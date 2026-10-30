@@ -61,10 +61,13 @@ def main() -> None:
             )
 
         valid_target = root / "valid-v4.cd-ram-target-write"
-        target_addresses = (0x1000D9, 0x1000DA, 0x1000DB, 0x10468D, 0x10468E)
-        target_values = (0xA9, 0x4C, 0x8D, 0x60, 0xEA)
+        target_addresses = (*range(0x1000D2, 0x1000E4), 0x10468D, 0x10468E)
+        target_values = [((index + 1) & 0xFF) for index in range(len(target_addresses))]
+        target_values[target_addresses.index(0x1000D9)] = 0xA9
+        target_values[target_addresses.index(0x1000DA)] = 0x4C
+        target_values[target_addresses.index(0x1000DB)] = 0x8D
         target_rows = ["source=mednafen-pce-fast-cd-ram-target-write"]
-        for sequence, (address, value) in enumerate(zip(target_addresses, target_values)):
+        for sequence, (address, value) in enumerate(zip(target_addresses, target_values, strict=True)):
             mprs = [0] * 7 + [0x80]
             target_rows.append(
                 f"cd_ram_target_write sequence={sequence} event_sequence={sequence} "
@@ -77,10 +80,10 @@ def main() -> None:
         valid_v4 = root / "valid-v4.system-card-dispatch"
         valid_v4.write_text(
             "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries\n"
-            "code_fetch event_sequence=5 logical_pc=40d9 physical_pc=1000d9 "
+            "code_fetch event_sequence=50 logical_pc=40d9 physical_pc=1000d9 "
             "mpr0=00 mpr1=00 mpr2=80 mpr3=00 mpr4=00 mpr5=00 mpr6=00 mpr7=00 "
             "bytes=a94c8d physical_bytes=1000d9,1000da,1000db valid_mask=7\n"
-            "code_fetch_extended event_sequence=6 logical_pc=6148 physical_pc=102148 "
+            "code_fetch_extended event_sequence=51 logical_pc=6148 physical_pc=102148 "
             "mpr0=00 mpr1=00 mpr2=00 mpr3=81 mpr4=00 mpr5=00 mpr6=00 mpr7=00 "
             "bytes=4c0040 physical_bytes=102148,102149,10214a valid_mask=7\n",
             encoding="ascii",

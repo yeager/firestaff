@@ -677,12 +677,36 @@ confirmed by the all-PC target-write trace. This binds executed bytes to
 authentic disc-read candidates while keeping repeated-value ambiguity and
 caller ownership explicit.
 
-The all-PC target-write trace covers only three of the 18 addresses; the
-`$EA9C` writer trace is not exhaustive for the other 15. Candidate read matches
-use the same 16-event window as the existing writer verifier, and repeated
-values can leave multiple reads as candidates. This does not establish
-exclusive RAM provenance, game ownership, gameplay handoff, or parity. Raw
-captures and original media remain private on TRV2.
+The v11 all-PC target-write trace covered only three of the 18 addresses;
+the `$EA9C` writer trace was not exhaustive for the other 15. Candidate read
+matches use the same 16-event window as the existing writer verifier, and
+repeated values can leave multiple reads as candidates. Raw captures and
+original media remain private on TRV2.
+
+## 2026-10-30 — v12 expanded RAM-loop target-write trace
+
+A new cold reference run used authentic Japanese Rev. 1 media and System Card
+3.0, without loading a save state. The instrumented target-write trace records
+all observed PCs for the full physical `$1000D2-$1000E3` range. The updated
+focused verifiers report 2–6 writes for each address; 40 fetched bytes at
+`$1000D9-$1000DB` all have a prior matching write, with no mismatches or
+missing writes. Across the 165-row/$495-slot loop fetch trace, all latest
+address-scoped writes match and the source-candidate counts remain 400
+`$EA9C`-matched slots (390 unique, 10 ambiguous) and 111 fully source-candidate
+backed rows. `$1000E3` had two writes, both from `$EA9C`.
+
+The capture wrapper exited 124 with `BLOCKED: dynamic receipts absent`,
+reporting zero host keys, IRQs, and authenticated CD-RAM receipts. These bounded
+traces do not establish that scripted RUN input reached the game, a gameplay
+transition, exclusive RAM provenance, game ownership, or parity. Raw captures
+and original media remain private on TRV2.
+
+The v12 trace hashes are:
+
+- CD-RAM target writes: `574444b87cc9466c60f3a70b9aa63b0e493fb627e58297ff74a9598d386af5e4`.
+- System Card dispatch: `77abcd4b77b3b4e27ae5a8749793cca825befa2d82893208c474b4e1c94bbebb`.
+- Indirect-jump follow: `f6f72b60e0b9848f024040689400aa9490565462e0f3de493b2b31ad3eba94aa`.
+- CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
 
 The additional trace hashes are:
 

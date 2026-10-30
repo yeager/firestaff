@@ -11,14 +11,16 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
  {
   static FILE *trace = NULL;
-@@ -96,14 +98,15 @@ static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
+@@ -96,14 +98,17 @@ static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
     return;
    fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
   }
 - fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 + fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x event_sequence=%u\n",
-          count++, address, stage2_target ? address - stage2_first : address - 0x68 * 8192, ROMSpace[address], value,
+          count++, address,
+          stage2_target ? address - stage2_first : ram_loop_target ? address - ram_loop_first : address - 0x68 * 8192,
+          ROMSpace[address], value,
           TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2],
           HuCPU.in_block_move, HuCPU.bmt_src,
           ((uint32)HuCPU.MPR[(HuCPU.bmt_src >> 13) & 7] << 13) | (HuCPU.bmt_src & 0x1fff),

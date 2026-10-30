@@ -211,7 +211,9 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_r
    grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_first = 0x68 * 8192 + 0x04d2' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_last = 0x68 * 8192 + 0x04e6' "$cd_ram_write_patch" ||
-   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
+   ! grep -Fq 'ram_loop_first = 0x80 * 8192 + 0x00d2' "$cd_ram_write_patch" ||
+   ! grep -Fq 'ram_loop_last = 0x80 * 8192 + 0x00e3' "$cd_ram_write_patch" ||
+   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !ram_loop_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
    ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded CD RAM target-write trace must include the source-locked poll-code window' >&2
     exit 1

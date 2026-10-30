@@ -2,17 +2,26 @@
 
 ## 2026-10-30 — classify authentic RAM-loop fetch/write/source candidates
 
+Follow-up v12 evidence expanded the all-PC target-write observer to
+`$1000D2-$1000E3`. The focused write/fetch verifier found 2–6 writes per loop
+address and matched all 40 fetched bytes in `$1000D9-$1000DB` to prior writes,
+with no mismatches or missing writes. `$1000E3` had two observed writes, both
+from `$EA9C`. The capture's strict receipt wrapper exited 124 because it saw
+no host key, IRQ, or authenticated CD-RAM receipt; these traces therefore do
+not establish successful RUN input, gameplay transition, exclusive memory
+provenance, or native parity.
+
 Added `verify_theron_jp_ram_loop_source_candidates.py` and a focused regression
 for the bounded `$40D2-$40E3` instruction window. The verifier validates the
 authentic Japanese Rev. 1 Track 02 bytes and the dispatch/follow trace structure,
-then compares each loop fetch byte with the latest address-scoped write: it
-uses the all-PC target-write trace at `$1000D9-$1000DB` and the `$EA9C` writer
-trace elsewhere, with ordered `$EA99` read candidates within 16 shared events
+then compares each loop fetch byte with the latest address-scoped write, with
+ordered `$EA99` read candidates within 16 shared events for `$EA9C` writes
 for `$EA9C` writes. Three repeated runs against the cold v11 capture observed
 all 18
 physical bytes across 165 fetch rows: all 495 byte slots matched the latest
-address-scoped writer record. The all-PC target-write trace covers
-`$1000D9-$1000DB`; the other 15 bytes use the `$EA9C` trace. Ninety-five slots
+address-scoped writer record. The v11 target-write trace covered
+`$1000D9-$1000DB`; the v12 target-write trace records writes across all 18
+addresses. Ninety-five slots
 matched non-`$EA9C` writes, while the other 400 matched `$EA9C` writes and had
 a source-valid `$EA99` read candidate within 16 events. Those 400 slots had
 390 unique and 10 ambiguous read candidates. All 165 rows matched their
@@ -23,11 +32,11 @@ helper bytes match prior `$EA9C` writes and have authentic read candidates
 (eight unique and four ambiguous); the all-PC trace confirms all three stores.
 The caller's ownership remains unknown. The test passed three local loops.
 
-This is bounded provenance analysis, not proof of exclusive memory ownership:
-the all-PC trace covers only three addresses, and the `$EA9C` sidecar is not an
-exhaustive writer census for the other 15. The capture still has no game-owned
-poll or gameplay transition, so native Theron handoff and parity remain open
-in `TODO-theron.md`.
+This is bounded provenance analysis, not proof of exclusive memory ownership.
+The v12 capture's strict receipt wrapper did not observe host input, IRQ, or an
+authenticated CD-RAM receipt. The trace therefore proves neither a game-owned
+poll nor gameplay transition; native Theron handoff and parity remain open in
+`TODO-theron.md`.
 
 ## 2026-10-30 — validate bounded indexed-dispatch follow traces
 

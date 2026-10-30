@@ -2,10 +2,10 @@
 """Classify bounded writer and source candidates for the observed JP RAM loop.
 
 The report joins instruction-fetch snapshots at physical $1000D2-$1000E3 to
-the latest prior all-PC target write at $1000D9-$1000DB and to the latest prior
-$EA9C-only write at other addresses. For $EA9C writes it reports matching
-source-valid $EA99 CD-read candidates within 16 shared events. The available
-writer traces do not establish exclusive RAM provenance or gameplay handoff.
+the latest prior all-PC target write at every address in that range. For
+$EA9C writes it reports matching source-valid $EA99 CD-read candidates within
+16 shared events. The available writer traces do not establish exclusive RAM
+provenance or gameplay handoff.
 """
 
 from __future__ import annotations
@@ -340,9 +340,9 @@ def verify(
         raise ValueError(f"CD trace contains {unbound_reads} source-unbound reads")
     writes = verify_writer_rows(write_path)
     target_writes = read_target_writes(target_write_path)
-    all_pc_addresses = (0x1000D9, 0x1000DA, 0x1000DB)
-    if any(not target_writes.get(address) for address in all_pc_addresses):
-        raise ValueError("all-PC target-write trace does not cover $1000D9-$1000DB")
+    if any(not target_writes.get(address)
+           for address in range(LOOP_PHYSICAL_RANGE[0], LOOP_PHYSICAL_RANGE[1] + 1)):
+        raise ValueError("all-PC target-write trace does not cover $1000D2-$1000E3")
     fetch_rows = parse_follow_rows(follow_path)
     report = classify(fetch_rows, reads, writes, target_writes)
     report.update(classify_patch_helper(fetch_rows, reads, writes, target_writes))
@@ -375,7 +375,7 @@ def main() -> int:
         return 1
     for key, value in report.items():
         print(f"{key}={value}")
-    print("LIMIT: all-PC target writes cover $1000D9-$1000DB only; the other loop bytes use the $EA9C-only trace; CD read matches are candidates and do not prove exclusive provenance or gameplay handoff")
+    print("LIMIT: all-PC writes cover the observed $1000D2-$1000E3 loop bytes; CD read matches are candidates and do not prove exclusive provenance or gameplay handoff")
     return 0
 
 

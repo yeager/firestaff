@@ -28,16 +28,19 @@ independent `$EA9C` writer comparison remains historical evidence. Results and
 hashes are recorded in the
 [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
-2026-10-30 v11 RAM-loop source-candidate analysis: the bounded fetch trace
-contains 165 snapshots and covers all 18 physical bytes at `$1000D2-$1000E3`.
-Across 495 observed byte slots, all match the latest address-scoped writer
-record, using the all-PC trace for `$1000D9-$1000DB` and the `$EA9C` trace for
-the other 15 bytes. Ninety-five slots use non-`$EA9C` writes; 400 match an
+2026-10-30 v12 RAM-loop source-candidate analysis: a fresh cold-reference
+trace's all-PC target-write observer now covers every physical loop address
+from `$1000D2` through `$1000E3`. The bounded fetch trace contains 165 snapshots
+and covers all 18 bytes. Across 495 observed byte slots, all match the latest
+address-scoped writer record. Ninety-five slots use non-`$EA9C` writes; 400 match an
 `$EA9C` write and have a source-valid `$EA99` read candidate within 16 events.
 Those 400 slots have 390 unique and 10 ambiguous read candidates; 165 fetch
 rows match their address-scoped latest writes, and 111 rows are fully joined
-to CD-read candidates. The `$EA9C` trace remains incomplete for the other 15
-addresses, so these counts are bounded candidates, not exclusive provenance.
+to CD-read candidates. The expanded target-write verifier reports 2–6 writes
+per loop address and 40/40 fetched bytes in `$1000D9-$1000DB` backed by a
+matching prior write, with no mismatches or missing writes. Address `$1000E3`
+had two observed writes, both from `$EA9C`; this remains a bounded observation,
+not an exclusive provenance census.
 In the same v11 window, code at `$6109` executes `LDA #$EA`, then stores `$EA`
 to `$40D9-$40DB` from `$610B/$610E/$6111` before returning to `$432B`. All 12
 executed helper bytes match earlier `$EA9C` writes and have source-valid CD-read
@@ -60,8 +63,9 @@ trace hashes are in the source-lock note.
    dispatches; 28 windows reach their 256-fetch cap. The first observed path
    returns from the System Card controller poll to its own dispatcher. The
    18-byte `$40D2-$40E3` RAM-loop report matches all 495 fetched byte slots to
-   the latest address-scoped writes. The all-PC trace covers only
-   `$1000D9-$1000DB`; the other 15 bytes rely on the incomplete `$EA9C` observer.
+   the latest address-scoped writes. The v12 all-PC target-write observer
+   records writes across all 18 physical addresses, though `$1000E3`'s two
+   captured writes both came from `$EA9C`.
    Of the 400 slots matched to `$EA9C` writes, 390 have unique and 10 have
    ambiguous source-read candidates, while 111 fetch rows are fully joined to
    CD-read candidates. The complete `$6109-$6114` helper execution and its
