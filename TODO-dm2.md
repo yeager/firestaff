@@ -939,6 +939,21 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   visual parity against a same-pose Amiga reference and the rest of the
   status/portrait layout remain open.
 
+- 2026-10-30: added an edition-pinned audit for all 64 authentic hand-action
+  GDAT routes across DOS EN/FR, Mac EN, FM Towns JA, and Amiga EN. It checks
+  the selected edition's GRAPHICS.DAT MD5, decoded source image bytes and RAW4
+  destination, then consumes the source receipts into a bounded local test
+  surface. On 2026-10-30, all five local original editions passed with 64/64
+  decoded routes, receipts and test-surface consumptions. This is not a test
+  of the production viewport/HUD renderer or presented-pixel parity. The
+  Survey frame has a source receipt and clipped RAW4 placement on DOS EN/FR,
+  Mac EN and Amiga EN; its test consumer does not implement the source crop.
+  GDAT v4 FM Towns has no Survey-frame route in this audit. CTest skips when
+  optional original media are absent. The French-labelled Mac `.sit` in local
+  scratch was byte-identical to Mac EN, so it is not evidence of a distinct
+  French build. There is no separate JewelCase GDAT in the local data set, so
+  that edition remains unverified.
+
 - 2026-10-24: the user reports that the DM2 Amiga HUD and viewport are very
   broken. A fresh authentic-media M4 debug capture reaches map 0 at (1,8),
   facing north, with an accepted frame, real assets, zero fallback draws,

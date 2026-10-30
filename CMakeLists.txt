@@ -57156,8 +57156,55 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_dat
     add_test(NAME dm2_v1_inventory_gdat_real_data
         COMMAND test_dm2_v1_inventory_gdat_real_data)
     set_tests_properties(dm2_v1_inventory_gdat_real_data PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        LABELS "dm2;dos;gdat;inventory;real-media;in-memory;skip-safe")
+        ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-en;FIRESTAFF_DM2_GRAPHICS_MD5=25247ede4dabb6a71e5dabdfbcd5907d;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+        SKIP_RETURN_CODE 77)
+
+    # The same 64 authentic hand routes are checked against each distinct
+    # platform GDAT format when original media are already present. This
+    # verifies source decoding/receipts and an isolated test surface, not the
+    # production renderer or presented frame. No game assets are synthesized.
+    set(_dm2_hand_audit_data_dir "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2")
+    set(_dm2_hand_audit_mac_en
+        "${_dm2_hand_audit_data_dir}/mac-en/Dungeon Master II/DMFiles/Graphics.dat")
+    set(_dm2_hand_audit_fmtowns
+        "${_dm2_hand_audit_data_dir}/fmtowns_iso/DATA/GRAPHICS.DAT")
+    set(_dm2_hand_audit_dos_fr
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+    set(_dm2_hand_audit_amiga
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_Amiga_EN.zip")
+    if(EXISTS "${_dm2_hand_audit_dos_fr}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_dos_fr
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_dos_fr PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-fr;FIRESTAFF_DM2_GRAPHICS_MD5=b4d733576ea60c41737f79f212faf528;FIRESTAFF_DM2_DOS_ARCHIVE=${_dm2_hand_audit_dos_fr}"
+            LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_mac_en}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_mac_en
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_mac_en PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=mac-en;FIRESTAFF_DM2_GRAPHICS_MD5=5cab25f6b975957eae4a203174e7f2a6;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_mac_en}"
+            LABELS "dm2;mac;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_fmtowns}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_fmtowns
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_fmtowns PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=fmtowns-ja;FIRESTAFF_DM2_GRAPHICS_MD5=027ff3b8ddc2c4c4cdda7ada0b0bc46c;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_fmtowns}"
+            LABELS "dm2;fmtowns;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_amiga}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_amiga
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_amiga PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=amiga-en;FIRESTAFF_DM2_GRAPHICS_MD5=1c940ea95703eaea0ecdf84d17e954b9;FIRESTAFF_DM2_AMIGA_ROOT=${_dm2_hand_audit_amiga}"
+            LABELS "dm2;amiga;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c")
