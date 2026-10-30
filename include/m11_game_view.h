@@ -1847,6 +1847,7 @@ typedef struct {
     int csbAtariStAnimationClockStarted;
     int csbAtariStAnimationFrameBound;
     int csbAtariStRuntimeHandoffComplete;
+    int csbAtariStViewportRejectionLogged;
     uint32_t csbAtariStAnimationFrameVbl;
     uint16_t csbAtariStAnimationSoundCount;
     int csbAtariStAnimationSoundPlayed[

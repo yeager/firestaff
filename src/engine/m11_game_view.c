@@ -6656,6 +6656,15 @@ static int m11_csb_present_atari_st_runtime_viewport(
         framebuffer_height < 200 ||
         (!entrance_micro_dungeon && !state->csbAtariStRuntimeHandoffComplete) ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        if (state && state->debugMovementTraceEnabled &&
+            !state->csbAtariStViewportRejectionLogged) {
+            fprintf(stderr,
+                "firestaff: csb-atari-viewport rejected stage=runtime-gate "
+                "handoff=%d source=%d framebuffer=%dx%d entrance=%d\n",
+                state->csbAtariStRuntimeHandoffComplete, state->sourceKind,
+                framebuffer_width, framebuffer_height, entrance_micro_dungeon);
+            state->csbAtariStViewportRejectionLogged = 1;
+        }
         return 0;
     }
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
@@ -6666,6 +6675,21 @@ static int m11_csb_present_atari_st_runtime_viewport(
         profile->runtime.current_level < 0 ||
         profile->runtime.current_level >=
             profile->runtime.dungeon_handle->level_count) {
+        if (state->debugMovementTraceEnabled &&
+            !state->csbAtariStViewportRejectionLogged) {
+            fprintf(stderr,
+                "firestaff: csb-atari-viewport rejected stage=profile "
+                "variant=%d graphics-verified=%d graphics-path=%d "
+                "dungeon=%d level=%d level-count=%d\n",
+                profile ? (int)profile->variant_id : -1,
+                profile ? profile->graphics_verified : 0,
+                profile ? profile->graphics_path[0] != '\0' : 0,
+                profile ? profile->runtime.dungeon_handle != NULL : 0,
+                profile ? profile->runtime.current_level : -1,
+                profile && profile->runtime.dungeon_handle
+                    ? profile->runtime.dungeon_handle->level_count : -1);
+            state->csbAtariStViewportRejectionLogged = 1;
+        }
         return 0;
     }
     dungeon = profile->runtime.dungeon_handle;
@@ -6681,6 +6705,17 @@ static int m11_csb_present_atari_st_runtime_viewport(
             state, material_plan.ceiling_graphic_index) ||
         !m11_csb_install_runtime_source_graphic(
             state, material_plan.floor_graphic_index)) {
+        if (state->debugMovementTraceEnabled &&
+            !state->csbAtariStViewportRejectionLogged) {
+            fprintf(stderr,
+                "firestaff: csb-atari-viewport rejected stage=material-plan "
+                "floor-set=%d wall-set=%d layout-valid=%d plan-valid=%d "
+                "ceiling-index=%u floor-index=%u\n",
+                floor_set, wall_set, layout.valid, material_plan.valid,
+                (unsigned)material_plan.ceiling_graphic_index,
+                (unsigned)material_plan.floor_graphic_index);
+            state->csbAtariStViewportRejectionLogged = 1;
+        }
         return 0;
     }
     ceiling_graphic = material_plan.ceiling_graphic_index;
@@ -6691,6 +6726,17 @@ static int m11_csb_present_atari_st_runtime_viewport(
         !ceiling->pixels || !floor->pixels ||
         ceiling->width != VIEWPORT_WIDTH || ceiling->height != CEILING_HEIGHT ||
         floor->width != VIEWPORT_WIDTH || floor->height != FLOOR_HEIGHT) {
+        if (state->debugMovementTraceEnabled &&
+            !state->csbAtariStViewportRejectionLogged) {
+            fprintf(stderr,
+                "firestaff: csb-atari-viewport rejected stage=base-bitmap "
+                "ceiling=%d:%ux%u floor=%d:%ux%u\n",
+                ceiling && ceiling->loaded, ceiling ? ceiling->width : 0u,
+                ceiling ? ceiling->height : 0u,
+                floor && floor->loaded, floor ? floor->width : 0u,
+                floor ? floor->height : 0u);
+            state->csbAtariStViewportRejectionLogged = 1;
+        }
         return 0;
     }
     /* ReDMCSB/CSBWin Viewport.cpp::FloorAndCeilingOnly and TAG0088b2 own
@@ -8045,6 +8091,7 @@ static int m11_csb_prepare_atari_st_animation_handoff(
            trace.played_sound_vbls,
            sizeof(state->csbAtariStAnimationSoundVbls));
     state->csbAtariStRuntimeHandoffComplete = 0;
+    state->csbAtariStViewportRejectionLogged = 0;
     return 1;
 }
 
