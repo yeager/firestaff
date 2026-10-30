@@ -56199,7 +56199,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     )
 endif()
 
-# M12 save browser input dispatch + delete + scroll-window contract.
+# M12 save browser input dispatch + delete + scroll-window and original-name
+# admission contract. Corrupt placeholders remain non-loadable after admission.
 # Pins the launcher-side navigation and on-disk delete path of
 # src/shared/save_browser_m12.c (M12_SaveBrowser_HandleInput + Scan
 # mtime-desc qsort + M12_SaveBrowser_DeleteSelected + GetSelected
@@ -56227,6 +56228,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_input_delete_m12.
         NAME save_browser_input_delete_m12
         COMMAND test_save_browser_input_delete_m12
     )
+    set(_dm1_pc34_multilang_save
+        "$ENV{HOME}/.firestaff/saves/dm1/original-pc34/DMSAVE.DAT")
+    if(EXISTS "${_dm1_pc34_multilang_save}")
+        set_tests_properties(save_browser_input_delete_m12 PROPERTIES
+            ENVIRONMENT
+                "FIRESTAFF_DM1_PC34_MULTILANG_SAVE=${_dm1_pc34_multilang_save}")
+    endif()
 endif()
 
 # DM1 V1 PC 3.4 native save exporter/importer regression (LSV-01) +

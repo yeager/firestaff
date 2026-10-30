@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-30 PC34 multilingual Save Browser admission: ReDMCSB
+`FILENAME.C` MEDIA733_I34M/F0745 resolves `DMSAVE~.DAT/.BAK` to `DMSAVEF`
+for French and `DMSAVEG` for German. M12 now admits these four basenames as
+DM1 candidates, while its normal parser and load gate still reject invalid
+bytes. The focused test checks candidate visibility/rejection and, when the
+local authentic PC34 `DMSAVE.DAT` corpus save is installed, exercises its
+unchanged bytes under all four names. This verifies filename routing with
+authentic save contents, not language-specific F/G save payloads; those
+original saves are not currently available locally.
+
 2026-10-30 X68000 raw map access step: ReDMCSB `LOADSAVE.C:2161-2163`
 constructs each map as column pointers advanced by `Height+1`, while
 `DUNGEON.C F0151` returns the byte at an in-bounds `(MapX, MapY)` coordinate.

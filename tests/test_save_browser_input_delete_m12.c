@@ -45,6 +45,7 @@
 #endif
 
 #include "save_browser_m12.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,6 +108,37 @@ static int write_fixture_file(const char* dir, const char* name) {
     if (!fp) return 0;
     fputs("not a valid Firestaff save\n", fp);
     return fclose(fp) == 0;
+}
+
+static int copy_file_to_fixture(const char* source,
+                                const char* dir,
+                                const char* name) {
+    char path[512];
+    unsigned char buffer[8192];
+    FILE* input;
+    FILE* output;
+    size_t count;
+    int ok = 1;
+
+    if (!source || !source[0]) return 0;
+    snprintf(path, sizeof(path), "%s/%s", dir, name);
+    input = fopen(source, "rb");
+    if (!input) return 0;
+    output = fopen(path, "wb");
+    if (!output) {
+        fclose(input);
+        return 0;
+    }
+    while ((count = fread(buffer, 1u, sizeof(buffer), input)) > 0u) {
+        if (fwrite(buffer, 1u, count, output) != count) {
+            ok = 0;
+            break;
+        }
+    }
+    if (ferror(input) || fclose(input) != 0) ok = 0;
+    if (fclose(output) != 0) ok = 0;
+    if (!ok) unlink(path);
+    return ok;
 }
 
 static int set_fixture_mtime(const char* dir, const char* name, time_t when) {
@@ -446,6 +478,75 @@ int main(void) {
             snprintf(name, sizeof(name),
                      "firestaff-dm1-%02d.sav", i);
             remove_fixture(tmpTemplate, name);
+        }
+    }
+
+    /* -------------------------------------------------------------- */
+    /*  Group I — DM1 PC34 multilingual original save names           */
+    /* -------------------------------------------------------------- */
+    {
+        static const char* const names[] = {
+            "DMSAVEF.DAT", "DMSAVEF.BAK", "DMSAVEG.DAT", "DMSAVEG.BAK"
+        };
+        int index;
+        int dm1_name_count = 0;
+        memset(&state, 0, sizeof(state));
+        for (index = 0; index < 4; ++index) {
+            check(write_fixture_file(tmpTemplate, names[index]),
+                  "Group I: wrote invalid placeholder for recognized original name");
+        }
+        check(M12_SaveBrowser_Scan(&state, tmpTemplate) == 4,
+              "Group I: scans French/German PC34 original DAT and BAK names");
+        for (index = 0; index < state.entryCount; ++index) {
+            const M12_SaveBrowserEntry* entry = &state.entries[index];
+            if (strncmp(entry->filename, "DMSAVE", 6) == 0 &&
+                (strstr(entry->filename, "F.") ||
+                 strstr(entry->filename, "G."))) {
+                ++dm1_name_count;
+                check(strcmp(entry->gameId, "dm1") == 0,
+                      "Group I: multilingual original name is attributed to DM1");
+                check(entry->valid == 0,
+                      "Group I: filename admission does not make corrupt data loadable");
+            }
+        }
+        check(dm1_name_count == 4,
+              "Group I: all four multilingual names are visible candidates");
+        check(M12_SaveBrowser_HandleInput(&state, 5) == 0,
+              "Group I: corrupt multilingual candidate cannot request load handoff");
+        for (index = 0; index < 4; ++index) {
+            remove_fixture(tmpTemplate, names[index]);
+        }
+
+        /* When an original PC34 DMSAVE.DAT is installed, re-use its real
+         * bytes under the four language-selected names and require the
+         * unchanged DM1 parser/load gate to accept them. This is a filename
+         * alias check, not evidence for language-specific save contents. */
+        {
+            const char* original =
+                getenv("FIRESTAFF_DM1_PC34_MULTILANG_SAVE");
+            if (original && original[0]) {
+                memset(&state, 0, sizeof(state));
+                for (index = 0; index < 4; ++index) {
+                    check(copy_file_to_fixture(original, tmpTemplate,
+                                               names[index]),
+                          "Group I: staged original PC34 save bytes under a localized name");
+                }
+                check(M12_SaveBrowser_Scan(&state, tmpTemplate) == 4,
+                      "Group I: authentic DM1 save aliases reach the browser parser");
+                for (index = 0; index < state.entryCount; ++index) {
+                    const M12_SaveBrowserEntry* entry = &state.entries[index];
+                    check(strcmp(entry->gameId, "dm1") == 0,
+                          "Group I: authentic localized alias remains a DM1 entry");
+                    check(entry->valid == 1,
+                          "Group I: authentic PC34 save passes the normal load gate under alias");
+                    check(entry->expectedGameCode ==
+                              SAVEGAME_PC34_GAME_CODE_DM1,
+                          "Group I: authentic localized alias expects DM1");
+                }
+                for (index = 0; index < 4; ++index) {
+                    remove_fixture(tmpTemplate, names[index]);
+                }
+            }
         }
     }
 
