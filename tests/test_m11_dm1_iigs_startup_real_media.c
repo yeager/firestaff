@@ -874,6 +874,10 @@ static int check_native_floor_item_roundtrip(M11_GameViewState *view,
         "native inventory closes while retaining the original mouse-held torch");
     (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_DROP_ITEM);
     REQUIRE_NATIVE_ITEM(!view->leaderHandObjectPresent &&
+            F0511_DUNGEON_GetSquareFirstThing_Compat(
+                view->world.dungeon, view->world.things,
+                view->world.party.mapIndex, view->world.party.mapX,
+                view->world.party.mapY) == original_item &&
             original_thing_owners(view, original_item) == 1,
         "ordinary DM1 drop input transfers the original torch to the dungeon");
     REQUIRE_NATIVE_ITEM(M11_GameView_HandleInput(view,

@@ -22730,6 +22730,43 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
  * Drop: take item from champion hand/slot -> current cell
  * ================================================================ */
 
+/* One action-level receipt for --debug. Keep the compact SFT state visible
+ * when diagnosing an item that appears to vanish, without adding per-frame
+ * logging or changing the normal game output. */
+static void m11_debug_trace_floor_drop(const M11_GameViewState* state,
+                                       const char* source,
+                                       unsigned short thing,
+                                       unsigned short beforeHead,
+                                       int linked) {
+    int mapIndex, mapX, mapY, sftIndex = -1, flagged = 0;
+    unsigned short afterHead;
+    const struct DungeonMapDesc_Compat* map;
+    if (!state || !state->debugMovementTraceEnabled || !state->world.dungeon ||
+        !state->world.things) return;
+    mapIndex = state->world.party.mapIndex;
+    mapX = state->world.party.mapX;
+    mapY = state->world.party.mapY;
+    afterHead = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
+    if (m11_world_has_compact_sft(&state->world))
+        sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+            state->world.dungeon, mapIndex, mapX, mapY);
+    if (mapIndex >= 0 && mapIndex < (int)state->world.dungeon->header.mapCount) {
+        map = &state->world.dungeon->maps[mapIndex];
+        if (mapX >= 0 && mapY >= 0 && mapX < (int)map->width &&
+            mapY < (int)map->height && state->world.dungeon->tiles &&
+            state->world.dungeon->tiles[mapIndex].squareData) {
+            size_t squareOffset = (size_t)mapX * map->height + (size_t)mapY;
+            flagged = (state->world.dungeon->tiles[mapIndex].squareData[squareOffset] &
+                       DUNGEON_SQUARE_MASK_THING_LIST) != 0;
+        }
+    }
+    fprintf(stderr,
+        "DM1 floor-drop source=%s map=%d square=%d,%d thing=%04X compact=%d sft=%d flagged=%d before=%04X after=%04X result=%s\n",
+        source ? source : "unknown", mapIndex, mapX, mapY, thing,
+        m11_world_has_compact_sft(&state->world), sftIndex, flagged,
+        beforeHead, afterHead, linked ? "linked" : "rejected");
+}
+
 int M11_GameView_DropItem(M11_GameViewState* state) {
     struct ChampionState_Compat* champ;
     unsigned short item = THING_NONE;
@@ -22767,17 +22804,24 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
      * the pointer helper's viewport-cell hit testing. */
     item = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
     if (item != THING_NONE) {
+        unsigned short beforeHead = m11_square_chain_head(
+            &state->world, state->world.party.mapIndex,
+            state->world.party.mapX, state->world.party.mapY);
         DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
         if (!m11_prepend_thing_to_square(&state->world,
                                          state->world.party.mapIndex,
                                          state->world.party.mapX,
                                          state->world.party.mapY,
                                          item)) {
+            m11_debug_trace_floor_drop(state, "mouse-hand", item,
+                                       beforeHead, 0);
             (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
             m11_set_status(state, "DROP",
                            M11_DM1_PRESENTED("DROP TARGET UNAVAILABLE"));
             return 0;
         }
+        m11_debug_trace_floor_drop(state, "mouse-hand", item,
+                                   beforeHead, 1);
         m11_get_source_item_name(state, state->world.things, item,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "DROP", "ITEM DROPPED");
@@ -22818,16 +22862,25 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
 
     item = champ->inventory[dropSlot];
     champ->inventory[dropSlot] = THING_NONE;
+    {
+        unsigned short beforeHead = m11_square_chain_head(
+            &state->world, state->world.party.mapIndex,
+            state->world.party.mapX, state->world.party.mapY);
 
-    if (!m11_prepend_thing_to_square(&state->world,
-                                     state->world.party.mapIndex,
-                                     state->world.party.mapX,
-                                     state->world.party.mapY,
-                                     item)) {
-        /* Restore if chain operation fails */
-        champ->inventory[dropSlot] = item;
-        m11_set_status(state, "DROP", "CHAIN ERROR");
-        return 0;
+        if (!m11_prepend_thing_to_square(&state->world,
+                                         state->world.party.mapIndex,
+                                         state->world.party.mapX,
+                                         state->world.party.mapY,
+                                         item)) {
+            m11_debug_trace_floor_drop(state, "inventory", item,
+                                       beforeHead, 0);
+            /* Restore if chain operation fails */
+            champ->inventory[dropSlot] = item;
+            m11_set_status(state, "DROP", "CHAIN ERROR");
+            return 0;
+        }
+        m11_debug_trace_floor_drop(state, "inventory", item,
+                                   beforeHead, 1);
     }
 
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));

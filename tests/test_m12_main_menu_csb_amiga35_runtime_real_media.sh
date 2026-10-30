@@ -35,17 +35,17 @@ probe="$scratch/runtime.json"
 log="$scratch/menu.log"
 mkdir -p "$home"
 
-# Expose only the authentic English 3.5 Amiga package. The user starts in the
-# no-game picker, selects CSB, follows its Amiga route, and reaches its first
-# native runtime receipt without a preselected CLI game.
+# Expose only the authentic English 3.5 Amiga package. Start in the no-game
+# picker, choose CSB -> Amiga -> Custom, use the edition tile and keyboard to
+# select the authenticated English version, then launch through production M12.
 env -u FIRESTAFF_DATA -u FIRESTAFF_ORIGINALS_DIR -u FIRESTAFF_EXIT_AFTER_LAUNCH \
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-    "$app" --debug --width 320 --height 200 --data-dir "$menu_data" \
-        --script 'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait1200,enter' \
+    "$app" --debug --verbose --width 1920 --height 1080 --data-dir "$menu_data" \
+        --script 'wait-scan-complete,wait20,click:1190:262,wait20,click:934:405,wait20,click:1458:405,wait20,click:520:442,wait20,key:left,wait20,click:960:892,wait1200,enter' \
         --duration 45000 >"$log" 2>&1
 
 expected_source="$menu_data/csb/$(basename "$archive")::ChaosStrikesBack_Disk1of2 GameDisk_English.raw::Graphics.DAT"
@@ -53,7 +53,7 @@ if ! grep -Fq 'startup game=none mode=menu' "$log" ||
    ! grep -Fq 'scan complete' "$log" ||
    ! grep -Fq 'games=dm1:no,csb:yes,dm2:no,nexus:no,theron:no' "$log" ||
    ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga35-en source=$expected_source" "$log"; then
-    echo 'FAIL: CSB Amiga 3.5 no-game picker did not hand off its authenticated original media' >&2
+    echo 'FAIL: CSB Amiga 3.5 custom-edition picker did not hand off its authenticated original media' >&2
     grep -E 'startup game=|scan complete|CSB READY|game-handoff|failed|error' "$log" >&2 || true
     exit 1
 fi
@@ -68,6 +68,7 @@ startup = probe["startup"]
 party = probe["party"]
 if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
         probe.get("sourceId") != "csb" or
+        probe.get("bootAssetMd5") != "291e1bc6803e3dc4b974c60117ca5d68" or
         startup.get("receiptReady") != 1 or
         startup.get("startupActive") != 0 or
         startup.get("levelLoaded") != 1 or
@@ -77,11 +78,11 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
         not probe.get("csbViewportHash") or
         probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
     raise SystemExit(f"FAIL: CSB Amiga 3.5 menu did not reach its authentic first runtime: {probe}")
-print("PASS: CSB Amiga 3.5 no-game menu reached its authentic first runtime")
+print("PASS: CSB Amiga 3.5 custom-edition menu reached its authentic first runtime")
 PY
 
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original CSB Amiga 3.5 archive changed during menu startup' >&2
     exit 1
 fi
-echo 'PASS: CSB Amiga 3.5 no-game startup used and preserved the original archive'
+echo 'PASS: CSB Amiga 3.5 custom-edition startup used and preserved the original archive'

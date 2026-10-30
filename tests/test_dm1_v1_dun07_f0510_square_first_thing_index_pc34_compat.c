@@ -278,6 +278,24 @@ int main(void)
     ok &= expect_int("F0164 clears square list present",
         (map0Squares[1 * 3 + 1] & DUNGEON_SQUARE_MASK_THING_LIST) != 0, 0);
 
+    /* A source square may retain its thing-list bit while its SFT row is
+     * empty. A drop into that cell reuses the existing row instead of
+     * trying to append to a sentinel or inserting a duplicate row. */
+    squareFirstThings[4] = THING_ENDOFLIST;
+    linkedWeapon = MAKE_THING(THING_TYPE_WEAPON, 0, 0);
+    ok &= expect_int("F0163 fills an already-flagged empty compact SFT row",
+        F0514_DUNGEON_LinkThingToList_Compat(&dungeon, &things, linkedWeapon,
+            THING_ENDOFLIST, 1, 1, 1), 1);
+    ok &= expect_thing("F0163 installs the item as the existing empty-row head",
+        squareFirstThings[4], linkedWeapon);
+    ok &= expect_int("F0163 preserves column bases for an existing empty row",
+        columnSftBases[4], 3);
+    ok &= expect_int("F0164 unlinks the item from the reused SFT row",
+        F0515_DUNGEON_UnlinkThingFromList_Compat(&dungeon, &things,
+            linkedWeapon, THING_ENDOFLIST, 1, 1, 1), 1);
+    ok &= expect_int("F0164 removes the source list flag after its last item",
+        (map1Squares[1 * 2 + 1] & DUNGEON_SQUARE_MASK_THING_LIST) != 0, 0);
+
     rawGroup[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawGroup[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawGroup[4] = 0; /* Giant Scorpion: full-square, G0243 size 2. */
