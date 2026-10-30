@@ -70,6 +70,7 @@ typedef enum {
 } Nexus_UISurfaceType;
 
 typedef struct {
+    int debug_enabled;
     Nexus_UI_Surface surfaces[NEXUS_SURFACE_COUNT];
 } Nexus_UI_Manager;
 
@@ -306,6 +307,8 @@ typedef struct {
 
 /* ── Manager lifecycle ─────────────────────────────────────────── */
 void nexus_ui_manager_init(Nexus_UI_Manager *mgr);
+void nexus_ui_manager_init_with_debug(Nexus_UI_Manager *mgr,
+                                      int debug_enabled);
 void nexus_ui_manager_free(Nexus_UI_Manager *mgr);
 
 /* ── Surface loaders ───────────────────────────────────────────── */

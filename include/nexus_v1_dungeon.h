@@ -1454,6 +1454,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
         structure3_face_normal_geometry;
     uint16_t structure3_entry_face_counts[NEXUS_DGN_MAX_STRUCTURE3_ENTRIES];
+    int debug_enabled;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -2300,6 +2301,9 @@ typedef struct {
 } Nexus_V1_DgnRenderPlanReceipt;
 
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index);
+int nexus_v1_level_load_with_debug(Nexus_V1_Level *level,
+                                   const uint8_t *data, int size,
+                                   int level_index, int debug_enabled);
 int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_level_get_collision_ref(const Nexus_V1_Level *level, int x, int y);
 int nexus_v1_level_get_material_ref(const Nexus_V1_Level *level, int x, int y,

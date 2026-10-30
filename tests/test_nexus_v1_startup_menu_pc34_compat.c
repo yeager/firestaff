@@ -4493,9 +4493,13 @@ int main(void)
                 int boot_ok;
                 memset(&title_screen, 0, sizeof(title_screen));
                 nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
-                boot_ok = nexus_v1_launcher_boot_level0_runtime_startup(
-                    nexus_dir, &title_screen, &runtime_receipt);
+                boot_ok = nexus_v1_launcher_boot_level0_runtime_startup_with_debug(
+                    nexus_dir, &title_screen, &runtime_receipt, 1);
                 if (boot_ok) {
+                    Nexus_V1_Engine *engine = nexus_v1_launcher_get_engine();
+                    expect(engine && engine->debug_enabled &&
+                               engine->game.debug_enabled,
+                           "Nexus title boot preserves enabled game diagnostics");
                     expect(1,
                            "Nexus launcher starts the decoded title while menu media stays gated");
                     expect(title_screen.loaded ||

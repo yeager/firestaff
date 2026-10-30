@@ -100,7 +100,7 @@ probe --game dm1 --platform pc --data-dir "$data_source" \
     --script "$menu_original" --boot-probe --boot-probe-frames 2 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug --menu --game dm1 \
     --platform pc --data-dir "$data_source" --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1

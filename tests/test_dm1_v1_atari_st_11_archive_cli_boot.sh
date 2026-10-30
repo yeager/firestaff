@@ -46,7 +46,7 @@ if [[ "$edition" == '1.1' ]]; then
     fi
 
     direct_menu=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug --menu \
         --game dm1 --data-dir "$source_archive" \
         --script enter,enter,enter --duration 1000 2>&1) || {
         printf '%s\n' "$direct_menu" >&2
@@ -90,7 +90,7 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$probe" ||
 fi
 
 menu=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug --menu --game dm1 \
     --platform atari-st --data-dir "$outer" \
     --script enter,enter,enter --duration 1000 2>&1) || {
     printf '%s\n' "$menu" >&2

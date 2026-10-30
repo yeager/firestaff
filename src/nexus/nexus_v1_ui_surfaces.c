@@ -95,8 +95,14 @@ static uint8_t nexus_ui_expand_5bit(uint16_t value)
 
 /* ── Manager lifecycle ──────────────────────────────────────────── */
 void nexus_ui_manager_init(Nexus_UI_Manager *mgr) {
+    nexus_ui_manager_init_with_debug(mgr, 0);
+}
+
+void nexus_ui_manager_init_with_debug(Nexus_UI_Manager *mgr,
+                                      int debug_enabled) {
     if (!mgr) return;
     memset(mgr, 0, sizeof(*mgr));
+    mgr->debug_enabled = debug_enabled != 0;
 }
 
 void nexus_ui_manager_free(Nexus_UI_Manager *mgr) {
@@ -133,7 +139,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
 
     if (!data || data_size < 0 || w <= 0 || h <= 0 ||
         (size_t)w > SIZE_MAX / (size_t)h) {
-        printf("Nexus UI: rejecting invalid surface dimensions %d [%s] (%dx%d)\n",
+        if (mgr->debug_enabled) printf("Nexus UI: rejecting invalid surface dimensions %d [%s] (%dx%d)\n",
                which, source ? source : "?", w, h);
         return -1;
     }
@@ -141,7 +147,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     if ((size_t)data_size < required_bytes) {
         /* Saturn startup media is all-or-nothing. A missing or short source
          * must reach the launch gate instead of becoming a plausible UI. */
-        printf("Nexus UI: rejecting incomplete surface %d [%s] (%d < %zu)\n",
+        if (mgr->debug_enabled) printf("Nexus UI: rejecting incomplete surface %d [%s] (%d < %zu)\n",
                which, source ? source : "?", data_size, required_bytes);
         return -1;
     }
@@ -157,7 +163,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
         memcpy(surf->data, data, w * h);
     }
 
-    printf("Nexus UI: surface %d [%s] loaded %dx%d "
+    if (mgr->debug_enabled) printf("Nexus UI: surface %d [%s] loaded %dx%d "
            "(palette %d-%d) own=%d size=%d\n",
            which, source ? source : "?",
            surf->w, surf->h, surf->pal_start, surf->pal_start + surf->pal_count - 1,
@@ -442,12 +448,12 @@ int nexus_ui_load_title(Nexus_UI_Manager *mgr,
     size_t i;
     (void)palette;
     if (!mgr || !data || data_size != (int)NEXUS_UI_TITLE_CG_BYTES) {
-        printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
+        if (mgr && mgr->debug_enabled) printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
         return -1;
     }
     for (i = 0U; i < NEXUS_UI_TITLE_CG_HEADER_BYTES; ++i) {
         if (data[i] != 0U) {
-            printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
+            if (mgr->debug_enabled) printf("Nexus UI: TITLE.CG requires the verified 328x1024 4bpp layout\n");
             return -1;
         }
     }
@@ -488,7 +494,7 @@ int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
     if (!mgr) return -1;
     if (!data || data_size <= 0 ||
         nexus_ui_res_dgt2_pp_view(data, (size_t)data_size, 0U, &view) != 0) {
-        printf("Nexus UI: WARNING.BIN requires a valid RES* container DGT2 PP image\n");
+        if (mgr->debug_enabled) printf("Nexus UI: WARNING.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
     if (nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_WARNING,
@@ -512,7 +518,7 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
     if (!mgr) return -1;
     if (!data || data_size <= 0 ||
         nexus_ui_res_dgt2_pp_view(data, (size_t)data_size, 0U, &view) != 0) {
-        printf("Nexus UI: GAMEOVER.BIN requires a valid RES* container DGT2 PP image\n");
+        if (mgr->debug_enabled) printf("Nexus UI: GAMEOVER.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
     if (nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_GAMEOVER,

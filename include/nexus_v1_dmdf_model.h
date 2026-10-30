@@ -31,6 +31,7 @@ typedef struct {
 } Nexus_DMDFVertex;
 
 typedef struct {
+    int debug_enabled;
     Nexus_DMDFHeader header;
     Nexus_DMDFVertex *vertices;
     int vertex_count;
@@ -336,6 +337,9 @@ int nexus_v1_dmdf_string_record(const uint8_t *data, int size,
                                 uint32_t *out_offset, uint32_t *out_length);
 
 int nexus_v1_dmdf_load(Nexus_V1_Model *model, const uint8_t *data, int size, const char *name);
+int nexus_v1_dmdf_load_with_debug(Nexus_V1_Model *model,
+                                  const uint8_t *data, int size,
+                                  const char *name, int debug_enabled);
 void nexus_v1_dmdf_free(Nexus_V1_Model *model);
 int nexus_v1_dmdf_is_valid(const uint8_t *data, int size);
 

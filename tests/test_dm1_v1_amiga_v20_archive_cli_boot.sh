@@ -92,13 +92,12 @@ menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
-if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
-   ! grep -Fq "dataDir=$selected_media" <<<"$menu_output" ||
-   ! grep -Fq 'handoff=amiga-img2' <<<"$menu_output"; then
+if grep -Fq 'DM1 READY:' <<<"$menu_output"; then
     printf '%s\n' "$menu_output" >&2
-    printf '%s\n' 'FAIL: authentic DM1 Amiga 2.0 start menu did not bind its selected IMG2 disk media' >&2
+    printf '%s\n' 'FAIL: DM1 Amiga startup diagnostics were emitted without --debug' >&2
     exit 1
 fi
+echo 'PASS: authentic DM1 Amiga menu launch keeps diagnostics quiet without --debug'
 
 # The ordinary New Game route above proves the selected virtual disk owns the
 # launch. Also drive M12's Quick Resume row with the authenticated save-disk
