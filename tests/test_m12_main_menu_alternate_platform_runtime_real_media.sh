@@ -10,6 +10,7 @@ data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 dm1_pc="$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 dm1_atari="$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip"
 dm1_atari_st12="$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+dm1_atari_st13="$data_root/dm1/Dungeon-Master_Atari-ST_FR_Version-13.zip"
 csb_atari="$data_root/csb/chaos_strikes_back_ftl.zip"
 dm2_pc="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 
@@ -29,6 +30,12 @@ case "$route" in
     dm1-atari-st-12)
         selected_game=dm1; game_down=0; platform_down=0
         selected_archive=$dm1_atari_st12; edition=st12-en; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-13)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st13; edition=st13-fr; platform='Atari ST'
         width=960; height=540; duration=90000
         game_input='wait30,enter,wait60,enter'
         ;;
@@ -89,7 +96,8 @@ for game_id in dm1 csb dm2; do
     [[ -d "$source_game_dir" ]] || continue
     while IFS= read -r -d '' archive; do
         [[ -f "$archive" ]] || continue
-        if [[ "$route" == dm1-atari-st-12 && "$game_id" == dm1 &&
+        if [[ ( "$route" == dm1-atari-st-12 || "$route" == dm1-atari-st-13 ) &&
+              "$game_id" == dm1 &&
               $(basename "$archive") != $(basename "$selected_archive") ]]; then
             continue
         fi
