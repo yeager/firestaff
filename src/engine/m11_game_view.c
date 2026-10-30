@@ -1212,7 +1212,7 @@ static void m11_dm1_f0035_fill_zone(void *context, int zone_index, int color)
     DM1_V1_LayoutZoneRectPc34 rect;
 
     if (!fill || zone_index != dm1_v1_leader_hand_object_name_zone_id_pc34() ||
-        color != M11_COLOR_BLACK) {
+        color != DM1_V1_F0035_BLACK_ISOLATED_C91F_PC34) {
         return;
     }
     rect = dm1_v1_leader_hand_object_name_rect_pc34();
