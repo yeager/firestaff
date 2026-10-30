@@ -23,6 +23,24 @@ identical for that command. This makes constant shading a useful diagnostic
 for this particular window; it does not validate Gouraud interpolation for
 general quads.
 
+The companion palette-pressure analysis shows why applying these Gouraud
+colors by replacing entries in Firestaff's shared 256-entry indexed palette
+cannot preserve the lower layer. In the authenticated visible `320x224` area,
+the captured FBS+NBG0 source planes contain 555 distinct RGB555 colors. The
+25 mode-1 commands use 19 distinct CLUT+Gouraud variants (304 slots if each
+variant reserves all 16 CLUT entries), with 61 distinct shaded colors present
+in their nontransparent source texels. This is a capacity diagnostic from the
+captured planes, not a rendered-pixel count. It points the composition work
+toward an RGB surface instead of palette replacement.
+
+Recompute the report from local, manifest-verified Ymir evidence:
+
+```sh
+python3 scripts/analyze_nexus_vdp1_gouraud_palette_pressure.py \
+  parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030 \
+  --frame 13162 --first 10 --last 40
+```
+
 All six authentic mode-5 draws (rows 13, 14, 28, 29, 33, and 34) are replayed
 through Firestaff's direct-colour capture decoder after their exact
 `LEV00.DGN` source joins are verified. Each 1,024-word source consists entirely
