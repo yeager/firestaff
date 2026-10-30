@@ -5,8 +5,15 @@
 #include <math.h>
 
 int nexus_v2_pipeline_init(Nexus_V2_RenderPipeline *pipe, Nexus_V2_Mode mode) {
+    return nexus_v2_pipeline_init_with_debug(pipe, mode, 0);
+}
+
+int nexus_v2_pipeline_init_with_debug(Nexus_V2_RenderPipeline *pipe,
+                                      Nexus_V2_Mode mode,
+                                      int debug_enabled) {
     if (!pipe) return -1;
     memset(pipe, 0, sizeof(*pipe));
+    pipe->debug_enabled = debug_enabled != 0;
     nexus_v2_config_init(&pipe->config, mode);
     nexus_v2_lighting_init(&pipe->lighting);
     nexus_v2_particles_init(&pipe->particles);
@@ -18,7 +25,7 @@ int nexus_v2_pipeline_init(Nexus_V2_RenderPipeline *pipe, Nexus_V2_Mode mode) {
     pipe->output_buffer = (uint32_t *)calloc(pipe->output_w * pipe->output_h, sizeof(uint32_t));
     if (!pipe->output_buffer) return -1;
 
-    printf("Nexus V2 pipeline: %s (%dx%d) smooth=%s\n",
+    if (pipe->debug_enabled) printf("Nexus V2 pipeline: %s (%dx%d) smooth=%s\n",
         mode == NEXUS_V2_UPSCALED ? "V2.1 Upscaled" :
         mode == NEXUS_V2_ENHANCED ? "V2.2 Enhanced" : "V1 Original",
         pipe->output_w, pipe->output_h,
@@ -143,7 +150,10 @@ void nexus_v2_pipeline_render(Nexus_V2_RenderPipeline *pipe,
 
 void nexus_v2_pipeline_shutdown(Nexus_V2_RenderPipeline *pipe) {
     if (!pipe) return;
+    {
+    int debug_enabled = pipe->debug_enabled;
     free(pipe->output_buffer);
     pipe->output_buffer = NULL;
-    printf("Nexus V2 pipeline shutdown\n");
+    if (debug_enabled) printf("Nexus V2 pipeline shutdown\n");
+    }
 }

@@ -193,8 +193,14 @@ static void nexus_script_profile_real_slev_task(Nexus_ScriptVM *vm,
  * ═══════════════════════════════════════════════════════════════════ */
 
 void nexus_script_vm_init(Nexus_ScriptVM *vm) {
+    nexus_script_vm_init_with_debug(vm, 0);
+}
+
+void nexus_script_vm_init_with_debug(Nexus_ScriptVM *vm,
+                                     int debug_enabled) {
     if (!vm) return;
     memset(vm, 0, sizeof(*vm));
+    vm->debug_enabled = debug_enabled != 0;
     vm->initialized = 1;
     vm->current_level = -1;
 }
@@ -266,7 +272,7 @@ int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
 
     /* No SLEV task-body opcode or record has a source-evidenced meaning yet. */
 
-    printf("Nexus script VM: level %d source=%d verified=%d bytes=%d parser=%s rules=%d\n",
+    if (vm->debug_enabled) printf("Nexus script VM: level %d source=%d verified=%d bytes=%d parser=%s rules=%d\n",
         level_index, vm->candidate_source_loaded, vm->canonical_source_verified,
         vm->candidate_source_bytes,
         vm->real_task_header_supported ? "task-header" : "pending",
@@ -441,45 +447,46 @@ static void nexus_dispatch_action(Nexus_ScriptVM *vm,
         vm->handler(action, vm->handler_data);
         return;
     }
+    if (!vm || !vm->debug_enabled) return;
 
     /* Default logging handlers */
     switch (action->opcode) {
     case NEXUS_OP_TELEPORT:
-        printf("  [SCRIPT] TELEPORT to (%d,%d) level %d\n",
+        if (vm->debug_enabled) printf("  [SCRIPT] TELEPORT to (%d,%d) level %d\n",
             action->x, action->y, action->level);
         break;
     case NEXUS_OP_SPAWN:
-        printf("  [SCRIPT] SPAWN creature at (%d,%d) level %d\n",
+        if (vm->debug_enabled) printf("  [SCRIPT] SPAWN creature at (%d,%d) level %d\n",
             action->x, action->y, action->level);
         break;
     case NEXUS_OP_SET_SQUARE:
-        printf("  [SCRIPT] SET_SQUARE (%d,%d) = %d\n",
+        if (vm->debug_enabled) printf("  [SCRIPT] SET_SQUARE (%d,%d) = %d\n",
             action->x, action->y, action->value);
         break;
     case NEXUS_OP_SOUND:
-        printf("  [SCRIPT] PLAY_SOUND id=%d\n", action->value);
+        if (vm->debug_enabled) printf("  [SCRIPT] PLAY_SOUND id=%d\n", action->value);
         break;
     case NEXUS_OP_TRIGGER_DOOR:
-        printf("  [SCRIPT] TRIGGER_DOOR (%d,%d) value=%d\n",
+        if (vm->debug_enabled) printf("  [SCRIPT] TRIGGER_DOOR (%d,%d) value=%d\n",
             action->x, action->y, action->value);
         break;
     case NEXUS_OP_GIVE_ITEM:
-        printf("  [SCRIPT] GIVE_ITEM id=%d to party\n", action->item_id);
+        if (vm->debug_enabled) printf("  [SCRIPT] GIVE_ITEM id=%d to party\n", action->item_id);
         break;
     case NEXUS_OP_AWARD_XP:
-        printf("  [SCRIPT] AWARD_XP %d to party\n", action->value);
+        if (vm->debug_enabled) printf("  [SCRIPT] AWARD_XP %d to party\n", action->value);
         break;
     case NEXUS_OP_DISPLAY_MESSAGE:
-        printf("  [SCRIPT] DISPLAY_MESSAGE id=%d\n", action->message_id);
+        if (vm->debug_enabled) printf("  [SCRIPT] DISPLAY_MESSAGE id=%d\n", action->message_id);
         break;
     case NEXUS_OP_SET_FLAG:
-        printf("  [SCRIPT] SET_FLAG %d = %d\n", action->flag_index, action->value);
+        if (vm->debug_enabled) printf("  [SCRIPT] SET_FLAG %d = %d\n", action->flag_index, action->value);
         break;
     case NEXUS_OP_END_GAME:
-        printf("  [SCRIPT] END_GAME triggered\n");
+        if (vm->debug_enabled) printf("  [SCRIPT] END_GAME triggered\n");
         break;
     default:
-        printf("  [SCRIPT] Unknown action opcode 0x%02x\n", action->opcode);
+        if (vm->debug_enabled) printf("  [SCRIPT] Unknown action opcode 0x%02x\n", action->opcode);
         break;
     }
 }
@@ -637,12 +644,12 @@ int nexus_script_vm_fire_rule(Nexus_ScriptVM *vm, int rule_id) {
 
 void nexus_script_vm_dump(const Nexus_ScriptVM *vm) {
     int i;
-    if (!vm) return;
-    printf("Script VM: %d rules (level %d)\n",
+    if (!vm || !vm->debug_enabled) return;
+    if (vm->debug_enabled) printf("Script VM: %d rules (level %d)\n",
         vm->rule_count, vm->current_level);
     for (i = 0; i < vm->rule_count; i++) {
         const Nexus_ScriptRule *r = &vm->rules[i];
-        printf("  Rule %d: cond=0x%02x action=0x%02x enabled=%d fired=%d once=%d\n",
+        if (vm->debug_enabled) printf("  Rule %d: cond=0x%02x action=0x%02x enabled=%d fired=%d once=%d\n",
             r->rule_id, r->cond.opcode, r->action.opcode,
             r->enabled, r->fired_count, r->once_only);
     }

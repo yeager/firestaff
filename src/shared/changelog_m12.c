@@ -17,6 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-30)",
+    "  - Change DM1 and Nexus startup logging to require the --debug option.",
     "  - The launcher discovers authentic nested DM1 Atari ST v1.2 media and renamed CSB FM Towns ZIP packages.",
     "  - Nexus supplemental disc resources are bound to the authentic region identified by extracted game files.",
     "  - Real-media alternate-platform launcher handoffs receive expanded coverage for DM1, CSB, and DM2.",

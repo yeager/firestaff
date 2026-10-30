@@ -62,8 +62,14 @@ static inline uint32_t bgr555_to_rgba(uint16_t bgr555) {
 /* ── Public API ────────────────────────────────────────────────────── */
 
 void nexus_palette_init_defaults(Nexus_PaletteState *pal) {
+    nexus_palette_init_defaults_with_debug(pal, 0);
+}
+
+void nexus_palette_init_defaults_with_debug(Nexus_PaletteState *pal,
+                                            int debug_enabled) {
     if (!pal) return;
     memset(pal, 0, sizeof(*pal));
+    pal->debug_enabled = debug_enabled != 0;
 }
 
 int nexus_palette_load_stone(Nexus_PaletteState *pal,
@@ -82,7 +88,7 @@ int nexus_palette_load_stone(Nexus_PaletteState *pal,
     memset(pal->entries, 0, sizeof(pal->entries));
     memset(pal->rgba, 0, sizeof(pal->rgba));
     pal->source_palette_bound = 0;
-    printf("Nexus palette: STONE.BIN uses image-local pp palettes; "
+    if (pal->debug_enabled) printf("Nexus palette: STONE.BIN uses image-local pp palettes; "
            "global palette load blocked\n");
     return 0;
 }
@@ -162,7 +168,7 @@ int nexus_palette_load_surface(Nexus_PaletteState *pal,
     if (size < 0 || offset < 0 || count <= 0 ||
         count > NEXUS_PALETTE_SIZE - (int)pal_start ||
         offset > size || count > (size - offset) / 2) {
-        printf("Nexus palette: incomplete/invalid surface span "
+        if (pal->debug_enabled) printf("Nexus palette: incomplete/invalid surface span "
                "offset=%d count=%d size=%d start=%u — source palette unchanged\n",
                offset, count, size, (unsigned)pal_start);
         return 0;
@@ -176,7 +182,7 @@ int nexus_palette_load_surface(Nexus_PaletteState *pal,
     if (pal_start == 0 && count == NEXUS_PALETTE_SIZE)
         pal->source_palette_bound = 1;
     nexus_palette_expand_rgba(pal);
-    printf("Nexus palette: loaded %d entries at offset %d [start=%d]\n",
+    if (pal->debug_enabled) printf("Nexus palette: loaded %d entries at offset %d [start=%d]\n",
            count, offset, pal_start);
     return count;
 }
@@ -199,19 +205,15 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
     Nexus_Texture *tx;
     int row, needed_sz;
 
-    if (!pal) {
-        printf("Nexus texture: ERROR null palette for '%s'\n",
-               label ? label : "?");
-        return -1;
-    }
+    if (!pal) return -1;
     if (x < 0 || y < 0 || w <= 0 || h <= 0) {
-        printf("Nexus texture: ERROR invalid %dx%d for '%s' "
+        if (pal->debug_enabled) printf("Nexus texture: ERROR invalid %dx%d for '%s' "
                "[source=%s] — source surface blocked\n",
                w, h, label ? label : "?", source_file ? source_file : "?");
         return -1;
     }
     if (pal->texture_count >= NEXUS_MAX_TEXTURES) {
-        printf("Nexus texture: ERROR atlas full (%d) loading '%s' "
+        if (pal->debug_enabled) printf("Nexus texture: ERROR atlas full (%d) loading '%s' "
                "[source=%s] — source surface blocked\n",
                NEXUS_MAX_TEXTURES, label ? label : "?",
                source_file ? source_file : "?");
@@ -228,7 +230,7 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
 
     if (y > (INT_MAX - h) || x > (INT_MAX - w) ||
         (y + h) > (INT_MAX / w)) {
-        printf("Nexus texture: ERROR source dimensions overflow for '%s' "
+        if (pal->debug_enabled) printf("Nexus texture: ERROR source dimensions overflow for '%s' "
                "[source=%s] — source surface blocked\n",
                label ? label : "?", source_file ? source_file : "?");
         return -1;
@@ -239,7 +241,7 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
     tx->owns_data = 1;
 
     if (!data || data_size < needed_sz) {
-        printf("Nexus texture: ERROR incomplete source %d < %d for '%s' "
+        if (pal->debug_enabled) printf("Nexus texture: ERROR incomplete source %d < %d for '%s' "
                "[%s] — source surface blocked\n",
                data_size, needed_sz, label ? label : "?",
                source_file ? source_file : "?");
@@ -251,7 +253,7 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
     for (row = 0; row < h; row++)
         memcpy(tx->data + row * w, data + (y + row) * w + x, w);
 
-    printf("Nexus texture: loaded %dx%d '%s' from %s "
+    if (pal->debug_enabled) printf("Nexus texture: loaded %dx%d '%s' from %s "
            "(pal %d-%d) -> id=%d\n",
            w, h, label ? label : "?", source_file ? source_file : "?",
            pal_start, pal_start + pal_count - 1,

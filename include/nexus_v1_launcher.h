@@ -54,6 +54,9 @@ extern "C" {
  * - A different data_dir tears down the old source-bound engine and
  *   initializes the requested corpus. */
 int nexus_v1_launcher_init(const char *data_dir);
+/* Same initializer with per-engine diagnostics explicitly enabled. */
+int nexus_v1_launcher_init_with_debug(const char *data_dir,
+                                      int debug_enabled);
 
 /* Load a playable dungeon level (1-15) into the engine.
  * LEV00 is the title/entrance asset and is not a playable level. A
@@ -2504,10 +2507,20 @@ int nexus_v1_launcher_boot_level0_startup(
     const char *data_dir,
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherBootReceipt *out_receipt);
+int nexus_v1_launcher_boot_level0_startup_with_debug(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherBootReceipt *out_receipt,
+    int debug_enabled);
 int nexus_v1_launcher_boot_level0_runtime_startup(
     const char *data_dir,
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherRuntimeReceipt *out_receipt);
+int nexus_v1_launcher_boot_level0_runtime_startup_with_debug(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherRuntimeReceipt *out_receipt,
+    int debug_enabled);
 int nexus_v1_launcher_resume_from_save_path(
     const char *save_path,
     Nexus_V1_LightRuntime *light_runtime,

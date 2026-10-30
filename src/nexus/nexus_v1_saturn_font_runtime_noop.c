@@ -15,6 +15,13 @@
 int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
                                 const uint8_t *data, int data_size,
                                 const Nexus_V1_FontS2dDecodeResult *decoded) {
+    return nexus_v1_font_load_from_s2d_with_debug(
+        font, data, data_size, decoded, 0);
+}
+
+int nexus_v1_font_load_from_s2d_with_debug(
+    Nexus_V1_Font *font, const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded, int debug_enabled) {
     int tile_count;
     int i;
 
@@ -30,6 +37,7 @@ int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
         return -1;
     }
     memset(font, 0, sizeof(*font));
+    font->debug_enabled = debug_enabled != 0;
     font->char_count = tile_count;
     font->char_width = 8;
     font->char_height = 8;

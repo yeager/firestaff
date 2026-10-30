@@ -25,6 +25,7 @@
  *   → SDL present */
 
 typedef struct {
+    int debug_enabled;
     Nexus_V2_Config config;
     Nexus_V2_SmoothState smooth;  /* V2 smooth movement state */
     Nexus_V2_LightingState lighting;
@@ -35,6 +36,9 @@ typedef struct {
 } Nexus_V2_RenderPipeline;
 
 int nexus_v2_pipeline_init(Nexus_V2_RenderPipeline *pipe, Nexus_V2_Mode mode);
+int nexus_v2_pipeline_init_with_debug(Nexus_V2_RenderPipeline *pipe,
+                                     Nexus_V2_Mode mode,
+                                     int debug_enabled);
 void nexus_v2_pipeline_render(Nexus_V2_RenderPipeline *pipe,
     const Nexus_Framebuffer *v1_fb,
     float game_x, float game_y, float game_angle, /* raw game state */

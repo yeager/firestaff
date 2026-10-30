@@ -56,7 +56,7 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$direct_boot_probe_ou
 fi
 
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
     --menu --game dm1 --platform pc --data-dir "$archive" \
     --script 'wait20,enter,wait20,enter,wait20,enter' --duration 10000 2>&1) || {
     printf '%s\n' "$menu_output" >&2
@@ -192,7 +192,7 @@ for mode in v1 v20 v21; do
     for route in cli menu; do
         if [[ "$route" == menu ]]; then
             mode_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-                SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+                SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
                 --menu --game dm1 --platform pc --data-dir "$archive" \
                 --script 'wait20,enter,wait20,enter,wait20,enter' \
                 --presentation-mode "$mode" --duration 30000 2>&1) || {

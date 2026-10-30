@@ -71,6 +71,7 @@ typedef enum {
 } Nexus_SlevLiteralProvenance;
 
 typedef struct {
+    int debug_enabled;
     Nexus_ScriptRule rules[NEXUS_SCRIPT_MAX_RULES];
     int rule_count;
     uint8_t flags[NEXUS_SCRIPT_MAX_FLAGS];
@@ -178,6 +179,8 @@ typedef struct {
 
 /* Init script VM (call at game start) */
 void nexus_script_vm_init(Nexus_ScriptVM *vm);
+void nexus_script_vm_init_with_debug(Nexus_ScriptVM *vm,
+                                     int debug_enabled);
 
 /* Load candidate trigger/script data for a level (0-15).
  * Pass raw file bytes and size.

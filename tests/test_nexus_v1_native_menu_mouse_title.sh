@@ -111,6 +111,32 @@ if ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' <<< "$output"
     printf '%s\n' "$output" >&2
     exit 1
 fi
+for diagnostic in \
+    'Nexus UI:' \
+    'Nexus sound:' \
+    'Nexus font:' \
+    'Nexus V1 engine initialized' \
+    'Nexus launcher:' \
+    'NEXUS STARTUP RECEIPT:'; do
+    if ! grep -Fq "$diagnostic" <<< "$output"; then
+        printf 'FAIL: --debug Nexus launch omitted diagnostic family: %s\n' \
+            "$diagnostic" >&2
+        printf '%s\n' "$output" >&2
+        exit 1
+    fi
+done
+if [ "$expected_source" = ISO ] &&
+   ! grep -Fq 'Nexus: opened disc image' <<< "$output"; then
+    echo 'FAIL: --debug Nexus ISO launch omitted its source diagnostic' >&2
+    printf '%s\n' "$output" >&2
+    exit 1
+fi
+if [ "$expected_source" = extracted ] &&
+   ! grep -Fq 'Nexus: using extracted files' <<< "$output"; then
+    echo 'FAIL: --debug Nexus extracted owner receipt was omitted' >&2
+    printf '%s\n' "$output" >&2
+    exit 1
+fi
 if [ "$expected_source" = extracted ] && {
     ! grep -Fq "Nexus: supplemental retail ISO $regional_cue " <<< "$output" ||
     ! grep -Fq "Nexus: using extracted files from $data_root" <<< "$output";
@@ -121,6 +147,42 @@ if [ "$expected_source" = extracted ] && {
 fi
 
 echo "PASS: Nexus mouse route reaches the authentic Saturn title capture gate"
+
+mkdir -p "$test_home/quiet"
+quiet_output="$(HOME="$test_home/quiet" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_EXIT_AFTER_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$firestaff_cli" --width 1920 --height 1080 --menu --game nexus \
+    --platform saturn --data-dir "$data_root" \
+    --script 'wait20,click:700:728,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 12000 2>&1)" || {
+    printf '%s\n' "$quiet_output" >&2
+    exit 1
+}
+for diagnostic in \
+    'Nexus UI:' \
+    'Nexus sound:' \
+    'Nexus font:' \
+    'Nexus V1 engine' \
+    'Nexus launcher:' \
+    'Nexus: opened disc image' \
+    'Nexus: using extracted files' \
+    'Nexus palette:' \
+    'Nexus texture:' \
+    'NEXUS STARTUP RECEIPT:'; do
+    if grep -Fq "$diagnostic" <<< "$quiet_output"; then
+        printf 'FAIL: non-debug Nexus launch emitted diagnostics: %s\n' \
+            "$diagnostic" >&2
+        printf '%s\n' "$quiet_output" >&2
+        exit 1
+    fi
+done
+if grep -Fq 'launch failed' <<< "$quiet_output" ||
+   grep -Fq 'game unavailable for --game' <<< "$quiet_output"; then
+    echo 'FAIL: non-debug Nexus launch emitted startup diagnostics or failed' >&2
+    printf '%s\n' "$quiet_output" >&2
+    exit 1
+fi
+echo 'PASS: authentic Nexus menu launch keeps startup receipt quiet without --debug'
 
 # Explicit DM.BIN selection can resolve through the extracted tree while
 # several regional discs sit beside it. Bind any supplemental disc to the

@@ -2507,8 +2507,15 @@ static void nexus_v1_level_resolve_structure1a_relations(Nexus_V1_Level *level)
 }
 
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index) {
+    return nexus_v1_level_load_with_debug(level, data, size, level_index, 0);
+}
+
+int nexus_v1_level_load_with_debug(Nexus_V1_Level *level, const uint8_t *data,
+                                   int size, int level_index,
+                                   int debug_enabled) {
     if (!level || !data || size < 64) return -1;
     memset(level, 0, sizeof(*level));
+    level->debug_enabled = debug_enabled != 0;
 
     /*
      * DMWeb source-lock:
@@ -2625,14 +2632,14 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     }
                 }
             }
-            printf("Nexus level %d: 64x64 Structure1B, payload=%d bytes, mesh_span=%d bytes, refs=%d/%d [DMWeb DGN]\n",
+            if (level->debug_enabled) printf("Nexus level %d: 64x64 Structure1B, payload=%d bytes, mesh_span=%d bytes, refs=%d/%d [DMWeb DGN]\n",
                    level_index, level->geometry_size, info.geometry_size,
                    info.collision_ref_unique_count, info.collision_ref_count);
             return 0;
         }
     }
 
-    printf("Nexus level %d: could not parse DGN header (size=%d)\n",
+    if (level->debug_enabled) printf("Nexus level %d: could not parse DGN header (size=%d)\n",
            level_index, size);
     return -1;
 }

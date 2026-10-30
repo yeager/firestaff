@@ -80,6 +80,7 @@ typedef struct {
  * ═══════════════════════════════════════════════════════════════════ */
 
 typedef struct {
+    int debug_enabled;
     int initialized;
     int sfx_enabled;
     int music_enabled;
@@ -331,6 +332,7 @@ typedef struct {
 
 /* Init sound system */
 int nexus_sound_init(Nexus_SoundEngine *eng);
+int nexus_sound_init_with_debug(Nexus_SoundEngine *eng, int debug_enabled);
 
 /* Shutdown */
 void nexus_sound_shutdown(Nexus_SoundEngine *eng);

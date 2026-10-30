@@ -69,6 +69,7 @@ typedef struct {
 
 /* Master palette — mirrors Saturn VDP1 Color RAM (BGR555 × 256) */
 typedef struct {
+    int debug_enabled;
     /* 16-bit BGR555 entries (Saturn native format)
      * Bit layout: 1R RRRG GGGGB BBBBB (16 bits per entry) */
     uint16_t entries[NEXUS_PALETTE_SIZE];
@@ -132,5 +133,7 @@ void nexus_palette_free_textures(Nexus_PaletteState *pal);
 
 /* Clear palette state. This does not create a fallback palette. */
 void nexus_palette_init_defaults(Nexus_PaletteState *pal);
+void nexus_palette_init_defaults_with_debug(Nexus_PaletteState *pal,
+                                            int debug_enabled);
 
 #endif /* NEXUS_V1_PALETTE_H */
