@@ -105,6 +105,39 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
     raise SystemExit(f"FAIL: IIGS G{version} menu handoff missed active dungeon runtime: {probe}")
 print(f"PASS: IIGS G{version} M12 menu reached active dungeon runtime")
 PY
+
+    # Also cover the first-run route with no game preselected. The extracted
+    # original disk image is the only available game source, so the game,
+    # Apple IIGS platform, and matching edition must all be discovered and
+    # selected through the startup menu before the entrance handoff.
+    FIRESTAFF_CONFIG_PATH="$scratch/g$version-no-game.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_AUTOTEST=1 \
+        FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=mouse:enter \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/g$version-no-game-runtime.json" \
+        "$app" --data-dir "$scratch/g$version.po" --debug \
+        --script wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter \
+        --duration 6000 >"$scratch/g$version-no-game.log" 2>&1 || {
+            cat "$scratch/g$version-no-game.log"; exit 1;
+        }
+    assert_trace "launch phase=game-handoff mode=menu game=dm1 platform=Apple IIGS edition=iigs$version-en source=$scratch/g$version.po::GRAPHICS.GAME" \
+        "$scratch/g$version-no-game.log"
+    assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" \
+        "$scratch/g$version-no-game.log"
+    python3 - "$version" "$scratch/g$version-no-game-runtime.json" <<'PY'
+import json
+import sys
+
+version, probe_path = sys.argv[1:]
+with open(probe_path, encoding="utf-8") as source:
+    probe = json.load(source)
+startup = probe["startup"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm1" or startup.get("receiptReady") != 1 or
+        startup.get("startupActive") != 0 or startup.get("levelLoaded") != 1 or
+        startup.get("phase") != "dm1-iigs-runtime"):
+    raise SystemExit(f"FAIL: IIGS G{version} no-game menu missed active dungeon runtime: {probe}")
+print(f"PASS: IIGS G{version} no-game menu selected the authentic edition and reached active dungeon runtime")
+PY
     [[ $(firestaff_sha256_file "$scratch/g$version.po") == "$expected" ]]
 done
 towns=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
@@ -124,4 +157,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: original G20/G21 title, ZIP-wrapped CLI startup, F0439 C255 entrance viewport and F0441 mouse-gated door startup reach runtime through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'
+echo 'PASS: original G20/G21 title, ZIP-wrapped CLI startup, no-game and selected M12 menus, F0439 C255 entrance viewport and F0441 mouse-gated door startup reach runtime; GS F0128 pixel parity and GS F0129 remain unverified'

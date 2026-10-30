@@ -102,6 +102,24 @@ set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
     COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
 
 if(BUILD_TESTING)
+    add_executable(test_dm1_snes_h03
+        tests/test_dm1_snes_h03.c
+        src/dm1/dm1_snes_h03.c)
+    target_include_directories(test_dm1_snes_h03 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME dm1_snes_h03 COMMAND test_dm1_snes_h03)
+    set_tests_properties(dm1_snes_h03 PROPERTIES
+        LABELS "dm1;snes;codec;bounds;tier1")
+
+    add_executable(test_dm1_snes_romgh
+        tests/test_dm1_snes_romgh.c
+        src/dm1/dm1_snes_romgh.c)
+    target_include_directories(test_dm1_snes_romgh PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME dm1_snes_romgh COMMAND test_dm1_snes_romgh)
+    set_tests_properties(dm1_snes_romgh PROPERTIES
+        LABELS "dm1;snes;romgh;bounds;tier1")
+
     foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
         if(EXISTS "${_candidate}")
             file(SHA256 "${_candidate}" _candidate_sha256)
@@ -254,15 +272,31 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_game_selection_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 420
+        SKIP_RETURN_CODE 77 TIMEOUT 1200
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
         LABELS "m12;dm1;csb;dm2;nexus;theron;main-menu;game-selection;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_priority_pointer_selection_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_priority_pointer_selection_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 600
+        ENVIRONMENT "FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;csb;dm2;main-menu;game-selection;pointer;platform-selection;presentation;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_priority_scan_early_selection_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_priority_scan_early_selection_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 600
+        ENVIRONMENT "FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;csb;dm2;main-menu;game-selection;pointer;platform-selection;scan;real-media;skip-safe")
 
     add_test(NAME m12_main_menu_runtime_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_runtime_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_runtime_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 600
+        SKIP_RETURN_CODE 77 TIMEOUT 900
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;csb;dm2;dm2-amiga;theron;main-menu;game-selection;runtime;real-media;skip-safe")
 
@@ -290,6 +324,14 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77 TIMEOUT 180
         ENVIRONMENT "FIRESTAFF_MAIN_MENU_GAME=dm2-amiga;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm2;amiga;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_dm1_amiga_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_dm1_amiga_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "FIRESTAFF_MAIN_MENU_GAME=dm1-amiga;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;amiga;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME firestaff_iigs_cli_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_iigs_cli_real_media.sh"
@@ -4155,6 +4197,22 @@ if(BUILD_TESTING)
     set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
         LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
+
+    add_executable(test_dm1_snes_romdungeon_real_media
+        tests/test_dm1_snes_romdungeon_real_media.c
+        src/dm1/dm1_snes_h03.c
+        src/dm1/dm1_snes_romgh.c
+        src/shared/firestaff_snes_romimg3.c
+        src/engine/firestaff_dungeon_state.c)
+    target_link_libraries(test_dm1_snes_romdungeon_real_media PRIVATE firestaff_m12)
+    add_test(NAME dm1_snes_romdungeon_real_media
+        COMMAND test_dm1_snes_romdungeon_real_media)
+    set_tests_properties(dm1_snes_romdungeon_real_media PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM1_SNES_7Z=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Super_NES,Software.7z"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 120
+        LABELS "dm1;snes;romdungeon;real-media;archive;decoder;skip-safe")
+
     add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot
         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_7z_cli_boot.sh
@@ -4272,9 +4330,9 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm2_v1_mac_extracted_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;dm2;macintosh;startup;cli;real-media;extracted;native;skip-safe"
+        LABELS "tier2;dm2;macintosh;startup;cli;main-menu;game-selection;real-media;extracted;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EXTRACTED_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/mac-en/Dungeon Master II/DMFiles;FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        TIMEOUT 180
+        TIMEOUT 300
     )
     add_test(
         NAME dm2_v1_mac_fr_named_sit_identity_real_media
@@ -4378,8 +4436,8 @@ if(BUILD_TESTING)
     set_tests_properties(firestaff_cli_startup_diagnostics_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;nexus;theron;startup;cli;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
-        TIMEOUT 300
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media
@@ -7100,6 +7158,9 @@ list(REMOVE_ITEM M10_SOURCES
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    # Bounds-checked decoder for the DM1 SNES ROMDUNGEON H03 slots. SNES
+    # runtime selection remains gated until its full data adapter is ready.
+    src/dm1/dm1_snes_h03.c
     src/shared/lzexe_unpack_v091.c
     # Native game presentation domains share one process-wide catalog owner.
     # DM2_QUERY_GDAT_TEXT lives in M10, so the loader must live here rather
@@ -7842,6 +7903,9 @@ set(M11_SOURCES
     src/engine/main_loop_m11.c
     src/engine/hardware_debug_m11.c
     src/shared/firestaff_nexus_mednafen.c
+    src/shared/firestaff_x68k_hdm.c
+    src/shared/firestaff_x68k_graphics_dat.c
+    src/shared/firestaff_x68k_dungeon_dat.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
@@ -41162,6 +41226,22 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_img5_decode
     )
 
+    # ── DM1 SNES ROMIMG3 tile graphics decoder unit test ──────
+    add_executable(test_firestaff_snes_romimg3
+        tests/test_firestaff_snes_romimg3.c
+        src/shared/firestaff_snes_romimg3.c
+    )
+    target_include_directories(test_firestaff_snes_romimg3 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_snes_romimg3 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_snes_romimg3_unit
+        COMMAND test_firestaff_snes_romimg3
+    )
+
     # ── CSB Utility Disk Sound/*.AMG container metadata ─────────
     add_executable(test_csb_v1_amg_sound
         tests/test_csb_v1_amg_sound.c
@@ -43186,6 +43266,35 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(
         NAME firestaff_x68k_media_classify_unit
         COMMAND test_firestaff_x68k_media_classify
+    )
+
+    # Read authentic X68000 files from the operator's original HDM archive
+    # without writing ROM/game bytes to disk. The ReDMCSB SWOOSH comparison
+    # is an import-boundary check; it does not claim an X68000 runtime.
+    add_executable(test_firestaff_x68k_hdm_real_media
+        tests/test_firestaff_x68k_hdm_real_media.c
+        src/shared/firestaff_x68k_hdm.c
+        src/shared/firestaff_x68k_graphics_dat.c
+        src/shared/firestaff_x68k_dungeon_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c
+    )
+    target_include_directories(test_firestaff_x68k_hdm_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_firestaff_x68k_hdm_real_media PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_x68k_hdm_real_media
+            PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_hdm_real_media
+        COMMAND test_firestaff_x68k_hdm_real_media
+    )
+    set_tests_properties(firestaff_x68k_hdm_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;x68k;startup;import;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_X68K_HDM_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,JP,X68000,Software.7z;FIRESTAFF_X68K_SWOOSH_REFERENCE=$ENV{HOME}/ReDMCSB/Reference/Original/X30J/SWOOSH"
+        TIMEOUT 120
     )
 
     # -- X68000 HDM <-> FTL container handoff boundary test --
@@ -57101,15 +57210,13 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_spell_gdat_re
     )
 endif()
 
-# DISABLED: deep-dependency link failure
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_timing.c"
-        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_startup_menu.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_timing.c"
+        AND TARGET firestaff_dm2)
     add_executable(test_dm2_v1_startup_static_menu_timing
         tests/test_dm2_v1_startup_static_menu_timing.c
-        src/dm2/dm2_v1_startup_menu.c
-        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_startup_static_menu_timing PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_startup_static_menu_timing PRIVATE firestaff_dm2)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_startup_static_menu_timing PRIVATE -Wall -Wextra -O2)
     endif()

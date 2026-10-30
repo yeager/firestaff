@@ -5,6 +5,7 @@
 - `DM1 and Nexus startup diagnostics`: change logging to emit game handoff, title, resource and engine details only when `--debug` is set.
 - `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
 - `CSB Atari ST items`: use the authenticated source item aspects and C559 projectile selectors for the corrected native rendering path.
+- `CSB Atari ST champion HUD`: change native gameplay to render champion names, hand slots, and live status bars.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
 - `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.
 - `Nexus Saturn CUE/BIN`: admit an authentic CUE-only Japanese disc through direct CLI and menu selection while keeping its exact CUE as runtime media.
@@ -16,12 +17,18 @@
 - `Theron PCE Fast diagnostics`: sequence v3 movement-context rows with CD/memory hooks, record MPR0–MPR7 snapshots, and preserve authenticated CD-to-RAM joins when a matching movement-write row intervenes. The authentic JP cold start follows the System Card Run branch and binds two Track 02 byte windows to bank `$80`; this does not establish a game-owned handoff, movement, active-map identity, collision, visible movement or native parity.
 - `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
 - `DM2 Macintosh media evidence`: rename the French-named SIT check to report its actual identity; its extracted application, resource forks and DMFiles match the English SIT, so a distinct French edition remains unverified.
-- `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
+- `DM1 X68000 media research`: add bounded, read-only in-memory readers for the authentic 2DHD directory and cluster chains, GRAPHICS.DAT IMG1 records, and X30J dungeon metadata. Real-media checks verify the extracted SWOOSH bytes and all 562 graphics records against authentic source data. X68000 startup, rendering, audio and input remain unsupported.
 - `Nexus startup`: verify regional owner selection and matching supplemental media; document the production title-compositor receipt gate and retain it until source-bound display evidence exists.
 - `Nexus CUE-only startup`: verify direct CLI and pointer-menu handoff from authentic CUE/BIN tracks, and reject a selected non-Nexus CUE beside a valid Nexus disc.
 - `Nexus title evidence`: update the evidence record with complete 224-row samples for two VDP2 serials sharing one VDP1 frame label; the VDP1 receipt remains incomplete and no separate pixel images or renderer parity are claimed.
+- `DM1 Apple IIGS startup`: verify no-game menu selection of authentic G20/G21 media through the matching handoff and active dungeon runtime.
+- `DM1 SNES media`: verify the authentic ROMDUNGEON and ROMGH assets, resolve them from original media, and add bounded H03 and ROMIMG3 decoders; this source evidence does not add a playable SNES route.
 - `Nexus frame-join verifier`: replace assert-only checks with explicit failures so validation stays active under optimized Python.
 - `CSB Atari viewport diagnostics`: report the first rejected runtime stage when debug movement tracing is enabled; include and protect the authentic Atari utility archive in the mixed-media regression.
+- `CSB CLI mode validation`: reject conflicting Utility Disk and Hint Oracle options, including a game ID that conflicts with either mode.
+- `DM2 startup timing`: enable the source-level startup-menu timing regression against the shared DM2 library; native presentation timing remains unverified.
+- `CSB Atari HUD regression`: change screenshot validation to check each recruited champion's visible name, hand-slot frame, and live status bars separately.
+- `Main-menu runtime regression`: change DM2 startup tests to wait for the authentic title-completion receipt instead of a fixed 2,400-frame delay, allow Theron 120 seconds for authentic collection scans, and set the CTest timeout to 900 seconds.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations

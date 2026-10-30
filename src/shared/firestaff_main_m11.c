@@ -838,7 +838,9 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--csb-utility-disk") == 0) {
             opts.csbFmtownsUtilityDisk = 1;
-            opts.gameId = "csb";
+            if (!opts.gameId) {
+                opts.gameId = "csb";
+            }
             opts.directLaunch = 1;
             continue;
         }
@@ -1319,6 +1321,17 @@ int main(int argc, char** argv) {
     if (opts.csbHintOracle && (!opts.dataDir || !opts.dataDir[0])) {
         fprintf(stderr,
                 "firestaff: --csb-hint-oracle requires --data-dir\n");
+        return 2;
+    }
+    if (opts.csbHintOracle && opts.gameId &&
+        strcmp(opts.gameId, "csb") != 0) {
+        fprintf(stderr,
+                "firestaff: --csb-hint-oracle requires --game csb\n");
+        return 2;
+    }
+    if (opts.csbHintOracle && opts.csbFmtownsUtilityDisk) {
+        fprintf(stderr,
+                "firestaff: --csb-hint-oracle and --csb-utility-disk cannot be combined\n");
         return 2;
     }
     if (opts.csbFmtownsUtilityDisk &&

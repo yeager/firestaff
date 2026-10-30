@@ -9,6 +9,16 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
+2026-10-30 indexed-dispatch follow-trace verification remains open: the
+offline verifier now binds each follow row or terminal marker to the latest
+preceding dispatch, rejects duplicate skip markers, and permits an absent
+window only when capture ends at the final dispatch before its first fetch.
+Focused validator tests and capture-script regressions pass. The new
+per-dispatch trace still needs an authentic cold capture from JP Track 02 and
+System Card media on TRV2; use those real instruction windows to guide the
+native loader/handoff investigation. This reference evidence cannot establish
+native gameplay or parity.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source

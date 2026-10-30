@@ -34,9 +34,10 @@ establish complete game parity.
 Firestaff detects real media and exposes paths only after their handoff gates
 pass. Edition ownership is checked per route. Extracted Nexus JP/EN/FR owners
 now use regional identity hashes, and supplemental discs must match the owner;
-authentic JP and EN menu checks passed. A CUE-only root without a recognized
-ISO or extracted owner remains rejected, and the title compositor gate stays
-closed. The detailed status is kept in
+authentic JP and EN menu checks passed. The authentic Japanese retail CUE/BIN
+layout is admitted through direct CLI and start-menu routes while retaining
+the selected CUE as its media owner. Nexus still stops at the title compositor
+gate and is not playable. The detailed status is kept in
 [project status](docs/PROJECT_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
@@ -404,7 +405,9 @@ after the normal verified CSB F31 boot; it implies `--game csb --platform
 fm-towns` and fails closed if that package is unavailable. The start menu also
 has a dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from
 the Atari R1 Hint Oracle (`--csb-hint-oracle`) and never substitutes its data
-or UI. The Hint Oracle needs `--data-dir <root>` containing the verified Atari
+or UI. Conflicting explicit `--game` selections are rejected, and the Utility
+Disk and Hint Oracle modes cannot be combined. The Hint Oracle needs
+`--data-dir <root>` containing the verified Atari
 R1 `HCSB.HTC`, `HCSB.DAT` and native `MINI.DAT`; those files may be loose or
 inside a supported archive. `--save <MINI.DAT>` is optional and selects an
 explicit native save instead of the verified R1 `MINI.DAT` found in that root.

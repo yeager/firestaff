@@ -9,12 +9,51 @@ data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+nexus_dm="$data_root/nexus/DM.BIN"
+nexus_cue="$data_root/nexus/Dungeon Master Nexus (Japan).cue"
+theron_track="$data_root/theron/TQUS02.bin"
+
+has_authentic_nexus_cue() {
+    [[ -f "$nexus_cue" ]] || return 1
+    python3 - "$nexus_cue" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+payloads = []
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if match:
+        payloads.append(cue.parent / (match.group(1) or match.group(2)))
+if not payloads or not all(path.is_file() for path in payloads):
+    raise SystemExit(1)
+PY
+}
+
 if [[ ! -x "$app" ]]; then
     echo 'SKIP: Firestaff executable is unavailable'
     exit 77
 fi
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
+    exit 77
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ( ( ! -f "$nexus_dm" && ! -f "$nexus_cue" ) || ! -f "$theron_track" ) ]]; then
+    echo 'SKIP: authentic Nexus DM.BIN or Japanese CUE/BIN media and Theron TQUS02.bin are required for the five-game selector test'
+    exit 77
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
+    echo 'SKIP: authentic Japanese Nexus CUE payloads are incomplete'
     exit 77
 fi
 
@@ -83,6 +122,30 @@ PY
     done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
         \( -iname '*.zip' -o -iname '*.stx' \) -print0)
 done
+
+if has_authentic_nexus_cue; then
+    original_sources+=("$nexus_cue")
+    original_source_hashes+=("$(firestaff_sha256_file "$nexus_cue")")
+    while IFS= read -r cue_payload; do
+        original_sources+=("$cue_payload")
+        original_source_hashes+=("$(firestaff_sha256_file "$cue_payload")")
+    done < <(python3 - "$nexus_cue" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if match:
+        print(cue.parent / (match.group(1) or match.group(2)))
+PY
+    )
+fi
+if [[ -f "$theron_track" ]]; then
+    original_sources+=("$theron_track")
+    original_source_hashes+=("$(firestaff_sha256_file "$theron_track")")
+fi
 
 if [[ ${#original_sources[@]} == 0 ]]; then
     echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
@@ -178,6 +241,15 @@ PY
         printf 'FAIL: unsupported source assertion mode: %s\n' "$source_mode" >&2
         return 2
     fi
+    if [[ "$game_id" == nexus ]] && {
+        ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' "$log" ||
+        ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' "$log" ||
+        grep -Fq 'launch phase=runtime-entered game=nexus' "$log"
+    }; then
+        printf 'FAIL: Nexus menu route did not stop at its documented capture-gated title state\n' >&2
+        cat "$log" >&2
+        return 1
+    fi
     if [[ $(firestaff_sha256_file "$game_archive") != "$source_hash" ]]; then
         printf 'FAIL: original %s source changed during menu launch\n' "$game_id" >&2
         return 1
@@ -224,13 +296,80 @@ run_alternate_platform_picker_case() {
 
 alternate_platform_cases=0
 
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]]; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 ]]; then
     run_game_picker_case dm1 "$dm1_archive" \
         'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
     run_game_picker_case csb "$csb_archive" \
         'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
     run_game_picker_case dm2 "$dm2_archive" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+fi
+
+# Keep authentic pointer routes for DM1, CSB, and DM2 independently
+# runnable. The full five-game selector test reaches Nexus/Theron before its
+# pointer cases, so a failure owned by either game must not hide these routes.
+# Each route clicks the game, platform, and Original-presentation cards.
+if [[ ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} == 1 ]]; then
+    dm1_pc_archive="$archive_data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    csb_atari_archive="$archive_data_root/csb/chaos_strikes_back_ftl.zip"
+    dm2_amiga_archive="$archive_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    if [[ ! -f "$dm1_pc_archive" || ! -f "$csb_atari_archive" ||
+          ! -f "$dm2_amiga_archive" ]]; then
+        echo 'SKIP: authentic DM1 PC, CSB Atari ST, and DM2 Amiga archives are required for priority pointer selection'
+        exit 77
+    fi
+    run_game_picker_case dm1 "$dm1_pc_archive" \
+        'wait-scan-complete,wait20,click:700:262,wait20,click:934:405,wait20,click:450:405' \
+        pc34-en mouse PC "$archive_data_root" dm1-pc-pointer resolved
+    run_game_picker_case csb "$csb_atari_archive" \
+        'wait-scan-complete,wait20,click:1190:262,wait20,click:1458:405,wait20,click:450:405' \
+        st20-21-en mouse 'Atari ST' "$archive_data_root" \
+        csb-atari-pointer resolved
+    run_game_picker_case dm2 "$dm2_amiga_archive" \
+        'wait-scan-complete,wait20,click:1680:262,wait20,click:1458:405,wait20,click:450:405' \
+        amiga-en mouse Amiga "$archive_data_root" dm2-amiga-pointer resolved
+    exit 0
+fi
+
+# Exercise early pointer selection while the authentic game-data scan is
+# still running. The first platform click must be safely deferred, and a
+# retry after publication must complete the same Original-presentation route.
+if [[ ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} == 1 ]]; then
+    dm1_pc_archive="$archive_data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    csb_atari_archive="$archive_data_root/csb/chaos_strikes_back_ftl.zip"
+    dm2_amiga_archive="$archive_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    if [[ ! -f "$dm1_pc_archive" || ! -f "$csb_atari_archive" ||
+          ! -f "$dm2_amiga_archive" ]]; then
+        echo 'SKIP: authentic DM1 PC, CSB Atari ST, and DM2 Amiga archives are required for priority scan-time selection'
+        exit 77
+    fi
+    run_early_scan_case() {
+        local game_id=$1 archive=$2 navigation=$3 edition=$4 platform=$5 case_id=$6
+        run_game_picker_case "$game_id" "$archive" "$navigation" "$edition" \
+            mouse "$platform" "$archive_data_root" "$case_id" resolved
+        local log="$scratch/$case_id.log"
+        local gate_line scan_line
+        gate_line=$(grep -n -F "launch gate game=$game_id result=deferred reason=startup-scan-incomplete" "$log" | head -n1 | cut -d: -f1 || true)
+        scan_line=$(grep -n -F 'firestaff: scan complete' "$log" | head -n1 | cut -d: -f1 || true)
+        if [[ -z "$gate_line" || -z "$scan_line" || "$gate_line" -ge "$scan_line" ]]; then
+            printf 'FAIL: %s pointer route did not record an early scan gate before scan completion\n' "$game_id" >&2
+            cat "$log" >&2
+            return 1
+        fi
+        printf 'PASS: %s early platform selection was safely gated during scan and succeeded after retry\n' "$game_id"
+    }
+    run_early_scan_case dm1 "$dm1_pc_archive" \
+        'click:700:262,click:934:405,wait-scan-complete,wait20,click:934:405,wait20,click:450:405' \
+        pc34-en PC dm1-pc-scan-early
+    run_early_scan_case csb "$csb_atari_archive" \
+        'click:1190:262,click:1458:405,wait-scan-complete,wait20,click:1458:405,wait20,click:450:405' \
+        st20-21-en 'Atari ST' csb-atari-scan-early
+    run_early_scan_case dm2 "$dm2_amiga_archive" \
+        'click:1680:262,click:1458:405,wait-scan-complete,wait20,click:1458:405,wait20,click:450:405' \
+        amiga-en Amiga dm2-amiga-scan-early
+    exit 0
 fi
 
 # Exercise alternate-platform selection from the no-game main menu for DM1,
@@ -249,14 +388,17 @@ elif [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
         "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" 2 Atari\ ST st12-en
 fi
-if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
+if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
+    # This authentic HD archive contains the launchable nested Amiga image.
+    # Keep other Amiga archives out so the selector must use this source.
+    dm1_amiga_picker_root="$scratch/dm1-amiga-picker-data"
+    mkdir -p "$dm1_amiga_picker_root/dm1"
+    ln -s "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" \
+        "$dm1_amiga_picker_root/dm1/Dungeon-Master_Amiga_EN.zip"
     run_alternate_platform_picker_case dm1 \
-        "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
-        're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
-elif [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
-    run_alternate_platform_picker_case dm1 \
-        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 3 Amiga \
-        're:amiga20-en'
+        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 0 Amiga \
+        're:amiga20-en' \
+        "$dm1_amiga_picker_root"
 fi
 csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
@@ -389,9 +531,11 @@ run_default_root_game_picker_case() {
     local navigation=$3
     local edition=$4
     local platform=${5:-FM Towns}
-    local home="$scratch/default-root-$game_id-home"
-    local data_home="$scratch/default-data-$game_id-home"
-    local log="$scratch/default-root-$game_id.log"
+    local picker_data_root=${6:-$data_root}
+    local case_id=${7:-$game_id}
+    local home="$scratch/default-root-$case_id-home"
+    local data_home="$scratch/default-data-$case_id-home"
+    local log="$scratch/default-root-$case_id.log"
     local source_member=''
     local source_path
     local source_hash
@@ -406,7 +550,7 @@ run_default_root_game_picker_case() {
     source_hash=$(firestaff_sha256_file "$game_archive")
     mkdir -p "$home" "$data_home/.firestaff"
     if [[ ! -e "$data_home/.firestaff/data" ]]; then
-        ln -s "$data_root" "$data_home/.firestaff/data"
+        ln -s "$picker_data_root" "$data_home/.firestaff/data"
     fi
     (
         unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
@@ -431,8 +575,22 @@ run_default_root_game_picker_case() {
         printf 'FAIL: default .firestaff/data menu changed the original %s archive\n' "$game_id" >&2
         return 1
     fi
+    if [[ "$game_id" == nexus ]] && {
+        ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' "$log" ||
+        ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' "$log" ||
+        grep -Fq 'launch phase=runtime-entered game=nexus' "$log"
+    }; then
+        printf 'FAIL: default-root Nexus route did not stop at its documented capture-gated title state\n' >&2
+        cat "$log" >&2
+        return 1
+    fi
     printf 'PASS: default .firestaff/data menu launched authentic %s %s\n' "$game_id" "$platform"
 }
+
+nexus_source="$data_root/nexus/RLOWFIX.BIN"
+if [[ ! -f "$nexus_source" ]]; then
+    nexus_source="$nexus_dm"
+fi
 
 run_default_root_game_picker_case dm1 "$dm1_archive" \
     'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
@@ -443,26 +601,66 @@ run_default_root_game_picker_case dm2 "$dm2_archive" \
 
 # The other two games must resolve from the same documented default root.
 # Their retail startup media is a loose binary rather than a platform archive.
-if [[ -f "$data_root/nexus/DM.BIN" ]]; then
-    run_default_root_game_picker_case nexus "$data_root/nexus/DM.BIN" \
+if [[ -f "$nexus_source" ]]; then
+    run_default_root_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         nexus-saturn-jp Saturn
+elif has_authentic_nexus_cue; then
+    run_default_root_game_picker_case nexus "$nexus_cue" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp-cue Saturn
 else
-    echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable for default-root startup'
+    echo 'SKIP: authentic Nexus Saturn media is unavailable for default-root startup'
 fi
-if [[ -f "$data_root/theron/TQUS02.bin" ]]; then
-    run_default_root_game_picker_case theron "$data_root/theron/TQUS02.bin" \
+if [[ -f "$theron_track" ]]; then
+    run_default_root_game_picker_case theron "$theron_track" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         pce-en 'PC Engine'
 else
     echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable for default-root startup'
 fi
 
+# Also exercise the default-root selector with the authentic Japanese Saturn
+# CUE/BIN as the only Nexus owner. Keep the other four authentic game sources
+# available so the menu still selects Nexus from the normal five-card list.
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]] && has_authentic_nexus_cue; then
+    nexus_cue_only_root="$scratch/nexus-cue-only-five-game-root"
+    mkdir -p "$nexus_cue_only_root"/{dm1,csb,dm2,nexus,theron}
+    ln -s "$dm1_archive" "$nexus_cue_only_root/dm1/$(basename "$dm1_archive")"
+    ln -s "$csb_archive" "$nexus_cue_only_root/csb/$(basename "$csb_archive")"
+    ln -s "$dm2_archive" "$nexus_cue_only_root/dm2/$(basename "$dm2_archive")"
+    ln -s "$theron_track" "$nexus_cue_only_root/theron/$(basename "$theron_track")"
+    python3 - "$nexus_cue" "$nexus_cue_only_root/nexus" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if not match:
+        continue
+    source = cue.parent / (match.group(1) or match.group(2))
+    if not source.is_file():
+        raise SystemExit(f"Missing authentic Nexus CUE payload: {source}")
+    target = destination / source.name
+    if not target.exists():
+        target.symlink_to(source)
+target = destination / cue.name
+if not target.exists():
+    target.symlink_to(cue)
+PY
+    run_default_root_game_picker_case nexus \
+        "$nexus_cue_only_root/nexus/$(basename "$nexus_cue")" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp-cue Saturn "$nexus_cue_only_root" nexus-jp-cue-only-default-root
+fi
+
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
 # user's separate archive tools or extracting/copying game data.
-nexus_source="$data_root/nexus/DM.BIN"
-theron_source="$data_root/theron/TQUS02.bin"
+theron_source="$theron_track"
 if [[ -f "$nexus_source" ]]; then
     run_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
@@ -492,10 +690,3 @@ if [[ -f "$theron_source" ]]; then
         'wait-scan-complete,wait20,click:1190:728,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         pce-en mouse 'PC Engine'
 fi
-
-run_game_picker_case dm1 "$dm1_archive" \
-    'wait-scan-complete,wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
-run_game_picker_case csb "$csb_archive" \
-    'wait-scan-complete,wait20,click:1190:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
-run_game_picker_case dm2 "$dm2_archive" \
-    'wait-scan-complete,wait20,click:1680:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja mouse

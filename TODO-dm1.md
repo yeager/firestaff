@@ -1,5 +1,90 @@
 # Firestaff TODO — DM1
 
+2026-10-30 X68000 raw map access step: ReDMCSB `LOADSAVE.C:2161-2163`
+constructs each map as column pointers advanced by `Height+1`, while
+`DUNGEON.C F0151` returns the byte at an in-bounds `(MapX, MapY)` coordinate.
+The authentic X30J parser now exposes bounded accessors for column-major
+square bytes, the four trailing map metadata arrays in `F0174` order, and the
+initial party location bit fields documented by `DEFS.H:998`. The original
+cracked HDM real-media test checks every square and metadata item across all 14
+maps and confirms start `(1,3)`, facing south. This is source-layout/import
+coverage only; no X68000 runtime, rendering, input, or M12 launch path is
+provided. Remaining work includes source-typed thing-list decoding and the
+runtime/resource launch route; do not advertise X68000 support yet.
+`FirestaffX68kDungeonDat_DecodeSquare` exposes the source-defined upper-three-bit
+square type and lower-five-bit flags (`DEFS.H:1001-1036`); the authentic-media
+test checks that split on every square in all 14 maps. The bounded
+`FirestaffX68kDungeonDat_GetSquareFirstThing` now follows ReDMCSB F0160/F0161:
+the stored per-column SFT count plus earlier list-present squares in the same
+column, with BE16 decoding. The original-media test independently recomputes
+every head across all 14 maps, compares every head word to the raw table, and
+checks non-sentinel type/index references against authentic typed-record
+counts. `FirestaffX68kDungeonDat_GetThingNext` reads the common BE16
+`GENERIC.Next` field verified against every original typed record, and the
+real-media gate traverses every square-owned list to `0xFFFE` with a bound
+against cycles and invalid refs. ReDMCSB's `MAP.A.Width` is stored as
+`cell_count-1`; the parser's width is already a cell count, so the serialized
+column base is the sum of parser widths. Group/container `Slot` ownership
+lists now have a bounded accessor for GROUP and CONTAINER records only; the
+real-media gate verifies all such fields and traverses 30 owner lists
+containing 68 items. Projectile `Slot` is excluded because it is not an
+ownership list. Payload-field decoding, full inventory semantics, runtime
+behavior, and X68000 launch support remain open.
+
+2026-10-30 startup/platform audit: the local original-media inventory includes
+`Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,
+the separately labeled non-working original HDM, and a save-disk HDM) and
+`Game,Dungeon_Master,Super_NES,Software.7z` (EU v1.0, JP v1.0/v1.1, and US
+v1.0 ROMs). These files remain in the external user-data directory and are not
+tracked by Git. Firestaff has no SNES architecture/asset route; X68000 is
+classified as unsupported and deliberately omitted from the M12 platform
+picker. Direct CLI and `--menu` requests for `--platform x68000` and `snes`
+both fail before scanning, as expected for the current implementation. The
+existing X68000 classifier and FTL handoff unit tests pass, but they only prove
+media-boundary parsing, not resource import or startup. On 2026-10-30, the
+cracked HDM was extracted only into ignored `build/test-scratch`; the real-media
+`firestaff_x68k_media_receipt_real_corpus` passed 1/1 and
+`firestaff_x68k_ftl_handoff_real_corpus` passed 11/11 invariants against that
+image. The receipts confirm full-disk classification and two parseable
+embedded FTL modules, but do not extract their resources or establish startup.
+Complete platform support still needs authentic X68000 resource/runtime
+integration and a SNES ROM/resource-owner route; do not infer support from the
+archive contents.
+
+2026-10-30 X68000 media import step: `firestaff_x68k_hdm` now reads the
+documented DM1 2DHD FAT12-like root directory and bounded cluster chains from
+the original HDM in memory. `firestaff_x68k_hdm_real_media` passed against the
+cracked original archive, validated all ten root entries and regular-file
+chains, matched extracted `SWOOSH` byte-for-byte with ReDMCSB `X30J/SWOOSH`,
+and confirmed the original `GRAPHICS.DAT` header plus the known `SWOOSH` and
+`FTLCODE` disk offsets. The same real-media test now parses all 562 X30J
+`GRAPHICS.DAT` format-1 metadata spans using the big-endian header/tables and
+ReDMCSB offset rule. It writes no game data to disk. Graphic item
+decoding now has an X30J-specific IMG1 route: Greatstone SCK 1.5.1's bundled
+`dm_x68k_gd.map` classifies 539 of the 562 records as images (IDs 0-532, 538,
+548, 558-561); 21 are SND4, one TXT2, and one FNT1. The Firestaff decoder's
+indexed pixels match all 539 SCK BMP outputs exactly. The real-media CTest
+checks the complete indexed-pixel fingerprint and rejects non-image records.
+This map differs from an older DMWeb note that reports 536 IMG1 plus three
+COD2 records; keep the map/version provenance explicit and resolve that
+discrepancy before generalizing to other X68000 revisions. Palette composition,
+rendering, audio, input, and M12/runtime launch support remain open.
+The new read-only X30J dungeon metadata parser validates the raw 44-byte
+header, 14 map descriptors, typed-data section spans, and raw map extent from
+the original HDM. All 14 per-map grid and metadata spans fit and meet their
+following offsets exactly; the original has no trailing checksum. The parser
+rejects the compressed `0x8104` wrapper and validates an optional X30J
+byte-sum checksum when present. It does not decode map squares or connect to a
+platform launch route, so X68000 runtime support remains unsupported.
+
+The four local SNES ROMs were also streamed directly from the original 7z
+archive without saving their contents. Each has a valid `DUNGEON MASTER`
+LoROM header and checksum/complement pair; the four distinct SHA-256 values were verified by an in-memory audit and remain outside Git. Greatstone's SCK
+supports extracting original SNES ROMs and their dungeon resource; obtaining
+the extractor/mapfile or the real exported resource is the next data-boundary
+step. No current Firestaff reader is proven compatible with that SNES
+`dungeon.dat`, and the PC34 reader must not be assumed compatible.
+
 2026-10-29 X68000 real-media FTL checksum receipt: the cracked usable
 X68000 HDM staged under ignored `build/test-scratch/x68k-fresh/` parses as
 two embedded FTL modules at byte offsets 73,728 (`0x12000`) and 460,800

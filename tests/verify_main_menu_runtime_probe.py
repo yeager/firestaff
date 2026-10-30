@@ -13,7 +13,11 @@ with open(probe_path, encoding="utf-8") as source:
     probe = json.load(source)
 startup = probe["startup"]
 party = probe["party"]
-expected_source_id = "dm2" if game_id == "dm2-amiga" else game_id
+expected_source_id = (
+    "dm2" if game_id == "dm2-amiga" else
+    "dm1" if game_id == "dm1-amiga" else
+    game_id
+)
 if game_id.startswith("theron-direct-"):
     expected_track02_md5_by_route = {
         "theron-direct-us": "f23601102138f87c33025877767ebf76",
@@ -54,7 +58,15 @@ if (
         f"FAIL: {game_id} menu selection did not reach active runtime: {probe}"
     )
 
-if game_id == "dm1":
+if game_id == "dm1-amiga":
+    if (
+        startup.get("phase") != "dm1-runtime"
+        or startup.get("dm1StartupHandoffExecuted") != 1
+    ):
+        raise SystemExit(
+            f"FAIL: DM1 Amiga menu start missed its authenticated runtime handoff: {probe}"
+        )
+elif game_id == "dm1":
     if (
         startup.get("phase") != "dm1-runtime"
         or startup.get("dm1StartupHoCFirstFrameReady") != 1

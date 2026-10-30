@@ -1,14 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
-## 2026-10-30 — Theron indirect-dispatch follow-trace verifier
+## 2026-10-30 — Authentic pointer selection for priority games
 
-The follow-trace verifier now checks that each instruction fetch and terminal
-record follows and belongs to the latest indexed dispatch, rejects duplicate
-skip markers, and accepts an unobserved follow window only for the final
-dispatch at capture EOF. Four focused validator cases and three runs of the
-Theron capture-script regression passed. These checks validate verifier
-behavior only; a new authentic capture, native loader handoff, and Theron
-gameplay parity remain open in `TODO.md`.
+Added an independently runnable real-media M12 selector check for DM1 PC,
+CSB Atari ST, and DM2 Amiga. Each route clicks the game, platform, and Original
+presentation cards and verifies that the selected authentic archive reaches
+the matching launch handoff. The check snapshots the source archive hashes,
+and skips as a whole when any required original archive is unavailable. All
+three routes passed against the installed game data using the SDL dummy video
+driver. This verifies the scripted menu pointer path and media handoff; it does
+not establish native mouse behavior or complete platform/gameplay parity.
 
 ## 2026-10-29 — Launcher horizontal keys in Game Options
 

@@ -5,14 +5,15 @@ firestaff_cli="${1:?Firestaff executable is required}"
 media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes Back.stx}"
 archive_path="${FIRESTAFF_CSB_ATARI_STX_ARCHIVE:-$HOME/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
 archive_data_root="${FIRESTAFF_CSB_ATARI_ARCHIVE_DATA_ROOT:-}"
+scratch_root="${FIRESTAFF_TEST_SCRATCH:-$HOME/.codex-scratch}"
 menu_probe=""
 runtime_screenshot_dir=""
-champion_screenshot_dir=""
+hud_screenshot_dir=""
 
 cleanup() {
     if [ -n "$menu_probe" ]; then rm -f "$menu_probe"; fi
     if [ -n "$runtime_screenshot_dir" ]; then rm -rf "$runtime_screenshot_dir"; fi
-    if [ -n "$champion_screenshot_dir" ]; then rm -rf "$champion_screenshot_dir"; fi
+    if [ -n "$hud_screenshot_dir" ]; then rm -rf "$hud_screenshot_dir"; fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -48,7 +49,8 @@ case "$title_output" in
         ;;
 esac
 
-runtime_screenshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-runtime.XXXXXX")"
+mkdir -p "$scratch_root"
+runtime_screenshot_dir="$(mktemp -d "$scratch_root/firestaff-csb-atari-runtime.XXXXXX")"
 runtime_output="$(FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_screenshot_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
@@ -236,10 +238,8 @@ probe_runtime_input action       9,0,2
 # after title acceptance; no pose or save state is injected by the test.
 atari_two_champion_route='enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:320:164,wait:32,click:260:230,wait:32,strafe-left,wait:32,right,wait:32,up,wait:32,up,wait:32,right,wait:32,up,wait:32,left,wait:32,click:320:164,wait:32,click:260:230'
 if [ -e "$archive_path" ]; then
-    champion_screenshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-champions.XXXXXX")"
-    champion_output="$(FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$champion_screenshot_dir" \
-        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
+    champion_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --debug --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
         --boot-probe --boot-probe-frames 2 \
         --script "$atari_two_champion_route,key:f1,key:f2" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
@@ -264,7 +264,35 @@ if [ -e "$archive_path" ]; then
         printf '%s\n' "$champion_output" >&2
         exit 1
     }
-    python3 - "$champion_screenshot_dir" <<'PY'
+    # The transaction above ends with the two inventory panels open. Capture
+    # the champion row in a separate authentic run before opening inventory;
+    # a post-F1/F2 screenshot cannot prove the underlying F0292 hand slots.
+    hud_screenshot_dir="$(mktemp -d "$scratch_root/firestaff-csb-atari-hud.XXXXXX")"
+    hud_output="$(FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$hud_screenshot_dir" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --debug --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
+        --boot-probe --boot-probe-frames 2 \
+        --script "$atari_two_champion_route" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1)" || {
+        printf '%s\n' "$hud_output" >&2
+        exit 1
+    }
+    case "$hud_output" in
+        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=11,9,1'*'champions=2'*dm1InventoryPanel=0*) ;;
+        *)
+            echo "FAIL: authentic Atari champion HUD capture did not preserve the two-champion runtime"
+            printf '%s\n' "$hud_output" >&2
+            exit 1
+            ;;
+    esac
+    printf '%s\n' "$hud_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*' || {
+        echo "FAIL: authentic Atari champion HUD capture lost its source viewport receipt" >&2
+        printf '%s\n' "$hud_output" >&2
+        exit 1
+    }
+    screenshot_check_status=0
+    python3 - "$hud_screenshot_dir" <<'PY' || screenshot_check_status=$?
 import glob
 import os
 import struct
@@ -309,8 +337,46 @@ with open(screenshots[0], "rb") as image:
     for x in (46, 53, 60, 115, 122, 129):
         if pixel(x, 26) != pixel(x, 2):
             raise SystemExit("FAIL: a full Atari champion bar does not span source rows 2 through 26")
-print("PASS: original-media Atari HUD draws all three live bars in both source champion slots")
+
+def colors_in(x0, y0, width, height):
+    return {pixel(x, y)
+            for y in range(y0, y0 + height)
+            for x in range(x0, x0 + width)}
+
+# CHAMDRAW.C F0292 uses fixed S20E status boxes at x=champion*69, y=0,
+# width=67, height=29. Name text starts at x+1, y=5. Two champions were
+# recruited by the original-media route above; require their separate boxes
+# to contain rendered source content, not just a viewport receipt or bars.
+for slot in (0, 1):
+    x = slot * 69
+    if len(colors_in(x, 0, 43, 29)) < 3:
+        raise SystemExit("FAIL: an Atari champion status box/name is missing from the HUD")
+for slot in (0, 1):
+    x = slot * 69 + 1
+    strip = [pixel(px, py)
+             for py in range(5, 12)
+             for px in range(x, x + 42)]
+    if sum(1 for color in strip if color != strip[0]) < 8:
+        raise SystemExit(
+            f"FAIL: Atari F0292 champion {slot} name is not visible in its status box")
+
+# F0291 draws the original C033/C034 slot frames at C211..C218: ready/action
+# hands start at x+4/x+24, y=10 and are 16x16. Empty slots still have their
+# source border, so at least one frame in each live champion row must vary.
+for slot in (0, 1):
+    x = slot * 69
+    ready_colors = len(colors_in(x + 4, 10, 16, 16))
+    action_colors = len(colors_in(x + 24, 10, 16, 16))
+    if max(ready_colors, action_colors) < 2:
+        raise SystemExit(
+            f"FAIL: Atari F0291 hand-slot frame is missing from live champion {slot} "
+            f"(ready colors={ready_colors}, action colors={action_colors})")
+print("PASS: original-media Atari HUD draws champion names, hand slots, and all six live stat bars")
 PY
+    if [ "$screenshot_check_status" -ne 0 ]; then
+        printf '%s\n' "$champion_output" >&2
+        exit 1
+    fi
 
     # Continue a fresh original campaign through the retail button door and
     # stairs using ordinary CLI input. The source map starts the party at

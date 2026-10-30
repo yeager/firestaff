@@ -85,3 +85,53 @@ EOF
 
 run_scan_probe explicit-language
 run_scan_probe saved-language
+
+# The normal no-game start must localize the same scan labels while the
+# launcher remains on its menu. Direct --game probes above do not cover this
+# route: they can pass even if the app's default menu startup ignores the
+# selected or saved language.
+run_menu_scan_probe() {
+    local mode=$1
+    local home="$scratch/menu-$mode-home"
+    local log="$scratch/menu-$mode-firestaff.log"
+    local exit_status=0
+    mkdir -p "$home"
+    if [[ "$mode" == saved-language ]]; then
+        cat > "$home/config.toml" <<'EOF'
+language_index = 1
+language_explicit = 1
+EOF
+    fi
+
+    local lang_args=()
+    if [[ "$mode" == explicit-language ]]; then
+        lang_args=(--lang sv)
+    fi
+
+    HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home" \
+    APPDATA="$home" FIRESTAFF_CONFIG_PATH="$home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_LOCALE_DIR="${FIRESTAFF_LOCALE_DIR:-$script_dir/../po}" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --menu "${lang_args[@]}" --data-dir "$archive" \
+            --debug --verbose --script wait-scan-complete,escape \
+            --duration 120000 >"$log" 2>&1 || exit_status=$?
+
+    if [[ $exit_status -ne 1 ]] ||
+       ! grep -Fq 'startup game=none mode=menu' "$log" ||
+       ! grep -Fq \
+           'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
+           "$log" ||
+       ! grep -Fq \
+           'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log" ||
+       ! grep -Fq 'scan complete elapsed-ms=' "$log" ||
+       grep -Fq 'launch phase=game-handoff' "$log"; then
+        echo "FAIL: Swedish no-game menu scan did not stay localized and game-free ($mode)" >&2
+        cat "$log" >&2
+        return 1
+    fi
+    echo "PASS: $mode Swedish no-game menu scan stays localized and does not launch a game"
+}
+
+run_menu_scan_probe explicit-language
+run_menu_scan_probe saved-language

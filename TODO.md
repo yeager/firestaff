@@ -1,14 +1,24 @@
 # Firestaff TODO — active cross-game work
 
-2026-10-30 Theron indexed-dispatch follow-trace verification remains open:
-the offline verifier now binds each follow row or terminal marker to the
-latest preceding dispatch and rejects duplicate skip markers. Its focused
-validator tests and capture-script regressions pass, but the new per-dispatch
-trace has not yet been collected from authentic JP Track 02 and System Card
-media. Rebuild the bounded Mednafen reference instrumentation on TRV2, collect
-and verify the trace, then use its authentic instruction windows to guide the
-native loader/handoff investigation. This evidence must not be described as
-native gameplay or parity.
+2026-10-30 current-main scanner/rescan regression retest at `9f4bb4df`: after
+rebuilding the shared scanner, the original-media M12 menu routes passed for
+DM1, CSB, and DM2. Alternate routes passed for DM1 PC and Atari ST, CSB Atari
+ST, and DM2 PC and Amiga; DM1 mixed-platform AUTO and the CSB Atari handoff and
+mixed-media FM Towns matrix also passed. Direct DM2 CLI startup passed for DOS
+English/French, extracted Macintosh English, Amiga English, and FM Towns
+Japanese. Selected-file return-to-menu passed for DM1 PC34, CSB FM Towns, and
+DM2 DOS; DM2 Amiga return-to-menu passed separately. Each return scan reported
+current availability for all five games. Real-media keyboard and mouse window
+close cancelled DM1's return scan without marking it complete. Removing and
+adding original CSB media during DM1 play correctly changed availability on
+return. The CSB FM Towns cold/warm cache check and DM2 DOS scoped/unscoped
+directory cancellation check also passed; DM2 cancellation rolled back
+partial scan publication and preserved the original archive. No start-menu,
+CLI, rescan, cancellation, or cache defect was reproduced in these checks.
+They use SDL's dummy video driver and do not establish native presentation,
+physical input, complete animation playback, or playable-game parity. The
+evidence is summarized in
+[`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
 2026-10-29 current-main startup retest at `737508d0` after PR #200: the
 authentic-media no-game M12 first-runtime cases passed separately for DM1,

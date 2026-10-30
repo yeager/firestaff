@@ -1,17 +1,22 @@
 # Five-game startup support gap analysis
 
-Evidence metadata refreshed on 2026-10-30 for the v3.0.421 candidate, based on
-`main` at `38ebdb04c85a207eafa32bbd6f281cff7dc2434` plus the candidate's
-unpublished Nexus CUE-only admission change from `76ffafc5c`. The latest published release
-remains v3.0.420 (published 2026-10-29 from tag commit
-`8224d5c8`); the candidate contains later source changes that are not in that
-package. The v3.0.420 workflow verifies packaging, not gameplay startup. The
+Evidence metadata refreshed on 2026-10-30 for `main` at
+`bde413fc7e860b23f9570c539f0f7849422d31b0`. The latest published release
+remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
+`main` contains later source changes that are not in that package. The v3.0.420
+workflow verifies packaging, not gameplay startup. The
 route records below are individually dated and establish only the named
 checks, not every edition or complete game parity. Real-media Swedish
 startup-debug localization checks cover DM1 PC34,
 CSB FM Towns, and DM2 FM Towns; these test explicit and saved preferences,
 localized scan labels, edition selection, and the boot-probe boundary, not full
 gameplay parity.
+The latest `main` also adds read-only X68000 HDM, GRAPHICS.DAT IMG1, and X30J
+dungeon-metadata readers verified against authentic Japanese media; these
+parsers do not add an X68000 startup, rendering, audio, or input route.
+It rejects conflicting CSB utility-disk and hint-oracle launch modes and
+enables the DM2 source-level startup-menu timing regression. The latter checks
+source tick sequencing; it does not measure native presentation timing.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English, FM Towns Japanese and Amiga
@@ -62,6 +67,37 @@ background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
 
+### 2026-10-30 DM1/CSB/DM2 menu return, rescan, and cache retest
+
+On `main` at `9f4bb4df`, the local app was rebuilt after the shared media
+scanner changes. Authentic-media M12 coverage passed for the DM1, CSB, and DM2
+game cards; DM1 PC and Atari ST, CSB Atari ST, and DM2 PC and Amiga platform
+routes; DM1 mixed-platform AUTO; and the CSB Atari handoff and mixed FM Towns
+media matrix. The two small DM2 FM Towns and Amiga media tests initially had no
+local executable, so their targets were built and both tests were rerun and
+passed. The five direct DM2 CLI tests also passed with original DOS English,
+DOS French, extracted Macintosh English, Amiga English, and FM Towns Japanese
+media.
+
+The real-media return-to-menu harness passed separately for DM1 PC34, CSB FM
+Towns, DM2 DOS, and DM2 Amiga. Each route reached gameplay, returned to M12,
+and reported current availability for all five games. The DM1 PC34 keyboard
+and mouse window-close cases both cancelled during the return scan without
+publishing a completed scan. Mutation checks removed the authentic CSB archive
+while DM1 was running and confirmed CSB became unavailable after return; a
+second run added authentic CSB media during DM1 gameplay and confirmed the
+return scan discovered it. The original media were linked into isolated test
+roots and were not modified.
+
+The authentic CSB FM Towns cold/warm scan test passed: the cold scan
+authenticated both original editions and the warm scan reused the verified
+receipt. The DM2 DOS original-media directory-cancellation test passed for
+scoped and unscoped scans; cancellation rolled back the partial publication
+and preserved the archive hash. No new CLI, M12 return, scan-cancellation, or
+cache-invalidation defect was reproduced in these checks. They use SDL's dummy
+video driver and do not establish native display, physical input, full
+animation playback, or playable-game parity.
+
 ### 2026-10-30 Nexus Japanese CUE-only CLI and menu admission
 
 On TRV2, the updated native menu regression built against authentic original
@@ -100,11 +136,17 @@ test and the DM2 Macintosh extracted-file M12/direct-runtime test also passed.
 Five additional authentic-media M12 routes passed: DM1 PC34 and Atari ST, CSB Atari
 ST, and DM2 PC and Amiga. These verify game-card/platform selection and the
 reported runtime handoff for those routes under SDL's dummy video driver; they
-do not prove native presentation or full gameplay. The broader
-`m12_main_menu_game_selection_real_media` run exceeded its 420-second CTest
-timeout on this host. Its partial output is not counted as a passing test.
-The no-media `unsupported_game_platforms_cli_rejected_before_renderer` test
-also passed, confirming invalid game/platform pairs fail before the renderer.
+do not prove native presentation or full gameplay. On 2026-10-30, the full
+`m12_main_menu_game_selection_real_media` run passed against the current
+candidate in 880.32 seconds. It covers authentic DM1, CSB, DM2, Nexus and
+Theron routes, including the standard data root, an isolated Nexus CUE/BIN-only
+root, keyboard and mouse selection, and alternate DM1/CSB/DM2 platforms. Nexus
+is asserted to hand off to its capture-gated title receipt, not to a playable
+runtime. The test timeout is 1200 seconds to cover the full authentic-media
+scan and route set. An earlier run exposed and fixed the Nexus source and
+isolated-root test assertions; it is not counted as a pass. The no-media
+`unsupported_game_platforms_cli_rejected_before_renderer` test also passed,
+confirming invalid game/platform pairs fail before the renderer.
 
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at

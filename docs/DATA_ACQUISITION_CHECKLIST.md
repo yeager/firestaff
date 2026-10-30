@@ -113,13 +113,15 @@ coverage**, not registry correctness.
    HDM media remain useful provenance, but must not become a Firestaff
    import, cache, startup, game-view or input target.
 9. **SNES / Super Famicom 1.0/1.1** remains outside the current
-   code-complete path, but DMWeb now pins the ROM set and evidence
-   boundary: English NTSC/PAL 1.0, Japanese NTSC 1.0/1.1, SMC cartridge
-   images, 19 SPC music dumps, bsnes-recorded track receipts, and
-   version-specific bug behavior. Firestaff would need cartridge-ROM
-   import/classification, SNES tile/palette rendering, controller/input
-   mapping, SPC/music receipts, and explicit bug gates before any native
-   SNES runtime claim.
+   code-complete path. A skip-safe real-media test now hash-locks the four
+   local SMCs (English NTSC/PAL 1.0, Japanese NTSC 1.0/1.1), decodes both
+   H03 `ROMDUNGEON` slots, and validates the shared 14-map dungeon structure.
+   No ROM bytes are tracked. DMWeb also identifies 19 SPC music dumps,
+   bsnes-recorded track receipts, and version-specific bug behavior.
+   Cartridge admission/classification, the remaining SNES resource readers,
+   tile/palette mapping, controller/input support, SPC/music handling, and
+   explicit version-specific behavior gates are still required before any
+   native SNES runtime claim.
 10. **PC 3.4 presentation/input receipts** are follow-up evidence work,
    not missing data. DMWeb's PC page pins the current runtime target's
    edition boundary as USA English plus Europe English/French/German,

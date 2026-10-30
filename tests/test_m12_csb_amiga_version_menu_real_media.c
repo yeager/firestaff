@@ -1,5 +1,6 @@
 #include "asset_status_m12.h"
 #include "main_loop_m11.h"
+#include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -124,7 +125,52 @@ int main(int argc, char** argv) {
               intent.options.architectureIndex == M12_ARCH_AMIGA,
           "launch intent retains the selected authentic CSB Amiga 3.5 edition");
 
-    printf("PASS: authentic CSB Amiga 3.5 menu selection reaches launch intent (%s)\n",
+    printf("PASS: authentic CSB Amiga 3.5 keyboard selection reaches launch intent (%s)\n",
+           version->matchedPath);
+
+    M12_StartupMenu_Destroy(&state);
+    memset(&state, 0, sizeof(state));
+    M12_StartupMenu_InitWithOptions(&state, argv[1], "csb", &initOptions);
+    version = M12_AssetStatus_GetVersion(&state.assetStatus, "csb",
+                                         (size_t)versionIndex);
+    CHECK(version && version->matched,
+          "authentic Amiga 3.5 media remains matched in the pointer session");
+    CHECK(state.view == M12_MENU_VIEW_MAIN,
+          "authentic CSB data opens a fresh pointer-selection session at main menu");
+    CHECK(M12_ModernMenu_HandlePointer(&state, 1190, 262, 1, NULL) == 1 &&
+              state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+              state.gameCardFlowStage == 0 &&
+              state.activatedIndex == entryIndex,
+          "production pointer handler opens CSB platform cards from the game cover");
+    CHECK(M12_ModernMenu_HandlePointer(&state,
+                                        160 + amigaCard * (500 + 24) + 250,
+                                        280 + 125, 1, NULL) == 1 &&
+              state.gameCardFlowStage == 1 &&
+              state.gameOptions[1].architectureIndex == M12_ARCH_AMIGA,
+          "production pointer handler selects the authentic Amiga platform card");
+    CHECK(M12_ModernMenu_HandlePointer(&state, 1458, 405, 1, NULL) == 1 &&
+              state.gameCardFlowStage == 2 && !state.launchRequested,
+          "Custom presentation card opens detailed options without launching");
+
+    for (tries = 0; tries < versionCount &&
+                    state.gameOptions[1].versionIndex != versionIndex;
+         ++tries) {
+        CHECK(M12_ModernMenu_HandlePointer(&state, 520, 442, 1, NULL) == 1,
+              "clicking the version tile changes the selected edition");
+    }
+    CHECK(state.gameOptions[1].versionIndex == versionIndex &&
+              state.gameOptions[1].architectureIndex == M12_ARCH_AMIGA,
+          "pointer-controlled version tile selects authentic CSB Amiga 3.5 English");
+    CHECK(M12_ModernMenu_HandlePointer(&state, 960, 892, 1, NULL) == 1,
+          "visible pointer launch button accepts the selected edition");
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    CHECK(state.launchRequested && intent.valid && intent.gameId &&
+              strcmp(intent.gameId, "csb") == 0 && intent.versionId &&
+              strcmp(intent.versionId, "amiga35-en") == 0 &&
+              intent.options.architectureIndex == M12_ARCH_AMIGA,
+          "pointer launch intent retains the selected authentic CSB Amiga 3.5 edition");
+
+    printf("PASS: authentic CSB Amiga 3.5 pointer selection reaches launch intent (%s)\n",
            version->matchedPath);
 
 cleanup:

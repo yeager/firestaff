@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — validate bounded indexed-dispatch follow traces
+
+Added a bounded per-dispatch instruction-follow observer to the Mednafen
+reference build and integrated its sidecar into the authentic capture path.
+The offline verifier checks event ordering, latest-dispatch ownership,
+address mapping, duplicate markers, capture-end windows, and configured caps.
+Five focused validator cases and three capture-script regression runs passed;
+the instrumented reference build also compiled on TRV2 with `-j1`. This
+verifies the trace tooling only. The new sidecar has not yet been collected
+against authentic media, and it does not establish native loader handoff or
+gameplay parity.
+
 ## 2026-10-30 — correlate the JP indexed System Card dispatch with Track 02
 
 Added `verify_theron_jp_indirect_jump_source_chain.py` to combine the bounded

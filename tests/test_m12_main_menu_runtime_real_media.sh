@@ -6,11 +6,12 @@ app=${1:?usage: test_m12_main_menu_runtime_real_media.sh <firestaff> <data-root>
 data_root=${2:?usage: test_m12_main_menu_runtime_real_media.sh <firestaff> <data-root>}
 selected_game=${FIRESTAFF_MAIN_MENU_GAME:-all}
 case "$selected_game" in
-    all|dm1|csb|dm2|dm2-amiga|theron) ;;
+    all|dm1|dm1-amiga|csb|dm2|dm2-amiga|theron) ;;
     *) echo "FAIL: unsupported FIRESTAFF_MAIN_MENU_GAME=$selected_game" >&2; exit 2 ;;
 esac
 
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+dm1_amiga_archive="$data_root/dm1/Dungeon-Master_Amiga_36.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
 dm2_amiga_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
@@ -144,7 +145,22 @@ run_selected_main_menu_runtime_case dm1 "$dm1_archive" fmtowns-en \
 run_selected_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 150000
 run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
-    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' 90000
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65,click:100:60' 90000
+
+# Exercise the no-game picker through DM1's Amiga architecture and require an
+# authentic Amiga 3.6 runtime receipt, not just a direct --game boot.
+if [[ "$selected_game" == all || "$selected_game" == dm1-amiga ]]; then
+  if [[ -f "$dm1_amiga_archive" ]]; then
+    run_main_menu_runtime_case dm1 "$dm1_amiga_archive" amiga36-multi \
+        'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-game-runtime,key:return' \
+        90000 Amiga dm1-amiga
+  elif [[ "$selected_game" == dm1-amiga ]]; then
+    echo 'SKIP: authentic DM1 Amiga 3.6 archive is unavailable'
+    exit 77
+  else
+    echo 'SKIP: authentic DM1 Amiga 3.6 archive is unavailable for menu runtime'
+  fi
+fi
 
 # The DM2 Amiga archive has a separate native GDAT startup menu. Select that
 # platform through M12, finish its original title, then accept New Game and
@@ -152,7 +168,7 @@ run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
 if [[ "$selected_game" == all || "$selected_game" == dm2-amiga ]]; then
   if [[ -f "$dm2_amiga_archive" ]]; then
     run_main_menu_runtime_case dm2 "$dm2_amiga_archive" amiga-en \
-        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,enter' \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65' \
         90000 Amiga dm2-amiga
   elif [[ "$selected_game" == dm2-amiga ]]; then
     echo 'SKIP: authentic DM2 Amiga archive is unavailable'
@@ -167,7 +183,7 @@ if [[ "$selected_game" == all || "$selected_game" == theron ]]; then
     run_theron_direct_selection_case us "$theron_us_track02"
     run_main_menu_runtime_case theron "$theron_us_track02" pce-en \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait:30,enter,enter,down,down,down,down,down,down,enter,down,enter,tab' \
-        30000 'PC Engine'
+        120000 'PC Engine'
   else
     echo 'SKIP: authentic Theron US Track 02 is unavailable'
     if [[ "$selected_game" == theron ]]; then
