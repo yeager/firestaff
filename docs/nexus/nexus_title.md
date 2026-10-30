@@ -476,6 +476,41 @@ pixels survive VDP1 occlusion and match the final screen. Keep title/menu
 display ownership and production renderer admission blocked until those paths
 are verified.
 
+### Same-frame Japanese title source-to-VRAM byte join (2026-10-30)
+
+A separate authentic Japanese cold-boot capture joins a `TITLE.BIN` source
+span to its same-frame VDP2 writes. The 921 bytes at file offset `0xb8a2`
+(`TITLE.BIN` SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
+are read from WorkRAMH `[0x060b5622, 0x060b59bb)` by the master SH-2 at PC
+`0x06023124`, with caller target `0x06023108` and return `0x06023176`, in
+VDP1 frame 7716. The aligned register snapshots show R5 advancing through
+each source byte and R4 identifying 921 distinct P2-alias destinations.
+Subtracting the P2 alias base `0x25e00000` maps those destinations to VDP2
+VRAM offsets `0xd334` through `0xda0c`.
+
+The same capture's complete, zero-drop VDP2 write trace records one byte
+write for every mapped address in the same VDP1 frame. All 921 write values
+match the corresponding bytes from the authentic file in source-read order.
+The final WorkRAMH span and mapped VDP2 VRAM snapshots also match the retail
+source span, but those final snapshots and the screenshot are from frame 8037,
+not frame 7716. They do not establish full frame-7716 memory or display state.
+`scripts/verify_nexus_title_bin_vram_frame_join.py` reproduces
+these checks against the raw Ymir capture and the real Japanese game data.
+Ymir's PC-filtered SH-2 read/register tracer was added on
+[the Yeager fork PR](https://github.com/yeager/Ymir/pull/3); the external
+capture bundle and reproduction instructions are under
+`firestaff-evidence/nexus/nexus_vdp2_frame_join_20261030`.
+
+This establishes that, in VDP1 frame 7716, the recorded source addresses and
+register snapshots map to same-frame VDP2 writes whose values and final VRAM
+bytes match the 921 retail source bytes. The SH-2 trace does not capture values
+at read time, and the source comparison uses the final WorkRAMH span; it does
+not independently prove that those bytes were present when each read occurred.
+It does not identify the full title background or prove which pixels survive
+VDP1/VDP2 composition on the screen. Full native title presentation and
+Firestaff renderer parity remain unproven.
+
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real
