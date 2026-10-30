@@ -18,11 +18,15 @@ test checks that split on every square in all 14 maps. The bounded
 the stored per-column SFT count plus earlier list-present squares in the same
 column, with BE16 decoding. The original-media test independently recomputes
 every head across all 14 maps, compares every head word to the raw table, and
-checks non-sentinel type/index references against the authentic typed-record
-counts. ReDMCSB's `MAP.A.Width` is a stored `cell_count-1`; the parser's width
-is already a cell count, so the serialized column base is the sum of parser
-widths. This proves bounded source-data access only, not linked-list traversal,
-typed payload decoding, runtime behavior, or X68000 launch support.
+checks non-sentinel type/index references against authentic typed-record
+counts. `FirestaffX68kDungeonDat_GetThingNext` reads the common BE16
+`GENERIC.Next` field verified against every original typed record, and the
+real-media gate traverses every square-owned list to `0xFFFE` with a bound
+against cycles and invalid refs. ReDMCSB's `MAP.A.Width` is stored as
+`cell_count-1`; the parser's width is already a cell count, so the serialized
+column base is the sum of parser widths. Group/container `Slot` ownership
+lists and their payload decoding remain open. This proves bounded source-data
+access only, not runtime behavior or X68000 launch support.
 
 2026-10-30 startup/platform audit: the local original-media inventory includes
 `Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,

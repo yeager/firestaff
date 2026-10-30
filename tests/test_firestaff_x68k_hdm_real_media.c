@@ -104,6 +104,9 @@ int main(void) {
     FirestaffX68kDungeonDat dungeon_dat;
     uint16_t cursor = 0u;
     size_t entries = 0u;
+    size_t total_thing_records = 0u;
+    size_t square_list_count = 0u;
+    size_t square_list_thing_count = 0u;
     size_t i;
     int result = 1;
 
@@ -354,6 +357,11 @@ int main(void) {
         size_t expected_offset = 8502u;
         uint16_t thing_type;
         for (thing_type = 0u; thing_type < 16u; ++thing_type) {
+            uint16_t thing_index;
+            const size_t record_bytes[] = {
+                4u, 6u, 4u, 8u, 16u, 4u, 4u, 4u,
+                4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u
+            };
             if (dungeon_dat.thing_data[thing_type].offset != expected_offset) {
                 fprintf(stderr,
                         "FAIL: X68000 DUNGEON.DAT thing section %u offset changed\n",
@@ -367,6 +375,40 @@ int main(void) {
             }
             typed_thing_bytes += dungeon_dat.thing_data[thing_type].size;
             expected_offset += dungeon_dat.thing_data[thing_type].size;
+            total_thing_records += dungeon_dat.thing_count[thing_type];
+            for (thing_index = 0u;
+                 thing_index < dungeon_dat.thing_count[thing_type];
+                 ++thing_index) {
+                uint16_t thing = (uint16_t)((thing_type << 10) | thing_index);
+                uint16_t actual_next = 0u;
+                const size_t record_offset = dungeon_dat.thing_data[thing_type].offset +
+                    (size_t)thing_index * record_bytes[thing_type];
+                const uint16_t raw_next =
+                    (uint16_t)(((uint16_t)dungeon[record_offset] << 8) |
+                               dungeon[record_offset + 1u]);
+                if (FirestaffX68kDungeonDat_GetThingNext(
+                        &dungeon_dat, thing, &actual_next) != 0 ||
+                    actual_next != raw_next) {
+                    fprintf(stderr,
+                            "FAIL: X68000 type %u thing %u Next differs from raw GENERIC field\n",
+                            (unsigned)thing_type, (unsigned)thing_index);
+                    goto done;
+                }
+                if (actual_next != FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST &&
+                    actual_next != FIRESTAFF_X68K_DUNGEON_THING_NONE) {
+                    const uint8_t next_type =
+                        (uint8_t)((actual_next & 0x3c00u) >> 10);
+                    const uint16_t next_index =
+                        (uint16_t)(actual_next & 0x03ffu);
+                    if (next_index >= dungeon_dat.thing_count[next_type]) {
+                        fprintf(stderr,
+                                "FAIL: X68000 type %u thing %u has invalid Next ref 0x%04x\n",
+                                (unsigned)thing_type, (unsigned)thing_index,
+                                (unsigned)actual_next);
+                        goto done;
+                    }
+                }
+            }
         }
         if (typed_thing_bytes != 13122u ||
             expected_offset != dungeon_dat.raw_map_data.offset) {
@@ -446,6 +488,7 @@ int main(void) {
                                 goto done;
                             }
                         } else {
+                            ++square_list_count;
                             size_t raw_column_index = expected_column_base +
                                                       map_x_index;
                             size_t expected_sft =
@@ -518,6 +561,43 @@ int main(void) {
                                     goto done;
                                 }
                             }
+                            {
+                                uint16_t current = first_thing;
+                                size_t traversed = 0u;
+                                while (current !=
+                                           FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST) {
+                                    uint16_t next = 0u;
+                                    uint8_t current_type;
+                                    uint16_t current_index;
+                                    if (current == FIRESTAFF_X68K_DUNGEON_THING_NONE ||
+                                        traversed++ >= total_thing_records) {
+                                        fprintf(stderr,
+                                                "FAIL: X68000 map %u square (%u,%u) has unterminated or cyclic THING list\n",
+                                                (unsigned)map_index,
+                                                (unsigned)map_x_index,
+                                                (unsigned)map_y_index);
+                                        goto done;
+                                    }
+                                    ++square_list_thing_count;
+                                    current_type =
+                                        (uint8_t)((current & 0x3c00u) >> 10);
+                                    current_index =
+                                        (uint16_t)(current & 0x03ffu);
+                                    if (current_index >=
+                                            dungeon_dat.thing_count[current_type] ||
+                                        FirestaffX68kDungeonDat_GetThingNext(
+                                            &dungeon_dat, current, &next) != 0) {
+                                        fprintf(stderr,
+                                                "FAIL: X68000 map %u square (%u,%u) list references invalid THING 0x%04x\n",
+                                                (unsigned)map_index,
+                                                (unsigned)map_x_index,
+                                                (unsigned)map_y_index,
+                                                (unsigned)current);
+                                        goto done;
+                                    }
+                                    current = next;
+                                }
+                            }
                         }
                     }
                 }
@@ -583,9 +663,11 @@ int main(void) {
                 }
             }
         }
-        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x first-thing=0x%04x; all map cells, SFT indexes, THING heads and metadata follow source layout\n",
+        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x first-thing=0x%04x; verified %lu square lists and %lu links, all map cells and metadata\n",
                (unsigned)map_x, (unsigned)map_y, (unsigned)direction,
-               (unsigned)start_square, (unsigned)start_thing);
+               (unsigned)start_square, (unsigned)start_thing,
+               (unsigned long)square_list_count,
+               (unsigned long)square_list_thing_count);
     }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
            "SWOOSH matches ReDMCSB; all 562 X30J graphics spans and the "

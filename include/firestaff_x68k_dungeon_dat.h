@@ -12,6 +12,7 @@ extern "C" {
 #define FIRESTAFF_X68K_DUNGEON_MAX_MAPS 16u
 #define FIRESTAFF_X68K_DUNGEON_THING_TYPES 16u
 #define FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST 0xfffeu
+#define FIRESTAFF_X68K_DUNGEON_THING_NONE 0xffffu
 
 typedef struct {
     uint8_t type;
@@ -103,6 +104,16 @@ int FirestaffX68kDungeonDat_GetSquareFirstThing(
     uint8_t map_x,
     uint8_t map_y,
     uint16_t *out_thing);
+
+/* Read the common GENERIC.Next BE16 field (ReDMCSB F0159). End-of-list and
+ * unused sentinels are returned unchanged; invalid/nonexistent refs fail.
+ * This reads only the square-list Next field; GROUP/CONTAINER Slot ownership
+ * lists have distinct semantics and are not traversed here.
+ */
+int FirestaffX68kDungeonDat_GetThingNext(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint16_t thing,
+    uint16_t *out_next);
 
 /* Read map-local trailing metadata in ReDMCSB F0174 order: creature types,
  * wall ornaments, floor ornaments, then door ornaments (DUNGEON.C:2755-2760).
