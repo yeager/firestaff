@@ -9516,3 +9516,23 @@ native rendering, or Theron parity. The private evidence bundle is at
   keyboard/mouse/touch routes passed three consecutive loops. This verifies
   Firestaff's native input routing on real game data; it does not by itself
   establish chord parity against the original hardware or full Theron parity.
+
+## 2026-10-30 — narrow JP System Card code-fetch tracing
+
+- Changed the reference-only Mednafen PCE Fast dispatch trace to v3 and
+  restrict its code-fetch rows to seven observed PCs. This removes the broad
+  windows that previously exhausted their row budgets while retaining v2
+  verifier compatibility and explicit truncation rejection.
+- Built Mednafen on TRV2 with PCE Fast enabled and ran the authentic JP Rev. 1
+  cold replay. The v3 trace recorded 37 `$40D9` fetches and six `$6138-$6144`
+  fetches with no code-fetch truncation marker. Source and guest-write
+  verifiers confirmed the 37 `$40D9` rows against prior writes to
+  `$1000D9-$1000DB`; unobserved `$10468D/$10468E` addresses now report zero
+  instead of making the CLI fail. The focused verifier regression passed three
+  consecutive loops.
+- The capture wrapper reported `BLOCKED`: the default input trace filled
+  before the last scheduled replay event had a matching controller read, and
+  the source-read and `$EA9C`-writer traces reached their row caps. This is
+  diagnostic evidence only. It proves no game-owned input, gameplay handoff,
+  or Theron parity; see `TODO-theron.md` for the remaining capture and consumer
+  work.

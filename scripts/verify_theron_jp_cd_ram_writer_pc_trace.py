@@ -141,7 +141,10 @@ def verify_writer_rows(path: Path) -> list[dict[str, str]]:
 
 def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != "source=mednafen-pce-fast-system-card-controller-dispatch-v2":
+    if not lines or lines[0] not in {
+        "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
+        "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
+    }:
         raise ValueError("unexpected System Card dispatch trace header")
     rows: list[dict[str, str]] = []
     previous_event = -1

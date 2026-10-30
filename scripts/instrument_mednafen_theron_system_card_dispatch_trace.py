@@ -11,7 +11,8 @@ text = source.read_text()
 marker = "TheronPCEFastDratorMenuRouteStep(TheronTraceInstructionPC);"
 if text.count(marker) != 1:
     raise SystemExit("FAIL: expected one exact Drator route marker")
-if "source=mednafen-pce-fast-system-card-controller-dispatch-v2" in text:
+if "source=mednafen-pce-fast-system-card-controller-dispatch-v2" in text or \
+   "source=mednafen-pce-fast-system-card-controller-dispatch-v3" in text:
     raise SystemExit("FAIL: System Card dispatch trace already instrumented")
 
 added = []

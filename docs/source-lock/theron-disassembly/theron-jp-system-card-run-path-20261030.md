@@ -284,3 +284,48 @@ native parity. Raw traces, game media, and firmware remain private on TRV2 at
 - CD data-port read trace SHA-256: `27f420ec0232b425b38d43975e16fe9c1f536281585672656aa4906b0e233641`.
 - CD-RAM target-write trace SHA-256: `2d6c2df36a271a654605bd3cbf133baa0849017925caa486f39a29596c6a4461`.
 - Transition receipt SHA-256: `c8fe028fb07f052c2e64217c071fcb188baa62f5aa6d096ce32664f85c4e2b84`.
+
+## Targeted v3 code-fetch rerun
+
+A further cold PCE Fast capture used the authentic JP Rev. 1 Track 02 and
+System Card 3.0, with no save state. Its v3 dispatch trace records only
+logical PCs `$40D9`, `$6138`, `$613A`, `$613D`, `$613F`, `$6142`, and `$6144`;
+the narrower scope avoids the overflow caused by the earlier broad
+`$4000-$5FFF` and `$6000-$7FFF` windows. The v3 dispatch trace contains 37
+basic fetch rows and 6 extended fetch rows, with no explicit code-fetch
+truncation marker.
+
+The source-bound verifier authenticated 262,144 Track 02 data-port reads and
+reported zero unbound reads. It correlated 131,072 `$EA9C` writer records
+against those reads; 106,496 had an ordered value candidate, while 24,576 did
+not. Among 43 executed fetch rows, 126 bytes matched the latest captured
+`$EA9C` write, 3 differed, and 42 rows were fully backed by prior captured
+writes. A separate guest-write comparison found 111 fetched bytes at
+`$1000D9-$1000DB`; all had a prior matching guest write and all 37 target
+fetch rows were fully backed. The older `$10468D/$10468E` candidate addresses
+were not fetched in this targeted scope and are reported as zero fetches.
+These bounded joins do not prove a unique disc-to-write transfer or gameplay
+handoff.
+
+The capture replay applied all 11 scheduled input events, but the wrapper
+stopped as `BLOCKED` when the default 1,048,576-row input trace filled before
+the last event had a matching controller-port read. The data-read and
+`$EA9C`-writer traces also reached their configured row caps. Therefore the
+fetch trace is complete for its targeted rows, while the surrounding input
+and source chronology is bounded and incomplete. This run still establishes
+no game-owned input poll, game IRQ, authenticated CD-to-RAM receipt,
+`$E009` dispatch, or gameplay transition. It adds trace evidence only, not
+native parity.
+
+The focused v3 verifier test covers accepted complete v3 rows, v2/v3
+truncation rejection, and absent candidate addresses. The four private trace
+SHA-256 values are, in order, dispatch, `$EA9C` writers, data-port reads, and
+guest target writes:
+
+- `5a9352107570c865c8e0b015d9d5817a247ee543b067815f9c889881c1c4b2d2`
+- `8449ed86a2bed54efa7f8f65dab3eabcfbc66e601101939a55365bff249c96db`
+- `a5949ffd7299a9454e4c538b67920edfddb92c071e9a6d4dbc1bae7c15895f5d`
+- `42bc77ea7b18ec603533ec317928864c4b8472312a13770208d22304e301a1a2`
+
+The original media and raw traces remain private on TRV2; they were not
+copied into the repository.

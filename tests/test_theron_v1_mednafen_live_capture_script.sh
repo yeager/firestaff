@@ -1728,17 +1728,23 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
     exit 1
 fi
 system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
-if ! grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
+if ! grep -Fq 'code_fetch_scope=targeted' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x40D9 && code_fetch_trace_count < 262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x6138 || pc == 0x613A || pc == 0x613D' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x613F || pc == 0x6142 || pc == 0x6144' "$system_card_dispatch_patch" ||
+   grep -Fq 'pc >= 0x4000 && pc <= 0x5FFF' "$system_card_dispatch_patch" ||
+   grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
    ! grep -Fq 'code_fetch_extended event_sequence=%u logical_pc=%04x' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=4000-5fff cap=262144' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6000-7fff cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=40d9 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6144 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted' "$system_card_dispatch_patch" ||
    ! grep -Fq '!code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq '!extended_code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
    ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
    ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py" ||
    ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py"; then
-    printf '%s\n' 'FAIL: the extended System Card code window must be traced and physically validated' >&2
+    printf '%s\n' 'FAIL: bounded target System Card code fetches must be traced and physically validated' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}' "$script" ||

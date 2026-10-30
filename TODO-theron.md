@@ -879,3 +879,14 @@ assets, mechanics, or parity.
 - Extended the reference-only PCE Fast trace to record reads and writes of logical $02/$03 while the authentic JP System Card routine executes in $4600-$46FF. The observer covers direct zero-page reads/writes, read-modify-write paths, and indirect pointer bytes in the HuC6280 interpreter.
 - A cold capture with authentic Japanese Rev. 1 Track 02 and System Card 3.0 recorded 32 complete TIA transfers (2,048 byte rows) and 2,240 zero-page rows, including direct operand reads at $466F/$02 and $4674/$03. The combined trace passed the bounded verifier without truncation.
 - This remains reference trace evidence, not game-level semantics or native parity. The run has no game IRQ, authenticated CD-to-RAM receipt, game-owned input poll, or transition into gameplay. Continue tracing authentic source bytes through game-owned consumers.
+
+- A targeted v3 PCE Fast capture now records cold code fetches at `$40D9` and
+  `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.
+  Authentic Track 02 reads and guest writes back the 37 observed `$40D9` rows
+  at `$1000D9-$1000DB`; this remains loader/firmware provenance, not a game
+  handoff. The wrapper hit its default input-trace cap before the final replay
+  event had a matching controller read, and the source-read/writer traces also
+  hit their row limits. Repeat with larger limits to establish complete input
+  and source chronology, then bind the fetched bytes to a game-owned consumer
+  before enabling further Theron gameplay behavior. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

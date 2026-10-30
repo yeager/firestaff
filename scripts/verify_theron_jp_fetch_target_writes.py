@@ -25,7 +25,10 @@ CAPTURED_ADDRESS_RANGES = (
 TARGET_SUFFIX = ".cd-ram-target-write"
 FETCH_SUFFIX = ".system-card-dispatch"
 TARGET_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
-FETCH_HEADER = "source=mednafen-pce-fast-system-card-controller-dispatch-v2"
+FETCH_HEADERS = {
+    "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
+    "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
+}
 
 
 def parse_fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
@@ -85,7 +88,7 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
     writes = read_target_writes(target_path)
     events = {address: [item[0] for item in rows] for address, rows in writes.items()}
     lines = fetch_path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != FETCH_HEADER:
+    if not lines or lines[0] not in FETCH_HEADERS:
         raise ValueError("unexpected System Card dispatch trace header")
     previous_event = -1
     fetch_bytes = defaultdict(int)
@@ -132,7 +135,7 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
             if address != expected_address:
                 raise ValueError(f"invalid code-fetch physical byte address at line {line_number}")
         row_checks: list[bool] = []
-        for address, value in zip(addresses, values, strict=True):
+        for address, value in zip(addresses, values):
             if address not in TARGET_ADDRESSES:
                 continue
             fetch_bytes[address] += 1
@@ -171,7 +174,7 @@ def main() -> int:
         for address in TARGET_ADDRESSES:
             print(f"address_{address:06x}_writes={write_counts[address]}")
             print(f"address_{address:06x}_non_ea9c_writes={other_pc_writes[address]}")
-            print(f"address_{address:06x}_fetch_bytes={fetch_bytes[address]}")
+            print(f"address_{address:06x}_fetch_bytes={fetch_bytes.get(address, 0)}")
         print(f"target_fetch_bytes_with_prior_matching_write={matched}")
         print(f"target_fetch_bytes_mismatching_latest_prior_write={mismatched}")
         print(f"target_fetch_bytes_without_prior_observed_write={missing}")
