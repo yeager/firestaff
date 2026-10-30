@@ -45,6 +45,40 @@ int main(void)
                        plan.center_y == 53,
                        "D2C smoke uses poison native bitmap, G0212, G0226 right cell");
 
+    input.explosion_type = 101; /* C101 rebirth step 2 uses G0227. */
+    {
+        static const int expected_g0227[7][3] = {
+            {113,57,12},{24,57,12},{195,57,12},{111,63,16},
+            {12,63,16},{213,63,16},{112,76,24}
+        };
+        int square;
+        input.party_direction = 2;
+        for (square = 0; square < 7; ++square) {
+            input.view_square = square;
+            input.last_view_cell = square & 3;
+            input.cell = (input.last_view_cell + input.party_direction) & 3;
+            failures += expect(csb_v1_atari_f0115_plan_explosion(&input, &plan) ==
+                               CSB_V1_ATARI_F0115_EXPLOSION_SPRITE &&
+                               plan.graphic_index == 348 && plan.aspect_index == 0 &&
+                               plan.scale_32 == expected_g0227[square][2] &&
+                               plan.center_x == expected_g0227[square][0] &&
+                               plan.center_y == expected_g0227[square][1],
+                               "C101 rebirth matches each G0227 source row");
+        }
+    }
+    input.view_square = 6; /* M606 D1C */
+    input.last_view_cell = 2;
+    input.party_direction = 0;
+    input.cell = 1;
+    failures += expect(csb_v1_atari_f0115_plan_explosion(&input, &plan) ==
+                       CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN,
+                       "C101 rebirth only draws in the last visible absolute cell");
+    input.cell = 0;
+    input.view_square = 7; /* M607 D1L is outside the G0227 range. */
+    failures += expect(csb_v1_atari_f0115_plan_explosion(&input, &plan) ==
+                       CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN,
+                       "C101 rebirth is clipped after D1C");
+
     input.explosion_type = 7; /* C007 poison cloud */
     input.attack = 0;
     input.centered = 1;

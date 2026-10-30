@@ -16,6 +16,7 @@ typedef struct CSB_V1_AtariF0115ExplosionInput {
     int attack;
     int centered;
     int cell;
+    int last_view_cell; /* Final F0115 view-cell ordinal, 0..3, or -1. */
     int party_direction;
     int view_square; /* MEDIA020 M600..M611: D3C through D0R */
     int flip_horizontal; /* M005_RANDOM(2), source-owned G0349 draw */

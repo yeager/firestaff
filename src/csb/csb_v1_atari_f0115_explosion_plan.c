@@ -44,11 +44,16 @@ static const int16_t s_g0226_cell[15][2][2] = {
     {{0,0},{0,0}},{{-73,60},{-33,60}},{{256,60},{296,60}}
 };
 
+/* ReDMCSB DUNVIEW.C G0227/G0228, D3C through D1C. */
+static const int16_t s_g0227_rebirth_step2[7][3] = {
+    {113,57,12},{24,57,12},{195,57,12},{111,63,16},
+    {12,63,16},{213,63,16},{112,76,24}
+};
+
 static int explosion_aspect(int type)
 {
     if (type == C000_EXPLOSION_FIREBALL ||
-        type == C002_EXPLOSION_LIGHTNING_BOLT ||
-        type == C101_EXPLOSION_REBIRTH_STEP2) {
+        type == C002_EXPLOSION_LIGHTNING_BOLT) {
         return C0_EXPLOSION_ASPECT_FIRE;
     }
     if (type == C006_EXPLOSION_POISON_BOLT ||
@@ -81,6 +86,36 @@ int csb_v1_atari_f0115_plan_explosion(
     out_plan->view_square = input->view_square;
     out_plan->explosion_coordinate_index = input->view_square + 3;
     out_plan->transparent_color = 10; /* MEDIA020 C10_COLOR_FLESH. */
+    if (input->explosion_type == C101_EXPLOSION_REBIRTH_STEP2) {
+        int scale;
+        int cell;
+        if (input->view_square > 6 || input->last_view_cell < 0 ||
+            input->last_view_cell > 3) {
+            out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
+            return out_plan->kind;
+        }
+        cell = (input->last_view_cell + input->party_direction) & 3;
+        if (input->cell != cell) {
+            out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
+            return out_plan->kind;
+        }
+        scale = s_g0227_rebirth_step2[input->view_square][2];
+        out_plan->aspect_index = C0_EXPLOSION_ASPECT_FIRE;
+        out_plan->graphic_index = MEDIA020_M614_FIRST_EXPLOSION;
+        out_plan->source_byte_width = s_g0211_byte_width[C0_EXPLOSION_ASPECT_FIRE];
+        out_plan->source_height = s_g0211_height[C0_EXPLOSION_ASPECT_FIRE];
+        out_plan->center_x = s_g0227_rebirth_step2[input->view_square][0];
+        out_plan->center_y = s_g0227_rebirth_step2[input->view_square][1];
+        out_plan->scale_32 = scale;
+        out_plan->draw_byte_width =
+            (out_plan->source_byte_width * scale + (scale >> 1)) >> 5;
+        out_plan->draw_height =
+            (out_plan->source_height * scale + (scale >> 1)) >> 5;
+        out_plan->flip_horizontal = input->flip_horizontal != 0;
+        out_plan->flip_vertical = input->flip_vertical != 0;
+        out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_SPRITE;
+        return out_plan->kind;
+    }
     if (input->explosion_type == C050_EXPLOSION_FLUXCAGE) {
         /* DUNVIEW.C:6006-6013 only retains C050 from D3L (explosion
          * index C04) toward the party; D3C is a source-invisible lane. */

@@ -6137,7 +6137,8 @@ static int m11_csb_atari_st_draw_explosions_for_square(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
     const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
     int framebuffer_width, int framebuffer_height,
-    int forward, int side, int view_square, int door_pass)
+    int forward, int side, int view_square, int door_pass,
+    uint16_t cell_order)
 {
     static const uint8_t smoke_palette[16] = {
         0,1,2,3,4,5,12,1,8,9,10,11,12,13,14,15
@@ -6149,6 +6150,8 @@ static int m11_csb_atari_st_draw_explosions_for_square(
     int thing;
     int links;
     int drawn = 0;
+    int last_view_cell = -1;
+    CSB_V1_AtariF0115CellOrder decoded_order;
 
     /* ReDMCSB F0115 draws ordinary explosions during the selected door
      * ordering pass too; only its separate Fluxcage field pass is deferred. */
@@ -6160,6 +6163,10 @@ static int m11_csb_atari_st_draw_explosions_for_square(
         side < -1 || side > 1 ||
         !state->csbAtariStRuntimeHandoffComplete ||
         !m11_dm1_media009_metadata(state)) return -1;
+    if (csb_v1_atari_f0115_decode_cell_order(cell_order, &decoded_order) < 0)
+        return -1;
+    if (decoded_order.count > 0u)
+        last_view_cell = decoded_order.view_cell[decoded_order.count - 1u];
 
     map_x = runtime->party_x +
         (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
@@ -6218,22 +6225,29 @@ static int m11_csb_atari_st_draw_explosions_for_square(
                 input.explosion_type = explosion->explosionType;
                 input.attack = explosion->attack;
                 input.centered = explosion->centered;
-                input.cell = explosion->cell == 0xff
-                    ? ((source_thing >> 14) & 3u) : explosion->cell;
+                input.cell = (source_thing >> 14) & 3u;
+                input.last_view_cell = last_view_cell;
                 input.party_direction = runtime->party_dir & 3;
                 input.view_square = view_square;
-                if (explosion->explosionType != 50 &&
-                    view_square != 9) {
-                    input.flip_vertical =
-                        csb_v1_runtime_main_random_bit(mutable_runtime);
-                    input.flip_horizontal =
-                        csb_v1_runtime_main_random_bit(mutable_runtime);
-                    if (input.flip_vertical < 0 || input.flip_horizontal < 0)
-                        return -1;
-                }
                 plan_result = csb_v1_atari_f0115_plan_explosion(
                     &input, &plan);
                 if (plan_result < 0) return -1;
+                /* ReDMCSB rejects invisible rebirth records before consuming
+                 * the ordinary sprite flip bits. Plan once before RNG, then
+                 * attach the source flips only to a visible bitmap route. */
+                if (plan_result != CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN) {
+                    if (explosion->explosionType != 50 && view_square != 9) {
+                        input.flip_vertical =
+                            csb_v1_runtime_main_random_bit(mutable_runtime);
+                        input.flip_horizontal =
+                            csb_v1_runtime_main_random_bit(mutable_runtime);
+                        if (input.flip_vertical < 0 || input.flip_horizontal < 0)
+                            return -1;
+                    }
+                    plan_result = csb_v1_atari_f0115_plan_explosion(
+                        &input, &plan);
+                    if (plan_result < 0) return -1;
+                }
                 if (plan_result == CSB_V1_ATARI_F0115_EXPLOSION_SPRITE) {
                     const int source_width = plan.source_byte_width * 2;
                     const int draw_width = plan.draw_byte_width * 2;
@@ -6363,7 +6377,8 @@ static int m11_csb_atari_st_draw_f0115_pass(
         } else if (event->layer == CSB_V1_ATARI_F0115_EXPLOSION_LAYER) {
             result = m11_csb_atari_st_draw_explosions_for_square(
                 state, dungeon, runtime, framebuffer, 320, 200,
-                forward, side, view_square, event->door_front_view_pass);
+                forward, side, view_square, event->door_front_view_pass,
+                cell_order);
         } else {
             /* Fluxcage remains an F0113 field pass; do not fold it into the
              * ordinary explosion/projectile blitters. */
