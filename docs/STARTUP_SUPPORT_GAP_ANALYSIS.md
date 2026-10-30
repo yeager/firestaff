@@ -709,7 +709,10 @@ symlinks. The picker test verified that source archive hashes stayed unchanged.
   reached its runtime handoff, accepted Return to Menu, then exited without
   reopening M12 or rescanning. The individual platform routes were DM1 PC-34,
   CSB Atari ST, and DM2 FM Towns in the separate real-media probes; the
-  matrix's own direct-exit cases use FM Towns for all three.
+  matrix's own direct-exit cases use FM Towns for all three. The
+  `csb_v1_atari_stx_native_cli_boot` regression separately starts authentic
+  Atari STX media with direct `--game csb --platform atari-st`, reaches the
+  first runtime, and verifies that Return to Menu exits without reopening M12.
 - Separate direct `--game` boot probes omitted `--platform` for all three
   priority games and selected their authentic FM Towns editions, confirming
   the default-platform rule on the no-platform CLI path.

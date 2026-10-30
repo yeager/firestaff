@@ -9,11 +9,13 @@ scratch_root="${FIRESTAFF_TEST_SCRATCH:-$HOME/.codex-scratch}"
 menu_probe=""
 runtime_screenshot_dir=""
 hud_screenshot_dir=""
+direct_exit_log=""
 
 cleanup() {
     if [ -n "$menu_probe" ]; then rm -f "$menu_probe"; fi
     if [ -n "$runtime_screenshot_dir" ]; then rm -rf "$runtime_screenshot_dir"; fi
     if [ -n "$hud_screenshot_dir" ]; then rm -rf "$hud_screenshot_dir"; fi
+    if [ -n "$direct_exit_log" ]; then rm -f "$direct_exit_log"; fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -528,4 +530,34 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic CSB Atari start menu did not accept source C200 and reach runtime: {probe}")
 print("PASS: authentic CSB Atari start menu accepted source C200 and reached runtime")
 PY
-echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu-to-runtime C200 route"
+
+# A direct CSB Atari launch is a single-game session.  After the authentic
+# ANIMATE.SCR title and first runtime handoff, Back must end the process rather
+# than reopening M12.  Use the installed STX itself, not the FM Towns CSB
+# archive used by the cross-game return-to-menu matrix.
+direct_exit_log="$(mktemp "$scratch_root/firestaff-csb-atari-direct-exit.XXXXXX")"
+if ! SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 90s \
+    "$firestaff_cli" --debug --width 960 --height 600 \
+    --game csb --platform atari-st --data-dir "$media_path" \
+    --script 'wait:3600,enter,wait-game-runtime,back,enter' \
+    --duration 120000 >"$direct_exit_log" 2>&1; then
+    cat "$direct_exit_log" >&2
+    echo "FAIL: direct CSB Atari ST did not exit after Return to Menu" >&2
+    exit 1
+fi
+if ! grep -Fq 'startup game=csb mode=direct platform=Atari ST' "$direct_exit_log" ||
+   ! grep -Fq 'phase=inactive' "$direct_exit_log" ||
+   ! grep -Fq 'level-loaded=1 map=0 party=9,0 dir=2' "$direct_exit_log" ||
+   ! grep -Fq 'direct game ended; exiting instead of opening the start menu' \
+       "$direct_exit_log"; then
+    cat "$direct_exit_log" >&2
+    echo "FAIL: direct CSB Atari ST did not reach runtime and exit on Back" >&2
+    exit 1
+fi
+if grep -Fq 'return-menu rescan-complete' "$direct_exit_log"; then
+    cat "$direct_exit_log" >&2
+    echo "FAIL: direct CSB Atari ST reopened M12 after Return to Menu" >&2
+    exit 1
+fi
+echo "PASS: direct CSB Atari ST reaches the authentic runtime and exits on Return to Menu"
+echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu routes"

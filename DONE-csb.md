@@ -1211,3 +1211,10 @@ Reviewed 2026-08-29. Completed work only.
   original Amiga `HCSB.DAT` + `HCSB.HTC` render three distinct pages. This
   validates the source surface and text path, not native Amiga UI integration
   or full-screen pixel parity.
+- 2026-10-30: Extended `csb_v1_atari_stx_native_cli_boot` with an authentic
+  direct-launch exit check. Starting `--game csb --platform atari-st` from the
+  installed Atari ST v2.1 STX, the regression now advances the original
+  ANIMATE.SCR title, enters the initial dungeon runtime, and sends Return to
+  Menu. It requires the direct-session exit trace and rejects a return-menu
+  rescan. The complete CTest passed locally in 212.17 seconds; this verifies
+  the Atari direct-launch lifecycle, not full CSB parity.
