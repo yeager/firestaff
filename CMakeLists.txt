@@ -111,6 +111,15 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_snes_h03 PROPERTIES
         LABELS "dm1;snes;codec;bounds;tier1")
 
+    add_executable(test_dm1_snes_romgh
+        tests/test_dm1_snes_romgh.c
+        src/dm1/dm1_snes_romgh.c)
+    target_include_directories(test_dm1_snes_romgh PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME dm1_snes_romgh COMMAND test_dm1_snes_romgh)
+    set_tests_properties(dm1_snes_romgh PROPERTIES
+        LABELS "dm1;snes;romgh;bounds;tier1")
+
     foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
         if(EXISTS "${_candidate}")
             file(SHA256 "${_candidate}" _candidate_sha256)
@@ -4168,6 +4177,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_snes_romdungeon_real_media
         tests/test_dm1_snes_romdungeon_real_media.c
         src/dm1/dm1_snes_h03.c
+        src/dm1/dm1_snes_romgh.c
+        src/shared/firestaff_snes_romimg3.c
         src/engine/firestaff_dungeon_state.c)
     target_link_libraries(test_dm1_snes_romdungeon_real_media PRIVATE firestaff_m12)
     add_test(NAME dm1_snes_romdungeon_real_media

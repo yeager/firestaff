@@ -35,7 +35,11 @@ int dm1_snes_h03_decode_slot(const uint8_t *source, size_t source_size,
             count = (size_t)(control & 0x7fu) >> 1;
             if (input >= source_size) return 0;
             distance = ((size_t)(control & 1u) << 8) | source[input++];
-            if (count > expected - output) return 0;
+            /* SCK's byte-array SNES_H03 decoder clips a final backward
+             * copy to the declared output size. Authentic DM1 SNES
+             * graphics contain this case (999477); keep literals strict
+             * while matching the reference copy-command behavior. */
+            if (count > expected - output) count = expected - output;
             if (distance > output || (count != 0 && distance == 0)) return 0;
             for (size_t i = 0; i < count; ++i) {
                 destination[output] = destination[output - distance];

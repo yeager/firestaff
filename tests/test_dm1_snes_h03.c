@@ -28,6 +28,8 @@ int main(void) {
     const uint8_t zero_literal[] = {0, 0, 0, 2, 1, 'x', 0, 1, 'y'};
     const uint8_t zero_repeat[] = {0, 0, 0, 2, 1, 'x', 0x80, 0, 1, 'y'};
     const uint8_t invalid_zero_repeat[] = {0, 0, 0, 2, 1, 'x', 0x80, 2, 1, 'y'};
+    /* SCK clips the final back-reference to the declared output length. */
+    const uint8_t clipped_final_repeat[] = {0, 0, 0, 3, 1, 'A', 0x86, 1};
     uint8_t output[8] = {0};
     uint8_t oversized_slot[DM1_SNES_H03_SLOT_SIZE + 1] = {0};
     size_t output_size = 99;
@@ -55,6 +57,10 @@ int main(void) {
     CHECK(consumed == sizeof(zero_repeat));
     CHECK(!decode(invalid_zero_repeat, sizeof(invalid_zero_repeat), output,
                   sizeof(output), NULL, NULL));
+    CHECK(decode(clipped_final_repeat, sizeof(clipped_final_repeat), output,
+                 sizeof(output), &output_size, &consumed));
+    CHECK(output_size == 3 && consumed == sizeof(clipped_final_repeat));
+    CHECK(memcmp(output, "AAA", 3) == 0);
     CHECK(!decode(overlap, sizeof(overlap), output, 5, NULL, NULL));
     CHECK(!decode(overlap, 3, output, sizeof(output), NULL, NULL));
     memcpy(oversized_slot, overlap, sizeof(overlap));

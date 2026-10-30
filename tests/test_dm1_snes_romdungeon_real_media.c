@@ -1,6 +1,8 @@
 #include "dm1_snes_h03.h"
+#include "dm1_snes_romgh.h"
 #include "firestaff_7z_extract.h"
 #include "firestaff_dungeon_query.h"
+#include "firestaff_snes_romimg3.h"
 #include "firestaff_x68k_media_receipt.h"
 
 #include <stdio.h>
@@ -21,6 +23,10 @@ typedef struct {
 
 static const char g_sck_decoded_dungeon_sha256[] =
     "910bdb71e3d1d2dfe02b6e7d7b80c453b2fdda7d51168df9ea9d9a89368882d2";
+static const char g_sck_us10_interface_romimg3_sha256[] =
+    "c8322c353f73c233f8ef4050145eabae8dfd3f4b31c341ea2c02edeedd29356c";
+static const char g_sck_us10_interface_pixels_sha256[] =
+    "583cdd5d1e35098057018140cdda25dbceb41febe004671dbccbe8e6d9dfd1e9";
 
 static const SnesRomIdentity g_snes_roms[] = {
     {"DungeonMasterSNESEU10.smc",
@@ -104,6 +110,73 @@ static int audit_member(const char *name, const uint8_t *bytes,
         fprintf(stderr, "FAIL: DM1 SNES DUNGEON structure mismatch: %s\n", name);
         audit->failure = 1u;
         return -1;
+    }
+
+    {
+        Dm1SnesRomghEntry floor_asset;
+        Dm1SnesRomghEntry item_asset;
+        Dm1SnesRomghEntry interface_asset;
+        const size_t romgh_offset = 34256u; /* map offset 33744 + copier header */
+        const size_t romgh_header_size = 2087u;
+
+        if (!dm1_snes_romgh_resolve(bytes, byte_count, romgh_offset,
+                                    romgh_header_size, 460u, &floor_asset) ||
+            !dm1_snes_romgh_resolve(bytes, byte_count, romgh_offset,
+                                    romgh_header_size, 470u, &item_asset) ||
+            !dm1_snes_romgh_resolve(bytes, byte_count, romgh_offset,
+                                    romgh_header_size, 477u, &interface_asset) ||
+            floor_asset.source_offset != 559126u ||
+            floor_asset.source_size != 5880u || floor_asset.compression != 0u ||
+            item_asset.source_offset != 590336u ||
+            item_asset.source_size != 4096u || item_asset.table_length != 4096u ||
+            item_asset.compression != 0u ||
+            interface_asset.source_offset != 623104u ||
+            interface_asset.compression != 3u ||
+            (strcmp(name, "DungeonMasterSNESJP10.smc") == 0 &&
+             interface_asset.source_size != 4640u) ||
+            (strcmp(name, "DungeonMasterSNESJP11.smc") == 0 &&
+             interface_asset.source_size != 4640u) ||
+            ((strcmp(name, "DungeonMasterSNESUS10.smc") == 0 ||
+              strcmp(name, "DungeonMasterSNESEU10.smc") == 0) &&
+             interface_asset.source_size != 4409u)) {
+            fprintf(stderr, "FAIL: DM1 SNES ROMGH source spans differ: %s\n", name);
+            audit->failure = 1u;
+            return -1;
+        }
+
+        {
+            uint8_t decoded_graphics[8192];
+            size_t graphics_size = 0u, graphics_consumed = 0u;
+            if (!dm1_snes_h03_decode_slot(bytes + interface_asset.source_offset,
+                                          interface_asset.source_size,
+                                          decoded_graphics, sizeof(decoded_graphics),
+                                          &graphics_size, &graphics_consumed) ||
+                graphics_size != sizeof(decoded_graphics) ||
+                graphics_consumed != interface_asset.source_size) {
+                fprintf(stderr, "FAIL: DM1 SNES ROMIMG3 H03 asset 999477: %s\n", name);
+                audit->failure = 1u;
+                return -1;
+            }
+
+            if (strcmp(name, "DungeonMasterSNESUS10.smc") == 0) {
+                uint8_t indexed_pixels[128u * 128u];
+                if (firestaff_x68k_media_receipt_sha256_hex(
+                        decoded_graphics, graphics_size, digest, sizeof(digest)) != 0 ||
+                    strcmp(digest, g_sck_us10_interface_romimg3_sha256) != 0 ||
+                    FirestaffSnesRomimg3_DecodeTiles(
+                        decoded_graphics, sizeof(decoded_graphics), 16u, 16u,
+                        indexed_pixels, sizeof(indexed_pixels)) != 0 ||
+                    firestaff_x68k_media_receipt_sha256_hex(
+                        indexed_pixels, sizeof(indexed_pixels), digest,
+                        sizeof(digest)) != 0 ||
+                    strcmp(digest, g_sck_us10_interface_pixels_sha256) != 0) {
+                    fprintf(stderr, "FAIL: DM1 SNES ROMIMG3 999477 differs from SCK\n");
+                    audit->failure = 1u;
+                    return -1;
+                }
+                puts("PASS: authenticated DM1 SNES US10 ROMIMG3 999477 matches SCK");
+            }
+        }
     }
     audit->passed_mask |= identity->bit;
     printf("PASS: authenticated DM1 SNES ROMDUNGEON %s maps=%d bytes=%zu\n",

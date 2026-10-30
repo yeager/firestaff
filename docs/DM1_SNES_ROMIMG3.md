@@ -29,11 +29,23 @@ is `489172bcc44cdeca1c6c7665bc66b202f91ef34d04e9819f35649bba7c23fabd`; and
 The ROM images and extracted SCK outputs remain local test data and are not
 part of the repository.
 
+`dm1_snes_romgh_resolve` parses the ROMGH length/compression arrays and
+resolves the banked source span with checked ROM bounds. For US 1.0, the
+ROMGH map entry is at file offset 34,256 (map offset 33,744 plus the 512-byte
+copier header), and the graphics stream begins at bank 9. The resolver's
+source offsets for items 999460, 999470, 999472, and 999477 match SCK's
+resmap for US 1.0, EU 1.0, JP 1.0, and JP 1.1. The real-media test also
+decodes H03 item 999477 in all four revisions. US 1.0's 8,192-byte H03
+output and its 128x128 tile-decoded pixel indexes match SCK's output hashes.
+
+SCK's byte-array H03 decoder clips an overlong final backward-copy command
+to the declared output length. DM1 SNES graphics item 999477 uses that case;
+Firestaff now follows the reference behavior for that copy command while
+continuing to reject literal commands that exceed the declared output size.
+
 ## Remaining integration work
 
-The current code is a bounded pixel decoder, not a complete SNES graphics
-loader. The ROMGH table and SNES banked data stream still need a proven
-bounded resolver from a logical map item to its source bytes. Palette resource
-loading and integration into the DM1 SNES renderer are also outstanding.
-Keep authentic ROM media outside Git; use the local real-media test pattern
-and SCK exports as reference evidence when implementing those pieces.
+The decoder and source-span resolver are not yet wired to a DM1 SNES graphics
+loader or renderer. Palette resource loading and presentation integration are
+also outstanding. Keep authentic ROM media outside Git; use the real-media
+test and SCK exports as reference evidence when implementing those pieces.
