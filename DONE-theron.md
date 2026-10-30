@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — disassemble the authentic System Card bootstrap branch
+
+Added a bounded disassembly excerpt of the authentic System Card 3.0 `$E0F3`
+bootstrap, verified against BIOS MD5 `ff1a674273fe3540ccef576376407d1d` on
+TRV2. After `$E4FB` dispatches through `$E000`, the bootstrap calls `$C860`,
+then `$F0A9` and `$E14C`; the latter's carry selects either the `$4000` jump
+after MPR6 setup or the `$CB03/$CB54` path followed by a retry at `$E109`.
+The exact semantics of these branches and the identity of code at `$4000`
+remain unproven. This is reference-only evidence and does not establish game
+startup or Theron parity. See
+`docs/source-lock/theron-disassembly/theron-system-card3-bootstrap-e0f3.asm`.
+
 ## 2026-10-30 — verify the authentic System Card RUN/SELECT branch
 
 The authentic System Card 3.0 disassembly at `$E4E1-$E4FB` requires a SELECT

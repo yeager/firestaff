@@ -64,6 +64,16 @@ unsatisfied. Continue disassembling the post-poll branch and its CD status
 checks; do not infer game startup from input consumption.
 Details and trace hashes are in the source-lock note.
 
+2026-10-30 bootstrap disassembly: the authentic System Card 3.0 callback
+vector resolves to `$E0F3`. The bounded listing shows the `$E109` loop calls
+`$C860`, then `$F0A9` and `$E14C`; `$E14C`'s carry selects the `$4000` path
+after MPR6 setup or the `$CB03/$CB54` path that retries `$C860`. The bytes
+alone do not identify either path's higher-level meaning, and the `$4000`
+payload remains unidentified. Obtain a source-bound v14 trace for the return
+value of `$C860`, the carry/result data at `$E11B`, and mapped bytes/control
+flow at `$4000` before assigning a BIOS launch interpretation. See the bounded
+excerpt `docs/source-lock/theron-disassembly/theron-system-card3-bootstrap-e0f3.asm`.
+
 2026-10-30 v14 source-guided input trace: the authentic System Card 3.0
 disassembly at `$E4E1-$E4FB` dispatches only when `delta=$04` and state=`$0C`.
 The cold replay held RUN (`$08`) for 300 frames, then pressed SELECT (`$04`)

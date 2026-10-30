@@ -761,9 +761,15 @@ The 60-second capture still reports 0 CD IRQ callbacks, 0 non-System-Card
 polls, 0 authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
 `transition=missing`. It records 51,200 source-bound CD data-port reads. The
 post-vector trace re-enters the BIOS bootstrap; it does not prove that control
-reached the game or that Theron gameplay began. The next source target is the
-`$E000` callback/vector and its CD launch condition. Raw media and trace files
-remain private on TRV2 at
+reached the game or that Theron gameplay began. A source-bound disassembly of
+the callback vector and bootstrap is now recorded in
+`theron-system-card3-bootstrap-e0f3.asm`. The vector resolves to `$E0F3`; its
+`$E109` loop calls `$C860`, invokes `$F0A9` and the `$E14C` routine, then either
+configures MPR6 and jumps to `$4000`, or calls `$CB03/$CB54` and retries `$C860`.
+The excerpt identifies the branch and memory operations but does not name
+their semantics. Runtime evidence still lacks the branch values needed to
+prove which route v14 took, and `$4000` has not been identified as game code.
+Raw media and trace files remain private on TRV2 at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-run-select-edge-v14-60s-cold-20261030/`.
 
 The v14 trace hashes are:
