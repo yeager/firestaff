@@ -101,6 +101,7 @@ def join_rows(
                     intervening is not None
                     and int(intervening["physical_address"], 16) == physical
                     and int(intervening["value"], 16) == int(write["value"], 16)
+                    and int(intervening["pc"], 16) == int(write["writer_pc"], 16)
                 )
             except (KeyError, ValueError):
                 movement_matches_write = False
