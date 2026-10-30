@@ -406,11 +406,11 @@ int main(int argc, char **argv)
         goto done;
     }
     if (!execution_receipt_contains_window(&execution)) {
-        fprintf(stderr, "execution receipt does not contain clip/local state and rows 10..40\n");
+        fprintf(stderr, "execution receipt does not contain clip/local state and rows 8..40\n");
         goto done;
     }
     if (!verify_window(&trace, &vram, &dgn, &mode1_joined, &mode5_joined)) {
-        fprintf(stderr, "frame-13162 command window 10..40 failed DGN source joins\n");
+        fprintf(stderr, "frame-13162 command window 8..40 failed source checks\n");
         goto done;
     }
     if (!verify_window_user_clip_accepts_viewport(&trace, &vram)) {
@@ -425,9 +425,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "frame-13162 verified composition reference failed its manifest/hash\n");
         goto done;
     }
-    printf("MODE-5 PROOF: six authenticated direct-color draws have an "
+    printf("MODE-5 PROOF: eight authenticated direct-color draws have an "
            "all-transparent 0x000f source and decode to zero opaque writes\n");
-    printf("PASS: frame-13162 rows 10..40 joined to authentic LEV00.DGN "
+    printf("PASS: frame-13162 rows 8..40 checked against authentic captures and LEV00.DGN "
            "(mode1=%u mode5=%u) with their active user-clip and local-origin "
            "state verified; the retained "
            "FBS+NBG0+row171 composition reference is hash-verified; "

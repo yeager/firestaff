@@ -1,11 +1,12 @@
 # Nexus frame-13162 VDP1 DGN material window
 
 This real-data verification checks the contiguous executed VDP1 command window
-10–40 from the authenticated Ymir cold-boot capture. It binds each trace row to
-the reconstructed little-endian VDP1 command bytes, confirms the Ymir execution
-receipt includes every row, and resolves each 4bpp or direct-colour texture to
-the actual retail `LEV00.DGN` Structure2 image and, for indexed textures, its
-palette. The current window has 25 mode-1 joins and 6 mode-5 joins.
+8–40 from the authenticated Ymir cold-boot capture. It binds each trace row to
+the reconstructed little-endian VDP1 command bytes and confirms the Ymir
+execution receipt includes every row. It resolves 25 indexed textures and six
+of the eight direct-colour textures to exact retail `LEV00.DGN` Structure2
+sources. Rows 8 and 9 have captured bytes but ambiguous retail-fill ownership;
+the test does not claim a source join for those rows.
 
 The execution receipt also includes rows 6 and 7, and the test checks those
 commands against the reconstructed command bytes. Row 6 sets the inclusive
