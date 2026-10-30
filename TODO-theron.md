@@ -31,15 +31,16 @@ hashes are recorded in the
 2026-10-30 v11 RAM-loop source-candidate analysis: the bounded fetch trace
 contains 165 snapshots and covers all 18 physical bytes at `$1000D2-$1000E3`.
 Across 495 observed byte slots, 491 match the latest prior `$EA9C` writer-PC
-record; 386 of those also have an immediately preceding source-valid `$EA99`
-Track 02 read with the same value. Four bytes differ from the latest recorded
-`$EA9C` write, and 105 matching writes lack that immediately preceding read.
-The writer trace is not an all-PC memory-write trace, so these counts are
-bounded candidates, not exclusive provenance. Keep following the 18-byte loop
-through complete writers and its caller until a game-owned consumer and
-input/state transition are demonstrated. The offline candidate verifier
-repeats these exact counts in three TRV2 runs; details and trace hashes are in
-the source-lock note.
+record, and all 491 have an ordered source-valid `$EA99` read of the same value
+within the existing 16-event candidate window. The nearest read is one event
+earlier for 386 byte slots and two events earlier for 105; 416 slots have one
+candidate and 75 have multiple same-value candidates. Four bytes differ from
+the latest recorded `$EA9C` write. The writer trace is not an all-PC
+memory-write trace, so these counts are bounded candidates, not exclusive
+provenance. Keep following the 18-byte loop through complete writers and its
+caller until a game-owned consumer and input/state transition are demonstrated.
+The offline candidate verifier repeats these exact counts in three TRV2 runs;
+details and trace hashes are in the source-lock note.
 
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte

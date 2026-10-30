@@ -639,8 +639,9 @@ valid bytes overlap logical `$40D2-$40E3`, mapped to physical `$1000D2-$1000E3`.
 indexed-dispatch/code-follow sidecars, authenticates all source-valid CD reads
 against the Japanese Rev. 1 Track 02 image, validates the `$EA9C` writer rows,
 then compares each fetched byte with the latest earlier write recorded for its
-physical address. For matching values it checks whether the immediately prior
-shared event is a source-valid `$EA99` read of that byte.
+physical address. For matching values it checks whether a source-valid
+`$EA99` read of the same value occurred in the prior 16 shared events, using
+the candidate window from the existing writer verifier.
 
 Three repeated runs against the private TRV2 capture reported the same
 classification:
@@ -649,16 +650,20 @@ classification:
   fetch rows.
 - 491 byte slots matched the latest earlier `$EA9C` writer-PC record; four
   differed, and no byte lacked a prior `$EA9C` record.
-- Of the 491 matches, 386 had an immediately preceding source-valid `$EA99`
-  Track 02 read. The other 105 had no such immediately preceding read.
-- 103 fetch rows had all their in-range bytes joined to matching writer and
-  read records.
+- All 491 matches had an ordered, same-value source-valid `$EA99` Track 02
+  read within 16 shared events. The nearest candidate was one event earlier
+  for 386 slots and two events earlier for 105. There was one same-value
+  candidate for 416 slots and more than one for 75, yielding 611 candidate
+  read matches across the repeated fetch slots.
+- 163 fetch rows had all their in-range bytes joined to matching writer and
+  read candidates.
 
 The tool reports observations and does not promote mismatches or missing joins
-into success claims. `$EA9C` is only one observed guest writer PC; other writes
-can be absent from the sidecar. This does not establish exclusive RAM
-provenance, game ownership, gameplay handoff, or parity. Raw captures and
-original media remain private on TRV2.
+into success claims. Repeated values can leave multiple reads as candidates.
+`$EA9C` is only one observed guest writer PC; other writes can be absent from
+the sidecar. This does not establish exclusive RAM provenance, game ownership,
+gameplay handoff, or parity. Raw captures and original media remain private on
+TRV2.
 
 The additional trace hashes are:
 

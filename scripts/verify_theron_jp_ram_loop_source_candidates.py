@@ -2,9 +2,10 @@
 """Classify source-bound $EA9C write candidates for the observed JP RAM loop.
 
 The report joins bounded instruction-fetch snapshots at physical $1000D2-$1000E3
-to the latest prior write in the $EA9C-only trace, then to the immediately
-preceding authentic $EA99 CD read. It does not observe writes from every guest
-PC and therefore cannot establish exclusive RAM provenance or gameplay handoff.
+to the latest prior write in the $EA9C-only trace, then reports matching
+source-valid $EA99 CD-read candidates within 16 shared events. It does not
+observe writes from every guest PC and cannot establish exclusive RAM provenance
+or gameplay handoff.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import sys
+from bisect import bisect_left
 from collections import defaultdict
 from pathlib import Path
 
@@ -86,13 +88,19 @@ def classify(
     reads: list[dict[str, str]],
     writes: list[dict[str, str]],
 ) -> dict[str, int]:
-    reads_by_event = {int(row["event_sequence"]): row for row in reads}
+    read_events_by_value: dict[int, list[int]] = defaultdict(list)
+    for row in reads:
+        if row.get("source_valid") == "1" and row.get("reader_pc") == "ea99":
+            read_events_by_value[int(row["value"], 16)].append(int(row["event_sequence"]))
     writes_by_address: dict[int, list[dict[str, str]]] = defaultdict(list)
     for row in writes:
         writes_by_address[int(row["physical_address"], 16)].append(row)
 
     observed_addresses: set[int] = set()
     observed_bytes = matching_writes = source_read_matches = 0
+    immediate_source_read_matches = unique_source_read_matches = 0
+    ambiguous_source_read_matches = source_read_candidates_total = 0
+    max_source_read_candidate_gap = 0
     mismatching_writes = missing_writes = missing_source_reads = 0
     fully_backed_fetch_rows = 0
     loop_fetch_rows = 0
@@ -126,17 +134,24 @@ def classify(
                 byte_results.append(False)
                 continue
             matching_writes += 1
-            read = reads_by_event.get(write_event - 1)
-            if (
-                read is None
-                or read.get("source_valid") != "1"
-                or read.get("reader_pc") != "ea99"
-                or int(read["value"], 16) != value
-            ):
+            candidate_events = read_events_by_value.get(value, [])
+            candidate_end = bisect_left(candidate_events, write_event)
+            candidate_start = bisect_left(candidate_events, write_event - 16)
+            candidates = candidate_events[candidate_start:candidate_end]
+            if not candidates:
                 missing_source_reads += 1
                 byte_results.append(False)
                 continue
             source_read_matches += 1
+            source_read_candidates_total += len(candidates)
+            if len(candidates) == 1:
+                unique_source_read_matches += 1
+            else:
+                ambiguous_source_read_matches += 1
+            nearest_gap = write_event - candidates[-1]
+            max_source_read_candidate_gap = max(max_source_read_candidate_gap, nearest_gap)
+            if nearest_gap == 1:
+                immediate_source_read_matches += 1
             byte_results.append(True)
         if byte_results:
             loop_fetch_rows += 1
@@ -151,8 +166,13 @@ def classify(
         "matching_latest_prior_ea9c_writes": matching_writes,
         "mismatching_latest_prior_ea9c_writes": mismatching_writes,
         "fetch_bytes_without_prior_ea9c_write": missing_writes,
-        "matches_with_immediately_prior_source_valid_ea99_read": source_read_matches,
-        "matching_writes_without_immediately_prior_source_valid_ea99_read": missing_source_reads,
+        "matching_writes_with_source_valid_ea99_read_candidate_within_16_events": source_read_matches,
+        "matching_writes_without_source_read_candidate_within_16_events": missing_source_reads,
+        "unique_source_read_candidate_byte_slots": unique_source_read_matches,
+        "ambiguous_source_read_candidate_byte_slots": ambiguous_source_read_matches,
+        "source_read_candidate_matches_across_fetch_byte_slots": source_read_candidates_total,
+        "nearest_source_read_candidate_gap_1": immediate_source_read_matches,
+        "max_source_read_candidate_gap": max_source_read_candidate_gap,
         "fetch_rows_fully_candidate_backed": fully_backed_fetch_rows,
     }
 

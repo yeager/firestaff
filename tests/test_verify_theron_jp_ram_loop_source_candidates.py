@@ -39,8 +39,8 @@ def main() -> None:
     report = verifier.classify([fetch], reads, writes)
     if report["matching_latest_prior_ea9c_writes"] != 3:
         raise AssertionError("matching writer bytes were not counted")
-    if report["matches_with_immediately_prior_source_valid_ea99_read"] != 3:
-        raise AssertionError("immediately preceding source reads were not joined")
+    if report["matching_writes_with_source_valid_ea99_read_candidate_within_16_events"] != 3:
+        raise AssertionError("ordered same-value source reads within the window were not joined")
     if report["fetch_rows_fully_candidate_backed"] != 1:
         raise AssertionError("fully candidate-backed fetch row was not counted")
 
@@ -53,8 +53,17 @@ def main() -> None:
 
     wrong_reader = [*reads[:-1], {**reads[-1], "reader_pc": "e4c5"}]
     report = verifier.classify([fetch], wrong_reader, writes)
-    if report["matching_writes_without_immediately_prior_source_valid_ea99_read"] != 1:
+    if report["matching_writes_without_source_read_candidate_within_16_events"] != 1:
         raise AssertionError("non-EA99 read was accepted as a source candidate")
+
+    delayed_and_repeated = [*reads[:-1],
+                            {**reads[-1], "event_sequence": "27"},
+                            {**reads[-1], "event_sequence": "28"}]
+    report = verifier.classify([fetch], delayed_and_repeated, writes)
+    if report["nearest_source_read_candidate_gap_1"] != 2:
+        raise AssertionError("two-event source-read candidate gap was not recorded")
+    if report["ambiguous_source_read_candidate_byte_slots"] != 1:
+        raise AssertionError("repeated-value source candidates were not marked ambiguous")
 
     print("PASS: RAM-loop verifier distinguishes matching, mismatching, and non-EA99 candidates")
 
