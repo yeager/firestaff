@@ -1250,3 +1250,10 @@ Reviewed 2026-08-29. Completed work only.
   Menu. It requires the direct-session exit trace and rejects a return-menu
   rescan. The complete CTest passed locally in 212.17 seconds; this verifies
   the Atari direct-launch lifecycle, not full CSB parity.
+- 2026-10-30: Installed France-region CSB Atari preservation media now passes
+  `csb_v1_atari_french_preservation_zip_cli_boot` against its original ZIP.
+  The test verifies source-owned title startup, map-0 runtime, first movement,
+  and M12 start-menu launch; its receipt reports the English v2.0/v2.1
+  campaign, so this proves the preservation archive route and does not claim a
+  French-language edition. SDL dummy devices were used; native display,
+  physical input, and audio remain unverified.

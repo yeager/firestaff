@@ -1070,11 +1070,21 @@ native Retina window, physical input, audio output or visual parity.
 
 2026-10-13 extended original-media archive matrix on the Mac mini M4, source
 commit `458bf820e`: the Atari nested ZIP, original Atari archive, and Amiga ADF
-CLI/start-menu tests passed. The French Atari preservation ZIP test was skipped
-because `chaos_strikes_back_ftl_france.zip` is not present in the CSB data
-directory; the available original Atari archive contains English v2.0/v2.1
-game and utility disks only. Do not replace the missing French source with
-synthetic media. These headless runs do not verify native display or audio.
+CLI/start-menu tests passed. The France-region Atari preservation ZIP was not
+present then, so its test skipped. These headless runs do not verify native
+display or audio.
+
+2026-10-30 current-source retest on the Mac mini M4: after the user-provided
+original-media collection gained
+`~/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip`, both the direct
+`tests/test_csb_v1_atari_nested_zip_cli_boot.sh` run and CTest
+`csb_v1_atari_french_preservation_zip_cli_boot` passed (1/1, 2.94 seconds).
+The test verified the archive's source-owned Atari title, CLI transition into
+the original map-0 runtime, first movement, and start-menu launch. Its receipt
+identifies the loaded campaign as `csb-st20-21-en`; this verifies the
+France-region preservation archive route, not a French-language edition.
+Original media remains outside Git. SDL dummy video/audio was used, so this
+does not establish native display, physical input, or audible output.
 
 2026-10-12 shared FTL decoder bounds: the ReDMCSB `DECOMPDU.C` F0455 token
 reader now fails on truncated input instead of synthesizing zero bits after
@@ -1233,12 +1243,6 @@ development-only conversion evidence below.
   gameplay and full original-disk parity remain open. Use hashes in
   `data/asset_validator_checksums_m12.json` and
   `parity-evidence/csb_v1_l10n_source_catalog.md` for future oracle checks.
-
-- Restore the original French Atari ST preservation ZIP before revalidating
-  `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
-  `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is absent
-  from the configured data directory. Do not treat the earlier French ZIP
-  evidence as a current local-media run until the authentic archive is present.
 
 - Verify the natural F31 closed-door melee path on the reported M5. Its
   C04 sound now schedules ReDMCSB's C20 event one tick later, and EN/JA
