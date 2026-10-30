@@ -2385,6 +2385,13 @@ parity.
   route passes after the changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
+  ReDMCSB MOVESENS.C F0270's floor C10 local effect now reaches M11 as a
+  typed local Steal-XP effect; the production WALK_ON consumer divides 300
+  across the source champion count and awards each living champion through
+  F0304. Its focused regression checks the CELL_ANY receipt. Cell-specific
+  leader-only C10 still needs the authenticated G0411 identity in the sensor
+  context; do not substitute the UI-selected champion. F0271 rotation, other
+  local effects and original-media sensor results remain open.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

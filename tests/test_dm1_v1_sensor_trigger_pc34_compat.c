@@ -1221,6 +1221,62 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
           "Runtime C003 door gate: door event delay comes from sensor value");
 }
 
+/* ReDMCSB MOVESENS.C F0276 -> F0272 -> F0270: a floor C10 local effect
+ * passes CM1_CELL_ANY, so it awards split 300 Steal XP. */
+static void test_floor_c10_local_steal_xp_effect(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct PartyState_Compat party;
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(&party, 0, sizeof(party));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    squares[2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY, 0, DM1_EFFECT_SET,
+                             0, 0, 0, 0, 1, 0, 0, 0);
+    sensors[0].localMultiple = DM1_EFFECT_ADD_300XP_STEAL_SKILL;
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.loaded = 1;
+    party.championCount = 2;
+
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1,
+          "Runtime C003 C10: party walk-on emits local XP effect");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_LOCAL_STEAL_XP &&
+              effects.effects[0].textIndex == DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
+              effects.effects[0].destCell == -1,
+          "Runtime C003 C10: preserves source effect and CELL_ANY split mode");
+}
+
 /* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — simple click
  *  Source: F0275 case C001 (WALL_ORNAMENT_CLICK)
@@ -2217,6 +2273,7 @@ int main(void) {
     test_floor_pressure_plate_runtime_party_object_weight_gate();
     test_floor_pressure_plate_runtime_multi_item_weight_gate();
     test_floor_party_plate_runtime_door_event_gate();
+    test_floor_c10_local_steal_xp_effect();
     test_pressure_plate_actuator_dispatch_per_square_type();
     test_wall_ornament_click();
     test_wall_click_specific_object();

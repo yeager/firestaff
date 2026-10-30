@@ -20553,6 +20553,32 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             /* Log but don't crash */
             break;
 
+        case SENSOR_EFFECT_LOCAL_STEAL_XP: {
+            /* ReDMCSB MOVESENS.C:F0269:1038-1075/F0270:1081-1097: C10
+             * awards 300 Steal XP.
+             * For CM1_CELL_ANY the source divides before iterating living
+             * champions; a cell-specific local C10 awards only G0411, whose
+             * identity is not yet present in this movement receipt. */
+            const int total = 300;
+            int championCount = state->world.party.championCount;
+            int champion;
+            int amount;
+            if (e->textIndex != 10 || e->destCell >= 0 || championCount <= 0 ||
+                championCount > CHAMPION_MAX_PARTY) {
+                break;
+            }
+            amount = total / championCount;
+            for (champion = 0; champion < championCount; ++champion) {
+                const struct ChampionState_Compat* member =
+                    &state->world.party.champions[champion];
+                if (!member->present || member->hp.current <= 0) continue;
+                m11_award_magic_xp(state, champion, LIFECYCLE_SKILL_STEAL,
+                                   amount);
+            }
+            m11_refresh_hash(state);
+            break;
+        }
+
         default:
             break;
         }

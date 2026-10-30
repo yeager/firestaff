@@ -39,6 +39,7 @@
 #define SENSOR_EFFECT_PROJECTILE     5  /* Launch projectile from wall */
 #define SENSOR_EFFECT_OBJECT_GEN     6  /* Generate object at sensor location */
 #define SENSOR_EFFECT_END_GAME_V2   7  /* Trigger endgame sequence */
+#define SENSOR_EFFECT_LOCAL_STEAL_XP 8 /* F0270 C10: local 300 Steal XP */
 #define SENSOR_EXEC_EFFECT_GENERATOR 14 /* Generator: spawn creature (textIndex = sensorIndex) */
 
 /* ---- Bounds ---- */

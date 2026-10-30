@@ -564,15 +564,25 @@ static int sensor_process_party_enter_leave(
             if (outList->count < SENSOR_EFFECT_LIST_MAX_COUNT) {
                 struct SensorEffect_Compat* effect =
                     &outList->effects[outList->count++];
+                /* ReDMCSB MOVESENS.C:F0270:1081-1097 calls F0269 for C10.
+                 * F0276:1785 passes CM1_CELL_ANY, so party entry splits 300
+                 * Steal XP among living champions. Keep that cell in
+                 * destCell; remote effects use the same field for target. */
                 effect->kind = sourceSensor->localEffect
-                    ? SENSOR_EFFECT_UNSUPPORTED
+                    ? (sourceSensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL
+                           ? SENSOR_EFFECT_LOCAL_STEAL_XP
+                           : SENSOR_EFFECT_UNSUPPORTED)
                     : SENSOR_EFFECT_TOGGLE_REMOTE;
                 effect->sensorType = sensors[i].sensorType;
                 effect->destMapIndex = sourceSensor->localEffect ? 0 : -1;
                 effect->destMapX = sensors[i].targetMapX;
                 effect->destMapY = sensors[i].targetMapY;
-                effect->destCell = sensors[i].targetCell;
-                effect->textIndex = triggerResult.resolvedEffect;
+                effect->destCell = sourceSensor->localEffect
+                    ? -1 /* F0276 calls F0272 with CM1_CELL_ANY */
+                    : sensors[i].targetCell;
+                effect->textIndex = sourceSensor->localEffect
+                    ? sourceSensor->localMultiple
+                    : triggerResult.resolvedEffect;
                 effect->delayTicks = sensors[i].value;
             }
             continue;
