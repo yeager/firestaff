@@ -107,6 +107,8 @@ int main(void) {
     size_t total_thing_records = 0u;
     size_t square_list_count = 0u;
     size_t square_list_thing_count = 0u;
+    size_t ownership_list_count = 0u;
+    size_t ownership_thing_count = 0u;
     size_t i;
     int result = 1;
 
@@ -408,6 +410,48 @@ int main(void) {
                         goto done;
                     }
                 }
+                if (thing_type == 4u || thing_type == 9u) {
+                    uint16_t slot = 0u;
+                    const uint16_t raw_slot =
+                        (uint16_t)(((uint16_t)dungeon[record_offset + 2u] << 8) |
+                                   dungeon[record_offset + 3u]);
+                    if (FirestaffX68kDungeonDat_GetThingSlot(
+                            &dungeon_dat, thing, &slot) != 0 || slot != raw_slot) {
+                        fprintf(stderr,
+                                "FAIL: X68000 type %u thing %u Slot differs from raw record\n",
+                                (unsigned)thing_type, (unsigned)thing_index);
+                        goto done;
+                    }
+                    /* An unused record has no owned contents. */
+                    if (actual_next != FIRESTAFF_X68K_DUNGEON_THING_NONE &&
+                        slot != FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST) {
+                        uint16_t current = slot;
+                        size_t traversed = 0u;
+                        ++ownership_list_count;
+                        while (current !=
+                                   FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST) {
+                            uint16_t next = 0u;
+                            const uint8_t current_type =
+                                (uint8_t)((current & 0x3c00u) >> 10);
+                            const uint16_t current_index =
+                                (uint16_t)(current & 0x03ffu);
+                            if (current == FIRESTAFF_X68K_DUNGEON_THING_NONE ||
+                                traversed++ >= total_thing_records ||
+                                current_index >=
+                                    dungeon_dat.thing_count[current_type] ||
+                                FirestaffX68kDungeonDat_GetThingNext(
+                                    &dungeon_dat, current, &next) != 0) {
+                                fprintf(stderr,
+                                        "FAIL: X68000 type %u thing %u has invalid or cyclic owned Slot list\n",
+                                        (unsigned)thing_type,
+                                        (unsigned)thing_index);
+                                goto done;
+                            }
+                            ++ownership_thing_count;
+                            current = next;
+                        }
+                    }
+                }
             }
         }
         if (typed_thing_bytes != 13122u ||
@@ -663,11 +707,13 @@ int main(void) {
                 }
             }
         }
-        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x first-thing=0x%04x; verified %lu square lists and %lu links, all map cells and metadata\n",
+        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x first-thing=0x%04x; verified %lu square lists/%lu links, %lu owner lists/%lu items, all map cells and metadata\n",
                (unsigned)map_x, (unsigned)map_y, (unsigned)direction,
                (unsigned)start_square, (unsigned)start_thing,
                (unsigned long)square_list_count,
-               (unsigned long)square_list_thing_count);
+               (unsigned long)square_list_thing_count,
+               (unsigned long)ownership_list_count,
+               (unsigned long)ownership_thing_count);
     }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
            "SWOOSH matches ReDMCSB; all 562 X30J graphics spans and the "

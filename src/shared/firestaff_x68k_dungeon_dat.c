@@ -347,6 +347,34 @@ int FirestaffX68kDungeonDat_GetThingNext(
     return 0;
 }
 
+int FirestaffX68kDungeonDat_GetThingSlot(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint16_t thing,
+    uint16_t *out_slot) {
+    const uint8_t thing_type = (uint8_t)((thing & 0x3c00u) >> 10);
+    const uint16_t thing_index = (uint16_t)(thing & 0x03ffu);
+    const uint8_t record_bytes = thing_type < FIRESTAFF_X68K_DUNGEON_THING_TYPES
+        ? g_x68k_thing_record_bytes[thing_type]
+        : 0u;
+    FirestaffX68kDungeonDatSpan span;
+    size_t record_offset;
+
+    if (!dungeon || !out_slot || !dungeon->bytes ||
+        (thing_type != 4u && thing_type != 9u) ||
+        thing_index >= dungeon->thing_count[thing_type] || record_bytes < 4u) {
+        return -1;
+    }
+    span = dungeon->thing_data[thing_type];
+    if (span.offset > dungeon->size || span.size > dungeon->size - span.offset ||
+        (size_t)thing_index > SIZE_MAX / record_bytes) {
+        return -1;
+    }
+    record_offset = (size_t)thing_index * record_bytes;
+    if (record_offset > span.size || 4u > span.size - record_offset) return -1;
+    *out_slot = x68k_read_be16(dungeon->bytes + span.offset + record_offset + 2u);
+    return 0;
+}
+
 int FirestaffX68kDungeonDat_GetMapMetadata(
     const FirestaffX68kDungeonDat *dungeon,
     uint8_t map_index,

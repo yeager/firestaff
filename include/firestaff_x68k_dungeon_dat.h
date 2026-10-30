@@ -115,6 +115,14 @@ int FirestaffX68kDungeonDat_GetThingNext(
     uint16_t thing,
     uint16_t *out_next);
 
+/* Read GROUP.Slot or CONTAINER.Slot (ReDMCSB DEFS.H GROUP/CONTAINER and
+ * GROUP.C / DUNGEON.C inventory traversal). Other thing types are rejected.
+ */
+int FirestaffX68kDungeonDat_GetThingSlot(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint16_t thing,
+    uint16_t *out_slot);
+
 /* Read map-local trailing metadata in ReDMCSB F0174 order: creature types,
  * wall ornaments, floor ornaments, then door ornaments (DUNGEON.C:2755-2760).
  */

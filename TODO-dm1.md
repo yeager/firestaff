@@ -25,8 +25,11 @@ real-media gate traverses every square-owned list to `0xFFFE` with a bound
 against cycles and invalid refs. ReDMCSB's `MAP.A.Width` is stored as
 `cell_count-1`; the parser's width is already a cell count, so the serialized
 column base is the sum of parser widths. Group/container `Slot` ownership
-lists and their payload decoding remain open. This proves bounded source-data
-access only, not runtime behavior or X68000 launch support.
+lists now have a bounded accessor for GROUP and CONTAINER records only; the
+real-media gate verifies all such fields and traverses 30 owner lists
+containing 68 items. Projectile `Slot` is excluded because it is not an
+ownership list. Payload-field decoding, full inventory semantics, runtime
+behavior, and X68000 launch support remain open.
 
 2026-10-30 startup/platform audit: the local original-media inventory includes
 `Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,
