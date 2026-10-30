@@ -407,6 +407,8 @@ static unsigned int report_authentic_stair_candidates(
         variant == THERON_TRACK02_VARIANT_JP_BIN ? 1u : 0u;
     unsigned int attribute_counts[16] = {0u};
     unsigned int total = 0u;
+    unsigned int with_open_neighbor = 0u;
+    unsigned int shared_akutuba_candidate_seen = 0u;
 
     for (unsigned int dungeon = 0u; dungeon < THERON_TRACK02_DUNGEON_COUNT;
          ++dungeon) {
@@ -428,11 +430,40 @@ static unsigned int report_authentic_stair_candidates(
                     if (theron_tile_type(raw) != THERON_TILE_STAIRS) continue;
                     ++total;
                     ++attribute_counts[theron_tile_attributes(raw)];
+                    /* Bits 0..3 mean north/east/south/west. This mask
+                     * describes only neighboring OPEN source tiles. It is a
+                     * capture-target hint, not movement/reachability evidence
+                     * or evidence of stair direction or destination. */
+                    unsigned int open_neighbor_mask = 0u;
+                    if (y > 0u &&
+                        theron_tile_type(data.maps[map].tiles[x][y - 1u]) ==
+                            THERON_TILE_OPEN)
+                        open_neighbor_mask |= 1u << 0; /* north */
+                    if (x + 1u < width &&
+                        theron_tile_type(data.maps[map].tiles[x + 1u][y]) ==
+                            THERON_TILE_OPEN)
+                        open_neighbor_mask |= 1u << 1; /* east */
+                    if (y + 1u < height &&
+                        theron_tile_type(data.maps[map].tiles[x][y + 1u]) ==
+                            THERON_TILE_OPEN)
+                        open_neighbor_mask |= 1u << 2; /* south */
+                    if (x > 0u &&
+                        theron_tile_type(data.maps[map].tiles[x - 1u][y]) ==
+                            THERON_TILE_OPEN)
+                        open_neighbor_mask |= 1u << 3; /* west */
+                    if (open_neighbor_mask != 0u) ++with_open_neighbor;
+                    if (dungeon == 0u && map == 1u && x == 17u && y == 8u) {
+                        assert(raw == 0x68u);
+                        assert(open_neighbor_mask == 0x04u);
+                        ++shared_akutuba_candidate_seen;
+                    }
                     printf("  source-only stair candidate region=%s dungeon=%s "
-                           "map=%u x=%u y=%u raw=%02x attributes=%x\n",
+                           "map=%u x=%u y=%u raw=%02x attributes=%x "
+                           "open_neighbor_mask_bits_nesw=%x\n",
                            region, names[dungeon], map, x, y,
                            (unsigned int)raw,
-                           (unsigned int)theron_tile_attributes(raw));
+                           (unsigned int)theron_tile_attributes(raw),
+                           open_neighbor_mask);
                 }
             }
         }
@@ -455,8 +486,14 @@ static unsigned int report_authentic_stair_candidates(
             exit(1);
         }
     }
+    const unsigned int expected_with_open_neighbor =
+        variant == THERON_TRACK02_VARIANT_JP_BIN ? 42u : 39u;
+    assert(with_open_neighbor == expected_with_open_neighbor);
+    assert(shared_akutuba_candidate_seen == 1u);
     printf("  %s: %u authentic stair-class tiles; direction and destination unresolved\n",
            region, total);
+    printf("  %s: %u stair tiles have at least one adjacent OPEN source tile; "
+           "reachability unresolved\n", region, with_open_neighbor);
     for (unsigned int attributes = 0u; attributes < 16u; ++attributes) {
         if (attribute_counts[attributes] != 0u)
             printf("  source-only stair attribute region=%s value=0x%x count=%u; "

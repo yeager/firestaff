@@ -1,5 +1,21 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-10-30 — JP System Card TIA reads consume preceding BaseRAM writes
+
+A cold reference run using authentic JP Rev. 1 Track 02 and System Card 3.0
+recorded 2,048 complete TIA byte reads from physical `$1047E0-$10481F`. Joining
+each read against the latest strictly preceding write to the same physical
+address in the shared HuC6280 event sequence matched all 2,048 values; the
+observed writer PCs were `$42ad` and `$42b4`. The join is reproducible with
+`scripts/verify_theron_tia_ram_source_trace.py` and the private capture's
+`.tia` and `.pce-fast-main-ram-target-write` traces.
+
+This establishes a reference-only RAM-to-TIA data flow. It does not establish
+that the writes originate in authentic Track 02: the same capture has zero raw
+sector spans, zero CD IRQ callbacks and zero authenticated CD-to-RAM receipts.
+It also does not establish game launch, gameplay behavior or native parity.
+The original media and raw traces remain private on TRV2.
+
 ## 2026-08-14 — r26 cold start proves same-session CD→RAM transport
 
 A fresh cold-start run with the authenticated US Track 02, System Card and

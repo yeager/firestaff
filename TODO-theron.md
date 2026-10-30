@@ -9,6 +9,39 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
+2026-10-30 v11 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
+System Card 3.0 produced 40 dispatch windows and 10,030 runtime fetch rows at
+the 256-instruction cap. Twelve windows ended at the next `$40E1` dispatch
+after 235-248 fetched instructions; 28 hit the cap. In the first window the
+actual fetches enter System Card controller polling at `$E4A5-$E4DE`, read the
+single scripted event at `$E4C5`, and return to the indexed dispatcher. The
+next observed targets vary, and this does not prove game ownership. Direct-
+dispatch, follow, and source-chain verifiers each passed three loops. Five
+source-chain joins bind the initial dispatched table and target opcode bytes
+to authentic Track 02 reads and latest observed `$EA9C` writes. Thirty-nine
+dispatches remain outside the bounded `$6148` code-follow. There were no
+non-System-Card polls, CD IRQ callbacks, authenticated aggregate CD-to-RAM
+receipts, or game main-RAM dispatches; the 45-second capture ended with
+`transition=missing`. Continue through complete guest writers and
+source/consumer chains to a game-owned poll and resulting state change. v9's
+independent `$EA9C` writer comparison remains historical evidence. Results and
+hashes are recorded in the
+[JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+
+2026-10-30 v11 RAM-loop source-candidate analysis: the bounded fetch trace
+contains 165 snapshots and covers all 18 physical bytes at `$1000D2-$1000E3`.
+Across 495 observed byte slots, 491 match the latest prior `$EA9C` writer-PC
+record, and all 491 have an ordered source-valid `$EA99` read of the same value
+within the existing 16-event candidate window. The nearest read is one event
+earlier for 386 byte slots and two events earlier for 105; 416 slots have one
+candidate and 75 have multiple same-value candidates. Four bytes differ from
+the latest recorded `$EA9C` write. The writer trace is not an all-PC
+memory-write trace, so these counts are bounded candidates, not exclusive
+provenance. Keep following the 18-byte loop through complete writers and its
+caller until a game-owned consumer and input/state transition are demonstrated.
+The offline candidate verifier repeats these exact counts in three TRV2 runs;
+details and trace hashes are in the source-lock note.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source
@@ -16,7 +49,16 @@ assets, mechanics, or parity.
    `$E009` dispatch, or partial byte join alone does not establish a game
    handoff or playable runtime. Current trace limits are recorded in the
    [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md)
-   and the dated trace entries below.
+   and the dated trace entries below. The latest v11 trace follows 40 indexed
+   dispatches; 28 windows reach their 256-fetch cap. The first observed path
+   returns from the System Card controller poll to its own dispatcher. The
+   new 18-byte `$40D2-$40E3` RAM-loop report has four fetch/write mismatches and
+   105 matching writes without an immediately preceding source read, and the
+   `$EA9C` observer does not cover every guest writer. The earlier `$613A`,
+   `$613F`, `$6144`, and temporary `$40D9` bytes also remain unbound to a
+   game-owned consumer. Continue tracing complete writers and callers until a
+   game-owned poll and resulting state change are observed; there is still no
+   game IRQ, aggregate authenticated CD-to-RAM receipt, or non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
@@ -35,6 +77,56 @@ assets, mechanics, or parity.
    actuators, creatures and combat, spells, inventory, chapter progression,
    and save/resume. Compare both authentic regional editions against the
    [Theron parity definition matrix](parity-evidence/theron_v1_parity_definition_matrix.md).
+
+## 2026-10-30 — trace all guest writes at the five fetched-code addresses
+
+- Extended the reference-only PCE Fast target-write observer to record guest
+  CPU and block-move writes at $1000D9-$1000DB and $10468D-$10468E, the five
+  addresses that differed from the earlier $EA9C-only trace.
+- In a second authentic JP cold run@480:300 capture, 76 writes to these
+  addresses came from PCs other than $EA9C. All 228 fetched bytes at the five
+  addresses had an earlier observed write with the same latest value. The new
+  verifier reports zero missing writes and zero value mismatches.
+- The writes at $10468D/$10468E came from STA $468D at $4684 and
+  STA $468E at $4689, with accumulator values $E0/$47. The subsequent
+  fetch at $468C was E3 E0 47, a TIA opcode and the start of its source
+  operand. At $1000D9-$1000DB, a TII block move at $4055 had source and
+  destination mappings that alias the same physical bytes; later writes
+  changed the fetched bytes to $4C 48 61 and back to $EA bytes. These are
+  runtime code writes, not evidence of a native gameplay handoff.
+- This closes the specific writer-observer gap for the five addresses in this
+  capture. The run still had no game IRQ, authenticated CD transfer receipt,
+  or gameplay transition, and it does not establish loader completion or
+  parity. Full remaining work is tracked in the JP source-lock note.
+
+## 2026-10-30 — bind the JP System Card transfer to executed code
+
+- Extended the PCE Fast reference trace with PC $EA9C CD-RAM writer records
+  and instruction-byte snapshots for execution in $4000-$5FFF. The verifier
+  checks the source bytes against hash-verified Japanese Rev. 1 Track 02, joins
+  reads and writes by event order and value, and compares executed bytes with
+  the latest traced write to each physical address.
+- On a fresh cold run@480:300 capture, all 63,488 CD data-port reads were
+  source-bound to authentic Track 02. All 53,248 $EA9C writes had an
+  ordered/value candidate match to a recent $EA99 source read. Repeated bytes
+  can make these joins ambiguous; they do not prove unique read-to-write
+  causality. Of 262,144 code-fetch rows, 262,121 were fully backed by prior
+  traced writes; 46 fetched bytes differed from the latest traced write.
+  Those bytes span 23 fetch rows, five physical addresses in banks $80 and
+  $82, and three logical PCs. Each address had a prior $EA9C write, but no
+  earlier traced write matched the fetched value. A later untraced writer
+  or mapping/trace semantics could explain this; the capture cannot
+  distinguish them. The affected physical addresses were $1000D9 (2 bytes),
+  $1000DA (1), $1000DB (1), $10468D (21), and $10468E (21); logical PCs
+  were $40D7 (1), $40D9 (3), and $468C (42). Slot-2 MPR was $80 at the
+  first three addresses and $82 at the last two, with no observed mapping
+  change. The follow-up trace now observes guest writes at these five addresses; it does not prove a full CD-to-game transfer.
+- The run remains blocked before the game-owned IRQ, authenticated CD transfer
+  receipt, game input poll, and gameplay transition. Treat this as loader and
+  execution provenance only; it does not establish game launch or parity.
+- Capture files remain private on TRV2 under
+  /home/trv2/firestaff-theron-evidence/capture/theron-jp-run-writer-opcode-cold-20261030/.
+  The emulator remains reference-only.
 
 ## 2026-10-30 — trace the JP System Card Run path from authentic media
 
@@ -682,17 +774,38 @@ assets, mechanics, or parity.
 
 ## 2026-10-30 — resolve stair-hosted actuator target consumers
 
-- An authentic-media census now records the decoded fields and target tile for
-  all eight stair-hosted `FLOOR_PARTY` actuators in each retail edition. Their
-  actuator records, decoded fields, coordinates, and target tile bytes match
-  across JP and USA. Seven target locations have equal source-record streams;
-  the SARMON target `(1,9)` has one category-2 record (`ref=0x0803`) whose raw
-  bytes differ by edition (`feff3106` JP, `feff0902` USA).
-- Do not infer mutation semantics from these data records. Bind the target
-  category and each regional raw record to the original actuator consumer,
-  then capture a positive original-runtime event and an equivalent no-input
-  control before enabling the stair-hosted target in
-  `theron_v1_world_dispatch_source_actuator()`.
+- Bind each stair-hosted `FLOOR_PARTY` target category and regional raw record
+  to the original actuator consumer, including SARMON `(1,9)` category 2
+  (`ref=0x0803`; `feff3106` JP, `feff0902` USA).
+- Do not infer mutation semantics from the data records. Capture a positive
+  original-runtime event and an equivalent no-input control before enabling the
+  target. Locate the current enablement site at
+  `theron_v1_world_dispatch_source_actuator_events()` before implementing.
+
+## 2026-10-30 — available Akutuba state does not reach a stair tile
+
+- Built and ran `test_theron_v1_track02_dungeon_loader` from the current source
+  on TRV2 against the installed authentic US and JP Track 02 data. The test
+  passed. A temporary US source-map census found no stair-class tile on
+  Akutuba map 0; the first US Akutuba stairs are on map 1 at `(8,1)` and
+  `(17,8)`, with five more on map 2 and eighteen on map 3.
+- Extended `test_theron_v1_track02_dungeon_map` to print a cardinal N/E/S/W
+  bit mask for adjacent `OPEN` source tiles at each authenticated stair cell.
+  On TRV2, the updated target built and the US and JP real-media CTests each
+  passed three consecutive runs. The census found 39 US and 42 JP stair cells
+  with at least one adjacent `OPEN` source tile. Akutuba map 1 `(17,8)` is a
+  shared US/JP capture candidate with an adjacent `OPEN` tile to its south
+  (mask bit 2). This mask reports source adjacency only; it does not establish
+  a reachable route, active runtime map identity, stair direction, or target.
+- The retained authentic post-Akutuba reference state
+  (`f17f377df210b4a3ae904a13fb85a7f0`) is position-bound at `(2,3)` in the
+  existing command captures, but it is not bound to a stair-bearing source
+  tile. Do not use it to claim a stair transition or infer a destination from
+  neighboring levels.
+- Next obtain an authentic original-runtime state with its active Track 02
+  level and a reachable stair tile bound in the same capture, then record a
+  positive stair traversal and no-input control before implementing that
+  specific transition. Keep all other stair routes blocked.
 
 ## 2026-10-30 — identify accepted UP+II movement-state transfer
 
@@ -758,3 +871,159 @@ assets, mechanics, or parity.
   and movement parity remain open. Next capture a confirmed cold JP gameplay
   route and follow authenticated Track 02 reads through their runtime
   destinations to the active selector and a discriminating tile consumer.
+
+## 2026-10-30 — retry combined TIA and RAM-writer capture
+
+- Added an optional bounded PCE Fast TIA trace output to the live-capture
+  wrapper. It is disabled by default, requires the PCE Fast hook, validates the
+  trace header, rejects truncation, and adds row counts to the capture receipt.
+- A cold JP Rev. 1 run with authentic Track 02 and System Card 3.0 produced
+  32 complete TIA transfers (2,048 byte rows), 2,240 zero-page rows, and 2,176
+  writes covering the observed `$1047E0-$10481F` range. The existing TIA and
+  authentic Track 02 verifiers passed. The RAM write trace was not truncated.
+- The wrapper still ended `BLOCKED`: it observed no IRQ or authenticated
+  CD-to-RAM receipt, so the run cannot establish a source-to-TIA provenance
+  chain. The partial first attempt was also interrupted with SIGINT and lacked
+  the required close-time VRAM snapshot; the corrected retry used SIGTERM and
+  emitted the snapshots. The partial captures are retained privately on TRV2.
+- The TIA hook is System Card execution evidence only. Game launch, native
+  parity, and the complete Theron gameplay route remain unproven.
+
+## 2026-10-30 — join TIA reads to preceding BaseRAM writes
+
+- Added `scripts/verify_theron_tia_ram_source_trace.py` to join every TIA byte
+  read to the latest strictly preceding BaseRAM write at the same physical
+  address using the shared event sequence. It rejects malformed, reordered,
+  truncated, unmapped, missing, or value-mismatched evidence.
+- Against the retained authentic-media capture, the verifier matched all
+  2,048 TIA reads with zero missing predecessors or value mismatches. The
+  matching producer PCs are `$42ad` and `$42b4`.
+- This proves a live RAM-to-TIA byte flow in the reference System Card run.
+  It does not bind those writes to Track 02: the capture has zero raw-sector
+  spans, zero CD IRQ callbacks, and zero authenticated CD-to-RAM receipts.
+  Gameplay transition and native parity remain open.
+
+- Follow-up review found that the v1 zero-page observer recorded direct
+  `HU_Page1` offsets `$02/$03` as logical `$0002/$0003` and derived MPR slot 0.
+  `HU_Page1` is the MPR1 window, so those rows do not prove the physical
+  addresses previously reported. The historical row counts and instruction
+  PCs remain observations, but discard the v1 zero-page MPR/physical mappings
+  and the old zero-page verifier pass. The independent `tia_byte` mappings
+  above are unaffected. The v2 observer now records `$2002/$2003`, an explicit
+  zero-page offset, and derives the physical address from MPR1; a new authentic
+  capture is still required to restore that evidence.
+
+## 2026-10-30 — trace TIA byte transfers at `$468C`
+
+- Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
+- A cold Japanese Rev. 1 capture recorded 32 complete transfers of the same 64-byte source range (`$47E0-$481F`) to alternating logical destinations `$0002/$0003`: 2,048 byte rows in total. The trace verifier passed with no truncation or incomplete transfer.
+- This remains emulator evidence. The run still lacks a game IRQ, authenticated CD-to-RAM receipt, game-owned controller poll, and gameplay transition. Continue binding the transfer to its source provenance and eventual game consumers; do not treat the trace as native parity.
+
+## 2026-10-30 — observe TIA zero-page transfers
+
+- The original v1 observer recorded 2,240 reads and writes of offsets $02/$03 while the authentic JP System Card routine executed in $4600-$46FF. Later review found its physical mapping was wrong: direct `HU_Page1` accesses use MPR1, but v1 labeled the offsets as logical $0002/$0003 and selected MPR slot 0. Do not use those v1 rows or their verifier pass as physical-address evidence.
+- The v2 trace encodes the corresponding bus addresses as $2002/$2003, retains the zero-page offsets explicitly, and resolves physical addresses through MPR1. The authentic v5 cold capture below validates this mapping.
+- This remains reference trace evidence, not game-level semantics or native parity. The run has no game IRQ, authenticated CD-to-RAM receipt, game-owned input poll, or transition into gameplay. Continue tracing authentic source bytes through game-owned consumers.
+
+## 2026-10-30 — follow the JP cold Run path into the next 256 instructions
+
+- Added a bounded PCE Fast code-follow sidecar that starts at the authentic
+  System Card fetch of `$6148`, records 256 instruction fetches with bytes and
+  MPR mappings, and emits completion only when the next instruction-fetch
+  hook confirms execution advanced beyond the 256th row.
+- On authentic Japanese Rev. 1 media and System Card 3.0, the cold
+  `run@480:300` capture produced 256 rows and the terminal completion record.
+  `verify_theron_jp_code_follow_trace.py` reported `status=complete rows=256`.
+  The same run produced 32 complete TIA transfers (2,048 byte rows) and 128
+  v2 zero-page rows; the TIA verifier passed and confirmed the corrected MPR1
+  mapping. In particular, direct `$02/$03` accesses carry the explicit
+  `space=zp` tag, are represented in the `$2002/$2003` window, and use
+  `mpr_slot=1` with MPR1=`$F8`.
+- Scripted input was consumed only by the System Card poll (`$E4C5`); there
+  were no non-System-Card polls. The transition receipt reports zero CD IRQ
+  callbacks, zero authenticated CD-to-RAM receipts, and no gameplay transition.
+  This is reference-only cold-loader evidence and does not establish a native
+  handoff or gameplay parity.
+- Raw capture files remain private on TRV2 under
+  `/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-follow-v6-cold-20261030/`.
+  Trace SHA-256: code-follow `32dc1fde9e78dd6f3c21a61a5a7f5117d80fb2393f1bab26ec2643773048e1d4`,
+  TIA `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`,
+  and transition receipt `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
+
+## 2026-10-30 — correlate the `$410D,X` dispatch bytes with disc reads
+
+- Added `verify_theron_jp_indirect_jump_source_chain.py`. It reuses the strict
+  JP Track 02 source and writer-PC validators, validates the complete code-follow
+  window and indexed dispatch, then requires the latest traced System Card
+  writer-PC store before each consumer to match an immediately preceding
+  source-bound CD read.
+- Against the authentic Japanese Rev. 1 capture, three consecutive runs matched
+  the two `$4131/$4132` table bytes and the three bytes fetched at `$4319` to
+  Track 02 offsets `2,876,817–2,876,818` and `2,877,305–2,877,307`. Each
+  source-valid `$EA99` read is followed by a byte-equal `$EA9C` write in the
+  shared event sequence, and each write is the latest `$EA9C` record before the
+  dispatch/fetch. Other guest-PC writes are not included in that trace, so this
+  is not exclusive memory provenance. The aggregate authenticated CD-to-RAM
+  receipt remains zero and game-owned execution is still unproven. See the
+  source-lock note for exact event IDs and hashes.
+
+## 2026-10-30 — correlate the `$410D,X` dispatch with the next fetch
+
+- Added an optional reference-only opcode `$7C` observer for PCE Fast at the
+  two-byte table reads executed by the `$40E1` System Card code. It records the
+  values returned by the existing `RdMem` calls, logical and physical table
+  addresses, MPR state, resolved target, and shared event sequence; it makes no
+  additional guest-memory reads. Its verifier joins dispatch events to the
+  preceding `$40E1` fetch and the next recorded instruction fetch inside the
+  bounded `$6148` code-follow window. Rows outside that window remain explicit
+  but are not promoted to code-follow matches.
+- A cold `run@480:300` capture on authentic JP Rev. 1 media and System Card 3.0
+  recorded 40 indexed dispatch rows. One row fell within the 256-instruction
+  follow window and matched on three consecutive verifier runs: event 102677
+  at `$40E1`, base `$410D`, X=`$24`, effective table address `$4131` mapped by
+  MPR2=`$80` to `$100131/$100132`, bytes `$19/$43`, resolved target `$4319`,
+  followed by fetch event 102678 at `$4319` / physical `$100319`. The other 39
+  dispatch rows occurred outside the bounded code-follow window and were not
+  correlated to a later fetch by this verifier.
+- The separate offline source-chain verifier authenticates the corresponding
+  five Track 02 source bytes and matches them to the captured dispatch/fetch
+  values and adjacent `$EA99` read / `$EA9C` write events 31301/31302 and
+  31303/31304 to table writes at physical `$100131/$100132`, then events
+  32277/32278, 32279/32280, and 32281/32282 to the three bytes fetched from
+  `$100319-$10031B`. Every source read matches the authentic raw Track 02 byte;
+  each write is the latest traced `$EA9C` store at that physical address before
+  its dispatch or fetch. This writer trace does not cover writes from all guest
+  PCs, so the chain does not establish exclusive memory provenance. The evidence
+  does not complete the loader or establish a game-owned input poll or gameplay
+  parity. The aggregate receipt
+  still reports zero CD IRQ callbacks and zero authenticated CD-to-RAM receipts;
+  scripted input remains at the System Card poll. See the source-lock note for
+  trace hashes and capture limits.
+
+- A targeted v3 PCE Fast capture now records cold code fetches at `$40D9` and
+  `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.
+  Authentic Track 02 reads and guest writes back the 37 observed `$40D9` rows
+  at `$1000D9-$1000DB`; this remains loader/firmware provenance, not a game
+  handoff. A v4 replay with larger input and source/writer limits later
+  established all scheduled events at the System Card poll and authenticated
+  the observed Track 02 reads; its separate main-RAM consumer trace still hit
+  its sample limit. Bind the fetched bytes to a game-owned consumer before
+  enabling further Theron gameplay behavior. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — v4 input and consumer evidence remains firmware bounded
+
+- The v4 cold replay removed the input-trace cap as a blocker: all 11 scheduled
+  events were followed by a System Card poll at `$E4C5`. It still observed no
+  non-System-Card poll, CD IRQ, authenticated CD-to-RAM receipt, `$E009`
+  dispatch, or gameplay transition. Treat `$42AB/$42B2` and the extended
+  writer fetches as candidate boundaries until their caller and ownership are
+  source-bound.
+- The source-read verifier matched 483,328 authentic Track 02 reads with no
+  unbound reads; the `$EA9C` writer rows had ordered value candidates. The
+  main-RAM consumer trace hit its independent sample limit, and three bytes
+  differ from the latest observed writer in the broader fetch comparison.
+- Next, identify the caller and ownership of the candidate PCs and follow a
+  source-authenticated transfer to a game-owned poll and visible gameplay
+  state. Do not infer gameplay parity from the BIOS poll or loader bytes. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

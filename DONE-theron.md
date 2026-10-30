@@ -1,5 +1,70 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — classify authentic RAM-loop fetch/write/source candidates
+
+Added `verify_theron_jp_ram_loop_source_candidates.py` and a focused regression
+for the bounded `$40D2-$40E3` instruction window. The verifier validates the
+authentic Japanese Rev. 1 Track 02 bytes and the dispatch/follow trace structure,
+then compares each loop fetch byte with the latest prior `$EA9C` writer-PC
+record and its ordered `$EA99` read candidate within 16 shared events. Three
+repeated runs against the cold v11 capture consistently observed all 18
+physical bytes across 165 fetch rows: 491/495 byte slots matched the latest
+traced write, and all 491 had a same-value source-valid read candidate. The
+nearest read was one event earlier for 386 slots and two events earlier for
+105; 416 slots had one candidate and 75 had multiple candidates. Four bytes
+differed from the latest traced write. The test passed three local loops.
+
+This is bounded provenance analysis, not proof of exclusive memory ownership:
+the writer sidecar records `$EA9C` only. The capture still has no game-owned
+poll or gameplay transition, so native Theron handoff and parity remain open in
+`TODO-theron.md`.
+
+## 2026-10-30 — validate bounded indexed-dispatch follow traces
+
+Added a bounded per-dispatch instruction-follow observer to the Mednafen
+reference build and integrated its sidecar into the authentic capture path.
+The offline verifier checks event ordering, latest-dispatch ownership,
+address mapping, duplicate markers, capture-end windows, and configured caps.
+Five focused validator cases and three capture-script regression runs passed;
+the instrumented reference build compiled on TRV2 with `-j1`. A new authentic
+v9 capture yielded 40 dispatch windows and 2,560 fetched instruction rows;
+MAME `unidasm` decoded actual fetch bytes from the `$41C5` window as a
+`$1C/$1D` cursor loop. This is trace-tool and code-fetch evidence only. All
+windows hit their caps, and the run still had no game-owned poll or transition;
+native loader handoff and gameplay parity remain open in `TODO-theron.md`.
+
+## 2026-10-30 — correlate the JP indexed System Card dispatch with Track 02
+
+Added `verify_theron_jp_indirect_jump_source_chain.py` to combine the bounded
+indexed-jump/code-follow verifiers with the authentic Track 02 read and System
+Card writer-PC checks. Against the real JP Rev. 1 media and v8 cold capture on
+TRV2, three runs each matched source events 31301/31302 and
+31303/31304 to table bytes `$19/$43` at `$100131/$100132`, and events
+32277/32278 through 32281/32282 to `$A5/$1C/$48` at `$100319-$10031B`. The
+verifier checks the raw BIN size and MD5 and each byte's raw-file offset; no
+game media or raw capture was copied into the repository.
+
+This closes raw-media validation and byte matching for five observed bytes on
+one JP System Card path. The writer trace only covers `$EA9C`, so other guest-PC
+writes are not ruled out and exclusive memory provenance remains open. The
+aggregate CD-to-RAM receipt remains absent, input still reaches only
+the System Card poll, and native loader completion and gameplay parity remain
+open in `TODO-theron.md`. Exact evidence is in
+`docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — report source-adjacent stair capture candidates
+
+Extended the authentic Track 02 stair census to print a N/E/S/W bit mask for
+neighboring `OPEN` source tiles and a per-region count. Built the focused target
+on TRV2 and ran the US and JP real-media CTests three consecutive times each;
+all six runs passed against the hash-verified Track 02 files. The census found
+39 US and 42 JP stair cells with at least one adjacent `OPEN` tile. Akutuba map
+1 `(17,8)` is present in both editions and has an adjacent open tile to its
+south. The mask helps select capture targets only; it proves neither
+reachability nor active runtime map identity, stair direction, destination,
+or native transition behavior. The transition remains fail-closed and the
+original traversal capture remains open in `TODO-theron.md`.
+
 ## 2026-10-30 — sequence cold PCE Fast movement trace rows
 
 The capture-only movement-context observer now emits v3 rows with the shared
@@ -9503,3 +9568,82 @@ native rendering, or Theron parity. The private evidence bundle is at
   keyboard/mouse/touch routes passed three consecutive loops. This verifies
   Firestaff's native input routing on real game data; it does not by itself
   establish chord parity against the original hardware or full Theron parity.
+
+## 2026-10-30 — narrow JP System Card code-fetch tracing
+
+- Changed the reference-only Mednafen PCE Fast dispatch trace to v3 and
+  restrict its code-fetch rows to seven observed PCs. This removes the broad
+  windows that previously exhausted their row budgets while retaining v2
+  verifier compatibility and explicit truncation rejection.
+- Built Mednafen on TRV2 with PCE Fast enabled and ran the authentic JP Rev. 1
+  cold replay. The v3 trace recorded 37 `$40D9` fetches and six `$6138-$6144`
+  fetches with no code-fetch truncation marker. Source and guest-write
+  verifiers confirmed the 37 `$40D9` rows against prior writes to
+  `$1000D9-$1000DB`; unobserved `$10468D/$10468E` addresses now report zero
+  instead of making the CLI fail. The focused verifier regression passed three
+  consecutive loops.
+- The capture wrapper reported `BLOCKED`: the default input trace filled
+  before the last scheduled replay event had a matching controller read, and
+  the source-read and `$EA9C`-writer traces reached their row caps. This is
+  diagnostic evidence only. It proves no game-owned input, gameplay handoff,
+  or Theron parity; see `TODO-theron.md` for the remaining capture and consumer
+  work.
+
+## 2026-10-30 — v4 cold input and consumer trace
+
+- Narrowed the reference-only Mednafen PCE Fast dispatch trace to five
+  candidate consumer PCs and seven extended writer PCs. Both verifier scripts
+  now enforce that exact v4 PC allowlist while retaining v2/v3 compatibility;
+  the regression rejects unlisted v4 addresses.
+- On TRV2, the complete instrumented Mednafen patch set applied and built with
+  PCE Fast enabled using `-j1`. The focused Python verifier passed three
+  consecutive loops, and the live-capture wrapper test passed.
+- A cold capture with authentic JP Rev. 1 Track 02 and System Card 3.0
+  recorded 15,351 consumer-boundary fetches and seven extended writer fetches
+  (15,358 total) and 11/11 scripted events followed by the System Card
+  `$E4C5` poll. Source
+  verification matched 483,328 authentic data reads with no unbound reads;
+  all five targeted guest-write addresses had 111 prior matching fetch bytes.
+- The run ended `BLOCKED` at its time limit. No game-owned poll, CD IRQ,
+  authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition
+  was observed. This is reference instrumentation and evidence only, not
+  native Theron parity. Remaining ownership and gameplay gaps are in
+  `TODO-theron.md`.
+## 2026-10-30 — extend authentic Theron dispatch follow to 128 rows
+
+- Raised the bounded per-dispatch reference trace cap to 128 fetches and the
+  total trace cap to 8,192 rows, retaining 64 windows. Updated the verifier and
+  focused regression to enforce the new bounds.
+- Applied the patch set in an isolated TRV2 source copy, built the PCE Fast
+  reference binary with `-j1`, and captured a cold run using authentic JP Rev.
+  1 Track 02 and System Card 3.0.
+- Direct-dispatch, bounded-follow, and authenticated source-chain verifiers
+  each passed three loops. All 40 follow windows hit the cap. Five observed
+  bytes joined to authentic Track 02 reads and the latest traced `$EA9C`
+  writes; other writer paths and exclusive provenance remain unproven.
+- Disassembly reached System Card input polling at `$E4C5`. The run observed no
+  game-owned poll, CD IRQ, aggregate authenticated CD-to-RAM receipt, game
+  main-RAM dispatch, or gameplay transition. Native gameplay and parity remain
+  open in `TODO-theron.md`.
+- `git diff --check`, shell syntax, Python syntax, six focused verifier tests,
+  and three capture-wrapper regression loops passed.
+- Full v10 trace metrics and hashes are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — follow authentic Theron dispatch windows through 256 fetches
+
+- Raised the bounded follow limit to 256 instructions per window and 16,384
+  rows total; the 64-window bound remains. The verifier and capture regression
+  now enforce those limits.
+- The complete Mednafen patch set applied to an isolated original source tree;
+  the PCE Fast reference binary built on TRV2 with `-j1`.
+- An authentic JP Rev. 1 cold capture passed the direct-dispatch, follow, and
+  source-chain verifiers in three loops. Twelve of 40 windows reached the next
+  indexed dispatch after 235–248 fetches; the other 28 hit the cap.
+- Actual fetches in the first window confirm System Card controller polling
+  and return to `$40E1`. No game-owned input poll, CD IRQ, aggregate
+  authenticated CD-to-RAM receipt, game main-RAM dispatch, or gameplay
+  transition was observed. Native handoff and Theron parity remain open.
+- Focused verifier tests and capture-script regression passed in repeated
+  loops. v11 metrics and hashes are in
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

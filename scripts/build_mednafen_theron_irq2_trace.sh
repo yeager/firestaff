@@ -17,6 +17,7 @@ pce_fast_vram_commit_trace=${FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT
 pce_fast_pointer_trace=${FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT:-0}
 pce_fast_huc6280_23ad_trace=${FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT:-0}
 pce_fast_code_ram_write_trace=${FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT:-0}
+pce_fast_tia_trace=${FIRESTAFF_THERON_PCE_FAST_TIA_TRACE_SUPPORT:-0}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
@@ -48,6 +49,10 @@ if [[ "$pce_fast_huc6280_23ad_trace" != 0 && "$pce_fast_huc6280_23ad_trace" != 1
 fi
 if [[ "$pce_fast_code_ram_write_trace" != 0 && "$pce_fast_code_ram_write_trace" != 1 ]]; then
     printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ "$pce_fast_tia_trace" != 0 && "$pce_fast_tia_trace" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_TIA_TRACE_SUPPORT must be 0 or 1\n' >&2
     exit 2
 fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
@@ -228,8 +233,6 @@ pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_
 pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch"
 if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
     pce_fast_vram_commit_rendered="$build_root/theron-pce-fast-vram-commit.rendered.patch"
@@ -293,6 +296,12 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$shared_event_patch" \
     > "$shared_event_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$shared_event_rendered"
+writer_pc_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_writer_pc_trace.patch"
+writer_pc_trace_rendered="$build_root/theron-pce-fast-cd-ram-writer-pc.rendered.patch"
+sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$writer_pc_trace_patch" \
+    > "$writer_pc_trace_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$writer_pc_trace_rendered"
 fast_vdc_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch"
 fast_vdc_snapshot_rendered="$build_root/theron-pce-fast-vdc-snapshot.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$fast_vdc_snapshot_patch" \
@@ -367,10 +376,20 @@ if ! awk '
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" \
+    "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_transfer_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -414,7 +433,7 @@ fi
 if [[ "$pce_fast_huc6280_23ad_trace" == 1 ]]; then
     configure_pce_fast=(--enable-pce-fast)
 fi
-if [[ "$pce_fast_code_ram_write_trace" == 1 ]]; then
+if [[ "$pce_fast_code_ram_write_trace" == 1 || "$pce_fast_tia_trace" == 1 ]]; then
     configure_pce_fast=(--enable-pce-fast)
 fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator

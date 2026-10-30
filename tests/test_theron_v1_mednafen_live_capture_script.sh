@@ -65,6 +65,8 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
 fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
+python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
+python3 "$repo/tests/test_verify_theron_jp_ram_loop_source_candidates.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -148,6 +150,48 @@ if [[ "$cd_ram_write_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WR
     printf '%s\n' 'FAIL: invalid CD RAM target-write limit lacked a precise diagnostic' >&2
     exit 1
 fi
+cd_ram_write_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=001234567 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal CD RAM target-write limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_octal_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero CD RAM target-write limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_write_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=00008192 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM target-write limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM target-write limit did not reach the missing-media gate' >&2
+    exit 1
+fi
+cd_ram_writer_pc_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT=001234567 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal CD RAM writer-PC limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$cd_ram_writer_pc_octal_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero CD RAM writer-PC limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_writer_pc_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT=00008192 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM writer-PC limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_writer_pc_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM writer-PC limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 cd_ram_write_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
     THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=262144 \
@@ -162,10 +206,12 @@ fi
 cd_ram_write_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_ram_write_patch" ||
    ! grep -Fq 'count >= trace_limit' "$cd_ram_write_patch" ||
+   ! grep -Fq 'cd_ram_target_write_truncated' "$cd_ram_write_patch" ||
+   ! grep -Fq 'if(trace && !truncated)' "$cd_ram_write_patch" ||
    grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_first = 0x68 * 8192 + 0x04d2' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_last = 0x68 * 8192 + 0x04e6' "$cd_ram_write_patch" ||
-   ! grep -Fq '(!stage2_target && !poll_target && !existing_target)' "$cd_ram_write_patch" ||
+   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
    ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded CD RAM target-write trace must include the source-locked poll-code window' >&2
     exit 1
@@ -1670,7 +1716,7 @@ if [[ ! -f "$code_ram_write_patch" ]] ||
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT' "$build_script" ||
-   ! grep -Fq 'if [[ "$pce_fast_code_ram_write_trace" == 1 ]]' "$build_script" ||
+   ! grep -Fq 'if [[ "$pce_fast_code_ram_write_trace" == 1 || "$pce_fast_tia_trace" == 1 ]]' "$build_script" ||
    ! grep -Fq 'configure_pce_fast=(--enable-pce-fast)' "$build_script"; then
     printf '%s\n' 'FAIL: the code-bank RAM-write build option must enable PCE Fast' >&2
     exit 1
@@ -1680,6 +1726,85 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
    ! grep -Fq '[[ ! -s "$pce_fast_code_ram_write_trace" ]]' "$script" ||
    ! grep -Fq 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' "$script"; then
     printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace failures and missing receipts must be rejected' >&2
+    exit 1
+fi
+system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
+if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x44C1 || pc == 0x44D2' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x6138 || pc == 0x613A || pc == 0x613D' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x613F || pc == 0x6142 || pc == 0x6144 || pc == 0x6148' "$system_card_dispatch_patch" ||
+   grep -Fq 'pc >= 0x4000 && pc <= 0x5FFF' "$system_card_dispatch_patch" ||
+   grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_extended event_sequence=%u logical_pc=%04x' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=40d9,42ab,42b2,44c1,44d2 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_follow_complete event_sequence=%u count=%u' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace"' "$script" ||
+   ! grep -Fq 'system_card_code_follow_trace="${trace}.system-card-code-follow"' "$script" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' "$script" ||
+   ! grep -Fq 'pce_fast_system_card_code_follow_status=%s' "$script" ||
+   ! grep -Fq '[[ "$capture_mednafen_module" == pce_fast ]] &&' "$script" ||
+   ! grep -Fq "FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' \"\$binary\"" "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-code-follow-v1' "$repo/scripts/verify_theron_jp_code_follow_trace.py" ||
+   ! grep -Fq 'start_pc=6148 limit=256 terminal=next-instruction-fetch' "$repo/scripts/verify_theron_jp_code_follow_trace.py" ||
+   ! grep -Fq '!code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
+   ! grep -Fq '!extended_code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py"; then
+    printf '%s\n' 'FAIL: bounded System Card code fetches and the 6148 instruction follow must be traced and physically validated' >&2
+    exit 1
+fi
+if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE_LIMIT="$pce_fast_tia_trace_limit"' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-theron-tia-byte-trace-v2 event_sequence_source=TheronTraceCDSharedEventSequence target_pc_range=4600-46ff' "$script" ||
+   ! grep -Fq 'TheronTIAZeroPageAccess("read", 0x2000 | tmp,' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'access=%s space=zp instruction_pc=%04x' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'logical != 0x2002 && logical != 0x2003' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'if slot != 1' "$repo/scripts/verify_theron_tia_transfer_trace.py" ||
+   ! grep -Fq "grep -Eq '^tia(_zero_page)?_truncated '" "$script" ||
+   ! grep -Fq "grep -aFq 'tia_start event_sequence='" "$script"; then
+    printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
+    exit 1
+fi
+source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
+if [[ ! -f "$source_chain_verifier" ]] ||
+   ! grep -Fq 'verify_read_rows(read_path, track02)' "$source_chain_verifier" ||
+   ! grep -Fq 'verify_writer_rows(write_path)' "$source_chain_verifier" ||
+   ! grep -Fq 'reads_by_event.get(write_event - 1)' "$source_chain_verifier" ||
+   ! grep -Fq 'read.get("reader_pc") != "ea99"' "$source_chain_verifier" ||
+   ! grep -Fq 'max(prior, key=lambda row: int(row["event_sequence"]))' "$source_chain_verifier"; then
+    printf '%s\n' 'FAIL: JP dispatch source-chain verifier must authenticate CD reads and latest RAM writes' >&2
+    exit 1
+fi
+indirect_jump_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
+if [[ ! -f "$indirect_jump_patch" ]] ||
+   ! grep -Fq 'TheronTraceIndirectJump(dispatch_base, HU_X, dispatch_low' "$indirect_jump_patch" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$indirect_jump_patch" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch' "$build_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_INDIRECT_JUMP_TRACE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INDIRECT_JUMP_TRACE="$pce_fast_indirect_jump_trace"' "$script" ||
+   ! grep -Fq 'verify_theron_indirect_jump_trace.py' "$script" ||
+   ! grep -Fq 'recorded instruction fetch' "$repo/scripts/verify_theron_indirect_jump_trace.py" ||
+   ! grep -Fq 'next captured fetch' "$repo/scripts/verify_theron_indirect_jump_trace.py"; then
+    printf '%s\n' 'FAIL: indexed indirect-jump evidence must preserve actual reads and match their next fetched target' >&2
+    exit 1
+fi
+indirect_jump_follow_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+indirect_jump_follow_verifier="$repo/scripts/verify_theron_jp_indirect_jump_follow_trace.py"
+if [[ ! -f "$indirect_jump_follow_patch" || ! -f "$indirect_jump_follow_verifier" ]] ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INDIRECT_JUMP_FOLLOW_TRACE="$pce_fast_indirect_jump_follow_trace"' "$script" ||
+   ! grep -Fq 'verify_theron_jp_indirect_jump_follow_trace.py' "$script" ||
+   ! grep -Fq 'per_window_limit=256 total_limit=16384' "$indirect_jump_follow_patch" ||
+   ! grep -Fq 'TheronIndirectJumpFollowTotalRows >= 16384' "$indirect_jump_follow_patch"; then
+    printf '%s\n' 'FAIL: per-dispatch code follows must use bounded windows and validate the trace' >&2
     exit 1
 fi
 main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"

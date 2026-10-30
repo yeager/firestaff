@@ -1,0 +1,96 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -1311,9 +1311,92 @@
+ #define BMT_PREHONK(pork) HuCPU.in_block_move = IBM_##pork;
+ #define BMT_HONKHONK(pork) if(HuCPU.timestamp >= next_user_event) goto GetOutBMT; continue_the_##pork:
+ 
++/* Reference-only probe for src/pce_fast/huc6280_ops.inc:544, which dispatches
++ * LD_BMT(BMT_TIA), and src/pce_fast/huc6280.cpp:1316, the BMT_TIA transfer. */
++static FILE *TheronTIAByteTraceFile;
++static bool TheronTIAByteTraceAttempted;
++static unsigned TheronTIAByteTraceCount;
++static unsigned TheronTIAByteTraceLimit;
++static unsigned TheronTIAByteTraceMove;
++static bool TheronTIAByteTraceTruncationReported;
++static FILE *TheronTIAByteTraceOpen(void)
++{
++ if(!TheronTIAByteTraceAttempted)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_TIA_TRACE");
++  const char *limit_text = getenv("FIRESTAFF_THERON_TIA_TRACE_LIMIT");
++  char *end = NULL;
++  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 65536UL;
++  TheronTIAByteTraceLimit = end && *end == 0 && parsed >= 1UL && parsed <= 1048576UL ?
++      (unsigned)parsed : 65536U;
++  TheronTIAByteTraceAttempted = true;
++  if(path && *path)
++  {
++   TheronTIAByteTraceFile = fopen(path, "w");
++   if(TheronTIAByteTraceFile)
++   {
++    fprintf(TheronTIAByteTraceFile,
++            "source=mednafen-pce-fast-theron-tia-byte-trace-v1 event_sequence_source=TheronTraceCDSharedEventSequence target_pc=468c\n");
++    fflush(TheronTIAByteTraceFile);
++   }
++  }
++ }
++ return TheronTIAByteTraceFile;
++}
++static void TheronTIAByteTraceStart(void)
++{
++ FILE *trace = TheronTIAByteTraceOpen();
++ if(trace)
++ {
++  if(TheronTIAByteTraceCount >= TheronTIAByteTraceLimit)
++   return;
++  const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++  fprintf(trace,
++          "tia_start event_sequence=%u move=%u instruction_pc=%04x physical_pc=%06x source=%04x destination=%04x encoded_length=%04x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++          event_sequence, ++TheronTIAByteTraceMove, TheronTraceInstructionPC,
++          TheronTraceInstructionPhysicalPC, HuCPU.bmt_src, HuCPU.bmt_dest,
++          HuCPU.bmt_length, HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2],
++          HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++  fflush(trace);
++ }
++}
++static INLINE void TheronTIAByteTraceTransfer(unsigned int source, unsigned int destination)
++{
++ const unsigned int source_slot = source >> 13;
++ const uint8 source_mpr = HuCPU.MPR[source_slot];
++ const uint32 source_physical = ((uint32)source_mpr << 13) | (source & 0x1FFF);
++ const uint8 value = RdMem(source);
++ const unsigned int destination_slot = destination >> 13;
++ const uint8 destination_mpr = HuCPU.MPR[destination_slot];
++ const uint32 destination_physical = ((uint32)destination_mpr << 13) | (destination & 0x1FFF);
++ WrMem(destination, value);
++ FILE *trace = TheronTIAByteTraceOpen();
++ if(!trace)
++  return;
++ if(TheronTIAByteTraceCount >= TheronTIAByteTraceLimit)
++ {
++  if(!TheronTIAByteTraceTruncationReported)
++  {
++   fprintf(trace, "tia_truncated after_rows=%u limit=%u\n",
++           TheronTIAByteTraceCount, TheronTIAByteTraceLimit);
++   fflush(trace);
++   TheronTIAByteTraceTruncationReported = true;
++  }
++  return;
++ }
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ fprintf(trace,
++         "tia_byte event_sequence=%u move=%u row=%u instruction_pc=%04x source=%04x source_mpr_slot=%u source_mpr=%02x source_physical=%06x destination=%04x destination_mpr_slot=%u destination_mpr=%02x destination_physical=%06x value=%02x remaining_length=%04x alternate=%u\n",
++         event_sequence, TheronTIAByteTraceMove, TheronTIAByteTraceCount++,
++         TheronTraceInstructionPC, source, source_slot, source_mpr, source_physical,
++         destination, destination_slot, destination_mpr, destination_physical,
++         value, HuCPU.bmt_length, HuCPU.bmt_alternate);
++ fflush(trace);
++}
++
+ #define BMT_TDD	BMT_PREHONK(TDD); do { ADDCYC(6); WrMem(HuCPU.bmt_dest, RdMem(HuCPU.bmt_src)); HuCPU.bmt_src--; HuCPU.bmt_dest--; BMT_HONKHONK(TDD); HuCPU.bmt_length--; } while(HuCPU.bmt_length);
+ #define BMT_TAI BMT_PREHONK(TAI); {HuCPU.bmt_alternate = 0; do { ADDCYC(6); WrMem(HuCPU.bmt_dest, RdMem(HuCPU.bmt_src + HuCPU.bmt_alternate)); HuCPU.bmt_dest++; HuCPU.bmt_alternate ^= 1; BMT_HONKHONK(TAI); HuCPU.bmt_length--; } while(HuCPU.bmt_length); }
+-#define BMT_TIA BMT_PREHONK(TIA); {HuCPU.bmt_alternate = 0; do { ADDCYC(6); WrMem(HuCPU.bmt_dest + HuCPU.bmt_alternate, RdMem(HuCPU.bmt_src)); HuCPU.bmt_src++; HuCPU.bmt_alternate ^= 1; BMT_HONKHONK(TIA); HuCPU.bmt_length--; } while(HuCPU.bmt_length); } 
++#define BMT_TIA BMT_PREHONK(TIA); {HuCPU.bmt_alternate = 0; if(TheronTraceInstructionPC == 0x468C) TheronTIAByteTraceStart(); do { ADDCYC(6); if(TheronTraceInstructionPC == 0x468C) TheronTIAByteTraceTransfer(HuCPU.bmt_src, HuCPU.bmt_dest + HuCPU.bmt_alternate); else WrMem(HuCPU.bmt_dest + HuCPU.bmt_alternate, RdMem(HuCPU.bmt_src)); HuCPU.bmt_src++; HuCPU.bmt_alternate ^= 1; BMT_HONKHONK(TIA); HuCPU.bmt_length--; } while(HuCPU.bmt_length); } 
+ #define BMT_TII BMT_PREHONK(TII); do { ADDCYC(6); WrMem(HuCPU.bmt_dest, RdMem(HuCPU.bmt_src)); HuCPU.bmt_src++; HuCPU.bmt_dest++; BMT_HONKHONK(TII); HuCPU.bmt_length--; } while(HuCPU.bmt_length); 
+ #define BMT_TIN BMT_PREHONK(TIN); do { ADDCYC(6); WrMem(HuCPU.bmt_dest, RdMem(HuCPU.bmt_src)); HuCPU.bmt_src++; BMT_HONKHONK(TIN); HuCPU.bmt_length--; } while(HuCPU.bmt_length);
+ 
