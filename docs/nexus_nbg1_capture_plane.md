@@ -8,15 +8,18 @@ visible page contains 40×28 cells from a 64×64 map.
 
 `nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane()` accepts only that
 register tuple. It applies PND flips, Saturn's 32-byte character-number base,
-8bpp pixel rows, and the captured CRAM palette. The output is marked
-capture-only; it does not claim a retail asset owner, layer priority,
-color-calculation relation, presentation crop, or renderer permission.
+8bpp pixel rows, and the captured CRAM palette. The plane output is marked
+capture-only; it does not claim a retail asset owner, presentation crop, or
+renderer permission. Full-stack layer priority and color selection are
+separately verified for frame 239 in
+[`nexus_vdp2_frame239_composition.md`](nexus_vdp2_frame239_composition.md).
 
 The real-data test decodes 1,120 cells, with 148 nonzero and 71,532
 transparent pixels. All 148 nontransparent pixel colors match the upper-left
 sample of the authentic 2× Ymir screenshot within eight RGB channel levels.
 The measured maximum RGB channel error is seven. This verifies the captured
-NBG1 fetch plane only, not the full VDP2 composite.
+NBG1 fetch plane. The separately documented frame-239 stack comparison checks
+all four screenshot samples per native pixel and matches exactly.
 
 Set `FIRESTAFF_NEXUS_YMIR_NBG2_VRAM`, `FIRESTAFF_NEXUS_YMIR_NBG2_CRAM`, and
 `FIRESTAFF_NEXUS_YMIR_NBG2_REGS` to the hash-pinned frame-239 snapshots, and

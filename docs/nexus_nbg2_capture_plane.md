@@ -10,16 +10,17 @@ base is `0x60000`.
 exact register tuple. It fetches the visible 40×28 cells, applies captured
 PND flips, uses Saturn's 32-byte character-number base and 8bpp pixel rows,
 and returns an index plane plus CRAM colors. The result is marked
-capture-only; the code does not assign it a named retail asset, layer
-priority, color-calculation relation, host presentation crop, or production
-renderer permission.
+capture-only; the plane decoder does not assign it a named retail asset, host
+presentation crop, or production renderer permission. Frame-239 layer priority
+and color selection are verified by the separate full-stack capture check in
+[`nexus_vdp2_frame239_composition.md`](nexus_vdp2_frame239_composition.md).
 
 The hash-pinned real-data test decodes 1,120 tiles with 11,232 nonzero and
 60,448 transparent pixels. Comparing each nontransparent native pixel's
 CRAM color with the upper-left sample of the 2× Ymir screenshot gives 9,258
-of 11,232 samples within eight channel levels. Other samples differ, so this
-plane result is evidence for NBG2 fetch only; it is not full VDP2 composition
-parity.
+of 11,232 samples within eight channel levels. Other samples differ because
+this per-layer plane omits cross-layer priority. The complete capture-only
+stack instead matches all four samples for every native pixel exactly.
 
 Set `FIRESTAFF_NEXUS_YMIR_NBG2_VRAM`, `FIRESTAFF_NEXUS_YMIR_NBG2_CRAM`, and
 `FIRESTAFF_NEXUS_YMIR_NBG2_REGS` to the authentic frame-239 snapshots, and
@@ -39,7 +40,6 @@ tilemap at byte offset `0x5c000`. Set the NBG0 or NBG1 capture output
 environment variables to retain those index/RGB planes, then run the verifier
 with `--layer nbg0` or `--layer nbg1`; NBG0 has 3,954/3,968 matching visible
 samples (maximum error 232), and NBG1 has 148/148 (maximum error 7). These
-remain per-layer capture checks and do not establish cross-layer ordering or
-color calculation. Set
+remain per-layer capture checks. Set
 `FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT` for NBG0 or
 `FIRESTAFF_NEXUS_YMIR_NBG1_CAPTURE_OUT` for NBG1.

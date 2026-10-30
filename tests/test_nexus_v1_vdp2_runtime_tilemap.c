@@ -75,6 +75,77 @@ static int write_capture_plane(const char *path,
     return fclose(output) == 0;
 }
 
+static int write_ymir_frame239_stack(const char *path,
+    const Nexus_V1_Vdp2YmirFrame239StackPlane *plane)
+{
+    FILE *output;
+    size_t pixel;
+    if (!path || !*path) return 1;
+    output = fopen(path, "wb");
+    if (!output) return 0;
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_CAPTURE_PIXELS; ++pixel) {
+        uint32_t rgba = plane->rgba_buffer[pixel];
+        uint8_t encoded[4] = {plane->top_layer_buffer[pixel],
+            (uint8_t)(rgba >> 16U), (uint8_t)(rgba >> 8U), (uint8_t)rgba};
+        if (fwrite(encoded, 1U, sizeof(encoded), output) != sizeof(encoded)) {
+            fclose(output);
+            return 0;
+        }
+    }
+    return fclose(output) == 0;
+}
+
+static int run_external_ymir_frame239_stack(void)
+{
+    const char *vdp1_path = getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS");
+    const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS");
+    const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_VDP2_STACK_CAPTURE_OUT");
+    uint8_t *vdp1 = NULL, *vram = NULL, *cram = NULL, *registers = NULL;
+    Nexus_V1_Vdp2YmirFrame239StackPlane *plane = NULL;
+    Nexus_V1_Vdp2YmirFrame239StackReceipt receipt;
+    int ok = 0;
+    vdp1 = read_exact_bytes(vdp1_path, NEXUS_V1_SATURN_VDP1_VRAM_BYTES);
+    vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_bytes(registers_path, 512U);
+    plane = (Nexus_V1_Vdp2YmirFrame239StackPlane *)malloc(sizeof(*plane));
+    if (!vdp1 || !vram || !cram || !registers || !plane ||
+        !bytes_have_sha256(vdp1, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
+            "82caef1162741e5baca99e3a8747abb62bd0568df84c75cc0a781176b6636f04") ||
+        !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            "148eebc95b80465a278b7f6d9c1025ee378ec6d288563de3e52ba8af986d94cc") ||
+        !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            "f97f5ebf7bcfab263514895097ec40e6c5dca6dd91fe878f1691e9f204d8515d") ||
+        !bytes_have_sha256(registers, 512U,
+            "308b3c23bb1db102d3833801a836f0141540fe0870069abb37d2041e57f9b555")) {
+        goto cleanup;
+    }
+    if (!nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
+            plane, vdp1, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
+            vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES, registers, 512U,
+            NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG, 1, 1, &receipt) ||
+        !receipt.valid || !receipt.capture_only || receipt.renderer_permitted ||
+        !receipt.registers_verified || !receipt.vdp1_framebuffer_verified ||
+        !receipt.original_ymir_capture_verified ||
+        !receipt.pixel_priority_stack_verified || receipt.color_calculation_cases_unsupported ||
+        receipt.shadow_cases_unsupported || receipt.vdp1_rgb_pixels != 59884 ||
+        receipt.vdp1_cram_pixels != 491 || receipt.nbg0_pixels != 3954 ||
+        receipt.nbg1_pixels != 148 || receipt.nbg2_pixels != 7203 ||
+        receipt.empty_pixels != 0 || !write_ymir_frame239_stack(output_path, plane))
+        goto cleanup;
+    ok = 1;
+cleanup:
+    free(plane);
+    free(registers);
+    free(cram);
+    free(vram);
+    free(vdp1);
+    return ok;
+}
+
 static int run_external_ymir_capture_planes(void)
 {
     const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM");
@@ -104,8 +175,9 @@ static int run_external_ymir_capture_planes(void)
         !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
             "f97f5ebf7bcfab263514895097ec40e6c5dca6dd91fe878f1691e9f204d8515d") ||
         !bytes_have_sha256(registers, 512U,
-            "308b3c23bb1db102d3833801a836f0141540fe0870069abb37d2041e57f9b555"))
+            "308b3c23bb1db102d3833801a836f0141540fe0870069abb37d2041e57f9b555")) {
         goto cleanup;
+    }
     if (!nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
             plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
             cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
@@ -464,6 +536,11 @@ int main(void)
          getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS")) &&
         !run_external_ymir_capture_planes()) {
         fprintf(stderr, "FAIL: authentic Ymir NBG0/NBG2 capture decode\n");
+        return 1;
+    }
+    if (getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") &&
+        !run_external_ymir_frame239_stack()) {
+        fprintf(stderr, "FAIL: authentic Ymir frame-239 VDP1/VDP2 composition\n");
         return 1;
     }
     puts("test_nexus_v1_vdp2_runtime_tilemap: PASS");

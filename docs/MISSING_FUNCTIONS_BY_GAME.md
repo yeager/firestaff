@@ -168,17 +168,22 @@ requirements above.
   math was merged in PR #19. A frame-239 capture-only plane decoder now records
   the 40×28 visible 8bpp page. The authentic raw-snapshot test decodes 148
   nontransparent samples, all within eight RGB levels of the retained Ymir
-  screenshot (maximum error seven). Retail asset ownership, text/page mapping,
-  placement and production rendering remain unresolved.
+  screenshot (maximum error seven). A capture-only VDP1/VDP2 stack now also
+  matches all 286,720 doubled screenshot samples exactly for this frame, using
+  its hash-pinned VDP1 FBS and the Ymir software renderer's priority tie rule.
+  Arbitrary-frame composition, retail asset ownership, text/page mapping,
+  placement, and production rendering remain unresolved.
 - **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
   visible 8bpp capture plane and matches 9,258 of 11,232 nontransparent CRAM
-  samples to the Ymir screenshot within eight RGB levels. Layer priority,
-  complete color calculation, retail source ownership and production rendering
-  remain unresolved.
+  samples to the Ymir screenshot within eight RGB levels. The exact frame-239
+  full-stack capture match resolves layer priority and color selection only
+  for this measured state; complete color calculation, retail source ownership
+  and production rendering remain unresolved.
 - **VDP2 NBG0 bitmap:** frame 239's existing bounded 8bpp decoder matches
-  3,954 of 3,968 nontransparent CRAM samples within eight levels. This does not
-  establish NBG0/NBG1/NBG2 ordering, full-screen color calculation or an asset
-  owner.
+  3,954 of 3,968 nontransparent CRAM samples within eight levels. The exact
+  frame-239 full-stack capture match verifies NBG0/NBG1/NBG2 ordering for this
+  captured state, but does not establish arbitrary-state color calculation or
+  an asset owner.
 
 ### Missing Original Data or Verification
 

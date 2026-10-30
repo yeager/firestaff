@@ -1,6 +1,7 @@
 #include "nexus_v1_vdp2_tilemap_capture_compositor.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 static uint16_t read_be16(const uint8_t *p)
 {
@@ -688,9 +689,11 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     if (NBG1_REG(0x00U) != 0x8000U || bgon != 7U || chctla != 0x1013U ||
         pncn1 != 0U || (plsz & 0x000cU) != 0U ||
         ((mpofn >> 4U) & 7U) != 0U || mapa != 0x17U || mapb != 0x17U ||
-        (craofa & 0x70U) != 0U || (NBG1_REG(0xfaU) & 7U) != 4U ||
+        (craofa & 0x70U) != 0U || (NBG1_REG(0xf8U) & 0x0700U) != 0x0400U ||
+        (NBG1_REG(0xfaU) & 7U) != 4U ||
         NBG1_REG(0x80U) || NBG1_REG(0x82U) || NBG1_REG(0x84U) ||
-        NBG1_REG(0x86U))
+        NBG1_REG(0x86U) || NBG1_REG(0x88U) != 1U ||
+        NBG1_REG(0x8aU) || NBG1_REG(0x8cU) != 1U || NBG1_REG(0x8eU))
         return 0;
     map_base = ((((uint32_t)((mpofn >> 4U) & 7U) << 6U) + mapa) << 13U);
     map_base = (map_base & 0x3ffffU) * 2U;
@@ -724,4 +727,229 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     if (out_receipt) *out_receipt = receipt;
 #undef NBG1_REG
     return 1;
+}
+
+static uint32_t ymir_rgb555_shift(uint16_t value)
+{
+    uint32_t red = ((uint32_t)value & 0x1fU) << 3U;
+    uint32_t green = ((uint32_t)value >> 2U) & 0xf8U;
+    uint32_t blue = ((uint32_t)value >> 7U) & 0xf8U;
+    return UINT32_C(0xff000000) | (red << 16U) | (green << 8U) | blue;
+}
+
+static uint8_t ymir_sprite_priority(const uint8_t *registers,
+                                    unsigned int priority_index)
+{
+    unsigned int register_offset = 0xf0U + (priority_index / 2U) * 2U;
+    unsigned int shift = (priority_index & 1U) ? 8U : 0U;
+    return (uint8_t)((read_register16_ordered(registers, register_offset,
+        NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG) >> shift) & 7U);
+}
+
+static void ymir_stack_consider(
+    Nexus_V1_Vdp2YmirFrame239StackPlane *plane, size_t pixel,
+    uint8_t priority, uint8_t ymir_layer, uint8_t output_layer,
+    uint32_t rgba)
+{
+    uint8_t current_layer = plane->top_layer_buffer[pixel];
+    uint8_t current_priority = plane->priority_buffer[pixel];
+    if (priority == 0U ||
+        (current_layer != NEXUS_V1_VDP2_STACK_LAYER_EMPTY &&
+         (priority < current_priority ||
+          (priority == current_priority &&
+           ymir_layer >= (current_layer == NEXUS_V1_VDP2_STACK_LAYER_VDP1 ?
+               0U : current_layer + 1U)))))
+        return;
+    plane->top_layer_buffer[pixel] = output_layer;
+    plane->priority_buffer[pixel] = priority;
+    plane->rgba_buffer[pixel] = rgba;
+}
+
+int nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
+    Nexus_V1_Vdp2YmirFrame239StackPlane *plane,
+    const uint8_t *vdp1_framebuffer, size_t vdp1_framebuffer_size,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    int vdp1_framebuffer_verified,
+    Nexus_V1_Vdp2YmirFrame239StackReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2YmirFrame239StackReceipt receipt;
+    Nexus_V1_Vdp2CapturePlane *nbg0 = NULL, *nbg1 = NULL, *nbg2 = NULL;
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt r0;
+    Nexus_V1_Vdp2Nbg1CapturePlaneReceipt r1;
+    Nexus_V1_Vdp2Nbg2CapturePlaneReceipt r2;
+    uint16_t sfprmd, ccctl, spctl, craofb;
+    size_t pixel;
+    int ok = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!plane || !vdp1_framebuffer || !vdp2_vram || !vdp2_cram ||
+        !vdp2_registers || vdp1_framebuffer_size !=
+            NEXUS_V1_SATURN_VDP1_VRAM_BYTES ||
+        vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        vdp2_registers_size < 0x120U ||
+        register_byte_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+        !original_ymir_capture_verified || !vdp1_framebuffer_verified)
+        return 0;
+#define STACK_REG(offset) read_register16_ordered( \
+        vdp2_registers, (offset), register_byte_order)
+    sfprmd = STACK_REG(0xeaU);
+    ccctl = STACK_REG(0xecU);
+    spctl = STACK_REG(0xe0U);
+    craofb = STACK_REG(0xe6U);
+    if (STACK_REG(0x00U) != 0x8000U || STACK_REG(0x20U) != 0x0007U ||
+        STACK_REG(0x28U) != 0x1013U || STACK_REG(0x2aU) != 0x0002U ||
+        STACK_REG(0x2cU) != 0U || STACK_REG(0x32U) != 0U ||
+        STACK_REG(0x34U) != 0U || STACK_REG(0x3aU) != 0U ||
+        STACK_REG(0x3cU) != 0U || STACK_REG(0x40U) != 0U ||
+        STACK_REG(0x42U) != 0U || STACK_REG(0x44U) != 0x1717U ||
+        STACK_REG(0x46U) != 0x1717U || STACK_REG(0x48U) != 0x1818U ||
+        STACK_REG(0x4aU) != 0x1818U || STACK_REG(0xe4U) != 0U ||
+        craofb != 0U || STACK_REG(0xf8U) != 0x0404U ||
+        STACK_REG(0xfaU) != 0x0004U || sfprmd != 0x0015U ||
+        ccctl != 0x0142U || STACK_REG(0xeeU) != 0x0004U ||
+        spctl != 0x1536U || STACK_REG(0xf0U) != 0x0102U ||
+        STACK_REG(0xf2U) != 0x0300U || STACK_REG(0xf4U) != 0x0504U ||
+        STACK_REG(0xf6U) != 0x0706U ||
+        STACK_REG(0x70U) || STACK_REG(0x72U) ||
+        STACK_REG(0x74U) || STACK_REG(0x76U) ||
+        STACK_REG(0x78U) != 1U || STACK_REG(0x7aU) ||
+        STACK_REG(0x7cU) != 1U || STACK_REG(0x7eU) ||
+        STACK_REG(0x80U) || STACK_REG(0x82U) ||
+        STACK_REG(0x84U) || STACK_REG(0x86U) ||
+        STACK_REG(0x88U) != 1U || STACK_REG(0x8aU) ||
+        STACK_REG(0x8cU) != 1U || STACK_REG(0x8eU) ||
+        STACK_REG(0x90U) || STACK_REG(0x92U)) {
+        goto cleanup;
+    }
+    nbg0 = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*nbg0));
+    nbg1 = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*nbg1));
+    nbg2 = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*nbg2));
+    if (!nbg0 || !nbg1 || !nbg2 ||
+        !nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
+            nbg0, vdp2_vram, vdp2_vram_size, vdp2_cram, vdp2_cram_size,
+            vdp2_registers, vdp2_registers_size, register_byte_order, 1, &r0) ||
+        !nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
+            nbg1, vdp2_vram, vdp2_vram_size, vdp2_cram, vdp2_cram_size,
+            vdp2_registers, vdp2_registers_size, register_byte_order, 1, &r1) ||
+        !nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
+            nbg2, vdp2_vram, vdp2_vram_size, vdp2_cram, vdp2_cram_size,
+            vdp2_registers, vdp2_registers_size, register_byte_order, 1, &r2)) {
+        goto cleanup;
+    }
+    memset(plane->rgba_buffer, 0, sizeof(plane->rgba_buffer));
+    memset(plane->top_layer_buffer, NEXUS_V1_VDP2_STACK_LAYER_EMPTY,
+           sizeof(plane->top_layer_buffer));
+    memset(plane->priority_buffer, 0, sizeof(plane->priority_buffer));
+    receipt.registers_verified = receipt.vdp1_framebuffer_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.pixel_priority_stack_verified = 1;
+
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_CAPTURE_PIXELS; ++pixel) {
+        unsigned int x = (unsigned int)(pixel % NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH);
+        unsigned int y = (unsigned int)(pixel / NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH);
+        unsigned int tile_index = (y >> 3U) * 64U + (x >> 3U);
+        uint16_t nbg1_meta = read_vram16_ordered(
+            vdp2_vram + 0x5c000U + (size_t)tile_index * 4U,
+            register_byte_order);
+        uint16_t nbg2_meta = read_vram16_ordered(
+            vdp2_vram + 0x60000U + (size_t)tile_index * 4U,
+            register_byte_order);
+        uint8_t i0 = nbg0->index_buffer[pixel];
+        uint8_t i1 = nbg1->index_buffer[pixel];
+        uint8_t i2 = nbg2->index_buffer[pixel];
+        uint16_t sprite = read_be16(vdp1_framebuffer +
+            ((size_t)y * 512U + x) * 2U);
+        if (i0) ymir_stack_consider(plane, pixel, 4U, 2U,
+            NEXUS_V1_VDP2_STACK_LAYER_NBG0,
+            ymir_rgb555_shift(read_vram16_ordered(
+                vdp2_cram + (size_t)i0 * 2U, register_byte_order)));
+        if (i1) {
+            uint8_t priority = (uint8_t)((STACK_REG(0xf8U) >> 8U) & 7U);
+            priority = (uint8_t)((priority & (uint8_t)~1U) |
+                ((sfprmd & 0x000cU) == 0x0004U ? ((nbg1_meta >> 13U) & 1U) : 0U));
+            if ((nbg1_meta & 0x1000U) != 0U) {
+                ++receipt.color_calculation_cases_unsupported;
+                goto cleanup;
+            }
+            ymir_stack_consider(plane, pixel, priority, 1U,
+                NEXUS_V1_VDP2_STACK_LAYER_NBG1,
+                ymir_rgb555_shift(read_vram16_ordered(
+                    vdp2_cram + (size_t)i1 * 2U, register_byte_order)));
+        }
+        if (i2) {
+            uint8_t priority = (uint8_t)(STACK_REG(0xfaU) & 7U);
+            priority = (uint8_t)((priority & (uint8_t)~1U) |
+                ((sfprmd & 0x0030U) == 0x0010U ? ((nbg2_meta >> 13U) & 1U) : 0U));
+            ymir_stack_consider(plane, pixel, priority, 2U,
+                NEXUS_V1_VDP2_STACK_LAYER_NBG2,
+                ymir_rgb555_shift(read_vram16_ordered(
+                    vdp2_cram + (size_t)i2 * 2U, register_byte_order)));
+        }
+        if ((sprite & 0x8000U) != 0U) {
+            ymir_stack_consider(plane, pixel,
+                ymir_sprite_priority(vdp2_registers, 0U), 0U,
+                NEXUS_V1_VDP2_STACK_LAYER_VDP1,
+                ymir_rgb555_shift((uint16_t)(sprite & 0x7fffU)));
+        } else if (sprite != 0U) {
+            uint8_t priority = ymir_sprite_priority(vdp2_registers,
+                ((unsigned int)sprite >> 12U) & 7U);
+            uint16_t colour_code = sprite & 0x03ffU;
+            if (colour_code == 0x03feU) {
+                ++receipt.shadow_cases_unsupported;
+                goto cleanup;
+            }
+            if (priority == 5U) {
+                ++receipt.color_calculation_cases_unsupported;
+                goto cleanup;
+            }
+            ymir_stack_consider(plane, pixel, priority, 0U,
+                NEXUS_V1_VDP2_STACK_LAYER_VDP1,
+                ymir_rgb555_shift(read_vram16_ordered(
+                    vdp2_cram + (size_t)colour_code * 2U,
+                    register_byte_order)));
+        }
+    }
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_CAPTURE_PIXELS; ++pixel) {
+        uint8_t current = plane->top_layer_buffer[pixel];
+        if (current == NEXUS_V1_VDP2_STACK_LAYER_EMPTY) {
+            ++receipt.empty_pixels;
+            continue;
+        }
+        switch (current) {
+        case NEXUS_V1_VDP2_STACK_LAYER_VDP1:
+            if ((read_be16(vdp1_framebuffer +
+                    ((pixel / NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH) * 512U +
+                     pixel % NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH) * 2U) &
+                 0x8000U) != 0U)
+                ++receipt.vdp1_rgb_pixels;
+            else
+                ++receipt.vdp1_cram_pixels;
+            break;
+        case NEXUS_V1_VDP2_STACK_LAYER_NBG0: ++receipt.nbg0_pixels; break;
+        case NEXUS_V1_VDP2_STACK_LAYER_NBG1: ++receipt.nbg1_pixels; break;
+        case NEXUS_V1_VDP2_STACK_LAYER_NBG2: ++receipt.nbg2_pixels; break;
+        default: goto cleanup;
+        }
+    }
+    receipt.valid = receipt.empty_pixels == 0;
+    ok = receipt.valid;
+cleanup:
+    free(nbg2);
+    free(nbg1);
+    free(nbg0);
+    if (out_receipt) *out_receipt = receipt;
+    if (ok) return 1;
+    memset(plane->rgba_buffer, 0, sizeof(plane->rgba_buffer));
+    memset(plane->top_layer_buffer, NEXUS_V1_VDP2_STACK_LAYER_EMPTY,
+           sizeof(plane->top_layer_buffer));
+    memset(plane->priority_buffer, 0, sizeof(plane->priority_buffer));
+#undef STACK_REG
+    return 0;
 }
