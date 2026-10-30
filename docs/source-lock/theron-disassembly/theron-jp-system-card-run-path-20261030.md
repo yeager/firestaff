@@ -708,6 +708,36 @@ The v12 trace hashes are:
 - Indirect-jump follow: `f6f72b60e0b9848f024040689400aa9490565462e0f3de493b2b31ad3eba94aa`.
 - CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
 
+## 2026-10-30 — v13 extended cold RUN trace
+
+Repeated the same cold Japanese Rev. 1/System Card 3.0 capture with
+`run@480:300`, extending the wall limit to 180 seconds and raising the CD read
+and writer trace limits to 1,048,576. The scripted event was applied at frame
+480 with mask `0008`; the System Card read it at `$E4C5` (shared event 1202),
+and the scripted-input receipt marked the controller poll boundary verified.
+This is positive input-delivery evidence only.
+
+The longer capture still had 0 CD IRQ callbacks, 0 non-System-Card polls, 0
+authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
+`transition=missing`. It recorded 63,488 source-bound CD data-port reads, the
+same sequence as v12, so increasing the capture duration did not yield further
+observed CD data-port activity. No `$C860/$C897` wait-window witness appeared
+in the capture summary. The available code-follow still contains 256 rows;
+this run does not establish that execution left the System Card or entered
+gameplay. The next source target is the BIOS poll/return path at `$E4C5/$E4E1`
+and the loader branch following it. The raw capture and original media remain
+private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-post-bios-wait-v13-180s-cold-20261030/`.
+
+The v13 trace hashes are:
+
+- Transition receipt: `7e8091e01bc7d5bc2c80ba76a4329ed8525564171db95fcdf155cba5efd902c9`.
+- Scripted-input receipt: `bf48c22366285ec05e6475ca7b06e4dcd25ff31e44193e7afc00c38162c65d78`.
+- System Card dispatch: `7ba48345ee331ac5dff52c8f7c71017d8fc4606fd92472a666adb85d028fb75d`.
+- Indirect-jump follow: `6ffd5a41c196ead9fcc272ec91014df6ec1d147f0f8289d5d5b694b4700a55e5`.
+- CD-RAM target writes: `cbf1878c6c8b2506e4d4fa07c67d0045cc3dbeffff4cca1a5708b45b2e0573ce`.
+- CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
+
 The additional trace hashes are:
 
 - Indexed-jump dispatch trace: `94ab5079cd00b290fcb0668731d0314005a6eb77977d6629af2efe0d10e638d3`.

@@ -52,6 +52,16 @@ a game-owned consumer and input/state transition are demonstrated. The offline
 candidate verifier repeats these exact counts in three TRV2 runs; details and
 trace hashes are in the source-lock note.
 
+2026-10-30 v13 extended cold-run trace: the same `run@480:300` input (RUN mask
+`0008`, held for 300 frames) was consumed by the System Card at `$E4C5`, but a
+180-second capture still recorded no non-System-Card poll, CD IRQ, authenticated
+CD-to-RAM receipt, game `$E009` dispatch, or gameplay transition. Its 63,488
+source-bound CD data-port reads were byte-identical to v12 despite the longer
+capture; no `$C860/$C897` wait-window witness was emitted. This narrows the next
+disassembly target to the System Card poll/return path and the first BIOS loader
+branch after `$E4C5/$E4E1`; do not infer game startup from input consumption.
+Details and trace hashes are in the source-lock note.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source

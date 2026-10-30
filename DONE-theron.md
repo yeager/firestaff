@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — extend the authentic cold RUN trace to 180 seconds
+
+Captured authentic Japanese Rev. 1 media and System Card 3.0 with no save state,
+replaying the verified five-second `run@480:300` input. The controller mask
+`0008` was applied and read at the System Card poll `$E4C5`. The longer trace
+still showed no non-System-Card poll, CD IRQ, authenticated CD-to-RAM receipt,
+game `$E009` dispatch, or gameplay transition. Its 63,488 source-bound CD
+data-port reads were byte-identical to v12, and no `$C860/$C897` wait-window
+witness appeared. This is BIOS-only reference evidence, not proof that the
+game started or reached gameplay. The next disassembly target is the System
+Card poll/return path and the loader branch after `$E4C5/$E4E1`; full Theron
+parity remains open in `TODO-theron.md`.
+
 ## 2026-10-30 — classify authentic RAM-loop fetch/write/source candidates
 
 Follow-up v12 evidence expanded the all-PC target-write observer to
