@@ -800,3 +800,9 @@ assets, mechanics, or parity.
 - Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
 - A cold Japanese Rev. 1 capture recorded 32 complete transfers of the same 64-byte source range (`$47E0-$481F`) to alternating logical destinations `$0002/$0003`: 2,048 byte rows in total. The trace verifier passed with no truncation or incomplete transfer.
 - This remains emulator evidence. The run still lacks a game IRQ, authenticated CD-to-RAM receipt, game-owned controller poll, and gameplay transition. Continue binding the transfer to its source provenance and eventual game consumers; do not treat the trace as native parity.
+
+## 2026-10-30 — observe TIA zero-page transfers
+
+- Extended the reference-only PCE Fast trace to record reads and writes of logical $02/$03 while the authentic JP System Card routine executes in $4600-$46FF. The observer covers direct zero-page reads/writes, read-modify-write paths, and indirect pointer bytes in the HuC6280 interpreter.
+- A cold capture with authentic Japanese Rev. 1 Track 02 and System Card 3.0 recorded 32 complete TIA transfers (2,048 byte rows) and 2,240 zero-page rows, including direct operand reads at $466F/$02 and $4674/$03. The combined trace passed the bounded verifier without truncation.
+- This remains reference trace evidence, not game-level semantics or native parity. The run has no game IRQ, authenticated CD-to-RAM receipt, game-owned input poll, or transition into gameplay. Continue tracing authentic source bytes through game-owned consumers.

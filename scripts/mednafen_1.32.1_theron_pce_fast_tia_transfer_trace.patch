@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1311,9 +1311,90 @@
+@@ -1311,9 +1311,92 @@
  #define BMT_PREHONK(pork) HuCPU.in_block_move = IBM_##pork;
  #define BMT_HONKHONK(pork) if(HuCPU.timestamp >= next_user_event) goto GetOutBMT; continue_the_##pork:
  
@@ -41,6 +41,8 @@
 + FILE *trace = TheronTIAByteTraceOpen();
 + if(trace)
 + {
++  if(TheronTIAByteTraceCount >= TheronTIAByteTraceLimit)
++   return;
 +  const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +  fprintf(trace,
 +          "tia_start event_sequence=%u move=%u instruction_pc=%04x physical_pc=%06x source=%04x destination=%04x encoded_length=%04x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",

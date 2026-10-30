@@ -164,8 +164,40 @@ separate from cold-boot loader evidence.
 
 ## TIA byte transfers at PC `$468C`
 
-A third cold reference capture used the authentic Japanese Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`), System Card 3.0 (MD5 `ff1a674273fe3540ccef576376407d1d`), and scripted `run@480:300` input without a save state. A bounded observer at the PCE Fast `BMT_TIA` macro records the decoded block operands and each actual `RdMem` then `WrMem` pair. The source reference is `src/pce_fast/huc6280_ops.inc:544` (`LD_BMT(BMT_TIA)`) and `src/pce_fast/huc6280.cpp:1316` (`BMT_TIA`).
+A third cold reference capture used the authentic Japanese Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`), System Card 3.0 (MD5 `ff1a674273fe3540ccef576376407d1d`), and scripted `run@480:300` input without a save state. A bounded observer at the PCE Fast `BMT_TIA` macro records the decoded block operands and each actual `RdMem` then `WrMem` pair. The source reference is `src/pce_fast/huc6280_ops.inc:543-544` (`LD_BMT(BMT_TIA)`) and `src/pce_fast/huc6280.cpp:463` (`BMT_TIA`).
 
 The capture recorded 32 complete executions with identical decoded operands: source `$47E0`, destination `$0002`, encoded length `$0040`. Each copied 64 bytes from logical `$47E0-$481F`; source MPR slot 2 was `$82` (mapped `$1047E0-$10481F`). Writes alternated between logical `$0002` and `$0003`; destination MPR slot 0 was `$FF` (mapped `$1FE002/$1FE003`). The 2,048-row verifier passed, including source increments, destination alternation, remaining lengths, MPR slots, and mapped addresses. These are observed bus/memory values and mappings; they do not identify the destination's game-level meaning.
 
 The run still ended before a game IRQ, an authenticated CD-to-RAM receipt, a game-owned input poll, or a gameplay transition. No TIA read in this capture is joined to an authenticated CD source receipt. This is emulator/disassembly evidence only; it does not establish a complete loader or native gameplay parity.
+
+## TIA zero-page access trace
+
+A fourth cold reference capture used authentic Japanese Rev. 1 Track 02 (MD5
+`b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`), with Run held for four seconds and no
+save state. The reference-only PCE Fast observer records logical $02/$03 reads
+and writes while the System Card routine runs in $4600-$46FF. Its hooks cover
+`RdMem`/`WrMem`, direct zero-page loads, stores and read-modify-write
+instructions, and pointer bytes loaded by `GetIND`, `GetIX`, and `GetIY`
+in Mednafen 1.32.1 `src/pce_fast/huc6280.cpp`. The unmodified 1.32.1 source
+places `RdMem` at line 145, `WrMem` at 161, and `GetIND`/`GetIX`/`GetIY` at
+393/405/417 respectively.
+
+The combined capture contains 32 complete TIA transfers from $47E0 to the
+alternating $0002/$0003 destinations (2,048 byte rows) and 2,240 zero-page
+records. It includes direct reads at PC $466F from $02 and PC $4674 from $03.
+The trace verifier confirms increasing shared event sequence values, contiguous
+row and move indexes, byte-width values, logical-to-physical mappings, and
+complete transfers with no truncation.
+
+Capture path on TRV2:
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-tia-zero-page-holdrun4-x11-cold-20261030/`.
+
+- TIA trace SHA-256: `1e0ac4ec23a330fd8646cc3eab0438378eefa2e8cbb3af91aaefb33f41b406c2`.
+- Transition receipt SHA-256: `43c40e418050025779aeefa36a09cc4f442eaba6512ac6d00dca0083e4c3024f`.
+
+The receipt reports `cd_irq_callbacks=0`,
+`authenticated_cd_ram_receipts=0`, `main_ram_loader_tii_transfers=0`, and
+`transition=missing`. This is System Card loader instrumentation evidence;
+it does not establish game launch, gameplay, or native parity. Raw traces,
+game media, and firmware remain private and are not included in Git.
