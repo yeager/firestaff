@@ -1795,6 +1795,17 @@ if [[ ! -f "$indirect_jump_patch" ]] ||
     printf '%s\n' 'FAIL: indexed indirect-jump evidence must preserve actual reads and match their next fetched target' >&2
     exit 1
 fi
+indirect_jump_follow_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+indirect_jump_follow_verifier="$repo/scripts/verify_theron_jp_indirect_jump_follow_trace.py"
+if [[ ! -f "$indirect_jump_follow_patch" || ! -f "$indirect_jump_follow_verifier" ]] ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INDIRECT_JUMP_FOLLOW_TRACE="$pce_fast_indirect_jump_follow_trace"' "$script" ||
+   ! grep -Fq 'verify_theron_jp_indirect_jump_follow_trace.py' "$script" ||
+   ! grep -Fq 'per_window_limit=64 total_limit=4096' "$indirect_jump_follow_patch" ||
+   ! grep -Fq 'TheronIndirectJumpFollowTotalRows >= 4096' "$indirect_jump_follow_patch"; then
+    printf '%s\n' 'FAIL: per-dispatch code follows must use bounded windows and validate the trace' >&2
+    exit 1
+fi
 main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
 if [[ ! -f "$main_ram_target_write_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$main_ram_target_write_patch" ||

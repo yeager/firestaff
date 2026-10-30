@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-30 — Theron indirect-dispatch follow-trace verifier
+
+The follow-trace verifier now checks that each instruction fetch and terminal
+record follows and belongs to the latest indexed dispatch, rejects duplicate
+skip markers, and accepts an unobserved follow window only for the final
+dispatch at capture EOF. Four focused validator cases and three runs of the
+Theron capture-script regression passed. These checks validate verifier
+behavior only; a new authentic capture, native loader handoff, and Theron
+gameplay parity remain open in `TODO.md`.
+
 ## 2026-10-29 — Launcher horizontal keys in Game Options
 
 The SDL keyboard path now routes Left and Right to Game Options, where the

@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-30 Theron indexed-dispatch follow-trace verification remains open:
+the offline verifier now binds each follow row or terminal marker to the
+latest preceding dispatch and rejects duplicate skip markers. Its focused
+validator tests and capture-script regressions pass, but the new per-dispatch
+trace has not yet been collected from authentic JP Track 02 and System Card
+media. Rebuild the bounded Mednafen reference instrumentation on TRV2, collect
+and verify the trace, then use its authentic instruction windows to guide the
+native loader/handoff investigation. This evidence must not be described as
+native gameplay or parity.
+
 2026-10-29 current-main startup retest at `737508d0` after PR #200: the
 authentic-media no-game M12 first-runtime cases passed separately for DM1,
 CSB, and DM2 using the installed FM Towns editions. The four alternate

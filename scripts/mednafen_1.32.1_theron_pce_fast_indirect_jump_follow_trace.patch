@@ -1,0 +1,139 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -1103,0 +1104 @@
++static void TheronTraceIndirectJumpFollowArm(unsigned int target, uint32 dispatch_event);
+@@ -1161 +1162,131 @@
+-}
++ TheronTraceIndirectJumpFollowArm(target, event_sequence);
++}
++/*
++ * Bounded follow stream for each observed $40E1/$7C dispatch. The fetch hook
++ * in HuC6280_Fast::Run() reuses FastPageR mappings, like the existing
++ * $6148 code-follow recorder at src/pce_fast/huc6280.cpp:1507-1610.
++ */
++static FILE *TheronIndirectJumpFollowTraceFile;
++static bool TheronIndirectJumpFollowAttempted;
++static unsigned TheronIndirectJumpFollowPending;
++static unsigned TheronIndirectJumpFollowActive;
++static unsigned TheronIndirectJumpFollowWindowCount;
++static unsigned TheronIndirectJumpFollowTotalRows;
++static unsigned TheronIndirectJumpFollowCount;
++static uint32 TheronIndirectJumpFollowPendingEvent;
++static uint32 TheronIndirectJumpFollowActiveEvent;
++static unsigned TheronIndirectJumpFollowTarget;
++
++static void TheronTraceIndirectJumpFollowInitialize(void)
++{
++ if(TheronIndirectJumpFollowAttempted)
++  return;
++ TheronIndirectJumpFollowAttempted = true;
++ const char *path = getenv("FIRESTAFF_THERON_INDIRECT_JUMP_FOLLOW_TRACE");
++ if(!path || !*path)
++  return;
++ TheronIndirectJumpFollowTraceFile = fopen(path, "w");
++ if(TheronIndirectJumpFollowTraceFile)
++ {
++  fputs("source=mednafen-pce-fast-indirect-jump-follow-v1 event_sequence_source=TheronTraceCDSharedEventSequence window_limit=64 per_window_limit=64 total_limit=4096\n",
++        TheronIndirectJumpFollowTraceFile);
++  fflush(TheronIndirectJumpFollowTraceFile);
++ }
++}
++
++static void TheronTraceIndirectJumpFollowArm(unsigned int target, uint32 dispatch_event)
++{
++ TheronTraceIndirectJumpFollowInitialize();
++ if(!TheronIndirectJumpFollowTraceFile)
++  return;
++ if(TheronIndirectJumpFollowWindowCount >= 64)
++ {
++  const uint32 event = TheronTraceCDSharedEventSequence++;
++  fprintf(TheronIndirectJumpFollowTraceFile,
++          "indirect_jump_follow_skipped dispatch_event=%u event_sequence=%u reason=window-limit limit=64\n",
++          dispatch_event, event);
++  fflush(TheronIndirectJumpFollowTraceFile);
++  return;
++ }
++ TheronIndirectJumpFollowPending = 1;
++ TheronIndirectJumpFollowPendingEvent = dispatch_event;
++ TheronIndirectJumpFollowTarget = target & 0xFFFF;
++}
++
++static void TheronTraceIndirectJumpFollowFinish(const char *terminal, bool truncated)
++{
++ const uint32 event = TheronTraceCDSharedEventSequence++;
++ if(truncated)
++  fprintf(TheronIndirectJumpFollowTraceFile,
++          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=64 reason=%s\n",
++          TheronIndirectJumpFollowActiveEvent, event, TheronIndirectJumpFollowCount, terminal);
++ else
++  fprintf(TheronIndirectJumpFollowTraceFile,
++          "indirect_jump_follow_complete dispatch_event=%u event_sequence=%u count=%u terminal=%s\n",
++          TheronIndirectJumpFollowActiveEvent, event, TheronIndirectJumpFollowCount, terminal);
++ fflush(TheronIndirectJumpFollowTraceFile);
++ TheronIndirectJumpFollowActive = 0;
++}
++
++static void TheronTraceIndirectJumpFollowFetch(void)
++{
++ TheronTraceIndirectJumpFollowInitialize();
++ if(!TheronIndirectJumpFollowTraceFile)
++  return;
++ if(TheronIndirectJumpFollowPending)
++ {
++  TheronIndirectJumpFollowPending = 0;
++  TheronIndirectJumpFollowActive = 1;
++  TheronIndirectJumpFollowActiveEvent = TheronIndirectJumpFollowPendingEvent;
++  TheronIndirectJumpFollowCount = 0;
++  TheronIndirectJumpFollowWindowCount++;
++ }
++ if(!TheronIndirectJumpFollowActive)
++  return;
++ if(TheronIndirectJumpFollowTotalRows >= 4096)
++ {
++  const uint32 event = TheronTraceCDSharedEventSequence++;
++  fprintf(TheronIndirectJumpFollowTraceFile,
++          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=4096 reason=total-limit\n",
++          TheronIndirectJumpFollowActiveEvent, event, TheronIndirectJumpFollowCount);
++  fflush(TheronIndirectJumpFollowTraceFile);
++  TheronIndirectJumpFollowActive = 0;
++  return;
++ }
++ const unsigned int pc = TheronTraceInstructionPC;
++ uint8 opcode_bytes[3] = {0, 0, 0};
++ uint32 physical_bytes[3] = {0, 0, 0};
++ unsigned int valid_mask = 0;
++ unsigned int i;
++ for(i = 0; i < 3; i++)
++ {
++  const uint16 logical = (uint16)(pc + i);
++  const unsigned int slot = (logical >> 13) & 7;
++  const uintptr_t mapping = HuCPU.FastPageR[slot];
++  if(mapping)
++  {
++   opcode_bytes[i] = *(const uint8 *)(mapping + logical);
++   physical_bytes[i] = ((uint32)HuCPU.MPR[slot] << 13) | (logical & 0x1FFF);
++   valid_mask |= 1U << i;
++  }
++ }
++ const uint32 event = TheronTraceCDSharedEventSequence++;
++ fprintf(TheronIndirectJumpFollowTraceFile,
++         "indirect_jump_follow dispatch_event=%u target_pc=%04x event_sequence=%u index=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x physical_bytes=%06x,%06x,%06x valid_mask=%x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++         TheronIndirectJumpFollowActiveEvent, TheronIndirectJumpFollowTarget,
++         event, TheronIndirectJumpFollowCount,
++         pc, TheronTraceInstructionPhysicalPC, opcode_bytes[0], opcode_bytes[1],
++         opcode_bytes[2], physical_bytes[0], physical_bytes[1], physical_bytes[2],
++         valid_mask, HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++ TheronIndirectJumpFollowCount++;
++ TheronIndirectJumpFollowTotalRows++;
++ fflush(TheronIndirectJumpFollowTraceFile);
++ if(TheronIndirectJumpFollowCount == 1 && pc != TheronIndirectJumpFollowTarget)
++  TheronTraceIndirectJumpFollowFinish("target-fetch-mismatch", true);
++ else if(pc == 0x40E1)
++  TheronTraceIndirectJumpFollowFinish("next-indirect-dispatch", false);
++ else if(TheronIndirectJumpFollowCount >= 64)
++  TheronTraceIndirectJumpFollowFinish("instruction-cap", true);
++}
++
+@@ -1508,0 +1640 @@
++  TheronTraceIndirectJumpFollowFetch();
