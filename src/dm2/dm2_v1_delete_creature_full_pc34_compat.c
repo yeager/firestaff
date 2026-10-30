@@ -329,8 +329,9 @@ static int dm2_v1_delete_creature_record_full_impl(
 
   /* c_record.cpp:1424 via c_record.cpp:1205-1208 — DM2_DEALLOC_RECORD:
    * the record's first word becomes the 0xffff free marker. */
-  record[0] = 0xffu;
-  record[1] = 0xffu;
+  if (!dm2_v1_record_pool_dealloc_record(pool_set, handle)) {
+    goto delete_rollback;
+  }
   receipt->dealloc_performed = 1;
 
   receipt->completed = 1;
