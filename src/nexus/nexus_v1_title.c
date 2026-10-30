@@ -584,3 +584,19 @@ void nexus_render_title(const Nexus_TitleScreen *title,
                NEXUS_FB_W);
     }
 }
+
+/* Boot-global timing includes WARNING.BIN's 48-frame lead-in. Convert it
+ * to the title-local frame before selecting the authentic MAPD letter. */
+int nexus_render_boot_title_frame(const Nexus_TitleScreen *title,
+                                  Nexus_Framebuffer *fb,
+                                  int boot_frame)
+{
+    Nexus_V1_BootFrame boot;
+    if (!fb ||
+        !nexus_v1_boot_frame(boot_frame, NEXUS_FB_H, &boot) ||
+        boot.phase != NEXUS_V1_BOOT_PHASE_TITLE) {
+        return 0;
+    }
+    nexus_render_title(title, fb, boot.title_frame);
+    return 1;
+}
