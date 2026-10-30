@@ -42,13 +42,38 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
             }
         ]
 
-    def join(self):
-        return join_rows(self.reads, self.writes, 0x0D04D2, 0x0D04E6, 0x68, 0xEA9C)
+    def join(self, movement_rows=None):
+        return join_rows(
+            self.reads, self.writes, 0x0D04D2, 0x0D04E6, 0x68, 0xEA9C, movement_rows
+        )
 
     def test_joins_authentic_shape_of_immediate_equal_read_and_write(self) -> None:
         joined = self.join()
         self.assertEqual(len(joined), 1)
         self.assertEqual(joined[0][0]["source_lba"], 3849)
+
+    def test_joins_when_verified_movement_hook_observes_same_store(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d2",
+            "value": "ad",
+        }]
+
+        joined = self.join(movement)
+
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0][0]["event_sequence"], 40)
+
+    def test_rejects_intervening_movement_row_for_different_store(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d3",
+            "value": "ad",
+        }]
+        with self.assertRaisesRegex(ValueError, "verified movement row"):
+            self.join(movement)
 
     def test_rejects_value_mismatch(self) -> None:
         self.writes[0]["value"] = "00"
