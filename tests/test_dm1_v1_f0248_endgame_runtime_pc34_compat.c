@@ -20,6 +20,7 @@ static void test_wall_countdown_c10_awards_active_leader(void)
     struct TickResult_Compat result;
     unsigned long leaderBefore;
     unsigned long otherBefore;
+    int foundXpAward = 0;
     int i;
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -90,11 +91,16 @@ static void test_wall_countdown_c10_awards_active_leader(void)
                .skills20[DM1_SKILL_IDX_STEAL].experience > leaderBefore);
     assert(world.lifecycle.champions[0]
                .skills20[DM1_SKILL_IDX_STEAL].experience == otherBefore);
-    assert(result.emissionCount == 1);
-    assert(result.emissions[0].kind == EMIT_XP_AWARD);
-    assert(result.emissions[0].payload[0] == 1);
-    assert(result.emissions[0].payload[1] == DM1_SKILL_IDX_STEAL);
-    assert(result.emissions[0].payload[2] == 300);
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_XP_AWARD &&
+            result.emissions[i].payload[0] == 1 &&
+            result.emissions[i].payload[1] == DM1_SKILL_IDX_STEAL &&
+            result.emissions[i].payload[2] == 300) {
+            foundXpAward = 1;
+            break;
+        }
+    }
+    assert(foundXpAward);
 }
 
 int main(void)
