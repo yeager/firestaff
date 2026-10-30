@@ -1,3 +1,14 @@
+- 2026-10-30: Added and ran an authentic no-game M12 startup regression for
+  CSB Amiga 3.5 English. An isolated data root containing only the original
+  `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` was scanned and selected from
+  the game/platform menus. The log identified `amiga35-en` and the exact
+  `archive::English.raw::Graphics.DAT` owner; the runtime receipt confirmed an
+  active CSB session, loaded level, original party position `(9,0)`, and
+  nonzero viewport hash. The source archive hash remained
+  unchanged. CTest: `m12_main_menu_csb_amiga35_runtime_real_media`.
+  This verifies the local macOS arm64 menu-to-runtime route only; native
+  Windows/Linux and visual/audio/hardware parity remain open.
+
 - 2026-10-30: Added an authentic-media M12 pointer regression for selecting
   CSB Atari ST v2.1 while the deferred startup scan is running. The first
   platform click is recorded as safely deferred in `--debug`; after scan

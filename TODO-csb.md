@@ -1084,19 +1084,23 @@ coverage gap for that ADF source; native intake of the separate original CTRaw
 archive was not covered by that ADF test. See the separate native and
 development-only conversion evidence below.
 
-- Complete remaining native CTRaw platform/presentation coverage. On
-  2026-10-10, direct CLI and start-menu probes against the original archive
-  failed because Firestaff does not recognize its four CAPS/SPS CT Raw disk
-  images as game data. ZIP repacking did not change that. ReDMCSB COMPILE.H
-  lines 274-298 define distinct A35E/A35M executable and language-selection
-  routes, so A31/A33 startup coverage does not cover this edition. Keep
-  emulator/BIOS and oracle dependencies out of Firestaff runtime.
+- Verify remaining native CTRaw platform/presentation coverage. ReDMCSB
+  COMPILE.H lines 274-298 define distinct A35E/A35M executable and
+  language-selection routes, so A31/A33 evidence does not cover this edition.
+  The native English and multilingual CTRaw paths now authenticate original
+  in-memory assets and reach runtime through CLI and M12; the authentic
+  no-game M12 Amiga 3.5 English route also passes on local macOS arm64. Native
+  Windows/Linux execution, utility-disk interactions, and visual/audio/hardware
+  parity remain unverified. Keep emulator/BIOS and oracle dependencies out of
+  Firestaff runtime.
 
   The archive stream regression `firestaff_caps_raw_archive_stream` validates
   the four original members' framing and packed/unpacked CRCs across all 164
   tracks. It also recovers all eleven checksum-valid sectors from every native
-  track-0 variant. Full sector-image assembly, file admission and launch remain
-  open. The separate A35M ADF is not a decoded image from this CTRaw archive.
+  track-0 variant. At this 2026-10-10 checkpoint, full sector-image assembly,
+  file admission and launch remained open. Later native implementation and
+  verification are recorded below. The separate A35M ADF is not a decoded
+  image from this CTRaw archive.
 
   2026-10-14 development-only oracle and boot verification: the original
   `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` archive in the supplied CSB data
@@ -1122,10 +1126,10 @@ development-only conversion evidence below.
   edition=amiga35-en`, authenticated `assetMd5=291e1bc6803e3dc4b974c60117ca5d68`,
   and reported `phase=inactive`, `startupActive=0`, `levelLoaded=1`, `map=0`,
   `party=9,1,2`, `runtimeTick=1577` and nonzero `csbViewportHash=3733227093`.
-  This proves the converted ADF files can feed the existing Firestaff ADF/ZIP
-  intake and reach runtime; it is not native CTRaw support and does not prove
-  lossless sector recovery or original-disk behavior. The damaged-track
-  warning remains relevant.
+  At the time, this proved only that converted ADF files could feed the
+  existing Firestaff ADF/ZIP intake; it did not prove native CTRaw support or
+  lossless sector recovery. Native recovery and launch were implemented and
+  verified separately on 2026-10-15.
 
   2026-10-15 native-sector verification: the density and track PACK decoders
   verify all 164 tracks on each original disk. Earlier zero-sector results

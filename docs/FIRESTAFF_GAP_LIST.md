@@ -826,18 +826,7 @@ report a per-version summary. Log it in `.extract-log.md` and
 `.extract-manifest.json`. This lets future runs immediately show which versions
 match a canonical hash and which are reference material only.
 
-### L4. CSB Amiga 3.5 launch barrier
-
-The extracted `csb-extras/amiga-3.5-ctraw-en` contains CTraw track and PACK
-records (`.st`/`.raw`/`.err`/`.out`). Firestaff currently validates the
-container framing and packed-payload CRCs, but does not decode PACK data or
-reconstruct game sectors. Renaming or repackaging `.raw` as `.DAT`/`.DATA`
-cannot produce playable assets. Keep this edition unavailable until a
-documented, bounded PACK decoder can recover and verify the required source
-data; then add an authentic startup test. Do not list Amiga 3.5 as launchable
-based on extraction alone.
-
-### L5. DM2 extras launch-test
+### L4. DM2 extras launch-test
 
 Status 2026-06-21: DONE for PC extras. `dm2_v1_boot_scan_assets` now accepts
 the extracted DOS layout `data/graphics.dat` + `data/dungeon.dat`, and
@@ -848,7 +837,7 @@ structured boot receipts. The earlier `DM2 READY` stderr marker was removed on
 in D3: demo and non-PC editions need separate classification and possibly
 container/format normalization before they can receive cross-version regression coverage.
 
-### L6. README-public-dokumentation-uppdatering
+### L5. README-public-dokumentation-uppdatering
 
 Per AGENTS.md, the README must be honest, user-facing, and sales-friendly,
 with real per-game status. After today's gap-list updates, the README's
