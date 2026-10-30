@@ -2392,3 +2392,10 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   when another option follows, instead of consuming that option as the
   animation expectation and continuing with an unintended launch. The CLI
   option-form regression covers this case.
+- DM1 PC34 loose-media discovery now keeps `GRAPHICS.DAT` and its base
+  `DUNGEON.DAT` within the same original `DATA` owner. It rejects a graphics
+  orphan that would borrow a nested world's dungeon, and rejects a wrong or
+  ambiguous standard world even when a renamed valid world is nearby. The
+  authentic loose-media ownership regression and broader PC34 startup CLI
+  test both pass against original data. This verifies startup ownership, not
+  complete visual parity.

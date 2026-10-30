@@ -4380,3 +4380,16 @@ not used as its final verification.
   one charge, and retains the flask in the unique hand owner. The test passed
   for both original editions. Potion discovery-to-use and complete IIGS parity
   remain unverified.
+
+- 2026-10-30: ReDMCSB's `FILENAME.C` and `LOADSAVE.C:F0435` bind PC34's base
+  `GRAPHICS.DAT` and `DUNGEON.DAT` to the same `DATA` directory. Discovery
+  previously let a root graphics orphan borrow a nested installation's world
+  and could accept a wrong standard `DUNGEON.DAT` when a renamed valid world
+  was nearby. PC34 now accepts renamed worlds only from the selected graphics
+  directory and treats a present but invalid or ambiguous standard world as a
+  terminal ownership failure. Authentic tests cover a complete nested package
+  beside a root orphan, renamed worlds, wrong-native worlds, and ambiguity.
+  `dm1_v1_pc34_loose_startup_paths_real_media` and
+  `dm1_v1_pc34_native_cli_boot` passed against original PC34 media. These
+  checks verify startup ownership and runtime entry, not complete visual
+  parity.
