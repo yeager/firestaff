@@ -1,3 +1,9 @@
+- 2026-10-30: `csb_v1_fmtowns_native_cli_boot` passed in 138.00 seconds and
+  `csb_v1_amiga_native_cli_boot` passed in 71.39 seconds on the current M4
+  build against installed authentic media. These checks cover their tested
+  menu/CLI startup routes only; they do not establish physical-display or
+  complete CSB platform parity.
+
 - 2026-10-30: Added `return_to_menu_rescans_csb_atari_only_real_media` to
   cover the case where authentic Atari ST is the only CSB edition installed.
   The test reached the original Atari runtime, returned to M12, and verified
