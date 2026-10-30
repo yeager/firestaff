@@ -29,9 +29,14 @@ and confirmed the original `GRAPHICS.DAT` header plus the known `SWOOSH` and
 `FTLCODE` disk offsets. The same real-media test now parses all 562 X30J
 `GRAPHICS.DAT` format-1 metadata spans using the big-endian header/tables and
 ReDMCSB offset rule. It writes no game data to disk. Graphic item
-decoding/rendering, an X68000 `DUNGEON.DAT` parser, audio, input, and M12/runtime
-launch support remain open; the bounded parser is not connected to a platform
-launch route.
+decoding/rendering, audio, input, and M12/runtime launch support remain open.
+The new read-only X30J dungeon metadata parser validates the raw 44-byte
+header, 14 map descriptors, typed-data section spans, and raw map extent from
+the original HDM. All 14 per-map grid and metadata spans fit and meet their
+following offsets exactly; the original has no trailing checksum. The parser
+rejects the compressed `0x8104` wrapper and validates an optional X30J
+byte-sum checksum when present. It does not decode map squares or connect to a
+platform launch route, so X68000 runtime support remains unsupported.
 
 The four local SNES ROMs were also streamed directly from the original 7z
 archive without saving their contents. Each has a valid `DUNGEON MASTER`

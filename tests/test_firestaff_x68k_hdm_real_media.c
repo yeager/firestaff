@@ -1,6 +1,7 @@
 #include "firestaff_7z_extract.h"
 #include "firestaff_x68k_hdm.h"
 #include "firestaff_x68k_graphics_dat.h"
+#include "firestaff_x68k_dungeon_dat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,8 +98,10 @@ int main(void) {
     uint8_t *swoosh = NULL;
     uint8_t *ftlcode = NULL;
     uint8_t *graphics = NULL;
+    uint8_t *dungeon = NULL;
     FirestaffX68kHdm hdm;
     FirestaffX68kGraphicsDat graphics_dat;
+    FirestaffX68kDungeonDat dungeon_dat;
     uint16_t cursor = 0u;
     size_t entries = 0u;
     size_t i;
@@ -156,6 +159,7 @@ int main(void) {
         if (strcmp(entry.name, "SWOOSH") == 0) swoosh = contents;
         else if (strcmp(entry.name, "FTLCODE") == 0) ftlcode = contents;
         else if (strcmp(entry.name, "GRAPHICS.DAT") == 0) graphics = contents;
+        else if (strcmp(entry.name, "DUNGEON.DAT") == 0) dungeon = contents;
         else free(contents);
     }
     if (entries != sizeof(g_expected) / sizeof(g_expected[0])) {
@@ -169,7 +173,7 @@ int main(void) {
             goto done;
         }
     }
-    if (!swoosh || !ftlcode || !graphics ||
+    if (!swoosh || !ftlcode || !graphics || !dungeon ||
         memcmp(image + 0x12000u, swoosh, 9784u) != 0 ||
         memcmp(image + 0x70800u, ftlcode, 156564u) != 0 ||
         graphics[0] != 0x80u || graphics[1] != 0x01u ||
@@ -213,14 +217,127 @@ int main(void) {
             goto done;
         }
     }
+    if (FirestaffX68kDungeonDat_OpenRaw(dungeon, 33990u, &dungeon_dat) != 0 ||
+        dungeon_dat.size != 33990u ||
+        dungeon_dat.ornament_random_seed != 99u ||
+        dungeon_dat.raw_map_byte_count != 12366u ||
+        dungeon_dat.map_count != 14u ||
+        dungeon_dat.text_data_word_count != 2023u ||
+        dungeon_dat.initial_party_location != 0x0861u ||
+        dungeon_dat.square_first_thing_count != 1682u ||
+        dungeon_dat.column_count != 412u ||
+        dungeon_dat.map_descriptors.offset != 44u ||
+        dungeon_dat.map_descriptors.size != 224u ||
+        dungeon_dat.column_sft_counts.offset != 268u ||
+        dungeon_dat.column_sft_counts.size != 824u ||
+        dungeon_dat.square_first_things.offset != 1092u ||
+        dungeon_dat.square_first_things.size != 3364u ||
+        dungeon_dat.text_data.offset != 4456u ||
+        dungeon_dat.text_data.size != 4046u ||
+        dungeon_dat.thing_data[0].offset != 8502u ||
+        dungeon_dat.thing_data[10].offset != 20504u ||
+        dungeon_dat.thing_data[10].size != 1120u ||
+        dungeon_dat.raw_map_data.offset != 21624u ||
+        dungeon_dat.raw_map_data.size != 12366u ||
+        dungeon_dat.has_trailing_checksum != 0u ||
+        dungeon_dat.raw_map_data.offset + dungeon_dat.raw_map_data.size !=
+            dungeon_dat.size) {
+        fputs("FAIL: X68000 DUNGEON.DAT metadata spans did not match ReDMCSB X30J layout\n",
+              stderr);
+        goto done;
+    }
+    {
+        static const uint8_t expected_widths[14] = {
+            19u, 32u, 32u, 32u, 30u, 32u, 30u,
+            32u, 31u, 31u, 31u, 32u, 22u, 26u
+        };
+        static const uint8_t expected_heights[14] = {
+            19u, 32u, 32u, 32u, 31u, 32u, 31u,
+            32u, 32u, 32u, 32u, 31u, 20u, 13u
+        };
+        static const uint16_t expected_thing_counts[16] = {
+            170u, 179u, 125u, 683u, 182u, 107u, 121u, 35u,
+            56u, 12u, 280u, 0u, 0u, 0u, 0u, 0u
+        };
+        uint16_t expected_columns = 0u;
+        uint16_t map_index;
+        for (map_index = 0u; map_index < 14u; ++map_index) {
+            const FirestaffX68kDungeonDatMap *map =
+                &dungeon_dat.maps[map_index];
+            if (map->level != map_index ||
+                map->width != expected_widths[map_index] ||
+                map->height != expected_heights[map_index]) {
+                fprintf(stderr,
+                        "FAIL: X68000 DUNGEON.DAT map %u metadata changed\n",
+                        (unsigned)map_index);
+                goto done;
+            }
+            if ((size_t)map->raw_map_offset > dungeon_dat.raw_map_byte_count ||
+                map->raw_map_span_size > (size_t)dungeon_dat.raw_map_byte_count -
+                                             map->raw_map_offset ||
+                (map_index + 1u < dungeon_dat.map_count &&
+                 (size_t)map->raw_map_offset + map->raw_map_span_size !=
+                     dungeon_dat.maps[map_index + 1u].raw_map_offset) ||
+                (map_index + 1u == dungeon_dat.map_count &&
+                 (size_t)map->raw_map_offset + map->raw_map_span_size !=
+                     dungeon_dat.raw_map_byte_count)) {
+                fprintf(stderr,
+                        "FAIL: X68000 DUNGEON.DAT map %u raw-data span is not bounded\n",
+                        (unsigned)map_index);
+                goto done;
+            }
+            expected_columns = (uint16_t)(expected_columns + map->width);
+        }
+        if (expected_columns != dungeon_dat.column_count) {
+            fputs("FAIL: X68000 DUNGEON.DAT column count did not match map records\n",
+                  stderr);
+            goto done;
+        }
+        for (map_index = 0u; map_index < 16u; ++map_index) {
+            if (dungeon_dat.thing_count[map_index] !=
+                expected_thing_counts[map_index]) {
+                fprintf(stderr,
+                        "FAIL: X68000 DUNGEON.DAT thing count %u changed\n",
+                        (unsigned)map_index);
+                goto done;
+            }
+        }
+    }
+    {
+        size_t typed_thing_bytes = 0u;
+        size_t expected_offset = 8502u;
+        uint16_t thing_type;
+        for (thing_type = 0u; thing_type < 16u; ++thing_type) {
+            if (dungeon_dat.thing_data[thing_type].offset != expected_offset) {
+                fprintf(stderr,
+                        "FAIL: X68000 DUNGEON.DAT thing section %u offset changed\n",
+                        (unsigned)thing_type);
+                goto done;
+            }
+            if (dungeon_dat.thing_data[thing_type].size > SIZE_MAX -
+                    typed_thing_bytes) {
+                fputs("FAIL: typed thing spans overflowed size_t\n", stderr);
+                goto done;
+            }
+            typed_thing_bytes += dungeon_dat.thing_data[thing_type].size;
+            expected_offset += dungeon_dat.thing_data[thing_type].size;
+        }
+        if (typed_thing_bytes != 13122u ||
+            expected_offset != dungeon_dat.raw_map_data.offset) {
+            fputs("FAIL: X68000 DUNGEON.DAT typed thing span total changed\n",
+                  stderr);
+            goto done;
+        }
+    }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
-           "SWOOSH matches ReDMCSB, FTL offsets are preserved, and all 562 "
-           "X30J graphics spans match format 1\n",
+           "SWOOSH matches ReDMCSB; all 562 X30J graphics spans and the "
+           "complete raw dungeon metadata layout match ReDMCSB\n",
            (unsigned long)entries);
     result = 0;
 
 done:
     free(graphics);
+    free(dungeon);
     free(ftlcode);
     free(swoosh);
     free(image);
