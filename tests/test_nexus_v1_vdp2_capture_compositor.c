@@ -123,6 +123,8 @@ static int run_external_ymir_menu_capture(void)
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer = NULL;
     Nexus_V1_Vdp2YmirMenuCaptureInput input;
     Nexus_V1_Vdp2YmirMenuCaptureReceipt receipt;
+    uint32_t command_offsets[1] = {0x1560U};
+    uint8_t command_joins[1] = {0U};
     FILE *output = NULL;
     size_t i;
     int ok = 0;
@@ -223,8 +225,10 @@ static int run_external_ymir_menu_capture(void)
         }
         input.vdp1_vram = vdp1_vram;
         input.vdp1_vram_size = NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
-        input.vdp1_command_byte_offset = (uint32_t)command_offset;
-        input.vdp1_command_source_join_verified = 1;
+        command_joins[0] = 1U;
+        input.vdp1_command_byte_offsets = command_offsets;
+        input.vdp1_command_source_join_verified_flags = command_joins;
+        input.vdp1_command_count = 1U;
     }
     input.original_ymir_capture_verified = capture_attested &&
         strcmp(capture_attested, "1") == 0;
@@ -253,7 +257,8 @@ static int run_external_ymir_menu_capture(void)
     if (overlay_requested &&
         (!receipt.vdp1_command_overlaid ||
          !receipt.vdp1_command_source_join_verified ||
-         receipt.vdp1_command_pixels != 963)) goto cleanup;
+         receipt.vdp1_command_pixels != 963 ||
+         receipt.vdp1_command_count != 1)) goto cleanup;
     if (overlay_requested) {
         size_t pixel;
         for (pixel = 0U; pixel < NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
@@ -312,6 +317,184 @@ cleanup:
     free(registers);
     free(cram);
     free(vram);
+    free(fbs);
+    return ok;
+}
+
+static int run_external_ymir_menu_frame119(void)
+{
+    const char *fbs_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_FBS");
+    const char *vdp2_vram_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_VDP2_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_REGS");
+    const char *vdp1_vram_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_VDP1_VRAM");
+    const char *title_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_TITLE");
+    const char *expected_path = getenv("FIRESTAFF_NEXUS_YMIR_MENU119_EXPECTED_RGB");
+    uint8_t *fbs = NULL;
+    uint8_t *vdp2_vram = NULL;
+    uint8_t *cram = NULL;
+    uint8_t *registers = NULL;
+    uint8_t *vdp1_vram = NULL;
+    uint8_t *title = NULL;
+    uint8_t *expected = NULL;
+    uint32_t command_offsets[5] = {
+        0x0d8e0U, 0x0d900U, 0x0d920U, 0x0d940U, 0x0d960U
+    };
+    static const uint32_t texture_offsets[5] = {
+        0x46460U, 0x46460U, 0x47de0U, 0x479e0U, 0x46f60U
+    };
+    static const size_t title_offsets[5] = {
+        0x000b76U, 0x000b76U, 0x000446U, 0x000576U, 0x0007d6U
+    };
+    uint8_t joins[5] = {0U, 0U, 0U, 0U, 0U};
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer = NULL;
+    Nexus_V1_Vdp2YmirMenuCaptureInput input;
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt receipt;
+    size_t command_index;
+    size_t pixel;
+    int ok = 0;
+    int failure_stage = 1;
+
+    if (!fbs_path && !vdp2_vram_path && !cram_path && !registers_path &&
+        !vdp1_vram_path && !title_path && !expected_path) return 1;
+    fbs = read_exact_file(fbs_path,
+        NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES * 2U);
+    vdp2_vram = read_exact_file(vdp2_vram_path,
+        NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_file(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_file(registers_path, 512U);
+    vdp1_vram = read_exact_file(vdp1_vram_path,
+        NEXUS_V1_SATURN_VDP1_VRAM_BYTES);
+    title = read_exact_file(title_path, NEXUS_V1_TITLE_BIN_BYTES);
+    expected = read_exact_file(expected_path,
+        NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+        NEXUS_V1_VDP2_YMIR_MENU_HEIGHT * 3U);
+    framebuffer = (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)
+        malloc(sizeof(*framebuffer));
+    if (!fbs || !vdp2_vram || !cram || !registers || !vdp1_vram ||
+        !title || !expected || !framebuffer ||
+        !has_sha256(fbs, NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES * 2U,
+            "1473643208f42bb5b483c6872935228ce85a0b0a3f9e31f4edf8759d51673480") ||
+        !has_sha256(vdp1_vram, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
+            "5b930dc90f7a1c70ee804e823549f45130d7ae5846b20dbf5af72f1504e9cc18") ||
+        !has_sha256(vdp2_vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            "de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c") ||
+        !has_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
+        !has_sha256(registers, 512U,
+            "79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d") ||
+        !has_sha256(expected,
+            NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                NEXUS_V1_VDP2_YMIR_MENU_HEIGHT * 3U,
+            "beea61eb64fc11eab394e98542213b9b4a91c2e272f4b7f4f267309aec72a4bc") ||
+        !has_sha256(title, NEXUS_V1_TITLE_BIN_BYTES,
+            NEXUS_V1_TITLE_BIN_SHA256)) goto cleanup;
+
+    failure_stage = 2;
+    for (command_index = 0U; command_index < 5U; ++command_index) {
+        Nexus_V1_Vdp1TextureCommand command;
+        uint32_t offset = command_offsets[command_index];
+        size_t byte;
+        /* The trace preserves Saturn bus words in big-endian order; only
+         * command words are swapped for Firestaff's parser. Texture bytes
+         * remain untouched in their captured lane order. */
+        for (byte = 0U; byte < NEXUS_V1_VDP1_COMMAND_BYTES; byte += 2U) {
+            uint8_t temp = vdp1_vram[offset + byte];
+            vdp1_vram[offset + byte] = vdp1_vram[offset + byte + 1U];
+            vdp1_vram[offset + byte + 1U] = temp;
+        }
+        if (nexus_v1_vdp1_texture_command_parse(
+                vdp1_vram + offset, (int)NEXUS_V1_VDP1_COMMAND_BYTES,
+                &command) != 0 || !command.texture_command ||
+            command.command_type != 0U || command.colour_mode != 0U ||
+            command.texture_source_byte_offset != texture_offsets[command_index] ||
+            title_offsets[command_index] + command.texture_byte_count >
+                NEXUS_V1_TITLE_BIN_BYTES ||
+            memcmp(vdp1_vram + command.texture_source_byte_offset,
+                   title + title_offsets[command_index],
+                   command.texture_byte_count) != 0) goto cleanup;
+        joins[command_index] = 1U;
+    }
+    memset(&input, 0, sizeof(input));
+    input.vdp1_display_framebuffer = fbs +
+        NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES;
+    input.vdp1_display_framebuffer_size =
+        NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES;
+    input.vdp2_vram = vdp2_vram;
+    input.vdp2_vram_size = NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
+    input.vdp2_cram = cram;
+    input.vdp2_cram_size = NEXUS_V1_SATURN_VDP2_CRAM_BYTES;
+    input.vdp2_registers = registers;
+    input.vdp2_registers_size = 512U;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    input.vdp1_vram = vdp1_vram;
+    input.vdp1_vram_size = NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
+    input.vdp1_command_byte_offsets = command_offsets;
+    input.vdp1_command_source_join_verified_flags = joins;
+    input.vdp1_command_count = 5U;
+    input.original_ymir_capture_verified = 1;
+    input.command_trace_complete_verified = 1;
+    failure_stage = 3;
+    if (!nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || !receipt.valid ||
+        !receipt.capture_only || receipt.renderer_permitted ||
+        !receipt.registers_verified ||
+        !receipt.original_ymir_capture_verified ||
+        !receipt.command_trace_complete_verified ||
+        receipt.vdp1_direct_pixels + receipt.vdp1_palette_pixels !=
+            (int)(NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                  NEXUS_V1_VDP2_YMIR_MENU_HEIGHT) ||
+        receipt.nbg0_overlay_pixels <= 0 ||
+        !receipt.vdp1_command_overlaid ||
+        !receipt.vdp1_command_source_join_verified ||
+        receipt.vdp1_command_count != 5 ||
+        receipt.vdp1_command_pixels != 1445) {
+        fprintf(stderr, "frame119 receipt valid=%d regs=%d commands=%d pixels=%d\n",
+                receipt.valid, receipt.registers_verified,
+                receipt.vdp1_command_count, receipt.vdp1_command_pixels);
+        goto cleanup;
+    }
+    failure_stage = 4;
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                            NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++pixel) {
+        uint32_t actual = framebuffer->rgba_buffer[pixel];
+        const uint8_t channels[3] = {
+            (uint8_t)(actual >> 16U), (uint8_t)(actual >> 8U), (uint8_t)actual
+        };
+        size_t channel;
+        for (channel = 0U; channel < 3U; ++channel) {
+            int difference = (int)channels[channel] - expected[pixel * 3U + channel];
+            if (difference < -8 || difference > 8) {
+                fprintf(stderr, "frame119 mismatch pixel=%lu channel=%lu actual=%u expected=%u\n",
+                        (unsigned long)pixel, (unsigned long)channel,
+                        (unsigned int)channels[channel],
+                        (unsigned int)expected[pixel * 3U + channel]);
+                goto cleanup;
+            }
+        }
+    }
+    failure_stage = 5;
+    joins[2] = 0U;
+    if (nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || receipt.valid ||
+        receipt.renderer_permitted) goto cleanup;
+    joins[2] = 1U;
+    command_offsets[4] = command_offsets[3];
+    if (nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || receipt.valid ||
+        receipt.renderer_permitted) goto cleanup;
+    command_offsets[4] = 0x0d960U;
+    ok = 1;
+cleanup:
+    if (!ok) fprintf(stderr, "frame119 capture test failed at stage %d\n",
+                     failure_stage);
+    free(framebuffer);
+    free(expected);
+    free(title);
+    free(vdp1_vram);
+    free(registers);
+    free(cram);
+    free(vdp2_vram);
     free(fbs);
     return ok;
 }
@@ -444,6 +627,17 @@ int main(void)
          getenv("FIRESTAFF_NEXUS_YMIR_REPLAY_OUT")) &&
         !run_external_ymir_menu_capture()) {
         fprintf(stderr, "FAIL: external full-frame Ymir title-menu replay\n");
+        return 1;
+    }
+    if ((getenv("FIRESTAFF_NEXUS_YMIR_MENU119_FBS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_VDP2_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_CRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_REGS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_VDP1_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_TITLE") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MENU119_EXPECTED_RGB")) &&
+        !run_external_ymir_menu_frame119()) {
+        fprintf(stderr, "FAIL: external five-command Ymir menu frame 119 replay\n");
         return 1;
     }
     puts("test_nexus_v1_vdp2_capture_compositor: PASS");

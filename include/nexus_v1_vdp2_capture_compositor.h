@@ -15,6 +15,7 @@
 #define NEXUS_V1_VDP2_NBG0_BITMAP_HEIGHT 256U
 #define NEXUS_V1_VDP2_YMIR_MENU_WIDTH 320U
 #define NEXUS_V1_VDP2_YMIR_MENU_HEIGHT 224U
+#define NEXUS_V1_VDP2_YMIR_MENU_MAX_VDP1_COMMANDS 16U
 #define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES (512U * 256U * 2U)
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
@@ -113,6 +114,11 @@ typedef struct {
     size_t vdp1_vram_size;
     uint32_t vdp1_command_byte_offset;
     int vdp1_command_source_join_verified;
+    /* Optional ordered VDP1 draws from one complete captured trace. Each
+     * command needs its own independently established source join. */
+    const uint32_t *vdp1_command_byte_offsets;
+    const uint8_t *vdp1_command_source_join_verified_flags;
+    size_t vdp1_command_count;
     int original_ymir_capture_verified;
     int command_trace_complete_verified;
 } Nexus_V1_Vdp2YmirMenuCaptureInput;
@@ -137,6 +143,7 @@ typedef struct {
     int vdp1_command_overlaid;
     int vdp1_command_source_join_verified;
     int vdp1_command_pixels;
+    int vdp1_command_count;
 } Nexus_V1_Vdp2YmirMenuCaptureReceipt;
 
 /* Replay one authenticated NBG1 8bpp bitmap span. This is deliberately a

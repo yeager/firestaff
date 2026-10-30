@@ -591,6 +591,17 @@ capture-gated Nexus title; this change does not make the game playable.
   writer or either span to a retail resource.
   Keep both spans blocked until upload provenance or an exact transformed
   retail-surface join is captured.
+- The retained Ymir Japanese title-menu capture at frame 119 independently
+  binds five ordered VDP1 draws (two selection markers and three labels) to
+  exact `TITLE.BIN` texture/palette records and screenshot samples. The
+  capture-only Ymir menu input now supports a bounded ordered list of
+  source-joined command offsets, applies them in trace order, and reports the
+  aggregate draw count and pixel count. A hash-pinned frame-119 C integration
+  case now checks all five commands against retail `TITLE.BIN` texture spans
+  and compares the resulting 320x224 RGB plane with the retained Ymir output;
+  the focused test passes. The replay remains capture-only. Keep production
+  renderer admission blocked until runtime ownership, complete menu input,
+  and broader frame behavior are verified.
 - Implement native Saturn runtime semantics only after each dispatcher,
   material, event, save or audio consumer has a captured, hash-verified
   contract.

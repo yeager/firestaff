@@ -392,6 +392,7 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     unsigned int x;
     unsigned int y;
     int command_overlay_requested;
+    size_t command_index;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.capture_only = 1;
@@ -416,16 +417,51 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     command_overlay_requested = input->vdp1_vram ||
         input->vdp1_vram_size != 0U ||
         input->vdp1_command_byte_offset != 0U ||
-        input->vdp1_command_source_join_verified;
+        input->vdp1_command_source_join_verified ||
+        input->vdp1_command_count != 0U ||
+        input->vdp1_command_byte_offsets != NULL ||
+        input->vdp1_command_source_join_verified_flags != NULL;
     if (command_overlay_requested &&
         (!input->vdp1_vram ||
          input->vdp1_vram_size != NEXUS_V1_SATURN_VDP1_VRAM_BYTES ||
-         input->vdp1_command_byte_offset % NEXUS_V1_VDP1_COMMAND_BYTES != 0U ||
-         input->vdp1_command_byte_offset > input->vdp1_vram_size -
-             NEXUS_V1_VDP1_COMMAND_BYTES ||
-         !input->vdp1_command_source_join_verified)) {
+         ((input->vdp1_command_count == 0U &&
+           (input->vdp1_command_byte_offsets != NULL ||
+            input->vdp1_command_source_join_verified_flags != NULL)) ||
+          (input->vdp1_command_count > 0U &&
+           (!input->vdp1_command_byte_offsets ||
+            !input->vdp1_command_source_join_verified_flags ||
+            input->vdp1_command_count >
+                NEXUS_V1_VDP2_YMIR_MENU_MAX_VDP1_COMMANDS))))) {
         if (out_receipt) *out_receipt = receipt;
         return 0;
+    }
+    if (command_overlay_requested) {
+        size_t count = input->vdp1_command_count ?
+            input->vdp1_command_count : 1U;
+        for (command_index = 0U; command_index < count; ++command_index) {
+            uint32_t offset = input->vdp1_command_count ?
+                input->vdp1_command_byte_offsets[command_index] :
+                input->vdp1_command_byte_offset;
+            int join_verified = input->vdp1_command_count ?
+                input->vdp1_command_source_join_verified_flags[command_index] != 0U :
+                input->vdp1_command_source_join_verified;
+            size_t prior;
+            if (offset % NEXUS_V1_VDP1_COMMAND_BYTES != 0U ||
+                offset > input->vdp1_vram_size -
+                    NEXUS_V1_VDP1_COMMAND_BYTES || !join_verified) {
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            for (prior = 0U; prior < command_index; ++prior) {
+                uint32_t previous = input->vdp1_command_count ?
+                    input->vdp1_command_byte_offsets[prior] :
+                    input->vdp1_command_byte_offset;
+                if (offset == previous) {
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+            }
+        }
     }
 #define CAPTURE_REG(offset) read_register16_ordered( \
         registers, (offset), input->register_byte_order)
@@ -544,7 +580,7 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
         Nexus_V1_Vdp2ColourRamCapture colour_capture;
         Nexus_V1_Vdp1DirectColorFramebuffer *vdp1_framebuffer;
         size_t byte;
-        int written_pixels = 0;
+        int total_written_pixels = 0;
         vdp1_framebuffer = (Nexus_V1_Vdp1DirectColorFramebuffer *)
             malloc(sizeof(*vdp1_framebuffer));
         if (!vdp1_framebuffer) {
@@ -574,26 +610,39 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
         colour_capture.original_saturn_capture_verified = 1;
         memcpy(vdp1_framebuffer->rgba_buffer, working->rgba_buffer,
                sizeof(vdp1_framebuffer->rgba_buffer));
-        if (!nexus_v1_vdp1_capture_blend_mode0_normal(
-                vdp1_framebuffer,
-                input->vdp1_vram + input->vdp1_command_byte_offset,
-                (int)NEXUS_V1_VDP1_COMMAND_BYTES,
-                input->vdp1_vram, (int)input->vdp1_vram_size,
-                &colour_capture, 0, 0, (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH,
-                (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT, &written_pixels) ||
-            written_pixels <= 0) {
-            free(vdp1_framebuffer);
-            free(working);
-            if (out_receipt) *out_receipt = receipt;
-            return 0;
+        {
+            size_t count = input->vdp1_command_count ?
+                input->vdp1_command_count : 1U;
+            for (command_index = 0U; command_index < count; ++command_index) {
+                uint32_t offset = input->vdp1_command_count ?
+                    input->vdp1_command_byte_offsets[command_index] :
+                    input->vdp1_command_byte_offset;
+                int written_pixels = 0;
+                if (!nexus_v1_vdp1_capture_blend_mode0_normal(
+                        vdp1_framebuffer,
+                        input->vdp1_vram + offset,
+                        (int)NEXUS_V1_VDP1_COMMAND_BYTES,
+                        input->vdp1_vram, (int)input->vdp1_vram_size,
+                        &colour_capture, 0, 0,
+                        (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH,
+                        (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT,
+                        &written_pixels) || written_pixels <= 0) {
+                    free(vdp1_framebuffer);
+                    free(working);
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+                total_written_pixels += written_pixels;
+            }
         }
         memcpy(working->rgba_buffer, vdp1_framebuffer->rgba_buffer,
                sizeof(working->rgba_buffer));
         free(vdp1_framebuffer);
         receipt.vdp1_command_overlaid = 1;
-        receipt.vdp1_command_source_join_verified =
-            input->vdp1_command_source_join_verified;
-        receipt.vdp1_command_pixels = written_pixels;
+        receipt.vdp1_command_source_join_verified = 1;
+        receipt.vdp1_command_count = (int)(input->vdp1_command_count ?
+            input->vdp1_command_count : 1U);
+        receipt.vdp1_command_pixels = total_written_pixels;
     }
     receipt.valid = 1;
     receipt.renderer_permitted = 0;
