@@ -59,13 +59,17 @@ trace hashes are in the source-lock note.
    and the dated trace entries below. The latest v11 trace follows 40 indexed
    dispatches; 28 windows reach their 256-fetch cap. The first observed path
    returns from the System Card controller poll to its own dispatcher. The
-   new 18-byte `$40D2-$40E3` RAM-loop report has four fetch/write mismatches and
-   105 matching writes without an immediately preceding source read, and the
-   `$EA9C` observer does not cover every guest writer. The earlier `$613A`,
-   `$613F`, `$6144`, and temporary `$40D9` bytes also remain unbound to a
-   game-owned consumer. Continue tracing complete writers and callers until a
-   game-owned poll and resulting state change are observed; there is still no
-   game IRQ, aggregate authenticated CD-to-RAM receipt, or non-System-Card poll.
+   18-byte `$40D2-$40E3` RAM-loop report matches all 495 fetched byte slots to
+   the latest address-scoped writes. The all-PC trace covers only
+   `$1000D9-$1000DB`; the other 15 bytes rely on the incomplete `$EA9C` observer.
+   Of the 400 slots matched to `$EA9C` writes, 390 have unique and 10 have
+   ambiguous source-read candidates, while 111 fetch rows are fully joined to
+   CD-read candidates. The complete `$6109-$6114` helper execution and its
+   three writes are now verified, but its caller and the earlier `$613A`,
+   `$613F`, `$6144`, and temporary `$40D9` bytes remain unbound to a game-owned
+   consumer. Continue tracing complete writers and callers until a game-owned
+   poll and resulting state change are observed; there is still no game IRQ,
+   aggregate authenticated CD-to-RAM receipt, or non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
