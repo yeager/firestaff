@@ -302,6 +302,12 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
                                  int16_t handle,
                                  int16_t *out_next);
 
+/* DM2_DEALLOC_RECORD (c_record.cpp:1205): set a validated record's first
+ * word to OBJECT_NULL. The source primitive does not unlink the record from
+ * its owning list; callers must perform that source-owned operation first. */
+int dm2_v1_record_pool_dealloc_record(DM2_V1_RecordPoolSet *set,
+                                      int16_t handle);
+
 /* SK1C9A DM2_19f0_050f: first DB4 in a tile-rooted record chain, or END.
  * This receipt proves record traversal only; it does not admit an edge. */
 typedef struct {

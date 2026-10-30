@@ -29,15 +29,17 @@ playable game route or parity on every supported platform.
 | `IMPLEMENTED_PARITY` | 1,113 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
-| `UNOWNED_SOURCE_MUTATION` | 2 |
+| `UNOWNED_SOURCE_MUTATION` | 1 |
 | `PARTIAL` | 2 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 1 |
 | **Total** | **1,751** |
 
 Open source-owned behavior includes `DM2_ALLOC_NEW_RECORD` and
-`DM2_DEALLOC_RECORD`, whose map-chain, recycler, record-pool, CAII, and timer
-ownership is not implemented as a complete transaction. `DM2_ARRANGE_DUNGEON`
+`DM2_DEALLOC_RECORD`, whose complete runtime allocation/reclamation path still
+needs map-chain, recycler, record-pool, CAII, and timer ownership. The bounded
+`DM2_DEALLOC_RECORD` primitive now marks a record's first word as NULL but does
+not unlink it or connect reclamation to callers. `DM2_ARRANGE_DUNGEON`
 has a bounded source-owned mutation path integrated into new-game loading, but
 still lacks source-by-source mutation and all-edition/platform parity proof.
 `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and

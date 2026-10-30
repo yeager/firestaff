@@ -447,6 +447,27 @@ int main(void)
     int16_t head_a;
     int16_t head_b;
 
+    /* ── DM2_DEALLOC_RECORD (c_record.cpp:1205) ─────────────────── */
+    {
+        uint8_t bytes[4] = {0x34u, 0x12u, 0xa5u, 0x5au};
+        uint8_t expected[4] = {0xffu, 0xffu, 0xa5u, 0x5au};
+        memset(&set, 0, sizeof(set));
+        set.valid = 1;
+        set.source_words_big_endian = 1;
+        set.pools[0].bytes = bytes;
+        set.pools[0].record_count = 1;
+        set.pools[0].record_size = 4;
+        CHECK(dm2_v1_record_pool_dealloc_record(&set, mk_handle(0, 0)),
+              "dealloc resolves and marks a valid source record");
+        CHECK(memcmp(bytes, expected, sizeof(bytes)) == 0,
+              "dealloc changes only the source record link word");
+        CHECK(!dm2_v1_record_pool_dealloc_record(&set, mk_handle(0, 1)) &&
+                  !dm2_v1_record_pool_dealloc_record(
+                      &set, DM2_V1_RECORD_HANDLE_NULL) &&
+                  memcmp(bytes, expected, sizeof(bytes)) == 0,
+              "dealloc rejects out-of-range and null handles without mutation");
+    }
+
     /* ── table_recordsizes (c_record.cpp:28-31) ─────────────────── */
     {
         static const int expect[16] = {

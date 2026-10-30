@@ -1451,6 +1451,17 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
     return 1;
 }
 
+int dm2_v1_record_pool_dealloc_record(DM2_V1_RecordPoolSet *set,
+                                      int16_t handle)
+{
+    uint8_t *addr = dm2_v1_record_pool_address_mut(set, handle);
+    if (!addr) return 0;
+    /* skproject c_record.cpp::DM2_DEALLOC_RECORD (1205) writes only
+     * OBJECT_NULL to the record's first word. It does not unlink the record. */
+    dm2_v1_pool_wr16(set, addr, DM2_V1_RECORD_HANDLE_NULL);
+    return 1;
+}
+
 int dm2_v1_record_pool_first_creature_receipt(
     const DM2_V1_RecordPoolSet *set, int16_t first_link,
     DM2_V1_FirstCreatureReceipt *out)
