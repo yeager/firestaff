@@ -80,7 +80,7 @@ def main() -> int:
     ensure(len(trace) == len(snapshots),
            "SH-2 read and register snapshot counts are misaligned")
 
-    # The matching read pass is one contiguous 921-byte operation in frame 7716.
+    # The matching read pass is one contiguous 921-byte operation in the selected frame.
     selected = [i for i, r in enumerate(trace)
                 if r["sh2"] == "master" and r["vdp1_frame"] == str(target_frame)
                 and int(r["address"], 16) >= SOURCE_ADDRESS
