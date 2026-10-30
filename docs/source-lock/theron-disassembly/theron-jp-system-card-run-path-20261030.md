@@ -787,3 +787,35 @@ The additional trace hashes are:
 
 The code-follow, bounded-follow, CD read, and `$EA9C` writer hashes are the
 v11 values recorded above.
+
+## 2026-10-30 — v15 bounded bootstrap and `$4000` instruction windows
+
+Added a reference-only PCE Fast trace that independently arms a 512-fetch
+window at `$E11B` and a 128-fetch window at `$4000`. Each row records the
+logical PC, mapped physical PC and instruction-byte addresses, four memory
+bytes with a validity mask, CPU registers, and MPR0–MPR7. The verifier checks
+each window's ordering and cap independently, then validates the logical to
+physical mapping for every recorded instruction byte. It does not require one
+window to precede the other, since the two start PCs are armed independently.
+
+The cold capture used authentic Japanese Rev. 1 media, System Card 3.0, and
+`run@480:300,select@600:1`, without a save-state. Track 02 MD5 was
+`b7afb338ad31be1025b53f9aff12d73a`; the System Card MD5 was
+`ff1a674273fe3540ccef576376407d1d`. The capture produced 512 bootstrap rows
+beginning at `$E11B` and 128 target rows beginning at `$4000`; the bounded
+trace verifier passed. The target window maps `$4000` through MPR2=`$80` to
+physical `$100000`. Its rows include a repeated instruction loop at
+`$403A-$4041`; the window alone does not identify this mapped payload or its
+owner.
+
+The scripted-input receipt confirms both scheduled events were consumed at
+the System Card poll `$E4C5`; it records zero non-System-Card polls. The
+60-second capture ended with exit 124 and `transition=missing`, zero CD IRQs,
+and zero authenticated CD-to-RAM receipts. These rows show bounded CPU
+execution and address mapping only. They do not source-bind the `$4000`
+payload, prove a causal BIOS handoff, identify game-owned code, or establish
+gameplay. Raw traces and original media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v15-20261030/`.
+
+Bootstrap-follow trace SHA-256:
+`b05d637423d927c66318d38c8534e058dcb76fdeaec282c134a93415740a24aa`.

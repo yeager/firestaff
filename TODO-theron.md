@@ -88,6 +88,17 @@ byte slots across 78 rows match the latest writes for all 18 addresses, with
 56 rows fully joined to source-read candidates. See the source-lock note for
 trace hashes and limits.
 
+2026-10-30 v15 bootstrap windows: an authentic cold Japanese Rev. 1 capture
+now verifies 512 instruction rows starting at `$E11B` and 128 independently
+armed rows starting at `$4000`, with every logical/physical mapping validated.
+The scripted RUN/SELECT events were consumed at System Card poll `$E4C5`, but
+there were still no non-System-Card polls, CD IRQs, authenticated CD-to-RAM
+receipts, or gameplay transition. The `$4000` payload remains unbound to
+source bytes and its ownership is unknown. Do not treat instruction execution
+or a passing trace verifier as proof of a game handoff. Continue by joining
+these mapped fetches to complete source-authenticated writes and a game-owned
+consumer. Details and the trace hash are in the source-lock note.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source

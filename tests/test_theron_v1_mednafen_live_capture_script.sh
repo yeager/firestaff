@@ -1731,6 +1731,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
     exit 1
 fi
 system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
+system_card_bootstrap_follow_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_bootstrap_follow.patch
 if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x44C1 || pc == 0x44D2' "$system_card_dispatch_patch" ||
@@ -1743,6 +1744,16 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144' "$system_card_dispatch_patch" ||
    ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_follow index=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'target_follow index=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'static unsigned int bootstrap_started = 0' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'if(!target_armed && pc == 0x4000)' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace"' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the PCE Fast System Card bootstrap-follow hook' "$script" ||
+   ! grep -Fq 'verify_theron_jp_syscard_bootstrap_follow.py' "$script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_bootstrap_follow.py' "$build_script" ||
+   ! grep -Fq 'pce_fast_system_card_bootstrap_follow_status=%s' "$script" ||
    ! grep -Fq 'code_follow_complete event_sequence=%u count=%u' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace"' "$script" ||
    ! grep -Fq 'system_card_code_follow_trace="${trace}.system-card-code-follow"' "$script" ||

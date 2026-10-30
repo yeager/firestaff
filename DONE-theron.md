@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — verify bounded System Card bootstrap instruction windows
+
+Added independently armed PCE Fast instruction windows at `$E11B` and
+`$4000`, plus a verifier for capped row order and logical/physical byte
+mapping. On authentic Japanese Rev. 1 media and System Card 3.0, the cold
+`run@480:300,select@600:1` capture produced 512 BIOS-bootstrap rows and 128
+`$4000` target rows. The verifier passed. The input receipt confirms both
+events were read at the System Card poll `$E4C5`, with no non-System-Card poll.
+The capture still has no CD IRQ, authenticated CD-to-RAM receipt, or gameplay
+transition; the `$4000` payload's source and owner remain unknown. This closes
+the bounded trace-tooling task only; Theron support remains open in
+`TODO-theron.md`. Raw evidence and its hash are in
+`docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
 ## 2026-10-30 — disassemble the authentic System Card bootstrap branch
 
 Added a bounded disassembly excerpt of the authentic System Card 3.0 `$E0F3`
