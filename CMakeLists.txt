@@ -56010,6 +56010,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_
     add_executable(test_csb_v1_atari_f0115_projectile_plan
         tests/test_csb_v1_atari_f0115_projectile_plan.c
         src/csb/csb_v1_atari_f0115_projectile_plan.c
+        src/csb/csb_v1_atari_f0115_explosion_plan.c
     )
     target_link_libraries(test_csb_v1_atari_f0115_projectile_plan PRIVATE firestaff_m11)
     if(NOT MSVC)
@@ -56024,7 +56025,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_
         LABELS "csb;atari;f0115;projectiles;real-media;skip-safe")
 endif()
 
-# ReDMCSB DUNVIEW.C MEDIA020 F0115 G0211/G0216/G0225/G0226 explosion
+# ReDMCSB DUNVIEW.C MEDIA020 F0115 G0211/G0212/G0216/G0225/G0226/G0228 explosion
 # source tables and F0114/F0115 source bitmap selection.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_explosion_plan.c")
     add_executable(test_csb_v1_atari_f0115_explosion_plan

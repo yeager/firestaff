@@ -1,4 +1,5 @@
 #include "csb_v1_atari_f0115_projectile_plan.h"
+#include "csb_v1_atari_f0115_explosion_plan.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 
 #include <stdio.h>
@@ -70,6 +71,8 @@ int main(void)
     uint8_t c558[CSB_V1_ATARI_F0115_PROJECTILE_C558_SIZE];
     CSB_V1_AtariF0115ProjectileInput input;
     CSB_V1_AtariF0115ProjectilePlan plan;
+    CSB_V1_AtariF0115ExplosionInput explosion_input;
+    CSB_V1_AtariF0115ExplosionPlan explosion_plan;
     int result;
 
     if (!path || !path[0]) return 77;
@@ -91,6 +94,55 @@ int main(void)
         c558[CSB_V1_ATARI_F0115_PROJECTILE_G0215_OFFSET + 6u] != 32u) {
         fprintf(stderr, "original C558 does not match ReDMCSB MEDIA020 G0210/G0215\n");
         return 3;
+    }
+    memset(&explosion_input, 0, sizeof(explosion_input));
+    explosion_input.c558 = c558;
+    explosion_input.c558_size = sizeof(c558);
+    explosion_input.explosion_type = 100;
+    explosion_input.party_direction = 2;
+    explosion_input.last_view_cell = 1;
+    explosion_input.cell = 3;
+    {
+        static const int expected[7][3] = {
+            {112,53,15},{24,53,15},{194,53,15},{112,59,20},
+            {15,59,20},{208,59,20},{112,70,32}
+        };
+        int square;
+        for (square = 0; square < 7; ++square) {
+            explosion_input.view_square = square;
+            if (csb_v1_atari_f0115_plan_explosion(
+                    &explosion_input, &explosion_plan) !=
+                    CSB_V1_ATARI_F0115_EXPLOSION_SPRITE ||
+                !explosion_plan.uses_projectile_bitmap ||
+                explosion_plan.graphic_index != 326 ||
+                explosion_plan.aspect_index != 3 ||
+                explosion_plan.source_byte_width != 32 ||
+                explosion_plan.source_height != 15 ||
+                explosion_plan.scale_32 != expected[square][2] ||
+                explosion_plan.center_x != expected[square][0] ||
+                explosion_plan.center_y != expected[square][1]) {
+                fprintf(stderr,
+                        "authentic C100 lightning/G0228 plan mismatch at row %d\n",
+                        square);
+                return 10;
+            }
+        }
+    }
+    explosion_input.view_square = 6;
+    explosion_input.cell = 2;
+    if (csb_v1_atari_f0115_plan_explosion(
+            &explosion_input, &explosion_plan) !=
+            CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN) {
+        fprintf(stderr, "C100 rebirth ignored its visible-cell gate\n");
+        return 11;
+    }
+    explosion_input.cell = 3;
+    explosion_input.view_square = 7;
+    if (csb_v1_atari_f0115_plan_explosion(
+            &explosion_input, &explosion_plan) !=
+            CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN) {
+        fprintf(stderr, "C100 rebirth drew beyond D1C\n");
+        return 12;
     }
     if (!check_selector_resolution()) return 4;
 

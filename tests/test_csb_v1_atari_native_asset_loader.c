@@ -55,6 +55,21 @@ int main(int argc, char **argv)
             }
         }
     }
+    {
+        /* ReDMCSB G0210 lightning aspect 3 maps to native bitmap 326. */
+        unsigned short width = 0u, height = 0u;
+        const M11_AssetSlot *asset;
+        if (!M11_AssetLoader_QuerySize(&loader, 326u, &width, &height) ||
+            width != 64u || height != 15u ||
+            !(asset = M11_AssetLoader_Load(&loader, 326u)) ||
+            !asset->loaded || !asset->pixels || asset->width != 64u ||
+            asset->height != 15u) {
+            fprintf(stderr,
+                    "CSB Atari C100 lightning bitmap 326 failed original-media decode\n");
+            M11_AssetLoader_Shutdown(&loader);
+            return 19;
+        }
+    }
     csb_atari_st_graphics_loader_init(&native);
     if (!csb_atari_st_graphics_loader_open(&native, path) ||
         native.items[558u].decompressed_size != 4720u) {

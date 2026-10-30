@@ -6222,6 +6222,8 @@ static int m11_csb_atari_st_draw_explosions_for_square(
                 ((record[2] >> 7) & 1u) == (explosion->centered != 0) &&
                 record[3] == (uint8_t)explosion->attack) {
                 memset(&input, 0, sizeof(input));
+                input.c558 = state->csbAtariStCreatureC558;
+                input.c558_size = sizeof(state->csbAtariStCreatureC558);
                 input.explosion_type = explosion->explosionType;
                 input.attack = explosion->attack;
                 input.centered = explosion->centered;

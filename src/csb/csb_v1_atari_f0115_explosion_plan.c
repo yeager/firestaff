@@ -8,6 +8,15 @@ enum {
     MEDIA020_M600_D3C = 0,
     MEDIA020_M609_D0C = 9,
     MEDIA020_M611_D0R = 11,
+    MEDIA020_M613_FIRST_PROJECTILE = 316,
+    CSB_G20E_C558_SIZE = 4720,
+    CSB_G20E_G0210_OFFSET = 1558,
+    G0210_RECORD_SIZE = 6,
+    G0210_LIGHTNING_ASPECT_INDEX = 3,
+    G0210_LIGHTNING_NATIVE_RELATIVE_INDEX = 9,
+    G0210_LIGHTNING_DERIVED_INDEX = 54,
+    G0210_LIGHTNING_BYTE_WIDTH = 32,
+    G0210_LIGHTNING_HEIGHT = 15,
     C000_EXPLOSION_FIREBALL = 0,
     C002_EXPLOSION_LIGHTNING_BOLT = 2,
     C006_EXPLOSION_POISON_BOLT = 6,
@@ -50,6 +59,12 @@ static const int16_t s_g0227_rebirth_step2[7][3] = {
     {12,63,16},{213,63,16},{112,76,24}
 };
 
+/* ReDMCSB DUNVIEW.C G0228, D3C through D1C. */
+static const int16_t s_g0228_rebirth_step1[7][3] = {
+    {112,53,15},{24,53,15},{194,53,15},{112,59,20},
+    {15,59,20},{208,59,20},{112,70,32}
+};
+
 static int explosion_aspect(int type)
 {
     if (type == C000_EXPLOSION_FIREBALL ||
@@ -61,7 +76,6 @@ static int explosion_aspect(int type)
         return C2_EXPLOSION_ASPECT_POISON;
     }
     if (type == C040_EXPLOSION_SMOKE) return C3_EXPLOSION_ASPECT_SMOKE;
-    if (type == C100_EXPLOSION_REBIRTH_STEP1) return -1;
     return C1_EXPLOSION_ASPECT_SPELL;
 }
 
@@ -86,6 +100,53 @@ int csb_v1_atari_f0115_plan_explosion(
     out_plan->view_square = input->view_square;
     out_plan->explosion_coordinate_index = input->view_square + 3;
     out_plan->transparent_color = 10; /* MEDIA020 C10_COLOR_FLESH. */
+    if (input->explosion_type == C100_EXPLOSION_REBIRTH_STEP1) {
+        const uint8_t *aspect;
+        int cell;
+        int scale;
+        if (input->view_square > 6 || input->last_view_cell < 0 ||
+            input->last_view_cell > 3) {
+            out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
+            return out_plan->kind;
+        }
+        if (!input->c558 || input->c558_size != CSB_G20E_C558_SIZE) {
+            return CSB_V1_ATARI_F0115_EXPLOSION_INVALID;
+        }
+        cell = (input->last_view_cell + input->party_direction) & 3;
+        if (input->cell != cell) {
+            out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
+            return out_plan->kind;
+        }
+        aspect = input->c558 + CSB_G20E_G0210_OFFSET +
+            G0210_LIGHTNING_ASPECT_INDEX * G0210_RECORD_SIZE;
+        /* G20E G0210 lightning: native bitmap relative index 9, 32-byte
+         * width, 15-pixel height, and the authentic rotation/back flags. */
+        if (aspect[0] != G0210_LIGHTNING_NATIVE_RELATIVE_INDEX ||
+            aspect[1] != G0210_LIGHTNING_DERIVED_INDEX ||
+            aspect[2] != G0210_LIGHTNING_BYTE_WIDTH ||
+            aspect[3] != G0210_LIGHTNING_HEIGHT ||
+            aspect[4] != 0x01u || aspect[5] != 0x12u) {
+            return CSB_V1_ATARI_F0115_EXPLOSION_INVALID;
+        }
+        scale = s_g0228_rebirth_step1[input->view_square][2];
+        out_plan->aspect_index = G0210_LIGHTNING_ASPECT_INDEX;
+        out_plan->graphic_index = MEDIA020_M613_FIRST_PROJECTILE +
+            G0210_LIGHTNING_NATIVE_RELATIVE_INDEX + 1;
+        out_plan->source_byte_width = aspect[2];
+        out_plan->source_height = aspect[3];
+        out_plan->center_x = s_g0228_rebirth_step1[input->view_square][0];
+        out_plan->center_y = s_g0228_rebirth_step1[input->view_square][1];
+        out_plan->scale_32 = scale;
+        out_plan->draw_byte_width =
+            (out_plan->source_byte_width * scale + (scale >> 1)) >> 5;
+        out_plan->draw_height =
+            (out_plan->source_height * scale + (scale >> 1)) >> 5;
+        out_plan->uses_projectile_bitmap = 1;
+        out_plan->flip_horizontal = input->flip_horizontal != 0;
+        out_plan->flip_vertical = input->flip_vertical != 0;
+        out_plan->kind = CSB_V1_ATARI_F0115_EXPLOSION_SPRITE;
+        return out_plan->kind;
+    }
     if (input->explosion_type == C101_EXPLOSION_REBIRTH_STEP2) {
         int scale;
         int cell;
@@ -127,8 +188,6 @@ int csb_v1_atari_f0115_plan_explosion(
         return out_plan->kind;
     }
     aspect = explosion_aspect(input->explosion_type);
-    /* Rebirth uses the C15 lightning projectile and G0227/G0228 tables;
-     * reject it until that separate native-source route is bound. */
     if (aspect < 0) return CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
     out_plan->aspect_index = aspect;
     out_plan->smoke_palette = aspect == C3_EXPLOSION_ASPECT_SMOKE;
@@ -144,9 +203,6 @@ int csb_v1_atari_f0115_plan_explosion(
             out_plan->d0c_pattern_size = 3;
         }
         return out_plan->kind;
-    }
-    if (input->explosion_type == C100_EXPLOSION_REBIRTH_STEP1) {
-        return CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN;
     }
     cell_index = input->centered ? -1 :
         ((input->cell == input->party_direction ||

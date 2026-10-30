@@ -13,19 +13,22 @@ an end-to-end gameplay assertion. Explosion/Fluxcage and F0113 field
 composition and full viewport parity remain open.
 
 2026-10-30 CSB Atari F0115 ordinary explosion work in progress: the new
-planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226 and native
+planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226/G0228 and native
 M614 mapping. The live Atari route reads C15 records in SFT order, validates
 them against the runtime explosion list, uses the shared G0349 random stream
 for flips, and draws ordinary M600-M611 explosion sprites from original
 graphics. C101 now uses its separate G0227 coordinates/scales and checks the
 last processed view cell before consuming flip randomness; it no longer falls
-through to an ordinary fireball placement. Source comparison used
+through to an ordinary fireball placement. C100 now uses the authentic C558
+G0210 lightning bitmap and G0228 placement/scale rows, with the same final
+visible-cell gate. The live asset path draws native bitmap 326. Source
+comparison used
 `.codex-scratch/redmcsb-source/DUNVIEW.C`:
 F0114 around lines 4490-4545; F0115 explosion dispatch around lines
 6025-6215; tables around lines 1319, 1533, 1565, and 1871-1905. Build and
 eight focused Atari plan, asset and viewport tests pass, including the
 original-media native-asset test. This is not full rendering parity: D0C
-pattern compositing, Rebirth C100's lightning-projectile/G0228 path, Fluxcage F0113 field rendering,
+pattern compositing and Fluxcage F0113 field rendering,
 and an end-to-end live explosion capture still need implementation and
 verification. Do not claim the CSB Atari viewport or explosion behavior is
 complete based on these checks.

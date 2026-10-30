@@ -1,6 +1,7 @@
 #ifndef CSB_V1_ATARI_F0115_EXPLOSION_PLAN_H
 #define CSB_V1_ATARI_F0115_EXPLOSION_PLAN_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef enum CSB_V1_AtariF0115ExplosionKind {
@@ -12,6 +13,8 @@ typedef enum CSB_V1_AtariF0115ExplosionKind {
 } CSB_V1_AtariF0115ExplosionKind;
 
 typedef struct CSB_V1_AtariF0115ExplosionInput {
+    const uint8_t *c558; /* Authenticated Atari MEDIA020 G20E item 558. */
+    size_t c558_size;
     int explosion_type;
     int attack;
     int centered;
@@ -41,6 +44,7 @@ typedef struct CSB_V1_AtariF0115ExplosionPlan {
     int transparent_color;
     int smoke_palette;
     int d0c_pattern_size;
+    int uses_projectile_bitmap;
 } CSB_V1_AtariF0115ExplosionPlan;
 
 /* Source tables are MEDIA020 constants in ReDMCSB DUNVIEW.C, not C558 data.
