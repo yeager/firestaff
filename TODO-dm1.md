@@ -841,11 +841,19 @@ SDL dummy does not prove native display, audio output, or physical input.
 
 2026-10-21 Amiga HD/demo follow-up:
 `dm1_v1_amiga_hd_archive_cli_boot` passed against the authentic Amiga HD ZIP.
-`dm1_v1_amiga_demo_archive_cli_boot` skipped because the required original
-`dm-amiga-demo-en.zip` is not present in the local or external archive cache;
-the installed Amiga software archive does not contain that demo package.
-Demo startup therefore remains unverified with authentic media; no substitute
-payload was created.
+At that time, `dm1_v1_amiga_demo_archive_cli_boot` skipped because the original
+`dm-amiga-demo-en.zip` was not present in the local or external archive cache;
+the installed Amiga software archive did not contain that demo package. No
+substitute payload was created.
+
+2026-10-30 Amiga demo startup retest: the original
+`~/.firestaff/data/dm1/dm-amiga-demo-en.zip` is now installed. The
+`dm1_v1_amiga_demo_archive_cli_boot` real-media test passed both when invoked
+directly and as CTest (1/1, 15.98 seconds). It verifies the authenticated
+demo GRAPHICS.DAT and DemoDun.dat hashes, direct CLI and M12 startup from the
+archive and loose original files, and leaves the source archive unchanged.
+This closes the demo startup verification gap for these paths, not native
+display, physical input, audio, or complete Amiga parity.
 
 2026-10-21 Atari outer-archive startup follow-up:
 `dm1_v1_atari_st_outer_archive_cli_boot` passed against the authentic Atari ST
