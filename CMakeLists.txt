@@ -57133,15 +57133,13 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_spell_gdat_re
     )
 endif()
 
-# DISABLED: deep-dependency link failure
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_timing.c"
-        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_startup_menu.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_timing.c"
+        AND TARGET firestaff_dm2)
     add_executable(test_dm2_v1_startup_static_menu_timing
         tests/test_dm2_v1_startup_static_menu_timing.c
-        src/dm2/dm2_v1_startup_menu.c
-        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_startup_static_menu_timing PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_startup_static_menu_timing PRIVATE firestaff_dm2)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_startup_static_menu_timing PRIVATE -Wall -Wextra -O2)
     endif()

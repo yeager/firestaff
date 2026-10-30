@@ -8,7 +8,8 @@
 #endif
 
 /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235):
- * TITLE/0/dt07/4 is static while MessageLoop(true) waits for GAME_LOAD(). */
+ * TITLE/0/dt07/4 is static while MessageLoop(true) waits for GAME_LOAD().
+ * The handoff remains active as a menu phase; title-film fields stay zero. */
 static void assert_static_menu(int source_tick)
 {
     (void)source_tick;
@@ -19,7 +20,7 @@ static void assert_static_menu(int source_tick)
         &receipt, 1, 1, source_tick));
     assert(receipt.startup_menu_active == 1);
     assert(strcmp(receipt.animation, "dm2-startup-menu") == 0);
-    assert(receipt.animation_active == 0);
+    assert(receipt.animation_active == 1);
     assert(receipt.title_animation_tick == 0);
     assert(receipt.title_frame == 0);
     assert(receipt.title_frame_max == 0);

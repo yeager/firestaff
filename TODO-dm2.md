@@ -1,5 +1,12 @@
 # Firestaff TODO — DM2
 
+2026-10-30 static startup-menu timing regression: re-enabled
+`dm2_v1_startup_static_menu_timing` by linking the focused test against the
+existing `firestaff_dm2` library. The receipt is checked at source ticks 0,
+1, and 13: the menu phase remains active while title-film frame and timing
+fields stay zero, matching SkProject's static `SHOW_MENU_SCREEN` wait. This
+is a source-state regression, not a native-presentation timing measurement.
+
 2026-10-29 Macintosh French-labelled media identity correction: I extracted
 the supplied English and French-named `.sit` archives into ignored
 `build/test-scratch/` and compared all 11 relative entries. Every data fork
