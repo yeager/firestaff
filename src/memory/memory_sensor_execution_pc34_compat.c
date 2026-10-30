@@ -511,24 +511,8 @@ static int sensor_process_party_enter_leave(
     for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
         struct SensorEffectList_Compat tmp;
         memset(&tmp, 0, sizeof(tmp));
-        /* ReDMCSB MOVESENS.C F0276 lines 1658-1720: the switch applies
-         * C001-C009 admission/revert rules before F0272 dispatches the
-         * selected effect. The context below models the party addition or
-         * removal without mutating the linked list. */
-        /* ReDMCSB MOVESENS.C F0276 lines 1695-1702: floor C005 only
-         * survives the switch when the party is the triggering thing and
-         * M034_SQUARE_TYPE(current square) == C03_ELEMENT_STAIRS.  This
-         * party-enter/leave wrapper already models party triggers, so it
-         * must preserve the stairs-square predicate before execution. */
-        if (sensors[i].sensorType == 5 && squareType != DUNGEON_ELEMENT_STAIRS) {
-            continue;
-        }
-        /* ReDMCSB MOVESENS.C F0276:1695-1702, case C007 at 1703-1705:
-         * floor-creature sensors do not fire for the party. This wrapper
-         * only processes party enter/leave, so C007 is never applicable. */
-        if (sensors[i].sensorType == 7) {
-            continue;
-        }
+        /* ReDMCSB MOVESENS.C F0276 lines 1658-1720 applies C001-C009
+         * admission/revert rules before F0272 dispatches the effect. */
         if (sensors[i].sensorType >= 1 && sensors[i].sensorType <= 9) {
             struct FloorSensorContext_Compat floorContext;
             struct SensorTriggerResult_Compat triggerResult;
@@ -540,6 +524,9 @@ static int sensor_process_party_enter_leave(
                 continue;
             }
             sourceSensor = &things->sensors[sensors[i].sensorIndex];
+            if (sourceSensor->sensorType != sensors[i].sensorType) {
+                continue;
+            }
             if (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
                 if (!possessionContextValid) continue;
                 hasObject = F0274_SENSOR_IsObjectInPartyPossession_Compat(
@@ -581,13 +568,6 @@ static int sensor_process_party_enter_leave(
             }
             continue;
         }
-        /* ReDMCSB MOVESENS.C F0276 C004 compares SensorData with the
-         * moving Thing's object type. A party enter/leave event has the
-         * special party Thing (not an object), so C004 cannot trigger. */
-        if (sensors[i].sensorType == 4) continue;
-        /* The source text object is Thing type C02 and is printed while
-         * walking the square chain; no floor sensor has type 13. */
-        if (sensors[i].sensorType == 13) continue;
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
                                          triggerEvent, &tmp)) {
             continue;
