@@ -10068,6 +10068,111 @@ static int dm2_v1_render_fmtowns_squad_backdrop(
     return 1;
 }
 
+static int dm2_v1_render_amiga_status_panes(
+    DM2_V1_ViewportState *s, uint8_t *target, int stride,
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    int drawn = 0;
+    if (!s || !target || stride < DM2_VP_WIDTH || !plan || !plan->valid ||
+        !s->asset_loader || s->asset_loader->gdat_version != 5u ||
+        !s->asset_loader->big_endian || !s->asset_profile ||
+        !s->hud_party_valid || !s->hud_party.status_hero_source_bound)
+        return 0;
+    for (int i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        DM2_V1_BootExpandedRectReceipt rect_receipt;
+        DM2_V1_GdatImageMetadata metadata;
+        DM2_V1_InterfacePalette interface_palette;
+        uint8_t palette16[16];
+        uint32_t palette_hash;
+        int hero_slot;
+        int expected_field;
+        if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE)
+            continue;
+        hero_slot = command->viewport_gdat_index - 0x6500;
+        if (hero_slot < 0 || hero_slot >= s->hud_party.champion_count ||
+            hero_slot >= DM2_V1_HUD_CHAMPION_SLOT_COUNT) return 0;
+        const DM2_V1_HudChampionState *hero =
+            &s->hud_party.champions[hero_slot];
+        expected_field = !hero->current_hp_source_bound ? -1
+            : hero->current_hp == 0 ? 1
+            : s->hud_party.status_hero_index == hero_slot ? 9 : 0;
+        memset(&rect_receipt, 0, sizeof(rect_receipt));
+        memset(&metadata, 0, sizeof(metadata));
+        memset(&interface_palette, 0, sizeof(interface_palette));
+        if (!hero->occupied || expected_field < 0 ||
+            command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+            command->gdat_index != 2 || command->gdat_field != expected_field ||
+            command->source_state_flags != (uint8_t)expected_field ||
+            command->destination_rect_id != (uint16_t)(0xa1 + hero_slot) ||
+            (command->format != DM2_IMG_FMT_IMG3 &&
+             command->format != DM2_IMG_FMT_U4) || !command->pixels ||
+            command->width <= 0 || command->height <= 0 ||
+            !command->raw_hash || !command->raw_byte_count ||
+            !command->material_source_bytes ||
+            !command->material_source_byte_count ||
+            !command->material_receipt_hash ||
+            !command->destination_table_hash ||
+            command->decoded_hash !=
+                dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+            !dm2_v1_asset_load_interface_palette(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                DM2_GDAT_INTERFACE_PALETTE_FIELD, &interface_palette) ||
+            interface_palette.hash == 0u ||
+            !dm2_v1_asset_load_image_metadata(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                2, expected_field, &metadata) || metadata.bits_per_pixel != 4u ||
+            metadata.width != (uint16_t)command->width ||
+            metadata.height != (uint16_t)command->height ||
+            memcmp(command->palette16, interface_palette.palette16,
+                   sizeof(palette16)) != 0 ||
+            command->palette_hash != dm2_v1_weather_pixels_hash(
+                command->palette16, 16, 1, 16) ||
+            !dm2_v1_boot_query_expanded_rect_receipt(
+                (const DM2_V1_BootProfile *)s->asset_profile,
+                (uint16_t)(0xa1 + hero_slot), &rect_receipt) ||
+            !rect_receipt.valid ||
+            rect_receipt.raw4_hash != command->destination_table_hash ||
+            command->destination.x != rect_receipt.rect.x / 2 ||
+            command->destination.y != rect_receipt.rect.y / 2 ||
+            command->destination.w != rect_receipt.rect.w / 2 ||
+            command->destination.h != rect_receipt.rect.h / 2 ||
+            command->width != rect_receipt.rect.w ||
+            command->height != rect_receipt.rect.h) return 0;
+        memcpy(palette16, interface_palette.palette16, sizeof(palette16));
+        palette_hash = dm2_v1_weather_pixels_hash(palette16, 16, 1, 16);
+        if (!palette_hash || palette_hash != command->palette_hash) return 0;
+        memcpy(s->active_asset_palette16, palette16,
+               sizeof(s->active_asset_palette16));
+        s->active_asset_palette_hash = palette_hash;
+        s->active_asset_palette_ready = 1;
+        for (int y = 0; y < command->destination.h; ++y) {
+            const int fy = command->destination.y + y;
+            const int sy = y * command->height / command->destination.h;
+            if ((unsigned)fy >=
+                (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+            for (int x = 0; x < command->destination.w; ++x) {
+                const int fx = command->destination.x + x;
+                const int sx = x * command->width / command->destination.w;
+                if ((unsigned)fx >=
+                    (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                target[fy * stride + fx] = dm2_v1_material_palette_color(
+                    s, command->pixels[sy * command->width + sx],
+                    &s->gdat_interface_palette_consumed_count);
+            }
+        }
+        ++s->gdat_hud_material_plan_consumed_count;
+        ++s->asset_hud_core_drawn_count;
+        s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+            s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+            command->width, command->height);
+        s->last_hud_core_pixel_count += (uint32_t)(
+            command->destination.w * command->destination.h);
+        ++drawn;
+    }
+    return drawn > 0;
+}
+
 static int dm2_v1_render_amiga_squad_figures(
     DM2_V1_ViewportState *s, uint8_t *target, int stride,
     const DM2_V1_GdatHudM11CommandPlan *plan)
@@ -10306,6 +10411,14 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 command->width, command->height);
             s->last_hud_core_pixel_count += (uint32_t)(
                 command->destination.w * command->destination.h);
+        }
+        if (s->hud_party_valid &&
+            s->hud_party.status_hero_source_bound &&
+            !dm2_v1_render_amiga_status_panes(
+                s, vp, stride, amiga_plan)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
         }
     }
 

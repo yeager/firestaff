@@ -66460,6 +66460,7 @@ static void m11_debug_trace_dm2_runtime_frame(
         if (!dm2_v1_runtime_last_hud_material_trace(
                 hud_trace_index, &hud_trace)) continue;
         M11_DM2_DEBUG_MIX(hud_trace_index);
+        M11_DM2_DEBUG_MIX(hud_trace.consumed);
         M11_DM2_DEBUG_MIX(hud_trace.kind);
         M11_DM2_DEBUG_MIX(hud_trace.gdat_category);
         M11_DM2_DEBUG_MIX(hud_trace.gdat_index);
@@ -66589,10 +66590,10 @@ static void m11_debug_trace_dm2_runtime_frame(
         if (!dm2_v1_runtime_last_hud_material_trace(
                 hud_trace_index, &hud_trace)) continue;
         fprintf(stderr,
-            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
+            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
             state->sourceId[0] ? state->sourceId : "dm2",
             m11_dm2_debug_platform_label(platform), hud_trace_index,
-            hud_trace.kind, hud_trace.viewport_gdat_index,
+            hud_trace.consumed, hud_trace.kind, hud_trace.viewport_gdat_index,
             hud_trace.gdat_category, hud_trace.gdat_index,
             hud_trace.gdat_field, hud_trace.destination_rect_id,
             hud_trace.destination.x, hud_trace.destination.y,

@@ -219,6 +219,13 @@ int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
     int invisible,
     const DM2_V1_ViewportRect *destination,
     uint32_t destination_table_hash);
+
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash);
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect arrow_destinations[6],
