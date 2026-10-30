@@ -829,6 +829,20 @@ assets, mechanics, or parity.
 - The TIA hook is System Card execution evidence only. Game launch, native
   parity, and the complete Theron gameplay route remain unproven.
 
+## 2026-10-30 — join TIA reads to preceding BaseRAM writes
+
+- Added `scripts/verify_theron_tia_ram_source_trace.py` to join every TIA byte
+  read to the latest strictly preceding BaseRAM write at the same physical
+  address using the shared event sequence. It rejects malformed, reordered,
+  truncated, unmapped, missing, or value-mismatched evidence.
+- Against the retained authentic-media capture, the verifier matched all
+  2,048 TIA reads with zero missing predecessors or value mismatches. The
+  matching producer PCs are `$42ad` and `$42b4`.
+- This proves a live RAM-to-TIA byte flow in the reference System Card run.
+  It does not bind those writes to Track 02: the capture has zero raw-sector
+  spans, zero CD IRQ callbacks, and zero authenticated CD-to-RAM receipts.
+  Gameplay transition and native parity remain open.
+
 ## 2026-10-30 — trace TIA byte transfers at `$468C`
 
 - Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
