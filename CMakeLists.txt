@@ -4783,6 +4783,17 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm1_v1_atari_only_auto_start
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_only_auto_start.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_atari_only_auto_start PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari-st;real-media;cli;menu;auto-platform;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-auto;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-auto;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-auto;FIRESTAFF_CONFIG_PATH=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-auto/config.toml"
+        TIMEOUT 120
+    )
+    add_test(
         NAME dm1_v1_atari_st_11_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_11_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>

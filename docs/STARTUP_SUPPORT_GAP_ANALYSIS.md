@@ -110,6 +110,13 @@ direct CLI boot and movement; the original ZIP hash remained unchanged. This
 closes the French-edition no-game-picker coverage gap only. It does not verify
 physical display/input or full DM2 parity.
 
+The new `dm1_v1_atari_only_auto_start` test passed (3.06 s) with a data root
+containing only the authentic Atari ST v1.2 ZIP. Bare `--game dm1` selected
+the Atari runtime through AUTO, and a no-game M12 session selected the DM1
+card, Atari ST, and Original presentation before handing off to `st12-en`. The
+original ZIP remained unchanged. This covers those isolated Atari selection
+routes, not campaign depth or native display/input parity.
+
 The same build then passed `m12_main_menu_runtime_real_media` (726.80 s)
 against the installed original-media collection, including DM1, CSB, DM2,
 DM1 Amiga, DM2 Amiga, and Theron runtime routes. It also passed the three
