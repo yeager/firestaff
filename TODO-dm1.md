@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-30 PC34 M12 startup route recheck: the authentic
+`m12_main_menu_dm1-pc_runtime_real_media` test passed. Selecting DM1 → PC from
+the no-game menu reached the PC34 first runtime, and the test confirmed that
+the original archive remained unchanged. This verifies the scripted SDL
+menu-to-runtime path; native display, audio and physical input remain
+unverified. The same recheck passed
+`m12_main_menu_dm1-atari-st_runtime_real_media` against the original Atari
+archive, with the same headless-display and physical-input boundary.
+
 2026-10-30 Apple IIGS floor-item drop recovery: the authentic G20/G21 first-
 descent test exposed a map-1 square whose Thing-list bit was set while its
 existing compact SFT row contained `THING_ENDOFLIST`. `F0514_DUNGEON_LinkThingToList_Compat`
