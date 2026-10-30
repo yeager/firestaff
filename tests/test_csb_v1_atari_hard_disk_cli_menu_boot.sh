@@ -158,8 +158,60 @@ if [[ $(grep -Fc 'launch phase=game-handoff' "$menu_log") != 1 ]] ||
     exit 1
 fi
 
+# A launcher handoff alone is not proof that the selected title completed its
+# native startup. Repeat the no-game M12 route without EXIT_AFTER_LAUNCH and
+# require the Atari HD source to load its first playable map and render a real
+# viewport, as the direct CLI route above already does.
+menu_runtime_log="$scratch/menu-runtime.log"
+menu_runtime_probe="$scratch/menu-runtime.json"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR FIRESTAFF_CSB_ATARI_ST_ARCHIVE
+    FIRESTAFF_CONFIG_PATH="$scratch/menu-runtime.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe" \
+    HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" APPDATA="$scratch/home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug --width 320 --height 200 --data-dir "$data_root" \
+        --script \
+        'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240,wait-game-runtime' \
+        --duration 60000
+) >"$menu_runtime_log" 2>&1 || {
+    cat "$menu_runtime_log" >&2
+    exit 1
+}
+if ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Atari ST edition=st20-21-hd-en source=$expected_source" "$menu_runtime_log" ||
+   ! grep -Fq 'CSB READY: gameId=csb' "$menu_runtime_log" ||
+   ! grep -Fq 'md5=e0ce7ac5160ca5540e90cf09ab9fad49' "$menu_runtime_log" ||
+   ! grep -Fq 'level-loaded=1 map=0 party=9,0 dir=2 champions=0' "$menu_runtime_log"; then
+    echo 'FAIL: authentic CSB Atari hard-disk M12 runtime route lost its selected media owner' >&2
+    cat "$menu_runtime_log" >&2
+    exit 1
+fi
+python3 - "$menu_runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as source:
+    probe = json.load(source)
+startup = probe["startup"]
+party = probe["party"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "csb" or
+        probe.get("bootAssetMd5") != "e0ce7ac5160ca5540e90cf09ab9fad49" or
+        startup.get("receiptReady") != 1 or
+        startup.get("startupActive") != 0 or
+        startup.get("levelLoaded") != 1 or
+        startup.get("phase") != "inactive" or
+        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+         party.get("direction"), party.get("championCount")) != (0, 9, 0, 2, 0) or
+        not probe.get("csbViewportHash")):
+    raise SystemExit(
+        f"FAIL: CSB Atari hard-disk M12 menu missed its original runtime: {probe}")
+print("PASS: CSB Atari hard-disk no-game M12 menu reached its authenticated first runtime")
+PY
+
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original CSB Atari ST archive changed during hard-disk startup checks' >&2
     exit 1
 fi
-echo 'PASS: authentic CSB Atari hard-disk media reaches the title and runtime through CLI and is selected from the no-game menu'
+echo 'PASS: authentic CSB Atari hard-disk media reaches runtime through direct CLI and the no-game M12 menu'
