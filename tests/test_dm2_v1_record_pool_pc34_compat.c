@@ -449,21 +449,28 @@ int main(void)
 
     /* ── DM2_DEALLOC_RECORD (c_record.cpp:1205) ─────────────────── */
     {
+        DM2_V1_RecordPoolSet dealloc_set;
         uint8_t bytes[4] = {0x34u, 0x12u, 0xa5u, 0x5au};
         uint8_t expected[4] = {0xffu, 0xffu, 0xa5u, 0x5au};
-        memset(&set, 0, sizeof(set));
-        set.valid = 1;
-        set.source_words_big_endian = 1;
-        set.pools[0].bytes = bytes;
-        set.pools[0].record_count = 1;
-        set.pools[0].record_size = 4;
-        CHECK(dm2_v1_record_pool_dealloc_record(&set, mk_handle(0, 0)),
+        memset(&dealloc_set, 0, sizeof(dealloc_set));
+        dealloc_set.valid = 1;
+        dealloc_set.source_words_big_endian = 1;
+        dealloc_set.pools[0].bytes = bytes;
+        dealloc_set.pools[0].record_count = 1;
+        dealloc_set.pools[0].record_size = 4;
+        CHECK(dm2_v1_record_pool_dealloc_record(
+                  &dealloc_set, mk_handle(0, 0)),
               "dealloc resolves and marks a valid source record");
         CHECK(memcmp(bytes, expected, sizeof(bytes)) == 0,
               "dealloc changes only the source record link word");
-        CHECK(!dm2_v1_record_pool_dealloc_record(&set, mk_handle(0, 1)) &&
+        CHECK(dm2_v1_record_pool_next_link(
+                  &dealloc_set, mk_handle(0, 0), &next) &&
+                  next == DM2_V1_RECORD_HANDLE_NULL,
+              "dealloc is visible through the source-endian next-link reader");
+        CHECK(!dm2_v1_record_pool_dealloc_record(
+                   &dealloc_set, mk_handle(0, 1)) &&
                   !dm2_v1_record_pool_dealloc_record(
-                      &set, DM2_V1_RECORD_HANDLE_NULL) &&
+                      &dealloc_set, DM2_V1_RECORD_HANDLE_NULL) &&
                   memcmp(bytes, expected, sizeof(bytes)) == 0,
               "dealloc rejects out-of-range and null handles without mutation");
     }
