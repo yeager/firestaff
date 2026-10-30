@@ -9211,6 +9211,63 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   JP map for that state is still unresolved.
 - Next bind the active map and destination tile from authentic Track 02/runtime
   evidence, then run an accepted command plus an identical no-input control.
-  Require both ordered `$C1FA` transfer bytes and the position delta before
-  claiming runtime observer validation or movement parity. Details are in
+  The initial observer gate used `$C1FA`; the follow-up below corrects it to
+  `$C1FC` and records both ordered bytes. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
+
+## 2026-10-30 — identify accepted UP+II movement-state transfer
+
+- A corrected authentic JP Rev. 1 save-state replay used `ii@470:140,up@471:120`.
+  At frame 471 the original accepted `$2905=$03` at `$CC99`, then cleared it
+  at `$D39D` in frame 472. The position-write observer recorded the two actual
+  transfer writes at opcode PC `$C1FC`, bytes `73b420`, `IBM_TII`:
+  `$20B4->$2040=03` and `$20B5->$2041=03`, with physical opcode PC `$0DC1FC`
+  and destination `$1F0040/$1F0041` under MPR1 `$F8`. The final RAM snapshot
+  changed `$2040/$2041` from `02/03` to `03/03`. A save-state reader interprets
+  these as coordinates `(2,3)->(3,3)`, but the fields' meaning is not yet
+  source-bound.
+- This capture corrected the earlier `$C1FA` opcode-PC assumption. The specific
+  TII observer now keys on `$C1FC`; generic position writes also record code
+  bytes through the PCE Fast `FastPageR` mapping. Direct zero-page observations
+  are gated on MPR1 `$F8` to keep physical-address attribution valid.
+- Patch-only validation and a full Mednafen build passed on TRV2 with `-j1`.
+  The focused live-capture test passed three loops. The runtime capture remains
+  `BLOCKED` for cold CD IRQ/authenticated CD-to-RAM receipts because it loads a
+  save state. Active-map identity, collision evidence, Firestaff runtime
+  comparison, and Theron movement parity remain open; see the source-lock note.
+- A follow-up build with the corrected `$C1FC` TII gate recorded two
+  `tii_candidate_state_transfer` rows with source `$1F00B4/$1F00B5`, source value `$03`,
+  and matching destinations `$1F0040/$1F0041`. The hooks cover their explicit
+  `WrMem()` and selected zero-page paths, not every possible physical RAM
+  writer; this bounded capture does not establish an exhaustive write census.
+- Do not change movement mechanics based only on this trace: it proves the
+  original accepted UP+II command and changed candidate bytes, but not the
+  bytes' gameplay meaning or active map. The native mapper implements the
+  manual's Button II+direction contract, and authentic-data native `--debug`
+  coverage for Button II+Up and Button II+Down now passes three loops. Bind the
+  `$2040/$2041` consumer and JP map before claiming the emulator bytes represent
+  coordinates or asserting full original movement parity.
+
+## 2026-10-30 — retained BaseRAM snapshots do not identify the active JP map
+
+- Reprojected hash-verified JP Rev. 1 Track 02 raw sectors to 2,048-byte user
+  data by dropping each 16-byte sector header, then decoded Akutuba's four map
+  arrays using `theron_v1_track02_dungeon_map_load_for_variant()` and the
+  source offsets in `theron_v1_track02_dungeon_map.c`. This reproduces the
+  discriminating source cells locked by
+  `tests/test_theron_v1_track02_dungeon_map.c`: map 0 has `0x20` at `(2,3)`;
+  map 2 has `0x00` there.
+- Scanned all 106 retained, exactly 8 KiB `pce-fast.ram` snapshots against
+  each map's exact contiguous tile bytes. There were no matches. Source map
+  dimensions and SHA-256 values were: map 0, 6x8,
+  `a7e0707986d898ecd397d92d9312d87f88e1acab8ced97bfaa1b7b0c34dc4b20`; map 1,
+  19x13, `d09fcb98e731e6bb1e5ad62e523637c898ec9d0784d1cbf72672ba04c528837a`;
+  map 2, 19x17,
+  `12f2745d5e0baa3cadaca61d41a564df9569efe9d1556dd1b141e4a6e93ec5b2`; map 3,
+  13x12, `19a50d0d5e0baa3cadaca61d41a564df9569efe9d1556dd1b141e4a6e93ec5b2`.
+- This negative scan covers only contiguous copies in 8 KiB BaseRAM snapshots.
+  It does not cover full physical RAM, VRAM, packed/decoded forms, or the live
+  consumer, and does not prove that no map was loaded. The active-map identity
+  and movement parity remain open. Next capture a confirmed cold JP gameplay
+  route and follow authenticated Track 02 reads through their runtime
+  destinations to the active selector and a discriminating tile consumer.
