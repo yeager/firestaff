@@ -4,10 +4,23 @@ set -euo pipefail
 
 app=${1:?usage: test_dm1_v1_atari_only_auto_start.sh <firestaff>}
 archive=${FIRESTAFF_DM1_ATARI_ST_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
-expected_md5s=(
-    b3cfd84e44cdf07ce2eeba47e87f772b
-    9ce2eaf7a9e78620e3f17594437caffa
-)
+case "$(basename "$archive")" in
+    Dungeon-Master_Atari-ST_EN_Version-12.zip)
+        edition=st12-en
+        expected_md5s=(
+            b3cfd84e44cdf07ce2eeba47e87f772b
+            9ce2eaf7a9e78620e3f17594437caffa
+        )
+        ;;
+    Dungeon-Master_Atari-ST_FR_Version-13.zip)
+        edition=st13-fr
+        expected_md5s=(0d7af44dd14f383464288abdcec76afc)
+        ;;
+    *)
+        printf 'FAIL: unsupported DM1 Atari AUTO archive identity: %s\n' "$archive" >&2
+        exit 2
+        ;;
+esac
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     echo 'SKIP: authentic DM1 Atari ST archive is not staged'
     exit 77
@@ -77,7 +90,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         exit 1
     }
 if ! grep -Fq 'startup game=none mode=menu' "$menu_log" ||
-   ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=Atari ST edition=st12-en source=$data_root/dm1/$(basename "$archive")" "$menu_log"; then
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=Atari ST edition=$edition source=$data_root/dm1/$(basename "$archive")" "$menu_log"; then
     cat "$menu_log" >&2
     echo 'FAIL: no-game M12 did not select the sole authentic Atari ST edition' >&2
     exit 1
@@ -86,4 +99,4 @@ if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original DM1 Atari ST archive changed during AUTO startup checks' >&2
     exit 1
 fi
-echo 'PASS: DM1 bare CLI AUTO and no-game M12 both select authentic Atari ST media'
+echo "PASS: DM1 bare CLI AUTO and no-game M12 both select authentic Atari ST $edition media"
