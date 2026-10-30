@@ -1,7 +1,7 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`6317b039f1f756c4b220525a0ea4b704ade0e978`. The latest published release
+`bde413fc7e860b23f9570c539f0f7849422d31b0`. The latest published release
 remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
 `main` contains later source changes that are not in that package. The v3.0.420
 workflow verifies packaging, not gameplay startup. The

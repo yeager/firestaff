@@ -21,7 +21,7 @@
 - `Nexus CUE-only startup`: verify direct CLI and pointer-menu handoff from authentic CUE/BIN tracks, and reject a selected non-Nexus CUE beside a valid Nexus disc.
 - `Nexus title evidence`: update the evidence record with complete 224-row samples for two VDP2 serials sharing one VDP1 frame label; the VDP1 receipt remains incomplete and no separate pixel images or renderer parity are claimed.
 - `DM1 Apple IIGS startup`: verify no-game menu selection of authentic G20/G21 media through the matching handoff and active dungeon runtime.
-- `DM1 SNES media`: verify the authentic ROMDUNGEON source and add a bounded H03 slot decoder; this is media evidence and does not add a playable SNES route.
+- `DM1 SNES media`: verify the authentic ROMDUNGEON and ROMGH assets, resolve them from original media, and add bounded H03 and ROMIMG3 decoders; this source evidence does not add a playable SNES route.
 - `Nexus frame-join verifier`: replace assert-only checks with explicit failures so validation stays active under optimized Python.
 - `CSB Atari viewport diagnostics`: report the first rejected runtime stage when debug movement tracing is enabled; include and protect the authentic Atari utility archive in the mixed-media regression.
 - `CSB CLI mode validation`: reject conflicting Utility Disk and Hint Oracle options, including a game ID that conflicts with either mode.
