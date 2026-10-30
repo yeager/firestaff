@@ -67234,8 +67234,7 @@ static void m11_nexus_startup_exec_boot_title_frame(
                                    ? context->state->nexusTitleScreen
                                    : NULL),
                            &nexusFb,
-                           command->title_frame +
-                               nexus_title_boot_warning_frames());
+                           command->title_frame);
     }
     if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
         (void)nexus_v1_retail_title_menu_render(
