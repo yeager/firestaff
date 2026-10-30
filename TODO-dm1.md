@@ -10,9 +10,15 @@ classified as unsupported and deliberately omitted from the M12 platform
 picker. Direct CLI and `--menu` requests for `--platform x68000` and `snes`
 both fail before scanning, as expected for the current implementation. The
 existing X68000 classifier and FTL handoff unit tests pass, but they only prove
-media-boundary parsing, not resource import or startup. Complete platform
-support still needs authentic X68000 resource/runtime integration and a SNES
-ROM/resource-owner route; do not infer support from the archive contents.
+media-boundary parsing, not resource import or startup. On 2026-10-30, the
+cracked HDM was extracted only into ignored `build/test-scratch`; the real-media
+`firestaff_x68k_media_receipt_real_corpus` passed 1/1 and
+`firestaff_x68k_ftl_handoff_real_corpus` passed 11/11 invariants against that
+image. The receipts confirm full-disk classification and two parseable
+embedded FTL modules, but do not extract their resources or establish startup.
+Complete platform support still needs authentic X68000 resource/runtime
+integration and a SNES ROM/resource-owner route; do not infer support from the
+archive contents.
 
 2026-10-29 X68000 real-media FTL checksum receipt: the cracked usable
 X68000 HDM staged under ignored `build/test-scratch/x68k-fresh/` parses as
