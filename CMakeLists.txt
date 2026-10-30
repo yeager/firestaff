@@ -7993,6 +7993,8 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_f0115_creature_plan.c
     src/csb/csb_v1_atari_f0115_projectile_plan.c
     src/csb/csb_v1_atari_f0115_explosion_plan.c
+    src/csb/csb_v1_atari_f0113_fluxcage_plan.c
+    src/csb/csb_v1_atari_f0113_fluxcage_blit.c
     src/csb/csb_v1_atari_f0133_indexed_blit.c
     src/csb/csb_v1_atari_f0128_cell_schedule.c
     src/csb/csb_v1_atari_f0132_clip.c
@@ -56086,6 +56088,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_GRAPHICS=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
         SKIP_RETURN_CODE 77
         LABELS "csb;atari;f0115;projectiles;real-media;skip-safe")
+endif()
+
+# ReDMCSB DUNVIEW.C MEDIA020 F0115/F0113 Fluxcage field selection. Geometry,
+# visibility, asset indexes and masks are source tables; pixels remain owned
+# by the authenticated Atari ST GRAPHICS.DAT checked by the native asset test.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0113_fluxcage_plan.c")
+    add_executable(test_csb_v1_atari_f0113_fluxcage_plan
+        tests/test_csb_v1_atari_f0113_fluxcage_plan.c
+        src/csb/csb_v1_atari_f0113_fluxcage_plan.c
+    )
+    target_include_directories(test_csb_v1_atari_f0113_fluxcage_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0113_fluxcage_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0113_fluxcage_plan
+        COMMAND test_csb_v1_atari_f0113_fluxcage_plan)
+    set_tests_properties(csb_v1_atari_f0113_fluxcage_plan PROPERTIES
+        LABELS "csb;atari;f0113;fluxcage;source-plan;unit;skip-safe")
 endif()
 
 # ReDMCSB DUNVIEW.C MEDIA020 F0115 G0211/G0212/G0216/G0225/G0226/G0228 explosion

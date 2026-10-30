@@ -62,6 +62,8 @@
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_atari_f0113_fluxcage_plan.h"
+#include "csb_v1_atari_f0113_fluxcage_blit.h"
 #include "csb_v1_atari_f0133_indexed_blit.h"
 #include "csb_v1_atari_f0128_cell_schedule.h"
 #include "csb_v1_atari_st_wall_ornament_data.h"
@@ -6388,15 +6390,177 @@ static int m11_csb_atari_st_draw_explosions_for_square(
     return drawn;
 }
 
+/* ReDMCSB F0115 keeps the last visible C050 C15 record while scanning the
+ * source thing chain, then calls F0113 once after ordinary explosions. Keep
+ * that deferred field pass separate and bind it to the live runtime entry. */
+static int m11_csb_atari_st_draw_fluxcage_for_square(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, int door_pass)
+{
+    CSB_V1_BootProfile *boot;
+    CSB_V1_RuntimeProfile *mutable_runtime;
+    const struct ExplosionInstance_Compat *fluxcage = NULL;
+    CSB_V1_AtariF0113FluxcageInput input;
+    CSB_V1_AtariF0113FluxcagePlan plan;
+    const M11_AssetSlot *field;
+    const M11_AssetSlot *mask = NULL;
+    int map_x;
+    int map_y;
+    int thing;
+    int links;
+    int plan_result;
+    int last_unit;
+    int first_unit;
+    int pixels;
+    unsigned int source_unit_count;
+    unsigned int max_last_unit;
+
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        forward < 0 || forward > 3 || side < -1 || side > 1 ||
+        view_square < 0 || view_square > 11 || door_pass < 0 || door_pass > 2 ||
+        !state->csbAtariStRuntimeHandoffComplete ||
+        !state->assetLoader.csbAtariSt) return -1;
+
+    map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (thing < 0) return 0;
+    boot = (CSB_V1_BootProfile *)state->csbBootProfile;
+    mutable_runtime = boot ? &boot->runtime : NULL;
+    if (!mutable_runtime || mutable_runtime != runtime) return -1;
+
+    /* F0115 restarts the cell's source chain and stores the last admitted
+     * Fluxcage pointer. A decoded C15 record alone cannot authorize a draw. */
+    for (links = 0; links < 4096 && thing != CSB_THING_ENDOFLIST &&
+         thing != CSB_THING_PARTY; ++links) {
+        const uint16_t source_thing = (uint16_t)thing;
+        const uint16_t source_slot = source_thing & 0x03ffu;
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
+        int next;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, source_thing, &type, NULL, &record_size);
+        if (!record) return -1;
+        if (type == 15 && record_size >= 4 &&
+            (record[2] & 0x7fu) == C050_EXPLOSION_FLUXCAGE) {
+            int list_index;
+            for (list_index = 0;
+                 list_index < runtime->explosions.count &&
+                 list_index < EXPLOSION_LIST_CAPACITY; ++list_index) {
+                const struct ExplosionInstance_Compat *candidate =
+                    &runtime->explosions.entries[list_index];
+                if (candidate->slotIndex == (int)source_slot &&
+                    candidate->mapIndex == runtime->current_level &&
+                    candidate->mapX == map_x && candidate->mapY == map_y &&
+                    candidate->explosionType == C050_EXPLOSION_FLUXCAGE &&
+                    (record[2] & 0x7fu) ==
+                        (uint8_t)candidate->explosionType &&
+                    ((record[2] >> 7) & 1u) == (candidate->centered != 0) &&
+                    record[3] == (uint8_t)candidate->attack) {
+                    fluxcage = candidate;
+                    break;
+                }
+            }
+        }
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon,
+                                                        source_thing);
+        if (next == CSB_THING_ENDOFLIST || next == CSB_THING_PARTY) break;
+        if (next < 0) return -1;
+        thing = next;
+    }
+    if (!fluxcage) return 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosion_type = fluxcage->explosionType;
+    input.view_square = view_square;
+    input.door_front_view_pass = door_pass;
+    input.suppress_during_endgame = state->endgameDoNotDrawFluxcages;
+    plan_result = csb_v1_atari_f0113_plan_fluxcage(&input, &plan);
+    if (plan_result < 0) return -1;
+    if (plan_result != CSB_V1_ATARI_F0113_FLUXCAGE_DRAW_FIELD) return 0;
+
+    if (plan.graphic_index != CSB_V1_ATARI_F0113_FLUXCAGE_GRAPHIC ||
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)plan.graphic_index)) return -1;
+    field = M11_AssetLoader_Load(&state->assetLoader,
+        (unsigned int)plan.graphic_index);
+    if (!field || !field->loaded || !field->pixels ||
+        field->width != 32u || field->height != 32u) return -1;
+    source_unit_count = (unsigned int)(field->width / 16u) * field->height;
+    max_last_unit = (unsigned int)plan.base_last_unit +
+        (unsigned int)plan.last_unit_random_range - 1u;
+    if (source_unit_count != 64u || plan.base_last_unit <= 0 ||
+        plan.last_unit_random_range != 2 ||
+        plan.first_unit_random_range != 32 ||
+        max_last_unit > source_unit_count ||
+        plan.first_unit_random_range > plan.base_last_unit) return -1;
+
+    if (plan.mask_graphic_index >= 0) {
+        if (!m11_csb_install_runtime_source_graphic(
+                state, (unsigned int)plan.mask_graphic_index)) return -1;
+        mask = M11_AssetLoader_Load(&state->assetLoader,
+            (unsigned int)plan.mask_graphic_index);
+        if (!mask || !mask->loaded || !mask->pixels ||
+            mask->width != (unsigned int)plan.source_pixel_width ||
+            mask->height != (unsigned int)plan.source_height) return -1;
+    } else if (plan.mask_index != -1 || plan.mask_flip_horizontal ||
+               plan.source_pixel_width != 0 || plan.source_height != 0) {
+        return -1;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0133 argument order: lastUnit first, then firstUnit.
+     * M005_RANDOM(2) consumes one bit; M003_RANDOM(32) masks the next RNG
+     * result with 31. Both draws occur only when the deferred F0113 route is
+     * actually visible, after the C15 source-chain scan. */
+    last_unit = plan.base_last_unit +
+        csb_v1_runtime_main_random_bit(mutable_runtime);
+    first_unit = csb_v1_runtime_main_random_mask(mutable_runtime, 31);
+    if (last_unit < 0 || first_unit < 0) return -1;
+
+    pixels = csb_v1_atari_f0113_blit_fluxcage(
+        &plan, field->pixels, (int)field->width, (int)field->height,
+        mask ? mask->pixels : NULL, mask ? (int)mask->width : 0,
+        mask ? (int)mask->height : 0,
+        last_unit, first_unit, framebuffer, framebuffer_width,
+        framebuffer_height, 48, 33);
+    if (pixels < 0) return -1;
+    if (state->debugMovementTraceEnabled) {
+        fprintf(stderr,
+            "firestaff: viewport game=csb platform=atari "
+            "pass=f0113-fluxcage status=%s slot=%d map=%d:%d,%d "
+            "square=%d graphic=%d mask=%d flip=%d last=%d first=%d "
+            "mask-size=%ux%u frame=%u,%u,%u,%u pixels=%d\n",
+            pixels ? "drawn" : "clipped-or-transparent",
+            fluxcage->slotIndex, runtime->current_level, map_x, map_y,
+            view_square, plan.graphic_index, plan.mask_graphic_index,
+            plan.mask_flip_horizontal, last_unit, first_unit,
+            mask ? mask->width : 0u, mask ? mask->height : 0u,
+            plan.destination_frame[0],
+            plan.destination_frame[2],
+            plan.destination_frame[1] - plan.destination_frame[0] + 1,
+            plan.destination_frame[3] - plan.destination_frame[2] + 1,
+            pixels);
+    }
+    return pixels;
+}
+
 static int m11_csb_atari_st_draw_f0115_pass(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
     const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
     int forward, int side, int view_square, uint16_t cell_order)
 {
     /* Four view cells each emit object/creature/projectile, followed by the
-     * source-owned explosion and Fluxcage passes. The latter two are not yet
-     * bound to Atari graphics, but reserving them here preserves the source
-     * schedule without aborting the visible object/creature layers. */
+     * source-owned explosion scan and deferred Fluxcage field pass. */
     CSB_V1_AtariF0115PassEvent events[14];
     int event_count;
     int event_index;
@@ -6426,9 +6590,11 @@ static int m11_csb_atari_st_draw_f0115_pass(
                 state, dungeon, runtime, framebuffer, 320, 200,
                 forward, side, view_square, event->door_front_view_pass,
                 cell_order);
+        } else if (event->layer == CSB_V1_ATARI_F0115_FLUXCAGE_LAYER) {
+            result = m11_csb_atari_st_draw_fluxcage_for_square(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, event->door_front_view_pass);
         } else {
-            /* Fluxcage remains an F0113 field pass; do not fold it into the
-             * ordinary explosion/projectile blitters. */
             continue;
         }
         if (result < 0) return result;

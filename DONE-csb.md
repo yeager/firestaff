@@ -1,3 +1,13 @@
+- 2026-10-30: Implemented the CSB Atari MEDIA020 F0113 Fluxcage field route.
+  The F0115 pass rescans the authentic C15 chain, binds the last matching C050
+  to its live runtime explosion, and applies ReDMCSB visibility, door-pass,
+  endgame, and RNG rules. F0133/F0132 composition uses original C074 and masks
+  with source-defined G0188/G0163 geometry. The source-plan test passes, and
+  the original Atari `GRAPHICS.DAT` test pins masked D3L and unmasked D2C
+  compositions. The installed S21E save cannot reach a C050 scenario, so live
+  chain binding, RNG progression, ordering, and final in-game output remain
+  open in `TODO-csb.md`; this is not full CSB Atari viewport parity.
+
 - 2026-10-30: `csb_v1_fmtowns_native_cli_boot` passed in 138.00 seconds and
   `csb_v1_amiga_native_cli_boot` passed in 71.39 seconds on the current M4
   build against installed authentic media. These checks cover their tested

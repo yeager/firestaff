@@ -12,10 +12,20 @@ the entire routine is guarded by MEDIA720, which excludes S21E, and the older
 S21E F0372 route only triggers an existing wall sensor. Source review used
 `Documentation/Readme.htm:21-22`, `COMPILE.H:602-603`, `DEFS.H:1025-1034`,
 `CLIKMENU.C:124-169`, `DUNGEON.C:1534-1581`, `MOVESENS.C:475-493,564-575`,
-`CLIKVIEW.C:4-27,29-76,403-448`, and `MEDIA81.H:258`. This is a limit of the
-available authentic save route, not evidence that the live F0113 Fluxcage
-renderer is correct; the renderer and an authentic C050 gameplay capture
-remain open.
+`CLIKVIEW.C:4-27,29-76,403-448`, and `MEDIA81.H:258`. The live F0113 renderer
+is now source-derived and its mask/no-mask pixel composition is checked
+against authentic `GRAPHICS.DAT`. The available authentic save still does not
+reach a C050 Fluxcage, so end-to-end C15 binding, RNG progression, and final
+in-game layering remain unverified.
+
+2026-10-30 CSB Atari MEDIA020 F0113 Fluxcage renderer: source-table planning,
+F0115 deferred C15-chain binding, and F0133/F0132 Atari pixel composition are
+implemented from ReDMCSB `DUNVIEW.C`, `BLITMASK.C`, `BLIT.C`, `DEFS.H`, and the
+G0188/G0163 tables. The plan test passes; the authentic Atari `GRAPHICS.DAT`
+asset/composition test checks masks 69–72, C074's 64 source units, masked D3L
+and unmasked D2C output fingerprints. This does not yet prove the runtime C15
+chain lookup, RNG state, draw ordering, or rendered result in a real C050 game
+scenario. Full CSB Atari viewport parity remains open.
 
 2026-10-30 CSB Atari-only return/rescan regression: the shared return-to-menu
 test now has an isolated mode that stages only the authentic Atari ST archive.
@@ -33,8 +43,9 @@ weapon ordinals outside the 14 aspects supported by the projectile planner
 remain safely rejected. Build, C559 unit checks, the real-media Atari C559
 cache comparison, and the real-media projectile-plan test pass. The stock
 campaign has no live C14 scenario, so the rendered projectile path still lacks
-an end-to-end gameplay assertion. Explosion/Fluxcage and F0113 field
-composition and full viewport parity remain open.
+an end-to-end gameplay assertion. Ordinary explosion gameplay and full
+viewport parity remain open; F0113 source and authentic-asset composition are
+implemented, but its live C050 route still lacks an end-to-end assertion.
 
 2026-10-30 CSB Atari D0C F133 pattern pass: the live F0115 route now selects
 the original M636 graphics 351–359 and tiles their indexed 8-byte units into
@@ -64,10 +75,10 @@ F0114 around lines 4490-4545; F0115 explosion dispatch around lines
 6025-6215; tables around lines 1319, 1533, 1565, and 1871-1905. Build and
 eight focused Atari plan, asset and viewport tests pass, including the
 original-media native-asset test. D0C pattern compositing is now implemented
-and source-asset checked, but Fluxcage F0113 field rendering and an end-to-end
-live explosion capture still need implementation and verification. Do not
-claim the CSB Atari viewport or explosion behavior is complete based on these
-checks.
+and source-asset checked. F0113 now has a source-derived renderer and
+authentic-asset composition checks, but an end-to-end live explosion capture
+is still missing. Do not claim the CSB Atari viewport or explosion behavior
+is complete based on these checks.
 
 2026-10-29 CSB FM Towns renamed-ZIP discovery: the scanner previously
 admitted only two hard-coded ZIP basenames, so an authentic archive selected
