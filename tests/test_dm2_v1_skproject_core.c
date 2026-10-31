@@ -6162,6 +6162,15 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &dungeon, 0x0c00u, 0, 0, 32, &ordinal) == 0 &&
                   ordinal == 1,
               "actuator wall-GFX ordinal reads big-endian GraphicNumber");
+        /* c_querydb.cpp:3524 only special-cases 0x7e. Type 0x7f falls
+         * through to the default zero field, regardless of active status. */
+        actuator_record_be[3] = 0x7fu;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.valid && q1a46.found_actuator &&
+                  q1a46.actuator_type == 0x7fu && wall_field == 0,
+              "DM2_query_0cee_1a46 type 0x7f uses source default field");
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */

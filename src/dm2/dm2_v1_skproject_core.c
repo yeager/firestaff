@@ -13956,9 +13956,6 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     switch (actuator_type) {
                     case 0x3f: /* shop panel */
                         break;
-                    case 0x7f: /* champion mirror */
-                        if (active_status == 0) si = 1;
-                        break;
                     case 0x7e: /* resuscitation */
                         if (once_only != 0) si = 1;
                         break;

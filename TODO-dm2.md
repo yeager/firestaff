@@ -30,6 +30,12 @@ The side-decoration query now implements the source's actuator 0x4a field as
 cases cover all four status-bit combinations. The remaining actuator categories,
 ornate-animation behavior, and viewport integration remain open.
 
+2026-10-31 skproject `DM2_query_0cee_1a46` actuator type 0x7f:
+The source has a special branch for type 0x7e only; type 0x7f falls through to
+the default wall-GFX field zero (`c_querydb.cpp:3524`). Firestaff no longer
+requests ornate animation for type 0x7f. A big-endian DB3 regression verifies
+the static field with no GDAT animation loader.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` query result and endian handling:
 The actuator side-decoration query now uses the Dungeon record-word accessor for
 DB3 words, so Mac/Amiga big-endian actuator type, status, and animation fields
