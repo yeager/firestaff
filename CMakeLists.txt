@@ -29507,6 +29507,21 @@ endif()
         COMMAND test_dm1_v1_slot_boxes_pc34_compat
     )
 
+    # ReDMCSB OBJECT.C F0619 wraps the edition's F0635 slot-zone resolver
+    # and applies the MEDIA508 or MEDIA720 border margin branch.
+    add_executable(test_redmcsb_f0619_slot_box_border
+        tests/test_redmcsb_f0619_slot_box_border.c
+        src/shared/redmcsb_f0619_slot_box_border.c
+    )
+    target_link_libraries(test_redmcsb_f0619_slot_box_border PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0619_slot_box_border PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME redmcsb_f0619_slot_box_border
+        COMMAND test_redmcsb_f0619_slot_box_border
+    )
+
     # DM1 V1 light-power-to-light-amount: Graphics.dat item 562 init
     # var G0039_ai_Graphic562_LightPowerToLightAmount[16] = {0, 5, 12,
     # 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100}. Read sites:

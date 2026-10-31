@@ -3716,7 +3716,10 @@ runtime integration and parity remain open.
 # ReDMCSB F0619 — slot-box border rectangle
 
 `OBJECT.C:378-389` resolves the slot's ZoneIndex through F0618/F0635 and adds
-the configured text margin on MEDIA508/MEDIA720. Firestaff currently has the
-PC34 G0030 table and ZoneIndex accessor, but no equivalent zone rectangle
-resolver. Implement and gate the behavior against each applicable edition;
-the slot table alone does not provide F0619 parity.
+the configured text margin on MEDIA508/MEDIA720. The shared
+`redmcsb_f0619_get_slot_box_border` adapter now calls an edition-owned F0635
+resolver and applies both source margin branches with checked rectangle bounds;
+its focused regression covers those transformations. Platform-specific F0635
+zone data/resolvers and live slot-border rendering remain unintegrated, so this
+is partial coverage and does not establish F0619 parity across supported
+editions.
