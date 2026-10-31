@@ -55,6 +55,28 @@ show a rendered response. The same `$C1FC` instruction remains associated in
 the source-locked Track 02 analysis with teleporter destination copying, so
 the movement-versus-teleporter question remains open.
 
+## Caller stack attribution correction (2026-10-31)
+
+A previous `guest_stack` field is invalid for caller attribution: it read
+logical `$01xx` through `PCERead`, which resolves that address with MPR0. The
+PCE Fast CPU's `PUSH`/`POP` macros use `HU_Page1`, selected through MPR1.
+The reference instrumenter now snapshots the MPR1-backed `FastMap` page at
+the TII write event and records `stack_mpr`; the focused capture-script
+regression locks that mapping. The earlier `4000000040000000` stack values
+must not be used as return addresses.
+
+Three repeated authentic-state captures after the correction produced the
+same movement-context SHA-256
+`61bf0ec56235a7cf77faca16492c76ef2393a838fa8bd525bd2088935489ee28` and the
+same event-time 16-byte stack snapshot beginning `feffff4dc1774521466d895dbbce7745`,
+with `SP=$e8`, MPR0 `$ff`, and MPR1 `$f8`. The emitted `stack_callsites` are
+candidate byte windows, not a validated call stack; none is source-bound here
+as the caller of `$C1FC`. Caller identity therefore remains unknown. The runs autoload the authentic JP F5
+state and report `transition=missing`; they do not add cold CD-to-RAM or
+active-map provenance. This corrected observation does not distinguish player
+movement from teleporter resolution and does not establish parity. Raw traces
+remain outside Git.
+
 ## Provenance and reproduction
 
 - Game: authentic Japanese Rev. 1 Track 02 media; CUE SHA-256

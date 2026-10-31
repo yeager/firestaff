@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — correct TII stack attribution and opcode documentation
+
+The reference movement-context instrumenter now locks stack reads to the
+MPR1-backed PCE Fast page and records the selected stack MPR; the capture
+script regression also rejects the old MPR0 read pattern. Three authentic JP
+F5 state-only traces repeat the same stack bytes, but do not identify a unique
+source-mapped caller and retain `transition=missing`. Corrected the August
+movement note to identify the TII opcode at `$C1FC`; `$C203` is the older
+observer's post-operand PC, and `$C1FA` is the preceding branch. The focused
+capture-script regression passed three loops. No production gameplay code or
+game data changed. See the [caller-stack capture note](docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+
 ## 2026-10-31 — reconcile current Theron user-facing documentation
 
 Removed the duplicated Theron status row from the README and shortened the

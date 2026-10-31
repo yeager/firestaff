@@ -1,5 +1,18 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — corrected TII stack bytes still do not identify the caller
+
+The former `guest_stack` trace read logical `$01xx` through MPR0 even though
+PCE Fast stack operations use the MPR1-backed `HU_Page1`. The reference
+instrumenter now snapshots the stack page through MPR1. Three repeated
+authentic JP F5 state-only captures match the same trace hash and stack bytes,
+but no unique source-mapped JSR return address is established. Do not use the
+old `4000000040000000` value or the corrected bytes to assign gameplay purpose
+to `$C1FC`. Continue with a source-mapped caller/control-flow capture; keep the
+player-movement versus teleporter question open. These runs still report
+`transition=missing` and provide no cold CD-to-RAM or active-map proof. See the
+[caller-stack correction](docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md#caller-stack-attribution-correction-2026-10-31).
+
 ## 2026-10-31 — join authentic world resources to the live VDC scene
 
 The production viewport still has no source-derived cell-to-screen renderer.
