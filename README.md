@@ -159,8 +159,9 @@ before drawing world-tile or renderer conclusions; see the
 The previously completed reference-only Mednafen trace-tooling chain applied
 in three clean patch-only runs, and its instrumented PCE build/install plus
 focused parser/controller checks passed on TRV2. These results cover that
-earlier tooling revision. The current input-gated VRAM trace change compiles
-its two PCE Fast object files on TRV2, but the complete patch chain and linked
+earlier tooling revision. Three clean TRV2 rebuild loops compile the current
+input-gated VRAM trace's PCE Fast object files and confirm the callback symbol
+reference matches its definition. The complete patch chain and linked
 instrumented binary remain unverified.
 A follow-up cold US capture validates all three scripted inputs at System
 Card controller polls and records one `$E009` dispatch. It observes no

@@ -5,8 +5,9 @@
 Updated the README to distinguish the previously verified Mednafen trace
 tooling revision from the newer, still-unverified input-gated VRAM trace work.
 Added the current build and capture blockers to the Theron TODO and capture
-readiness summaries. Only the changed PCE Fast object files have since
-compiled; the complete patch chain, linked tool, runtime capture, and
+readiness summaries. Three clean TRV2 rebuild loops compiled the changed PCE
+Fast object files and verified the callback symbol pair. The complete patch
+chain, linked tool, runtime capture, and
 input-to-render join remain unverified. Theron support status is unchanged.
 No runtime code or game data changed in this documentation update.
 

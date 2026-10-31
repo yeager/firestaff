@@ -4,9 +4,10 @@
 
 The working-tree change opens the PCE Fast VRAM-commit trace only after an
 exact guest controller-read PC/raw-value match. Focused patch-application
-loops passed for the affected Mednafen source files. On TRV2, the changed
-`pce_fast/vdc.o` and `pce_fast/input.o` compile with the trace-support macro,
-and their callback definition/reference match. The complete instrumentation
+loops passed for the affected Mednafen source files. Three clean TRV2 rebuild
+loops compiled the changed `pce_fast/vdc.o` and `pce_fast/input.o` with the
+trace-support macro and confirmed their callback definition/reference match.
+The complete instrumentation
 patch chain remains blocked by stale RAM-provenance contexts in
 `src/pce/pcecd.cpp`; there is no linked instrumented binary, runtime capture,
 or new input-to-render join. Treat this as pending capture infrastructure, not
