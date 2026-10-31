@@ -412,7 +412,7 @@
         ],
         "core_input_movement": [
           13,
-          "Joypad button-to-action mapping proven: all 5 groups (I=$01, II=$02, Select=$04, Run=$08, D-pad=$F0) found via AND #mask + BEQ/BNE patterns. 64 action sites with combined mask $FF. Command VM 10 handlers classified. Joypad read routine + timer + IRQ proven."
+          "Static disassembly classifies all five controller button groups and the bounded command handlers. Native Firestaff integration tests verify bounded input transactions on authentic US/JP data; original-game action semantics and a game-owned cold poll remain unproven."
         ],
         "viewport_ui_render": [
           16,
