@@ -450,7 +450,7 @@ SKW_48ae_01af	SKWINDOS	SKWINDOS/dm2byc.cpp	285	x8 SKW_48ae_01af(x16 eaxw, x16 ed
 SKW_IS_ITEM_FIT_FOR_EQUIP	SKWINDOS	SKWINDOS/dm2byc.cpp	298	x16 SKW_IS_ITEM_FIT_FOR_EQUIP(x16 eaxw, bool ebxbool, x16 edxw)	0	UNREVIEWED
 SKW_48ae_0767	SKWINDOS	SKWINDOS/dm2byc.cpp	327	x16 SKW_48ae_0767(x16 eaxw, t_gfxdata* ebxpg, x16* ecxpw, x16 edxw)	0	UNREVIEWED
 SKW_SHOOT_ITEM	SKWINDOS	SKWINDOS/dm2byc.cpp	359	void SKW_SHOOT_ITEM(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x8 argb0, x8 argb1, x8 argb2, x8 argb3)	0	UNREVIEWED
-SKW_ATTACK_DOOR	SKWINDOS	SKWINDOS/dm2byc.cpp	420	bool SKW_ATTACK_DOOR(x16 eaxw, x16 ebxw, bool ecxbool, x16 edxw, x16 argw0)	0	UNREVIEWED
+SKW_ATTACK_DOOR	SKWINDOS	SKWINDOS/dm2byc.cpp	420	bool SKW_ATTACK_DOOR(x16 eaxw, x16 ebxw, bool ecxbool, x16 edxw, x16 argw0)	0	PARTIAL
 SKW_DELETE_MISSILE_RECORD	SKWINDOS	SKWINDOS/dm2byc.cpp	460	void SKW_DELETE_MISSILE_RECORD(x16 eaxw, x16 ebxw, x16 ecxw, x16* edxpw)	0	UNREVIEWED
 SKW_075f_1bc2	SKWINDOS	SKWINDOS/dm2byc.cpp	496	void SKW_075f_1bc2(s_4bytearray* eaxp4ba, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, x16 argw1)	0	UNREVIEWED
 SKW_098d_000f	SKWINDOS	SKWINDOS/dm2byc.cpp	527	void SKW_098d_000f(x16 eaxw, x16 ebxw, x16* ecxpw, x16 edxw, x16* argpw0)	0	UNREVIEWED
@@ -1947,7 +1947,7 @@ GET_DOOR_STAT_10	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	18	U16 SkWinCore::GET_DOOR_
 GET_DOOR_STAT_0D	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	24	U16 SkWinCore::GET_DOOR_STAT_0D(U8 iDoorType)	0	PARTIAL
 GET_GRAPHICS_FOR_DOOR	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	31	U8 SkWinCore::GET_GRAPHICS_FOR_DOOR(Door* xDoor)	0	PARTIAL
 QUERY_DOOR_DAMAGE_RESIST	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	46	"i16 SkWinCore::QUERY_DOOR_DAMAGE_RESIST(U8 iDoorType)	// cls2"	0	PARTIAL
-ATTACK_DOOR	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	54	U16 SkWinCore::ATTACK_DOOR(i16 x, i16 y, U16 iDamage, U16 isSpellAttack, U16 iDestroyDelay)	0	UNREVIEWED
+ATTACK_DOOR	SKWINSPX	SKWINSPX/src/v4/skdoor.cpp	54	U16 SkWinCore::ATTACK_DOOR(i16 x, i16 y, U16 iDamage, U16 isSpellAttack, U16 iDestroyDelay)	0	PARTIAL
 GET_TILE_RECORD_LINK	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	30	ObjectID SkWinCore::GET_TILE_RECORD_LINK(i16 xx, i16 yy)	2	UNREVIEWED
 IS_TILE_PASSAGE	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	49	Bit16u SkWinCore::IS_TILE_PASSAGE(i16 xx, i16 yy)	1	UNREVIEWED
 GET_TILE_VALUE	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	80	U8 SkWinCore::GET_TILE_VALUE(i16 xx, i16 yy)	2	UNREVIEWED
@@ -3507,7 +3507,7 @@ DM2_0cee_317f	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	1032	static i32 DM2_0cee_317f(
 DM2_ATTACK_WALL	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	1053	static i32 DM2_ATTACK_WALL(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1)	1	UNREVIEWED
 DM2_move_075f_0af9	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	1307	i32 DM2_move_075f_0af9(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED
 DM2_move_075f_06bd	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	1972	i32 DM2_move_075f_06bd(unk* xeaxp, i32 edxl)	1	UNREVIEWED
-DM2_ATTACK_DOOR	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	2097	i32 DM2_ATTACK_DOOR(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0)	1	UNREVIEWED
+DM2_ATTACK_DOOR	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	2097	i32 DM2_ATTACK_DOOR(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0)	1	PARTIAL
 DM2_move_2fcf_0434	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	2152	i32 DM2_move_2fcf_0434(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i32 argl1)	1	UNREVIEWED
 DM2_move_075f_1bc2	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	2861	static void DM2_move_075f_1bc2(s_4bytearray* eaxp_s08, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i32 argl1)	1	UNREVIEWED
 DM2_move_2c1d_028c	SKWINSPX	SKWINSPX/src/v5/skmove.cpp	2914	i32 DM2_move_2c1d_028c(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
