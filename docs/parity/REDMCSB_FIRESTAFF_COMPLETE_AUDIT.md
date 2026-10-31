@@ -50,11 +50,14 @@ source functions are mapped to Firestaff behavior and platform-specific gates.
 
 F0275 has one bounded DM1 PC34 M11 C080 behavior regression in this review:
 successful non-head C017 removal and the linked-head exception. ReDMCSB's
-`MOVESENS.C:1415-1427` compiles the unlink under MEDIA009/MEDIA529, while
-MEDIA508 omits it; do not project this result onto every DM1 edition or onto
-the Atari ST, Amiga, and FM Towns lanes. Each lane still needs its edition's
-source gate and original-runtime evidence. CSB's bounded PC34 C011/C012 sensor
-routes are tracked separately and do not close its other platform lanes.
+`MOVESENS.C:1415-1427` compiles the unlink under MEDIA009/MEDIA529. MEDIA009
+covers the supported S10-S21, G14/G20/G21, and A20-A22 editions; MEDIA529
+includes I34, A31/A36, F31, and their supported language variants. MEDIA508
+is the separate F20/X30/P20 set and does not contain I34. Thus C017 unlink is
+source-applicable to the documented DM1/CSB lanes, while the current live M11
+integration regression is PC34-only. Each other lane still needs runtime
+integration and original-media evidence. CSB's bounded PC34 C011/C012 routes
+are tracked separately and do not close its other platform lanes.
 
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
