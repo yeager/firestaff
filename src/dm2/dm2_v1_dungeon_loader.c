@@ -6734,9 +6734,9 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
      * class-2 bit-08 roots whose first record is DB4+ pass the DB0..DB3
      * ornament loop untouched; DB0/DB1 prefixes are skipped to the next
-     * summary root below. DB2 C02 ornament selections and DB3 actuator
-     * no-decoration roots have bounded paths. Class-2 no-record tiles and
-     * class-5 DB1 roots retain their separate paths. */
+     * summary root below. DB2 C02 ornament selections and DB3 map-local
+     * floor-actuator ornaments have bounded paths. Class-2 no-record tiles
+     * and class-5 DB1 roots retain their separate paths. */
     if (raw >= 0 && raw <= 0xff) {
         if (raw_class == 2u) {
             accepted = first == -1 ||
@@ -6764,10 +6764,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
         /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
          * records do not add ornament state. DB2 C02 records select the
          * source's static, state-selected, or tick-animated ceiling frame.
-         * A DB3 actuator with floor index zero returns no decoration;
-         * nonzero map-list selectors remain closed. The source skips all
-         * DB0-DB3 links, then preserves the first DB4+ root for c_light's
-         * creature and DBE/DBF scans. */
+         * DB3 floor decorations resolve through the authenticated map-local
+         * floor list. The direction-specific subtype 0x27 remains closed.
+         * The source skips all DB0-DB3 links, then preserves the first DB4+
+         * root for c_light's creature and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
             (((summary_root >> 10) & 0x0fu) <= 3u)) {
             uint16_t link = summary_root;
@@ -6829,11 +6829,48 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                     }
                 } else if (type == 3) {
                     uint16_t word4;
+                    uint16_t word2;
+                    uint8_t floor_list[16];
+                    uint16_t frame = 0u;
+                    uint32_t animation_hash = 0u;
+                    unsigned ordinal;
+                    unsigned subtype;
+                    int floor_count;
                     if (size < 6) return 0;
+                    word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
                     word4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
-                    /* skproject c_record.cpp:1288-1311 returns 0xFF when
-                     * the actuator floor-decoration index is zero. */
-                    if ((word4 >> 12) != 0u) return 0;
+                    ordinal = word4 >> 12;
+                    if (ordinal != 0u) {
+                        DM2_V1_QueryOrnateAnimFrameReceipt animation;
+                        floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+                            d, level, floor_list, (int)sizeof(floor_list));
+                        if (floor_count < 0 || ordinal > (unsigned)floor_count)
+                            return 0;
+                        subtype = word2 & 0x7fu;
+                        /* c_gui_vp.cpp:2915-2927 gates subtype 0x27 on
+                         * ddat.v1d3248; this receipt has no source direction. */
+                        if (subtype == 0x27u) return 0;
+                        if ((subtype == 0x2cu || subtype == 0x32u) &&
+                            (record[4] & 1u) == 0u) {
+                            uint32_t delay = (word2 >> 7) & 0xffu;
+                            memset(&animation, 0, sizeof(animation));
+                            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                    loader, 10, floor_list[ordinal - 1u],
+                                    tick, delay, &animation) ||
+                                !animation.accepted ||
+                                animation.receipt_hash == 0u) return 0;
+                            frame = animation.frame;
+                            animation_hash = animation.receipt_hash;
+                        }
+                        out->ceiling_ornament_index =
+                            floor_list[ordinal - 1u];
+                        out->ceiling_ornament_word = (uint16_t)(
+                            out->ceiling_ornament_index |
+                            (uint16_t)((uint32_t)frame * 10u << 8));
+                        out->ceiling_animation_frame = frame;
+                        out->ornament_source_hash = animation_hash;
+                        class2_ornament_found = 1;
+                    }
                 }
                 {
                     int next_link = dm2_v1_dungeon_get_next_thing(d, link);

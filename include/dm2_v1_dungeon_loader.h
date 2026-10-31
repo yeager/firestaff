@@ -1743,8 +1743,8 @@ int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,D
 
 /* Bounded c_light SUMMARIZE_STONE_ROOM branches for class-2 no-record,
  * DB0/DB1 prefixes, DB2 C02 static/tick-selected ornaments, DB3
- * no-decoration actuator records, and class-5 DB1-first roots. Actuators
- * needing map-local floor-decoration lookup remain outside this receipt. */
+ * map-local floor-actuator ornaments, and class-5 DB1-first roots. The
+ * direction-specific DB3 subtype 0x27 remains outside this receipt. */
 typedef struct {
     int valid;
     int level;

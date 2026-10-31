@@ -22,10 +22,10 @@ static void test_class2_db4plus_chain_receipt(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader loader;
     DM2_V1_CLightStoneRoomReceipt room;
-    DM2_V1_GdatEntry animation_entries[2];
+    DM2_V1_GdatEntry animation_entries[3];
     DM2_V1_QueryOrnateAnimFrameReceipt expected_animation;
     uint8_t animation_data[1] = {0u};
-    uint8_t raw[96] = {0};
+    uint8_t raw[160] = {0};
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&loader, 0, sizeof(loader));
@@ -46,7 +46,7 @@ static void test_class2_db4plus_chain_receipt(void)
     dungeon.thing_type_counts[1] = 1;
     dungeon.thing_data_bases[2] = 48;
     dungeon.thing_type_counts[2] = 2;
-    dungeon.thing_data_bases[3] = 64;
+    dungeon.thing_data_bases[3] = 96;
     dungeon.thing_type_counts[3] = 1;
     dungeon.thing_data_bases[4] = 16;
     dungeon.thing_type_counts[4] = 2;
@@ -106,11 +106,14 @@ static void test_class2_db4plus_chain_receipt(void)
     animation_entries[1] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_FLOOR_GFX, 0xb2u,
         DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
+    animation_entries[2] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
     loader.data = animation_data;
     loader.data_size = sizeof(animation_data);
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
     loader.entries = animation_entries;
-    loader.entry_count = 2u;
+    loader.entry_count = 3u;
     raw[54] = 0x92u; raw[55] = 2u; /* C02 ext usage 2, ornament 0x52. */
     assert(dm2_v1_query_ornate_anim_frame_receipt(
         &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x52u, 7u, 0u,
@@ -167,19 +170,48 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_index == 0xffu &&
               room.ceiling_ornament_word == 0x00ffu);
 
-    raw[3] = 0u; raw[4] = 0x0cu; /* DB3 actuator with no floor index. */
-    raw[64] = 1u; raw[65] = 0x10u; /* DB3 w0 links to DB4 index 1. */
-    raw[66] = 0x30u; raw[67] = 0u; /* subtype 0x30 clears a non-light field. */
-    raw[68] = 0u; raw[69] = 0u; /* floor-decoration index zero -> 0xFF. */
-    CHECK("class-2 DB3 no-decoration actuator skips to the DB4 root",
+    raw[54] = 0u; raw[55] = 1u; /* one map-local floor graphic. */
+    raw[80] = 0x58u; /* class-2 map tile at its authenticated map base. */
+    raw[81] = 0x20u; /* floor decoration ordinal 1 resolves to 0x20. */
+    dungeon.raw_map_data_base = 80;
+    dungeon.thing_data_bases[3] = 96;
+    raw[3] = 0u; raw[4] = 0x0cu; /* DB3 actuator root. */
+    raw[96] = 1u; raw[97] = 0x10u; /* DB3 w0 links to DB4 index 1. */
+    raw[98] = 0x30u; raw[99] = 0u; /* subtype 0x30 clears a non-light field. */
+    raw[100] = 0u; raw[101] = 0x10u; /* floor-decoration ordinal 1. */
+    CHECK("class-2 DB3 actuator resolves its map-local floor ornament",
           dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room) &&
               room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
-              room.ceiling_ornament_index == 0xffu &&
-              room.ceiling_ornament_word == 0x00ffu);
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_ornament_word == 0x0020u);
 
-    raw[68] = 0u; raw[69] = 0x10u; /* Nonzero floor index needs map-list data. */
-    CHECK("class-2 DB3 decorated actuator stays closed without map-list evidence",
+    raw[98] = 0x2cu; raw[99] = 1u; /* subtype 0x2c, delay value 2. */
+    assert(dm2_v1_query_ornate_anim_frame_receipt(
+        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u, 7u, 2u,
+        &expected_animation));
+    CHECK("class-2 DB3 subtype-2c queries the tick and source delay",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+
+    raw[100] = 1u; /* Actuator flag selects a static frame for subtype 0x2c. */
+    CHECK("class-2 DB3 subtype-2c flag keeps the static frame",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x0020u);
+
+    raw[100] = 0u;
+    raw[101] = 0x20u; /* Ordinal 2 is outside this map's floor list. */
+    CHECK("class-2 DB3 actuator rejects an out-of-range map-list ordinal",
+          !dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room));
+
+    raw[101] = 0x10u;
+    raw[98] = 0x27u; /* Direction-specific source case lacks direction input. */
+    CHECK("class-2 DB3 direction-specific ornament stays closed",
           !dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room));
 }
