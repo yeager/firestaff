@@ -11,10 +11,162 @@
 #include "dm2_v1_runtime.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int withhold_material;
 static int plan_valid;
+
+static int read_graphics_file(const char *path, uint8_t **out_data,
+                              size_t *out_size)
+{
+    FILE *file;
+    long size;
+    uint8_t *data;
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0u;
+    if (!path || !out_data || !out_size || !(file = fopen(path, "rb")))
+        return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0) {
+        fclose(file);
+        return 0;
+    }
+    rewind(file);
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out_data = data;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int render_real_ornament(const DM2_V1_AssetLoader *loader,
+                               uint8_t wall_gfx, uint8_t base_field,
+                               int with_overlay, uint8_t *framebuffer)
+{
+    DM2_V1_ViewportState viewport;
+    DM2_V1_WallOrnamentRenderPlan plan;
+    DM2_V1_WallOrnamentReceipt base;
+    DM2_V1_WallOrnamentReceipt overlay;
+    if (!dm2_v1_wall_ornament_material_receipt(
+            loader, wall_gfx, base_field, &base) ||
+        (with_overlay && !dm2_v1_wall_ornament_material_receipt(
+            loader, wall_gfx, DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+            &overlay))) return 0;
+    memset(framebuffer, 0, DM2_VP_WIDTH * DM2_VP_HEIGHT);
+    memset(&plan, 0, sizeof(plan));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_loader(&viewport, loader);
+    viewport.squares[DM2_SQ_D1C].square_type = DM2_SQUARE_WALL;
+    viewport.squares[DM2_SQ_D1C].wall_ornate_gfx_index = wall_gfx;
+    plan.valid = 1;
+    plan.ornament_count = 1;
+    plan.ornaments[0].view_square = DM2_SQ_D1C;
+    plan.ornaments[0].gdat_index =
+        dm2_v1_viewport_wall_gfx_map_chip_graphic_index(wall_gfx);
+    plan.ornaments[0].image_field = base_field;
+    plan.ornaments[0].dst_rect =
+        (DM2_V1_ViewportRect){ 16, 16, 48, 48 };
+    plan.ornaments[0].src_rect = (DM2_V1_ViewportRect){
+        0, 0, base.decoded_width, base.decoded_height };
+    if (with_overlay) {
+        plan.ornaments[0].overlay_valid = 1u;
+        plan.ornaments[0].overlay_image_field =
+            DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD;
+        plan.ornaments[0].overlay_colorkey = overlay.colorkey;
+        plan.ornaments[0].overlay_dst_rect =
+            (DM2_V1_ViewportRect){ 16, 16, 48, 48 };
+        plan.ornaments[0].overlay_src_rect = (DM2_V1_ViewportRect){
+            0, 0, overlay.decoded_width, overlay.decoded_height };
+    }
+    dm2_v1_viewport_set_gdat_wall_ornament_material_plan(&viewport, &plan);
+    dm2_v1_render_wall_ornaments(&viewport);
+    return viewport.blocked_material_mask == 0u &&
+        viewport.asset_wall_ornament_drawn_count == 1;
+}
+
+static int test_real_generic_overlay(void)
+{
+    const char *graphics_path = getenv("FIRESTAFF_DM2_GRAPHICS_DAT");
+    const char *data_root = getenv("FIRESTAFF_DATA");
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    DM2_V1_AssetLoader loader;
+    uint8_t *base_frame = NULL;
+    uint8_t *overlay_frame = NULL;
+    int found = 0;
+    unsigned int shop_overlay_count = 0u;
+    char path[2048];
+
+    if (!graphics_path && data_root && data_root[0]) {
+        snprintf(path, sizeof(path), "%s/dm2/GRAPHICS.DAT", data_root);
+        graphics_path = path;
+    }
+    if (!graphics_path && getenv("HOME")) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/GRAPHICS.DAT",
+                 getenv("HOME"));
+        graphics_path = path;
+    }
+    if (!graphics_path || !read_graphics_file(
+            graphics_path, &graphics, &graphics_size)) {
+        puts("SKIP: original DM2 graphics are unavailable for overlay pixels");
+        return 0;
+    }
+    memset(&loader, 0, sizeof(loader));
+    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
+        free(graphics);
+        puts("SKIP: DM2 graphics could not initialize the GDAT loader");
+        return 0;
+    }
+    base_frame = (uint8_t *)malloc(DM2_VP_WIDTH * DM2_VP_HEIGHT);
+    overlay_frame = (uint8_t *)malloc(DM2_VP_WIDTH * DM2_VP_HEIGHT);
+    if (!base_frame || !overlay_frame) goto done;
+
+    for (unsigned int index = 0u; index <= 255u && !found; ++index) {
+        DM2_V1_WallOrnateAlcoveTypeReceipt alcove;
+        DM2_V1_WallOrnamentReceipt overlay;
+        if (!dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(
+                &loader, (uint8_t)index, &alcove) || !alcove.valid ||
+            !dm2_v1_wall_ornament_material_receipt(
+                &loader, (uint8_t)index,
+                DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD, &overlay)) continue;
+        if (alcove.alcove_type == 2u) {
+            ++shop_overlay_count;
+            continue;
+        }
+        for (unsigned int field = 1u; field <= 3u; ++field) {
+            DM2_V1_WallOrnamentReceipt base;
+            if (field == DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD ||
+                !dm2_v1_wall_ornament_material_receipt(
+                    &loader, (uint8_t)index, (uint8_t)field, &base)) continue;
+            if (!render_real_ornament(&loader, (uint8_t)index,
+                                      (uint8_t)field, 0, base_frame) ||
+                !render_real_ornament(&loader, (uint8_t)index,
+                                      (uint8_t)field, 1, overlay_frame))
+                continue;
+            if (memcmp(base_frame, overlay_frame,
+                       DM2_VP_WIDTH * DM2_VP_HEIGHT) != 0) {
+                found = 1;
+                break;
+            }
+        }
+    }
+    if (found) puts("PASS: real non-shop WALL_GFX overlay changes rendered pixels");
+    else printf("SKIP: no generic overlay in this data set (%u shop overlays)\n",
+                shop_overlay_count);
+
+done:
+    free(base_frame);
+    free(overlay_frame);
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
+    return 0;
+}
 
 static void write_le16(uint8_t *out, uint16_t value)
 {
@@ -321,5 +473,9 @@ int main(void)
     }
 
     puts("PASS: wall ornaments consume only source-owned WALL_GFX material");
+    if (test_real_generic_overlay() != 0) {
+        fputs("FAIL: real generic wall overlay rendering\n", stderr);
+        return 1;
+    }
     return 0;
 }

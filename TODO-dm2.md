@@ -88,7 +88,9 @@ because source calls `_32cb_0f82_SHOP_GLASS` there; shop interaction remains
 missing as described below. The material-gate regression verifies that an
 overlay plan cannot draw without authenticated GDAT data. Original-media
 visual confirmation, alcove-item rendering when no overlay exists, and shop
-glass dynamics remain open.
+glass dynamics remain open. The refetched `SKWIN/data_dm2_dm/graphics.dat`
+contains no loadable generic overlay for a pixel comparison, so the optional
+real-media render case skips for that asset set.
 
 2026-10-31 skproject shop interaction is still missing: Firestaff rejects
 runtime shop entry and its panel builder returns no render plan. The source
