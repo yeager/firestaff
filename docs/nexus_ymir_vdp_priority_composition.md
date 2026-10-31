@@ -41,10 +41,14 @@ composition against all four samples of the 640×448 Ymir screenshot. Frames
 channel error 0. Frame 2173 is the authentic accepted four-champion BKR dungeon
 view; its stack hash is
 `116b9ca3a19a6ce2642224d42efbf45a22f0d2481022ae7ba19b6bc100336fdf`. Its
-registers include `CCCTL=0x0142` and `SFCCMD=0x0004`. This exact replay verifies
-the captured output for that state; it does not establish general color
-calculation behavior for other pixels or register profiles. The earlier stack
-hashes are
+registers include `CCCTL=0x0142` and `SFCCMD=0x0004`. In the Saturn register
+layout, CCCTL bit 1 enables NBG1 color calculation (bit 0 is NBG0), and SFCCMD
+selects per-character color calculation for NBG1. No visible NBG1 pixel in the
+authenticated replay comes from a PND with its color-calculation enable bit
+set; the compositor rejects such a pixel. Therefore this frame verifies the
+NBG1 calculation-disabled case and its priority composition, but does not
+exercise active NBG1 color calculation. Exact screenshot agreement must not be
+read as general color-calculation coverage. The earlier stack hashes are
 `1fcf190a75bc137f312160e92dfb4d5d0d0b2e1fa84144a035bac15ba974199b` (frame
 239) and `402ca6d5d295214f68d574097753ee04c6194f42d82bb832bd902052bbbe97e3`
 (frame 397).
