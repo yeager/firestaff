@@ -520,53 +520,6 @@ int dm1_v1_dungeon_get_object_type_for_info_index_pc34(int objectInfoIndex)
     return (int)s_object_info_type[objectInfoIndex];
 }
 
-int dm1_v1_dungeon_get_object_type_from_record_pc34(
-    int thingType,
-    const unsigned char *record,
-    int recordSize)
-{
-    int subtype;
-    int objectInfoIndex;
-
-    if (!record || recordSize < 4) return -1;
-    switch (thingType) {
-    case THING_TYPE_SCROLL:
-        subtype = 0;
-        objectInfoIndex = kObjectInfoFirstScroll;
-        break;
-    case THING_TYPE_CONTAINER:
-        if (recordSize < 8) return -1;
-        subtype = (int)((record[4] >> 1) & 0x03u);
-        objectInfoIndex = kObjectInfoFirstContainer + subtype;
-        break;
-    case THING_TYPE_POTION:
-        subtype = (int)(record[3] & 0x7Fu);
-        if (subtype > 20) return -1;
-        objectInfoIndex = kObjectInfoFirstPotion + subtype;
-        break;
-    case THING_TYPE_WEAPON:
-        subtype = (int)(record[2] & 0x7Fu);
-        if (subtype > 45) return -1;
-        objectInfoIndex = kObjectInfoFirstWeapon + subtype;
-        break;
-    case THING_TYPE_ARMOUR:
-        subtype = (int)(record[2] & 0x7Fu);
-        if (subtype > 57) return -1;
-        objectInfoIndex = kObjectInfoFirstArmour + subtype;
-        break;
-    case THING_TYPE_JUNK:
-        subtype = (int)(record[2] & 0x7Fu);
-        if (subtype > 52) return -1;
-        objectInfoIndex = kObjectInfoFirstJunk + subtype;
-        break;
-    default:
-        return -1;
-    }
-    return objectInfoIndex >= 0 && objectInfoIndex < kObjectInfoCount
-        ? (int)s_object_info_type[objectInfoIndex]
-        : -1;
-}
-
 unsigned int dm1_v1_dungeon_get_object_allowed_slots_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing)

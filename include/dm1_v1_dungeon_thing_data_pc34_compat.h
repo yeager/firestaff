@@ -32,13 +32,6 @@ int dm1_v1_dungeon_get_object_type_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing);
 
-/* F0032 lookup for a loaded raw Thing record when the caller owns a different
- * dungeon view but has already resolved its checked record and type. */
-int dm1_v1_dungeon_get_object_type_from_record_pc34(
-    int thingType,
-    const unsigned char *record,
-    int recordSize);
-
 /* ReDMCSB DUNGEON.C F0141 / G0237.AllowedSlots.  This is a raw-Thing
  * ownership query for CHAMPION.C inventory and hand placement; missing raw
  * data returns zero so a host/decoded object cannot be placed anywhere. */
