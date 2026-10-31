@@ -1,5 +1,41 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — capture authentic US mouse-input dispatch boundary
+
+The preserved authentic US gameplay state (MD5
+`f17f377df210b4a3ae904a13fb85a7f0`) loads in standard PCE, while PCE Fast
+rejects its serialization schema. With authentic US Track 02 MODE1/2352 media
+(MD5 `f23601102138f87c33025877767ebf76`) and the verified System Card, one
+neutral and three same-state captures held raw mouse-button mask `0x01` for 60
+updates. Each held-input run records 60 guest device reads; all three agree on
+the close-time RAM and command-consumer stream. The consumer reads logical
+`$2905=$50` twice at PC `$D34D` among 473 reads. RAM differs from neutral in
+24 bytes, while VRAM, VCE, SAT, VDC and candidate position/pointer bytes remain
+unchanged. These observations prove input delivery and candidate command
+dispatch only; they do not assign a semantic button, movement, item target,
+pose or rendering effect.
+
+Validation ends `transition=missing` because save-state loading bypasses the
+original CD-to-RAM transfer. The captures therefore lack authenticated media
+origin at runtime. See the [source-locked evidence report](docs/source-lock/theron-disassembly/theron-us-pce-mouse-held-command-capture-20261031.md)
+for artifact receipts, procedure and limits.
+
+## 2026-10-31 — repair PCE Fast trace build and empty-BRAM capture arguments
+
+The Mednafen reference-build pipeline now applies the PCE Fast TIA zero-page
+trace patch only when its opt-in TIA trace feature is enabled. That patch
+otherwise collided with earlier direct-main-RAM instrumentation even when the
+trace was disabled. The capture runner now inserts `-filesys.fname_sav` only
+for a verified BRAM path, avoiding macOS Bash's `set -u` failure when an array
+is declared but empty.
+
+Verification: the complete instrumented PCE Fast patch-only pipeline passed
+three isolated loops. The rebuilt instrumented core passed the SDL 2.32.10
+runtime-link verifier. The authentic US state is incompatible with PCE Fast,
+but the standard PCE module loads it and produced the bounded captures recorded
+above. This closes the tooling faults only. Raw diagnostic captures were kept
+outside the repo.
+
 ## 2026-10-31 — require provenance before in-place BRAM updates
 
 Same-path Save Game updates now require a Firestaff-managed sidecar whose
