@@ -472,6 +472,32 @@ int main(void)
             check(raw[15] == 20u,
                   "CSB ROS potion becomes an empty flask");
 
+            /* ReDMCSB PANEL.C F0348 uses strict >120 and >150 thresholds
+             * for CSB's S1.2+ family, then caps the current value at 170.
+             * Exercise both sides of each branch through the live mouth
+             * consumer rather than testing a detached formula. */
+            {
+                static const uint16_t starts[] = {121u, 150u, 151u, 169u, 170u};
+                static const uint16_t expected[] = {127u, 156u, 154u, 170u, 170u};
+                char label[96];
+                for (size_t boundary = 0;
+                     boundary < sizeof(starts) / sizeof(starts[0]);
+                     ++boundary) {
+                    profile.runtime.party_state.LeaderHandThing = ven_potion;
+                    profile.runtime.party_state.Champions[0].Load = 3;
+                    write_u16(raw + 14, (6u << 8) | 80u);
+                    champion->Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
+                        starts[boundary];
+                    (void)snprintf(label, sizeof(label),
+                        "CSB F0348 source threshold/cap case %u",
+                        (unsigned)starts[boundary]);
+                    check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                              &profile.runtime, 0) == 1 &&
+                          champion->Statistics[CSB_V1_STAT_DEX]
+                              [CSB_V1_STAT_CUR] == expected[boundary], label);
+                }
+            }
+
             profile.runtime.party_state.LeaderHandThing = ven_potion;
             profile.runtime.party_state.Champions[0].Load = 3;
             write_u16(raw + 14, (7u << 8) | 80u);
