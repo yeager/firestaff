@@ -79,6 +79,8 @@ static void mark_game_ready(M12_StartupMenuState* state, int slot, const char* g
     state->entries[slot].available = 1;
     state->gameOptions[slot].architectureIndex = M12_ARCH_AUTO;
     state->gameOptions[slot].versionIndex = 0;
+    state->gameOptions[slot].presentationModeIndex =
+        M12_PRESENTATION_V1_ORIGINAL;
     if (strcmp(gameId, "dm1") == 0) {
         M12_DM1HoCPresentedCaptureReceipt receipt;
         memset(&receipt, 0, sizeof(receipt));
@@ -498,6 +500,22 @@ int main(void) {
                 "test renderer backend should be unavailable")) return 1;
     if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "FILES FOUND") == 0,
                 "scan feedback should not call data-only games ready when launch gate blocks")) return 1;
+
+    /* A V2.2 choice must not claim launch readiness when no reviewed,
+     * game-owned finished-real art pack is installed. The runtime falls
+     * back to V2.1 in that case, so the menu must report the same limitation
+     * for every game rather than presenting V2.2 as active. */
+    state.settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
+        M12_StartupLaunchGate gate;
+        mark_game_ready(&state, i, expected[i].gameId);
+        state.gameOptions[i].presentationModeIndex =
+            M12_PRESENTATION_V22_MODERN;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
+                    "V2.2 launch gate should build for every game")) return 1;
+        if (!expect(gate.presentationReady == 0 && gate.canLaunch == 0,
+                    "V2.2 without a reviewed real-art pack must be blocked for every game")) return 1;
+    }
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");
     return 0;
