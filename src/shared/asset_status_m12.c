@@ -6870,6 +6870,165 @@ static int m12_admit_explicit_csb_atari_image(M12_AssetStatus* status,
     return 0;
 }
 
+/* Atari ST CSB keeps GRAPHICS.DAT and DUNGEON.DAT together in the selected
+ * original disk image. The generic required-file walk can see the former
+ * through an STX member but does not reliably resolve its sibling. Bind the
+ * required pair to that exact image and accept only a catalogued dungeon
+ * digest; never borrow a same-named file from another platform/edition. */
+static void m12_publish_csb_atari_required_files(M12_AssetStatus* status,
+                                                 int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    const M12_RequiredFileSpec* dungeonSpec = NULL;
+    const char* separator;
+    const char* hashes;
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char selectedHash[M12_ASSET_MD5_CAPACITY] = {0};
+    size_t requiredIndex, specIndex;
+    int versionIndexForOwner;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) return;
+    versionIndexForOwner = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        status, "csb", M12_ARCH_AUTO);
+    if (versionIndexForOwner < 0) return;
+    version = &status->versions[gameIndex][versionIndexForOwner];
+    if (!version->matched || !version->versionId ||
+        !version->matchedPath[0] ||
+        g_csbVersions[versionIndexForOwner].architecture != M12_ARCH_ATARI_ST) {
+        return;
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (!separator || strlen(version->matchedPath) < strlen("GRAPHICS.DAT") ||
+        strncmp(version->matchedPath + strlen(version->matchedPath) -
+                    strlen("GRAPHICS.DAT"), "GRAPHICS.DAT",
+                strlen("GRAPHICS.DAT")) != 0) return;
+    if (snprintf(dungeonPath, sizeof(dungeonPath), "%.*sDUNGEON.DAT",
+                 (int)(strlen(version->matchedPath) - strlen("GRAPHICS.DAT")),
+                 version->matchedPath) >= (int)sizeof(dungeonPath)) return;
+    for (specIndex = 0U; g_requiredFiles[specIndex].gameId; ++specIndex) {
+        if (strcmp(g_requiredFiles[specIndex].gameId, "csb") == 0 &&
+            strcmp(g_requiredFiles[specIndex].roleId, "dungeon") == 0) {
+            dungeonSpec = &g_requiredFiles[specIndex];
+            break;
+        }
+    }
+    hashes = m12_effective_required_md5(dungeonSpec);
+    while (hashes && hashes[0]) {
+        char candidateHash[M12_ASSET_MD5_CAPACITY];
+        size_t hashLength = strcspn(hashes, ";");
+        if (hashLength == 32U) {
+            memcpy(candidateHash, hashes, 32U);
+            candidateHash[32] = '\0';
+            if (asset_file_matches_md5(dungeonPath, candidateHash)) {
+                m12_copy_string(selectedHash, sizeof(selectedHash), candidateHash);
+                break;
+            }
+        }
+        hashes += hashLength;
+        if (hashes[0] == ';') ++hashes;
+        else break;
+    }
+    if (!selectedHash[0]) return;
+    for (requiredIndex = 0U;
+         requiredIndex < status->requiredFileCounts[gameIndex];
+         ++requiredIndex) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][requiredIndex];
+        const char* path = NULL;
+        const char* hash = NULL;
+        if (!required->roleId) continue;
+        if (strcmp(required->roleId, "graphics") == 0) {
+            path = version->matchedPath;
+            hash = version->matchedMd5;
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            path = dungeonPath;
+            hash = selectedHash;
+        } else {
+            continue;
+        }
+        required->matched = 1;
+        m12_copy_string(required->matchedPath, sizeof(required->matchedPath), path);
+        m12_copy_string(required->sourcePath, sizeof(required->sourcePath), path);
+        m12_copy_string(required->matchedHash, sizeof(required->matchedHash), hash);
+    }
+    status->csbAvailable = 1;
+    status->originalFileCandidateFound = 1;
+}
+
+static int m12_csb_atari_version_already_matched(
+    const M12_AssetStatus* status, int gameIndex) {
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
+        return 0;
+    }
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        if (g_games[gameIndex].versions[i].architecture == M12_ARCH_ATARI_ST &&
+            status->versions[gameIndex][i].matched) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int m12_csb_zip_candidate_compare(const void* left, const void* right) {
+    return strcmp((const char*)left, (const char*)right);
+}
+
+/* The generic batched hash inventory recognizes ordinary CSB payloads and
+ * disk images, while the direct-file Atari admission also understands a
+ * preservation ZIP that owns an STX disk. Reuse that exact authenticated
+ * admission for ZIPs under the selected CSB leaf so the no-game picker can
+ * discover the same real archive that --game csb accepts. */
+static int m12_admit_csb_atari_directory_zips(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount, M12_ScanProgressContext* progress) {
+    M12_CsbFmtownsZipCandidates* candidates;
+    size_t rootIndex;
+    int admitted = 0;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) {
+        return 0;
+    }
+    if (m12_csb_atari_version_already_matched(status, gameIndex)) {
+        return 1;
+    }
+    candidates = calloc(1u, sizeof(*candidates));
+    if (!candidates) return 0;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char csbRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* candidateRoot = roots[rootIndex];
+        if (FSP_DirExists(roots[rootIndex]) &&
+            FSP_JoinPath(csbRoot, sizeof(csbRoot), roots[rootIndex], "csb") &&
+            FSP_DirExists(csbRoot)) {
+            candidateRoot = csbRoot;
+        }
+        if (m12_csb_fmtowns_collect_directory_zips(candidates,
+                                                    candidateRoot,
+                                                    progress) <= 0) {
+            if (status->scanProgress.cancelRequested ||
+                status->scanProgress.cancelled) {
+                free(candidates);
+                return 0;
+            }
+        }
+    }
+    qsort(candidates->paths, candidates->count,
+          sizeof(candidates->paths[0]), m12_csb_zip_candidate_compare);
+    for (rootIndex = 0U; rootIndex < candidates->count; ++rootIndex) {
+        if (!m12_scan_progress_update(progress, "authenticating Atari ZIP",
+                                      "csb", candidates->paths[rootIndex], 0)) {
+            break;
+        }
+        if (m12_admit_explicit_csb_atari_image(
+                status, gameIndex, candidates->paths[rootIndex])) {
+            admitted = 1;
+            break;
+        }
+    }
+    free(candidates);
+    return admitted;
+}
+
 /* A selected DM1 Atari disk/image archive owns its launch provenance.  Do
  * not let a broad parent scan replace that request with another edition:
  * asset_find_by_md5() traverses ST/STX/MSA and ZIP-contained disk images in
@@ -9636,6 +9795,16 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                &dataDirResolvedToMatchedRoot,
                                userExplicitDataDir,
                                csbFmtownsAdmitted);
+        if (strcmp(g_games[i].gameId, "csb") == 0) {
+            (void)m12_admit_csb_atari_directory_zips(
+                status, i, roots, rootCount, &progressCtx);
+            if (status->scanProgress.cancelRequested ||
+                status->scanProgress.cancelled) {
+                m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                                  legacyFallbackSnapshot);
+                return 0;
+            }
+        }
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             (void)m12_admit_dm1_fmtowns_archive(
                 status, i, roots, rootCount, requestedDataDir);
@@ -9767,6 +9936,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         } else if (strcmp(g_games[i].gameId, "csb") == 0) {
             size_t requiredIndex;
             m12_publish_csb_fmtowns_required_files(status, i, 0);
+            m12_publish_csb_atari_required_files(status, i);
             reqMatch = status->requiredFileCounts[i] > 0U;
             for (requiredIndex = 0U;
                  requiredIndex < status->requiredFileCounts[i];
@@ -10260,6 +10430,7 @@ void M12_AssetStatus_ScanGameWithOptions(
         size_t requiredIndex;
         m12_publish_csb_fmtowns_required_files(status, gameIndex,
                                                 csbFmtownsAdmitted);
+        m12_publish_csb_atari_required_files(status, gameIndex);
         reqMatch = status->requiredFileCounts[gameIndex] > 0U;
         for (requiredIndex = 0U;
              requiredIndex < status->requiredFileCounts[gameIndex];

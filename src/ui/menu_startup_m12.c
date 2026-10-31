@@ -8678,10 +8678,44 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
     }
 }
 
+static const char* m12_menu_input_debug_name(M12_MenuInput input) {
+    switch (input) {
+        case M12_MENU_INPUT_UP: return "up";
+        case M12_MENU_INPUT_DOWN: return "down";
+        case M12_MENU_INPUT_LEFT: return "left";
+        case M12_MENU_INPUT_RIGHT: return "right";
+        case M12_MENU_INPUT_ACCEPT: return "accept";
+        case M12_MENU_INPUT_BACK: return "back";
+        case M12_MENU_INPUT_ACTION: return "action";
+        case M12_MENU_INPUT_VALUE_LEFT: return "value-left";
+        case M12_MENU_INPUT_VALUE_RIGHT: return "value-right";
+        default: return "other";
+    }
+}
+
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                   M12_MenuInput input) {
     const char* missing;
+    int previousView = state ? (int)state->view : -1;
+    int previousFlowStage = state ? state->gameCardFlowStage : -1;
+    int previousCard = state ? state->gameCardSelected : -1;
+    int previousEntry = state ? state->activatedIndex : -1;
     m12_startup_menu_handle_input(state,input);
+    if (state && state->debugStartup) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(
+            state, state->activatedIndex);
+        fprintf(stderr,
+                "firestaff: menu-action input=%s(%d) view=%d->%d flow=%d->%d card=%d->%d entry=%d->%d game=%s available=%d launch=%d\n",
+                m12_menu_input_debug_name(input), (int)input,
+                previousView, (int)state->view,
+                previousFlowStage, state->gameCardFlowStage,
+                previousCard, state->gameCardSelected,
+                previousEntry, state->activatedIndex,
+                entry && entry->gameId ? entry->gameId : "none",
+                entry && entry->gameId ? M12_AssetStatus_GameAvailable(
+                    &state->assetStatus, entry->gameId) : 0,
+                state->launchRequested);
+    }
     if (state && state->launchRequested &&
         (missing=m12_missing_dm1_language_file(state,NULL))!=NULL)
         m12_show_missing_game_data_file_popup(state,"dm1",missing);
