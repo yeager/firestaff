@@ -14,7 +14,7 @@ static int failed;
 } while (0)
 
 static const char *const kSavePath =
-    "/tmp/firestaff_csb_f0275_c011_wall_click_save.fsav";
+    "firestaff_csb_f0275_c011_wall_click_save.fsav";
 
 static void put_le16(unsigned char *bytes, int offset, unsigned short value)
 {
@@ -164,6 +164,109 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
               profile.timeline_queue.eventCount == 0 &&
               memcmp(raw, before, sizeof(raw)) == 0,
           "C011 mismatch leaves the hand, raw chain, and timeline unchanged");
+}
+
+static void test_c017_removes_head_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    int queued;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    dungeon.thing_data_bases[5] = 108;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (unsigned short)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, (unsigned short)((8u << 7) |
+        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR));
+    put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 108, 0xfffeu);
+    put_le16(raw, 110, 8u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = (unsigned short)(5u << 10);
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = profile.party_state.LeaderHandThing;
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+        &profile, 0, 0, 0);
+    CHECK(queued == 1 &&
+              read_le16(raw, 66) == 0xfffeu &&
+              read_le16(raw, 68) == 0xffffu &&
+              profile.party_state.LeaderHandThing == 0xffffu,
+          "C017 at the Thing-list head is removed after consuming the hand");
+}
+
+static void test_later_c004_uses_hand_filled_by_storage_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    const uint16_t sensor0 = (uint16_t)(3u << 10);
+    const uint16_t sensor1 = (uint16_t)((3u << 10) | 1u);
+    const uint16_t object = (uint16_t)(5u << 10);
+    int queued;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 2;
+    dungeon.thing_data_bases[5] = 108;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, sensor0);
+    put_le16(raw, 68, sensor1);
+    put_le16(raw, 70, (unsigned short)((8u << 7) |
+        DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
+    put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 76, object);
+    put_le16(raw, 78, (unsigned short)((8u << 7) |
+        DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED));
+    put_le16(raw, 80, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 82, sensor_target(2, 0, 0));
+    put_le16(raw, 108, 0xfffeu);
+    put_le16(raw, 110, 8u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = 0xffffu;
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+        &profile, 0, 0, 0);
+    CHECK(queued == 2 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xffffu,
+          "later C004 consumes the object placed in hand by an earlier storage sensor");
 }
 
 static void test_c002_uses_hand_occupancy_and_revert_only(void)
@@ -406,6 +509,8 @@ int main(void)
 {
     test_c011_runtime_hand_roundtrips_save();
     test_c011_wrong_object_type_rejects_without_mutation();
+    test_c017_removes_head_sensor();
+    test_later_c004_uses_hand_filled_by_storage_sensor();
     test_f0275_processes_all_matching_sensors_in_source_order();
     test_c002_uses_hand_occupancy_and_revert_only();
     test_c001_hold_does_not_trigger();

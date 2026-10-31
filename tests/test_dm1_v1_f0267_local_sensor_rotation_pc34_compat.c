@@ -140,6 +140,8 @@ int main(void)
           "F0271 rotates matching sensors across other-cell entries");
     CHECK(firstThings[1] == sensor1Cell1 && sensors[1].next == sensor2 &&
           sensors[2].next == sensor0 && sensors[0].next == weaponThing &&
+          rawSensors[0] == (unsigned char)(weaponThing & 0xffu) &&
+          rawSensors[1] == (unsigned char)(weaponThing >> 8) &&
           rawSensors[8] == (unsigned char)(sensor2 & 0xffu) &&
           rawSensors[9] == (unsigned char)(sensor2 >> 8) &&
           rawSensors[16] == (unsigned char)(sensor0 & 0xffu) &&
