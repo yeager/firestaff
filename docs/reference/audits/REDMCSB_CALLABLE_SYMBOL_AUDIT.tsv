@@ -993,7 +993,7 @@ F	0914	F0914_Graphic21	GRAPH21.C;MKBIN.C	referenced-not-verified	referenced_not_
 F	0915	F0915_Graphic538	GRAPH538.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0917	F0917_PRIM_15_Memory_Allocate	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0918	F0918_PRIM_16_Memory_Free	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0919	F0919_PRIM_19_File_Seek	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0919	F0919_PRIM_19_File_Seek	PRIM1.C;PRIM2C.C;PRIM2STB.C;PRIM.H	implemented-narrow	implemented_narrow	PC 3.4 PrimSeek slot 19 beginning-relative seek and exact-position status; Atari ST/FMTowns ABIs remain separate
 F	0920	F0920_PRIM_20_File_Read	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0922	F0922_Custom_strcpy	PRIM1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0924	F0924_SetCriticalErrorHandler	HINT002.C;PRIM1.C;CEDTINCI.C;SWITCH.C;UTIO.C;HINTSCR.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -1628,7 +1628,7 @@ F	6013	F6013_F0917_PRIM_15_Memory_Allocate	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	un
 F	6014	F6014_F0918_PRIM_16_Memory_Free	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6015	F6015_F6000_PRIM_17_File_Open	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6016	F6016_F6001_PRIM_18_File_Close	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	6017	F6017_F0919_PRIM_19_File_Seek	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	6017	F6017_F0919_PRIM_19_File_Seek	PRIM.H;PRIM2STB.C;PRIM2B.C	implemented-narrow	implemented_narrow	PRIM slot 19 loader boundary resolves to the PC 3.4 beginning-relative seek adapter; Atari ST/FMTowns platform dispatch remains open
 F	6018	F6018_F0920_PRIM_20_File_Read	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6019	F6019_F6002_PRIM_22_Console_PrintMessage	PRIM.H;PRIM2STB.C;PRIM2A.C;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6020	F6020_F6003_PRIM_23_Input_WaitForChar	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

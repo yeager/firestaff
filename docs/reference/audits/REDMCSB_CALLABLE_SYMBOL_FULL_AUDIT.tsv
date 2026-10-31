@@ -995,7 +995,7 @@ F0914_Graphic21	F	Graphic21	GRAPH21.C:170-241	include/redmcsb_f0914_graphic21.h	
 F0915_Graphic538	F	Graphic538	GRAPH538.C:1-110	include/redmcsb_f0915_graphic538_pc34_compat.h	SOURCE_NONAPPLICABLE	Available source branches directly program Atari ST or Amiga hardware; no PC 3.4 branch or portable adapter is supplied. Focused strict-C11 boundary test documents the decision.
 F0917_PRIM_15_Memory_Allocate	F	PRIM	PRIM1.C:10-25	include/redmcsb_f0917_prim_memory_allocate_x30j_compat.h	IMPLEMENTED_NARROW	Source-locked X30J allocation/error path with a focused strict-C11 test.
 F0918_PRIM_16_Memory_Free	F	PRIM	PRIM1.C:27-38;PRIM2STB.C:19,338	include/redmcsb_f0918_prim_memory_free_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked PC release callback/null gate with a focused strict-C11 test.
-F0919_PRIM_19_File_Seek	F	PRIM	PRIM.H:281	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0919_PRIM_19_File_Seek	F	PRIM	PRIM2C.C:106-123;PRIM2STB.C:122-126;PRIM.H:281,323	include/redmcsb_f0919_prim_file_seek_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 PrimSeek slot 19 dispatches one beginning-relative seek and returns 0 only when the resulting position equals the signed offset; focused test covers exact, short, negative and boundary offsets. Atari ST/FMTowns PRIM ABIs remain separate platform work.
 F0920_PRIM_20_File_Read	F	PRIM	PRIM2C.C:123-142;PRIM.H:324	include/redmcsb_f0920_prim_file_read_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked exact-count file-read host boundary with a focused strict-C11 test.
 F0922_Custom_strcpy	F	Custom	PRIM1.C:105	include/f0922_custom_strcpy_compat.h	IMPLEMENTED_NARROW	PRIM1.C NUL-terminated copy semantics with bounded destination gate; focused CTest.
 F0924_SetCriticalErrorHandler	F	SetCriticalErrorHandler	CEDTINCI.C:306;PRIM1.C:253-269	include/redmcsb_f0924_set_critical_error_handler_pc34_compat.h	SOURCE_NONAPPLICABLE	Available source route installs an Atari ST critical-error vector; no PC 3.4 branch or portable host adapter is supplied. Focused strict-C11 boundary test documents the decision.
@@ -1630,7 +1630,7 @@ F6013_F0917_PRIM_15_Memory_Allocate	F	F0917	PRIM.H:319	-	MISSING	No exact number
 F6014_F0918_PRIM_16_Memory_Free	F	F0918	PRIM.H:320	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F6015_F6000_PRIM_17_File_Open	F	F6000	PRIM.H:321	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F6016_F6001_PRIM_18_File_Close	F	F6001	PRIM.H:322	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F6017_F0919_PRIM_19_File_Seek	F	F0919	PRIM.H:323	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F6017_F0919_PRIM_19_File_Seek	F	F0919	PRIM.H:323;PRIM2B.C:385,448,497	include/redmcsb_f0919_prim_file_seek_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 PRIM slot 19 loader boundary uses a beginning-relative seek and exact-position status; Atari ST/FMTowns PRIM dispatch remains separate platform work.
 F6018_F0920_PRIM_20_File_Read	F	F0920	PRIM.H:324	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F6019_F6002_PRIM_22_Console_PrintMessage	F	F6002	PRIM.H:326	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F6020_F6003_PRIM_23_Input_WaitForChar	F	F6003	PRIM.H:327	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
