@@ -3,8 +3,8 @@
 ## 2026-10-31 — require provenance before in-place BRAM updates
 
 Same-path Save Game updates now require a Firestaff-managed sidecar whose
-content and save-path digests match the exact BRAM that will be replaced. The
-writer checks that provenance again after reading the template. A valid
+content and save-path checksums match the exact BRAM that will be replaced.
+The writer checks that provenance again after reading the template. A valid
 original BRAM placed at the canonical output path without a matching marker is
 rejected and left byte-identical. Distinct-source writes create the marker
 after the classified BRAM has been atomically installed, and successful saves
