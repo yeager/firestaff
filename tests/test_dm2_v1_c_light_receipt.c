@@ -1,9 +1,9 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_asset_loader.h"
+#include "firestaff_zip_extract.h"
 #include "dm2_v1_viewport_renderer.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +16,21 @@ static int passed;
     if (condition) ++passed; \
     else printf("FAIL: %s\n", label); \
 } while (0)
+
+static int query_animation(const char *label,
+                           const DM2_V1_AssetLoader *loader,
+                           uint8_t index, uint32_t tick, uint32_t delay,
+                           DM2_V1_QueryOrnateAnimFrameReceipt *out)
+{
+    int accepted;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    accepted = dm2_v1_query_ornate_anim_frame_receipt(
+        loader, DM2_GDAT_CATEGORY_FLOOR_GFX, index, tick, delay, out);
+    CHECK(label, accepted);
+    return accepted;
+}
 
 static void test_class2_db4plus_chain_receipt(void)
 {
@@ -115,9 +130,9 @@ static void test_class2_db4plus_chain_receipt(void)
     loader.entries = animation_entries;
     loader.entry_count = 3u;
     raw[54] = 0x92u; raw[55] = 2u; /* C02 ext usage 2, ornament 0x52. */
-    assert(dm2_v1_query_ornate_anim_frame_receipt(
-        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x52u, 7u, 0u,
-        &expected_animation));
+    if (!query_animation("class-2 DB2 ext-2 animation query succeeds",
+                         &loader, 0x52u, 7u, 0u, &expected_animation))
+        return;
     CHECK("class-2 DB2 ext-2 keeps tick-selected ornament animation",
           dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room) &&
@@ -153,9 +168,9 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_word == 0x00b2u);
 
     raw[54] = 0x93u; /* Same ext usage, low flag admits animation. */
-    assert(dm2_v1_query_ornate_anim_frame_receipt(
-        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0xb2u, 7u, 0u,
-        &expected_animation));
+    if (!query_animation("class-2 DB2 ext-5 animation query succeeds",
+                         &loader, 0xb2u, 7u, 0u, &expected_animation))
+        return;
     CHECK("class-2 DB2 ext-5 flag selects the animated source frame",
           dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room) &&
@@ -187,9 +202,9 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_word == 0x0020u);
 
     raw[98] = 0x2cu; raw[99] = 1u; /* subtype 0x2c, delay value 2. */
-    assert(dm2_v1_query_ornate_anim_frame_receipt(
-        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u, 7u, 2u,
-        &expected_animation));
+    if (!query_animation("class-2 DB3 subtype-2c animation query succeeds",
+                         &loader, 0x20u, 7u, 2u, &expected_animation))
+        return;
     CHECK("class-2 DB3 subtype-2c queries the tick and source delay",
           dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room) &&
@@ -221,9 +236,9 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_index == 0x20u &&
               room.ceiling_animation_frame == 0u);
     raw[100] = 1u;
-    assert(dm2_v1_query_ornate_anim_frame_receipt(
-        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u, 7u, 0u,
-        &expected_animation));
+    if (!query_animation("class-2 DB3 subtype-27 animation query succeeds",
+                         &loader, 0x20u, 7u, 0u, &expected_animation))
+        return;
     CHECK("class-2 DB3 subtype-27 animates when matched and active",
           dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
               &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
@@ -336,6 +351,134 @@ static int load_dungeon(uint8_t **out_data, size_t *out_size,
         }
     }
     return 0;
+}
+
+static int read_dm2_archive_member(const char *suffix, uint8_t **out_data,
+                                   size_t *out_size)
+{
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+
+    if (!archive || !archive[0] || !suffix || !out_data || !out_size)
+        return 0;
+    *out_data = NULL;
+    *out_size = 0u;
+    return firestaff_zip_extract_by_suffix(archive, suffix, out_data,
+                                           out_size) == 0 &&
+           *out_data && *out_size != 0u;
+}
+
+static int class2_prefix_chain_reaches_db4(
+    const DM2_V1_DungeonData *dungeon, int first)
+{
+    uint16_t link;
+    unsigned length = 0u;
+
+    if (!dungeon || first < 0 || first == (int)DM2_THING_END_MARKER ||
+        first == (int)DM2_THING_NULL_MARKER)
+        return 0;
+    link = (uint16_t)first;
+    while (link != DM2_THING_END_MARKER &&
+           link != DM2_THING_NULL_MARKER && ++length <= 256u) {
+        int type = -1;
+        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+            dungeon, link, &type, NULL, NULL);
+        int next;
+
+        if (!record || type < 0 || type > 15) return 0;
+        if (type >= 4) return 1;
+        next = dm2_v1_dungeon_get_next_thing(dungeon, link);
+        if (next < 0 || next == (int)link) return 0;
+        link = (uint16_t)next;
+    }
+    return 0;
+}
+
+static void test_real_class2_prefix_c_light_receipts(void)
+{
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon_bytes = NULL;
+    size_t graphics_size = 0u;
+    size_t dungeon_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_DungeonData dungeon;
+    int tiles_scanned = 0;
+    int prefixes_seen = 0;
+    int qualifying_chains = 0;
+    int matching_receipts = 0;
+
+    memset(&loader, 0, sizeof(loader));
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set for class-2 real-media scan");
+        return;
+    }
+    if (!read_dm2_archive_member("data/graphics.dat", &graphics,
+                                 &graphics_size) ||
+        !read_dm2_archive_member("data/dungeon.dat", &dungeon_bytes,
+                                 &dungeon_size)) {
+        free(graphics);
+        free(dungeon_bytes);
+        puts("SKIP: authentic DM2 DOS GRAPHICS.DAT/DUNGEON.DAT are unavailable");
+        return;
+    }
+    CHECK("authentic DM2 DOS GRAPHICS.DAT loads for class-2 summary scan",
+          dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0);
+    CHECK("authentic DM2 DOS DUNGEON.DAT loads for class-2 summary scan",
+          dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
+                              (int)dungeon_size) == 0);
+    if (!loader.loaded || !dungeon.raw_data || !dungeon.record_graph_complete) {
+        dm2_v1_asset_loader_free(&loader);
+        dm2_v1_dungeon_free(&dungeon);
+        free(graphics);
+        free(dungeon_bytes);
+        return;
+    }
+
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        for (int y = 0; y < dungeon.level_heights[level]; ++y) {
+            for (int x = 0; x < dungeon.level_widths[level]; ++x) {
+                DM2_V1_CLightStoneRoomReceipt receipt;
+                int raw = dm2_v1_dungeon_get_tile_raw(&dungeon, level, x, y);
+                int first = dm2_v1_dungeon_get_first_thing(
+                    &dungeon, level, x, y);
+                unsigned type;
+
+                ++tiles_scanned;
+                if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 2u ||
+                    (raw & 0x08) == 0 || first < 0 ||
+                    first == (int)DM2_THING_END_MARKER ||
+                    first == (int)DM2_THING_NULL_MARKER)
+                    continue;
+                type = ((unsigned)first >> 10) & 0x0fu;
+                if (type > 2u) continue;
+                ++prefixes_seen;
+                if (!class2_prefix_chain_reaches_db4(&dungeon, first))
+                    continue;
+                ++qualifying_chains;
+                if (dm2_v1_dungeon_c_light_stone_room_receipt(
+                        &dungeon, &loader, level, x, y, 0u, &receipt) &&
+                    receipt.valid && receipt.source_tile_type == 2u &&
+                    receipt.first_record_link != DM2_THING_END_MARKER &&
+                    receipt.first_record_link != DM2_THING_NULL_MARKER &&
+                    (((receipt.first_record_link >> 10) & 0x0fu) >= 4u))
+                    ++matching_receipts;
+            }
+        }
+    }
+    printf("INFO: authentic DM2 DOS class-2 scan tiles=%d prefixes=%d "
+           "db4plus_chains=%d matching_receipts=%d\n",
+           tiles_scanned, prefixes_seen, qualifying_chains, matching_receipts);
+    CHECK("authentic DM2 maps were fully scanned for class-2 roots",
+          tiles_scanned > 0);
+    CHECK("authentic class-2 DB0-DB2 to DB4+ path has a media-backed receipt "
+          "or no qualifying chain exists",
+          qualifying_chains == 0 || matching_receipts > 0);
+
+    dm2_v1_asset_loader_free(&loader);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics);
+    free(dungeon_bytes);
 }
 
 static void test_real_dungeon_c_light_receipts(
@@ -595,6 +738,7 @@ int main(void)
 
     test_class2_db4plus_chain_receipt();
     test_real_dungeon_c_light_receipts(&scene);
+    test_real_class2_prefix_c_light_receipts();
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;

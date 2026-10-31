@@ -4,6 +4,7 @@
 
 - `DM1 and Nexus startup diagnostics`: change logging to emit game handoff, title, resource and engine details only when `--debug` is set.
 - `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
+- `DM1 Apple IIGS object icons`: extract the selected indexed 16x16 pixels from the authenticated icon strip before drawing. Authentic pixel comparison and equivalent behavior on other editions and platforms remain unverified.
 - `CSB Atari ST items`: use the authenticated source item aspects and C559 projectile selectors for the corrected native rendering path.
 - `CSB Atari ST champion HUD`: change native gameplay to render champion names, hand slots, and live status bars.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.

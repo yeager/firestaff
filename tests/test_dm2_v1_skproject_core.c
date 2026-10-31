@@ -4072,6 +4072,7 @@ static void test_skwin_core_symbol_batch_cycle3(void)
     int16_t x, y;
 
     /* _0cee_2df4 creature AI spec word30 */
+    memset(&ai_spec, 0, sizeof(ai_spec));
     CHECK(dm2_v1_skproject_0cee_2df4_creature_ai_word30(
               0x1234u, NULL, &ai_receipt) == 0,
           "_0cee_2df4 fails closed without AI spec");
@@ -6174,16 +6175,20 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         actuator_record_be[3] = 0x3fu;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 2, 2, 0u, wall_graphics, 1, NULL,
-                  &wall_idx, &wall_field, &q1a46) == 0 &&
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.summary_word7_written &&
-                  q1a46.summary_word7 == 0x0c00,
-              "DM2_query_0cee_1a46 type 0x3f writes shop handle to summary word 7 on side 2");
+                  q1a46.summary_word7 == 0x0c00 &&
+                  q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
+                  wall_idx == 0x22 && wall_field == 0,
+              "DM2_query_0cee_1a46 type 0x3f preserves shop summary word 7 and wall ornament on side 2");
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
-                  &wall_idx, &wall_field, &q1a46) == 0 &&
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.summary_word7_written &&
-                  q1a46.summary_word7 == -1,
-              "DM2_query_0cee_1a46 type 0x3f writes absent marker off side 2");
+                  q1a46.summary_word7 == -1 &&
+                  q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
+                  wall_idx == 0x22 && wall_field == 0,
+              "DM2_query_0cee_1a46 type 0x3f preserves wall ornament off side 2");
         actuator_record_be[2] = 0x02u;
         actuator_record_be[3] = 0xfeu; /* type 0x7e, actuator datum 5. */
         actuator_record_be[5] = 0x04u; /* once-only -> source animation path. */
