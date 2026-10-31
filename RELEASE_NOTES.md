@@ -1,3 +1,42 @@
+# Firestaff v3.0.422
+
+## User-facing changes
+
+- `DM1 party sensors`: apply source-matched floor and wall sensor behavior during movement, item pickup and drop, including floor text, audible cues, party rotation, experience effects and triggered-sensor removal.
+- `DM1 item interaction`: resolve movement Thing lists by source index, preserve door throw overlap, and restrict viewport actions while holding an item.
+- `DM1 media and names`: load Apple IIGS M564 object names and admit authenticated A22G media through startup.
+- `CSB wall sensors`: change wall-click handling to use source object types, packed cells, chain order, hand state and revert rules.
+- `CSB Atari interaction`: change door-switch, rendered click-zone and floor-pickup handling to use authentic source geometry.
+- `CSB party messages`: display all party-entry text in source order and use the Amiga message lifetime.
+- `DM2 lighting`: cover additional authentic class 0–4 light records, class-one ambient branches, darkness terms, floor falloff and ceiling/creature separation.
+- `DM2 wall decorations`: change animated text and ornate fallback-frame rendering to use source-endian records and actuator state.
+- `DM2 world recycling`: change DB0, DB2, DB4, DB7 and DB9 record returns to follow source ownership and direct-return rules.
+- `Theron's Quest saves`: change managed BRAM save handling to prevent save loss across stages and resumed launches, including XDG-managed storage.
+- `Theron's Quest capture`: change optional reference tracing to retain the diagnostic capture path.
+- `Nexus Saturn evidence`: change VDP composition and live-row replay validation to use authenticated capture data; the Saturn playable route remains gated.
+
+## Developer changes
+
+- `DM1 and CSB source parity`: expand ReDMCSB source mappings and bounded utility contracts, with updated evidence for unresolved platform and edition gaps.
+- `DM1 startup coverage`: add authentic Atari, Amiga, French/German and Apple IIGS menu-to-runtime checks; enforce Amiga original-disk checks.
+- `DM2 startup coverage`: add authentic archive and FM Towns light-path checks, including malformed light-root rejection and media selection cases.
+- `CSB runtime coverage`: add checks for Amiga message expiry, Atari campaign, wall-sensor predicates, rendered hitboxes and party-entry text using authentic source behavior.
+- `DM2 runtime internals`: add source-backed light processing and a shared record deallocation boundary.
+- `Theron evidence`: update authentic fresh-start, native pickup, save/continue and System Card source tracing; claims remain bounded to tested routes.
+- `Nexus evidence`: update BKR trace-order and consumer-read validation, and add VDP1/VDP2 composition checks against authentic captures.
+- `CLI diagnostics`: change achievement and startup logging to emit details only when `--debug` is enabled where applicable.
+- `Localization`: regenerate startup-menu references after catalog changes.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `Nexus`: Saturn title/menu composition and the playable game route remain gated; capture and media admission evidence does not establish a playable viewport or HUD.
+- `Theron's Quest`: authentic startup, save and selected input/capture paths do not establish complete campaign or presentation parity.
+- `DM1, CSB and DM2`: viewport, HUD, audio and physical-display parity remain incomplete outside individually verified game, edition and platform routes.
+- `DM1 X68000 and SNES`: source/media readers and asset checks do not add playable platform routes.
+- `DM2 Macintosh French`: the French-named SIT remains unverified as a distinct French edition.
+- Original game media, saves and firmware are not included in release packages.
+
 # Firestaff v3.0.421
 
 ## User-facing changes
