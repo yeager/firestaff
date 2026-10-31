@@ -27,22 +27,24 @@ playable game route or parity on every supported platform.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,110 |
+| `IMPLEMENTED_PARITY` | 1,111 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
 | `PARTIAL` | 5 |
 | `STATIC_INPUT_ONLY` | 0 |
-| `PARTIAL_SOURCE_OWNER` | 3 |
+| `PARTIAL_SOURCE_OWNER` | 2 |
 | **Total** | **1,751** |
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
 `DM2_ALLOC_NEW_DBITEM_DEEPLY` chain: Firestaff has the pool scan and limited
 recycler routes, but not the complete source recycler across databases, map
-cursor, protected maps, timers and CAII ownership. `DM2_DEALLOC_RECORD` now
-uses the source primitive in bounded creature-delete and CAII delete-tail
-routes; other source call sites remain open. `DM2_ARRANGE_DUNGEON`
+cursor, protected maps, timers and CAII ownership. `DM2_DEALLOC_RECORD` itself is implemented at source semantics: the bounded
+record-pool owner changes only the first word to `OBJECT_NULL` using source
+byte order, with a regression that checks the untouched payload bytes. Other
+game-level callers remain open where their list cuts, timers, CAII and owner
+transactions are incomplete. `DM2_ARRANGE_DUNGEON`
 has a bounded source-owned mutation path integrated into new-game loading, but
 still lacks source-by-source mutation and all-edition/platform parity proof.
 `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and
