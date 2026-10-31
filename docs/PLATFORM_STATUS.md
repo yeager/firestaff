@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last status review: 2026-10-31, for the v3.0.421 candidate.** This is the
+**Last status review: 2026-10-31, after v3.0.422.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
@@ -171,6 +171,24 @@ behavior, not physical M5 HiDPI rendering, input, or game-specific visual/audio
 parity.
 
 ## Latest real-media revalidation
+
+On 2026-10-31, `firestaff_cli_startup_diagnostics_real_media` passed in
+171.94 seconds against the installed original-media root. The test checked
+CLI startup diagnostics for DM1, CSB, DM2, Nexus and Theron. The separate
+`m12_main_menu_game_selection_real_media` test passed in 435.08 seconds and
+checked keyboard and pointer game-card selection and launch handoff for all
+five games. These tests cover launcher and bounded startup routes; they do not
+establish complete gameplay or visual/audio parity, and Nexus remains
+capture-gated at its Saturn title.
+
+The same day's `dm2_v1_mac_extracted_native_cli_boot` passed in 210.37 seconds.
+It exercised DM2 Macintosh direct CLI launch, selected-game menu launch and
+first-run game discovery from a ZIP made in test scratch from the supplied
+authentic extracted Mac files, including their AppleDouble sidecars. The ZIP
+retained the original file bytes and was not presented as a reconstructed CD
+image. Hash checks confirmed that the supplied files remained unchanged.
+These checks prove the tested bounded Macintosh startup routes, not complete
+Macintosh sound or gameplay parity.
 
 On 2026-10-28, `test_m12_main_menu_game_selection_real_media.sh` passed
 against the current working tree and the installed original-media root. It
