@@ -20,6 +20,12 @@ the authentic USA and Japanese Rev. 1 native SDL input suites. These runs
 verify event dispatch and bounded state changes; they do not close original
 mouse-hitbox, rendered-frame or complete retail-input parity.
 
+The Theron CUE resolver now permits same-stem `.ogg` substitutions only for
+CUE-declared `.wav` audio tracks. A focused three-run regression confirms that
+such an audio alias remains accepted and that an OGG cannot satisfy a missing
+Track 02 data file. This protects media admission; it does not verify CD-DA
+playback or audio parity.
+
 ## 2026-10-31 — matched JP state-only comparison records candidate transfers
 
 Three PCE Fast replays from the authentic Akutuba F5 state recorded the same

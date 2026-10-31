@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
+
+The CUE media resolver now accepts a same-stem `.ogg` only when the CUE
+declares a `.wav` audio track. A converted audio file can no longer satisfy a
+missing `.iso`/`.bin` data track; the two exact split Track 02 aliases remain
+separate. The focused test covers both a valid WAV-to-OGG audio alias and a
+missing Track 02 file beside a same-stem OGG. The test passed three consecutive
+runs. Its small generated files exercise only the resolver contract; they do
+not stand in for retail media or prove CD-DA playback. No authentic game data
+was changed. See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## 2026-10-31 — repeat native macOS SDL input routes for both regions
 
 Configured a clean macOS Debug build with SDL3 and built the native Firestaff

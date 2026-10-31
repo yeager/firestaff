@@ -53,6 +53,11 @@ static int tqr_path_is_cue(const char *path) {
     return dot && tqr_ascii_equal_ci(dot, ".cue");
 }
 
+static int tqr_path_has_extension(const char *path, const char *extension) {
+    const char *dot = path ? strrchr(path, '.') : NULL;
+    return dot && tqr_ascii_equal_ci(dot, extension);
+}
+
 static size_t tqr_copy_string(char *out, size_t out_cap, const char *in) {
     size_t len = in ? strlen(in) : 0u;
     if (len >= out_cap) {
@@ -176,6 +181,7 @@ static int tqr_cue_known_split_track02_path(
 
 static int tqr_resolve_audio_file(const char *cue_path, const char *data_root,
                                   const char *declared_name,
+                                  int is_audio_track,
                                   char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]) {
     char cue_parent[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     const char *root;
@@ -188,8 +194,10 @@ static int tqr_resolve_audio_file(const char *cue_path, const char *data_root,
     }
     if (!tqr_path_for_file(root, declared_name, out_path)) return 0;
     if (tqr_path_is_readable(out_path)) return 1;
-    /* CUEs name the original .wav CD-DA tracks; local corpus supplies .ogg. */
-    if (tqr_ogg_fallback_path(declared_name, ogg_name) &&
+    /* The local corpus supplies OGG conversions only for CUE-declared WAV
+     * CD-DA tracks. Never let an audio conversion stand in for data media. */
+    if (is_audio_track && tqr_path_has_extension(declared_name, ".wav") &&
+        tqr_ogg_fallback_path(declared_name, ogg_name) &&
         tqr_path_for_file(root, ogg_name, out_path) &&
         tqr_path_is_readable(out_path)) {
         return 1;
@@ -352,6 +360,7 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
                     receipt.track_present[track] =
                         tqr_resolve_audio_file(cue_path, data_root,
                                                current_file,
+                                               audio,
                                                receipt.track_paths[track]);
                     if (audio && receipt.track_present[track] &&
                         !tqr_raw_audio_file_has_complete_sectors(
