@@ -2037,6 +2037,7 @@ static M11_GameInputResult run_wall_c017_click_fixture(int c017IsHead,
     struct DungeonThings_Compat things;
     struct DungeonSensor_Compat sensors[2];
     unsigned char squareData[25];
+    unsigned short columnSft[1] = {0};
     unsigned short squareFirstThings[25];
     unsigned char sensorRaw[16];
     unsigned short headThing;
@@ -2074,6 +2075,9 @@ static M11_GameInputResult run_wall_c017_click_fixture(int c017IsHead,
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = columnSft;
+    dungeon.dungeonColumnCount = 1;
+    squareData[squareIndex] |= DUNGEON_SQUARE_MASK_THING_LIST;
 
     headThing = make_thing_in_cell(THING_TYPE_SENSOR, 0, 2);
     c017Thing = make_thing_in_cell(THING_TYPE_SENSOR,
@@ -2109,6 +2113,7 @@ static M11_GameInputResult run_wall_c017_click_fixture(int c017IsHead,
 
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
+    things.loaded = 1;
     things.rawThingData[THING_TYPE_SENSOR] = sensorRaw;
     things.thingCounts[THING_TYPE_SENSOR] = sensorCount;
     things.sensors = sensors;
@@ -2124,13 +2129,13 @@ static M11_GameInputResult run_wall_c017_click_fixture(int c017IsHead,
               "C017 fixture exposes its linked wall sensor through F0172");
 
     mouseCommand = M11_GameView_GetV1MouseCommandForPoint(
-        DM1_V1_MOUSE_LIST_MOVEMENT_PC34, 40, 73,
+        DM1_V1_MOUSE_LIST_MOVEMENT_PC34, 112, 80,
         DM1_V1_MOUSE_MASK_LEFT_PC34, &mouseSpace, &mouseZone);
     ASSERT_EQ(mouseCommand, 80, "C017 test point routes to source C080 click");
     ASSERT_EQ(mouseZone, 7, "C017 test point belongs to source C007 viewport");
 
     M11_GameInputResult result = M11_GameView_HandlePointer(
-        &state, 40, 73, 1); /* source wall-ornament click box */
+        &state, 112, 80, 1); /* C05 wall-ornament box inside the viewport */
     if (outHeadNext) *outHeadNext = F0512_DUNGEON_GetThingNext_Compat(
         &things, headThing);
     if (outC017Next) *outC017Next = F0512_DUNGEON_GetThingNext_Compat(
