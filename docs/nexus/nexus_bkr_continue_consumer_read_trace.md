@@ -20,9 +20,13 @@ After copying the retained package from TRV2, set its location and run the verif
 
 ```sh
 export FIRESTAFF_NEXUS_BKR_CONSUMER_EVIDENCE_DIR="/path/to/nexus_bkr_continue_consumer_read_20261031"
+(
+    cd "$FIRESTAFF_NEXUS_BKR_CONSUMER_EVIDENCE_DIR"
+    shasum -a 256 -c SHA256SUMS.txt
+)
 python3 scripts/verify_nexus_bkr_consumer_read_trace.py "$FIRESTAFF_NEXUS_BKR_CONSUMER_EVIDENCE_DIR"
 ```
 
-The verifier checks the trace and receipt counts, required read/write fields, and selected call-context rows. It does not pair register snapshots with reads by row position.
+The checksum step verifies the copied package before the verifier checks trace and receipt counts, required read/write fields, and selected call-context rows. The verifier does not pair register snapshots with reads by row position.
 
 `SHA256SUMS.txt` records hashes for all files in this evidence package except itself.

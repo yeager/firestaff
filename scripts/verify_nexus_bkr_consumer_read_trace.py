@@ -82,6 +82,10 @@ def verify(root: Path) -> None:
     tuple_fields = {"0x6064544", "0x6064546", "0x6064548", "0x606454a"}
     require(tuple_fields <= {row["address"] for row in selected},
             "expected tuple field addresses are absent")
+    require(all(any(row["address"] in tuple_fields
+                    for row in selected if row["instruction_pc"] == pc)
+                for pc in targets),
+            "each expected initializer PC must read a tuple field")
 
     print("PASS: 477 complete SH-2 read rows; 477 register snapshots recorded separately; zero dropped rows")
     print("PASS: initializer call-context includes observed reads at tuple offsets +0, +2, +4, +6")
