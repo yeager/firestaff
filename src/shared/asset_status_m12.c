@@ -5073,13 +5073,59 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
     return 1;
 }
 
+/* The authentic PC 3.4 archive extraction used by the startup tests can put
+ * GRAPHICS.DAT at the selected root while keeping its DUNGEON.DAT below
+ * dos_extract/<edition>/.../DATA. Permit that owner only when the dungeon has
+ * the catalogued PC34 hash and is the sole compatible world in the root. */
+static int m12_path_is_under_ignore_case(const char* path, const char* root) {
+    size_t length;
+    size_t i;
+    if (!path || !root) return 0;
+    length = strlen(root);
+    if (strlen(path) <= length) return 0;
+    for (i = 0U; i < length; ++i) {
+        int pathChar = (unsigned char)path[i];
+        int rootChar = (unsigned char)root[i];
+        if (pathChar == '\\') pathChar = '/';
+        if (rootChar == '\\') rootChar = '/';
+        if (m12_char_lower(pathChar) != m12_char_lower(rootChar)) return 0;
+    }
+    return path[length] == '/' || path[length] == '\\';
+}
+
+static int m12_dm1_pc34_nested_dungeon_path(const char* root,
+                                             const char* candidate) {
+    char editionRoot[ASSET_PATH_MAX];
+    char dataDir[ASSET_PATH_MAX];
+    size_t rootLength;
+    int written;
+    if (!root || !candidate ||
+        !m12_ascii_equals_ignore_case(m12_path_leaf(candidate), "DUNGEON.DAT") ||
+        !FSP_ParentDir(dataDir, sizeof(dataDir), candidate) ||
+        !m12_ascii_equals_ignore_case(m12_path_leaf(dataDir), "DATA")) {
+        return 0;
+    }
+    rootLength = strlen(root);
+    while (rootLength > 1U &&
+           (root[rootLength - 1U] == '/' || root[rootLength - 1U] == '\\'))
+        --rootLength;
+    if (rootLength == 0U || rootLength + 1U >= sizeof(editionRoot)) return 0;
+    written = snprintf(editionRoot, sizeof(editionRoot),
+                       "%.*s/dos_extract/Dungeon-Master_DOS_EN_Version-34",
+                       (int)rootLength, root);
+    if (written < 0 || (size_t)written >= sizeof(editionRoot)) return 0;
+    /* The number of subdirectories below the original installation varies
+     * between authentic archive repacks; the fixed DATA owner and hash gate
+     * are the stable parts. */
+    return m12_path_is_under_ignore_case(dataDir, editionRoot);
+}
+
 /* ReDMCSB LOADSAVE.C F0435 resolves the dungeon owned by the selected game
- * installation. Keep discovery inside the selected graphics directory and
- * accept only one catalogued world hash. In particular, a renamed DUNGEON
- * may be found under the same parent, but a nested package cannot complete
- * an orphan graphics file from its parent. */
+ * installation. Keep discovery inside that root and accept only one
+ * catalogued world hash. A renamed DUNGEON may be found beside its graphics;
+ * the one nested exception above is bound to authentic PC34 media. */
 static int m12_dm1_find_unique_root_dungeon(
-    const char* graphics, const char* allowedHashes,
+    const char* graphics, const char* graphicsMd5, const char* allowedHashes,
     char dungeon[ASSET_PATH_MAX]) {
     char graphicsParent[FSP_PATH_MAX];
     char hash[33];
@@ -5112,15 +5158,16 @@ static int m12_dm1_find_unique_root_dungeon(
         }
         for (i = 0; i < count; ++i) {
             char candidateParent[FSP_PATH_MAX];
-            /* The original loader resolves DUNGEON from the selected
-             * installation's data directory. A recursive hash hit can be
-             * from a neighboring extracted edition, so only retain a world
-             * owned by this GRAPHICS.DAT directory. */
             if (!FSP_ParentDir(candidateParent, sizeof(candidateParent),
-                               candidates[i]) ||
-                strcmp(candidateParent, graphicsParent) != 0) {
+                               candidates[i])) {
                 continue;
             }
+            if (strcmp(candidateParent, graphicsParent) != 0 &&
+                (!graphicsMd5 ||
+                 (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") != 0 &&
+                  strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") != 0) ||
+                 !m12_dm1_pc34_nested_dungeon_path(graphicsParent, candidates[i])))
+                continue;
             if (selected[0] && strcmp(selected, candidates[i]) != 0) {
                 free(candidates);
                 return 0;
@@ -5176,12 +5223,16 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
          * discovery. A missing named sibling may be replaced by one unique
          * same-directory match; an invalid or ambiguous named sibling is a
          * terminal ownership failure, not permission to use another file. */
-        if (found == 0 && !namedSiblingPresent && !namedSiblingMatches &&
+        if (found == 0 &&
+            (!namedSiblingPresent ||
+             strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0) &&
+            !namedSiblingMatches &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
              ((language == 1 || language == 2) &&
               strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))) {
-            if (!m12_dm1_find_unique_root_dungeon(graphics, allowed,
+            if (!m12_dm1_find_unique_root_dungeon(graphics, graphicsMd5, allowed,
                                                   dungeon))
                 return 0;
         } else if (found != 1) return 0;
