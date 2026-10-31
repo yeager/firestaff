@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, and the legacy DOS files at
 the top level of `SKWINDOS/` in the locked checkout: 3,929 definition rows,
 3,629 distinct names, and 300 repeated-name definitions. The active review
-ledger currently maps 3,875 as `UNREVIEWED`, 49 as `PARTIAL`, and 5 as
+ledger currently maps 3,874 as `UNREVIEWED`, 50 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -37,7 +37,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,875 `UNREVIEWED`; 49 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,874 `UNREVIEWED`; 50 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 ## Dispositions
 
@@ -59,7 +59,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are also recorded as partial in the supplemental review; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform.
+The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are also recorded as partial in the supplemental review; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is now source-compared to the live callback helper; platform-specific GDAT field equivalence remains open.
 
 The SKULLWIN shooter audit also follows live callers: `DM2_ACTIVATE_SHOOTER` reaches a fail-closed helper before projectile creation, while `DM2_SHOOT_ITEM` and `DM2_CREATURE_SHOOT_ITEM` helpers have no live callers. Their source projectile allocation, initialization, timer, and creature lifecycle behavior is therefore `PARTIAL`, not parity-complete. Matching SKWINSPX v4/v5 source definitions are recorded in the supplemental review ledger. The matching DOS implementations live in legacy top-level `SKWINDOS/` files and are now included in the expanded supplemental inventory; only individually mapped entries are reviewed.
 
@@ -128,7 +128,7 @@ before treating a mapping as a parity result.
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The 1,754 disposition
 rows cover the older `SKWIN`/`SKULLWIN` source sets; the expanded supplemental
-inventory contains 3,929 `SKWINSPX`/`SKWINDOS` definitions, with 3,875 still
+inventory contains 3,929 `SKWINSPX`/`SKWINDOS` definitions, with 3,874 still
 unreviewed and individual partial or parity dispositions recorded separately. Per-function comparison and runtime evidence remain required for
 DOS, Amiga, FM Towns, and Macintosh.
 
@@ -154,7 +154,7 @@ python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
 At this revision it reports 3,953 open rows: 3,875 unreviewed active-source
-definitions, 76 partial source or older-ledger rows, and 2 partial source-owner
+definitions, 77 partial source or older-ledger rows, and 2 partial source-owner
 rows. The active inventory now includes the legacy DOS implementation files. Exact-name overlap is shown only as a
 candidate for source comparison.
 
