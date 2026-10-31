@@ -493,6 +493,7 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
 typedef struct {
     DM2_V1_RecordPoolSet *pool_set;
     DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_SourceTimerQueue *queue;
     const uint8_t *actu_record;
     int src_x, src_y, src_dir;
@@ -501,6 +502,8 @@ typedef struct {
     int recycler;
     int only_first_item;
     uint16_t filter_data;
+    uint8_t item_mask[64];
+    int item_mask_valid;
     int map;
     uint32_t game_tick;
     DM2_V1_ItemTeleportReceipt *receipt;
@@ -528,12 +531,13 @@ static int item_teleport_visitor(void *context,
     if (ctx->is_floor == 0 && item_dir != ctx->src_dir) {
         return 0;
     }
+    if (ctx->recycler && !ctx->item_mask_valid) return 0;
 
     /* skevent.cpp:1400-1420 / SKW_ACTIVATE_ITEM_TELEPORT: compare
      * GET_DISTINCTIVE_ITEMTYPE with ActuatorData; 0x1ff accepts every
-     * item. Recycler filtering uses the GDAT mask path below and remains
-     * explicitly permissive until its live text owner is bound. */
-    if (!ctx->recycler && ctx->filter_data != 0x1ffu) {
+     * item. Recycler instead indexes QUERY_CREATURES_ITEM_MASK by the
+     * distinctive type. */
+    if (ctx->recycler || ctx->filter_data != 0x1ffu) {
         uint8_t cls2 = 0xffu;
         uint16_t distinctive = 0xffffu;
         DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
@@ -550,7 +554,13 @@ static int item_teleport_visitor(void *context,
             ctx->receipt->fail_closed = 1;
             return 1;
         }
-        if (distinctive != ctx->filter_data) return 0;
+        if (ctx->recycler) {
+            if (distinctive >= 512u ||
+                (ctx->item_mask[distinctive >> 3] &
+                 (uint8_t)(1u << (distinctive & 7u))) == 0u) return 0;
+        } else if (distinctive != ctx->filter_data) {
+            return 0;
+        }
     }
 
     ctx->receipt->items_counted++;
@@ -578,6 +588,7 @@ static int item_teleport_visitor(void *context,
 
 int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   DM2_V1_DungeonData *dungeon,
+                                  const DM2_V1_AssetLoader *asset_loader,
                                   DM2_V1_SourceTimerQueue *queue,
                                   const uint8_t *actu_record,
                                   int timer_x, int timer_y,
@@ -593,7 +604,12 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_TileRecordWalkReceipt walk_receipt;
 
     memset(&local, 0, sizeof(local));
-    if (receipt == NULL) receipt = &local;
+    if (receipt == NULL) {
+        receipt = &local;
+    } else {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+    memset(&ctx, 0, sizeof(ctx));
 
     if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
         receipt->fail_closed = 1;
@@ -625,18 +641,29 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
         ctx.dst_dir = (int)dm2_actu_direction(actu_record);
     }
 
-    /* Recycler path: QUERY_CREATURES_ITEM_MASK builds a bitmask of item
-     * types a creature accepts.  Without GDAT text queries, use a
-     * permissive mask (all item types pass).  Source: c_querydb.cpp:1045. */
+    /* skevent.cpp:1413 and c_querydb.cpp:1045: obtain the exact GDAT
+     * item-type mask from the actuator's creature index and Delay field. */
     if (recycler != 0) {
-        uint8_t item_mask[64];
-        memset(item_mask, 0xFF, sizeof(item_mask));
-        ctx.filter_data = 0x1FFU;
-        receipt->recycler_permissive_mask = 1;
+        DM2_V1_CreaturesItemMaskReceipt mask_receipt;
+        int creature_index = (int)(dm2_actu_data(actu_record) & 0xffu);
+        int text_field_base = (int)dm2_actu_delay(actu_record) * 3 + 0x10;
+        memset(&mask_receipt, 0, sizeof(mask_receipt));
+        if (!dm2_v1_query_creatures_item_mask_receipt(
+                asset_loader, creature_index, text_field_base, 0,
+                &mask_receipt) || !mask_receipt.accepted) {
+            /* c_querydb.cpp zeroes the destination mask before asking GDAT.
+             * The source caller ignores a missing-text result, so this
+             * transaction continues with no recycler item types accepted. */
+            memset(ctx.item_mask, 0, sizeof(ctx.item_mask));
+        } else {
+            memcpy(ctx.item_mask, mask_receipt.mask, sizeof(ctx.item_mask));
+            ctx.item_mask_valid = 1;
+        }
     }
 
     ctx.pool_set = pool_set;
     ctx.dungeon = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.queue = queue;
     ctx.actu_record = actu_record;
     ctx.is_floor = is_floor;
@@ -662,6 +689,7 @@ typedef struct {
     DM2_V1_RecordPoolSet *pool_set;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_CaiiArray *caii;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_SourceTimerQueue *queue;
     int map;
     int x;             /* timer X coordinate (tile walk origin) */
@@ -972,7 +1000,8 @@ static int wall_mecha_visitor(void *context,
         int16_t si = dm2_v1_tile_record_link(ctx->dungeon, ctx->map,
             (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record));
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -986,7 +1015,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -999,7 +1029,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1012,7 +1043,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1025,7 +1057,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1109,6 +1142,7 @@ static int wall_mecha_visitor(void *context,
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
                               DM2_V1_SourceTimerQueue *queue,
                               int map, int x, int y,
                               int action_type, int direction,
@@ -1132,6 +1166,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;
@@ -1322,7 +1357,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_PLACED_ITEM_TELEPORTER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1335,7 +1371,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1348,7 +1385,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1361,7 +1399,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1374,7 +1413,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1440,6 +1480,7 @@ static int floor_mecha_visitor(void *context,
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
                                DM2_V1_CaiiArray *caii,
+                               const DM2_V1_AssetLoader *asset_loader,
                                DM2_V1_SourceTimerQueue *queue,
                                int map, int x, int y,
                                int action_type, int direction,
@@ -1463,6 +1504,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;

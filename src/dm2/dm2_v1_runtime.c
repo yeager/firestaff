@@ -9179,7 +9179,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     memset(&event, 0, sizeof(event));
     (void)dm2_v1_actuate_wall_mecha(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        rt->caii_ready ? &rt->caii : NULL,
+        dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
         game ? &global_state : NULL,
         rt->caii_ready ? &creature_killer_cb : NULL,
@@ -9303,7 +9304,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     memset(&event, 0, sizeof(event));
     (void)dm2_v1_actuate_floor_mecha(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        rt->caii_ready ? &rt->caii : NULL,
+        dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
         game ? &global_state : NULL,
         rt->caii_ready ? &creature_killer_cb : NULL,

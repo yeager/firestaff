@@ -166,12 +166,12 @@ static void test_null_safety(void)
 {
     DM2_V1_ActuatorEventReceipt receipt;
 
-    assert(dm2_v1_actuate_wall_mecha(NULL, NULL, NULL, NULL,
+    assert(dm2_v1_actuate_wall_mecha(NULL, NULL, NULL, NULL, NULL,
                                       0, 0, 0, 0, 0, 0, NULL,
                                       NULL, NULL, NULL, &receipt) == 0);
     assert(receipt.fail_closed == 1);
 
-    assert(dm2_v1_actuate_floor_mecha(NULL, NULL, NULL, NULL,
+    assert(dm2_v1_actuate_floor_mecha(NULL, NULL, NULL, NULL, NULL,
                                        0, 0, 0, 0, 0, 0, NULL,
                                        NULL, NULL, NULL, &receipt) == 0);
     assert(receipt.fail_closed == 1);
