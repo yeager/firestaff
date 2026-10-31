@@ -9062,14 +9062,17 @@ static void dm2_runtime_creature_killer_set_ai_state(
     DM2_RuntimeCreatureKillerContext *ctx =
         (DM2_RuntimeCreatureKillerContext *)context;
     DM2_V1_CaiiAiTurnReceipt receipt;
-    if (!ctx || !ctx->runtime || !ctx->runtime->caii_ready ||
-        !dm2_v1_caii_ai_13e4_0360(
+    if (!ctx || !ctx->runtime || !ctx->runtime->caii_ready) {
+        if (ctx) ctx->failed = 1;
+        return;
+    }
+    if (!dm2_v1_caii_ai_13e4_0360(
             &ctx->runtime->record_pools,
             (const DM2_V1_DungeonData *)ctx->runtime->boot->dungeon_data,
             &ctx->runtime->caii, &ctx->runtime->timer_queue,
             ctx->map, (unsigned long)ctx->runtime->tick_count,
-            (int16_t)handle, x, y, state, value, &receipt) ||
-        !receipt.completed) {
+            (int16_t)handle, x, y, state, value, &receipt) &&
+        !receipt.guard_denied) {
         if (ctx) ctx->failed = 1;
     }
 }
