@@ -8,11 +8,13 @@ summarized class-0 nodes as no-op, matching `c_light.cpp:233-243`. Data-free
 mode-7 and visibility tests pass. The class-1 floor-actuator route now carries
 the source F8 and GDAT 99 weather terms through authenticated record/GDAT
 receipts; focused accumulator checks cover its light, weather and high-bit
-gates. A new HME-242 real-media regression for
-map 3 `(8,4)` compiles. That real-media test cannot run here because the
-original FM Towns archive is unavailable. Existing runtime proof remains
-FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains
-open, as do other record-derived light branches.
+gates. The HME-242 real-media regression for map 3 `(8,4)` now passes with the
+original FM Towns archive: its class-1 DB2 ext-usage-10 ornament chain reaches
+a complete mode-8/mode-7 receipt, and the resulting c_light stripe is consumed
+by the runtime frame. The class-4 and class-5 non-admission decisions also
+match SK1C9A's action-23 mask. Runtime evidence remains FM Towns-only; DOS,
+Amiga, Macintosh and other-edition runtime coverage remains open, as do other
+record-derived light branches.
 
 Source comparison found concrete unresolved `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE`
 branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
@@ -1352,16 +1354,13 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   media preservation-only.
   Remaining work is outdoor's distinct composition, transition stretching
   and same-tuple original-capture comparison; retain only GDAT-owned pixels.
-- Implement the FM Towns dynamic-light path before accepting post-teleport
-  dungeon frames. Original-media traversal from map 3 to map 38 and back
-  reaches the source coordinates, but both frames lack a c_light receipt.
-  SKProject `c_light.cpp:490-592` requires FIND_WALK_PATH modes 8 and 7,
-  visibility buffers, live light accumulators, party possessions, spells,
-  savegame light and weather. Firestaff's current pathfinders handle creature
-  movement and do not implement those light modes. GAME_LOAD now refreshes
-  the map scene after copying the live party and light state, but the light
-  traversal remains absent. Do not fill the receipt from a map descriptor or
-  a guessed minimum light level.
+- Extend authenticated FM Towns c_light coverage to the post-teleporter route
+  from map 3 `(13,11)` to map 38 `(6,6)` and back from map 38 `(6,4)` to map 3
+  `(13,9)`. A real-media frame at map 3 `(8,4)` now completes source FIND_WALK_PATH
+  modes 8 and 7 and consumes a verified c_light result; the existing DB1
+  transition checks reach the map-38 coordinates but do not assert c_light on
+  either arrival frame. Do not infer those receipts from transition success,
+  a map descriptor, or a guessed minimum light level.
   The source order is `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v5/sklight.cpp`,
   lines 490-592): mode 8 clears and fills `v1e08c8/v1e08cc` visibility data;
   mode 7 traverses the admitted cells and calls
@@ -1369,16 +1368,13 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   Those calls update `v1e0974/v1e0978`; only then may
   `RECALC_LIGHT_LEVEL` combine the party hand charges, `savegames1.w_00`,
   GRAPHICSSET words 0x67/0x68 and weather into the clamped light level.
-  The runtime now binds the original party, record charge fields, executable
+  The runtime binds the original party, record charge fields, executable
   tables, GRAPHICSSET words, savegame light and weather to the source light
-  routine. It publishes no dynamic-light receipt until the map-matched
-  visibility owner reports complete mode-8 and mode-7 traversal. Those modes
-  still lack a live producer; the existing creature movement path is not a
-  substitute. An
-  implementation must retain the map, party position, tick, records and GDAT
-  identities across both traversals and the final frame receipt. The
-  original-media acceptance case is map 3 (13,11) -> map 38 (6,6), then map
-  38 (6,4) -> map 3 (13,9), with valid `c_light` on both resulting frames.
+  routine, and withholds the receipt unless both map-matched traversals finish.
+  Extend the retained identities and completion proof through both real DB1
+  transitions, then require valid `c_light` receipts on the map-38 and return
+  frames. Keep this FM Towns evidence separate from still-unverified DOS,
+  Amiga and Macintosh rendering paths.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they

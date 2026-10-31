@@ -2324,13 +2324,14 @@ static int dm2_runtime_mode7_flags3_evidence(
         room->source_tile_type < 0x10u) {
         /* SKULLWIN/c_light.cpp:252-264 queries type-11 F8 and 99 on the
          * class-1 ornament; the latter independently selects weather light. */
-        if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
-                room->ceiling_ornament_word & 0xffu, 11, 0xf8,
-                &light_word)) return 0;
-        if (class1_ornament &&
-            !dm2_v1_query_gdat_entry_data_index(loader, 10,
+        /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero when a scalar is absent;
+         * skgdtqdb.cpp then supplies zero light/weather contribution. */
+        (void)dm2_v1_query_gdat_entry_data_index(loader, 10,
+            room->ceiling_ornament_word & 0xffu, 11, 0xf8, &light_word);
+        if (class1_ornament)
+            (void)dm2_v1_query_gdat_entry_data_index(loader, 10,
                 room->ceiling_ornament_word & 0xffu, 11, 99,
-                &weather_word)) return 0;
+                &weather_word);
     }
     evidence->ceiling_gdat_known = 1u;
     evidence->ceiling_gdat_light_word = light_word;
@@ -2422,8 +2423,14 @@ static int dm2_runtime_mode7_on_node(
         node.prepass = &prepass;
     } else if (source_flags == 3u && raw == 0x30) {
         branch = 28u;
-        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
-                dungeon, loader, map, x, y, &room)) goto unknown;
+        if (((unsigned)first >> 10 & 0x0fu) == 3u) {
+            if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+                    dungeon, loader, map, x, y, &room)) goto unknown;
+        } else if (((unsigned)first >> 10 & 0x0fu) == 2u) {
+            if (!dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+                    dungeon, loader, map, x, y,
+                    (uint32_t)rt->tick_count, &room)) goto unknown;
+        } else goto unknown;
         if (!dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;

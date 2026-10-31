@@ -1780,6 +1780,12 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
 int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
+/* Bounded class-1 DB2 decoration summary for supported ext-usage 10 text
+ * records, including the source map-GDAT ceiling initializer. */
+int dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out);
 /* Flags-4 only: class 1's raw summary type is known before the bounded
  * record scan. Ornament detail is intentionally absent from this receipt. */
 int dm2_v1_dungeon_c_light_class1_flags4_receipt(

@@ -7006,6 +7006,96 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    uint16_t link;
+    uint16_t graphics_word = 0u;
+    int raw, first, graphicsset;
+    unsigned count = 0u;
+    int found_ext10 = 0;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded ||
+        !dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw != 0x30 || first < 0 ||
+        ((unsigned)first >> 10 & 0x0fu) != 2u) return 0;
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15) return 0;
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero when the scalar is absent;
+     * the source leaves the summary word at FF in that case. */
+    (void)dm2_v1_query_gdat_entry_data_index(
+        loader, 8, graphicsset, 11, 0x6b, &graphics_word);
+    out->ceiling_ornament_index = 0xffu;
+    out->ceiling_ornament_word = 0x00ffu;
+    if (graphics_word != 0u) {
+        out->ceiling_ornament_index = (uint8_t)graphics_word;
+        out->ceiling_ornament_word = (uint8_t)graphics_word;
+        if ((graphics_word & 0x8000u) != 0u) {
+            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+            memset(&animation, 0, sizeof(animation));
+            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                    loader, 10, graphics_word & 0xffu, tick, 0u,
+                    &animation) || !animation.accepted ||
+                animation.receipt_hash == 0u) return 0;
+            out->ceiling_animation_frame = animation.frame;
+            out->ornament_source_hash = animation.receipt_hash;
+            out->ceiling_ornament_word = (uint16_t)(
+                (uint8_t)graphics_word |
+                (uint16_t)((uint32_t)animation.frame * 10u << 8));
+        }
+    }
+    link = (uint16_t)first;
+    while (link != DM2_THING_END_MARKER) {
+        const uint8_t *record;
+        uint16_t word;
+        int type = -1, size = 0;
+        if (++count > 32u) return 0;
+        record = dm2_v1_dungeon_get_thing_record(
+            d, link, &type, NULL, &size);
+        if (!record || type != 2 || size < 4) return 0;
+        word = dm2_v1_dungeon_read_record_u16(d, record + 2);
+        if ((word & 6u) == 2u) {
+            unsigned ext_usage = (word >> 8) & 0x1fu;
+            /* SKProject skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM: DB2
+             * ext usage 10 replaces the map-GDAT ornament with the text's
+             * ornament, using frame zero. Other ext usages can alter the
+             * frame or depend on state not owned by this receipt. */
+            if (ext_usage == 10u) {
+                uint8_t ornament = (uint8_t)(word >> 3);
+                out->ceiling_ornament_index = ornament;
+                out->ceiling_ornament_word = ornament;
+                out->ceiling_animation_frame = 0u;
+                out->ornament_source_hash = 0x54324431u ^
+                    ((uint32_t)link << 8) ^ word;
+                if (out->ornament_source_hash == 0u)
+                    out->ornament_source_hash = 1u;
+                found_ext10 = 1;
+            } else if (ext_usage != 6u) {
+                return 0;
+            }
+        }
+        {
+            int next = dm2_v1_dungeon_get_next_thing(d, link);
+            if (next < 0 || next == (int)link) return 0;
+            link = (uint16_t)next;
+        }
+    }
+    if (!found_ext10) return 0;
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = (uint16_t)first;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class1_flags4_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     DM2_V1_CLightStoneRoomReceipt *out)

@@ -26,12 +26,17 @@ int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
     (void)first_record_link;
     /* SK1C9A.cpp:3190-3340 maps GO_THERE tile classes to capability
      * bits. Action 23 sets v1e0576=0x227 at :6873-6882. Empty class-0
-     * squares still need the party-square blocker below. Classes 3 and 7
+     * squares still need the party-square blocker below. Classes 3, 4 and 7
      * have no overlapping capability bit (or are rejected outright).
+     * SK1C9A.cpp:2690-2797 leaves the class-4 GO_THERE capability word zero,
+     * so it fails the action-23 mask check without traversing the tile.
+     * Class-5 portal raw values other than the explicit B0/B8 handlers below
+     * do not establish action-23 destination admission.
      * Class 6 with bit 0x04 has capability 0x2 and needs blocker proof;
      * other class-6 tiles have no action-23 capability.
      * Other branches need movement and record evidence before admission. */
-    if (type == 3u || type == 7u ||
+    if (type == 3u || type == 4u || type == 7u ||
+        (type == 5u && raw_tile != 0xb0u && raw_tile != 0xb8u) ||
         (type == 6u && (raw_tile & 0x04u) == 0u)) return 0;
     return -1;
 }

@@ -281,6 +281,8 @@ static void test_mode7_go_there_tile_admission(void)
     assert(dm2_v1_mode7_go_there_tile_admission(0x10u, 0) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0x40u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0x60u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0x80u, -1) == 0);
+    assert(dm2_v1_mode7_go_there_tile_admission(0xb4u, -1) == 0);
     assert(dm2_v1_mode7_go_there_tile_admission(0xb0u, -1) == -1);
     assert(dm2_v1_mode7_go_there_tile_admission(0xc0u, -1) == 0);
     assert(dm2_v1_mode7_go_there_tile_admission(0xc4u, -1) == -1);
