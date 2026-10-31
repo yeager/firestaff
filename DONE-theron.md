@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — rerun authentic JP and US native startup/save routes on macOS Debug
+
+Configured a separate external-disk Debug build with the installed SDL3 and
+built the native `firestaff` target plus both Theron real-media integration
+tests. `theron_v1_m11_real_bram_continue` passed against authentic US Track 02
+(MD5 `f23601102138f87c33025877767ebf76`) and Ak-Tu-Ba-complete Backup RAM
+(MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`).
+`theron_v1_m11_jp_fresh_start` passed against authentic JP Rev. 1 Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`). Both CTest cases passed; they use
+isolated user-data roots, and the wrappers confirm the source media remains
+unchanged. This revalidates the bounded native startup and US Continue/save
+routes on macOS. It does not establish paired retail presentation, full
+campaign, original input semantics, or complete Theron parity.
+
 ## 2026-10-31 — cold scripted input verified at System Card polls
 
 Corrected the verifier to compare the active-low controller value returned to
