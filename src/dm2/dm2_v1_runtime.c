@@ -8862,9 +8862,10 @@ static int dm2_runtime_queue_door_collision_noise(
  * the boot dungeon and source-endian record; it applies a step, source party
  * damage or threshold-admitted creature CAII attack, collision sounds, and
  * the source continuation timers. The collision branches roll back when
- * their exact GDAT/CAII/sound/timer inputs cannot be admitted. The separate
- * GAME_LOAD candidate path and off-current-map door graphic mapping remain
- * fail-closed for occupied-door collisions.
+ * their exact GDAT/CAII/sound/timer inputs cannot be admitted. The GAME_LOAD
+ * runtime candidate now binds the same collision owners using each map
+ * header's G1 door mapping. The direct GAME_LOAD world-owner receipt remains
+ * structural, and live off-current-map G1 mapping remains fail-closed.
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:127+   (DM2_STEP_DOOR)
