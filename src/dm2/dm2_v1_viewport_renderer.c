@@ -6983,7 +6983,8 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
         const DM2_V1_WallOrnamentRender *ornament = NULL;
 
         if (sq->square_type != DM2_SQUARE_WALL ||
-            sq->wall_ornate_gfx_index == 0u) {
+            sq->wall_ornate_gfx_index == 0u ||
+            sq->wall_ornate_source_image_absent) {
             continue;
         }
 

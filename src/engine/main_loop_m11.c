@@ -10715,7 +10715,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
-            "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"fallbackDraws\": %d},\n"
+            "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"blockedMaterialMask\": %u, \"wallOrnamentRequiredMask\": %u, \"wallOrnamentConsumedMask\": %u, \"wallOrnamentPlanStatusCode\": %u, \"wallOrnamentPlanStatusSquare\": %d, \"wallOrnamentPlanStatusGdatIndex\": %u, \"wallOrnamentPlanStatusImageField\": %u, \"fallbackDraws\": %d},\n"
             "  \"dm2M11Frame\": {\"valid\": %d, \"floorCeilingComplete\": %d, \"mapLoadToken\": %u, \"sceneControlHash\": %u, \"sceneLightHash\": %u, \"floorMaterialHash\": %u, \"ceilingMaterialHash\": %u, \"wallPlanHash\": %u, \"presentationStateHash\": %u},\n"
             "  \"dm2LiveMissileDrawSchedule\": {\"valid\": %d, \"partial\": %d, \"calls\": %d},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
@@ -10760,6 +10760,13 @@ static void m11_write_autotest_runtime_probe(const char* path,
             dm2FrameOwnership.hud_gdat_blits,
             dm2FrameOwnership.gdat_scene_control_consumed,
             dm2FrameOwnership.blocked_material_draws,
+            (unsigned int)dm2FrameOwnership.blocked_material_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_material_required_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_material_consumed_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_code,
+            (int)dm2FrameOwnership.wall_ornament_plan_status_square,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_gdat_index,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_image_field,
             dm2FrameOwnership.total_runtime_fallback_draws,
             dm2M11FrameReceipt.valid,
             dm2M11FrameReceipt.floor_ceiling_materials_complete,
