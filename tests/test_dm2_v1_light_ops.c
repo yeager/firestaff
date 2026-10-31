@@ -1047,6 +1047,15 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.creature_query_known = 1u;
     evidence.ceiling_gdat_known = 1u;
     evidence.ceiling_gdat_light_word = 100u;
+    room.raw_tile = 0x30u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 90 && darkness == 0); /* class-1 ceiling term, distance 1 */
+    ambient = 0;
+    evidence.ceiling_gdat_light_word = 0u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 0 && darkness == 0); /* source exits on zero ceiling F8 */
+    evidence.ceiling_gdat_light_word = 100u;
+    room.raw_tile = 0x40u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 90 && darkness == 0); /* 100 - distance loss 10. */
     evidence.teleporter_present = 1u;

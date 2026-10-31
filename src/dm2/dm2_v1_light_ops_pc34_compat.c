@@ -337,7 +337,7 @@ int dm2_v1_mode7_tile_cache_action23_gate(
     return dm2_v1_mode7_action23_samples_tile(cache->tile);
 }
 
-static int dm2_v1_mode7_flags3_class2_terms(
+static int dm2_v1_mode7_flags3_floor_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_Mode7Flags3Evidence *evidence,
     uint8_t weather_index, uint8_t weather_delta,
@@ -347,7 +347,9 @@ static int dm2_v1_mode7_flags3_class2_terms(
     uint16_t light;
     unsigned index;
     if (!room || !room->valid ||
-        !(((room->raw_tile >> 5) == 2u &&
+        !(((room->raw_tile >> 5) == 1u && room->raw_tile == 0x30u &&
+            room->first_record_link == DM2_THING_NULL_MARKER) ||
+          ((room->raw_tile >> 5) == 2u &&
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           ((room->raw_tile >> 5) == 5u &&
            ((room->first_record_link >> 10) & 0x0fu) == 1u &&
@@ -360,8 +362,8 @@ static int dm2_v1_mode7_flags3_class2_terms(
     *tile_light = 0;
     *weather_light = 0;
     /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
-     * before flags 2 reads the live creature F8 term. The no-record room
-     * proves the DBE/DBF darkness chain empty for this narrow branch. */
+     * before flags 2 reads the live creature F8 term. A class-1/2 no-record
+     * room proves the DBE/DBF darkness chain empty for this narrow branch. */
     if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
         evidence->ceiling_gdat_light_word != 0u) {
         light = evidence->ceiling_gdat_light_word & 0x7fffu;
@@ -402,7 +404,7 @@ int dm2_v1_mode7_on_node(
             node->prepass->ceiling_gdat_light_word == 0u)
             return 1;
         if (node->distance > 8u || node->floor ||
-            !dm2_v1_mode7_flags3_class2_terms(
+            !dm2_v1_mode7_flags3_floor_terms(
                 node->stone_room, node->prepass,
                 node->weather_index, node->weather_delta,
                 &tile_light, &weather_light)) return -1;
