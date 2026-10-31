@@ -54,6 +54,7 @@
 #include "dm2_v1_projectile_impact_attack.h"
 #include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
+#include "dm2_v1_tile_record_walk_pc34_compat.h"
 #include "dm2_v1_shop_npc_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_sound_queue_pc34_compat.h"
@@ -9016,6 +9017,82 @@ static int16_t dm2_runtime_get_ornate_anim_len(
     return 1;
 }
 
+/* ACTIVATE_ORNATE_ANIMATOR (SKWINSPX skevent.cpp:1240) queues the actuator's
+ * optional activation sound only on the inactive-to-active transition. The
+ * mecha transaction owns record mutation; compare its pre-dispatch pool copy
+ * with the committed pool and then submit the exact GDAT 0x88 sound request. */
+static void dm2_runtime_queue_ornate_activation_sounds(
+    DM2_V1_RuntimeState *rt, const DM2_V1_RecordPoolSet *before,
+    int map, int x, int y, int is_wall)
+{
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_SoundQueueEnv env;
+    int category = is_wall ? 0x09 : 0x0a;
+    int gfx_count;
+    int16_t link;
+    long budget = 1;
+
+    if (!rt || !before || !rt->record_pools_valid ||
+        !rt->sound_queue_ready || !rt->boot ||
+        !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map]) return;
+
+    gfx_count = is_wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
+    if (gfx_count <= 0 || gfx_count > 16) return;
+    for (int i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i)
+        budget += before->pools[i].record_count;
+    link = dm2_v1_tile_record_link(dungeon, map, x, y);
+    memset(&env, 0, sizeof(env));
+    env.current_map = (int16_t)map;
+    env.gate_map_a = rt->sound_env.gate_map_a;
+    env.gate_map_b = rt->sound_env.gate_map_b;
+    env.facing = (uint16_t)rt->view_dir;
+    env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+    env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+    env.gametick = (int32_t)rt->tick_count;
+
+    while (link != DM2_V1_RECORD_HANDLE_END && budget-- > 0) {
+        const uint8_t *old_record = dm2_v1_record_pool_address(before, link);
+        const uint8_t *record = dm2_v1_record_pool_address(
+            &rt->record_pools, link);
+        int16_t next;
+        if (!old_record || !record || !dm2_v1_record_pool_next_link(
+                before, link, &next)) return;
+        if (dm2_v1_record_handle_pool(link) == 3 &&
+            dm2_actu_type(old_record) == DM2_ACTU_ORNATE_ANIMATOR_2 &&
+            dm2_actu_active_status(old_record) == 0 &&
+            dm2_actu_active_status(record) != 0 &&
+            dm2_actu_sound_effect(old_record)) {
+            uint16_t gfx_word = (uint16_t)record[4] |
+                ((uint16_t)record[5] << 8);
+            uint8_t gfx_index = (uint8_t)(gfx_word >> 12);
+            uint8_t decoration = 0xffu;
+            uint16_t sound_row = 0xffffu;
+            if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
+                decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
+                                     : rt->map_floor_gfx_list[gfx_index - 1u];
+            if (decoration != 0xffu) {
+                if (dm2_v1_query_gdat_entry_data_index(
+                        loader, (uint8_t)category, decoration,
+                        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row))
+                    ++sound_row;
+                DM2_V1_SoundQueueReceipt sound;
+                memset(&sound, 0, sizeof(sound));
+                (void)dm2_v1_sound_queue_noise_gen2(
+                    &rt->sound_queue, (int8_t)category, (int8_t)decoration,
+                    (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+                    (int16_t)sound_row, (int16_t)0x8c,
+                    (int16_t)0x80, &env, &sound);
+            }
+        }
+        link = next;
+    }
+}
+
 typedef struct {
     DM2_V1_RuntimeState *runtime;
     int map;
@@ -9198,6 +9275,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         memcpy(game->glob_vars.word_vars, global_state.word_vars,
                sizeof(global_state.word_vars));
     }
+    dm2_runtime_queue_ornate_activation_sounds(
+        rt, &pool_backup, map, x, y, 1);
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
     free(caii_backup);
@@ -9323,6 +9402,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         memcpy(game->glob_vars.word_vars, global_state.word_vars,
                sizeof(global_state.word_vars));
     }
+    dm2_runtime_queue_ornate_activation_sounds(
+        rt, &pool_backup, map, x, y, 0);
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
     free(caii_backup);
