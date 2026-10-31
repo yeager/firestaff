@@ -2723,10 +2723,9 @@ static int dm2_runtime_wall_rendered_record_root(
         if (dungeon->source_words_big_endian) {
             int16_t next;
             /* The Mac wall-button path mutates live DB record links when
-             * rotating a wall. The dungeon bytes remain the authenticated
-             * original, so follow the matching live pool after that point. */
-            if (!rt->record_pools_valid ||
-                !rt->record_pools.valid ||
+             * rotating a wall. The authenticated dungeon bytes remain
+             * unchanged, so follow the matching live pool after rotation. */
+            if (!rt->record_pools_valid || !rt->record_pools.valid ||
                 !rt->record_pools.record_graph_complete ||
                 rt->record_pools.source_words_big_endian !=
                     dungeon->source_words_big_endian ||
@@ -2846,6 +2845,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                 surface->wall_ornate_gfx_field = 0u;
                 surface->wall_ornate_rect_number = 0u;
                 surface->wall_ornate_ref_point = 0u;
+                surface->wall_ornate_source_image_absent = 0u;
                 surface->wall_rendered_record_root =
                     DM2_THING_END_MARKER;
                 surface->wall_rendered_record_root_valid = 0u;
@@ -12852,8 +12852,12 @@ static void dm2_runtime_bind_wall_ornament_plan(
 
     if (!viewport || !loader || !plan) return;
     memset(plan, 0, sizeof(*plan));
+    viewport->wall_ornament_plan_status_code = 0u;
+    viewport->wall_ornament_plan_status_square = -1;
+    viewport->wall_ornament_plan_status_gdat_index = 0u;
+    viewport->wall_ornament_plan_status_image_field = 0u;
     for (int square = 0; square < DM2_SQ_COUNT; ++square) {
-        const DM2_ViewSquare *surface = &viewport->squares[square];
+        DM2_ViewSquare *surface = &viewport->squares[square];
         DM2_V1_WallOrnamentReceipt receipt;
         DM2_V1_QueryGdatSummaryImageReceipt summary_image;
         DM2_V1_WallOrnamentBlitRect blit;
@@ -12867,7 +12871,13 @@ static void dm2_runtime_bind_wall_ornament_plan(
             surface->wall_ornate_gfx_index == 0u) continue;
         if (!surface->wall_ornate_rect_number ||
             plan->ornament_count >= DM2_V1_WALL_ORNAMENT_RENDER_MAX ||
-            surface->wall_ornate_gfx_field == 0u) return;
+            surface->wall_ornate_gfx_field == 0u) {
+            viewport->wall_ornament_plan_status_code = 1u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            viewport->wall_ornament_plan_status_gdat_index = surface->wall_ornate_gfx_index;
+            viewport->wall_ornament_plan_status_image_field = surface->wall_ornate_gfx_field;
+            return;
+        }
         switch (square) {
         case DM2_SQ_D0C: distance = 0; lateral = 0; break;
         case DM2_SQ_D0L: distance = 0; lateral = -1; break;
@@ -12881,7 +12891,10 @@ static void dm2_runtime_bind_wall_ornament_plan(
         case DM2_SQ_D3C: distance = 3; lateral = 0; break;
         case DM2_SQ_D3L: distance = 3; lateral = -3; break;
         case DM2_SQ_D3R: distance = 3; lateral = 3; break;
-        default: return;
+        default:
+            viewport->wall_ornament_plan_status_code = 2u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            return;
         }
         {
             int frame = (int)surface->wall_ornate_gfx_field - 1;
@@ -12906,11 +12919,42 @@ static void dm2_runtime_bind_wall_ornament_plan(
         if (image_field < 0 || image_field > UINT8_MAX ||
             !dm2_v1_wall_ornament_material_receipt(
                 loader, surface->wall_ornate_gfx_index,
-                (uint8_t)image_field, &receipt) ||
-            !dm2_v1_query_gdat_summary_image_receipt(
+                (uint8_t)image_field, &receipt)) {
+            DM2_V1_GdatImageMetadata selected_metadata;
+            /* SKWIN QUERY_GDAT_SUMMARY_IMAGE leaves a blank descriptor when
+             * the selected entry is absent. DRAW_DEF_PICT returns without a
+             * blit for its zero-sized source image, so this is a source no-op
+             * rather than an incomplete runtime material. */
+            if (image_field >= 0 && image_field <= UINT8_MAX &&
+                !dm2_v1_asset_load_image_metadata(
+                    loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    surface->wall_ornate_gfx_index, image_field,
+                    &selected_metadata)) {
+                surface->wall_ornate_source_image_absent = 1u;
+                viewport->wall_ornament_plan_status_code = 11u;
+                viewport->wall_ornament_plan_status_square = (int8_t)square;
+                viewport->wall_ornament_plan_status_gdat_index =
+                    surface->wall_ornate_gfx_index;
+                viewport->wall_ornament_plan_status_image_field =
+                    (uint8_t)image_field;
+                continue;
+            }
+            viewport->wall_ornament_plan_status_code = 3u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            viewport->wall_ornament_plan_status_gdat_index = surface->wall_ornate_gfx_index;
+            viewport->wall_ornament_plan_status_image_field = (uint8_t)image_field;
+            return;
+        }
+        if (!dm2_v1_query_gdat_summary_image_receipt(
                 loader, DM2_GDAT_CATEGORY_WALL_GFX,
                 surface->wall_ornate_gfx_index, image_field,
-                &summary_image)) return;
+                &summary_image)) {
+            viewport->wall_ornament_plan_status_code = 10u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            viewport->wall_ornament_plan_status_gdat_index = surface->wall_ornate_gfx_index;
+            viewport->wall_ornament_plan_status_image_field = (uint8_t)image_field;
+            return;
+        }
         if (lateral == 0 && receipt.do_not_flip == 0u) {
             int graphics_flip = (viewport->party_x + viewport->party_y +
                 viewport->party_dir + viewport->gdat_scene_map_offset_x +
@@ -12940,7 +12984,11 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 loader, surface->wall_ornate_rect_number,
                 surface->wall_ornate_ref_point,
                 scaled_width, scaled_height, picture_offset_x,
-                picture_offset_y, &blit)) return;
+                picture_offset_y, &blit)) {
+            viewport->wall_ornament_plan_status_code = 4u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            return;
+        }
         source_x0 = (blit.source_x * (int)receipt.decoded_width) / scaled_width;
         source_y0 = (blit.source_y * (int)receipt.decoded_height) / scaled_height;
         source_x1 = ((blit.source_x + blit.source_width) *
@@ -12951,7 +12999,11 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     scaled_height;
         if (source_x0 < 0 || source_y0 < 0 || source_x1 > receipt.decoded_width ||
             source_y1 > receipt.decoded_height || source_x1 <= source_x0 ||
-            source_y1 <= source_y0) return;
+            source_y1 <= source_y0) {
+            viewport->wall_ornament_plan_status_code = 5u;
+            viewport->wall_ornament_plan_status_square = (int8_t)square;
+            return;
+        }
         if (mirror_flip & 1) {
             int mirrored_source_x0 = (int)receipt.decoded_width - source_x1;
             int mirrored_source_x1 = (int)receipt.decoded_width - source_x0;
@@ -13003,7 +13055,11 @@ static void dm2_runtime_bind_wall_ornament_plan(
                         loader, DM2_GDAT_CATEGORY_WALL_GFX,
                         surface->wall_ornate_gfx_index,
                         DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
-                        &overlay_summary_image)) return;
+                        &overlay_summary_image)) {
+                    viewport->wall_ornament_plan_status_code = 6u;
+                    viewport->wall_ornament_plan_status_square = (int8_t)square;
+                    return;
+                }
                 overlay_scaled_width =
                     ((int)overlay_receipt.decoded_width * stretch_x +
                      (stretch_x >> 1)) >> 6;
@@ -13021,6 +13077,8 @@ static void dm2_runtime_bind_wall_ornament_plan(
                         surface->wall_ornate_ref_point,
                         overlay_scaled_width, overlay_scaled_height,
                         overlay_offset_x, overlay_offset_y, &blit)) {
+                    viewport->wall_ornament_plan_status_code = 7u;
+                    viewport->wall_ornament_plan_status_square = (int8_t)square;
                     return;
                 }
                 overlay_x0 = (blit.source_x *
@@ -13037,6 +13095,8 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     overlay_x1 > overlay_receipt.decoded_width ||
                     overlay_y1 > overlay_receipt.decoded_height ||
                     overlay_x1 <= overlay_x0 || overlay_y1 <= overlay_y0) {
+                    viewport->wall_ornament_plan_status_code = 8u;
+                    viewport->wall_ornament_plan_status_square = (int8_t)square;
                     return;
                 }
                 if (mirror_flip & 1) {
@@ -13067,7 +13127,11 @@ static void dm2_runtime_bind_wall_ornament_plan(
             }
         }
     }
-    if (plan->ornament_count == 0) return;
+    if (plan->ornament_count == 0) {
+        if (viewport->wall_ornament_plan_status_code == 0u)
+            viewport->wall_ornament_plan_status_code = 9u;
+        return;
+    }
     plan->valid = plan_hash != 0u;
     dm2_v1_viewport_set_gdat_wall_ornament_material_plan(viewport, plan);
 }
@@ -14636,6 +14700,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.last_floor_ceiling_material_consumed_mask;
     g_dm2_frame_ownership.blocked_material_draws =
         viewport.blocked_material_draw_count;
+    g_dm2_frame_ownership.blocked_material_mask =
+        viewport.blocked_material_mask;
+    g_dm2_frame_ownership.wall_ornament_material_required_mask =
+        viewport.last_wall_ornament_material_required_mask;
+    g_dm2_frame_ownership.wall_ornament_material_consumed_mask =
+        viewport.last_wall_ornament_material_consumed_mask;
+    g_dm2_frame_ownership.wall_ornament_plan_status_code =
+        viewport.wall_ornament_plan_status_code;
+    g_dm2_frame_ownership.wall_ornament_plan_status_square =
+        viewport.wall_ornament_plan_status_square;
+    g_dm2_frame_ownership.wall_ornament_plan_status_gdat_index =
+        viewport.wall_ornament_plan_status_gdat_index;
+    g_dm2_frame_ownership.wall_ornament_plan_status_image_field =
+        viewport.wall_ornament_plan_status_image_field;
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and

@@ -1266,6 +1266,7 @@ typedef struct {
     uint8_t  wall_ornate_gfx_field; /* source query frame/field (1=first frame) */
     uint16_t wall_ornate_rect_number; /* skproject QUERY_RECTNO_FOR_WALL_ORNATE */
     uint8_t  wall_ornate_ref_point; /* packed WALL_GFX position high byte */
+    uint8_t  wall_ornate_source_image_absent; /* SUMMARY_IMAGE width is zero */
     uint16_t wall_rendered_record_root; /* SUMMARIZE_STONE_ROOM xsrd.id4 */
     uint8_t  wall_rendered_record_root_valid;
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
@@ -2033,6 +2034,12 @@ typedef struct {
     uint32_t last_dungeon_wall_source_cell_consumed_mask;
     uint16_t last_wall_ornament_material_required_mask;
     uint16_t last_wall_ornament_material_consumed_mask;
+    /* --debug runtime-probe reason for a rejected wall plan; 11 means the
+     * source-selected GDAT image is absent and correctly resolves to no draw. */
+    uint8_t wall_ornament_plan_status_code;
+    int8_t wall_ornament_plan_status_square;
+    uint8_t wall_ornament_plan_status_gdat_index;
+    uint8_t wall_ornament_plan_status_image_field;
     DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
     DM2_V1_ViewportCreatureMaterialCommand
         last_creature_presentation_command;
