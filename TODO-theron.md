@@ -6,18 +6,19 @@ The authenticated Drator event receipt follows a generated ten-byte row
 through construction, runtime-slot publication, first reads and unlink. Static
 US Track 02 code at raw offset `$A1612` / logical `$C852` copies row offsets
 6–8 into working fields, but the capture corpus has not shown that consumer
-reading this exact row in the same event. The next bounded capture should add
-an opcode-fetch observer at logical `$C852`, after `RdAtPC()` and before
-instruction dispatch, recording the fetched opcode, physical PC, MPR snapshot,
-registers and a monotonically increasing instruction ordinal. Include a shared
-event sequence only if the fetch and row-lifecycle records use the same
-counter; otherwise use the instruction ordinal for ordering. Correlate it with
-the existing main-RAM consumer-read trace, which records reader PC/MPR and row
-data reads. Its
+reading this exact row in the same event. The reference capture wrapper now
+supports a bounded opcode-fetch trace at logical `$C852`; enable it with
+`THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`. It writes
+`${THERON_LIVE_TRACE_OUTPUT}.c852-fetch`, capped at 4,096 hits, with the fetched
+opcode, physical PC, all MPRs, registers and the same shared event sequence as
+the row-lifecycle records. Correlate it with the existing main-RAM
+consumer-read trace, which records reader PC/MPR and row data reads. Its
 `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` option filters physical
 data-read addresses; it is not a code-PC filter. A logical-PC hit in another
 physical bank does not close the join. Keep row bytes opaque; do not label
 them as coordinates, direction or creature fields.
+This reference capture is evidence-enabling work; the native viewport still
+requires a separate same-run map, pose, VDC/VCE/VRAM and rendered-frame join.
 Do not reuse an occupied capture profile or evidence directory; coordinate
 with its owner before using shared capture infrastructure. See the
 [source-bound generator/position report](docs/source-lock/theron-generator-rng-state-2026-08-21.md)

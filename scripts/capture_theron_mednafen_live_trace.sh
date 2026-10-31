@@ -141,6 +141,15 @@ rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
+pce_fast_c852_fetch_enabled=${THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE:-0}
+if [[ "$pce_fast_c852_fetch_enabled" != 0 && "$pce_fast_c852_fetch_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_c852_fetch_enabled" == 1 && "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE requires the pce_fast module' >&2
+    exit 1
+fi
 pce_fast_main_ram_target_write_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE:-}
 pce_fast_main_ram_target_write_sample_limit=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT:-65536}
 pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}
@@ -1520,6 +1529,10 @@ bram_snapshot="${trace}.bram"
 pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
 pce_fast_a1b7_bmt_write_trace="${trace}.a1b7-bmt-write"
 pce_fast_a1a9_init_trace="${trace}.a1a9-init"
+pce_fast_c852_fetch_trace=
+if [[ "$pce_fast_c852_fetch_enabled" == 1 ]]; then
+    pce_fast_c852_fetch_trace="${trace}.c852-fetch"
+fi
 pce_fast_vram_snapshot="${trace}.pce-fast.vram"
 pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
@@ -1602,6 +1615,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" \
     "$pce_fast_pointer_ram_write_trace" \
     "$pce_fast_a1a9_init_trace" \
+    ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} \
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
@@ -1907,6 +1921,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_LIMIT="$pce_fast_vce_write_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace" \
+    FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE="$pce_fast_c852_fetch_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
@@ -2252,6 +2267,17 @@ if [[ "$capture_mednafen_module" == pce_fast ]] &&
     printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast main-RAM consumer trace' >&2
     exit 1
 fi
+if [[ -n "$pce_fast_c852_fetch_trace" ]]; then
+    if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE_ERROR' "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported an error while writing the C852 opcode-fetch trace' >&2
+        exit 1
+    fi
+    if [[ ! -s "$pce_fast_c852_fetch_trace" ]] ||
+       ! grep -Fqx 'source=mednafen-pce-fast-c852-opcode-fetch event_sequence_source=TheronTraceCDSharedEventSequence' "$pce_fast_c852_fetch_trace"; then
+        printf '%s\n' 'FAIL: Mednafen did not produce a valid C852 opcode-fetch trace' >&2
+        exit 1
+    fi
+fi
 if [[ "$capture_mednafen_module" == pce_fast ]] &&
    { [[ ! -s "$main_ram_consumer_trace" ]] ||
      ! grep -Fqx 'source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence' "$main_ram_consumer_trace"; }; then
@@ -2374,7 +2400,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi

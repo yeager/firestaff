@@ -371,6 +371,8 @@ if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_c852_fetch_trace.py" \
+    "$build_root/source"
 if [[ "$pce_fast_huc6280_23ad_trace" == 1 ]]; then
     python3 "$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py" \
         "$build_root/source"
@@ -387,6 +389,18 @@ if ! awk '
     }
 ' "$build_root/source/src/pce_fast/huc6280.cpp"; then
     printf '%s\n' 'FAIL: A1A9 trace must sample the fetched opcode after existing trace calls and before dispatch' >&2
+    exit 1
+fi
+if ! awk '
+    index($0, "b1 = RdAtPC();") { opcode_fetch = NR }
+    index($0, "c852_fetch sequence=") { trace_record = NR }
+    index($0, "ADDCYC(CycTable[b1]);") { dispatch_cycle = NR }
+    END {
+        if (!opcode_fetch || !dispatch_cycle || !trace_record ||
+            opcode_fetch >= trace_record || trace_record >= dispatch_cycle) exit 1
+    }
+' "$build_root/source/src/pce_fast/huc6280.cpp"; then
+    printf '%s\n' 'FAIL: C852 trace must sample the fetched opcode after fetch and before dispatch' >&2
     exit 1
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \

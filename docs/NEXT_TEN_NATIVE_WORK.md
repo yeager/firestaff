@@ -24,12 +24,12 @@ contains only the next cross-game work items, not a complete Theron inventory.
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
 5. **Theron JP generated-row consumer join.** Replay the authenticated Drator
-   event with a bounded opcode-fetch hook at logical `$C852` after `RdAtPC()`
-   and before dispatch. Record opcode, physical PC, MPR/registers and a
-   monotonically increasing instruction ordinal. Use a shared event sequence
-   only if it uses the same counter as the row-lifecycle trace. Correlate with
-   main-RAM reads that include reader PC and row data address. The optional
-   main-RAM range filters physical data addresses, not instruction PCs.
+   event with the bounded `$C852` opcode-fetch hook, enabled by
+   `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`. Its physical PC/MPR and shared
+   event sequence can be correlated with the row-lifecycle and main-RAM reader
+   traces. The optional main-RAM range filters physical data addresses, not
+   instruction PCs. This evidence capture does not replace the native
+   viewport's required map/pose-to-VDC/VCE/VRAM-to-frame join.
    The current receipt proves the row lifecycle, but no same-session capture
    shows `$C852` consuming that exact row; a hit in another physical bank does
    not close the join. Keep row fields opaque. Then continue the separate

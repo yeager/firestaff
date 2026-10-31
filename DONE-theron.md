@@ -13,11 +13,13 @@ join: identify the physical `$C852` consumer in the same Drator generated-row
 event. Marked the August capture inventory as historical so it cannot override
 the current status summary.
 
-Corrected the capture instructions to distinguish opcode-fetch PC from the
-main-RAM consumer trace's physical data-address range filter. The `$C852` fetch
-must be observed at the CPU fetch/dispatch boundary and correlated with row
-reads using a comparable instruction ordinal or a verified shared event
-counter; the range option cannot select `$C852` as an instruction address.
+Added an opt-in, 4,096-hit `$C852` fetched-opcode trace to the Mednafen
+reference build/capture chain. It records physical PC, all MPRs, registers and
+the shared event counter used by row-lifecycle traces. The capture wrapper
+requires `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; its main-RAM range
+setting still filters physical data addresses, not instruction PCs. Shell and
+Python syntax checks pass. The real Drator replay has not yet been captured, so
+the consumer-to-row join and native viewport evidence remain open.
 
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 
