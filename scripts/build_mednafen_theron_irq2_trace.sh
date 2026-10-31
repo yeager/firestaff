@@ -128,8 +128,12 @@ sed -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
     "$scripted_pce_input_patch" > "$scripted_pce_input_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$scripted_pce_input_rendered"
+scripted_pce_fast_input_patch="$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"
+scripted_pce_fast_input_rendered="$build_root/theron-scripted-pce-fast-input.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    "$scripted_pce_fast_input_patch" > "$scripted_pce_fast_input_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
-    "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"
+    "$scripted_pce_fast_input_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

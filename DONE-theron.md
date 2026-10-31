@@ -1,5 +1,45 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — verify the authentic empty JP BRAM at native M11 startup
+
+Added `theron_v1_m11_jp_empty_bram`, a bounded native startup integration
+using authentic JP Rev. 1 Track 02 (MD5
+`b7afb338ad31be1025b53f9aff12d73a`) and the captured empty JP Mednafen SRAM
+(MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). The test verifies its valid BRAM
+layout and zero campaign byte, then confirms M11 does not advertise Continue,
+does not change the fresh Akutuba selection or campaign state, and leaves both
+original inputs unchanged. A TRV2 Debug build and three CTest loops passed.
+This covers the native UI's empty-slot rejection only; no authentic progressed
+JP BRAM is available, so positive JP Continue/save semantics remain open.
+
+## 2026-10-31 — synchronize Theron status documentation with verified input evidence
+
+Updated the README, documentation index, project/platform status, capture
+readiness, reverse-engineering index and technical-reference summaries, and
+Theron TODO/DONE records. Current status distinguishes the three authentic JP
+PCE Fast input-conditioned RAM updates from the cold US System Card BIOS polls.
+It also keeps the nonblack Firestaff snapshot separate from the unpaired
+original-reference image. No gameplay semantics or parity claim was added.
+
+## 2026-10-31 — join JP PCE Fast UP poll and RAM traces by event sequence
+
+Three UP runs and three neutral controls used the same authentic JP Rev. 1
+media and Akutuba F5 state. Each UP run bound `up@61:120` on slot 0 to the
+active-low guest read at `$44C1` (`value=3e`) and assigned it shared event 2342.
+The same counter records `$D334` reading `$2912=00` at event 3000, `$D349`
+writing `$10` at event 3001, then `$D334` reading `$10` at event 3023. Neutral
+controls had no `$D334` reads or `$D349` writes; they recorded 596–597 zero
+writes to `$2912` from `$D2F2`. The v2 verifier passed three consecutive loops
+across all six authentic trace bundles. Raw traces and logs are retained on
+the external disk; trace hashes are
+in the [source-locked comparison report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+
+This establishes repeatable event ordering from the poll to the RAM
+transaction, not causality. `$2912` semantics, movement, visible effect, and
+parity remain open. The verifier also rejects ambiguous module/slot/mask
+records; capture receipts are in [the guest-read report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
+and [the shared-sequence comparison](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+
 ## 2026-10-31 — rerun authentic JP and US native startup/save routes on macOS Debug
 
 Configured a separate external-disk Debug build with the installed SDL3 and
@@ -880,7 +920,8 @@ changes; state-driven visual rendering and direct viewport clicks remain open.
 
 The authentic USA SDL event test now selects `--lang en` because its item
 trace assertions compare localized action labels. On a Swedish host the
-three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
+three actions succeeded but emitted a localized object label instead of the
+expected English `ITEM`
 assertion. All seven event routes passed on the Linux build host with the
 USA Track 02 after fixing the language selection, including the added side
 steps, left turn, champion selection and wait actions. This verifies input

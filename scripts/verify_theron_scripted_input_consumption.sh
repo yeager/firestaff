@@ -129,6 +129,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
         failure = "legacy PCE input result did not immediately follow its raw read"
         pending_result = 0
     }
+    /^source=mednafen-pce-fast-instrumented-input$/ {
+        trace_is_pce_fast = 1
+        next
+    }
     /^pce_input_read / {
         input_reads++
         if (input_reads > read_limit) {
@@ -143,6 +147,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
             read_register = ""
             read_pc = ""
             read_frame = ""
+            read_module = ""
+            read_device_type = ""
+            read_scripted_port = ""
+            read_scripted_mask = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^register=[0-9a-fA-F]+$/)
                     read_register = tolower(substr($i, 10))
@@ -158,9 +166,50 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                     read_pc = substr($i, 8)
                 if ($i ~ /^frame=[0-9]+$/)
                     read_frame = substr($i, 7)
+                if ($i ~ /^module=[a-z0-9_]+$/)
+                    read_module = substr($i, 8)
+                if ($i ~ /^device_type=[0-9]+$/)
+                    read_device_type = substr($i, 13)
+                if ($i ~ /^scripted_port=[0-4]$/)
+                    read_scripted_port = substr($i, 15)
+                if ($i ~ /^scripted_mask=[0-9a-fA-F]+$/)
+                    read_scripted_mask = substr($i, 15)
             }
             register_value = hex_to_dec(read_register)
             if (register_value >= 4096 && register_value <= 5119) {
+                if (trace_is_pce_fast) {
+                    if (read_module != "pce_fast") {
+                        failure = "PCE Fast capture contains an input read without module=pce_fast"
+                        pending_result = 0
+                        next
+                    }
+                    if (read_device_type != "1")
+                        failure = "PCE Fast controller read did not come from a gamepad device"
+                    else if (read_scripted_port != expected_input_index)
+                        failure = "PCE Fast controller read reports a different scripted controller slot"
+                    else if ((read_frame + 0) >= (pending_frame + 0) &&
+                             (read_frame + 0) < (pending_end + 0)) {
+                        read_scripted_mask_value = hex_to_dec(read_scripted_mask)
+                        read_frame_mask = apply_mask_by_frame[read_frame]
+                        read_frame_port = apply_port_by_frame[read_frame]
+                        expected_frame_mask = 0
+                        for (event_index = 1; event_index <= events; event_index++)
+                            if ((read_frame + 0) >= (planned_frame[event_index] + 0) &&
+                                (read_frame + 0) < (planned_frame[event_index] + planned_hold[event_index]))
+                                expected_frame_mask = mask_union(expected_frame_mask,
+                                                                 planned_mask[event_index])
+                        if (read_frame_port != expected_input_index)
+                            failure = "PCE Fast same-frame apply receipt targets a different controller slot"
+                        else if (read_scripted_mask_value < 0 || read_frame_mask == "" ||
+                                 read_scripted_mask_value != (read_frame_mask + 0) ||
+                                 read_scripted_mask_value != expected_frame_mask)
+                            failure = "PCE Fast read mask does not match the same-frame scripted apply receipt and plan"
+                    }
+                    if (failure != "") {
+                        pending_result = 0
+                        next
+                    }
+                }
                 if (returned_value >= 0) {
                     accept_controller_read(raw_value, returned_value,
                                            read_sel, read_index, read_pc,
@@ -229,6 +278,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                 scripted_mask = substr($i, 10)
             if ($i ~ /^port=[0-4]$/)
                 apply_port = substr($i, 6)
+        }
+        if (apply_frame != "" && scripted_mask ~ /^[0-9a-fA-F]+$/) {
+            apply_mask_by_frame[apply_frame] = hex_to_dec(scripted_mask)
+            apply_port_by_frame[apply_frame] = apply_port
         }
         if (pending_frame != "" && apply_frame == pending_frame &&
             scripted_mask != "" && scripted_mask !~ /^0+$/) {
@@ -304,6 +357,9 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
             pending_button_mask = mask_union(pending_button_mask, mask_value % 16)
         }
         events++
+        planned_frame[events] = event_frame
+        planned_hold[events] = event_hold
+        planned_mask[events] = mask_value
         # Events scheduled on one frame combine before the CPU can poll them.
         # Require a controller read after the last event in that frame group.
         pending_apply = 0

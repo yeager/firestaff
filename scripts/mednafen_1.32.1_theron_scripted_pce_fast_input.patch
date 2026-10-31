@@ -1,10 +1,22 @@
 --- a/src/pce_fast/input.cpp
 +++ b/src/pce_fast/input.cpp
-@@ -22,0 +23,2 @@
+@@ -20,6 +20,8 @@
+ #include "huc.h"
+ #include <stdio.h>
+ #include <stdlib.h>
 +#include <string.h>
 +#include <limits.h>
-@@ -89,1 +91,49 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ namespace MDFN_IEN_PCE_FAST
+ {
+@@ -92,6 +94,70 @@
+ static bool DisableSR;
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ static void SyncSettings(void);
++
 +unsigned TheronPCEFastScriptFrame;
++unsigned TheronPCEFastScriptPort;
++uint16 TheronPCEFastScriptMask;
 +static void TheronPCEFastScriptInputFrame(uint16 *data, unsigned *port)
 +{
 + static bool initialized, valid;
@@ -62,10 +74,14 @@
 +  if(frame >= events[i].frame && frame - events[i].frame < events[i].duration) mask |= events[i].mask;
 + }
 + if(mask) { *data |= mask; if(TheronPCEFastInputTrace) { fprintf(TheronPCEFastInputTrace, "scripted_pce_input_apply frame=%u scripted=%04x port=%u\n", frame, mask, port_index); fflush(TheronPCEFastInputTrace); } }
++ TheronPCEFastScriptPort = port_index;
++ TheronPCEFastScriptMask = mask;
 +}
-+
+FIRESTAFF_PATCH_BLANK_CONTEXT
  void PCEINPUT_SettingChanged(const char *name)
-@@ -131,2 +181,4 @@
+ {
+@@ -137,11 +203,15 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
  void INPUT_Frame(void)
  {
 + uint16 scripted_mask = 0;
@@ -73,8 +89,10 @@
 + TheronPCEFastScriptInputFrame(&scripted_mask, &scripted_port);
   for(int x = 0; x < 5; x++)
   {
-@@ -137,3 +189,5 @@
+   if(InputTypes[x] == 1)
    {
     uint16 new_data = data_ptr[x][0] | (data_ptr[x][1] << 8);
 +   if(x == (int)scripted_port) new_data |= scripted_mask;
     pce_jp_data[x] = new_data;
+   }
+   else if(InputTypes[x] == 2)

@@ -15,7 +15,26 @@ RUN trace binds `$1800=$C8`, `$1801=$04`, `$2259=$04`, and `$E166->$E176`, but
 does not observe a confirmed game-owned handoff. A separate US save-state
 mouse replay proves guest reads and candidate command consumption only; it
 has no runtime CD provenance and establishes no semantic action or movement.
-The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
+Three same-state PCE Fast UP runs and neutral controls also show a repeatable
+shared event order from `$44C1` poll (2342) through `$D334` read `$00` (3000),
+`$D349` write `$10` (3001), and later `$D334` read `$10` (3023). No such
+consumer/writer path appears in controls. This does not establish causality,
+identify the byte's semantics, or prove movement. See the
+[source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+The follow-up UP/neutral trace reproduces the latch order, but the F5 save
+faces a wall: UP, neutral, and DOWN reference screenshots retain the same
+front wall, with no `$C1FC` TII or `$2040/$2041` position write observed by the
+bounded movement hooks. It does not prove movement or renderer parity; see the
+[blocked-wall probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
+progress restoration remains unverified because no authentic progressed JP
+BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
+after a four-second System Card RUN hold and short Button I menu/story presses;
+its resulting BRAM is byte-identical to the known empty JP slot. The reported
+3–5 second hold on the selected title-menu action itself remains untested. See
+the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
+and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
+Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture
 readiness](../theron/THERON_CAPTURE_READINESS.md), and the
