@@ -527,6 +527,19 @@ typedef struct {
     uint16_t shop_current_item;
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
+    /* Source QUERY_TEMP_PICST item artwork for SHOP_GLASS. */
+    uint8_t shop_item_render_valid;
+    uint8_t shop_item_category;
+    uint8_t shop_item_index;
+    uint8_t shop_item_field;
+    uint8_t shop_item_mirror_flip;
+    uint16_t shop_item_colorkey;
+    uint16_t shop_item_width;
+    uint16_t shop_item_height;
+    uint32_t shop_item_summary_hash;
+    uint32_t shop_item_palette_hash;
+    DM2_V1_ViewportRect shop_item_dst_rect;
+    DM2_V1_ViewportRect shop_item_src_rect;
 } DM2_V1_WallOrnamentRender;
 
 typedef struct DM2_V1_WallOrnamentRenderPlan {

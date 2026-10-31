@@ -13270,6 +13270,93 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
     return 1;
 }
 
+/* QUERY_TEMP_PICST in SHOP_GLASS uses the same RAW4 rectangle and view scale
+ * as the shop glass, but the merchandise image's own SUMMARY_IMAGE offsets
+ * plus WALL_GFX/dtImageOffset/0xfd. */
+static int dm2_runtime_bind_shop_item_render(
+    const DM2_V1_AssetLoader *loader, uint8_t wall_gfx_index,
+    uint16_t rect_number, uint8_t ref_point, uint16_t item,
+    int stretch_x, int stretch_y, int mirror_flip,
+    DM2_V1_WallOrnamentRender *entry)
+{
+    DM2_V1_SkprojectItemdbOfItemspecReceipt itemdb_receipt;
+    DM2_V1_SkprojectItemtypeOfItemspecReceipt itemtype_receipt;
+    DM2_V1_QueryGdatSummaryImageReceipt summary;
+    DM2_V1_WallOrnamentBlitRect blit;
+    uint16_t itemdb = 0xffffu;
+    uint16_t itemtype = 0xffffu;
+    uint16_t wall_offset_word = 0u;
+    int combined_x;
+    int combined_y;
+    int scaled_width;
+    int scaled_height;
+    int source_x0, source_y0, source_x1, source_y1;
+
+    if (!loader || !entry || !rect_number || stretch_x <= 0 ||
+        stretch_y <= 0 ||
+        !dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+            item, &itemdb, &itemdb_receipt) || !itemdb_receipt.valid ||
+        itemdb == 0xffffu ||
+        !dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+            item, &itemtype, &itemtype_receipt) ||
+        !itemtype_receipt.valid || itemtype > 0xffu ||
+        !dm2_v1_query_gdat_summary_image_receipt(
+            loader, itemdb, itemtype, 0, &summary) || !summary.accepted ||
+        summary.metadata.width == 0u || summary.metadata.height == 0u)
+        return 0;
+    (void)dm2_v1_asset_load_image_offset(
+        loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0xfdu,
+        &wall_offset_word);
+    combined_x = summary.metadata.query_offset_x + (int8_t)(wall_offset_word >> 8);
+    combined_y = summary.metadata.query_offset_y + (int8_t)wall_offset_word;
+    scaled_width = ((int)summary.metadata.width * stretch_x +
+                    (stretch_x >> 1)) >> 6;
+    scaled_height = ((int)summary.metadata.height * stretch_y +
+                     (stretch_y >> 1)) >> 6;
+    combined_x = dm2_v1_viewport_calc_stretched_size(combined_x, stretch_x);
+    combined_y = dm2_v1_viewport_calc_stretched_size(combined_y, stretch_y);
+    if (mirror_flip & 1) combined_x = -combined_x;
+    if (scaled_width <= 0 || scaled_height <= 0 ||
+        !dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
+            loader, rect_number, ref_point, scaled_width, scaled_height,
+            combined_x, combined_y, &blit)) return 0;
+    source_x0 = ((int)blit.source_x * (int)summary.metadata.width) /
+        scaled_width;
+    source_y0 = ((int)blit.source_y * (int)summary.metadata.height) /
+        scaled_height;
+    source_x1 = (((int)blit.source_x + (int)blit.source_width) *
+        (int)summary.metadata.width + scaled_width - 1) / scaled_width;
+    source_y1 = (((int)blit.source_y + (int)blit.source_height) *
+        (int)summary.metadata.height + scaled_height - 1) / scaled_height;
+    if (source_x0 < 0 || source_y0 < 0 ||
+        source_x1 > summary.metadata.width ||
+        source_y1 > summary.metadata.height ||
+        source_x1 <= source_x0 || source_y1 <= source_y0) return 0;
+    if (mirror_flip & 1) {
+        int mirrored_x0 = (int)summary.metadata.width - source_x1;
+        int mirrored_x1 = (int)summary.metadata.width - source_x0;
+        source_x0 = mirrored_x0;
+        source_x1 = mirrored_x1;
+    }
+    entry->shop_item_render_valid = 1u;
+    entry->shop_item_category = (uint8_t)itemdb;
+    entry->shop_item_index = (uint8_t)itemtype;
+    entry->shop_item_field = 0u;
+    entry->shop_item_mirror_flip = (uint8_t)mirror_flip;
+    entry->shop_item_colorkey = 0u;
+    entry->shop_item_width = summary.metadata.width;
+    entry->shop_item_height = summary.metadata.height;
+    entry->shop_item_summary_hash = summary.receipt_hash;
+    entry->shop_item_palette_hash = summary.palette_hash;
+    entry->shop_item_dst_rect = (DM2_V1_ViewportRect){
+        blit.destination_x, blit.destination_y,
+        blit.destination_width, blit.destination_height };
+    entry->shop_item_src_rect = (DM2_V1_ViewportRect){
+        source_x0, source_y0, source_x1 - source_x0,
+        source_y1 - source_y0 };
+    return 1;
+}
+
 /* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
  * Build placements from the active map's source-owned WALL_GFX fields and
  * INTERFACE_GENERAL RAW4 rectangle graph. */
@@ -13489,7 +13576,22 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->shop_current_item = pair.current_item;
                 entry->shop_glass_pair_valid = 1u;
                 entry->shop_glass_render_pending = 1u;
+                entry->shop_item_colorkey = receipt.colorkey;
+                if (!dm2_runtime_bind_shop_item_render(
+                        loader, surface->wall_ornate_gfx_index,
+                        surface->wall_ornate_rect_number,
+                        surface->wall_ornate_ref_point, pair.current_item,
+                        stretch_x, stretch_y, 0, entry)) {
+                    viewport->wall_ornament_plan_status_code = 14u;
+                    viewport->wall_ornament_plan_status_square =
+                        (int8_t)square;
+                    continue;
+                }
                 plan_hash ^= pair.identity_hash;
+                plan_hash ^= entry->shop_item_summary_hash;
+                plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_item_palette_hash;
+                plan_hash *= 16777619u;
                 plan_hash *= 16777619u;
             }
         }
