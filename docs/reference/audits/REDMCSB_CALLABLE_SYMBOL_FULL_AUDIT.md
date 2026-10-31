@@ -45,8 +45,8 @@ compiler/linker BSS initialization rather than a callable symbol.
 | Status | Count |
 |---|---:|
 | `MISSING` | 810 |
-| `UNCERTAIN_NUMBERED_EVIDENCE` | 652 |
-| `IMPLEMENTED_NARROW` | 503 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 650 |
+| `IMPLEMENTED_NARROW` | 505 |
 | `VERIFIED_SOURCE_MAPPING` | 96 |
 | `SOURCE_NONAPPLICABLE` | 64 |
 | `PC34_SOURCE_IMPLEMENTED` | 5 |
