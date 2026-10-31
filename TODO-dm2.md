@@ -126,11 +126,13 @@ shop subtype word bit `0x1000`, wall/floor stock presence, and current party
 inventory/containers/hands via `_2fcf_16ff`/`_2fcf_164e`; then clear once-only,
 activate both actuators, and write the selected item to the floor actuator.
 `dm2_v1_shop_select_masked_stock` now implements the bounded list-order or
-modulo-512 mask scan and preserves the raw whitelist word, including its
-high-bit allocation flag. Its focused compatibility test covers forward and
-backward cycling, mask skips, missing-list cycling, and exhaustion. It is not
-yet bound to the live actuator, subtype-word or party-ownership filters, so
-`SHOP_GLASS` remains missing in the named-symbol audit.
+modulo-512 mask scan, decodes source-endian `WALL_GFX/dt08/0x13` words, and
+preserves the raw whitelist word, including its high-bit allocation flag. An
+eligibility callback provides the remaining source subtype/ownership filter
+seam. Its focused compatibility test covers endian order, forward/backward
+cycling, mask and callback skips, missing-list cycling, and exhaustion. It is
+not yet bound to the live actuator or callbacks, so `SHOP_GLASS` remains
+missing in the named-symbol audit.
 The same render call draws the item image, sold-out icon when applicable, nav
 board, item name and buy/sell prices for cell 3, and may spawn a deeply
 allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
