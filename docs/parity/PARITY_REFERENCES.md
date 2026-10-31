@@ -1,6 +1,6 @@
 # Parity Reference Sources
 
-Last updated: 2026-05-20
+Last updated: 2026-10-31
 
 This file inventories all known local reference sources and artifacts available for 1:1 parity verification work.
 
@@ -9,9 +9,13 @@ This file inventories all known local reference sources and artifacts available 
 ## Product contract
 
 **Version 1** targets 1:1 original-faithful parity with **all three original games**:
-- **DM1** — Dungeon Master (PC DOS, VGA, English)
-- **CSB** — Chaos Strikes Back
-- **DM2** — Dungeon Master II: The Legend of Skullkeep
+- **DM1** — PC 3.4 English and Multilanguage.
+- **CSB** — Atari ST 2.0/2.1, Amiga 3.1/3.5, and FM Towns English/Japanese.
+- **DM2** — PC English, French, and German/English JewelCase editions.
+
+This edition list follows the current [project guide](../PROJECT_GUIDE.md).
+Parity review must cover each supported edition and platform path, not only the
+edition used for a focused source or media check.
 
 V2 (modern graphics/resolution) and V3 (modern 3D) are separate product tracks.
 Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementation.
