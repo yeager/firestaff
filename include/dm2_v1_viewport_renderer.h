@@ -2040,6 +2040,7 @@ typedef struct {
     int8_t wall_ornament_plan_status_square;
     uint8_t wall_ornament_plan_status_gdat_index;
     uint8_t wall_ornament_plan_status_image_field;
+    int wall_ornament_plan_failure_stage;
     DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
     DM2_V1_ViewportCreatureMaterialCommand
         last_creature_presentation_command;

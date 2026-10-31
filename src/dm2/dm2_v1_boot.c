@@ -12797,6 +12797,18 @@ int dm2_v1_boot_runtime_render_frame(
         }
         out_receipt->runtime_render_blocked_material_draw_count =
             frame_ownership.blocked_material_draws;
+        out_receipt->runtime_render_blocked_material_mask =
+            frame_ownership.blocked_material_mask;
+        out_receipt->runtime_render_wall_ornament_status_code =
+            frame_ownership.wall_ornament_plan_status_code;
+        out_receipt->runtime_render_wall_ornament_status_square =
+            frame_ownership.wall_ornament_plan_status_square;
+        out_receipt->runtime_render_wall_ornament_gdat_index =
+            frame_ownership.wall_ornament_plan_status_gdat_index;
+        out_receipt->runtime_render_wall_ornament_image_field =
+            frame_ownership.wall_ornament_plan_status_image_field;
+        out_receipt->runtime_render_wall_ornament_failure_stage =
+            frame_ownership.wall_ornament_plan_failure_stage;
         out_receipt->runtime_render_fallback_floor_ceiling_count =
             dm2_v1_runtime_last_fallback_floor_ceiling_count();
         out_receipt->runtime_render_asset_wall_count =
