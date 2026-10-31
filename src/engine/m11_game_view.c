@@ -1526,9 +1526,9 @@ static M11_Dm1RenderedPileTarget
     s_m11_dm1_rendered_pile_targets[M11_DM1_RENDERED_PILE_TARGET_MAX];
 static int s_m11_dm1_rendered_pile_target_count;
 /* ReDMCSB DUNVIEW.C F0115:4923-5109 resolves each C2500/F0635 object box;
- * CLIKVIEW.C F0377:410-415 hit-tests the frame-owned view-cell zone. The
- * CSB click route consumes the final successfully drawn box, paired with
- * its source view-cell, instead of a viewport-wide estimate. */
+ * CLIKVIEW.C F0377:410-415 hit-tests the frame-owned view-cell zone. Firestaff
+ * pairs its current successfully drawn box with that source view-cell so input
+ * matches its own rendering. Platform-live C696/F0635 placement is still open. */
 typedef struct M11_CSBRenderedFloorTarget {
     int valid;
     int viewCell;

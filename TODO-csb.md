@@ -494,12 +494,15 @@ compiles through MEDIA009 and uses native G0291 byte boxes, corrected and
 implemented in the following entry. On the non-Atari compatibility route,
 Firestaff now retains successfully drawn C2500/F0635 floor-object destination
 rectangles and C080 chooses the matching source view-cell instead of a fixed
-PC34 pile pane. This closes the floor-object hitbox mismatch for that
-rendered route. The fixed `{160,175,44,52}` door-button rectangle has not been
-proven equivalent to every current C05 source zone, and rendered wall-ornament
-bounds are still not carried into C080. Atari also still lacks the full source
-object/ornament passes; verify remaining interactions and platform behavior
-against original campaign media.
+PC34 pile pane. This removes disagreement between input and Firestaff’s own current sprite
+rectangles; it does not close source click-zone parity. The renderer still
+uses fixed PC34 placement tables instead of each platform’s live C696/F0635
+layout.
+The fixed `{160,175,44,52}` door-button rectangle has not been proven equivalent
+to every current C05 source zone, and rendered wall-ornament bounds are still
+not carried into C080. Atari also still lacks the full source object/ornament
+passes; verify remaining interactions and platform behavior against original
+campaign media.
 
 2026-10-31 correction and implementation for Atari F0115 floor-object click
 bounds: ReDMCSB compiles Atari ST through MEDIA009. `DUNVIEW.C F0115`
