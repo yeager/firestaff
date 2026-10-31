@@ -33,6 +33,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_wall_ornament.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
@@ -2680,14 +2681,15 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         int square;
         int forward;
         int lateral;
+        int source_cell;
     } visible_cells[] = {
         /* Source table1d6ad0 cells 0..13 map to the D0..D3 center/side rows. */
-        { DM2_SQ_D0C, 0,  0 }, { DM2_SQ_D1C, 1,  0 },
-        { DM2_SQ_D2C, 2,  0 }, { DM2_SQ_D3C, 3,  0 },
-        { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
-        { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
-        { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
-        { DM2_SQ_D3L, 3, -1 }, { DM2_SQ_D3R, 3,  1 },
+        { DM2_SQ_D0C, 0,  0,  0 }, { DM2_SQ_D1C, 1,  0,  3 },
+        { DM2_SQ_D2C, 2,  0,  6 }, { DM2_SQ_D3C, 3,  0, 11 },
+        { DM2_SQ_D0L, 0, -1,  1 }, { DM2_SQ_D0R, 0,  1,  2 },
+        { DM2_SQ_D1L, 1, -1,  4 }, { DM2_SQ_D1R, 1,  1,  5 },
+        { DM2_SQ_D2L, 2, -1,  7 }, { DM2_SQ_D2R, 2,  1,  8 },
+        { DM2_SQ_D3L, 3, -1, 12 }, { DM2_SQ_D3R, 3,  1, 13 },
     };
     static const int8_t source_lateral[DM2_V1_SKPROJECT_VIEW_CELL_COUNT] = {
         0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0, -1, 1, -2, 2,
@@ -2765,6 +2767,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
             if (square_type == DM2_SQUARE_WALL) {
                 surface->wall_ornate_gfx_index = 0u;
                 surface->wall_ornate_gfx_field = 0u;
+                surface->wall_ornate_rect_number = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
                 /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
@@ -2795,6 +2798,20 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                                 &decoration) == 1 && decoration.valid &&
                             ornament_index > 0 && ornament_index <= UINT8_MAX &&
                             ornament_field > 0 && ornament_field <= UINT8_MAX) {
+                            uint16_t ornament_position = 0u;
+                            uint16_t rect_number = 0u;
+                            if (dm2_v1_asset_load_word_value(
+                                    loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                                    (uint8_t)ornament_index,
+                                    DM2_V1_WALL_ORNATE_POSITION_FIELD,
+                                    &ornament_position) &&
+                                ornament_position <= 24u &&
+                                dm2_v1_wall_ornament_rect_number(
+                                    visible_cells[i].source_cell,
+                                    visible_cells[i].lateral,
+                                    ornament_position, &rect_number)) {
+                                surface->wall_ornate_rect_number = rect_number;
+                            }
                             surface->wall_ornate_gfx_index =
                                 (uint8_t)ornament_index;
                             surface->wall_ornate_gfx_field =
