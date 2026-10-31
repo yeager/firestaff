@@ -1,5 +1,17 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
+
+A fresh isolated macOS Debug configuration built the native Firestaff target
+and its Theron real-media CTest integrations. JP fresh-start passed against
+hash-verified original Track 02, and US Continue/save passed against
+hash-verified US Track 02 plus the authentic Ak-Tu-Ba-complete BRAM. The tests
+isolate user-data paths and check that their original media inputs remain
+unchanged. This confirms bounded native startup/save routes on macOS; it does
+not establish retail presentation parity, complete campaign behavior, or the
+missing cold game-owned handoff. Detailed hashes and scope are in
+[`DONE-theron.md`](../../DONE-theron.md).
+
 ## 2026-10-31 — current capture and renderer checkpoint
 
 The supported Firestaff route remains native C/SDL. Authentic US Continue
