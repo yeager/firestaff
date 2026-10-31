@@ -164,10 +164,19 @@ def main() -> int:
         print("FAIL: frame-300 partial material join no longer has its expected blocked status")
         sys.stderr.write(sequence.stdout)
         return 1
+    draw_rows = [line for line in sequence.stdout.splitlines()
+                 if line.startswith("draw=")]
+    if (len(draw_rows) != 66 or
+            sum(" palette=verified " in line for line in draw_rows) != 51 or
+            sum(" palette=not_applicable " in line for line in draw_rows) != 15):
+        print("FAIL: frame-300 per-command palette receipts disagree with the source-join totals")
+        sys.stderr.write(sequence.stdout)
+        return 1
 
     print("PASS: frame 300 contains an 83-record authenticated VDP1 chain with zero dropped rows")
     print("PASS: 66/68 textured commands match hash-verified retail DGN sources")
-    print("PASS: 51 palettes and 15 direct-color spans match; 61 draws have candidate face owners")
+    print("PASS: per-command palette receipts account for all 51 indexed and 15 direct-color draws")
+    print("PASS: 61 draws have candidate Structure3 face owners")
     print("PASS: two unbound zero-size draws are clipped outside the captured viewport")
     print("PASS: selected face, transform/culling, and semantic admission remain unresolved")
     return 0

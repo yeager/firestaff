@@ -228,7 +228,8 @@ def main() -> int:
           (",".join(f"0x{x:05x}" for x in unmatched_offsets) or "none"))
     print("transparent_zero_filled_offsets=" +
           (",".join(f"0x{x:05x}" for x in transparent_zero_filled_offsets) or "none"))
-    for offset, names, owners, palette_match, palette_sources, source_offset, source_size, clut_word, mode in rows:
+    for (offset, names, owners, palette_status, palette_sources,
+         source_offset, source_size, clut_word, mode) in rows:
         print(f"draw=0x{offset:05x} source=0x{source_offset:05x} "
               f"bytes={source_size} color_mode={mode} "
               f"clut_word={'n/a' if mode == 5 else f'0x{clut_word:05x}'} "
