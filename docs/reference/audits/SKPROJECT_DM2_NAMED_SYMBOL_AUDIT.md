@@ -25,7 +25,7 @@ ledger. The supplemental
 `SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists per-file `ctags -x`
 definitions from `SKWINSPX/src` and `SKWINDOS/src` at the locked checkout:
 3,097 definition rows, 2,848 distinct names, and 249 repeated-name
-definitions. Of those 3,097 rows, 3,065 remain `UNREVIEWED` and 32 allocator definitions are
+definitions. Of those 3,097 rows, 3,063 remain `UNREVIEWED` and 34 definitions are
 `PARTIAL` in `SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv`; exact name overlap with the older ledger is only a search hint, not
 proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -36,7 +36,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src` and `SKWINDOS/src` | 3,097 (2,724 SPX, 373 DOS) | 3,065 `UNREVIEWED`; 32 SPX/DOS allocator rows `PARTIAL` |
+| `SKWINSPX/src` and `SKWINDOS/src` | 3,097 (2,724 SPX, 373 DOS) | 3,063 `UNREVIEWED`; 34 SPX/DOS rows `PARTIAL` |
 
 ## Dispositions
 
@@ -53,7 +53,7 @@ runtime.
 | **Total** | **1,754** |
 
 The supplemental inventory now records 17 SPX v5 and 15 DOS `c_alloc.cpp`
-definitions as `PARTIAL` with source-to-classifier mappings. The DOS
+definitions, plus SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, as `PARTIAL` with source mappings and variant-specific evidence. The DOS
 `DM2_ALLOC_MEMORY_RAM` body also ignores the clean flag and always clears
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
@@ -148,8 +148,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,122 open rows: 3,065 unreviewed `SKWINSPX` and
-`SKWINDOS` definitions, 32 partial SPX/DOS allocator rows, 16 partial allocator
+At this revision it reports 3,122 open rows: 3,063 unreviewed `SKWINSPX` and
+`SKWINDOS` definitions, 34 partial SPX/DOS rows, 16 partial allocator
 rows in the older ledger, and 9 other unresolved older rows. Exact-name overlap is shown only as a
 candidate for source comparison.
 
