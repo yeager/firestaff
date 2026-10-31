@@ -385,6 +385,8 @@ python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py"
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_bootstrap_follow.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_decision_trace.py" \
+    "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" \
     "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -400,6 +402,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_callback_state_trace.py" \
+    "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" \
     "$build_root/source"
 
 if [[ "$patch_only" == 1 ]]; then

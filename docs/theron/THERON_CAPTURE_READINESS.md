@@ -1,5 +1,17 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — authentic BRAM Continue reaches native dungeon 2
+
+The native `theron_v1_m11_real_bram_continue` integration test passed three
+TRV2 loops with authentic US Track 02 and the authentic Ak-Tu-Ba-complete
+Backup RAM image. It verifies source-backed campaign and Theron stat restore,
+Continue focus and acceptance, next-dungeon/Soul Room progression, forcefield
+admission, and three native floor moves. A separate 10-frame CLI boot-probe
+with no input remained at the title; it does not exercise Continue. The native
+test is not a paired retail comparison and leaves the full-screen renderer and
+later quest/save paths unresolved. See the dated result in
+[`DONE-theron.md`](../../DONE-theron.md).
+
 Firestaff runs Theron's Quest in its native C/SDL runtime. Mednafen is used
 only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for

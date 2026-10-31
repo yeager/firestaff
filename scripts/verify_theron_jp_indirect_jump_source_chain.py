@@ -9,6 +9,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from theron_python_compat import zip_strict
 from verify_theron_indirect_jump_trace import (
     FETCH,
     parse_fetch_rows,
@@ -35,7 +36,7 @@ def require_capture_pair(paths: list[Path]) -> None:
         raise ValueError("trace files are not from one capture directory")
     suffixes = (DISPATCH_SUFFIX, FOLLOW_SUFFIX, READ_SUFFIX, WRITE_SUFFIX)
     bases = []
-    for path, suffix in zip(paths, suffixes, strict=True):
+    for path, suffix in zip_strict(paths, suffixes):
         if not path.name.endswith(suffix):
             raise ValueError(f"unexpected trace filename suffix: {path.name}")
         bases.append(path.name[: -len(suffix)])
@@ -63,7 +64,7 @@ def parse_follow_rows(path: Path) -> tuple[list[dict[str, str]], int, int]:
     )
     result = []
     for fields in raw_rows:
-        result.append(dict(zip(keys, fields, strict=True)))
+        result.append(dict(zip_strict(keys, fields)))
     return result, first_sequence, completion_sequence
 
 
@@ -158,7 +159,7 @@ def verify_source_chain(
     code_addresses = [int(follow[f"physical_bytes_{index}"], 16) for index in range(3)]
     if len(code_values) != len(code_addresses) or len(code_values) != 3:
         raise ValueError("unexpected next-fetch byte count")
-    for value, address in zip(code_values, code_addresses, strict=True):
+    for value, address in zip_strict(code_values, code_addresses):
         joins.append(source_backed_write(address, value, fetch_event))
 
     return joins, out_of_window_rows

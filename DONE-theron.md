@@ -1,5 +1,110 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — continue authentic US BRAM into the next native dungeon
+
+On TRV2, built the existing `theron_v1_m11_real_bram_continue` integration
+test and ran it three times against authentic US Track 02 (MD5
+`f23601102138f87c33025877767ebf76`) and the authentic Ak-Tu-Ba-complete BRAM
+(MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`). All three loops passed. The test
+source-checks the original save body, restores only proven campaign and Theron
+attributes/skill experience, selects Continue, advances to dungeon 2's Soul
+Room, admits an original roster champion, and enters the authentic Track 02
+dungeon through the forcefield handoff. Native movement then traverses three
+floor steps in the loaded source map. The test leaves unproven location fields
+untouched and does not compare movement, presentation, or save writes against
+a paired retail run.
+
+A separate 10-frame native CLI boot-probe with `--save` remained at the title
+with no input. This is the expected pre-Continue startup state and does not
+exercise the interactive Continue transaction. Its isolated BRAM copy retained
+its original hash.
+
+## 2026-10-31 — verify the authentic cold BIOS I/O and RAM trace
+
+Ran the updated capture loop on TRV2 with the authentic Japanese Rev. 1 CUE,
+Track 02, and hash-verified System Card 3.0, with no save-state autoload and a
+single RUN event. The expanded I/O/RAM verifier accepted 453,615 rows across
+all 29 configured addresses, including mapped opcode bytes checked against
+the authentic BIOS. The decision observer accepted 47 rows across six PCs;
+the status and callback-state observers accepted 65,536 and 251 rows. The
+scripted input was consumed at the System Card poll only. No `$E11D` launch
+branch, CD IRQ, or game-owned controller poll was observed, so this is BIOS
+activity evidence and does not establish game launch or parity.
+
+Retained the verified sidecars on the external disk under
+`.codex-scratch/theron-syscard-io-ram-cold-20261031/`. The 143,845,643-byte
+I/O/RAM trace SHA-256 is
+`1b9fbf4238a23202bb75c64d9fdeda0e9ad7243cb563777b6b8bb2287e942c8f`; decision
+trace `43a12483f13ef07731582bcc25bcfcb803495ecfc1d89c6cd69cca23ea7eb2b3`;
+status trace `d7fac0372474c05729abda93304a84cfe2cd7f90552b8e989b10f43aaa3d4db9`;
+callback-state trace
+`ca2f4d79bb9bc1a20a4390cb90e9a494079f1712fe79edde919e7619496dc143`.
+Removed only obsolete r1-r4 capture-family files from this task's isolated
+TRV2 scratch directory after retaining r5.
+
+## 2026-10-31 — native debug input route with authentic JP Track 02
+
+Built the current Firestaff source on TRV2 and ran it natively with the
+hash-verified Japanese Rev. 1 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`).
+The `--debug` startup script reached the loaded dungeon runtime, turned left,
+then advanced the party from `(1,0,0)` to `(2,3,3)`. Separate cold-start input
+probes turned left successfully; forward and right-strafe inputs were blocked
+from the spawn. The logs confirm Firestaff's own state changes and input
+results only. There was no original-game state comparison, paired reference
+capture, or rendered-game frame, so this is not movement or visual parity.
+
+## 2026-10-31 — add bounded BIOS I/O and RAM receipts
+
+Added an opt-in Mednafen sidecar for System Card reads and writes at
+`$1800-$1803`, `$224C-$2255`, `$2273-$2280`, and `$22A4`. Each row includes
+the shared event sequence, access direction and value, logical and physical
+data addresses, CPU PC mapping, mapped instruction bytes, and MPR state. The
+verifier requires the authentic hash-locked System Card image and rejects
+unmapped opcodes, source-byte mismatches, invalid mappings, reordered rows,
+and cap overflow. Instrumenter and verifier regression tests cover insertion,
+idempotence, read/write cases, and malformed evidence. This records BIOS
+activity only; no new capture has been collected, and no gameplay state or
+Theron parity is established. The next capture remains open in `TODO-theron.md`.
+
+## 2026-10-31 — retain BIOS decisions beyond the bootstrap trace cap
+
+Added an opt-in Mednafen decision-PC sidecar with the shared event sequence,
+instruction-start bytes, logical/physical mappings, registers, and processor
+status. It independently records `$E11B/$E11D`, `$E12C/$E130`, `$E14C`, the
+`$EC05/$E900` command path, `$E9C5/$EC69`, and `$E209/$E20A`, so the 8,192-row
+bootstrap cap cannot hide later launch-condition visits. Its verifier checks
+row order, requested PCs, register formatting, mapped instruction bytes, and
+cap markers. Focused verifier/instrumenter tests and the shell capture contract
+are part of the verification loop. This adds reference instrumentation only;
+it does not establish that the BIOS reached `$E11D` or that Theron gameplay
+started. The next authentic replay and expanded I/O/RAM sidecars remain open
+in `TODO-theron.md`.
+
+## 2026-10-31 — disassemble the authentic System Card callback/status path
+
+On TRV2, MAME `unidasm -arch h6280` decoded three bounded windows from the
+authentic System Card 3.0 BIOS (MD5
+`ff1a674273fe3540ccef576376407d1d`): `$EC05`, `$E900`, and `$E1C0-$E20A`.
+Three repeated listings for each window matched their recorded SHA-256
+hashes. The code writes `$81` to `$1801`, tests and updates `$1800-$1802`,
+checks `$22A4`, and reaches the `$E209 SEC; RTS` table-check exit in static
+control flow. This literal disassembly does not infer higher-level device
+semantics.
+
+The authentic v22 JP Rev. 1 cold RUN-only capture (Track 02 MD5
+`b7afb338ad31be1025b53f9aff12d73a`) was independently checked on TRV2. The
+bootstrap verifier accepted 8,192 rows and 128 independent `$4000` rows; the
+status verifier accepted 65,536 `$E95E/$1800` rows; and the callback-state
+verifier accepted 251 rows (83 reads and 168 writes). The bounded bootstrap
+trace reached `$EC05` once and `$E900` three times, but no `$E209` or `$E11D`
+instruction start. Both bootstrap and status windows hit their configured
+caps. The transition receipt still reports no non-System-Card poll, CD IRQ,
+authenticated CD-RAM receipt, or gameplay transition. Raw captures remain
+private on TRV2; hashes, listings, and limits are in
+`docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm`.
+This closes the bounded BIOS-disassembly task only; native Theron gameplay
+support remains open in `TODO-theron.md`.
+
 ## 2026-10-30 — source-correlate `$4000` instruction-start snapshots
 
 The v16 authentic cold capture associates the first complete instruction-start
