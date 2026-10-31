@@ -2,6 +2,7 @@
 #include "theron_v1_mechanics.h"
 #include "theron_v1_srm_classifier.h"
 #include "theron_v1_startup_save_resume.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -23,6 +24,154 @@ static int set_test_environment(const char *name, const char *value) {
 #else
     return value ? setenv(name, value, 1) == 0 : unsetenv(name) == 0;
 #endif
+}
+
+static int pick_up_nearest_authentic_item(M11_GameViewState *view,
+                                          Theron_V1_World *world) {
+    static const int movement_inputs[4] = {
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_RIGHT,
+        M12_MENU_INPUT_DOWN, M12_MENU_INPUT_STRAFE_LEFT
+    };
+    int16_t parent_x[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
+    int16_t parent_y[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
+    int8_t parent_direction[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
+    int16_t queue_x[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+    int16_t queue_y[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+    uint8_t visited[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE] = {{0}};
+    int path_directions[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+    int path_length = 0, queue_head = 0, queue_tail = 0;
+    int target_x = -1, target_y = -1, target_direction = -1;
+    int target_object_index = -1;
+    const int dungeon = world->current_dungeon;
+    const int level = world->current_level;
+    int width, height;
+    const int start_x = world->party.leader_x;
+    const int start_y = world->party.leader_y;
+    int facing = world->party.leader_dir & 3;
+
+    if (dungeon < 1 || dungeon > THERON_DUNGEON_COUNT || level < 0 ||
+        level >= THERON_MAX_LEVELS_PER_DUNGEON) return 0;
+    width = world->levels[dungeon - 1][level].width;
+    height = world->levels[dungeon - 1][level].height;
+    if (width <= 0 || height <= 0 ||
+        width > THERON_MAX_MAP_SIZE || height > THERON_MAX_MAP_SIZE ||
+        start_x < 0 || start_y < 0 || start_x >= width || start_y >= height ||
+        theron_v1_world_get_square(world, start_x, start_y) !=
+            THERON_SQUARE_FLOOR) {
+        return 0;
+    }
+
+    memset(parent_x, 0xff, sizeof(parent_x));
+    memset(parent_y, 0xff, sizeof(parent_y));
+    memset(parent_direction, 0xff, sizeof(parent_direction));
+    queue_x[queue_tail] = (int16_t)start_x;
+    queue_y[queue_tail++] = (int16_t)start_y;
+    visited[start_y][start_x] = 1u;
+    while (queue_head < queue_tail && target_object_index < 0) {
+        const int x = queue_x[queue_head];
+        const int y = queue_y[queue_head++];
+        for (int direction = 0; direction < THERON_DIR_COUNT; ++direction) {
+            const int item_x = x + g_theron_dir_dx[direction];
+            const int item_y = y + g_theron_dir_dy[direction];
+            if (item_x < 0 || item_y < 0 || item_x >= width ||
+                item_y >= height) continue;
+            for (int object_index = 0; object_index < world->object_count;
+                 ++object_index) {
+                const Theron_V1_Object *object =
+                    &world->objects[object_index];
+                const int carryable =
+                    object->source_category == THERON_CAT_WEAPON ||
+                    object->source_category == THERON_CAT_CLOTHING ||
+                    object->source_category == THERON_CAT_SCROLL ||
+                    object->source_category == THERON_CAT_POTION ||
+                    object->source_category == THERON_CAT_MISC;
+                if (object->dungeon_id == dungeon && object->level == level &&
+                    object->x == item_x && object->y == item_y &&
+                    object->source_origin_valid &&
+                    object->source_property_valid && carryable &&
+                    !(object->flags & THERON_OBJ_F_PICKED_UP)) {
+                    target_x = x;
+                    target_y = y;
+                    target_direction = direction;
+                    target_object_index = object_index;
+                    break;
+                }
+            }
+            if (target_object_index >= 0) break;
+        }
+        if (target_object_index >= 0) break;
+        for (int direction = 0; direction < THERON_DIR_COUNT; ++direction) {
+            const int nx = x + g_theron_dir_dx[direction];
+            const int ny = y + g_theron_dir_dy[direction];
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height ||
+                visited[ny][nx] ||
+                theron_v1_world_get_square(world, nx, ny) !=
+                    THERON_SQUARE_FLOOR) continue;
+            visited[ny][nx] = 1u;
+            parent_x[ny][nx] = (int16_t)x;
+            parent_y[ny][nx] = (int16_t)y;
+            parent_direction[ny][nx] = (int8_t)direction;
+            queue_x[queue_tail] = (int16_t)nx;
+            queue_y[queue_tail++] = (int16_t)ny;
+        }
+    }
+    if (target_object_index < 0) return 0;
+
+    for (int x = target_x, y = target_y; x != start_x || y != start_y;) {
+        const int px = parent_x[y][x];
+        const int py = parent_y[y][x];
+        if (px < 0 || py < 0 ||
+            path_length >= THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE)
+            return 0;
+        path_directions[path_length++] = parent_direction[y][x];
+        x = px;
+        y = py;
+    }
+    while (path_length > 0) {
+        const int direction = path_directions[--path_length];
+        const int relative = (direction - facing + THERON_DIR_COUNT) & 3;
+        const int next_x = world->party.leader_x + g_theron_dir_dx[direction];
+        const int next_y = world->party.leader_y + g_theron_dir_dy[direction];
+        if (M11_GameView_HandleInput(view, movement_inputs[relative]) !=
+                M11_GAME_INPUT_REDRAW || world->party.leader_x != next_x ||
+            world->party.leader_y != next_y ||
+            world->current_dungeon != dungeon || world->current_level != level)
+            return 0;
+        facing = direction;
+    }
+    while (facing != target_direction) {
+        if (M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) !=
+            M11_GAME_INPUT_REDRAW) return 0;
+        facing = (facing + 1) & 3;
+    }
+    if (M11_GameView_HandleInput(view, M12_MENU_INPUT_PICKUP_ITEM) !=
+            M11_GAME_INPUT_REDRAW ||
+        !(world->objects[target_object_index].flags &
+          THERON_OBJ_F_PICKED_UP)) return 0;
+    if (world->party.active_slot < 0 ||
+        world->party.active_slot >= THERON_MAX_CHAMPIONS) return 0;
+    for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+        const Theron_V1_InventorySourceRecord *carried =
+            &world->inventory_source[world->party.active_slot][slot];
+        if (carried->valid && carried->source_origin_valid &&
+            carried->source_ref ==
+                world->objects[target_object_index].source_ref &&
+            carried->source_index ==
+                world->objects[target_object_index].source_index &&
+            carried->category ==
+                world->objects[target_object_index].source_category &&
+            carried->property_valid &&
+            memcmp(carried->property,
+                   world->objects[target_object_index].source_property,
+                   sizeof(carried->property)) == 0 &&
+            carried->source_raw_size ==
+                world->objects[target_object_index].source_raw_size &&
+            memcmp(carried->source_raw,
+                   world->objects[target_object_index].source_raw,
+                   carried->source_raw_size) == 0)
+            return 1;
+    }
+    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -410,6 +559,20 @@ int main(int argc, char** argv) {
                 fprintf(stderr,
                         "FAIL: native input traverses three source-map floor steps after authentic Continue (start=%d,%d facing=%d path=%d moved=%d)\n",
                         start_x, start_y, facing, path_length, moved_steps);
+            } else {
+                const uint8_t quest_items_before =
+                    world->progression.quest_items_collected;
+                if (!pick_up_nearest_authentic_item(&view, world)) {
+                    ++failures;
+                    fprintf(stderr,
+                            "FAIL: native M11 pickup transfers an approachable authentic Track 02 object with exact inventory provenance\n");
+                }
+                if (world->progression.quest_items_collected !=
+                    quest_items_before) {
+                    ++failures;
+                    fprintf(stderr,
+                            "FAIL: an authentic item pickup leaves unproven quest-item progress unchanged\n");
+                }
             }
         }
     }
