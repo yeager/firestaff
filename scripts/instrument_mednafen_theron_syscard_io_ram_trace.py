@@ -38,7 +38,7 @@ static void TheronTraceSystemCardIoRam(const char *access,
    trace = fopen(path, "w");
    if(trace)
    {
-    fputs("source=mednafen-pce-fast-system-card-io-ram-v1 event_sequence_source=TheronTraceCDSharedEventSequence limit=131072 logical_ranges=1800-1803,224c-2255,2273-2280,22a4\n", trace);
+    fputs("source=mednafen-pce-fast-system-card-io-ram-v1 event_sequence_source=TheronTraceCDSharedEventSequence limit=524288 logical_ranges=1800-1803,224c-2255,2273-2280,22a4\n", trace);
     fflush(trace);
    }
   }
@@ -48,9 +48,9 @@ static void TheronTraceSystemCardIoRam(const char *access,
       (logical >= 0x224C && logical <= 0x2255) ||
       (logical >= 0x2273 && logical <= 0x2280) || logical == 0x22A4))
   return;
- if(rows >= 131072)
+ if(rows >= 524288)
  {
-  fputs("io_ram_truncated cap=131072\n", trace);
+  fputs("io_ram_truncated cap=524288\n", trace);
   fflush(trace);
   truncated = true;
   return;

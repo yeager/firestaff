@@ -9,15 +9,15 @@ import sys
 from pathlib import Path
 
 
-CAP = 131072
+CAP = 524288
 SYSTEM_CARD_MD5 = "ff1a674273fe3540ccef576376407d1d"
 PCE_HEADER_BYTES = 512
-BIOS_LOGICAL_BASE = 0xE000
+BIOS_LOGICAL_BASE = 0xC000
 RANGES = ((0x1800, 0x1803), (0x224C, 0x2255), (0x2273, 0x2280), (0x22A4, 0x22A4))
 ADDRESSES = {address for start, end in RANGES for address in range(start, end + 1)}
 HEADER = (
     "source=mednafen-pce-fast-system-card-io-ram-v1 "
-    "event_sequence_source=TheronTraceCDSharedEventSequence limit=131072 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence limit=524288 "
     "logical_ranges=1800-1803,224c-2255,2273-2280,22a4"
 )
 FIELDS = (
@@ -94,6 +94,12 @@ def verify_lines(lines: list[str], system_card_image: bytes) -> dict[str, int]:
             raise ValueError(f"logical/physical data mapping mismatch at line {line_number}")
 
         pc = int(values["logical_pc"], 16)
+        # System Card code can execute through either half of the HuC6280's
+        # top 16 KiB window. In particular, callbacks at $C000-$DFFF are
+        # backed by the physical bank selected in MPR6 (commonly bank $01),
+        # while $E000-$FFFF is backed by MPR7. Validate source bytes through
+        # the captured physical mapping below instead of assuming all BIOS
+        # instructions live at logical $E000+.
         if not BIOS_LOGICAL_BASE <= pc <= 0xFFFF or mprs[7] != 0:
             raise ValueError(f"event is not mapped to the System Card BIOS at line {line_number}")
         pc_slot = pc >> 13
@@ -118,7 +124,7 @@ def verify_lines(lines: list[str], system_card_image: bytes) -> dict[str, int]:
                 if physical != expected:
                     raise ValueError(f"instruction-byte mapping mismatch at line {line_number}")
                 if BIOS_LOGICAL_BASE <= code_logical <= 0xFFFF:
-                    image_offset = PCE_HEADER_BYTES + code_logical - BIOS_LOGICAL_BASE
+                    image_offset = PCE_HEADER_BYTES + physical
                     if image_offset >= len(system_card_image):
                         raise ValueError("System Card image does not cover the BIOS PC")
                     if code_bytes[offset] != system_card_image[image_offset]:

@@ -15,8 +15,9 @@ IMAGE = bytearray(verifier.PCE_HEADER_BYTES + 0x10000)
 
 
 def source_bytes(pc: int) -> bytes:
-    return bytes(IMAGE[verifier.PCE_HEADER_BYTES + pc - 0xE000:
-                       verifier.PCE_HEADER_BYTES + pc - 0xE000 + 4])
+    start = (MPRS[pc >> 13] << 13) | (pc & 0x1FFF)
+    return bytes(IMAGE[verifier.PCE_HEADER_BYTES + start:
+                       verifier.PCE_HEADER_BYTES + start + 4])
 
 
 def make_row(index: int, event: int, access: str, address: int, pc: int) -> str:
@@ -62,9 +63,10 @@ def main() -> None:
         make_row(0, 30, "read", 0x1800, 0xE900),
         make_row(1, 33, "write", 0x224C, 0xEC05),
         make_row(2, 37, "read", 0x22A4, 0xE95E),
+        make_row(3, 41, "write", 0x224C, 0xCB1B),
     ]
     assert verifier.verify_lines(rows, image) == {
-        "rows": 3, "reads": 2, "writes": 1, "addresses": 3,
+        "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
         "missing_addresses": len(verifier.ADDRESSES) - 3,
     }
     valid = make_row(0, 30, "write", 0x224C, 0xEC05)
@@ -94,7 +96,7 @@ def main() -> None:
         make_row(1, 37, "read", 0x22A4, 0xE95E).replace("event_sequence=37", "event_sequence=29"),
     ], image, "event order", "non-increasing shared event sequence")
     must_reject(
-        [verifier.HEADER, valid, "io_ram_truncated cap=131072"],
+        [verifier.HEADER, valid, "io_ram_truncated cap=524288"],
         image, "truncation", "truncation marker disagrees with row count",
     )
     original_cap = verifier.CAP

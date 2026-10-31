@@ -123,10 +123,15 @@ the authentic System Card BIOS now cover `$EC05`, `$E900`, and `$E1C0-$E20A`.
 They identify command setup, `$1800-$1802` accesses, status comparison, and
 the `$E209 SEC; RTS` table-check exit without assigning undocumented device
 semantics. An opt-in bounded decision-PC sidecar can record `$EC05`, `$E900`,
-`$E209/$E20A`, and `$E11D` independently of the bootstrap row cap. No authentic
-capture has used it yet. The next capture still needs the expanded `$1800-$1803`
-I/O and `$224C-$2255`, `$2273-$2280`, and `$22A4` RAM receipts before the
-authentic disc is replayed.
+`$E209/$E20A`, and `$E11D` independently of the bootstrap row cap. The 2026-10-31 r5 cold capture used both expanded observers. It verified
+453,615 I/O/RAM rows across all 29 configured addresses with authentic BIOS
+opcode-byte mapping, 47 decision rows across six PCs, 65,536 status rows, and
+251 callback-state rows. The RUN event was consumed only by the System Card;
+no `$E11D` launch branch, CD IRQ, or game-owned controller poll was observed.
+The expanded receipts document BIOS activity only and do not prove game launch
+or parity. The retained trace hashes and exact capture inputs are recorded in
+`DONE-theron.md` and the ignored `.codex-scratch/theron-syscard-io-ram-cold-20261031/`
+artifacts on the external disk.
 Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).

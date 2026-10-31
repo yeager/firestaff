@@ -1,5 +1,28 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — verify the authentic cold BIOS I/O and RAM trace
+
+Ran the updated capture loop on TRV2 with the authentic Japanese Rev. 1 CUE,
+Track 02, and hash-verified System Card 3.0, with no save-state autoload and a
+single RUN event. The expanded I/O/RAM verifier accepted 453,615 rows across
+all 29 configured addresses, including mapped opcode bytes checked against
+the authentic BIOS. The decision observer accepted 47 rows across six PCs;
+the status and callback-state observers accepted 65,536 and 251 rows. The
+scripted input was consumed at the System Card poll only. No `$E11D` launch
+branch, CD IRQ, or game-owned controller poll was observed, so this is BIOS
+activity evidence and does not establish game launch or parity.
+
+Retained the verified sidecars on the external disk under
+`.codex-scratch/theron-syscard-io-ram-cold-20261031/`. The 143,845,643-byte
+I/O/RAM trace SHA-256 is
+`1b9fbf4238a23202bb75c64d9fdeda0e9ad7243cb563777b6b8bb2287e942c8f`; decision
+trace `43a12483f13ef07731582bcc25bcfcb803495ecfc1d89c6cd69cca23ea7eb2b3`;
+status trace `d7fac0372474c05729abda93304a84cfe2cd7f90552b8e989b10f43aaa3d4db9`;
+callback-state trace
+`ca2f4d79bb9bc1a20a4390cb90e9a494079f1712fe79edde919e7619496dc143`.
+Removed only obsolete r1-r4 capture-family files from this task's isolated
+TRV2 scratch directory after retaining r5.
+
 ## 2026-10-31 — native debug input route with authentic JP Track 02
 
 Built the current Firestaff source on TRV2 and ran it natively with the
