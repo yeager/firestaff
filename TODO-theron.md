@@ -5,14 +5,15 @@
 The current working-tree change adds a PCE Fast trace gate keyed to an exact
 guest controller-read PC and raw value, so emitted VRAM commits can be scoped
 to activity after a matching input read. Focused patch-application loops passed
-against the corresponding Mednafen source files. The complete instrumentation
-patch chain is not verified: it stops earlier at the existing RAM-provenance
-patch context, and a TRV2 object-build attempt has not identified the correct
-generated Make target. No instrumented runtime capture or new gameplay join
-has been produced from this change. Keep the tooling provisional; next resolve
-the patch-chain/build prerequisites, compile it, and collect a source-locked
-authentic capture before documenting any trace result. This does not change
-native Theron support or parity status.
+against the corresponding Mednafen source files. On TRV2, `pce_fast/vdc.o` and
+`pce_fast/input.o` now compile with the trace-support macro, and the callback's
+definition and reference match. The complete instrumentation patch chain is
+still unverified: it stops at stale RAM-provenance contexts in `src/pce/pcecd.cpp`.
+No linked instrumented Mednafen binary, runtime capture, or new gameplay join
+has been produced. Keep the tooling provisional; next rebase that patch on the
+actual preceding instrumentation state, apply and build the full chain, then
+collect a source-locked authentic capture before documenting any trace result.
+This does not change native Theron support or parity status.
 
 ## 2026-10-31 — next JP movement capture needs a reachable authentic pose
 

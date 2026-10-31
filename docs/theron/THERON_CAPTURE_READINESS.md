@@ -2,16 +2,17 @@
 
 ## 2026-10-31 — input-gated PCE Fast VRAM trace remains provisional
 
-A working-tree change is being developed to open the PCE Fast VRAM-commit
-trace only after an exact guest controller-read PC/raw-value match. Focused
-patch-application loops passed for the affected Mednafen source files, but the
-complete patch chain is blocked by an earlier RAM-provenance patch context
-mismatch. The TRV2 compile attempt has not yet established the correct
-generated object target. There is no compiled-tool or runtime-capture result
-for this change, and no new input-to-render join. Treat this as pending capture
-infrastructure, not Theron gameplay evidence; native support and parity status
-are unchanged. The next step is to resolve the patch/build path, compile, and
-then collect an authentic source-locked capture. See the matching
+The working-tree change opens the PCE Fast VRAM-commit trace only after an
+exact guest controller-read PC/raw-value match. Focused patch-application
+loops passed for the affected Mednafen source files. On TRV2, the changed
+`pce_fast/vdc.o` and `pce_fast/input.o` compile with the trace-support macro,
+and their callback definition/reference match. The complete instrumentation
+patch chain remains blocked by stale RAM-provenance contexts in
+`src/pce/pcecd.cpp`; there is no linked instrumented binary, runtime capture,
+or new input-to-render join. Treat this as pending capture infrastructure, not
+Theron gameplay evidence; native support and parity status are unchanged. The
+next step is to rebase that patch on the preceding instrumentation state, build
+the complete chain, and collect an authentic source-locked capture. See the
 [Theron TODO entry](../../TODO-theron.md).
 
 ## 2026-10-31 — JP title-menu four-second Button I hold visibly advances
