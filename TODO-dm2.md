@@ -48,6 +48,17 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 current-main real-media retest: built commit `23c52ea70` on TRV2
+and passed `dm2_fmtowns_m11_gameplay_real_media` against the original HME-242
+FM Towns archive. The regression reaches dynamic map 3 `(8,4)` and consumes a
+complete c_light receipt. Focused `dm2_v1_light_ops` and
+`dm2_v1_skproject_core` tests also pass. The real-media direct-exit matrix
+passed for `--game dm1`, `--game csb`, and `--game dm2`: after Return to Menu,
+each process exits without reopening the launcher. In this SDL dummy run,
+DM2's authenticated 225-frame FM Towns title stream took about 26 seconds on
+the TRV2 software renderer; `--debug` reported high CPU during the title.
+This is host-specific smoke evidence, not a native M5 performance result.
+
 2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:
 `dm2_runtime_try_light_mode8` now attempts authenticated dynamic-light maps
 without the former four-coordinate FM Towns gate; incomplete source walks still
