@@ -8,6 +8,16 @@
 +MDFN_HIDE extern uint8 TheronPCEVDCInstructionOpcode;
 +MDFN_HIDE extern bool TheronPCEVDCInstructionFetchInProgress;
  class alignas(128) HuC6280
+@@ -174,4 +180,8 @@
+ 	uint8 INLINE RdOp(unsigned int address)
+ 	{
+-		return RdMem(address);
++		const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;
++		TheronPCEVDCInstructionFetchInProgress = true;
++		const uint8 ret = RdMem(address);
++		TheronPCEVDCInstructionFetchInProgress = previous_fetch;
++		return ret;
+ 	}
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
 @@ -44,1 +44,6 @@

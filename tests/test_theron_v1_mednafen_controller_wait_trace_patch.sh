@@ -434,6 +434,18 @@ if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offse
    ! grep -Fq 'theron_ram_provenance_copy sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMProvenanceRead' "$ram_provenance_patch_file" ||
    ! awk '
+       /^ [[:space:]]*uint8 INLINE RdOp\(unsigned int address\)/ { rdop = NR }
+       /^\+[[:space:]]+const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;/ { saved = NR }
+       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = true;/ { opened = NR }
+       /^\+[[:space:]]+const uint8 ret = RdMem\(address\);/ { read = NR }
+       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = previous_fetch;/ { restored = NR }
+       /^\+[[:space:]]+return ret;/ { returned = NR }
+       END {
+           if (!(rdop && saved > rdop && opened > saved && read > opened &&
+                 restored > read && returned > restored)) exit 1
+       }
+   ' "$vdc_instruction_pc_patch_file" ||
+  ! awk '
        /^FIRESTAFF_PATCH_TAB_CONTEXT if\(!TheronPCEVDCInstructionFetchInProgress &&/ { filtered_consumer = NR }
        /^FIRESTAFF_PATCH_TAB_CONTEXT    \(\(physical_address >= 0x1f0000/ { address_filter = NR }
        /^\+[[:space:]]+const uint8 reader_mpr = MPR\[reader_pc >> 13\];/ { reader_mpr = NR }
