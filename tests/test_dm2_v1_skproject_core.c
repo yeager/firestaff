@@ -6239,7 +6239,10 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &dungeon, 0x0800u, 0, 0, 0u, NULL, 0, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.valid && q1a46.found_static_text &&
-                  wall_idx == 5 && wall_field == 1,
+                  wall_idx == 5 && wall_field == 1 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 0 &&
+                  q1a46.text_summary_value == 0,
               "extended side-decoration query returns static big-endian DB2 text");
     }
     {
@@ -6278,8 +6281,18 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(text_animation_result == 1 &&
                   q1a46.valid && q1a46.found_text_animation &&
                   q1a46.text_ext_usage == 2u && wall_idx == 5 &&
-                  wall_field == 2,
+                  wall_field == 2 && q1a46.text_summary_written &&
+                  q1a46.text_summary_value == 1,
               "DM2_query_0cee_1a46 animates big-endian DB2 ext usage 2");
+        animated_text_record_be[3] |= 0x01u; /* source-visible text flag */
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 0 &&
+                  q1a46.text_summary_value == 1,
+              "DB2 animated text summary applies active XOR visibility");
+        animated_text_record_be[3] = 0x2au; /* invisible ext usage 2 */
         animation_entry.data_index = 0u;
         int animation_fallback_result = dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 0, 0, 7u, NULL, 0,

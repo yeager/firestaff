@@ -143,9 +143,11 @@ lighting and nonzero retail DBE/DBF media cases remain unverified. The ordered
 `DM2_query_0cee_1a46` door-decoration path is also incomplete: actuator
 0x18 XOR and 0x46 active-state fields have focused source checks, and the
 0x3f shop-panel handle and once-only 0x7e actuator datum are receipted in
-summary word 7. Remaining DB2 text summary-word-7 behavior, the full
-output-array contract, viewport integration, and
-all-platform runtime behavior remain open. Do not treat
+summary word 7. DB2 TextMode-1 summary writes are now receipted for static
+ext-usage 0, animated ext-usage 2, and visibility-gated ext-usages 4/5/7/8/13
+(the latter use active XOR visibility). The full output-array contract,
+consumption of every summary slot in the viewport, and all-platform runtime
+behavior remain open. Do not treat
 these bounded receipts as full DM2 parity.
 
 ## Gate

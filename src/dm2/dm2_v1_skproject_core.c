@@ -13869,6 +13869,8 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                 int text_ext_usage = (text_index >> 8) & 0x1fu;
                 int decoration = text_index & 0xff;
                 int text_visible = (text_word & 1u) != 0u;
+                int text_summary_write = 0;
+                int text_summary_value = 0;
                 int animate = text_ext_usage == 1 || text_ext_usage == 2 ||
                     ((text_ext_usage == 4 || text_ext_usage == 5 ||
                       text_ext_usage == 7 || text_ext_usage == 8 ||
@@ -13881,6 +13883,25 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
 
                 object_dir = (int)((thing >> 14) & 3u);
                 relative_side = ((object_dir - (view_dir & 3)) & 3);
+                if (text_mode == 1 && relative_side == side_index) {
+                    if (text_ext_usage == 0) {
+                        text_summary_write = 1;
+                    } else if (text_ext_usage == 2) {
+                        text_summary_write = 1;
+                        text_summary_value = 1;
+                    } else if (text_ext_usage == 4 || text_ext_usage == 5 ||
+                               text_ext_usage == 7 || text_ext_usage == 8 ||
+                               text_ext_usage == 13) {
+                        text_summary_write = 1;
+                        text_summary_value = text_visible ? 0 : 1;
+                    }
+                    if (text_summary_write) {
+                        receipt.text_summary_written = 1u;
+                        receipt.text_summary_side = (int16_t)side_index;
+                        receipt.text_summary_value =
+                            (int16_t)text_summary_value;
+                    }
+                }
                 if (text_mode == 1 && relative_side == side_index) {
                     int frame = 0;
                     if (animate) {

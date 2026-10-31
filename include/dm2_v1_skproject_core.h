@@ -5450,6 +5450,9 @@ typedef struct {
     uint8_t blocked_text_animation_path;
     uint8_t summary_word7_written;
     int16_t summary_word7;
+    uint8_t text_summary_written;
+    int16_t text_summary_side;
+    int16_t text_summary_value;
 } DM2_V1_SkprojectQuery0cee1a46Receipt;
 
 int dm2_v1_skproject_query_0cee_1a46(
