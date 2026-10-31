@@ -59,8 +59,8 @@ DM2, retain the more detailed [PC English Greatstone cross-check](../reference/a
 - **Copyright handling:** Not vendored into repo. Referenced for local verification only.
 - **Good for:** Ground-truth data file formats, original asset presence, original executable behavior.
 
-### A2. ReDMCSB WIP archive (dm7z-extract)
-- **Local path:** `dm7z-extract/`
+### A2. ReDMCSB WIP archive (fresh task-local refetch)
+- **Current local path:** `work/redmcsb-refetched-latest/extracted/` (untracked reference material; do not commit or redistribute the upstream archive)
 - **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes; SHA-256 `58de16a34476a1ac2349ca01a4768cdecbadc9929fed0b69e8b9698f996159d1`). The 2026-10-31 refetch matches this checksum.
 - **Key contents:**
   - `Reference/Original/I34E/` — DM PC 3.4 English executables (11 LZEXE-compressed DOS files): `DM.EXE`, `FIRES` (94,779 bytes, main game), `VGA`, `ANIM`, `SWOOSH`, `SELECTOR`, etc.
@@ -175,7 +175,7 @@ DM2, retain the more detailed [PC English Greatstone cross-check](../reference/a
 ## D. Source code references
 
 ### D1. ReDMCSB reconstructed source
-- **Local path:** `dm7z-extract/Toolchains/Common/Source/`
+- **Current local path:** `work/redmcsb-refetched-latest/extracted/Toolchains/Common/Source/` (same untracked task-local refetch as A2)
 - **Files:** `VIDEODRV.C`, `DUNGEON.C`, `DEFS.H`
 - **Good for:** Authoritative structural reference for UI composition, component model, panel ownership, graphics slot use, event naming, gameplay mechanics, memory/cache behavior.
 
