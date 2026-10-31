@@ -15,8 +15,12 @@ narrower: a Japanese dungeon capture shows host mouse motion moving the retail
 hand cursor, but does not establish guest coordinates or click semantics. The
 US save-state route records raw mouse input reaching guest reads and candidate
 command-consumer activity, but does not bind the raw bit to Button I or to a
-committed party movement or viewport change. The current close-time
-RUN trace ends in System Card BIOS and supplies no Theron game-owned handoff.
+committed party movement or viewport change. The Japanese close-time RUN trace
+ends in System Card BIOS. A newer cold US trace records one `$E009` dispatch. A follow-up validates
+all three scripted inputs at System Card controller polls, but observes no non-System-Card
+poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
+not establish a game-owned handoff, title-menu action, or gameplay input
+semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
 of Firestaff's shipped runtime. A successful emulator build or input-delivery
@@ -62,6 +66,17 @@ the PCE Fast TIA zero-page instrumentation patch is opt-in. The isolated
 patch-only pipeline passed three loops, and the instrumented PCE Fast build
 passed the SDL 2.32.10 runtime check. Mednafen remains a diagnostic reference
 tool and is not part of Firestaff's native C/SDL runtime.
+
+Three fresh TRV2 patch-only runs applied the normal-PCE instruction-start
+consumer trace sequence through selected-record and guest-input instrumenters.
+The instruction PC and physical mapping are captured before opcode fetch, and
+the fetched opcode is latched afterward. The instrumented Mednafen 1.32.1 PCE
+build and install succeeded. Controller-patch dry-run and compiled mouse parser
+checks each passed three loops. A subsequent cold US capture recorded one
+`$E009` dispatch. A follow-up cold run validates three scripted inputs at System Card controller polls; no
+game-owned poll or runtime CD source-read join was observed. This is bounded
+input-delivery evidence only; native runtime evidence and parity gaps are
+unchanged. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 ## 2026-10-31 — PCE Fast capture tooling repaired
 

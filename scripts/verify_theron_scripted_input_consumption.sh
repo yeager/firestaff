@@ -62,24 +62,25 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                 return 0
         return mask != 0
     }
-    # Mednafen 1.32.1 PCE Fast INPUT_Read selects the direction nibble with
-    # SEL=1 and the button nibble with SEL=0; its visible value is active-low.
-    # The raw pad word alone therefore cannot establish what the guest read.
-    # ReadIO dispatches the whole $1000-$13FF mirror to INPUT_Read (Mednafen
-    # src/pce_fast/ioread.inc); the read_index field selects the controller
-    # (src/pce_fast/input.cpp). Accept the hardware mirror, then require the
-    # explicitly selected input slot.
-    function selected_bank_matches(raw, value, sel, mask,    nibble) {
-        if (raw < 0 || value < 0 || sel < 0 || !contains_mask(raw, mask))
+    # The device update snapshots the scripted overlay into its button state,
+    # then the producer restores the physical data buffer. Consequently the
+    # standard PCE raw field can omit scripted bits while the active-low value
+    # returned to the guest exposes them. PCE Fast may retain the overlay in
+    # its raw field; checking the returned selected bank works for both cores.
+    # SEL=1 selects the direction nibble, SEL=0 the button nibble. ReadIO
+    # accepts the $1000-$13FF hardware mirror; read_index identifies the slot.
+    function selected_bank_matches(raw, value, sel,    nibble) {
+        if (raw < 0 || value < 0 || sel < 0)
             return 0
         if (sel == 1) {
             if (pending_direction_mask == 0)
                 return 0
-            nibble = int(raw / 16) % 16
+            nibble = mask_union(int(raw / 16) % 16,
+                                pending_direction_mask)
         } else {
             if (pending_button_mask == 0)
                 return 0
-            nibble = raw % 16
+            nibble = mask_union(raw % 16, pending_button_mask)
         }
         return value % 16 == 15 - nibble
     }
@@ -94,13 +95,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
         # controller row is therefore a required, fail-closed witness.
         if ((read_frame + 0) < (pending_frame + 0) ||
             (read_frame + 0) >= (pending_end + 0)) {
-            if (contains_mask(raw_value, pending_mask)) {
+            if (selected_bank_matches(raw_value, returned_value, read_sel)) {
                 pending_out_of_window_read = 1
             }
             return
         }
-        if (selected_bank_matches(raw_value, returned_value,
-                                  read_sel, pending_mask)) {
+        if (selected_bank_matches(raw_value, returned_value, read_sel)) {
             if (!pending_poll_classified) {
                 pc = tolower(read_pc)
                 if (pc == "e4b7" || pc == "e4c8" ||

@@ -1,20 +1,18 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-10-31.** Firestaff reads authentic PC Engine CD
-> Track 02 media through bounded JP and US native routes. The JP Rev 1 route
-> reaches title, stage, Soul Room and Akutuba; US routes include direct and
-> M12 startup, an authentic Continue-to-dungeon-2 path, and a MODE1/2048
-> Akutuba forcefield handoff. Source-only loaders cover all seven dungeons
-> in both regions, but do not prove their original runtime semantics. The
-> reported 3–5 second hold on the selected title-menu action remains untested
-> in a visibly confirmed original-emulator menu. Three current-source JP
-> `--debug` runs reach Firestaff's bounded runtime; this does not prove the
-> original emulator's movement, pit semantics or visual output. A separate
-> authentic JP emulator save state shows dungeon gameplay, but its active map,
-> party pose and input-to-command route are not joined. Campaign progression,
-> native save persistence, original presentation and full gameplay remain
-> evidence-gated. Capture tools are research provenance only and are never a
-> Firestaff runtime dependency. See the
+> **Status reviewed 2026-10-31.** Firestaff runs Theron's Quest in native
+> C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
+> and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
+> US authentic BRAM Continue route reaches dungeon 2 and has bounded native
+> movement and inventory transactions. Source-only loaders cover all seven
+> dungeons in both regions, but do not establish their retail runtime
+> semantics. The reported 3–5 second title-menu hold remains unverified in a
+> visibly confirmed original-game capture. A separate US save-state replay
+> records mouse reads and a candidate command consumer, but has no runtime CD
+> provenance and proves no semantic action, movement, pose, or viewport
+> change. Original presentation, later campaign progression, broader save
+> behavior, and full gameplay remain evidence-gated. Capture tools are
+> research instruments only and are never a Firestaff runtime dependency. See the
 > [current platform status](../PLATFORM_STATUS.md#therons-quest),
 > [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
 > [input notes](../theron/theron_input.md). A cold System Card RUN capture
@@ -304,4 +302,4 @@ route requires an executing HuC6280 consumer plus a source payload join; host
 text and guessed scroll markup are deliberately excluded.
 
 For strict CUE/record handling and Stage 2/3 receipts, see [Theron's Quest
-Track 02 Internals](Therons-Quest-Track02-Internals).
+Track 02 Internals](Therons-Quest-Track02-Internals.md).

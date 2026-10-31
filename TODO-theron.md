@@ -1,5 +1,18 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
+
+The authentic US cold standard-PCE run loaded no save state and configured no
+profile SRAM. Its trace records one dispatch to `$E009` from logical PC
+`$2CC7` (physical `$1F0CC7`). The initial capture had a capped input trace.
+The follow-up corrected the returned-value verifier and validates all three
+scripted Run/Select/Button I inputs against System Card controller reads. All reads remain at BIOS PC
+`$E4C8`; no non-System-Card poll, CD data-port read, or authenticated
+CD-to-RAM join was observed. Treat `$E009` only as an unjoined dispatch
+observation: it does not prove game ownership, title-menu action, or gameplay.
+Next capture a game-owned poll and join its transition to authenticated Track 02
+source data. See the [returned-mask capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
+
 ## 2026-10-31 — cold System Card RUN still has no game-owned handoff
 
 The authentic Japanese `run@480:300` reference capture binds `$1800=$C8`,
@@ -11,6 +24,18 @@ source-authenticated transfer reaches game-owned code and input polling; then
 compare that path against native Firestaff. Evidence and bounded disassembly:
 [`System Card RUN trace`](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary),
 [`$EA3B` listing](docs/source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm).
+
+## 2026-10-31 — reference trace build passes; original-game capture remains open
+
+The hook is now anchored to the unique instruction-opcode provenance callback,
+and the RAM read provenance hunk matches the opcode-fetch guard. Three fresh
+TRV2 patch-only runs applied the full Mednafen 1.32.1 trace sequence; the full
+instrumented PCE build and install succeeded. The controller-patch dry-run and
+compiled mouse parser regression each passed three loops. No new authentic
+gameplay capture has been collected. Next capture a bounded cold/reference run
+that reaches game-owned input and state consumers, then join those observations
+to native behavior. Do not infer launch, action semantics, or parity from a
+successful instrumented build alone.
 
 ## Remaining end-to-end work, ordered by dependency
 

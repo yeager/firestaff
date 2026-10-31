@@ -189,7 +189,8 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
 ram_provenance_patch="$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch"
 ram_provenance_rendered="$build_root/theron-ram-provenance.rendered.patch"
 sed \
-    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^ FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
     -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
     "$ram_provenance_patch" \
     > "$ram_provenance_rendered"
@@ -197,9 +198,11 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$ram_provenance_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch"
-git -C "$build_root/source" apply --recount --ignore-space-change \
-    --whitespace=nowarn \
-    "$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
+single_write_patch="$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
+single_write_rendered="$build_root/theron-single-logical-write.rendered.patch"
+sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$single_write_patch" > "$single_write_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$single_write_rendered"
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
 vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
 sed \
@@ -346,9 +349,12 @@ if ! awk '
 fi
 theron_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch"
 theron_3879_trace_rendered="$build_root/theron-3879-indirect-target-trace.rendered.patch"
-sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$theron_3879_trace_patch" \
+sed \
+    -e $'s/^ FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    "$theron_3879_trace_patch" \
     > "$theron_3879_trace_rendered"
-patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
+patch -d "$build_root/source" -p1 --batch --forward --fuzz=0 \
     < "$theron_3879_trace_rendered"
 
 python3 "$repo/scripts/instrument_mednafen_theron_mouse_trace.py" \

@@ -1,5 +1,69 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — cold scripted input verified at System Card polls
+
+Corrected the verifier to compare the active-low controller value returned to
+the guest against the physical and pending scripted masks. The standard PCE
+sidecar may show a restored physical raw buffer, so raw-mask matching alone
+was not a valid input-delivery check. The live-capture regression and complete
+PCE/PCE Fast reference patch chain each passed three TRV2 loops. A fresh
+authentic cold US run verified all three scripted inputs at the System Card
+BIOS controller poll (three applies, reads and selected-bank matches). The
+trace recorded no non-BIOS poll, CD data-port read or authenticated CD-to-RAM
+receipt; its `$E009` dispatch remains unjoined and no gameplay action is
+proved. See the [capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
+
+## 2026-10-31 — cold US Select/Button I capture boundary recorded
+
+After the instruction-start reference build completed, a cold standard-PCE
+run used authentic US Track 02 and the verified System Card without a save
+state. It recorded one `$E009` dispatch, but validation rejected the three
+scripted input events, the input trace reached its cap, and no runtime CD
+source-read join was present. The run therefore verifies neither input
+delivery nor a game-owned handoff or gameplay action. Its bounded receipt and
+hashes are in the
+[source-locked capture report](docs/source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md).
+
+## 2026-10-31 — build and verify instruction-start reference trace chain
+
+Anchored the 3879 observer to the unique instruction-opcode provenance hook,
+corrected patch hunk counts and aligned the RAM-provenance read hook with the
+instruction-fetch guard. The trace now latches logical and physical instruction
+PC before opcode fetch, then records the fetched opcode. Updated the controller
+trace regression's ordering assertion to match this sequence. Three fresh
+TRV2 patch-only runs applied the full Theron Mednafen instrumentation chain;
+the instrumented Mednafen 1.32.1 PCE build and install then succeeded. The
+controller patch dry-run and compiled mouse parser regression each passed three
+loops. No original-game capture was made, so this validates reference tooling
+only and establishes no game behavior or native parity.
+
+## 2026-10-31 — reference trace patch applicability; instrumented build still blocked
+
+Updated the reference-only Mednafen 1.32.1 instrumentation so consumer reads
+can retain instruction-start logical/physical PC and opcode alongside the
+runtime reader PC. Repaired patch rendering and write-hook ordering for RAM
+provenance, loader writes and selected-record consumers. The mouse guest-read
+instrumenter now anchors to the current reader-MPR line rather than an obsolete
+pair of adjacent declarations. Three fresh TRV2 patch-only runs applied the then-current
+patch snapshot, and three loops of the controller-trace dry-run and compiled
+mouse parser regression passed. A subsequent full instrumented-core build
+failed compiling `pce/huc6280.cpp`: a later trace hook landed inside an existing
+`fprintf` call. Therefore the patch-only result is not build validation and the
+reference instrumentation repair is not complete. No new original-game capture
+was performed. This work establishes no gameplay behavior or parity.
+
+## 2026-10-31 — refresh current Theron documentation summaries
+
+Aligned the README, documentation index, project status, real-data inventory,
+reverse-engineering overview, technical reference and Track 02 internals page
+with the current verified native JP fresh-start and US Continue routes. The
+summaries distinguish authentic-data host receipts from retail parity, link
+to the canonical capture-readiness and TODO records, and retain the open
+game-owned handoff, dynamic viewport, progression and save gaps. Corrected a
+stale Track 02 reference link. Local Markdown links and whitespace checks
+passed. Gitleaks found no secret in the staged documentation changes; the
+repository-history scan reports pre-existing findings.
+
 ## 2026-10-31 — capture authentic US mouse-input dispatch boundary
 
 The preserved authentic US gameplay state (MD5

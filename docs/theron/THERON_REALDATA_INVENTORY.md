@@ -1,5 +1,10 @@
 # Theron’s Quest: real-data inventory
 
+For current native-runtime capability, capture limits, and outstanding
+evidence joins, see the [capture-readiness summary](THERON_CAPTURE_READINESS.md)
+and [Theron TODO](../../TODO-theron.md). This inventory records authenticated
+media identity and data admission; it does not imply full gameplay parity.
+
 This page records the local media identities used by Firestaff’s Theron
 bring-up. It separates the PC Engine CD data track from the related Track 19
 ISO files so a valid-looking image cannot be attached to the wrong loader.
@@ -70,7 +75,8 @@ The following are intentionally not presented as real game data:
 - a host viewport draw without an authenticated HuC6280 `$2600` RAM consumer
   and source-LBA join.
 
-The source and capture requirements are tracked in `TODO.md`, especially
+The Theron source and capture requirements are tracked in
+[`TODO-theron.md`](../../TODO-theron.md), especially
 `THERON-PALETTE-ROUTE`, `THERON-BITMAP-ROUTE-PROVENANCE`,
 `THERON-V1-TRACK02-VRAM-CONSUMER` and `THERON-V1-HUC6280-RAM-CONSUMER`.
 The provenance boundary follows the Theron’s Quest platform and Track 02

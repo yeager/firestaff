@@ -117,6 +117,10 @@ int main(int argc, char **)
         raise SystemExit("FAIL: standard PCE and PCE Fast do not share the mouse parser")
     if instrumenter.count("+ pointer_c1df_trace_gate_source()") != 1:
         raise SystemExit("FAIL: C1DF tracing does not use the tested opt-in gate")
+    if '"\\t const uint8 reader_mpr = MPR[reader_pc >> 13];\\n"' not in instrumenter:
+        raise SystemExit("FAIL: mouse guest-read hook is not anchored to the current reader MPR")
+    if '"\\t const uint16 reader_pc = GetRegister(GSREG_PC);\\n"\n        "\\t const uint8 reader_mpr' in instrumenter:
+        raise SystemExit("FAIL: mouse guest-read hook still assumes stale adjacent reader fields")
     capture_script = (ROOT / "scripts/capture_theron_mednafen_live_trace.sh").read_text()
     if 'FIRESTAFF_THERON_POINTER_C1DF_TRACE=\"$capture_pointer_c1df_trace\"' not in capture_script:
         raise SystemExit("FAIL: capture flag is not passed to the C1DF trace gate")

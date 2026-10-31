@@ -12,8 +12,8 @@
 +static unsigned Theron3879TargetPhysical;
 +static unsigned Theron3879TargetOpcode;
 +static unsigned Theron3879CallerWindowStarted;
-@@ -1188,1 +1188,50 @@
- FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
+@@ -1254,1 +1254,50 @@
+ FIRESTAFF_PATCH_TAB_CONTEXT TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop);
 +	 if(Theron3879TargetStepsRemaining ||
 +	    (PC >= 0x4ef4 && PC <= 0x4ef6) ||
 +	    (PC >= 0x3879 && PC <= 0x3918) ||

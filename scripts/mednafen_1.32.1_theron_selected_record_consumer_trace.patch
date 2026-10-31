@@ -1,6 +1,11 @@
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -397,6 +397,44 @@
+@@ -397,11 +397,49 @@
+                                          uint32 physical_address, uint8 value,
+                                          uint16 reader_pc, uint32 reader_physical_pc,
+                                          uint16 instruction_pc,
+                                          uint32 instruction_physical_pc,
+                                          uint8 instruction_opcode,
                                           uint8 reader_a, uint8 reader_x, uint8 reader_y,
                                           uint8 reader_sp, uint8 reader_p)
  {
@@ -32,10 +37,10 @@
 +  if(selected_record_trace)
 +  {
 +   fprintf(selected_record_trace,
-+           "selected_record_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x record_buffer=%u record_offset=%03x record_slot=%u record_slot_offset=%02x selected_index_byte=%u active_body=%u\n",
++           "selected_record_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x instruction_pc=%04x instruction_physical_pc=%06x instruction_opcode=%02x a=%02x x=%02x y=%02x sp=%02x p=%02x record_buffer=%u record_offset=%03x record_slot=%u record_slot_offset=%02x selected_index_byte=%u active_body=%u\n",
 +           selected_record_trace_count++, logical_address, physical_address,
-+           value, reader_pc, reader_physical_pc, reader_a, reader_x, reader_y,
-+           reader_sp, reader_p,
++           value, reader_pc, reader_physical_pc, instruction_pc, instruction_physical_pc,
++           instruction_opcode, reader_a, reader_x, reader_y, reader_sp, reader_p,
 +           record_buffer_probe, record_offset, record_slot, record_slot_offset,
 +           record_buffer_probe && record_offset == 0x198,
 +           logical_address >= 0x267c && logical_address <= 0x2701);
