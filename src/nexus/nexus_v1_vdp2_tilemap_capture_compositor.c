@@ -908,8 +908,7 @@ int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
             }
             ymir_stack_consider(plane, pixel, priority, 1U,
                 NEXUS_V1_VDP2_STACK_LAYER_NBG1,
-                ymir_rgb555_shift(read_vram16_ordered(
-                    vdp2_cram + (size_t)i1 * 2U, register_byte_order)));
+                nbg1->rgba_buffer[pixel]);
         }
         if (i2) {
             uint8_t priority = (uint8_t)(STACK_REG(0xfaU) & 7U);
