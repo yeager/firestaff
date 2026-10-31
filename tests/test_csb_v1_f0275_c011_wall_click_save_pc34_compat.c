@@ -78,7 +78,7 @@ static void make_fixture(CSB_V1_RuntimeProfile *profile,
     dungeon->thing_type_counts[5] = 1;
 
     /* A wall at (0,0) owns a C011 in cell zero. The preceding C000 keeps
-     * rotation observable, while the C011 consumes the live type-8 hand. */
+     * rotation observable, while C011 consumes F0032 object type 32. */
     raw[square_offset(0, 0)] = 0x10u;
     raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
     put_le16(raw, 60, 0u);
@@ -116,7 +116,7 @@ static void test_c011_runtime_hand_roundtrips_save(void)
     unsigned char raw[128];
 
     remove(kSavePath);
-    make_fixture(&profile, &dungeon, raw, 8);
+    make_fixture(&profile, &dungeon, raw, 32);
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 1,
           "C011 consumes the matching source-owned runtime hand");
@@ -154,7 +154,7 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
     unsigned char raw[128];
     unsigned char before[128];
 
-    make_fixture(&profile, &dungeon, raw, 7);
+    make_fixture(&profile, &dungeon, raw, 31);
     memcpy(before, raw, sizeof(before));
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 0,
@@ -192,12 +192,12 @@ static void test_c017_preserves_head_sensor(void)
     put_le16(raw, 60, 0u);
     put_le16(raw, 66, (unsigned short)(3u << 10));
     put_le16(raw, 68, 0xfffeu);
-    put_le16(raw, 70, (unsigned short)((8u << 7) |
+    put_le16(raw, 70, (unsigned short)((32u << 7) |
         DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR));
     put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 74, sensor_target(2, 0, 0));
     put_le16(raw, 108, 0xfffeu);
-    put_le16(raw, 110, 8u);
+    put_le16(raw, 110, 8u); /* Weapon subtype 8 resolves to F0032 type 32. */
 
     csb_v1_runtime_init(&profile, NULL);
     profile.dungeon_handle = &dungeon;
@@ -244,17 +244,17 @@ static void test_later_c004_uses_hand_filled_by_storage_sensor(void)
     put_le16(raw, 60, 0u);
     put_le16(raw, 66, sensor0);
     put_le16(raw, 68, sensor1);
-    put_le16(raw, 70, (unsigned short)((8u << 7) |
+    put_le16(raw, 70, (unsigned short)((32u << 7) |
         DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
     put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 74, sensor_target(2, 0, 0));
     put_le16(raw, 76, object);
-    put_le16(raw, 78, (unsigned short)((8u << 7) |
+    put_le16(raw, 78, (unsigned short)((32u << 7) |
         DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED));
     put_le16(raw, 80, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 82, sensor_target(2, 0, 0));
     put_le16(raw, 108, 0xfffeu);
-    put_le16(raw, 110, 8u);
+    put_le16(raw, 110, 8u); /* Weapon subtype 8 resolves to F0032 type 32. */
 
     csb_v1_runtime_init(&profile, NULL);
     profile.dungeon_handle = &dungeon;
@@ -305,14 +305,74 @@ static void test_c002_uses_hand_occupancy_and_revert_only(void)
           "C002 triggers for a held object based on occupancy/revert, not Sensor.Data");
 }
 
+static void test_c002_hold_clears_when_empty_hand_does_not_match(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    int slot;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, (uint16_t)((7u << 7) | 2u));
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, -1) == 1,
+          "C002 HOLD continues traversal when the empty hand predicate is false");
+    slot = profile.timeline_queue.eventCount > 0
+        ? profile.timeline_queue.timeline[0]
+        : -1;
+    CHECK(slot >= 0 && slot < DM1_EVENT_MAX_COUNT &&
+              profile.timeline_queue.events[slot].c_effect == DM1_EFFECT_CLEAR,
+          "C002 resolves a false HOLD predicate to a queued CLEAR effect");
+}
+
+static void test_c003_revert_triggers_with_empty_hand(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 70, DM1_SENSOR_DISABLED);
+    put_le16(raw, 102, (uint16_t)((32u << 7) |
+                                  DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "reverted C003 triggers when the empty hand type does not match Sensor.Data");
+}
+
 static void test_c004_removes_matching_hand_object(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
     unsigned char raw[128];
 
-    make_fixture(&profile, &dungeon, raw, 8);
-    put_le16(raw, 102, (uint16_t)((8u << 7) | 4u));
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 4u));
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 1 &&
               profile.party_state.LeaderHandThing == 0xffffu &&
@@ -327,19 +387,19 @@ static void test_c003_matches_hand_type_and_revert(void)
     CSB_V1_DungeonData dungeon;
     unsigned char raw[128];
 
-    make_fixture(&profile, &dungeon, raw, 8);
-    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
     put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
     CHECK(csb_v1_runtime_trigger_wall_ornament_click(
-              &profile, 0, 0, 0, 8) == 1 &&
+              &profile, 0, 0, 0, 32) == 1 &&
               profile.timeline_queue.eventCount == 1,
           "C003 triggers when held object type matches Sensor.Data and RevertEffect is clear");
 
-    make_fixture(&profile, &dungeon, raw, 8);
-    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
     put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
     CHECK(csb_v1_runtime_trigger_wall_ornament_click(
-              &profile, 0, 0, 0, 8) == 0 &&
+              &profile, 0, 0, 0, 32) == 0 &&
               profile.timeline_queue.eventCount == 0,
           "C003 suppresses a matching hand type when RevertEffect is set");
 }
@@ -584,6 +644,8 @@ int main(void)
     test_later_c004_uses_hand_filled_by_storage_sensor();
     test_f0275_processes_all_matching_sensors_in_source_order();
     test_c002_uses_hand_occupancy_and_revert_only();
+    test_c002_hold_clears_when_empty_hand_does_not_match();
+    test_c003_revert_triggers_with_empty_hand();
     test_c001_hold_does_not_trigger();
     test_c003_matches_hand_type_and_revert();
     test_reverted_object_sensors_match_empty_hand_sentinel();

@@ -1652,7 +1652,7 @@ if [[ -n "$configured_home" ]]; then
 fi
 mkdir -p "$home_dir/sav"
 mkdir -p "$home_dir/mcs"
-capture_sav_args=()
+capture_authentic_bram_name=
 if [[ -n "$capture_authentic_bram" ]]; then
     # Copy into the private profile first, then authenticate the exact bytes
     # Mednafen will open. A change to the operator's source path during the
@@ -1662,7 +1662,6 @@ if [[ -n "$capture_authentic_bram" ]]; then
         rm -rf "$home_dir"
         exit 1
     fi
-    capture_sav_args=(-filesys.fname_sav "$capture_authentic_bram_name")
 fi
 profile_sram_count=0
 : >"$profile_sram_manifest"
@@ -1900,7 +1899,11 @@ launch=(
     -sound "$capture_sound" \
     -video.driver softfb \
     -filesys.path_sav "$home_dir/sav" \
-    "${capture_sav_args[@]}" \
+)
+if [[ -n "$capture_authentic_bram_name" ]]; then
+    launch+=(-filesys.fname_sav "$capture_authentic_bram_name")
+fi
+launch+=(
     -filesys.path_state "$home_dir/mcs" \
     -pce.input.multitap 0 \
     "${capture_input_args[@]}" \

@@ -395,8 +395,10 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_transfer_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch"
+if [[ "$pce_fast_tia_trace" == 1 ]]; then
+    patch -d "$build_root/source" -p1 --batch --forward \
+        < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch"
+fi
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
