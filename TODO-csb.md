@@ -6,11 +6,13 @@ successful wall sensor. ReDMCSB `DEFS.H:398` defines `M011_CELL` as bits 14–15
 and `MOVESENS.C:1390-1550` walks the complete sensor list in source order
 before F0271. The bounded CSB PC34 path now uses the source cell bits, queues
 multiple matching events in order, and defers local sensor rotation until the
-list boundary. Its C001 path triggers on click without checking hand or wall
-cell occupancy, matching MOVESENS.C:1399-1404. A focused regression verifies
-ordered multi-sensor dispatch, C001 occupancy semantics, and the Thing cell
-bit layout. Other F0275 sensor types, editions, platforms, and original-media
-outcomes remain open.
+list boundary. C001 triggers on click without checking hand or wall-cell
+occupancy; C002 uses hand-empty/RevertEffect only; C003/C004/C011/C017 compare
+the hand object's type with Sensor.Data and apply RevertEffect as in
+MOVESENS.C:1399-1420. The runtime no longer applies a blanket revert inversion
+to every sensor type. Focused regressions verify ordered dispatch, C001 and
+C002 semantics, and the Thing cell bit layout. Other F0275 sensor types,
+editions, platforms, and original-media outcomes remain open.
 
 2026-10-31 CSB Atari ST authentic campaign regression: the local
 `csb_v1_atari_stx_native_cli_boot` CTest passed (199.49 s) using the installed

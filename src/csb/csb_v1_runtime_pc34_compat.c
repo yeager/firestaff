@@ -12464,16 +12464,11 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         int sensor_type;
         int sensor_data;
         int sensor_cell;
-        int square_has_object = 0;
-        int same_type_present = 0;
-        int different_type_present = 0;
         int trigger = 1;
         int sensor_effect;
         int target_cell;
         int target_x;
         int target_y;
-        int scan;
-        int scan_guard;
         uint16_t storage_thing = 0xFFFFu;
         uint16_t square_thing = 0xFFFFu;
         uint16_t generated_thing = 0xFFFFu;
@@ -12504,37 +12499,6 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             continue;
         }
 
-        scan = first_thing;
-        for (scan_guard = 0;
-             scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
-             ++scan_guard) {
-            int scan_type;
-            int scan_object_type;
-            const uint8_t *scan_record = csb_v1_dungeon_get_thing_record(
-                dungeon,
-                (uint16_t)scan,
-                &scan_type,
-                NULL,
-                NULL);
-            (void)scan_record;
-            if (!scan_record) break;
-            /* ReDMCSB DEFS.H:398 M011_CELL stores wall cells in bits 14-15. */
-            if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(
-                    (uint16_t)scan) == (cell & 3) &&
-                scan_type > 4 && scan_type < 14) {
-                square_has_object = 1;
-                scan_object_type = csb_v1_runtime_object_type_from_thing(
-                    dungeon,
-                    (uint16_t)scan);
-                if (scan_object_type == object_type) {
-                    same_type_present = 1;
-                } else {
-                    different_type_present = 1;
-                }
-            }
-            scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
-        }
-
         type_data = csb_v1_runtime_read_u16(record + 2);
         flags_word = csb_v1_runtime_read_u16(record + 4);
         target_word = csb_v1_runtime_read_u16(record + 6);
@@ -12547,14 +12511,16 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             trigger = 1;
             break;
         case 2: /* C002_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT */
-            trigger = (object_type >= 0 &&
-                       !same_type_present &&
-                       sensor_data == object_type) ? 1 : 0;
+            /* ReDMCSB MOVESENS.C:1405 compares empty-hand with RevertEffect;
+             * C002 does not use Sensor.Data or wall-cell occupancy. */
+            trigger = ((object_type < 0) == ((flags_word >> 5) & 0x01u));
             break;
         case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
+            /* MOVESENS.C:1412-1414 compares hand type with Sensor.Data and
+             * applies RevertEffect; objects already on the wall are ignored. */
             trigger = (object_type >= 0 &&
-                       !different_type_present &&
-                       sensor_data != object_type) ? 1 : 0;
+                       ((sensor_data == object_type) !=
+                        (int)((flags_word >> 5) & 0x01u)));
             break;
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE:
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR:
@@ -12566,7 +12532,9 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = (object_type >= 0 && sensor_data == object_type) ? 1 : 0;
+            trigger = (object_type >= 0 &&
+                       ((sensor_data == object_type) !=
+                        (int)((flags_word >> 5) & 0x01u)));
             if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
                 rotate_after = 1;
             } else if (sensor_type ==
@@ -12582,7 +12550,9 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = (object_type >= 0 && sensor_data == object_type) ? 1 : 0;
+            trigger = (object_type >= 0 &&
+                       ((sensor_data == object_type) !=
+                        (int)((flags_word >> 5) & 0x01u)));
             storage_action = 3;
             break;
         case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
@@ -12657,9 +12627,6 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             break;
         }
 
-        if ((flags_word >> 5) & 0x01u) {
-            trigger ^= 1;
-        }
         sensor_effect = (int)((flags_word >> 3) & 0x03u);
         if (sensor_effect == DM1_EFFECT_HOLD) {
             sensor_effect = do_not_trigger ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
