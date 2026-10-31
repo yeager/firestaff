@@ -1,5 +1,17 @@
 # Firestaff TODO — CSB
 
+2026-11-01 CSB Amiga intro missing in v3.0.422: the no-game picker can select
+the authentic A31M multilingual disk, but the FTL prelude previously rescanned
+the whole CSB data directory and could bind an A31E sibling instead. The
+prelude now uses the selected launch intent's matched `GRAPHICS.DAT` and admits
+only the authenticated A31M package before reading its adjacent `SWSH.FTL`.
+An SDL dummy-driver launch from the no-game menu on the original Amiga archive
+reported `amiga-swsh-ftl` complete (`source-vblanks=30`) and advanced the A31M
+title animation through frame 30. The debug build is not in v3.0.422. This
+confirms the headless A31M route only; other Amiga editions and native display
+playback remain unverified. Source inspection found separate PC, Atari ST and
+FM Towns intro paths, which this change does not alter.
+
 2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
 stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand
 occupied and resolves to CLEAR, while deposit empties it and resolves to SET.
