@@ -2689,14 +2689,14 @@ static int dm2_runtime_wall_rendered_record_root(
     const DM2_V1_DungeonData *dungeon, int map, int x, int y,
     uint16_t *out_root)
 {
-    uint16_t seen[256];
+    uint16_t seen[257];
     int seen_count = 0;
     int thing;
 
     if (out_root) *out_root = DM2_THING_END_MARKER;
     if (!dungeon || !out_root) return 0;
     thing = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
-    while (thing >= 0 && thing != DM2_THING_END_MARKER && seen_count < 256) {
+    while (thing >= 0 && thing != DM2_THING_END_MARKER && seen_count < 257) {
         uint16_t handle = (uint16_t)thing;
         int type = (handle >> 10) & 0x0f;
         int repeated = 0;
@@ -2714,6 +2714,10 @@ static int dm2_runtime_wall_rendered_record_root(
             *out_root = handle;
             return 1;
         }
+        /* The dungeon API admits record-list traversal only after its
+         * independent graph validator marks the complete graph. A direct
+         * DB4+ record above needs no chain traversal. */
+        if (!dungeon->record_graph_complete) return 0;
         if (dungeon->g1_w0_chains_disabled) return 0;
         thing = dm2_v1_dungeon_get_next_thing(dungeon, handle);
     }
