@@ -10,9 +10,11 @@ from __future__ import annotations
 import pathlib
 import re
 import sys
+from redmcsb_source import source_root
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-REDMCSB = pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = source_root(("TITLE.C", "ENTRANCE.C", "COMMAND.C", "CLIKVIEW.C",
+                       "MOVESENS.C", "DRAWVIEW.C"))
 
 checks: list[tuple[pathlib.Path, str, str]] = [
     (REDMCSB / "TITLE.C", r"M526_WaitVerticalBlank\(\).*BUG0_71|BUG0_71.*title screen", "TITLE.C locks title timing to VBlank/BUG0_71"),
@@ -27,13 +29,15 @@ checks: list[tuple[pathlib.Path, str, str]] = [
     (REDMCSB / "MOVESENS.C", r"LEADER_HAND_OBJECT\s+G4055_s_LeaderHandObject", "MOVESENS.C owns the source G4055 leader-hand object"),
     (REDMCSB / "MOVESENS.C", r"BOOLEAN\s+F0267_MOVE_GetMoveResult_CPSCE", "MOVESENS.C source-locks object/party move result behavior"),
     (REDMCSB / "MOVESENS.C", r"BOOLEAN\s+F0275_SENSOR_IsTriggeredByClickOnWall", "MOVESENS.C source-locks wall-click sensor trigger behavior"),
+    (REDMCSB / "MOVESENS.C", r"F0276_SENSOR_ProcessThingAdditionOrRemoval[\s\S]*C02_THING_TYPE_TEXTSTRING[\s\S]*C1_TEXT_TYPE_MESSAGE", "MOVESENS.C F0276 prints destination TextStrings as messages"),
     (REDMCSB / "DRAWVIEW.C", r"F0097_DUNGEONVIEW_DrawViewport", "DRAWVIEW.C defines the viewport redraw/request path"),
     (REDMCSB / "DRAWVIEW.C", r"C007_ZONE_VIEWPORT", "DRAWVIEW.C blits the viewport to C007_ZONE_VIEWPORT"),
     (REDMCSB / "DRAWVIEW.C", r"M526_WaitVerticalBlank\(\).*viewport", "DRAWVIEW.C waits VBlank after requesting viewport draw"),
-    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_GetV1ViewportZoneId[\s\S]*return 7;", "Firestaff exposes source C007 viewport zone id"),
+    (ROOT / "src/engine/m11_game_view.c", r"command == 80 && space == DM1_V1_MOUSE_SPACE_SCREEN_PC34 && zoneId == 7", "Firestaff routes source C007 viewport clicks to C080"),
     (ROOT / "src/engine/m11_game_view.c", r"Source runtime bridge[\s\S]*G4055_s_LeaderHandObject", "Firestaff documents G4055-equivalent leader-hand bridge"),
-    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_SetV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*1", "Firestaff sets dedicated leader-hand object state"),
-    (ROOT / "src/engine/m11_game_view.c", r"M11_GameView_ClearV1LeaderHandObject[\s\S]*leaderHandObjectPresent\s*=\s*0", "Firestaff clears dedicated leader-hand object state"),
+    (ROOT / "src/engine/m11_game_view.c", r"m11_print_dm1_party_entry_textstrings[\s\S]*DUNGEON_TEXT_TYPE_MESSAGE[\s\S]*dm1_v1_text_print_message", "Firestaff prints visible party-entry TextStrings through the source message surface"),
+    (ROOT / "include/m11_game_view.h", r"M11_GameView_SetV1LeaderHandObject[\s\S]*DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat", "Firestaff routes source hand pickup through the PC34 runtime owner"),
+    (ROOT / "include/m11_game_view.h", r"M11_GameView_ClearV1LeaderHandObject[\s\S]*DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat", "Firestaff routes source hand removal through the PC34 runtime owner"),
     (ROOT / "include/m11_game_view.h", r"G4055_s_LeaderHandObject[\s\S]*distinct from any champion inventory", "Firestaff header preserves G4055 as separate from champion slots"),
     (ROOT / "include/m11_game_view.h", r"M11_GameView_GetV1MouseCommandForPoint", "Firestaff exposes bounded source-backed mouse command resolver"),
 ]
