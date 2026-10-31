@@ -1,3 +1,10 @@
+2026-10-31 skproject `DM2_QUERY_ORNATE_ANIM_FRAME` missing-entry fallback:
+When GDAT field 0x0d has neither a nonzero word value nor a nonempty text
+sequence, skproject returns frame 1 (`c_querydb.cpp:489-517`). Firestaff now
+returns an accepted length-one/frame-one receipt for that source fallback; the
+GDAT receipt regression covers the absent-animation case. Malformed
+unterminated sequences still fail closed.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` actuator type 0x4a:
 The side-decoration query now implements the source's actuator 0x4a field as
 `active_status ^ once_only` (c_querydb.cpp:3553-3565). Big-endian regression
