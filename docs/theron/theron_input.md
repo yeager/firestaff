@@ -111,13 +111,13 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Pick up facing item | G                            |
 | Select next source item | I                         |
 | Drop last picked source item | P                    |
-| Use (command only; effect unverified) | U |
+| Send USE command (effect unverified) | U |
 
 The native dungeon view also shows a twelve-button Firestaff mouse panel in
 its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 **TURN R**, **STEP L**, **BACK**, and **STEP R**. The remaining buttons are
 **NEXT** champion, **PICKUP**, select the next source-backed **ITEM**, **DROP**
-the selected source item, send the **USE** command for the object ahead, and
+the selected source item, send the **USE** command for the facing object, and
 **WAIT** one tick. The effect of USE on authentic doors and other objects is
 not yet verified because the original T900 consumer remains unbound.
 These buttons send the same native Theron input tokens as the corresponding

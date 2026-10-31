@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — reconcile current Theron user-facing documentation
+
+Removed the duplicated Theron status row from the README and shortened the
+public status summaries to the current bounded native routes and the principal
+open parity gates. Corrected keyboard/mouse descriptions to say that U sends
+a USE command for the facing object; authentic effects remain unverified until
+the original T900 consumer is bound. The documentation index now points users
+to the maintained capture-readiness page and active Theron TODO instead of
+repeating historical emulator trace details. No runtime code, game data, or
+capture artifacts changed. `git diff --check` passed.
+
 ## 2026-10-31 — synchronize current Theron documentation set
 
 Updated the current README, project/platform status, completion and parity
