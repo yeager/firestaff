@@ -24,6 +24,7 @@ DM2_COMPLETE_ALLOCATION	SKWINDOS	SKWINDOS/src/c_alloc.cpp	237	static void DM2_CO
 DM2_SETUP_MEMORYALLOCATION	SKWINDOS	SKWINDOS/src/c_alloc.cpp	265	void DM2_SETUP_MEMORYALLOCATION(void)	1	UNREVIEWED
 DM2_DTOR_MEMORYALLOCATION	SKWINDOS	SKWINDOS/src/c_alloc.cpp	291	void DM2_DTOR_MEMORYALLOCATION(void)	1	UNREVIEWED
 ulptable	SKWINDOS	SKWINDOS/src/c_dballoc.cpp	15	:  ulptable(NULL)	1	UNREVIEWED
+init	SKWINDOS	SKWINDOS/src/c_dballoc.cpp	19	void c_ulp::init(void)	24	UNREVIEWED
 SKW_QUERY_GDAT_RAW_DATA_LENGTH	SKWINDOS	SKWINDOS/src/c_dballoc.cpp	25	x32 c_ulp::SKW_QUERY_GDAT_RAW_DATA_LENGTH(x16 n)	0	UNREVIEWED
 R_2D87A	SKWINDOS	SKWINDOS/src/c_dballoc.cpp	52	void c_ulp::R_2D87A(x16 index)	1	UNREVIEWED
 DM2_SETUP_DB_ALLOCATION	SKWINDOS	SKWINDOS/src/c_dballoc.cpp	145	void DM2_SETUP_DB_ALLOCATION(void)	1	UNREVIEWED
@@ -164,6 +165,7 @@ SKW_DRAW_DIALOGUE_PARTS_PICT	SKWINDOS	SKWINDOS/src/c_gfx_misc.cpp	143	void SKW_D
 SKW_DRAW_DIALOGUE_PICT	SKWINDOS	SKWINDOS/src/c_gfx_misc.cpp	155	void SKW_DRAW_DIALOGUE_PICT(t_gfxdata* srcbmp, c_rect* ebxr, x16 srcofs, t_gfxdata* destbmp, x16 argw0, x16 argw1, t_palette* palette)	0	UNREVIEWED
 SKW_FIRE_SELECT_PALETTE_SET	SKWINDOS	SKWINDOS/src/c_gfx_pal.cpp	6	void SKW_FIRE_SELECT_PALETTE_SET(x8 index)	0	UNREVIEWED
 SKW_FIRE_FADE_SCREEN	SKWINDOS	SKWINDOS/src/c_gfx_pal.cpp	11	void SKW_FIRE_FADE_SCREEN(bool eaxbool)	0	UNREVIEWED
+init	SKWINDOS	SKWINDOS/src/c_gfx_str.cpp	17	void c_font::init(void)	24	UNREVIEWED
 allocate	SKWINDOS	SKWINDOS/src/c_gfx_str.cpp	25	void c_font::allocate(void)	0	UNREVIEWED
 SKW_QUERY_GFXLETTER	SKWINDOS	SKWINDOS/src/c_gfx_str.cpp	37	t_gfxdata* c_font::SKW_QUERY_GFXLETTER(ui8 charidx, ui8 cmask1, ui8 cmask2)	0	UNREVIEWED
 SKW_QUERY_STR_METRICS	SKWINDOS	SKWINDOS/src/c_gfx_str.cpp	73	bool c_string_metrics::SKW_QUERY_STR_METRICS(const t_text* eaxt, OO x16& theight, OO x16& twidth)	0	UNREVIEWED
@@ -194,6 +196,10 @@ SKW_476d_05a9	SKWINDOS	SKWINDOS/src/c_mouse.cpp	6	x16 SKW_476d_05a9(void)	0	UNRE
 SKW_476d_050e	SKWINDOS	SKWINDOS/src/c_mouse.cpp	12	x16 SKW_476d_050e(void)	0	UNREVIEWED
 SKW_GETSINGLEMOUSEEVENT	SKWINDOS	SKWINDOS/src/c_mouse.cpp	48	void SKW_GETSINGLEMOUSEEVENT(void)	0	UNREVIEWED
 SKW_1031_098e	SKWINDOS	SKWINDOS/src/c_mouse.cpp	57	void SKW_1031_098e(void)	0	UNREVIEWED
+SKW_443c_00a9	SKWINDOS	SKWINDOS/src/c_mouse.cpp	111	void SKW_443c_00a9(s_munknown* p1, x16 x1, x16 y1, x16 x0, x16 y0)	0	UNREVIEWED
+SKW_FIRE_QUEUE_MOUSE_EVENT	SKWINDOS	SKWINDOS/src/c_mouse.cpp	127	void SKW_FIRE_QUEUE_MOUSE_EVENT(x16 mx, x16 my, x16 buttons)	0	UNREVIEWED
+SKW_443c_00f8	SKWINDOS	SKWINDOS/src/c_mouse.cpp	174	static x16 SKW_443c_00f8(x16 a, x16 b)	0	UNREVIEWED
+queue_int2e	SKWINDOS	SKWINDOS/src/c_mouse.cpp	280	x16 queue_int2e(void)	0	UNREVIEWED
 SKW_FIRE_HIDE_MOUSE_CURSOR	SKWINDOS	SKWINDOS/src/c_mouse.cpp	296	void SKW_FIRE_HIDE_MOUSE_CURSOR(void)	0	UNREVIEWED
 SKW_FIRE_SHOW_MOUSE_CURSOR	SKWINDOS	SKWINDOS/src/c_mouse.cpp	302	void SKW_FIRE_SHOW_MOUSE_CURSOR(void)	0	UNREVIEWED
 SKW_FIRE_MOUSE_EVENT_RECEIVER	SKWINDOS	SKWINDOS/src/c_mouse.cpp	308	void SKW_FIRE_MOUSE_EVENT_RECEIVER(x16 eaxw, x16 ebxw, x16 ecxw, t_gfxdata* edxpg, x16 argw0, x16 argw1, x16 argw2, t_gfxdata* argpg3, x16 argw4)	0	UNREVIEWED
@@ -202,6 +208,7 @@ SKW_FIRE_MOUSE_SET_CAPTURE	SKWINDOS	SKWINDOS/src/c_mouse.cpp	334	void SKW_FIRE_M
 SKW_FIRE_MOUSE_RELEASE_CAPTURE	SKWINDOS	SKWINDOS/src/c_mouse.cpp	339	void SKW_FIRE_MOUSE_RELEASE_CAPTURE(void)	0	UNREVIEWED
 SKW_443c_040e	SKWINDOS	SKWINDOS/src/c_mouse.cpp	344	void SKW_443c_040e(void)	0	UNREVIEWED
 do_music_wav	SKWINDOS	SKWINDOS/src/c_music_wav.cpp	11	void do_music_wav(i16 nr)	0	UNREVIEWED
+init	SKWINDOS	SKWINDOS/src/c_rect.cpp	5	void c_rect::init(void)	24	UNREVIEWED
 SKW_SET_SRECT	SKWINDOS	SKWINDOS/src/c_rect.cpp	10	void SKW_SET_SRECT(c_rect* r, x16 x, x16 y, x16 w, x16 h)	0	UNREVIEWED
 SKW_SET_ORIGIN_RECT	SKWINDOS	SKWINDOS/src/c_rect.cpp	18	void SKW_SET_ORIGIN_RECT(c_rect* r, x16 w, x16 h)	0	UNREVIEWED
 SKW_ALLOC_TEMP_RECT	SKWINDOS	SKWINDOS/src/c_rect.cpp	26	c_rect* SKW_ALLOC_TEMP_RECT(x16 x, x16 y, x16 w, x16 h)	0	UNREVIEWED
@@ -260,7 +267,9 @@ SKW_QUEUE_NOISE_GEN2	SKWINDOS	SKWINDOS/src/c_sfx.cpp	337	void SKW_QUEUE_NOISE_GE
 SKW_QUERY_SND_ENTRY_INDEX	SKWINDOS	SKWINDOS/src/c_sfx.cpp	345	static x16 SKW_QUERY_SND_ENTRY_INDEX(x8 eaxb, x8 ebxb, x8 edxb)	0	UNREVIEWED
 SKW_482b_0624	SKWINDOS	SKWINDOS/src/c_sfx.cpp	356	void SKW_482b_0624(x8 eaxb, x8 ebxb, x8 edxb)	0	UNREVIEWED
 sndptr6	SKWINDOS	SKWINDOS/src/c_sound.cpp	29	sndptr6(NULL)	1	UNREVIEWED
+init	SKWINDOS	SKWINDOS/src/c_sound.cpp	33	bool c_sound::init(void)	24	UNREVIEWED
 stop_all_sound	SKWINDOS	SKWINDOS/src/c_sound.cpp	45	void c_sound::stop_all_sound(void)	1	UNREVIEWED
+dtor	SKWINDOS	SKWINDOS/src/c_sound.cpp	51	void c_sound::dtor(void)	2	UNREVIEWED
 R_5044A	SKWINDOS	SKWINDOS/src/c_sound.cpp	64	static void R_5044A(x8 eaxb)	1	UNREVIEWED
 R_51AF6	SKWINDOS	SKWINDOS/src/c_sound.cpp	83	static void R_51AF6(x16 edxw)	1	UNREVIEWED
 R_4FF39	SKWINDOS	SKWINDOS/src/c_sound.cpp	89	static void R_4FF39(x16 eaxw)	1	UNREVIEWED
@@ -292,6 +301,7 @@ SKW_DISPLAY_TAKEN_ITEM_NAME	SKWINDOS	SKWINDOS/src/dm2bdone.cpp	25	void SKW_DISPL
 SKW_COPY_TO_DRIVER	SKWINDOS	SKWINDOS/src/dm2bdone.cpp	33	void SKW_COPY_TO_DRIVER(x8* buffer, x16 amount)	0	UNREVIEWED
 SKW_443c_087c	SKWINDOS	SKWINDOS/src/dm2bdone.cpp	39	void SKW_443c_087c(void)	0	UNREVIEWED
 SKW_443c_0889	SKWINDOS	SKWINDOS/src/dm2bdone.cpp	44	void SKW_443c_0889(void)	0	UNREVIEWED
+init	SKWINDOS	SKWINDOS/src/dm2data.cpp	1192	void c_dm2data::init(void)	24	UNREVIEWED
 t_hard_file_copy	SKWINDOS	SKWINDOS/src/fileio.cpp	25	} t_hard_file_copy;	0	UNREVIEWED
 SYS_gettransferadress	SKWINDOS	SKWINDOS/src/fileio.cpp	31	i8* SYS_gettransferadress(void)	1	UNREVIEWED
 SYS_findfirst	SKWINDOS	SKWINDOS/src/fileio.cpp	45	i8 SYS_findfirst(i8* ptr)	0	UNREVIEWED
@@ -417,10 +427,20 @@ AudioPlayFile	SKWINSPX	SKWINSPX/src/v0/skrender.cpp	83	UINT SkRendererGeneric::A
 AudioStop	SKWINSPX	SKWINSPX/src/v0/skrender.cpp	88	UINT SkRendererGeneric::AudioStop()	0	UNREVIEWED
 SkRendererSDL	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	42	SkRendererSDL::SkRendererSDL()	0	UNREVIEWED
 InitAudio	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	53	UINT SkRendererSDL::InitAudio()	0	UNREVIEWED
+Init	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	88	UINT SkRendererSDL::Init(SkVRAM* xVRAM)	0	UNREVIEWED
+ResizeWindow	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	152	UINT SkRendererSDL::ResizeWindow()	0	UNREVIEWED
+SetVGAPaletteRGB	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	161	UINT SkRendererSDL::SetVGAPaletteRGB(X8 *xVGAPalette)	0	UNREVIEWED
 ConvertVRAMToRGB	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	174	UINT SkRendererSDL::ConvertVRAMToRGB()	0	UNREVIEWED
+Render	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	206	UINT SkRendererSDL::Render()	0	UNREVIEWED
+Close	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	223	UINT SkRendererSDL::Close()	0	UNREVIEWED
+StartAudioSample	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	242	UINT SkRendererSDL::StartAudioSample(const char* sSampleName)	0	UNREVIEWED
+ML	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	276	bool SkRendererSDL::ML()	0	UNREVIEWED
 FreeChunk	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	355	void FreeChunk(Mix_Chunk* chunk)	0	UNREVIEWED
 MakeMixChunkFromPCM	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	366	Mix_Chunk* MakeMixChunkFromPCM(const U8* buffInt, Uint32 buffSize, int volume)	0	UNREVIEWED
 MakeMixChunkFromConvertedPCM	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	387	Mix_Chunk* MakeMixChunkFromConvertedPCM(const U8* xSoundBuffer, Uint32 iBufferSize, int volume)	0	UNREVIEWED
+AudioPlaySound	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	426	UINT SkRendererSDL::AudioPlaySound(const U8* xSoundBuffer, U32 iBufferSize, i8 iSoundVolume, U16 iPlaybackFrequency, U8 iVolumeLeft, U8 iVolumeRight)	0	UNREVIEWED
+AudioPlayFile	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	465	UINT SkRendererSDL::AudioPlayFile(const char* sFilename, i8 iSoundVolume)	0	UNREVIEWED
+AudioStop	SKWINSPX	SKWINSPX/src/v0/sksdl2.cpp	482	UINT SkRendererSDL::AudioStop()	0	UNREVIEWED
 C3	SKWINSPX	SKWINSPX/src/v0/skvram.cpp	13	typedef X8 C3[3];	0	UNREVIEWED
 SkVRAM	SKWINSPX	SKWINSPX/src/v0/skvram.cpp	37	SkVRAM::SkVRAM()	0	UNREVIEWED
 GET_VIDEO_ARRAY	SKWINSPX	SKWINSPX/src/v0/skvram.cpp	62	X8* SkVRAM::GET_VIDEO_ARRAY()	0	UNREVIEWED
@@ -482,11 +502,17 @@ processKinput	SKWINSPX	SKWINSPX/src/v0/skwinapp.cpp	896	void SkWinApp::processKi
 VersionMessage	SKWINSPX	SKWINSPX/src/v0/skwinapp.cpp	1067	void SkWinApp::VersionMessage()	0	UNREVIEWED
 StartMessage	SKWINSPX	SKWINSPX/src/v0/skwinapp.cpp	1075	void SkWinApp::StartMessage()	0	UNREVIEWED
 ExitMessage	SKWINSPX	SKWINSPX/src/v0/skwinapp.cpp	1080	void SkWinApp::ExitMessage()	0	UNREVIEWED
+CDialog	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	71	: CDialog(CAboutDlg::IDD, pParent)	1	UNREVIEWED
+CAboutDlg	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	76	CAboutDlg::~CAboutDlg()	1	UNREVIEWED
+DoDataExchange	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	80	void CAboutDlg::DoDataExchange(CDataExchange* pDX)	1	UNREVIEWED
+BEGIN_MESSAGE_MAP	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	85	BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)	2	UNREVIEWED
 GetSkwinini	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	187	CString GetSkwinini() {	1	UNREVIEWED
 CSkWinMFC	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	201	CSkWinMFC::CSkWinMFC()	1	UNREVIEWED
 OnPaint	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	264	void CSkWinMFC::OnPaint()	1	UNREVIEWED
+ML	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	286	bool CSkWinMFC::ML() {	0	UNREVIEWED
 OnCreate	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	294	int CSkWinMFC::OnCreate(LPCREATESTRUCT lpCreateStruct)	1	UNREVIEWED
 OnDestroy	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	321	void CSkWinMFC::OnDestroy()	1	UNREVIEWED
+processMinput	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	326	void CSkWinMFC::processMinput(UINT nFlags, CPoint point)	2	UNREVIEWED
 OnMouseMove	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	350	void CSkWinMFC::OnMouseMove(UINT nFlags, CPoint point)	1	UNREVIEWED
 OnLButtonDown	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	357	void CSkWinMFC::OnLButtonDown(UINT nFlags, CPoint point)	1	UNREVIEWED
 OnLButtonUp	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	364	void CSkWinMFC::OnLButtonUp(UINT nFlags, CPoint point)	1	UNREVIEWED
@@ -494,9 +520,11 @@ OnRButtonDown	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	371	void CSkWinMFC::OnRButto
 OnRButtonUp	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	378	void CSkWinMFC::OnRButtonUp(UINT nFlags, CPoint point)	1	UNREVIEWED
 OnEraseBkgnd	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	385	BOOL CSkWinMFC::OnEraseBkgnd(CDC* pDC)	1	UNREVIEWED
 SetVRAM	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	397	void CSkWinMFC::SetVRAM(SkVRAM* xVRAM)	0	UNREVIEWED
+SetVGAPaletteRGB	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	402	void CSkWinMFC::SetVGAPaletteRGB(X8 *xVGAPalette)	0	UNREVIEWED
 UpdateRect	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	412	void CSkWinMFC::UpdateRect(i16 x, i16 y, i16 cx, i16 cy)	2	UNREVIEWED
 OnKeyDown	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	423	void CSkWinMFC::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)	1	UNREVIEWED
 OnKeyUp	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	430	void CSkWinMFC::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)	1	UNREVIEWED
+processKinput	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	437	void CSkWinMFC::processKinput(UINT nChar, bool press)	2	UNREVIEWED
 OnVideo1x	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	506	void CSkWinMFC::OnVideo1x(UINT nID) {	1	UNREVIEWED
 OnUpdateVideo1x	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	636	void CSkWinMFC::OnUpdateVideo1x(CCmdUI *pCmdUI) {	1	UNREVIEWED
 PreCreateWindow	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	697	BOOL CSkWinMFC::PreCreateWindow(CREATESTRUCT& cs)	1	UNREVIEWED
@@ -505,6 +533,10 @@ OnMove	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	713	void CSkWinMFC::OnMove(int x, i
 ShowMessage	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	725	void CSkWinMFC::ShowMessage(const char *psz) {	2	UNREVIEWED
 AskMe	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	734	bool CSkWinMFC::AskMe(const char *psz) {	2	UNREVIEWED
 END_MESSAGE_MAP	SKWINSPX	SKWINSPX/src/v0/skwinmfc.cpp	753	END_MESSAGE_MAP()	1	UNREVIEWED
+CDialog	SKWINSPX	SKWINSPX/src/v4/AboutDlg.cpp	11	: CDialog(CAboutDlg::IDD, pParent)	1	UNREVIEWED
+CAboutDlg	SKWINSPX	SKWINSPX/src/v4/AboutDlg.cpp	16	CAboutDlg::~CAboutDlg()	1	UNREVIEWED
+DoDataExchange	SKWINSPX	SKWINSPX/src/v4/AboutDlg.cpp	20	void CAboutDlg::DoDataExchange(CDataExchange* pDX)	1	UNREVIEWED
+BEGIN_MESSAGE_MAP	SKWINSPX	SKWINSPX/src/v4/AboutDlg.cpp	26	BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)	2	UNREVIEWED
 VcppException	SKWINSPX	SKWINSPX/src/v4/SBlast.cpp	167	#define VcppException(sev,err)  ((sev) | (FACILITY_VISUALCPP<<16) | err)	1	UNREVIEWED
 DBType	SKWINSPX	SKWINSPX/src/v4/dme.cpp	22	U8 ObjectID::DBType() const { // DBType == FakeDBType	1	UNREVIEWED
 IS_SCARD_PRESENT	SKWINSPX	SKWINSPX/src/v4/skaudio.cpp	9	X16 SkWinCore::IS_SCARD_PRESENT() //#DS=04BF	0	UNREVIEWED
@@ -638,6 +670,8 @@ CHAMPION_WEIGHT_CREATURE_12b4_099e	SKWINSPX	SKWINSPX/src/v4/skchamp.cpp	2716	X16
 USE_LUCK_ATTRIBUTE	SKWINSPX	SKWINSPX/src/v4/skchamp.cpp	2761	U16 SkWinCore::USE_LUCK_ATTRIBUTE(Champion* xChampion, U16 xx)	0	UNREVIEWED
 USE_DEXTERITY_ATTRIBUTE	SKWINSPX	SKWINSPX/src/v4/skchamp.cpp	2777	U16 SkWinCore::USE_DEXTERITY_ATTRIBUTE(U16 iHeroIndex)	0	UNREVIEWED
 USE_ABILITY_ATTRIBUTE	SKWINSPX	SKWINSPX/src/v4/skchamp.cpp	2791	i16 SkWinCore::USE_ABILITY_ATTRIBUTE(Champion* xChampion, X16 iAbility, i16 tt)	0	UNREVIEWED
+min	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	77	#define min(A,B) ((A < B) ? A : B)	0	UNREVIEWED
+max	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	78	#define max(A,B) ((A < B) ? B : A)	0	UNREVIEWED
 outportb	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	90	#define outportb(PORT,VAL)	0	UNREVIEWED
 inportb	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	91	#define inportb(PORT,VAL)	0	UNREVIEWED
 getXActrName	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	108	const char *SkWinCore::getXActrName(int x)	1	UNREVIEWED
@@ -862,6 +896,8 @@ FILE_CLOSE	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	7401	void SkWinCore::FILE_CLOSE(U
 FILE_RENAME	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	7406	void SkWinCore::FILE_RENAME(const U8 *curf, const U8 *newf)	1	UNREVIEWED
 _44c8_0b8d	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	7414	void SkWinCore::_44c8_0b8d(U16 src, U16 dst, U16 pitch)	0	UNREVIEWED
 MIN	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	14191	#define MIN(a,b) ( (a < b) ? a : b )	2	UNREVIEWED
+min	SKWINSPX	SKWINSPX/src/v4/skcrture.cpp	23	#define min(A,B) ((A < B) ? A : B)	0	UNREVIEWED
+max	SKWINSPX	SKWINSPX/src/v4/skcrture.cpp	24	#define max(A,B) ((A < B) ? B : A)	0	UNREVIEWED
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWINSPX	SKWINSPX/src/v4/skcrture.cpp	28	AIDefinition *SkWinCore::QUERY_CREATURE_AI_SPEC_FROM_TYPE(Bit8u creatureType)	2	UNREVIEWED
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWINSPX	SKWINSPX/src/v4/skcrture.cpp	41	U16 SkWinCore::QUERY_GDAT_CREATURE_WORD_VALUE(U8 creatureType, U8 cls4)	2	UNREVIEWED
 GET_CREATURE_INFO_DATA	SKWINSPX	SKWINSPX/src/v4/skcrture.cpp	78	sk1c9a02c3 *SkWinCore::GET_CREATURE_INFO_DATA(Creature *xCreature, AIDefinition *xAIDef)	0	UNREVIEWED
@@ -1106,6 +1142,7 @@ GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1564	Bit8
 _0cee_06dc_GET_TILE_DIRECTION	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1611	Bit16u SkWinCore::_0cee_06dc_GET_TILE_DIRECTION(i16 xx, i16 yy)	0	UNREVIEWED
 _0cee_319e_ALCOVE_GET_GDAT_X13	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1635	X16 SkWinCore::_0cee_319e_ALCOVE_GET_GDAT_X13(ObjectID rl)	0	UNREVIEWED
 _32cb_4185_TILE_ROOM	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1653	void SkWinCore::_32cb_4185_TILE_ROOM(i16 xx, i16 yy, i16 cellPos, i16 dir)	0	UNREVIEWED
+if	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1735	if (cellPos < 0x10 && tblCellTilesRoom[cellPos].xsrd.w0 != 0) { // if it is not wall	0	UNREVIEWED
 IS_REBIRTH_ALTAR	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1849	Bit16u SkWinCore::IS_REBIRTH_ALTAR(ObjectID rl)	0	UNREVIEWED
 IS_OBJECT_ALCOVE	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1869	X16 SkWinCore::IS_OBJECT_ALCOVE(ObjectID rl)	0	UNREVIEWED
 ALLOC_NEW_DBITEM	SKWINSPX	SKWINSPX/src/v4/skdungn.cpp	1879	ObjectID SkWinCore::ALLOC_NEW_DBITEM(Bit16u itemspec)	0	UNREVIEWED
@@ -1288,6 +1325,7 @@ UI_READ_KEY_INPUT	SKWINSPX	SKWINSPX/src/v4/skgameui.cpp	12	X16 SkWinCore::UI_REA
 SPECIAL_UI_KEY_TRANSFORMATION	SKWINSPX	SKWINSPX/src/v4/skgameui.cpp	26	Bit16u SkWinCore::SPECIAL_UI_KEY_TRANSFORMATION()	0	UNREVIEWED
 UI_CONSUME_KEYBOARD_INPUT	SKWINSPX	SKWINSPX/src/v4/skgameui.cpp	89	void SkWinCore::UI_CONSUME_KEYBOARD_INPUT()	0	UNREVIEWED
 HANDLE_UI_EVENT_1031_111e	SKWINSPX	SKWINSPX/src/v4/skgameui.cpp	98	void SkWinCore::HANDLE_UI_EVENT_1031_111e(U16 xx)	0	UNREVIEWED
+if	SKWINSPX	SKWINSPX/src/v4/skgameui.cpp	306	if (bp48.iCacheIndex0 != 0xffff) {	0	UNREVIEWED
 MAKE_ENT4	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	21	SkEnt4 SkWinCore::MAKE_ENT4(U8 iGDatCls1Category, U8 iGDatCls2MainItemId, U8 iGDatCls3DataType, U8 iGDatCls4EntryId)	0	UNREVIEWED
 SOUND_ENTRY	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	34	void SkWinCore::SOUND_ENTRY(U8 iGDatCls1Category, U8 iGDatCls2MainItemId, U8 iGDatCls4EntryId)	0	UNREVIEWED
 DECODE_IMG3_OVERLAY	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	53	void SkWinCore::DECODE_IMG3_OVERLAY(U8 *blitUnderlay, IMG3 *blitSrc, U8 *blitDst)	0	UNREVIEWED
@@ -1298,6 +1336,8 @@ EXTRACT_GDAT_IMAGE	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	366	U8* SkWinCore::EXTRAC
 KANJI_FONT_LOAD	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	549	void SkWinCore::KANJI_FONT_LOAD(X8 iGDatCls2MainItemId)	0	UNREVIEWED
 FONT_LOAD_NOTHING	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	600	void SkWinCore::FONT_LOAD_NOTHING()	0	UNREVIEWED
 _3929_0e16_FONT_LOAD	SKWINSPX	SKWINSPX/src/v4/skgdat.cpp	607	void SkWinCore::_3929_0e16_FONT_LOAD()	0	UNREVIEWED
+min	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	17	#define min(A,B) ((A < B) ? A : B)	0	UNREVIEWED
+max	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	18	#define max(A,B) ((A < B) ? B : A)	0	UNREVIEWED
 DRAW_SIMPLE_STR	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	25	void SkWinCore::DRAW_SIMPLE_STR(sk3f6c *ref, U16 rectno, U16 clr1, U16 clr2, U8 *str)	1	UNREVIEWED
 DRAW_ICON_PICT_BUFF	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	61	void SkWinCore::DRAW_ICON_PICT_BUFF(	1	UNREVIEWED
 DRAW_ICON_PICT_ENTRY	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	102	void SkWinCore::DRAW_ICON_PICT_ENTRY(U8 cls1, U8 cls2, U8 cls4, sk3f6c *ss, U16 iRectNo, i16 iColorKey)	1	UNREVIEWED
@@ -1415,6 +1455,10 @@ FILL_RECT_ANY	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	6792	void SkWinCore::FILL_RE
 UPDATE_RIGHT_PANEL	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	6801	void SkWinCore::UPDATE_RIGHT_PANEL(U16 xx)	1	UNREVIEWED
 CLEAR_TRY_PUSH_PULL_OBJECT	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	7079	void SkWinCore::CLEAR_TRY_PUSH_PULL_OBJECT()	0	UNREVIEWED
 getdrive	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	46	int getdrive()	0	UNREVIEWED
+min	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	55	#define min(A,B) ((A < B) ? A : B)	0	UNREVIEWED
+max	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	56	#define max(A,B) ((A < B) ? B : A)	0	UNREVIEWED
+outportb	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	68	#define outportb(PORT,VAL)	0	UNREVIEWED
+inportb	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	69	#define inportb(PORT,VAL)	0	UNREVIEWED
 SKDOS_IMPORTB	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	98	U8 SkWinCore::SKDOS_IMPORTB(U16 port) {	0	UNREVIEWED
 SKDOS_OUTPORTB	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	118	void SkWinCore::SKDOS_OUTPORTB(U16 port, U8 value)	0	UNREVIEWED
 FIRE_BOOTSTRAP	SKWINSPX	SKWINSPX/src/v4/skibmio.cpp	136	int SkWinCore::FIRE_BOOTSTRAP() //#DS=089C	0	UNREVIEWED
@@ -1487,6 +1531,7 @@ LOAD_MISCITEM	SKWINSPX	SKWINSPX/src/v4/skitem.cpp	464	void SkWinCore::LOAD_MISCI
 SET_ITEMTYPE	SKWINSPX	SKWINSPX/src/v4/skitem.cpp	497	void SkWinCore::SET_ITEMTYPE(ObjectID recordLink, Bit8u itemType)	0	UNREVIEWED
 GET_DISTINCTIVE_ITEMTYPE	SKWINSPX	SKWINSPX/src/v4/skitem.cpp	553	U16 SkWinCore::GET_DISTINCTIVE_ITEMTYPE(ObjectID recordLink)	0	UNREVIEWED
 QUERY_ITEM_MONEY_VALUE	SKWINSPX	SKWINSPX/src/v4/skitem.cpp	578	U16 SkWinCore::QUERY_ITEM_MONEY_VALUE(ObjectID oItem)	0	UNREVIEWED
+CHANGE_CONSOLE_COLOR	SKWINSPX	SKWINSPX/src/v4/sklua.cpp	13	#define CHANGE_CONSOLE_COLOR(x,y,z) ;;;	0	UNREVIEWED
 SkWinLua_Init_Lua	SKWINSPX	SKWINSPX/src/v4/sklua.cpp	50	float SkWinLua_Init_Lua(SkWinCore* xSkCore, char* sVersionName)	0	UNREVIEWED
 SkWinLua_Bail	SKWINSPX	SKWINSPX/src/v4/sklua.cpp	55	void SkWinLua_Bail(lua_State *L, char *msg, const char* sScriptName, const char* sFunctionName)	0	UNREVIEWED
 SkWinLua_RunScript	SKWINSPX	SKWINSPX/src/v4/sklua.cpp	60	bool SkWinLua_RunScript(const char* sScriptFilename)	0	UNREVIEWED
@@ -1713,6 +1758,7 @@ DM2_4FCC	SKWINSPX	SKWINSPX/src/v5/bcreatur.cpp	3308	i32 DM2_4FCC(i32 eaxl, i32 e
 DM2_QUERY_NEXT_GDAT_ENTRY	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	30	static bool DM2_QUERY_NEXT_GDAT_ENTRY(s_gdat* eaxp_s36)	1	UNREVIEWED
 DM2_dballoc_3e74_24b8	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	272	void c_dballochandler::DM2_dballoc_3e74_24b8(void)	1	UNREVIEWED
 DM2_dballoc_3e74_2162	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	335	bool c_dballochandler::DM2_dballoc_3e74_2162(i16 eaxw)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	348	void c_gdatfile::init(void)	24	UNREVIEWED
 DM2_GRAPHICS_DATA_OPEN	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	368	void DM2_GRAPHICS_DATA_OPEN(void)	1	UNREVIEWED
 DM2_GRAPHICS_DATA_CLOSE	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	385	void DM2_GRAPHICS_DATA_CLOSE(void)	1	UNREVIEWED
 DM2_GRAPHICS_DATA_READ	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	400	static void DM2_GRAPHICS_DATA_READ(i32 eaxl, i32 edxl, unk* xebxp)	1	UNREVIEWED
@@ -1727,6 +1773,7 @@ R_2D8AD	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	581	static i16* R_2D8AD(s_pppw* eaxp,
 R_2D8BA	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	588	static i16* R_2D8BA(s_pppw* eaxp, unk* xedxp, i32 ebxl)	1	UNREVIEWED
 R_2D802	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	595	static void R_2D802(s_pppw* eaxp_s46)	1	UNREVIEWED
 DM2_FREE_PICT_ENTRY	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	619	void DM2_FREE_PICT_ENTRY(c_pixel* gfx)	1	UNREVIEWED
+if	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	642	if (   s101p->bmp.width == (s101p->w_04 & wcon(0x3ff))	0	UNREVIEWED
 DM2_LOAD_GDAT_ENTRY_DATA_TO	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	819	void DM2_LOAD_GDAT_ENTRY_DATA_TO(i8 eaxb, i8 edxb, i8 ebxb, i8 ecxb, unk* xargp0)	1	UNREVIEWED
 DM2_LOAD_GDAT_ENTRIES	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	824	__WIN_STATIC void DM2_LOAD_GDAT_ENTRIES(void)	1	UNREVIEWED
 DM2_47eb_00a4	SKWINSPX	SKWINSPX/src/v5/bgdat.cpp	851	static void DM2_47eb_00a4(s_pwwp* xeaxp)	1	UNREVIEWED
@@ -1757,7 +1804,9 @@ DM2_F958	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1034	i16 DM2_F958(i32 eaxl)	1	UNREVI
 DM2_SHOOT_ITEM	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1043	void DM2_SHOOT_ITEM(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i8 argb1, i8 argb2, i8 argb3)	1	UNREVIEWED
 DM2_PUT_OBJECT_INTO_CONTAINER	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1146	i32 DM2_PUT_OBJECT_INTO_CONTAINER(i32 eaxl)	1	UNREVIEWED
 DM2_TAKE_OBJECT	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1185	void DM2_TAKE_OBJECT(i32 eaxl, i32 edxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/dm2data.cpp	1032	void c_dm2data::init(void)	24	UNREVIEWED
 MAX	SKWINSPX	SKWINSPX/src/v5/dm2debug.cpp	45	#define MAX(a,b) ( (a > b) ? a : b )	1	UNREVIEWED
+MIN	SKWINSPX	SKWINSPX/src/v5/dm2debug.cpp	46	#define MIN(a,b) ( (a < b) ? a : b )	2	UNREVIEWED
 SPX_DEBUG_DECREASE_DEPTH	SKWINSPX	SKWINSPX/src/v5/dm2debug.cpp	57	void SPX_DEBUG_DECREASE_DEPTH() { iDebugCallDepth--;}	1	UNREVIEWED
 FFLUSH	SKWINSPX	SKWINSPX/src/v5/dm2debug.cpp	62	#define FFLUSH(X) fflush(X);	1	UNREVIEWED
 SPX_DEBUG_POP_ALL	SKWINSPX	SKWINSPX/src/v5/dm2debug.cpp	68	"void SPX_DEBUG_POP_ALL()	// To be used for top-level catch (after throw)"	1	UNREVIEWED
@@ -1817,6 +1866,7 @@ _lr16	SKWINSPX	SKWINSPX/src/v5/emu.cpp	83	i16 static _lr16(i16 wm, i8 bn)	1	UNRE
 shr16	SKWINSPX	SKWINSPX/src/v5/emu.cpp	89	void shr16(i8* bpm, i8 bn) { wpoke(bpm, _lr16(wpeek(bpm), bn)); }	2	UNREVIEWED
 sar8	SKWINSPX	SKWINSPX/src/v5/emu.cpp	91	void sar8(i8* bpm, i8 bn) { bpoke(bpm, _ar8(bpeek(bpm), bn)); }	1	UNREVIEWED
 lrshift6e	SKWINSPX	SKWINSPX/src/v5/emu.cpp	93	ui16 lrshift6e(ui16 n)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	42	void c_fileiodata::init(void)	24	UNREVIEWED
 SYS_gettransferadress	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	54	i8* SYS_gettransferadress(void)	1	UNREVIEWED
 SYS_createfile	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	74	static i16 SYS_createfile(i8 attrib, t_text* filename, bool& boolc)	1	UNREVIEWED
 SYS_openfile	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	120	static i16 SYS_openfile(i8 bmode, t_text* filename, bool& flag)	1	UNREVIEWED
@@ -1844,6 +1894,7 @@ DM2_FILE_DELETE	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	746	i16 DM2_FILE_DELETE(t_te
 DM2_FILE_RENAME	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	756	void DM2_FILE_RENAME(t_text* oldname, t_text* newname)	1	UNREVIEWED
 DM2_FILE_CLOSE	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	765	void DM2_FILE_CLOSE(i16 handle)	1	UNREVIEWED
 DM2_READ_BINARY	SKWINSPX	SKWINSPX/src/v5/fileio.cpp	777	void DM2_READ_BINARY(t_text* filename, void* buf, size_t size)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/gfxblit.cpp	29	void c_blitter::init(void)	24	UNREVIEWED
 xlat	SKWINSPX	SKWINSPX/src/v5/gfxblit.cpp	42	static c_pixel256 xlat(const t_palette* palette, c_pixel xlatidx)	1	UNREVIEWED
 blit_within_screen	SKWINSPX	SKWINSPX/src/v5/gfxblit.cpp	51	void c_blitter::blit_within_screen(c_pixel256* screen, c_rect* rectp, i16 yofs)	1	UNREVIEWED
 blitline_44_	SKWINSPX	SKWINSPX/src/v5/gfxblit.cpp	62	void c_blitter::blitline_44_(ui16 srcofs, ui16 destofs, ui16 pixels)	1	UNREVIEWED
@@ -1884,6 +1935,7 @@ stretch_4to8	SKWINSPX	SKWINSPX/src/v5/gfxblit.cpp	1256	void c_blitter::stretch_4
 getbmpheader	SKWINSPX	SKWINSPX/src/v5/gfxbmp.cpp	10	s_dm2bmpheader* getbmpheader(t_bmp* bmp)	1	UNREVIEWED
 init_bitmaps	SKWINSPX	SKWINSPX/src/v5/gfxbmp.cpp	17	void init_bitmaps(void)	1	UNREVIEWED
 DM2_CALC_IMAGE_BYTE_LENGTH	SKWINSPX	SKWINSPX/src/v5/gfxbmp.cpp	23	i32 DM2_CALC_IMAGE_BYTE_LENGTH(t_bmp* bmp)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	19	void c_imgdecode::init(void)	24	UNREVIEWED
 alloc	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	41	void c_imgdecode::alloc(void)	1	UNREVIEWED
 func_44c8_1202	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	52	void c_imgdecode::func_44c8_1202(ui16 offset, c_pixel16 dpix)	1	UNREVIEWED
 spill_img3_pixels	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	63	void c_imgdecode::spill_img3_pixels(ui16 dofs, ui16 sofs, i16 num)	1	UNREVIEWED
@@ -1897,6 +1949,7 @@ dec9_1	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	547	void c_imgdecode::dec9_1(ui8* dat
 dec9_2	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	672	void c_imgdecode::dec9_2(ui8* data, c_pixel* gfx2, i32 num)	1	UNREVIEWED
 dec9_3	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	708	void c_imgdecode::dec9_3(ui8* data, c_pixel* gfx2, i32 num)	1	UNREVIEWED
 decode_img9	SKWINSPX	SKWINSPX/src/v5/gfxdec.cpp	744	void c_imgdecode::decode_img9(ui8* data, c_pixel* gfx, i32 num)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	24	void c_gfx_system::init(void)	24	UNREVIEWED
 DM2_INIT_BACKBUFF	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	44	void DM2_INIT_BACKBUFF(void)	1	UNREVIEWED
 DM2_DRAW_GAMELOAD_DIALOGUE_TO_SCREEN	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	55	void DM2_DRAW_GAMELOAD_DIALOGUE_TO_SCREEN(void)	1	UNREVIEWED
 DM2_gfxmain_3929_0914	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	86	void DM2_gfxmain_3929_0914(void)	1	UNREVIEWED
@@ -1917,6 +1970,7 @@ ui8_to_palettecolor	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	25	void ui8_to_paletteco
 palettecolor_to_ui8	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	26	ui8 palettecolor_to_ui8(t_palette pal) { return pixel_to_ui8(pal.c); }	1	UNREVIEWED
 palettecolor_to_pixel	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	27	c_pixel256 palettecolor_to_pixel(t_palette pal) { c_pixel256 pix; pix = pal.c; return pix; }	1	UNREVIEWED
 conv	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	29	void t_palette::conv(const t_colconv* colconv)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	85	void c_palettedata::init(void)	24	UNREVIEWED
 driver_setcolors	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	99	void driver_setcolors(void)	1	UNREVIEWED
 DM2_CONVERT_DRIVERPALETTE	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	130	void DM2_CONVERT_DRIVERPALETTE(ui8* pb)	1	UNREVIEWED
 DM2_SELECT_PALETTE_SET	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	162	void DM2_SELECT_PALETTE_SET(i16 set)	1	UNREVIEWED
@@ -1926,6 +1980,7 @@ ui8_to_pixel	SKWINSPX	SKWINSPX/src/v5/gfxpixel.cpp	8	c_pixel ui8_to_pixel(ui8 i)
 pixel_to_ui8	SKWINSPX	SKWINSPX/src/v5/gfxpixel.cpp	9	ui8 pixel_to_ui8(c_pixel p) { return p.p; }	1	UNREVIEWED
 build_pixels16	SKWINSPX	SKWINSPX/src/v5/gfxpixel.cpp	13	c_pixel16 build_pixels16(c_pixel16 left, c_pixel16 right)	1	UNREVIEWED
 build_pixels_masked16	SKWINSPX	SKWINSPX/src/v5/gfxpixel.cpp	20	c_pixel16 build_pixels_masked16(c_pixel16 left, c_pixel16 right, ui8 mask)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/gfxstr.cpp	22	void c_stringdata::init(void)	24	UNREVIEWED
 DM2_QUERY_FONT	SKWINSPX	SKWINSPX/src/v5/gfxstr.cpp	42	static c_pixel* DM2_QUERY_FONT(i8 eaxb, i8 edxb, i8 ebxb)	1	UNREVIEWED
 DM2_QUERY_STR_METRICS	SKWINSPX	SKWINSPX/src/v5/gfxstr.cpp	67	bool DM2_QUERY_STR_METRICS(t_text* text, i16* edxpw, i16* ebxpw)	1	UNREVIEWED
 DM2_DRAW_STRING	SKWINSPX	SKWINSPX/src/v5/gfxstr.cpp	84	void DM2_DRAW_STRING(c_pixel* destgfx, i16 edxw, i16 ebxw, i16 ecxw, i16 argw0, i16 argw1, t_text* argpt2)	1	UNREVIEWED
@@ -1970,6 +2025,7 @@ set_midi_volume	SKWINSPX	SKWINSPX/src/v5/sfxmidi.cpp	81	void c_midi::set_midi_vo
 init_midi	SKWINSPX	SKWINSPX/src/v5/sfxmidi.cpp	86	void c_midi::init_midi(void)	1	UNREVIEWED
 do_music_wav	SKWINSPX	SKWINSPX/src/v5/sfxmuwav.cpp	19	void do_music_wav(i16 nr)	0	UNREVIEWED
 do_music_wav_stop	SKWINSPX	SKWINSPX/src/v5/sfxmuwav.cpp	34	void do_music_wav_stop()	0	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/sfxsnd.cpp	28	void c_lw::init(void)	24	UNREVIEWED
 sndptr6	SKWINSPX	SKWINSPX/src/v5/sfxsnd.cpp	56	sndptr6(NULL)	1	UNREVIEWED
 stop_all_sound	SKWINSPX	SKWINSPX/src/v5/sfxsnd.cpp	101	void c_sound::stop_all_sound(void)	1	UNREVIEWED
 dtor	SKWINSPX	SKWINSPX/src/v5/sfxsnd.cpp	107	void c_sound::dtor(void)	2	UNREVIEWED
@@ -2098,6 +2154,7 @@ DM2_UNPREPARE_LOCAL_CREATURE_VAR	SKWINSPX	SKWINSPX/src/v5/skai.cpp	5902	void DM2
 DM2_ai_13e4_0360	SKWINSPX	SKWINSPX/src/v5/skai.cpp	5919	void DM2_ai_13e4_0360(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED
 DM2_ai_13e4_071b	SKWINSPX	SKWINSPX/src/v5/skai.cpp	5969	void DM2_ai_13e4_071b(void)	1	UNREVIEWED
 DM2_ai_13e4_0806	SKWINSPX	SKWINSPX/src/v5/skai.cpp	6008	void DM2_ai_13e4_0806(void)	1	UNREVIEWED
+thread_func	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	24	void* thread_func(ALLEGRO_THREAD* thr, void* vparg) { return NULL; }	1	UNREVIEWED
 thread_func2	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	25	void* thread_func2(ALLEGRO_THREAD* thr, void* vparg) { return NULL; }	0	UNREVIEWED
 al_init_acodec_addon	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	34	int al_init_acodec_addon() { return 0;}	0	UNREVIEWED
 al_install_audio	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	35	int al_install_audio() { return 0;}	0	UNREVIEWED
@@ -2113,6 +2170,7 @@ al_get_next_event	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	44	int al_get_next_event
 al_get_mouse_state	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	45	int al_get_mouse_state(ALLEGRO_MOUSE_STATE* ret_state) { return 0;}	0	UNREVIEWED
 c_allegro	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	47	c_allegro::c_allegro(void)	0	UNREVIEWED
 restart	SKWINSPX	SKWINSPX/src/v5/skalegro.cpp	59	void c_allegro::restart(void)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skalloc.cpp	74	void c_allochandler::init(void)	24	UNREVIEWED
 DM2_GET_FROM_FREEPOOL	SKWINSPX	SKWINSPX/src/v5/skalloc.cpp	90	unk* c_allochandler::DM2_GET_FROM_FREEPOOL(c_freepool* freepool, i32 amount)	1	UNREVIEWED
 DM2_FIND_FREE_POOL	SKWINSPX	SKWINSPX/src/v5/skalloc.cpp	98	c_freepool* c_allochandler::DM2_FIND_FREE_POOL(i32 amount, i16 wmask)	1	UNREVIEWED
 DM2_ALLOC_MEMORY_RAM	SKWINSPX	SKWINSPX/src/v5/skalloc.cpp	120	unk* c_allochandler::DM2_ALLOC_MEMORY_RAM(i32 amount, i16 wmask, i16 wtype)	1	UNREVIEWED
@@ -2133,6 +2191,7 @@ DM2_ALLOC_CPX_LINK_NODE	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	26	void c_cpx_link
 DM2_ALLOC_CPX_UNLINK_NODE	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	65	void c_cpx_linklist::DM2_ALLOC_CPX_UNLINK_NODE(s_lpp* lpptr)	1	UNREVIEWED
 DM2_ALLOC_CPX1	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	87	i32 c_cpx_linklist::DM2_ALLOC_CPX1(OO unk*& xptr, i32 amount)	1	UNREVIEWED
 ulptable	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	121	: ulptable(NULL)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	125	void c_ulp::init(void)	24	UNREVIEWED
 getadr	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	130	u_lp* c_ulp::getadr(ui32 uln) const { return &ulptable[uln]; }	1	UNREVIEWED
 getp	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	132	unk* c_ulp::getp(ui32 uln) const { return ulptable[uln].xp_00; }	1	UNREVIEWED
 setp	SKWINSPX	SKWINSPX/src/v5/skalocdb.cpp	133	void c_ulp::setp(ui32 uln, unk* xp) { ulptable[uln].xp_00 = xp; }	1	UNREVIEWED
@@ -2182,6 +2241,7 @@ DM2_CREATE_CLOUD	SKWINSPX	SKWINSPX/src/v5/skcloud.cpp	127	i32 DM2_CREATE_CLOUD(i
 DM2_CALC_CLOUD_DAMAGE	SKWINSPX	SKWINSPX/src/v5/skcloud.cpp	446	i16 DM2_CALC_CLOUD_DAMAGE(i32 eaxl, i32 edxl)	1	UNREVIEWED
 DM2_PROCESS_CLOUD	SKWINSPX	SKWINSPX/src/v5/skcloud.cpp	587	void DM2_PROCESS_CLOUD(c_tim* eaxtimp)	1	UNREVIEWED
 DM2_ENGAGE_COMMAND	SKWINSPX	SKWINSPX/src/v5/skengage.cpp	23	i32 DM2_ENGAGE_COMMAND(i32 eaxl, i32 edxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skeventq.cpp	12	void c_eventqueue::init(void)	24	UNREVIEWED
 set	SKWINSPX	SKWINSPX/src/v5/skeventq.cpp	36	void c_eventqueue::set(i16 i, i16 x, i16 y, i16 b)	1	UNREVIEWED
 PROCESS_SINGLEEVENT	SKWINSPX	SKWINSPX/src/v5/skeventq.cpp	47	void c_eventqueue::PROCESS_SINGLEEVENT(void)	1	UNREVIEWED
 QUEUE_EVENT	SKWINSPX	SKWINSPX/src/v5/skeventq.cpp	58	void c_eventqueue::QUEUE_EVENT(i16 mx, i16 my, i16 mb)	1	UNREVIEWED
@@ -2383,6 +2443,65 @@ DM2_guidraw_24a5_1798	SKWINSPX	SKWINSPX/src/v5/skguidr5.cpp	4907	void DM2_guidra
 DM2_29ee_0396	SKWINSPX	SKWINSPX/src/v5/skguidr5.cpp	5035	static void DM2_29ee_0396(void)	1	UNREVIEWED
 DM2_29ee_0b2b	SKWINSPX	SKWINSPX/src/v5/skguidr5.cpp	5159	static void DM2_29ee_0b2b(void)	1	UNREVIEWED
 DM2_UPDATE_RIGHT_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidr5.cpp	5183	void DM2_UPDATE_RIGHT_PANEL(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_ICON_PICT_BUFF	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	32	void DM2_DRAW_ICON_PICT_BUFF(t_bmp* srcbmp, c_buttongroup* buttongroup, c_rect* blitrect, i16 srcx, i16 srcy, t_alphamask alphamask, e_blitmode blitmode, t_palette* palette)	1	UNREVIEWED
+DM2_DRAW_ICON_PICT_ENTRY	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	59	void DM2_DRAW_ICON_PICT_ENTRY(i8 lpalidx, i8 edxb, i8 ebxb, c_buttongroup* buttongroup, i16 argw0, t_alphamask alphamask)	1	UNREVIEWED
+DM2_DRAW_DIALOGUE_PROGRESS	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	80	void DM2_DRAW_DIALOGUE_PROGRESS(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_DIALOGUE_PARTS_PICT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	98	void DM2_DRAW_DIALOGUE_PARTS_PICT(t_bmp* bmp, c_rect* edxrp, i16 ebxw, t_palette* palette)	1	UNREVIEWED
+DM2_DRAW_DIALOGUE_PICT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	118	void DM2_DRAW_DIALOGUE_PICT(t_bmp* srcbmp, t_bmp* destbmp, c_rect* ebxrp, i16 ecxw, i16 argw0, i16 argw1, t_palette* palette)	1	UNREVIEWED
+DM2_DRAW_WAKE_UP_TEXT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	148	void DM2_DRAW_WAKE_UP_TEXT(void)	1	UNREVIEWED
+DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	168	void DM2_DRAW_PLAYER_3STAT_HEALTH_BAR(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_CUR_MAX_HMS	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	239	void DM2_DRAW_CUR_MAX_HMS(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DRAW_PLAYER_3STAT_TEXT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	261	void DM2_DRAW_PLAYER_3STAT_TEXT(c_hero* hero)	1	UNREVIEWED
+DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	282	void DM2_DRAW_PLAYER_NAME_AT_CMDSLOT(void)	1	UNREVIEWED
+DM2_DRAW_PLAYER_DAMAGE	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	290	void DM2_DRAW_PLAYER_DAMAGE(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_CHIP_OF_MAGIC_MAP	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	312	void DM2_DRAW_CHIP_OF_MAGIC_MAP(t_bmp* bmp, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, t_palette* palette)	1	UNREVIEWED
+DM2_QUERY_GDAT_SQUAD_ICON	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	391	void DM2_QUERY_GDAT_SQUAD_ICON(t_bmp* bmp, i32 edxl, t_palette* palette)	1	UNREVIEWED
+DM2_DRAW_CRYOCELL_LEVER	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	415	void DM2_DRAW_CRYOCELL_LEVER(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_CHARSHEET_OPTION_ICON	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	442	void DM2_DRAW_CHARSHEET_OPTION_ICON(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_MONEY_BOX_SURVEY	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	459	void DM2_MONEY_BOX_SURVEY(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_MONEYBOX	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	513	void DM2_DRAW_MONEYBOX(i16 eaxw)	1	UNREVIEWED
+DM2_guidraw_0b36_0c52	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	618	void DM2_guidraw_0b36_0c52(c_buttongroup* buttongroup, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DRAW_PLAYER_3STAT_PANE	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	643	void DM2_DRAW_PLAYER_3STAT_PANE(i32 eaxl, i32 edxl)	1	UNREVIEWED
+DM2_guidraw_29ee_00a3	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	684	void DM2_guidraw_29ee_00a3(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_CMD_SLOT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	694	void DM2_DRAW_CMD_SLOT(i16 eaxw, i8 edxb)	1	UNREVIEWED
+DM2_DRAW_SPELL_TO_BE_CAST	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	715	void DM2_DRAW_SPELL_TO_BE_CAST(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_PLAYER_ATTACK_DIR	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	734	void DM2_DRAW_PLAYER_ATTACK_DIR(void)	1	UNREVIEWED
+DM2_DRAW_SPELL_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	806	void DM2_DRAW_SPELL_PANEL(void)	1	UNREVIEWED
+DM2_SHOW_ATTACK_RESULT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	865	void DM2_SHOW_ATTACK_RESULT(i16 eaxw)	1	UNREVIEWED
+DM2_guidraw_0b36_105b	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1017	void DM2_guidraw_0b36_105b(c_buttongroup* buttongroup, c_rect* edxrp, i16 ebxw) // serious! entry to deactivated - rectangle - blit HOTHOT	1	UNREVIEWED
+DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1031	void DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON(i16 eaxw, i32 edxl)	1	UNREVIEWED
+DM2_guidraw_24a5_0e82	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1127	void DM2_guidraw_24a5_0e82(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i32 argl1)	1	UNREVIEWED
+DM2_DRAW_FOOD_WATER_POISON_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1216	void DM2_DRAW_FOOD_WATER_POISON_PANEL(void)	1	UNREVIEWED
+DM2_DRAW_ITEM_STATS_BAR	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1233	void DM2_DRAW_ITEM_STATS_BAR(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0)	1	UNREVIEWED
+DM2_guidraw_2405_014a	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1308	i8 DM2_guidraw_2405_014a(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DRAW_ITEM_IN_HAND	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1517	void DM2_DRAW_ITEM_IN_HAND(c_itemrecord* xeaxp)	1	UNREVIEWED
+DM2_DRAW_CONTAINER_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1541	void DM2_DRAW_CONTAINER_PANEL(i32 eaxl, i32 edxl)	1	UNREVIEWED
+DM2_guidraw_2405_011f	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1627	void DM2_guidraw_2405_011f(i32 eaxl, c_rect* edxrp)	1	UNREVIEWED
+DM2_guidraw_2405_00ec	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1639	void DM2_guidraw_2405_00ec(i32 eaxl, c_rect* edxrp)	1	UNREVIEWED
+DM2_DRAW_ITEM_ICON	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1657	void DM2_DRAW_ITEM_ICON(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED
+DM2_DRAW_CONTAINER_SURVEY	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1796	void DM2_DRAW_CONTAINER_SURVEY(unk* xeaxp)	1	UNREVIEWED
+DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1825	void DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE(i8 eaxb, i16 edxw)	1	UNREVIEWED
+DM2_guidraw_2e62_03b5	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1834	i32 DM2_guidraw_2e62_03b5(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DRAW_SCROLL_TEXT	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	1997	void DM2_DRAW_SCROLL_TEXT(i32 eaxl)	1	UNREVIEWED
+DM2_DRAW_ITEM_SURVEY	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	2073	i32 DM2_DRAW_ITEM_SURVEY(i32 eaxl, i32 edxl)	1	UNREVIEWED
+DM2_DRAW_ITEM_ON_WOOD_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	2235	static t_bmp* DM2_DRAW_ITEM_ON_WOOD_PANEL(i32 eaxl, i32 edxl, c_imgdesc* imgdesc)	1	UNREVIEWED
+DM2_DRAW_HAND_ACTION_ICONS	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	2342	void DM2_DRAW_HAND_ACTION_ICONS(i16 eaxw, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DRAW_MAP_CHIP	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	2413	void DM2_DRAW_MAP_CHIP(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i16 argw1, i8 argb2, i32 argl3)	1	UNREVIEWED
+DM2_guidraw_29ee_1d03	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	3500	void DM2_guidraw_29ee_1d03(i8 eaxb)	1	UNREVIEWED
+DM2_guidraw_29ee_1946	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	3562	void DM2_guidraw_29ee_1946(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i32 argl1, i32 argl2, i32 argl3)	1	UNREVIEWED
+DM2_DRAW_MAJIC_MAP	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	3929	void DM2_DRAW_MAJIC_MAP(i32 eaxl)	1	UNREVIEWED
+DM2_DISPLAY_HINT_NEW_LINE	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4139	void DM2_DISPLAY_HINT_NEW_LINE(void)	1	UNREVIEWED
+DM2_DISPLAY_TAKEN_ITEM_NAME	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4145	void DM2_DISPLAY_TAKEN_ITEM_NAME(i16 wn)	1	UNREVIEWED
+DM2_HIGHLIGHT_ARROW_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4152	void DM2_HIGHLIGHT_ARROW_PANEL(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+DM2_DISPLAY_RIGHT_PANEL_SQUAD_HANDS	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4182	void DM2_DISPLAY_RIGHT_PANEL_SQUAD_HANDS(void)	1	UNREVIEWED
+DM2_24a5_1532	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4217	static void DM2_24a5_1532(void)	1	UNREVIEWED
+DM2_2e62_061d	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4334	static void DM2_2e62_061d(i32 eaxl)	1	UNREVIEWED
+DM2_REFRESH_PLAYER_STAT_DISP	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4360	void DM2_REFRESH_PLAYER_STAT_DISP(i16 eaxw)	1	UNREVIEWED
+DM2_guidraw_29ee_000f	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4881	i32 DM2_guidraw_29ee_000f(void)	1	UNREVIEWED
+DM2_guidraw_24a5_1798	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	4907	void DM2_guidraw_24a5_1798(i16 eaxw)	1	UNREVIEWED
+DM2_29ee_0396	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	5035	static void DM2_29ee_0396(void)	1	UNREVIEWED
+DM2_29ee_0b2b	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	5159	static void DM2_29ee_0b2b(void)	1	UNREVIEWED
+DM2_UPDATE_RIGHT_PANEL	SKWINSPX	SKWINSPX/src/v5/skguidrw.cpp	5183	void DM2_UPDATE_RIGHT_PANEL(i32 eaxl)	1	UNREVIEWED
 DM2_DRAW_MIRRORED_PIC	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	47	static void DM2_DRAW_MIRRORED_PIC(t_bmp* srcbmp, t_bmp* destbmp)	1	UNREVIEWED
 DM2_SET_GRAPHICS_FLIP_FROM_POSITION	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	79	static i32 DM2_SET_GRAPHICS_FLIP_FROM_POSITION(i32 eaxl, i32 ebxl, i32 ecxl, i32 edxl)	1	UNREVIEWED
 DM2_guivp_098d_0cd7	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	150	static i16 DM2_guivp_098d_0cd7(i16 wa, i16 wc, bool vbool)	1	UNREVIEWED
@@ -2432,6 +2551,7 @@ DM2_ENVIRONMENT_DISPLAY_ELEMENTS	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	6815	stat
 DM2_DRAW_DUNGEON_TILES	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	6932	static i32 DM2_DRAW_DUNGEON_TILES(void)	1	UNREVIEWED
 DM2_CHANCE_TABLE_OPERATION	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	7177	static void DM2_CHANCE_TABLE_OPERATION(void)	1	UNREVIEWED
 DM2_DISPLAY_VIEWPORT	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	7325	void DM2_DISPLAY_VIEWPORT(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	41	void c_hero::init(void)	24	UNREVIEWED
 get_adj_ability1	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	82	i16 c_hero::get_adj_ability1(e_ability abi, e_curmax curmax)	1	UNREVIEWED
 get_adj_ability2	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	102	i32 c_hero::get_adj_ability2(e_ability abi, i16 in)	1	UNREVIEWED
 get_stamina_adj	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	111	i16 c_hero::get_stamina_adj(i16 in)	1	UNREVIEWED
@@ -2490,6 +2610,7 @@ DM2_hero_2c1d_1de2	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	3905	i32 DM2_hero_2c1d_1d
 DM2_CHANGE_PLAYER_POS	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	4039	void DM2_CHANGE_PLAYER_POS(i16 eaxw)	1	UNREVIEWED
 DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKWINSPX	SKWINSPX/src/v5/skhero.cpp	4143	void DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION(void)	1	UNREVIEWED
 init_global_images	SKWINSPX	SKWINSPX/src/v5/skimage.cpp	20	void init_global_images(void)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skimage.cpp	30	void c_imgdesc::init(void)	24	UNREVIEWED
 DM2_0b36_068f	SKWINSPX	SKWINSPX/src/v5/skimage.cpp	68	static i32 DM2_0b36_068f(c_image* image)	1	UNREVIEWED
 DM2_image_0b36_11c0	SKWINSPX	SKWINSPX/src/v5/skimage.cpp	73	void DM2_image_0b36_11c0(c_image* image, c_buttongroup* buttongroup, i16 ebxw, i16 alphamask)	1	UNREVIEWED
 DM2_QUERY_PICST_IT	SKWINSPX	SKWINSPX/src/v5/skimage.cpp	101	c_image* DM2_QUERY_PICST_IT(c_image* image)	1	UNREVIEWED
@@ -2519,6 +2640,7 @@ DM2_3a15_38b6	SKWINSPX	SKWINSPX/src/v5/sklodlvl.cpp	1125	void DM2_3a15_38b6(i32 
 DM2_LOAD_NEWMAP	SKWINSPX	SKWINSPX/src/v5/sklodlvl.cpp	1337	void DM2_LOAD_NEWMAP(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl)	1	UNREVIEWED
 tile_to_ulong	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	27	ui32 tile_to_ulong(t_tile n)	1	UNREVIEWED
 tile_to_ubyte	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	32	ui8 tile_to_ubyte(t_tile n)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	37	void c_mapdata::init(void)	24	UNREVIEWED
 DM2_GET_OBJECT_INDEX_FROM_TILE	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	47	i16 DM2_GET_OBJECT_INDEX_FROM_TILE(i16 x, i16 y)	1	UNREVIEWED
 DM2_GET_TILE_RECORD_LINK	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	64	t_record DM2_GET_TILE_RECORD_LINK(i16 x, i16 y)	1	UNREVIEWED
 DM2_GET_ADDRESS_OF_TILE_RECORD	SKWINSPX	SKWINSPX/src/v5/skmap.cpp	72	t_record* DM2_GET_ADDRESS_OF_TILE_RECORD(i16 x, i16 y)	1	UNREVIEWED
@@ -2563,6 +2685,7 @@ DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION	SKWINSPX	SKWINSPX/src/v5/skmovrec.cpp	3
 DM2_moverec_2fcf_01c5	SKWINSPX	SKWINSPX/src/v5/skmovrec.cpp	365	static void DM2_moverec_2fcf_01c5(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED
 DM2_MOVE_RECORD_TO	SKWINSPX	SKWINSPX/src/v5/skmovrec.cpp	392	i32 DM2_MOVE_RECORD_TO(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0)	1	UNREVIEWED
 DM2_moverec_3CE7D	SKWINSPX	SKWINSPX/src/v5/skmovrec.cpp	1147	void DM2_moverec_3CE7D(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skrandom.cpp	9	void c_randomdata::init(void)	24	UNREVIEWED
 DM2_RAND	SKWINSPX	SKWINSPX/src/v5/skrandom.cpp	16	i32 DM2_RAND(void)	1	UNREVIEWED
 DM2_RAND16	SKWINSPX	SKWINSPX/src/v5/skrandom.cpp	24	i16 DM2_RAND16(i16 a)	1	UNREVIEWED
 DM2_RANDBIT	SKWINSPX	SKWINSPX/src/v5/skrandom.cpp	33	bool DM2_RANDBIT(void)	1	UNREVIEWED
@@ -2603,6 +2726,8 @@ DM2_DROP_CREATURE_POSSESSION	SKWINSPX	SKWINSPX/src/v5/skrecord.cpp	1540	void DM2
 DM2_OVERSEE_RECORD	SKWINSPX	SKWINSPX/src/v5/skrecord.cpp	1758	i16* DM2_OVERSEE_RECORD(i16* eaxpw, i32 edxl, i16** ebxppw, FPTR_L_WPWP ecxf, i16* argpw0, i32 argl1, i32 argl2)	1	UNREVIEWED
 DM2_ROTATE_RECORD_BY_TELEPORTER	SKWINSPX	SKWINSPX/src/v5/skrecord.cpp	1842	i32 DM2_ROTATE_RECORD_BY_TELEPORTER(unk* xeaxp, i32 edxl)	1	UNREVIEWED
 DM2_075f_056c	SKWINSPX	SKWINSPX/src/v5/skrecord.cpp	1873	void DM2_075f_056c(i32 eaxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skrect.cpp	7	void c_rect::init(void)	24	UNREVIEWED
+set	SKWINSPX	SKWINSPX/src/v5/skrect.cpp	13	void c_rect::set(i16 nx, i16 ny, i16 nw, i16 nh)	1	UNREVIEWED
 set_origin	SKWINSPX	SKWINSPX/src/v5/skrect.cpp	19	void c_rect::set_origin(i16 nw, i16 nh)	0	UNREVIEWED
 inflate	SKWINSPX	SKWINSPX/src/v5/skrect.cpp	25	void c_rect::inflate(i16 dw, i16 dh)	0	UNREVIEWED
 unify	SKWINSPX	SKWINSPX/src/v5/skrect.cpp	34	c_rect* c_rect::unify(c_rect* rs, OO i16& ox, OO i16& oy)	0	UNREVIEWED
@@ -2645,6 +2770,7 @@ DM2_1c9a_3bab	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2040	static void DM2_1c9a_3b
 SUBSAVE	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2056	#define SUBSAVE(x) FSUBSAVE(x, s29_3c.tp_2c, boolrg7)	1	UNREVIEWED
 FSUBSAVE	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2059	"int FSUBSAVE(bool flag, t_text* tpv, i32 val)	// SPX: changed void to int for MSVC6 compilation convenience"	1	UNREVIEWED
 DM2_GAME_SAVE_MENU	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2084	"int DM2_GAME_SAVE_MENU(void)		// SPX: changed void to int for MSVC6 compilation convenience"	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	10	void c_timerdata::init(void)	24	UNREVIEWED
 DM2_cmp_timers	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	34	static bool DM2_cmp_timers(c_tim* eaxtimp, c_tim* edxtimp)	1	UNREVIEWED
 DM2_timer_3a15_0486	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	53	static void DM2_timer_3a15_0486(i16 eaxw)	1	UNREVIEWED
 DM2_REARRANGE_TIMERLIST	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	100	void DM2_REARRANGE_TIMERLIST(void)	1	UNREVIEWED
@@ -2696,6 +2822,10 @@ DM2_TRY_ORNATE_NOISE	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	4592	void DM2_TRY_ORN
 DM2_SET_TIMER_WEATHER	SKWINSPX	SKWINSPX/src/v5/skweath5.cpp	22	void DM2_SET_TIMER_WEATHER(i32 eaxl)	1	UNREVIEWED
 DM2_UPDATE_WEATHER	SKWINSPX	SKWINSPX/src/v5/skweath5.cpp	33	void DM2_UPDATE_WEATHER(i32 eaxl)	1	UNREVIEWED
 DM2_weather_3df7_0037	SKWINSPX	SKWINSPX/src/v5/skweath5.cpp	509	i32 DM2_weather_3df7_0037(i32 eaxl)	1	UNREVIEWED
+DM2_SET_TIMER_WEATHER	SKWINSPX	SKWINSPX/src/v5/skweathr.cpp	22	void DM2_SET_TIMER_WEATHER(i32 eaxl)	1	UNREVIEWED
+DM2_UPDATE_WEATHER	SKWINSPX	SKWINSPX/src/v5/skweathr.cpp	33	void DM2_UPDATE_WEATHER(i32 eaxl)	1	UNREVIEWED
+DM2_weather_3df7_0037	SKWINSPX	SKWINSPX/src/v5/skweathr.cpp	509	i32 DM2_weather_3df7_0037(i32 eaxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/skxrect.cpp	11	void c_xrectdat::init(void)	24	UNREVIEWED
 DM2_PT_IN_EXPANDED_RECT	SKWINSPX	SKWINSPX/src/v5/skxrect.cpp	24	bool DM2_PT_IN_EXPANDED_RECT(i16 query, i16 x, i16 y)	1	UNREVIEWED
 DM2_CALC_SIZE_OF_COMPRESSED_RECT	SKWINSPX	SKWINSPX/src/v5/skxrect.cpp	34	static i16 DM2_CALC_SIZE_OF_COMPRESSED_RECT(ui8 mask)	1	UNREVIEWED
 DM2_QUERY_RECT	SKWINSPX	SKWINSPX/src/v5/skxrect.cpp	61	static c_rect* DM2_QUERY_RECT(s_rnode* rnodep, i16 query)	1	UNREVIEWED
@@ -2719,6 +2849,7 @@ DM2_DRAW_TITLE_MENU_SCREEN	SKWINSPX	SKWINSPX/src/v5/startend.cpp	219	static void
 DM2_SHOW_MENU_SCREEN	SKWINSPX	SKWINSPX/src/v5/startend.cpp	250	static void DM2_SHOW_MENU_SCREEN(void)	1	UNREVIEWED
 DM2_LOAD_RECTS_AND_COMPRESS	SKWINSPX	SKWINSPX/src/v5/startend.cpp	351	static void DM2_LOAD_RECTS_AND_COMPRESS(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
 DM2_098d_1208	SKWINSPX	SKWINSPX/src/v5/startend.cpp	384	static void DM2_098d_1208(void)	1	UNREVIEWED
+R_D2C	SKWINSPX	SKWINSPX/src/v5/startend.cpp	390	static t_bmp* R_D2C(i16 w, i16 h)	2	UNREVIEWED
 DM2_38c8_00c8	SKWINSPX	SKWINSPX/src/v5/startend.cpp	402	static void DM2_38c8_00c8(void)	1	UNREVIEWED
 DM2_3929_07e1	SKWINSPX	SKWINSPX/src/v5/startend.cpp	410	/*static*/ void DM2_3929_07e1(i32 eaxl, i32 edxl)	1	UNREVIEWED
 DM2_3929_0e16	SKWINSPX	SKWINSPX/src/v5/startend.cpp	442	static i32 DM2_3929_0e16(void)	1	UNREVIEWED
@@ -2761,6 +2892,7 @@ mkul	SKWINSPX	SKWINSPX/src/v5/types.cpp	38	ui32 mkul(i32 ln) { return ln; }	1	UN
 SetX	SKWINSPX	SKWINSPX/src/v5/types.cpp	44	void SPX_Ax3::SetX(ui16 val)	1	UNREVIEWED
 SetY	SKWINSPX	SKWINSPX/src/v5/types.cpp	51	void SPX_Ax3::SetY(ui16 val)	1	UNREVIEWED
 SetMap	SKWINSPX	SKWINSPX/src/v5/types.cpp	58	void SPX_Ax3::SetMap(ui16 val)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/uibutton.cpp	13	void c_button::init(void)	24	UNREVIEWED
 init_global_buttongroups	SKWINSPX	SKWINSPX/src/v5/uibutton.cpp	27	void init_global_buttongroups(void)	1	UNREVIEWED
 DM2_OFFSET_RECT	SKWINSPX	SKWINSPX/src/v5/uibutton.cpp	34	c_rect* DM2_OFFSET_RECT(c_buttongroup* buttongroup, c_rect* rd, c_rect* rs)	1	UNREVIEWED
 DM2_ADJUST_BUTTONGROUP_RECTS	SKWINSPX	SKWINSPX/src/v5/uibutton.cpp	46	void DM2_ADJUST_BUTTONGROUP_RECTS(c_buttongroup* buttongroup, c_rect* rect)	1	UNREVIEWED
@@ -2777,6 +2909,7 @@ DM2_dialog_2066_38d9	SKWINSPX	SKWINSPX/src/v5/uidialog.cpp	307	static void DM2_d
 DM2_dialog_OPEN_DIALOG_PANEL	SKWINSPX	SKWINSPX/src/v5/uidialog.cpp	352	void DM2_dialog_OPEN_DIALOG_PANEL(i32 eaxl, i32 edxl)	1	UNREVIEWED
 DM2_dialog_2066_37f2	SKWINSPX	SKWINSPX/src/v5/uidialog.cpp	433	void DM2_dialog_2066_37f2(void)	1	UNREVIEWED
 DM2_dialog_2066_398a	SKWINSPX	SKWINSPX/src/v5/uidialog.cpp	454	i32 DM2_dialog_2066_398a(i32 eaxl)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	46	void c_eventdata::init(void)	24	UNREVIEWED
 DM2_1031_03f2	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	63	static i16 DM2_1031_03f2(s_bbw* eaxp, i16 x)	1	UNREVIEWED
 DM2_ADJUST_UI_EVENT	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	121	static void DM2_ADJUST_UI_EVENT(c_uievent* xeaxp)	1	UNREVIEWED
 DM2_TRANSMIT_UI_EVENT	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	189	static i8* DM2_TRANSMIT_UI_EVENT(c_uievent* xeaxp)	1	UNREVIEWED
@@ -2785,11 +2918,13 @@ DM2_0b36_129a	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	532	static void DM2_0b36_129a
 DM2_EXEC_EVENT	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	574	static void DM2_EXEC_EVENT(i16 eaxw)	1	UNREVIEWED
 DM2_IBMIO_USER_INPUT_CHECK	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	809	void DM2_IBMIO_USER_INPUT_CHECK(void)	1	UNREVIEWED
 DM2_EVENT_LOOP	SKWINSPX	SKWINSPX/src/v5/uiinput.cpp	919	"void DM2_EVENT_LOOP(void)	// = MAIN_LOOP"	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	79	void c_keybd::init(void)	24	UNREVIEWED
 getkey	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	90	i16 c_keybd::getkey(void)	1	UNREVIEWED
 putkey	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	102	void c_keybd::putkey(i16 keycode)	1	UNREVIEWED
 DM2_HAS_KEY	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	117	bool DM2_HAS_KEY(void)	1	UNREVIEWED
 DM2_GETKEY_TRANSLATED	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	126	i16 DM2_GETKEY_TRANSLATED(void)	1	UNREVIEWED
 DM2_keybd_476d_05b6	SKWINSPX	SKWINSPX/src/v5/uikeybd.cpp	181	i16 DM2_keybd_476d_05b6(i16 wn)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	21	void c_xmouserect::init(void)	24	UNREVIEWED
 push	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	27	bool c_commandqueue::push(c_servercommand sc)	1	UNREVIEWED
 pop	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	39	bool c_commandqueue::pop(OO c_servercommand& sc)	1	UNREVIEWED
 send_command	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	53	void send_command(i16 s)	1	UNREVIEWED
@@ -2800,6 +2935,7 @@ T1_drawmouse	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	359	void c_Tmouse::T1_drawmou
 T1_driver_mouseint	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	437	bool c_Tmouse::T1_driver_mouseint(c_evententry me)	1	UNREVIEWED
 blit_hline	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	457	void c_mblitter::blit_hline(c_pixel256* srcgfx, c_pixel256* destgfx, ui16 srcofs, ui16 destofs, ui16 pixels)	1	UNREVIEWED
 blit_hline_masked	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	468	void c_mblitter::blit_hline_masked(c_pixel256* srcgfx, c_pixel256* destgfx, ui16 srcofs, ui16 destofs, ui16 pixels, c_pixel mask)	1	UNREVIEWED
+blit	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	485	void c_mblitter::blit(c_pixel256* srcmap, c_pixel256* destmap, c_rect* rectp, i16 sx, i16 sy, i16 sw, i16 dw, i8 masked, ui8 bmask)	2	UNREVIEWED
 blit_hline_stretched	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	507	void c_mblitter::blit_hline_stretched(c_pixel256* srcgfx, c_pixel256* destgfx, ui16 srcx, ui16 destx)	1	UNREVIEWED
 driver_blockmouseinput	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	540	void c_Tmouse::driver_blockmouseinput(void)	1	UNREVIEWED
 driver_unblockmouseinput	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	546	void c_Tmouse::driver_unblockmouseinput(void)	1	UNREVIEWED
@@ -2835,24 +2971,35 @@ DM2_4BYTES_TO_LONG	SKWINSPX	SKWINSPX/src/v5/util.cpp	142	i32 DM2_4BYTES_TO_LONG(
 DM2_ROTATE_5x5_POS	SKWINSPX	SKWINSPX/src/v5/util.cpp	147	i16 DM2_ROTATE_5x5_POS(i16 wa, t_rotate rotate)	1	UNREVIEWED
 sgn8	SKWINSPX	SKWINSPX/src/v5/util.cpp	181	i8 sgn8(i8 bn)	1	UNREVIEWED
 jul_shl32	SKWINSPX	SKWINSPX/src/v5/util.cpp	187	i32 jul_shl32(i32 lm, i8 bn)	1	UNREVIEWED
+init	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	3	void c_sizex16::init(void)	24	UNREVIEWED
 peek8	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	18	i8 c_ql32::peek8(void) { return lv & lcon(0xff); }	1	UNREVIEWED
 peek16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	19	i16 c_ql32::peek16(void) { return lv & lcon(0xffff); }	1	UNREVIEWED
 poke16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	20	void c_ql32::poke16(i16 wn) { lv = mkl(wn) & lcon(0xffff); }	1	UNREVIEWED
 peek32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	21	i32 c_ql32::peek32(void) { return lv; }	1	UNREVIEWED
 poke32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	22	void c_ql32::poke32(i32 ln) { lv = ln; }	1	UNREVIEWED
+inc16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	27	void c_o32::inc16(void) { i16 wtmp = lv; lv = mkl(wtmp + 1) & lcon(0xffff); }	2	UNREVIEWED
+dec16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	28	void c_o32::dec16(void) { i16 wtmp = lv; lv = mkl(wtmp - 1) & lcon(0xffff); }	2	UNREVIEWED
+sub16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	29	void c_o32::sub16(i16 wn) { i16 wtmp = lv; lv = mkl(wtmp - wn) & lcon(0xffff); }	2	UNREVIEWED
+add16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	30	void c_o32::add16(i16 wn) { i16 wtmp = lv; lv = mkl(wtmp + wn) & lcon(0xffff); }	2	UNREVIEWED
 shl16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	31	void c_o32::shl16(ui8 ubn) { i16 wtmp = lv; wtmp <<= ubn; lv = mkl(wtmp) & lcon(0xffff); }	1	UNREVIEWED
 sar16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	32	void c_o32::sar16(ui8 ubn) { ui16 utmp = lv; utmp >>= ubn; lv = mkl(utmp) & lcon(0xffff); }	1	UNREVIEWED
 getbyte1	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	33	i8 c_o32::getbyte1(void) { return lv >> 8; }	1	UNREVIEWED
+and16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	34	void c_o32::and16(i16 wn) { lv &= lcon(0xffff0000) | mkl(wn); }	2	UNREVIEWED
+or16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	35	void c_o32::or16(i16 wn) { lv |= mkl(wn) & lcon(0xffff); }	2	UNREVIEWED
 xor16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	36	void c_o32::xor16(i16 wn) { lv ^= mkl(wn) & lcon(0xffff); }	1	UNREVIEWED
 inc32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	42	void c_ol32::inc32(void) { lv++; }	1	UNREVIEWED
+shr16	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	44	void c_ol32::shr16(ui8 ubn) { ui16 utmp = lv; utmp >>= ubn; lv = mkl(utmp) & lcon(0xffff); }	2	UNREVIEWED
 dec32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	45	void c_ol32::dec32(void) { lv--; }	1	UNREVIEWED
+add32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	46	void c_ol32::add32(i32 ln) { lv += ln; }	2	UNREVIEWED
 sub32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	47	void c_ol32::sub32(i32 ln) { lv -= ln; }	1	UNREVIEWED
 getbyte3	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	49	i8 c_ol32::getbyte3(void) { return lv >> 24; }	1	UNREVIEWED
+or32	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	52	void c_ol32::or32(i32 ln) { lv |= ln; }	2	UNREVIEWED
 getlong	SKWINSPX	SKWINSPX/src/v5/xtypes.cpp	54	i32 s_bbw::getlong(void) const	1	UNREVIEWED
 SK_GetContext	SKWINSPX	SKWINSPX/src/v6/skapi.cpp	9	SK_API int SK_GetContext(tSKWinContext* xSKWinContext)	0	UNREVIEWED
 SK_ProceedOneGameStep	SKWINSPX	SKWINSPX/src/v6/skapi.cpp	16	SK_API int SK_ProceedOneGameStep(tSKWinContext* xSKWinContext)	0	UNREVIEWED
 SK_SendUIEvent	SKWINSPX	SKWINSPX/src/v6/skapi.cpp	23	SK_API int SK_SendUIEvent(tSKWinContext* xSKWinContext, UINT iUIEventCode)	0	UNREVIEWED
 SK_SetMousePointer	SKWINSPX	SKWINSPX/src/v6/skapi.cpp	32	SK_API int SK_SetMousePointer(tSKWinContext* xSKWinContext, UINT iXPos, UINT iYPos)	0	UNREVIEWED
+MIN	SKWINSPX	SKWINSPX/src/v6/xcorebwy.cpp	18	#define MIN(a,b) ((a)>(b)?(b):(a))	2	UNREVIEWED
 tUWallFunction	SKWINSPX	SKWINSPX/src/v6/xcorebwy.cpp	42	union tUWallFunction {	0	UNREVIEWED
 tBWTileWall	SKWINSPX	SKWINSPX/src/v6/xcorebwy.cpp	66	} tBWTileWall;	0	UNREVIEWED
 BW_GetSwitchFunctionName	SKWINSPX	SKWINSPX/src/v6/xcorebwy.cpp	70	const char* BW_GetSwitchFunctionName(U8 iFuncNo)	0	UNREVIEWED
@@ -2875,6 +3022,7 @@ GET_DM1_DISTINCTIVE_ITEMTYPE	SKWINSPX	SKWINSPX/src/v6/xcoredm1.cpp	339	U16 SkWin
 DM1_DECYPHER_SAVEGAME_BLOCK	SKWINSPX	SKWINSPX/src/v6/xcoredm1.cpp	366	U16 SkWinCore::DM1_DECYPHER_SAVEGAME_BLOCK(U16* pDataBlock, U16 iCypherKey, U16 iBlockSize)	0	UNREVIEWED
 DM1_GAME_LOAD	SKWINSPX	SKWINSPX/src/v6/xcoredm1.cpp	382	i16 SkWinCore::DM1_GAME_LOAD()	0	UNREVIEWED
 GET_DATA_FOLDER_ZNAME	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	31	const X8* SkWinCore::GET_DATA_FOLDER_ZNAME()	0	UNREVIEWED
+GET_DATA_FOLDER_NAME	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	46	const X8* SkWinCore::GET_DATA_FOLDER_NAME()	0	UNREVIEWED
 EXTENDED_LOAD_AI_DEFINITION	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	61	X16 SkWinCore::EXTENDED_LOAD_AI_DEFINITION(void)	1	UNREVIEWED
 EXTENDED_LOAD_SPELLS_DEFINITION	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	280	SkWinCore::EXTENDED_LOAD_SPELLS_DEFINITION(void)	1	UNREVIEWED
 QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	329	U16 SkWinCore::QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD(ObjectID rl)	1	UNREVIEWED
@@ -2899,9 +3047,11 @@ INIT_CHAMPIONS_CUSTOM_MODES	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	647	void SkWin
 EXT_PROCEED_DCS_GENERIC_COMMAND	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	808	U16 SkWinCore::EXT_PROCEED_DCS_GENERIC_COMMAND(const char* sCommandName, const char* sObjectScope, const char* sSubCommand, int iArg1, int iArg2, int iArg3, int iArg4, int iArg5)	0	UNREVIEWED
 PLAY_DIRECT_SOUND	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1186	void SkWinCore::PLAY_DIRECT_SOUND(const char* sAudioFilename, int volume)	0	UNREVIEWED
 CHANGE_MUSIC_ID	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1207	void SkWinCore::CHANGE_MUSIC_ID(int iMapNumber, int iMusicID)	0	UNREVIEWED
+REQUEST_PLAY_MUSIC_FROM_MAP	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1214	void SkWinCore::REQUEST_PLAY_MUSIC_FROM_MAP(int iMapNumber)	0	UNREVIEWED
 REQUEST_PLAY_MUSIC	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1227	void SkWinCore::REQUEST_PLAY_MUSIC(int iMusicNumber, int iVolume = 25)	1	UNREVIEWED
 INIT_CHAMPION	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1273	void SkWinCore::INIT_CHAMPION(Champion *xChampion)	0	UNREVIEWED
 INSPECT	SKWINSPX	SKWINSPX/src/v6/xcoreenh.cpp	1326	void SkWinCore::INSPECT()	0	UNREVIEWED
+MIN	SKWINSPX	SKWINSPX/src/v6/xcoreeob.cpp	15	#define MIN(a,b) ((a)>(b)?(b):(a))	2	UNREVIEWED
 READ_DUNGEON_STRUCTURE_EOB	SKWINSPX	SKWINSPX/src/v6/xcoreeob.cpp	32	int SkWinCore::READ_DUNGEON_STRUCTURE_EOB(X16 isNewGame)	0	UNREVIEWED
 eob_CreatureDef	SKWINSPX	SKWINSPX/src/v6/xcoreeob.cpp	64	} eob_CreatureDef;	0	UNREVIEWED
 READ_DUNGEON_STRUCTURE_EOB_INFFILE	SKWINSPX	SKWINSPX/src/v6/xcoreeob.cpp	66	int SkWinCore::READ_DUNGEON_STRUCTURE_EOB_INFFILE(int iMapIndex)	0	UNREVIEWED
@@ -2935,6 +3085,8 @@ XAUDIO_SDL_CLOSE	SKWINSPX	SKWINSPX/src/v6/xsfxsdl.cpp	40	int XAUDIO_SDL_CLOSE() 
 XAUDIO_SDL_PLAY_SOUND_FILE	SKWINSPX	SKWINSPX/src/v6/xsfxsdl.cpp	41	int XAUDIO_SDL_PLAY_SOUND_FILE(const char* sFilename, int vol) { return -1; }	0	UNREVIEWED
 XAUDIO_SDL_PLAY_MIDI_FILE	SKWINSPX	SKWINSPX/src/v6/xsfxsdl.cpp	42	int XAUDIO_SDL_PLAY_MIDI_FILE(const char* sFilename, int vol) { return -1; }	0	UNREVIEWED
 threadAudio	SKWINSPX	SKWINSPX/src/v6/xsfxsdl.cpp	127	int threadAudio(void *data) {	0	UNREVIEWED
+CHANGE_CONSOLE_COLOR	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	49	#define CHANGE_CONSOLE_COLOR(_A_,_F_,_B_) ;;	0	UNREVIEWED
+main	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	72	int main(int argc, char* argv[])	1	UNREVIEWED
 SKWIN_START_MAIN	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	110	int SKWIN_START_MAIN(int iEngine, int argc, char **argv)	0	UNREVIEWED
 SKWIN_START_MAIN_HEADLESS	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	198	int SKWIN_START_MAIN_HEADLESS(tSKWinContext* xSKWinContext, int iEngine, int argc, char **argv)	0	UNREVIEWED
 SK_MainFromCommandLine	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	248	SK_API int SK_MainFromCommandLine(const char* sCommandLine)	0	UNREVIEWED

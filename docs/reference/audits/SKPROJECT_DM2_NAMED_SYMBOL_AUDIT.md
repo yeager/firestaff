@@ -22,9 +22,10 @@ repository README identifies `SKWINSPX` as its newer unified Windows/Linux/DOS
 engine; the disposition ledger below covers only the older `SKWIN`/`SKULLWIN`
 trees, with one selected SPX definition. `SKWINDOS` is also outside that
 ledger. The supplemental
-`SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists the `ctags -x` definitions
-from `SKWINSPX/src` and `SKWINDOS/src` at the locked checkout: 2,945 definition
-rows, 2,848 distinct names, and 97 repeated-name definitions. All 2,945 rows
+`SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists per-file `ctags -x`
+definitions from `SKWINSPX/src` and `SKWINDOS/src` at the locked checkout:
+3,097 definition rows, 2,848 distinct names, and 249 repeated-name
+definitions. All 3,097 rows
 are `UNREVIEWED`; exact name overlap with the older ledger is only a search
 hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -35,7 +36,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src` and `SKWINDOS/src` | 2,945 | Supplemental callable-definition rows; all `UNREVIEWED` |
+| `SKWINSPX/src` and `SKWINDOS/src` | 3,097 (2,724 SPX, 373 DOS) | Supplemental callable-definition rows; all `UNREVIEWED` |
 
 ## Dispositions
 
@@ -114,7 +115,7 @@ before treating a mapping as a parity result.
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The 1,754 disposition
 rows cover only the older `SKWIN`/`SKULLWIN` source sets; the supplemental
-2,945 `SKWINSPX`/`SKWINDOS` definitions are listed but not behaviorally
+3,097 `SKWINSPX`/`SKWINDOS` definitions are listed but not behaviorally
 reviewed. Per-function comparison and runtime evidence remain required for
 DOS, Amiga, FM Towns, and Macintosh.
 

@@ -44,37 +44,27 @@ def main() -> int:
                        if p.is_file() and p.suffix.lower() in {".c", ".cpp"})
         if not files:
             raise SystemExit(f"no C/C++ files found under {tree_root}")
-        result = subprocess.run(
-            [args.ctags, "-x", *(str(path) for path in files)],
-            check=True, capture_output=True, text=True)
-        for line in result.stdout.splitlines():
-            columns = line.split(None, 3)
-            if len(columns) != 4 or not columns[1].isdigit():
-                continue
-            symbol, line_number, _reported_path, signature = columns
-            # ctags reports the supplied path. Retain the repository-relative
-            # path so the TSV is portable across local checkout locations.
-            source_file = next(
-                (path for path in files
-                 if path.name == Path(_reported_path).name and
-                 str(path).endswith(Path(_reported_path).as_posix())),
-                None)
-            if source_file is None:
-                # The normal invocation emits the full argument path. This
-                # fallback handles ctags implementations that emit basename.
-                source_file = next((path for path in files
-                                    if path.name == Path(_reported_path).name), None)
-            if source_file is None:
-                raise SystemExit(f"cannot resolve ctags path: {_reported_path}")
-            discovered.append({
-                "symbol": symbol,
-                "source_tree": source_tree.split("/", 1)[0],
-                "source_file": source_file.relative_to(source_root).as_posix(),
-                "line": line_number,
-                "signature": signature,
-                "legacy_audit_exact_symbol_rows": str(legacy_counts.get(symbol, 0)),
-                "review_status": "UNREVIEWED",
-            })
+        for source_file in files:
+            # Run per file. Exuberant ctags suppresses same-name tags when
+            # multiple source files are passed together, which would erase
+            # separate v4/v5 definitions from this source inventory.
+            result = subprocess.run(
+                [args.ctags, "-x", str(source_file)],
+                check=True, capture_output=True, text=True)
+            for line in result.stdout.splitlines():
+                columns = line.split(None, 3)
+                if len(columns) != 4 or not columns[1].isdigit():
+                    continue
+                symbol, line_number, _reported_path, signature = columns
+                discovered.append({
+                    "symbol": symbol,
+                    "source_tree": source_tree.split("/", 1)[0],
+                    "source_file": source_file.relative_to(source_root).as_posix(),
+                    "line": line_number,
+                    "signature": signature,
+                    "legacy_audit_exact_symbol_rows": str(legacy_counts.get(symbol, 0)),
+                    "review_status": "UNREVIEWED",
+                })
 
     discovered.sort(key=lambda row: (row["source_file"], int(row["line"]),
                                      row["symbol"], row["signature"]))
