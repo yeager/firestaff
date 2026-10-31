@@ -1371,6 +1371,9 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                      uint16_t raw_index,
                                      int *out_width, int *out_height,
                                      DM2_ImageFormat *out_format);
+/* Last raw-image decoder rejection stage for the current thread. Diagnostic
+ * only; zero means no decoder rejection was observed. */
+int dm2_v1_asset_last_image_decode_failure_stage(void);
 
 /* ── SKULLWIN/c_gfx_decode.cpp source-named decode receipts ────────── */
 

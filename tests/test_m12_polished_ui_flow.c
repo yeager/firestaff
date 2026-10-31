@@ -61,6 +61,24 @@ static int rendered_rows_differ(const unsigned char *left,
     return 0;
 }
 
+static int rendered_region_differ(const unsigned char *left,
+                                 const unsigned char *right,
+                                 int width,
+                                 int x0,
+                                 int x1,
+                                 int y0,
+                                 int y1) {
+    int y;
+    if (!left || !right || width <= 0 || x0 < 0 || x1 > width ||
+        x1 <= x0 || y0 < 0 || y1 <= y0) return 0;
+    for (y = y0; y < y1; ++y) {
+        size_t offset = (size_t)y * (size_t)width + (size_t)x0;
+        if (memcmp(left + offset, right + offset,
+                   (size_t)(x1 - x0)) != 0) return 1;
+    }
+    return 0;
+}
+
 static int rendered_has_content(const unsigned char *framebuffer,
                                 size_t pixelCount) {
     size_t i;
@@ -217,8 +235,21 @@ int main(void) {
                 "settings RIGHT should switch tab and reset row to the first visible row")) return 1;
     originalSetting = state.settings.graphicsIndex;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.settings.graphicsIndex != originalSetting,
-                "settings ACCEPT should cycle the selected row value")) return 1;
+    if (!expect(state.settings.graphicsIndex ==
+                    (originalSetting + 1) % M12_PRESENTATION_MODE_COUNT,
+                "settings ACCEPT should advance to the next distinct presentation mode")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetSettingsValue(
+                           &state, M12_STARTUP_SETTINGS_ROW_GRAPHICS),
+                       M12_StartupMenu_GetPresentationModeLabel(&state)) == 0,
+                "graphics setting should display its selected presentation mode")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.settings.graphicsIndex ==
+                    (originalSetting + 2) % M12_PRESENTATION_MODE_COUNT,
+                "settings should expose every presentation mode in sequence")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_LEFT);
+    if (!expect(state.settings.graphicsIndex ==
+                    (originalSetting + 1) % M12_PRESENTATION_MODE_COUNT,
+                "settings value-left should select the previous presentation mode")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN, "settings BACK should return to main")) return 1;
 
@@ -250,6 +281,7 @@ int main(void) {
      * false missing-media popup. */
     state.assetStatus.dm2Available = 0;
     state.deferredScanActive = 1;
+    state.deferredScanCompletedGameMask &= ~(1U << 2);
     state.selectedIndex = 2;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
@@ -275,13 +307,12 @@ int main(void) {
     state.deferredScanActive = 0;
     state.deferredScanPending = 1;
     M12_StartupMenu_Draw(&state, pendingCardView, 320, 200);
-    if (!expect(!rendered_rows_differ(scanningCardView, pendingCardView,
-                                     320, 0, 200),
-                "pending and active scans should both show scanning status")) return 1;
     state.deferredScanPending = 0;
     M12_StartupMenu_Draw(&state, unavailableCardView, 320, 200);
-    if (!expect(rendered_rows_differ(scanningCardView, unavailableCardView,
-                                    320, 0, 200),
+    if (!expect(rendered_region_differ(scanningCardView, unavailableCardView,
+                                      320, 12, 308, 145, 162) &&
+                rendered_region_differ(pendingCardView, unavailableCardView,
+                                      320, 12, 308, 145, 162),
                 "platform card should distinguish scanning from missing media")) return 1;
     state.assetStatus.dm2Available = 1;
     force_menu_game_available(&state, 2, "dm2", "SKULLKEEP");

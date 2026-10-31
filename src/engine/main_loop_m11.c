@@ -1034,8 +1034,13 @@ static void m11_debug_log_launch_selection(
         static const char* const modeNames[M12_PRESENTATION_MODE_COUNT] = {
             "v1", "v20", "v21", "v22"
         };
+        const int requestedIndex =
+            menuState->gameOptions[slot].presentationModeIndex;
         const int resolved = gameView->presentationMode;
-        const char* requested = "menu-or-saved-setting";
+        const char* requested =
+            requestedIndex >= M12_PRESENTATION_V1_ORIGINAL &&
+                    requestedIndex < M12_PRESENTATION_MODE_COUNT
+                ? modeNames[requestedIndex] : "unknown";
         if (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
             cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
             requested = modeNames[cliPresentationModeOverride];
@@ -1049,8 +1054,9 @@ static void m11_debug_log_launch_selection(
                     ? modeNames[resolved] : "unknown",
                 gameView->presentationWidth,
                 gameView->presentationHeight,
-                (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
-                 cliPresentationModeOverride != resolved)
+                ((cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+                  cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT
+                      ? cliPresentationModeOverride : requestedIndex) != resolved)
                     ? " fallback=1" : "");
     }
 }

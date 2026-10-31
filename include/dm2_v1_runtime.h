@@ -219,6 +219,7 @@ typedef struct {
     int8_t wall_ornament_plan_status_square;
     uint8_t wall_ornament_plan_status_gdat_index;
     uint8_t wall_ornament_plan_status_image_field;
+    int wall_ornament_plan_failure_stage;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
     int viewport_raw_gdat_asset_count;
@@ -1754,6 +1755,9 @@ int dm2_v1_runtime_bind_weather_distant_environment(
  * Used by dm2_v2_runtime_render_frame to detect headless mode.
  * Source: Phase 5 runtime binding */
 int dm2_v1_runtime_has_dungeon_data(void);
+/* Last source-render rejection stage (0 means no rejected render). Intended
+ * for --debug so a blocked live frame identifies its failed admission gate. */
+int dm2_v1_runtime_last_render_failure_stage(void);
 
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
 

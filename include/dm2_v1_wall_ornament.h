@@ -28,6 +28,7 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int failure_stage;
     uint8_t wall_gfx_index;
     uint16_t colorkey;
     uint16_t position;

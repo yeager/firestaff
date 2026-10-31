@@ -648,14 +648,13 @@ int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
     return 0;
 }
 
-static int m12_toggle_user_presentation_mode(int presentationMode) {
-    /* V2.1 is the portable native Modern baseline.  V2.0/V2.2 remain valid
-     * implementation profiles when loaded from an existing configuration,
-     * but the user-facing control deliberately exposes only Original and
-     * Modern rather than leaking those implementation details. */
-    return presentationMode == M12_PRESENTATION_V1_ORIGINAL
-        ? M12_PRESENTATION_V21_UPSCALED
-        : M12_PRESENTATION_V1_ORIGINAL;
+static int m12_cycle_presentation_mode(int presentationMode, int delta) {
+    int count = M12_PRESENTATION_MODE_COUNT;
+    int next = m12_clamp_index(presentationMode, count) +
+               (delta < 0 ? -1 : 1);
+    if (next < 0) next = count - 1;
+    if (next >= count) next = 0;
+    return next;
 }
 
 /* Presentation cards are promises, not merely labels.  Their policy affects
@@ -776,9 +775,8 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
     (void)presentationMode;
     switch (row) {
         case M12_GAME_OPT_ROW_PRESENTATION:
-            (void)delta;
-            opts->presentationModeIndex = m12_toggle_user_presentation_mode(
-                opts->presentationModeIndex);
+            opts->presentationModeIndex = m12_cycle_presentation_mode(
+                opts->presentationModeIndex, delta);
             break;
         case M12_GAME_OPT_ROW_ARCHITECTURE:
             break;
@@ -990,9 +988,9 @@ static const M12_Glyph g_font[] = {
 
 static const char* g_presentationModes[] = {
     "ORIGINAL (V1)",
-    "MODERN (V2.X)",
-    "MODERN (V2.X)",
-    "MODERN (V2.X)"
+    "FILTERED (V2.0)",
+    "UPSCALED (V2.1)",
+    "MODERN ART (V2.2)"
 };
 static const char* g_windowModes[] = {_("WINDOWED"), _("MAXIMIZED"), _("FULLSCREEN")};
 
@@ -7314,9 +7312,8 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
             m12_request_dm1_language_scan(state);
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
-                (void)delta;
-                state->settings.graphicsIndex = m12_toggle_user_presentation_mode(
-                    state->settings.graphicsIndex);
+                state->settings.graphicsIndex = m12_cycle_presentation_mode(
+                    state->settings.graphicsIndex, delta);
             break;
         case M12_SETTINGS_ROW_RENDERER_BACKEND:
             state->settings.rendererBackendIndex = m12_cycle_index(
@@ -12043,8 +12040,9 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
                     state->deferredScanActive) &&
             !(state->deferredScanCompletedGameMask &
               m12_deferred_game_bit(entry->gameId));
-        ready = M12_AssetStatus_GameAvailable(&state->assetStatus,
-                                               entry->gameId) &&
+        ready = !scanning &&
+                M12_AssetStatus_GameAvailable(&state->assetStatus,
+                                              entry->gameId) &&
                 M12_AssetStatus_GameHasMatchedArchitecture(
                     &state->assetStatus, entry->gameId, cards[selected]);
         if (ready) {

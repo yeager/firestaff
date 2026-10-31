@@ -703,6 +703,7 @@ static int g_dm2_last_hud_party_valid;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
+static int g_dm2_last_render_failure_stage;
 
 typedef struct {
     DM2_V1_RuntimeState *runtime;
@@ -12838,6 +12839,7 @@ static void dm2_runtime_bind_wall_ornament_plan(
     viewport->wall_ornament_plan_status_square = -1;
     viewport->wall_ornament_plan_status_gdat_index = 0u;
     viewport->wall_ornament_plan_status_image_field = 0u;
+    viewport->wall_ornament_plan_failure_stage = 0u;
     for (int square = 0; square < DM2_SQ_COUNT; ++square) {
         DM2_ViewSquare *surface = &viewport->squares[square];
         DM2_V1_WallOrnamentReceipt receipt;
@@ -12925,6 +12927,8 @@ static void dm2_runtime_bind_wall_ornament_plan(
             viewport->wall_ornament_plan_status_square = (int8_t)square;
             viewport->wall_ornament_plan_status_gdat_index = surface->wall_ornate_gfx_index;
             viewport->wall_ornament_plan_status_image_field = (uint8_t)image_field;
+            viewport->wall_ornament_plan_failure_stage =
+                receipt.failure_stage;
             return;
         }
         if (!dm2_v1_query_gdat_summary_image_receipt(
@@ -13034,6 +13038,8 @@ static void dm2_runtime_bind_wall_ornament_plan(
                         &overlay_summary_image)) {
                     viewport->wall_ornament_plan_status_code = 6u;
                     viewport->wall_ornament_plan_status_square = (int8_t)square;
+                    viewport->wall_ornament_plan_failure_stage =
+                        overlay_receipt.failure_stage;
                     return;
                 }
                 overlay_scaled_width =
@@ -13488,8 +13494,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     static const int forward_dx[4] = { 0, 1, 0, -1 };
     static const int forward_dy[4] = { -1, 0, 1, 0 };
 
+    g_dm2_last_render_failure_stage = 0;
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
+        g_dm2_last_render_failure_stage = 1;
         return -1;
     }
 
@@ -13506,6 +13514,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->viewport_asset_palette_fetch !=
             dm2_v1_boot_viewport_asset_palette_fetch ||
         rt->viewport_asset_palette_user != rt->boot) {
+        g_dm2_last_render_failure_stage = 2;
         return -1;
     }
 
@@ -13546,6 +13555,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          * compact buffer is bound. */
         if (!dm2_v1_viewport_set_surface_dimensions(
                 &viewport, DM2_GFX_BACKBUFFER_W, DM2_GFX_BACKBUFFER_H)) {
+            g_dm2_last_render_failure_stage = 3;
             return -1;
         }
         dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
@@ -13744,6 +13754,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
             !dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
                 &viewport, scene_map_token, rt->gdat_scene_control_hash)) {
+            g_dm2_last_render_failure_stage = 4;
             return -1;
         }
     }
@@ -13849,6 +13860,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (rt->g1_scene_runtime_handoff.blocked) {
         /* A classified source tile has no verified GDAT material. Never let
          * the renderer turn this into a fallback dungeon frame. */
+        g_dm2_last_render_failure_stage = 5;
         return -1;
     }
     if (rt->g1_scene_runtime_handoff.valid &&
@@ -13995,6 +14007,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_runtime_present_rect7_backbuffer(
             rt, &viewport, &rect7_receipt, dungeon_backbuffer, framebuffer,
             fb_stride, view_w, view_h) != 0) {
+        g_dm2_last_render_failure_stage = 6;
         return -1;
     }
     rt->source_click_target_count = viewport.source_click_target_count;
@@ -14682,6 +14695,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.wall_ornament_plan_status_gdat_index;
     g_dm2_frame_ownership.wall_ornament_plan_status_image_field =
         viewport.wall_ornament_plan_status_image_field;
+    g_dm2_frame_ownership.wall_ornament_plan_failure_stage =
+        viewport.wall_ornament_plan_failure_stage;
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
@@ -18227,6 +18242,10 @@ int dm2_v1_runtime_bind_weather_distant_environment(
 int dm2_v1_runtime_has_dungeon_data(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     return (rt->boot && rt->boot->dm2_state) ? 1 : 0;
+}
+
+int dm2_v1_runtime_last_render_failure_stage(void) {
+    return g_dm2_last_render_failure_stage;
 }
 
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */

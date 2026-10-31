@@ -4,6 +4,8 @@
 #include "render_sdl_m11.h"
 #include "csb_v2_filter_config_pc34.h"
 #include "csb_v2_texture_upscale_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
+#include "dm1_v2_presentation_mode_pc34.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -60,12 +62,29 @@ int main(void) {
         state.world.party.champions[slot].hp.current = 100;
         state.world.party.champions[slot].hp.maximum = 100;
     }
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
 
     result = M11_GameView_HandleInput(&state,
                                       M12_MENU_INPUT_GRAPHICS_POPUP);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 1);
     assert(state.graphicsPopupSelectedRow == 0);
+
+    /* All advertised presentation modes must be reachable in the live F10
+     * menu, with the game-specific renderer allowed to report a fallback. */
+    for (int expected = M12_PRESENTATION_V20_FILTERED;
+         expected <= M12_PRESENTATION_V22_MODERN; ++expected) {
+        result = M11_GameView_HandleInput(
+            &state, M12_MENU_INPUT_VALUE_RIGHT);
+        assert(result == M11_GAME_INPUT_REDRAW);
+        assert(state.presentationMode == expected);
+        assert(M12_Config_Load(&config, NULL) == 1);
+        assert(config.graphicsIndex == expected);
+    }
+    result = M11_GameView_HandleInput(
+        &state, M12_MENU_INPUT_VALUE_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
 
     /* Every visible F10 control has a mouse path.  Exercise the tabs, a
      * value row and the close button through the same source-space pointer
@@ -124,7 +143,7 @@ int main(void) {
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
-    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
+    assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
 
     /* Close the F10 modal and exercise the V2 HUD that is actually drawn
      * after the live mode change. Champion four's portrait is deliberately
@@ -157,7 +176,7 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(M12_Config_Load(&config, NULL) == 1);
-    assert(config.graphicsIndex == M12_PRESENTATION_V21_UPSCALED);
+    assert(config.graphicsIndex == M12_PRESENTATION_V20_FILTERED);
     assert(config.scaleModeIndex == M11_SCALE_STRETCH);
 
     /* FPS is a presentation diagnostic: it is persisted and sampled from
@@ -209,10 +228,8 @@ int main(void) {
     assert(M12_Config_Load(&config, NULL) == 1);
     assert(config.dm1V2PhosphorPersistenceEnabled != savedPhosphor);
 
-    /* V2.2 is omitted completely when no real art pack has been admitted.
-     * The new CHEATS page is still available, so cycle past it before
-     * returning to presentation; prove enhancement rows cannot alter the
-     * original-data presentation. */
+    /* The CHEATS page is still available between enhancement and the base
+     * presentation controls. */
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupPage == 3);
@@ -221,7 +238,9 @@ int main(void) {
     assert(state.graphicsPopupPage == 0);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
-    assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
+    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
     assert(result == M11_GAME_INPUT_REDRAW);
     savedScanlineStrength = config.dm1V2CrtScanlinesEnabled;
@@ -258,12 +277,11 @@ int main(void) {
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
 
-    /* An admitted path alone is not CSB V2.2 material: a DM1 (or otherwise
-     * unrelated) .fsart must not expose CSB's modern mode before the CSB
-     * manifest/cache gate reports a complete installation. */
+    /* An unrelated art pack must not expose CSB's V2.2 selector without a
+     * finished CSB-owned material set. */
     config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
-    /* Simulate a completed modern pack for another game. CSB's own
-     * finished-material gate is still absent and must hide V2.2. */
+    /* A legacy global flag or another game's art pack cannot satisfy the
+     * CSB-owned material gate. */
     config.v22_modern_assets_installed = 1;
     snprintf(config.artpackPath, sizeof(config.artpackPath),
              "%s", "/tmp/other-game.fsart");
@@ -275,15 +293,13 @@ int main(void) {
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 1);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
-    assert(result == M11_GAME_INPUT_REDRAW);
-    assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
+    assert(result == M11_GAME_INPUT_IGNORED);
+    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
 
-    /* CSB V2.2 cannot be opened by a test-generated manifest or host PNG
-     * placeholders. The production renderer accepts only future original CSB
-     * decoded material; until then the F10 route stays on V1/V2.1. */
+    /* V2.2 art activation stays independently gated by real CSB materials. */
 
     /* CSB owns a separate V2 filter contract. The in-game F10 panel must
      * persist and apply CSB's filter settings, not mutate DM1's settings
@@ -428,7 +444,7 @@ int main(void) {
             assert(state.graphicsPopupActive == 1);
             result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
             assert(result == M11_GAME_INPUT_REDRAW);
-            assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
+            assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
 
             /* Click CHEATS, then its master toggle and SPEED row. */
             result = M11_GameView_HandlePointerButton(

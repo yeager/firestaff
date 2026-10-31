@@ -971,6 +971,8 @@ static int dm2_img3_emit_run(uint8_t *padded,
     return 1;
 }
 
+static int g_dm2_last_image_decode_failure_stage;
+
 static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
                                    size_t raw_size,
                                    int width,
@@ -990,12 +992,14 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
 
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE ||
         width <= 0 || height <= 0) {
+        g_dm2_last_image_decode_failure_stage = 731;
         return NULL;
     }
     even_width = (width + 1) & ~1;
     padded_total = (size_t)even_width * (size_t)height;
     pixel_total = (size_t)width * (size_t)height;
     if (padded_total == 0 || padded_total > (size_t)1024u * 1024u) {
+        g_dm2_last_image_decode_failure_stage = 732;
         return NULL;
     }
 
@@ -1004,6 +1008,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
     if (!padded || !pixels) {
         free(padded);
         free(pixels);
+        g_dm2_last_image_decode_failure_stage = 733;
         return NULL;
     }
 
@@ -1011,6 +1016,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
         if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &palette[i])) {
             free(padded);
             free(pixels);
+            g_dm2_last_image_decode_failure_stage = 734;
             return NULL;
         }
     }
@@ -1025,6 +1031,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
         if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &command)) {
             free(padded);
             free(pixels);
+            g_dm2_last_image_decode_failure_stage = 735;
             return NULL;
         }
         code = command & 7;
@@ -1036,6 +1043,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
                 !dm2_img3_read_duration(raw, raw_size, &cursor, &run)) {
                 free(padded);
                 free(pixels);
+                g_dm2_last_image_decode_failure_stage = 736;
                 return NULL;
             }
             if (!dm2_img3_emit_run(padded,
@@ -1049,6 +1057,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
                                    1)) {
                 free(padded);
                 free(pixels);
+                g_dm2_last_image_decode_failure_stage = 737;
                 return NULL;
             }
             continue;
@@ -1059,6 +1068,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
         } else if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &color)) {
             free(padded);
             free(pixels);
+            g_dm2_last_image_decode_failure_stage = 738;
             return NULL;
         }
 
@@ -1066,6 +1076,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
             if (!dm2_img3_read_duration(raw, raw_size, &cursor, &run)) {
                 free(padded);
                 free(pixels);
+                g_dm2_last_image_decode_failure_stage = 739;
                 return NULL;
             }
         } else {
@@ -1082,6 +1093,7 @@ static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
                                0)) {
             free(padded);
             free(pixels);
+            g_dm2_last_image_decode_failure_stage = 740;
             return NULL;
         }
     }
@@ -4748,6 +4760,10 @@ static int dm2_v1_asset_find_underlay_raw_index(
     return 0;
 }
 
+int dm2_v1_asset_last_image_decode_failure_stage(void) {
+    return g_dm2_last_image_decode_failure_stage;
+}
+
 uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                       uint16_t raw_index,
                                       int *out_width, int *out_height,
@@ -4763,6 +4779,7 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     int offset_y;
     uint8_t *pixels;
 
+    g_dm2_last_image_decode_failure_stage = 0;
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
     if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
@@ -4771,7 +4788,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
      * SKProject ReadImgDM2C4towns() accepts four-byte headers, including
      * GRAPHICSSET/0's six-byte wall material on the DB1 destination map. */
     if (!raw || raw_size < (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION
-                              ? 4u : DM2_IMG3_HEADER_SIZE)) return NULL;
+                              ? 4u : DM2_IMG3_HEADER_SIZE)) {
+        g_dm2_last_image_decode_failure_stage = 1;
+        return NULL;
+    }
 
     cx = img_rd16(raw + 0, loader->big_endian);
     cy = img_rd16(raw + 2, loader->big_endian);
@@ -4780,7 +4800,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     width = (int)(cx & 0x03ffu);
     height = (int)(cy & 0x03ffu);
     offset_y = dm2_img3_signed_offset(cy);
-    if (width <= 0 || height <= 0) return NULL;
+    if (width <= 0 || height <= 0) {
+        g_dm2_last_image_decode_failure_stage = 2;
+        return NULL;
+    }
 
     /* DMWeb's data-files format table identifies DMII FM Towns (0x8004)
      * as IMG2/IMG6 media; never route it through the PC IMG3 command
@@ -4796,14 +4819,19 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                       0x03ffu);
         word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
         height = (int)(word2 & 0x03ffu);
-        if (width <= 0 || width > 1023 || height <= 0 || height > 1023)
+        if (width <= 0 || width > 1023 || height <= 0 || height > 1023) {
+            g_dm2_last_image_decode_failure_stage = 3;
             return NULL;
+        }
         pixels = ((word2 & 0xfe00u) == 0x8000u)
             ? dm2_decode_fmtowns_img6_c4(raw, raw_size, width, height,
                                          out_format)
             : dm2_decode_fmtowns_img2_c4(raw, raw_size, width, height,
                                          out_format);
-        if (!pixels) return NULL;
+        if (!pixels) {
+            g_dm2_last_image_decode_failure_stage = 4;
+            return NULL;
+        }
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;
         return pixels;
@@ -4828,8 +4856,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
 
         underlay_raw = dm2_v1_load_gdat_raw_data(
             loader, underlay_raw_index, &underlay_raw_size);
-        if (!underlay_raw || underlay_raw_size < DM2_IMG3_HEADER_SIZE)
+        if (!underlay_raw || underlay_raw_size < DM2_IMG3_HEADER_SIZE) {
+            g_dm2_last_image_decode_failure_stage = 5;
             return NULL;
+        }
         underlay_cx = img_rd16(underlay_raw, loader->big_endian);
         underlay_cy = img_rd16(underlay_raw + 2u, loader->big_endian);
         underlay_width = (int)(underlay_cx & 0x03ffu);
@@ -4838,27 +4868,46 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
         if (underlay_width < width || underlay_height < height ||
             !dm2_img3_raw_bits_per_pixel(
                 underlay_raw, underlay_raw_size, &underlay_bpp,
-                loader->big_endian)) return NULL;
+                loader->big_endian)) {
+            g_dm2_last_image_decode_failure_stage = 6;
+            return NULL;
+        }
         if (underlay_offset_y == -32) {
             underlay_pixels = dm2_decode_uncompressed_image(
                 underlay_raw, underlay_raw_size, underlay_width,
                 underlay_height, (int)underlay_bpp, NULL);
+            if (!underlay_pixels &&
+                g_dm2_last_image_decode_failure_stage == 0)
+                g_dm2_last_image_decode_failure_stage = 71;
         } else if (underlay_offset_y == 31) {
             underlay_pixels = dm2_decode_img9_c8(
                 underlay_raw, underlay_raw_size, underlay_width,
                 underlay_height, NULL);
+            if (!underlay_pixels &&
+                g_dm2_last_image_decode_failure_stage == 0)
+                g_dm2_last_image_decode_failure_stage = 72;
         } else {
             underlay_pixels = dm2_decode_img3_c4(
                 underlay_raw, underlay_raw_size, underlay_width,
                 underlay_height, NULL);
+            if (!underlay_pixels &&
+                g_dm2_last_image_decode_failure_stage == 0)
+                g_dm2_last_image_decode_failure_stage = 73;
         }
-        if (!underlay_pixels) return NULL;
+        if (!underlay_pixels) {
+            if (g_dm2_last_image_decode_failure_stage == 0)
+                g_dm2_last_image_decode_failure_stage = 7;
+            return NULL;
+        }
         pixels = dm2_v1_decode_img3_overlay(
             raw, raw_size, underlay_pixels,
             (size_t)underlay_width * (size_t)underlay_height,
             width, height, out_format);
         free(underlay_pixels);
-        if (!pixels) return NULL;
+        if (!pixels) {
+            g_dm2_last_image_decode_failure_stage = 8;
+            return NULL;
+        }
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;
         return pixels;
@@ -4874,7 +4923,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                                height,
                                                (int)bpp,
                                                out_format);
-        if (!pixels) return NULL;
+        if (!pixels) {
+            g_dm2_last_image_decode_failure_stage = 9;
+            return NULL;
+        }
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;
         return pixels;
@@ -4886,7 +4938,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                     width,
                                     height,
                                     out_format);
-        if (!pixels) return NULL;
+        if (!pixels) {
+            g_dm2_last_image_decode_failure_stage = 10;
+            return NULL;
+        }
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;
         return pixels;
@@ -4899,7 +4954,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                 width,
                                 height,
                                 out_format);
-    if (!pixels) return NULL;
+    if (!pixels) {
+        g_dm2_last_image_decode_failure_stage = 11;
+        return NULL;
+    }
     if (out_width) *out_width = width;
     if (out_height) *out_height = height;
     return pixels;
