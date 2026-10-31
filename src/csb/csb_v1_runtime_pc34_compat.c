@@ -12595,6 +12595,11 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                     break;
                 }
                 storage_action = 1;
+                /* F0275 resolves HOLD after transferring the stored Thing to
+                 * the leader's hand. Retrieval leaves the hand occupied, so
+                 * the source turns HOLD into CLEAR. */
+                do_not_trigger = (int)(((flags_word >> 3) & 0x03u) ==
+                                       DM1_EFFECT_HOLD);
             } else {
                 if (object_type != sensor_data ||
                     csb_v1_runtime_find_wall_cell_object_of_type(
@@ -12607,8 +12612,8 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                     break;
                 }
                 storage_action = 2;
-                do_not_trigger = (int)(((flags_word >> 3) & 0x03u) ==
-                                       DM1_EFFECT_HOLD);
+                /* Depositing empties the hand before F0275 resolves HOLD;
+                 * source therefore turns HOLD into SET. */
             }
             trigger = 1;
             break;
