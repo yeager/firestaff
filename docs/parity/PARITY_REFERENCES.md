@@ -61,7 +61,7 @@ DM2, retain the more detailed [PC English Greatstone cross-check](../reference/a
 
 ### A2. ReDMCSB WIP archive (dm7z-extract)
 - **Local path:** `dm7z-extract/`
-- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes)
+- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes; SHA-256 `58de16a34476a1ac2349ca01a4768cdecbadc9929fed0b69e8b9698f996159d1`). The 2026-10-31 refetch matches this checksum.
 - **Key contents:**
   - `Reference/Original/I34E/` — DM PC 3.4 English executables (11 LZEXE-compressed DOS files): `DM.EXE`, `FIRES` (94,779 bytes, main game), `VGA`, `ANIM`, `SWOOSH`, `SELECTOR`, etc.
   - `Reference/Original/G14ED/` — Amiga 1.4 English Demo: `DUNGEON.MASTER` (233,777 bytes), `START`
