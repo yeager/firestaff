@@ -235,6 +235,14 @@ static int run_external_ymir_priority_stack(void)
         "e853e43bfc7d73d3425c56bf9c5258217c6db63d12859d4cbf587662be0799cd",
         NULL, NULL, 59884U, 491U, 3954U, 148U, 7203U
     };
+    static const YmirPriorityStackCapture frame2173 = {
+        NULL, NULL, NULL, NULL, NULL,
+        "82caef1162741e5baca99e3a8747abb62bd0568df84c75cc0a781176b6636f04",
+        "972bf6209ec8543a0665b5077a1c8f069ec213cea100be623b591268e1a03e31",
+        "244e7d84c910f5555f12250dde6ccf698171682588ba88253fa73fb2478006de",
+        "e853e43bfc7d73d3425c56bf9c5258217c6db63d12859d4cbf587662be0799cd",
+        NULL, NULL, 59884U, 491U, 3954U, 148U, 7203U
+    };
     static const YmirPriorityStackCapture frame300 = {
         NULL, NULL, NULL, NULL, NULL,
         "82caef1162741e5baca99e3a8747abb62bd0568df84c75cc0a781176b6636f04",
@@ -276,6 +284,16 @@ static int run_external_ymir_priority_stack(void)
         capture.output_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME300_STACK_OUT");
         capture.reference_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME300_RENDERED");
         capture.reference_sha256 = frame300.reference_sha256;
+        if (!run_external_ymir_priority_stack_capture(&capture)) return 0;
+        ran = 1;
+    }
+    if (getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP1_FBS")) {
+        capture = frame2173;
+        capture.vdp1_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP1_FBS");
+        capture.vram_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP2_VRAM");
+        capture.cram_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP2_CRAM");
+        capture.registers_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP2_REGS");
+        capture.output_path = getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_STACK_OUT");
         if (!run_external_ymir_priority_stack_capture(&capture)) return 0;
         ran = 1;
     }

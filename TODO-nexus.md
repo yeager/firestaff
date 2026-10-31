@@ -31,13 +31,15 @@ The authentic Japanese MAPD startup pass (VDP1 frame 891 / VDP2 serial
 pattern palette selection, rejects N1TPON and unsupported two-word CRAM color
 modes, and records the decoded layer color for later composition. The NBG1
 priority-stack path now consumes that palette-resolved RGBA color instead of
-treating the raw dot index as a CRAM address. CI passed the Linux/macOS CMake build, Nexus production boundary, and filtered
-CTest; Windows CMake also passed. The opt-in authentic MAPD layer test and
-frame-239, frame-300 priority-stack comparisons were rerun against PR head
-`c1d2664` and passed. The two gameplay screenshot comparisons each matched all
-286,720 doubled RGB samples with zero error; the frame-300 stack matched Ymir's
-same-run RGB reference. This verifies these captured states only and does not
-enable production rendering. See
+treating the raw dot index as a CRAM address. The opt-in authentic MAPD layer
+test and VDP priority-stack comparisons for frames 239, 397, 300, 8037, and the
+four-champion Continue frame 2173 passed against PR code commit `c1d2664`.
+Frames 239, 397, and 2173 each match all 286,720 doubled screenshot RGB samples
+with zero channel error; frame 300 matches Ymir's same-run RGB reference, and
+frame 8037 matches both Ymir pass buffers. These results verify only the
+captured states and do not enable production rendering. The later full CI run
+also found unrelated stale localization catalogs and a Theron source-boundary
+failure in the merged PR check. See
 [the MAPD 4bpp capture report](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
 ## 2026-10-30 — NBG1 8bpp character stride

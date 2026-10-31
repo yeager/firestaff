@@ -29,9 +29,10 @@ not bind the full NBG0 bitmap, `MENU.BPK`, menu transitions, or input hitboxes.
 At Japanese cold-boot title-prompt frame 13162, command 171 binds to
 `TITLE.BIN` DGT2/PP record 21 and a 921-byte NBG0 span binds to TITL record 2.
 The selected VDP1 FBS + NBG0 + command reconstruction matches all 286,720
-doubled samples within eight levels. At gameplay frames 239 and 397, the captured
-VDP1/VDP2 priority stack matches all 286,720 doubled screenshot samples
-exactly. Each result covers only its selected layers and frame; arbitrary
+doubled samples within eight levels. At gameplay frames 239, 397, and the
+authentic four-champion Continue frame 2173, the captured VDP1/VDP2 priority
+stack matches all 286,720 doubled screenshot samples exactly. Each result
+covers only its selected layers and frame; arbitrary
 VDP states, full title/menu composition, and production renderer admission
 remain unverified. See the linked capture-specific evidence notes in
 `docs/nexus_vdp1_menu_frame119_source_join.md`,

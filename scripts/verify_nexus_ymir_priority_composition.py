@@ -22,6 +22,10 @@ CAPTURE_EXPECTATIONS = {
         "screenshot_sha256": "b03843d943bfade7b68d19c8f195896b59f8aa254c7a8bc549abe3b702d510cc",
         "stack_sha256": "402ca6d5d295214f68d574097753ee04c6194f42d82bb832bd902052bbbe97e3",
     },
+    2173: {
+        "screenshot_sha256": "742ea48a955f07c8490169c6b444b53fb947385ed97a3f1812b684b65b2a2872",
+        "stack_sha256": "116b9ca3a19a6ce2642224d42efbf45a22f0d2481022ae7ba19b6bc100336fdf",
+    },
 }
 
 
