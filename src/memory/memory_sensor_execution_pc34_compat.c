@@ -64,32 +64,9 @@ int F0710_SENSOR_Execute_Compat(
     }
 
     switch (sensor->sensorType) {
-    case 0: {
-        /* TELEPORT — destination from sensor's remote target fields. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_TELEPORT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = -1; /* Same-map teleport in v1 — caller keeps current mapIndex. */
-        e->destMapX = sensor->targetMapX;
-        e->destMapY = sensor->targetMapY;
-        e->destCell = sensor->targetCell;
-        e->textIndex = 0;
-        outList->count = 1;
+    case DM1_SENSOR_DISABLED:
+        /* C000 is disabled in the source sensor table; it has no action. */
         return 1;
-    }
-    case 13: {
-        /* TEXT / MESSAGE — sensor->sensorData carries the text index. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_SHOW_TEXT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = 0;
-        e->destMapX = 0;
-        e->destMapY = 0;
-        e->destCell = 0;
-        e->textIndex = (int)sensor->sensorData;
-        outList->count = 1;
-        return 1;
-    }
     case 1:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
     case 2:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE */
     case 3:  /* DM1_SENSOR_FLOOR_PARTY — pressure plates */

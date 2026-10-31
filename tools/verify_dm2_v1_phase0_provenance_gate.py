@@ -25,10 +25,10 @@ DEFAULT_SPHENX_CACHE = Path.home() / ".firestaff/data/firestaff-dm2-sources/sphe
 DEFAULT_EVIDENCE = ROOT / "parity-evidence/verification/dm2_v1_phase0_provenance_gate/manifest.json"
 
 SKPROJECT_REMOTE = "https://github.com/gbsphenx/skproject"
-SKPROJECT_HEAD = "a962896e42aaf54c76157a7b062fb5b0526929e6"
-SKPROJECT_TREE = "a095e458cfaaa0490b9c4d4d2adf88108a8ad92f"
-SKPROJECT_TREE_FILE_COUNT = 1868
-SKPROJECT_TREE_NAME_SHA256 = "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
+SKPROJECT_HEAD = "2c59a2c5a7978923ff5c822c15c3479e4d448493"
+SKPROJECT_TREE = "a09b748f8ce1a974a642965f3a48e925e202ef9f"
+SKPROJECT_TREE_FILE_COUNT = 1872
+SKPROJECT_TREE_NAME_SHA256 = "2e358622158efa78ac9545915bc56ce25d48c4fd1c9b904fb277cda22e57b207"
 
 SPHENX_PAGE_URL = "https://dmbuilder.sphenxmusics.fr/skwin.php"
 SPHENX_PACKAGE_URL = "https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip"

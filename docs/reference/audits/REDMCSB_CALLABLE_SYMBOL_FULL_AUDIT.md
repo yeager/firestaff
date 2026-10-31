@@ -21,7 +21,7 @@ compiler/linker BSS initialization rather than a callable symbol.
 | F | 2,100 |
 | E | 6 |
 | R | 8 |
-| S | 15 |
+| S | 19 |
 | **Total** | **2,133** |
 
 ## Mapping rules

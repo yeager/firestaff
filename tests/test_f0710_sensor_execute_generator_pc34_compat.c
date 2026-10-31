@@ -60,23 +60,38 @@ static void test_generator_null_safety(void) {
 static void test_version_checker_uses_dm1_v20_gate(void) {
     struct SensorOnSquare_Compat sensor;
     struct SensorEffectList_Compat effects;
+    struct DungeonSensor_Compat sourceSensor;
+    struct DungeonThings_Compat things;
 
     memset(&sensor, 0, sizeof(sensor));
+    memset(&sourceSensor, 0, sizeof(sourceSensor));
+    memset(&things, 0, sizeof(things));
+    sourceSensor.sensorType = DM1_SENSOR_FLOOR_VERSION_CHECKER;
+    sourceSensor.effect = DM1_EFFECT_TOGGLE;
+    things.sensors = &sourceSensor;
+    things.sensorCount = 1;
     sensor.found = 1;
     sensor.sensorType = DM1_SENSOR_FLOOR_VERSION_CHECKER;
+    sensor.sensorIndex = 0;
     sensor.targetMapX = 3;
     sensor.targetMapY = 5;
 
-    sensor.sensorData = 20u;
-    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+    sourceSensor.sensorData = 20u;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, &things, &sensor,
               SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 1 &&
               effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
           "C009 data 20 triggers for DM1 V2.0");
 
-    sensor.sensorData = 21u;
-    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+    sourceSensor.sensorData = 21u;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, &things, &sensor,
               SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 0,
           "C009 data above 20 does not trigger for DM1 V2.0");
+
+    sourceSensor.revertEffect = 1;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, &things, &sensor,
+              SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "C009 inverted data above 20 triggers through the source record");
 }
 
 static void test_source_sensor_type_meanings(void) {

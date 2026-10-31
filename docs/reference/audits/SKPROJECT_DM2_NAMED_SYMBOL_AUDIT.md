@@ -4,7 +4,8 @@
 
 This line-addressable inventory covers callable definitions in the
 project-owned `.cpp` files under skproject `SKWIN/` and `SKULLWIN/`, excluding
-bundled third-party SDK trees. Its source authority is the upstream revision
+bundled third-party SDK trees, plus the selected `DM2_ARRANGE_DUNGEON` row in
+`SKWINSPX/src/v5/skmap.cpp`. Its source authority is the upstream revision
 locked by `docs/parity/DM2_V1_PHASE0_PROVENANCE_GATE.md`:
 
 - Repository: <https://github.com/gbsphenx/skproject>
@@ -20,7 +21,7 @@ playable game route or parity on every supported platform.
 
 | Source set | Definitions | Result |
 |---|---:|---|
-| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/` | 1,751 | Callable-definition rows in the ledger |
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,751 | Callable-definition rows in the ledger |
 
 ## Dispositions
 
@@ -59,6 +60,8 @@ rows and runtime evidence.
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
   END { print rows, count["IMPLEMENTED_PARITY"], count["NOT_APPLICABLE_ARCH"],
-              count["NONAPPLICABLE"], count["UNOWNED_SOURCE_MUTATION"] }' \
+              count["NONAPPLICABLE"], count["UNOWNED_SOURCE_MUTATION"],
+              count["PARTIAL"], count["STATIC_INPUT_ONLY"],
+              count["PARTIAL_SOURCE_OWNER"] }' \
   docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv
 ```
