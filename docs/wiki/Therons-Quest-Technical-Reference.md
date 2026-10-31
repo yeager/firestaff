@@ -21,7 +21,14 @@
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save
-> behavior, and full gameplay remain evidence-gated. Three JP PCE Fast
+> behavior, and full gameplay remain evidence-gated. A 2026-10-31 authentic US
+> Drator follow-up joins generated-row writes and reads for offsets 6–8 and a
+> later ten-byte TII copy to a work buffer. The first five 512-byte runtime
+> `$C852` windows exactly match US Track 02 raw offset `$A3AD2`. The runtime
+> source is mapped, while direct generated-row consumer attribution and
+> downstream row semantics remain open; the associated BIOS trace was
+> explicitly truncated and fails closed. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> Three JP PCE Fast
 > reference UP runs bind scripted `up@61:120` to the same-frame guest read at
 > `$44C1` and the shared event order through `$D334` read, `$D349` write, and
 > `$D334` reread of `$2912`, absent in three neutral controls. The order does

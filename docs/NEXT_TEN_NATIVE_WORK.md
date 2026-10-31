@@ -23,34 +23,25 @@ contains only the next cross-game work items, not a complete Theron inventory.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron US (Drator) generated-row consumer join.** First resolve the two
-   runtime `$C852` fetch windows at physical `$0DC852` against the authentic
-   ROM bank; their `a5ba85a9a5b885a8...` bytes differ from the prior static
-   attribution. Rerun the retained 8,388,608-row trace through the new streaming
-   System Card I/O/RAM verifier. Then capture the filtered main-RAM reads in an
-   event-aware window: the 1,048,576-row sample limit was reached before
-   `reentered-event`. Callback-state verification passed at 403,975 rows, but
-   the wrapper did not finish. This reference capture does not replace the
-   native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join.
-   A rebuilt cold replay reached Drator `left-event` and captured two runtime
-   `$C852` windows at physical `$0DC852`; their bytes differ from the prior
-   static attribution. The filtered consumer observer hit its 1,048,576-row
-   cap before reentry, callback-state verification passed, and the
-   8,388,608-row System Card I/O/RAM verifier exhausted whole-file memory.
-   The streaming verifier is implemented; rerun with a capture that avoids the
-   fixed row cap, source-map the runtime code, and capture an event-aware
-   consumer window. A hit in another physical bank does not
-   close the join. Keep row fields opaque. Then continue the separate
-   `$C1FC` active-map and movement question: its matched input-conditioned
-   transfers may be teleporter destination copying and do not yet prove
-   movement, collision or visible effect. See the
+5. **Theron US (Drator) generated-row consumer join.** The cold Drator
+   reference now records 27 runtime `$C852` fetches at physical `$0DC852`; its
+   first five 512-byte windows exactly match authenticated US Track 02 raw
+   offset `$A3AD2`. The route reached `left-event` and `reentered-event`, and
+   same-session writes/reads of generated-row offsets 6–8 plus a later ten-byte
+   work-buffer copy are proven. The consumer observer reached its cap after
+   these reads; the route subsequently reached reentry. The BIOS trace was
+   explicitly truncated, and its streaming verifier correctly rejected the
+   marker. Source-map readers `$CBC9` and `$45C3`, trace the work buffer
+   downstream, and establish whether `$C852`
+   participates in this row lifecycle. Keep row bytes opaque. This reference
+   capture does not replace the native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join. Continue the separate `$C1FC` active-map and movement question:
+   its matched input-conditioned transfers may be teleporter destination
+   copying and do not prove movement, collision or visible effect. See the
    [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). The clean
    Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check have
-   already passed. The initial Drator route capture is now recorded, but the
-   same-event `$C852` consumer capture is still outstanding. No
-   Drator-positioned save or state artifact is checked into
-   the repository, so the capture must use a separately verified authentic
-   state or reproduce the original Drator route with hash-verified media.
+   passed. No Drator-positioned save or state artifact is checked into the
+   repository, so reproduce the route from hash-verified media in a fresh
+   profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
    Track 02 transition through its game-owned consumer, then bind bitmap,
    palette, text and audio state to the native presentation path. Save-state

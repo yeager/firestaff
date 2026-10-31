@@ -6,27 +6,38 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-The remaining useful original-game capture is a Drator replay that observes
-opcode fetches at logical `$C852` during the already authenticated generated-row
-publication/read/unlink event. Enable the bounded fetch hook with
+The latest original-game capture maps the runtime `$C852` code window to
+Track 02 raw offset `$A3AD2`. The cold Drator route reached start, left-event
+and reentry. Its wrapper remains incomplete because the exhaustive BIOS trace
+hit its row cap; the next useful capture should scope BIOS tracing to the
+source-locked decision/status path. The existing capture also joins generated-
+row publication bytes to later reads and a work-buffer copy. Enable the bounded
+fetch hook with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; it runs after `RdAtPC()` and
 before instruction dispatch, and writes `${THERON_LIVE_TRACE_OUTPUT}.c852-fetch`
-with at most 4,096 hits. Each row records the fetched opcode, a 27-byte runtime
+with at most 4,096 hits. Each row records the fetched opcode, a 512-byte runtime
 code window, physical PC, MPR snapshot, registers and `event_sequence` from the
 same shared counter used by the row-lifecycle trace. Correlate it with the
 main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.
 
-The 2026-10-31 authentic US cold run reached both Drator `start` and
-`left-event`. The rebuilt reference binary captured two `$C852` fetches at
-physical `$0DC852`, with event sequences 10,644,900 and 10,648,164. Both runtime
-windows begin `a5ba85a9a5b885a8...`; this differs from the static raw `$A1612`
-window previously attributed to logical `$C852`. The runtime fetch is
-therefore not yet source-bound to that static row-copy code. The filtered
-consumer trace sampled `$1F093B-$1F093D` but filled its 1,048,576-row sample
-limit before route reentry; no consumer read at the two fetch events is
-established. The target-write trace retained 139 rows. Callback-state
+The 2026-10-31 authentic US cold run reached Drator `start`, `left-event` and
+`reentered-event` at level `$03`, position `$02,$03`. The rebuilt reference
+binary recorded 27 `$C852` fetches at physical `$0DC852`. The first five
+512-byte runtime windows have SHA-256
+`c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`, exactly
+matching the authentic US Track 02 candidate at raw offset `$A3AD2`. Later
+windows vary as execution advances. This maps the captured runtime code window
+to that source occurrence; it does not prove `$C852` is the generated-row
+consumer or assign semantics to the row bytes. The filtered
+consumer trace filled its 1,048,576-row sample limit before route reentry; the
+route later reached reentry. The trace retained a same-session byte join:
+writes to physical `$1F093B-$1F093D`
+(`$02,$03,$00`) at events 10,644,901, 10,644,902 and 10,644,910 are followed
+by reads of those bytes at events 10,644,912–10,644,914. A later PC `$45C3`
+`TII $2935,$2400,$000A` reads the same offsets and values at events
+10,647,071–10,647,073. The target-write trace retained 139 rows. Callback-state
 verification passed with 403,975 rows (87 reads and 403,888 writes), but the
 System Card I/O/RAM trace reached its 8,388,608-row cap. Its former verifier
 loaded all 8.4 million rows into a list and reached about 3.2 GB RSS before it
@@ -36,12 +47,12 @@ passes. The full retained trace was processed with about 18 MB RSS and rejected
 only at its explicit truncation marker, confirming both the streaming memory
 bound and fail-closed behavior.
 
-The generator receipt still proves the row lifecycle and a prior consumer in
-that event, while this capture establishes neither `$C852`'s same-event row
-consumption nor the runtime code's static source identity. Keep row bytes
-opaque. Continue by resolving the runtime bank/code window, filtering the
-consumer range with event-aware sampling or a higher bounded limit, and making
-the I/O/RAM verifier stream rows with bounded memory. This capture does not
+The generator receipt and this cold run now prove a same-session write/read
+match for row offsets 6–8 and a ten-byte copy into a work buffer. The capture
+does not prove that the `$C852` fetch itself reads those bytes. Keep row bytes
+semantically opaque and trace the consumer's downstream use. The
+streaming I/O/RAM verifier uses bounded memory but correctly rejects this
+capture's explicit truncation marker. This capture does not
 close the separate native
 viewport gap, which still requires a same-run map/pose-to-VDC/VCE/VRAM-to-frame
 join. See the
@@ -52,9 +63,10 @@ The complete clean-source Mednafen 1.32.1 patch chain applied in three
 consecutive loops. A fresh instrumented PCE Fast build against real SDL2 2.33.0
 compiled and installed, and the isolated capture-wrapper runtime verifier
 passed for both compiled and running SDL versions. This clears the former
-`sdl2-compat` runtime gate. The 2026-10-31 run has since reached Drator, but
-its `$C852` same-event consumer join remains open as described above. No
-Drator-positioned save or state artifact is checked into the repository. Use a
+`sdl2-compat` runtime gate. The 2026-10-31 run has since reached Drator and
+proved the generated-row byte reads described above; `$C852` source mapping is
+resolved for the captured code window, while downstream buffer semantics
+remain open. No Drator-positioned save or state artifact is checked into the repository. Use a
 separately verified authentic state or reproduce the original Drator route
 with hash-verified media in a new isolated profile and evidence directory; do
 not reuse an occupied capture profile.

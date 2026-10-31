@@ -35,9 +35,10 @@ def main() -> None:
         assert result.returncode == 0, result.stderr
         changed = source.read_text()
         assert changed.count("source=mednafen-pce-fast-c852-opcode-fetch") == 1
-        assert "code_bytes[55]" in changed
+        assert "code_bytes[1025]" in changed
         assert "HuCPU.FastPageR[" in changed
-        assert "i < 27" in changed
+        assert "<= 0x1E00" in changed
+        assert "i < 512" in changed
         assert "code_bytes=%s" in changed
         result = subprocess.run(
             [sys.executable, str(INSTRUMENTER), str(root)],

@@ -1,20 +1,35 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — authentic US cold Drator route capture; `$C852` join remains open
+## 2026-10-31 — authentic US cold Drator row byte join and runtime source mapping
 
 - Follow-up with a rebuilt PCE Fast binary reached Drator `start` and
   `left-event`, then captured two runtime `$C852` fetches at physical
-  `$0DC852` (shared events 10,644,900 and 10,648,164). Their 27-byte windows
-  begin `a5ba85a9a5b885a8`, differing from the previous static source
-  attribution. The runtime bank/source mapping remains unresolved.
+  `$0DC852` (shared events 10,644,900 and 10,648,164). Their 512-byte windows begin `a5ba85a9a5b885a8`; the first five hash to
+  `c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`, an
+  exact match for authenticated US Track 02 raw offset `$A3AD2`. The later
+  windows vary as execution advances. The cold route reached `reentered-event`
+  at level `$03`, position `$02,$03`. Wrapper verification is still pending.
+- The same capture's target-write and consumer traces join physical
+  `$1F093B-$1F093D` writes (`$02,$03,$00`) at events 10,644,901, 10,644,902
+  and 10,644,910 to reads of the same values at events 10,644,912–10,644,914.
+  A later `$45C3` TII read confirms the ten-byte row copy from `$2935` to
+  `$2400`, including offsets 6–8. Raw trace hashes and exact rows are in the
+  source-lock report. The exact source-byte mapping is established; direct `$C852` consumer
+  attribution and field meanings remain open.
 - The filtered `$1F093B-$1F093D` observer reached its 1,048,576-row limit
-  before route reentry. Callback-state verification passed for 403,975 rows
+  before route reentry in the row-consumer trace; the cold route later reached
+  reentry in its route diagnostic. Callback-state verification passed for 403,975 rows
   (87 reads, 403,888 writes). The 8,388,608-row System Card I/O/RAM trace
-  reached its cap; whole-file verification used about 3.2 GB RSS and was
-  stopped, so wrapper verification did not finish.
-- Updated the documentation to retain these limits. Next capture work needs a
-  source-mapped runtime `$C852` code and an event-aware row-consumer
-  observation. Replaced whole-file I/O/RAM loading with line-by-line
+  reached its cap. The streaming verifier processed it at about 18 MB RSS and
+  correctly rejected its explicit truncation marker, so wrapper verification
+  remains incomplete.
+- Updated the documentation to retain these limits. A search of the authentic
+  Track 02 BIN found seven occurrences of the initial runtime `$C852` prefix.
+  Their first 128 bytes match, while their 512-byte windows are distinct. The
+  later isolated capture matches `$A3AD2`; the consumer and semantics remain
+  open.
+  Downstream work-buffer analysis also remains open.
+  Replaced whole-file I/O/RAM loading with line-by-line
   verification, preserving strict row checks with bounded memory; the
   iterator path and related focused regressions passed three loops. The
   retained 8,388,608-row trace was processed at about 18 MB RSS and correctly
@@ -23,7 +38,7 @@
   native gameplay or renderer parity.
 - Rebuilt clean-source Mednafen 1.32.1 after increasing the System Card I/O/RAM
   trace cap to 8,388,608 rows and callback-state cap to 524,288 rows. Added the
-  bounded 27-byte runtime code window to `$C852` fetch rows; three-loop focused
+  bounded runtime code window to `$C852` fetch rows; three-loop focused
   instrumentation/verifier regressions passed, and the clean PCE Fast build
   completed on TRV2. The authentic follow-up produced the limits recorded
   above. The I/O/RAM verifier must be converted to streaming before it can
@@ -55,14 +70,14 @@
   repository; the next capture must use a separately verified authentic state
   or reproduce the original Drator route from hash-verified media.
 - Refreshed the Theron row in the native platform verification page while
-  retaining that page's older full-review date. The other current Theron
-  summaries already agree that the same-event join and full gameplay parity
-  remain open.
+  retaining that page's older full-review date. Current Theron summaries now
+  record the byte-level same-session row join while keeping runtime source
+  mapping and full gameplay parity open.
 
 ## 2026-10-31 — clean `$C852` patch chain and PCE Fast build verified
 
 - ✅ Added the opt-in `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` reference
-  hook. It records the fetched opcode, 27-byte runtime code window, physical PC, MPRs, registers and shared
+  hook. It records the fetched opcode, an initial 27-byte runtime code window, physical PC, MPRs, registers and shared
   event sequence after `RdAtPC()` and before instruction dispatch, capped at
   4,096 rows. Manual source inspection confirmed the insertion point in
   Mednafen 1.32.1.
@@ -76,11 +91,28 @@
   running binary; it linked `@rpath/libSDL2-2.0.0.dylib`, not `sdl2-compat`.
 - ✅ A later rebuilt authentic cold replay reached Drator `left-event` and
   recorded two fetches with runtime bytes differing from the static source
-  attribution; see the current capture report above. Source mapping and the
-  consumer join remain open.
+  attribution. A later isolated 512-byte capture mapped the first five windows
+  to US Track 02 raw offset `$A3AD2`; see the current capture report above.
+  The row-byte read join is established; `$C852` consumer attribution and
+  downstream semantics remain open.
 - Scope: this is reference instrumentation only. It does not establish a
-  same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
+  direct `$C852` source attribution, native Theron behavior, or gameplay parity.
   See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
+## 2026-10-31 — reconcile Drator byte-join summaries
+
+- Updated the current Theron status pages to record the same-session match
+  between writes and reads of generated-row offsets 6–8, plus the later
+  ten-byte TII work-buffer copy.
+- Added the seven authentic US Track 02 source candidates for the initial
+  `$C852` runtime prefix. The first 128 bytes are identical and their 512-byte
+  windows differ. A later isolated capture exactly matches the `$A3AD2` window.
+- Expanded the opt-in `$C852` trace row to include 512 runtime bytes, with a
+  page-bound guard and the existing hit cap, enabling exact source matching.
+- Corrected outdated statements that called the row-byte join absent and
+  updated wrapper status to reflect that the streaming verifier rejects the
+  explicitly truncated BIOS trace. Native gameplay, `$C852` consumer semantics
+  and full wrapper verification remain open.
 
 ## 2026-10-31 — reconcile Theron documentation with verified evidence
 
@@ -811,7 +843,7 @@ limit. The capture does not establish the active map, candidate-byte meaning,
 collision, visible movement, or native parity. Raw traces and media stayed on
 TRV2. Details and hashes are in
 `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
-The active-map and consumer join remain open in `TODO-theron.md`.
+The active-map and movement joins remain open in `TODO-theron.md`.
 
 ## 2026-10-29 — verify bounded authentic CD-to-RAM source joins
 
