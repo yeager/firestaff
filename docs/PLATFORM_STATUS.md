@@ -172,6 +172,26 @@ parity.
 
 ## Latest real-media revalidation
 
+On 2026-10-31, the current `main` commit `17f9c2e41` passed a fresh
+real-media startup sweep. `firestaff_cli_startup_diagnostics_real_media`
+passed for all five games in 160.57 seconds. The three Swedish scan tests
+passed for DM1 PC34, CSB FM Towns and DM2 FM Towns, covering explicit and
+saved language selection in direct launch and the no-game menu. Both
+unsupported-platform CLI gates also passed before renderer startup.
+`m12_main_menu_game_selection_real_media` passed in 488.23 seconds against the
+installed original-media collection. It verified keyboard selection for all
+five game cards, authentic-media handoffs and the Nexus/Theron pointer cases.
+The separate priority-game pointer test passed in 34.10 seconds for DM1, CSB
+and DM2, and the scan-in-progress pointer test passed in 32.61 seconds. The
+menu cases checked source hashes around the selected media. Together these
+tests cover keyboard and mouse game-card selection for all five games, plus
+the priority games' platform choices and deferred selection during scanning.
+GitHub Actions run
+[`41214887945`](https://github.com/yeager/firestaff/actions/runs/41214887945)
+passed for this commit. These checks establish bounded CLI and menu startup
+routes only. They do not establish full gameplay or native display/audio
+parity, and Nexus remains gated before playable runtime.
+
 On 2026-10-31, `firestaff_cli_startup_diagnostics_real_media` passed in
 171.94 seconds against the installed original-media root. The test checked
 CLI startup diagnostics for DM1, CSB, DM2, Nexus and Theron. The separate
