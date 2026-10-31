@@ -383,9 +383,13 @@ int dm2_v1_wall_ornament_query_blit_rect(
     int big_endian, int alignment_override, int image_width, int image_height,
     DM2_V1_WallOrnamentBlitRect *out)
 {
+    /* Preserve the legacy high-bit convention: the bit requested an image
+     * sized anchor displacement. New callers pass explicit picture offsets. */
     return dm2_v1_wall_ornament_query_blit_rect_with_offset(
         raw_rects, raw_length, rect_number, big_endian, alignment_override,
-        image_width, image_height, 0, 0, out);
+        image_width, image_height,
+        (rect_number & 0x8000u) ? image_width : 0,
+        (rect_number & 0x8000u) ? image_height : 0, out);
 }
 
 int dm2_v1_wall_ornament_query_loaded_blit_rect(
