@@ -53,6 +53,11 @@
 > passability, visible movement, cold CD handoff or parity. See the
 > [comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
 
+> **TII caller ambiguity (2026-10-31):** the same `$C1FC` instruction is
+> associated in the source-locked analysis with copying teleporter destination
+> coordinates. The matched state-only capture does not identify the caller or
+> active-map object, so its transfer cannot yet be assigned to movement.
+
 > **Input-gated VRAM trace (2026-10-31):** a corrected PCE Fast callback
 > gates the bounded VRAM trace on the guest-visible controller value. An
 > authentic JP state-only run records the scripted `$44C1` read at shared

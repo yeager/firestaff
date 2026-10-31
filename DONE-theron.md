@@ -11,6 +11,17 @@ semantics, passability, a visible response, or native parity. Raw emulator
 traces remain outside Git. This documentation/evidence update changes no
 runtime behavior. See the [comparison report](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
 
+## 2026-10-31 — synchronize the Theron documentation boundary
+
+Updated the shared missing-functions summary, completion matrix, and Theron
+reverse-engineering, technical-reference, and Track 02 wiki pages. They now
+record that the observed `$C1FC` TII is also associated with teleporter
+destination copying. Since the matched input/state trace does not identify the
+caller or active-map object, it remains an input-conditioned transfer rather
+than verified player movement. Existing reports of absent transfers in the
+separate blocked-wall probe remain unchanged. No runtime code, game data, or
+capture artifact changed.
+
 ## 2026-10-31 — capture input-gated PCE Fast VRAM event ordering
 
 Updated the PCE Fast input hook to pass the guest-visible controller port

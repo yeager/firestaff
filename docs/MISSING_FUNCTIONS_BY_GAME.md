@@ -1,6 +1,6 @@
 # Missing Functions and Verification by Game
 
-Status: 2026-08-27. This is a summary of Firestaff's remaining gaps, not a
+Status: 2026-10-31. This is a summary of Firestaff's remaining gaps, not a
 list of every historical TODO or symbol name.
 
 Each item is classified as follows:
@@ -208,6 +208,17 @@ movement and item transactions. Source-only loaders cover all seven dungeons
 per region. These results are recorded in the
 [capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); they do not
 establish complete retail gameplay or visual parity.
+
+A matched three-run JP PCE Fast state-only comparison records Button II+UP
+guest reads followed by repeatable `$C1FC` transfers from `$20B4` to candidate
+bytes `$2040/$2041`; three Button II-only controls retain the prior bytes.
+Source-locked analysis also associates `$C1FC` with copying teleporter
+destination coordinates. The trace does not identify its caller or active-map
+object, so it cannot establish that the observed transfer is player movement.
+Map identity, byte semantics, collision outcome, visible response, cold CD
+handoff and native parity remain open. The separate short-format US
+`$44CA/$44DB` trace is still ambiguous because standard-PCE and PCE Fast share
+an instrumentation path and label.
 
 ### Missing Original Data or Verification
 
