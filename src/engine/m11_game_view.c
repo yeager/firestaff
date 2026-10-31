@@ -145,6 +145,7 @@
 #include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "memory_sensor_execution_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
@@ -20609,6 +20610,23 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB MOVESENS.C F0276 runs the floor sensor pass for object
+ * admission/removal after a successful floor-chain mutation. This adapter is
+ * currently bounded to the DM1 PC34 path. */
+static void m11_process_dm1_object_floor_change(M11_GameViewState* state,
+                                                unsigned short thing,
+                                                int isAddition) {
+    struct SensorEffectList_Compat effects;
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        !state->world.dungeon || !state->world.things) return;
+    if (F0276_SENSOR_ProcessObjectFloorChange_Compat(
+            state->world.dungeon, state->world.things,
+            state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY, thing, isAddition, &effects)) {
+        m11_apply_sensor_effects(state, &effects);
+    }
+}
+
 static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
@@ -22816,6 +22834,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
                        M11_DM1_PRESENTED("HAND ROUTE FAILED"));
         return 0;
     }
+    m11_process_dm1_object_floor_change(state, item, 0);
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: HELD %s",
                   (unsigned int)state->world.gameTick, itemName);
@@ -22922,6 +22941,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         }
         m11_debug_trace_floor_drop(state, "mouse-hand", item,
                                    beforeHead, 1);
+        m11_process_dm1_object_floor_change(state, item, 1);
         m11_get_source_item_name(state, state->world.things, item,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "DROP", "ITEM DROPPED");
@@ -22982,6 +23002,8 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         m11_debug_trace_floor_drop(state, "inventory", item,
                                    beforeHead, 1);
     }
+
+    m11_process_dm1_object_floor_change(state, item, 1);
 
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));

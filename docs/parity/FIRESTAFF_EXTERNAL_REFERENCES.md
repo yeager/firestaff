@@ -90,13 +90,15 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 |------|-------|------------|---------------------|
 | DM1 | Mechanics, data formats, creature/item references, maps and solutions | DM1 maps, graphics atlases and edition-specific extracted data | ReDMCSB |
 | CSB | Shared DM/CSB mechanics and format pages, CSB-specific maps/solutions where present | CSB maps and extracted assets for the matching edition/platform | ReDMCSB |
-| DM2 | Consult only a page that explicitly identifies Skullkeep and the matching edition; do not carry DM1/CSB-specific facts across | Consult only a DM2-specific map or asset entry if one is available; current reference inventory has no locked DM2 Greatstone data set | skproject |
+| DM2 | Consult only a page that explicitly identifies Skullkeep and the matching edition; do not carry DM1/CSB-specific facts across | Greatstone's SCK documentation notes DM2 item-format support (IMG9, TXT3 and ENT1); use only explicitly identified DM2 extracts. Current Firestaff inventory has no edition-hash-locked Greatstone DM2 dataset | skproject |
 
 DMWeb and Greatstone are supporting references for all game audits, but their
-evidence is edition-specific. A missing DM2 page or dataset is recorded as a
-reference gap; it does not license treating DM1/CSB pages as proof of DM2
-behavior. DM2 functional claims remain locked to skproject and DM2 original
-media.
+evidence is edition-specific. For DM2, Greatstone's format/extractor notes can
+inform asset inspection, while a missing edition-matched dataset is recorded
+as a reference gap. Neither DM1/CSB pages nor extraction-format support proves
+DM2 behavior. DM2 functional claims remain locked to skproject and DM2
+original media. Greatstone's DM2 format note is linked from the [SCK release
+discussion](https://www.dungeon-master.com/forum/viewtopic.php?t=28556).
 
 **MEMORY.md rule (2026-05-09):** All GRAPHICS.DAT/dungeon.dat comparisons must hash-lock the exact file variant before claiming parity. File name is NOT identity — SHA256 is.
 

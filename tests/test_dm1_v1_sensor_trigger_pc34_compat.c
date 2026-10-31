@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "memory_sensor_execution_pc34_compat.h"
 
 static int g_pass = 0, g_fail = 0;
 
@@ -2260,6 +2261,69 @@ static void test_floor_group_generator_skipped(void) {
     CHECK(result.triggered == 0, "Group generator: skipped in floor processing");
 }
 
+/* ReDMCSB F0276 C004 fires when an object of the sensor's type is added to
+ * or removed from a floor square, provided no matching object was already
+ * there. The M11 caller owns the chain mutation; this tests the bounded
+ * PC34 effect adapter around that mutation. */
+static void test_object_floor_change_runtime(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char square = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                            DUNGEON_SQUARE_MASK_THING_LIST);
+    unsigned char weaponRaw[4] = { 0, 0, 2, 0x90u };
+    unsigned short sft[1] = { make_thing(THING_TYPE_SENSOR, 0, 0) };
+    unsigned short object = make_thing(THING_TYPE_WEAPON, 0, 0);
+    struct SensorEffectList_Compat effects;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(sensors, 0, sizeof(sensors));
+    map.width = map.height = 1;
+    tiles.squareData = &square;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = dungeon.tilesLoaded = 1;
+    things.loaded = 1;
+    things.squareFirstThings = sft;
+    things.squareFirstThingCount = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    weapons[0].next = THING_ENDOFLIST;
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_OBJECT, 4,
+                             DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                             0, 0, 0, 0);
+    sensors[0].next = object;
+
+    CHECK(F0276_SENSOR_ProcessObjectFloorChange_Compat(
+              &dungeon, &things, 0, 0, 0, object, 1, &effects) == 1,
+          "F0276 C004 add: bounded floor object pass succeeds");
+    CHECK(effects.count == 1 &&
+          effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "F0276 C004 add: matching object sensor emits effect");
+
+    /* After unlink, the sensor remains the square-chain head. */
+    sensors[0].next = THING_ENDOFLIST;
+    sensors[0].revertEffect = 1; /* Source F0276 XORs add/remove with revert. */
+    CHECK(F0276_SENSOR_ProcessObjectFloorChange_Compat(
+              &dungeon, &things, 0, 0, 0, object, 0, &effects) == 1,
+          "F0276 C004 remove: bounded floor object pass succeeds");
+    CHECK(effects.count == 1,
+          "F0276 C004 remove: matching object sensor emits effect");
+}
+
 /* ================================================================ */
 
 int main(void) {
@@ -2313,6 +2377,7 @@ int main(void) {
     test_floor_sensor_edition_policy();
     test_floor_disabled();
     test_floor_group_generator_skipped();
+    test_object_floor_change_runtime();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

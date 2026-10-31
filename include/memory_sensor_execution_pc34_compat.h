@@ -189,6 +189,20 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList);
 
+/* ReDMCSB MOVESENS.C F0276 object add/remove pass for a floor square.
+ * The caller owns the source link/unlink transaction and invokes this after
+ * the mutation. Added `thing` is excluded from the pre-existing-weight scan,
+ * matching F0276's add-before-link census. This bounded adapter handles floor
+ * C001/C002/C004/C007 admission and emits F0272 effect receipts; wall-cell
+ * sensor branches remain in the wall/object interaction path. */
+int F0276_SENSOR_ProcessObjectFloorChange_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY,
+    unsigned short thing,
+    int isAddition,
+    struct SensorEffectList_Compat* outList);
+
 /* ReDMCSB MOVESENS.C F0271: apply the final CLEAR/TOGGLE rotation receipt
  * after a complete F0276 sensor pass. Mutates the loaded Thing chain and
  * matching raw Next bytes only. */

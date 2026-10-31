@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
 
 /* ---- LE int32 helpers (MEDIA016 / PC LSB-first) ---- */
@@ -637,6 +638,135 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     return sensor_process_party_enter_leave(
         dungeon, things, mapIndex, mapX, mapY, triggerEvent, partyOnSquare, party,
         leaderHandThing, outList);
+}
+
+int F0276_SENSOR_ProcessObjectFloorChange_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY,
+    unsigned short movingThing,
+    int isAddition,
+    struct SensorEffectList_Compat* outList)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    int movingType;
+    int movingObjectType;
+    int sensorCount;
+    int squareType = -1;
+    int squareHasObject = 0;
+    int squareHasGroup = 0;
+    int squareHasSameType = 0;
+    int squareHasDifferentType = 0;
+    int sftIndex;
+    unsigned short cursor;
+    int safety = 0;
+    int i;
+
+    if (!outList) return 0;
+    memset(outList, 0, sizeof(*outList));
+    if (!dungeon || !things || !things->loaded ||
+        (isAddition != 0 && isAddition != 1)) return 0;
+    movingType = THING_GET_TYPE(movingThing);
+    if (movingType <= THING_TYPE_GROUP || movingType >= THING_TYPE_PROJECTILE)
+        return 0;
+    movingObjectType = dm1_v1_dungeon_get_object_type_pc34(things, movingThing);
+    if (movingObjectType < 0) return 0;
+
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount ||
+        !dungeon->maps || mapX < 0 || mapY < 0 ||
+        mapX >= dungeon->maps[mapIndex].width ||
+        mapY >= dungeon->maps[mapIndex].height || !dungeon->tiles ||
+        !dungeon->tiles[mapIndex].squareData) return 0;
+    {
+        size_t squareOffset = (size_t)mapX * dungeon->maps[mapIndex].height +
+                              (size_t)mapY;
+        unsigned char square = dungeon->tiles[mapIndex].squareData[squareOffset];
+        squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    }
+
+    /* F0276 uses cell-specific admission on wall squares. This adapter is for
+     * floor changes only; wall-object transactions use the separate click /
+     * storage route and must not be guessed from a floor sensor pass. */
+    if (squareType == DM1_SQUARE_WALL) return 1;
+
+    sftIndex = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount ||
+        !things->squareFirstThings) return 0;
+    cursor = things->squareFirstThings[sftIndex];
+    while (cursor != THING_NONE && cursor != THING_ENDOFLIST && safety++ < 64) {
+        int type, index;
+        unsigned short next = sensor_step_thing(things, cursor, &type, &index);
+        (void)index;
+        /* On addition F0276 computes the weight flags before linking the new
+         * object. Its caller has already linked it, so remove that one record
+         * from the census. On removal the record is already absent. */
+        if (cursor != movingThing) {
+            if (type == THING_TYPE_GROUP) squareHasGroup = 1;
+            else if (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE) {
+                int objectType = dm1_v1_dungeon_get_object_type_pc34(things, cursor);
+                if (objectType < 0) return 0;
+                squareHasObject = 1;
+                if (objectType == movingObjectType) squareHasSameType = 1;
+                else squareHasDifferentType = 1;
+            }
+        }
+        cursor = next;
+    }
+    if (safety >= 64) return 0;
+
+    sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+        dungeon, things, mapIndex, mapX, mapY, sensors);
+    for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
+        const struct DungeonSensor_Compat* sensor;
+        struct FloorSensorContext_Compat context;
+        struct SensorTriggerResult_Compat result;
+        struct SensorEffect_Compat* effect;
+        int sensorIndex = sensors[i].sensorIndex;
+
+        if (sensors[i].sensorType < DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT ||
+            sensors[i].sensorType > DM1_SENSOR_FLOOR_CREATURE ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_ON_STAIRS ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_GROUP_GENERATOR) continue;
+        if (!things->sensors || sensorIndex < 0 ||
+            sensorIndex >= things->sensorCount) continue;
+        sensor = &things->sensors[sensorIndex];
+        if (sensor->sensorType != sensors[i].sensorType) continue;
+
+        memset(&context, 0, sizeof(context));
+        context.mapX = mapX;
+        context.mapY = mapY;
+        context.thingType = DM1_TRIGGER_SOURCE_OBJECT;
+        context.objectType = movingObjectType;
+        context.squareHasObject = squareHasObject;
+        context.squareHasGroup = squareHasGroup;
+        context.squareHasSameTypeObj = squareHasSameType;
+        context.squareHasDiffTypeObj = squareHasDifferentType;
+        context.squareType = squareType;
+        context.isAddition = isAddition;
+        if (!F0722_SENSOR_EvaluateFloor_Compat(sensor, &context, &result) ||
+            !result.triggered) continue;
+        if (outList->count >= SENSOR_EFFECT_LIST_MAX_COUNT) break;
+        effect = &outList->effects[outList->count++];
+        effect->sensorType = sensor->sensorType;
+        effect->destMapIndex = sensor->localEffect ? mapIndex : -1;
+        effect->destMapX = sensor->localEffect ? mapX : result.targetMapX;
+        effect->destMapY = sensor->localEffect ? mapY : result.targetMapY;
+        effect->destCell = sensor->localEffect ? -1 : result.targetCell;
+        effect->textIndex = sensor->localEffect
+            ? sensor->localMultiple : result.resolvedEffect;
+        effect->delayTicks = result.delayTicks;
+        effect->sourceSensorIndex = sensorIndex;
+        effect->sourceOnceOnly = result.sensorDisabled;
+        if (sensor->localEffect) {
+            effect->kind = sensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL
+                ? SENSOR_EFFECT_LOCAL_STEAL_XP
+                : SENSOR_EFFECT_LOCAL_DEFERRED;
+        } else {
+            effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+        }
+    }
+    return 1;
 }
 
 int F0720_SENSOR_CountAudiblePartyPass_Compat(
