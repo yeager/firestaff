@@ -15,8 +15,9 @@ user-clip rectangle to `(0,0)..(320,224)`; row 7 sets local coordinates to
 inside-rectangle mode, and their trace records carry the same local origin.
 There is no intervening user-clip or local-coordinate command in the checked
 window. Consequently, user clipping rejects no pixel in the captured
-`320x224` viewport for these rows. This proves the captured clip/local state;
-it does not prove complete VDP1 clipping, polygon coverage, or pixel output.
+`320x224` viewport for these rows. This proves the captured clip/local state
+for this window; the full-frame stepper result below verifies polygon coverage
+and final VDP1 pixel output for frame 13162.
 All 31 draws also enable non-neutral Gouraud shading. The verifier follows each command's
 captured Gouraud pointer (`word_address * 8` bytes), bounds-checks the table in
 the reconstructed VDP1 VRAM, and confirms that its four vertex colors are
@@ -42,33 +43,35 @@ the compositor verifies that the captured texture span is the word-normalized
 form of the retail DGN image, then reads texels from the original DGN byte
 order so nibble selection follows the actual Saturn texture stream.
 
-A separate real-data CTest now runs the stepper against the complete
-frame-13162 Ymir VDP1 capture. It verifies the hash-pinned 168-row trace,
-command bytes, captured VRAM spans, clip/local-coordinate state, single-density
-register tuple, and capture receipt. The first 512x256 FBS draw buffer is
-compared at native 320x224 coordinates: 70,470 of 70,970 opaque stepper pixels
-match exactly (99.295%). The 500 remaining pixels are still under investigation. A local diagnostic
-compared the same output with FBS buffer 1 and found 69,507 exact pixels, so the
-test retains buffer 0 as the better-supported reference. The capture does not
-record a dedicated active-buffer receipt; this comparison is not a complete
-Ymir/Firestaff framebuffer contract.
-The test renders only 124 mode-1 commands; 36 other draw commands in the window
-are not part of this comparison. It asserts the exact count for this capture,
-claims no DGN ownership, and keeps `renderer_permitted=false`. The capture data
-stays outside Git. Set `FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its
-profile directory (or `dumps/`) and run:
+A separate real-data CTest runs the Ymir-stepper capture path against the
+complete frame-13162 Ymir VDP1 capture. It verifies the hash-pinned 168-row
+trace, command bytes, captured VRAM spans, clip/local-coordinate state,
+single-density register tuple, and capture receipt. It rasterizes 124 mode-1
+distorted sprites and 28 flat polygons in trace order. The other eight mode-5
+commands are checked by the companion frame-window test, which verifies their
+captured source pixels are fully transparent. Together these cover all 160
+draw commands in this frame's trace window.
+
+The resulting first 512x256 Ymir FBS draw buffer matches the capture-only
+replay at native 320x224 coordinates: all 71,680 RGB555 pixels and all 71,680
+opacity bits match exactly. This closes the previous 500-pixel residual for
+this captured VDP1 state. The stepper claims no DGN ownership for its command
+inputs and keeps `renderer_permitted=false`; exact replay of this single Ymir
+buffer does not establish original-Saturn, arbitrary-frame, VDP2-composition,
+or production-renderer parity. The capture data stays outside Git. Set
+`FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its profile directory (or
+`dumps/`) and run:
 
 ```sh
 ctest --test-dir build -R '^nexus_v1_vdp1_ymir_stepper_capture_real$' --output-on-failure
 ```
 
-The capture stepper is a separate diagnostic path; its existence does not
-make the barycentric compositor pixel-exact or enable the production
-renderer. The source references are Ymir
+The Ymir stepper is a separate capture-only path; it does not enable the
+production renderer. The source references are Ymir
 `vdp_renderer_sw.cpp::VDP1PlotTexturedLine` and
-`VDP1PlotTexturedQuad`, plus `vdp1_steppers.hpp::GouraudChannelStepper`; and
-Mednafen `vdp1_common.h::GourauderTheTerrible` and
-`vdp1_poly.cpp::CMD_PolygonG_T`.
+`VDP1PlotTexturedQuad`/`VDP1Cmd_DrawPolygon`, plus
+`vdp1_steppers.hpp::GouraudChannelStepper`; and Mednafen `vdp1_common.h` and
+`vdp1_poly.cpp`.
 
 The companion palette-pressure analysis shows why applying these Gouraud
 colors by replacing entries in Firestaff's shared 256-entry indexed palette

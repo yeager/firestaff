@@ -149,6 +149,27 @@ static uint16_t rgba_to_555(uint32_t rgba)
         (((rgba & 0xffU) >> 3U) << 10U));
 }
 
+static int write_rgba(const char *path,
+                      const Nexus_V1_Vdp1YmirCaptureSurface *surface)
+{
+    FILE *file;
+    size_t i;
+    if (!path || !*path || !surface) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    for (i = 0U; i < (size_t)NEXUS_FB_W * NEXUS_FB_H; ++i) {
+        uint32_t pixel = surface->rgba[i];
+        uint8_t rgba[4] = {(uint8_t)(pixel >> 16U),
+            (uint8_t)(pixel >> 8U), (uint8_t)pixel,
+            (uint8_t)(pixel >> 24U)};
+        if (fwrite(rgba, 1U, sizeof(rgba), file) != sizeof(rgba)) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
 int main(int argc, char **argv)
 {
     static const struct { const char *name; const char *sha; size_t size; } files[] = {
@@ -170,9 +191,10 @@ int main(int argc, char **argv)
     int16_t local_x = 0, local_y = 0;
     int user_x0 = 0, user_y0 = 0, user_x1 = 512, user_y1 = 256;
     int sys_clip_h = 511, sys_clip_v = 255;
-    unsigned int frame_rows = 0U, draws = 0U, mode1_count = 0U, other_modes = 0U;
+    unsigned int frame_rows = 0U, draws = 0U, mode1_count = 0U;
+    unsigned int other_modes = 0U, polygon_count = 0U;
     unsigned int user_clip_updates = 0U, system_clip_updates = 0U, local_updates = 0U;
-    uint64_t opaque = 0U, exact_matches = 0U;
+    uint64_t opaque = 0U, exact_matches = 0U, alpha_matches = 0U;
     char *trace_copy = NULL, *line;
     size_t i, file_count = sizeof(files) / sizeof(files[0]);
     int result = 1;
@@ -293,6 +315,35 @@ int main(int argc, char **argv)
                 }
                 if (index < FIRST_DRAW || index > LAST_DRAW) continue;
                 if (parsed.command_type <= 7U) ++draws;
+                if (parsed.command_type == 4U) {
+                    memset(&input, 0, sizeof(input));
+                    input.command = command;
+                    input.command_size = (int)sizeof(command);
+                    input.command_capture_verified = 1;
+                    input.vdp1_vram = le_vram;
+                    input.vdp1_vram_size = (int)blobs[1].size;
+                    input.vdp1_vram_hash_verified = 1;
+                    input.local_origin_verified = 1;
+                    input.local_origin_x = (int)row_local_x;
+                    input.local_origin_y = (int)row_local_y;
+                    input.system_clip_verified = 1;
+                    input.sys_clip_h = sys_clip_h;
+                    input.sys_clip_v = sys_clip_v;
+                    input.user_clip_verified = 1;
+                    input.user_clip_x0 = user_x0;
+                    input.user_clip_y0 = user_y0;
+                    input.user_clip_x1 = user_x1;
+                    input.user_clip_y1 = user_y1;
+                    input.single_density_verified = 1;
+                    if (!nexus_v1_vdp1_ymir_capture_rasterize_polygon(
+                            surface, &input, &receipt) || !receipt.valid ||
+                        receipt.renderer_permitted || !receipt.capture_only) {
+                        fprintf(stderr, "stepper rejected authentic polygon row %lu\n", index);
+                        goto done;
+                    }
+                    ++polygon_count;
+                    continue;
+                }
                 if (parsed.command_type != 2U) continue;
                 if (!parsed.texture_command || (parsed.control & 0x4000U) != 0U ||
                     (parsed.colour_mode != 1U && parsed.colour_mode != 5U)) {
@@ -344,9 +395,9 @@ int main(int argc, char **argv)
     }
     if (frame_rows != EXPECTED_FRAME_ROWS || draws != LAST_DRAW-FIRST_DRAW+1U ||
         mode1_count != 124U || other_modes != 8U || user_clip_updates != 1U || local_updates != 3U ||
-        system_clip_updates != 0U || !seen[0] || !seen[LAST_DRAW]) {
-        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u userclip=%u local=%u sysclip=%u\n",
-            frame_rows,draws,mode1_count,user_clip_updates,local_updates,system_clip_updates); goto done;
+        polygon_count != 28U || system_clip_updates != 0U || !seen[0] || !seen[LAST_DRAW]) {
+        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u polygon=%u userclip=%u local=%u sysclip=%u\n",
+            frame_rows,draws,mode1_count,polygon_count,user_clip_updates,local_updates,system_clip_updates); goto done;
     }
     if (!is_frame_receipt(&blobs[5])) { fprintf(stderr,"frame receipt changed during validation\n"); goto done; }
 
@@ -356,22 +407,32 @@ int main(int argc, char **argv)
     for (int y = 0; y < NEXUS_FB_H; ++y) for (int x = 0; x < NEXUS_FB_W; ++x) {
         size_t p=(size_t)y*NEXUS_FB_W+(size_t)x;
         uint32_t rgba=surface->rgba[p];
-        if ((rgba >> 24U) == 0U) continue;
-        ++opaque;
+        uint16_t expected=(uint16_t)read_be16(blobs[0].bytes+((size_t)y*512U+(size_t)x)*2U);
+        if ((rgba >> 24U) != 0U) ++opaque;
+        if (((rgba >> 24U) != 0U) == ((expected & 0x8000U) != 0U))
+            ++alpha_matches;
         {
-            uint16_t expected=(uint16_t)(read_be16(blobs[0].bytes+((size_t)y*512U+(size_t)x)*2U)&0x7fffU);
-            if (rgba_to_555(rgba)==expected) ++exact_matches;
+            if (rgba_to_555(rgba)==(expected & 0x7fffU)) ++exact_matches;
         }
     }
-    if (opaque != UINT64_C(70970) || exact_matches != UINT64_C(70470)) {
-        fprintf(stderr,"captured VDP1 output changed: opaque=%llu exact=%llu; expected 70970/70470\n",
-            (unsigned long long)opaque,(unsigned long long)exact_matches); goto done;
+    if (opaque != UINT64_C(71680) || exact_matches != UINT64_C(71680) ||
+        alpha_matches != UINT64_C(71680)) {
+        fprintf(stderr,"captured VDP1 output differs: opaque=%llu rgb_exact=%llu alpha_exact=%llu; expected 71680 each\n",
+            (unsigned long long)opaque,(unsigned long long)exact_matches,
+            (unsigned long long)alpha_matches); goto done;
     }
-    printf("Ymir stepper diagnostic: frame=%u draws=%u mode1=%u other_mode=%u opaque=%llu exact=%llu residual=%llu (%.3f%%); DGN ownership claims=0; renderer_permitted=false\n",
-        FRAME_INDEX,draws,mode1_count,other_modes,(unsigned long long)opaque,
-        (unsigned long long)exact_matches,(unsigned long long)(opaque-exact_matches),
-        100.0*(double)exact_matches/(double)opaque);
-    printf("PASS: authentic 168-row trace and Ymir capture hashes/receipt verified; command-record addresses and captured VRAM spans checked; parity remains incomplete\n");
+    {
+        const char *out_path = getenv("FIRESTAFF_NEXUS_YMIR_STEPPER_RGBA_OUT");
+        if (out_path && *out_path && !write_rgba(out_path, surface)) {
+            fprintf(stderr, "unable to write stepper diagnostic output: %s\n", out_path);
+            goto done;
+        }
+    }
+    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u polygons=%u other_mode=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; DGN ownership claims=0; renderer_permitted=false\n",
+        FRAME_INDEX,draws,mode1_count,polygon_count,other_modes,
+        (unsigned long long)opaque,(unsigned long long)exact_matches,
+        (unsigned long long)alpha_matches);
+    printf("PASS: authentic 168-row trace and captured VDP1 framebuffer match exactly at 320x224; production renderer admission remains blocked\n");
     result=0;
 done:
     free(trace_copy); free(le_vram); free(surface);

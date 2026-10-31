@@ -457,3 +457,111 @@ cleanup:
     *out=rec;
     return ok;
 }
+
+int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *in,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+{
+    Nexus_V1_Vdp1YmirCaptureReceipt rec;
+    Nexus_V1_Vdp1TextureCommand cmd;
+    Nexus_V1_Vdp1YmirCaptureSurface *tmp = NULL;
+    Point p[4];
+    Quad q;
+    uint16_t color;
+    uint16_t draw_mode;
+    int calc, clip_mode, user_clip_enabled;
+    uint32_t row;
+    int ok = 0;
+
+    memset(&rec, 0, sizeof(rec));
+    rec.capture_only = 1;
+    if (!out) return 0;
+    *out = rec;
+    if (!surface || !in || !in->command ||
+        in->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        !in->command_capture_verified || !in->local_origin_verified ||
+        !in->system_clip_verified || !in->single_density_verified ||
+        in->sys_clip_h < 0 || in->sys_clip_h > 511 ||
+        in->sys_clip_v < 0 || in->sys_clip_v > 511 ||
+        nexus_v1_vdp1_texture_command_parse(in->command, in->command_size,
+            &cmd) != 0 || cmd.command_type != 4U || cmd.texture_command)
+        return 0;
+
+    draw_mode = le16(in->command + 4U);
+    color = le16(in->command + 6U);
+    calc = draw_mode & 3;
+    clip_mode = (draw_mode & 0x0200U) != 0U;
+    user_clip_enabled = (draw_mode & 0x0400U) != 0U;
+    /* This path is deliberately limited to the flat polygons in the
+     * authenticated capture. Gouraud and mesh use different pixel state. */
+    if ((draw_mode & 0x0100U) != 0U ||
+        (draw_mode & 0x0004U) != 0U ||
+        (draw_mode & 0x8000U) != 0U || (draw_mode & 3U) != 0U ||
+        (user_clip_enabled && (!in->user_clip_verified ||
+         in->user_clip_x0 < 0 || in->user_clip_y0 < 0 ||
+         in->user_clip_x1 < in->user_clip_x0 ||
+         in->user_clip_y1 < in->user_clip_y0)) ||
+        in->local_origin_x < -4096 || in->local_origin_x > 4095 ||
+        in->local_origin_y < -4096 || in->local_origin_y > 4095)
+        return 0;
+
+    p[0] = (Point){(int32_t)((int64_t)cmd.xa + in->local_origin_x),
+                   (int32_t)((int64_t)cmd.ya + in->local_origin_y)};
+    p[1] = (Point){(int32_t)((int64_t)cmd.xb + in->local_origin_x),
+                   (int32_t)((int64_t)cmd.yb + in->local_origin_y)};
+    p[2] = (Point){(int32_t)((int64_t)cmd.xc + in->local_origin_x),
+                   (int32_t)((int64_t)cmd.yc + in->local_origin_y)};
+    p[3] = (Point){(int32_t)((int64_t)cmd.xd + in->local_origin_x),
+                   (int32_t)((int64_t)cmd.yd + in->local_origin_y)};
+    memset(&q, 0, sizeof(q));
+    quad_setup(&q, p[0], p[1], p[2], p[3]);
+    tmp = (Nexus_V1_Vdp1YmirCaptureSurface *)malloc(sizeof(*tmp));
+    if (!tmp) return 0;
+    *tmp = *surface;
+    rec.command_verified = 1;
+    rec.local_origin_verified = 1;
+    rec.system_clip_verified = 1;
+    rec.user_clip_verified = user_clip_enabled ? 1 : 0;
+    rec.single_density_verified = 1;
+
+    /* Ymir's DrawPolygon walks the same A-D/B-C quad edges as textured
+     * quads and fills each scanline with an antialiased LineStepper. */
+    for (row = 0U; row <= q.dmaj; ++row) {
+        Point left = {q.left.x, q.left.y};
+        Point right = {q.right.x, q.right.y};
+        Line line;
+        uint32_t clipped;
+        int aa = 0;
+        line_setup(&line, left, right, 1);
+        clipped = line_system_clip(&line, in->sys_clip_h, in->sys_clip_v);
+        if (clipped) rec.system_or_host_clipped_pixels += (int)clipped;
+        for ((void)line_step(&line); line_can_step(&line); aa = line_step(&line)) {
+            uint32_t rgba = to_rgba(color);
+            if ((color & 0x8000U) == 0U) rgba &= UINT32_C(0x00ffffff);
+            if (paint_pixel(tmp, in, line.x, line.y, user_clip_enabled,
+                            clip_mode, calc, rgba,
+                            &rec.system_or_host_clipped_pixels,
+                            &rec.user_clipped_pixels))
+                ++rec.pixels_written;
+            if (aa && paint_pixel(tmp, in, line.x + line.aa_x_inc,
+                                  line.y + line.aa_y_inc, user_clip_enabled,
+                                  clip_mode, calc, rgba,
+                                  &rec.system_or_host_clipped_pixels,
+                                  &rec.user_clipped_pixels))
+                ++rec.pixels_written;
+        }
+        quad_step(&q);
+    }
+    rec.valid = 1;
+    rec.renderer_permitted = 0;
+    *surface = *tmp;
+    ok = 1;
+    free(tmp);
+    if (!ok) {
+        rec.valid = 0;
+        rec.renderer_permitted = 0;
+    }
+    *out = rec;
+    return ok;
+}

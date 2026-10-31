@@ -82,4 +82,13 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
     const Nexus_V1_Vdp1YmirCaptureInput *input,
     Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
 
+/* Replay one authenticated untextured type-4 polygon using the same Ymir
+ * quad/scanline edge steppers. This diagnostic path supports flat RGB555
+ * fill only; Gouraud, mesh, and unsupported states are rejected. It does not
+ * require or claim a retail material source join. */
+int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
+
 #endif

@@ -38,15 +38,19 @@ remain unverified. See the linked capture-specific evidence notes in
 `docs/nexus_vdp1_coldboot_frame13162_composition.md`, and
 `docs/nexus_ymir_vdp_priority_composition.md`.
 
-The frame-13162 VDP1 capture lane replays 25 source-bound mode-1 distorted
-sprites from authentic trace rows 8–40 into an RGBA surface, with 8 mode-5
-draws recorded as gaps. Each mode-1 command uses its own exact Structure2
-image and CLUT joins. All 25 enable Gouraud shading and their hash-verified
-captured VRAM tables have four identical corner values per command. The
-capture decoder applies Ymir's RGB555 correction formula for these uniform
-tables and rejects non-uniform tables. It still uses a different quad
-rasterizer and has not passed pixel comparison against Ymir; this remains
-capture-only and does not change Nexus production readiness.
+The separate Ymir-stepper capture path now rasterizes all 124 mode-1 distorted
+sprites and 28 flat polygons in authentic frame-13162 trace rows 8–167. The
+other eight mode-5 draws are verified as fully transparent by the companion
+real-data capture test. The combined 320×224 VDP1 output matches the
+hash-verified Ymir FBS buffer 0 in all 71,680 RGB555 pixels and opacity bits.
+The stepper reads the exact captured command, texture, CLUT, and Gouraud table
+bytes; the separate frame-13162 source-join test binds 25 mode-1 image/CLUT
+pairs and six mode-5 sources to retail `LEV00.DGN`. This is an exact replay of
+one captured Ymir VDP1 frame, not proof of original-Saturn behavior, arbitrary
+VDP1 states, or retail ownership for every draw. It remains capture-only and
+does not change Nexus production readiness. VDP2 composition, full title/menu
+and gameplay source ownership, and production renderer admission remain open.
+See [`docs/nexus_vdp1_frame13162_dgn_window.md`](../nexus_vdp1_frame13162_dgn_window.md).
 
 ## Japanese date/time setup VDP2 trace — 2026-10-24
 
