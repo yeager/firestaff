@@ -3,10 +3,11 @@ The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
 door direction or rejects values outside 0/1. Both GAME_LOAD owners derive
 movement from the door record DoorBit09, matching SKWINDOS `SKW_STEP_DOOR`
 and SPX `STEP_DOOR`. This closes that timer-field mismatch only; the direct
-world-owner now follows the source's destroyed/inactive early exits and does
-not incorrectly block opening steps for occupied cells. Closing steps that
-would damage the party or a creature remain blocked in this structural owner;
-the live runtime and transactional candidate own those collision effects.
+world-owner now follows the source's destroyed/inactive and reached-endpoint
+early exits and does not incorrectly block opening steps for occupied cells.
+Closing steps that would damage the party or a creature remain blocked in this
+structural owner; the live runtime and transactional candidate own those
+collision effects.
 Supported-platform source mapping remains open.
 
 2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:

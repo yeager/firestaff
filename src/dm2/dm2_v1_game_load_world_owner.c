@@ -13643,6 +13643,31 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
         if (out_receipt) *out_receipt = receipt;
         return receipt.valid;
     }
+    if ((direction == 0 && old_state == DM2_DOOR_STATE_OPEN) ||
+        (direction == 1 && old_state == DM2_DOOR_STATE_CLOSED)) {
+        uint8_t *mutable_door = dm2_v1_record_pool_address_mut(
+            &owner->record_pools, link);
+        uint16_t stopped_attributes =
+            (uint16_t)(door_attributes & (uint16_t)~0x0400u);
+        if (!mutable_door) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        dm2_v1_game_load_owner_write_record_u16(
+            owner, mutable_door + 2, stopped_attributes);
+        receipt.door_record_attributes_before = door_attributes;
+        receipt.door_record_attributes_after = stopped_attributes;
+        receipt.door_record_state_mutated =
+            stopped_attributes != door_attributes;
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            0x44535450u, (uint16_t)link); /* "DSTP" */
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            receipt.private_animation_hash, (uint32_t)old_state);
+        receipt.valid = receipt.private_animation_hash != 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.valid;
+    }
     /* All source state accessed below is local to the cloned File_header
      * owner.  Validate the complete tile chain first: a creature caught by a
      * closing door needs CAII/damage/timer ownership, so it must stop this
