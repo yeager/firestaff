@@ -1,5 +1,12 @@
 # Firestaff V2 Graphics Plan
 
+> **Status: historical proposal, not an implementation specification.** The
+> tiers below describe the original target. They are not evidence that the
+> runtime currently delivers those effects. Current M11 V2.1 presentation is
+> generally a 2× EPX path, not 10× AI upscaling. DM2 resolves V2.2 to V2.1;
+> DM1 and CSB gate V2.2 on finished real-material packs. Verify each game's
+> resolved runtime mode and rendered output before describing a tier as active.
+
 ## Decisions (Daniel 2026-05-17)
 
 - **v2.1 resolution:** Exact 10x
