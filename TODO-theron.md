@@ -175,14 +175,16 @@ a dummy SDL display and produced no rendered-game frame.
    run-only callback reaches `$EC05/$E900`, then remains in the `$E95E/$E966`
    status loop; it still has no observed `$E209/$E11D` instruction starts or game
    handoff.
-2. **Verify quest progression and original-format save transactions.** A
-   2026-10-31 TRV2 native Debug probe admitted authentic US Track 02 and an
-   Ak-Tu-Ba-complete BRAM copy, but both `FIRESTAFF_THERON_BRAM_PATH` and
-   `--save` runs remained at the Theron title (`levelLoaded=0`, party `(0,0)`,
-   `runtimeTick=0`). Bind this authentic resume transaction to the native
-   startup flow before claiming that save support. Then bind authentic quest
-   artifacts and their pickup, exit, chapter transition, and completion
-   consumers. Keep the campaign-completion bit distinct from
+2. **Verify quest progression and original-format save transactions.** The
+   authentic US `theron_v1_m11_real_bram_continue` integration test passed three
+   TRV2 loops: it restores the proven Ak-Tu-Ba campaign byte and Theron
+   attributes/skill experience, then exercises Continue, dungeon 2 selection,
+   Soul Room champion selection, forcefield admission, and three native floor
+   moves using authentic US Track 02. A no-input CLI boot-probe remains at the
+   title and is not a Continue test. Extend the proven transaction to all
+   regional save cases and bind later quest artifacts and their pickup, exit,
+   chapter transition, and completion consumers. Keep the campaign-completion
+   bit distinct from
    quest-item collection. Connect the source-gated writer only to proven
    progress, then reopen the changed save in the original runtime. The
    [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)

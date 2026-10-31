@@ -1,17 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — exercise the authentic US save through native startup
+## 2026-10-31 — continue authentic US BRAM into the next native dungeon
 
-Ran the isolated native Firestaff Debug binary on TRV2 against authentic US
-Track 02 (MD5 `f23601102138f87c33025877767ebf76`) and a copy of the authentic
-Ak-Tu-Ba-complete BRAM (MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`). One run set
-`FIRESTAFF_THERON_BRAM_PATH`; another passed the same save copy with `--save`.
-Both admitted the US Track 02 and entered Firestaff's Theron title runtime,
-with `levelLoaded=0`, `party=0,0`, and `runtimeTick=0`. Neither probe reached
-save resume or dungeon runtime. The isolated BRAM copies retained their
-original hashes. This narrows the gap to connecting original-format resume to
-the native startup flow; it does not establish save compatibility in an
-interactive resume transaction or gameplay parity.
+On TRV2, built the existing `theron_v1_m11_real_bram_continue` integration
+test and ran it three times against authentic US Track 02 (MD5
+`f23601102138f87c33025877767ebf76`) and the authentic Ak-Tu-Ba-complete BRAM
+(MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`). All three loops passed. The test
+source-checks the original save body, restores only proven campaign and Theron
+attributes/skill experience, selects Continue, advances to dungeon 2's Soul
+Room, admits an original roster champion, and enters the authentic Track 02
+dungeon through the forcefield handoff. Native movement then traverses three
+floor steps in the loaded source map. The test leaves unproven location fields
+untouched and does not compare movement, presentation, or save writes against
+a paired retail run.
+
+A separate 10-frame native CLI boot-probe with `--save` remained at the title
+with no input. This is the expected pre-Continue startup state and does not
+exercise the interactive Continue transaction. Its isolated BRAM copy retained
+its original hash.
 
 ## 2026-10-31 — verify the authentic cold BIOS I/O and RAM trace
 
