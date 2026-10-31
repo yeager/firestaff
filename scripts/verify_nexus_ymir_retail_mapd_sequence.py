@@ -160,7 +160,10 @@ def replay_and_find_sequence(trace_path: Path, receipt: dict[str, str],
                 address = int(row["address"], 16)
                 width = int(row["width"])
                 value = int(row["value"], 16)
-                if width not in (1, 2, 4) or value < 0 or value >= 1 << (8 * width):
+                # The pinned Ymir VDP2 memory-write bundle schema permits
+                # byte and word writes only. Reject wider rows even when
+                # their replay happens to produce the same final snapshot.
+                if width not in (1, 2) or value < 0 or value >= 1 << (8 * width):
                     raise VerificationError("VDP2 trace has an invalid write width or value")
                 # Ymir's VDP2Memory::MapVRAMAddress wraps to 512 KiB and aligns
                 # to the write width; WriteVRAM stores the value big-endian.
