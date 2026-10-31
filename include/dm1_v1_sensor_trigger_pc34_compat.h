@@ -196,6 +196,7 @@ struct SensorTriggerResult_Compat {
     int isLocal;
     int localEffectValue;
     int sensorDisabled;
+    int sensorRemoveFromSquare; /* F0275 C017: unlink after a successful click */
     int audible;
     int sensorIndex;
     int delayTicks;

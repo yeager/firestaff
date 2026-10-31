@@ -7,6 +7,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
@@ -2025,6 +2026,139 @@ static void test_closed_fakewall_wall_sensor_follows_redmcsb(void)
               "closed fake-wall wall sensor owns its F0172 ornament ordinal");
 }
 
+static M11_GameInputResult run_wall_c017_click_fixture(int c017IsHead,
+                                                       unsigned short* outHeadNext,
+                                                       unsigned short* outC017Next)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonSensor_Compat sensors[2];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    unsigned char sensorRaw[16];
+    unsigned short headThing;
+    unsigned short c017Thing;
+    int frontOrnament = -1;
+    int squareIndex = 0; /* front square at (0,0), party at (0,1) */
+    int sensorCount = c017IsHead ? 1 : 2;
+    int mouseSpace = DM1_V1_MOUSE_SPACE_NONE_PC34;
+    int mouseZone = 0;
+    int mouseCommand;
+
+    seed_active_view(&state);
+    state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+    (void)snprintf(state.sourceId, sizeof(state.sourceId), "%s", "dm1");
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(sensorRaw, 0, sizeof(sensorRaw));
+    memset(squareData, (unsigned char)(DUNGEON_ELEMENT_WALL << 5),
+           sizeof(squareData));
+    for (int i = 0; i < 25; ++i) squareFirstThings[i] = THING_ENDOFLIST;
+
+    state.world.party.mapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 0;
+
+    map.width = 1;
+    map.height = 2;
+    tiles.squareData = squareData;
+    tiles.squareCount = 2;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+
+    headThing = make_thing_in_cell(THING_TYPE_SENSOR, 0, 2);
+    c017Thing = make_thing_in_cell(THING_TYPE_SENSOR,
+                                   c017IsHead ? 0 : 1, 2);
+    squareFirstThings[squareIndex] = headThing;
+    if (c017IsHead) {
+        sensors[0].sensorType = DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR;
+        sensors[0].sensorData = 8;
+        sensors[0].ornamentOrdinal = 4;
+        sensors[0].effect = DM1_EFFECT_HOLD;
+        sensors[0].revertEffect = 1;
+        sensors[0].localEffect = 1;
+        sensors[0].localMultiple = DM1_EFFECT_ADD_300XP_STEAL_SKILL;
+        sensorRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+        sensorRaw[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    } else {
+        sensors[0].sensorType = DM1_SENSOR_WALL_ORNAMENT_CLICK;
+        sensors[0].effect = DM1_EFFECT_SET;
+        sensors[0].targetMapX = 0;
+        sensors[0].targetMapY = 0;
+        sensors[0].ornamentOrdinal = 4;
+        sensors[1].sensorType = DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR;
+        sensors[1].sensorData = 8;
+        sensors[1].effect = DM1_EFFECT_HOLD;
+        sensors[1].revertEffect = 1;
+        sensors[1].localEffect = 1;
+        sensors[1].localMultiple = DM1_EFFECT_ADD_300XP_STEAL_SKILL;
+        sensorRaw[0] = (unsigned char)(c017Thing & 0xffu);
+        sensorRaw[1] = (unsigned char)(c017Thing >> 8);
+        sensorRaw[8] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+        sensorRaw[9] = (unsigned char)(THING_ENDOFLIST >> 8);
+    }
+
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 25;
+    things.rawThingData[THING_TYPE_SENSOR] = sensorRaw;
+    things.thingCounts[THING_TYPE_SENSOR] = sensorCount;
+    things.sensors = sensors;
+    things.sensorCount = sensorCount;
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
+                  &state, 1, 0, NULL, NULL,
+                  NULL, &frontOrnament, NULL, NULL, NULL), 1,
+              "C017 fixture resolves the source front wall square");
+    ASSERT_EQ(frontOrnament, 4,
+              "C017 fixture exposes its linked wall sensor through F0172");
+
+    mouseCommand = M11_GameView_GetV1MouseCommandForPoint(
+        DM1_V1_MOUSE_LIST_MOVEMENT_PC34, 40, 73,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &mouseSpace, &mouseZone);
+    ASSERT_EQ(mouseCommand, 80, "C017 test point routes to source C080 click");
+    ASSERT_EQ(mouseZone, 7, "C017 test point belongs to source C007 viewport");
+
+    M11_GameInputResult result = M11_GameView_HandlePointer(
+        &state, 40, 73, 1); /* source wall-ornament click box */
+    if (outHeadNext) *outHeadNext = F0512_DUNGEON_GetThingNext_Compat(
+        &things, headThing);
+    if (outC017Next) *outC017Next = F0512_DUNGEON_GetThingNext_Compat(
+        &things, c017Thing);
+    return result;
+}
+
+static void test_wall_c017_live_thing_chain_unlink(void)
+{
+    unsigned short headNext = THING_NONE;
+    unsigned short c017Next = THING_NONE;
+    M11_GameInputResult result;
+
+    result = run_wall_c017_click_fixture(0, &headNext, &c017Next);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "non-head C017 wall click triggers through live M11 route");
+    ASSERT_EQ(headNext, THING_ENDOFLIST,
+              "non-head C017 unlink preserves its predecessor and next tail");
+    ASSERT_EQ(c017Next, THING_ENDOFLIST,
+              "non-head C017 is detached from the square Thing chain");
+
+    result = run_wall_c017_click_fixture(1, &headNext, &c017Next);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "head C017 wall click still triggers through live M11 route");
+    ASSERT_EQ(headNext, THING_ENDOFLIST,
+              "head C017 remains the linked square Thing and keeps its tail");
+}
+
 static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
 {
     M11_GameViewState state;
@@ -2139,6 +2273,7 @@ int main(void)
     test_candidate_panel_hides_stale_action_rows();
     test_hoc_floor_ornament_sources_follow_redmcsb();
     test_closed_fakewall_wall_sensor_follows_redmcsb();
+    test_wall_c017_live_thing_chain_unlink();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();

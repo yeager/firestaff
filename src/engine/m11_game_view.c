@@ -20430,6 +20430,59 @@ static int m11_print_dm1_sensor_message(M11_GameViewState* state,
     return 1;
 }
 
+/* ReDMCSB MOVESENS.C F0276 prints every visible TextString on the
+ * destination square when the PARTY is added there. This is independent of
+ * a sensor's own message TextIndex. */
+static void m11_print_dm1_party_entry_textstrings(
+    M11_GameViewState* state, int mapIndex, int mapX, int mapY) {
+    unsigned short thing;
+    unsigned char square;
+    int safety = 0;
+    int maxLinks = 0;
+    int type;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        !state->world.dungeon || !state->world.things ||
+        !state->world.things->textStrings ||
+        state->world.things->textStringCount <= 0 ||
+        !state->world.things->textData ||
+        state->world.things->textDataWordCount <= 0) {
+        return;
+    }
+    if (!m11_get_square_byte(&state->world, mapIndex, mapX, mapY, &square) ||
+        (square >> 5) == DUNGEON_ELEMENT_WALL) {
+        return;
+    }
+    thing = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        if (state->world.things->thingCounts[type] > 0) {
+            maxLinks += state->world.things->thingCounts[type];
+        }
+    }
+    for (; safety < maxLinks && thing != THING_NONE &&
+           thing != THING_ENDOFLIST; ++safety) {
+        const unsigned short next =
+            m11_raw_next_thing(state->world.things, thing);
+        const int thingType = THING_GET_TYPE(thing);
+        const int textIndex = THING_GET_INDEX(thing);
+        if (thingType == THING_TYPE_TEXTSTRING && textIndex >= 0 &&
+            textIndex < state->world.things->textStringCount) {
+            char decoded[256];
+            if (F0508_DUNGEON_DecodeTextStringThing_Compat(
+                    state->world.things, textIndex,
+                    DUNGEON_TEXT_TYPE_MESSAGE, decoded,
+                    (int)sizeof(decoded)) > 0 && decoded[0] != '\0') {
+                dm1_v1_text_set_game_time(&state->dm1V1TextMessage,
+                                          (long)state->world.gameTick);
+                dm1_v1_text_print_message(&state->dm1V1TextMessage,
+                                          DM1_V1_COLOR_WHITE,
+                                          fs_po_gettext_in_domain("dm1", decoded));
+            }
+        }
+        thing = next;
+    }
+}
+
 /* ReDMCSB F0268/F0244 square-state effects must cross the DM1 actuator
  * boundary before they mutate live map bytes.  Keep door animation on the
  * F0713/F0714 timeline path below; this helper covers the immediate pit and
@@ -35667,6 +35720,11 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         &state->lastDm1V1MovementPipelineResult.core.leaveEffects);
     m11_apply_sensor_effects(state,
         &state->lastDm1V1MovementPipelineResult.core.enterEffects);
+    if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
+        m11_print_dm1_party_entry_textstrings(
+            state, state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY);
+    }
     /* The movement pipeline owns ordinary floor effects. C008 additionally
      * reads G4055's leader-hand object, which is held outside PartyState in
      * the live M11 view, so resolve that sensor at this source boundary. */
@@ -47041,6 +47099,40 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 }
                                 resultObjectMutation = 1;
                                 objectMutation = 1;
+                            }
+
+                            /* ReDMCSB MOVESENS.C:F0275 C017 unlinks the
+                             * current sensor when a previous Thing exists.
+                             * Its list-head branch still triggers but leaves
+                             * the sensor linked. */
+                            if (tr->sensorRemoveFromSquare &&
+                                tr->sensorIndex >= 0 &&
+                                tr->sensorIndex < state->world.things->sensorCount) {
+                                unsigned short sensorThing = frontCell.firstThing;
+                                unsigned short squareHead = sensorThing;
+                                int sensorSafety = 0;
+                                while (sensorThing != THING_ENDOFLIST &&
+                                       sensorThing != THING_NONE &&
+                                       sensorSafety++ < 64) {
+                                    if (THING_GET_TYPE(sensorThing) == THING_TYPE_SENSOR &&
+                                        THING_GET_INDEX(sensorThing) == tr->sensorIndex) {
+                                        if (sensorThing != squareHead &&
+                                            m11_unlink_thing_from_square(
+                                                &state->world,
+                                                state->world.party.mapIndex,
+                                                frontCell.mapX,
+                                                frontCell.mapY,
+                                                sensorThing)) {
+                                            objectMutation = 1;
+                                        }
+                                        break;
+                                    }
+                                    if (THING_GET_TYPE(sensorThing) >= THING_TYPE_GROUP) {
+                                        break;
+                                    }
+                                    sensorThing = m11_raw_next_thing(
+                                        state->world.things, sensorThing);
+                                }
                             }
 
                             /* C004/C011/C017 consume the leader hand object
@@ -81171,6 +81263,8 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
         world->party = placedParty;
         world->partyMapIndex = placedParty.mapIndex;
         world->newPartyMapIndex = -1;
+        m11_print_dm1_party_entry_textstrings(
+            state, placedParty.mapIndex, placedParty.mapX, placedParty.mapY);
         for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
             if (resolution.championFallDamage[i] > 0 &&
                 world->party.champions[i].present &&

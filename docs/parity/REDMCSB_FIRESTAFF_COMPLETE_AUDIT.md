@@ -1,6 +1,6 @@
 # ReDMCSB Firestaff complete audit
 
-Updated: 2026-10-30
+Updated: 2026-10-31
 
 This is the DM1/CSB source-review contract for comparing ReDMCSB against
 Firestaff. ReDMCSB is the primary functional reference for DM1 and CSB V1.
@@ -48,6 +48,17 @@ source functions are mapped to Firestaff behavior and platform-specific gates.
 | DM2 | FM Towns | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, FM Towns row | PARTIAL |
 | DM2 | Macintosh | `README.md` Macintosh English route; Macintosh First Chapter demo remains explicitly unsupported | PARTIAL |
 
+F0275 has one bounded DM1 PC34 M11 C080 behavior regression in this review:
+successful non-head C017 removal and the linked-head exception. ReDMCSB's
+`MOVESENS.C:1415-1427` compiles the unlink under MEDIA009/MEDIA529. MEDIA009
+covers the supported S10-S21, G14/G20/G21, and A20-A22 editions; MEDIA529
+includes I34, A31/A36, F31, and their supported language variants. MEDIA508
+is the separate F20/X30/P20 set and does not contain I34. Thus C017 unlink is
+source-applicable to the documented DM1/CSB lanes, while the current live M11
+integration regression is PC34-only. Each other lane still needs runtime
+integration and original-media evidence. CSB's bounded PC34 C011/C012 routes
+are tracked separately and do not close its other platform lanes.
+
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
 claims must be made per game and per supported platform lane.
@@ -86,7 +97,7 @@ bounded before DM1 V1 can be called complete:
 |---|---|---|
 | Creature AI fidelity | `src/memory/memory_creature_ai_pc34_compat.c` lists all 27 DM1 creature profiles at FULL tier, while `F0804_CREATURE_Tick_Compat` retains a tier-0 fallback. | Do not report a broad profile-stub gap: compare each source behavior and platform profile against its gate; separately track any simplified or deferred mechanics and confirm whether any profile actually selects the fallback. |
 | Magic/combat fidelity | `memory_magic_pc34_compat` implements a bounded PC 3.4 spell and defence path; its header records the historical stub that it replaced. | Compare the implemented path against ReDMCSB for each supported DM1/CSB platform and edition; list only source-confirmed missing semantics as `MISSING`. |
-| Sensor execution unsupported types | Floor C10 group-split Steal-XP and deferred CLEAR/TOGGLE rotation have source-shaped M11 WALK_ON consumers. The F0248 wall-event route awards cell-specific C10 Steal-XP to the active leader and applies OnceOnly before dispatch. A bounded DM1 PC34 object add/remove sensor adapter now runs after successful M11 keyboard and rendered-pile pickup/drop chain changes, carrying the F0276 audible-sensor switch-sound receipt. Other mutation routes, wall-cell object branches, local effects, uncovered sensor-event paths, full platform coverage and original-media proof remain open. | Continue MOVESENS.C F0270/F0271/F0276 audit across every event path and platform; test remaining local-effect types and keep original-media claims separate from source-level behavior. |
+| Sensor execution unsupported types | Floor C10 group-split Steal-XP and deferred CLEAR/TOGGLE rotation have source-shaped M11 WALK_ON consumers. The F0248 wall-event route awards cell-specific C10 Steal-XP to the active leader and applies OnceOnly before dispatch. A bounded DM1 PC34 object add/remove sensor adapter now runs after successful M11 keyboard and rendered-pile pickup/drop chain changes, carrying the F0276 audible-sensor switch-sound receipt. M11 now also prints visible destination-square TextStrings in source chain order for accepted DM1 PC34 movement and first party placement, matching F0276's C1_TEXT_TYPE_MESSAGE path. A focused startup-placement regression confirms chain order and invisible-string suppression; ordinary movement integration, other mutation routes, wall-cell object branches, local effects, uncovered sensor-event paths, full platform coverage and original-media proof remain open. CSB's F0276 party path still only publishes a single TextString receipt and skips mixed or multiple TextString destination lists. | Continue MOVESENS.C F0270/F0271/F0276 audit across every event path and platform; add ordinary movement integration coverage, implement CSB's multi-TextString queue, cover remaining local-effect types, and keep original-media claims separate from source-level behavior. |
 | Original overlay regression absent | docs/parity/COMPLETION_MATRIX.md gives DM1 V1 original_overlay_regression 0/10. | Keep source fixes separate from pixel claims until representative original overlay frames exist. |
 | V1-visible shell leakage | Previous parity docs identify custom M11/M12 surfaces that must not decide original behavior. | Audit normal V1 route and keep invented/debug surfaces unreachable unless source-backed. |
 
