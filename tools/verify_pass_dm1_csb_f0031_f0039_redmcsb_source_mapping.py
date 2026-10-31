@@ -15,6 +15,9 @@ OBJECT = SOURCE / "OBJECT.C"
 IMPLEMENTATION = ROOT / "src/dm1/dm1_v1_object_slotbox_icon_f0039_pc34_compat.c"
 SLOT_BOXES = ROOT / "src/dm1/dm1_v1_slot_boxes_pc34_compat.c"
 TEST = ROOT / "tests/test_dm1_v1_object_slotbox_icon_f0039_pc34_compat.c"
+M11 = ROOT / "src/engine/m11_game_view.c"
+CSB_RUNTIME = ROOT / "src/csb/csb_v1_runtime_pc34_compat.c"
+CSB_BOOT = ROOT / "src/csb/csb_v1_boot.c"
 AUDIT = ROOT / "docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv"
 
 
@@ -49,6 +52,48 @@ def main() -> int:
     if row["status"] != "IMPLEMENTED_NARROW" or "PC34" not in row["notes"] or "other edition/platform runtime parity remain open" not in row["notes"]:
         raise SystemExit("FAIL F0039 disposition overstates its PC34 scope")
 
+    # F0031 has three source encodings in the supported M11 lanes: MEDIA060
+    # high-bit termination, MEDIA574 NUL termination, and MEDIA689's byte-1
+    # display terminator inside NUL-terminated Japanese rows.
+    f0031 = "\n".join(lines[24:119])
+    for marker in (
+        "void F0031_OBJECT_LoadNames(",
+        "#ifdef MEDIA689_F31J_X31J_P31J",
+        "if (*L0001_puc_ObjectNames == 1)",
+        "#ifdef MEDIA060_",
+        "while (!(*L0002_puc_Graphic & 0x80))",
+        "#ifdef MEDIA574_",
+        "while (*L0001_puc_ObjectNames++)",
+    ):
+        if marker not in f0031:
+            raise SystemExit(f"FAIL ReDMCSB F0031 source behavior changed: {marker}")
+    m11 = M11.read_text()
+    csb_runtime = CSB_RUNTIME.read_text()
+    csb_boot = CSB_BOOT.read_text()
+    for marker in (
+        "static int m11_dm1_load_object_names_m564(",
+        "M11_DM1_OBJECT_NAME_COUNT = 199",
+        "highBitTerminated",
+        "state->dm1ObjectNames[nameIndex][--written] = '\\0'",
+    ):
+        if marker not in m11:
+            raise SystemExit(f"FAIL DM1 F0031 live loader behavior changed: {marker}")
+    for marker in (
+        "csb_v1_runtime_load_object_names_m564(",
+        "csb_v1_runtime_load_object_names_m564_f31j(",
+        "display_ended",
+    ):
+        if marker not in csb_runtime:
+            raise SystemExit(f"FAIL CSB F0031 runtime parser behavior changed: {marker}")
+    if "csb_v1_boot_load_object_names_m564(profile)" not in csb_boot:
+        raise SystemExit("FAIL CSB boot no longer binds source M564 names")
+    name_rows = [row for row in rows if row["symbol"] == "F0031_OBJECT_LoadNames"]
+    if (len(name_rows) != 1 or name_rows[0]["status"] != "IMPLEMENTED_NARROW" or
+            "src/engine/m11_game_view.c" not in name_rows[0]["firestaff_mapping"] or
+            "src/csb/" not in name_rows[0]["firestaff_mapping"] or
+            "IIGS" not in name_rows[0]["notes"]):
+        raise SystemExit("FAIL F0031 inventory row overstates or loses scoped mappings")
+
     # Keep the adjacent F0619 inventory row honest: the slot-table accessor
     # does not resolve a source zone rectangle or apply edition margins.
     f0619 = "\n".join(lines[364:393])
@@ -67,7 +112,7 @@ def main() -> int:
     if len(missing_rows) != 1 or missing_rows[0]["status"] != "MISSING" or "F0635" not in missing_rows[0]["notes"]:
         raise SystemExit("FAIL F0619 source-backed missing-function disposition changed")
 
-    print("PASS F0039 ReDMCSB source mapping (PC34 scope); F0619 missing gap confirmed")
+    print("PASS F0031 DM1/CSB M564 source mappings; F0039 PC34 mapping; F0619 missing gap")
     return 0
 
 
