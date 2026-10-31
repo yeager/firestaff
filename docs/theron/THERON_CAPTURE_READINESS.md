@@ -13,8 +13,9 @@ also required to separate display animation from state-driven scene changes.
 The available original-reference evidence that can be promoted today is
 narrower: a Japanese dungeon capture shows host mouse motion moving the retail
 hand cursor, but does not establish guest coordinates or click semantics. The
-US save-state route has previously bound Button I to a game command queue, but
-not to a committed party movement or viewport change. The current close-time
+US save-state route records raw mouse input reaching guest reads and candidate
+command-consumer activity, but does not bind the raw bit to Button I or to a
+committed party movement or viewport change. The current close-time
 RUN trace ends in System Card BIOS and supplies no Theron game-owned handoff.
 
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
@@ -26,7 +27,43 @@ states for these missing real-data joins. See the [Theron TODO](../../TODO-thero
 [native platform status](../PLATFORM_STATUS.md#therons-quest) for the current
 work order and detailed evidence.
 
-## 2026-10-31 — PCE Fast capture tooling repaired; save-state replay still blocked
+## 2026-10-31 — authentic US PCE mouse-input capture boundary
+
+The preserved authentic US gameplay state (MD5
+`f17f377df210b4a3ae904a13fb85a7f0`) loads in the standard PCE module; PCE Fast
+rejects this state's serialization format. The successful standard-PCE replay
+used authentic US Track 02 MODE1/2352 media (MD5
+`f23601102138f87c33025877767ebf76`) and the verified System Card. The state
+already contains dungeon-bank bytes `$20DA=01`, `$20DB=00`.
+
+One neutral capture and three repeated captures with raw mouse-button mask
+`0x01` held for 60 updates were made from that exact state and media. All three
+held-input captures agree on close-time RAM and command-consumer stream. The
+input trace records 60 scripted updates and 60 guest device reads. The command
+consumer reads logical `$2905=$50` twice at PC `$D34D` in the instrumented
+listing; across the 473 reads, these are dispatch observations, not a decoded
+game action. Close-time RAM differs from neutral in 24 bytes, while VRAM, VCE,
+SAT and VDC snapshots match the neutral capture. Known candidate position
+bytes `$2031`, `$203F`, `$2040`, `$2041`, and pointers `$2E3B`/`$2E7B` are
+unchanged. A separate motion-only probe latched hardware delta `x=-10`, but
+did not change those bytes or the close-time display snapshots.
+
+All replay validations end `transition=missing`: loading the save state skips
+the original CD-to-RAM transfer, so no authenticated runtime media-origin
+receipt exists. These captures establish guest mouse-read and command-consumer
+activity only. They do not bind mask `0x01` to Button I, prove movement or an
+item action, identify a target, establish a game-owned pose/map join, or verify
+rendering/parity. The [source-locked capture report](../source-lock/theron-disassembly/theron-us-pce-mouse-held-command-capture-20261031.md)
+records artifact hashes and the full evidence boundary.
+
+Capture tooling fixes are also retained: optional BRAM arguments are now added
+only when a verified filename exists, avoiding macOS Bash `nounset` failure;
+the PCE Fast TIA zero-page instrumentation patch is opt-in. The isolated
+patch-only pipeline passed three loops, and the instrumented PCE Fast build
+passed the SDL 2.32.10 runtime check. Mednafen remains a diagnostic reference
+tool and is not part of Firestaff's native C/SDL runtime.
+
+## 2026-10-31 — PCE Fast capture tooling repaired
 
 The isolated reference-capture wrapper previously failed under macOS Bash
 `nounset` when its optional authentic-BRAM argument list was empty. The wrapper
@@ -36,14 +73,9 @@ the corresponding opt-in trace flag is enabled; the complete patch-only
 pipeline passed three isolated loops, and a PCE Fast instrumentation build
 passed the real SDL 2.32.10 runtime check.
 
-An existing authentic US gameplay save state was rejected by this freshly
-built reference core's serialized-state schema. The capture wrapper reached
-Mednafen and retained diagnostics, but validation reported no observed System
-Card `$1800` reads because the requested state did not load. This is a tooling
-compatibility failure, not gameplay evidence. The next reference capture needs
-a save state emitted by the exact instrumented core or a separately verified
-cold route into the dungeon. No game media, save state or raw capture was
-committed.
+The PCE Fast module rejects the preserved authentic US state's serialization
+schema; the standard PCE module accepts it, as documented above. No game media,
+save state or raw capture was committed.
 
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 

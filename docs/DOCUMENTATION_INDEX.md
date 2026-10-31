@@ -77,6 +77,7 @@ remain at the top of `docs/`.
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 - [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins
+- [Theron US PCE mouse-held capture](source-lock/theron-disassembly/theron-us-pce-mouse-held-command-capture-20261031.md) — repeated guest mouse-read and candidate command-consumer receipts; save-state replay has no runtime CD provenance
 - [Theron System Card RUN trace](source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) and [bounded `$EA3B` disassembly](source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm) — callback byte and BIOS branch evidence; game handoff remains unobserved
 
 ## Per-game technical notes
