@@ -5539,7 +5539,6 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
         receipt.source_noop_destroyed = 1;
     } else if ((receipt.door_record_attributes_before & 0x0400u) == 0u) {
         receipt.state_after = (uint8_t)old_state;
-        receipt.source_noop = 1;
         receipt.valid = 1;
         receipt.consumed = 1;
         receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
