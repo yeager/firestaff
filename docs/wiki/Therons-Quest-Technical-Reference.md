@@ -4,7 +4,7 @@
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.
 
-> **Status reviewed 2026-10-31.** Firestaff runs Theron's Quest in native
+> **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native
@@ -87,6 +87,13 @@
 > 58761. The run reports `transition=missing`; it verifies the trace gate and
 > ordering only. It does not prove input causality, VRAM semantics, visible
 > gameplay, cold media handoff, or parity. See the [source-locked report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+
+> **Track 02 spawn source records (2026-11-01):** authenticated US and JP full
+> ISO projections decode the same creature-pointer and regular-spawn zone
+> records as their raw BINs, and native ISO dungeon startup binds those source
+> records. The JP category semantics, runtime consumer, RNG, creature
+> generation and combat remain unverified. See the
+> [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ## Door movement boundary
 

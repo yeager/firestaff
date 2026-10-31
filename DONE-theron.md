@@ -146,6 +146,17 @@ members and the resulting hash. The suffix by itself remains rejected. Older
 entries below preserve the evidence and conclusions available on their dates;
 this correction supersedes their description of the bytes as a placeholder.
 
+## 2026-11-01 — bind ISO spawn records to authentic regional source
+
+Native source admission now decodes the eight pointer and five zone records
+from complete hash-verified US and JP Track 02 ISO projections. The normalized
+ISO records match their separate authentic raw BIN records for both regions;
+startup source-dungeon loading binds those records for ISO launches too. This
+does not promote JP spawn categories, RNG, creature generation, or combat.
+Three repeated real-media loops passed the JP seven-dungeon runtime and US/JP
+spawn-source regressions. Details and offsets are in
+`docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md`.
+
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 
 The CUE media resolver now accepts a same-stem `.ogg` only when the CUE

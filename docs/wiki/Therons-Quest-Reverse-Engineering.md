@@ -185,7 +185,9 @@ The full Theron CTest selection is now green on an external temporary volume:
 with the local authenticated VRAM/VCE, Main-RAM, and CD-state fixtures. Six
 tests remain expected skips when those local fixtures are absent. This closes
 the test-environment blocker, not the semantic one: no game-owned dungeon
-handoff, spawn consumer, or RNG window is admitted yet.
+handoff, runtime spawn consumer, or RNG window is admitted yet. Authenticated
+US/JP raw BINs and complete ISO projections now admit the same source spawn
+records, as documented in the [projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ---
 
@@ -193,10 +195,13 @@ handoff, spawn consumer, or RNG window is admitted yet.
 
 Theron's Quest's disc has **no ISO-9660 filesystem** on the data track that
 the game itself reads at runtime — the boot chain is a record-based System
-Card access pattern, not a mounted filesystem walk. (Some redumps additionally
-carry an ISO-9660 wrapper used only by external tooling; Firestaff treats
-that as a separate media variant, `THERON_TRACK02_VARIANT_*_ISO`, distinct
-from the raw BIN.)
+Card access pattern, not a mounted filesystem walk. Some supplied files are
+MODE1/2048 ISO projections used by external tools; they are not the PC Engine
+runtime disc layout. Firestaff admits them only through separate full-image
+hash checks. The authenticated US and JP projections preserve the spawn
+pointer and zone records at pregap-normalized offsets, and those records are
+checked against their regional raw BINs. See the
+[spawn-record projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ### Boot chain (from `theron_v1_track02.h`, `theron_v1_stage2_runtime_handoff.h`, `theron_v1_stage3_irq2_dispatch.h`)
 

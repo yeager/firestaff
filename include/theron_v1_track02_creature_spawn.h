@@ -58,6 +58,17 @@ int theron_v1_track02_decode_spawn_source(
     Theron_V1Track02Variant variant,
     Theron_Track02SpawnSource *out);
 
+/* Authenticated source decode for the complete MODE1/2048 Track 02 ISO
+ * projection. Pass the regional BIN variant to select US or JP; only the
+ * matching exact retail ISO hash is accepted. The output keeps that regional
+ * BIN-family identity. This records source fields only; it does not open a
+ * runtime spawn consumer. */
+int theron_v1_track02_decode_spawn_source_iso(
+    const uint8_t *iso_track02,
+    size_t iso_track02_bytes,
+    Theron_V1Track02Variant variant,
+    Theron_Track02SpawnSource *out);
+
 /* Static retail-code receipt for the regional regular-spawn consumer.  It
  * authenticates the complete instruction span corresponding to the US
  * `$B0E5..$B1F1` disassembly and its relocated JP counterpart.  Static code

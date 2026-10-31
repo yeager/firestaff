@@ -70,6 +70,13 @@ the same component and complete-image hash checks used for the US split pair.
   offset `0x0B3D98`: eight newline/NUL-framed records decode their numeric
   fields from the A–P nibble representation. A wrong regional MD5, offset
   mutation or malformed field rejects the receipt.
+- The eight creature-pointer records and five regular-spawn zone records are
+  now source-bound from both raw BINs and the complete regional MODE1/2048 ISO
+  projections. The ISO decoder uses the pregap-normalized shared offset
+  `0x203818`, requires the exact regional full-image hash and roster marker,
+  and is regression-checked against each raw BIN. This admits source metadata
+  only; JP category/runtime semantics and the original RNG consumer remain
+  closed. See the [spawn-record projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 - Later-level runtime receipts retain the retail resource frame length
   (`LE16(+2)-5`) and exact user-data end offset in addition to the block and
   payload hashes. The payload remains opaque until the HuC6280 consumer is

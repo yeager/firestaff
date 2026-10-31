@@ -76,6 +76,7 @@ remain at the top of `docs/`.
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
+- [Theron ISO spawn-record projection](source-lock/theron-track02-spawn-record-iso-projection-20261101.md) — hash-verified US/JP ISO offsets and raw-BIN record parity; no spawn semantics inferred
 - [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins; includes the cold JP emulator route and its byte-identical empty BRAM result
 - [Theron reference-capture runbook](theron/THERON_MAC_SDL_MEDNAFEN_LOCAL.md) — current diagnostic capture constraints; retired machine-specific build paths have been removed
 - [Theron native Debug direct launch](source-lock/theron-native-debug-direct-launch-20261031.md) — confirms the Firestaff Run menu is bypassed; the startup probe did not load a dungeon

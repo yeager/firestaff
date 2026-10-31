@@ -7,7 +7,7 @@
 
 ## Authenticated startup handoff (2026-08-08)
 
-**Native status (2026-10-31):** Firestaff's bounded JP fresh-start and US
+**Native status (2026-11-01):** Firestaff's bounded JP fresh-start and US
 Continue routes consume authentic Track 02 data in the native C/SDL runtime.
 Continue reaches dungeon 2 with its authentic Ak-Tu-Ba-complete BRAM; the JP
 fresh start reaches a source-verified loaded dungeon. These routes do not
@@ -33,6 +33,13 @@ Firestaff verifies the US CUE/Track 02 and System Card boundaries, then records
 the original media reads required for startup. This proves the startup/media
 transport only; it does not promote the Track 02 payload to semantic level,
 object, tile, palette, HUD, creature, T700 or T900 state.
+
+**Track 02 source records (2026-11-01):** hash-verified US and JP full-ISO
+projections now admit the same eight creature-pointer and five regular-spawn
+zone records as their raw BINs. Native ISO dungeon startup binds these source
+records. This does not establish JP category semantics or a runtime spawn,
+RNG, creature-generation, or combat consumer. See the
+[ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 **Current reference boundary (2026-10-31):** a separate authentic Japanese
 cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`

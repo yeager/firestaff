@@ -15,6 +15,9 @@
     } \
 } while (0)
 
+static void assert_iso_matches_raw_source(
+    const char *edition, const Theron_Track02SpawnSource *raw);
+
 static uint8_t *read_file(const char *path, size_t *size_out) {
     FILE *file;
     long size;
@@ -70,6 +73,8 @@ static void assert_decoded_real_bin(const char *path,
                                                  &source) == 1);
     assert(source.authenticated == 1);
     assert(source.variant == (int)variant);
+    assert_iso_matches_raw_source(
+        variant == THERON_V1_TRACK02_VARIANT_US_BIN ? "US" : "JP", &source);
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
         const Theron_CreaturePointerEntry *expected =
             theron_v1_track02_creature_pointer(i);
@@ -156,6 +161,76 @@ static const char *media_path(const char *edition, const char *override_name) {
     length = snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s",
                       home, filename);
     return length >= 0 && (size_t)length < sizeof(path) ? path : NULL;
+}
+
+static const char *iso_media_path(const char *edition) {
+    const char *override = getenv(strcmp(edition, "US") == 0
+        ? "FIRESTAFF_THERON_US_ISO" : "FIRESTAFF_THERON_JP_ISO");
+    const char *home = getenv("HOME");
+    static char path[4096];
+    const char *filename = strcmp(edition, "US") == 0
+        ? "TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
+        : "TQJP02-62a39bbf43415c9739c41c2481080a49.iso";
+    int length;
+
+    if (override && override[0]) return override;
+    if (!home || !home[0]) return NULL;
+    length = snprintf(path, sizeof(path),
+                      "%s/.firestaff/cache/theron/%s", home, filename);
+    return length >= 0 && (size_t)length < sizeof(path) ? path : NULL;
+}
+
+static void assert_iso_matches_raw_source(
+    const char *edition, const Theron_Track02SpawnSource *raw) {
+    const char *path = iso_media_path(edition);
+    const char *expected_md5 = strcmp(edition, "US") == 0
+        ? THERON_TRACK02_MD5_US_ISO : THERON_TRACK02_MD5_JP_ISO;
+    const Theron_V1Track02Variant variant = strcmp(edition, "US") == 0
+        ? THERON_V1_TRACK02_VARIANT_US_BIN
+        : THERON_V1_TRACK02_VARIANT_JP_BIN;
+    const char *override_name = strcmp(edition, "US") == 0
+        ? "FIRESTAFF_THERON_US_ISO" : "FIRESTAFF_THERON_JP_ISO";
+    size_t size = 0u;
+    uint8_t *bytes;
+    Theron_Track02SpawnSource iso;
+
+    if (!path || !(bytes = read_file(path, &size))) {
+        if (getenv(override_name) && getenv(override_name)[0]) {
+            fprintf(stderr, "FAIL: explicit authentic %s Track 02 ISO unavailable\n",
+                    edition);
+            exit(EXIT_FAILURE);
+        }
+        printf("SKIP: authentic %s Track 02 ISO projection unavailable\n",
+               edition);
+        return;
+    }
+    assert(theron_v1_track02_raw_bytes_match_md5(bytes, size, expected_md5));
+    assert(theron_v1_track02_decode_spawn_source_iso(
+        bytes, size, variant, &iso));
+    assert(iso.authenticated && iso.variant == variant);
+    for (unsigned int i = 0u; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
+        assert(iso.pointers[i].sprite_desc_offset ==
+               raw->pointers[i].sprite_desc_offset);
+        assert(iso.pointers[i].constant_278a == raw->pointers[i].constant_278a);
+        assert(iso.pointers[i].spawn_data_offset ==
+               raw->pointers[i].spawn_data_offset);
+        assert(iso.pointers[i].constant_016b == raw->pointers[i].constant_016b);
+    }
+    for (unsigned int i = 0u; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
+        assert(iso.zones[i].map_width == raw->zones[i].map_width);
+        assert(iso.zones[i].map_height == raw->zones[i].map_height);
+        assert(iso.zones[i].category == raw->zones[i].category);
+        assert(iso.zones[i].count == raw->zones[i].count);
+        assert(iso.zones[i].param1 == raw->zones[i].param1);
+        assert(iso.zones[i].param2 == raw->zones[i].param2);
+    }
+    bytes[0x203858u] ^= 1u;
+    assert(!theron_v1_track02_decode_spawn_source_iso(
+        bytes, size, variant, &iso));
+    assert(!iso.authenticated);
+    free(bytes);
+    printf("PASS: authentic %s Track 02 ISO spawn records match raw BIN\n",
+           edition);
 }
 
 int main(int argc, char **argv) {

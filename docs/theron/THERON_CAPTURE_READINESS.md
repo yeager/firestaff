@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-10-31.** This is the maintained evidence overview for
+**Current summary: 2026-11-01.** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
@@ -81,6 +81,14 @@ US pickup/reselect/drop; USE command effects remain unverified. Native JP M11
 rejects the authentic empty BRAM, while positive JP progress restoration remains
 untested. Current claims are bounded routes, not complete gameplay or visual
 parity.
+
+The 2026-11-01 source update admits the eight creature-pointer records and
+five regular-spawn zone records from authenticated US and JP full-ISO
+projections. Each decoded record matches its regional raw Track 02 BIN, and
+native ISO dungeon startup now binds those records. This is source metadata
+only: it does not establish JP category semantics, a runtime spawn consumer,
+RNG, creature generation, or combat. See the
+[ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 On 2026-10-31, a clean macOS Debug/SDL3 build passed three repetitions each of
 the authentic USA and Japanese Rev. 1 native SDL input suites. These runs
