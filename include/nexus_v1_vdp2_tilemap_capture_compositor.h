@@ -93,6 +93,8 @@ typedef struct {
     int nbg2_tilemap_mode;
     int pnd_size_two_words;
     int colour_code_256;
+    int nbg1_enabled;
+    int bits_per_pixel;
     int name_table_vram_offset;
     int map_page_columns;
     int map_page_rows;
