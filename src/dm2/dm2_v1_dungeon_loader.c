@@ -6791,7 +6791,9 @@ int dm2_v1_dungeon_c_light_class34_receipt(
     if (!d || direction < 0 || direction > 3) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    if (raw < 0 || raw > 0xff || first < -1 || first == DM2_THING_NULL_MARKER)
+    if (raw < 0 || raw > 0xff || first < -1 ||
+        first == DM2_THING_NULL_MARKER ||
+        (d->square_bytes == 1 && (raw & 0x10) != 0 && first < 0))
         return 0;
     if (((unsigned)raw >> 5) == 3u) {
         /* c_gui_vp.cpp:2659-2669: class 3 summarizes as 0x12/0x13. */
@@ -6817,7 +6819,9 @@ int dm2_v1_dungeon_c_light_class34_receipt(
             if (adjacent_raw < 0 || adjacent_raw > 0xff) return 0;
             adjacent_first = dm2_v1_dungeon_get_first_thing(
                 d, level, adjacent_x, adjacent_y);
-            if (adjacent_first == DM2_THING_NULL_MARKER) return 0;
+            if (adjacent_first == DM2_THING_NULL_MARKER ||
+                (d->square_bytes == 1 && (adjacent_raw & 0x10) != 0 &&
+                 adjacent_first < 0)) return 0;
             if (adjacent_first != -1 &&
                 adjacent_first != DM2_THING_END_MARKER) {
                 unsigned adjacent_record_class =
