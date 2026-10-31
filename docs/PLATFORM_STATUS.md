@@ -349,10 +349,12 @@ and does not alter the native routes above. See the [capture-readiness record](t
 [source-locked follow-up report](source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 A separate US saved-state PCE Fast capture loaded its existing state and
-recorded 1,354 reads at `$44CA/$44DB`; every read reports `raw=0000` despite
-scripted input-apply records. RAM, VRAM, and SAT snapshots differ from control,
-but the changes are not joined to received input, party pose, map cell, or a
-display consumer. This adds no verified action or renderer mapping; see the
+recorded 1,354 short-format rows at `$44CA/$44DB`. Standard-PCE and PCE Fast
+instrumentation share the output path and row label, so these are not verified
+PCE Fast read receipts despite separate scripted input-apply records. RAM,
+VRAM, and SAT snapshots differ from control, but the changes are not joined to
+received input, party pose, map cell, or a display consumer. This adds no
+verified action or renderer mapping; see the
 [saved-state capture report](source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
 ## Data and preservation rules

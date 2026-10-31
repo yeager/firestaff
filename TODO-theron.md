@@ -3,16 +3,16 @@
 ## 2026-10-31 — US saved-state scripted-input trace remains inconclusive
 
 An existing US state file loaded successfully in an instrumented PCE Fast
-reference run with the original US CUE. The run logged guest reads at `$44CA`
-and `$44DB` and produced different close-time RAM/VRAM/SAT snapshots from its
-control. However, all 1,354 guest-read records report `raw=0000`, including
-reads during the scripted Right/Down/Button I events. The script-apply records
-do not prove that the guest received those inputs, and the snapshot changes
-are not attributed to a specific action, pose, map cell, or display consumer.
-This does not establish the semantics or game ownership of those PCs, nor a
-source-bound renderer mapping. Resolve the read-instrumentation discrepancy
-and join a source-backed state change to same-session VDC/VRAM writes before
-using this route for parity. See the [capture report](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+reference run with the original US CUE. The run's shared trace file contains
+1,354 short-format input-read rows at `$44CA/$44DB`, all with `raw=0000`, while
+the separate input script log records Right/Down/Button I mask application.
+The standard-PCE and PCE Fast instrumenters share the same trace path and row
+label, so these rows are not a verified PCE Fast read receipt. The different
+close-time RAM/VRAM/SAT snapshots are also not attributed to an action, pose,
+map cell, or display consumer. Source ownership, input consumption, and a
+renderer mapping remain unproven. Separate the trace streams and join a
+source-backed state change to same-session VDC/VRAM writes before using this
+route for parity. See the [capture report](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 

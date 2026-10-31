@@ -11,8 +11,9 @@ dynamic source-bound viewport, cold game-owned handoff/input, later campaign
 and save semantics, combat, quest-item consumers, and audio remain open. Do
 not infer stair or quest behavior from roster indices or fixtures. See the
 [Theron capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
-The separate saved-state PCE Fast trace reached `$44CA/$44DB`, but all 1,354
-guest-read records reported `raw=0000`; its input actions and changed snapshots
+The separate saved-state PCE Fast trace contains 1,354 short-format
+`$44CA/$44DB` rows, but standard-PCE and PCE Fast instrumentation share the
+output path and label, so the input receipt is ambiguous and changed snapshots
 remain unattributed. See its [capture report](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
 2026-10-31 authentic-media launch audit: on base `d64d70d0`, the real-media

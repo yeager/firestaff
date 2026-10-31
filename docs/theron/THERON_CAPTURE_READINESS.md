@@ -34,13 +34,15 @@ poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
-A separate US saved-state PCE Fast run loaded its existing state and logged
-guest reads at `$44CA/$44DB`, but all 1,354 read records report `raw=0000`
-despite the scripted input-apply records. RAM, VRAM, and SAT differ from the
-control snapshot, while VCE and VDC state match; those changes are not joined
-to a received input, party pose, map cell, or display consumer. This does not
-prove action semantics or game ownership and cannot supply a tile mapping. See
-the [saved-state input boundary report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+A separate US saved-state PCE Fast run loaded its existing state and recorded
+scripted input-apply events. Its shared input trace contains 1,354
+short-format rows at `$44CA/$44DB`, all reporting `raw=0000`; because standard
+PCE and PCE Fast instrumentation share a path and row label, these are not a
+verified PCE Fast read receipt. RAM, VRAM, and SAT differ from the control
+snapshot, while VCE and VDC state match; those changes are not joined to a
+received input, party pose, map cell, or display consumer. This proves neither
+action semantics nor game ownership and cannot supply a tile mapping. See the
+[saved-state input boundary report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
 of Firestaff's shipped runtime. A successful emulator build or input-delivery
@@ -112,9 +114,10 @@ the corresponding opt-in trace flag is enabled; the complete patch-only
 pipeline passed three isolated loops, and a PCE Fast instrumentation build
 passed the real SDL 2.32.10 runtime check.
 
-The PCE Fast module rejects the preserved authentic US state's serialization
-schema; the standard PCE module accepts it, as documented above. No game media,
-save state or raw capture was committed.
+The earlier PCE Fast build rejected the preserved US state's serialization
+schema, while a later instrumented PCE Fast binary reported successful loading
+of the same state. The shared input trace remains ambiguous as described above.
+No game media, save state or raw capture was committed.
 
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 

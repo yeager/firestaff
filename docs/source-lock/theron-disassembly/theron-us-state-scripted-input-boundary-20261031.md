@@ -23,12 +23,16 @@ frames, and Button I at frame 145 for 5 frames.
 
 ## Observations
 
-The run logged 1,354 guest input reads and corresponding result records at
-`$44CA` and `$44DB` (677 at each PC, frames 2–1354). Every recorded `raw` field
-was `0000`, including reads during the scripted events. The script log confirms
-that masks were applied by the instrumentation, but the guest-read records do
-not show those masks. This capture therefore does not prove that the game
-received any of the scripted actions or identify the semantics of either PC.
+The input file contains 1,354 short-format `pce_input_read` rows and matching
+result rows at `$44CA` and `$44DB` (677 at each PC, frames 2–1354). Every
+recorded `raw` field was `0000`, including rows during scripted events. These
+rows do not include the `physical_pc` and returned `value` fields emitted by
+the current dedicated PCE Fast trace patch. The standard-PCE and PCE Fast
+instrumenters have both written to the same output path with the same event
+label, so the row producer in this artifact is ambiguous. The script log
+confirms that the instrumentation applied masks, but this mixed trace does not
+prove that the game received any scripted action or identify either PC's
+semantics.
 
 The close-time control/input snapshots differ by 570 bytes in main RAM, 17,385
 bytes in VRAM, and 3 bytes in SAT. VCE (1,024 bytes) and the 116-byte VDC-state
@@ -38,13 +42,14 @@ They cannot be used to derive a map-to-BAT/tile/palette mapping.
 
 ## Boundary and next step
 
-This is useful evidence that the authentic-media state can enter a code path
-outside the previously observed System Card input PCs, but neither the state
-nor the `$44CA/$44DB` routines have been joined to authenticated runtime
-Track 02 provenance. The instrumentation discrepancy must be resolved before
-using this route to infer input behavior. A follow-up needs reads that expose
-the applied controller value, a source-backed guest state change, and a
-same-session join from that state to VDC/VRAM output.
+This capture records PC values outside the previously observed System Card
+input PCs, but neither the `$44CA/$44DB` routines nor their trace producer are
+source-bound to authenticated runtime Track 02 provenance. Resolve the shared
+trace-path/record-label ambiguity before using this route to infer input
+behavior. A follow-up needs separate PCE and PCE Fast trace files, fast-path
+records that expose the applied controller value and returned byte, a
+source-backed guest state change, and a same-session join from that state to
+VDC/VRAM output.
 
 The paired capture is not checked into Git; its paths and input hashes are
 recorded above. A separate standard-PCE artifact with the same state file

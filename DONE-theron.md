@@ -85,8 +85,9 @@ The preserved authentic US gameplay state (MD5
 build used here, while that build's PCE Fast module rejected its serialization
 schema. A later PCE Fast instrumented binary (MD5
 `cdef1c8ebe6ec3248ea19559cdd13fe3`) reports a successful load of the same
-state; its input trace remains inconclusive because every guest-read record
-reports `raw=0000`. See the [later PCE Fast capture boundary](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+state; its input trace remains inconclusive because standard-PCE and PCE Fast
+instrumentation share an output path and row label. See the [later PCE Fast
+capture boundary](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 With authentic US Track 02 MODE1/2352 media
 (MD5 `f23601102138f87c33025877767ebf76`) and the verified System Card, one
 neutral and three same-state captures held raw mouse-button mask `0x01` for 60
