@@ -6988,6 +6988,28 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
             continue;
         }
 
+        /* SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE dispatches alcove type 2 to
+         * _32cb_0f82_SHOP_GLASS instead of drawing the generic ornament. The
+         * shop plan currently proves its live actuator pair only; keep that
+         * source branch out of the generic image requirement until its
+         * merchandise panel renderer is bound. */
+        if (s->source_materials_required && s->gdat_wall_ornament_material_plan &&
+            s->gdat_wall_ornament_material_plan->valid) {
+            int shop_pending = 0;
+            for (int j = 0;
+                 j < s->gdat_wall_ornament_material_plan->ornament_count; ++j) {
+                const DM2_V1_WallOrnamentRender *candidate =
+                    &s->gdat_wall_ornament_material_plan->ornaments[j];
+                if (candidate->view_square == i &&
+                    candidate->shop_glass_pair_valid &&
+                    candidate->shop_glass_render_pending) {
+                    shop_pending = 1;
+                    break;
+                }
+            }
+            if (shop_pending) continue;
+        }
+
         s->last_wall_ornament_material_required_mask |=
             (uint16_t)(1u << (unsigned)i);
 

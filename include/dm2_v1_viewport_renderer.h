@@ -521,6 +521,12 @@ typedef struct {
     DM2_V1_ViewportRect overlay_src_rect;
     uint8_t overlay_mirror_flip;
     uint32_t overlay_material_hash;
+    /* Source-owned shop-glass actuator pair for the live tile. */
+    uint16_t shop_wall_actuator;
+    uint16_t shop_floor_actuator;
+    uint16_t shop_current_item;
+    uint8_t shop_glass_pair_valid;
+    uint8_t shop_glass_render_pending;
 } DM2_V1_WallOrnamentRender;
 
 typedef struct DM2_V1_WallOrnamentRenderPlan {
@@ -1269,6 +1275,8 @@ typedef struct {
     uint8_t  wall_ornate_source_image_absent; /* SUMMARY_IMAGE width is zero */
     uint16_t wall_rendered_record_root; /* SUMMARIZE_STONE_ROOM xsrd.id4 */
     uint8_t  wall_rendered_record_root_valid;
+    int16_t  source_map_x; /* source tile coordinate used to build this view square */
+    int16_t  source_map_y;
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
     uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */

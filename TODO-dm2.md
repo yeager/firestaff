@@ -88,6 +88,17 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 shop-glass viewport routing: the wall-ornament source plan now
+retains the live DB3 wall-panel/floor-shop actuator pair and current floor
+item from the visible source tile, including source byte order on
+Macintosh/Amiga records. A validated pair routes the shop alcove away from
+the generic ornament material requirement, matching `DRAW_WALL_ORNATE`'s
+dispatch to `_32cb_0f82_SHOP_GLASS`; missing or malformed ownership remains
+visible as a blocked-plan status. This does not render merchandise or the
+shop panel and does not select/advance stock, resolve prices, or implement
+buy/sell transitions. Those source functions remain missing, and no DM2
+platform has full shop parity.
+
 2026-10-31 skproject `DRAW_WALL_ORNATE` generic overlay: the runtime render
 plan now resolves optional `WALL_GFX` image field `0x0f` for non-shop alcoves,
 uses the source rectangle, scale, flip, and local palette, and draws it after

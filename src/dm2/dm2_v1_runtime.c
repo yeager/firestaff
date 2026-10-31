@@ -50,6 +50,7 @@
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_projectile_impact_attack.h"
 #include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
@@ -2839,6 +2840,10 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         }
         {
             DM2_ViewSquare *surface = &viewport->squares[visible_cells[i].square];
+            /* Retain the source tile address for dynamic wall owners such as
+             * SkProject SHOP_GLASS. */
+            surface->source_map_x = (int16_t)map_x;
+            surface->source_map_y = (int16_t)map_y;
             if (square_type == DM2_SQUARE_WALL) {
                 uint16_t rendered_record_root = DM2_THING_END_MARKER;
                 surface->wall_ornate_gfx_index = 0u;
@@ -12840,17 +12845,146 @@ static void dm2_runtime_bind_source_squad_hands(
     }
 }
 
+typedef struct {
+    uint16_t wall_object;
+    uint16_t floor_object;
+    uint16_t wall_w2;
+    uint16_t wall_w4;
+    uint16_t floor_w2;
+    uint16_t floor_w4;
+    uint16_t current_item;
+    uint16_t records_scanned;
+    uint32_t identity_hash;
+} DM2_V1_ShopGlassActuatorPair;
+
+/* SkWinCore.cpp::_32cb_0f82_SHOP_GLASS starts from the wall actuator tile,
+ * finds the first floor shop actuator (0x30), and reads the wall shop-panel
+ * actuator (0x3f). Preserve chain order and the original words before item
+ * selection or any actuator mutation. */
+static int dm2_runtime_shop_glass_actuator_pair_at(
+    DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    int level, int x, int y, DM2_V1_ShopGlassActuatorPair *out)
+{
+    DM2_V1_ShopGlassActuatorPair candidate;
+    int link;
+    int wall_found = 0;
+    int floor_found = 0;
+
+    if (!out) return -1;
+    memset(out, 0, sizeof(*out));
+    if (!rt || !dungeon || !dungeon->raw_data ||
+        !dungeon->record_graph_complete || dungeon->g1_w0_chains_disabled ||
+        level < 0 || level >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[level] || y >= dungeon->level_heights[level])
+        return -1;
+    if (dungeon->source_words_big_endian &&
+        (!rt->record_pools_valid || !rt->record_pools.valid ||
+         !rt->record_pools.record_graph_complete ||
+         rt->record_pools.source_words_big_endian !=
+             dungeon->source_words_big_endian ||
+         rt->record_pools.words_big_endian != dungeon->words_big_endian))
+        return -1;
+
+    memset(&candidate, 0, sizeof(candidate));
+    link = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (link < 0) return -1;
+    if (link == (int)DM2_THING_END_MARKER ||
+        link == (int)DM2_THING_NULL_MARKER) return 0;
+
+    for (unsigned steps = 0u; steps < 256u; ++steps) {
+        int type = (link >> 10) & 0x0f;
+        int record_type = -1;
+        int record_size = 0;
+        const uint8_t *record;
+        uint16_t next;
+
+        if (link == (int)DM2_THING_END_MARKER) break;
+        if (link == (int)DM2_THING_NULL_MARKER || type > 3) break;
+        if (dungeon->source_words_big_endian) {
+            record = dm2_v1_record_pool_address(
+                &rt->record_pools, (int16_t)(uint16_t)link);
+            record_type = type;
+            record_size = dm2_v1_record_pool_record_size(type);
+        } else {
+            record = dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)link, &record_type, NULL, &record_size);
+        }
+        if (!record || record_type != type || record_size < 2) return -1;
+        if (dungeon->source_words_big_endian) {
+            int16_t next_handle;
+            if (!dm2_v1_record_pool_next_link(
+                    &rt->record_pools, (int16_t)(uint16_t)link,
+                    &next_handle)) return -1;
+            next = (uint16_t)next_handle;
+        } else {
+            next = dm2_v1_dungeon_read_record_u16(dungeon, record);
+        }
+        ++candidate.records_scanned;
+        if (type == 3) {
+            uint16_t w2;
+            uint16_t w4;
+            if (record_size < 8) return -1;
+            if (dungeon->source_words_big_endian) {
+                w2 = (uint16_t)(((uint16_t)record[2] << 8) | record[3]);
+                w4 = (uint16_t)(((uint16_t)record[4] << 8) | record[5]);
+            } else {
+                w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
+                w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
+            }
+            if (!wall_found && (w2 & 0x007fu) == 0x3fu) {
+                wall_found = 1;
+                candidate.wall_object = (uint16_t)link;
+                candidate.wall_w2 = w2;
+                candidate.wall_w4 = w4;
+            }
+            if (!floor_found && (w2 & 0x007fu) == 0x30u) {
+                floor_found = 1;
+                candidate.floor_object = (uint16_t)link;
+                candidate.floor_w2 = w2;
+                candidate.floor_w4 = w4;
+                candidate.current_item = (uint16_t)((w2 >> 7) & 0x01ffu);
+            }
+        }
+        link = (int)next;
+    }
+    if (link != (int)DM2_THING_END_MARKER &&
+        link != (int)DM2_THING_NULL_MARKER && ((link >> 10) & 0x0f) <= 3)
+        return -1;
+    if (!wall_found || !floor_found) return 0;
+
+    candidate.identity_hash = 2166136261u;
+#define DM2_SHOP_PAIR_MIX(value) do { \
+    candidate.identity_hash ^= (uint32_t)(value); \
+    candidate.identity_hash *= 16777619u; \
+} while (0)
+    DM2_SHOP_PAIR_MIX((uint16_t)level);
+    DM2_SHOP_PAIR_MIX((uint16_t)x);
+    DM2_SHOP_PAIR_MIX((uint16_t)y);
+    DM2_SHOP_PAIR_MIX(candidate.wall_object);
+    DM2_SHOP_PAIR_MIX(candidate.wall_w2);
+    DM2_SHOP_PAIR_MIX(candidate.wall_w4);
+    DM2_SHOP_PAIR_MIX(candidate.floor_object);
+    DM2_SHOP_PAIR_MIX(candidate.floor_w2);
+    DM2_SHOP_PAIR_MIX(candidate.floor_w4);
+#undef DM2_SHOP_PAIR_MIX
+    if (candidate.identity_hash == 0u) candidate.identity_hash = 1u;
+    *out = candidate;
+    return 1;
+}
+
 /* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
  * Build placements from the active map's source-owned WALL_GFX fields and
  * INTERFACE_GENERAL RAW4 rectangle graph. */
 static void dm2_runtime_bind_wall_ornament_plan(
-    DM2_V1_ViewportState *viewport, const DM2_V1_AssetLoader *loader,
+    DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_DungeonData *dungeon,
     DM2_V1_WallOrnamentRenderPlan *plan)
 {
     static const int stretch_by_distance[5] = { 0x60, 0x40, 0x2b, 0x1c, 0x13 };
     uint32_t plan_hash = 2166136261u;
 
-    if (!viewport || !loader || !plan) return;
+    if (!rt || !viewport || !loader || !dungeon || !plan) return;
     memset(plan, 0, sizeof(*plan));
     viewport->wall_ornament_plan_status_code = 0u;
     viewport->wall_ornament_plan_status_square = -1;
@@ -13029,11 +13163,35 @@ static void dm2_runtime_bind_wall_ornament_plan(
             ((uint32_t)square << 24);
         plan_hash *= 16777619u;
 
+        if (receipt.alcove_type == 2u) {
+            DM2_V1_ShopGlassActuatorPair pair;
+            int pair_result = dm2_runtime_shop_glass_actuator_pair_at(
+                rt, dungeon, viewport->dungeon_level,
+                surface->source_map_x, surface->source_map_y, &pair);
+            if (pair_result < 0) {
+                viewport->wall_ornament_plan_status_code = 12u;
+                viewport->wall_ornament_plan_status_square = (int8_t)square;
+                continue;
+            }
+            if (pair_result == 0) {
+                viewport->wall_ornament_plan_status_code = 12u;
+                viewport->wall_ornament_plan_status_square = (int8_t)square;
+            } else {
+                entry->shop_wall_actuator = pair.wall_object;
+                entry->shop_floor_actuator = pair.floor_object;
+                entry->shop_current_item = pair.current_item;
+                entry->shop_glass_pair_valid = 1u;
+                entry->shop_glass_render_pending = 1u;
+                plan_hash ^= pair.identity_hash;
+                plan_hash *= 16777619u;
+            }
+        }
+
         /* SkWinCore.cpp::DRAW_WALL_ORNATE draws a generic WALL_GFX overlay
          * when dtImage/0x0f is loadable, except shop glass (alcove type 2),
-         * which enters the DB14-backed SHOP_GLASS routine instead. Preserve
-         * the source placement and flip for generic overlays; the dynamic
-         * shop routine remains unavailable until its record owner is wired. */
+         * which enters the SHOP_GLASS routine instead. Preserve the source
+         * placement and flip for generic overlays; item-mask selection,
+         * merchandise image draw, and price presentation remain open. */
         if (receipt.alcove_type != 2u) {
             DM2_V1_GdatImageMetadata overlay_metadata;
             DM2_V1_WallOrnamentReceipt overlay_receipt;
@@ -13642,7 +13800,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
            sizeof(wall_ornament_render_plan));
     if (viewport.asset_loader && !rt->outdoor) {
         dm2_runtime_bind_wall_ornament_plan(
-            &viewport, viewport.asset_loader, &wall_ornament_render_plan);
+            rt, &viewport, viewport.asset_loader,
+            (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+            &wall_ornament_render_plan);
     }
     dm2_v1_viewport_set_source_materials_required(
         &viewport,
