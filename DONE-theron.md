@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — cold scripted input verified at System Card polls
+
+Corrected the verifier to compare the active-low controller value returned to
+the guest against the physical and pending scripted masks. The standard PCE
+sidecar may show a restored physical raw buffer, so raw-mask matching alone
+was not a valid input-delivery check. The live-capture regression and complete
+PCE/PCE Fast reference patch chain each passed three TRV2 loops. A fresh
+authentic cold US run verified all three scripted inputs at the System Card
+BIOS controller poll (three applies, reads and selected-bank matches). The
+trace recorded no non-BIOS poll, CD data-port read or authenticated CD-to-RAM
+receipt; its `$E009` dispatch remains unjoined and no gameplay action is
+proved. See the [capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
+
 ## 2026-10-31 — cold US Select/Button I capture boundary recorded
 
 After the instruction-start reference build completed, a cold standard-PCE

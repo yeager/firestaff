@@ -138,9 +138,11 @@ fi
 update_line=$(grep -nF 'devices[i]->Update(data_ptr[i]);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
 overlay_line=$(grep -nF 'MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
 restore_line=$(grep -nF 'MDFN_en16lsb(data_ptr[0], physical_mask);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+apply_trace_line=$(grep -nF 'scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
 if [[ -z $update_line || -z $overlay_line || -z $restore_line ||
-      $overlay_line -ge $update_line || $restore_line -le $update_line ]]; then
-    printf 'FAIL: scripted PCE input must be latched before polling and restore the physical buffer afterward\n' >&2
+      -z $apply_trace_line || $overlay_line -ge $update_line ||
+      $restore_line -le $update_line || $apply_trace_line -le $update_line ]]; then
+    printf 'FAIL: scripted PCE input must be latched by the device update and restored afterward\n' >&2
     exit 1
 fi
 if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
@@ -438,12 +440,12 @@ if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offse
    ! grep -Fq 'TheronPCECDDataReadInstructionOpcode = TheronPCEVDCInstructionOpcode;' "$ram_provenance_patch_file" ||
    ! grep -Fq 'reader_opcode=%02x writer_opcode=%02x' "$ram_provenance_patch_file" ||
    ! awk '
-       /^ [[:space:]]*uint8 INLINE RdOp\(unsigned int address\)/ { rdop = NR }
-       /^\+[[:space:]]+const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;/ { saved = NR }
-       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = true;/ { opened = NR }
-       /^\+[[:space:]]+const uint8 ret = RdMem\(address\);/ { read = NR }
-       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = previous_fetch;/ { restored = NR }
-       /^\+[[:space:]]+return ret;/ { returned = NR }
+       /^(FIRESTAFF_PATCH_TAB_CONTEXT INLINE uint8| [[:space:]]*INLINE uint8) RdOp\(unsigned int address\)/ { rdop = NR }
+       /^\+[[:space:]]+const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;/ { if (!saved) saved = NR }
+       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = true;/ { if (!opened) opened = NR }
+       /^\+[[:space:]]+const uint8 ret = RdMem\(address\);/ { if (!read) read = NR }
+       /^\+[[:space:]]+TheronPCEVDCInstructionFetchInProgress = previous_fetch;/ { if (!restored) restored = NR }
+       /^\+[[:space:]]+return ret;/ { if (!returned) returned = NR }
        END {
            if (!(rdop && saved > rdop && opened > saved && read > opened &&
                  restored > read && returned > restored)) exit 1
@@ -452,7 +454,7 @@ if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offse
   ! awk '
        /^FIRESTAFF_PATCH_TAB_CONTEXT if\(!TheronPCEVDCInstructionFetchInProgress &&/ { filtered_consumer = NR }
        /^FIRESTAFF_PATCH_TAB_CONTEXT    \(\(physical_address >= 0x1f0000/ { address_filter = NR }
-       /^\+[[:space:]]+const uint8 reader_mpr = MPR\[reader_pc >> 13\];/ { reader_mpr = NR }
+       /^(\+|FIRESTAFF_PATCH_TAB_CONTEXT)[[:space:]]+const uint8 reader_mpr = MPR\[reader_pc >> 13\];/ { reader_mpr = NR }
        /^\+[[:space:]]+TheronPCECDTraceMainRAMProvenanceRead/ { provenance = NR }
        /^\+[[:space:]]+TheronPCECDTraceRecordWatchRead/ { record_watch = NR }
        /^\+[[:space:]]+if\(!TheronPCEVDCInstructionFetchInProgress\)$/ { standalone_guard = NR }

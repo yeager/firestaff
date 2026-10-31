@@ -49,7 +49,7 @@ The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
 | Chaos Strikes Back | Atari ST, Amiga and FM Towns have bounded real-media runtime routes. FM Towns uses its authenticated entrance palette and MINI.DAT bootstrap state. Amiga F0107 wall ornaments now use source MEDIA720 scales and authentic C696 anchors; matched-frame, palette/light, inscription readability, floor trapdoor, intro timing and audible output remain open. Campaign and save coverage are also incomplete. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and source-bound MAPD decoding support a bounded render of the five authentic title planes. Firestaff does not yet reproduce the complete native Saturn title or menu. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Full title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic Japanese Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises bounded movement and item transactions. Source-only loaders verify all seven dungeons in both regions. A cold US reference trace records one `$E009` dispatch, but input validation failed and the dispatch has no runtime CD source-read join. The Firestaff-presented capture is nonblack but has no paired retail frame; dynamic viewport binding, broader campaign/save behavior, combat, audio and full parity remain open. |
+| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic Japanese Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises bounded movement and item transactions. Source-only loaders verify all seven dungeons in both regions. A cold US reference trace records one `$E009` dispatch; a follow-up validates three scripted inputs at System Card controller polls, but observes no game-owned poll or runtime CD source-read join. The Firestaff-presented capture is nonblack but has no paired retail frame; dynamic viewport binding, broader campaign/save behavior, combat, audio and full parity remain open. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -146,11 +146,11 @@ renderer behavior.
 
 The latest reference-only Mednafen trace tooling applied in three clean
 patch-only runs, and its instrumented PCE build/install plus focused
-parser/controller checks passed on TRV2. A later cold US capture recorded one
-`$E009` dispatch, but scripted input validation failed, the trace reached its
-row cap, and there was no runtime CD source-read join. This observation does
-not change the native support boundary; see the
-[source-locked capture boundary](docs/source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md).
+parser/controller checks passed on TRV2. A follow-up cold US capture validates
+all three scripted inputs at System Card controller polls and records one
+`$E009` dispatch. It observes no game-owned poll or runtime CD source-read
+join, so the observation does not change native support status. See the
+[returned-mask capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 README screenshots are Firestaff-rendered only; original-emulator captures
 are not presented as Firestaff output. See the

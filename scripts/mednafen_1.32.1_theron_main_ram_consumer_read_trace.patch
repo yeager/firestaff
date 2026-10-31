@@ -43,7 +43,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +	    (reader_pc >= 0xc600 && reader_pc <= 0xcd13))
 +	   )
 +	 {
-+	  const uint8 reader_mpr = MPR[reader_pc >> 13];
++	 const uint8 reader_mpr = MPR[reader_pc >> 13];
 +	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
 +	  TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
 +	                                      reader_pc, reader_physical_pc,

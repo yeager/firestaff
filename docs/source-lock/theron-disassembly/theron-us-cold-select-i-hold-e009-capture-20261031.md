@@ -1,5 +1,7 @@
 # Theron US cold Select and Button I capture boundary — 2026-10-31
 
+> Historical result: this earlier run was rejected by the original raw-mask verifier. The corrected returned-value check and a later, uncapped three-event cold run are documented in [the follow-up report](theron-us-cold-scripted-input-returned-mask-20261031.md). That follow-up verifies BIOS input delivery only; it does not prove a game-owned poll or handoff.
+
 ## Result
 
 A bounded, cold standard-PCE Mednafen run used the authentic US Track 02 CUE

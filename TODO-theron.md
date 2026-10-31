@@ -1,16 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-31 — cold US capture records an unjoined `$E009` dispatch
+## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 
 The authentic US cold standard-PCE run loaded no save state and configured no
 profile SRAM. Its trace records one dispatch to `$E009` from logical PC
-`$2CC7` (physical `$1F0CC7`). The capture receipt remains `transition=missing`:
-the scripted Run/Select/Button I events were not validated against controller
-reads, the input trace hit its row cap, and the run has no runtime CD data-port
-source-read join. Treat this only as a dispatch observation; it does not prove
-game ownership, input delivery, a menu action, or gameplay. Repair the capture
-schedule/validator and repeat with same-run source provenance. See the
-[capture report](docs/source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md).
+`$2CC7` (physical `$1F0CC7`). The initial capture had a capped input trace.
+The follow-up corrected the returned-value verifier and validates all three
+scripted Run/Select/Button I inputs against System Card controller reads. All reads remain at BIOS PC
+`$E4C8`; no non-System-Card poll, CD data-port read, or authenticated
+CD-to-RAM join was observed. Treat `$E009` only as an unjoined dispatch
+observation: it does not prove game ownership, title-menu action, or gameplay.
+Next capture a game-owned poll and join its transition to authenticated Track 02
+source data. See the [returned-mask capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 ## 2026-10-31 — cold System Card RUN still has no game-owned handoff
 
