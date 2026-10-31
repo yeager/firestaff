@@ -176,10 +176,11 @@ requirements above.
   The frame-891 input hashes, receipt, and reproduction command are in
   [the authentic MAPD 4bpp capture report](nexus_vdp2_nbg1_mapd_4bpp.md).
   The priority-stack compositor now takes NBG1 color from the decoded RGBA
-  plane so the pattern palette attribute survives composition. External
-  frame-239, frame-300, and frame-2173 stack comparisons passed against PR code
-  head `c1d2664`; frames 239, 397, and the authentic four-champion Continue
-  frame 2173 each match all 286,720 doubled screenshot samples exactly.
+  plane so the pattern palette attribute survives composition. Frame-239/397/300
+  stack comparisons passed against PR code head `c1d2664`; a new hash-pinned
+  frame-2173 regression passed against PR code head `8bfbdd9`. Frames 239, 397,
+  and the authentic four-champion Continue frame 2173 each match all 286,720
+  doubled screenshot samples exactly.
   Arbitrary-frame composition, retail asset ownership, text/page mapping,
   placement, and production rendering remain unresolved.
 - **VDP2 NBG2 tilemap:** a bounded frame-239 decoder measures the 40×28

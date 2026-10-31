@@ -32,8 +32,9 @@ pattern palette selection, rejects N1TPON and unsupported two-word CRAM color
 modes, and records the decoded layer color for later composition. The NBG1
 priority-stack path now consumes that palette-resolved RGBA color instead of
 treating the raw dot index as a CRAM address. The opt-in authentic MAPD layer
-test and VDP priority-stack comparisons for frames 239, 397, 300, 8037, and the
-four-champion Continue frame 2173 passed against PR code commit `c1d2664`.
+test and VDP priority-stack comparisons for frames 239, 397, 300, and 8037
+passed against PR code commit `c1d2664`. A new hash-pinned regression for the
+four-champion Continue frame 2173 was added and passed against commit `8bfbdd9`.
 Frames 239, 397, and 2173 each match all 286,720 doubled screenshot RGB samples
 with zero channel error; frame 300 matches Ymir's same-run RGB reference, and
 frame 8037 matches both Ymir pass buffers. These results verify only the
