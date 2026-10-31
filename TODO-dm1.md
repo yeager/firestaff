@@ -5,13 +5,16 @@ returns `C0xFFFF_ICON_NONE` (`-1`) for `THING_NONE`, and `MOVESENS.C:1412-1414`
 compares that type with `Sensor.Data` before applying `RevertEffect`. DM1's
 F0723 predicate already preserves the comparison; its focused regression now
 checks reverted C003/C004 triggers with an empty hand and confirms C004
-consumes no nonexistent object. The same source review found C017 had no live
-unlink in M11: successful non-head C017 sensors now leave the square Thing
-chain, while a head C017 remains linked and still triggers, matching
-`MOVESENS.C:1415-1427`. F0723 predicates and F0726 receipt propagation have focused tests; the
-live PC34 owner builds and its M11 C080 regression now verifies non-head unlink
-and head retention through real square chains. Other F0275 routes, supported
-editions/platforms, and end-to-end original-media sensor outcomes remain open.
+consumes no nonexistent object. The PC34 M11 owner now unlinks a successfully
+triggered non-head C017 sensor; its C080 regression also verifies head retention
+through live square Thing chains. ReDMCSB `MOVESENS.C:1415-1427` compiles that
+unlink under MEDIA009 and MEDIA529. The source's MEDIA009 set includes the
+supported S10-S21, G14/G20/G21, and A20-A22 editions; MEDIA529 includes I34,
+A31/A36, F31, and their supported language variants. MEDIA508 is the separate
+F20/X30/P20 set and does not contain I34. The C017 behavior is therefore
+source-applicable to the documented Firestaff DM1/CSB lanes, while current
+M11 integration evidence is PC34-only. Other F0275 routes, platform runtime
+coverage, and end-to-end original-media sensor outcomes remain open.
 
 2026-10-31 ReDMCSB F0271 interleaved sensor cells: `MOVESENS.C:1100-1148`
 continues through the contiguous sensor Thing run while selecting the last
