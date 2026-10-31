@@ -24212,7 +24212,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
             dm2_v1_runtime_get_source_hero_state(
                 (uint8_t)dm2_ui_caster, &dm2_ui_hero) &&
             dm2_ui_hero.cur_hp > 0 && dm2_hand >= 0 &&
-            dm2_v1_runtime_activate_action_hand(dm2_ui_caster, dm2_hand)) {
+            dm2_v1_runtime_select_spell_champion(dm2_ui_caster)) {
             dm2_caster = dm2_v1_runtime_get_active_champion_index();
         }
         if (dm2_caster < 0)

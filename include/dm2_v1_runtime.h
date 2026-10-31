@@ -1644,6 +1644,9 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Select the living DM2 champion that owns an M11 rune-cast request without
+ * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
+int dm2_v1_runtime_select_spell_champion(int hero_index);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);

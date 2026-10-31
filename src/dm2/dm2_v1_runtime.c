@@ -67,6 +67,8 @@
 #include "dm2_v1_light_visibility.h"
 #include "dm2_v1_light_terminal_receipt.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_item_missile_helpers.h"
+#include "dm2_v1_skill_query_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
 #include "dm2_v1_creature_attacks_player_pc34_compat.h"
@@ -19233,9 +19235,282 @@ int dm2_v1_runtime_cycle_action_champion(void) {
     return 0;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    int hero_index;
+} DM2_RuntimeHandActivationQuery;
+
+/* SKWINSPX/skgame.cpp::ACTIVATE_ACTION_HAND:1345 delegates admission to
+ * SKULLWIN/c_querydb.cpp::DM2_IS_ITEM_HAND_ACTIVABLE:4562. Keep its GDAT,
+ * CMDSTR, record-chain, charge, pouch/scabbard, and skill queries attached
+ * to the active GAME_LOAD owners rather than the presentation-only hand scan. */
+static uint16_t dm2_runtime_hand_query_word(
+    const DM2_V1_RecordPoolSet *pools, const uint8_t *record,
+    unsigned word_offset)
+{
+    const uint8_t *p;
+    if (!pools || !record) return 0xffffu;
+    p = record + word_offset;
+    return pools->source_words_big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
+        : (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static int dm2_runtime_hand_record_word(void *context, uint16_t ref,
+                                         unsigned offset,
+                                         uint16_t *out_word)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    const uint8_t *record;
+    if (!query || !out_word || offset > 0x7fu ||
+        (offset & 1u) != 0u) return 0;
+    record = dm2_v1_record_pool_address(
+        &query->rt->record_pools, (int16_t)ref);
+    if (!record || dm2_v1_record_pool_record_size(
+            dm2_v1_record_handle_pool((int16_t)ref)) < (int)(offset + 2u))
+        return 0;
+    *out_word = dm2_runtime_hand_query_word(
+        &query->rt->record_pools, record, offset);
+    return 1;
+}
+
+static int dm2_runtime_hand_next_link(void *context, uint16_t ref,
+                                       uint16_t *out_next)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    int16_t next;
+    if (!query || !out_next || !dm2_v1_record_pool_next_link(
+            &query->rt->record_pools, (int16_t)ref, &next)) return 0;
+    *out_next = (uint16_t)next;
+    return 1;
+}
+
+static int dm2_runtime_hand_container_type(
+    DM2_RuntimeHandActivationQuery *query, uint16_t item_ref,
+    uint8_t *out_type, uint8_t *out_subtype, uint16_t *out_w6,
+    uint16_t *out_contained)
+{
+    const uint8_t *record;
+    uint16_t w4, w6, contained;
+    if (!query || item_ref == 0xffffu ||
+        dm2_v1_record_handle_pool((int16_t)item_ref) != 9 ||
+        !(record = dm2_v1_record_pool_address(
+              &query->rt->record_pools, (int16_t)item_ref)) ||
+        dm2_v1_record_pool_record_size(9) < 8) return 0;
+    w4 = dm2_runtime_hand_query_word(&query->rt->record_pools, record, 4u);
+    w6 = dm2_runtime_hand_query_word(&query->rt->record_pools, record, 6u);
+    contained = dm2_runtime_hand_query_word(
+        &query->rt->record_pools, record, 2u);
+    if (out_type) *out_type = (uint8_t)((w4 >> 1) & 3u);
+    if (out_subtype) *out_subtype = (uint8_t)(w4 >> 13);
+    if (out_w6) *out_w6 = w6;
+    if (out_contained) *out_contained = contained;
+    return 1;
+}
+
+static int dm2_runtime_hand_has_moneybox_list(
+    DM2_RuntimeHandActivationQuery *query, uint16_t item_ref)
+{
+    const DM2_V1_AssetLoader *loader;
+    uint8_t cls2 = 0xffu;
+    uint16_t data_index = 0xffffu;
+    DM2_V1_SkprojectQueryCls2Receipt receipt;
+    if (!query || !query->rt->boot ||
+        !(loader = dm2_v1_boot_asset_loader(query->rt->boot)) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item_ref, &query->rt->record_pools, &cls2, &receipt)) return 0;
+    return dm2_v1_query_gdat_entry_data_index(
+               loader, DM2_GDAT_CATEGORY_CONTAINERS, cls2,
+               DM2_GDAT_ENTRY_TYPE_TEXT, 0x40, &data_index) &&
+           data_index != 0xffffu;
+}
+
+static int dm2_runtime_hand_is_moneybox(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t type;
+    return dm2_runtime_hand_container_type(
+               query, item_ref, &type, NULL, NULL, NULL) && type == 0u &&
+           dm2_runtime_hand_has_moneybox_list(query, item_ref);
+}
+
+static int dm2_runtime_hand_is_chest(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t type;
+    return dm2_runtime_hand_container_type(
+               query, item_ref, &type, NULL, NULL, NULL) && type == 0u &&
+           !dm2_runtime_hand_has_moneybox_list(query, item_ref);
+}
+
+static int dm2_runtime_hand_is_map(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t type;
+    return dm2_runtime_hand_container_type(
+               query, item_ref, &type, NULL, NULL, NULL) && type == 1u;
+}
+
+static uint8_t dm2_runtime_hand_cls1(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t cls1 = 0xffu;
+    DM2_V1_SkprojectQueryCls1Receipt receipt;
+    return query && dm2_v1_skproject_query_cls1_from_record_ex(
+        item_ref, &query->rt->record_pools, &cls1, &receipt) ? cls1 : 0xffu;
+}
+
+static uint8_t dm2_runtime_hand_cls2(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t cls2 = 0xffu;
+    DM2_V1_SkprojectQueryCls2Receipt receipt;
+    return query && dm2_v1_skproject_query_cls2_from_record(
+        item_ref, &query->rt->record_pools, &cls2, &receipt) ? cls2 : 0xffu;
+}
+
+static uint8_t dm2_runtime_hand_hero_type(void *context, int16_t hero_index)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    if (!query || hero_index < 0 ||
+        hero_index >= query->rt->source_party.heros_in_party)
+        return 0xffu;
+    return (uint8_t)query->rt->source_party.hero[hero_index].herotype;
+}
+
+static int dm2_runtime_hand_gdat_loadable(void *context, uint8_t cls1,
+                                           uint8_t cls2, uint8_t group,
+                                           uint8_t cmd)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_GdatEntryQueryReceipt receipt;
+    return query && query->rt->boot && group == 5u &&
+        (loader = dm2_v1_boot_asset_loader(query->rt->boot)) != NULL &&
+        dm2_v1_query_gdat_entry_if_loadable(
+            loader, cls1, cls2, DM2_GDAT_ENTRY_TYPE_TEXT, cmd, &receipt) &&
+        receipt.loadable_raw;
+}
+
+static int16_t dm2_runtime_hand_cmdstr(void *context, uint8_t cls1,
+                                        uint8_t cls2, uint8_t cmd,
+                                        uint8_t field)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_CmdstrEntryReceipt receipt;
+    if (!query || !query->rt->boot ||
+        !(loader = dm2_v1_boot_asset_loader(query->rt->boot)) ||
+        !dm2_v1_query_cmdstr_entry_receipt(
+            loader, cls1, cls2, cmd, field, &receipt) || !receipt.found)
+        return 0;
+    return receipt.value;
+}
+
+static int dm2_runtime_hand_action_applies(void *context,
+                                            int16_t action_word,
+                                            uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    uint8_t container_type, container_subtype, minion_type = 0u;
+    uint16_t container_w6, contained, missile_ref = 0xffffu;
+    DM2_V1_RecordChainAccess chain;
+    DM2_V1_ItemMissileReceipt missile_receipt;
+    DM2_V1_Skproject2759_01feReceipt receipt;
+    if (!query || item_ref == 0xffffu) return 0;
+    if (dm2_v1_record_handle_pool((int16_t)item_ref) != 9) return 1;
+    if (!dm2_runtime_hand_container_type(
+            query, item_ref, &container_type, &container_subtype,
+            &container_w6, &contained)) return 0;
+    memset(&chain, 0, sizeof(chain));
+    chain.record_word = dm2_runtime_hand_record_word;
+    chain.next_link = dm2_runtime_hand_next_link;
+    chain.context = query;
+    if (contained != 0xffffu && contained != 0xfffeu) {
+        missile_ref = dm2_v1_GET_MISSILE_REF_OF_MINION(
+            &chain, contained, item_ref, &missile_receipt);
+        if (missile_receipt.blocked) return 0;
+        if (dm2_v1_record_handle_pool((int16_t)contained) == 4) {
+            const uint8_t *minion = dm2_v1_record_pool_address(
+                &query->rt->record_pools, (int16_t)contained);
+            if (!minion || dm2_v1_record_pool_record_size(4) < 5)
+                return 0;
+            minion_type = minion[4];
+        }
+    }
+    return dm2_v1_skproject_2759_01fe_command_valid(
+        (uint8_t)action_word, 1u, container_type, container_subtype,
+        missile_ref != 0xffffu, minion_type, container_w6, &receipt) &&
+        receipt.valid && receipt.result;
+}
+
+static int16_t dm2_runtime_hand_item_charge(void *context, uint16_t item_ref)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    const uint8_t *record;
+    uint16_t w2;
+    DM2_V1_SkprojectItemChargeReceipt receipt;
+    if (!query || !(record = dm2_v1_record_pool_address(
+            &query->rt->record_pools, (int16_t)item_ref)) ||
+        dm2_v1_record_pool_record_size(
+            dm2_v1_record_handle_pool((int16_t)item_ref)) < 6) return 0;
+    w2 = dm2_runtime_hand_query_word(&query->rt->record_pools, record, 4u);
+    if (!dm2_v1_skproject_add_item_charge(item_ref, &w2, 0, &receipt) ||
+        !receipt.valid) return 0;
+    return (int16_t)receipt.new_charge;
+}
+
+static int16_t dm2_runtime_hand_find_pouch_or_scabbard(
+    void *context, int16_t hero_index, int16_t kind)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    const DM2_V1_Hero *hero;
+    static const uint8_t pouch_slots[] = { 11u, 6u };
+    static const uint8_t scabbard_slots[] = { 12u, 7u, 8u, 9u };
+    const uint8_t *slots;
+    size_t count;
+    if (!query || hero_index < 0 ||
+        hero_index >= query->rt->source_party.heros_in_party ||
+        (kind != 0 && kind != 1)) return -1;
+    hero = &query->rt->source_party.hero[hero_index];
+    slots = kind == 0 ? pouch_slots : scabbard_slots;
+    count = kind == 0 ? sizeof(pouch_slots) : sizeof(scabbard_slots);
+    for (size_t i = 0u; i < count; ++i)
+        if ((uint16_t)hero->item[slots[i]] != 0xffffu) return slots[i];
+    return -1;
+}
+
+static int16_t dm2_runtime_hand_skill_level(void *context,
+                                             int16_t hero_index,
+                                             int16_t skill,
+                                             int16_t mode)
+{
+    DM2_RuntimeHandActivationQuery *query = context;
+    DM2_V1_HeroSkills skills;
+    const DM2_V1_Hero *hero;
+    if (!query || hero_index < 0 ||
+        hero_index >= query->rt->source_party.heros_in_party || mode != 1 ||
+        skill < 0 || skill >= DM2_V1_SKILL_ARRAY_SIZE) return 1;
+    hero = &query->rt->source_party.hero[hero_index];
+    for (int major = 0; major < 5; ++major) {
+        for (int minor = 0; minor < 4; ++minor) {
+            int index = major * 4 + minor;
+            skills.skill[index] = (int16_t)hero->skill[major][minor];
+            skills.sbonus[index] = hero->sbonus[major][minor];
+        }
+    }
+    return dm2_v1_query_player_skill_lv(
+        &skills, skill, 1, query->rt->source_sleeping != 0);
+}
+
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
+    DM2_V1_HandActivableCallbacks callbacks;
+    DM2_V1_HandActionEntry actions[DM2_V1_ITEM_HAND_ACTIVABLE_MAX_ACTIONS];
+    DM2_V1_ItemMissileReceipt activation_receipt;
+    DM2_RuntimeHandActivationQuery query;
+    size_t action_count = 0u;
 
     if (hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
         hand < 0 || hand > 1 || !rt->source_party_valid ||
@@ -19244,11 +19519,53 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         return 0;
     }
     hero = &rt->source_party.hero[hero_index];
-    if (hero->curHP <= 0) return 0;
+    if (hero->curHP == 0) return 0;
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&activation_receipt, 0, sizeof(activation_receipt));
+    memset(&query, 0, sizeof(query));
+    query.rt = rt;
+    query.hero_index = hero_index;
+    callbacks.is_container_moneybox = dm2_runtime_hand_is_moneybox;
+    callbacks.is_container_chest = dm2_runtime_hand_is_chest;
+    callbacks.is_container_map = dm2_runtime_hand_is_map;
+    callbacks.query_cls1 = dm2_runtime_hand_cls1;
+    callbacks.query_cls2 = dm2_runtime_hand_cls2;
+    callbacks.hero_type = dm2_runtime_hand_hero_type;
+    callbacks.gdat_entry_if_loadable = dm2_runtime_hand_gdat_loadable;
+    callbacks.cmdstr_entry = dm2_runtime_hand_cmdstr;
+    callbacks.action_applies_to_item = dm2_runtime_hand_action_applies;
+    callbacks.item_charge = dm2_runtime_hand_item_charge;
+    callbacks.find_pouch_or_scabbard_pos =
+        dm2_runtime_hand_find_pouch_or_scabbard;
+    callbacks.player_skill_level = dm2_runtime_hand_skill_level;
+    callbacks.context = &query;
+    if (!dm2_v1_IS_ITEM_HAND_ACTIVABLE(
+            &callbacks, (int16_t)hero_index,
+            (uint16_t)hero->item[hand], (int16_t)hand,
+            actions, DM2_V1_ITEM_HAND_ACTIVABLE_MAX_ACTIONS,
+            &action_count, &activation_receipt) ||
+        !activation_receipt.valid || !activation_receipt.result) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
+    return 1;
+}
+
+int dm2_v1_runtime_select_spell_champion(int hero_index) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    if (hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
+        !rt->source_party_valid || !rt->session_snapshot_valid ||
+        !rt->record_pools_valid ||
+        hero_index >= rt->source_party.heros_in_party) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP == 0) return 0;
+    /* The M11 rune buffer already owns SET_SPELLING_CHAMPION's spell
+     * selection mode. Keep party.curactmode as the active hand used by the
+     * DM2 cast owner; only transfer the source champion selection here. */
+    rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_party.curacthero = rt->source_curacthero;
     return 1;
 }
 
