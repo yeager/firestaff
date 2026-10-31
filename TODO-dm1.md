@@ -1,12 +1,12 @@
 # Firestaff TODO — DM1
 
-2026-10-31 ReDMCSB `BASE.C:F0023-F0026` arithmetic helpers: the callable
-inventory now maps the signed absolute-value, minimum, maximum, and inclusive
-clamp implementations to Firestaff's narrow PC34 helpers and source lines.
-Their shared arithmetic matches the C/68k behavior for signed 16-bit inputs;
-the callable-function counterparts and runtime-owner use still need mapping
-for every other supported DM1 edition/platform. This does not close the
-all-platform source-function requirement.
+2026-10-31 ReDMCSB `BASE.C:F0023-F0028` helpers: the callable inventory maps
+signed absolute value, minimum, maximum, inclusive clamp, the F0027 LCG, and
+F0028 low-bit extraction to narrow PC34 helpers and source lines. F0028 uses
+HORIZCNT on Apple IIGS. Global seed ownership, call order, the IIGS hardware
+branch, and runtime-owner use still need mapping for every other supported
+DM1 edition/platform. This does not close the all-platform source-function
+requirement.
 
 2026-10-31 HoC PC34 real-media viewport material smoke check:
 `m11_dm1_hoc_real_mirror_viewport_material` passed against the installed
