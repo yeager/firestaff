@@ -47043,6 +47043,40 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 objectMutation = 1;
                             }
 
+                            /* ReDMCSB MOVESENS.C:F0275 C017 unlinks the
+                             * current sensor when a previous Thing exists.
+                             * Its list-head branch still triggers but leaves
+                             * the sensor linked. */
+                            if (tr->sensorRemoveFromSquare &&
+                                tr->sensorIndex >= 0 &&
+                                tr->sensorIndex < state->world.things->sensorCount) {
+                                unsigned short sensorThing = frontCell.firstThing;
+                                unsigned short squareHead = sensorThing;
+                                int sensorSafety = 0;
+                                while (sensorThing != THING_ENDOFLIST &&
+                                       sensorThing != THING_NONE &&
+                                       sensorSafety++ < 64) {
+                                    if (THING_GET_TYPE(sensorThing) == THING_TYPE_SENSOR &&
+                                        THING_GET_INDEX(sensorThing) == tr->sensorIndex) {
+                                        if (sensorThing != squareHead &&
+                                            m11_unlink_thing_from_square(
+                                                &state->world,
+                                                state->world.party.mapIndex,
+                                                frontCell.mapX,
+                                                frontCell.mapY,
+                                                sensorThing)) {
+                                            objectMutation = 1;
+                                        }
+                                        break;
+                                    }
+                                    if (THING_GET_TYPE(sensorThing) >= THING_TYPE_GROUP) {
+                                        break;
+                                    }
+                                    sensorThing = m11_raw_next_thing(
+                                        state->world.things, sensorThing);
+                                }
+                            }
+
                             /* C004/C011/C017 consume the leader hand object
                              * after the trigger, except where the transaction
                              * above already consumed it. */
