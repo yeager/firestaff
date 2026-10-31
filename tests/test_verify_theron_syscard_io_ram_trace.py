@@ -96,7 +96,7 @@ def main() -> None:
         make_row(1, 37, "read", 0x22A4, 0xE95E).replace("event_sequence=37", "event_sequence=29"),
     ], image, "event order", "non-increasing shared event sequence")
     must_reject(
-        [verifier.HEADER, valid, "io_ram_truncated cap=524288"],
+        [verifier.HEADER, valid, "io_ram_truncated cap=4194304"],
         image, "truncation", "truncation marker disagrees with row count",
     )
     original_cap = verifier.CAP

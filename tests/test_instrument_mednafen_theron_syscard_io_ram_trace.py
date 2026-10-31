@@ -60,7 +60,7 @@ def main() -> None:
         assert 'TheronTraceSystemCardIoRam("read"' in changed
         assert 'TheronTraceSystemCardIoRam("write"' in changed
         assert "logical_ranges=1800-1803,224c-2255,2273-2280,22a4" in changed
-        assert "limit=524288" in changed
+        assert "limit=4194304" in changed
         compiler = subprocess.run(
             ["c++", "-std=c++11", "-fsyntax-only", str(source)],
             check=False, capture_output=True, text=True,
