@@ -14,13 +14,16 @@ pass. Firestaff does render selected source-derived wall ornaments in
 `m11_csb_atari_st_draw_wall_ornament` using the G0194/G0205 tables. ReDMCSB
 F0107 copies each visible ornament's G0205 rectangle into
 `G0291[C05]` (`DUNVIEW.C:3724`, `4168`); F0377 then hit-tests that byte box
-with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff does not
-publish the rendered Atari ornament rectangle to its C05 input path, which
-still uses the generic PC wall-ornament box. Audit and implement the actual
-frame-owned C05 rectangle, including its overwrite order relative to door
-buttons, before claiming Atari wall-sensor click parity. This correction does
-not close the still-open Atari floor/door ornament, creature, projectile, or
-explosion rendering and hit behavior.
+with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff now records
+the latest rendered G0205 ornament or door-switch projection each Atari
+F0128 frame and routes Atari C080 through that inclusive box; PC keeps its
+separate box. The switch projection's equivalence to Atari's media-backed
+G0208 rectangle still needs original `GRAPHICS.DAT` verification. The bounds
+regression covers C05 overwrite versus F0115 floor-box union, and the updated
+M11 translation unit compiles. A matching original-media sensor or
+door-button click has not run locally because the Atari package is absent.
+This correction does not close the still-open Atari floor/door ornament,
+creature, projectile, or explosion rendering and hit behavior.
 
 2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
 Atari package contains a separate `st20-21-hd-en` installation. The new
