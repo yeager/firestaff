@@ -306,10 +306,11 @@ typedef struct {
 
 typedef struct {
     int valid;
-    int items_counted;    /* matching items found on source tile */
+    int items_counted;    /* source items passing direction and type filters */
     int items_moved;      /* items successfully moved to destination */
     int creatures_checked;/* creature possession chains walked */
     int recycler_permissive_mask; /* 1 = used full-accept mask (no GDAT) */
+    int item_type_lookup_failed;
     int fail_closed;
 } DM2_V1_ItemTeleportReceipt;
 

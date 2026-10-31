@@ -498,6 +498,7 @@ typedef struct {
     int src_x, src_y, src_dir;
     int dst_x, dst_y, dst_dir;
     int is_floor;
+    int recycler;
     int only_first_item;
     uint16_t filter_data;
     int map;
@@ -528,13 +529,31 @@ static int item_teleport_visitor(void *context,
         return 0;
     }
 
-    ctx->receipt->items_counted++;
-
-    /* Filter by actuator data (itemspec).  0x1FF = match all. */
-    if (ctx->filter_data != 0x1FF) {
-        /* Without GET_DISTINCTIVE_ITEMTYPE, use raw data compare */
-        /* This is a simplified filter; full version needs itemtype lookup */
+    /* skevent.cpp:1400-1420 / SKW_ACTIVATE_ITEM_TELEPORT: compare
+     * GET_DISTINCTIVE_ITEMTYPE with ActuatorData; 0x1ff accepts every
+     * item. Recycler filtering uses the GDAT mask path below and remains
+     * explicitly permissive until its live text owner is bound. */
+    if (!ctx->recycler && ctx->filter_data != 0x1ffu) {
+        uint8_t cls2 = 0xffu;
+        uint16_t distinctive = 0xffffu;
+        DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+        DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+        memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+        memset(&type_receipt, 0, sizeof(type_receipt));
+        if (!dm2_v1_skproject_query_cls2_from_record(
+                (uint16_t)handle, ctx->pool_set, &cls2, &cls2_receipt) ||
+            !cls2_receipt.valid || cls2 == 0xffu ||
+            !dm2_v1_skproject_get_distinctive_itemtype(
+                (uint16_t)handle, cls2, &distinctive, &type_receipt) ||
+            !type_receipt.valid) {
+            ctx->receipt->item_type_lookup_failed++;
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+        if (distinctive != ctx->filter_data) return 0;
     }
+
+    ctx->receipt->items_counted++;
 
     /* Move the item via MOVE_RECORD_TO */
     {
@@ -621,6 +640,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     ctx.queue = queue;
     ctx.actu_record = actu_record;
     ctx.is_floor = is_floor;
+    ctx.recycler = recycler != 0;
     ctx.only_first_item = only_first_item;
     ctx.filter_data = dm2_actu_data(actu_record);
     ctx.map = map;
@@ -631,6 +651,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     dm2_v1_tile_record_walk(pool_set, dungeon, map, ctx.src_x, ctx.src_y,
                             item_teleport_visitor, &ctx, &walk_receipt);
 
+    if (receipt->fail_closed) return 0;
     receipt->valid = 1;
     return 1;
 }
