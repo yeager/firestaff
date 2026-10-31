@@ -15,14 +15,17 @@ the row-lifecycle records. Correlate it with the existing main-RAM
 consumer-read trace, which records reader PC/MPR and row data reads. Its
 `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` option filters physical
 data-read addresses; it is not a code-PC filter. A logical-PC hit in another
-physical bank does not close the join. Keep row bytes opaque; do not label
+physical bank does not close the join. No Drator-positioned save or state
+artifact is checked into the repository. Obtain and verify an authentic state
+outside Git, or replay the documented original Drator route from authentic
+media in an isolated profile. Keep row bytes opaque; do not label
 them as coordinates, direction or creature fields.
 The complete clean-source Mednafen 1.32.1 patch chain applies in three
 consecutive fresh-source loops. A fresh instrumented PCE Fast build against
 real SDL2 2.33.0 compiled, installed and passed the isolated capture-wrapper
 runtime check; the earlier `sdl2-compat` runtime block is cleared. No Drator
-capture has been run with this binary yet. Before capturing, use an authentic
-Drator-positioned state and media identity in a new isolated profile and
+capture has been run with this binary yet. Before capturing, bind the authentic
+state or cold-start route to its media identity in a new isolated profile and
 evidence directory; do not reuse an occupied capture profile. The same-event
 row-consumer join and native viewport gap remain open.
 This reference capture is evidence-enabling work; the native viewport still

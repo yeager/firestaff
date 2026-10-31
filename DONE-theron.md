@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — reconcile the remaining Theron documentation queue
+
+- Corrected the cross-game work queue to identify the `$C852` generated-row
+  consumer capture as a US/Drator task and removed a stale sentence implying
+  the already-passed SDL2 runtime check was still pending.
+- Clarified that no Drator-positioned save/state is checked into the
+  repository; the next capture must use a separately verified authentic state
+  or reproduce the original Drator route from hash-verified media.
+- Refreshed the Theron row in the native platform verification page while
+  retaining that page's older full-review date. The other current Theron
+  summaries already agree that the same-event join and full gameplay parity
+  remain open.
+
 ## 2026-10-31 — clean `$C852` patch chain and PCE Fast build verified
 
 - ✅ Added the opt-in `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` reference

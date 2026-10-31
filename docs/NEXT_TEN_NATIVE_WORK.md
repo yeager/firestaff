@@ -23,7 +23,7 @@ contains only the next cross-game work items, not a complete Theron inventory.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron JP generated-row consumer join.** Replay the authenticated Drator
+5. **Theron US (Drator) generated-row consumer join.** Replay the authenticated Drator
    event with the bounded `$C852` opcode-fetch hook, enabled by
    `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`. Its physical PC/MPR and shared
    event sequence can be correlated with the row-lifecycle and main-RAM reader
@@ -36,9 +36,12 @@ contains only the next cross-game work items, not a complete Theron inventory.
    `$C1FC` active-map and movement question: its matched input-conditioned
    transfers may be teleporter destination copying and do not yet prove
    movement, collision or visible effect. See the
-   [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). Before
-   an isolated PCE Fast build against real SDL2 2.33.0 passes runtime
-   verification. The same-event `$C852` consumer capture is still outstanding.
+   [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). The clean
+   Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check have
+   already passed; the same-event `$C852` consumer capture is still
+   outstanding. No Drator-positioned save or state artifact is checked into
+   the repository, so the capture must use a separately verified authentic
+   state or reproduce the original Drator route with hash-verified media.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
    Track 02 transition through its game-owned consumer, then bind bitmap,
    palette, text and audio state to the native presentation path. Save-state

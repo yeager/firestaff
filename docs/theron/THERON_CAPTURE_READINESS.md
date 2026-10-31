@@ -32,9 +32,11 @@ consecutive loops. A fresh instrumented PCE Fast build against real SDL2 2.33.0
 compiled and installed, and the isolated capture-wrapper runtime verifier
 passed for both compiled and running SDL versions. This clears the former
 `sdl2-compat` runtime gate. No Drator capture has been run with this binary
-yet, so the `$C852` same-event consumer join remains open. Use an authentic
-Drator-positioned state with hash-verified media in a new isolated profile and
-evidence directory; do not reuse an occupied capture profile.
+yet, so the `$C852` same-event consumer join remains open. No Drator-positioned
+save or state artifact is checked into the repository. Use a separately
+verified authentic state or reproduce the original Drator route with
+hash-verified media in a new isolated profile and evidence directory; do not
+reuse an occupied capture profile.
 
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US
