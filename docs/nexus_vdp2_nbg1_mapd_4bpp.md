@@ -50,3 +50,12 @@ register state. The output is not the final VDP2 composition: it does not
 account for VDP1 overlays, other enabled layers, full color-calculation cases,
 or source ownership and placement. The decoder keeps production renderer
 permission disabled. No game data or raw emulator capture is tracked in Git.
+
+## Same-pass composition boundary
+
+The decoded plane was compared with Ymir's hash-pinned 320×224 RGBX pass
+`vdp1-891-vdp2-1280-320x224.rgbx8888le`. Only 44,811 of 71,680 RGB pixels
+match exactly. At pixel `(0,0)`, the isolated NBG1 layer produces `(104,104,104)`
+while the full Ymir pass produces `(8,24,8)`. This confirms that the layer
+decode cannot be presented as the complete frame; the remaining VDP1/layer
+composition and pixel ownership still need a source-verified implementation.

@@ -140,7 +140,8 @@ typedef struct {
 static int run_external_ymir_priority_stack_capture(
     const YmirPriorityStackCapture *capture)
 {
-    uint8_t *vdp1 = NULL, *vram = NULL, *cram = NULL, *registers = NULL;
+    uint8_t *vdp1 = NULL, *vdp1_display = NULL;
+    uint8_t *vram = NULL, *cram = NULL, *registers = NULL;
     uint8_t *reference = NULL;
     Nexus_V1_Vdp2YmirPriorityStackPlane *plane = NULL;
     Nexus_V1_Vdp2YmirPriorityStackReceipt receipt;
@@ -163,8 +164,9 @@ static int run_external_ymir_priority_stack_capture(
     if (capture->reference_path)
         reference = read_exact_bytes(capture->reference_path,
             NEXUS_V1_VDP2_CAPTURE_PIXELS * 4U);
+    vdp1_display = (uint8_t *)calloc(1U, NEXUS_V1_SATURN_VDP1_VRAM_BYTES);
     plane = (Nexus_V1_Vdp2YmirPriorityStackPlane *)malloc(sizeof(*plane));
-    if (!vdp1 || !vram || !cram || !registers || !plane ||
+    if (!vdp1 || !vdp1_display || !vram || !cram || !registers || !plane ||
         (capture->reference_path && !reference) ||
         !bytes_have_sha256(vdp1, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
                            capture->vdp1_sha256) ||
@@ -177,8 +179,13 @@ static int run_external_ymir_priority_stack_capture(
             NEXUS_V1_VDP2_CAPTURE_PIXELS * 4U,
             capture->reference_sha256)))
         goto cleanup;
+    /* Ymir's --dump-memory VDP1 FBS payload stores the draw framebuffer
+     * first and the display framebuffer second. VDP2 samples the latter. */
+    memcpy(vdp1_display,
+           vdp1 + NEXUS_V1_SATURN_VDP1_VRAM_BYTES / 2U,
+           NEXUS_V1_SATURN_VDP1_VRAM_BYTES / 2U);
     if (!nexus_v1_vdp2_capture_compose_ymir_priority_stack(
-            plane, vdp1, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
+            plane, vdp1_display, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
             vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
             cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES, registers, 512U,
             NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG, 1, 1, &receipt) ||
@@ -209,6 +216,7 @@ static int run_external_ymir_priority_stack_capture(
     ok = 1;
 cleanup:
     free(plane);
+    free(vdp1_display);
     free(reference);
     free(registers);
     free(cram);

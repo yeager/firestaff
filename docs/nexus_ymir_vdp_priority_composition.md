@@ -108,3 +108,9 @@ This exact match validates only these two captures and the implemented
 priority/color cases; it does not establish arbitrary scroll, windows, line
 effects, rotation, interlace, other Nexus scenes, or production renderer
 admission. Raw game captures remain external to the source repository.
+
+Ymir's raw `vdp1-fbs.bin` dump stores the draw framebuffer first and the display
+framebuffer second. The real-capture regression verifies the hash of the whole
+dump, then passes the display half to the compositor. Re-running frames 239,
+397, 2173, and 300 with this selection produced the same hash-pinned priority
+stacks and same-pass RGB results recorded above.
