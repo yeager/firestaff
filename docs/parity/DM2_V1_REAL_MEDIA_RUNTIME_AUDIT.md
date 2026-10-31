@@ -64,6 +64,21 @@ assertion because no explicit DM2 corpus was selected for that standalone test.
 
 ## Remaining evidence work
 
+### Dynamic c_light platform coverage (2026-10-31)
+
+The supplied DOS `DUNGEON.DAT` descriptor scan reports dynamic-light maps 1–43;
+map 0 is static. `dm2_v1_runtime.c:dm2_runtime_try_light_mode8` currently
+admits only four FM Towns positions (map 3 at `(13,9)/(13,10)` and map 38 at
+`(6,5)/(6,6)`) before attempting the mode-8/mode-7 visibility walks. The
+source-backed DOS New Game route reaches map 0 at `(1,8)`, so its successful
+real-media startup/frame regression does not exercise dynamic c_light. The
+same current runtime path has no Amiga or Macintosh position admission. This
+is a confirmed platform-coverage gap for skproject
+`SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and
+`DM2_CHECK_RECOMPUTE_LIGHT`; descriptor counts and source mapping do not close
+the gameplay function. Extend the complete walk/evidence contract with
+platform-specific real-media start states before enabling those runtime lanes.
+
 ### Original DOS capture intake (2026-08-31)
 
 The external DOSBox capture harness now accepts the supplied
