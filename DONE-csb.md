@@ -1,3 +1,13 @@
+- 2026-11-01: Fixed the CSB Amiga A31M no-game launch selecting the wrong
+  sibling disk for its SWSH prelude. The launcher now reads `SWSH.FTL` beside
+  the authenticated graphics member selected by the menu. A Debug build and
+  manual `--debug` launch against the original Amiga 3.1 multilingual archive
+  logged `startup-source-complete` with 30 source VBlanks, then showed the
+  A31M title animation advancing through frame 30. The release v3.0.422 does
+  not contain this change. SDL dummy-driver evidence does not prove native
+  Amiga display or audible output; remaining editions are listed in
+  `TODO-csb.md`.
+
 - 2026-10-30: Implemented the CSB Atari MEDIA020 F0113 Fluxcage field route.
   The F0115 pass rescans the authentic C15 chain, binds the last matching C050
   to its live runtime explosion, and applies ReDMCSB visibility, door-pass,
