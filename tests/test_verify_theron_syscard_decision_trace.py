@@ -70,6 +70,8 @@ def main() -> None:
          "instruction bytes disagree with source lock"),
         (row(0, 30, "e209").replace("valid_mask=f", "valid_mask=e"),
          "source opcode bytes are unmapped"),
+        (row(0, 30, "e209").replace("mpr7=00", "mpr7=01"),
+         "instruction is not mapped to the System Card BIOS"),
     )
     for bad, message in mutations:
         expect_rejected([verifier.HEADER, bad], message)

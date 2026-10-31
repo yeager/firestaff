@@ -66,6 +66,9 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
         if event <= previous_event:
             raise ValueError(f"non-increasing shared event sequence at line {line_number}")
         previous_event = event
+        mprs = [int(values[f"mpr{i}"], 16) for i in range(8)]
+        if mprs[7] != 0:
+            raise ValueError(f"instruction is not mapped to the System Card BIOS at line {line_number}")
         pc = values["logical_pc"]
         if pc not in PCS:
             raise ValueError(f"decision row has an unrequested PC at line {line_number}")
@@ -84,7 +87,6 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
         for key in ("a", "x", "y", "sp", "p", *(f"mpr{i}" for i in range(8))):
             if not re.fullmatch(r"[0-9a-f]{2}", values[key]):
                 raise ValueError(f"malformed register {key} at line {line_number}")
-        mprs = [int(values[f"mpr{i}"], 16) for i in range(8)]
         logical_pc = int(pc, 16)
         expected_physical_pc = (mprs[logical_pc >> 13] << 13) | (logical_pc & 0x1FFF)
         if int(values["physical_pc"], 16) != expected_physical_pc:
