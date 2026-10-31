@@ -1,5 +1,19 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — US saved-state scripted-input trace remains inconclusive
+
+An existing US state file loaded successfully in an instrumented PCE Fast
+reference run with the original US CUE. The run logged guest reads at `$44CA`
+and `$44DB` and produced different close-time RAM/VRAM/SAT snapshots from its
+control. However, all 1,354 guest-read records report `raw=0000`, including
+reads during the scripted Right/Down/Button I events. The script-apply records
+do not prove that the guest received those inputs, and the snapshot changes
+are not attributed to a specific action, pose, map cell, or display consumer.
+This does not establish the semantics or game ownership of those PCs, nor a
+source-bound renderer mapping. Resolve the read-instrumentation discrepancy
+and join a source-backed state change to same-session VDC/VRAM writes before
+using this route for parity. See the [capture report](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 
 The authentic US cold standard-PCE run loaded no save state and configured no

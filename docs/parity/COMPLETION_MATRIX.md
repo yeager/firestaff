@@ -20,7 +20,7 @@ number of hashes or presented as 41 separately verified ports.
 | CSB | 2 | 9 | 37.0% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
 | DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
-| Theron's Quest | 1 | 4 | 72.0% | Native JP fresh start reaches source-verified Ak-Tu-Ba level 0; authentic US Track 02 plus matching BRAM reaches dungeon 2 through Continue with bounded movement/item transactions. All seven dungeon source records load per region. Retail-frame parity, game-owned cold handoff, broader campaign, combat and save semantics remain open. |
+| Theron's Quest | 1 | 4 | 72.0% | Native JP fresh start reaches source-verified Ak-Tu-Ba level 0; authentic US Track 02 plus matching BRAM reaches dungeon 2 through Continue with bounded movement/item transactions. All seven dungeon source records load per region. A saved-state input trace reaches `$44CA/$44DB`, but all guest reads report `raw=0000`, so scripted input and changed snapshots are unjoined. Retail-frame parity, game-owned cold handoff, broader campaign, combat and save semantics remain open. |
 | **Total** | **9** | **41** | **42.7%** | Unweighted mean of the 9 runtime targets: 384/900. |
 
 The family and total means are derived from the nine target scores in the

@@ -34,6 +34,14 @@ poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
+A separate US saved-state PCE Fast run loaded its existing state and logged
+guest reads at `$44CA/$44DB`, but all 1,354 read records report `raw=0000`
+despite the scripted input-apply records. RAM, VRAM, and SAT differ from the
+control snapshot, while VCE and VDC state match; those changes are not joined
+to a received input, party pose, map cell, or display consumer. This does not
+prove action semantics or game ownership and cannot supply a tile mapping. See
+the [saved-state input boundary report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
 of Firestaff's shipped runtime. A successful emulator build or input-delivery
 receipt does not by itself establish original-game behavior or native parity.

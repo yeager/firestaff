@@ -348,6 +348,13 @@ source-read join. This is not evidence of an authenticated handoff or gameplay
 and does not alter the native routes above. See the [capture-readiness record](theron/THERON_CAPTURE_READINESS.md) and
 [source-locked follow-up report](source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
+A separate US saved-state PCE Fast capture loaded its existing state and
+recorded 1,354 reads at `$44CA/$44DB`; every read reports `raw=0000` despite
+scripted input-apply records. RAM, VRAM, and SAT snapshots differ from control,
+but the changes are not joined to received input, party pose, map cell, or a
+display consumer. This adds no verified action or renderer mapping; see the
+[saved-state capture report](source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+
 ## Data and preservation rules
 
 Firestaff reads the original file or container in its supplied form. It may
