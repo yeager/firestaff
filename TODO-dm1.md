@@ -306,6 +306,14 @@ Amiga archive. The Amiga demo case was unverified at that time because its
 archive was not staged. SDL dummy verifies these launch and source-handoff paths,
 not native display or physical input parity.
 
+2026-10-31 Atari ST 1.2 German no-game M12 route: the current-source
+`m12_main_menu_dm1-atari-st-12-de_runtime_real_media` CTest passed in 91.23
+seconds against `Dungeon-Master_Atari-ST_DE_Version-12.zip`. It selected the
+authenticated `st12-de` owner, reached the first Hall runtime with the source
+startup handoff and first-frame receipts, and verified the archive remained
+unchanged. SDL dummy does not establish native display or physical-input
+parity.
+
 2026-10-28 authentic Amiga 2.0 menu pacing retest: the updated
 `dm1_v1_amiga_v20_archive_cli_boot` passed against the installed original
 ZIP -> ZIP -> ADF preservation archive using the fast-dev build. It covers
