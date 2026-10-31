@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-31 ReDMCSB `OBJECT.C:F0031` IIGS M564 name-table route: native
+startup now reads `GRAPHICS.GAME` raw record 556 and sends the MEDIA060
+high-bit-terminated stream through the 199-entry object-name parser before
+inventory labels. Verify against authentic G14ED/G20E/G21E media and confirm
+the names are visible in the IIGS runtime; full-table and runtime evidence are
+still missing. This closes only the missing code path, not IIGS or DM1
+function/platform parity.
+
 2026-10-31 ReDMCSB `BASE.C:F0023-F0030` helpers: the callable inventory
 maps signed absolute value, minimum, maximum, inclusive clamp, the F0027 LCG
 and its F0028/F0029 bit extracts, plus bounded F0030 scaled products to narrow

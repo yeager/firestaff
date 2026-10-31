@@ -21504,7 +21504,15 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     if (!state || !state->assetLoader.graphicsDatPath[0]) return 0;
     state->dm1ObjectNameTableValid = 0;
     memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
-    if (state->assetLoader.atariStDm1 && state->assetLoader.atariStData &&
+    if (state->assetLoader.iigsDm1 && state->assetLoader.iigsData &&
+        state->assetLoader.iigsDataSize > 0) {
+        /* ReDMCSB MEDIA060 explicitly includes G14ED/G20E/G21E: IIGS
+         * GRAPHICS.GAME keeps M564 as a raw high-bit-terminated record.
+         * Keep the already admitted native image as the source owner. */
+        fileByteCount = (size_t)state->assetLoader.iigsDataSize;
+        fileBytes = malloc(fileByteCount);
+        if (fileBytes) memcpy(fileBytes, state->assetLoader.iigsData, fileByteCount);
+    } else if (state->assetLoader.atariStDm1 && state->assetLoader.atariStData &&
         state->assetLoader.atariStDataSize > 0) {
         fileByteCount = (size_t)state->assetLoader.atariStDataSize;
         fileBytes = malloc(fileByteCount);
@@ -21536,7 +21544,19 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     /* ReDMCSB's M564 number is media-dependent: current PC3.4 data uses
      * record 694, while older DM1 layouts use 556.  Admit only a complete
      * C199 stream, never a raster record that happens to decode. */
-    if (state->assetLoader.atariStDm1) {
+    if (state->assetLoader.iigsDm1) {
+        int count = 0;
+        if (dm1_v1_iigs_graphics_read_raw(fileBytes, fileByteCount,
+                M11_DM1_M564_LEGACY, decoded, 65535u, &decodedSize))
+            count = (int)decodedSize;
+        if (count <= 0) {
+            free(decoded);
+            free(fileBytes);
+            return 0;
+        }
+        /* ReDMCSB OBJECT.C F0031/MEDIA060 masks the high bit on the final
+         * byte of each name and stores 199 caller-owned strings. */
+    } else if (state->assetLoader.atariStDm1) {
         DM1_V1_AtariStGraphicsDat original;
         int count = 0;
         /* OBJECT.C F0031/MEDIA009 requests raw M564, not its IMG1 raster.
@@ -30181,6 +30201,9 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     snprintf(state->assetLoader.graphicsDatPath,
              sizeof(state->assetLoader.graphicsDatPath), "%s",
              installation.graphics_path);
+    /* ReDMCSB OBJECT.C F0031/MEDIA060 loads the native IIGS M564 stream too.
+     * Bind those source names before the first inventory label is rendered. */
+    (void)m11_dm1_load_object_names_m564(state);
     state->mirrorCatalogAvailable = F0652_CHAMPION_BuildMirrorCatalog_Compat(
         state->world.things, &state->mirrorCatalog) > 0;
     failureStage = "world-hash";
