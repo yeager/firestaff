@@ -7084,6 +7084,62 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                 ornament->mirror_flip,
                 &s->gdat_material_palette_wall_consumed_count);
         }
+        if (ornament && ornament->overlay_valid) {
+            const DM2_V1_ViewportRect *dst = &ornament->overlay_dst_rect;
+            const DM2_V1_ViewportRect *src = &ornament->overlay_src_rect;
+            const uint8_t *overlay_pixels = NULL;
+            uint8_t overlay_palette[16];
+            uint32_t overlay_palette_hash = 0u;
+            DM2_ImageFormat overlay_format = DM2_IMG_FMT_UNKNOWN;
+            int overlay_width = 0, overlay_height = 0;
+            if (!s->asset_loader ||
+                !(overlay_pixels = dm2_v1_asset_load_image_field(
+                    s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    sq->wall_ornate_gfx_index,
+                    ornament->overlay_image_field,
+                    &overlay_width, &overlay_height, &overlay_format)) ||
+                overlay_width <= 0 || overlay_height <= 0 ||
+                !dm2_v1_asset_load_image_local_palette(
+                    s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    sq->wall_ornate_gfx_index,
+                    ornament->overlay_image_field,
+                    overlay_palette, &overlay_palette_hash) ||
+                overlay_palette_hash == 0u ||
+                (overlay_format != DM2_IMG_FMT_IMG3 &&
+                 overlay_format != DM2_IMG_FMT_U4 &&
+                 overlay_format != DM2_IMG_FMT_U8 &&
+                 overlay_format != DM2_IMG_FMT_IMG9) ||
+                dst->w <= 0 || dst->h <= 0 || dst->x < 0 || dst->y < 0 ||
+                (unsigned)dst->x + (unsigned)dst->w >
+                    (unsigned)dm2_v1_viewport_draw_width(s) ||
+                (unsigned)dst->y + (unsigned)dst->h >
+                    (unsigned)dm2_v1_viewport_draw_height(s) ||
+                src->x < 0 || src->y < 0 || src->w <= 0 || src->h <= 0 ||
+                src->x + src->w > overlay_width ||
+                src->y + src->h > overlay_height) {
+                dm2_v1_asset_free_pixels((uint8_t *)overlay_pixels);
+                if (owned_pixels) dm2_v1_asset_free_pixels((uint8_t *)pixels);
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+            memcpy(s->active_asset_palette16, overlay_palette,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = overlay_palette_hash;
+            s->active_asset_palette_ready = 1;
+            dm2_v1_blit_scaled_material_bitmap_region_ex(
+                s, s->framebuffer, s->fb_stride,
+                dst->x, dst->y, dst->w, dst->h,
+                overlay_pixels, src->x, src->y, src->w, src->h, overlay_width,
+                ornament->overlay_colorkey ?
+                    (int)ornament->overlay_colorkey :
+                    (s->gdat_scene_control_ready
+                        ? (int)s->gdat_scene_colorkey
+                        : DM2_COLOR_TRANSPARENT),
+                ornament->overlay_mirror_flip,
+                &s->gdat_material_palette_wall_consumed_count);
+            dm2_v1_asset_free_pixels((uint8_t *)overlay_pixels);
+        }
         if (owned_pixels) dm2_v1_asset_free_pixels((uint8_t *)pixels);
         ++s->asset_wall_ornament_drawn_count;
         s->last_wall_ornament_material_consumed_mask |=

@@ -12873,6 +12873,74 @@ static void dm2_runtime_bind_wall_ornament_plan(
         plan_hash ^= receipt.material_hash + (uint32_t)surface->wall_ornate_rect_number +
             ((uint32_t)square << 24);
         plan_hash *= 16777619u;
+
+        /* SkWinCore.cpp::DRAW_WALL_ORNATE draws a generic WALL_GFX overlay
+         * when dtImage/0x0f is loadable, except shop glass (alcove type 2),
+         * which enters the DB14-backed SHOP_GLASS routine instead. Preserve
+         * the source placement and flip for generic overlays; the dynamic
+         * shop routine remains unavailable until its record owner is wired. */
+        if (receipt.alcove_type != 2u) {
+            DM2_V1_GdatImageMetadata overlay_metadata;
+            DM2_V1_WallOrnamentReceipt overlay_receipt;
+            if (dm2_v1_asset_load_image_metadata(
+                    loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    surface->wall_ornate_gfx_index,
+                    DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+                    &overlay_metadata)) {
+                int overlay_scaled_width;
+                int overlay_scaled_height;
+                int overlay_x0, overlay_y0, overlay_x1, overlay_y1;
+                if (!dm2_v1_wall_ornament_material_receipt(
+                        loader, surface->wall_ornate_gfx_index,
+                        DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+                        &overlay_receipt)) return;
+                overlay_scaled_width =
+                    ((int)overlay_receipt.decoded_width * stretch_x +
+                     (stretch_x >> 1)) >> 6;
+                overlay_scaled_height =
+                    ((int)overlay_receipt.decoded_height * stretch_y +
+                     (stretch_y >> 1)) >> 6;
+                if (overlay_scaled_width <= 0 || overlay_scaled_height <= 0 ||
+                    !dm2_v1_wall_ornament_query_loaded_blit_rect(
+                        loader, surface->wall_ornate_rect_number,
+                        surface->wall_ornate_ref_point,
+                        overlay_scaled_width, overlay_scaled_height, &blit)) {
+                    return;
+                }
+                overlay_x0 = (blit.source_x *
+                    (int)overlay_receipt.decoded_width) / overlay_scaled_width;
+                overlay_y0 = (blit.source_y *
+                    (int)overlay_receipt.decoded_height) / overlay_scaled_height;
+                overlay_x1 = ((blit.source_x + blit.source_width) *
+                    (int)overlay_receipt.decoded_width + overlay_scaled_width - 1) /
+                    overlay_scaled_width;
+                overlay_y1 = ((blit.source_y + blit.source_height) *
+                    (int)overlay_receipt.decoded_height + overlay_scaled_height - 1) /
+                    overlay_scaled_height;
+                if (overlay_x0 < 0 || overlay_y0 < 0 ||
+                    overlay_x1 > overlay_receipt.decoded_width ||
+                    overlay_y1 > overlay_receipt.decoded_height ||
+                    overlay_x1 <= overlay_x0 || overlay_y1 <= overlay_y0) {
+                    return;
+                }
+                entry->overlay_valid = 1u;
+                entry->overlay_image_field =
+                    DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD;
+                entry->overlay_colorkey = overlay_receipt.colorkey;
+                entry->overlay_dst_rect = (DM2_V1_ViewportRect){
+                    blit.destination_x, blit.destination_y,
+                    blit.destination_width, blit.destination_height };
+                entry->overlay_src_rect = (DM2_V1_ViewportRect){
+                    overlay_x0, overlay_y0, overlay_x1 - overlay_x0,
+                    overlay_y1 - overlay_y0 };
+                entry->overlay_mirror_flip = (uint8_t)mirror_flip;
+                entry->overlay_material_hash = overlay_receipt.material_hash;
+                plan_hash ^= overlay_receipt.material_hash +
+                    (uint32_t)surface->wall_ornate_rect_number +
+                    ((uint32_t)square << 24);
+                plan_hash *= 16777619u;
+            }
+        }
     }
     if (plan->ornament_count == 0) return;
     plan->valid = plan_hash != 0u;

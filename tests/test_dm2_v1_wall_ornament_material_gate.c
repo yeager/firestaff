@@ -264,6 +264,28 @@ int main(void)
         return 1;
     }
 
+    /* Generic DRAW_WALL_ORNATE overlays require the authenticated WALL_GFX
+     * loader. A plan cannot turn field 0x0f into a synthetic overlay. */
+    plan.ornaments[0].overlay_valid = 1u;
+    plan.ornaments[0].overlay_image_field =
+        DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD;
+    plan.ornaments[0].overlay_dst_rect =
+        (DM2_V1_ViewportRect){ 100, 60, 16, 16 };
+    plan.ornaments[0].overlay_src_rect =
+        (DM2_V1_ViewportRect){ 0, 0, 4, 4 };
+    memset(framebuffer, 0, sizeof(framebuffer));
+    viewport.blocked_material_mask = 0u;
+    viewport.asset_wall_ornament_drawn_count = 0;
+    dm2_v1_render_wall_ornaments(&viewport);
+    if ((viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT) == 0u ||
+        viewport.asset_wall_ornament_drawn_count != 0) {
+        fputs("FAIL: wall overlay drew without authenticated WALL_GFX data\n",
+              stderr);
+        return 1;
+    }
+    plan.ornaments[0].overlay_valid = 0u;
+
     /* A placement receipt for another WALL_GFX row must not borrow this
      * square's derived pixels. It is an unowned source-material mismatch,
      * not permission to draw at the supplied destination. */

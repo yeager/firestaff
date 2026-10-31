@@ -514,6 +514,13 @@ typedef struct {
     DM2_V1_ViewportRect src_rect;
     uint8_t mirror_flip;
     uint32_t material_hash;
+    uint8_t overlay_valid;
+    uint8_t overlay_image_field;
+    uint16_t overlay_colorkey;
+    DM2_V1_ViewportRect overlay_dst_rect;
+    DM2_V1_ViewportRect overlay_src_rect;
+    uint8_t overlay_mirror_flip;
+    uint32_t overlay_material_hash;
 } DM2_V1_WallOrnamentRender;
 
 typedef struct DM2_V1_WallOrnamentRenderPlan {
