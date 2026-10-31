@@ -1334,10 +1334,26 @@ static void test_mode7_class34_receipts(void)
     dungeon.square_first_thing_base = 8;
     dungeon.square_first_thing_count = 1;
     dungeon.words_big_endian = 1;
+
+    /* A flagged center whose first-thing table is truncated is not an empty
+     * chain and must not be admitted as a valid source receipt. */
+    adjacent_record_tiles[36] = 0x90u;
+    dungeon.square_first_thing_base = 39;
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 1, 1, 0, &room));
+    adjacent_record_tiles[36] = 0x80u;
+    dungeon.square_first_thing_base = 8;
+
     assert(dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 1, &room));
     assert(room.source_tile_type == 0x11u &&
            room.first_record_link == 0x3c00u);
+
+    /* The adjacent root flag is present, but its table offset is invalid. */
+    dungeon.square_first_thing_base = 39;
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 1, 1, 1, &room));
+    dungeon.square_first_thing_base = 8;
 
     adjacent_record_tiles[8] = 0xffu;
     adjacent_record_tiles[9] = 0xffu;
