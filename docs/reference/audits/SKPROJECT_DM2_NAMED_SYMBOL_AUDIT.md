@@ -57,7 +57,21 @@ image-field `dtImageOffset` before `QUERY_TEMP_PICST`; that call
 adds the generic `0xFE` offset and selected-field offset to the image
 metadata as well. `QUERY_TEMP_PICST` scales the combined anchor with
 `_4976_418e[y_distance][1]` and clips through the wall ornament rectangle
-with reference point zero. Preserve the early facing mismatch return before
+with reference point zero. SKWINSPX v4 further confirms that
+`DRAW_ALCOVE_ITEMS` writes `_4976_41b0[slot][0] = 0` for indices 0..31 before
+drawing, then invokes `DRAW_ITEM` with slots 2..13. The shared table is declared
+`[16][2]`, so that SPX initialization loop exceeds its declared rows; only
+the values used by item slots 2..13 are in bounds. For those slots it removes
+the second x displacement, while `DRAW_ITEM(tt=1)` applies the y displacement
+in both its initial anchor and the later `vv != -1` block (`ref == NULL`). This
+is an SPX-specific source detail that must be reconciled with primary SKWIN,
+which does not show the reset loop, before claiming cross-build parity. The
+wall anchor is the separate `glbDrawExtPicture` (`_4976_5aa8`)
+snapshot; the tracked SKWIN and SKWINSPX sources read that owner but do not show
+its population in a named helper, so a runtime bind still needs an audited
+producer before it can claim source placement. The floor plan's cell pass,
+5x5 anchor, and one-pass slot offsets therefore cannot substitute. Preserve
+the early facing mismatch return before
 the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
 then wrap to 2), and the cell-3-only clickable zone. The next work is to
 consume that root with the source facing gate, this wall-specific placement,
