@@ -1,9 +1,11 @@
-# Nexus English Configuration floor-map join (2026-10-31)
+# Nexus English Configuration floor-map numeric-pattern correlation (2026-10-31)
 
 This receipt extends the authentic frame-119 Ymir material join with a
-source-side search of the retail `LEV00.DGN` Structure1B map. It identifies a
-unique floor-material pattern corresponding to 16 early VDP1 quads. It does
-not establish the active map-cell selection routine or camera projection.
+numeric-pattern search of the retail `LEV00.DGN` Structure1B map. It finds a
+unique sequence of values equal to the 16 early VDP1 quads' Structure2 image
+IDs. No explicit mapping from those Structure2 IDs to Structure1B values has
+been established, so this is a numeric correlation, not a certified source
+join or proof that the candidate map cells produced the captured quads.
 
 ## Authenticated inputs
 
@@ -23,7 +25,7 @@ not establish the active map-cell selection routine or camera projection.
 
 The Ymir receipt records a complete 189-command frame-119 trace with no dropped
 rows. The analyzer verifies all three capture-file hashes, the Ymir trace
-receipt, and the retail DGN hash before reporting a join.
+receipt, and the retail DGN hash before reporting the numeric correlation.
 
 ## Observed floor-material rows
 
@@ -48,12 +50,12 @@ Structure1B stores the same four rows at one and only one location in the
 | 28 | 30–34 | 2, 3, 1, 3, 2 |
 | 29 | 30–34 | 1, 1, 1, 5, 4 |
 
-The row sequence and its unique map occurrence are source-backed evidence that
-these draws use a real `LEV00.DGN` floor-material pattern. Their increasing
-command-space Y spans are consistent with a receding floor fan. The capture
-does not trace the retail producer's selected cells or projection math, so it
-does not prove that this unique candidate patch was the active source at this
-frame.
+The row sequence and its unique map occurrence are a source-backed numeric
+correlation. They do not establish that the Structure2 image IDs and
+Structure1B values share an identifier space, or that this candidate patch
+produced the captured quads. Their increasing command-space Y spans are
+consistent with a receding floor fan. The capture does not trace the retail
+producer's selected cells or projection math.
 
 ## Reproduction
 
@@ -65,6 +67,7 @@ python3 scripts/analyze_nexus_vdp1_structure1b_floor_map_join.py \
   "$EVIDENCE_DUMPS" --data-dir "$NEXUS_DATA"
 ```
 
-This is a capture analyzer only. Active cell selection, camera projection,
+This is a capture analyzer only. The Structure2-to-Structure1B ID mapping,
+active cell selection, camera projection,
 culling, display origin, VDP2 composition, complete pixel ownership, and
 Firestaff runtime parity remain unproven; semantic admission remains blocked.

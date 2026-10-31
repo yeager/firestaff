@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Join authentic Nexus frame-119 floor quads to the retail LEV00 map.
+"""Compare authentic Nexus frame-119 floor quads with the retail LEV00 map.
 
 This is a bounded evidence analyzer, not a scene renderer or admission gate.
 It verifies the captured VDP1 texture bytes and CLUTs, groups the unowned
-48x48 quads by their observed command-space Y spans, and searches the
-hash-verified LEV00 Structure1B floor-material map for their row pattern.
+48x48 quads by their observed command-space Y spans, and checks whether their
+numeric Structure2 IDs occur as a row pattern in the hash-verified LEV00
+Structure1B map. Numeric equality alone does not establish an ID mapping.
 """
 
 from __future__ import annotations
@@ -219,7 +220,7 @@ def main() -> int:
 
     print(f"frame={FRAME} complete_vdp1_commands={TRACE_ROWS}")
     print("capture_hashes=verified")
-    print("floor_draws=16 source_and_clut_matches=verified structure3_face_owners=none")
+    print("floor_draws=16 structure2_source_and_clut_matches=verified structure3_face_owners=none")
     for span in spans:
         details = ",".join(
             f"index={index}/address=0x{address:04x}/S2={image_id}"
@@ -228,7 +229,8 @@ def main() -> int:
         print(f"command_y_span={span[0]}..{span[1]} materials="
               f"{','.join(map(str, observed_pattern[spans.index(span)]))} "
               f"draws={details}")
-    print("unique_structure1b_floor_pattern=LEV00.DGN:x30..34,y26..29")
+    print("unique_numeric_structure1b_pattern=LEV00.DGN:x30..34,y26..29")
+    print("structure2_to_structure1b_id_mapping=unproven")
     for y, (x_offset, values) in enumerate(ROW_PATTERN, start=26):
         print(f"map_row_y={y} x{30 + x_offset}..{30 + x_offset + len(values) - 1} "
               f"materials={','.join(map(str, values))}")
