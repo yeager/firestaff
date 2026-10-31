@@ -34,6 +34,8 @@ compiler/linker BSS initialization rather than a callable symbol.
   does not establish complete host-platform equivalence.
 - `VERIFIED_SOURCE_MAPPING`: the evidence maps a source behavior but does not
   by itself prove all caller or platform behavior.
+- `PARTIAL`: source behavior has a bounded Firestaff counterpart, with material
+  behavior or supported-platform coverage still open.
 - `SOURCE_NONAPPLICABLE`: source review found no applicable PC 3.4 route.
 - `PC34_SOURCE_IMPLEMENTED`: the source implements the behavior on PC 3.4;
   confirm the Firestaff runtime route separately.
@@ -43,11 +45,12 @@ compiler/linker BSS initialization rather than a callable symbol.
 | Status | Count |
 |---|---:|
 | `MISSING` | 810 |
-| `UNCERTAIN_NUMBERED_EVIDENCE` | 666 |
-| `IMPLEMENTED_NARROW` | 492 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 659 |
+| `IMPLEMENTED_NARROW` | 497 |
 | `VERIFIED_SOURCE_MAPPING` | 96 |
 | `SOURCE_NONAPPLICABLE` | 64 |
 | `PC34_SOURCE_IMPLEMENTED` | 5 |
+| `PARTIAL` | 2 |
 | **Total** | **2,133** |
 
 The open rows include platform service routines, ABI aliases, unreferenced
