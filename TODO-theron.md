@@ -138,6 +138,13 @@ kind, value, PC mapping, and opcode bytes against that BIOS. No new trace has
 been collected with this observer yet; collect one before drawing conclusions
 about the status callback or `$E209/$E11D` carry path.
 
+A current-source native Debug run with authentic Japanese Rev. 1 Track 02
+reached the dungeon runtime and recorded a left turn followed by a forward
+move. Starting-state probes also recorded blocked forward and right-strafe
+actions. These are Firestaff state receipts only; bind equivalent actions to
+an authentic original-game state before claiming movement parity. The run used
+a dummy SDL display and produced no rendered-game frame.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source

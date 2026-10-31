@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — native debug input route with authentic JP Track 02
+
+Built the current Firestaff source on TRV2 and ran it natively with the
+hash-verified Japanese Rev. 1 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`).
+The `--debug` startup script reached the loaded dungeon runtime, turned left,
+then advanced the party from `(1,0,0)` to `(2,3,3)`. Separate cold-start input
+probes turned left successfully; forward and right-strafe inputs were blocked
+from the spawn. The logs confirm Firestaff's own state changes and input
+results only. There was no original-game state comparison, paired reference
+capture, or rendered-game frame, so this is not movement or visual parity.
+
 ## 2026-10-31 — add bounded BIOS I/O and RAM receipts
 
 Added an opt-in Mednafen sidecar for System Card reads and writes at
