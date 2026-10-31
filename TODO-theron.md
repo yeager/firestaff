@@ -111,6 +111,25 @@ those markers remains to be collected. The original run had no CD IRQ,
 non-System-Card poll, or gameplay transition. Continue tracing toward a
 game-owned poll and visible state change.
 
+2026-10-31 authentic v22 run-only callback trace and BIOS disassembly: the
+hash-verified Japanese Rev. 1 / System Card 3.0 replay consumed its single RUN
+event at `$E4C5`. Its 8,192-row bootstrap window reached `$EC05` once and
+`$E900` three times, then remained in the `$E95E/$E966` status loop until the
+window cap. It records no observed instruction start at `$E209` or `$E11D`; the
+independent `$4000` window is not evidence of the `$E130` launch path. The bootstrap trace
+hash matches v21, while this capture's status and callback-state hashes are
+recorded in the source-lock note. Three repeated MAME `unidasm` listings from
+the authentic System Card BIOS now cover `$EC05`, `$E900`, and `$E1C0-$E20A`.
+They identify command setup, `$1800-$1802` accesses, status comparison, and
+the `$E209 SEC; RTS` table-check exit without assigning undocumented device
+semantics. An opt-in bounded decision-PC sidecar now observes `$EC05`, `$E900`,
+`$E209/$E20A`, and `$E11D` independently of the bootstrap row cap. The next
+capture still needs expanded `$1800-$1803` I/O and `$224C-$2255`,
+`$2273-$2280`, and `$22A4` RAM receipts before the authentic disc is replayed.
+Neither the disassembly nor the independent `$4000` window proves a game
+launch or parity. Evidence and limits are in the [System Card command/status
+source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source
@@ -118,7 +137,7 @@ game-owned poll and visible state change.
    `$E009` dispatch, or partial byte join alone does not establish a game
    handoff or playable runtime. Current trace limits are recorded in the
    [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md)
-   and the dated trace entries below. The latest v11 trace follows 40 indexed
+   and the dated trace entries below. The bounded v11 trace follows 40 indexed
    dispatches; 28 windows reach their 256-fetch cap. The first observed path
    returns from the System Card controller poll to its own dispatcher. The
    18-byte `$40D2-$40E3` RAM-loop report matches all 495 fetched byte slots to
@@ -132,7 +151,10 @@ game-owned poll and visible state change.
    `$613F`, `$6144`, and temporary `$40D9` bytes remain unbound to a game-owned
    consumer. Continue tracing complete writers and callers until a game-owned
    poll and resulting state change are observed; there is still no game IRQ,
-   aggregate authenticated CD-to-RAM receipt, or non-System-Card poll.
+   aggregate authenticated CD-to-RAM receipt, or non-System-Card poll. The v22
+   run-only callback reaches `$EC05/$E900`, then remains in the `$E95E/$E966`
+   status loop; it still has no observed `$E209/$E11D` instruction starts or game
+   handoff.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from

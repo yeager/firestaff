@@ -1444,6 +1444,7 @@ system_card_code_follow_trace="${trace}.system-card-code-follow"
 system_card_bootstrap_follow_trace="${trace}.system-card-bootstrap-follow"
 system_card_status_trace="${trace}.system-card-status"
 system_card_callback_state_trace="${trace}.system-card-callback-state"
+system_card_decision_trace="${trace}.system-card-decision"
 profile_sram_manifest="${trace}.profile-sram"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
 pce_fast_code_ram_write_trace=
@@ -1558,7 +1559,7 @@ for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
 done
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
     "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
-    "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" \
+    "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
     "$movement_data_read_trace" \
@@ -1820,6 +1821,7 @@ launch=(
     FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE="$system_card_status_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE="$system_card_callback_state_trace" \
+    FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE="$system_card_decision_trace" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
@@ -2258,6 +2260,15 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     system_card_callback_state_receipt=$(python3 "$script_dir/verify_theron_syscard_callback_state_trace.py" \
         "$system_card_callback_state_trace") || exit 1
     printf '%s\n' "$system_card_callback_state_receipt"
+    if [[ ! -s "$system_card_decision_trace" ]]; then
+        printf '%s\n' 'FAIL: Mednafen did not produce the PCE Fast System Card decision trace' >&2
+        exit 1
+    fi
+    system_card_decision_receipt=$(python3 "$script_dir/verify_theron_syscard_decision_trace.py" \
+        "$system_card_decision_trace") || exit 1
+    printf '%s\n' "$system_card_decision_receipt"
+    system_card_decision_rows=${system_card_decision_receipt#*decision rows=}
+    system_card_decision_rows=${system_card_decision_rows%% *}
     if [[ ! -s "$system_card_bootstrap_follow_trace" ]] ||
        ! grep -Fqx 'source=mednafen-pce-fast-system-card-bootstrap-follow-v4 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=8192 branch_follow_limit=4096 target_pc=4000 target_limit=128' \
            "$system_card_bootstrap_follow_trace"; then
@@ -2315,7 +2326,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2964,6 +2975,7 @@ fi
     printf 'pce_fast_system_card_bootstrap_follow_status=%s\n' "$system_card_bootstrap_follow_status"
     printf 'pce_fast_system_card_bootstrap_follow_rows=%s\n' "$system_card_bootstrap_follow_rows"
     printf 'pce_fast_system_card_target_follow_rows=%s\n' "$system_card_target_follow_rows"
+    printf 'pce_fast_system_card_decision_rows=%s\n' "${system_card_decision_rows:-0}"
     printf 'main_ram_target_reads=%s\n' "$transition_main_ram_target_read_count"
     printf 'ram_provenance_seeds=%s\n' "$transition_ram_provenance_seed_count"
     printf 'ram_provenance_copies=%s\n' "$transition_ram_provenance_copy_count"
