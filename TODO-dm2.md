@@ -1,7 +1,8 @@
 2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:
-Both live and GAME_LOAD candidate door-step paths now queue sound 0x8e while
-moving and 0x8f on the final step before scheduling the continuation. The
-dungeon loader retains map descriptor bytes 2/3 and word E, and both owners
+Both live and GAME_LOAD candidate door-step paths now queue source sound 0x8f
+only when the resulting door state is 4; every other state queues 0x8e before
+scheduling the continuation. The dungeon loader retains map descriptor bytes
+2/3 and word E, and both owners
 resolve the source altar selector through
 `dm2_v1_skproject_is_rebirth_altar`. Sound lookup failure does not block a door
 step; failed live and candidate enqueues restore their sound/timer state. Exact

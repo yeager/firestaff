@@ -9299,8 +9299,8 @@ door_creature_rollback:
                       new_state == DM2_DOOR_STATE_OPEN) ||
                      (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                       new_state == DM2_DOOR_STATE_CLOSED);
-    /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while moving
-     * and 0x8f on the final step with SKW_IS_REBIRTH_ALTAR as cls_alt. */
+    /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR selects 0x8f only when the
+     * resulting state is 4; all other states use 0x8e. */
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
         rt->sound_queue.ssound_entries_capacity > 0u) {
         DM2_V1_SkprojectRebirthAltarReceipt altar_receipt;
@@ -9324,7 +9324,9 @@ door_creature_rollback:
                    entries_bytes);
             if (!dm2_runtime_queue_door_collision_noise(
                     rt, map, x, y, DM2_GDAT_CATEGORY_DOORS,
-                    reached_target ? 0x8f : 0x8e, 0xfe, cls_alt,
+                    (reached_target &&
+                     new_state == DM2_DOOR_STATE_CLOSED) ? 0x8f : 0x8e,
+                    0xfe, cls_alt,
                     0x5f, 0x80,
                     receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
                     source_index)) {

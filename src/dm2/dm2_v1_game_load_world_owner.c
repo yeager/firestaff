@@ -5825,14 +5825,16 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                     candidate->dungeon.map_header_word_e[map],
                     &altar_receipt))
                 cls_alt = altar_receipt.altar_value;
-            /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while
-             * moving and 0x8f on the final step with the source altar value. */
+            /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR selects 0x8f only when
+             * the resulting state is 4; all other states use 0x8e. */
             if (dm2_v1_game_load_runtime_candidate_sound_clone(
                     &sound_backup, &candidate->sound_owner)) {
                 collision_sound_cloned = 1;
                 if (!dm2_game_load_candidate_queue_door_collision_noise(
                         candidate, map, x, y, DM2_GDAT_CATEGORY_DOORS,
-                        reached_target ? 0x8f : 0x8e, 0xfe, cls_alt,
+                        (reached_target &&
+                         new_state == DM2_DOOR_STATE_CLOSED) ? 0x8f : 0x8e,
+                        0xfe, cls_alt,
                         0x5f, 0x80, game_tick)) {
                     dm2_v1_game_load_runtime_candidate_sound_free(
                         &candidate->sound_owner);
