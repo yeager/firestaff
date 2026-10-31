@@ -7,6 +7,10 @@ input paths that do not populate scancodes.
 
 Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
 are research instruments only and do not run or replace the game in Firestaff.
+The original System Card's cold RUN callback has been traced separately, but
+the latest authentic capture remains before confirmed game-owned code; it does
+not verify the reported multi-second title-menu action hold. See the
+[capture readiness record](THERON_CAPTURE_READINESS.md).
 
 ## PC Engine button mapping
 

@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — source-lock System Card RUN callback boundary
+
+Updated the current Theron status, readiness and reference pages to document
+the authentic cold Japanese System Card trace: `$1800=$C8`, `$1801=$04`,
+callback byte `$2259=$04`, then BIOS branch `$E166->$E176`. Added the bounded
+`$EA3B` disassembly reference and linked the trace from the documentation
+index and parity matrix. The capture has no `SELECT` event, `$E174`, `$E11D`, `$E130`, `$E209`,
+or confirmed game-owned handoff, so no gameplay or parity claim is made.
+
+This is a documentation and evidence-index update; it adds no runtime
+behavior and does not close the handoff TODO.
+
 ## 2026-10-31 — round-trip a Track 02 item through native M11 input
 
 Extended `theron_v1_m11_real_bram_continue` to find a reachable,

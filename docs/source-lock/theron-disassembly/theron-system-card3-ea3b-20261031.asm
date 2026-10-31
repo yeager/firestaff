@@ -11,6 +11,8 @@
 ; the byte through ($FA). The authentic r5 trace joins $1800=$C8 at event
 ; 10510, $1801=$04 at 10517, and the $2259=$04 write at 10519.
 ; See theron-jp-system-card-run-path-20261030.md for capture limits and hashes.
+; The 2026-10-31 r5 trace later observes $E162 reading $2259=$04, then
+; $E166->$E176. It does not observe $E174/$E11D/$E130/$E209 or game handoff.
 
 0ea3b: ad 00 18  lda  $1800
 0ea3e: 29 f8     and  #$F8

@@ -7,6 +7,12 @@ the original media reads required for startup. This proves the startup/media
 transport only; it does not promote the Track 02 payload to semantic level,
 object, tile, palette, HUD, creature, T700 or T900 state.
 
+**Current reference boundary (2026-10-31):** a separate authentic Japanese
+cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`
+callback through BIOS branch `$E166->$E176`. It does not observe a confirmed
+game-owned handoff or gameplay and does not change the transport-only claim
+above. See the [source-locked trace supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
+
 ## Why the Disc Is Not an ISO Filesystem
 
 PC Engine System Card software works with record numbers relative to a CD base.

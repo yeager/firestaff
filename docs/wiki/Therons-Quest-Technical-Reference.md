@@ -1,6 +1,6 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-10-24.** Firestaff reads authentic PC Engine CD
+> **Status reviewed 2026-10-31.** Firestaff reads authentic PC Engine CD
 > Track 02 media through bounded JP and US native routes. The JP Rev 1 route
 > reaches title, stage, Soul Room and Akutuba; US routes include direct and
 > M12 startup, an authentic Continue-to-dungeon-2 path, and a MODE1/2048
@@ -17,7 +17,10 @@
 > Firestaff runtime dependency. See the
 > [current platform status](../PLATFORM_STATUS.md#therons-quest),
 > [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
-> [input notes](../theron/theron_input.md).
+> [input notes](../theron/theron_input.md). A cold System Card RUN capture
+> binds the `$1800=$C8` / `$1801=$04` callback to `$2259=$04` and branch
+> `$E166->$E176`; no confirmed game-owned handoff was observed. See the
+> [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
 ## Door movement boundary
 
@@ -197,12 +200,14 @@ receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
 ## Scope
 
-**Current capture boundary (reviewed 2026-10-24):** Original-emulator menu
+**Current capture boundary (reviewed 2026-10-31):** Original-emulator menu
 input remains an evidence gap. Earlier JP `pce_fast` captures advanced with
 ordinary Space/Button I after a four-second RUN hold; the operator reports
 that the selected menu action itself must be held for 3–5 seconds. The latest
-US emulator attempt stayed on System Card 3.0 and did not test that hold. See
-the current
+authentic JP cold RUN capture is still System Card-only: it records the device
+callback byte and BIOS branch `$E166->$E176`, but no confirmed game-owned
+handoff. It used `run@480:300` and does not test the stated multi-second hold
+on the selected title-menu action. See the current
 [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
 [input notes](../theron/theron_input.md). DMWeb provides retail edition and manual
 references. Greatstone's Theron material covers a CSBWin custom-dungeon
