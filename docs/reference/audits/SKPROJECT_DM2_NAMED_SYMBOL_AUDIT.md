@@ -51,9 +51,11 @@ front-cell ornament gate; it still has no wall-cell item material/placement
 pass, matching cloud route, or front-wall click target. Its wall-item geometry
 cannot reuse the floor static-object plan: `DRAW_ITEM(tt=1)` starts from the
 drawn wall picture's `w28/w30` anchor and `rectNo`, adds the item's signed
-`dtImageOffset[0xFD]` and the slot delta from `_4976_41b0/_4976_41de`, then
-applies that slot delta again in the later `vv != -1` block, followed by the
-selected image's `dtImageOffset[0xFE]`. `QUERY_TEMP_PICST` scales with
+`dtImageOffset[0xFD]` and the slot delta from `_4976_41b0/_4976_41de`. The later
+`vv != -1` block applies that slot delta again, then adds the selected
+image-field `dtImageOffset` before `QUERY_TEMP_PICST`; that call
+adds the generic `0xFE` offset and selected-field offset to the image
+metadata as well. `QUERY_TEMP_PICST` scales the combined anchor with
 `_4976_418e[y_distance][1]` and clips through the wall ornament rectangle
 with reference point zero. Preserve the early facing mismatch return before
 the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
