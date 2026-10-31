@@ -26,6 +26,25 @@ static int set_test_environment(const char *name, const char *value) {
 #endif
 }
 
+static int copy_authentic_bram(const char *source_path,
+                               const char *destination_path) {
+    uint8_t bytes[THERON_V1_PCE_BRAM_BYTES];
+    FILE *source = source_path ? fopen(source_path, "rb") : NULL;
+    FILE *destination = NULL;
+    int ok = 0;
+    if (!source) return 0;
+    ok = fread(bytes, 1u, sizeof(bytes), source) == sizeof(bytes) &&
+         fgetc(source) == EOF && !ferror(source);
+    if (fclose(source) != 0) ok = 0;
+    if (!ok) return 0;
+    destination = destination_path ? fopen(destination_path, "wb") : NULL;
+    if (!destination) return 0;
+    ok = fwrite(bytes, 1u, sizeof(bytes), destination) == sizeof(bytes) &&
+         fflush(destination) == 0;
+    if (fclose(destination) != 0) ok = 0;
+    return ok;
+}
+
 static int exercise_nearest_authentic_item_cycle(M11_GameViewState *view,
                                                  Theron_V1_World *world) {
     static const int movement_inputs[4] = {
@@ -321,6 +340,7 @@ int main(int argc, char** argv) {
         if (saved_file) fclose(saved_file);
         if (saved_bytes != sizeof(saved_bram_before_dungeon) ||
             !saved_bram_path[0] ||
+            !theron_v1_startup_is_pce_bram_managed_save(saved_bram_path) ||
             theron_v1_pce_bram_classify_path(
                 saved_bram_path, &saved_receipt) !=
                 THERON_V1_PCE_BRAM_READY ||
@@ -706,7 +726,9 @@ int main(int argc, char** argv) {
                         &view, M12_MENU_INPUT_SAVE_GAME) !=
                         M11_GAME_INPUT_REDRAW ||
                     strcmp(view.lastOutcome, "GAME SAVED") != 0 ||
-                    strcmp(view.inspectTitle, "THERON SAVE") != 0) {
+                    strcmp(view.inspectTitle, "THERON SAVE") != 0 ||
+                    !theron_v1_startup_is_pce_bram_managed_save(
+                        saved_bram_path)) {
                     ++failures;
                     fprintf(stderr,
                             "FAIL: a BRAM found through default XDG Continue can be saved again\n");
@@ -816,6 +838,52 @@ int main(int argc, char** argv) {
             }
         }
         M11_GameView_Shutdown(&view);
+    }
+    if (saved_bram_path[0]) {
+        char marker_path[THERON_V1_SRM_PATH_MAX + 32u];
+        uint8_t before[THERON_V1_PCE_BRAM_BYTES];
+        uint8_t after[THERON_V1_PCE_BRAM_BYTES];
+        FILE *file;
+        size_t bytes_read;
+        int marker_length = snprintf(marker_path, sizeof(marker_path),
+                                     "%s.firestaff-managed",
+                                     saved_bram_path);
+        /* Put the authentic original BRAM at the canonical output path with
+         * no Firestaff marker. Path equality alone must not permit its
+         * in-place replacement. This occurs after all normal Continue tests
+         * and only inside the isolated per-test user-data directory. */
+        if (marker_length <= 0 ||
+            (size_t)marker_length >= sizeof(marker_path) ||
+            !copy_authentic_bram(argv[3], saved_bram_path)) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: stage an authentic unmarked BRAM at the isolated canonical save path\n");
+        } else {
+            (void)remove(marker_path);
+            file = fopen(saved_bram_path, "rb");
+            bytes_read = file
+                ? fread(before, 1u, sizeof(before), file) : 0u;
+            if (file) fclose(file);
+            if (bytes_read != sizeof(before) ||
+                theron_v1_startup_is_pce_bram_managed_save(
+                    saved_bram_path) ||
+                theron_v1_startup_update_pce_bram_theron_save(
+                    NULL, saved_bram_path)) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: same-path update rejects an authentic unmarked original BRAM\n");
+            }
+            file = fopen(saved_bram_path, "rb");
+            bytes_read = file
+                ? fread(after, 1u, sizeof(after), file) : 0u;
+            if (file) fclose(file);
+            if (bytes_read != sizeof(after) ||
+                memcmp(before, after, sizeof(before)) != 0) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: rejected same-path update leaves the authentic original BRAM unchanged\n");
+            }
+        }
     }
     if (failures) {
         fprintf(stderr, "Theron authenticated M11 Continue FAILED (%d checks)\n",

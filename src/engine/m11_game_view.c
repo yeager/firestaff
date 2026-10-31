@@ -33768,14 +33768,24 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
             return 0;
         }
-        if (!(strcmp(template_path, save_path) == 0
-                  ? theron_v1_startup_update_pce_bram_theron_save(
-                        world, save_path)
-                  : theron_v1_startup_write_pce_bram_theron_record(
-                        world, template_path, save_path))) {
+        if (strcmp(template_path, save_path) == 0) {
+            if (!theron_v1_startup_update_pce_bram_theron_save(
+                    world, save_path)) {
+                m11_set_status(state, "SAVE",
+                               "UNVERIFIED ORIGINAL SAVE IS READ ONLY");
+                return 0;
+            }
+        } else if (!theron_v1_startup_write_pce_bram_theron_record(
+                       world, template_path, save_path)) {
             m11_set_status(state, "SAVE", "ORIGINAL SAVE WRITE FAILED");
             return 0;
         }
+        /* After the first write the canonical output is the current
+         * Firestaff-managed template. Its content-bound marker is checked by
+         * the in-place update API on every later stage-select save. */
+        snprintf(state->theronState.save_resume_srm_root,
+                 sizeof(state->theronState.save_resume_srm_root),
+                 "%s", save_path);
         M12_Config_SetLastSavePath(save_path);
         m11_set_status(state, "SAVE", "GAME SAVED");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),

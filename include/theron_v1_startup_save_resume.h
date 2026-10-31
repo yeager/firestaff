@@ -299,6 +299,11 @@ int theron_v1_startup_write_pce_bram_theron_record(
     const char *template_path,
     const char *destination_path);
 
+/* Managed-save provenance is stored beside a Firestaff-written BRAM and is
+ * bound to its exact 2 KiB contents. A stale/missing sidecar never authorizes
+ * an in-place update. */
+int theron_v1_startup_is_pce_bram_managed_save(const char *save_path);
+
 /* Atomically update an existing Firestaff-managed Continue BRAM in place.
  * Do not use for an imported or original user BRAM; those require distinct
  * template and destination paths through the function above. */

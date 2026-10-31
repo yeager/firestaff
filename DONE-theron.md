@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — require provenance before in-place BRAM updates
+
+Same-path Save Game updates now require a Firestaff-managed sidecar whose
+content and save-path digests match the exact BRAM that will be replaced. The
+writer checks that provenance again after reading the template. A valid
+original BRAM placed at the canonical output path without a matching marker is
+rejected and left byte-identical. Distinct-source writes create the marker
+after the classified BRAM has been atomically installed, and successful saves
+use that managed output as the next in-session template.
+
+The authentic US M11 integration test passed with the original Track 02 and
+Ak-Tu-Ba-complete BRAM. It verifies a cold Continue/save cycle, repeat save,
+and fail-closed handling of an unmarked original BRAM at the output path.
+This proves host file handling with authentic game data, not retail PCE SRAM
+parity.
+
 ## 2026-10-31 — round-trip a Track 02 item through native M11 input
 
 Extended `theron_v1_m11_real_bram_continue` to find a reachable,
