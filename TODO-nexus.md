@@ -24,6 +24,21 @@ cover the later title menu, configuration/Load panels, arbitrary display
 register profiles, or production rendering. See
 [`docs/nexus_vdp2_title_frame59_composition.md`](docs/nexus_vdp2_title_frame59_composition.md).
 
+## 2026-10-31 — NBG1 4bpp MAPD startup plane
+
+The authentic Japanese MAPD startup pass (VDP1 frame 891 / VDP2 serial
+1280) now has a hash-pinned capture-only NBG1 4bpp decoder. It applies Saturn
+pattern palette selection, rejects N1TPON and unsupported two-word CRAM color
+modes, and records the decoded layer color for later composition. The NBG1
+priority-stack path now consumes that palette-resolved RGBA color instead of
+treating the raw dot index as a CRAM address. CI passed the Linux CMake build,
+Nexus production boundary, and CTest for the code revision. The latest
+documentation-only revision is running a fresh CI cycle. Re-run the external
+MAPD layer test and frame-239/frame-300 stack comparisons against the retained
+Ymir captures before considering this path verified end-to-end. This is still
+one register state and does not enable production rendering. See
+[the MAPD 4bpp capture report](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
 ## 2026-10-30 — NBG1 8bpp character stride
 
 The generic source-bound NBG1 compositor now follows Saturn's 32-byte PND
