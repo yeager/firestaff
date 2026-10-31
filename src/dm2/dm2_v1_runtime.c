@@ -10787,7 +10787,11 @@ static int dm2_runtime_process_cloud_timer(
             DM2_V1_CalcCloudDamageReceipt damage_receipt;
             uint16_t old_raw = (uint16_t)raw_tile;
             int door_state = dm2_door_get_state(old_raw);
-            int door_type;
+            DM2_V1_SkprojectRebirthAltarReceipt altar_receipt;
+            DM2_V1_GdatWordQueryReceipt required_power_receipt;
+            DM2_V1_SkprojectAttackDoorReceipt attack_door_receipt;
+            const DM2_V1_AssetLoader *loader =
+                rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL;
 
             if (door_link == DM2_V1_RECORD_HANDLE_NULL ||
                 door_link == DM2_V1_RECORD_HANDLE_END ||
@@ -10811,14 +10815,32 @@ static int dm2_runtime_process_cloud_timer(
                 dm2_runtime_cloud_poison_resistance;
             damage_receipt = dm2_v1_calc_cloud_damage(
                 &damage_cb, (uint16_t)cloud_record, door_link);
-            door_type = (int)((uint16_t)door_record[2] & 0x0001u);
-            if (damage_receipt.damage > 0 &&
-                dm2_door_check_destruction(
-                    door_type, door_state, damage_receipt.damage, 1,
-                    door_record[2]) == DM2_DOOR_DESTROYED_YES &&
-                dm2_v1_dungeon_set_tile_raw(
-                    dungeon, map, x, y,
-                    dm2_door_set_state(old_raw, DM2_DOOR_STATE_DESTROYED)) != 0)
+            memset(&altar_receipt, 0, sizeof(altar_receipt));
+            memset(&required_power_receipt, 0,
+                   sizeof(required_power_receipt));
+            memset(&attack_door_receipt, 0, sizeof(attack_door_receipt));
+            if (!loader || map < 0 || map >= dungeon->level_count)
+                goto cloud_runtime_rollback;
+            (void)dm2_v1_skproject_is_rebirth_altar(
+                    door_record[2], dungeon->map_header_byte2[map],
+                    dungeon->map_header_byte3[map],
+                    dungeon->map_header_word_e[map], &altar_receipt);
+            if (!altar_receipt.valid ||
+                !dm2_v1_get_door_stat_0x10_receipt(
+                    loader, altar_receipt.altar_value & 0xff,
+                    &required_power_receipt))
+                goto cloud_runtime_rollback;
+            (void)dm2_v1_skproject_attack_door(
+                (uint8_t)door_state, door_record[2], door_record[3],
+                damage_receipt.damage, required_power_receipt.value, 1,
+                altar_receipt.altar_value != -1, 0u, (int16_t)x,
+                (int16_t)y, &attack_door_receipt);
+            if (!attack_door_receipt.valid ||
+                (attack_door_receipt.changed_tile_type &&
+                 dm2_v1_dungeon_set_tile_raw(
+                     dungeon, map, x, y,
+                     dm2_door_set_state(old_raw,
+                                        attack_door_receipt.tile_type_after)) != 0))
                 goto cloud_runtime_rollback;
         }
 
