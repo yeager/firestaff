@@ -1235,7 +1235,7 @@ static void test_mode7_flags3_prepass_evidence(void)
 
     room.raw_tile = 0x80u;
     room.source_tile_type = 0x10u;
-    room.first_record_link = DM2_THING_END_MARKER;
+    room.first_record_link = 0x3c00u;
     node.source_flags = 4u;
     node.effective_flags = 2u;
     node.source_tile_type = 0x10u;
@@ -1243,8 +1243,8 @@ static void test_mode7_flags3_prepass_evidence(void)
     node.prepass = NULL;
     ambient = 23;
     darkness = 31;
-    /* c_light.cpp flags 4 reaches the creature tail; an empty class-4
-     * chain proves that its F8 query contributes nothing. */
+    /* SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE:304-305,
+     * 423-435 disables record and creature terms for class-4 flags 4. */
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 23 && darkness == 31);
 }

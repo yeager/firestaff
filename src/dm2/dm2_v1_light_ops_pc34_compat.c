@@ -427,12 +427,12 @@ static int dm2_v1_mode7_flags3_floor_terms(
     return 1;
 }
 
-static int dm2_v1_mode7_class34_empty_room(
+static int dm2_v1_mode7_class34_room(
     const DM2_V1_CLightStoneRoomReceipt *room)
 {
     unsigned raw_class;
     if (!room || !room->valid ||
-        room->first_record_link != DM2_THING_END_MARKER) return 0;
+        room->first_record_link == DM2_THING_NULL_MARKER) return 0;
     raw_class = room->raw_tile >> 5;
     if (raw_class == 3u)
         return room->source_tile_type == 0x12u ||
@@ -443,16 +443,18 @@ static int dm2_v1_mode7_class34_empty_room(
     return 0;
 }
 
-static int dm2_v1_mode7_flags4_class34_empty_terms(
+static int dm2_v1_mode7_flags4_class34_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     int16_t *out_tile_light, int16_t *out_darkness,
     int16_t *out_weather_light)
 {
-    if (!dm2_v1_mode7_class34_empty_room(room) ||
+    if (!dm2_v1_mode7_class34_room(room) ||
         !out_tile_light || !out_darkness || !out_weather_light)
         return 0;
-    /* SKULLWIN/c_light.cpp:310-435: this bounded flags-4 admission is for
-     * empty chains only; record and creature terms remain fail-closed. */
+    /* SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE:304-305,
+     * 423-435: flags 4 clears both flags-1 ground-record and flags-2
+     * creature paths, so accepted class-3/4 summaries are no-op for any
+     * authenticated record-chain root. */
     *out_tile_light = 0;
     *out_darkness = 0;
     *out_weather_light = 0;
@@ -543,7 +545,7 @@ int dm2_v1_mode7_on_node(
                !dm2_v1_mode7_flags4_class5_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light) &&
-               !dm2_v1_mode7_flags4_class34_empty_terms(
+               !dm2_v1_mode7_flags4_class34_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light)) return -1;
     if (!dm2_v1_mode7_light_accumulate_tile(

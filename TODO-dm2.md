@@ -23,7 +23,8 @@ record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
 mode-7 class-3 summaries and direction-matched class-4 summaries with their
 source record link. Flags-3 walks up to 256 authenticated links, accumulates
 DBE/DBF terms and the creature F8 term, and passes focused accumulator
-regressions. Flags-4 remains limited to empty chains and contributes no term.
+regressions. Flags-4 is a no-op for any accepted class-3/4 record-chain root,
+because the source flag mask disables its record and creature terms.
 Class-4 direction mismatches that redirect to an adjacent record owner remain
 unresolved. Original-media dynamic-light evidence is still needed for every
 supported DM2 platform; the existing FM Towns-only runtime receipt does not
