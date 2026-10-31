@@ -1,5 +1,30 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — synchronize Theron status documentation with verified input evidence
+
+Updated the README, documentation index, project/platform status, capture
+readiness, reverse-engineering and technical-reference summaries, and Theron
+TODO/DONE records. Current status distinguishes the three authentic JP PCE
+Fast guest-read receipts from the separate October 9 state-consumer trace and
+the cold US System Card BIOS polls. It also keeps the nonblack Firestaff
+snapshot separate from the unpaired original-reference image. No gameplay
+semantics or parity claim was added.
+
+## 2026-10-31 — bind JP scripted input to a PCE Fast guest read
+
+Three independent PCE Fast replays used authentic JP Rev. 1 media and the
+authentic Akutuba F5 state. Each replay bound the `up@61:120` script, its
+same-frame apply receipt, controller slot 0, and mask `0010` to the active-low
+guest read at `$44C1` (`value=3e`). The verifier rejects ambiguous module,
+slot, and mask records. The input-delivery check passed three loops, as did
+the tracked live-capture script regression and completion-matrix check.
+
+This establishes delivery to a guest poll only. It does not identify the poll's
+caller or prove a game-state change, movement, visible effect, or parity. The
+October 9 `$2912` consumer trace came from a different save-state identity and
+is not joined to these runs. Full capture details and trace hashes are in the
+[source-locked receipt](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
+
 ## 2026-10-31 — rerun authentic JP and US native startup/save routes on macOS Debug
 
 Configured a separate external-disk Debug build with the installed SDL3 and
@@ -880,7 +905,8 @@ changes; state-driven visual rendering and direct viewport clicks remain open.
 
 The authentic USA SDL event test now selects `--lang en` because its item
 trace assertions compare localized action labels. On a Swedish host the
-three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
+three actions succeeded but emitted a localized object label instead of the
+expected English `ITEM`
 assertion. All seven event routes passed on the Linux build host with the
 USA Track 02 after fixing the language selection, including the added side
 steps, left turn, champion selection and wait actions. This verifies input
