@@ -12504,6 +12504,13 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         target_word = csb_v1_runtime_read_u16(record + 6);
         sensor_type = (int)(type_data & 0x007Fu);
         sensor_data = (int)(type_data >> 7);
+        if (sensor_type == 1 &&
+            ((flags_word >> 3) & 0x03u) == DM1_EFFECT_HOLD) {
+            /* ReDMCSB MOVESENS.C:1400-1403 skips C001 HOLD before F0272. */
+            previous_thing = thing;
+            thing = next_thing;
+            continue;
+        }
         switch (sensor_type) {
         case 1: /* C001_SENSOR_WALL_ORNAMENT_CLICK */
             /* ReDMCSB MOVESENS.C:1399-1404 triggers C001 on click without

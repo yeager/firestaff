@@ -201,6 +201,41 @@ static void test_c002_uses_hand_occupancy_and_revert_only(void)
           "C002 triggers for a held object based on occupancy/revert, not Sensor.Data");
 }
 
+static void test_c001_hold_does_not_trigger(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, -1) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "ReDMCSB C001 skips a wall click whose remote effect is HOLD");
+}
+
 static void test_c001_ignores_objects_in_other_wall_cells(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -334,6 +369,7 @@ int main(void)
     test_c011_wrong_object_type_rejects_without_mutation();
     test_f0275_processes_all_matching_sensors_in_source_order();
     test_c002_uses_hand_occupancy_and_revert_only();
+    test_c001_hold_does_not_trigger();
     test_c001_ignores_objects_in_other_wall_cells();
     test_c001_triggers_even_with_object_on_clicked_cell();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);

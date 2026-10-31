@@ -7,7 +7,7 @@ and `MOVESENS.C:1390-1550` walks the complete sensor list in source order
 before F0271. The bounded CSB PC34 path now uses the source cell bits, queues
 multiple matching events in order, and defers local sensor rotation until the
 list boundary. C001 triggers on click without checking hand or wall-cell
-occupancy; C002 uses hand-empty/RevertEffect only; C003/C004/C011/C017 compare
+occupancy (but skips Effect=HOLD); C002 uses hand-empty/RevertEffect only; C003/C004/C011/C017 compare
 the hand object's type with Sensor.Data and apply RevertEffect as in
 MOVESENS.C:1399-1420. The runtime no longer applies a blanket revert inversion
 to every sensor type. Focused regressions verify ordered dispatch, C001 and
