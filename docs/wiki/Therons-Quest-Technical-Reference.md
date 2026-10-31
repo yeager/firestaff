@@ -46,6 +46,13 @@
 > proof. This is not successful movement or rendering evidence. See the
 > [blocked-wall report](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
+> **Matched JP state-only comparison (2026-10-31):** Three Button II+UP runs
+> repeat TII transfers into candidate `$2040/$2041` bytes after guest reads;
+> three Button II-only controls retain the prior values. This is a
+> repeatable input-conditioned state transfer, not yet verified coordinates,
+> passability, visible movement, cold CD handoff or parity. See the
+> [comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
 > **Input-gated VRAM trace (2026-10-31):** a corrected PCE Fast callback
 > gates the bounded VRAM trace on the guest-visible controller value. An
 > authentic JP state-only run records the scripted `$44C1` read at shared

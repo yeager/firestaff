@@ -125,11 +125,14 @@ transition receipt SHA-256:
 
 Movement-context v3 rows read and increment
 `TheronTraceCDSharedEventSequence`, a counter shared with the PCE Fast CD and
-memory trace hooks in the instrumented Mednafen build. The PCE Fast
-`pce_input_read` and `scripted_pce_input_apply` records do not include
-`event_sequence` and cannot be ordered against movement-context rows by this
-counter. The selected `input_latch_write` rows emitted by this movement-context
-observer do carry the shared sequence. The
+memory trace hooks in the instrumented Mednafen build. The earlier capture's
+input sidecar lacked `event_sequence`, so those guest reads could not be
+ordered against movement-context rows. The corrected 2026-10-31 PCE Fast hook
+records `event_sequence` on `pce_input_read`; scripted input-apply rows still
+lack it. The new JP comparison therefore orders guest reads against TII
+transfers using the guest-read and movement-context rows. Selected
+`input_latch_write` rows emitted by this observer also carry the shared
+sequence. The
 `build_mednafen_theron_irq2_trace.sh` build pipeline applies
 `mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch` before this
 instrumenter. Source audit points to `src/pce_fast/huc6280.cpp`, `WrMem`
@@ -140,6 +143,17 @@ yield/resume. The counter orders observed hook rows only; disabled hooks,
 untraced instructions, DMA, and other uninstrumented events do not receive
 sequence values. Two hook rows may describe one store and consume adjacent
 values.
+
+## Follow-up comparison — 2026-10-31
+
+Three authentic-state action replays and three matched controls repeat the
+input-conditioned TII transfers from `$20B4` to candidate `$2040/$2041` after
+Button II+UP guest reads; Button II-only controls preserve the prior bytes.
+This supports a repeatable state-transfer observation, not confirmed
+coordinates, collision outcome, visible movement, or native parity. All six
+captures are state-only and lack authenticated CD-to-RAM provenance. See the
+[review-format comparison bundle](../../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+for per-run hashes and limits.
 
 ## Remaining proof
 

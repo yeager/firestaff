@@ -49,7 +49,7 @@ The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
 | Chaos Strikes Back | Atari ST, Amiga and FM Towns have bounded real-media runtime routes. FM Towns uses its authenticated entrance palette and MINI.DAT bootstrap state. Amiga F0107 wall ornaments now use source MEDIA720 scales and authentic C696 anchors; matched-frame, palette/light, inscription readability, floor trapdoor, intro timing and audible output remain open. Campaign and save coverage are also incomplete. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and source-bound MAPD decoding support a bounded render of the five authentic title planes. Firestaff does not yet reproduce the complete native Saturn title or menu. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Full title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Direct native launch bypasses Firestaff's Run menu and System Card; the US Debug probe stops before dungeon loading. Authentic Japanese Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises bounded movement and item transactions. Source-only loaders verify all seven dungeons in both regions. Cold US reference traces remain without a joined game-owned handoff or runtime CD source read. A separate saved-state run contains 1,354 short-format rows at `$44CA/$44DB` with `raw=0000`, but standard-PCE and PCE Fast instrumentation share a trace path and label, so these are not verified PCE Fast read receipts. Script delivery, action effects, and snapshot changes remain unjoined. The Firestaff-presented capture is nonblack but has no paired retail frame; dynamic viewport binding, broader campaign/save behavior, combat, audio and full parity remain open. |
+| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Direct native launch bypasses Firestaff's Run menu and System Card; the US Debug probe stops before dungeon loading. Authentic Japanese Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises bounded movement and item transactions. Source-only loaders verify all seven dungeons in both regions. A matched three-run JP PCE Fast state-only comparison repeats `$20B4->$2040/$2041` TII transfers after Button II+UP guest reads; matched Button II-only controls retain the candidate bytes. This is not yet mapped movement, established collision semantics, visible response or parity. Cold US reference traces remain without a joined game-owned handoff or runtime CD source read. A separate saved-state run contains 1,354 short-format rows at `$44CA/$44DB` with `raw=0000`, but standard-PCE and PCE Fast instrumentation share a trace path and label, so these are not verified PCE Fast read receipts. Script delivery, action effects, and snapshot changes remain unjoined. The Firestaff-presented capture is nonblack but has no paired retail frame; dynamic viewport binding, broader campaign/save behavior, combat, audio and full parity remain open. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -149,12 +149,15 @@ the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
 renderer behavior.
 
-A newer same-state Japanese movement probe used an Akutuba F5 save facing a
-wall. UP, neutral and DOWN captures kept the same front wall, and the bounded
-position observer recorded no movement. The repeated `$2912` event ordering is
-not causal or movement evidence. Continue with an authentic reachable pose
-before drawing world-tile or renderer conclusions; see the
-[blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+A same-state Japanese F5 wall probe found no candidate position writes for
+UP, neutral or DOWN. A later matched three-run comparison from the same
+authentic save found repeatable `$20B4->$2040` TII transfers after Button II+UP
+reads; three Button II-only controls retained the candidate bytes. This is
+input-conditioned state-transfer evidence, not proof of mapped movement,
+collision semantics, a visible response, or parity. The active map and
+position meaning remain unknown, and the state-only runs lack a cold CD
+handoff. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and the historical [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
 The reference-only Mednafen instrumentation chain, including the input-gated
 PCE Fast VRAM trace hook, applied to an isolated source tree and the

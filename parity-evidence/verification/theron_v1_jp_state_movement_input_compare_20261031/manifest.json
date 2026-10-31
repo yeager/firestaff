@@ -1,0 +1,160 @@
+{
+  "schema": "firestaff.parity.theron_v1_jp_state_movement_input_compare.v1",
+  "date": "2026-10-31",
+  "status": "REFERENCE_POSITION_STATE_TRANSFER_OBSERVED",
+  "scope": "authentic JP emulator-state replay with matched directional control; not cold-start or Firestaff parity",
+  "game": "theron",
+  "platform": "pce-cd",
+  "edition": "jp",
+  "ok": true,
+  "sourceArtifacts": {
+    "track02": {
+      "cueSha256": "7bbbe8b077f35b2e9b05c68848f8cb86ea9aa74021a076e882eee8841bc56545",
+      "track02Md5": "b7afb338ad31be1025b53f9aff12d73a"
+    },
+    "systemCard": {
+      "sha256": "df4f75feebb95e53dfef72dea0787df743e3474ba046ff5a4cb88e34dda93ff1"
+    },
+    "autoloadState": {
+      "sha256": "b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068",
+      "md5": "8bf0caf3a98b5748d2a78ba8016d2f01",
+      "kind": "emulator state; not in-game BRAM"
+    },
+    "instrumentedMednafen": {
+      "version": "1.32.1",
+      "module": "pce_fast",
+      "sha256": "d673c3bbd7d8f27fe6b717b29af2ffaaa68d2c74e93b27abe6609a68cb019e56",
+      "md5": "a7117b08fabcbf1987d92012eef472c2"
+    }
+  },
+  "capture": {
+    "iterationsPerArm": 3,
+    "stateOnly": true,
+    "positiveInputPlan": "ii@61:120,right@62:120,ii@190:120,up@191:120,ii@330:120,right@331:120,ii@460:120,up@461:120,ii@600:120,right@601:120,ii@730:120,up@731:120,ii@870:120,right@871:120,ii@1000:120,up@1001:120",
+    "controlInputPlan": "ii@61:120,right@62:120,ii@190:120,up@191:120,ii@330:120,right@331:120,ii@460:120,ii@600:120,right@601:120,ii@730:120,ii@870:120,right@871:120,ii@1000:120",
+    "inputReceipt": "all 16 positive scripted events and all 13 control events were followed by a guest controller read containing the scripted mask"
+  },
+  "movementArm": {
+    "guestReads": [
+      {
+        "frame": 461,
+        "pc": "44c1",
+        "raw": "0012",
+        "activeLowValue": "3e",
+        "eventSequence": 9565
+      },
+      {
+        "frame": 731,
+        "pc": "44c1",
+        "raw": "0012",
+        "activeLowValue": "3e",
+        "eventSequence": 11298
+      }
+    ],
+    "stateTransfers": [
+      {
+        "frame": 469,
+        "pc": "c1fc",
+        "instructionPrefix": "73b420",
+        "operation": "TII $20B4,$2040,$0002",
+        "events": [9678, 9679, 9680, 9681],
+        "bytesWritten": {
+          "2040": "01",
+          "2041": "03"
+        }
+      },
+      {
+        "frame": 734,
+        "pc": "c1fc",
+        "instructionPrefix": "73b420",
+        "operation": "TII $20B4,$2040,$0002",
+        "events": [11390, 11391, 11392, 11393],
+        "bytesWritten": {
+          "2040": "01",
+          "2041": "02"
+        }
+      }
+    ],
+    "finalCandidateBytes": {
+      "2031": "02",
+      "203f": "01",
+      "2040": "01",
+      "2041": "02"
+    },
+    "movementContextSha256PerLoop": [
+      "6a709c32b940d30d54459453b2945cfbde4108e595e306ebaef2edb09a298624",
+      "6a709c32b940d30d54459453b2945cfbde4108e595e306ebaef2edb09a298624",
+      "6a709c32b940d30d54459453b2945cfbde4108e595e306ebaef2edb09a298624"
+    ],
+    "inputSha256PerLoop": [
+      "224c4bf4404585d383a372e714fa3f21e07c09152f114abdfef03ed913690991",
+      "ab07a709c0a6447d7751eaa15e597e9b8e559ed1159732197d469cf3e390ceac",
+      "224c4bf4404585d383a372e714fa3f21e07c09152f114abdfef03ed913690991"
+    ],
+    "ramSha256PerLoop": [
+      "95fcfb40152b87b501de5294af4a37080a89addf4002616669d15fd4f927290b",
+      "66034b3b1c94346f11dcad7712c7a1c6ec89a3221b0d0e43f434e680915901c0",
+      "95fcfb40152b87b501de5294af4a37080a89addf4002616669d15fd4f927290b"
+    ],
+    "vramSha256PerLoop": [
+      "2ab06e4b622aa53e96163252aa8f79a9e38026d3b2624bb7f8564d086f46dc50",
+      "73498da7ac59ecce9607791c1c0069b33f85eb0eca855952746cd4cfea8ffb9d",
+      "2ab06e4b622aa53e96163252aa8f79a9e38026d3b2624bb7f8564d086f46dc50"
+    ]
+  },
+  "controlArm": {
+    "guestReads": [
+      {
+        "frame": 461,
+        "pc": "44c1",
+        "raw": "0002",
+        "activeLowValue": "3f",
+        "eventSequence": 9565
+      },
+      {
+        "frame": 731,
+        "pc": "44c1",
+        "raw": "0002",
+        "activeLowValue": "3f",
+        "eventSequence": 10888
+      }
+    ],
+    "positionWrites": 0,
+    "finalCandidateBytes": {
+      "2031": "02",
+      "203f": "01",
+      "2040": "02",
+      "2041": "03"
+    },
+    "movementContextSha256PerLoop": [
+      "37f2ebd0833a4a9c69f94b01283c9c2302d4ba215f12edc2eb9399b4c678f9f9",
+      "37f2ebd0833a4a9c69f94b01283c9c2302d4ba215f12edc2eb9399b4c678f9f9",
+      "37f2ebd0833a4a9c69f94b01283c9c2302d4ba215f12edc2eb9399b4c678f9f9"
+    ],
+    "ramSha256PerLoop": [
+      "6731bd554d1bc7c615ec1dbfa81083cbfd63e1857fa2b508c740d98f574ddfed",
+      "6731bd554d1bc7c615ec1dbfa81083cbfd63e1857fa2b508c740d98f574ddfed",
+      "3ae3d7f224f1a3f14a29ca5f6199896a2bae65b59154a435d65514980eaded84"
+    ],
+    "vramSha256PerLoop": [
+      "d4ef084753c04a6ea4eaf842cfd53a34550246df6d6feea34516470a93b187bf",
+      "d4ef084753c04a6ea4eaf842cfd53a34550246df6d6feea34516470a93b187bf",
+      "d4ef084753c04a6ea4eaf842cfd53a34550246df6d6feea34516470a93b187bf"
+    ]
+  },
+  "transition": {
+    "missingPerRun": true,
+    "authenticatedCdRamReceiptsPerRun": 0,
+    "sourceBoundCdDataPortReadsPerRun": 0
+  },
+  "nonClaims": [
+    "The active dungeon map and tile/passability semantics for this JP state are unidentified.",
+    "Candidate RAM bytes do not independently prove a party coordinate or heading in this JP state.",
+    "No visible renderer response or paired retail image is established; movement-arm VRAM snapshots vary between one loop and the other two.",
+    "Save-state autoload bypasses the original game-owned cold CD-to-RAM handoff.",
+    "No Firestaff runtime behavior, native gameplay parity, or release readiness is established."
+  ],
+  "artifactStorage": {
+    "rawCaptures": "private external-disk archive; raw traces and snapshots are not committed"
+  }
+}

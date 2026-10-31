@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — capture matched JP directional state-transfer evidence
+
+Created a review-format evidence bundle for three authentic-state PCE Fast
+directional replays and three matched Button II-only controls. The action runs
+repeat `$20B4->$2040/$2041` TII transfers after Button II+UP guest reads; the
+controls retain the prior candidate bytes. The six traces are state-only and
+lack an authenticated CD handoff. The evidence does not establish map or field
+semantics, passability, a visible response, or native parity. Raw emulator
+traces remain outside Git. This documentation/evidence update changes no
+runtime behavior. See the [comparison report](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
 ## 2026-10-31 — capture input-gated PCE Fast VRAM event ordering
 
 Updated the PCE Fast input hook to pass the guest-visible controller port

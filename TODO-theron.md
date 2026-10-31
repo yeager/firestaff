@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — identify the active map and candidate position semantics
+
+Three repeated PCE Fast state-only runs from the authentic JP Akutuba F5 state
+record Button II+UP guest reads followed by `$C1FC` TII transfers from
+`$20B4` to candidate bytes `$2040/$2041`; three matched Button II-only
+controls retain the previous values. This is repeatable input-conditioned
+state transfer, not yet a confirmed coordinate update or successful movement.
+Next, identify the active map and source consumer, establish passability and
+collision behavior, and join the state to an original rendered frame. All six
+state-only captures lack a cold CD handoff; variable VRAM snapshots do not
+establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
 ## 2026-10-31 — input-gated PCE Fast VRAM event-order trace captured
 
 The complete reference-only Mednafen instrumentation patch chain applied to
@@ -18,14 +30,14 @@ are unchanged. See the [capture-readiness record](docs/theron/THERON_CAPTURE_REA
 
 ## 2026-10-31 — next JP movement capture needs a reachable authentic pose
 
-The latest F5 UP/neutral/DOWN replay keeps the same front wall in all three
-screenshots. The bounded observer records no `$C1FC` TII candidate or write at
-`$2040/$2041`; the earlier `$44C1` to `$2912` event ordering is not proof of
-causality or movement. Do not derive world tiles, position semantics or
-renderer behavior from this blocked-wall state. Capture from an authentic
-reachable pose and join guest input, a changed party position, and the
-presented reference frame within the same session. See the [source-locked
-blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+The earlier F5 UP/neutral/DOWN replay keeps the same front wall in all three
+screenshots and records no candidate-position transfer. Its `$44C1` to
+`$2912` event ordering is not proof of causality or movement. A later matched
+Button II+UP comparison does record repeatable TII transfers; the map, byte
+semantics, collision outcome and rendered response are still unknown. Do not
+infer a coordinate or passability model until those are source-bound. See the
+[comparison](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and historical [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
 ## 2026-10-31 — direct launch bypasses Firestaff's Run menu; dungeon proof remains separate
 

@@ -43,6 +43,12 @@ movement. Do not infer Track 02 tile semantics from this blocked-wall result;
 a reachable authentic pose and same-session position/frame join are still
 needed. See the [source-locked movement boundary](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
+Later matched state-only runs show repeatable Button II+UP-conditioned TII
+transfers from `$20B4` to candidate `$2040/$2041` bytes, absent in Button II-only
+controls. They do not identify the active map or prove coordinate semantics,
+collision behavior, a rendered change or cold media provenance. See the
+[comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
 ## Why the Disc Is Not an ISO Filesystem
 
 PC Engine System Card software works with record numbers relative to a CD base.

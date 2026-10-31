@@ -26,6 +26,12 @@ faces a wall: UP, neutral, and DOWN reference screenshots retain the same
 front wall, with no `$C1FC` TII or `$2040/$2041` position write observed by the
 bounded movement hooks. It does not prove movement or renderer parity; see the
 [blocked-wall probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+In a later matched three-run state-only comparison, Button II+UP guest reads
+are followed by repeatable TII transfers to candidate `$2040/$2041` bytes;
+Button II-only controls retain their previous values. This is input-conditioned
+state transfer, not yet mapped movement: active-map identity, field semantics,
+collision outcome and rendered response remain open. See the [comparison
+bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
 An isolated JP PCE Fast state-only run also verified the corrected input gate:
 the scripted guest read at `$44C1` (`raw=0010`, event 58758) precedes the first
 of 4,096 bounded VRAM commit rows (event 58761). The capture reports

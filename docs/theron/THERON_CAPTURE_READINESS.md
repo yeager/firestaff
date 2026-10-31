@@ -1,5 +1,18 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — matched JP state-only comparison records candidate transfers
+
+Three PCE Fast replays from the authentic Akutuba F5 state recorded the same
+Button II+UP guest reads followed by `$C1FC` TII transfers from `$20B4` into
+candidate bytes `$2040/$2041`. Three matched Button II-only controls recorded
+no such transfer and retained the prior values. The input-conditioned
+transfer repeated, but active-map identity, position semantics, collision
+behavior, and any rendered effect remain unproven. VRAM snapshots differ in
+two action repetitions, and all six runs report `transition=missing` with no
+authenticated CD-to-RAM receipt. This is reference evidence only; it does not
+establish native gameplay parity. See the
+[state-only comparison](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
 ## 2026-10-31 — corrected input-gated PCE Fast VRAM trace captured
 
 The complete reference-only Mednafen trace patch chain applied in three
@@ -96,11 +109,12 @@ A follow-up single UP/neutral pair reproduces the `$D334` read → `$D349` write
 → `$D334` read sequence. The authenticated F5 pose faces a wall: separate UP,
 neutral, and DOWN screenshots retain the same front wall, and the bounded
 observer records no `$C1FC` TII or `$2040/$2041` position write. This is a
-blocked-wall observation, not a gameplay or renderer result. The next movement
-capture needs an authentic reachable position and a same-session input,
-position, and screen join. See the [blocked-wall
-probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md)
-for source hashes, event IDs, and trace hashes.
+blocked-wall observation, not a gameplay or renderer result. A later matched
+directional replay observed repeatable candidate-position transfers, but
+active-map identification, collision semantics, and a screen join remain
+open. See the [comparison](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and the historical [blocked-wall
+probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
 ## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
 
