@@ -31,6 +31,10 @@ build and three consecutive real-media CTest runs passed after rebasing onto
 the latest PR commits. The JP BIN and isolated test data stayed on the external
 disk; this is Firestaff startup-path evidence, not full retail parity.
 
+The Track 02 binary-analysis notes now label the seven retrieved-item strings
+as message text only. They no longer claim a runtime item-to-message or
+quest-state mapping; the original T900 consumer remains unbound.
+
 ## 2026-10-31 — write authentic BRAM from the between-stage save input
 
 Connected Theron's Save Game input to the existing source-bound original BRAM

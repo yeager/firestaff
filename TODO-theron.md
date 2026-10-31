@@ -21,6 +21,9 @@ campaign completion still require the original T900 consumer. Do not map the
 parallel quest-name type indices to quest bits: authentic US/JP tables contain
 repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
 and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
+The pass 215/223 binary-analysis notes describe the retrieved-item strings as
+text evidence only; runtime object identity and quest-state effects remain
+open.
 
 The JP counterpart, `theron_v1_m11_jp_fresh_start`, now covers the authentic
 title-to-level-0 path independently. It compares all eight decoded roster
