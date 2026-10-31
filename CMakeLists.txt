@@ -18287,13 +18287,16 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v1_c_light_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_c_light_receipt
-        PRIVATE firestaff_dm2 m)
+        PRIVATE firestaff_dm2 firestaff_zip_extract m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_c_light_receipt PRIVATE
             -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME dm2_v1_c_light_receipt
              COMMAND test_dm2_v1_c_light_receipt)
+    set_tests_properties(dm2_v1_c_light_receipt PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;real-media;in-memory;skip-safe")
 
     add_executable(test_dm2_v1_frame_presentation_state
         tests/test_dm2_v1_frame_presentation_state.c)

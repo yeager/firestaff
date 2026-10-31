@@ -21,6 +21,13 @@ int main(void)
         found = dm1_v1_f0600_f0620_source_audit_find_pc34(entries[index].symbol_number);
         if (found != &entries[index]) return 1;
     }
+    {
+        const DM1_V1_F0600F0620SourceAuditPc34 *f0619 =
+            dm1_v1_f0600_f0620_source_audit_find_pc34(619u);
+        if (!f0619 || strcmp(f0619->firestaff_owner,
+                             "missing: no F0635 zone-border resolver") != 0)
+            return 1;
+    }
     if (dm1_v1_f0600_f0620_source_audit_find_pc34(599u) ||
         dm1_v1_f0600_f0620_source_audit_find_pc34(621u) ||
         !strstr(dm1_v1_f0600_f0620_source_audit_evidence_pc34(), "does not render")) return 1;

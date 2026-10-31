@@ -4072,6 +4072,7 @@ static void test_skwin_core_symbol_batch_cycle3(void)
     int16_t x, y;
 
     /* _0cee_2df4 creature AI spec word30 */
+    memset(&ai_spec, 0, sizeof(ai_spec));
     CHECK(dm2_v1_skproject_0cee_2df4_creature_ai_word30(
               0x1234u, NULL, &ai_receipt) == 0,
           "_0cee_2df4 fails closed without AI spec");
@@ -6123,6 +6124,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         };
         uint8_t wall_graphics[1] = { 0x22u };
         int ordinal = -1;
+        int16_t summary_words[8] = { 11, 12, 13, 14, 15, 16, 17, 18 };
         memset(&dungeon, 0, sizeof(dungeon));
         dungeon.raw_data = actuator_record_be;
         dungeon.raw_size = (int)sizeof(actuator_record_be);
@@ -6137,25 +6139,25 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(result == 1 &&
                   q1a46.valid && q1a46.found_actuator &&
                   q1a46.actuator_type == 0x4au &&
-                  wall_idx == 0x22 && wall_field == 0,
+                  wall_idx == 0x22 && wall_field == 1,
               "DM2_query_0cee_1a46 decodes big-endian XOR state (0,0)");
         actuator_record_be[5] = 0x04u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  q1a46.actuator_type == 0x4au && wall_field == 1,
+                  q1a46.actuator_type == 0x4au && wall_field == 2,
               "DM2_query_0cee_1a46 XOR state (0,1)");
         actuator_record_be[5] = 0x01u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  wall_field == 1,
+                  wall_field == 2,
               "DM2_query_0cee_1a46 XOR state (1,0)");
         actuator_record_be[5] = 0x05u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  wall_field == 0,
+                  wall_field == 1,
               "DM2_query_0cee_1a46 XOR state (1,1)");
         actuator_record_be[5] = 0u;
         CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
@@ -6169,13 +6171,148 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.valid && q1a46.found_actuator &&
-                  q1a46.actuator_type == 0x7fu && wall_field == 0,
+                  q1a46.actuator_type == 0x7fu && wall_field == 1,
               "DM2_query_0cee_1a46 type 0x7f uses source default field");
+        actuator_record_be[3] = 0x3fu;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                  &dungeon, 0x0c00u, 2, 2, 0u, wall_graphics, 1, NULL,
+                  summary_words, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == 0x0c00 &&
+                  summary_words[7] == 0x0c00 &&
+                  summary_words[5] == 0x22 && summary_words[3] == 14 &&
+                  q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
+                  wall_idx == 0x22 && wall_field == 1,
+              "DM2_query_0cee_1a46 type 0x3f preserves shop summary word 7 and wall ornament on side 2");
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == -1 &&
+                  q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
+                  wall_idx == 0x22 && wall_field == 1,
+              "DM2_query_0cee_1a46 type 0x3f preserves wall ornament off side 2");
+        actuator_record_be[2] = 0x02u;
+        actuator_record_be[3] = 0xfeu; /* type 0x7e, actuator datum 5. */
+        actuator_record_be[5] = 0x04u; /* once-only -> source animation path. */
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 2, 2, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == 5 &&
+                  q1a46.blocked_actuator_animation_path,
+              "DM2_query_0cee_1a46 type 0x7e writes actuator datum to summary word 7");
+        /* c_querydb.cpp:3418-3426 computes type 0x18 from the XOR of
+         * active and once-only, without asking GDAT for an animation. */
+        actuator_record_be[3] = 0x18u;
+        actuator_record_be[5] = 0x04u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x18u && wall_field == 2,
+              "DM2_query_0cee_1a46 type 0x18 uses active XOR once-only");
+        /* Type 0x46 selects the active bit (record word 4 bit 0). */
+        actuator_record_be[3] = 0x46u;
+        actuator_record_be[5] = 0x01u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x46u && wall_field == 2,
+              "DM2_query_0cee_1a46 type 0x46 returns active state");
+        /* c_querydb.cpp:3529-3533 assigns type 0x41's actuator data to RG2;
+         * the common summary write stores it in the high frame bits. */
+        actuator_record_be[2] = 0x02u;
+        actuator_record_be[3] = 0xc1u; /* type 0x41, data 5 */
+        memset(summary_words, 0, sizeof(summary_words));
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  summary_words, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x41u && wall_field == 6 &&
+                  summary_words[3] == (int16_t)0x1422u &&
+                  summary_words[4] == 0 && summary_words[7] == 0,
+              "DM2_query_0cee_1a46 type 0x41 returns actuator data in packed summary frame bits");
+        {
+            static const struct {
+                uint8_t actuator_type;
+                uint8_t status_bits;
+                int16_t expected_field;
+                const char *label;
+            } static_cases[] = {
+                { 0x17u, 0u, 1, "type 0x17 inactive state" },
+                { 0x1au, 0u, 1, "type 0x1a inactive state" },
+                { 0x1bu, 1u, 2, "type 0x1b active/once-only mismatch" },
+                { 0x2cu, 0u, 1, "type 0x2c inactive animator" },
+                { 0x32u, 0u, 1, "type 0x32 inactive animator" }
+            };
+            for (size_t case_index = 0;
+                 case_index < sizeof(static_cases) / sizeof(static_cases[0]);
+                 ++case_index) {
+                actuator_record_be[2] = 0u;
+                actuator_record_be[3] = static_cases[case_index].actuator_type;
+                actuator_record_be[4] = 0x10u;
+                actuator_record_be[5] = static_cases[case_index].status_bits;
+                CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                          &dungeon, 0x0c00u, 0, 0, 9u, wall_graphics, 1,
+                          NULL, &wall_idx, &wall_field, &q1a46) == 1 &&
+                          q1a46.actuator_type ==
+                              static_cases[case_index].actuator_type &&
+                          wall_field == static_cases[case_index].expected_field,
+                      static_cases[case_index].label);
+            }
+        }
+        {
+            static const struct {
+                uint8_t actuator_type;
+                uint16_t actuator_data;
+                uint8_t status_bits;
+                uint32_t game_tick;
+                const char *label;
+            } animated_cases[] = {
+                { 0x17u, 0u, 0x04u, 1u, "type 0x17 once-only animation" },
+                { 0x1au, 0u, 0x04u, 1u, "type 0x1a keyhole animation" },
+                { 0x1bu, 0u, 0x05u, 1u, "type 0x1b matched-state animation" },
+                { 0x2cu, 5u, 0x01u, 0u, "type 0x2c phase-offset animation" },
+                { 0x32u, 5u, 0x01u, 0u, "type 0x32 actuator-tick animation" }
+            };
+            uint32_t raw_offset = 0u, raw_size = 0u;
+            DM2_V1_GdatEntry animation_entry = {
+                DM2_GDAT_CATEGORY_WALL_GFX, 0x22u,
+                DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 2u
+            };
+            DM2_V1_AssetLoader animation_loader;
+            memset(&animation_loader, 0, sizeof(animation_loader));
+            animation_loader.loaded = 1;
+            animation_loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+            animation_loader.raw_data_count = 1u;
+            animation_loader.raw_offsets = &raw_offset;
+            animation_loader.raw_sizes = &raw_size;
+            animation_loader.entries = &animation_entry;
+            animation_loader.entry_count = 1u;
+            for (size_t case_index = 0;
+                 case_index < sizeof(animated_cases) / sizeof(animated_cases[0]);
+                 ++case_index) {
+                uint16_t actuator_word = (uint16_t)(
+                    (animated_cases[case_index].actuator_data << 7) |
+                    animated_cases[case_index].actuator_type);
+                actuator_record_be[2] = (uint8_t)(actuator_word >> 8);
+                actuator_record_be[3] = (uint8_t)actuator_word;
+                actuator_record_be[4] = 0x10u;
+                actuator_record_be[5] = animated_cases[case_index].status_bits;
+                CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                          &dungeon, 0x0c00u, 0, 0,
+                          animated_cases[case_index].game_tick,
+                          wall_graphics, 1, &animation_loader, &wall_idx,
+                          &wall_field, &q1a46) == 1 &&
+                          q1a46.actuator_needs_anim && wall_field == 2,
+                      animated_cases[case_index].label);
+            }
+        }
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */
         uint8_t text_record_be[4] = { 0xffu, 0xfeu, 0x00u, 0x2au };
         int text_idx = -1, text_field = -1;
+        int16_t text_summary[8] = { 0, 0, 0, -1, -1, -1, -1, 0 };
         memset(&dungeon, 0, sizeof(dungeon));
         dungeon.raw_data = text_record_be;
         dungeon.raw_size = (int)sizeof(text_record_be);
@@ -6190,12 +6327,16 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(text_result == 0 &&
                   text_idx == 5 && text_field == 1,
               "static text wall-GFX query reads big-endian TextMode");
-        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
                   &dungeon, 0x0800u, 0, 0, 0u, NULL, 0, NULL,
-                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  text_summary, &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.valid && q1a46.found_static_text &&
-                  wall_idx == 5 && wall_field == 1,
-              "extended side-decoration query returns static big-endian DB2 text");
+                  wall_idx == 5 && wall_field == 1 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 3 &&
+                  q1a46.text_summary_value == 5 &&
+                  text_summary[3] == 5 && text_summary[4] == -1,
+              "extended side-decoration query returns static text and mutates source summary array");
     }
     {
         uint8_t animated_text_record_be[4] = {
@@ -6233,8 +6374,80 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(text_animation_result == 1 &&
                   q1a46.valid && q1a46.found_text_animation &&
                   q1a46.text_ext_usage == 2u && wall_idx == 5 &&
-                  wall_field == 2,
+                  wall_field == 2 && q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 3 &&
+                  q1a46.text_summary_value == 0x0405,
               "DM2_query_0cee_1a46 animates big-endian DB2 ext usage 2");
+        animated_text_record_be[2] = 0x28u;
+        animated_text_record_be[3] = 0x2au; /* ext usage 5, invisible */
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.found_static_text && q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 3 &&
+                  q1a46.text_summary_value == 5,
+              "DB2 ext usage 5 keeps a static ornament while invisible");
+        animated_text_record_be[3] = 0x2bu; /* ext usage 5, visible */
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.found_text_animation &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_value == 0x0405,
+              "DB2 ext usage 5 animates visible ornament and packs its summary word");
+        animated_text_record_be[2] = 0x70u;
+        animated_text_record_be[3] = 0x2au; /* ext usage 14, invisible */
+        int16_t text_summary[8] = { 0, 0, 0, -1, -1, -1, -1, 0 };
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                  &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,
+                  &animation_loader, text_summary, &wall_idx, &wall_field,
+                  &q1a46) == 0 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 5 &&
+                  q1a46.text_summary_value == 0 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == -1 &&
+                  text_summary[5] == 0 && text_summary[7] == -1,
+              "DB2 ext usage 14 clears side slot 5 and writes absent marker when text flag is clear");
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 3 &&
+                  q1a46.text_summary_value == 0 &&
+                  !q1a46.summary_word7_written,
+              "DB2 ext usage 14 clears other side slots without writing word 7");
+        {
+            /* skproject sets the visited-orientation bit for ext usage 14.
+             * A later same-facing DB2 ornament must not replace that clear. */
+            uint8_t same_orientation_records[8] = {
+                0x08u, 0x01u, 0x70u, 0x2au,
+                0xffu, 0xfeu, 0x00u, 0x2au
+            };
+            dungeon.raw_data = same_orientation_records;
+            dungeon.raw_size = (int)sizeof(same_orientation_records);
+            dungeon.thing_type_counts[2] = 2;
+            text_summary[3] = -1;
+            text_summary[7] = 0;
+            CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                      &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                      &animation_loader, text_summary, &wall_idx,
+                      &wall_field, &q1a46) == 0 &&
+                      q1a46.text_summary_written &&
+                      !q1a46.found_static_text && text_summary[3] == 0,
+                  "DB2 ext usage 14 suppresses later same-orientation decoration");
+        }
+        dungeon.raw_data = animated_text_record_be;
+        dungeon.raw_size = (int)sizeof(animated_text_record_be);
+        dungeon.thing_type_counts[2] = 1;
+        animated_text_record_be[3] = 0x2bu; /* visible -> record handle */
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == 0x0800,
+              "DB2 ext usage 14 writes record handle when text flag is set");
+        animated_text_record_be[2] = 0x10u;
         animation_entry.data_index = 0u;
         int animation_fallback_result = dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 0, 0, 7u, NULL, 0,

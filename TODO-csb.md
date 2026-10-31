@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
+stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand
+occupied and resolves to CLEAR, while deposit empties it and resolves to SET.
+The CSB PC34 runtime now computes that predicate for the post-transfer hand
+state. A two-direction regression checks the exact queued fakewall effects.
+The other C013 edition/platform runtime owners and original-media HOLD outcome
+remain unverified.
+
 2026-10-31 ReDMCSB F0046 message expiry: `TEXT.C:1663-1666` assigns 70 game
 ticks to MEDIA099, which covers Firestaff's supported A31/A35 Amiga variants,
 as well as the PC and FM Towns lanes. MEDIA413 assigns 200 ticks to the older

@@ -50,6 +50,12 @@ int main(void)
     CHECK(dm1_v1_f0036_icon_atlas_admission_pc34(&icon_request, &icon_receipt));
     CHECK(icon_receipt.accepted && icon_receipt.source_sheet_ordinal == 2 &&
           icon_receipt.source_local_icon_index == 1 && icon_receipt.raw_atlas_bound);
+    icon_request.icon_index = 223;
+    CHECK(dm1_v1_f0036_icon_atlas_admission_pc34(&icon_request, &icon_receipt) &&
+          icon_receipt.source_sheet_ordinal == 6 &&
+          icon_receipt.source_local_icon_index == 31);
+    icon_request.icon_index = 224;
+    CHECK(!dm1_v1_f0036_icon_atlas_admission_pc34(&icon_request, &icon_receipt));
 
     memset(&text_request, 0, sizeof(text_request));
     text_request.raw_font_bytes = font;

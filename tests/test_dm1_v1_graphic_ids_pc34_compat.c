@@ -19,6 +19,7 @@ static int g_fail;
 } while (0)
 
 int main(void) {
+    DM1_V1_ObjectIconSourceZonePc34 iconZone;
     ASSERT_TRUE(strstr(dm1_v1_graphic_ids_source_evidence_pc34(),
                        "DEFS.H C006") != NULL,
                 "source evidence names DEFS.H");
@@ -46,6 +47,18 @@ int main(void) {
     ASSERT_EQ(dm1_v1_graphic_champion_damage_big_pc34(), 16, "big damage");
     ASSERT_EQ(dm1_v1_graphic_endgame_champion_mirror_pc34(), 346,
               "endgame champion mirror");
+    ASSERT_TRUE(dm1_v1_object_icon_source_zone_pc34(0, &iconZone) &&
+                iconZone.graphic_index == 42 && iconZone.x == 0 &&
+                iconZone.y == 0,
+                "F0036 first icon maps to graphic 42 origin");
+    ASSERT_TRUE(dm1_v1_object_icon_source_zone_pc34(223, &iconZone) &&
+                iconZone.graphic_index == 48 && iconZone.x == 240 &&
+                iconZone.y == 16,
+                "F0036 last icon maps inside graphic 48");
+    ASSERT_TRUE(!dm1_v1_object_icon_source_zone_pc34(224, &iconZone),
+                "F0036 rejects the first icon index beyond graphic 48");
+    ASSERT_TRUE(!dm1_v1_object_icon_source_zone_pc34(-1, &iconZone),
+                "F0036 rejects negative icon indexes");
 
     if (g_fail) {
         fprintf(stderr, "dm1_v1_graphic_ids_pc34_compat: %d failed, %d passed\n",

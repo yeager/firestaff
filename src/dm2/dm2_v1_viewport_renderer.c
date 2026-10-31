@@ -2269,6 +2269,14 @@ void dm2_v1_viewport_set_gdat_wall_ornament_material_plan(
     s->dirty = 1;
 }
 
+int dm2_v1_viewport_wall_ornament_visible(int source_cell,
+                                           int see_thru_walls)
+{
+    /* SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE: cellPos 3 is the D1 front wall;
+     * DM2_EXTENDED_MODE hides its ornament while ttySeeThruWalls is active. */
+    return !(see_thru_walls != 0 && source_cell == 3);
+}
+
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan)
@@ -6971,6 +6979,7 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
         const uint8_t *pixels = NULL;
         int width = 0, height = 0, stride = 0;
         int gdat_index;
+        int owned_pixels = 0;
         const DM2_V1_WallOrnamentRender *ornament = NULL;
 
         if (sq->square_type != DM2_SQUARE_WALL ||
@@ -7011,10 +7020,38 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
             continue;
         }
-        if (gdat_index == 0 ||
-            dm2_v1_fetch_viewport_local_material(
-                s, gdat_index, &pixels, &width, &height, &stride) != 0 ||
-            !pixels || width <= 0 || height <= 0 || stride < width) {
+        if (gdat_index == 0) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+            continue;
+        }
+        if (ornament && s->asset_loader) {
+            uint32_t palette_hash = 0u;
+            DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+            pixels = dm2_v1_asset_load_image_field(
+                s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                sq->wall_ornate_gfx_index, ornament->image_field,
+                &width, &height, &format);
+            if (!pixels || width <= 0 || height <= 0 ||
+                !dm2_v1_asset_load_image_local_palette(
+                    s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    sq->wall_ornate_gfx_index, ornament->image_field,
+                    s->active_asset_palette16, &palette_hash) ||
+                palette_hash == 0u ||
+                (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+                 format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9)) {
+                dm2_v1_asset_free_pixels((uint8_t *)pixels);
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+            stride = width;
+            owned_pixels = 1;
+            s->active_asset_palette_hash = palette_hash;
+            s->active_asset_palette_ready = 1;
+        } else if (dm2_v1_fetch_viewport_local_material(
+                       s, gdat_index, &pixels, &width, &height, &stride) != 0 ||
+                   !pixels || width <= 0 || height <= 0 || stride < width) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
             continue;
@@ -7022,23 +7059,88 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
 
         if (ornament) {
             const DM2_V1_ViewportRect *dst = &ornament->dst_rect;
+            const DM2_V1_ViewportRect *src = &ornament->src_rect;
             if (dst->w <= 0 || dst->h <= 0 ||
                 dst->x < 0 || dst->y < 0 ||
                 (unsigned)dst->x + (unsigned)dst->w >
                     (unsigned)dm2_v1_viewport_draw_width(s) ||
                 (unsigned)dst->y + (unsigned)dst->h >
-                    (unsigned)dm2_v1_viewport_draw_height(s)) {
+                    (unsigned)dm2_v1_viewport_draw_height(s) ||
+                src->x < 0 || src->y < 0 || src->w <= 0 || src->h <= 0 ||
+                src->x + src->w > width || src->y + src->h > height) {
+                if (owned_pixels) dm2_v1_asset_free_pixels((uint8_t *)pixels);
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
                 continue;
             }
-            dm2_v1_blit_scaled_material_bitmap(
+            dm2_v1_blit_scaled_material_bitmap_region_ex(
                 s, s->framebuffer, s->fb_stride,
                 dst->x, dst->y, dst->w, dst->h,
-                pixels, width, height, stride,
-                DM2_COLOR_TRANSPARENT,
+                pixels, src->x, src->y, src->w, src->h, stride,
+                ornament->colorkey ? (int)ornament->colorkey :
+                    (s->gdat_scene_control_ready
+                        ? (int)s->gdat_scene_colorkey
+                        : DM2_COLOR_TRANSPARENT),
+                ornament->mirror_flip,
                 &s->gdat_material_palette_wall_consumed_count);
         }
+        if (ornament && ornament->overlay_valid) {
+            const DM2_V1_ViewportRect *dst = &ornament->overlay_dst_rect;
+            const DM2_V1_ViewportRect *src = &ornament->overlay_src_rect;
+            const uint8_t *overlay_pixels = NULL;
+            uint8_t overlay_palette[16];
+            uint32_t overlay_palette_hash = 0u;
+            DM2_ImageFormat overlay_format = DM2_IMG_FMT_UNKNOWN;
+            int overlay_width = 0, overlay_height = 0;
+            if (!s->asset_loader ||
+                !(overlay_pixels = dm2_v1_asset_load_image_field(
+                    s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    sq->wall_ornate_gfx_index,
+                    ornament->overlay_image_field,
+                    &overlay_width, &overlay_height, &overlay_format)) ||
+                overlay_width <= 0 || overlay_height <= 0 ||
+                !dm2_v1_asset_load_image_local_palette(
+                    s->asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    sq->wall_ornate_gfx_index,
+                    ornament->overlay_image_field,
+                    overlay_palette, &overlay_palette_hash) ||
+                overlay_palette_hash == 0u ||
+                (overlay_format != DM2_IMG_FMT_IMG3 &&
+                 overlay_format != DM2_IMG_FMT_U4 &&
+                 overlay_format != DM2_IMG_FMT_U8 &&
+                 overlay_format != DM2_IMG_FMT_IMG9) ||
+                dst->w <= 0 || dst->h <= 0 || dst->x < 0 || dst->y < 0 ||
+                (unsigned)dst->x + (unsigned)dst->w >
+                    (unsigned)dm2_v1_viewport_draw_width(s) ||
+                (unsigned)dst->y + (unsigned)dst->h >
+                    (unsigned)dm2_v1_viewport_draw_height(s) ||
+                src->x < 0 || src->y < 0 || src->w <= 0 || src->h <= 0 ||
+                src->x + src->w > overlay_width ||
+                src->y + src->h > overlay_height) {
+                dm2_v1_asset_free_pixels((uint8_t *)overlay_pixels);
+                if (owned_pixels) dm2_v1_asset_free_pixels((uint8_t *)pixels);
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+            memcpy(s->active_asset_palette16, overlay_palette,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = overlay_palette_hash;
+            s->active_asset_palette_ready = 1;
+            dm2_v1_blit_scaled_material_bitmap_region_ex(
+                s, s->framebuffer, s->fb_stride,
+                dst->x, dst->y, dst->w, dst->h,
+                overlay_pixels, src->x, src->y, src->w, src->h, overlay_width,
+                ornament->overlay_colorkey ?
+                    (int)ornament->overlay_colorkey :
+                    (s->gdat_scene_control_ready
+                        ? (int)s->gdat_scene_colorkey
+                        : DM2_COLOR_TRANSPARENT),
+                ornament->overlay_mirror_flip,
+                &s->gdat_material_palette_wall_consumed_count);
+            dm2_v1_asset_free_pixels((uint8_t *)overlay_pixels);
+        }
+        if (owned_pixels) dm2_v1_asset_free_pixels((uint8_t *)pixels);
         ++s->asset_wall_ornament_drawn_count;
         s->last_wall_ornament_material_consumed_mask |=
             (uint16_t)(1u << (unsigned)i);

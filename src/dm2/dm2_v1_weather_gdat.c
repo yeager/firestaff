@@ -259,6 +259,7 @@ int dm2_v1_asset_load_image_local_palette(
     uint16_t cy;
     int offset_y;
     uint32_t hash = 2166136261u;
+    DM2_V1_GdatImageMetadata metadata;
 
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
@@ -284,6 +285,19 @@ int dm2_v1_asset_load_image_local_palette(
      * Amiga-aware loader palette path; interpreting the tail as indices can
      * produce values above 15 and corrupt otherwise valid HUD/scene art. */
     if (dm2_v1_asset_loader_uses_physical_16_color_palette(loader)) {
+        for (int i = 0; i < 16; ++i) {
+            out_palette16[i] = (uint8_t)i;
+            hash = dm2_weather_hash_step(hash, out_palette16[i]);
+        }
+        if (out_hash) *out_hash = hash;
+        return hash != 0u;
+    }
+    if (dm2_v1_asset_load_image_metadata(loader, category, index, field,
+                                          &metadata) &&
+        metadata.bits_per_pixel == 8u) {
+        /* Both native U8 (IMG3 OffsetY=-32) and IMG9 images have no
+         * 16-color local translation in SUMMARY_IMAGE. Their pixel bytes
+         * address the global palette directly. */
         for (int i = 0; i < 16; ++i) {
             out_palette16[i] = (uint8_t)i;
             hash = dm2_weather_hash_step(hash, out_palette16[i]);

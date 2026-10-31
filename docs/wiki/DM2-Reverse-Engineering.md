@@ -219,7 +219,7 @@ analysis (DM2-001) rather than assumed from DM1 conventions:
 
 Two audit files track skproject symbol coverage:
 
-- `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` (1,752 lines) —
+- `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` (1,755 lines) —
   per-symbol rows with `symbol`, `family`, `source_file`, `line`,
   `firestaff_mapping`, and `status`.
 - `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv` (1,001 lines) — disposition
