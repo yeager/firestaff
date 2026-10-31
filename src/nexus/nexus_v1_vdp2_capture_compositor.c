@@ -476,15 +476,16 @@ int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
         input->vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
         input->vdp2_registers_size < 0x120U ||
         input->register_byte_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
-        !input->original_ymir_capture_verified || !input->row_states_verified) return 0;
+        !input->original_ymir_capture_verified || !input->row_states_verified ||
+        !input->nbg1_transparency_verified) return 0;
 
     registers = input->vdp2_registers;
 #define SCAN_REG(offset) read_register16_ordered(registers, (offset), input->register_byte_order)
     if (SCAN_REG(0x00U) != 0x8000U || SCAN_REG(0x0eU) != 0x0300U ||
-        (SCAN_REG(0x20U) & 1U) == 0U ||
-        (SCAN_REG(0x28U) & 0x0013U) != 0x0013U ||
+        SCAN_REG(0x20U) != 0x0003U || SCAN_REG(0x28U) != 0x0013U ||
         SCAN_REG(0x2cU) != 0U || SCAN_REG(0x3cU) != 0U ||
-        SCAN_REG(0xe4U) != 0U || (SCAN_REG(0xf8U) & 7U) != 4U ||
+        SCAN_REG(0xe4U) != 0U || SCAN_REG(0xe6U) != 0U ||
+        SCAN_REG(0xe0U) != 0x1536U || SCAN_REG(0xf8U) != 0x0404U ||
         SCAN_REG(0xecU) != 0x0043U || SCAN_REG(0x100U) != 0x1010U) return 0;
     base_h = (uint16_t)(((SCAN_REG(0x70U) & 0x07ffU) << 8U) |
                         (SCAN_REG(0x72U) >> 8U));
@@ -565,6 +566,7 @@ int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
     }
     receipt.original_ymir_capture_verified = 1;
     receipt.row_states_verified = 1;
+    receipt.nbg1_transparency_verified = 1;
     receipt.valid = 1;
     receipt.renderer_permitted = 0;
     if (out_receipt) *out_receipt = receipt;

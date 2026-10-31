@@ -23,6 +23,15 @@ fixed-point units. The captured final registers encode H/V scroll
 71,680 exact matches. The test pins the VDP1 FBS, VDP2 VRAM, CRAM, register
 snapshot, baseline replay, and screenshot by SHA-256.
 
+This compositor admits the observed profile only: `BGON=0x0003`,
+`CHCTLA=0x0013`, `SPCTL=0x1536`, `PRINA=0x0404`, `CCCTL=0x0043`, and
+`CCRNA=0x1010`, with the captured zero bitmap/CRAM offsets. NBG1 is enabled in
+this profile, so the caller must attest its transparent visible plane; the
+retained capture resolves 1,120 visible map cells to zero pixels. The real
+data regression also verifies that the compositor rejects the input when
+this NBG1 transparency attestation is missing. Other enabled backgrounds or
+register profiles are rejected instead of being silently omitted.
+
 Run the authentic regression:
 
 ```sh

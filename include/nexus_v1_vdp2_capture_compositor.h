@@ -180,6 +180,7 @@ typedef struct {
     size_t row_state_count;
     int original_ymir_capture_verified;
     int row_states_verified;
+    int nbg1_transparency_verified;
 } Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput;
 
 typedef struct {
@@ -189,6 +190,7 @@ typedef struct {
     int registers_verified;
     int original_ymir_capture_verified;
     int row_states_verified;
+    int nbg1_transparency_verified;
     int width;
     int height;
     int nbg0_pixels;

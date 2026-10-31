@@ -74,7 +74,12 @@ int main(void)
     input.row_states = rows; input.row_state_count = sizeof(rows)/sizeof(rows[0]);
     input.original_ymir_capture_verified = 1; input.row_states_verified = 1;
     memset(&receipt, 0, sizeof(receipt));
-    if (!nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(fb, &input, &receipt) || !receipt.valid || !receipt.capture_only || receipt.renderer_permitted || receipt.uncovered_rows != 111 || receipt.nbg0_pixels != 21455 || receipt.vdp1_pixels != 50225) {
+    if (nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(fb, &input, &receipt) || receipt.valid) {
+        fprintf(stderr, "FAIL: scanline replay accepted an unattested enabled NBG1 layer\n");
+        goto done;
+    }
+    input.nbg1_transparency_verified = 1;
+    if (!nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(fb, &input, &receipt) || !receipt.valid || !receipt.capture_only || receipt.renderer_permitted || !receipt.nbg1_transparency_verified || receipt.uncovered_rows != 111 || receipt.nbg0_pixels != 21455 || receipt.vdp1_pixels != 50225) {
         fprintf(stderr, "FAIL: live-row replay receipt nbg0=%d vdp1=%d uncovered=%d\n", receipt.nbg0_pixels, receipt.vdp1_pixels, receipt.uncovered_rows); goto done;
     }
     if (!replay_path || !(out = fopen(replay_path, "wb"))) { fprintf(stderr, "FAIL: replay output path\n"); goto done; }
