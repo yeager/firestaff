@@ -13900,7 +13900,7 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
                     if (relative_side + 3 == 5) {
                         receipt.summary_word7_written = 1u;
                         receipt.summary_word7 = text_visible
-                            ? -1 : (int16_t)thing;
+                            ? (int16_t)thing : -1;
                         if (summary_words) {
                             summary_words[7] = receipt.summary_word7;
                         }

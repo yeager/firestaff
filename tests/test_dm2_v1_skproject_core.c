@@ -6406,9 +6406,9 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.text_summary_side == 5 &&
                   q1a46.text_summary_value == 0 &&
                   q1a46.summary_word7_written &&
-                  q1a46.summary_word7 == 0x0800 &&
-                  text_summary[5] == 0 && text_summary[7] == 0x0800,
-              "DB2 ext usage 14 clears side slot 5 and writes record handle into source summary array");
+                  q1a46.summary_word7 == -1 &&
+                  text_summary[5] == 0 && text_summary[7] == -1,
+              "DB2 ext usage 14 clears side slot 5 and writes absent marker when text flag is clear");
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
                   &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
@@ -6440,13 +6440,13 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         dungeon.raw_data = animated_text_record_be;
         dungeon.raw_size = (int)sizeof(animated_text_record_be);
         dungeon.thing_type_counts[2] = 1;
-        animated_text_record_be[3] = 0x2bu; /* visible -> absent marker */
+        animated_text_record_be[3] = 0x2bu; /* visible -> record handle */
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,
                   &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
                   q1a46.summary_word7_written &&
-                  q1a46.summary_word7 == -1,
-              "DB2 ext usage 14 writes absent marker for visible text");
+                  q1a46.summary_word7 == 0x0800,
+              "DB2 ext usage 14 writes record handle when text flag is set");
         animated_text_record_be[2] = 0x10u;
         animation_entry.data_index = 0u;
         int animation_fallback_result = dm2_v1_skproject_query_0cee_1a46_ext(

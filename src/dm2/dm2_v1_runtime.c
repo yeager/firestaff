@@ -2355,10 +2355,9 @@ static int dm2_runtime_mode7_on_node(
     int16_t ambient_before = rt->c_light_visibility.v1e0974;
     int16_t darkness_before = rt->c_light_visibility.v1e0978;
     walk->node.hash = 0u;
-    /* The current class-0/2/5 receipts do not consume viewing direction.
-     * Keep both source values distinct for the remaining record branches. */
+    /* source_facing is the source view direction; direction is the edge
+     * traversal direction. The stone-room receipts use the former. */
     (void)direction;
-    (void)source_facing;
     if (source_flags == 3u) {
         if (!dm2_v1_mode7_tile_cache_start(&walk->cache, map, x, y,
                 dm2_runtime_mode7_read_tile, walk)) goto unknown;
@@ -2398,7 +2397,7 @@ static int dm2_runtime_mode7_on_node(
         branch = 27u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) &&
+                (uint32_t)rt->tick_count, source_facing, &room) &&
             !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
         if (!dm2_runtime_mode7_flags3_evidence(
@@ -2409,7 +2408,7 @@ static int dm2_runtime_mode7_on_node(
         branch = 33u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) ||
+                (uint32_t)rt->tick_count, source_facing, &room) ||
             !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
@@ -2462,7 +2461,7 @@ static int dm2_runtime_mode7_on_node(
         branch = 32u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, (int)rt->view_dir, &room)) goto unknown;
+                (uint32_t)rt->tick_count, source_facing, &room)) goto unknown;
         node.stone_room = &room;
     } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
         branch = 36u;

@@ -197,7 +197,11 @@ static int dm2_wall_rect_containment_anchor(int anchor, int outer_width,
     case 5:
         *x = outer_width - ((inner_width + 1) >> 1); *y = outer_height; return 1;
     case 6:
-        *x = outer_width - (inner_width - 1); return 1;
+        *x = outer_width - (inner_width - 1);
+        /* skproject/SKWINSPX/src/v4/skbltgfx.cpp:1067-1070,
+         * QUERY_BLIT_RECT case 6, leaves di at the parent height. */
+        *y = inner_height;
+        return 1;
     case 7:
         *x = outer_width - ((inner_width + 1) >> 1);
         *y = outer_height - (inner_height - 1); return 1;

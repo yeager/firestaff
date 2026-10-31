@@ -48,6 +48,14 @@ The executable builds and `dm2_v1_skproject_core` passes. Full wall-side
 decoration integration, source-case runtime captures, and all-platform
 actuator/text behavior remain open.
 
+2026-10-31 SKProject `QUERY_BLIT_RECT` containment anchor 6: the wall-ornament
+rectangle helper now sets the vertical offset to the parent height, matching
+`SKWINSPX/src/v4/skbltgfx.cpp::QUERY_BLIT_RECT` case 6, where `di` remains the
+parent rectangle height. The regression covers a deferred mode-6 containment
+chain; the dedicated wall-ornament test and authentic DOS class-2 scan pass
+(51/51). This closes the uninitialized vertical-offset case only; authentic
+wall-ornament placement/render comparisons across platforms remain open.
+
 2026-10-31 skproject `DM2_QUERY_ORNATE_ANIM_FRAME` missing-entry fallback:
 When GDAT field 0x0d has a zero word value, skproject falls through to dtText;
 when neither has animation data, it returns frame 1 (`c_querydb.cpp:471-517`).

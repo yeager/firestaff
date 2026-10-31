@@ -253,6 +253,7 @@ static void test_class2_db4plus_chain_receipt(void)
     /* Mac/Amiga Dungeon records store DB3 words big-endian. Preserve the
      * logical active bit and direction while resolving the same floor list. */
     dungeon.words_big_endian = 1;
+    raw[54] = 1u; raw[55] = 0u; /* one map-local floor graphic, big-endian. */
     raw[3] = 0x0cu; raw[4] = 0u; /* first Thing handle 0x0c00. */
     raw[32] = 0xffu; raw[33] = 0xfeu; /* DB4 end marker, big-endian. */
     raw[96] = 0x10u; raw[97] = 1u; /* DB3 w0 -> DB4 handle 0x1001. */
@@ -337,8 +338,11 @@ static int load_dungeon(uint8_t **out_data, size_t *out_size,
                         char *path, size_t path_size)
 {
     static const char *suffixes[] = {
+        "dm2/mac-en/Dungeon Master II/DMFiles/Dungeon.dat",
         "dm2/DUNGEON.DAT",
         "dm2/dungeon.dat",
+        "dm2/dos_extract/data/DUNGEON.DAT",
+        "dm2/dos_extract/data/dungeon.dat",
         "dm2/data/DUNGEON.DAT",
         "dm2/data/dungeon.dat"
     };

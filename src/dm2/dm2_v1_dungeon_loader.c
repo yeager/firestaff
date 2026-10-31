@@ -5645,9 +5645,9 @@ int dm2_v1_dungeon_get_map_floor_gfx_list(
     }
     map_desc = d->raw_data + DM2_DUNGEON_HEADER_SIZE +
                level * DM2_MAP_DESC_SIZE;
-    wall_gfx_count = (int)(RD16(map_desc + 10) & 0x0fu);
-    floor_gfx_count = (int)((RD16(map_desc + 10) >> 8) & 0x0fu);
-    creature_count = (int)((RD16(map_desc + 12) >> 4) & 0x0fu);
+    wall_gfx_count = (int)(dm2_v1_dungeon_rd16(d, map_desc + 10) & 0x0fu);
+    floor_gfx_count = (int)((dm2_v1_dungeon_rd16(d, map_desc + 10) >> 8) & 0x0fu);
+    creature_count = (int)((dm2_v1_dungeon_rd16(d, map_desc + 12) >> 4) & 0x0fu);
     if (floor_gfx_count <= 0) return 0;
     if (!out_floor_gfx_list || out_capacity < floor_gfx_count ||
         d->raw_map_data_base < 0 || d->level_widths[level] <= 0 ||

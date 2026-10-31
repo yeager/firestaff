@@ -307,6 +307,39 @@ int main(void)
             }
         }
         {
+            /* A deferred containment chain using anchor 6 inherits the
+             * parent height, matching skproject QUERY_BLIT_RECT case 6. */
+            uint8_t containment_table[4u + 4u + 3u * 8u] = { 0 };
+            DM2_V1_WallOrnamentBlitRect contained;
+            containment_table[0] = 0x0du;
+            containment_table[1] = 0xfcu;
+            write_le16(containment_table + 2u, 1u);
+            write_le16(containment_table + 4u, 0x1000u);
+            write_le16(containment_table + 6u, 0x1002u);
+            write_le16(containment_table + 8u, 1u);
+            write_le16(containment_table + 10u, 0x1001u);
+            write_le16(containment_table + 12u, 4u);
+            write_le16(containment_table + 14u, 6u);
+            write_le16(containment_table + 16u, 6u);
+            write_le16(containment_table + 18u, 0x1002u);
+            write_le16(containment_table + 20u, 4u);
+            write_le16(containment_table + 22u, 6u);
+            write_le16(containment_table + 24u, 9u);
+            write_le16(containment_table + 26u, 0u);
+            write_le16(containment_table + 28u, 100u);
+            write_le16(containment_table + 30u, 80u);
+            if (!dm2_v1_wall_ornament_query_blit_rect(
+                    containment_table, sizeof(containment_table),
+                    0x1000u, 0, -1, 4, 6, &contained) ||
+                contained.destination_x != -91 ||
+                contained.destination_y != 86 ||
+                contained.destination_width != 4 ||
+                contained.destination_height != 6) {
+                fputs("FAIL: QUERY_BLIT_RECT mode-6 containment anchor\n", stderr);
+                return 1;
+            }
+        }
+        {
             static const uint8_t nested_table[] = {
                 0x0du, 0xfcu, 0x01u, 0x00u,
                 0x00u, 0x10u, 0x02u, 0x10u,
