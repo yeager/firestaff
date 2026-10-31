@@ -13617,10 +13617,38 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
         !(door = dm2_v1_record_pool_address(&owner->record_pools, link))) {
         return 0;
     }
+    receipt.map = map;
+    receipt.x = (uint8_t)x;
+    receipt.y = (uint8_t)y;
+    receipt.door_record_link = link;
+    old_state = dm2_door_get_state((uint16_t)raw_tile);
+    receipt.state_before = (uint8_t)old_state;
+    receipt.state_after = (uint8_t)old_state;
+    if (old_state == DM2_DOOR_STATE_DESTROYED) {
+        receipt.source_noop_destroyed = 1;
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            0x44535450u, (uint16_t)link); /* "DSTP" */
+        receipt.valid = receipt.private_animation_hash != 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.valid;
+    }
+    door_attributes = dm2_v1_game_load_read_u16(
+        door + 2, owner->dungeon.source_words_big_endian);
+    direction = (door_attributes & 0x0200u) != 0u ? 0 : 1;
+    receipt.direction = (uint8_t)direction;
+    if ((door_attributes & 0x0400u) == 0u) {
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            0x44535450u, (uint16_t)link);
+        receipt.valid = receipt.private_animation_hash != 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.valid;
+    }
     /* All source state accessed below is local to the cloned File_header
      * owner.  Validate the complete tile chain first: a creature caught by a
      * closing door needs CAII/damage/timer ownership, so it must stop this
-     * atom before either its map byte or queue is touched. */
+     * atom before either its map byte or queue is touched. SKWINDOS
+     * SKW_STEP_DOOR only enters that collision branch while closing; opening
+     * doors pass through occupied cells as an ordinary step. */
     for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
         const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
         if (pool->record_count < 0 || pool->extension_count < 0 ||
@@ -13642,7 +13670,8 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
             if (out_receipt) *out_receipt = receipt;
             return 0;
         }
-        if (dm2_v1_record_handle_pool(chain_link) == 4) {
+        if (direction == 1 &&
+            dm2_v1_record_handle_pool(chain_link) == 4) {
             receipt.blocked_creature_collision = 1;
             if (out_receipt) *out_receipt = receipt;
             return 0;
@@ -13650,41 +13679,13 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
         ++chain_count;
         chain_link = next;
     }
-    if (map == owner->source_party_map && x == (int)owner->source_party_x &&
+    if (direction == 1 && old_state != DM2_DOOR_STATE_OPEN &&
+        map == owner->source_party_map && x == (int)owner->source_party_x &&
         y == (int)owner->source_party_y) {
         receipt.blocked_party_collision = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-
-    receipt.map = map;
-    receipt.x = (uint8_t)x;
-    receipt.y = (uint8_t)y;
-    receipt.direction = (uint8_t)direction;
-    receipt.door_record_link = link;
-    old_state = dm2_door_get_state((uint16_t)raw_tile);
-    receipt.state_before = (uint8_t)old_state;
-    if (old_state == DM2_DOOR_STATE_DESTROYED) {
-        receipt.state_after = (uint8_t)old_state;
-        receipt.source_noop_destroyed = 1;
-        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
-            0x44535450u, (uint16_t)link); /* "DSTP" */
-        receipt.valid = receipt.private_animation_hash != 0u;
-        if (out_receipt) *out_receipt = receipt;
-        return receipt.valid;
-    }
-    door_attributes = dm2_v1_game_load_read_u16(
-        door + 2, owner->dungeon.source_words_big_endian);
-    if ((door_attributes & 0x0400u) == 0u) {
-        receipt.state_after = (uint8_t)old_state;
-        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
-            0x44535450u, (uint16_t)link);
-        receipt.valid = receipt.private_animation_hash != 0u;
-        if (out_receipt) *out_receipt = receipt;
-        return receipt.valid;
-    }
-    direction = (door_attributes & 0x0200u) != 0u ? 0 : 1;
-    receipt.direction = (uint8_t)direction;
     new_state = dm2_door_apply_toggle_step(old_state, direction);
     if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
         return 0;
