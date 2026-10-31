@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — cold US capture records an unjoined `$E009` dispatch
+
+The authentic US cold standard-PCE run loaded no save state and configured no
+profile SRAM. Its trace records one dispatch to `$E009` from logical PC
+`$2CC7` (physical `$1F0CC7`). The capture receipt remains `transition=missing`:
+the scripted Run/Select/Button I events were not validated against controller
+reads, the input trace hit its row cap, and the run has no runtime CD data-port
+source-read join. Treat this only as a dispatch observation; it does not prove
+game ownership, input delivery, a menu action, or gameplay. Repair the capture
+schedule/validator and repeat with same-run source provenance. See the
+[capture report](docs/source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md).
+
 ## 2026-10-31 — cold System Card RUN still has no game-owned handoff
 
 The authentic Japanese `run@480:300` reference capture binds `$1800=$C8`,

@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — cold US Select/Button I capture boundary recorded
+
+After the instruction-start reference build completed, a cold standard-PCE
+run used authentic US Track 02 and the verified System Card without a save
+state. It recorded one `$E009` dispatch, but validation rejected the three
+scripted input events, the input trace reached its cap, and no runtime CD
+source-read join was present. The run therefore verifies neither input
+delivery nor a game-owned handoff or gameplay action. Its bounded receipt and
+hashes are in the
+[source-locked capture report](docs/source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md).
+
 ## 2026-10-31 — build and verify instruction-start reference trace chain
 
 Anchored the 3879 observer to the unique instruction-opcode provenance hook,
