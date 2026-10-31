@@ -5689,6 +5689,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                 } else {
                     DM2_V1_CaiiAttackContext attack_context;
                     DM2_V1_CaiiAttackReceipt attack_receipt;
+                    int32_t creature_hp_delta = (int16_t)door_strength;
                     int source_noop;
                     threshold = (receipt.door_record_attributes_before & 0x0020u)
                         ? (int)((ai_flags >> 6) & 3u) : 1;
@@ -5706,13 +5707,18 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                             dm2_game_load_candidate_attack_delete_timer;
                         attack_context.schedule = dm2_game_load_candidate_attack_schedule;
                         memset(&attack_receipt, 0, sizeof(attack_receipt));
+                        /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR (96-100):
+                         * AIDef w24 bit 12 halves door damage, minimum one. */
+                        if ((ai->w24 & 0x1000u) != 0u) {
+                            creature_hp_delta /= 2;
+                            if (creature_hp_delta < 1) creature_hp_delta = 1;
+                        }
                         if (!dm2_v1_caii_attack_creature_context(
                                 &candidate->record_pools, &candidate->dungeon,
                                 &candidate->caii_slots, NULL,
                                 &candidate->caii_rng, map, game_tick,
                                 collision_creature, x, y, x, y, 0x2006u,
-                                0x64, ((ai->w24 >> 12) & 1u) ? 0 :
-                                (int16_t)door_strength, &attack_context,
+                                0x64, creature_hp_delta, &attack_context,
                                 &attack_receipt)) {
                             source_noop = attack_receipt.denied_static_no_slot ||
                                 (attack_receipt.hp_applied &&

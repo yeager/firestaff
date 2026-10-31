@@ -9042,7 +9042,7 @@ static int dm2_runtime_door_step_timer(void *user,
             if (!dm2_runtime_queue_door_collision_noise(
                     rt, map, x, y, DM2_GDAT_CATEGORY_CHAMPIONS,
                     hero_type, DM2_SOUND_CHAMPION_BUMP, 0x64, 0xC8,
-                    receipt ? receipt->game_tick : rt->tick_count,
+                    receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
                     source_index)) {
                 rt->source_party = party_before;
                 rt->session_rng = rng_before;
@@ -9128,6 +9128,7 @@ static int dm2_runtime_door_step_timer(void *user,
                     uint8_t *caii_backup = NULL;
                     size_t caii_backup_size = 0u;
                     uint16_t door_strength = 0u;
+                    int32_t creature_hp_delta;
                     uint8_t creature_cls2 = 0u;
                     DM2_V1_SkprojectQueryCls2Receipt cls2_rc;
                     uint16_t raw_before = raw;
@@ -9190,13 +9191,19 @@ static int dm2_runtime_door_step_timer(void *user,
                     pool_cloned = 1;
 
                     memset(&attack_receipt, 0, sizeof(attack_receipt));
+                    creature_hp_delta = (int16_t)door_strength;
+                    /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR (96-100) and
+                     * SKULLWIN/c_tim_proc.cpp halve this door damage for
+                     * AIDef w24 bit 12, with a minimum of one. */
+                    if ((ai->w24 & 0x1000u) != 0u) {
+                        creature_hp_delta /= 2;
+                        if (creature_hp_delta < 1) creature_hp_delta = 1;
+                    }
                     attack_ok = dm2_v1_caii_attack_creature(
                         &rt->record_pools, dungeon, &rt->caii,
                         &rt->timer_queue, &rt->session_rng, map,
                         (unsigned long)game_tick, creature, x, y, x, y,
-                        0x2006u, 0x64,
-                        ((ai->w24 >> 12) & 1u) != 0u
-                            ? 0 : (int16_t)door_strength,
+                        0x2006u, 0x64, creature_hp_delta,
                         &attack_receipt);
                     source_noop = attack_receipt.denied_static_no_slot ||
                         (attack_receipt.hp_applied &&

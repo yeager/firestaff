@@ -88,6 +88,21 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 SKProject `STEP_DOOR` GAME_LOAD collision follow-up: the runtime
+session candidate now resolves the active map's G1 door graphic and handles
+party-first closing-door damage/noise plus threshold-admitted non-immune DB4
+attacks, state changes, delayed sound timers, and the source extra door tick.
+Candidate timer, sound, party/RNG, record-pool, CAII, tile, and door-record
+mutations roll back together on rejected effects. Source-variant review found
+a material difference: SKULLWIN/c_tim_proc.cpp halves the door-strength HP
+delta and clamps it to at least one when AIDef w24 bit 12 is set, while
+SKWINSPX/skevent.cpp and SKWIN/SkWinCore.cpp set the delta to zero. The live
+and candidate paths now follow the SKWINDOS branch. Map this behavior to
+every supported DM2 edition before claiming platform parity. The direct
+world-owner receipt is still structural, live runtime cannot resolve active
+G1 mapping for off-current maps, and exact audio edge behavior remains
+unverified.
+
 2026-10-31 shop-glass viewport routing: the wall-ornament source plan now
 retains the live DB3 wall-panel/floor-shop actuator pair and current floor
 item from the visible source tile, including source byte order on
