@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — verify the authentic empty JP BRAM at native M11 startup
+
+Added `theron_v1_m11_jp_empty_bram`, a bounded native startup integration
+using authentic JP Rev. 1 Track 02 (MD5
+`b7afb338ad31be1025b53f9aff12d73a`) and the captured empty JP Mednafen SRAM
+(MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). The test verifies its valid BRAM
+layout and zero campaign byte, then confirms M11 does not advertise Continue,
+does not change the fresh Akutuba selection or campaign state, and leaves both
+original inputs unchanged. A TRV2 Debug build and three CTest loops passed.
+This covers the native UI's empty-slot rejection only; no authentic progressed
+JP BRAM is available, so positive JP Continue/save semantics remain open.
+
 ## 2026-10-31 — synchronize Theron status documentation with verified input evidence
 
 Updated the README, documentation index, project/platform status, capture

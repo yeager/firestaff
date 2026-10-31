@@ -6,7 +6,9 @@
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native
 > movement and inventory transactions. Source-only loaders cover all seven
 > dungeons in both regions, but do not establish their retail runtime
-> semantics. The reported 3–5 second title-menu hold remains unverified in a
+> semantics. Native M11 rejects the authentic empty JP BRAM as Continue;
+> positive JP progress restoration remains unverified because no authentic
+> progressed JP BRAM is available. The reported 3–5 second title-menu hold remains unverified in a
 > visibly confirmed original-game capture. A separate US save-state replay
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport

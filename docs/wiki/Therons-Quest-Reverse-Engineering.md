@@ -21,6 +21,9 @@ shared event order from `$44C1` poll (2342) through `$D334` read `$00` (3000),
 consumer/writer path appears in controls. This does not establish causality,
 identify the byte's semantics, or prove movement. See the
 [source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
+progress restoration remains unverified because no authentic progressed JP
+BRAM is available. See the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
 The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture

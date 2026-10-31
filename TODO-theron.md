@@ -87,8 +87,13 @@ The JP counterpart, `theron_v1_m11_jp_fresh_start`, now covers the authentic
 title-to-level-0 path independently. It compares all eight decoded roster
 names, confirms Theron is admitted, and requires a source-verified level header
 with zero quest progress. The warning-as-error build and three repeated CTest
-runs passed against the hash-locked original JP BIN. This does not prove JP
-Continue/save semantics, retail input parity, or full gameplay parity.
+runs passed against the hash-locked original JP BIN. A separate native M11
+integration now pairs that original BIN with the authentic captured empty JP
+BRAM and confirms the zero-campaign slot is not offered as Continue; it passed
+three TRV2 loops without changing either input. No authentic progressed JP
+BRAM is currently available, so positive JP Continue/save round-trip and
+retail JP progress restoration remain unverified. Neither test proves retail
+input parity or full gameplay parity.
 
 2026-10-31 save-resume follow-up: the default Continue root now uses the same
 `FSP_GetUserDataDir()/saves/theron` directory as Save Game, including when

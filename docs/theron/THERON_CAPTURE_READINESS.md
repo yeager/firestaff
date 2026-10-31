@@ -1,5 +1,17 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — authentic JP empty BRAM at native startup
+
+The native M11 startup integration pairs authentic Japanese Rev. 1 Track 02
+with the captured empty JP SRAM (BRAM). The file has a valid container and
+body layout but a zero campaign byte, so M11 correctly withholds Continue and
+keeps the new Akutuba route unchanged. The integration passed three TRV2
+Debug loops and verifies that neither source file changes. This is a negative
+empty-slot boundary only: no authentic progressed JP BRAM is available, so
+positive JP Continue/save round-trip and retail JP save compatibility remain
+unverified. See the [source-locked save-body report](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
+and [`DONE-theron.md`](../../DONE-theron.md).
+
 ## 2026-10-31 — JP PCE Fast poll-to-RAM event ordering
 
 Three isolated emulator runs replayed `up@61:120` from an authentic JP
