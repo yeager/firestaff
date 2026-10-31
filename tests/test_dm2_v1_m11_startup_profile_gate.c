@@ -36,6 +36,7 @@
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v2_runtime.h"
+#include "fs_portable_compat.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -2674,9 +2675,10 @@ static int dm2_test_paths_name_same_file(const char *left, const char *right) {
 }
 
 /* The launcher scanner may be pointed at a DOS install root while the
- * authenticated pair lives in its original DATA/ subdirectory.  Keep this
- * as a real-data-only boundary test: M12 must hand M11 that owning directory,
- * never merely the configured scan root.  SKULL.ASM T560 owns DUNGEON.DAT;
+ * authenticated pair lives in its original DATA/ subdirectory. Keep this as
+ * a real-data-only boundary test: M12 must hand M11 the selected source owner
+ * (the matched archive or the owning loose directory), never merely the
+ * configured scan root. SKULL.ASM T560 owns DUNGEON.DAT;
  * dm2_v1_boot_scan_assets() is the corresponding hash-first Firestaff entry.
  */
 static void expect_m12_dm2_verified_launch(const char* data_dir,
@@ -2684,7 +2686,9 @@ static void expect_m12_dm2_verified_launch(const char* data_dir,
     M12_StartupMenuState menu;
     M12_StartupMenuInitOptions options;
     M11_GameViewState launched_view;
+    const M12_AssetVersionStatus* selected_version = NULL;
     const char* runtime_dir;
+    char selected_asset_root[FSP_PATH_MAX] = {0};
     int pc_version;
 
     if (!data_dir || !data_dir[0]) return;
@@ -2701,6 +2705,24 @@ static void expect_m12_dm2_verified_launch(const char* data_dir,
     if (pc_version >= 0) {
         menu.gameOptions[2].architectureIndex = M12_ARCH_PC;
         menu.gameOptions[2].versionIndex = pc_version;
+        selected_version = M12_AssetStatus_GetVersion(
+            &menu.assetStatus, "dm2", (size_t)pc_version);
+        if (selected_version && selected_version->matchedPath[0]) {
+            const char* member = strstr(selected_version->matchedPath, "::");
+            if (member) {
+                size_t owner_length = (size_t)(member -
+                                               selected_version->matchedPath);
+                if (owner_length < sizeof(selected_asset_root)) {
+                    memcpy(selected_asset_root,
+                           selected_version->matchedPath, owner_length);
+                    selected_asset_root[owner_length] = '\0';
+                }
+            } else {
+                (void)FSP_ParentDir(selected_asset_root,
+                                    sizeof(selected_asset_root),
+                                    selected_version->matchedPath);
+            }
+        }
     }
     runtime_dir = M12_AssetStatus_GetRuntimeDataDir(&menu.assetStatus, "dm2");
     expect_true(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm2") == 1,
@@ -2742,9 +2764,9 @@ static void expect_m12_dm2_verified_launch(const char* data_dir,
     expect_true(launched_view.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
                     launched_view.dm2BootProfile != NULL,
                 "M12 DM2 launch retains the verified boot profile");
-    expect_true(launched_view.dm2BootProfile && expected_asset_root &&
+    expect_true(launched_view.dm2BootProfile && selected_asset_root[0] &&
                     strcmp(((DM2_V1_BootProfile*)launched_view.dm2BootProfile)->asset_root,
-                           expected_asset_root) == 0,
+                           selected_asset_root) == 0,
                 "M11 resolves the exact M12-selected DM2 asset owner");
     M11_GameView_Shutdown(&launched_view);
 }
