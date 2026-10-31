@@ -1,3 +1,12 @@
+2026-11-01 DM2 Amiga no-game M12 runtime retest at `93c644549`: the local
+`m12_main_menu_runtime_real_media` test passed with
+`FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` (90.80 s) against the installed original
+Amiga archive. It selected Amiga from the launcher, completed the native
+startup menu, and verified first-runtime state plus the Amiga GDAT squad panel
+at RECT_47. The test checked that the original archive remained unchanged.
+This is SDL dummy-driver startup evidence, not native display/input or complete
+DM2 parity.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` DB2 text animation cases:
 The extended query now walks DB2 text and DB3 actuator records in list order.
 DB2 TextMode-1 static extensions stay on the static path; ext-usage 1/2 and
