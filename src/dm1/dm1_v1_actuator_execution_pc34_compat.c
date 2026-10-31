@@ -1,8 +1,10 @@
 /*
  * DM1 V1 Actuator Execution — pc34 compat layer.
  *
- * Source: ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent lines 1136-1232
- *         TIMELINE.C C024_EVENT_DOOR handler lines ~600-660
+ * Related source: ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent (event construction,
+ * lines 1000-1030); actuator state transitions are owned by the event handlers.
+ *         TIMELINE.C F0244 C10 door event (line 885) and F0241 C01 door
+ *         animation handler (line 711)
  *
  * Consumes SensorActuatorDispatch_Compat from the sensor trigger chain
  * and mutates dungeon square bytes to open/close doors, toggle pits,
@@ -280,8 +282,9 @@ int dm1_v1_actuator_door_animation_step_pc34(
 
 const char* dm1_v1_actuator_execution_source_evidence_pc34(void)
 {
-    return "ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent lines 1136-1232; "
-           "TIMELINE.C C024_EVENT_DOOR handler; DEFS.H M036_DOOR_STATE "
+    return "ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent lines 1000-1030 "
+           "(event construction); actuator transitions are event-handler-owned; "
+           "TIMELINE.C F0244 C10/F0241 C01 door handlers; DEFS.H M036_DOOR_STATE "
            "(bits 2:0), MASK0x0008_PIT_OPEN (bit 3), M034_SQUARE_TYPE "
            "(bits 7:5). Actuator dispatch consumes "
            "SensorActuatorDispatch_Compat from sensor trigger chain and "
