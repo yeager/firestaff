@@ -4439,3 +4439,13 @@ not used as its final verification.
   row, list flag, and chain head before/after); it is gated so ordinary play
   stays quiet. This is a gameplay transaction fix, not a claim of complete
   IIGS parity.
+
+- 2026-10-31: Corrected DM1 PC34 floor version-checker C009 execution to
+  evaluate the original sensor record through `F0722_SENSOR_EvaluateFloor_Compat`.
+  This preserves `RevertEffect`, the DM1 V2.0 threshold, WALK_ON-only behavior,
+  HOLD resolution, and the source delay when `F0710_SENSOR_Execute_Compat`
+  creates the remote effect. ReDMCSB `MOVESENS.C:F0276` applies the version
+  test at lines 1716-1723 and XORs `RevertEffect` in the common trigger path.
+  The focused version-gate test covers threshold and inverted-trigger cases.
+  C009 is not used by the original dungeon, so this verifies source logic and
+  its compatibility interface rather than an original-media campaign route.

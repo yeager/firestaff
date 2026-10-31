@@ -47,11 +47,9 @@ int F0710_SENSOR_Execute_Compat(
     int triggerEvent,
     struct SensorEffectList_Compat* outList)
 {
-    /* We intentionally avoid warnings about unused parameters — dungeon
-     * and things are part of the stable API so later phases (text
+    /* Dungeon and things are part of the stable API so later phases (text
      * lookup, door resolution) can use them without changing callers. */
     (void)dungeon;
-    (void)things;
 
     if (outList == 0 || sensor == 0) return 0;
     memset(outList, 0, sizeof(*outList));
@@ -138,8 +136,30 @@ int F0710_SENSOR_Execute_Compat(
          * event owner, not by a party walking onto this square. */
         return 1;
     case 9: {
-        /* DM1_SENSOR_FLOOR_VERSION_CHECKER — version gate.
-         * Always triggers in our implementation (we emulate latest version). */
+        /* ReDMCSB MOVESENS.C F0276:1716-1723: C009 checks the DM1 engine
+         * version, then the common F0276 path XORs the result with
+         * RevertEffect before resolving HOLD. Use the original sensor record
+         * so an inverted version gate is not lost in SensorOnSquare. */
+        const struct DungeonSensor_Compat* sourceSensor;
+        struct FloorSensorContext_Compat floorContext;
+        struct SensorTriggerResult_Compat triggerResult;
+        if (!things || !things->sensors || sensor->sensorIndex < 0 ||
+            sensor->sensorIndex >= things->sensorCount) {
+            return 1;
+        }
+        sourceSensor = &things->sensors[sensor->sensorIndex];
+        if (sourceSensor->sensorType != DM1_SENSOR_FLOOR_VERSION_CHECKER) {
+            return 1;
+        }
+        memset(&floorContext, 0, sizeof(floorContext));
+        floorContext.thingType = DM1_TRIGGER_SOURCE_PARTY;
+        floorContext.isAddition = (triggerEvent == SENSOR_EVENT_WALK_ON);
+        if (!F0722_SENSOR_EvaluateFloor_Compat(
+                sourceSensor, &floorContext, &triggerResult)) {
+            return 0;
+        }
+        if (!triggerResult.triggered) return 1;
+
         struct SensorEffect_Compat* e = &outList->effects[0];
         e->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
         e->sensorType = sensor->sensorType;
@@ -147,8 +167,8 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapX = sensor->targetMapX;
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
-        e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
-        e->delayTicks = sensor->value;
+        e->textIndex = triggerResult.resolvedEffect;
+        e->delayTicks = triggerResult.delayTicks;
         outList->count = 1;
         return 1;
     }
