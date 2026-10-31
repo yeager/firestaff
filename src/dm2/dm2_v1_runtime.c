@@ -8982,6 +8982,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_ActuatorEventReceipt event;
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_GlobVarState global_state;
+    DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
     int backup_ready = 0;
     int map, x, y, action, direction;
@@ -8997,6 +8999,15 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
     direction = (int)(uint8_t)(timer->value_b & 0xff);
     action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (game) {
+        memcpy(global_state.bit_vars, game->glob_vars.bit_vars,
+               sizeof(global_state.bit_vars));
+        memcpy(global_state.byte_vars, game->glob_vars.byte_vars,
+               sizeof(global_state.byte_vars));
+        memcpy(global_state.word_vars, game->glob_vars.word_vars,
+               sizeof(global_state.word_vars));
+    }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
     if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
@@ -9014,9 +9025,17 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        NULL, 0, NULL, NULL, &event);
+        game ? &global_state : NULL, NULL, NULL, &event);
     if (!event.valid || event.fail_closed != 0) {
         goto wall_mecha_reject;
+    }
+    if (game) {
+        memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
+               sizeof(global_state.bit_vars));
+        memcpy(game->glob_vars.byte_vars, global_state.byte_vars,
+               sizeof(global_state.byte_vars));
+        memcpy(game->glob_vars.word_vars, global_state.word_vars,
+               sizeof(global_state.word_vars));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
@@ -9045,6 +9064,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_ActuatorEventReceipt event;
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_GlobVarState global_state;
+    DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
     int backup_ready = 0;
     int map, x, y, action, direction;
@@ -9060,6 +9081,15 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
     direction = (int)(uint8_t)(timer->value_b & 0xff);
     action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (game) {
+        memcpy(global_state.bit_vars, game->glob_vars.bit_vars,
+               sizeof(global_state.bit_vars));
+        memcpy(global_state.byte_vars, game->glob_vars.byte_vars,
+               sizeof(global_state.byte_vars));
+        memcpy(global_state.word_vars, game->glob_vars.word_vars,
+               sizeof(global_state.word_vars));
+    }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
     if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
@@ -9077,9 +9107,17 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        NULL, 0, NULL, NULL, &event);
+        game ? &global_state : NULL, NULL, NULL, &event);
     if (!event.valid || event.fail_closed != 0) {
         goto floor_mecha_reject;
+    }
+    if (game) {
+        memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
+               sizeof(global_state.bit_vars));
+        memcpy(game->glob_vars.byte_vars, global_state.byte_vars,
+               sizeof(global_state.byte_vars));
+        memcpy(game->glob_vars.word_vars, global_state.word_vars,
+               sizeof(global_state.word_vars));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);

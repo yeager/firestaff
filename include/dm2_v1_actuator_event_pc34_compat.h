@@ -17,6 +17,7 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_runtime_parity_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
 #ifdef __cplusplus
@@ -346,8 +347,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
-                              uint16_t *global_words,
-                              uint16_t global_word_count,
+                              DM2_V1_GlobVarState *global_state,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt);
@@ -361,8 +361,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
-                               uint16_t *global_words,
-                               uint16_t global_word_count,
+                               DM2_V1_GlobVarState *global_state,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt);

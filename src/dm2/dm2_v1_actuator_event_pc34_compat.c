@@ -648,8 +648,7 @@ typedef struct {
     int action_type;   /* timer ActionType (from value_b high byte) */
     int direction;     /* timer Value2 (from value_b low byte) */
     uint32_t game_tick;
-    uint16_t *global_words;
-    uint16_t global_word_count;
+    DM2_V1_GlobVarState *global_state;
     const DM2_V1_CreatureKillerCallbacks *creature_killer_cb;
     DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len;
     void *ornate_ctx;
@@ -1029,18 +1028,15 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
         const int global_operation =
             (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
-        if (!ctx->global_words || ctx->global_word_count <= 0 ||
-            global_operation < 0 || global_operation > 6 ||
-            !dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)global_operation, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt) ||
-            !gv_receipt.valid) {
+        if (!ctx->global_state) {
             r->fail_closed++;
             break;
         }
+        (void)dm2_v1_update_glob_var_direct(
+            ctx->global_state, (int16_t)dm2_actu_data(record),
+            (int16_t)global_operation, 1);
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
@@ -1052,17 +1048,14 @@ static int wall_mecha_visitor(void *context,
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
         int should_forward;
-        uint16_t gv_val = 0;
-        DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+        int32_t gv_val;
         const int revert = dm2_actu_revert_effect(record) != 0;
-        if (!ctx->global_words || ctx->global_word_count <= 0 ||
-            !dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record), ctx->global_words,
-                ctx->global_word_count, &gv_val, &gv_receipt) ||
-            !gv_receipt.valid) {
+        if (!ctx->global_state) {
             r->fail_closed++;
             break;
         }
+        gv_val = dm2_v1_get_glob_var(
+            ctx->global_state, dm2_actu_data(record));
         should_forward = ((revert != (gv_val != 0u)) &&
                           (ctx->action_type == 0 || ctx->action_type == 2)) ||
                          ((revert == (gv_val != 0u)) &&
@@ -1099,8 +1092,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
-                              uint16_t *global_words,
-                              uint16_t global_word_count,
+                              DM2_V1_GlobVarState *global_state,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
@@ -1126,8 +1118,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
-    ctx.global_words      = global_words;
-    ctx.global_word_count = global_word_count;
+    ctx.global_state      = global_state;
     ctx.creature_killer_cb = NULL;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
@@ -1374,18 +1365,15 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
         const int global_operation =
             (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
-        if (!ctx->global_words || ctx->global_word_count <= 0 ||
-            global_operation < 0 || global_operation > 6 ||
-            !dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)global_operation, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt) ||
-            !gv_receipt.valid) {
+        if (!ctx->global_state) {
             r->fail_closed++;
             break;
         }
+        (void)dm2_v1_update_glob_var_direct(
+            ctx->global_state, (int16_t)dm2_actu_data(record),
+            (int16_t)global_operation, 1);
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
@@ -1397,17 +1385,14 @@ static int floor_mecha_visitor(void *context,
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
         int should_forward;
-        uint16_t gv_val = 0;
-        DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+        int32_t gv_val;
         const int revert = dm2_actu_revert_effect(record) != 0;
-        if (!ctx->global_words || ctx->global_word_count <= 0 ||
-            !dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record), ctx->global_words,
-                ctx->global_word_count, &gv_val, &gv_receipt) ||
-            !gv_receipt.valid) {
+        if (!ctx->global_state) {
             r->fail_closed++;
             break;
         }
+        gv_val = dm2_v1_get_glob_var(
+            ctx->global_state, dm2_actu_data(record));
         should_forward = ((revert != (gv_val != 0u)) &&
                           (ctx->action_type == 0 || ctx->action_type == 2)) ||
                          ((revert == (gv_val != 0u)) &&
@@ -1437,8 +1422,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
-                               uint16_t *global_words,
-                               uint16_t global_word_count,
+                               DM2_V1_GlobVarState *global_state,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
@@ -1464,8 +1448,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
-    ctx.global_words      = global_words;
-    ctx.global_word_count = global_word_count;
+    ctx.global_state      = global_state;
     ctx.creature_killer_cb = NULL;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
