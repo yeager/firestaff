@@ -1392,6 +1392,43 @@ static void test_wall_click_specific_object_removed(void) {
     F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "Wall C004: wrong object does not trigger");
     CHECK(result.leaderHandObjectRemoved == 0, "Wall C004: wrong object is not consumed");
+
+    /* ReDMCSB F0275 compares Sensor.Data with F0032's empty-hand icon
+     * sentinel (-1) before applying RevertEffect. A reverted C003/C004 can
+     * therefore trigger with an empty hand; only C004 consumes an object,
+     * and there is none to consume in this case. */
+    ctx.leaderHandObjectType = -1;
+    ctx.leaderEmptyHanded = 1;
+    sensor.sensorType = DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT;
+    sensor.revertEffect = 1;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1,
+          "Wall C003: RevertEffect matches ReDMCSB empty-hand sentinel");
+    CHECK(result.leaderHandObjectRemoved == 0,
+          "Wall C003: empty-hand trigger removes no object");
+
+    sensor.sensorType = DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1,
+          "Wall C004: RevertEffect matches ReDMCSB empty-hand sentinel");
+    CHECK(result.leaderHandObjectRemoved == 0,
+          "Wall C004: empty-hand trigger removes no object");
+
+    ctx.leaderHandObjectType = 8;
+    ctx.leaderEmptyHanded = 0;
+    sensor.sensorType = DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR;
+    sensor.sensorData = 8;
+    sensor.revertEffect = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1,
+          "Wall C017: matching object triggers the remove-sensor action");
+    CHECK(result.sensorRemoveFromSquare == 1,
+          "Wall C017: successful trigger requests the source sensor unlink");
+    CHECK(result.leaderHandObjectRemoved == 1,
+          "Wall C017: successful trigger consumes the matching hand object");
 }
 
 /* ----------------------------------------------------------------
@@ -2063,6 +2100,20 @@ static void test_process_wall_click(void) {
     CHECK(results.count == 1, "Wall click: only 1 of 2 sensors triggered");
     CHECK(results.results[0].resolvedEffect == DM1_EFFECT_TOGGLE, "Wall click: TOGGLE effect");
     CHECK(results.results[0].targetMapX == 10, "Wall click: target X=10");
+
+    /* F0275 C017 emits its self-unlink receipt only after its source predicate
+     * passes. It remains behind C001 so the list-order/last-sensor gate is
+     * exercised through the complete F0726 adapter. */
+    sensorData[1] = make_sensor(
+        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR, 8,
+        DM1_EFFECT_SET, 0, 0, 0, 0, 0, 12, 13, 0);
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderHandObjectType = 8;
+    F0726_SENSOR_ProcessWallClick_Compat(sensors, 2, sensorData, 2, &ctx, &results);
+    CHECK(results.count == 2, "Wall click C017: source matching sensors remain ordered");
+    CHECK(results.results[1].sensorIndex == 1 &&
+          results.results[1].sensorRemoveFromSquare == 1,
+          "Wall click C017: F0726 carries the non-head unlink receipt");
 }
 
 /* ----------------------------------------------------------------

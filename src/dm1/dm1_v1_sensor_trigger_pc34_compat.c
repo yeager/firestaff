@@ -566,6 +566,13 @@ int F0723_SENSOR_EvaluateWall_Compat(
         outResult->sensorDisabled = 1;
     }
 
+    /* ReDMCSB MOVESENS.C:F0275 removes a successfully triggered C017 from
+     * the square's Thing chain when it has a predecessor. The source caller
+     * owns that chain mutation; the first Thing is deliberately retained. */
+    if (sensorType == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
+        outResult->sensorRemoveFromSquare = 1;
+    }
+
     /* Local vs remote dispatch (same as floor) */
     if (sensor->localEffect) {
         outResult->isLocal = 1;
