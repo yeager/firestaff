@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — JP PCE Fast input reaches a guest controller read
+
+Three independent replays from the authentic JP Akutuba F5 dungeon state
+applied `up@61:120` on controller slot 0. All three match the PCE Fast guest
+read at `$44C1`: internal `raw=0010`, active-low `value=3e`, and the same-frame
+scripted mask and port. This proves input delivery to that guest read; caller
+ownership, action semantics, and a resulting game-state change remain open.
+Trace hashes and authentic media/state provenance are in the
+[JP PCE Fast input receipt](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
+Next follow `$44C1` into its caller and state consumer, and capture a
+state-driven response. Do not treat this as proof of movement or parity.
+
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 
 The authentic US cold standard-PCE run loaded no save state and configured no

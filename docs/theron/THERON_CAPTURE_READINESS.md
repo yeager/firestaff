@@ -1,5 +1,15 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — JP PCE Fast guest input receipt
+
+Three isolated emulator runs replayed `up@61:120` from an authentic JP
+Akutuba F5 dungeon state. The new PCE Fast trace binds the scripted mask and
+slot to the same-frame active-low guest read at `$44C1` (`raw=0010`,
+`value=3e`). This is stronger input-delivery evidence than the cold System
+Card captures, but it does not identify the poll's caller or prove a
+game-state or screen change. Continue the source trace into a game-owned state
+consumer. See the [hash-locked receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
+
 ## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
 
 A fresh isolated macOS Debug configuration built the native Firestaff target

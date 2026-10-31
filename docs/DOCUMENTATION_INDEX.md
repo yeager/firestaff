@@ -77,6 +77,7 @@ remain at the top of `docs/`.
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 - [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins; latest reference trace build and capture boundary is recorded there
+- [Theron JP PCE Fast input receipt](source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md) — three authentic-state runs bind a scripted direction mask to its same-frame PCE Fast guest read; game-state effect remains unproven
 - [Theron US PCE mouse-held capture](source-lock/theron-disassembly/theron-us-pce-mouse-held-command-capture-20261031.md) — repeated guest mouse-read and candidate command-consumer receipts; save-state replay has no runtime CD provenance
 - [Theron US cold `$E009` capture boundary](source-lock/theron-disassembly/theron-us-cold-select-i-hold-e009-capture-20261031.md) — earlier raw-mask-verifier result, retained as historical evidence
 - [Theron US returned-mask capture](source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md) — three scripted inputs reach System Card polls; no game-owned poll or runtime CD source provenance was observed
