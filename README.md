@@ -156,12 +156,14 @@ not causal or movement evidence. Continue with an authentic reachable pose
 before drawing world-tile or renderer conclusions; see the
 [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
-The latest reference-only Mednafen trace tooling applied in three clean
-patch-only runs, and its instrumented PCE build/install plus focused
-parser/controller checks passed on TRV2. A follow-up cold US capture validates
-all three scripted inputs at System Card controller polls and records one
-`$E009` dispatch. It observes no game-owned poll or runtime CD source-read
-join, so the observation does not change native support status. See the
+The previously completed reference-only Mednafen trace-tooling chain applied
+in three clean patch-only runs, and its instrumented PCE build/install plus
+focused parser/controller checks passed on TRV2. These results cover that
+earlier tooling revision; they do not verify subsequent trace-hook changes.
+A follow-up cold US capture validates all three scripted inputs at System
+Card controller polls and records one `$E009` dispatch. It observes no
+game-owned poll or runtime CD source-read join, so the observation does not
+change native support status. See the
 [returned-mask capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 A separate PCE Fast replay loaded an existing US state and reached input-read

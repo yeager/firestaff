@@ -1,5 +1,19 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — input-gated PCE Fast VRAM trace remains provisional
+
+A working-tree change is being developed to open the PCE Fast VRAM-commit
+trace only after an exact guest controller-read PC/raw-value match. Focused
+patch-application loops passed for the affected Mednafen source files, but the
+complete patch chain is blocked by an earlier RAM-provenance patch context
+mismatch. The TRV2 compile attempt has not yet established the correct
+generated object target. There is no compiled-tool or runtime-capture result
+for this change, and no new input-to-render join. Treat this as pending capture
+infrastructure, not Theron gameplay evidence; native support and parity status
+are unchanged. The next step is to resolve the patch/build path, compile, and
+then collect an authentic source-locked capture. See the matching
+[Theron TODO entry](../../TODO-theron.md).
+
 ## 2026-10-31 — JP title-menu four-second Button I hold visibly advances
 
 An isolated cold Mednafen 1.32.1 PCE Fast run used hash-verified JP Rev. 1

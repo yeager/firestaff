@@ -1,5 +1,19 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — input-gated PCE Fast VRAM trace is not yet verified
+
+The current working-tree change adds a PCE Fast trace gate keyed to an exact
+guest controller-read PC and raw value, so emitted VRAM commits can be scoped
+to activity after a matching input read. Focused patch-application loops passed
+against the corresponding Mednafen source files. The complete instrumentation
+patch chain is not verified: it stops earlier at the existing RAM-provenance
+patch context, and a TRV2 object-build attempt has not identified the correct
+generated Make target. No instrumented runtime capture or new gameplay join
+has been produced from this change. Keep the tooling provisional; next resolve
+the patch-chain/build prerequisites, compile it, and collect a source-locked
+authentic capture before documenting any trace result. This does not change
+native Theron support or parity status.
+
 ## 2026-10-31 — next JP movement capture needs a reachable authentic pose
 
 The latest F5 UP/neutral/DOWN replay keeps the same front wall in all three

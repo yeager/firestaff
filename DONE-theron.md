@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — clarify current Mednafen tooling verification scope
+
+Updated the README to distinguish the previously verified Mednafen trace
+tooling revision from the newer, still-unverified input-gated VRAM trace work.
+Added the current build and capture blockers to the Theron TODO and capture
+readiness summaries. The notes make clear that no compiled tool, runtime
+capture, input-to-render join, or change in Theron support status has been
+verified for the new work. No runtime code or game data changed in this
+documentation update.
+
 ## 2026-10-31 — document the authentic JP four-second title-action capture
 
 Recorded a cold Japanese Rev. 1 reference route using hash-verified Track 02
