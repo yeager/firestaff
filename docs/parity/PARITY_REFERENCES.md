@@ -16,6 +16,28 @@ This file inventories all known local reference sources and artifacts available 
 V2 (modern graphics/resolution) and V3 (modern 3D) are separate product tracks.
 Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementation.
 
+## Cross-check references for all three games
+
+Use DMWeb and Greatstone as cross-check references for DM1, CSB, and DM2.
+They supplement the game-specific source of behavior below; they do not replace
+ReDMCSB for DM1/CSB or skproject for DM2. DMWeb is especially useful for
+documented platform variants, file formats, and known data-file structure.
+Greatstone's Swoosh Construction Kit pages provide extracted map/data views and
+catalogues that can help check file parsing and platform-specific content.
+Treat those extracted views as secondary evidence, and verify behavior against
+the applicable source code and original data before claiming parity.
+
+| Game | Greatstone reference | DMWeb reference collection |
+|---|---|---|
+| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB, file formats, and game-version pages |
+| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB, file formats, and game-version pages |
+| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): DM2 data-file notes, Nexus, and game-version pages |
+
+The Greatstone game pages report different catalogued variant counts (26 DM1,
+19 CSB, and 15 DM2 when checked on 2026-10-31). These counts describe the
+extractor's available entries, not Firestaff's supported-edition matrix. For
+DM2, retain the more detailed [PC English Greatstone cross-check](../reference/audits/DM2_PC10_EN_GREATSTONE_CROSSCHECK.md).
+
 ---
 
 ## A. Original game data packages
