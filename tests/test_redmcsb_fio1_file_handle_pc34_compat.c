@@ -174,6 +174,14 @@ int main(void)
     (void)size;
     int32_t offset = -1;
     (void)offset;
+    int16_t stub_value = -1;
+
+    assert(F1320_FIO1_27_Pc34Compat() == 234);
+    assert(F1324_FIO1_24_Pc34Compat(1, 2, 3, &stub_value) ==
+           REDMCSB_FIO1_RESULT_SUCCESS_PC34);
+    assert(stub_value == 0);
+    assert(F1324_FIO1_24_Pc34Compat(0, 0, 0, NULL) ==
+           REDMCSB_FIO1_RESULT_INVALID_PC34);
 
     memset(&state, 0, sizeof(state));
     state.nextHandle = 7;
