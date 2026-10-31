@@ -45,6 +45,11 @@ dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5)
     if (strcmp(graphicsMd5, "5095a13692702235d2e74f6b2b1367a9") == 0) {
         return DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
     }
+    /* ReDMCSB MEDIA240 includes I34E/I34M (Apple IIGS 2.0/2.1).
+     * Both supported releases share this authenticated GRAPHICS.GAME bank. */
+    if (strcmp(graphicsMd5, "1045a36952e64eb2bc7b4c7b2965b112") == 0) {
+        return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
+    }
     return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
 }
 
