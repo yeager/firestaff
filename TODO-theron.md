@@ -122,10 +122,11 @@ recorded in the source-lock note. Three repeated MAME `unidasm` listings from
 the authentic System Card BIOS now cover `$EC05`, `$E900`, and `$E1C0-$E20A`.
 They identify command setup, `$1800-$1802` accesses, status comparison, and
 the `$E209 SEC; RTS` table-check exit without assigning undocumented device
-semantics. An opt-in bounded decision-PC sidecar now observes `$EC05`, `$E900`,
-`$E209/$E20A`, and `$E11D` independently of the bootstrap row cap. The next
-capture still needs expanded `$1800-$1803` I/O and `$224C-$2255`,
-`$2273-$2280`, and `$22A4` RAM receipts before the authentic disc is replayed.
+semantics. An opt-in bounded decision-PC sidecar can record `$EC05`, `$E900`,
+`$E209/$E20A`, and `$E11D` independently of the bootstrap row cap. No authentic
+capture has used it yet. The next capture still needs the expanded `$1800-$1803`
+I/O and `$224C-$2255`, `$2273-$2280`, and `$22A4` RAM receipts before the
+authentic disc is replayed.
 Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
