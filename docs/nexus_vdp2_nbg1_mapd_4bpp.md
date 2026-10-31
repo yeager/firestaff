@@ -17,8 +17,10 @@ The hash-pinned VDP2 inputs are:
 The pass has `BGON=0x0002` (NBG1 enabled), `CHCTLA=0x0013` (NBG1 4bpp
 tilemap), `PNCN1=0`, `PLSZ=0`, `MPOFN=0`, and `MAP1A/B=0x1717`. The
 NBG1 name table begins at byte offset `0x5c000`. Its 64×64 page exposes a
-40×28 visible region. The decoder records 1,120 unique cells, 71,680
-nontransparent pixels, and zero transparent pixels for this pass.
+40×28 decoded region. The isolated Firestaff plane decoder records 1,120
+unique cells and nonzero palette indices for all 71,680 output pixels. This is
+a plane-decode result; it does not establish that every pixel is visible in
+Ymir's rendered NBG1 layer.
 
 ## Reproduction
 
@@ -51,11 +53,29 @@ account for VDP1 overlays, other enabled layers, full color-calculation cases,
 or source ownership and placement. The decoder keeps production renderer
 permission disabled. No game data or raw emulator capture is tracked in Git.
 
-## Same-pass composition boundary
+## Same-pass layer coverage
 
-The decoded plane was compared with Ymir's hash-pinned 320×224 RGBX pass
-`vdp1-891-vdp2-1280-320x224.rgbx8888le`. Only 44,811 of 71,680 RGB pixels
-match exactly. At pixel `(0,0)`, the isolated NBG1 layer produces `(104,104,104)`
-while the full Ymir pass produces `(8,24,8)`. This confirms that the layer
-decode cannot be presented as the complete frame; the remaining VDP1/layer
-composition and pixel ownership still need a source-verified implementation.
+Ymir's complete pre-composition layer trace is retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/layer-trace-frame891-start60-20261101/`.
+The trace SHA-256 is
+`086d660dce00d0df4f38a33fe1591043676d0e72482cd0e867540d215a494526`; its
+receipt reports 3,136 complete layer-row records across VDP2 serials 1279 and
+1280. The selected frame 891 / serial 1280 RGBX pass has SHA-256
+`24cc53361cf3b6e0456bc9b48fddc362d6865ac491376fb203181f3108469f17`.
+
+The layer-output analyzer confirms 44,800 nonzero-priority pixels for layer 3
+(NBG1/EXBG). They occupy rows 84–223 at priority 5. Rows 0–83 have priority 0
+and RGB `(0,0,0)` throughout. Comparing Ymir's layer RGB with the isolated
+Firestaff plane yields exact RGB equality for all 44,800 active pixels;
+249 of the 26,880 upper-row pixels match. The earlier comparison against the
+full Ymir composition is not a valid isolated-layer parity measure and is
+removed here.
+
+The upper-row discrepancy remains unresolved: Firestaff's isolated plane has
+nonzero palette indices in those rows while Ymir's traced NBG1 layer is fully
+transparent. The captured WCTLA–WCTLD window controls are zero, and the PND and
+character bytes checked at the map origin are nonzero. Do not apply a fixed
+84-row clip or enable this decoder as a full-screen compositor until a
+same-frame source or per-scanline state trace explains the difference. VDP1,
+other layer ownership, and full color-calculation composition remain separate
+parity work.
