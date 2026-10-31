@@ -11645,6 +11645,8 @@ static int csb_v1_runtime_object_type_from_thing(
     if (!record || thing_type <= 4 || thing_type >= 14 || thing_size < 4) {
         return -1;
     }
+    /* F0032 maps the record subtype through G0237 ObjectInfo.Type; it does
+     * not return the low-seven-bit subtype stored in the raw Thing word. */
     return dm1_v1_dungeon_get_object_type_from_record_pc34(
         thing_type, record, thing_size);
 }
