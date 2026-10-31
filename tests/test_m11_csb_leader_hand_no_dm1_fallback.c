@@ -700,17 +700,13 @@ int main(void)
         M11_GameView_ClearActingChampion(&state);
 
         /* CSB shares ReDMCSB COMMAND.C G0447 C007..C015 with the PC34
-         * dungeon view.  These visible status boxes must remain live even
-         * though CSB owns a separate runtime profile. */
+         * dungeon view. A right-click on the status box owns the C007
+         * inventory toggle; left C012 champion selection is a separate path. */
         state.inventoryPanelActive = 0;
         check(M11_GameView_HandlePointerButton(
-                  &state, 10, 10, M11_DM1_MOUSE_MASK_LEFT) ==
-                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 1,
-              "CSB status-box click opens its runtime-backed champion inventory");
-        check(M11_GameView_HandlePointerButton(
                   &state, 10, 10, M11_DM1_MOUSE_MASK_RIGHT) ==
-                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 0,
-              "CSB right-click status-box toggle closes the same inventory");
+                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 1,
+              "CSB right-click C007 route opens runtime-backed inventory");
         state.inventoryPanelActive = 1;
 
         check(M11_GameView_GetObjectIconIndexForThing(&state, dagger) == 32,
