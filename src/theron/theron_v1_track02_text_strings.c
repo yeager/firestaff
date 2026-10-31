@@ -10,7 +10,7 @@ static const char *const g_level_names[THERON_TRACK02_LEVEL_COUNT] = {
     "LEVEL 11", "LEVEL 12", "LEVEL 13", "LEVEL 14", "LEVEL 15",
 };
 
-/* UD 0x27713D: quest item retrieval messages (cleaned of control bytes) */
+/* UD 0x27713D: retrieved-item message text; runtime consumer is unproven. */
 static const char *const g_quest_messages[THERON_TRACK02_QUEST_MESSAGE_COUNT] = {
     "THERON has retrieved the Shield Defiant.",
     "THERON has retrieved the Taza Boots.",

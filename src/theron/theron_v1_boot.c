@@ -35,6 +35,7 @@
 
 #include "theron_v1_boot.h"
 #include "theron_v1_asset_loader.h"
+#include "fs_portable_compat.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_theron_media_classify.h"
 #include "theron_v1_mechanics.h"
@@ -1124,13 +1125,19 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
     if (save_dir && save_dir[0]) {
         strncpy(profile->save_root, save_dir, sizeof(profile->save_root) - 1);
     } else {
-        /* Default: <data_dir>/../saves/theron/ */
-        /* Firestaff host namespace is distinct from saves/dm1/, saves/csb/,
-         * saves/dm2/ and saves/nexus/. It is not a retail save path. */
-        snprintf(profile->save_root, sizeof(profile->save_root),
-                 "%s%c..%csaves%ctheron",
-                 profile->asset_root[0] ? profile->asset_root : ".",
-                 TRV_PATH_SEP, TRV_PATH_SEP, TRV_PATH_SEP);
+        char user_data[FSP_PATH_MAX];
+        /* Continue and stage-select Save Game must resolve the same
+         * Firestaff-owned directory, including when XDG_DATA_HOME is set. */
+        if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+            !FSP_JoinPath(profile->save_root, sizeof(profile->save_root),
+                          user_data, "saves/theron")) {
+            /* Preserve the previous fallback if the platform path helper
+             * cannot provide a user-data directory. */
+            snprintf(profile->save_root, sizeof(profile->save_root),
+                     "%s%c..%csaves%ctheron",
+                     profile->asset_root[0] ? profile->asset_root : ".",
+                     TRV_PATH_SEP, TRV_PATH_SEP, TRV_PATH_SEP);
+        }
     }
 }
 

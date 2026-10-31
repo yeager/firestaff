@@ -293,11 +293,25 @@ int theron_v1_startup_encode_pce_bram_theron_record(
  * The authenticated template is read-only and must not resolve to the target.
  * The destination's parent directory must already exist. A verified temporary
  * file is atomically moved into place only after the complete 2 KiB image has
- * been written and reclassified. */
+ * been written and reclassified. A path- and content-bound managed marker is
+ * written only after the destination is installed successfully. */
 int theron_v1_startup_write_pce_bram_theron_record(
     const Theron_V1_World *world,
     const char *template_path,
     const char *destination_path);
+
+/* Managed-save provenance is stored beside a Firestaff-written BRAM and is
+ * bound to its exact 2 KiB contents. A stale/missing sidecar never authorizes
+ * an in-place update. */
+int theron_v1_startup_is_pce_bram_managed_save(const char *save_path);
+
+/* Atomically update an existing Firestaff-managed Continue BRAM in place.
+ * The exact file must have a matching Firestaff-managed marker. Imported or
+ * original user BRAMs require distinct template and destination paths through
+ * the function above. */
+int theron_v1_startup_update_pce_bram_theron_save(
+    const Theron_V1_World *world,
+    const char *save_path);
 
 /* Build the canonical user-save path below a configured Theron save root. */
 int theron_v1_startup_pce_bram_save_path(

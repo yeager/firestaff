@@ -66,7 +66,7 @@ Theron-unique items:
 | 0 | COMPASS | Standard DM1 item |
 | 1 | ILLUMULET | Standard DM1 item |
 | 6 | VORPAL BLADE | **Theron-unique** |
-| 7 | THE RETALIATOR | **Theron quest item** |
+| 7 | THE RETALIATOR | Named in retrieved-item message text below; runtime object and quest mapping unproven |
 | 12 | ROCK | **Theron-unique** (replaces FURY in DM1 table) |
 | 14 | STAFF OF MANAR | **Theron-unique** |
 | 22 | MITHRAL AKETON | **Theron-unique** (replaces TORSO PLATE) |
@@ -111,9 +111,11 @@ TQ contains three distinct item name tables representing different ID namespaces
 null-terminated ASCII strings. This confirms the same 15-level depth structure
 as DM1.
 
-### Quest Retrieval Messages
+### Retrieved-Item Message Strings (consumer mapping unproven)
 
-Seven quest completion messages at UD 0x27713D:
+Seven messages at UD 0x27713D name items as retrieved. This establishes the
+binary strings and their order only; it does not bind a message to a source
+object record, dungeon event, or quest-state mutation.
 
 1. "THERON has retrieved the Shield Defiant."
 2. "THERON has retrieved the Taza Boots."
@@ -241,13 +243,14 @@ parameters:
 - US UD `0x1DA870`: 0, 0, 60, 50, 256, 256, 256, 256 (words)
 - US UD `0x1DA880`: 3, 3, 3, 3, 0, 10, 54, 90 (words)
 
-### Dungeon Lore / Quest Narrative (UD 0x27613E–0x276CCB)
+### Dungeon Lore and Retrieval Narrative (UD 0x27613E–0x276CCB)
 
-7 multi-line narrative blocks describing the backstory and quest objective
-for each dungeon.  Text lines are separated by 0x01, blocks terminated by
-0x00.  Each dungeon corresponds to one creature type and one quest item:
+Seven multi-line narrative blocks describe the backstory and objective for
+each dungeon. Text lines are separated by 0x01, blocks terminated by 0x00.
+The narrative associates the following item names with each dungeon; the
+runtime object records and quest-state consumers remain unproven:
 
-| Dungeon | Creature | Quest Item | Key Locations/NPCs |
+| Dungeon | Creature named in narrative | Item named in narrative | Key Locations/NPCs |
 |---------|----------|------------|---------------------|
 | 0 Ak-Tu-Ba | AKUTUBA | Shield Defiant | Floating fortress, Mummies, sorcerer Alaphalon |
 | 1 Drator's Tower | DRATOR | Taza Boots | Cult of Deaths, warrior/wizard |
@@ -287,5 +290,6 @@ This analysis does NOT establish:
 - Object table format or location
 - Champion stat record format
 - The relationship between the two item tables (DM1-compatible vs Theron-unique)
+- Runtime object identity, retrieval-message consumers, and quest-state effects
 - Creature attribute records (HP, attack, defense, speed — names are proven)
 - Shop price table source offsets

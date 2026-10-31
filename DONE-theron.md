@@ -1,5 +1,100 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — require provenance before in-place BRAM updates
+
+Same-path Save Game updates now require a Firestaff-managed sidecar whose
+content and save-path checksums match the exact BRAM that will be replaced.
+The writer checks that provenance again after reading the template. A valid
+original BRAM placed at the canonical output path without a matching marker is
+rejected and left byte-identical. Distinct-source writes create the marker
+after the classified BRAM has been atomically installed, and successful saves
+use that managed output as the next in-session template.
+
+The authentic US M11 integration test passed with the original Track 02 and
+Ak-Tu-Ba-complete BRAM. It verifies a cold Continue/save cycle, repeat save,
+and fail-closed handling of an unmarked original BRAM at the output path.
+This proves host file handling with authentic game data, not retail PCE SRAM
+parity.
+
+## 2026-10-31 — source-lock System Card RUN callback boundary
+
+Updated the current Theron status, readiness and reference pages to document
+the authentic cold Japanese System Card trace: `$1800=$C8`, `$1801=$04`,
+callback byte `$2259=$04`, then BIOS branch `$E166->$E176`. Added the bounded
+`$EA3B` disassembly reference and linked the trace from the documentation
+index and parity matrix. The capture has no `SELECT` event, `$E174`, `$E11D`,
+`$E130`, `$E209`, or confirmed game-owned handoff, so no gameplay or parity
+claim is made.
+
+This is a documentation and evidence-index update; it adds no runtime
+behavior and does not close the handoff TODO.
+
+## 2026-10-31 — round-trip a Track 02 item through native M11 input
+
+Extended `theron_v1_m11_real_bram_continue` to find a reachable,
+source-authenticated carryable object in the loaded US Track 02 map, route the
+party to it with native movement and turn inputs, and picks it up through
+`M12_MENU_INPUT_PICKUP_ITEM`. The test then drops it through the M11 input
+path. It verifies inventory retains the same source ref, category, source
+index, property bytes, and complete raw record; the same source record returns
+to the floor; and the inventory slot is freed. Quest progress stays unchanged
+because the original T900 quest-artifact consumer is not proven.
+
+Three TRV2 loops passed with authentic US Track 02 and the authentic
+Ak-Tu-Ba-complete BRAM. This proves the host's real-media M11 input and
+provenance path; it does not claim retail pickup parity or quest-item identity.
+
+The same probe removes the authenticated BRAM override and starts a fresh
+native campaign from the authentic US Track 02 title. It selects Ak-Tu-Ba,
+admits the real roster through the Soul Room, and enters source-verified level 0
+without a Continue claim or fabricated quest progress. The probe gives this
+leg separate temporary HOME, XDG_DATA_HOME, and APPDATA roots so an earlier
+Continue output cannot masquerade as a fresh start. This fresh-start route
+also passed the three TRV2 loops.
+
+Added a Japanese counterpart, `theron_v1_m11_jp_fresh_start`, using the
+authentic JP Track 02 BIN. It verifies the eight decoded source roster names,
+selects Theron through the Soul Room, and enters source-header-verified
+Ak-Tu-Ba level 0 with quest progress unchanged. The warning-as-error macOS
+build and three consecutive real-media CTest runs passed after rebasing onto
+the latest PR commits. The JP BIN and isolated test data stayed on the external
+disk; this is Firestaff startup-path evidence, not full retail parity.
+
+The Track 02 binary-analysis notes now label the seven retrieved-item strings
+as message text only. They no longer claim a runtime item-to-message or
+quest-state mapping; the original T900 consumer remains unbound.
+
+## 2026-10-31 — write authentic BRAM from the between-stage save input
+
+Connected Theron's Save Game input to the existing source-bound original BRAM
+writer only at the stage-selection boundary with campaign progress and a
+classifier-verified authentic BRAM template. The writer saves to the user's
+`saves/theron/theron-original.bram`; a loaded dungeon still reports that
+in-dungeon saves are unavailable. A real-media M11 integration assertion
+checks that the Continue state creates a correctly sized, classified original
+BRAM image, that dungeon Save Game input leaves that output byte-identical,
+and that the authenticated input BRAM hash remains unchanged. The wrapper
+isolates user data under a temporary home directory. Built on TRV2 and ran
+`theron_v1_m11_real_bram_continue` three times; all three loops passed against
+the authentic US Track 02 and Ak-Tu-Ba-complete BRAM. Reopening the newly
+written BRAM in a fresh native M11 launch now selects Continue and restores
+the campaign byte, seven attributes, and twenty temporary/persistent skill
+experience pairs from the classified output. The subsequent XDG Continue and
+repeat-save check is recorded below; regional save coverage remains open.
+
+## 2026-10-31 — resume and update the default XDG Continue save
+
+Aligned the default Theron Continue root with the `FSP_GetUserDataDir()` path
+used by stage-select Save Game, so an `XDG_DATA_HOME` outside the asset tree
+does not hide the generated BRAM. A resumed Firestaff-managed BRAM now uses
+the same verified temporary-file and atomic-replace flow for another save;
+the normal writer still rejects template/destination aliases for imported or
+original BRAMs. Extended `theron_v1_m11_real_bram_continue` to find the prior
+save through default lookup with the original-BRAM override unset, verify the
+resolved XDG path, and save again. The focused CTest passed locally using the
+authentic US Track 02 and Ak-Tu-Ba-complete BRAM with isolated user data. This
+does not establish retail-device SRAM behavior.
+
 ## 2026-10-31 — continue authentic US BRAM into the next native dungeon
 
 On TRV2, built the existing `theron_v1_m11_real_bram_continue` integration
@@ -104,6 +199,23 @@ private on TRV2; hashes, listings, and limits are in
 `docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm`.
 This closes the bounded BIOS-disassembly task only; native Theron gameplay
 support remains open in `TODO-theron.md`.
+
+Re-reading the v22 callback-state and bootstrap traces showed the live
+`$E14C` decisions: `$2259=$00` let `$E166` continue through the
+`$226A/$226B` comparison, then `$EA50` wrote `$04` to `$2259`; the following
+`$E166` branched to `$E176`. This cold replay scheduled RUN only, with no
+SELECT event. The observed byte therefore cannot be treated as a
+SELECT-specific marker. No `$E174/$E11D` clear-carry launch was captured. The
+source-lock note records event sequences and exact trace hashes; this refines
+the BIOS branch evidence but does not establish gameplay or native parity.
+
+The expanded r5 RUN-only capture provides the source-ordered I/O join:
+`$1800=$C8` at `$EA3B`, `$1801=$04` at `$EA4D`, then `$2259=$04` at `$EA50`,
+followed by `$E166->$E176`. The three access events share the verified event
+sequence and authentic System Card opcode mapping. This binds `$2259`'s value
+to the preceding System Card port read in that execution, with no SELECT event
+scheduled. It still records no `$E174/$E11D` clear-carry launch. Detailed row
+numbers, limits, hashes, and the remaining gaps are in the source-lock note.
 
 ## 2026-10-30 — source-correlate `$4000` instruction-start snapshots
 

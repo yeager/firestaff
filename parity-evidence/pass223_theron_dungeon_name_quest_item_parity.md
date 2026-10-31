@@ -1,9 +1,12 @@
-# Pass 223 — Theron Dungeon Name and Quest Item Parity
+# Pass 223 — Theron Dungeon Names and Retrieval-Message Text
 
 ## Summary
 
-Replace synthetic dungeon names and quest item ordering with
-binary-verified data from US Track 02 BIN.
+Replace synthetic dungeon names and retrieved-item message text with
+binary-verified strings from the US Track 02 BIN. The message sequence does not
+identify the runtime object records that trigger those messages or prove their
+quest-state effects; see
+[`theron_t900_proof_2026-08-08.md`](../docs/source-lock/theron_t900_proof_2026-08-08.md).
 
 ## Source
 
@@ -26,9 +29,10 @@ binary-verified data from US Track 02 BIN.
 Dungeon 1 (Hall of Records) name comes from the stage-select menu,
 not this table.
 
-## Quest Item Ordering (UD 0x27713D)
+## Retrieval-Message Text Order (UD 0x27713D)
 
-Retrieval messages "THERON has retrieved the X" appear in dungeon order:
+These seven strings appear in this source-text order. Their indexes are not
+proven to be runtime item IDs, dungeon IDs, or quest-state indexes.
 
 | Index | UD Offset  | Item            |
 |-------|-----------|-----------------|
@@ -90,7 +94,8 @@ through 0x7A ('z'). Top-to-bottom row order, MSB-left bit order.
 
 ## Versions
 
-- v3.0.223: Dungeon names, quest item ordering, viewport wiring
+- v3.0.223: Dungeon names and retrieval-message text order; runtime quest
+  mapping remains unproven; viewport wiring
 - v3.0.224: Object action names, save/delete strings
 - v3.0.225: Track 19 runtime item name table (69 items)
 - v3.0.226: Level descriptor table, save menu font

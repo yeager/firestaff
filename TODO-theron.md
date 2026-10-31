@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — cold System Card RUN still has no game-owned handoff
+
+The authentic Japanese `run@480:300` reference capture binds `$1800=$C8`,
+`$1801=$04`, the callback store `$2259=$04`, and BIOS continuation
+`$E166->$E176`. It records no `SELECT` event and no `$E174`, `$E11D`,
+`$E130`, or `$E209` receipt. Do not infer `$2259` semantics, a title-menu
+action, or game launch from this firmware path. Continue tracing until a
+source-authenticated transfer reaches game-owned code and input polling; then
+compare that path against native Firestaff. Evidence and bounded disassembly:
+[`System Card RUN trace`](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary),
+[`$EA3B` listing](docs/source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm).
+
 ## Remaining end-to-end work, ordered by dependency
 
 The dated entries below retain current capture results and limits. This short
@@ -8,6 +20,44 @@ from this file, while their source-lock files remain in the repository.
 Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
+
+2026-10-31 native startup and item lifecycle loop:
+`theron_v1_m11_real_bram_continue` now verifies a fresh US campaign through
+Ak-Tu-Ba, the authentic roster/Soul Room, and source-verified level 0. Its
+Continue branch separately routes to dungeon 2 and exercises movement, turning,
+pickup, and drop through the M11 input API. Three TRV2 loops verify complete
+source-record/property preservation and release of the inventory slot; quest
+progress remains unchanged. This proves real-data native host paths, not retail
+parity. Quest artifact identity, retrieval messaging, dungeon exit, and
+campaign completion still require the original T900 consumer. Do not map the
+parallel quest-name type indices to quest bits: authentic US/JP tables contain
+repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
+and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
+The pass 215/223 binary-analysis notes describe the retrieved-item strings as
+text evidence only; runtime object identity and quest-state effects remain
+open.
+
+The JP counterpart, `theron_v1_m11_jp_fresh_start`, now covers the authentic
+title-to-level-0 path independently. It compares all eight decoded roster
+names, confirms Theron is admitted, and requires a source-verified level header
+with zero quest progress. The warning-as-error build and three repeated CTest
+runs passed against the hash-locked original JP BIN. This does not prove JP
+Continue/save semantics, retail input parity, or full gameplay parity.
+
+2026-10-31 save-resume follow-up: the default Continue root now uses the same
+`FSP_GetUserDataDir()/saves/theron` directory as Save Game, including when
+`XDG_DATA_HOME` is set. Same-path updates now require a Firestaff-written
+`.firestaff-managed` sidecar bound to both the exact BRAM bytes and save path;
+the writer rechecks the marker against the bytes it is about to replace.
+Unmarked or stale-marker original BRAMs are rejected without replacement.
+Distinct-source saves retain the alias guard and move the in-session template
+to the verified managed output after a successful save.
+`theron_v1_m11_real_bram_continue` passed locally against authentic US Track 02
+and Ak-Tu-Ba-complete BRAM data with XDG data isolated outside the asset root.
+It verifies repeated Continue/save and that an unmarked authentic BRAM at the
+canonical destination remains byte-identical after a rejected update. This
+validates host persistence and startup lookup, not retail hardware or PCE SRAM
+parity.
 
 2026-10-30 v11 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
 System Card 3.0 produced 40 dispatch windows and 10,030 runtime fetch rows at
@@ -136,6 +186,23 @@ Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
 
+The v22 bootstrap rows also show the `$E14C` branch sequence: with `$2259=$00`,
+`$E166` falls through to the `$226A/$226B` counter comparison; later `$EA50`
+writes `$04` to `$2259`, and the next `$E166` takes `$E176`. The replay had no
+scheduled SELECT event, so `$2259=$04` alone must not be labeled as SELECT
+evidence. The capture did not reach `$E174`, `$E11D`, `$E209`, or `$E130` before
+the row cap. The branch and value provenance are documented in the [JP System
+Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+
+The r5 RUN-only trace now joins the branch byte to its preceding BIOS I/O:
+`$EA3B` read `$1800=$C8` (event 10510), `$EA4D` read `$1801=$04` (event
+10517), and `$EA50` copied `$04` to `$2259` (event 10519). `$E166` later
+branched to `$E176`; no `$E174/$E11D` clear-carry launch was observed. Keep
+following the authentic CD command/status path and carry checks until the BIOS
+handoff reaches a source-bound game-owned consumer and gameplay transition.
+Receipts and hashes are in the [JP System Card Run source-lock
+note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+
 The bounded `$1800-$1803` I/O and `$224C-$2255`, `$2273-$2280`, `$22A4`
 memory observer has now been used in the r5 capture. Its offline verifier
 requires the authenticated System Card image and checks each event's access
@@ -184,9 +251,12 @@ a dummy SDL display and produced no rendered-game frame.
    title and is not a Continue test. Extend the proven transaction to all
    regional save cases and bind later quest artifacts and their pickup, exit,
    chapter transition, and completion consumers. Keep the campaign-completion
-   bit distinct from
-   quest-item collection. Connect the source-gated writer only to proven
-   progress, then reopen the changed save in the original runtime. The
+   bit distinct from quest-item collection. The native Save Game input now
+   writes the classified original-format BRAM at the between-stage boundary,
+   remains blocked in a loaded dungeon, and a fresh native M11 Continue
+   restores the proven campaign and champion fields from that written file.
+   Continue with all regional save cases and reopen the changed save in the
+   original runtime. The
    [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
    records the currently authenticated structure and limits.
 3. **Complete source-bound presentation and event output.** Bind gameplay
