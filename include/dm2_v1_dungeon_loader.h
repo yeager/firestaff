@@ -1763,7 +1763,8 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     DM2_V1_CLightStoneRoomReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
  * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
- * is absent. The source summary retains ceiling word FF. */
+ * is absent. The source summary retains ceiling word FF; a following
+ * DBE/DBF tail is admitted for sklight's separate darkness accumulator. */
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);

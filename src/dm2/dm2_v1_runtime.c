@@ -2235,6 +2235,7 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
     int16_t creature = (int16_t)0xffff;
     unsigned length = 0u;
     uint16_t light_word = 0u;
+    int32_t record_darkness = 0;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
         !rt->record_pools_valid || (room->raw_tile >> 5) != 5u)
         return 0;
@@ -2254,10 +2255,30 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
             if (creature != (int16_t)0xffff) return 0;
             creature = link;
         }
-        if (type == 14u || type == 15u) return 0;
+        if (type == 14u || type == 15u) {
+            const DM2_V1_RecordPool *pool =
+                &rt->record_pools.pools[type];
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, link);
+            uint16_t word_2;
+            int16_t term;
+            if (!record || pool->record_size < (type == 14u ? 5 : 4))
+                return 0;
+            word_2 = rt->record_pools.source_words_big_endian
+                ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                : (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+            if (!dm2_v1_mode7_record_darkness_term(
+                    (uint8_t)type, word_2,
+                    type == 14u ? record[4] : 0u, &term)) return 0;
+            record_darkness += term;
+            if (record_darkness < INT16_MIN ||
+                record_darkness > INT16_MAX) return 0;
+        }
         link = next;
     }
-    evidence->record_chain_known_no_darkness = 1u;
+    evidence->record_chain_known = 1u;
+    evidence->record_darkness = (int16_t)record_darkness;
+    evidence->record_chain_known_no_darkness = record_darkness == 0;
     evidence->creature_query_known = 1u;
     if (creature != (int16_t)0xffff) {
         uint8_t cls1 = dm2_runtime_attack_cls1(rt, (uint16_t)creature);

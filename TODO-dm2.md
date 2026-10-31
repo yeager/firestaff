@@ -1,5 +1,15 @@
 # Firestaff TODO — DM2
 
+2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
+The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
+tails with source byte order and a 256-link limit. DBE selector `FF80` and DBF
+selectors `2`/`30` feed `v1e0978` using `table1d673d` and the source minimum of
+two, separately from creature F8. Focused term/accumulator checks, the DOS
+real-DUNGEON descriptor receipt, and the FM Towns M11 real-media gameplay test
+pass. The Towns test exercises its established map-3/map-38 lane but does not
+prove a retail nonzero DBE/DBF encounter. Other record-derived branches and
+dynamic-light starts on DOS, Amiga and Macintosh remain open.
+
 2026-10-30 Amiga HUD movement arrows: the authentic no-game Amiga runtime
 trace showed the source HUD plan had only the squad panel and party portraits;
 all six movement arrows were absent. SKProject

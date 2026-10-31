@@ -1026,7 +1026,18 @@ static void test_mode7_flags3_prepass_evidence(void)
     DM2_V1_CLightStoneRoomReceipt room;
     DM2_V1_Mode7Flags3Evidence evidence;
     DM2_V1_Mode7Action23Node node;
-    int16_t ambient = 0, darkness = 0;
+    int16_t ambient = 0, darkness = 0, term = 0;
+    assert(dm2_v1_mode7_record_darkness_term(14u, 0xff80u, 100u,
+                                             &term) && term == 5);
+    assert(dm2_v1_mode7_record_darkness_term(14u, 0u, 100u,
+                                             &term) && term == 0);
+    assert(dm2_v1_mode7_record_darkness_term(15u, 0x6402u, 0u,
+                                             &term) && term == 50);
+    assert(dm2_v1_mode7_record_darkness_term(15u, 0x6430u, 0u,
+                                             &term) && term == 50);
+    assert(dm2_v1_mode7_record_darkness_term(15u, 0x6403u, 0u,
+                                             &term) && term == 0);
+    assert(!dm2_v1_mode7_record_darkness_term(4u, 0u, 0u, &term));
     memset(&room, 0, sizeof(room));
     memset(&evidence, 0, sizeof(evidence));
     memset(&node, 0, sizeof(node));
@@ -1081,6 +1092,15 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.record_chain_known_no_darkness = 1u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 192 && darkness == 0);
+    evidence.record_chain_known_no_darkness = 0u;
+    evidence.record_chain_known = 1u;
+    evidence.record_darkness = 100;
+    node.distance = 1u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 192 && darkness == 90); /* c_light.cpp:470-481, loss 10. */
+    evidence.record_chain_known = 0u;
+    evidence.record_darkness = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
 
     /* SKULLWIN/c_light.cpp:455-481 zeros vw_24 beyond distance 8 but still
      * attenuates creature F8 into RG6 with table1d673d[5] and a floor of 2. */

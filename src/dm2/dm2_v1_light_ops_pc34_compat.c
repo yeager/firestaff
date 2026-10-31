@@ -342,7 +342,7 @@ static int dm2_v1_mode7_flags3_floor_terms(
     const DM2_V1_Mode7Flags3Evidence *evidence,
     uint8_t weather_index, uint8_t weather_delta,
     int16_t *tile_light, int16_t *weather_light,
-    int16_t *creature_light)
+    int16_t *creature_light, int16_t *record_darkness)
 {
     static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
     uint16_t light;
@@ -354,15 +354,18 @@ static int dm2_v1_mode7_flags3_floor_terms(
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           ((room->raw_tile >> 5) == 5u &&
            ((room->first_record_link >> 10) & 0x0fu) == 1u &&
-           evidence && evidence->record_chain_known_no_darkness)) ||
+           evidence && (evidence->record_chain_known ||
+                        evidence->record_chain_known_no_darkness))) ||
         (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !evidence || !evidence->valid ||
         !evidence->teleporter_detail_known ||
         !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
-        !tile_light || !weather_light || !creature_light) return 0;
+        !tile_light || !weather_light || !creature_light ||
+        !record_darkness) return 0;
     *tile_light = 0;
     *weather_light = 0;
     *creature_light = 0;
+    *record_darkness = 0;
     /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
      * before flags 2 reads the live creature F8 term. A class-1/2 no-record
      * room proves the DBE/DBF darkness chain empty for this narrow branch. */
@@ -381,6 +384,32 @@ static int dm2_v1_mode7_flags3_floor_terms(
     }
     if (evidence->creature_present)
         *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
+    if ((room->raw_tile >> 5) == 5u) {
+        if (evidence->record_chain_known)
+            *record_darkness = evidence->record_darkness;
+        else if (!evidence->record_chain_known_no_darkness)
+            return 0;
+    }
+    return 1;
+}
+
+int dm2_v1_mode7_record_darkness_term(
+    uint8_t record_type, uint16_t word_2, uint8_t byte_4,
+    int16_t *out_term)
+{
+    int term = 0;
+    if (!out_term || (record_type != 14u && record_type != 15u)) return 0;
+    if (record_type == 14u) {
+        /* SKULLWIN/c_light.cpp:386-397: DBE needs selector FF80. */
+        if (word_2 == 0xff80u) term = (int)(byte_4 / 2u) - 45;
+    } else {
+        /* SKULLWIN/c_light.cpp:398-405: DBF selectors 2/30 contribute half the
+         * high byte; every other selector is ignored. */
+        uint16_t selector = word_2 & 0x007fu;
+        if (selector == 2u || selector == 0x30u)
+            term = (int)((word_2 >> 8) / 2u);
+    }
+    *out_term = (int16_t)term;
     return 1;
 }
 
@@ -389,7 +418,7 @@ int dm2_v1_mode7_on_node(
     int16_t *v1e0974, int16_t *v1e0978)
 {
     int16_t tile_light = 0, darkness = 0, weather_light = 0;
-    int16_t creature_light = 0;
+    int16_t creature_light = 0, record_darkness = 0;
     if (!node || !v1e0974 || !v1e0978) return -1;
     if (node->source_flags != 3u && node->source_flags != 4u) return -1;
     /* Both SK1C9A action-23 call sites test v1e08ae bit 0x10 before
@@ -409,7 +438,8 @@ int dm2_v1_mode7_on_node(
             !dm2_v1_mode7_flags3_floor_terms(
                 node->stone_room, node->prepass,
                 node->weather_index, node->weather_delta,
-                &tile_light, &weather_light, &creature_light)) return -1;
+                &tile_light, &weather_light, &creature_light,
+                &record_darkness)) return -1;
         /* sklight.cpp:455-481: ceiling/teleporter light (vw_24) uses
          * table1d672b and becomes zero past distance 8. Creature F8 light
          * remains in RG6, uses table1d673d, and still contributes past 8. */
@@ -420,7 +450,8 @@ int dm2_v1_mode7_on_node(
                                                (uint16_t)weather_light);
             if (node->distance > 8u) ceiling_light = 0;
             return dm2_v1_mode7_light_accumulate_tile(
-                node->distance, creature_light, 0, ceiling_light,
+                node->distance, creature_light, record_darkness,
+                ceiling_light,
                 v1e0974, v1e0978) ? 1 : -1;
         }
     }

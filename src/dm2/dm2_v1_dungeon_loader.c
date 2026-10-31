@@ -6786,6 +6786,7 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     uint16_t first, sensor, creature, end, sensor_word;
     uint16_t graphics_word = 0u;
     int type, index, size, raw, graphicsset;
+    unsigned tail_length = 0u;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!d || !loader || !loader->loaded) return 0;
@@ -6806,15 +6807,28 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     db4 = dm2_v1_dungeon_get_thing_record(d, creature, &type, &index, &size);
     if (!db4 || type != 4 || size < 2) return 0;
     end = dm2_v1_dungeon_read_record_u16(d, db4);
-    if (end != DM2_THING_END_MARKER) return 0;
+    /* sklight.cpp:386-405 also consumes DBE/DBF links after the summarized
+     * DB0..DB3 prefix. Admit only those known light-record tail classes. */
+    while (end != DM2_THING_END_MARKER) {
+        const uint8_t *tail;
+        int tail_type, tail_index, tail_size;
+        if (++tail_length > 256u ||
+            (((end >> 10) & 0x0fu) != 14u &&
+             ((end >> 10) & 0x0fu) != 15u)) return 0;
+        tail = dm2_v1_dungeon_get_thing_record(
+            d, end, &tail_type, &tail_index, &tail_size);
+        if (!tail || tail_type != (int)((end >> 10) & 0x0fu) ||
+            tail_size < (tail_type == 14 ? 5 : 4)) return 0;
+        end = dm2_v1_dungeon_read_record_u16(d, tail);
+    }
     graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
     if (graphicsset < 0 || graphicsset > 15 ||
         dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
                                             0x6b, &graphics_word)) return 0;
     /* skguivwp.cpp:2630-3077: b0 becomes summary type 1. With no GDAT
      * 0x6b and a DB3 0x27 for another map, word 5 stays initialized FF.
-     * DB4 ends the DB0..DB3 summary loop, then GET_CREATURE_AT handles it
-     * separately in sklight.cpp. */
+     * DB4 ends the DB0..DB3 summary loop; sklight.cpp then handles the
+     * creature separately and scans the admitted DBE/DBF tail for darkness. */
     out->level = level;
     out->x = x;
     out->y = y;

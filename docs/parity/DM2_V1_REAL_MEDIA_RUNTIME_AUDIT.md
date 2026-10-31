@@ -79,6 +79,22 @@ is a confirmed platform-coverage gap for skproject
 the gameplay function. Extend the complete walk/evidence contract with
 platform-specific real-media start states before enabling those runtime lanes.
 
+### DBE/DBF darkness terms in dynamic c_light (2026-10-31)
+
+The skproject `SKULLWIN/c_light.cpp:386-405, 470-481` scan contributes
+selector-qualified DBE/DBF record values to `v1e0978`, then applies the
+`table1d673d` distance loss with the source minimum of two. Firestaff now
+decodes DBE `FF80` byte-4 terms and DBF selector `2`/`30` high-byte terms,
+walks the live record chain with edition byte order and a 256-link bound, and
+feeds the result to the darkness accumulator independently of creature F8.
+The class-5 source receipt admits only DBE/DBF tails after the authenticated
+DB1/DB3/DB4 prefix. Unit regressions cover selector decoding and the separate
+distance accumulator; the existing FM Towns real-media M11 gameplay test and
+DOS descriptor receipt test pass. The FM Towns test proves its established
+map-3/map-38 runtime route, but does not claim that a retail cell with a
+nonzero DBE/DBF term was encountered. DOS, Amiga, and Macintosh dynamic
+runtime starts and DBE/DBF original-media encounters remain open.
+
 ### Original DOS capture intake (2026-08-31)
 
 The external DOSBox capture harness now accepts the supplied
