@@ -133,6 +133,17 @@ The generator rejects a checkout whose `HEAD` differs from the locked commit.
 The resulting names and locations are still discovery evidence; review each
 row's behavior and Firestaff caller before changing its disposition.
 
+The open queue combines the disposition ledger with the unreviewed source
+definitions:
+
+```sh
+python3 tools/symbol_backlog.py --game DM2 --reference skproject
+```
+
+At this revision it reports 3,106 open rows: 3,097 unreviewed `SKWINSPX` and
+`SKWINDOS` definitions plus 9 unresolved rows from the older disposition
+ledger. Exact-name overlap is shown only as a candidate for source comparison.
+
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
   END { print rows, count["IMPLEMENTED_PARITY"], count["NOT_APPLICABLE_ARCH"],
