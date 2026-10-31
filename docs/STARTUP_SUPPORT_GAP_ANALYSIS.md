@@ -1,7 +1,7 @@
 # Five-game startup support gap analysis
 
-Evidence metadata refreshed on 2026-10-30 for `main` at
-`79568c536b3a4e766d8a2359f63257cdc74b7a53`. The latest published release is
+Evidence metadata refreshed on 2026-10-31 against the `main` source baseline
+`4f74568d94bcc570feca7efaa90dfe2aa3094559`. The latest published release is
 v3.0.421 (published 2026-10-30 from tag commit
 `6e4b9a5a86fb12624305be0e1d91d256d0b64141`); current `main` contains later
 menu-test, documentation and CLI diagnostic changes that are not in that
@@ -239,6 +239,13 @@ the named menu and runtime routes only, not native rendering or full gameplay.
 GitHub Actions run
 [`41178574316`](https://github.com/yeager/firestaff/actions/runs/41178574316)
 completed successfully for `751e98d`.
+
+Also on 2026-10-31, `m12_main_menu_csb_fmtowns_default_with_amiga_real_media`
+passed in 123.08 seconds. With authentic CSB FM Towns and Amiga 3.3 archives
+present together, the no-game menu selected FM Towns on first selection and
+after Back/reselection, and reached the authenticated CSB runtime. Both
+original archives retained their pre-test hashes. This checks CSB's menu
+platform default in a mixed-media root, not full Amiga or FM Towns parity.
 
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
