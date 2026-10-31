@@ -158,6 +158,45 @@ typedef struct {
 } Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt;
 
 typedef struct {
+    unsigned int first_output_row;
+    unsigned int row_count;
+    uint32_t scroll_h_11_8;
+    uint32_t scroll_v_11_8;
+    uint16_t increment_h_8_8;
+    uint16_t increment_v_8_8;
+} Nexus_V1_Vdp2YmirNbg0RowState;
+
+typedef struct {
+    const uint8_t *vdp1_display_framebuffer;
+    size_t vdp1_display_framebuffer_size;
+    const uint8_t *vdp2_vram;
+    size_t vdp2_vram_size;
+    const uint8_t *vdp2_cram;
+    size_t vdp2_cram_size;
+    const uint8_t *vdp2_registers;
+    size_t vdp2_registers_size;
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    const Nexus_V1_Vdp2YmirNbg0RowState *row_states;
+    size_t row_state_count;
+    int original_ymir_capture_verified;
+    int row_states_verified;
+} Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int row_states_verified;
+    int width;
+    int height;
+    int nbg0_pixels;
+    int vdp1_pixels;
+    int uncovered_rows;
+} Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt;
+
+typedef struct {
     int valid;
     int capture_only;
     int renderer_permitted;
@@ -220,5 +259,13 @@ int nexus_v1_vdp2_capture_replay_ymir_title_prompt(
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
     const Nexus_V1_Vdp2YmirTitlePromptCaptureInput *input,
     Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt *out_receipt);
+
+/* Capture-only NBG0 bitmap replay using Ymir's live per-row scroll and
+ * coordinate increments. Uncovered rows fall back to captured final
+ * registers; caller must bind row states to the retained emulator trace. */
+int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput *input,
+    Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt *out_receipt);
 
 #endif

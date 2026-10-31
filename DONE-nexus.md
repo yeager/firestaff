@@ -1,5 +1,22 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-31 — Replay authentic NBG0 live-row scrolling
+
+- Added a capture-only NBG0 bitmap sampler that consumes verified Ymir
+  per-row scroll and coordinate increments, falling back to the captured
+  register snapshot on rows without live state.
+- The retained authentic Japanese intro capture reproduces all 71,680
+  screenshot samples exactly when the live `0x1f79/0x0bcd` scroll state is
+  applied to rows 4–116. The prior final-register replay matched 70,454.
+- The real-data CTest pins the VDP1/VDP2 dumps, screenshot, and retained
+  baseline replay. The replay receipt reports 21,455 NBG0-selected pixels and
+  50,225 VDP1-selected pixels; the prior replay matched 70,454 screenshot
+  samples, while the scanline replay matches 71,680/71,680.
+- This remains capture-only; a screenshot match does not by itself prove a
+  source-to-VRAM timing join or authorize production renderer admission.
+  Evidence and reproduction are in
+  [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
+
 ## 2026-10-30 — Exact Ymir VDP1 replay for one captured frame
 
 - The capture-only integer stepper replays 124 indexed mode-1 distorted

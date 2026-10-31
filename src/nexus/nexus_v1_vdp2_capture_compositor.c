@@ -452,6 +452,126 @@ int nexus_v1_vdp2_capture_replay_ymir_title_prompt(
     return 1;
 }
 
+int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput *input,
+    Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt receipt;
+    const uint8_t *registers;
+    uint16_t base_h, base_v, inc_h, inc_v;
+    size_t state_index;
+    unsigned int y, x;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.width = (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH;
+    receipt.height = (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !input || !input->vdp1_display_framebuffer ||
+        !input->vdp2_vram || !input->vdp2_cram || !input->vdp2_registers ||
+        !input->row_states || input->row_state_count == 0U ||
+        input->vdp1_display_framebuffer_size != NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES ||
+        input->vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        input->vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        input->vdp2_registers_size < 0x120U ||
+        input->register_byte_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+        !input->original_ymir_capture_verified || !input->row_states_verified) return 0;
+
+    registers = input->vdp2_registers;
+#define SCAN_REG(offset) read_register16_ordered(registers, (offset), input->register_byte_order)
+    if (SCAN_REG(0x00U) != 0x8000U || SCAN_REG(0x0eU) != 0x0300U ||
+        (SCAN_REG(0x20U) & 1U) == 0U ||
+        (SCAN_REG(0x28U) & 0x0013U) != 0x0013U ||
+        SCAN_REG(0x2cU) != 0U || SCAN_REG(0x3cU) != 0U ||
+        SCAN_REG(0xe4U) != 0U || (SCAN_REG(0xf8U) & 7U) != 4U ||
+        SCAN_REG(0xecU) != 0x0043U || SCAN_REG(0x100U) != 0x1010U) return 0;
+    base_h = (uint16_t)(((SCAN_REG(0x70U) & 0x07ffU) << 8U) |
+                        (SCAN_REG(0x72U) >> 8U));
+    base_v = (uint16_t)(((SCAN_REG(0x74U) & 0x07ffU) << 8U) |
+                        (SCAN_REG(0x76U) >> 8U));
+    inc_h = (uint16_t)(((SCAN_REG(0x78U) & 7U) << 8U) |
+                       (SCAN_REG(0x7aU) >> 8U));
+    inc_v = (uint16_t)(((SCAN_REG(0x7cU) & 7U) << 8U) |
+                       (SCAN_REG(0x7eU) >> 8U));
+    if (inc_h == 0U || inc_v == 0U) return 0;
+    receipt.registers_verified = 1;
+
+    for (state_index = 0U; state_index < input->row_state_count; ++state_index) {
+        const Nexus_V1_Vdp2YmirNbg0RowState *state = &input->row_states[state_index];
+        if (state->row_count == 0U || state->first_output_row >= NEXUS_V1_VDP2_YMIR_MENU_HEIGHT ||
+            state->row_count > NEXUS_V1_VDP2_YMIR_MENU_HEIGHT - state->first_output_row ||
+            state->increment_h_8_8 == 0U || state->increment_v_8_8 == 0U) return 0;
+        for (size_t prior = 0U; prior < state_index; ++prior) {
+            const Nexus_V1_Vdp2YmirNbg0RowState *other = &input->row_states[prior];
+            unsigned int a_end = state->first_output_row + state->row_count;
+            unsigned int b_end = other->first_output_row + other->row_count;
+            if (state->first_output_row < b_end && other->first_output_row < a_end)
+                return 0;
+        }
+    }
+
+    for (y = 0U; y < NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++y) {
+        const Nexus_V1_Vdp2YmirNbg0RowState *state = NULL;
+        uint32_t scroll_h = base_h, scroll_v = base_v;
+        uint16_t row_inc_h = inc_h, row_inc_v = inc_v;
+        for (state_index = 0U; state_index < input->row_state_count; ++state_index) {
+            const Nexus_V1_Vdp2YmirNbg0RowState *candidate = &input->row_states[state_index];
+            if (y >= candidate->first_output_row && y < candidate->first_output_row + candidate->row_count) {
+                state = candidate;
+                break;
+            }
+        }
+        if (state) {
+            scroll_h = state->scroll_h_11_8; scroll_v = state->scroll_v_11_8;
+            row_inc_h = state->increment_h_8_8; row_inc_v = state->increment_v_8_8;
+        } else {
+            ++receipt.uncovered_rows;
+        }
+        for (x = 0U; x < NEXUS_V1_VDP2_YMIR_MENU_WIDTH; ++x) {
+            uint32_t source_x_fp = scroll_h + (uint32_t)x * row_inc_h;
+            uint32_t source_y_fp = scroll_v + (uint32_t)y * row_inc_v;
+            unsigned int source_x = (source_x_fp >> 8U) & 0x1ffU;
+            unsigned int source_y = (source_y_fp >> 8U) & 0xffU;
+            size_t source = (size_t)source_y * 512U + source_x;
+            size_t dest = (size_t)y * NEXUS_V1_VDP2_YMIR_MENU_WIDTH + x;
+            uint8_t index = input->vdp2_vram[source];
+            size_t sprite_source = (size_t)y * 512U + x;
+            uint16_t sprite = read_be16(input->vdp1_display_framebuffer + sprite_source * 2U);
+            uint32_t lower = (sprite & 0x8000U) ? capture_rgb555(sprite) : UINT32_C(0xff000000);
+            if (index != 0U) {
+                uint16_t top = read_be16(input->vdp2_cram + (size_t)index * 2U);
+                uint32_t ratio = 31U - (SCAN_REG(0x108U) & 31U);
+                {
+                    uint32_t top_rgb = capture_rgb555(top);
+                    uint32_t channels[3];
+                    unsigned int shifts[3] = {16U, 8U, 0U};
+                    unsigned int c;
+                    for (c = 0U; c < 3U; ++c) {
+                        int hi = (int)((top_rgb >> shifts[c]) & 0xffU);
+                        int lo = (int)((lower >> shifts[c]) & 0xffU);
+                        int value = lo + (((hi - lo) * (int)ratio) >> 5);
+                        channels[c] = (uint32_t)(value < 0 ? 0 : value > 255 ? 255 : value);
+                    }
+                    framebuffer->rgba_buffer[dest] = UINT32_C(0xff000000) |
+                        (channels[0] << 16U) | (channels[1] << 8U) | channels[2];
+                }
+                ++receipt.nbg0_pixels;
+            } else {
+                framebuffer->rgba_buffer[dest] = lower;
+                ++receipt.vdp1_pixels;
+            }
+        }
+    }
+    receipt.original_ymir_capture_verified = 1;
+    receipt.row_states_verified = 1;
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef SCAN_REG
+    return 1;
+}
+
 int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
     const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
