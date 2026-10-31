@@ -604,9 +604,24 @@ static int dm2_v1_asset_load_image_local_palette(
         }
         return !out_hash || *out_hash != 0u;
     }
-    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE ||
-        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian) ||
-        bpp != 4u) {
+    if (!raw ||
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) {
+        return 0;
+    }
+    /* SKWIN/c_querydb.cpp::DM2_QUERY_GDAT_IMAGE_LOCALPAL returns no 16-color
+     * translation for 8bpp data. SUMMARY_IMAGE leaves these pixels as direct
+     * global-palette indices; the renderer's 16-entry prefix is identity. */
+    if (bpp == 8u) {
+        uint32_t hash = 2166136261u;
+        for (int color = 0; color < 16; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = (hash ^ out_palette16[color]) * 16777619u;
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
+    if (bpp != 4u ||
+        raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE) {
         return 0;
     }
     width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);

@@ -135,3 +135,23 @@ int dm1_v1_iigs_graphics_decode(const uint8_t *data, size_t size,
     if (!iigs_record(data,size,index,&item,&length)) return 0;
     return dm1_v1_iigs_graphics_decode_item(item,length,pixels,capacity,out_width,out_height);
 }
+
+int dm1_v1_iigs_graphics_extract_icon(const uint8_t *strip_pixels,
+    size_t strip_pixel_count, unsigned relative_icon_index,
+    uint8_t *icon_pixels, size_t icon_pixel_capacity) {
+    unsigned row;
+    size_t source_x, source_y;
+    if (!strip_pixels || !icon_pixels || relative_icon_index >= 32u ||
+        strip_pixel_count < 256u * 32u || icon_pixel_capacity < 16u * 16u)
+        return 0;
+    source_x = (size_t)(relative_icon_index & 15u) * 16u;
+    source_y = (size_t)(relative_icon_index >> 4) * 16u;
+    /* ReDMCSB OBJECT.C F0036/MEDIA008 addresses a 16x16 icon within
+     * each 256x32 IIGS bank and copies sixteen rows into the destination. */
+    for (row = 0; row < 16u; ++row) {
+        memcpy(icon_pixels + (size_t)row * 16u,
+               strip_pixels + (source_y + row) * 256u + source_x,
+               16u);
+    }
+    return 1;
+}

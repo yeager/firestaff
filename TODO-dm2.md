@@ -7,6 +7,38 @@ frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
 frame and the absent-animation fallback. Full actuator animation variants and
 viewport integration remain open.
 
+The source orientation mask is now preserved for DB2 ext-usage 14 and active,
+once-only DB3 actuator 0x7e records. A regression verifies that a later
+same-facing DB2 ornament cannot overwrite an ext-usage-14 side clear. This
+closes those visited-orientation cases only. Additional no-animation regressions
+cover inactive/type-state paths and selected animated frames for actuator
+types 0x17, 0x1a, 0x1b, 0x2c, and 0x32, including actuator tick and phase
+offset inputs. Full animation sequences, other actuator variants, viewport
+integration, source captures, and all-platform behavior remain open.
+
+2026-10-31 skproject `DRAW_WALL_ORNATE` SeeThruWalls gate:
+`SKWIN/SkWinCore.cpp:22967-22980` suppresses the D1 front-wall ornament at
+source cell 3 while the extended SeeThruWalls effect is active. The DM2 runtime
+now reads active type-0x49 timers and omits that cell's ornament metadata;
+regressions verify type-0x49 timer detection, suppression, and that other cells
+and the inactive case are unchanged. This does not implement the rest of DRAW_WALL_ORNATE's window,
+overlay, alcove, and Cryocell presentation branches.
+
+2026-10-31 skproject `DM2_query_0cee_1a46` packed output parity:
+`dm2_v1_skproject_query_0cee_1a46_ext_summary` now exposes the source's
+in-place `s_8wordarray[3..7]` updates while preserving the simpler renderer
+wrapper. Its ordered text path writes packed decoration/frame values and the
+usage-14 clear/record marker; actuator shop/resurrection branches write word 7.
+Actuator type `0x41` now returns its source actuator-data word in the packed
+frame bits rather than zero (`c_querydb.cpp:3529-3533`, `3703-3723`). Synthetic
+big-endian regression coverage checks the type-`0x41` value and packed array
+write, plus type-`0x3f` word-7 mutation. The renderer-facing actuator field is
+normalized to the source image-entry base plus the packed frame offset, so an
+inactive actuator's packed offset zero still draws base entry 1 (front) or 0
+(side); active offsets and type `0x41` use the same rule. Runtime composition
+still uses direct wall index/field output, and other actuator, source-capture,
+and all-platform cases remain open.
+
 2026-10-31 runtime integration for `DM2_query_0cee_1a46`: the DM2 door metadata
 path now consumes the ordered, GDAT-aware query with the current game tick,
 map wall-GFX list, and authenticated asset loader. This makes the supported
@@ -47,6 +79,48 @@ actuator branch and returns its wall-GFX index/field. Full query integration int
 the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
+
+2026-10-31 skproject `DRAW_WALL_ORNATE` generic overlay: the runtime render
+plan now resolves optional `WALL_GFX` image field `0x0f` for non-shop alcoves,
+uses the source rectangle, scale, flip, and local palette, and draws it after
+the base ornament. Shop-glass alcove type `2` is kept out of this generic path
+because source calls `_32cb_0f82_SHOP_GLASS` there; shop interaction remains
+missing as described below. The material-gate regression verifies that an
+overlay plan cannot draw without authenticated GDAT data. Original-media
+visual confirmation, alcove-item rendering when no overlay exists, and shop
+glass dynamics remain open. The refetched `SKWIN/data_dm2_dm/graphics.dat`
+contains no loadable generic overlay for a pixel comparison, so the optional
+real-media render case skips for that asset set.
+
+2026-10-31 skproject shop interaction is still missing: Firestaff rejects
+runtime shop entry and its panel builder returns no render plan. The source
+path begins at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
+`::_32cb_0f82_SHOP_GLASS`, which resolves the active wall actuator, a floor
+shop actuator (type `0x30`), DB14 item state, creature item masks, and
+`WALL_GFX` artwork. `_48ae_05ae_CREATURE` supplies source item prices;
+`SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE` and
+`::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the live
+record/GDAT chain, panel rendering, and buy/sell state transitions against
+those owners, then verify against source-owned DM2 data on each supported
+platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
+generic price formulas. The source ownership gate currently means this whole
+gameplay feature is absent, not at parity.
+
+2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
+visible wall metadata now calls the source-shaped summary entry point and
+reads the selected side's packed `s_8wordarray[3..6]` word for the WALL_GFX
+index and frame offset. It cross-checks the helper's direct outputs before
+binding render metadata, so inconsistent or truncated summary data fails
+closed. `test_dm2_v1_skproject_core` and
+`test_dm2_v1_wall_ornament_material_gate` pass. The broader M11 startup gate
+now compares the boot profile with the selected version's matched owner
+(outer archive for archive members, parent directory for loose files). The
+source receipt now honors `SUMMARY_IMAGE` direct palette indices for decoded
+8bpp/IMG9 images, accepts absent ornament fields with the source's zero
+defaults, and permits packed position words whose low byte selects the
+rectangle. The authentic DOS startup gate now consumes its first source-owned
+M11 frame. Complete room-wide summary-array construction, Cryocell presentation,
+source-case render captures, and all-platform parity remain open.
 
 2026-10-31 external-disk original-media retest: local
 `dm2_fmtowns_m11_gameplay_real_media` and

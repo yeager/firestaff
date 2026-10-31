@@ -13797,7 +13797,7 @@ int dm2_v1_skproject_query_0cee_1a46(
    Walks thing list for text (type 2) and actuator (type 3) records.
    For actuators, resolves GraphicNumber via wall decoration table
    and computes animation frame via QUERY_ORNATE_ANIM_FRAME. */
-int dm2_v1_skproject_query_0cee_1a46_ext(
+static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
     const struct DM2_V1_DungeonData *d,
     uint16_t first_thing,
     int16_t view_dir,
@@ -13806,6 +13806,7 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     const uint8_t *wall_gfx_list,
     int wall_gfx_count,
     const void *asset_loader_ptr,
+    int16_t summary_words[8],
     int16_t *out_wall_gfx_index,
     int16_t *out_wall_gfx_field,
     DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
@@ -13815,6 +13816,7 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     DM2_V1_SkprojectQuery0cee1a46Receipt receipt;
     int16_t wall_gfx_index = -1;
     int16_t wall_gfx_field = -1;
+    uint8_t visited_orientations = 0u;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -13860,6 +13862,9 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
             record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
             if (!record || size < 2) break;
             if (type > 3) break;
+            object_dir = (int)((thing >> 14) & 3u);
+            if ((visited_orientations & (uint8_t)(1u << object_dir)) != 0u)
+                goto next_thing;
 
             if (type == 2 && size >= 4) {
                 uint16_t text_word = dm2_v1_dungeon_read_record_u16(
@@ -13881,6 +13886,28 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
 
                 object_dir = (int)((thing >> 14) & 3u);
                 relative_side = ((object_dir - (view_dir & 3)) & 3);
+                if (text_mode == 1 && relative_side == side_index &&
+                    text_ext_usage == 14) {
+                    /* c_querydb.cpp:3648-3671 clears this side slot and
+                     * writes word 7 for the special DB2 text usage. */
+                    receipt.text_summary_written = 1u;
+                    receipt.text_summary_side =
+                        (int16_t)(relative_side + 3);
+                    receipt.text_summary_value = 0;
+                    if (summary_words) {
+                        summary_words[relative_side + 3] = 0;
+                    }
+                    if (relative_side + 3 == 5) {
+                        receipt.summary_word7_written = 1u;
+                        receipt.summary_word7 = text_visible
+                            ? -1 : (int16_t)thing;
+                        if (summary_words) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
+                    }
+                    visited_orientations |= (uint8_t)(1u << object_dir);
+                    goto next_thing;
+                }
                 if (text_mode == 1 && relative_side == side_index) {
                     int frame = 0;
                     if (animate) {
@@ -13910,6 +13937,19 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     wall_gfx_field = (int16_t)(frame + 1);
                     receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
                     receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+                    /* s_8wordarray stores the ornament index in bits 0..7
+                     * and QUERY_ORNATE_ANIM_FRAME in bits 10..15. Its
+                     * side slots are 3..6, while the public helper accepts
+                     * a relative side in 0..3. */
+                    receipt.text_summary_written = 1u;
+                    receipt.text_summary_side =
+                        (int16_t)(relative_side + 3);
+                    receipt.text_summary_value = (int16_t)(
+                        (((int)wall_gfx_field - 1) << 10) | decoration);
+                    if (summary_words) {
+                        summary_words[relative_side + 3] =
+                            receipt.text_summary_value;
+                    }
                     *out_wall_gfx_index = wall_gfx_index;
                     *out_wall_gfx_field = wall_gfx_field;
                     receipt.valid = 1;
@@ -13954,21 +13994,46 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     receipt.actuator_type = (uint8_t)actuator_type;
 
                     switch (actuator_type) {
-                    case 0x3f: /* shop panel */
+                    case 0x3f: /* shop panel: source writes summary word 7 */
+                        /* c_querydb.cpp:3483-3492 writes the shop-panel
+                         * record only for relative side 2, otherwise -1.
+                         * c_querydb.cpp:3711-3723 still records the wall
+                         * ornament after setting that summary word. */
+                        receipt.summary_word7_written = 1u;
+                        receipt.summary_word7 = relative_side == 2
+                            ? (int16_t)thing : -1;
+                        if (summary_words) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
                         break;
                     case 0x7e: /* resuscitation */
-                        if (once_only != 0) si = 1;
+                        if (once_only != 0) {
+                            if (relative_side == 2) {
+                                /* c_querydb.cpp:3524-3541 writes the
+                                 * actuator datum to summary word 7. */
+                                receipt.summary_word7_written = 1u;
+                                receipt.summary_word7 = (int16_t)actuator_data;
+                                if (summary_words) {
+                                    summary_words[7] = receipt.summary_word7;
+                                }
+                            }
+                            si = 1;
+                            visited_orientations |=
+                                (uint8_t)(1u << object_dir);
+                        }
                         break;
                     case 0x17: /* 2-state wall switch */
                         di = (int)once_only;
                         if (di != 0) si = 1;
                         break;
                     case 0x18: /* push button wall switch */
-                        di = (int)(active_status ^ once_only);
+                        /* Source sets skip00150 and later computes
+                         * status XOR once-only. */
+                        si = 2;
                         break;
                     case 0x1a: /* key hole */
-                        di = (int)once_only;
-                        if (di != 0) si = 1;
+                        /* Source skip00149 tests once-only bit 2. */
+                        si = (int)once_only;
                         break;
                     case 0x1b:
                         di = (int)active_status;
@@ -13987,6 +14052,10 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         }
                         break;
                     case 0x41: /* ornate step animator */
+                        /* c_querydb.cpp:3529-3533 copies the actuator data
+                         * word into RG2; the common summary write shifts it
+                         * into bits 10..15 even though no GDAT animation is
+                         * queried for this subtype. */
                         di = (int)actuator_data;
                         break;
                     case 0x46: /* sealable push button */
@@ -13998,14 +14067,19 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         break;
                     }
 
-                    if (si != 0 && asset_loader) {
+                    if (si == 2) {
+                        di = (int)(active_status ^ once_only);
+                    } else if (si != 0 && asset_loader) {
                         DM2_V1_QueryOrnateAnimFrameReceipt anim_receipt;
-                        if (dm2_v1_query_ornate_anim_frame_receipt(
+                        if (!dm2_v1_query_ornate_anim_frame_receipt(
                                 asset_loader, 0x09, (int)decoration,
-                                bp0c, bp10, &anim_receipt) &&
-                            anim_receipt.accepted) {
-                            di = (int)anim_receipt.frame;
+                                bp0c, bp10, &anim_receipt) ||
+                            !anim_receipt.accepted) {
+                            receipt.blocked_actuator_animation_path = 1u;
+                            if (out_receipt) *out_receipt = receipt;
+                            return 0;
                         }
+                        di = (int)anim_receipt.frame;
                         receipt.actuator_needs_anim = 1;
                     } else if (si != 0) {
                         receipt.blocked_actuator_animation_path = 1;
@@ -14014,9 +14088,20 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     }
 
                     wall_gfx_index = (int16_t)decoration;
-                    wall_gfx_field = (int16_t)di;
+                    /* The source summary stores di in its upper six bits,
+                     * while DRAW_WALL_ORNATE adds the view base (front=1,
+                     * side=0) to that offset. The renderer-facing field is
+                     * therefore one-based so frame zero remains drawable. */
+                    wall_gfx_field = (int16_t)(di + 1);
                     receipt.wall_gfx_index = (uint16_t)decoration;
-                    receipt.wall_gfx_field = (uint16_t)di;
+                    receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+                    if (summary_words) {
+                        summary_words[relative_side + 3] = (int16_t)(
+                            (((uint16_t)di << 10) | decoration));
+                        if (receipt.summary_word7_written) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
+                    }
                     *out_wall_gfx_index = wall_gfx_index;
                     *out_wall_gfx_field = wall_gfx_field;
                     receipt.valid = 1;
@@ -14035,6 +14120,45 @@ next_thing:
     receipt.blocked_no_wall_gfx = 1;
     if (out_receipt) *out_receipt = receipt;
     return 0;
+}
+
+int dm2_v1_skproject_query_0cee_1a46_ext(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader_ptr,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    return dm2_v1_skproject_query_0cee_1a46_ext_impl(
+        d, first_thing, view_dir, side_index, game_tick,
+        wall_gfx_list, wall_gfx_count, asset_loader_ptr, NULL,
+        out_wall_gfx_index, out_wall_gfx_field, out_receipt);
+}
+
+int dm2_v1_skproject_query_0cee_1a46_ext_summary(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader_ptr,
+    int16_t summary_words[8],
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    return dm2_v1_skproject_query_0cee_1a46_ext_impl(
+        d, first_thing, view_dir, side_index, game_tick,
+        wall_gfx_list, wall_gfx_count, asset_loader_ptr, summary_words,
+        out_wall_gfx_index, out_wall_gfx_field, out_receipt);
 }
 
 /* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a. */

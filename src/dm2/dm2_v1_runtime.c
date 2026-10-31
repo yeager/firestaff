@@ -33,6 +33,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_wall_ornament.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
@@ -2017,9 +2018,9 @@ static int dm2_runtime_light_mode8_step(
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         branch = 15u;
         loader = dm2_v1_boot_asset_loader(rt->boot);
-        if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, nx, ny, (uint32_t)rt->tick_count,
-                &room))
+                (int)rt->view_dir, &room))
             return -1;
         if (room.source_tile_type == 2u) DM2_LIGHT_EDGE_RETURN(16u, 0);
         if ((raw >> 5) == 5) {
@@ -2395,9 +2396,9 @@ static int dm2_runtime_mode7_on_node(
         branch = 34u;
     } else if (source_flags == 3u && (raw >> 5) == 5) {
         branch = 27u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room) &&
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) &&
             !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
         if (!dm2_runtime_mode7_flags3_evidence(
@@ -2406,9 +2407,9 @@ static int dm2_runtime_mode7_on_node(
         node.prepass = &prepass;
     } else if (source_flags == 3u && (raw >> 5) == 2 && first == -1) {
         branch = 33u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room) ||
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) ||
             !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
@@ -2459,9 +2460,9 @@ static int dm2_runtime_mode7_on_node(
         node.stone_room = &room;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         branch = 32u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room)) goto unknown;
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room)) goto unknown;
         node.stone_room = &room;
     } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
         branch = 36u;
@@ -2669,6 +2670,17 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
     dm2_runtime_refresh_gdat_scene_control(rt);
 }
 
+int dm2_v1_runtime_see_thru_walls_active_for_queue(
+    const DM2_V1_SourceTimerQueue *queue)
+{
+    if (!queue) return 0;
+    if (queue->count > DM2_V1_SOURCE_TIMER_MAX) return 1;
+    for (size_t i = 0u; i < queue->count; ++i) {
+        if (queue->timers[i].type == 0x49u) return 1;
+    }
+    return 0;
+}
+
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                                                  DM2_V1_ViewportState *viewport,
                                                  int party_dir,
@@ -2680,14 +2692,15 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         int square;
         int forward;
         int lateral;
+        int source_cell;
     } visible_cells[] = {
         /* Source table1d6ad0 cells 0..13 map to the D0..D3 center/side rows. */
-        { DM2_SQ_D0C, 0,  0 }, { DM2_SQ_D1C, 1,  0 },
-        { DM2_SQ_D2C, 2,  0 }, { DM2_SQ_D3C, 3,  0 },
-        { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
-        { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
-        { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
-        { DM2_SQ_D3L, 3, -1 }, { DM2_SQ_D3R, 3,  1 },
+        { DM2_SQ_D0C, 0,  0,  0 }, { DM2_SQ_D1C, 1,  0,  3 },
+        { DM2_SQ_D2C, 2,  0,  6 }, { DM2_SQ_D3C, 3,  0, 11 },
+        { DM2_SQ_D0L, 0, -1,  1 }, { DM2_SQ_D0R, 0,  1,  2 },
+        { DM2_SQ_D1L, 1, -1,  4 }, { DM2_SQ_D1R, 1,  1,  5 },
+        { DM2_SQ_D2L, 2, -1,  7 }, { DM2_SQ_D2R, 2,  1,  8 },
+        { DM2_SQ_D3L, 3, -1, 12 }, { DM2_SQ_D3R, 3,  1, 13 },
     };
     static const int8_t source_lateral[DM2_V1_SKPROJECT_VIEW_CELL_COUNT] = {
         0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0, -1, 1, -2, 2,
@@ -2703,12 +2716,15 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     };
     DM2_V1_DungeonData *dd;
     int dir;
+    int see_thru_walls;
 
     if (!rt || !viewport || rt->outdoor || !rt->boot ||
         !rt->boot->dungeon_data) {
         return;
     }
     dir = party_dir & 3;
+    see_thru_walls = dm2_v1_runtime_see_thru_walls_active_for_queue(
+        &rt->timer_queue);
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     viewport->skproject_wall_cell_mask = 0u;
     for (int cell = 0; cell < DM2_V1_SKPROJECT_VIEW_CELL_COUNT; ++cell) {
@@ -2763,8 +2779,89 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         {
             DM2_ViewSquare *surface = &viewport->squares[visible_cells[i].square];
             if (square_type == DM2_SQUARE_WALL) {
+                surface->wall_ornate_gfx_index = 0u;
+                surface->wall_ornate_gfx_field = 0u;
+                surface->wall_ornate_rect_number = 0u;
+                surface->wall_ornate_ref_point = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
+                /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
+                 * through _0cee_1a46; DRAW_WALL_ORNATE selects slot 4/5/6
+                 * from the lateral offset. Query only the visible relative
+                 * side here, preserving DB2/DB3 list order and source tick. */
+                if (dm2_v1_viewport_wall_ornament_visible(
+                        visible_cells[i].source_cell, see_thru_walls) &&
+                    map_x >= 0 &&
+                    map_x < dd->level_widths[rt->dungeon_level] &&
+                    map_y >= 0 && map_y < dd->level_heights[rt->dungeon_level]) {
+                    int first_thing = dm2_v1_dungeon_get_first_thing(
+                        dd, rt->dungeon_level, map_x, map_y);
+                    int side_index = visible_cells[i].lateral < 0 ? 1 :
+                        (visible_cells[i].lateral > 0 ? 3 : 2);
+                    if (first_thing >= 0 &&
+                        first_thing != DM2_THING_END_MARKER) {
+                        DM2_V1_SkprojectQuery0cee1a46Receipt decoration;
+                        int16_t ornament_summary[8] = { 0 };
+                        int16_t ornament_index = -1;
+                        int16_t ornament_field = -1;
+                        const DM2_V1_AssetLoader *loader =
+                            dm2_v1_boot_asset_loader(rt->boot);
+                        if (dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                                dd, (uint16_t)first_thing, (int16_t)dir,
+                                (int16_t)side_index,
+                                (uint32_t)rt->tick_count,
+                                rt->map_wall_gfx_list,
+                                rt->map_wall_gfx_count, loader,
+                                ornament_summary,
+                                &ornament_index, &ornament_field,
+                                &decoration) == 1 && decoration.valid &&
+                            ornament_index > 0 && ornament_index <= UINT8_MAX &&
+                            ornament_field > 0 && ornament_field <= UINT8_MAX) {
+                            uint16_t packed_side =
+                                (uint16_t)ornament_summary[side_index + 3];
+                            int summary_index = packed_side & 0x00ffu;
+                            int summary_field =
+                                (int)((packed_side >> 10) & 0x003fu) + 1;
+                            uint16_t ornament_position = 0u;
+                            uint16_t rect_number = 0u;
+                            uint16_t position_value = 0u;
+                            unsigned position = 12u;
+                            uint8_t ref_point = 0u;
+                            /* c_querydb.cpp mutates s_8wordarray[3..6];
+                             * DRAW_WALL_ORNATE consumes that packed side
+                             * summary. Keep the helper outputs as a
+                             * consistency guard, but source the render fields
+                             * from the same packed word. */
+                            if (summary_index == ornament_index &&
+                                summary_field == ornament_field) {
+                                if (dm2_v1_asset_load_word_value(
+                                        loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                                        (uint8_t)summary_index,
+                                        DM2_V1_WALL_ORNATE_POSITION_FIELD,
+                                        &ornament_position) &&
+                                    ornament_position != 0u) {
+                                    ref_point = (uint8_t)(ornament_position >> 8);
+                                    position_value = ornament_position & 0xffu;
+                                    if (position_value < 1u || position_value > 25u)
+                                        position = 25u;
+                                    else
+                                        position = position_value - 1u;
+                                }
+                                if (dm2_v1_wall_ornament_rect_number(
+                                        visible_cells[i].source_cell,
+                                        visible_cells[i].lateral,
+                                        position, &rect_number)) {
+                                    surface->wall_ornate_rect_number = rect_number;
+                                    surface->wall_ornate_ref_point = ref_point;
+                                }
+                                surface->wall_ornate_gfx_index =
+                                    (uint8_t)summary_index;
+                                surface->wall_ornate_gfx_field =
+                                    (uint8_t)summary_field;
+                            }
+                        }
+                    }
+                }
             } else if (square_type == DM2_SQUARE_FLOOR) {
                 surface->square_type = DM2_SQUARE_FLOOR;
                 surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
@@ -12662,6 +12759,194 @@ static void dm2_runtime_bind_source_squad_hands(
     }
 }
 
+/* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
+ * Build placements from the active map's source-owned WALL_GFX fields and
+ * INTERFACE_GENERAL RAW4 rectangle graph. */
+static void dm2_runtime_bind_wall_ornament_plan(
+    DM2_V1_ViewportState *viewport, const DM2_V1_AssetLoader *loader,
+    DM2_V1_WallOrnamentRenderPlan *plan)
+{
+    static const int stretch_by_distance[5] = { 0x60, 0x40, 0x2b, 0x1c, 0x13 };
+    uint32_t plan_hash = 2166136261u;
+
+    if (!viewport || !loader || !plan) return;
+    memset(plan, 0, sizeof(*plan));
+    for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+        const DM2_ViewSquare *surface = &viewport->squares[square];
+        DM2_V1_WallOrnamentReceipt receipt;
+        DM2_V1_WallOrnamentBlitRect blit;
+        DM2_V1_WallOrnamentRender *entry;
+        int distance, lateral, stretch_x, stretch_y, mirror_flip = 0;
+        int image_field;
+        int scaled_width, scaled_height;
+        int source_x0, source_y0, source_x1, source_y1;
+        if (surface->square_type != DM2_SQUARE_WALL ||
+            surface->wall_ornate_gfx_index == 0u) continue;
+        if (!surface->wall_ornate_rect_number ||
+            plan->ornament_count >= DM2_V1_WALL_ORNAMENT_RENDER_MAX ||
+            surface->wall_ornate_gfx_field == 0u) return;
+        switch (square) {
+        case DM2_SQ_D0C: distance = 0; lateral = 0; break;
+        case DM2_SQ_D0L: distance = 0; lateral = -1; break;
+        case DM2_SQ_D0R: distance = 0; lateral = 1; break;
+        case DM2_SQ_D1C: distance = 1; lateral = 0; break;
+        case DM2_SQ_D1L: distance = 1; lateral = -1; break;
+        case DM2_SQ_D1R: distance = 1; lateral = 1; break;
+        case DM2_SQ_D2C: distance = 2; lateral = 0; break;
+        case DM2_SQ_D2L: distance = 2; lateral = -2; break;
+        case DM2_SQ_D2R: distance = 2; lateral = 2; break;
+        case DM2_SQ_D3C: distance = 3; lateral = 0; break;
+        case DM2_SQ_D3L: distance = 3; lateral = -3; break;
+        case DM2_SQ_D3R: distance = 3; lateral = 3; break;
+        default: return;
+        }
+        {
+            int frame = (int)surface->wall_ornate_gfx_field - 1;
+            if (lateral == 0) {
+                image_field = 1 + frame;
+            } else if (lateral < 0) {
+                image_field = frame;
+            } else {
+                DM2_V1_GdatImageMetadata side_metadata;
+                int right_field = 2 + frame;
+                if (dm2_v1_asset_load_image_metadata(
+                        loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                        surface->wall_ornate_gfx_index, right_field,
+                        &side_metadata)) {
+                    image_field = right_field;
+                } else {
+                    image_field = frame;
+                    mirror_flip = 1;
+                }
+            }
+        }
+        if (image_field < 0 || image_field > UINT8_MAX ||
+            !dm2_v1_wall_ornament_material_receipt(
+                loader, surface->wall_ornate_gfx_index,
+                (uint8_t)image_field, &receipt)) return;
+        if (lateral == 0 && receipt.do_not_flip == 0u) {
+            int graphics_flip = (viewport->party_x + viewport->party_y +
+                viewport->party_dir + viewport->gdat_scene_map_offset_x +
+                viewport->gdat_scene_map_offset_y +
+                viewport->gdat_scene_map_flip_seed) & 1;
+            mirror_flip = graphics_flip ^ ((distance & 1) ? 0 : 1);
+        }
+        stretch_x = stretch_y = stretch_by_distance[distance];
+        if (distance == 2 && (lateral <= -2 || lateral >= 2))
+            stretch_x = 0x72;
+        else if (distance == 3 && (lateral <= -2 || lateral >= 2))
+            stretch_x = 0x4c;
+        scaled_width = ((int)receipt.decoded_width * stretch_x +
+                        (stretch_x >> 1)) >> 6;
+        scaled_height = ((int)receipt.decoded_height * stretch_y +
+                         (stretch_y >> 1)) >> 6;
+        if (scaled_width <= 0 || scaled_height <= 0 ||
+            !dm2_v1_wall_ornament_query_loaded_blit_rect(
+                loader, surface->wall_ornate_rect_number,
+                surface->wall_ornate_ref_point,
+                scaled_width, scaled_height, &blit)) return;
+        source_x0 = (blit.source_x * (int)receipt.decoded_width) / scaled_width;
+        source_y0 = (blit.source_y * (int)receipt.decoded_height) / scaled_height;
+        source_x1 = ((blit.source_x + blit.source_width) *
+                     (int)receipt.decoded_width + scaled_width - 1) /
+                    scaled_width;
+        source_y1 = ((blit.source_y + blit.source_height) *
+                     (int)receipt.decoded_height + scaled_height - 1) /
+                    scaled_height;
+        if (source_x0 < 0 || source_y0 < 0 || source_x1 > receipt.decoded_width ||
+            source_y1 > receipt.decoded_height || source_x1 <= source_x0 ||
+            source_y1 <= source_y0) return;
+        entry = &plan->ornaments[plan->ornament_count++];
+        entry->view_square = square;
+        entry->gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
+            surface->wall_ornate_gfx_index);
+        entry->image_field = (uint8_t)image_field;
+        entry->colorkey = receipt.colorkey;
+        entry->dst_rect = (DM2_V1_ViewportRect){
+            blit.destination_x, blit.destination_y,
+            blit.destination_width, blit.destination_height };
+        entry->src_rect = (DM2_V1_ViewportRect){
+            source_x0, source_y0, source_x1 - source_x0,
+            source_y1 - source_y0 };
+        entry->mirror_flip = (uint8_t)mirror_flip;
+        entry->material_hash = receipt.material_hash;
+        plan_hash ^= receipt.material_hash + (uint32_t)surface->wall_ornate_rect_number +
+            ((uint32_t)square << 24);
+        plan_hash *= 16777619u;
+
+        /* SkWinCore.cpp::DRAW_WALL_ORNATE draws a generic WALL_GFX overlay
+         * when dtImage/0x0f is loadable, except shop glass (alcove type 2),
+         * which enters the DB14-backed SHOP_GLASS routine instead. Preserve
+         * the source placement and flip for generic overlays; the dynamic
+         * shop routine remains unavailable until its record owner is wired. */
+        if (receipt.alcove_type != 2u) {
+            DM2_V1_GdatImageMetadata overlay_metadata;
+            DM2_V1_WallOrnamentReceipt overlay_receipt;
+            if (dm2_v1_asset_load_image_metadata(
+                    loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    surface->wall_ornate_gfx_index,
+                    DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+                    &overlay_metadata)) {
+                int overlay_scaled_width;
+                int overlay_scaled_height;
+                int overlay_x0, overlay_y0, overlay_x1, overlay_y1;
+                if (!dm2_v1_wall_ornament_material_receipt(
+                        loader, surface->wall_ornate_gfx_index,
+                        DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+                        &overlay_receipt)) return;
+                overlay_scaled_width =
+                    ((int)overlay_receipt.decoded_width * stretch_x +
+                     (stretch_x >> 1)) >> 6;
+                overlay_scaled_height =
+                    ((int)overlay_receipt.decoded_height * stretch_y +
+                     (stretch_y >> 1)) >> 6;
+                if (overlay_scaled_width <= 0 || overlay_scaled_height <= 0 ||
+                    !dm2_v1_wall_ornament_query_loaded_blit_rect(
+                        loader, surface->wall_ornate_rect_number,
+                        surface->wall_ornate_ref_point,
+                        overlay_scaled_width, overlay_scaled_height, &blit)) {
+                    return;
+                }
+                overlay_x0 = (blit.source_x *
+                    (int)overlay_receipt.decoded_width) / overlay_scaled_width;
+                overlay_y0 = (blit.source_y *
+                    (int)overlay_receipt.decoded_height) / overlay_scaled_height;
+                overlay_x1 = ((blit.source_x + blit.source_width) *
+                    (int)overlay_receipt.decoded_width + overlay_scaled_width - 1) /
+                    overlay_scaled_width;
+                overlay_y1 = ((blit.source_y + blit.source_height) *
+                    (int)overlay_receipt.decoded_height + overlay_scaled_height - 1) /
+                    overlay_scaled_height;
+                if (overlay_x0 < 0 || overlay_y0 < 0 ||
+                    overlay_x1 > overlay_receipt.decoded_width ||
+                    overlay_y1 > overlay_receipt.decoded_height ||
+                    overlay_x1 <= overlay_x0 || overlay_y1 <= overlay_y0) {
+                    return;
+                }
+                entry->overlay_valid = 1u;
+                entry->overlay_image_field =
+                    DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD;
+                entry->overlay_colorkey = overlay_receipt.colorkey;
+                entry->overlay_dst_rect = (DM2_V1_ViewportRect){
+                    blit.destination_x, blit.destination_y,
+                    blit.destination_width, blit.destination_height };
+                entry->overlay_src_rect = (DM2_V1_ViewportRect){
+                    overlay_x0, overlay_y0, overlay_x1 - overlay_x0,
+                    overlay_y1 - overlay_y0 };
+                entry->overlay_mirror_flip = (uint8_t)mirror_flip;
+                entry->overlay_material_hash = overlay_receipt.material_hash;
+                plan_hash ^= overlay_receipt.material_hash +
+                    (uint32_t)surface->wall_ornate_rect_number +
+                    ((uint32_t)square << 24);
+                plan_hash *= 16777619u;
+            }
+        }
+    }
+    if (plan->ornament_count == 0) return;
+    plan->valid = plan_hash != 0u;
+    dm2_v1_viewport_set_gdat_wall_ornament_material_plan(viewport, plan);
+}
+
 /* ReDMCSB/skproject SkWinCore.cpp::DISPLAY_RIGHT_PANEL_SQUAD_HANDS keeps
  * the selected champion and selected hand in party.curacthero/curactmode,
  * then calls DRAW_HAND_ACTION_ICONS. Without a source-selected champion
@@ -13031,6 +13316,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int door_map_chip_material_plan_required = 0;
     int door_map_chip_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
+    DM2_V1_WallOrnamentRenderPlan wall_ornament_render_plan;
     DM2_V1_GdatSceneM11CommandPlan scene_material_plan;
     const DM2_V1_GdatSceneM11CommandPlan *scene_material_plan_for_m11;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
@@ -13162,6 +13448,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (rt->boot && rt->boot->graphics_dat) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
+    }
+    memset(&wall_ornament_render_plan, 0,
+           sizeof(wall_ornament_render_plan));
+    if (viewport.asset_loader && !rt->outdoor) {
+        dm2_runtime_bind_wall_ornament_plan(
+            &viewport, viewport.asset_loader, &wall_ornament_render_plan);
     }
     dm2_v1_viewport_set_source_materials_required(
         &viewport,

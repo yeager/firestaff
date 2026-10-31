@@ -31,6 +31,13 @@ int dm1_v1_iigs_graphics_decode_item(const uint8_t *item, size_t item_size,
     uint8_t *indexed_pixels, size_t pixel_capacity,
     uint16_t *out_width, uint16_t *out_height);
 
+/* Extract one 16x16 object icon from a decoded native IIGS 256x32 strip.
+ * relative_icon_index is local to a ReDMCSB F0036 seven-bank selection
+ * (0..31); output is row-major palette indices. */
+int dm1_v1_iigs_graphics_extract_icon(const uint8_t *strip_pixels,
+    size_t strip_pixel_count, unsigned relative_icon_index,
+    uint8_t *icon_pixels, size_t icon_pixel_capacity);
+
 #ifdef __cplusplus
 }
 #endif

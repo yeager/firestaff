@@ -1,39 +1,19 @@
 /*
  * dm2_v1_shop.c - DM2 V1 Shop + NPC Implementation
  *
- * Phase 4 (mechanics parity) source-lock.
+ * DM2 shop and NPC compatibility surface.
  *
- * DM2 introduces in-dungeon shops as floor sensors (type 0x30) that
- * open a shop panel (actuator 0x3F). Each shop is owned by one of
- * 4 NPC personalities (DM2_NUM_NPCS=4 from skproject/SKULLWIN/SKWinGlobal.h:42).
+ * Shop interaction is not implemented yet. Source selection starts in
+ * skproject/SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE and
+ * _32cb_0f82_SHOP_GLASS. That path resolves a live wall actuator, the floor
+ * shop actuator, its DB14 item state, creature item masks, and WALL_GFX data.
+ * Runtime entry and panel construction stay unavailable until those owners
+ * are connected; fixed catalogs and host-generated shop data are not valid
+ * substitutes for the source records.
  *
- * This module provides:
- *   1. Built-in shop catalog (5 shops: General/Weapons/Magic/Tavern/Blacksmith).
- *   2. Shop interaction API (enter/buy/sell/leave) with proper gold and
- *      inventory bookkeeping.
- *   3. NPC dialog table (4 NPCs x 6 personality-flavored lines each).
- *   4. Price formulas:
- *        buy_price = base_price * (100 - negotiator_skill) / 100
- *        sell_price = base_price / 2
- *      Source: skproject/SKULLWIN/c_shop.cpp transaction pricing.
- *
- * Source-lock anchors (DM2 decompilation only via skproject):
- *   skproject/SKULLWIN/c_shop.cpp           - shop panel + transactions
- *   skproject/SKULLWIN/c_npc.cpp            - NPC dialog + personality
- *   skproject/SKULLWIN/SKWinGlobal.h:42     - NUM_NPCS=4
- *   skproject/SKWIN/DME.h:1505-1560         - shop_descriptor_t
- *   skproject/SKWIN/SkGlobal.cpp:966-1011   - dSpellsTable + shop tables
- *   ReDMCSB docs/dm2/dm2_sensors.md             - SHOP sensor (0x30)
- *   ReDMCSB docs/dm2/dm2_actuators.md           - SHOP_PANEL actuator (0x3F)
- *
- * DM2 difference vs DM1:
- *   - DM1 has no shops in-dungeon (only post-game armory in CSB).
- *   - DM2 shops are persistent NPC-managed entities.
- *   - DM2 shop stock may be limited (-1 = unlimited) or finite.
- *
- * V1 invariant: shop transactions never modify party state outside
- * gold + inventory (party position, direction, HP, mana, stamina, food,
- * water are all preserved).
+ * Other source anchors include SkWinCore.cpp::_48ae_05ae_CREATURE for item
+ * prices and SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE and
+ * ::TAKE_MERCHANDISE for creature merchandise operations.
  */
 
 #include "dm2_v1_shop.h"
