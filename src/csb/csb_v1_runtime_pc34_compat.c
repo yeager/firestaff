@@ -50,6 +50,7 @@
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_text_message_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -4102,11 +4103,10 @@ static int csb_v1_runtime_stage_openroom_text_message(
     decoded = F0508_DUNGEON_DecodeTextStringThing_Compat(
         &things, 0, DUNGEON_TEXT_TYPE_MESSAGE, out_receipt->text,
         (int)sizeof(out_receipt->text));
-    /* F0168 prepends the source message separator.  C015 owns a single
-     * QuePrintLines row here, so reject multi-line/empty output rather than
-     * approximating the unavailable queue and wrapping behavior. */
+    /* F0168 prepends the source message separator. The F0047 text state
+     * owns wrapping and subsequent C015 rows. */
     if (decoded <= 1 || out_receipt->text[0] != '\n' ||
-        strchr(out_receipt->text + 1, '\n') != NULL) {
+        !out_receipt->text[1]) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -18066,6 +18066,8 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int square_contains_object = 0;
     int square_contains_group = 0;
     int pending_local_effect = DM1_EFFECT_NONE;
+    DM1_V1_TextMessageState party_text_rows;
+    int collect_party_text_rows = 0;
 
     if (!profile || !result) return;
     dungeon = (profile->dungeon_handle)
@@ -18081,6 +18083,15 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         map_x,
         map_y);
     if (first_thing < 0 || first_thing == 0xFFFE) return;
+
+    collect_party_text_rows = add_party && !party_square &&
+                              dungeon->square_bytes == 1;
+    if (collect_party_text_rows) {
+        dm1_v1_text_init(&party_text_rows);
+        party_text_rows.gameTime = profile->game_time;
+        memset(&profile->csb_party_text_rows_receipt, 0,
+               sizeof(profile->csb_party_text_rows_receipt));
+    }
 
     /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
      * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
@@ -18142,35 +18153,23 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         if (!record) break;
         if (thing_type >= 4) break;
         if (thing_type == 2) {
-            /* ReDMCSB MOVESENS.C F0276:1630-1633 decodes a TextString when
-             * the party enters its square.  Firestaff owns only one C015
-             * receipt, so admit one visible original C02 record and reject a
-             * multi-text list rather than inventing QuePrintLines behavior. */
-            if (add_party && !party_square && dungeon->square_bytes == 1 &&
-                thing_size >= 4) {
-                int scan = first_thing;
-                int scan_guard;
-                int text_count = 0;
+            /* ReDMCSB MOVESENS.C F0276:1630-1633 calls F0168/F0047 for
+             * each visible C02 in source Thing-chain order on party arrival. */
+            if (collect_party_text_rows && thing_size >= 4) {
                 CSB_V1_RuntimeTextMessageReceipt message_receipt;
-
-                for (scan_guard = 0;
-                     scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
-                     ++scan_guard) {
-                    int scan_type;
-                    if (!csb_v1_dungeon_get_thing_record(
-                            dungeon, (uint16_t)scan, &scan_type, NULL, NULL)) {
-                        break;
-                    }
-                    if (scan_type == 2) ++text_count;
-                    scan = csb_v1_runtime_sensor_next_thing(
-                        dungeon, (uint16_t)scan);
-                }
-                if (text_count == 1) {
-                    memset(&message_receipt, 0, sizeof(message_receipt));
-                    if (csb_v1_runtime_stage_openroom_text_message(
-                            profile, (uint16_t)thing,
-                            csb_v1_runtime_read_u16(record + 2),
-                            &message_receipt)) {
+                if (csb_v1_runtime_stage_openroom_text_message(
+                        profile, (uint16_t)thing,
+                        csb_v1_runtime_read_u16(record + 2),
+                        &message_receipt)) {
+                    char source_message[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
+                    size_t length = strlen(message_receipt.text);
+                    if (length + 2u <= sizeof(source_message)) {
+                        source_message[0] = '\n';
+                        memcpy(source_message + 1, message_receipt.text,
+                               length + 1u);
+                        dm1_v1_text_print_message(&party_text_rows,
+                                                  DM1_V1_COLOR_WHITE,
+                                                  source_message);
                         profile->csbwin_text_message_receipt = message_receipt;
                     }
                 }
@@ -18320,6 +18319,21 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         }
 
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+
+    if (collect_party_text_rows) {
+        int row;
+        for (row = 0; row < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++row) {
+            if (!party_text_rows.rows[row].text[0]) continue;
+            profile->csb_party_text_rows_receipt.valid = 1;
+            memcpy(profile->csb_party_text_rows_receipt.rows[row],
+                   party_text_rows.rows[row].text,
+                   sizeof(profile->csb_party_text_rows_receipt.rows[row]));
+        }
+        if (profile->csb_party_text_rows_receipt.valid) {
+            profile->csb_party_text_rows_receipt.source_game_time =
+                profile->game_time;
+        }
     }
     if (pending_local_effect == DM1_EFFECT_CLEAR ||
         pending_local_effect == DM1_EFFECT_TOGGLE) {

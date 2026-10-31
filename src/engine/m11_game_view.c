@@ -75854,6 +75854,7 @@ static void m11_clear_csb_v1_message_area_source_owned(
     DM1_V1_LayoutZoneRectPc34 messageRect;
     const CSB_V1_BootProfile *boot_profile;
     const CSB_V1_RuntimeTextMessageReceipt *receipt;
+    const CSB_V1_RuntimePartyTextRowsReceipt *party_rows;
     int message_width;
 
     if (!state || !framebuffer || state->showDebugHUD ||
@@ -75878,11 +75879,38 @@ static void m11_clear_csb_v1_message_area_source_owned(
     boot_profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     receipt = boot_profile ? &boot_profile->runtime.csbwin_text_message_receipt
                            : NULL;
+    party_rows = boot_profile
+        ? &boot_profile->runtime.csb_party_text_rows_receipt : NULL;
     if (!receipt ||
-        !csb_v1_runtime_text_message_active_pc34(&boot_profile->runtime) ||
         !g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
         return;
     }
+    if (party_rows && party_rows->valid &&
+        boot_profile->runtime.game_time - party_rows->source_game_time <
+            ((boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA35_MULTI ||
+              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA31_MULTI)
+                 ? 200u : 70u)) {
+        int row;
+        for (row = 0; row < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++row) {
+            const char *text = party_rows->rows[row];
+            const char *presented;
+            if (!text[0]) continue;
+            presented = fs_po_gettext_in_domain("csb", text);
+            message_width = (int)m11_count_visible_glyphs_utf8(presented) *
+                            DM1_V1_TEXT_CHARACTER_WIDTH;
+            if (message_width < 1 || message_width > messageRect.w) continue;
+            (void)m11_draw_original_font_utf8_presentation(
+                g_activeOriginalFont, framebuffer,
+                framebufferWidth, framebufferHeight,
+                messageRect.x,
+                messageRect.y + row * DM1_V1_TEXT_LINE_HEIGHT,
+                presented, M11_COLOR_WHITE);
+        }
+        return;
+    }
+    if (!csb_v1_runtime_text_message_active_pc34(&boot_profile->runtime)) return;
     {
         const char* presented = fs_po_gettext_in_domain("csb", receipt->text);
         message_width = (int)m11_count_visible_glyphs_utf8(presented) *
