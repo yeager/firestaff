@@ -11,10 +11,10 @@ The source orientation mask is now preserved for DB2 ext-usage 14 and active,
 once-only DB3 actuator 0x7e records. A regression verifies that a later
 same-facing DB2 ornament cannot overwrite an ext-usage-14 side clear. This
 closes those visited-orientation cases only. Additional no-animation regressions
-cover inactive/type-state paths for actuator types 0x17, 0x1a, 0x1b, 0x2c, and
-0x32; their animation/data-driven combinations still need source cases. Other
-actuator variants, viewport integration, source captures, and all-platform
-behavior remain open.
+cover inactive/type-state paths and selected animated frames for actuator
+types 0x17, 0x1a, 0x1b, 0x2c, and 0x32, including actuator tick and phase
+offset inputs. Full animation sequences, other actuator variants, viewport
+integration, source captures, and all-platform behavior remain open.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` packed output parity:
 `dm2_v1_skproject_query_0cee_1a46_ext_summary` now exposes the source's

@@ -6260,6 +6260,53 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                       static_cases[case_index].label);
             }
         }
+        {
+            static const struct {
+                uint8_t actuator_type;
+                uint16_t actuator_data;
+                uint8_t status_bits;
+                uint32_t game_tick;
+                const char *label;
+            } animated_cases[] = {
+                { 0x17u, 0u, 0x04u, 1u, "type 0x17 once-only animation" },
+                { 0x1au, 0u, 0x04u, 1u, "type 0x1a keyhole animation" },
+                { 0x1bu, 0u, 0x05u, 1u, "type 0x1b matched-state animation" },
+                { 0x2cu, 5u, 0x01u, 0u, "type 0x2c phase-offset animation" },
+                { 0x32u, 5u, 0x01u, 0u, "type 0x32 actuator-tick animation" }
+            };
+            uint32_t raw_offset = 0u, raw_size = 0u;
+            DM2_V1_GdatEntry animation_entry = {
+                DM2_GDAT_CATEGORY_WALL_GFX, 0x22u,
+                DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 2u
+            };
+            DM2_V1_AssetLoader animation_loader;
+            memset(&animation_loader, 0, sizeof(animation_loader));
+            animation_loader.loaded = 1;
+            animation_loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+            animation_loader.raw_data_count = 1u;
+            animation_loader.raw_offsets = &raw_offset;
+            animation_loader.raw_sizes = &raw_size;
+            animation_loader.entries = &animation_entry;
+            animation_loader.entry_count = 1u;
+            for (size_t case_index = 0;
+                 case_index < sizeof(animated_cases) / sizeof(animated_cases[0]);
+                 ++case_index) {
+                uint16_t actuator_word = (uint16_t)(
+                    (animated_cases[case_index].actuator_data << 7) |
+                    animated_cases[case_index].actuator_type);
+                actuator_record_be[2] = (uint8_t)(actuator_word >> 8);
+                actuator_record_be[3] = (uint8_t)actuator_word;
+                actuator_record_be[4] = 0x10u;
+                actuator_record_be[5] = animated_cases[case_index].status_bits;
+                CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                          &dungeon, 0x0c00u, 0, 0,
+                          animated_cases[case_index].game_tick,
+                          wall_graphics, 1, &animation_loader, &wall_idx,
+                          &wall_field, &q1a46) == 1 &&
+                          q1a46.actuator_needs_anim && wall_field == 2,
+                      animated_cases[case_index].label);
+            }
+        }
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */
