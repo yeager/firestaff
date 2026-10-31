@@ -222,6 +222,9 @@ int main(int argc, char** argv) {
     int failures = 0;
     char saved_bram_path[THERON_V1_SRM_PATH_MAX] = {0};
     uint8_t saved_bram_before_dungeon[THERON_V1_PCE_BRAM_BYTES];
+    char fresh_home[THERON_V1_SRM_PATH_MAX] = {0};
+    char fresh_xdg_data_home[THERON_V1_SRM_PATH_MAX] = {0};
+    char fresh_app_data[THERON_V1_SRM_PATH_MAX] = {0};
 
     if (argc != 4) {
         fprintf(stderr, "usage: %s DATA_DIR TRACK02 BRAM\n", argv[0]);
@@ -706,6 +709,108 @@ int main(int argc, char** argv) {
             }
             M11_GameView_Shutdown(&view);
         }
+    }
+    {
+        const char *test_home = getenv("HOME");
+        int home_length = -1;
+        int xdg_length = -1;
+        int app_data_length = -1;
+        if (test_home && test_home[0]) {
+            home_length = snprintf(fresh_home, sizeof(fresh_home),
+                                   "%s/fresh-campaign", test_home);
+            xdg_length = snprintf(fresh_xdg_data_home,
+                                  sizeof(fresh_xdg_data_home),
+                                  "%s/.local/share/fresh-campaign", test_home);
+            app_data_length = snprintf(fresh_app_data,
+                                       sizeof(fresh_app_data),
+                                       "%s/fresh-campaign/AppData/Roaming",
+                                       test_home);
+        }
+        if (!test_home || !test_home[0] ||
+            home_length <= 0 ||
+            (size_t)home_length >= sizeof(fresh_home) ||
+            xdg_length <= 0 ||
+            (size_t)xdg_length >= sizeof(fresh_xdg_data_home) ||
+            app_data_length <= 0 ||
+            (size_t)app_data_length >= sizeof(fresh_app_data) ||
+            !set_test_environment("HOME", fresh_home) ||
+            !set_test_environment("XDG_DATA_HOME", fresh_xdg_data_home) ||
+            !set_test_environment("APPDATA", fresh_app_data) ||
+            !set_test_environment("FIRESTAFF_THERON_BRAM_PATH", NULL)) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: isolate the fresh campaign from prior user-data saves\n");
+        }
+    }
+    if (failures) {
+        M11_GameView_Shutdown(&view);
+    } else {
+        int fresh_game_ready = 1;
+        spec.savePath = NULL;
+        M11_GameView_Init(&view);
+        if (!M11_GameView_Start(&view, &spec)) {
+            ++failures;
+            fprintf(stderr, "FAIL: native M11 starts a fresh game from authentic US Track 02\n");
+            fresh_game_ready = 0;
+        }
+        if (fresh_game_ready) {
+            world = (Theron_V1_World *)view.theronWorld;
+            if (!world ||
+                view.theronState.startup_phase != THERON_STARTUP_PHASE_TITLE ||
+                view.theronState.save_resume_claim != THERON_V1_STARTUP_RESUME_NONE ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                view.theronState.startup_phase !=
+                    THERON_STARTUP_PHASE_STAGE_SELECT ||
+                view.theronState.selected_dungeon != 1 ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                view.theronState.startup_phase !=
+                    THERON_STARTUP_PHASE_SOUL_ROOM ||
+                view.theronState.level_loaded ||
+                view.theronState.startup_roster_name_count <= 0 ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                view.theronState.startup_phase != THERON_STARTUP_PHASE_READY ||
+                view.theronState.selected_mirrors_mask == 0) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: authentic fresh campaign selects Ak-Tu-Ba and admits the source roster through the Soul Room (phase=%d claim=%d dungeon=%d roster=%d cursor=%d mirrors=0x%08x loaded=%d)\n",
+                        view.theronState.startup_phase,
+                        view.theronState.save_resume_claim,
+                        view.theronState.selected_dungeon,
+                        view.theronState.startup_roster_name_count,
+                        view.theronState.startup_cursor,
+                        view.theronState.selected_mirrors_mask,
+                        view.theronState.level_loaded);
+                fresh_game_ready = 0;
+            }
+        }
+        if (fresh_game_ready) {
+            for (i = 0;
+                 i <= THERON_STARTUP_HERO_MIRROR_COUNT &&
+                 view.theronState.startup_cursor !=
+                     THERON_STARTUP_HERO_MIRROR_COUNT;
+                 ++i) {
+                if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) !=
+                    M11_GAME_INPUT_REDRAW) break;
+            }
+            if (view.theronState.startup_cursor !=
+                    THERON_STARTUP_HERO_MIRROR_COUNT ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                view.theronState.startup_phase !=
+                    THERON_STARTUP_PHASE_IN_DUNGEON ||
+                !view.theronState.level_loaded || !world ||
+                world->current_dungeon != 1 || world->current_level != 0 ||
+                !world->levels[0][0].source_header_verified ||
+                world->progression.quest_items_collected != 0u) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: authentic fresh Ak-Tu-Ba game admits the real level without inventing quest progress\n");
+            }
+        }
+        M11_GameView_Shutdown(&view);
     }
     if (failures) {
         fprintf(stderr, "Theron authenticated M11 Continue FAILED (%d checks)\n",
