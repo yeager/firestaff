@@ -26,6 +26,8 @@ def main() -> int:
     old_replay = Path(baseline_value)
     row_trace = Path(trace_value)
     output = Path(sys.argv[2])
+    vram = (root / "dumps" / "vdp2-vram.bin").read_bytes()
+    registers = (root / "dumps" / "vdp2-registers.bin").read_bytes()
     expected_screenshot_hash = "f9f2175b5f75616cbd7c942a7d65f5fcdb20012186b5069aebe77be4e4a85c94"
     if hashlib.sha256(screenshot.read_bytes()).hexdigest() != expected_screenshot_hash:
         raise SystemExit("authentic intro screenshot SHA-256 mismatch")
@@ -34,6 +36,26 @@ def main() -> int:
     trace_bytes = row_trace.read_bytes()
     if hashlib.sha256(trace_bytes).hexdigest() != "1f1ddff055c5189e8b42db9b15936135601f43bc7320873c14e0269a323c40ff":
         raise SystemExit("retained Ymir live-row trace SHA-256 mismatch")
+    if hashlib.sha256(vram).hexdigest() != "2b6fe0392b1ff23c0c55f08423d179a74d7f481990e37aadd4e6bfd657d9cf45":
+        raise SystemExit("authentic intro VDP2 VRAM SHA-256 mismatch")
+    if hashlib.sha256(registers).hexdigest() != "2d3ed242492f06aa8bac0aa90acfc823c488a6d07ec76d5932882233e80d2ff4":
+        raise SystemExit("authentic intro VDP2 register SHA-256 mismatch")
+    register_words = {offset: int.from_bytes(registers[offset:offset + 2], "big")
+                      for offset in (0x20, 0x28, 0x32, 0x3a, 0x3c, 0x44, 0x46)}
+    if register_words != {0x20: 0x0003, 0x28: 0x0013, 0x32: 0, 0x3a: 0,
+                          0x3c: 0, 0x44: 0x1717, 0x46: 0x1717}:
+        raise SystemExit("authentic intro NBG1 map register profile mismatch")
+    # With PLSZ/MPOFN zero and MAP1A/B=0x1717, NBG1's map is at
+    # 0x5c000. Verify every 64x64 PND there, so the live scroll position
+    # cannot select an unexamined map cell. The 4bpp character number 0x1000
+    # addresses 32 bytes at 0x20000; all zero nibbles are transparent.
+    map_base = 0x5c000
+    pnds = [vram[map_base + cell * 4:map_base + cell * 4 + 4]
+            for cell in range(64 * 64)]
+    if len(vram) != 0x80000 or any(pnd != b"\x00\x00\x10\x00" for pnd in pnds):
+        raise SystemExit("authentic intro NBG1 64x64 map is not uniformly (attr=0,charno=0x1000)")
+    if vram[0x20000:0x20020] != bytes(32):
+        raise SystemExit("authentic intro NBG1 character 0x1000 is not fully transparent")
     trace = trace_bytes.decode("utf-8")
     if len(re.findall(r"^TARGET frame_counter=7486$", trace, re.MULTILINE)) != 1:
         raise SystemExit("retained Ymir trace does not identify exactly frame 7486")
@@ -78,7 +100,7 @@ def main() -> int:
                         )
         if old_exact != 70454 or live_exact != 286720:
             raise SystemExit(f"unexpected authentic screenshot match: old={old_exact}/71680 live={live_exact}/286720")
-        print(f"PASS: baseline={old_exact}/71680 top-left samples; live-row replay={live_exact}/286720 doubled screenshot samples exact")
+        print(f"PASS: NBG1 transparency verified from all 4096 authentic PNDs and its character bytes; baseline={old_exact}/71680 top-left samples; live-row replay={live_exact}/286720 doubled screenshot samples exact")
         return 0
     finally:
         output.unlink(missing_ok=True)

@@ -19,7 +19,11 @@ The row trace is `gdb-row-state.log` (SHA-256
 real-data test verifies this hash, the single frame-counter marker `7486`, the
 complete row sequence 4–116, and each row's NBG0 transparency, scroll,
 increment, priority, and color-calculation fields before supplying row states
-to the C compositor.
+to the C compositor. It also hash-pins the VDP2 register and VRAM dumps,
+checks the captured NBG1 register profile, and verifies all 4,096 PNDs in its
+64×64 map are `(attr=0, charno=0x1000)`. The corresponding 32-byte 4bpp
+character pattern at `0x20000` is all zero, proving transparent index-zero
+pixels for every visible NBG1 cell regardless of the live map scroll.
 
 The trace observes one consistent live row tuple over output rows 4–116:
 NBG0 H/V scroll `0x1f79/0x0bcd` and H/V increments `0xcd/0xcd` in 11.8/8.8
@@ -33,11 +37,10 @@ snapshot, baseline replay, and screenshot by SHA-256.
 This compositor admits the observed profile only: `BGON=0x0003`,
 `CHCTLA=0x0013`, `SPCTL=0x1536`, `PRINA=0x0404`, `CCCTL=0x0043`, and
 `CCRNA=0x1010`, with the captured zero bitmap/CRAM offsets. NBG1 is enabled in
-this profile, so the caller must attest its transparent visible plane; the
-retained capture resolves 1,120 visible map cells to zero pixels. The real
-data regression also verifies that the compositor rejects the input when
-this NBG1 transparency attestation is missing. Other enabled backgrounds or
-register profiles are rejected instead of being silently omitted.
+this profile; the real-data harness verifies its register profile, all 4,096
+map entries, and the selected transparent character before passing the
+attestation to the compositor. Other enabled backgrounds or register profiles
+are rejected instead of being silently omitted.
 
 Run the authentic regression:
 
