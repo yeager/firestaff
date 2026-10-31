@@ -247,6 +247,14 @@ after Back/reselection, and reached the authenticated CSB runtime. Both
 original archives retained their pre-test hashes. This checks CSB's menu
 platform default in a mixed-media root, not full Amiga or FM Towns parity.
 
+`m12_main_menu_dm2_fmtowns_default_with_mac_real_media` also passed in 161.86
+seconds. With authentic FM Towns Japanese and Macintosh English media present,
+the no-game menu selected FM Towns on first selection and after Back/reselection,
+then reached the first dungeon runtime. Both original archives retained their
+pre-test hashes. This verifies the DM2 menu default alongside the separate
+direct-CLI mixed-platform check; it does not establish native presentation or
+full gameplay parity.
+
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
 `0x06010040`. The English-version `MENU.BPK` has an authenticated hash and is
