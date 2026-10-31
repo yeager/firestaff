@@ -260,10 +260,30 @@ run_direct_game_exit_case() {
             archive=$dm2_archive
             script='wait:1800,click:115:65,click:100:60,wait-game-runtime,key:escape,key:enter'
             ;;
+        nexus)
+            archive=
+            for candidate in "$data_root"/nexus/*.cue "$data_root"/nexus/*.iso "$data_root"/nexus/DM.BIN; do
+                if [ -f "$candidate" ]; then
+                    archive=$candidate
+                    break
+                fi
+            done
+            script='wait:100,key:escape'
+            ;;
+        theron)
+            archive=
+            for candidate in "$data_root"/theron/TQUS02.bin "$data_root"/theron/TQJP02.bin; do
+                if [ -f "$candidate" ]; then
+                    archive=$candidate
+                    break
+                fi
+            done
+            script='wait:100,key:escape'
+            ;;
         *) echo "FAIL: unsupported direct-exit game: $game" >&2; return 1 ;;
     esac
-    if [ ! -f "$archive" ]; then
-        echo "SKIP: authentic $game FM Towns archive unavailable: $archive"
+    if [ -z "$archive" ] || [ ! -f "$archive" ]; then
+        echo "SKIP: authentic $game original media unavailable for direct-exit test"
         return 0
     fi
     mkdir -p "$case_root"
@@ -310,6 +330,8 @@ run_direct_game_exit_matrix() {
     run_direct_game_exit_case dm1
     run_direct_game_exit_case csb
     run_direct_game_exit_case dm2
+    run_direct_game_exit_case nexus
+    run_direct_game_exit_case theron
 }
 
 run_return_menu_window_close_case() {
