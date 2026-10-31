@@ -1,6 +1,6 @@
 # ReDMCSB Firestaff complete audit
 
-Updated: 2026-10-30
+Updated: 2026-10-31
 
 This is the DM1/CSB source-review contract for comparing ReDMCSB against
 Firestaff. ReDMCSB is the primary functional reference for DM1 and CSB V1.
@@ -47,6 +47,14 @@ source functions are mapped to Firestaff behavior and platform-specific gates.
 | DM2 | Amiga | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, Amiga row | PARTIAL |
 | DM2 | FM Towns | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, FM Towns row | PARTIAL |
 | DM2 | Macintosh | `README.md` Macintosh English route; Macintosh First Chapter demo remains explicitly unsupported | PARTIAL |
+
+F0275 has one bounded DM1 PC34 M11 C080 behavior regression in this review:
+successful non-head C017 removal and the linked-head exception. ReDMCSB's
+`MOVESENS.C:1415-1427` compiles the unlink under MEDIA009/MEDIA529, while
+MEDIA508 omits it; do not project this result onto every DM1 edition or onto
+the Atari ST, Amiga, and FM Towns lanes. Each lane still needs its edition's
+source gate and original-runtime evidence. CSB's bounded PC34 C011/C012 sensor
+routes are tracked separately and do not close its other platform lanes.
 
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
