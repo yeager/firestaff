@@ -37,6 +37,21 @@ playable game route or parity on every supported platform.
 | `MISSING` | 1 |
 | **Total** | **1,754** |
 
+The tail of the inventory includes `DRAW_ALCOVE_ITEMS` and
+`DRAW_WALL_ORNATE`, both still partial, plus the missing
+`_32cb_0f82_SHOP_GLASS`. In particular, the isolated
+`GET_WALL_TILE_ANYITEM_RECORD` helper is not an implementation of
+`DRAW_ALCOVE_ITEMS`: skproject reads each rendered wall cell's `id4` record
+handle, applies an early facing gate, renders DB5..DB10 items with wall-specific
+`DRAW_ITEM` geometry, handles two cloud types, and creates the clickable item
+zone only for front cell 3. Firestaff's source item material route currently
+starts from floor-tile roots and its static-object plans do not model this wall
+placement. The next required owner is the renderer-cell record bridge, followed
+by wall-specific item/cloud rendering and the front-wall click target. The
+shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
+creature item masks, merchandise WALL_GFX assets, and its name/price display;
+the runtime entry and panel builder currently fail closed.
+
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
 `DM2_ALLOC_NEW_DBITEM_DEEPLY` chain: Firestaff has the pool scan and limited
