@@ -71,6 +71,44 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     printf '%s\n' 'FAIL: an unmatched key-down was counted as a complete host key press' >&2
     exit 1
 fi
+state_autoload_gate="$host_key_gate_dir/autoload-gate.sh"
+sed -n '/^validate_autoload_state_receipt() {/,/^}/p' "$script" \
+    >"$state_autoload_gate"
+state_autoload_stdout="$host_key_gate_dir/autoload.stdout"
+state_autoload_stderr="$host_key_gate_dir/autoload.stderr"
+state_autoload_path="$host_key_gate_dir/authentic-state.mc0"
+printf 'Theron autoload state loaded: %s\n' "$state_autoload_path" \
+    >"$state_autoload_stdout"
+: >"$state_autoload_stderr"
+if ! autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate"; then
+    printf '%s\n' 'FAIL: successful requested-state autoload receipt was rejected' >&2
+    exit 1
+fi
+printf 'Theron autoload state loaded: %s\n' "$host_key_gate_dir/other-state.mc0" \
+    >"$state_autoload_stdout"
+if autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate" \
+        2>/dev/null; then
+    printf '%s\n' 'FAIL: autoload receipt for a different state file was accepted' >&2
+    exit 1
+fi
+printf 'Theron autoload state failed: %s\n' "$state_autoload_path" \
+    >"$state_autoload_stdout"
+if autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate" \
+        2>/dev/null; then
+    printf '%s\n' 'FAIL: failed autoload receipt was accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'validate_autoload_state_receipt || exit 1' "$script" || \
+   ! grep -Fq 'autoload_state_load_status=verified' "$script"; then
+    printf '%s\n' 'FAIL: state-only mode must be gated by the successful autoload receipt' >&2
+    exit 1
+fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
 python3 "$repo/tests/test_theron_pce_fast_cd_ram_writer_pc_trace_patch.py"
@@ -1251,6 +1289,7 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x guest_sp=%02x stack_mpr=%02x guest_stack=' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementStateWrite' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'movement_state_write sequence=%u event_sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'opcode_mpr=%02x opcode_physical_pc=%06x' "$pce_fast_movement_context_instrumenter" ||
@@ -2142,12 +2181,16 @@ if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
    ! grep -Fq 'autoload_state_magic=$(od -An -tx1 -N4 "$autoload_state"' "$script" ||
    ! grep -Fq 'autoload_state_md5=$(md5_file "$autoload_state")' "$script" ||
    ! grep -Fq 'autoload_state_md5=%s' "$script" ||
+   ! grep -Fq 'Theron autoload state loaded: $autoload_state' "$script" ||
+   ! grep -Fq 'Theron autoload state failed: $autoload_state' "$script" ||
+   ! grep -Fq 'state-only trace mode requires a successful save-state autoload receipt' "$script" ||
+   ! grep -Fq 'autoload_state_load_status=%s' "$script" ||
    ! grep -Fq 'points to HUBM SRAM, not a Mednafen savestate' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE' "$state_autoload_patch"; then
-    printf 'FAIL: capture script and Mednafen patch must retain authentic movie-replay provenance\n' >&2
+    printf 'FAIL: capture script must validate autoload receipts and retain authentic movie-replay provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'profile_sram_manifest="${trace}.profile-sram"' "$script" ||

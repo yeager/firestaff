@@ -54,16 +54,16 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +static void TheronPCEFastInputTraceRead(unsigned int address, uint8 value, int index)
 +{
 + TheronPCEFastInputTraceInit();
++#ifdef FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT
++ if(index >= 0)
++  TheronTracePCEFastVWRControllerRead(TheronTraceInstructionPC, pce_jp_data[index]);
++#endif
 + if(TheronPCEFastInputTrace && TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame && TheronPCEFastInputTraceCount < TheronPCEFastInputTraceLimit)
 + {
 +  const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +  fprintf(TheronPCEFastInputTrace, "pce_input_read frame=%u cpu_pc=%04x physical_pc=%08x register=%04x raw=%04x sel=%u clr=%u index=%u value=%02x module=pce_fast device_type=%u device_raw=%04x scripted_port=%u scripted_mask=%04x event_sequence=%u\n", TheronPCEFastScriptFrame, TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, address, index >= 0 ? pce_jp_data[index] : 0, sel & 1, (sel >> 1) & 1, read_index, value, index >= 0 ? InputTypes[index] : 0, index >= 0 && data_ptr[index] ? MDFN_de16lsb(data_ptr[index]) : 0, TheronPCEFastScriptPort, TheronPCEFastScriptMask, event_sequence);
 +  fflush(TheronPCEFastInputTrace);
 +  TheronPCEFastInputTraceCount++;
-+#ifdef FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT
-+  if(index >= 0)
-+   TheronTracePCEFastVWRControllerRead(TheronTraceInstructionPC, pce_jp_data[index]);
-+#endif
 + }
 +}
 +

@@ -1818,6 +1818,21 @@ cleanup_capture() {
 }
 trap cleanup_capture EXIT INT TERM
 
+validate_autoload_state_receipt() {
+    local expected_receipt="Theron autoload state loaded: $autoload_state"
+    local failure_receipt="Theron autoload state failed: $autoload_state"
+
+    if grep -aFq -- "$failure_receipt" "$stdout_file" "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported that the requested autoload state failed' >&2
+        return 1
+    fi
+    if ! grep -aFq -- "$expected_receipt" "$stdout_file" "$stderr_file"; then
+        printf '%s\n' 'FAIL: state-only trace mode lacks a successful Mednafen autoload receipt for the requested state' >&2
+        return 1
+    fi
+    return 0
+}
+
 # The locally supplied SysCard3 dump is a 512-byte-headered image. Keep its
 # source hash above for provenance, but pass Mednafen the byte-exact ROM body;
 # the resulting image must match the canonical Japanese v3.0 firmware hash.
@@ -2237,6 +2252,16 @@ fi
 wait "$mednafen_pid"
 status=$?
 set -e
+
+autoload_state_load_status=not_requested
+if [[ -n "$autoload_state" ]]; then
+    validate_autoload_state_receipt || exit 1
+    autoload_state_load_status=verified
+fi
+if [[ "$state_trace_only" == 1 && "$autoload_state_load_status" != verified ]]; then
+    printf '%s\n' 'FAIL: state-only trace mode requires a successful save-state autoload receipt' >&2
+    exit 1
+fi
 
 if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
     if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$stderr_file"; then
@@ -2984,6 +3009,7 @@ fi
         sed 's/^/configured_profile_sram=/' "$profile_sram_manifest"
     fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
+    printf 'autoload_state_load_status=%s\n' "$autoload_state_load_status"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"

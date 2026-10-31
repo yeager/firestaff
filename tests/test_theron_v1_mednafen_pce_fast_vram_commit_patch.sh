@@ -78,6 +78,55 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
     exit 1
 fi
 
+# The VWR input gate is an observation hook, not part of bounded input-log
+# output. It must run for matching controller reads before the log start frame
+# and after the log row limit has been reached.
+python3 - "$input_trace_patch" <<'PY'
+from pathlib import Path
+import sys
+
+patch = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+added = "\n".join(
+    line[1:] for line in patch
+    if line.startswith("+") and not line.startswith("+++")
+)
+start = added.find("static void TheronPCEFastInputTraceRead")
+if start < 0:
+    raise SystemExit("FAIL: missing PCE Fast input-read instrumentation")
+opening = added.find("{", start)
+depth = 0
+end = None
+for offset in range(opening, len(added)):
+    if added[offset] == "{":
+        depth += 1
+    elif added[offset] == "}":
+        depth -= 1
+        if depth == 0:
+            end = offset
+            break
+if end is None:
+    raise SystemExit("FAIL: unterminated PCE Fast input-read instrumentation")
+function = added[start:end + 1]
+gate = function.find("TheronTracePCEFastVWRControllerRead(")
+log_gate = function.find("if(TheronPCEFastInputTrace &&")
+if gate < 0 or log_gate < 0 or gate > log_gate:
+    raise SystemExit("FAIL: VWR controller gate must be checked before input logging")
+for position, label in ((gate, "VWR gate"), (log_gate, "input logger")):
+    if function[:position].count("{") - function[:position].count("}") != 1:
+        raise SystemExit(f"FAIL: {label} must be at input-reader function scope")
+gate_start = function.rfind("#ifdef", 0, gate)
+gate_end = function.find("#endif", gate)
+if (gate_start < 0 or gate_end < gate or
+        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT" not in
+        function[gate_start:gate_end] or "if(index >= 0)" not in
+        function[gate_start:gate]):
+    raise SystemExit("FAIL: VWR hook must be optional and require an indexed controller")
+if "TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame" not in function[log_gate:] or \
+        "TheronPCEFastInputTraceCount < TheronPCEFastInputTraceLimit" not in function[log_gate:]:
+    raise SystemExit("FAIL: input-log frame and row bounds must remain intact")
+print("PASS: PCE Fast VWR input gate is independent of bounded input logging")
+PY
+
 if [[ -z ${MEDNAFEN_SOURCE:-} ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_SOURCE is required for patch-application verification'
     exit 0
