@@ -225,6 +225,7 @@ typedef struct {
     uint8_t effective_flags;
     uint8_t source_flags;
     uint8_t distance;
+    uint8_t source_tile_type;
     uint8_t weather_index;
     uint8_t weather_delta;
     const DM2_V1_CLightFlags4FloorReceipt *floor;

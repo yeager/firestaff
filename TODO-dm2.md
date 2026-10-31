@@ -1,5 +1,16 @@
 # Firestaff TODO — DM2
 
+2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:
+`dm2_runtime_try_light_mode8` now attempts authenticated dynamic-light maps
+without the former four-coordinate FM Towns gate; incomplete source walks still
+block the transaction. `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` flags 3 now resolves
+summarized class-0 nodes as no-op, matching `c_light.cpp:233-243`. Data-free
+mode-7 and visibility tests pass, and a new HME-242 real-media regression for
+map 3 `(8,4)` compiles. That real-media test cannot run here because the
+original FM Towns archive is unavailable. Existing runtime proof remains
+FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains
+open, as do other record-derived light branches.
+
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
 tails with source byte order and a 256-link limit. DBE selector `FF80` and DBF

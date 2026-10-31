@@ -426,6 +426,9 @@ int dm2_v1_mode7_on_node(
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
+        /* SKProject c_light.cpp:233-243: a summarized class-0 tile with
+         * mode-7 flags 3 exits to L_fin before any GDAT or record query. */
+        if (node->source_tile_type == 0u) return 1;
         /* sklight.cpp:316-323 exits before teleporter, record and creature
          * probes when the ceiling F8 query returns zero. */
         if (node->stone_room && node->stone_room->valid &&

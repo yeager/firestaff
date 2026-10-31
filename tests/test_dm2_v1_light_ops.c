@@ -814,6 +814,7 @@ static void test_mode7_flags4_original_media(void)
     node.cached_tile = 0x30u;
     node.source_flags = 3u;
     node.stone_room = &class1_room;
+    node.source_tile_type = class1_room.source_tile_type;
     node.prepass = &class1_prepass;
     assert(dm2_v1_mode7_on_node(&node, &accumulated, &darkness) == 1);
     assert(accumulated == 0 && darkness == 0);
@@ -839,6 +840,7 @@ static void test_mode7_flags4_original_media(void)
     node.stone_room = NULL;
     node.effective_flags = 0u;
     node.source_flags = 3u;
+    node.source_tile_type = room.source_tile_type;
     assert(room.raw_tile == 0xb0u && room.source_tile_type == 1u &&
            room.first_record_link == 0x0441u &&
            room.ceiling_ornament_word == 0x00ffu);
@@ -1085,11 +1087,24 @@ static void test_mode7_flags3_prepass_evidence(void)
     room.ceiling_ornament_word = 0x0a28u;
     node.cached_tile = 0x10u;
     node.source_flags = 3u;
+    node.source_tile_type = 1u;
     node.distance = 1u;
     node.stone_room = &room;
     node.prepass = &evidence;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
     assert(ambient == 0 && darkness == 0);
+    node.source_tile_type = 0u;
+    node.stone_room = NULL;
+    node.prepass = NULL;
+    ambient = 7;
+    darkness = 9;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 7 && darkness == 9);
+    node.source_tile_type = 1u;
+    node.stone_room = &room;
+    node.prepass = &evidence;
+    ambient = 0;
+    darkness = 0;
     evidence.valid = 1u;
     evidence.teleporter_detail_known = 1u;
     evidence.creature_query_known = 1u;

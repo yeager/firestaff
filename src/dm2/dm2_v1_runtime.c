@@ -2354,6 +2354,7 @@ static int dm2_runtime_mode7_on_node(
     node.cached_tile = walk->cache.tile;
     node.effective_flags = effective_flags;
     node.source_flags = (uint8_t)source_flags;
+    node.source_tile_type = 0u;
     node.distance = (uint8_t)score;
     if (!dm2_v1_mode7_tile_cache_action23_gate(&walk->cache)) {
         result = dm2_v1_mode7_on_node(&node,
@@ -2373,7 +2374,10 @@ static int dm2_runtime_mode7_on_node(
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (raw < 0 || first < -1) goto unknown;
-    if (source_flags == 3u && (raw >> 5) == 5) {
+    node.source_tile_type = (uint8_t)(raw >> 5);
+    if (source_flags == 3u && (raw >> 5) == 0) {
+        branch = 34u;
+    } else if (source_flags == 3u && (raw >> 5) == 5) {
         branch = 27u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, x, y,
