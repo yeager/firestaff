@@ -2,8 +2,8 @@
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
 The locked checkout yields 3,929 active definitions (2,724 SPX and 1,205 DOS);
-3,870 remain unreviewed, 54 are partial, and 5 have mapped parity entries.
-The DOS `SKW_IS_REBIRTH_ALTAR` predicate also maps to the matching Firestaff helper; authenticated header decoding and platform caller parity remain open. `SKW_QUERY_DOOR_STRENGTH` has an exact helper/caller mapping, with authenticated GDAT source fields still to verify on each lane. The adjacent door graphics/state/resistance getters have matching helper queries; authenticate their GDAT field values on each supported platform. The combined skproject backlog is 3,953 rows. The legacy DOS and SPX shooter
+3,860 remain unreviewed, 64 are partial, and 5 have mapped parity entries.
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. The map-header resolver and runtime integration are missing, and all per-platform runtime/data checks remain open. The combined skproject backlog is 3,953 rows. The legacy DOS and SPX shooter
 source rows are now marked partial: Firestaff still lacks a live owner for the
 source DB14 allocation, projectile record initialization/tile append, and
 C1D/C1E follow-up timer transaction. Review and implement the remaining rows

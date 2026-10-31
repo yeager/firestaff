@@ -3553,14 +3553,14 @@ int dm2_v1_query_door_damage_resist_receipt(
     DM2_V1_GdatWordQueryReceipt *out_receipt)
 {
     uint16_t value = 0u;
-    /* SKProject SkWinCore.cpp::QUERY_DOOR_DAMAGE_RESIST reads
-     * GDAT_DOOR_DEFENSE (0x0e), not the neighbouring strength field. */
+    /* SKProject c_querydb.cpp::DM2_QUERY_DOOR_DAMAGE_RESIST reads
+     * DOORS dtWordValue field 0x0f. */
     if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
-                                      door_index, 0x0e, &value)) {
+                                      door_index, 0x0f, &value)) {
         if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
-    return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_DOORS, door_index, 0x0e,
+    return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_DOORS, door_index, 0x0f,
                                  value, 0u, out_receipt);
 }
 
@@ -3585,7 +3585,8 @@ int dm2_v1_get_door_stat_0x10_receipt(
     int door_index,
     DM2_V1_GdatWordQueryReceipt *out_receipt)
 {
-    return dm2_door_word_field_receipt(loader, door_index, 0x10, out_receipt);
+    /* The legacy name is misleading: source GET_DOOR_STAT_0X10 asks 0x0e. */
+    return dm2_door_word_field_receipt(loader, door_index, 0x0e, out_receipt);
 }
 
 int dm2_v1_get_graphics_for_door_receipt(
@@ -3601,7 +3602,8 @@ int dm2_v1_query_0cee_3275_receipt(
     int door_index,
     DM2_V1_GdatWordQueryReceipt *out_receipt)
 {
-    return dm2_door_word_field_receipt(loader, door_index, 0x0d, out_receipt);
+    /* SKProject c_querydb.cpp::DM2_query_0cee_3275 reads field 0x10. */
+    return dm2_door_word_field_receipt(loader, door_index, 0x10, out_receipt);
 }
 
 int dm2_v1_query_gdat_creature_word_value_receipt(
@@ -3712,29 +3714,52 @@ int dm2_v1_query_door_strength_receipt(
     DM2_V1_DoorStrengthReceipt *out_receipt)
 {
     uint16_t strength = 0u;
+    uint16_t fallback_value = 0u;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (door_index < 0 || door_index > 0xff) return 0;
     out_receipt->door_index = (uint8_t)door_index;
 
-    /* SKProject: SkWinCore.cpp::QUERY_DOOR_STRENGTH is a direct GDAT
-     * lookup: DOORS / dtWordValue / GDAT_DOOR_STRENGTH (0x0f).  Earlier
-     * Firestaff code looked at unrelated 0x10/0x11 fields and manufactured
-     * a 6-or-1 strength fallback.  Never infer gameplay values where the
-     * original record has an exact field. */
+    /* SKProject c_querydb.cpp::DM2_QUERY_DOOR_STRENGTH reads field 0x11,
+     * then returns 6 when field 0x10 is zero or 1 when it is nonzero. */
     if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
-                                      door_index, 0x0f, &strength)) {
-        return 0;
+                                      door_index, 0x11, &strength)) {
+        if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                         door_index, 0x10,
+                                         &fallback_value)) {
+            return 0;
+        }
+        out_receipt->accepted = 1u;
+        out_receipt->used_resistance_fallback = 1u;
+        out_receipt->resistance_field_value = fallback_value;
+        out_receipt->strength = fallback_value == 0u ? 6u : 1u;
+        out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+            0x44535452u, (uint32_t)door_index,
+            ((uint32_t)out_receipt->strength << 16) | 0x0010u,
+            out_receipt->resistance_field_value);
+        return 1;
+    }
+    if (strength != 0u) {
+        out_receipt->used_explicit_strength = 1u;
+        out_receipt->strength = strength;
+    } else {
+        if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                          door_index, 0x10,
+                                          &fallback_value)) {
+            return 0;
+        }
+        out_receipt->used_resistance_fallback = 1u;
+        out_receipt->resistance_field_value = fallback_value;
+        out_receipt->strength = fallback_value == 0u ? 6u : 1u;
     }
     out_receipt->accepted = 1u;
-    out_receipt->used_explicit_strength = 1u;
-    out_receipt->strength = strength;
 
     out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
         0x44535452u, (uint32_t)door_index,
-        ((uint32_t)out_receipt->strength << 16) | 0x000fu,
-        out_receipt->used_explicit_strength);
+        ((uint32_t)out_receipt->strength << 16) |
+            (out_receipt->used_explicit_strength ? 0x0011u : 0x0010u),
+        out_receipt->used_explicit_strength ? strength : fallback_value);
     return 1;
 }
 
