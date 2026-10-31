@@ -116,10 +116,21 @@ runtime shop entry and its panel builder returns no render plan. The source
 path begins at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
 `::_32cb_0f82_SHOP_GLASS`, which resolves the active wall actuator, a floor
 shop actuator (type `0x30`), DB14 item state, creature item masks, and
-`WALL_GFX` artwork. `_48ae_05ae_CREATURE` supplies source item prices;
-`SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE` and
-`::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the live
-record/GDAT chain, panel rendering, and buy/sell state transitions against
+`WALL_GFX` artwork. Preserve the complete source order from
+`SkWinCore.cpp:22703-22874`: resolve the first same-tile floor actuator `0x30`
+and wall-panel actuator `0x3f`; when the wall actuator is inactive or
+once-only, load its CREATURES item mask from index `ActuatorData` and text
+field `(Delay * 3) + 0x10`; cycle candidates in the `WALL_GFX/dt08/0x13`
+whitelist order (or modulo 512 when that list is absent); filter the mask,
+shop subtype word bit `0x1000`, wall/floor stock presence, and current party
+inventory/containers/hands via `_2fcf_16ff`/`_2fcf_164e`; then clear once-only,
+activate both actuators, and write the selected item to the floor actuator.
+The same render call draws the item image, sold-out icon when applicable, nav
+board, item name and buy/sell prices for cell 3, and may spawn a deeply
+allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
+supplies source item prices; `SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE`
+and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
+live record/GDAT chain, panel rendering, and buy/sell state transitions against
 those owners, then verify against source-owned DM2 data on each supported
 platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
 generic price formulas. The source ownership gate currently means this whole
