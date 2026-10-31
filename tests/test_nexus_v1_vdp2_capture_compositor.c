@@ -499,6 +499,79 @@ cleanup:
     return ok;
 }
 
+static int rejects_short_register_capture_for_vdp1_overlay(void)
+{
+    uint8_t *fbs = (uint8_t *)calloc(
+        1U, NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES);
+    uint8_t *vdp2_vram = (uint8_t *)calloc(
+        1U, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    uint8_t *cram = (uint8_t *)calloc(
+        1U, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    uint8_t *registers = (uint8_t *)calloc(
+        1U, NEXUS_V1_SATURN_VDP2_REG_BYTES);
+    uint8_t *vdp1_vram = (uint8_t *)calloc(
+        1U, NEXUS_V1_SATURN_VDP1_VRAM_BYTES);
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer =
+        (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)calloc(
+            1U, sizeof(*framebuffer));
+    Nexus_V1_Vdp2YmirMenuCaptureInput input;
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt receipt;
+    int rejected = 0;
+
+    if (!fbs || !vdp2_vram || !cram || !registers || !vdp1_vram ||
+        !framebuffer) goto cleanup;
+    wb16(registers + 0x00U, 0x8000U);
+    wb16(registers + 0x0eU, 0x0300U);
+    wb16(registers + 0x20U, 0x0001U);
+    wb16(registers + 0x28U, 0x0013U);
+    wb16(registers + 0x78U, 0x0001U);
+    wb16(registers + 0x7cU, 0x0001U);
+    wb16(registers + 0xacU, 0x8003U);
+    wb16(registers + 0xaeU, 0xf800U);
+    wb16(registers + 0xe0U, 0x1536U);
+    wb16(registers + 0xe4U, 0x0000U);
+    wb16(registers + 0xe8U, 0x0000U);
+    wb16(registers + 0xecU, 0x0043U);
+    wb16(registers + 0xf0U, 0x0102U);
+    wb16(registers + 0xf2U, 0x0300U);
+    wb16(registers + 0xf4U, 0x0504U);
+    wb16(registers + 0xf6U, 0x0706U);
+    wb16(registers + 0xf8U, 0x0004U);
+    wb16(registers + 0x100U, 0x1000U);
+    wb16(registers + 0x108U, 0x1000U);
+    memset(&input, 0, sizeof(input));
+    input.vdp1_display_framebuffer = fbs;
+    input.vdp1_display_framebuffer_size =
+        NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES;
+    input.vdp2_vram = vdp2_vram;
+    input.vdp2_vram_size = NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
+    input.vdp2_cram = cram;
+    input.vdp2_cram_size = NEXUS_V1_SATURN_VDP2_CRAM_BYTES;
+    input.vdp2_registers = registers;
+    /* Backing storage is complete to keep the regression probe memory-safe;
+     * the declared span is intentionally too short for the overlay copy. */
+    input.vdp2_registers_size = 0x120U;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    input.vdp1_vram = vdp1_vram;
+    input.vdp1_vram_size = NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
+    input.vdp1_command_source_join_verified = 1;
+    input.original_ymir_capture_verified = 1;
+    input.command_trace_complete_verified = 1;
+    if (!nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) && receipt.capture_only &&
+        !receipt.registers_verified && !receipt.renderer_permitted) {
+        rejected = 1;
+    }
+cleanup:
+    free(framebuffer);
+    free(vdp1_vram);
+    free(registers);
+    free(cram);
+    free(vdp2_vram);
+    free(fbs);
+    return rejected;
+}
+
 int main(void)
 {
     uint8_t *bitmap = (uint8_t *)calloc(1, NEXUS_V1_VDP2_NBG1_BITMAP_BYTES);
@@ -508,6 +581,11 @@ int main(void)
     Nexus_V1_Vdp2CaptureCompositeReceipt receipt;
     Nexus_Viewport viewport;
     int i;
+
+    if (!rejects_short_register_capture_for_vdp1_overlay()) {
+        fprintf(stderr, "FAIL: VDP1 overlay accepted a short VDP2 register span\n");
+        return 1;
+    }
 
     if (!bitmap || !cram) return 1;
     wb16(registers + 0x20, 0x0002);

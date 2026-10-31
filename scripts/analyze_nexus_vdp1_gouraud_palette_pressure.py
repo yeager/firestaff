@@ -138,6 +138,11 @@ def main() -> int:
             draw_mode = words[2]
             if ((draw_mode >> 3) & 7) != 1:
                 continue
+            if not (draw_mode & 0x0004):
+                parser.error(
+                    f"command {index} is mode 1 without Gouraud enabled; "
+                    "this analyzer only counts Gouraud commands"
+                )
             width = ((words[5] >> 8) & 0x3F) * 8
             height = words[5] & 0xFF
             texture_offset = words[4] * 8
@@ -195,7 +200,11 @@ def main() -> int:
         "naive_palette_slots_required_at_16_per_variant": 16 * len(variants),
         "unique_shaded_palette_rgb555_colors": len(all_colors),
         "unique_shaded_colors_in_nontransparent_source_texels": len(visible_colors),
-        "unique_colors_in_background_plus_mode1_source_palette_union": len(background_rgb555 | visible_colors),
+        "unique_colors_in_background_plus_mode1_source_palette_union": len(
+            background_rgb555 |
+            {red | (green << 5) | (blue << 10)
+             for red, green, blue in visible_colors}
+        ),
         "indexed_framebuffer_capacity": 256,
         "renderer_permitted": False,
         "limitations": [

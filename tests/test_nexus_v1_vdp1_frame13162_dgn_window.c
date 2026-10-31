@@ -448,7 +448,8 @@ static int verify_window_user_clip_accepts_viewport(const Blob *trace,
                 read_le16(command + 14U) != 112U) goto done;
             local_found = 1;
         } else if (index > 7U && index <= LAST_COMMAND &&
-                   (command_type == 8 || command_type == 11)) {
+                   (command_type == 8 || command_type == 9 ||
+                    command_type == 10 || command_type == 11)) {
             unexpected_state = 1;
         }
         if (index >= FIRST_COMMAND && index <= LAST_COMMAND) {
@@ -498,6 +499,7 @@ int main(int argc, char **argv)
 {
     char path[4096];
     const char *root;
+    const char *expected_rgb_path;
     Blob manifest = {0}, trace = {0}, vram = {0}, execution = {0}, dgn = {0};
     Blob composition_rgb = {0};
     unsigned int mode1_joined = 0U, mode5_joined = 0U;
@@ -512,6 +514,7 @@ int main(int argc, char **argv)
         return 2;
     }
     root = argv[1];
+    expected_rgb_path = getenv("FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB");
 #define LOAD(var, relative) do { \
         make_capture_path(path, sizeof(path), root, relative); \
         var = read_blob(path); \
@@ -526,7 +529,17 @@ int main(int argc, char **argv)
     }
     LOAD(vram, "vdp1-vram-command-trace-reconstructed-le.bin");
     LOAD(execution, "vdp1-command-execution-frame13162.json");
-    LOAD(composition_rgb, "vdp12-frame13162-command171.rgb");
+    if (expected_rgb_path && *expected_rgb_path) {
+        composition_rgb = read_blob(expected_rgb_path);
+        if (!composition_rgb.data) {
+            fprintf(stderr, "SKIP: external Ymir RGB evidence is unavailable at %s\n",
+                    expected_rgb_path);
+            result = 77;
+            goto done;
+        }
+    } else {
+        LOAD(composition_rgb, "vdp12-frame13162-command171.rgb");
+    }
 #undef LOAD
     dgn = read_blob(argv[2]);
     if (!dgn.data) {

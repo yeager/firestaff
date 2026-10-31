@@ -424,6 +424,8 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     if (command_overlay_requested &&
         (!input->vdp1_vram ||
          input->vdp1_vram_size != NEXUS_V1_SATURN_VDP1_VRAM_BYTES ||
+         input->vdp2_registers_size <
+             NEXUS_V1_SATURN_VDP2_REG_BYTES ||
          ((input->vdp1_command_count == 0U &&
            (input->vdp1_command_byte_offsets != NULL ||
             input->vdp1_command_source_join_verified_flags != NULL)) ||

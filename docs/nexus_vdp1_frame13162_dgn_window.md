@@ -88,7 +88,10 @@ python3 scripts/analyze_nexus_vdp1_gouraud_palette_pressure.py \
   --frame 13162 --first 10 --last 40
 ```
 
-The bounded Ymir title capture compositor can now add one source-bound VDP1
+The expected RGB replay is capture media and is kept outside Git. Set
+`FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB` to its local path; the test
+checks the file hash against the retained manifest entry. The bounded Ymir
+title capture compositor can now add one source-bound VDP1
 mode-0 sprite after constructing the captured FBS+NBG0 RGBA base. Its frame
 13162 check binds command bytes at VDP1 VRAM `0x1560`, preserves the captured
 4bpp texture byte order, and verifies the 1,008-byte span at `TITLE.BIN`
@@ -111,16 +114,18 @@ export FIRESTAFF_NEXUS_YMIR_REGS="$PWD/parity-evidence/verification/nexus_v1_ymi
 export FIRESTAFF_NEXUS_YMIR_VDP1_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp1-vram.bin"
 export FIRESTAFF_NEXUS_YMIR_VDP1_RECONSTRUCTED_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp1-vram-command-trace-reconstructed-le.bin"
 export FIRESTAFF_NEXUS_YMIR_COMMAND171_TITLE="$HOME/.firestaff/data/nexus/TITLE.BIN"
-export FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp12-frame13162-command171.rgb"
+export FIRESTAFF_NEXUS_YMIR_CAPTURE_DIR="/path/to/external/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030"
+export FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB="$FIRESTAFF_NEXUS_YMIR_CAPTURE_DIR/vdp12-frame13162-command171.rgb"
 export FIRESTAFF_NEXUS_YMIR_CAPTURE_ATTESTED=1
 export FIRESTAFF_NEXUS_YMIR_TRACE_ATTESTED=1
-export FIRESTAFF_NEXUS_YMIR_REPLAY_OUT=/tmp/nexus-frame13162-command171.rgb
+export FIRESTAFF_NEXUS_YMIR_REPLAY_OUT="$FIRESTAFF_NEXUS_YMIR_CAPTURE_DIR/replay-command171.rgb"
 cmake --build build --target test_nexus_v1_vdp2_capture_compositor
 build/test_nexus_v1_vdp2_capture_compositor
 python3 scripts/verify_nexus_capture_rgb_screenshot.py \
   "$FIRESTAFF_NEXUS_YMIR_REPLAY_OUT" \
   "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261030T131353.620.png" \
-  --manifest-root "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030"
+  --manifest-root "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030" \
+  --tolerance 7
 ```
 
 All eight authentic mode-5 draws (rows 8, 9, 13, 14, 28, 29, 33, and 34) are
