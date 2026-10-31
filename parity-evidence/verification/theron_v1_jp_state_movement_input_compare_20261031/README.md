@@ -30,6 +30,15 @@ All six transition receipts report `transition=missing` and zero authenticated
 CD-to-RAM receipts. Raw traces and snapshots are retained outside Git; the
 manifest records their SHA-256 values.
 
+There is a concrete alternative to interpreting this transfer as player
+movement: Firestaff's source-locked Track 02 teleporter analysis associates
+the same `$C1FC` `TII $20B4,$2040,$0002` instruction with copying a packed
+teleporter destination before the destination-tile check. These traces do not
+include a call-stack/caller receipt or the active map's source object row, so
+they cannot distinguish a movement path from teleporter resolution. See the
+[teleporter handoff analysis](../../../docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction)
+and [native implementation boundary](../../../src/theron/theron_v1_mechanics.c).
+
 ## Provenance
 
 The captures used authentic Japanese Rev. 1 Track 02 (CUE SHA-256

@@ -150,6 +150,7 @@
   "nonClaims": [
     "The active dungeon map and tile/passability semantics for this JP state are unidentified.",
     "Candidate RAM bytes do not independently prove a party coordinate or heading in this JP state.",
+    "The same $C1FC TII is associated in source-locked analysis with the Track 02 teleporter destination path; these traces do not capture the caller or active-map object row needed to distinguish that path from movement.",
     "No visible renderer response or paired retail image is established; movement-arm VRAM snapshots vary between one loop and the other two.",
     "Save-state autoload bypasses the original game-owned cold CD-to-RAM handoff.",
     "No Firestaff runtime behavior, native gameplay parity, or release readiness is established."

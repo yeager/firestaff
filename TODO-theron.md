@@ -7,10 +7,13 @@ record Button II+UP guest reads followed by `$C1FC` TII transfers from
 `$20B4` to candidate bytes `$2040/$2041`; three matched Button II-only
 controls retain the previous values. This is repeatable input-conditioned
 state transfer, not yet a confirmed coordinate update or successful movement.
-Next, identify the active map and source consumer, establish passability and
-collision behavior, and join the state to an original rendered frame. All six
-state-only captures lack a cold CD handoff; variable VRAM snapshots do not
-establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+The same `$C1FC` instruction is also associated with the Track 02 teleporter
+destination path. The trace does not identify its caller or active-map object
+row, so first disambiguate a movement step from teleporter resolution; then
+bind the active map, passability/collision behavior, and original rendered
+frame. All six state-only captures lack a cold CD handoff; variable VRAM
+snapshots do not establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and [source-locked teleporter analysis](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction).
 
 ## 2026-10-31 — input-gated PCE Fast VRAM event-order trace captured
 

@@ -152,7 +152,8 @@ renderer behavior.
 A same-state Japanese F5 wall probe found no candidate position writes for
 UP, neutral or DOWN. A later matched three-run comparison from the same
 authentic save found repeatable `$20B4->$2040` TII transfers after Button II+UP
-reads; three Button II-only controls retained the candidate bytes. This is
+reads; three Button II-only controls retained the candidate bytes. Source-locked analysis associates the same TII with teleporter destination
+copying; these traces do not identify the caller or active-map object. This is
 input-conditioned state-transfer evidence, not proof of mapped movement,
 collision semantics, a visible response, or parity. The active map and
 position meaning remain unknown, and the state-only runs lack a cold CD

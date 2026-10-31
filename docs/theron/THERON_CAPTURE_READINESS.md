@@ -12,6 +12,9 @@ two action repetitions, and all six runs report `transition=missing` with no
 authenticated CD-to-RAM receipt. This is reference evidence only; it does not
 establish native gameplay parity. See the
 [state-only comparison](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+The same `$C1FC` TII is associated in the source-locked teleporter analysis
+with copying destination coordinates; without a caller and active-map object
+receipt, the current trace cannot distinguish that path from movement.
 
 ## 2026-10-31 — corrected input-gated PCE Fast VRAM trace captured
 
