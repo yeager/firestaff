@@ -9,16 +9,17 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
-2026-10-31 native pickup loop: `theron_v1_m11_real_bram_continue` now routes
-through authentic Continue and dungeon 2, finds a reachable source-authenticated
-carryable object, and exercises movement, turning, and pickup through the M11
-input API. Three TRV2 loops verify the floor occurrence is picked up and the
-complete source record reaches inventory; the quest mask remains unchanged.
-This covers a real-data native input path, not retail action parity. Quest
-artifact identity, retrieval messaging, dungeon exit, and campaign completion
-still require the original T900 consumer. Do not map the parallel quest-name
-type indices to quest bits: authentic US/JP tables contain repeated matching
-types. See `tests/test_theron_v1_track02_quest_item_names.c` and
+2026-10-31 native item lifecycle loop: `theron_v1_m11_real_bram_continue`
+routes through authentic Continue and dungeon 2, finds a reachable
+source-authenticated carryable object, and exercises movement, turning, pickup,
+and drop through the M11 input API. Three TRV2 loops verify the complete source
+record and property bytes reach inventory, then return to the floor with the
+inventory slot freed; the quest mask remains unchanged. This covers a
+real-data native input path, not retail action parity. Quest artifact identity,
+retrieval messaging, dungeon exit, and campaign completion still require the
+original T900 consumer. Do not map the parallel quest-name type indices to
+quest bits: authentic US/JP tables contain repeated matching types. See
+`tests/test_theron_v1_track02_quest_item_names.c` and
 `docs/source-lock/theron_t900_proof_2026-08-08.md`.
 
 2026-10-31 save-resume follow-up: the default Continue root now uses the same
