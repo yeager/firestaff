@@ -75886,12 +75886,7 @@ static void m11_clear_csb_v1_message_area_source_owned(
         return;
     }
     if (party_rows && party_rows->valid &&
-        boot_profile->runtime.game_time - party_rows->source_game_time <
-            ((boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
-              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA35_MULTI ||
-              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
-              boot_profile->runtime.variant_id == CSB_V1_VARIANT_AMIGA31_MULTI)
-                 ? 200u : 70u)) {
+        boot_profile->runtime.game_time - party_rows->source_game_time < 70u) {
         int row;
         for (row = 0; row < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++row) {
             const char *text = party_rows->rows[row];

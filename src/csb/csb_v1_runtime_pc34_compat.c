@@ -4126,14 +4126,10 @@ int csb_v1_runtime_text_message_active_pc34(
     if (!profile) return 0;
     receipt = &profile->csbwin_text_message_receipt;
     if (!receipt->valid || !receipt->text[0]) return 0;
-    /* ReDMCSB TEXT.C F0046: MEDIA099/F20E/F31E uses +70; Amiga
-     * MEDIA413/A20E/A21E/A22E uses +200. */
+    /* ReDMCSB TEXT.C F0046 assigns 70 game ticks to MEDIA099, which covers
+     * the supported Atari ST, Amiga A31/A35, and FM Towns variants. */
     age = profile->game_time - receipt->source_game_time;
-    return age < ((profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
-                   profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI ||
-                   profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
-                   profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI)
-                      ? 200u : 70u);
+    return age < 70u;
 }
 
 /* DSA.cpp TEXT@ decodes a DB2 thing directly, irrespective of its show bit.

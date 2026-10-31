@@ -82,9 +82,16 @@ static int move_forward(CSB_V1_RuntimeProfile *profile)
 
 int main(void)
 {
+    static const CSB_V1_VariantId amigaVariants[] = {
+        CSB_V1_VARIANT_AMIGA31_EN,
+        CSB_V1_VARIANT_AMIGA31_MULTI,
+        CSB_V1_VARIANT_AMIGA35_EN,
+        CSB_V1_VARIANT_AMIGA35_MULTI
+    };
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
     unsigned char raw[256];
+    int variantIndex;
 
     make_dungeon(&dungeon, raw, 1);
     prepare_party(&profile, &dungeon);
@@ -115,17 +122,26 @@ int main(void)
     CHECK(!csb_v1_runtime_text_message_active_pc34(&profile),
           "FM Towns MEDIA099 expires a C015 row at tick 70");
 
-    profile.variant_id = CSB_V1_VARIANT_AMIGA35_EN;
     profile.csbwin_text_message_receipt.valid = 1;
     profile.csbwin_text_message_receipt.text[0] = 'X';
     profile.csbwin_text_message_receipt.text[1] = '\0';
-    profile.csbwin_text_message_receipt.source_game_time = profile.game_time;
-    profile.game_time += 199u;
-    CHECK(csb_v1_runtime_text_message_active_pc34(&profile),
-          "Amiga MEDIA413 retains a C015 row through tick 199");
-    profile.game_time += 1u;
-    CHECK(!csb_v1_runtime_text_message_active_pc34(&profile),
-          "Amiga MEDIA413 expires a C015 row at tick 200");
+    profile.csbwin_text_message_receipt.source_game_time = 0;
+    for (variantIndex = 0;
+         variantIndex < (int)(sizeof(amigaVariants) / sizeof(amigaVariants[0]));
+         ++variantIndex) {
+        char label[96];
+        profile.variant_id = amigaVariants[variantIndex];
+        profile.game_time = 69u;
+        (void)snprintf(label, sizeof(label),
+                       "MEDIA099 Amiga variant %d retains C015 through tick 69",
+                       (int)profile.variant_id);
+        CHECK(csb_v1_runtime_text_message_active_pc34(&profile), label);
+        profile.game_time = 70u;
+        (void)snprintf(label, sizeof(label),
+                       "MEDIA099 Amiga variant %d expires C015 at tick 70",
+                       (int)profile.variant_id);
+        CHECK(!csb_v1_runtime_text_message_active_pc34(&profile), label);
+    }
 
     make_dungeon(&dungeon, raw, 0);
     prepare_party(&profile, &dungeon);
