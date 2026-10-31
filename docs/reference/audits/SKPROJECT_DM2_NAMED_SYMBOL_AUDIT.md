@@ -27,11 +27,11 @@ playable game route or parity on every supported platform.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,111 |
+| `IMPLEMENTED_PARITY` | 1,110 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 4 |
+| `PARTIAL` | 5 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 3 |
 | **Total** | **1,751** |

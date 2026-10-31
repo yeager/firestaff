@@ -6800,11 +6800,12 @@ int dm2_v1_dungeon_c_light_class34_receipt(
         base = 0x12u;
     } else if (((unsigned)raw >> 5) == 4u) {
         /* c_gui_vp.cpp:2672-2707: class 4 summarizes as 0x10/0x11.
-         * On a side mismatch, the source advances direction once, selects
-         * that adjacent square's record root, then runs query_0cee_1a46.
-         * The query returns the current link immediately for decoded record
-         * classes above 3; classes 0..3 continue through orientation/type
-         * filters that this receipt does not implement. */
+         * On a side mismatch, source advances direction once, selects that
+         * adjacent square's record root, then calls query_0cee_1a46. That
+         * query writes side-decoration fields (summary words 3..6);
+         * c_light.cpp:231-435 consumes summary words 0 and 2 for this class-4
+         * path. The bounded light receipt validates the record walk below
+         * without claiming decoration rendering parity. */
         source_side = ((unsigned)raw & 0x08u) >> 3;
         direction_side = (unsigned)direction & 1u;
         if (source_side != direction_side) {
@@ -6822,13 +6823,36 @@ int dm2_v1_dungeon_c_light_class34_receipt(
             if (adjacent_first == DM2_THING_NULL_MARKER ||
                 (d->square_bytes == 1 && (adjacent_raw & 0x10) != 0 &&
                  adjacent_first < 0)) return 0;
-            if (adjacent_first != -1 &&
+            if (adjacent_first >= 0 &&
                 adjacent_first != DM2_THING_END_MARKER) {
                 unsigned adjacent_record_class =
                     (((unsigned)adjacent_first >> 8) & 0x3cu) >> 2;
-                /* c_querydb.cpp:3296-3337 returns the current record link
-                 * before applying orientation/type filters when class > 3. */
-                if (adjacent_record_class <= 3u) return 0;
+                uint16_t thing = (uint16_t)adjacent_first;
+                uint16_t seen[256];
+                unsigned seen_count = 0u;
+                /* query_0cee_1a46 walks records 0..3 to update side
+                 * decorations. Keep the light input usable for those roots
+                 * after validating that bounded walk; its side fields are
+                 * not read by ADD_BACKGROUND_LIGHT_FROM_TILE. Record classes
+                 * above 3 return before that query dereferences the record. */
+                if (adjacent_record_class <= 3u &&
+                    !dm2_v1_dungeon_record_list_traversal_allowed(d))
+                    return 0;
+                while (adjacent_record_class <= 3u &&
+                       thing != DM2_THING_END_MARKER) {
+                    int next;
+                    if (thing == DM2_THING_NULL_MARKER ||
+                        seen_count >= sizeof(seen) / sizeof(seen[0]))
+                        return 0;
+                    for (unsigned i = 0u; i < seen_count; ++i)
+                        if (seen[i] == thing) return 0;
+                    seen[seen_count++] = thing;
+                    if (!dm2_v1_dungeon_get_thing_record(
+                            d, thing, NULL, NULL, NULL)) return 0;
+                    next = dm2_v1_dungeon_get_next_thing(d, thing);
+                    if (next < 0 || next == (int)thing) return 0;
+                    thing = (uint16_t)next;
+                }
             }
             first = adjacent_first;
             base = 0x11u;

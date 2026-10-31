@@ -29,8 +29,11 @@ class-3/4 record-chain root, because the source flag mask disables its record
 and creature terms.
 Class-4 direction mismatches now follow the source's direction-plus-one
 adjacent-square route. Empty roots and decoded record classes above 3 match
-the source query's early-return behavior; classes 0-3 still need the exact
-`query_0cee_1a46` orientation/type filters. A flagged center or adjacent
+the source query's early-return behavior. Class-0..3 roots now pass the
+bounded light receipt only when their complete record graph and linked records
+validate; `query_0cee_1a46` side-decoration fields are separate from the tile,
+root, and ornament values consumed by `c_light.cpp`. Full decoration selection
+and actuator animation remain open. A flagged center or adjacent
 root is rejected if its first-thing table lookup fails; regressions cover both
 malformed-root cases so the loader's `-1` error sentinel cannot become an
 empty-root receipt. Original-media dynamic-light evidence is still needed for
@@ -1681,3 +1684,5 @@ real-media test verifies that the live Fireball enters the center-cell call
 schedule. The schedule does not consume pixels. Next, bind TEMP_PICST
 placement/frame selection and ordinary flying-item materials to their proven
 destination transforms before drawing.
+
+2026-10-31 skproject class-4 light roots: Rechecked `c_gui_vp.cpp:2672-2707`, `c_querydb.cpp:3296-3700`, and `c_light.cpp:231-435`. The side-mismatch route invokes `query_0cee_1a46`, whose side-decoration writes do not change the three summary fields consumed by the light calculation. Firestaff now admits class-0..3 adjacent roots only after a complete bounded record-list walk validates every record and end marker; higher classes preserve the query's source early return. The focused `dm2_v1_light_ops` test passes for a valid DB3 root and rejects an unresolved root. This closes the class-0..3 light-input admission gap only; full side-decoration query behavior, actuator animation, and platform/runtime coverage remain open.

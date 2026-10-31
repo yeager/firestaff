@@ -1255,7 +1255,7 @@ static void test_mode7_class34_receipts(void)
     DM2_V1_CLightStoneRoomReceipt room;
     uint8_t linked_tile[5] = {0x70u, 0u, 0u, 0u, 0x3cu};
     uint8_t adjacent_empty_tiles[9] = {0u};
-    uint8_t adjacent_record_tiles[40] = {0u};
+    uint8_t adjacent_record_tiles[49] = {0u};
     uint8_t tile = 0x60u;
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.level_count = 1;
@@ -1338,7 +1338,7 @@ static void test_mode7_class34_receipts(void)
     /* A flagged center whose first-thing table is truncated is not an empty
      * chain and must not be admitted as a valid source receipt. */
     adjacent_record_tiles[36] = 0x90u;
-    dungeon.square_first_thing_base = 39;
+    dungeon.square_first_thing_base = 49;
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 0, &room));
     adjacent_record_tiles[36] = 0x80u;
@@ -1350,7 +1350,7 @@ static void test_mode7_class34_receipts(void)
            room.first_record_link == 0x3c00u);
 
     /* The adjacent root flag is present, but its table offset is invalid. */
-    dungeon.square_first_thing_base = 39;
+    dungeon.square_first_thing_base = 49;
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 1, &room));
     dungeon.square_first_thing_base = 8;
@@ -1360,9 +1360,30 @@ static void test_mode7_class34_receipts(void)
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 1, &room));
 
-    /* A class-3 adjacent root enters the source's record filters and remains
-     * closed until those filters are implemented. */
-    adjacent_record_tiles[8] = 0x0cu; /* big-endian record link 0x0c00 */
+    /* c_querydb.cpp:3296-3337 walks class-0..3 records for side decoration,
+     * but c_light.cpp consumes only the unchanged adjacent root and tile
+     * summary. A complete bounded record graph therefore remains eligible
+     * for the light route even though decoration rendering is separate. */
+    adjacent_record_tiles[41] = 0xffu; /* GenericRecord w0 = end marker */
+    adjacent_record_tiles[42] = 0xfeu;
+    dungeon.record_graph_complete = 1;
+    for (unsigned type = 0u; type <= 3u; ++type) {
+        uint16_t root = (uint16_t)(type << 10);
+        memset(dungeon.thing_type_counts, 0,
+               sizeof(dungeon.thing_type_counts));
+        dungeon.thing_data_bases[type] = 41;
+        dungeon.thing_type_counts[type] = 1;
+        adjacent_record_tiles[8] = (uint8_t)(root >> 8);
+        adjacent_record_tiles[9] = (uint8_t)root;
+        assert(dm2_v1_dungeon_c_light_class34_receipt(
+            &dungeon, 0, 1, 1, 1, &room));
+        assert(room.first_record_link == root);
+    }
+
+    /* An unresolved class-0..3 root cannot stand in for an empty list. */
+    adjacent_record_tiles[8] = 0x0cu;
+    adjacent_record_tiles[9] = 0u;
+    dungeon.thing_type_counts[3] = 0;
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 1, &room));
 }
