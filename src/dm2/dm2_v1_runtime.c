@@ -12746,17 +12746,15 @@ static void dm2_runtime_bind_wall_ornament_plan(
         DM2_V1_WallOrnamentReceipt receipt;
         DM2_V1_WallOrnamentBlitRect blit;
         DM2_V1_WallOrnamentRender *entry;
-        int distance, lateral, stretch_x, stretch_y;
+        int distance, lateral, stretch_x, stretch_y, mirror_flip = 0;
+        int image_field;
         int scaled_width, scaled_height;
         int source_x0, source_y0, source_x1, source_y1;
         if (surface->square_type != DM2_SQUARE_WALL ||
             surface->wall_ornate_gfx_index == 0u) continue;
         if (!surface->wall_ornate_rect_number ||
             plan->ornament_count >= DM2_V1_WALL_ORNAMENT_RENDER_MAX ||
-            surface->wall_ornate_gfx_field == 0u ||
-            !dm2_v1_wall_ornament_material_receipt(
-                loader, surface->wall_ornate_gfx_index,
-                surface->wall_ornate_gfx_field, &receipt)) return;
+            surface->wall_ornate_gfx_field == 0u) return;
         switch (square) {
         case DM2_SQ_D0C: distance = 0; lateral = 0; break;
         case DM2_SQ_D0L: distance = 0; lateral = -1; break;
@@ -12771,6 +12769,37 @@ static void dm2_runtime_bind_wall_ornament_plan(
         case DM2_SQ_D3L: distance = 3; lateral = -3; break;
         case DM2_SQ_D3R: distance = 3; lateral = 3; break;
         default: return;
+        }
+        {
+            int frame = (int)surface->wall_ornate_gfx_field - 1;
+            if (lateral == 0) {
+                image_field = 1 + frame;
+            } else if (lateral < 0) {
+                image_field = frame;
+            } else {
+                DM2_V1_GdatImageMetadata side_metadata;
+                int right_field = 2 + frame;
+                if (dm2_v1_asset_load_image_metadata(
+                        loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                        surface->wall_ornate_gfx_index, right_field,
+                        &side_metadata)) {
+                    image_field = right_field;
+                } else {
+                    image_field = frame;
+                    mirror_flip = 1;
+                }
+            }
+        }
+        if (image_field < 0 || image_field > UINT8_MAX ||
+            !dm2_v1_wall_ornament_material_receipt(
+                loader, surface->wall_ornate_gfx_index,
+                (uint8_t)image_field, &receipt)) return;
+        if (lateral == 0 && receipt.do_not_flip == 0u) {
+            int graphics_flip = (viewport->party_x + viewport->party_y +
+                viewport->party_dir + viewport->gdat_scene_map_offset_x +
+                viewport->gdat_scene_map_offset_y +
+                viewport->gdat_scene_map_flip_seed) & 1;
+            mirror_flip = graphics_flip ^ ((distance & 1) ? 0 : 1);
         }
         stretch_x = stretch_y = stretch_by_distance[distance];
         if (distance == 2 && (lateral <= -2 || lateral >= 2))
@@ -12801,7 +12830,7 @@ static void dm2_runtime_bind_wall_ornament_plan(
         entry->view_square = square;
         entry->gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
             surface->wall_ornate_gfx_index);
-        entry->image_field = surface->wall_ornate_gfx_field;
+        entry->image_field = (uint8_t)image_field;
         entry->colorkey = receipt.colorkey;
         entry->dst_rect = (DM2_V1_ViewportRect){
             blit.destination_x, blit.destination_y,
@@ -12809,7 +12838,7 @@ static void dm2_runtime_bind_wall_ornament_plan(
         entry->src_rect = (DM2_V1_ViewportRect){
             source_x0, source_y0, source_x1 - source_x0,
             source_y1 - source_y0 };
-        entry->mirror_flip = 0u;
+        entry->mirror_flip = (uint8_t)mirror_flip;
         entry->material_hash = receipt.material_hash;
         plan_hash ^= receipt.material_hash + (uint32_t)surface->wall_ornate_rect_number +
             ((uint32_t)square << 24);
