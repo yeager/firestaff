@@ -5,8 +5,13 @@ set -euo pipefail
 app=${1:?usage: test_m12_main_menu_csb_only_real_media.sh <firestaff> <data-root>}
 data_root=${2:?usage: test_m12_main_menu_csb_only_real_media.sh <firestaff> <data-root>}
 archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
+companion_archive=${FIRESTAFF_CSB_M12_COMPANION_ARCHIVE:-}
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     echo 'SKIP: authentic CSB FM Towns archive is required'
+    exit 77
+fi
+if [[ -n "$companion_archive" && ! -f "$companion_archive" ]]; then
+    echo 'SKIP: configured authentic CSB companion archive is unavailable'
     exit 77
 fi
 
@@ -28,6 +33,12 @@ archive_name=$(basename "$archive")
 mkdir -p "$csb_root"
 ln -s "$archive" "$csb_root/$archive_name"
 archive_hash=$(firestaff_sha256_file "$archive")
+companion_archive_hash=
+if [[ -n "$companion_archive" ]]; then
+    companion_archive_name=$(basename "$companion_archive")
+    ln -s "$companion_archive" "$csb_root/$companion_archive_name"
+    companion_archive_hash=$(firestaff_sha256_file "$companion_archive")
+fi
 probe="$scratch/runtime.json"
 log="$scratch/firestaff.log"
 
@@ -87,6 +98,11 @@ if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original CSB archive changed during the M12 menu launch' >&2
     exit 1
 fi
+if [[ -n "$companion_archive" &&
+      $(firestaff_sha256_file "$companion_archive") != "$companion_archive_hash" ]]; then
+    echo 'FAIL: original CSB companion archive changed during the M12 menu launch' >&2
+    exit 1
+fi
 echo 'PASS: default .firestaff/data/csb discovery launched only authentic CSB without CLI game selection'
 
 # Escape from the platform picker must return to the game list. Reselect the
@@ -95,6 +111,9 @@ back_home="$scratch/back-home"
 back_csb_root="$back_home/.firestaff/data/csb"
 mkdir -p "$back_csb_root"
 ln -s "$archive" "$back_csb_root/$archive_name"
+if [[ -n "$companion_archive" ]]; then
+    ln -s "$companion_archive" "$back_csb_root/$companion_archive_name"
+fi
 back_probe="$scratch/back-runtime.json"
 back_log="$scratch/back-firestaff.log"
 (
@@ -142,5 +161,10 @@ PY
 
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original CSB archive changed during Back/reselect menu launch' >&2
+    exit 1
+fi
+if [[ -n "$companion_archive" &&
+      $(firestaff_sha256_file "$companion_archive") != "$companion_archive_hash" ]]; then
+    echo 'FAIL: original CSB companion archive changed during Back/reselect menu launch' >&2
     exit 1
 fi

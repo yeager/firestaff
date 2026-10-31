@@ -82,7 +82,9 @@ def main() -> None:
         target_values[target_addresses.index(0x1000DA)] = 0x4C
         target_values[target_addresses.index(0x1000DB)] = 0x8D
         target_rows = ["source=mednafen-pce-fast-cd-ram-target-write"]
-        for sequence, (address, value) in enumerate(zip(target_addresses, target_values, strict=True)):
+        if len(target_addresses) != len(target_values):
+            raise AssertionError("target address and value fixtures must have matching lengths")
+        for sequence, (address, value) in enumerate(zip(target_addresses, target_values)):
             mprs = [0] * 7 + [0x80]
             target_rows.append(
                 f"cd_ram_target_write sequence={sequence} event_sequence={sequence} "

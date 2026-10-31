@@ -8,6 +8,7 @@ route=${3:?usage: test_m12_main_menu_alternate_platform_runtime_real_media.sh <f
 data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
 dm1_pc="$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+dm1_towns="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 dm1_atari="$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip"
 dm1_atari_st11="$data_root/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
 dm1_atari_st12="$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
@@ -22,6 +23,12 @@ case "$route" in
         selected_game=dm1; game_down=0; platform_down=1
         selected_archive=$dm1_pc; edition=pc34-en; platform=PC
         width=320; height=200; duration=45000
+        game_input='wait20,key:enter,wait20,key:enter,wait20,key:enter'
+        ;;
+    dm1-fmtowns-with-pc)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_towns; edition=fmtowns-en; platform='FM Towns'
+        width=960; height=540; duration=60000
         game_input='wait20,key:enter,wait20,key:enter,wait20,key:enter'
         ;;
     dm1-atari-st)
@@ -82,6 +89,10 @@ if [[ ! -x "$app" || ! -f "$selected_archive" ]]; then
     printf 'SKIP: authentic %s media or Firestaff executable is unavailable\n' "$route"
     exit 77
 fi
+if [[ "$route" == dm1-fmtowns-with-pc && ! -f "$dm1_pc" ]]; then
+    echo 'SKIP: authentic DM1 PC media is required beside FM Towns for this picker route'
+    exit 77
+fi
 
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
@@ -137,6 +148,11 @@ for game_id in dm1 csb dm2; do
         if [[ "$route" == dm1-atari-st-11 && "$game_id" == dm1 ]]; then
             continue
         fi
+        if [[ "$route" == dm1-fmtowns-with-pc && "$game_id" == dm1 &&
+              "$(basename "$archive")" != "$(basename "$selected_archive")" &&
+              "$(basename "$archive")" != "$(basename "$dm1_pc")" ]]; then
+            continue
+        fi
         if [[ "$route" == csb-atari-st-france && "$game_id" == csb &&
               "$(basename "$archive")" != "$(basename "$selected_archive")" ]]; then
             continue
@@ -181,6 +197,10 @@ home="$scratch/home"
 log="$scratch/firestaff.log"
 probe="$scratch/runtime.json"
 archive_hash=$(firestaff_sha256_file "$selected_archive")
+companion_archive_hash=
+if [[ "$route" == dm1-fmtowns-with-pc ]]; then
+    companion_archive_hash=$(firestaff_sha256_file "$dm1_pc")
+fi
 navigation='wait-scan-complete,wait20'
 for ((index = 0; index < game_down; ++index)); do
     navigation+=',key:down,wait20'
@@ -240,6 +260,11 @@ if [[ "$route" == dm2-pc ]]; then
 fi
 if [[ $(firestaff_sha256_file "$selected_archive") != "$archive_hash" ]]; then
     printf 'FAIL: original %s source changed during M12 runtime selection\n' "$route" >&2
+    exit 1
+fi
+if [[ "$route" == dm1-fmtowns-with-pc &&
+      $(firestaff_sha256_file "$dm1_pc") != "$companion_archive_hash" ]]; then
+    echo 'FAIL: original DM1 PC source changed during FM Towns menu selection' >&2
     exit 1
 fi
 printf 'PASS: no-game M12 menu reached authentic %s runtime\n' "$route"

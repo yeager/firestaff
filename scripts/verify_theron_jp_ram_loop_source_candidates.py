@@ -17,6 +17,7 @@ from bisect import bisect_left
 from collections import defaultdict
 from pathlib import Path
 
+from theron_python_compat import zip_strict
 from verify_theron_indirect_jump_trace import verify as verify_indirect_jump
 from verify_theron_jp_cd_ram_writer_pc_trace import (
     READ_SUFFIX,
@@ -66,7 +67,7 @@ def ensure_capture(paths: list[Path]) -> None:
         WRITE_SUFFIX,
     )
     bases = []
-    for path, suffix in zip(paths, suffixes, strict=True):
+    for path, suffix in zip_strict(paths, suffixes):
         if not path.name.endswith(suffix):
             raise ValueError(f"unexpected trace filename suffix: {path.name}")
         bases.append(path.name[: -len(suffix)])
@@ -131,7 +132,7 @@ def classify(
         event = int(row["event_sequence"])
         byte_results: list[bool] = []
         source_results: list[bool] = []
-        for offset, (address, value) in enumerate(zip(addresses, values, strict=True)):
+        for offset, (address, value) in enumerate(zip_strict(addresses, values)):
             if not LOOP_PHYSICAL_RANGE[0] <= address <= LOOP_PHYSICAL_RANGE[1]:
                 continue
             if not LOOP_LOGICAL_RANGE[0] <= logical_pc + offset <= LOOP_LOGICAL_RANGE[1]:
@@ -249,13 +250,13 @@ def classify_patch_helper(
                 continue
             calls += 1
             call_stores: list[tuple[int, int, int]] = []
-            for row, (pc, expected) in zip(window[:-1], HELPER_INSTRUCTIONS.items(), strict=True):
+            for row, (pc, expected) in zip_strict(window[:-1], HELPER_INSTRUCTIONS.items()):
                 values = bytes.fromhex(row["bytes"])
                 addresses = [int(value, 16) for value in row["physical_bytes"].split(",")]
                 if values[:len(expected)] != expected:
                     raise ValueError(f"unexpected patch-helper instruction bytes at ${pc:04X}")
                 event = int(row["event_sequence"])
-                for address, value in zip(addresses[:len(expected)], values[:len(expected)], strict=True):
+                for address, value in zip_strict(addresses[:len(expected)], values[:len(expected)]):
                     fetch_byte_slots += 1
                     prior = [item for item in writes_by_address.get(address, ())
                              if int(item["event_sequence"]) < event]

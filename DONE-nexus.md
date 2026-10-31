@@ -1,5 +1,55 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-31 — Replay authentic NBG0 live-row scrolling
+
+- Added a capture-only NBG0 bitmap sampler that consumes verified Ymir
+  per-row scroll and coordinate increments, falling back to the captured
+  register snapshot on rows without live state.
+- The retained authentic Japanese intro capture reproduces all 71,680
+  screenshot samples exactly when the live `0x1f79/0x0bcd` scroll state is
+  applied to rows 4–116. The prior final-register replay matched 70,454.
+- The real-data CTest pins the VDP1/VDP2 dumps, screenshot, and retained
+  baseline replay. The replay receipt reports 21,455 NBG0-selected pixels and
+  50,225 VDP1-selected pixels; the prior replay matched 70,454 screenshot
+  upper-left samples, while the scanline replay matches all 286,720 samples
+  across the 2× screenshot blocks exactly.
+- This remains capture-only; a screenshot match does not by itself prove a
+  source-to-VRAM timing join or authorize production renderer admission.
+  Evidence and reproduction are in
+  [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
+
+## 2026-10-30 — Exact Ymir VDP1 replay for one captured frame
+
+- The capture-only integer stepper replays 124 indexed mode-1 distorted
+  sprites and 28 flat polygons from the authenticated frame-13162 Ymir trace.
+- Its real-data CTest pins the complete 168-row trace, VDP1 VRAM/FBS/registers,
+  VDP2 registers, and frame receipt. The 320x224 output matches Ymir FBS buffer
+  0 exactly across all 71,680 RGB555 pixels and opacity bits.
+- The companion frame-window test verifies that the other eight mode-5 draws
+  are transparent, accounting for all 160 draws in the captured window.
+- The stepper claims no DGN ownership and retains `renderer_permitted=false`.
+  This single captured-state replay is not Saturn hardware parity, arbitrary-
+  frame parity, or production renderer admission. See
+  [`docs/nexus_vdp1_frame13162_dgn_window.md`](docs/nexus_vdp1_frame13162_dgn_window.md).
+
+## 2026-10-31 — Replay the authentic frame-59 title prompt
+
+- The capture-only NBG0-over-VDP1 compositor accepts the hash-pinned Ymir
+  frame-59 zero-scroll, zero-palette-bank register profile. It writes 18,513
+  NBG0 pixels and 53,167 captured VDP1 pixels and matches all 71,680 RGB
+  pixels in the retained native-size Ymir reference.
+- The real-data CTest also compares the replay with the authentic 640×448
+  screenshot: all 286,720 doubled samples are within eight RGB levels, with
+  maximum channel error eight. The test pins the raw capture, complete VDP1
+  command bundle/trace, register receipt, reference and screenshot hashes.
+- The two VDP1 framebuffer buffers are byte-identical. The raw VDP2 register
+  word at offset `0xf8` is `0x0004`; an older evidence note's `0x01f4` value
+  does not match the hash-pinned register dump. The compositor stays
+  capture-only and does not claim full bitmap source ownership or production
+  renderer admission.
+- Evidence and reproduction steps are in
+  [`docs/nexus_vdp2_title_frame59_composition.md`](docs/nexus_vdp2_title_frame59_composition.md).
+
 ## 2026-10-30 — Admit authentic CUE-only Nexus media
 
 - M12 now binds a Saturn CUE/BIN source to its own ISO data track and admits

@@ -252,6 +252,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm2;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME m12_main_menu_dm2_fmtowns_default_with_mac_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_dm2_fmtowns_default_with_mac_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 360
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_M12_COMPANION_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon Master II for Macintosh English.sit;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm2;fmtowns;macintosh;mixed-platform;main-menu;game-selection;runtime;real-media;skip-safe")
+
     add_test(NAME m12_main_menu_csb_only_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
@@ -259,6 +267,14 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77 TIMEOUT 180
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_csb_fmtowns_default_with_amiga_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_csb_fmtowns_default_with_amiga_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 300
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_CSB_M12_COMPANION_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga version 3.3 English, French, German.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;csb;amiga;fmtowns;mixed-platform;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME m12_main_menu_csb_renamed_fmtowns_zip_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_renamed_fmtowns_zip_real_media.sh"
@@ -324,7 +340,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france dm2-pc)
+    foreach(route IN ITEMS dm1-pc dm1-fmtowns-with-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")
@@ -7649,6 +7665,9 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
 # lifecycle-safe no-op adapter; material probes add the fixture explicitly.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
+# This Ymir stepper port is an authenticated-capture comparison tool only.
+# Compile it into its dedicated real-data test, never the retail Nexus library.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_vdp1_ymir_stepper_capture\\.c$")
 # ITEM.IBS and TITLE.CG decoders retain source-format bytes, but their RGBA
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
@@ -41937,6 +41956,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_vdp2_capture_compositor
         tests/test_nexus_v1_vdp2_capture_compositor.c
         src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
     )
     target_include_directories(test_nexus_v1_vdp2_capture_compositor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -41954,9 +41975,113 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp2_capture_compositor
     )
 
+    add_executable(test_nexus_v1_vdp2_ymir_frame8037_real
+        tests/test_nexus_v1_vdp2_ymir_frame8037_real.c
+        src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_ymir_frame8037_real
+        COMMAND test_nexus_v1_vdp2_ymir_frame8037_real
+    )
+    set_tests_properties(nexus_v1_vdp2_ymir_frame8037_real PROPERTIES
+        LABELS "nexus;saturn;ymir;frame8037;real-data;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
+    add_executable(test_nexus_v1_vdp2_title_frame59_real
+        tests/test_nexus_v1_vdp2_title_frame59_real.c
+        src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_title_frame59_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_title_frame59_real.py
+            $<TARGET_FILE:test_nexus_v1_vdp2_title_frame59_real>
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-vdp2-title-frame59-replay.rgb
+    )
+    set_tests_properties(nexus_v1_vdp2_title_frame59_real PROPERTIES
+        LABELS "nexus;saturn;ymir;title;frame59;real-data;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
+    add_executable(test_nexus_v1_vdp2_nbg0_live_rows_real
+        tests/test_nexus_v1_vdp2_nbg0_live_rows_real.c
+        src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_nbg0_live_rows_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_nbg0_live_rows_real PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_nbg0_live_rows_real PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_nbg0_live_rows_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_nbg0_live_rows_real.py
+            $<TARGET_FILE:test_nexus_v1_vdp2_nbg0_live_rows_real>
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-nbg0-live-rows-replay.rgb
+    )
+    set_tests_properties(nexus_v1_vdp2_nbg0_live_rows_real PROPERTIES
+        LABELS "nexus;saturn;ymir;nbg0;scanline;real-data;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME nexus_v1_vdp1_frame8037_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_frame8037_source_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_frame8037_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;frame8037;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+        add_test(
+            NAME nexus_v1_vdp1_gameplay_frame300_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_gameplay_frame300_source_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_gameplay_frame300_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+    endif()
+
     add_executable(test_nexus_v1_vdp2_tilemap_capture_compositor
         tests/test_nexus_v1_vdp2_tilemap_capture_compositor.c
         src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
     )
     target_include_directories(test_nexus_v1_vdp2_tilemap_capture_compositor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -41976,6 +42101,8 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_nexus_v1_vdp2_runtime_tilemap
         tests/test_nexus_v1_vdp2_runtime_tilemap.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_x68k_media_receipt.c
         src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
     )
     target_include_directories(test_nexus_v1_vdp2_runtime_tilemap PRIVATE
@@ -45304,6 +45431,46 @@ add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
 set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_vdp1_frame13162_dgn_window
+    tests/test_nexus_v1_vdp1_frame13162_dgn_window.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
+target_include_directories(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_frame13162_dgn_window
+    COMMAND test_nexus_v1_vdp1_frame13162_dgn_window
+        ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030
+        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv)
+set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")
+
+add_executable(test_nexus_v1_vdp1_ymir_stepper_capture_real
+    tests/test_nexus_v1_vdp1_ymir_stepper_capture_real.c
+    src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c)
+target_include_directories(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_ymir_stepper_capture_real
+    COMMAND test_nexus_v1_vdp1_ymir_stepper_capture_real)
+set_tests_properties(nexus_v1_vdp1_ymir_stepper_capture_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;ymir;frame13162;real-data;capture-only;skip-safe")
+
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)
 target_sources(test_nexus_v1_title_mapd_tibg_admission PRIVATE

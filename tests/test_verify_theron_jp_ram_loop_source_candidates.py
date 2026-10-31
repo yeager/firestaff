@@ -7,6 +7,7 @@ import sys
 repo = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(repo / "scripts"))
 
+from theron_python_compat import zip_strict
 import verify_theron_jp_ram_loop_source_candidates as verifier
 
 
@@ -19,6 +20,13 @@ def row(event: int, address: int, value: int) -> dict[str, str]:
 
 
 def main() -> None:
+    try:
+        list(zip_strict((1,), (1, 2)))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("zip_strict accepted mismatched fixture lengths")
+
     fetch = {
         "event_sequence": "40",
         "logical_pc": "40d2",
@@ -29,11 +37,11 @@ def main() -> None:
     addresses = (0x1000D2, 0x1000D3, 0x1000D4)
     values = (0xAD, 0x28, 0x22)
     writes = [row(event, address, value)
-              for event, address, value in zip((10, 20, 30), addresses, values, strict=True)]
+              for event, address, value in zip((10, 20, 30), addresses, values)]
     reads = [
         {"event_sequence": str(event), "value": f"{value:02x}",
          "source_valid": "1", "reader_pc": "ea99"}
-        for event, value in zip((9, 19, 29), values, strict=True)
+        for event, value in zip((9, 19, 29), values)
     ]
 
     report = verifier.classify([fetch], reads, writes, {})

@@ -15,7 +15,10 @@
 #define NEXUS_V1_VDP2_NBG0_BITMAP_HEIGHT 256U
 #define NEXUS_V1_VDP2_YMIR_MENU_WIDTH 320U
 #define NEXUS_V1_VDP2_YMIR_MENU_HEIGHT 224U
+#define NEXUS_V1_VDP2_YMIR_MENU_MAX_VDP1_COMMANDS 16U
 #define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES (512U * 256U * 2U)
+#define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_PAIR_BYTES \
+    (NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES * 2U)
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
  * exact byte matches; placement is explicit because registers alone do not
@@ -106,6 +109,18 @@ typedef struct {
     const uint8_t *vdp2_registers;
     size_t vdp2_registers_size;
     Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    /* Optional source-bound VDP1 mode-0 normal-sprite overlay. The command
+     * record must be normalized for the C parser, while texture bytes retain
+     * their captured byte lanes so packed 4bpp texels are not reordered. */
+    const uint8_t *vdp1_vram;
+    size_t vdp1_vram_size;
+    uint32_t vdp1_command_byte_offset;
+    int vdp1_command_source_join_verified;
+    /* Optional ordered VDP1 draws from one complete captured trace. Each
+     * command needs its own independently established source join. */
+    const uint32_t *vdp1_command_byte_offsets;
+    const uint8_t *vdp1_command_source_join_verified_flags;
+    size_t vdp1_command_count;
     int original_ymir_capture_verified;
     int command_trace_complete_verified;
 } Nexus_V1_Vdp2YmirMenuCaptureInput;
@@ -114,6 +129,74 @@ typedef struct {
     uint32_t rgba_buffer[NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
                          NEXUS_V1_VDP2_YMIR_MENU_HEIGHT];
 } Nexus_V1_Vdp2YmirMenuCaptureFramebuffer;
+
+typedef struct {
+    const uint8_t *vdp1_framebuffers;
+    size_t vdp1_framebuffers_size;
+    const uint8_t *vdp2_vram;
+    size_t vdp2_vram_size;
+    const uint8_t *vdp2_cram;
+    size_t vdp2_cram_size;
+    const uint8_t *vdp2_registers;
+    size_t vdp2_registers_size;
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    int original_ymir_capture_verified;
+    int nbg0_over_vdp1_order_verified;
+} Nexus_V1_Vdp2YmirTitlePromptCaptureInput;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int nbg0_over_vdp1_order_verified;
+    int width;
+    int height;
+    int nbg0_overlay_pixels;
+    int vdp1_background_pixels;
+} Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt;
+
+typedef struct {
+    unsigned int first_output_row;
+    unsigned int row_count;
+    uint32_t scroll_h_11_8;
+    uint32_t scroll_v_11_8;
+    uint16_t increment_h_8_8;
+    uint16_t increment_v_8_8;
+} Nexus_V1_Vdp2YmirNbg0RowState;
+
+typedef struct {
+    const uint8_t *vdp1_display_framebuffer;
+    size_t vdp1_display_framebuffer_size;
+    const uint8_t *vdp2_vram;
+    size_t vdp2_vram_size;
+    const uint8_t *vdp2_cram;
+    size_t vdp2_cram_size;
+    const uint8_t *vdp2_registers;
+    size_t vdp2_registers_size;
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    const Nexus_V1_Vdp2YmirNbg0RowState *row_states;
+    size_t row_state_count;
+    int original_ymir_capture_verified;
+    int row_states_verified;
+    int nbg1_transparency_verified;
+} Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int row_states_verified;
+    int nbg1_transparency_verified;
+    int width;
+    int height;
+    int nbg0_pixels;
+    int vdp1_pixels;
+    int uncovered_rows;
+} Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt;
 
 typedef struct {
     int valid;
@@ -127,6 +210,10 @@ typedef struct {
     int vdp1_direct_pixels;
     int vdp1_palette_pixels;
     int nbg0_overlay_pixels;
+    int vdp1_command_overlaid;
+    int vdp1_command_source_join_verified;
+    int vdp1_command_pixels;
+    int vdp1_command_count;
 } Nexus_V1_Vdp2YmirMenuCaptureReceipt;
 
 /* Replay one authenticated NBG1 8bpp bitmap span. This is deliberately a
@@ -165,5 +252,22 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
     const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
     Nexus_V1_Vdp2YmirMenuCaptureReceipt *out_receipt);
+
+/* Replay the observed title-prompt lane: NBG0's 8bpp bitmap overlays the
+ * captured VDP1 framebuffer. Only the zero-scroll, zero-palette-bank
+ * register profile is admitted. This capture-only join establishes neither
+ * retail asset ownership nor production renderer permission. */
+int nexus_v1_vdp2_capture_replay_ymir_title_prompt(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirTitlePromptCaptureInput *input,
+    Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt *out_receipt);
+
+/* Capture-only NBG0 bitmap replay using Ymir's live per-row scroll and
+ * coordinate increments. Uncovered rows fall back to captured final
+ * registers; caller must bind row states to the retained emulator trace. */
+int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput *input,
+    Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt *out_receipt);
 
 #endif

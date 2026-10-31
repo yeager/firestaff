@@ -6,7 +6,9 @@ set -eu
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 
 firestaff_cli="${1:?Firestaff executable is required}"
-media_path="${FIRESTAFF_CSB_ATARI_MEDIA:-${FIRESTAFF_CSB_ATARI_NESTED_ZIP:-$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip}}"
+# A test-specific nested archive must win over a generic Atari media override;
+# CTest may inherit that override from the invoking shell.
+media_path="${FIRESTAFF_CSB_ATARI_NESTED_ZIP:-${FIRESTAFF_CSB_ATARI_MEDIA:-$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip}}"
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$media_path" ]; then
     echo "SKIP: nested CSB Atari ST campaign archive or Firestaff executable is unavailable"
@@ -15,7 +17,7 @@ fi
 
 title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 2 --duration 0 2>&1)" || {
+    --debug --boot-probe --boot-probe-frames 2 --duration 0 2>&1)" || {
     printf '%s\n' "$title_output" >&2
     exit 1
 }
@@ -25,6 +27,14 @@ case "$title_output" in
     *sourceId=csb*assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=csb-atari-st-animation*startupAnimation=animate-scr*titleReady=1*levelLoaded=0*) ;;
     *)
         echo "FAIL: nested CSB Atari archive did not reach the source title"
+        printf '%s\n' "$title_output" >&2
+        exit 1
+        ;;
+esac
+case "$title_output" in
+    *"source=$media_path::"*) ;;
+    *)
+        echo "FAIL: CSB Atari title resolved a different archive than the selected original" >&2
         printf '%s\n' "$title_output" >&2
         exit 1
         ;;

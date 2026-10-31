@@ -16,6 +16,75 @@ captured NBG1 layer, not an asset owner, text-page map, menu composition, HUD,
 viewport, or production rendering. The Menu gate stays
 at 3/8 and production readiness stays at 0%.
 
+## Capture-only VDP source/composition receipts — 2026-10-30
+
+Additional hash-verified Ymir captures now support three bounded visual
+checks. At Japanese menu frame 119, five VDP1 marker/label commands bind to
+unique `TITLE.BIN` DGT2/PP source records and matching CRAM palettes; the
+captured VDP1 FBS + NBG0 + five commands reproduce all 286,720 doubled
+screenshot samples within eight RGB levels. The C capture-only compositor
+matches the independent 215,040-byte native RGB reference exactly. This does
+not bind the full NBG0 bitmap, `MENU.BPK`, menu transitions, or input hitboxes.
+
+At Japanese cold-boot title-prompt frame 13162, command 171 binds to
+`TITLE.BIN` DGT2/PP record 21 and a 921-byte NBG0 span binds to TITL record 2.
+The selected VDP1 FBS + NBG0 + command reconstruction matches all 286,720
+doubled samples within eight levels. At gameplay frames 239 and 397, the captured
+VDP1/VDP2 priority stack matches all 286,720 doubled screenshot samples
+exactly. Each result covers only its selected layers and frame; arbitrary
+VDP states, full title/menu composition, and production renderer admission
+remain unverified. See the linked capture-specific evidence notes in
+`docs/nexus_vdp1_menu_frame119_source_join.md`,
+`docs/nexus_vdp1_coldboot_frame13162_composition.md`, and
+`docs/nexus_ymir_vdp_priority_composition.md`.
+
+An additional accepted-save gameplay capture at VDP1 frame 300 is now checked
+against Ymir's same-run 320×224 rendered frame. The priority compositor matches
+all 71,680 RGB pixels and accounts for every pixel across VDP1, NBG0, NBG1, and
+NBG2; the input VDP buffers and registers are SHA-256 pinned. As with the other
+captures, this establishes emulator-frame composition for one state, not
+independent hardware parity or full Nexus gameplay coverage. See
+[`nexus_vdp2_gameplay_frame300_composition.md`](../nexus_vdp2_gameplay_frame300_composition.md).
+The same 83-command VDP1 trace joins 66 of 68 textured draws to authentic
+Japanese retail DGN data, including 51 indexed palettes and 15 direct-color
+spans. Sixty-one draws have candidate face owners. The two unbound zero-size draws are
+proven outside the active user clip and contribute no pixels in this frame. The
+active face, transform, and culling remain unresolved.
+
+The separate Ymir-stepper capture path now rasterizes all 124 mode-1 distorted
+sprites and 28 flat polygons in authentic frame-13162 trace rows 8–167. The
+other eight mode-5 draws are verified as fully transparent by the companion
+real-data capture test. The combined 320×224 VDP1 output matches the
+hash-verified Ymir FBS buffer 0 in all 71,680 RGB555 pixels and opacity bits.
+The stepper reads the exact captured command, texture, CLUT, and Gouraud table
+bytes; the separate frame-13162 source-join test binds 25 mode-1 image/CLUT
+pairs and six mode-5 sources to retail `LEV00.DGN`. This is an exact replay of
+one captured Ymir VDP1 frame, not proof of original-Saturn behavior, arbitrary
+VDP1 states, or retail ownership for every draw. It remains capture-only and
+does not change Nexus production readiness. VDP2 composition, full title/menu
+and gameplay source ownership, and production renderer admission remain open.
+See [`docs/nexus_vdp1_frame13162_dgn_window.md`](../nexus_vdp1_frame13162_dgn_window.md).
+
+The same frame-8037 screenshot verifies all five Japanese `TITLE.BIN`
+title-menu sprites at command indices 171–175: their source and CRAM palette
+spans are bound, and all 1,495 visible sprite samples match exactly against
+the captured VDP2 back-screen color calculation. The screenshot's frame timing
+is not independently attested by a retained run log; this does not prove menu
+input or transition behavior.
+
+For the Japanese title-menu endpoint at frame 8037, the full capture-only VDP
+composition matches both same-run Ymir VDP2 pass buffers exactly. A real-data
+source test also binds 126 of 137 informative VDP1 texture spans to
+hash-verified retail bytes, including 121 DGN Structure2 image matches; the
+remaining 11 spans are zero-filled and unowned. Repeated DGN images can occur
+across level files, so these matches do not establish a unique level owner or
+pixel-to-command attribution. The complete command-sequence join also verifies
+113 indexed palettes and eight direct-colour images, with at least one
+Structure3 face owner for 105 draws; selected-face, transform, and culling
+remain unresolved. This remains frame-specific emulator evidence and does not
+enable production rendering. See
+[`docs/nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).
+
 ## Japanese date/time setup VDP2 trace — 2026-10-24
 
 Ymir `--debug` captures from a session configured with the hash-verified

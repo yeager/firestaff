@@ -35,7 +35,8 @@ if route == "dm1-pc":
         fail("DM1 PC-34 picker route missed its first runtime", probe)
 elif route in {
     "dm1-atari-st", "dm1-atari-st-11", "dm1-atari-st-12",
-    "dm1-atari-st-12-de", "dm1-atari-st-13"
+    "dm1-atari-st-12-de", "dm1-atari-st-13",
+    "dm1-fmtowns-with-pc"
 }:
     if (probe.get("sourceId") != "dm1" or startup.get("receiptReady") != 1 or
             startup.get("phase") != "dm1-runtime" or

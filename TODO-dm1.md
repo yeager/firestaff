@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-10-31 M12 main-menu startup matrix: all ten selected real-media tests
+passed against the installed original DM1 archives: DM1-only, PC, FM Towns
+with PC media also installed, Atari ST 1.0, 1.1, 1.2 English, 1.2 German,
+1.3 French, Amiga 3.6, and Amiga 2.0. The checks reached the selected runtime
+through the no-game menu, including editions that require a platform/edition
+choice. These are SDL dummy-display startup and handoff checks; they do not
+prove native display, physical input, audio, gameplay, or visual parity. The
+DM1, CSB, and DM2 source files were unchanged between the tested executable's
+build revision and current `main` (`06689246`).
+
 2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the existing PC3.4 gates
 cover bounded scheduler, wall/ornament, door, pit/stairs, floor-ornament,
 thing-order, and field slices, including the D3R side-door button. The source
@@ -314,6 +324,21 @@ built; after building that helper, all three passed against the original
 Amiga archive. The Amiga demo case was unverified at that time because its
 archive was not staged. SDL dummy verifies these launch and source-handoff paths,
 not native display or physical input parity.
+
+2026-10-31 Atari ST 1.2 German no-game M12 route: the current-source
+`m12_main_menu_dm1-atari-st-12-de_runtime_real_media` CTest passed in 91.23
+seconds against `Dungeon-Master_Atari-ST_DE_Version-12.zip`. It selected the
+authenticated `st12-de` owner, reached the first Hall runtime with the source
+startup handoff and first-frame receipts, and verified the archive remained
+unchanged. SDL dummy does not establish native display or physical-input
+parity.
+
+The matching French v1.3 no-game route,
+`m12_main_menu_dm1-atari-st-13_runtime_real_media`, also passed on the same
+current-source build in 91.26 seconds against
+`Dungeon-Master_Atari-ST_FR_Version-13.zip`. It reached the first Hall runtime
+and verified the original archive remained unchanged. This verifies the
+named M12 route only; native display and physical-input parity remain open.
 
 2026-10-28 authentic Amiga 2.0 menu pacing retest: the updated
 `dm1_v1_amiga_v20_archive_cli_boot` passed against the installed original
