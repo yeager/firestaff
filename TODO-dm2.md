@@ -20,8 +20,8 @@ integration, source captures, and all-platform behavior remain open.
 `SKWIN/SkWinCore.cpp:22967-22980` suppresses the D1 front-wall ornament at
 source cell 3 while the extended SeeThruWalls effect is active. The DM2 runtime
 now reads active type-0x49 timers and omits that cell's ornament metadata;
-regressions cover suppression and ensure other cells and the inactive case are
-unchanged. This does not implement the rest of DRAW_WALL_ORNATE's window,
+regressions verify type-0x49 timer detection, suppression, and that other cells
+and the inactive case are unchanged. This does not implement the rest of DRAW_WALL_ORNATE's window,
 overlay, alcove, and Cryocell presentation branches.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` packed output parity:

@@ -8,6 +8,7 @@
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_wall_ornament.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_runtime.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -189,6 +190,22 @@ int main(void)
             return 1;
         }
         puts("PASS: skproject wall-ornament rectangle selection");
+    }
+    {
+        DM2_V1_SourceTimerQueue effect_timers;
+        memset(&effect_timers, 0, sizeof(effect_timers));
+        effect_timers.count = 1u;
+        effect_timers.timers[0].type = 0x48u;
+        if (dm2_v1_runtime_see_thru_walls_active_for_queue(&effect_timers) != 0) {
+            fputs("FAIL: unrelated source timer enabled SeeThruWalls\n", stderr);
+            return 1;
+        }
+        effect_timers.timers[0].type = 0x49u;
+        if (dm2_v1_runtime_see_thru_walls_active_for_queue(&effect_timers) != 1) {
+            fputs("FAIL: source ttySeeThruWalls timer was not detected\n", stderr);
+            return 1;
+        }
+        puts("PASS: active source timer type 0x49 enables SeeThruWalls");
     }
     if (dm2_v1_viewport_wall_ornament_visible(3, 1) != 0 ||
         dm2_v1_viewport_wall_ornament_visible(3, 0) != 1 ||

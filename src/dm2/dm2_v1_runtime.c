@@ -2670,13 +2670,13 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
     dm2_runtime_refresh_gdat_scene_control(rt);
 }
 
-static int dm2_runtime_see_thru_walls_active(
-    const DM2_V1_RuntimeState *rt)
+int dm2_v1_runtime_see_thru_walls_active_for_queue(
+    const DM2_V1_SourceTimerQueue *queue)
 {
-    if (!rt) return 0;
-    if (rt->timer_queue.count > DM2_V1_SOURCE_TIMER_MAX) return 1;
-    for (size_t i = 0u; i < rt->timer_queue.count; ++i) {
-        if (rt->timer_queue.timers[i].type == 0x49u) return 1;
+    if (!queue) return 0;
+    if (queue->count > DM2_V1_SOURCE_TIMER_MAX) return 1;
+    for (size_t i = 0u; i < queue->count; ++i) {
+        if (queue->timers[i].type == 0x49u) return 1;
     }
     return 0;
 }
@@ -2723,7 +2723,8 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         return;
     }
     dir = party_dir & 3;
-    see_thru_walls = dm2_runtime_see_thru_walls_active(rt);
+    see_thru_walls = dm2_v1_runtime_see_thru_walls_active_for_queue(
+        &rt->timer_queue);
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     viewport->skproject_wall_cell_mask = 0u;
     for (int cell = 0; cell < DM2_V1_SKPROJECT_VIEW_CELL_COUNT; ++cell) {
