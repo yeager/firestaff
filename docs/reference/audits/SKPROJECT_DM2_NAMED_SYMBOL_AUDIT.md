@@ -31,14 +31,14 @@ playable game route or parity on every supported platform.
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 7 |
+| `PARTIAL` | 8 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
-| `MISSING` | 1 |
+| `MISSING` | 0 |
 | **Total** | **1,754** |
 
 The tail of the inventory includes `DRAW_ALCOVE_ITEMS` and
-`DRAW_WALL_ORNATE`, both still partial, plus the missing
+`DRAW_WALL_ORNATE`, both still partial, plus the partial
 `_32cb_0f82_SHOP_GLASS`. In particular, the isolated
 `GET_WALL_TILE_ANYITEM_RECORD` helper is not an implementation of
 `DRAW_ALCOVE_ITEMS`: skproject reads each rendered wall cell's `id4` record
@@ -61,9 +61,11 @@ with reference point zero. Preserve the early facing mismatch return before
 the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
 then wrap to 2), and the cell-3-only clickable zone. The next work is to
 consume that root with the source facing gate, this wall-specific placement,
-and the corresponding clipping. The shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
-creature item masks, merchandise WALL_GFX assets, and its name/price display;
-the runtime entry and panel builder currently fail closed.
+and the corresponding clipping. The shop-glass routine now resolves the live wall/floor actuator pair and begins
+its mask/whitelist/ownership transition in source byte order. The separate
+`ddat.v1d67bc` hand-container owner, merchandise rendering, DB14 allocation,
+name/prices and buy/sell remain open; runtime entry and panel rendering still
+fail closed.
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /

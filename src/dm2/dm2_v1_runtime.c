@@ -54,6 +54,7 @@
 #include "dm2_v1_projectile_impact_attack.h"
 #include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
+#include "dm2_v1_shop_npc_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_sound_queue_pc34_compat.h"
 #include "dm2_v1_timer_ops_pc34_compat.h"
@@ -12857,6 +12858,300 @@ typedef struct {
     uint32_t identity_hash;
 } DM2_V1_ShopGlassActuatorPair;
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    const DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    int level;
+    int x;
+    int y;
+} DM2_V1_ShopStockFilterContext;
+
+static int dm2_runtime_shop_item_distinctive_type(
+    DM2_V1_RuntimeState *rt, uint16_t object, uint16_t *out_type)
+{
+    uint8_t cls2 = 0xffu;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+
+    if (out_type) *out_type = 0xffffu;
+    if (!rt || !out_type || !rt->record_pools_valid ||
+        object == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
+        object == (uint16_t)DM2_V1_RECORD_HANDLE_END) return 0;
+    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+    if (!dm2_v1_skproject_query_cls2_from_record(
+            object, &rt->record_pools, &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu) return 0;
+    memset(&type_receipt, 0, sizeof(type_receipt));
+    if (!dm2_v1_skproject_get_distinctive_itemtype(
+            object, cls2, out_type, &type_receipt) || !type_receipt.valid)
+        return 0;
+    return 1;
+}
+
+/* Source `_2fcf_164e` container traversal over the mutable session pools.
+ * Unlike its current compatibility receipt, this reader honors the active
+ * dungeon's DB word order for Mac/Amiga records. */
+static int dm2_runtime_shop_container_has_item(
+    DM2_V1_RuntimeState *rt, uint16_t container, uint16_t distinctive,
+    unsigned depth)
+{
+    const uint8_t *record;
+    int cls2 = -1;
+    int size;
+    int16_t child;
+    uint8_t cls2_value = 0xffu;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+
+    if (!rt || !rt->record_pools_valid || depth > 16u ||
+        dm2_v1_record_handle_pool((int16_t)container) != 9) return -1;
+    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+    if (!dm2_v1_skproject_query_cls2_from_record(
+            container, &rt->record_pools, &cls2_value, &cls2_receipt) ||
+        !cls2_receipt.valid) return -1;
+    cls2 = cls2_value;
+    if (cls2 < 0 || cls2 >= 8) return 0;
+    record = dm2_v1_record_pool_address(
+        &rt->record_pools, (int16_t)container);
+    size = dm2_v1_record_pool_record_size(9);
+    if (!record || size < 4) return -1;
+    child = (int16_t)dm2_runtime_missile_rd16(&rt->record_pools, record + 2);
+    for (unsigned steps = 0u; steps < 256u; ++steps) {
+        uint16_t found_type;
+        int16_t next;
+        int nested;
+        if (child == DM2_V1_RECORD_HANDLE_END) return 0;
+        if (child == DM2_V1_RECORD_HANDLE_NULL) return -1;
+        if (!dm2_runtime_shop_item_distinctive_type(
+                rt, (uint16_t)child, &found_type)) return -1;
+        if (found_type == distinctive) return 1;
+        if (dm2_v1_record_handle_pool(child) == 9) {
+            nested = dm2_runtime_shop_container_has_item(
+                rt, (uint16_t)child, distinctive, depth + 1u);
+            if (nested != 0) return nested;
+        }
+        if (!dm2_v1_record_pool_next_link(&rt->record_pools, child, &next))
+            return -1;
+        child = next;
+    }
+    return -1;
+}
+
+static int dm2_runtime_shop_tile_has_item(
+    DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    int level, int x, int y, uint16_t distinctive)
+{
+    int link;
+    if (!rt || !dungeon || !rt->record_pools_valid) return -1;
+    link = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (link < 0) return -1;
+    for (unsigned steps = 0u; steps < 256u; ++steps) {
+        int type;
+        int16_t next;
+        if (link == DM2_V1_RECORD_HANDLE_END) return 0;
+        if (link == DM2_V1_RECORD_HANDLE_NULL) return -1;
+        type = dm2_v1_record_handle_pool((int16_t)link);
+        if (type < 0 || type > 15 ||
+            !dm2_v1_record_pool_address(&rt->record_pools,
+                                        (int16_t)link)) return -1;
+        if (type >= 5 && type <= 10) {
+            uint16_t found_type;
+            if (!dm2_runtime_shop_item_distinctive_type(
+                    rt, (uint16_t)link, &found_type)) return -1;
+            if (found_type == distinctive) return 1;
+            if (type == 9) {
+                int nested = dm2_runtime_shop_container_has_item(
+                    rt, (uint16_t)link, distinctive, 0u);
+                if (nested != 0) return nested;
+            }
+        }
+        if (!dm2_v1_record_pool_next_link(&rt->record_pools,
+                                          (int16_t)link, &next)) return -1;
+        link = next;
+    }
+    return -1;
+}
+
+static int dm2_runtime_shop_party_has_item(
+    DM2_V1_RuntimeState *rt, uint16_t distinctive)
+{
+    if (!rt || !rt->source_party_valid || !rt->record_pools_valid ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return -1;
+    for (int hero = 0; hero < rt->source_party.heros_in_party; ++hero) {
+        const DM2_V1_Hero *party_hero = &rt->source_party.hero[hero];
+        if (party_hero->curHP <= 0) continue;
+        for (int slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+            uint16_t object = (uint16_t)party_hero->item[slot];
+            uint16_t found_type;
+            int nested;
+            if (object == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
+                object == (uint16_t)DM2_V1_RECORD_HANDLE_END) continue;
+            if (!dm2_runtime_shop_item_distinctive_type(
+                    rt, object, &found_type)) return -1;
+            if (found_type == distinctive) return 1;
+            if (dm2_v1_record_handle_pool((int16_t)object) == 9) {
+                nested = dm2_runtime_shop_container_has_item(
+                    rt, object, distinctive, 0u);
+                if (nested != 0) return nested;
+            }
+        }
+    }
+    if (rt->leader_hand_object != 0u && rt->leader_hand_object != 0xffffu) {
+        uint16_t object = (uint16_t)rt->leader_hand_object;
+        uint16_t found_type;
+        if (!dm2_runtime_shop_item_distinctive_type(
+                rt, object, &found_type)) return -1;
+        if (found_type == distinctive) return 1;
+        if (dm2_v1_record_handle_pool((int16_t)object) == 9)
+            return dm2_runtime_shop_container_has_item(
+                rt, object, distinctive, 0u);
+    }
+    /* SkWinCore.cpp::_2fcf_16ff gates the eight hand containers on the
+     * separate ddat.v1d67bc global. party.curactmode is only a 0/1 hand
+     * selector and cannot stand in for that mode. Until the runtime owns
+     * v1d67bc, an otherwise-unmatched subtype-filtered item is unresolved. */
+    return -1;
+}
+
+static int dm2_runtime_shop_stock_is_eligible(
+    uint16_t item, uint16_t raw_entry, void *user)
+{
+    DM2_V1_ShopStockFilterContext *context =
+        (DM2_V1_ShopStockFilterContext *)user;
+    DM2_V1_SkprojectItemdbOfItemspecReceipt itemdb_receipt;
+    DM2_V1_SkprojectItemtypeOfItemspecReceipt itemtype_receipt;
+    uint16_t itemdb = 0xffffu;
+    uint16_t itemtype = 0xffffu;
+    uint16_t subtype_word = 0u;
+    int on_tile;
+    int in_party;
+
+    if (!context || !context->runtime || !context->dungeon ||
+        !context->loader) return -1;
+    if (!dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+            item, &itemdb, &itemdb_receipt) || !itemdb_receipt.valid ||
+        itemdb == 0xffffu ||
+        !dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+            item, &itemtype, &itemtype_receipt) ||
+        !itemtype_receipt.valid || itemtype > 0xffu) return -1;
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent dtWordValue. */
+    (void)dm2_v1_asset_load_word_value(
+        context->loader, (int)itemdb, (int)itemtype, 0, &subtype_word);
+    on_tile = -1;
+    if ((subtype_word & 0x1000u) != 0u || (raw_entry & 0x8000u) != 0u) {
+        on_tile = dm2_runtime_shop_tile_has_item(
+            context->runtime, context->dungeon, context->level,
+            context->x, context->y, item);
+        if (on_tile < 0) return -1;
+    }
+    if ((subtype_word & 0x1000u) != 0u && !on_tile) {
+        in_party = dm2_runtime_shop_party_has_item(context->runtime, item);
+        if (in_party <= 0) return in_party;
+    }
+    /* The source allocates/appends a DB14 for this whitelist bit when the
+     * item is not already on the shop tile. Do not mutate stock until that
+     * source allocation and tile-append transaction is wired. */
+    if ((raw_entry & 0x8000u) != 0u && !on_tile) return -1;
+    return 1;
+}
+
+/* SkWinCore.cpp::_32cb_0f82_SHOP_GLASS source-order item transition. The
+ * draw route owns this mutation; a party stepping onto a coordinate does not
+ * manufacture a shop session. */
+static int dm2_runtime_shop_glass_transition(
+    DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_AssetLoader *loader, int level, int x, int y,
+    uint8_t wall_gfx_index, DM2_V1_ShopGlassActuatorPair *pair)
+{
+    uint8_t *wall;
+    uint8_t *floor;
+    uint16_t wall_w2;
+    uint16_t wall_w4;
+    uint16_t floor_w2;
+    uint16_t floor_w4;
+    uint16_t current_item;
+    int once_only;
+    DM2_V1_CreaturesItemMaskReceipt mask;
+    int have_mask = 0;
+
+    if (!rt || !dungeon || !loader || !pair ||
+        !rt->record_pools_valid || !rt->record_pools.valid ||
+        !rt->record_pools.record_graph_complete ||
+        rt->record_pools.source_words_big_endian !=
+            dungeon->source_words_big_endian ||
+        rt->record_pools.words_big_endian != dungeon->words_big_endian)
+        return 0;
+    wall = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, (int16_t)pair->wall_object);
+    floor = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, (int16_t)pair->floor_object);
+    if (!wall || !floor || dm2_v1_record_pool_record_size(3) < 8)
+        return 0;
+    wall_w2 = dm2_runtime_missile_rd16(&rt->record_pools, wall + 2);
+    wall_w4 = dm2_runtime_missile_rd16(&rt->record_pools, wall + 4);
+    floor_w2 = dm2_runtime_missile_rd16(&rt->record_pools, floor + 2);
+    floor_w4 = dm2_runtime_missile_rd16(&rt->record_pools, floor + 4);
+    if ((wall_w2 & 0x007fu) != DM2_ACTUATOR_TYPE_SHOP_PANEL ||
+        (floor_w2 & 0x007fu) != DM2_ACTUATOR_FLOOR_TYPE_SHOP) return 0;
+    current_item = (uint16_t)((floor_w2 >> 7) & 0x01ffu);
+    once_only = (wall_w4 >> 2) & 1u;
+
+    if ((wall_w4 & 1u) == 0u || once_only) {
+        DM2_V1_ShopStockFilterContext filter;
+        DM2_V1_ShopStockSelection selection;
+        const uint8_t *item_list;
+        size_t item_list_size = 0u;
+        size_t item_count = 0u;
+        int direction = once_only ? 1 : -1;
+
+        memset(&mask, 0, sizeof(mask));
+        have_mask = dm2_v1_query_creatures_item_mask_receipt(
+            loader, (uint8_t)((wall_w2 >> 7) & 0x01ffu),
+            (int)(((wall_w4 >> 7) & 0x0fu) * 3u), 0, &mask) &&
+            mask.accepted;
+        if (have_mask) {
+            item_list = dm2_v1_query_gdat_entry_data_ptr(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+                DM2_GDAT_ENTRY_TYPE_RAW8, 0x13, &item_list_size);
+            if (item_list) {
+                if (item_list_size < 2u) return 0;
+                item_count = item_list_size / 2u;
+            }
+            filter.runtime = rt;
+            filter.dungeon = dungeon;
+            filter.loader = loader;
+            filter.level = level;
+            filter.x = x;
+            filter.y = y;
+            memset(&selection, 0, sizeof(selection));
+            if (!dm2_v1_shop_select_masked_stock(
+                    item_list, item_count, loader->big_endian, current_item,
+                    mask.mask, direction, dm2_runtime_shop_stock_is_eligible,
+                    &filter, &selection)) return 0;
+            current_item = selection.item;
+            wall_w4 &= (uint16_t)~(1u << 2);
+            floor_w2 = (uint16_t)((floor_w2 & 0x007fu) |
+                                  ((current_item & 0x01ffu) << 7));
+        }
+    }
+
+    wall_w4 |= 1u;
+    floor_w4 |= 1u;
+    dm2_runtime_missile_wr16(&rt->record_pools, wall + 4, wall_w4);
+    dm2_runtime_missile_wr16(&rt->record_pools, floor + 4, floor_w4);
+    dm2_runtime_missile_wr16(&rt->record_pools, floor + 2, floor_w2);
+    pair->wall_w2 = wall_w2;
+    pair->wall_w4 = wall_w4;
+    pair->floor_w2 = floor_w2;
+    pair->floor_w4 = floor_w4;
+    pair->current_item = current_item;
+    pair->identity_hash ^= ((uint32_t)wall_w4 << 16) | floor_w2;
+    pair->identity_hash *= 16777619u;
+    if (pair->identity_hash == 0u) pair->identity_hash = 1u;
+    return 1;
+}
+
 /* SkWinCore.cpp::_32cb_0f82_SHOP_GLASS starts from the wall actuator tile,
  * finds the first floor shop actuator (0x30), and reads the wall shop-panel
  * actuator (0x3f). Preserve chain order and the original words before item
@@ -12869,6 +13164,7 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
     int link;
     int wall_found = 0;
     int floor_found = 0;
+    int use_pools;
 
     if (!out) return -1;
     memset(out, 0, sizeof(*out));
@@ -12877,12 +13173,12 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
         level < 0 || level >= dungeon->level_count || x < 0 || y < 0 ||
         x >= dungeon->level_widths[level] || y >= dungeon->level_heights[level])
         return -1;
-    if (dungeon->source_words_big_endian &&
-        (!rt->record_pools_valid || !rt->record_pools.valid ||
-         !rt->record_pools.record_graph_complete ||
-         rt->record_pools.source_words_big_endian !=
-             dungeon->source_words_big_endian ||
-         rt->record_pools.words_big_endian != dungeon->words_big_endian))
+    use_pools = rt->record_pools_valid && rt->record_pools.valid &&
+        rt->record_pools.record_graph_complete &&
+        rt->record_pools.source_words_big_endian ==
+            dungeon->source_words_big_endian &&
+        rt->record_pools.words_big_endian == dungeon->words_big_endian;
+    if (dungeon->source_words_big_endian && !use_pools)
         return -1;
 
     memset(&candidate, 0, sizeof(candidate));
@@ -12900,7 +13196,7 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
 
         if (link == (int)DM2_THING_END_MARKER) break;
         if (link == (int)DM2_THING_NULL_MARKER || type > 3) break;
-        if (dungeon->source_words_big_endian) {
+        if (use_pools) {
             record = dm2_v1_record_pool_address(
                 &rt->record_pools, (int16_t)(uint16_t)link);
             record_type = type;
@@ -12910,7 +13206,7 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
                 dungeon, (uint16_t)link, &record_type, NULL, &record_size);
         }
         if (!record || record_type != type || record_size < 2) return -1;
-        if (dungeon->source_words_big_endian) {
+        if (use_pools) {
             int16_t next_handle;
             if (!dm2_v1_record_pool_next_link(
                     &rt->record_pools, (int16_t)(uint16_t)link,
@@ -12924,9 +13220,11 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
             uint16_t w2;
             uint16_t w4;
             if (record_size < 8) return -1;
-            if (dungeon->source_words_big_endian) {
-                w2 = (uint16_t)(((uint16_t)record[2] << 8) | record[3]);
-                w4 = (uint16_t)(((uint16_t)record[4] << 8) | record[5]);
+            if (use_pools) {
+                w2 = dm2_runtime_missile_rd16(&rt->record_pools,
+                                               record + 2);
+                w4 = dm2_runtime_missile_rd16(&rt->record_pools,
+                                               record + 4);
             } else {
                 w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
                 w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
@@ -13177,6 +13475,15 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 viewport->wall_ornament_plan_status_code = 12u;
                 viewport->wall_ornament_plan_status_square = (int8_t)square;
             } else {
+                if (!dm2_runtime_shop_glass_transition(
+                        rt, dungeon, loader, viewport->dungeon_level,
+                        surface->source_map_x, surface->source_map_y,
+                        surface->wall_ornate_gfx_index, &pair)) {
+                    viewport->wall_ornament_plan_status_code = 13u;
+                    viewport->wall_ornament_plan_status_square =
+                        (int8_t)square;
+                    continue;
+                }
                 entry->shop_wall_actuator = pair.wall_object;
                 entry->shop_floor_actuator = pair.floor_object;
                 entry->shop_current_item = pair.current_item;

@@ -130,9 +130,12 @@ modulo-512 mask scan, decodes source-endian `WALL_GFX/dt08/0x13` words, and
 preserves the raw whitelist word, including its high-bit allocation flag. An
 eligibility callback provides the remaining source subtype/ownership filter
 seam. Its focused compatibility test covers endian order, forward/backward
-cycling, mask and callback skips, missing-list cycling, and exhaustion. It is
-not yet bound to the live actuator or callbacks, so `SHOP_GLASS` remains
-missing in the named-symbol audit.
+cycling, mask and callback skips, missing-list cycling, and exhaustion. The
+runtime now begins this transition from the shop-glass render route and reads
+and mutates authenticated session record pools in source byte order. Party
+ownership still cannot resolve the eight hand containers because the separate
+`ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
+candidate fails closed.
 The same render call draws the item image, sold-out icon when applicable, nav
 board, item name and buy/sell prices for cell 3, and may spawn a deeply
 allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
@@ -141,8 +144,9 @@ and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
 live record/GDAT chain, panel rendering, and buy/sell state transitions against
 those owners, then verify against source-owned DM2 data on each supported
 platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
-generic price formulas. The source ownership gate currently means this whole
-gameplay feature is absent, not at parity.
+generic price formulas. The click-direction global, merchandise/panel draw,
+prices, high-bit DB14 allocation, hand-container mode, and buy/sell transitions
+remain missing; the feature is not at parity.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
 visible wall metadata now calls the source-shaped summary entry point and
