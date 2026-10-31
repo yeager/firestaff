@@ -23,7 +23,7 @@ AUDIT = ROOT / "docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv"
 
 def c_function_body(text: str, name: str) -> str:
     """Return a C function body while ignoring braces inside comments and literals."""
-    match = re.search(rf"\\b{re.escape(name)}\\s*\\(", text)
+    match = re.search(rf"\b{re.escape(name)}\s*\(", text)
     if not match:
         raise SystemExit(f"FAIL C function missing: {name}")
     opening = text.find("{", match.end())
@@ -37,7 +37,7 @@ def c_function_body(text: str, name: str) -> str:
         char = text[index]
         next_char = text[index + 1] if index + 1 < len(text) else ""
         if char == "/" and next_char == "/":
-            newline = text.find("\\n", index + 2)
+            newline = text.find("\n", index + 2)
             index = len(text) if newline < 0 else newline + 1
             continue
         if char == "/" and next_char == "*":
@@ -46,11 +46,11 @@ def c_function_body(text: str, name: str) -> str:
                 raise SystemExit(f"FAIL unterminated C comment in {name}")
             index = end + 2
             continue
-        if char in ("\\\"", "'"):
+        if char in ('"', "'"):
             quote = char
             index += 1
             while index < len(text):
-                if text[index] == "\\\\":
+                if text[index] == "\\":
                     index += 2
                     continue
                 if text[index] == quote:
@@ -85,8 +85,8 @@ def main() -> int:
     test = TEST.read_text(encoding="utf-8")
     f0039_body = c_function_body(implementation, "F0039_OBJECT_GetIconIndexInSlotBox")
     if not re.fullmatch(
-        r"\\s*return\\s+dm1_v1_slot_boxes_get_icon_index_pc34"
-        r"\\s*\\(\\s*slotBoxIndex\\s*\\)\\s*;\\s*",
+        r"\s*return\s+dm1_v1_slot_boxes_get_icon_index_pc34"
+        r"\s*\(\s*slotBoxIndex\s*\)\s*;\s*",
         f0039_body,
     ):
         raise SystemExit("FAIL Firestaff F0039 adapter return expression changed")
@@ -153,6 +153,15 @@ def main() -> int:
 
     # Keep the adjacent F0619 inventory row honest: the slot-table accessor
     # does not resolve a source zone rectangle or apply edition margins.
+    object_text = "\n".join(lines)
+    f0618_body = c_function_body(object_text, "F0618_LoadZone")
+    if not re.search(
+        r"F0635_\s*\(\s*NULL\s*,\s*P2054_pi_XYZ\s*,"
+        r"\s*P2053_i_ZoneIndex\s*,\s*&L3359_i_X\s*,"
+        r"\s*&L3360_i_Y\s*\)",
+        f0618_body,
+    ):
+        raise SystemExit("FAIL ReDMCSB F0618 no longer resolves zone data through F0635")
     f0619 = "\n".join(lines[364:393])
     for marker in (
         "void F0618_LoadZone(",
