@@ -9213,6 +9213,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_SoundQueueState sound_queue_backup;
+    DM2_V1_SoundSsoundEntry *sound_entries_backup = NULL;
+    size_t sound_entries_backup_size = 0u;
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
@@ -9268,6 +9270,17 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
+    if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
+        rt->sound_queue.ssound_entries_capacity > 0u) {
+        sound_entries_backup_size =
+            (size_t)rt->sound_queue.ssound_entries_capacity *
+            sizeof(*rt->sound_queue.ssound_entries);
+        sound_entries_backup = (DM2_V1_SoundSsoundEntry *)malloc(
+            sound_entries_backup_size);
+        if (!sound_entries_backup) goto wall_mecha_reject;
+        memcpy(sound_entries_backup, rt->sound_queue.ssound_entries,
+               sound_entries_backup_size);
+    }
     if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
         caii_backup_size = (size_t)rt->caii.capacity *
             DM2_V1_CAII_SLOT_SIZE;
@@ -9309,6 +9322,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
                sizeof(global_state.word_vars));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
+    free(sound_entries_backup);
     free(raw_backup);
     free(caii_backup);
     rt->actuator_tile_wall_mecha++;
@@ -9318,6 +9332,9 @@ wall_mecha_reject:
     if (backup_ready) {
         rt->timer_queue = queue_backup;
         rt->sound_queue = sound_queue_backup;
+        if (sound_entries_backup && sound_queue_backup.ssound_entries)
+            memcpy(sound_queue_backup.ssound_entries, sound_entries_backup,
+                   sound_entries_backup_size);
         memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
                raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
         dm2_v1_record_pool_set_free(&rt->record_pools);
@@ -9328,6 +9345,7 @@ wall_mecha_reject:
         rt->session_rng = rng_backup;
     }
     dm2_v1_record_pool_set_free(&pool_backup);
+    free(sound_entries_backup);
     free(raw_backup);
     free(caii_backup);
     return 0;
@@ -9342,6 +9360,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_SoundQueueState sound_queue_backup;
+    DM2_V1_SoundSsoundEntry *sound_entries_backup = NULL;
+    size_t sound_entries_backup_size = 0u;
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
@@ -9397,6 +9417,17 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
+    if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
+        rt->sound_queue.ssound_entries_capacity > 0u) {
+        sound_entries_backup_size =
+            (size_t)rt->sound_queue.ssound_entries_capacity *
+            sizeof(*rt->sound_queue.ssound_entries);
+        sound_entries_backup = (DM2_V1_SoundSsoundEntry *)malloc(
+            sound_entries_backup_size);
+        if (!sound_entries_backup) goto floor_mecha_reject;
+        memcpy(sound_entries_backup, rt->sound_queue.ssound_entries,
+               sound_entries_backup_size);
+    }
     if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
         caii_backup_size = (size_t)rt->caii.capacity *
             DM2_V1_CAII_SLOT_SIZE;
@@ -9438,6 +9469,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
                sizeof(global_state.word_vars));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
+    free(sound_entries_backup);
     free(raw_backup);
     free(caii_backup);
     rt->floor_mecha_timers++;
@@ -9447,6 +9479,9 @@ floor_mecha_reject:
     if (backup_ready) {
         rt->timer_queue = queue_backup;
         rt->sound_queue = sound_queue_backup;
+        if (sound_entries_backup && sound_queue_backup.ssound_entries)
+            memcpy(sound_queue_backup.ssound_entries, sound_entries_backup,
+                   sound_entries_backup_size);
         memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
                raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
         dm2_v1_record_pool_set_free(&rt->record_pools);
@@ -9457,6 +9492,7 @@ floor_mecha_reject:
         rt->session_rng = rng_backup;
     }
     dm2_v1_record_pool_set_free(&pool_backup);
+    free(sound_entries_backup);
     free(raw_backup);
     free(caii_backup);
     rt->actuator_tile_pitfall_rejected++;
