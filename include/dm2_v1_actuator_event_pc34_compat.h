@@ -17,7 +17,7 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
-#include "dm2_v1_runtime_parity_pc34_compat.h"
+#include "dm2_v1_glob_var_state_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
 #ifdef __cplusplus
