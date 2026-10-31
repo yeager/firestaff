@@ -208,6 +208,14 @@ static void test_private_db0_recycler_candidate(void)
     uint16_t ground_before[4];
 
     build_synthetic(&set);
+    set.pools[7].record_size = 4;
+    set.pools[7].record_count = 1;
+    set.pools[7].source_base = 68;
+    set.pools[7].bytes = calloc(1, 4);
+    set.pools[9].record_size = 8;
+    set.pools[9].record_count = 1;
+    set.pools[9].source_base = 72;
+    set.pools[9].bytes = calloc(1, 8);
     CHECK(ground != NULL && columns != NULL && tiles != NULL,
           "private recycler fixture allocates map-owner storage");
     if (!ground || !columns || !tiles) {
@@ -295,6 +303,49 @@ static void test_private_db0_recycler_candidate(void)
               &game_owner, 2u, &candidate) && candidate.valid &&
               candidate.found && candidate.selected_link == (uint16_t)mk_handle(2, 0),
           "private recycler directly returns an ordinary DB2 record");
+    game_owner.recycler_context.map_cursors[2] = 3u;
+    memset(&candidate, 0, sizeof(candidate));
+    uint16_t committed_db2 = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    CHECK(dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+              &game_owner, 2u, &committed_db2) &&
+              committed_db2 == (uint16_t)mk_handle(2, 0) &&
+              game_owner.record_pools.pools[2].bytes[0] == 0xfeu &&
+              game_owner.record_pools.pools[2].bytes[1] == 0xffu &&
+              game_owner.record_pools.pools[2].bytes[2] == 0u &&
+              game_owner.record_pools.pools[2].bytes[3] == 0u &&
+              game_owner.map_owner.ground_stack_links[0] ==
+                  (uint16_t)mk_handle(2, 0) &&
+              game_owner.recycler_context.map_cursors[2] == 0u &&
+              !game_owner.source_game_load_session_ready,
+          "private DB2 recycler clears the selected record in place and preserves the source tile link");
+    for (uint8_t direct_db_index = 0u; direct_db_index < 3u;
+         ++direct_db_index) {
+        const uint8_t direct_db = direct_db_index == 0u ? 3u :
+            (direct_db_index == 1u ? 7u : 9u);
+        const int16_t direct_handle = mk_handle(direct_db, 0);
+        uint16_t committed_direct = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+        ground[0] = (uint16_t)direct_handle;
+        memset(game_owner.record_pools.pools[direct_db].bytes, 0,
+               game_owner.record_pools.pools[direct_db].record_size);
+        wr16(game_owner.record_pools.pools[direct_db].bytes,
+             (int16_t)DM2_V1_RECORD_HANDLE_END);
+        if (direct_db == 9u)
+            wr16(game_owner.record_pools.pools[direct_db].bytes + 2u,
+                 (int16_t)DM2_V1_RECORD_HANDLE_END);
+        game_owner.recycler_context.map_cursors[direct_db] = 3u;
+        CHECK(dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+                  &game_owner, direct_db, &committed_direct) &&
+                  committed_direct == (uint16_t)direct_handle &&
+                  game_owner.record_pools.pools[direct_db].bytes[0] == 0xfeu &&
+                  game_owner.record_pools.pools[direct_db].bytes[1] == 0xffu &&
+                  game_owner.map_owner.ground_stack_links[0] ==
+                      (uint16_t)direct_handle &&
+                  game_owner.recycler_context.map_cursors[direct_db] == 0u &&
+                  (direct_db != 9u ||
+                   (game_owner.record_pools.pools[direct_db].bytes[2] == 0xfeu &&
+                    game_owner.record_pools.pools[direct_db].bytes[3] == 0xffu)),
+              "private direct recycler commits DB3/DB7/DB9 with source-sized ALLOC_NEW_RECORD initialization");
+    }
     ground[0] = (uint16_t)mk_handle(2, 0);
     wr16(game_owner.record_pools.pools[2].bytes, mk_handle(0, 1));
     memset(&candidate, 0, sizeof(candidate));
