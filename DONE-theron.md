@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — exercise the authentic US save through native startup
+
+Ran the isolated native Firestaff Debug binary on TRV2 against authentic US
+Track 02 (MD5 `f23601102138f87c33025877767ebf76`) and a copy of the authentic
+Ak-Tu-Ba-complete BRAM (MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`). One run set
+`FIRESTAFF_THERON_BRAM_PATH`; another passed the same save copy with `--save`.
+Both admitted the US Track 02 and entered Firestaff's Theron title runtime,
+with `levelLoaded=0`, `party=0,0`, and `runtimeTick=0`. Neither probe reached
+save resume or dungeon runtime. The isolated BRAM copies retained their
+original hashes. This narrows the gap to connecting original-format resume to
+the native startup flow; it does not establish save compatibility in an
+interactive resume transaction or gameplay parity.
+
 ## 2026-10-31 — verify the authentic cold BIOS I/O and RAM trace
 
 Ran the updated capture loop on TRV2 with the authentic Japanese Rev. 1 CUE,

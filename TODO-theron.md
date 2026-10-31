@@ -136,12 +136,12 @@ Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
 
-The next capture tool now includes a bounded `$1800-$1803` I/O and
-`$224C-$2255`, `$2273-$2280`, `$22A4` memory observer. Its offline verifier
+The bounded `$1800-$1803` I/O and `$224C-$2255`, `$2273-$2280`, `$22A4`
+memory observer has now been used in the r5 capture. Its offline verifier
 requires the authenticated System Card image and checks each event's access
-kind, value, PC mapping, and opcode bytes against that BIOS. No new trace has
-been collected with this observer yet; collect one before drawing conclusions
-about the status callback or `$E209/$E11D` carry path.
+kind, value, PC mapping, and opcode bytes against that BIOS. Continue with
+source-guided tracing around `$EA79/$EA7E` and `$E95E/$E963`, then target the
+`$E209/$E11D` carry path in a replay that reaches it.
 
 A current-source native Debug run with authentic Japanese Rev. 1 Track 02
 reached the dungeon runtime and recorded a left turn followed by a forward
@@ -175,9 +175,14 @@ a dummy SDL display and produced no rendered-game frame.
    run-only callback reaches `$EC05/$E900`, then remains in the `$E95E/$E966`
    status loop; it still has no observed `$E209/$E11D` instruction starts or game
    handoff.
-2. **Verify quest progression and original-format save transactions.** Bind
-   authentic quest artifacts and their pickup, exit, chapter transition, and
-   completion consumers. Keep the campaign-completion bit distinct from
+2. **Verify quest progression and original-format save transactions.** A
+   2026-10-31 TRV2 native Debug probe admitted authentic US Track 02 and an
+   Ak-Tu-Ba-complete BRAM copy, but both `FIRESTAFF_THERON_BRAM_PATH` and
+   `--save` runs remained at the Theron title (`levelLoaded=0`, party `(0,0)`,
+   `runtimeTick=0`). Bind this authentic resume transaction to the native
+   startup flow before claiming that save support. Then bind authentic quest
+   artifacts and their pickup, exit, chapter transition, and completion
+   consumers. Keep the campaign-completion bit distinct from
    quest-item collection. Connect the source-gated writer only to proven
    progress, then reopen the changed save in the original runtime. The
    [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
