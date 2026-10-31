@@ -2243,6 +2243,9 @@ static int dm2_runtime_mode7_flags3_evidence(
         !((room->raw_tile >> 5) == 5u ||
           ((room->raw_tile >> 5) == 2u &&
            room->first_record_link == DM2_THING_NULL_MARKER) ||
+          (room->source_tile_type >= 0x10u &&
+           room->source_tile_type <= 0x13u &&
+           room->first_record_link == DM2_THING_END_MARKER) ||
           (room->raw_tile == 0x30u &&
            room->source_tile_type == 1u)))
         return 0;
@@ -2252,6 +2255,17 @@ static int dm2_runtime_mode7_flags3_evidence(
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
     memset(evidence, 0, sizeof(*evidence));
+    if (room->source_tile_type >= 0x10u &&
+        room->source_tile_type <= 0x13u) {
+        if (room->first_record_link != DM2_THING_END_MARKER) return 0;
+        /* c_light.cpp:310-435: empty class-3/4 summary chains cannot add a
+         * ground-record term, and an empty chain proves no creature F8 term. */
+        evidence->record_chain_known = 1u;
+        evidence->record_chain_known_no_darkness = 1u;
+        evidence->creature_query_known = 1u;
+        evidence->valid = 1u;
+        return 1;
+    }
     link = (int16_t)room->first_record_link;
     if ((room->raw_tile >> 5) == 2u &&
         room->first_record_link == DM2_THING_NULL_MARKER)
@@ -2424,6 +2438,19 @@ static int dm2_runtime_mode7_on_node(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
+    } else if (source_flags == 3u &&
+               ((raw >> 5) == 3 || (raw >> 5) == 4)) {
+        branch = 35u;
+        /* skguivwp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
+         * this receipt admits only empty chains and the class-4 direction
+         * that does not redirect into an adjacent record owner. */
+        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+                dungeon, map, x, y, direction, &room) ||
+            !dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
+        node.stone_room = &room;
+        node.prepass = &prepass;
+        node.source_tile_type = room.source_tile_type;
     } else if (source_flags != 4u) {
         goto unknown;
     } else if ((raw >> 5) == 0) {
@@ -2447,6 +2474,12 @@ static int dm2_runtime_mode7_on_node(
                 dungeon, loader, map, x, y,
                 (uint32_t)rt->tick_count, &room)) goto unknown;
         node.stone_room = &room;
+    } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
+        branch = 36u;
+        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+                dungeon, map, x, y, direction, &room)) goto unknown;
+        node.stone_room = &room;
+        node.source_tile_type = room.source_tile_type;
     } else goto unknown;
     result = dm2_v1_mode7_on_node(&node,
         &rt->c_light_visibility.v1e0974,

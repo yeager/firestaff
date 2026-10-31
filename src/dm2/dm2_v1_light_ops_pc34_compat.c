@@ -408,6 +408,55 @@ static int dm2_v1_mode7_flags3_floor_terms(
     return 1;
 }
 
+static int dm2_v1_mode7_class34_empty_room(
+    const DM2_V1_CLightStoneRoomReceipt *room)
+{
+    unsigned raw_class;
+    if (!room || !room->valid ||
+        room->first_record_link != DM2_THING_END_MARKER) return 0;
+    raw_class = room->raw_tile >> 5;
+    if (raw_class == 3u)
+        return room->source_tile_type == 0x12u ||
+               room->source_tile_type == 0x13u;
+    if (raw_class == 4u)
+        return room->source_tile_type == 0x10u ||
+               room->source_tile_type == 0x11u;
+    return 0;
+}
+
+static int dm2_v1_mode7_class34_empty_noop(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_Mode7Flags3Evidence *evidence)
+{
+    if (!dm2_v1_mode7_class34_empty_room(room) ||
+        !evidence || !evidence->valid ||
+        !evidence->record_chain_known ||
+        !evidence->record_chain_known_no_darkness ||
+        !evidence->creature_query_known || evidence->creature_present)
+        return 0;
+    /* SKULLWIN/c_light.cpp:310-435: with an accepted summary type 0x10..13,
+     * flags 3/4 contribute through the ground-record and creature paths.
+     * Empty records and an absent creature leave both accumulators unchanged. */
+    return 1;
+}
+
+static int dm2_v1_mode7_flags4_class34_empty_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light)
+{
+    if (!dm2_v1_mode7_class34_empty_room(room) ||
+        !out_tile_light || !out_darkness || !out_weather_light)
+        return 0;
+    /* SKULLWIN/c_light.cpp:310-435: flags 4 skip the class-0 floor,
+     * ceiling and ground-record branches. An empty accepted class-3/4
+     * summary has no creature F8 term either. */
+    *out_tile_light = 0;
+    *out_darkness = 0;
+    *out_weather_light = 0;
+    return 1;
+}
+
 int dm2_v1_mode7_record_darkness_term(
     uint8_t record_type, uint16_t word_2, uint8_t byte_4,
     int16_t *out_term)
@@ -441,6 +490,12 @@ int dm2_v1_mode7_on_node(
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
+        if (node->source_tile_type >= 0x10u &&
+            node->source_tile_type <= 0x13u) {
+            if (!dm2_v1_mode7_class34_empty_noop(
+                    node->stone_room, node->prepass)) return -1;
+            return 1;
+        }
         /* SKProject c_light.cpp:233-243: a summarized class-0 tile with
          * mode-7 flags 3 exits to L_fin before any GDAT or record query. */
         if (node->source_tile_type == 0u) return 1;
@@ -490,6 +545,9 @@ int dm2_v1_mode7_on_node(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light) &&
                !dm2_v1_mode7_flags4_class5_terms(
+                   node->stone_room, &tile_light, &darkness,
+                   &weather_light) &&
+               !dm2_v1_mode7_flags4_class34_empty_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light)) return -1;
     if (!dm2_v1_mode7_light_accumulate_tile(

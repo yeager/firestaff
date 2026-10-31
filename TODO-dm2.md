@@ -19,16 +19,16 @@ branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
 (:2497-3087) classifies raw class-3 tiles as summary types `0x12`/`0x13` and
 raw class-4 tiles as `0x10`/`0x11`, may redirect class-4 summaries to an
 adjacent tile according to the incoming direction, and carries the selected
-record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff's mode-7 node owner currently
-ignores `direction`/`source_facing` and rejects raw class-3/4 nodes in its
-flags-3 and flags-4 paths (`src/dm2/dm2_v1_runtime.c::dm2_runtime_mode7_on_node`),
-even though the adjacent mode-8 owner admits one no-creature DB0 class-4 edge.
-Implement the source summary and adjacent-record ownership for these variants,
-then route their flags-3/flags-4 light terms through the authenticated runtime
-walk. Acceptance requires focused record-link/direction regressions and
-original-media dynamic-light evidence for every supported DM2 platform; the
-existing FM Towns-only runtime receipt does not close DOS, Amiga, or Macintosh
-behavior.
+record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
+mode-7 class-3 summaries and direction-matched class-4 summaries when their
+record chain is empty. With authenticated absence of darkness and creatures,
+flags-3 contributes no term; flags-4 likewise leaves the accumulators unchanged.
+Focused direction, receipt, fail-closed evidence and accumulator regressions
+cover those cases. Record-bearing chains and class-4 direction mismatches that
+redirect to an adjacent record owner remain unresolved. Acceptance still
+requires source-owned record traversal and original-media dynamic-light evidence
+for every supported DM2 platform; the existing FM Towns-only runtime receipt
+does not close DOS, Amiga, or Macintosh behavior.
 
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record

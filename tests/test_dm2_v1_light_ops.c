@@ -1106,6 +1106,32 @@ static void test_mode7_flags3_prepass_evidence(void)
     ambient = 0;
     darkness = 0;
     evidence.valid = 1u;
+    room.raw_tile = 0x60u;
+    room.source_tile_type = 0x13u;
+    room.first_record_link = DM2_THING_END_MARKER;
+    evidence.record_chain_known = 1u;
+    evidence.record_chain_known_no_darkness = 1u;
+    evidence.creature_query_known = 1u;
+    evidence.creature_present = 0u;
+    node.source_tile_type = 0x13u;
+    ambient = 11;
+    darkness = 17;
+    /* c_light.cpp:310-435: accepted empty class-3 summaries have no
+     * ground-record or creature term under the flags-3 prepass. */
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 11 && darkness == 17);
+    evidence.record_chain_known_no_darkness = 0u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    evidence.record_chain_known_no_darkness = 1u;
+    evidence.creature_present = 1u;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    evidence.creature_present = 0u;
+    room.raw_tile = 0x40u;
+    room.source_tile_type = 1u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    node.source_tile_type = 1u;
+    ambient = 0;
+    darkness = 0;
     evidence.teleporter_detail_known = 1u;
     evidence.creature_query_known = 1u;
     evidence.ceiling_gdat_known = 1u;
@@ -1194,6 +1220,54 @@ static void test_mode7_flags3_prepass_evidence(void)
     darkness = 0;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 2 && darkness == 0);
+
+    room.raw_tile = 0x80u;
+    room.source_tile_type = 0x10u;
+    room.first_record_link = DM2_THING_END_MARKER;
+    node.source_flags = 4u;
+    node.effective_flags = 2u;
+    node.source_tile_type = 0x10u;
+    node.distance = 1u;
+    node.prepass = NULL;
+    ambient = 23;
+    darkness = 31;
+    /* c_light.cpp flags 4 reaches the creature tail; an empty class-4
+     * chain proves that its F8 query contributes nothing. */
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 23 && darkness == 31);
+}
+
+static void test_mode7_class34_empty_receipts(void)
+{
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_CLightStoneRoomReceipt room;
+    uint8_t tile = 0x60u;
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = &tile;
+    dungeon.raw_size = 1;
+    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 0, &room));
+    assert(room.valid && room.raw_tile == 0x60u &&
+           room.source_tile_type == 0x12u &&
+           room.first_record_link == DM2_THING_END_MARKER);
+    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 1, &room));
+    assert(room.source_tile_type == 0x13u);
+    tile = 0x80u;
+    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 0, &room));
+    assert(room.source_tile_type == 0x10u);
+    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 1, &room));
+    tile = 0x40u;
+    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 0, &room));
+    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        &dungeon, 0, 0, 0, 4, &room));
 }
 
 static void test_check_recompute_clean(void)
@@ -1239,6 +1313,7 @@ int main(void)
     test_mode7_tile_accumulator();
     test_mode7_flags4_source_branches();
     test_mode7_flags3_prepass_evidence();
+    test_mode7_class34_empty_receipts();
     test_mode7_flags4_original_media();
     test_proceed_light_darkness();
     test_proceed_light_torch();

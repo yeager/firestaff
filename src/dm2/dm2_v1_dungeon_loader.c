@@ -6778,6 +6778,49 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class34_empty_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    int direction, DM2_V1_CLightStoneRoomReceipt *out)
+{
+    int raw, first;
+    unsigned base;
+    unsigned source_side;
+    unsigned direction_side;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || direction < 0 || direction > 3) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || first != -1) return 0;
+    if (((unsigned)raw >> 5) == 3u) {
+        /* c_gui_vp.cpp:2659-2669: class 3 summarizes as 0x12/0x13. */
+        base = 0x12u;
+    } else if (((unsigned)raw >> 5) == 4u) {
+        /* c_gui_vp.cpp:2672-2707: class 4 summarizes as 0x10/0x11.
+         * A side mismatch follows an adjacent tile record chain; keep this
+         * receipt to the no-adjacent-route case until that owner is ported. */
+        source_side = ((unsigned)raw & 0x08u) >> 3;
+        direction_side = (unsigned)direction & 1u;
+        if (source_side != direction_side) return 0;
+        base = 0x10u;
+    } else {
+        return 0;
+    }
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    source_side = ((unsigned)raw & 0x08u) >> 3;
+    direction_side = (unsigned)direction & 1u;
+    out->source_tile_type = (uint8_t)(base +
+        (source_side != direction_side ? 1u : 0u));
+    out->first_record_link = DM2_THING_END_MARKER;
+    out->ceiling_ornament_word = 0x00ffu;
+    out->ceiling_ornament_index = 0xffu;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
