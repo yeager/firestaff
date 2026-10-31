@@ -8813,21 +8813,62 @@ static int dm2_runtime_update_weather_timer(void *user,
  */
 #define DM2_V1_SQUARE_CLASS_DOOR 4
 
+/* Queue the source's positional door-collision noise and bind its delayed
+ * type-0x15 timer through the same runtime timer owner. */
+static int dm2_runtime_queue_door_collision_noise(
+    DM2_V1_RuntimeState *rt, int map, int x, int y,
+    int cls1, int cls2, int cls3, int volume, int delay,
+    uint32_t game_tick, uint16_t source_index)
+{
+    DM2_V1_SoundQueueEnv env;
+    DM2_V1_SoundQueueReceipt sound;
+    if (!rt || !rt->sound_queue_ready) return 0;
+    memset(&env, 0, sizeof(env));
+    env.current_map = (int16_t)map;
+    env.gate_map_a = rt->sound_env.gate_map_a;
+    env.gate_map_b = rt->sound_env.gate_map_b;
+    env.facing = (uint16_t)rt->view_dir;
+    env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+    env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+    env.gametick = (int32_t)game_tick;
+    memset(&sound, 0, sizeof(sound));
+    if (!dm2_v1_sound_queue_noise_gen2(
+            &rt->sound_queue, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3,
+            (int8_t)0xfe, (int16_t)x, (int16_t)y, 1, (int16_t)volume,
+            (int16_t)delay, &env, &sound) || !sound.valid)
+        return 0;
+    if (sound.timer_queue_pending) {
+        DM2_V1_SourceTimer timer;
+        memset(&timer, 0, sizeof(timer));
+        timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            ((uint32_t)sound.timer_mticks & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        timer.type = sound.timer_type;
+        timer.actor = sound.timer_actor;
+        timer.value_a = (uint16_t)sound.timer_a;
+        if (dm2_v1_source_timer_enqueue(
+                &rt->timer_queue, &timer, source_index) !=
+            DM2_V1_SOURCE_TIMER_OK)
+            return 0;
+    }
+    return 1;
+}
+
 /*
  * dm2_runtime_door_step_timer — DM2-owned 0x01 handler for the source-order
  * timer dispatcher (DM2-003 follow-up, round 24).
  *
  * skproject/SKULLWIN/c_tim_proc.cpp:4041 dispatches timer type 0x01 to
- * DM2_STEP_DOOR.  The bounded Firestaff slice reads the door square from the
- * boot dungeon, applies one ReDMCSB TIMELINE.C state transition, writes the
- * new square back, and re-queues subsequent steps until OPEN/CLOSED. The live
- * path reads source DoorBit09/10 with source byte order, so an actuator can
- * reverse an active door. Party/creature damage and sound dispatch remain
- * unbound (occupied-door paths fail closed).
+ * DM2_STEP_DOOR. The live path reads the door square and DoorBit09/10 from
+ * the boot dungeon and source-endian record; it applies a step, source party
+ * damage or threshold-admitted creature CAII attack, collision sounds, and
+ * the source continuation timers. The collision branches roll back when
+ * their exact GDAT/CAII/sound/timer inputs cannot be admitted. The separate
+ * GAME_LOAD candidate path and off-current-map door graphic mapping remain
+ * fail-closed for occupied-door collisions.
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:127+   (DM2_STEP_DOOR)
- *         ReDMCSB TIMELINE.C:750-810               (door state transitions)
+ *         SKWINSPX skevent.cpp:2358-2472            (door state/collision path)
  */
 static int dm2_runtime_door_step_timer(void *user,
                                        const DM2_V1_SourceTimer *timer,
@@ -8885,9 +8926,7 @@ static int dm2_runtime_door_step_timer(void *user,
     if (!dungeon->record_graph_complete || link_type != 0 || link_size < 4 ||
         dm2_v1_record_handle_pool((int16_t)(uint16_t)timer->value_b) != 0 ||
         dm2_v1_dungeon_get_first_thing(dungeon, map, x, y) !=
-            (int)(uint16_t)timer->value_b ||
-        dm2_v1_dungeon_find_thing_of_type(
-            dungeon, (uint16_t)timer->value_b, 4, 64) >= 0) {
+            (int)(uint16_t)timer->value_b) {
         if (receipt != NULL) receipt->handler_rejected_count++;
         return 1;
     }
@@ -8907,6 +8946,16 @@ static int dm2_runtime_door_step_timer(void *user,
     }
     direction = (door_attributes & 0x0200u) != 0u
         ? DM2_DOOR_TOGGLE_DIR_OPEN : DM2_DOOR_TOGGLE_DIR_CLOSE;
+    if ((direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+         current_state == DM2_DOOR_STATE_CLOSED) ||
+        (direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+         current_state == DM2_DOOR_STATE_OPEN)) {
+        /* SKWINSPX STEP_DOOR clears DoorBit10 and returns before either
+         * collision branch once the requested endpoint is already reached. */
+        door_attributes &= (uint16_t)~0x0400u;
+        dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
+        return 1;
+    }
 
     /* SKWINSPX skevent.cpp::STEP_DOOR first handles a closing door over the
      * party. It opens the tile for that step, applies QUERY_DOOR_STRENGTH
@@ -8922,7 +8971,6 @@ static int dm2_runtime_door_step_timer(void *user,
     if (party_collision) {
         const DM2_V1_AssetLoader *loader;
         DM2_V1_HeroAttackPartyCallbacks party_cb;
-        DM2_V1_SoundQueueEnv sound_env;
         DM2_V1_DropRng rng_before;
         DM2_V1_Party party_before;
         DM2_V1_SoundQueueState sound_before;
@@ -8987,25 +9035,14 @@ static int dm2_runtime_door_step_timer(void *user,
         hit_mask = dm2_v1_hero_attack_party(
             (int16_t)door_strength, 4, 2, &party_cb, rt);
 
-        memset(&sound_env, 0, sizeof(sound_env));
-        sound_env.current_map = (int16_t)map;
-        sound_env.gate_map_a = rt->sound_env.gate_map_a;
-        sound_env.gate_map_b = rt->sound_env.gate_map_b;
-        sound_env.facing = (uint16_t)rt->view_dir;
-        sound_env.party_x = (int16_t)x;
-        sound_env.party_y = (int16_t)y;
-        sound_env.gametick = (int32_t)(receipt
-            ? receipt->game_tick : rt->tick_count);
         for (i = 0; i < rt->source_party.heros_in_party; ++i) {
-            DM2_V1_SoundQueueReceipt sound_receipt;
             const int hero_type = rt->source_party.hero[i].herotype;
             if ((hit_mask & (1 << i)) == 0) continue;
-            memset(&sound_receipt, 0, sizeof(sound_receipt));
-            if (!dm2_v1_sound_queue_noise_gen2(
-                    &rt->sound_queue, 0x16, (int8_t)hero_type,
-                    DM2_SOUND_CHAMPION_BUMP, 0xFE,
-                    (int16_t)x, (int16_t)y, 1, 0x64, 0xC8,
-                    &sound_env, &sound_receipt) || !sound_receipt.valid) {
+            if (!dm2_runtime_queue_door_collision_noise(
+                    rt, map, x, y, DM2_GDAT_CATEGORY_CHAMPIONS,
+                    hero_type, DM2_SOUND_CHAMPION_BUMP, 0x64, 0xC8,
+                    receipt ? receipt->game_tick : rt->tick_count,
+                    source_index)) {
                 rt->source_party = party_before;
                 rt->session_rng = rng_before;
                 rt->sound_queue = sound_before;
@@ -9018,35 +9055,6 @@ static int dm2_runtime_door_step_timer(void *user,
                 free(sound_entries_before);
                 if (receipt != NULL) receipt->handler_rejected_count++;
                 return -1;
-            }
-            if (sound_receipt.timer_queue_pending) {
-                DM2_V1_SourceTimer sound_timer;
-                memset(&sound_timer, 0, sizeof(sound_timer));
-                sound_timer.ticks_and_map =
-                    ((uint32_t)(map & 0xff) << 24) |
-                    ((uint32_t)sound_receipt.timer_mticks &
-                     DM2_V1_SOURCE_TIMER_TICK_MASK);
-                sound_timer.type = sound_receipt.timer_type;
-                sound_timer.actor = sound_receipt.timer_actor;
-                sound_timer.value_a = (uint16_t)sound_receipt.timer_a;
-                if (dm2_v1_source_timer_enqueue(
-                        &rt->timer_queue, &sound_timer, source_index) !=
-                    DM2_V1_SOURCE_TIMER_OK) {
-                    rt->source_party = party_before;
-                    rt->session_rng = rng_before;
-                    rt->sound_queue = sound_before;
-                    if (sound_entries_before && sound_before.ssound_entries)
-                        memcpy(sound_before.ssound_entries,
-                               sound_entries_before,
-                               sound_entries_before_size);
-                    rt->timer_queue = queue_before;
-                    (void)dm2_v1_dungeon_set_tile_raw(
-                        dungeon, map, x, y, raw_before);
-                    free(sound_entries_before);
-                    if (receipt != NULL)
-                        receipt->handler_rejected_count++;
-                    return -1;
-                }
             }
         }
 
@@ -9078,6 +9086,193 @@ static int dm2_runtime_door_step_timer(void *user,
         rt->door_step_mutations++;
         rt->door_step_requeues++;
         return 1;
+    }
+
+    /* The source checks DB4 after the party collision. If a caught creature
+     * is non-immune and its AI collision threshold admits this door state,
+     * ATTACK_CREATURE runs first, then the tile moves one state toward open,
+     * two delayed noises are queued, and the next door step is delayed by an
+     * extra tick. */
+    if (direction == DM2_DOOR_TOGGLE_DIR_CLOSE) {
+        const int16_t creature = dm2_v1_get_creature_at(
+            &rt->record_pools, dungeon, map, x, y);
+        if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+            const uint8_t *creature_record = dm2_v1_record_pool_address(
+                &rt->record_pools, creature);
+            const DM2_AIDefinition *ai = NULL;
+            uint16_t ai_flags = 0u;
+            const int door_type = (int)(door_attributes & 1u);
+
+            if (!creature_record ||
+                !dm2_v1_creature_ai_spec_flags(
+                    (int)creature_record[4], &ai_flags) ||
+                !dm2_v1_creature_ai_spec_def(
+                    (int)creature_record[4], &ai) || !ai) {
+                if (receipt != NULL) receipt->handler_rejected_count++;
+                return -1;
+            }
+            if ((ai_flags & 0x20u) == 0u) {
+                const int threshold = (door_attributes & 0x0020u) != 0u
+                    ? (int)((ai_flags >> 6) & 0x3u) : 1;
+                if (threshold <= current_state) {
+                    const DM2_V1_AssetLoader *loader;
+                    DM2_V1_RecordPoolSet pool_backup;
+                    DM2_V1_SourceTimerQueue queue_backup;
+                    DM2_V1_SoundQueueState sound_backup;
+                    DM2_V1_SoundSsoundEntry *sound_entries_backup = NULL;
+                    size_t sound_entries_backup_size = 0u;
+                    DM2_V1_DropRng rng_backup;
+                    DM2_V1_CaiiAttackReceipt attack_receipt;
+                    DM2_V1_SourceTimer next;
+                    uint8_t *caii_backup = NULL;
+                    size_t caii_backup_size = 0u;
+                    uint16_t door_strength = 0u;
+                    uint8_t creature_cls2 = 0u;
+                    DM2_V1_SkprojectQueryCls2Receipt cls2_rc;
+                    uint16_t raw_before = raw;
+                    uint16_t attributes_before = door_attributes;
+                    const uint32_t game_tick = receipt
+                        ? receipt->game_tick : (uint32_t)rt->tick_count;
+                    int pool_cloned = 0;
+                    int caii_cloned = 0;
+                    int attack_ok;
+                    int source_noop;
+
+                    memset(&pool_backup, 0, sizeof(pool_backup));
+                    if (map != rt->dungeon_level ||
+                        dungeon->square_bytes != 1 || door_type < 0 ||
+                        door_type >= 2 ||
+                        !rt->map_door_gfx_active[door_type] ||
+                        !rt->caii_ready || !rt->caii.valid ||
+                        !rt->caii.slots || rt->caii.capacity <= 0 ||
+                        !rt->sound_queue_ready ||
+                        !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
+                        !dm2_v1_asset_load_word_value(
+                            loader, DM2_GDAT_CATEGORY_DOORS,
+                            rt->map_door_gfx_list[door_type], 0x0fu,
+                            &door_strength) ||
+                        !dm2_v1_skproject_query_cls2_from_record(
+                            (uint16_t)creature, &rt->record_pools,
+                            &creature_cls2, &cls2_rc) || !cls2_rc.valid) {
+                        if (receipt != NULL)
+                            receipt->handler_rejected_count++;
+                        return -1;
+                    }
+
+                    queue_backup = rt->timer_queue;
+                    sound_backup = rt->sound_queue;
+                    rng_backup = rt->session_rng;
+                    if (rt->sound_queue.ssound_entries &&
+                        rt->sound_queue.ssound_entries_capacity > 0u) {
+                        sound_entries_backup_size =
+                            (size_t)rt->sound_queue.ssound_entries_capacity *
+                            sizeof(*rt->sound_queue.ssound_entries);
+                        sound_entries_backup =
+                            (DM2_V1_SoundSsoundEntry *)malloc(
+                                sound_entries_backup_size);
+                        if (!sound_entries_backup)
+                            goto door_creature_rollback;
+                        memcpy(sound_entries_backup,
+                               rt->sound_queue.ssound_entries,
+                               sound_entries_backup_size);
+                    }
+                    caii_backup_size = (size_t)rt->caii.capacity *
+                        DM2_V1_CAII_SLOT_SIZE;
+                    caii_backup = (uint8_t *)malloc(caii_backup_size);
+                    if (!caii_backup ||
+                        !dm2_v1_record_pool_set_clone(
+                            &pool_backup, &rt->record_pools))
+                        goto door_creature_rollback;
+                    memcpy(caii_backup, rt->caii.slots,
+                           caii_backup_size);
+                    caii_cloned = 1;
+                    pool_cloned = 1;
+
+                    memset(&attack_receipt, 0, sizeof(attack_receipt));
+                    attack_ok = dm2_v1_caii_attack_creature(
+                        &rt->record_pools, dungeon, &rt->caii,
+                        &rt->timer_queue, &rt->session_rng, map,
+                        (unsigned long)game_tick, creature, x, y, x, y,
+                        0x2006u, 0x64,
+                        ((ai->w24 >> 12) & 1u) != 0u
+                            ? 0 : (int16_t)door_strength,
+                        &attack_receipt);
+                    source_noop = attack_receipt.denied_static_no_slot ||
+                        (attack_receipt.hp_applied &&
+                         (attack_receipt.below_threshold ||
+                          attack_receipt.dying_mode));
+                    if (!attack_ok && !source_noop)
+                        goto door_creature_rollback;
+
+                    new_state = current_state == DM2_DOOR_STATE_OPEN
+                        ? DM2_DOOR_STATE_OPEN : current_state - 1;
+                    raw = dm2_door_set_state(raw, new_state);
+                    if (dm2_v1_dungeon_set_tile_raw(
+                            dungeon, map, x, y, raw) != 0)
+                        goto door_creature_rollback;
+                    if (!dm2_runtime_queue_door_collision_noise(
+                            rt, map, x, y, DM2_GDAT_CATEGORY_CREATURES,
+                            creature_cls2, DM2_SOUND_CREATURE_GET_HIT,
+                            0x46, 0x80, game_tick, source_index) ||
+                        !dm2_runtime_queue_door_collision_noise(
+                            rt, map, x, y,
+                            DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
+                            DM2_SOUND_STD_KNOCK, 0x46, 0x80,
+                            game_tick, source_index))
+                        goto door_creature_rollback;
+
+                    door_attributes |= 0x1000u;
+                    dm2_runtime_record_wr16(rt, door_record + 2,
+                                            door_attributes);
+                    next = *timer;
+                    next.ticks_and_map =
+                        ((uint32_t)(map & 0xff) << 24) |
+                        (((timer->ticks_and_map &
+                           DM2_V1_SOURCE_TIMER_TICK_MASK) + 2u) &
+                         DM2_V1_SOURCE_TIMER_TICK_MASK);
+                    if (dm2_v1_source_timer_enqueue(
+                            &rt->timer_queue, &next, source_index) !=
+                        DM2_V1_SOURCE_TIMER_OK)
+                        goto door_creature_rollback;
+
+                    dm2_v1_record_pool_set_free(&pool_backup);
+                    free(sound_entries_backup);
+                    free(caii_backup);
+                    rt->door_step_mutations++;
+                    rt->door_step_requeues++;
+                    return 1;
+
+door_creature_rollback:
+                    rt->timer_queue = queue_backup;
+                    rt->sound_queue = sound_backup;
+                    if (sound_entries_backup && sound_backup.ssound_entries)
+                        memcpy(sound_backup.ssound_entries,
+                               sound_entries_backup,
+                               sound_entries_backup_size);
+                    rt->session_rng = rng_backup;
+                    if (caii_cloned && caii_backup && rt->caii.slots)
+                        memcpy(rt->caii.slots, caii_backup,
+                               caii_backup_size);
+                    if (raw != raw_before)
+                        (void)dm2_v1_dungeon_set_tile_raw(
+                            dungeon, map, x, y, raw_before);
+                    if (door_attributes != attributes_before)
+                        dm2_runtime_record_wr16(rt, door_record + 2,
+                                                attributes_before);
+                    if (pool_cloned) {
+                        dm2_v1_record_pool_set_free(&rt->record_pools);
+                        rt->record_pools = pool_backup;
+                        memset(&pool_backup, 0, sizeof(pool_backup));
+                    }
+                    dm2_v1_record_pool_set_free(&pool_backup);
+                    free(sound_entries_backup);
+                    free(caii_backup);
+                    if (receipt != NULL)
+                        receipt->handler_rejected_count++;
+                    return -1;
+                }
+            }
+        }
     }
 
     new_state = dm2_door_apply_toggle_step(current_state, direction);
