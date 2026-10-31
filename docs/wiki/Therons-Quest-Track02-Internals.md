@@ -27,6 +27,14 @@ callback through BIOS branch `$E166->$E176`. It does not observe a confirmed
 game-owned handoff or gameplay and does not change the transport-only claim
 above. See the [source-locked trace supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+The JP PCE Fast UP/neutral/DOWN follow-up used an authentic F5 save facing a
+wall. Each reference screenshot retained the same front wall, and the bounded
+observer saw no `$C1FC` TII candidate or `$2040/$2041` position write. The
+separate input-to-`$2912` event ordering remains noncausal and does not show
+movement. Do not infer Track 02 tile semantics from this blocked-wall result;
+a reachable authentic pose and same-session position/frame join are still
+needed. See the [source-locked movement boundary](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+
 ## Why the Disc Is Not an ISO Filesystem
 
 PC Engine System Card software works with record numbers relative to a CD base.

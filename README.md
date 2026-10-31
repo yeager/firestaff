@@ -144,6 +144,13 @@ the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
 renderer behavior.
 
+A newer same-state Japanese movement probe used an Akutuba F5 save facing a
+wall. UP, neutral and DOWN captures kept the same front wall, and the bounded
+position observer recorded no movement. The repeated `$2912` event ordering is
+not causal or movement evidence. Continue with an authentic reachable pose
+before drawing world-tile or renderer conclusions; see the
+[blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+
 The latest reference-only Mednafen trace tooling applied in three clean
 patch-only runs, and its instrumented PCE build/install plus focused
 parser/controller checks passed on TRV2. A follow-up cold US capture validates
