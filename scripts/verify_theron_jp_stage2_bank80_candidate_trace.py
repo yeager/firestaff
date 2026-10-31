@@ -45,10 +45,12 @@ def fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
 def read_trace(path: Path) -> tuple[dict[int, list[dict[str, str]]], dict[int, dict[str, str]]]:
     lines = path.read_text(encoding="ascii").splitlines()
     mpr_context = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
+    mpr_context_shared = mpr_context + " event_sequence_source=TheronTraceCDSharedEventSequence"
     if not lines or lines[0] not in (
         "source=mednafen-pce-fast-cd-data-port-read",
         "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc",
         mpr_context,
+        mpr_context_shared,
     ):
         raise ValueError("unexpected CD data-port trace header")
     rows: dict[int, list[dict[str, str]]] = {lba: [] for lba in CANDIDATE_LBAS}
@@ -70,7 +72,7 @@ def read_trace(path: Path) -> tuple[dict[int, list[dict[str, str]]], dict[int, d
             event_rows[event_sequence] = row
         else:
             event_rows_missing += 1
-        if lines[0] == mpr_context:
+        if lines[0] in (mpr_context, mpr_context_shared):
             try:
                 reader_pc = int(row["reader_pc"], 16)
                 cpu_pc = int(row["cpu_pc"], 16)
@@ -151,7 +153,10 @@ def verify(
         candidate_bytes[lba] = bytes(values)
 
     lines = write_path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != "source=mednafen-pce-fast-cd-ram-target-write":
+    if not lines or lines[0] not in (
+        "source=mednafen-pce-fast-cd-ram-target-write",
+        "source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence",
+    ):
         raise ValueError("unexpected bank-$80 target-write trace header")
     groups: list[list[dict[str, str]]] = []
     current: list[dict[str, str]] = []

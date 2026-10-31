@@ -5,6 +5,7 @@ python=${2:-python3}
 archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-unused.zip}
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/build"}
+priority_games_only=${FIRESTAFF_TEST_PRIORITY_GAMES_ONLY:-0}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/removed-platform.XXXXXX")
 trap 'find "$scratch" -depth -delete' EXIT HUP INT TERM
@@ -43,10 +44,14 @@ for game in dm1 csb dm2; do
     for platform in pc98 pc-98 pc9821 pc-9821; do
         for route in direct menu; do
             menu_arg=
-            if [ "$route" = menu ]; then menu_arg=--menu; fi
+            probe_arg=--boot-probe
+            if [ "$route" = menu ]; then
+                menu_arg=--menu
+                probe_arg=
+            fi
             if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
                 --game "$game" --platform "$platform" --data-dir "$archive" \
-                $menu_arg --boot-probe --debug --duration 0 2>&1); then
+                $menu_arg $probe_arg --debug --duration 0 2>&1); then
                 echo "FAIL: unsupported platform $platform was accepted for $game ($route)" >&2
                 exit 1
             fi
@@ -118,14 +123,18 @@ expect_unsupported_pair dm2 pce 'PC Engine'
 expect_unsupported_pair dm2 saturn Saturn
 expect_unsupported_pair dm2 apple-iigs 'Apple IIGS'
 # The same common CLI guard covers the two other game owners. Keep these
-# checks here because platform compatibility is validated before any game
-# media scan, regardless of which runtime implements the selected game.
-expect_unsupported_pair nexus pc PC
-expect_unsupported_pair nexus amiga Amiga
-expect_unsupported_pair theron pc PC
-expect_unsupported_pair theron amiga Amiga
-expect_unsupported_pair theron saturn Saturn
-echo 'PASS: unsupported platform pairs across all five games are rejected for direct and menu launches'
+# checks enabled by default; the priority-only switch lets the DM1/CSB/DM2
+# owners run their requested slice without executing Nexus/Theron cases.
+if [ "$priority_games_only" != 1 ]; then
+    expect_unsupported_pair nexus pc PC
+    expect_unsupported_pair nexus amiga Amiga
+    expect_unsupported_pair theron pc PC
+    expect_unsupported_pair theron amiga Amiga
+    expect_unsupported_pair theron saturn Saturn
+    echo 'PASS: unsupported platform pairs across all five games are rejected for direct and menu launches'
+else
+    echo 'PASS: unsupported platform pairs for DM1/CSB/DM2 are rejected for direct and menu launches'
+fi
 
 removed_archive=${FIRESTAFF_DM2_REMOVED_ARCHIVE:-}
 if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then

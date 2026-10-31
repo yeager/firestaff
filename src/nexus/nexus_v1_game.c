@@ -89,18 +89,19 @@ int nexus_v1_game_parse_retail_start_entry(
     entry.retail_heading = nexus_v1_game_read_be16(record + 6);
     entry.party_dir = -1;
 
-    /* The level-1 heading is the only table heading currently calibrated to
-     * a named DGN axis: retail Up moves toward decreasing Y at 0x8000. Do not
-     * extrapolate other raw angles into host directions without a clean
-     * cardinal-turn capture. */
+    /* Retail Ymir captures calibrate these absolute headings against DGN
+     * coordinates: Up from 0x8000 decreases Y (North), and Up from 0x4000
+     * advances X (East). Leave the other source headings unmapped until a
+     * matching movement capture establishes their axes. */
     if (entry.level != level || entry.enabled != 1 ||
         entry.x >= NEXUS_MAX_MAP_SIZE || entry.y >= NEXUS_MAX_MAP_SIZE) {
         *out_entry = entry;
         return 0;
     }
-    if (level == NEXUS_V1_FIRST_PLAYABLE_LEVEL &&
-        entry.retail_heading == 0x8000U) {
-        entry.party_dir = 0; /* Firestaff North: DGN Y decreases. */
+    if (entry.retail_heading == 0x8000U) {
+        entry.party_dir = NEXUS_DIR_NORTH; /* DGN Y decreases. */
+    } else if (entry.retail_heading == 0x4000U) {
+        entry.party_dir = NEXUS_DIR_EAST; /* DGN X increases. */
     }
     *out_entry = entry;
     return 1;

@@ -316,7 +316,15 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga-multilingual;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-atari-st csb-atari-st dm2-pc)
+    add_test(NAME m12_main_menu_csb_amiga33_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga33_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_csb_amiga33_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-13 csb-atari-st dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")
@@ -18902,6 +18910,17 @@ endif()
         LABELS "csb;atari-st;real-media;cli;menu;auto-platform;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         TIMEOUT 120
+    )
+    add_test(
+        NAME csb_v1_atari_hard_disk_cli_menu_boot
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_hard_disk_cli_menu_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_hard_disk_cli_menu_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari-st;hard-disk;real-media;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 180
     )
     add_test(
         NAME csb_v1_atari_utility_mini_cli_resume
@@ -48708,6 +48727,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
     )
     add_test(
+        NAME theron_jp_syscard_bootstrap_follow_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_syscard_bootstrap_follow.py
+    )
+    add_test(
+        NAME theron_jp_stage2_instruction_snapshot_source_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_stage2_instruction_snapshot_source.py
+    )
+    add_test(
         NAME theron_v1_mednafen_pce_fast_vram_commit_patch
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh
     )
@@ -57148,8 +57177,55 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_dat
     add_test(NAME dm2_v1_inventory_gdat_real_data
         COMMAND test_dm2_v1_inventory_gdat_real_data)
     set_tests_properties(dm2_v1_inventory_gdat_real_data PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        LABELS "dm2;dos;gdat;inventory;real-media;in-memory;skip-safe")
+        ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-en;FIRESTAFF_DM2_GRAPHICS_MD5=25247ede4dabb6a71e5dabdfbcd5907d;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+        SKIP_RETURN_CODE 77)
+
+    # The same 64 authentic hand routes are checked against each distinct
+    # platform GDAT format when original media are already present. This
+    # verifies source decoding/receipts and an isolated test surface, not the
+    # production renderer or presented frame. No game assets are synthesized.
+    set(_dm2_hand_audit_data_dir "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2")
+    set(_dm2_hand_audit_mac_en
+        "${_dm2_hand_audit_data_dir}/mac-en/Dungeon Master II/DMFiles/Graphics.dat")
+    set(_dm2_hand_audit_fmtowns
+        "${_dm2_hand_audit_data_dir}/fmtowns_iso/DATA/GRAPHICS.DAT")
+    set(_dm2_hand_audit_dos_fr
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+    set(_dm2_hand_audit_amiga
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_Amiga_EN.zip")
+    if(EXISTS "${_dm2_hand_audit_dos_fr}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_dos_fr
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_dos_fr PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-fr;FIRESTAFF_DM2_GRAPHICS_MD5=b4d733576ea60c41737f79f212faf528;FIRESTAFF_DM2_DOS_ARCHIVE=${_dm2_hand_audit_dos_fr}"
+            LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_mac_en}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_mac_en
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_mac_en PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=mac-en;FIRESTAFF_DM2_GRAPHICS_MD5=5cab25f6b975957eae4a203174e7f2a6;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_mac_en}"
+            LABELS "dm2;mac;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_fmtowns}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_fmtowns
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_fmtowns PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=fmtowns-ja;FIRESTAFF_DM2_GRAPHICS_MD5=027ff3b8ddc2c4c4cdda7ada0b0bc46c;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_fmtowns}"
+            LABELS "dm2;fmtowns;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_amiga}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_amiga
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_amiga PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=amiga-en;FIRESTAFF_DM2_GRAPHICS_MD5=1c940ea95703eaea0ecdf84d17e954b9;FIRESTAFF_DM2_AMIGA_ROOT=${_dm2_hand_audit_amiga}"
+            LABELS "dm2;amiga;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c")
@@ -63104,6 +63180,11 @@ add_executable(test_f0710_sensor_execute_generator_pc34_compat tests/test_f0710_
 target_include_directories(test_f0710_sensor_execute_generator_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_f0710_sensor_execute_generator_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_f0710_sensor_execute_generator_pc34_compat COMMAND test_f0710_sensor_execute_generator_pc34_compat)
+
+add_executable(test_f0710_sensor_execute_version_gate_pc34_compat tests/test_f0710_sensor_execute_version_gate_pc34_compat.c)
+target_include_directories(test_f0710_sensor_execute_version_gate_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_f0710_sensor_execute_version_gate_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_f0710_sensor_execute_version_gate_pc34_compat COMMAND test_f0710_sensor_execute_version_gate_pc34_compat)
 
 add_executable(test_dm1_v1_creature_info_resistances_pc34_compat tests/test_dm1_v1_creature_info_resistances_pc34_compat.c)
 target_include_directories(test_dm1_v1_creature_info_resistances_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

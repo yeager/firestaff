@@ -9,14 +9,15 @@ and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers
 that agree pixel-for-pixel with the same-run frontend screenshot after 2×
 downscaling. The image contains the retail title and three menu choices. This
-is emulator-internal capture validation, not Firestaff or hardware parity.
-The Firestaff capture-only replay still rejects the observed `BGON=0x0001` and
-`CCRR=0x1000`, and 2,990 VDP1 palette/special pixels lack a complete
-per-command CLUT/CRAM provenance join. Next, extend only the capture-only
-replay to accept this observed NBG0-only state and resolve those pixels from
-authentic source data; require exact screenshot comparison. Keep the
-production title gate closed until the complete composition and producer
-ownership are verified. Evidence details are in
+is emulator-internal capture validation, not hardware parity. The bounded
+capture-only replay accepts the observed `BGON=0x0001` state and the captured
+ratio register value at `0x100=0x1000`; against the authentic frame-8037 dump,
+it matches both same-run VDP2 pass buffers exactly across all 71,680 RGB
+pixels. This proves the captured composition only. The 2,990 VDP1
+palette/special pixels still lack a complete per-command CLUT/CRAM provenance
+join to retail source data. Keep the production title gate closed until
+retail source ownership and the live display consumer are verified. Evidence
+details are in
 [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
 
 The Japanese and English retail Configuration foregrounds now render from

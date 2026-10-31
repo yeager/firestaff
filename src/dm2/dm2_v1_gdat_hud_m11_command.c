@@ -1237,6 +1237,52 @@ int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
     return plan->valid;
 }
 
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash)
+{
+    if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+        !plan || !plan->valid || !party || !status_pane_destinations ||
+        !status_pane_table_hash || !party->status_hero_source_bound ||
+        party->champion_count < 0 || party->champion_count > 4 ||
+        plan->command_hash != dm2_v1_gdat_hud_m11_command_plan_hash(plan))
+        return 0;
+
+    /* SKProject skguidrw.cpp::DRAW_PLAYER_3STAT_PANE uses
+     * INTERFACE_GENERAL/2/{0,1,9} at RECT_0xA1 + champion. Bind only the
+     * occupied champion states and preserve the original Amiga RAW4 table. */
+    for (int slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_HudChampionState *hero = &party->champions[slot];
+        const DM2_V1_ViewportRect *destination =
+            &status_pane_destinations[slot];
+        const int pane_field = !hero->current_hp_source_bound ? -1
+            : hero->current_hp == 0 ? 1
+            : party->status_hero_index == slot ? 9 : 0;
+        DM2_V1_GdatHudM11Command *command;
+        if (!hero->occupied) continue;
+        if (pane_field < 0 || destination->x < 0 || destination->y < 0 ||
+            destination->w <= 0 || destination->h <= 0 ||
+            destination->x + destination->w > DM2_VP_WIDTH ||
+            destination->y + destination->h > DM2_VP_HEIGHT ||
+            plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            !dm2_v1_gdat_hud_add_command(
+                loader, plan, DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE,
+                0x6500 + slot, destination,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2, pane_field))
+            return 0;
+        command = &plan->commands[plan->command_count - 1];
+        command->destination_rect_id = (uint16_t)(0xa1 + slot);
+        command->destination_table_hash = status_pane_table_hash;
+        command->source_state_flags = (uint8_t)pane_field;
+    }
+    plan->command_hash = dm2_v1_gdat_hud_m11_command_plan_hash(plan);
+    plan->valid = plan->command_hash != 0u;
+    return plan->valid;
+}
+
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect destinations[6],

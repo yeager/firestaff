@@ -2322,7 +2322,7 @@ static void test_object_floor_change_runtime(void) {
     things.thingCounts[THING_TYPE_WEAPON] = 1;
     things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
     weapons[0].next = THING_ENDOFLIST;
-    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_OBJECT, 4,
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_OBJECT, 2,
                              DM1_EFFECT_TOGGLE, 0, 0, 1, 0,
                              0, 0, 0, 0);
     sensors[0].next = object;

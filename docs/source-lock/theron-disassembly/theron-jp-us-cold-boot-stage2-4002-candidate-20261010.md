@@ -1,17 +1,24 @@
 # Theron cold-boot stage-2 `$4002` static source candidate
 
-An authentic JP Rev. 1 cold-start capture sampled execution at logical PC
-`$4002` (physical PC `$100002`) and `$4009`. The sampled instruction bytes
-match a contiguous candidate in JP Track 02. This note extends the static
-media comparison through the `RTS` at `$40d4` (211 bytes) and includes a MAME
-HuC6280 linear listing. It does not establish that Track 02 supplied the bytes
-executed at `$4002`, identify a routine, or infer loader/gameplay semantics.
+An authentic JP Rev. 1 cold-start capture sampled instruction-start memory
+snapshots at logical PCs `$4002` (physical `$100002`) and `$4009` (physical
+`$100009`). The v16 source-correlated trace indicates that the first 11 bytes at physical
+`$100002-$10000c` were loaded from the contiguous Track 02 span described
+below; four-byte snapshots at both PCs match the latest source-joined writes
+recorded before the samples. This note extends the static media comparison through the
+`RTS` at `$40d4` (211 bytes) and includes a MAME HuC6280 linear listing. Only
+the first 11 bytes have this dynamic source-bound receipt. The evidence does
+not identify a routine or establish loader/gameplay semantics.
 
-The runtime evidence and its first-stage boundary are documented in
-[`theron-jp-cold-boot-cd-data-port-20261009.md`](theron-jp-cold-boot-cd-data-port-20261009.md).
-That capture binds first-stage CD reads to authentic JP media and mapped RAM,
-then samples the second-stage instruction windows. Its source-to-RAM receipt
-does not extend to these `$4002` bytes.
+The first-stage and v16 runtime evidence are documented in
+[`theron-jp-cold-boot-cd-data-port-20261009.md`](theron-jp-cold-boot-cd-data-port-20261009.md)
+and [`theron-jp-system-card-run-path-20261030.md`](theron-jp-system-card-run-path-20261030.md).
+The v16 analysis associates the initial 11-byte buffer span with authentic
+reads and latest recorded writes. Its CD sidecar headers do not identify the
+shared event-sequence source, so the old cross-file join is insufficient to
+prove common counter provenance. Its hook samples mapped bytes before the CPU
+opcode read; it does not report actual CPU fetches. It does not extend this
+bounded source correlation to the remaining 200 bytes of the static candidate.
 
 ## Authentic media spans
 
@@ -41,11 +48,15 @@ uniqueness, span hashes, listing address continuity, and exact decoded bytes.
 
 ## Evidence boundary
 
-This is static disassembly of a unique source candidate, not runtime
-source-binding evidence. It does not prove that the candidate was loaded into
-the `$4002` execution mapping, explain why the second-stage code ran, or show a
-game-owned transition. The instrumented PCE Fast target-write window now
-includes physical `$100002-$100010`, covering the observed `$4002-$4010`
-instruction bytes. It records writes but does not propagate source-byte
-identity to opcode fetches. The candidate has no established function name
-here; instruction mnemonics and targets are presented as MAME's linear decode.
+The 211-byte listing remains static disassembly of a unique source candidate;
+only its initial 11 bytes have a bounded runtime source correlation. The v16
+capture associates each source read at `$EA99` with a value-equal `$EA9C`
+store using event IDs, and the recorded instruction-start snapshots at
+`$4002/$4009` match the latest writes in that capture. Its missing shared
+sequence header markers limit independent cross-sidecar provenance. It does
+not explain why the second-stage code ran, identify the remainder of the
+loaded image, or show a game-owned transition. The candidate has no
+established function name here; instruction mnemonics and targets are
+presented as MAME's linear decode. See
+[`theron-jp-system-card-run-path-20261030.md`](theron-jp-system-card-run-path-20261030.md)
+for capture hashes, event IDs, and remaining limits.

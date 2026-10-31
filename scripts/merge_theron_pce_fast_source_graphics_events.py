@@ -17,8 +17,12 @@ TRACE_HEADERS = {
     "cd_data_port_read": (
         ("source=mednafen-pce-fast-cd-data-port-read",),
         ("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context",),
+        ("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence",),
     ),
-    "cd_ram_target_write": (("source=mednafen-pce-fast-cd-ram-target-write",),),
+    "cd_ram_target_write": (
+        ("source=mednafen-pce-fast-cd-ram-target-write",),
+        ("source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence",),
+    ),
     "vram_commit": (
         (
             "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3",

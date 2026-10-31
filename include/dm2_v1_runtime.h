@@ -767,6 +767,7 @@ int dm2_v1_runtime_last_item_material_trace(
 /* Metadata-only copy of the last frame's source HUD plan for --debug.
  * Pixel buffers and source archive pointers are deliberately not retained. */
 typedef struct {
+    int consumed;
     int kind;
     int gdat_category;
     int gdat_index;

@@ -288,6 +288,14 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     receipt.payload_bytes = (uint32_t)payload_size;
     receipt.champion_count = champion_count;
     receipt.party_leader_index = (uint32_t)party_leader_index;
+    /* SH-2 disassembly maps the words at payload +0x10/+0x14 to the
+     * eight-byte Continue loader tuple. Keep extraction separate from engine
+     * state application while the downstream save consumers are unresolved. */
+    receipt.loader_tuple.valid = 1;
+    receipt.loader_tuple.level = read_be16(payload + 0x10U);
+    receipt.loader_tuple.heading = read_be16(payload + 0x12U);
+    receipt.loader_tuple.x = read_be16(payload + 0x14U);
+    receipt.loader_tuple.y = read_be16(payload + 0x16U);
     {
         uint32_t champion;
         for (champion = 0U; champion < champion_count; ++champion) {

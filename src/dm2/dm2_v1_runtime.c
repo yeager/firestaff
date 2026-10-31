@@ -12578,8 +12578,8 @@ static void dm2_runtime_bind_source_squad_hands(
             rt->session_snapshot.original_champion_records[player];
         uint8_t party_position = raw[0x1d];
         if (party_position > 3u ||
-            !viewport->hud_party.champions[player].towns_current_hp_source_bound ||
-            viewport->hud_party.champions[player].towns_current_hp <= 0) {
+            !viewport->hud_party.champions[player].current_hp_source_bound ||
+            viewport->hud_party.champions[player].current_hp <= 0) {
             continue;
         }
         for (int hand = 0; hand < 2; ++hand) {
@@ -13586,6 +13586,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 &hud_material_plan.commands[i];
             DM2_V1_RuntimeHudMaterialTrace *trace =
                 &g_dm2_last_hud_material_traces[i];
+            trace->consumed = hud_material_plan_consumed;
             trace->kind = command->kind;
             trace->gdat_category = command->gdat_category;
             trace->gdat_index = command->gdat_index;

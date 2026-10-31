@@ -9063,7 +9063,11 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             out_plan, party, portrait_destinations, table_hash)) return 0;
     if (profile->platform == DM2_PLATFORM_AMIGA_EN) {
         DM2_V1_GdatHudM11CommandPlan arrows;
+        DM2_V1_ViewportRect status_pane_destinations[4];
+        uint32_t amiga_status_pane_hash = 0u;
         memset(&arrows, 0, sizeof(arrows));
+        memset(status_pane_destinations, 0,
+               sizeof(status_pane_destinations));
         /* SKProject's right-panel path uses RECT_47 for the squad panel.
          * Generic top/action/gold strip guesses are PC chrome and visibly
          * corrupt the Amiga HUD, so discard those three static commands. */
@@ -9100,6 +9104,35 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
         if (!out_plan->valid) {
             dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
             return 0;
+        }
+        if (party->status_hero_source_bound) {
+            for (slot = 0; slot < party->champion_count; ++slot) {
+                DM2_V1_BootExpandedRectReceipt pane_receipt;
+                if (!party->champions[slot].occupied) continue;
+                if (!dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, (uint16_t)(0xa1u + slot), &pane_receipt) ||
+                    !pane_receipt.valid || !pane_receipt.raw4_hash ||
+                    pane_receipt.rect.x < 0 || pane_receipt.rect.y < 0 ||
+                    pane_receipt.rect.w <= 0 || pane_receipt.rect.h <= 0 ||
+                    (slot != 0 && pane_receipt.raw4_hash !=
+                        amiga_status_pane_hash)) {
+                    dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                    return 0;
+                }
+                amiga_status_pane_hash = pane_receipt.raw4_hash;
+                status_pane_destinations[slot] = (DM2_V1_ViewportRect){
+                    pane_receipt.rect.x / 2,
+                    pane_receipt.rect.y / 2,
+                    pane_receipt.rect.w / 2,
+                    pane_receipt.rect.h / 2 };
+            }
+            if (!amiga_status_pane_hash ||
+                !dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+                    &gfx->loader, out_plan, party,
+                    status_pane_destinations, amiga_status_pane_hash)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
         }
         if (party->amiga_squad_route_valid) {
             if (!party->amiga_invisibility_source_bound ||

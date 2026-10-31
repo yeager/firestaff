@@ -944,12 +944,36 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   region checks and runtime frame ownership. This verifies complete nonblank
   regions and source material consumption; it does not establish visual parity
   with every platform capture. Amiga IMG3 entries mapped in
-  `dtRaw8/0/0/0` now compose the source overlay with its tracked underlay via
+  `dtRaw8/0/0/0` compose the source overlay with its tracked underlay via
   `DM2_DECODE_IMG3_OVERLAY`; a real-media test covers
-  `INTERFACE_GENERAL/2/0` (77x37). Amiga still uses its prior HUD renderer:
-  enabling the generic source-native route removes source panel background
-  draws and fails the top-HUD coverage check. Map those panel draws to the
-  original Amiga source before enabling that route.
+  `INTERFACE_GENERAL/2/0` (77x37). The Amiga HUD now draws the six
+  `INTERFACE_GENERAL/3` movement arrows at RECT_040..RECT_045, the F5 party
+  backdrop and source-backed squad figure, plus the state-specific
+  `INTERFACE_GENERAL/2` status slab at RECT_0xA1+champion, and source-bound
+  `INTERFACE_GENERAL/4` hand-action panels at RECT_046..RECT_04d, following
+  SKProject `skguidrw.cpp::DRAW_ARROW_PANEL`, `DRAW_PLAYER_3STAT_PANE`,
+  `DRAW_HAND_ACTION_ICONS` and `DRAW_SQUAD_POS_INTERFACE`. The hand bindings
+  now use the shared source HP receipt instead of requiring Towns-only state.
+  The authentic-media CLI test checks the first status slab, both first-hero
+  hand panels, all six arrows and RECT_53 figure. The captured startup frame
+  still shows sparse/black unused HUD space with only the initial champion;
+  visual parity against a same-pose Amiga reference and the rest of the
+  status/portrait layout remain open.
+
+- 2026-10-30: added an edition-pinned audit for all 64 authentic hand-action
+  GDAT routes across DOS EN/FR, Mac EN, FM Towns JA, and Amiga EN. It checks
+  the selected edition's GRAPHICS.DAT MD5, decoded source image bytes and RAW4
+  destination, then consumes the source receipts into a bounded local test
+  surface. On 2026-10-30, all five local original editions passed with 64/64
+  decoded routes, receipts and test-surface consumptions. This is not a test
+  of the production viewport/HUD renderer or presented-pixel parity. The
+  Survey frame has a source receipt and clipped RAW4 placement on DOS EN/FR,
+  Mac EN and Amiga EN; its test consumer does not implement the source crop.
+  GDAT v4 FM Towns has no Survey-frame route in this audit. CTest skips when
+  optional original media are absent. The French-labelled Mac `.sit` in local
+  scratch was byte-identical to Mac EN, so it is not evidence of a distinct
+  French build. There is no separate JewelCase GDAT in the local data set, so
+  that edition remains unverified.
 
 - 2026-10-24: the user reports that the DM2 Amiga HUD and viewport are very
   broken. A fresh authentic-media M4 debug capture reaches map 0 at (1,8),

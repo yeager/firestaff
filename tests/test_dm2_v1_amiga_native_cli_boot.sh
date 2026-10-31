@@ -42,20 +42,22 @@ case "$app" in
 esac
 runtime_dir="$app_dir/test-dm2-amiga-startup"
 runtime_probe="$runtime_dir/runtime.json"
+runtime_trace="$runtime_dir/runtime.log"
 runtime_capture="$runtime_dir/capture"
 mkdir -p "$runtime_capture"
-rm -f "$runtime_probe" "$runtime_capture"/*.bmp
+rm -f "$runtime_probe" "$runtime_trace" "$runtime_capture"/*.bmp
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 960 --height 600 --scale-mode 0 --menu --game dm2 --platform amiga \
+    --debug --width 960 --height 600 --scale-mode 0 --menu --game dm2 --platform amiga \
     --data-dir "$archive" \
     --script 'key:enter,key:enter,key:enter,wait:2000,click:435:265' \
-    --duration 90000 >/dev/null 2>&1
-python3 - "$runtime_probe" "$runtime_capture" <<'PY'
+    --duration 90000 >"$runtime_trace" 2>&1
+python3 - "$runtime_probe" "$runtime_capture" "$runtime_trace" <<'PY'
 import json
 from pathlib import Path
+import re
 import struct
 import sys
 
@@ -73,6 +75,36 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 8, 0, 1)):
     raise SystemExit(f"FAIL: authentic DM2 Amiga start menu did not reach runtime: {probe}")
+
+# Runtime HUD traces are metadata-only copies of the renderer commands. A
+# command counts as consumed only when the full plan's per-command consume
+# count matches its command count; require both that frame receipt and the
+# exact original status-pane GDAT/RECT command in the same debug group.
+trace_lines = Path(sys.argv[3]).read_text(encoding="utf-8", errors="replace").splitlines()
+complete_hud = re.compile(
+    r"firestaff: dm2-render-debug game=dm2 platform=amiga-en .*"
+    r"hud=\{required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ")
+status_pane = re.compile(
+    r"firestaff: dm2-render-hud-plan game=dm2 platform=amiga-en .*"
+    r"consumed=1 .*viewport=6500 gdat=1/2/[019] rect-id=0a1 .*"
+    r"size=77x37 .*hashes=[0-9a-f]{8}/[0-9a-f]{8}/[0-9a-f]{8} "
+    r"table=[0-9a-f]{8}$")
+status_pane_consumed = False
+for index, line in enumerate(trace_lines):
+    if not complete_hud.search(line):
+        continue
+    for command_line in trace_lines[index + 1:]:
+        if command_line.startswith("firestaff: dm2-render-debug "):
+            break
+        if status_pane.search(command_line):
+            status_pane_consumed = True
+            break
+    if status_pane_consumed:
+        break
+if not status_pane_consumed:
+    raise SystemExit(
+        "FAIL: DM2 Amiga status pane lacks a consumed source HUD command "
+        "for INTERFACE_GENERAL/2 at RECT_0xA1")
 
 frames = list(Path(sys.argv[2]).glob("*.bmp"))
 if len(frames) != 1:
@@ -104,6 +136,23 @@ if sum(pixel != b"\0\0\0" for pixel in floor_pixels) < 5000:
     raise SystemExit(
         "FAIL: authentic DM2 Amiga floor is missing from the lower "
         "RECT_7 aperture")
+# SKProject DRAW_PLAYER_3STAT_PANE maps INTERFACE_GENERAL/2 to
+# RECT_0xA1+champion. The one-champion startup must show that authentic
+# IMG3 slab in the top-left status area, behind its live portrait/stat data.
+status_pane_pixels = [pixels[y * width + x]
+                      for y in range(19) for x in range(39)]
+if sum(pixel != b"\0\0\0" for pixel in status_pane_pixels) < 500:
+    raise SystemExit(
+        "FAIL: authentic DM2 Amiga INTERFACE_GENERAL/2 status pane "
+        "is missing from RECT_0xA1")
+# SKProject UPDATE_RIGHT_PANEL draws each living squad member's two hand
+# action backgrounds before the F5 formation (RECT_046..RECT_04d). On the
+# initial Amiga party pose the first member's two panels occupy this band.
+squad_hand_pixels = [pixels[y * width + x]
+                     for y in range(32, 62) for x in range(224, 300)]
+if sum(pixel != b"\0\0\0" for pixel in squad_hand_pixels) < 500:
+    raise SystemExit(
+        "FAIL: authentic DM2 Amiga squad hand-action panels are missing")
 # SKProject DRAW_ARROW_PANEL draws the six INTERFACE_GENERAL/3 move arrows
 # into Amiga's original expanded RECT_040..RECT_045. Their admitted 320x200
 # destinations are these rectangles in the authentic Amiga profile.

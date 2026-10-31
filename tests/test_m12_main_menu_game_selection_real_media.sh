@@ -241,6 +241,10 @@ PY
         local launch_line
         local logged_source
         local logged_media
+        local nexus_data_root="$menu_data_root/nexus"
+        if [[ "$(basename "$menu_data_root")" == nexus ]]; then
+            nexus_data_root=$menu_data_root
+        fi
         launch_line=$(grep -E '^firestaff: launch phase=game-handoff mode=menu game=nexus platform=Saturn edition=(nexus|nexus2|nexus-saturn-(jp|jp-cue|en-extracted|en-fan-v2|en-cue|fr-extracted|fr-fan|fr-cue))[[:space:]]+source=.+' "$log" | head -n 1 || true)
         if [[ -z "$launch_line" ]]; then
             printf 'FAIL: no-game main menu did not hand off an authenticated Nexus Saturn edition\n' >&2
@@ -249,7 +253,7 @@ PY
         fi
         logged_source=${launch_line##* source=}
         logged_media=${logged_source%%::*}
-        if ! python3 - "$menu_data_root/nexus" "$logged_media" <<'PY'
+        if ! python3 - "$nexus_data_root" "$logged_media" <<'PY'
 import pathlib
 import sys
 
@@ -737,6 +741,13 @@ if [[ -f "$nexus_source" ]]; then
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         authenticated-saturn-edition keyboard Saturn "$data_root" \
         nexus-keyboard-authenticated-owner nexus-root
+    # A game-specific data directory is also a supported collection root.
+    # Keep this route separate from the all-games root case so path promotion
+    # and authenticated media ownership are verified together.
+    run_game_picker_case nexus "$nexus_source" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        authenticated-saturn-edition keyboard Saturn "$data_root/nexus" \
+        nexus-keyboard-authenticated-leaf nexus-root
 else
     echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable'
 fi
@@ -744,6 +755,10 @@ if [[ -f "$theron_source" ]]; then
     run_game_picker_case theron "$theron_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         pce-en keyboard 'PC Engine'
+    run_game_picker_case theron "$theron_source" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        pce-en keyboard 'PC Engine' "$data_root/theron" \
+        theron-keyboard-authenticated-leaf resolved
 else
     echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable'
 fi

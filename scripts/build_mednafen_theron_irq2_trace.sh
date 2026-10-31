@@ -13,6 +13,7 @@ source_root=${1:-${FIRESTAFF_MEDNAFEN_SOURCE_ROOT:-}}
 sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
 patch_only=${FIRESTAFF_MEDNAFEN_PATCH_ONLY:-0}
 pce_fast_snapshot=${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT:-0}
+pce_fast_enabled=${FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST:-0}
 pce_fast_vram_commit_trace=${FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT:-0}
 pce_fast_pointer_trace=${FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT:-0}
 pce_fast_huc6280_23ad_trace=${FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT:-0}
@@ -23,12 +24,16 @@ pce_fast_tia_trace=${FIRESTAFF_THERON_PCE_FAST_TIA_TRACE_SUPPORT:-0}
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
 prefix="$build_root/install"
 
-if [[ -z "$source_root" ]]; then
-    printf 'FAIL: provide MEDNAFEN_1.32.1_SOURCE or FIRESTAFF_MEDNAFEN_SOURCE_ROOT\n' >&2
-    exit 2
-fi
 if [[ "$patch_only" != 0 && "$patch_only" != 1 ]]; then
     printf 'FAIL: FIRESTAFF_MEDNAFEN_PATCH_ONLY must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ "$pce_fast_enabled" != 0 && "$pce_fast_enabled" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ -z "$source_root" ]]; then
+    printf 'FAIL: provide MEDNAFEN_1.32.1_SOURCE or FIRESTAFF_MEDNAFEN_SOURCE_ROOT\n' >&2
     exit 2
 fi
 if [[ "$pce_fast_snapshot" != 0 && "$pce_fast_snapshot" != 1 ]]; then
@@ -378,6 +383,10 @@ python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_bootstrap_follow.py" \
+    "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" \
+    "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -390,6 +399,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_callback_state_trace.py" \
+    "$build_root/source"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -426,7 +437,7 @@ if [[ "$(uname -s)" == Darwin && -n "$sdl2_prefix" ]]; then
     export LDFLAGS="${LDFLAGS:-} -Wl,-rpath,$sdl2_prefix/lib"
 fi
 configure_pce_fast=(--disable-pce-fast)
-if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ||
+if [[ "$pce_fast_enabled" == 1 || "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ||
       "$pce_fast_pointer_trace" == 1 ]]; then
     configure_pce_fast=(--enable-pce-fast)
 fi

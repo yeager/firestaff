@@ -1,5 +1,14 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
+Atari package contains a separate `st20-21-hd-en` installation. The new
+real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build
+scratch, verifies the original `GRAPHICS.DAT` and `DUNGEON.DAT` fingerprints,
+and runs the selected hard-disk edition through direct CLI startup, title
+acceptance, first runtime viewport, and the no-game M12 menu. The local test
+passed and the outer 7z archive hash remained unchanged. SDL dummy verifies
+source startup and menu handoff, not native Atari display or physical input.
+
 2026-10-30 CSB Amiga M12 startup recheck: both
 `m12_main_menu_csb_amiga35_runtime_real_media` and
 `m12_main_menu_csb_amiga_multi_runtime_real_media` passed against the installed

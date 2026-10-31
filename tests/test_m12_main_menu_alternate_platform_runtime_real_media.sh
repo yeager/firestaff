@@ -9,6 +9,9 @@ data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
 dm1_pc="$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 dm1_atari="$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip"
+dm1_atari_st11="$data_root/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
+dm1_atari_st12="$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+dm1_atari_st13="$data_root/dm1/Dungeon-Master_Atari-ST_FR_Version-13.zip"
 csb_atari="$data_root/csb/chaos_strikes_back_ftl.zip"
 dm2_pc="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 
@@ -22,6 +25,24 @@ case "$route" in
     dm1-atari-st)
         selected_game=dm1; game_down=0; platform_down=2
         selected_archive=$dm1_atari; edition=st10a-en; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-11)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st11; edition=st11-en; platform='Atari ST'
+        width=960; height=540; duration=45000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-12)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st12; edition=st12-en; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-13)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st13; edition=st13-fr; platform='Atari ST'
         width=960; height=540; duration=90000
         game_input='wait30,enter,wait60,enter'
         ;;
@@ -75,6 +96,20 @@ print_diagnostics() {
 # archives so platform ordering is representative without copying game data
 # or scanning games owned by other work.
 menu_data_root="$scratch/data"
+if [[ "$route" == dm1-atari-st-11 ]]; then
+    extractor=${FIRESTAFF_7ZZ:-7zz}
+    member='Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx'
+    if ! command -v "$extractor" >/dev/null 2>&1; then
+        echo 'SKIP: 7zz is required to extract the original DM1 Atari ST 1.1 disk'
+        exit 77
+    fi
+    extracted_stx="$scratch/Dungeon Master Atari ST 1.1.stx"
+    "$extractor" e -so "$selected_archive" "$member" >"$extracted_stx" 2>/dev/null
+    if [[ ! -s "$extracted_stx" ]]; then
+        echo 'FAIL: original DM1 Atari ST 1.1 STX extraction was empty' >&2
+        exit 1
+    fi
+fi
 for game_id in dm1 csb dm2; do
     source_game_dir="$data_root/$game_id"
     menu_game_dir="$menu_data_root/$game_id"
@@ -82,6 +117,14 @@ for game_id in dm1 csb dm2; do
     [[ -d "$source_game_dir" ]] || continue
     while IFS= read -r -d '' archive; do
         [[ -f "$archive" ]] || continue
+        if [[ "$route" == dm1-atari-st-11 && "$game_id" == dm1 ]]; then
+            continue
+        fi
+        if [[ ( "$route" == dm1-atari-st-12 || "$route" == dm1-atari-st-13 ) &&
+              "$game_id" == dm1 &&
+              $(basename "$archive") != $(basename "$selected_archive") ]]; then
+            continue
+        fi
         ln -s "$(python3 - "$archive" <<'PY'
 import os
 import sys
@@ -105,6 +148,9 @@ PY
             -iname '*.7z' -print0)
     fi
 done
+if [[ "$route" == dm1-atari-st-11 ]]; then
+    ln -s "$extracted_stx" "$menu_data_root/dm1/$(basename "$extracted_stx")"
+fi
 
 home="$scratch/home"
 log="$scratch/firestaff.log"

@@ -97,6 +97,27 @@ static void check(int condition, const char *message)
     if (!condition) { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
 }
 
+static int rendered_map_matches(const Nexus_Framebuffer *framebuffer,
+                                const uint8_t *map_pixels)
+{
+    int x;
+    int y;
+
+    if (!framebuffer || !map_pixels) return 0;
+    for (y = 0; y < NEXUS_FB_H; ++y) {
+        for (x = 0; x < NEXUS_FB_W; ++x) {
+            size_t framebuffer_offset = (size_t)y * NEXUS_FB_W + (size_t)x;
+            size_t map_offset = (size_t)y * NEXUS_V1_TITLE_MAP_WIDTH +
+                (size_t)x;
+            if (framebuffer->color_buffer[framebuffer_offset] !=
+                (uint32_t)map_pixels[map_offset]) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 static void check_canonical_member_hash(const unsigned char *data,
                                         size_t size,
                                         const char *environment_name,
@@ -217,32 +238,48 @@ int main(void)
     title.loaded = 1;
     {
         Nexus_V1_TitleRenderPlan plan;
-        Nexus_Framebuffer n_frame;
-        Nexus_Framebuffer s_frame;
+        static const int map_start_frames[NEXUS_V1_TITLE_MAP_COUNT] = {
+            0, 40, 81, 121, 161
+        };
+        Nexus_Framebuffer title_frame;
         size_t pixel;
         size_t nonzero = 0U;
+        int map;
+        int n_rendered;
         check(nexus_v1_title_build_render_plan(&title, 0, &plan) == 1 &&
                   plan.kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART &&
                   plan.copy_width == NEXUS_FB_W &&
                   plan.copy_height == NEXUS_FB_H,
               "MAPD capture handoff admits the observed 320x224 title crop");
-        nexus_fb_init(&n_frame);
-        nexus_fb_init(&s_frame);
-        nexus_render_title(&title, &n_frame, 0);
-        nexus_render_title(&title, &s_frame, 161);
-        for (pixel = 0U; pixel < sizeof(n_frame.color_buffer); ++pixel) {
-            if (n_frame.color_buffer[pixel] != 0U) ++nonzero;
+        nexus_fb_init(&title_frame);
+        n_rendered = nexus_render_boot_title_frame(
+            &title, &title_frame, nexus_title_boot_warning_frames());
+        check(n_rendered == 1 && rendered_map_matches(
+                  &title_frame, title.decoded_map_pixels[0]),
+              "boot-global frame 48 renders the complete authentic N map");
+        for (pixel = 0U; pixel < sizeof(title_frame.color_buffer) /
+                                  sizeof(title_frame.color_buffer[0]); ++pixel) {
+            if (title_frame.color_buffer[pixel] != 0U) ++nonzero;
         }
         check(nonzero > 0U,
               "native title renderer presents the real first MAPD plane");
-        check(memcmp(n_frame.color_buffer,
-                     title.decoded_map_pixels[0],
-                     NEXUS_FB_W) == 0 &&
-                  memcmp(s_frame.color_buffer,
-                         title.decoded_map_pixels[4],
-                         NEXUS_FB_W) == 0,
-              "native title renderer preserves N,E,X,U,S source scheduling");
-        check(n_frame.palette[1] != 0U && s_frame.palette[15] != 0U,
+        for (map = 1; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+            int before_frame = nexus_title_boot_warning_frames() +
+                map_start_frames[map] - 1;
+            int first_frame = nexus_title_boot_warning_frames() +
+                map_start_frames[map];
+            check(nexus_render_boot_title_frame(
+                      &title, &title_frame, before_frame) == 1 &&
+                      rendered_map_matches(
+                          &title_frame, title.decoded_map_pixels[map - 1]),
+                  "retail title letter remains visible through its last frame");
+            check(nexus_render_boot_title_frame(
+                      &title, &title_frame, first_frame) == 1 &&
+                      rendered_map_matches(
+                          &title_frame, title.decoded_map_pixels[map]),
+                  "boot-global frame selects the next complete retail MAPD letter");
+        }
+        check(title_frame.palette[1] != 0U && title_frame.palette[15] != 0U,
               "native title renderer uses the real MAPD BGR555 palette");
     }
     free(title.pixels);
