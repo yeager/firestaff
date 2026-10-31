@@ -1,5 +1,31 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — current capture and renderer checkpoint
+
+The supported Firestaff route remains native C/SDL. Authentic US Continue
+evidence reaches dungeon 2, and the Japanese fresh-start route reaches a loaded
+dungeon; these establish bounded host/game-data paths, not a source-bound
+retail renderer. The production viewport still needs a same-run join from
+authenticated Track 02 map identity and party pose through game-owned VDC/VCE
+registers, VRAM/BAT and rendered output. A matched no-input reference frame is
+also required to separate display animation from state-driven scene changes.
+
+The available original-reference evidence that can be promoted today is
+narrower: a Japanese dungeon capture shows host mouse motion moving the retail
+hand cursor, but does not establish guest coordinates or click semantics. The
+US save-state route has previously bound Button I to a game command queue, but
+not to a committed party movement or viewport change. The current close-time
+RUN trace ends in System Card BIOS and supplies no Theron game-owned handoff.
+
+Instrumented Mednafen builds are diagnostic reference tools only; none are part
+of Firestaff's shipped runtime. A successful emulator build or input-delivery
+receipt does not by itself establish original-game behavior or native parity.
+Do not substitute fixture tile mappings, synthetic screens, or edited save
+states for these missing real-data joins. See the [Theron TODO](../../TODO-theron.md),
+[source-locked capture notes](../source-lock/theron-disassembly/), and
+[native platform status](../PLATFORM_STATUS.md#therons-quest) for the current
+work order and detailed evidence.
+
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 
 The authentic Japanese cold `run@480:300` capture records one System Card
