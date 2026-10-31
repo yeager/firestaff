@@ -419,6 +419,15 @@ received input, party pose, map cell, or a display consumer. This adds no
 verified action or renderer mapping; see the
 [saved-state capture report](source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
+A separate corrected PCE Fast capture from an authentic Japanese Akutuba
+state validates 4,096 bounded VRAM commit rows after the guest read of scripted
+UP at `$44C1`. The input read and first commit are adjacent in shared event
+order (`58758` and `58761`); the capture uses state-only mode and reports
+`transition=missing`. This confirms trace-gate operation and event ordering
+only. It does not establish causality, VRAM meaning, a visible response,
+game-owned cold handoff, or Firestaff parity. See the
+[source-locked input-gated trace report](source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+
 ## Data and preservation rules
 
 Firestaff reads the original file or container in its supplied form. It may
