@@ -479,6 +479,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
+#include "theron_v22_modern_assets_pc34.h"
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "dm1_v1_creature_behavior_bootstrap_pc34_compat.h"
@@ -28480,6 +28481,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
         }
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
+        /* Resolve V2.2 only against Theron's authenticated Track 02 material.
+         * The manifest root is game-specific; a DM1 pack must never unlock
+         * Theron's modern renderer. */
+        theron_v22_set_manifest_path(spec->dataDir);
         theron_v2_presentation_mode_set_m12(spec->presentationMode);
         theron_v2_hud_launch_mode_apply_m11_startup(
             spec->presentationMode == M12_PRESENTATION_V1_ORIGINAL,
@@ -38817,28 +38822,27 @@ static void m11_graphics_popup_apply_v2(const M11_GameViewState* state,
 }
 
 static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
-    M12_Config config;
-    /* V2.2 is offered only to runtimes that have a real art-material gate.
-     * DM2/Nexus keep their currently admitted V1/V2.0/V2.1 routes; a fake
-     * V2.2 choice would be worse than not offering it. */
+    /* Keep V2.2 visibility bound to the selected game's authenticated pack.
+     * The old config bit was shared across titles, so a DM1 pack could expose
+     * V2.2 in Theron even though Theron's own Track 02 material was absent. */
     if (!state || state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
-        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         return M12_PRESENTATION_V22_MODERN;
     }
-    /* M12's installed bit is cross-game launcher state. CSB V2.2 has no
-     * original-material decoder yet, so a finished DM1 or generated CSB pack
-     * must not expose it in the live graphics menu. */
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        return M12_PRESENTATION_V22_MODERN;
+    if (state->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG) {
+        const DM1_V2_PresentationModeState* modeState =
+            dm1_v2_presentation_mode_state();
+        return modeState && modeState->modernPackAvailable
+            ? M12_PRESENTATION_MODE_COUNT : M12_PRESENTATION_V22_MODERN;
     }
-    M12_Config_Load(&config, NULL);
-    /* A selected archive is not installed material. In particular it may
-     * belong to another game, so exposing V2.2 from its path would let CSB
-     * enter a presentation mode without a complete CSB manifest/cache. */
-    if (!config.v22_modern_assets_installed) {
-        return M12_PRESENTATION_V22_MODERN;
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        const Theron_V2_PresentationModeState* modeState =
+            theron_v2_presentation_mode_state();
+        return modeState && modeState->modernPackAvailable
+            ? M12_PRESENTATION_MODE_COUNT : M12_PRESENTATION_V22_MODERN;
     }
-    return M12_PRESENTATION_MODE_COUNT;
+    return M12_PRESENTATION_V22_MODERN;
 }
 
 static const char* m11_graphics_popup_mode_name(int mode) {

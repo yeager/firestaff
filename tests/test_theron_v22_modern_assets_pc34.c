@@ -61,21 +61,23 @@ static int mkdir_p(const char* path) {
 static void test_manifest_path_from_data_dir(void) {
     /* dataDir = ~/.firestaff/data/theron → manifest = ~/.firestaff/assets/theron/modern/modern_asset_manifest.json */
     theron_v22_set_manifest_path("/home/user/.firestaff/data/theron");
-    const char* expected_suffix = "/.firestaff/assets/theron/modern/modern_asset_manifest.json";
-    (void)expected_suffix;
+    CHECK(strcmp(theron_v22_get_manifest_path(),
+                 "/home/user/.firestaff/assets/theron/modern/modern_asset_manifest.json") == 0,
+          "manifest path stays inside the Theron asset root");
     /* The exact path is captured by re-running with a controlled dataDir */
     /* Use a fake dataDir that we can verify the path transformation */
     theron_v22_set_manifest_path("/tmp/scratch/firestaff-data/theron");
-    /* We can't read the internal static g_v22_manifest_path directly,
-     * so we validate via validate_manifest on a known-good location. */
-    CHECK(1, "theron_v22_set_manifest_path did not crash");
+    CHECK(strcmp(theron_v22_get_manifest_path(),
+                 "/tmp/scratch/assets/theron/modern/modern_asset_manifest.json") == 0,
+          "custom data root resolves its sibling Theron asset root");
 }
 
 static void test_manifest_path_null_safe(void) {
     theron_v22_set_manifest_path(NULL);
     CHECK(1, "NULL dataDir safe");
     theron_v22_set_manifest_path("");
-    CHECK(1, "empty dataDir safe");
+    CHECK(theron_v22_get_manifest_path()[0] == '\0',
+          "empty dataDir clears manifest path");
     int avail = theron_v22_modern_assets_available();
     CHECK(avail == 0, "no manifest = not available");
 }

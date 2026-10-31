@@ -36,9 +36,9 @@
  */
 
 #include "theron_v22_inplace_draw_pc34.h"
+#include "theron_v22_modern_assets_pc34.h"
 #include "theron_v22_shape_cache_pc34.h"
 #include "theron_v22_shape_cache_pc34.h" /* Theron_V22_CellRect + cache */
-#include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -194,18 +194,17 @@ int theron_v22_inplace_draw_init(void) {
     /* Resolve cache path from manifest path */
     char cache_path[FSP_PATH_MAX];
     {
-        /* Re-use theron_v22_get_shape_path to find the modern dir.
-         * The cache file lives next to modern_asset_manifest.json. */
+        const char* configured_manifest = theron_v22_get_manifest_path();
         char manifest_path[FSP_PATH_MAX];
-        /* theron_v22 doesn't expose its manifest path; reconstruct from data dir
-         * using the same logic as theron_v22_set_manifest_path. For first cut,
-         * hardcode the conventional path ~/.firestaff/assets/theron/modern/. */
-        const char* home = getenv("HOME");
-        if (!home) home = ".";
-        snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json", home);
+        if (!configured_manifest || !configured_manifest[0] ||
+            strlen(configured_manifest) >= sizeof(manifest_path)) {
+            return 0;
+        }
+        snprintf(manifest_path, sizeof(manifest_path), "%s",
+                 configured_manifest);
         char* last_slash = strrchr(manifest_path, '/');
-        if (last_slash) *last_slash = '\0';
+        if (!last_slash) return 0;
+        *last_slash = '\0';
         snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);
     }
 
@@ -361,9 +360,8 @@ int theron_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH)
 
 const char* theron_v22_inplace_draw_source_evidence(void) {
     return "theron_v22_shape_cache_pc34.c (per-cell V22 shape cache); "
-           "dm1_v2_modern_assets_pc34.c (manifest path resolution); "
-           "theron_v22_shape_cache_pc34.c (sibling cache + Theron_V22_CellRect coords); "
            "theron_v22_modern_assets_pc34.c (manifest path resolution); "
+           "theron_v22_shape_cache_pc34.c (sibling cache + Theron_V22_CellRect coords); "
            "theron_v22_shapes.c (Theron V22 shape book); "
            "THQUEST.ASM T400/T520/T600 (Theron viewport); "
            "THQUEST.ASM T400/T520/T600 (9-square layout); "

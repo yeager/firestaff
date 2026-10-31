@@ -7854,7 +7854,6 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$"
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_viewport\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 # Linked through firestaff_theron_world_support below so standalone archive
