@@ -136,8 +136,9 @@ at VDP2 VRAM `0x5c000..0x5dbff`, in order: N at Ymir trace frame 891, E at 930,
 X at 959, U at 998, and S at 1036. Each transfer frame contains 3,584 writes
 into the MAPD region. The trace receipt reports zero dropped rows.
 
-Reproduce with `scripts/verify_nexus_ymir_retail_mapd_sequence.py --cue
-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"`, whose CUE
+Reproduce with `scripts/verify_nexus_ymir_retail_mapd_sequence.py
+--cue "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+--capture /Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_relative_trace_20261031`, whose CUE
 SHA-256 is
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. It reads
 `TITLE.BIN` from the authenticated Japanese retail CUE and referenced tracks.
