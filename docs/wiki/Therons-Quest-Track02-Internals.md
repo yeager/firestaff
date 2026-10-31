@@ -1,5 +1,10 @@
 # Theron's Quest Track 02 Internals
 
+> Current runtime status and open evidence joins are in
+> [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
+> [Theron TODO](../../TODO-theron.md). Track 02 byte layouts and historical
+> capture notes below are not claims of semantic dungeon or gameplay parity.
+
 ## Authenticated startup handoff (2026-08-08)
 
 **Native status (2026-10-31):** Firestaff's bounded JP fresh-start and US

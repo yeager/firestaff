@@ -3,6 +3,10 @@
 Status: 2026-10-31. This is a summary of Firestaff's remaining gaps, not a
 list of every historical TODO or symbol name.
 
+For Theron, the current evidence summary is
+[`THERON_CAPTURE_READINESS.md`](theron/THERON_CAPTURE_READINESS.md); dated
+source-lock reports are supporting records, not parallel status pages.
+
 Each item is classified as follows:
 
 - **Missing code** – the function or its production route is not implemented.

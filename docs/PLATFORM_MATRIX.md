@@ -1,5 +1,10 @@
 # Firestaff — Platform & Version Support Matrix
 
+> This matrix inventories known editions. For current Theron implementation
+> scope and evidence boundaries, see [project status](PROJECT_STATUS.md),
+> [platform status](PLATFORM_STATUS.md#therons-quest), and the
+> [Theron capture-readiness summary](theron/THERON_CAPTURE_READINESS.md).
+
 The canonical "what game versions does Firestaff support, and which
 ones *could* it support with more data" reference. Derived from
 the dmweb/greatstone survey (`docs/DMWEB_REFERENCE.md`) and

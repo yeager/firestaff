@@ -1,5 +1,9 @@
 # Theron's Quest Technical Reference
 
+> Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> This page is a technical reference; dated capture notes retain their
+> historical scope and do not supersede the current project-status page.
+
 > **Status reviewed 2026-10-31.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
@@ -33,6 +37,13 @@
 > binds the `$1800=$C8` / `$1801=$04` callback to `$2259=$04` and branch
 > `$E166->$E176`; no confirmed game-owned handoff was observed. See the
 > [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
+
+> **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
+> record the same 128-instruction path into `$C1FC`, including `$C1D6`
+> call/return and conditional fall-through. Since `$C1FC` is also associated
+> with Track 02 teleporter destination copying, the repeated context does not
+> prove player movement or identify the active-map input object. See the
+> [control-flow report](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
 
 > **Native direct launch (2026-10-31):** Firestaff enters Theron's native
 > title/startup path without its Run menu or a System Card. The US Debug

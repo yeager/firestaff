@@ -1,5 +1,14 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — documentation follow-up
+
+The current status pages now identify the repeated `$C1FC` instruction path
+and its possible teleporter-destination role. Keep all future movement claims
+blocked until the caller data and active map are source-bound, then test an
+authentic reachable pose and join state change to reference output. The
+current documentation index is [`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md);
+historical gap inventories must not be treated as the active queue.
+
 ## 2026-10-31 — identify the active map and candidate position semantics
 
 Three repeated PCE Fast state-only runs from the authentic JP Akutuba F5 state

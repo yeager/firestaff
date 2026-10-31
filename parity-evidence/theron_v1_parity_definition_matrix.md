@@ -1,5 +1,9 @@
 # Theron's Quest V1 Parity Definition Matrix
 
+> Current implementation status and evidence are summarized in
+> [`docs/theron/THERON_CAPTURE_READINESS.md`](../docs/theron/THERON_CAPTURE_READINESS.md).
+> This matrix defines acceptance criteria; it is not a current-route report.
+
 ## Target
 
 Theron's Quest (PC Engine CD-ROM², 1992) — US and JP releases.
@@ -140,7 +144,7 @@ same rules; those retail consumers are listed separately.
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Original controller poll and state-latch update | PARTIAL | JP runtime trace follows `$44D2` through `$D32F` and observes UP storing `$10` to `$2912`; seven identical Track 02 source candidates per edition remain unjoined to the running bank |
-| Accepted directional action and party-position update | OPEN | The bounded authentic replay proves controller polling and a RAM latch change only; no accepted movement, coordinate write, visible action, or transition is verified |
+| Accepted directional action and party-position update | OPEN | Matched state-only PCE Fast runs show repeatable Button II+UP-conditioned TII transfers into candidate `$2040/$2041` bytes and a repeated instruction path into `$C1FC`; source analysis also associates that TII with teleporter destination copying. The active map, tested-field meaning, caller role, accepted movement, collision result, visible action, cold handoff, and transition remain unverified |
 | Firestaff host progression API determinism | PROVEN | `theron_v1_dungeon_progression`; host state-machine contract only |
 | Retail campaign progression, relic collection and between-dungeon transition semantics | PARTIAL | Six campaign bits and ordinal transport have bounded source evidence; original pickup/T900, stairs, exits and arrival semantics remain open |
 | Firestaff fixture/compatibility combat model | PROVEN | Host mechanics tests and fail-closed production gates; not original-game combat parity |

@@ -1,5 +1,11 @@
 # Theron Capture Readiness
 
+**Current summary: 2026-10-31.** This is the maintained evidence overview for
+Theron native runtime and reference captures. Historical source-lock reports
+retain their original capture dates and are not additional current status
+summaries. Start with [project status](../PROJECT_STATUS.md), the
+[Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
+
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US
 Continue routes reach loaded dungeons. The native input panel has bounded

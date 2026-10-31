@@ -1,5 +1,10 @@
 # Theron's Quest — Keyboard and Mouse Controls
 
+**Status reviewed 2026-10-31.** These controls describe Firestaff's native
+desktop mapping. SDL regression coverage verifies command dispatch and
+bounded US pickup/reselect/drop; it does not establish full retail input
+semantics. See the [capture-readiness summary](THERON_CAPTURE_READINESS.md).
+
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts
 both SDL scancodes and keycodes, so W/A/S/D also work on macOS layouts or

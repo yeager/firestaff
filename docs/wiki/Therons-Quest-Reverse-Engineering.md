@@ -1,5 +1,9 @@
 # Theron's Quest (PC Engine CD) — Reverse Engineering Wiki
 
+> Current summary and task order: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md)
+> and [Theron TODO](../../TODO-theron.md). Older dated sections below record
+> evidence as it was available and must not be read as current support claims.
+
 **Startup update (2026-08-08):** authenticated US Track 02 media proves the
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.

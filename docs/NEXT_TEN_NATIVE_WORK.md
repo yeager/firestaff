@@ -1,8 +1,11 @@
 # Next Ten Native Work Items
 
-Reviewed 2026-08-29. This is the current implementation queue after the
+Reviewed 2026-10-31. This is the current implementation queue after the
 archive/startup regression batch recorded in the per-game `DONE-*.md` files.
 It intentionally ranks source-owned work above synthetic presentation work.
+Theron runtime and capture status is summarized in
+[`THERON_CAPTURE_READINESS.md`](theron/THERON_CAPTURE_READINESS.md); this queue
+contains only the next cross-game work items, not a complete Theron inventory.
 
 1. **Nexus title-state capture bundle.** Capture one retail-JP revision that
    binds `TITLE.CG`, its active `MAPD` span, CRAM palette, VDP1/VDP2 register
@@ -20,13 +23,20 @@ It intentionally ranks source-owned work above synthetic presentation work.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron JP CD-to-RAM transition trace.** Capture a real level transition
-   through the consumer that reads the verified Track 02 data; do not infer
-   it from the US image.
-6. **Theron JP presentation ownership.** Capture bitmap, palette, text and
-   audio binding needed for native surfaces; fallback visuals remain closed.
+5. **Theron JP active-map and movement source join.** Bind the repeated
+   `$C1FC` TII source/destination fields to the active Track 02 map and the
+   caller's gameplay role. The matched input-conditioned transfers may also
+   be teleporter destination copying; they do not yet prove movement, collision
+   or visible effect. Continue from an authenticated, reachable pose and join
+   the state change to reference output.
+6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
+   Track 02 transition through its game-owned consumer, then bind bitmap,
+   palette, text and audio state to the native presentation path. Save-state
+   traces do not supply cold CD-to-RAM provenance.
 7. **Theron JP/US save and later-dungeon matrix.** Verify each region
-   separately with authentic saves and level transitions.
+   separately with authentic progressed saves and level transitions. The
+   available JP BRAM is empty; the emulator `.mc0` is a device snapshot, not
+   an in-game save.
 8. **CSB authenticated DSA saves.** Add checksum-verified save corpora for
    Atari ST, Amiga, and FM Towns before extending timers and transactions.
 9. **CSB original capture comparisons.** Bind title, HUD, viewport, doors and

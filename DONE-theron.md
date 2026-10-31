@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — synchronize current Theron documentation set
+
+Updated the current README, project/platform status, completion and parity
+matrices, cross-game gap index, next-work queue, capture-readiness guide,
+keyboard/mouse notes, and three Theron wiki references. The summaries now
+describe the repeated `$C1FC` TII instruction context alongside its known
+teleporter-destination source association, and keep player movement,
+active-map/field meaning, collision, visible response, and cold CD handoff
+unresolved. The platform entries also state native input coverage separately
+from retail input and display parity. No implementation or game data changed.
+`git diff --check` passed; internal Markdown-link validation remains to run.
+
 ## 2026-10-31 — capture repeatable PCE Fast TII instruction context
 
 Extended the capture-only PCE Fast observer to retain a 128-record instruction
