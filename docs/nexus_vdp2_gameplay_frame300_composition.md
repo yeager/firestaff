@@ -39,3 +39,24 @@ The screenshot and rendered reference share one emulator run, so this is an
 emulator-to-emulator implementation check rather than independent Saturn
 hardware validation. It does not prove the semantic owner of every HUD asset,
 FACE portrait selection, or behavior in other game states.
+
+## VDP1 source join
+
+The same 83-record Ymir trace has a complete command chain and zero dropped
+rows. Firestaff's DGN material join matches 66 of 68 textured draws to
+hash-verified Japanese retail data: 51 indexed palettes and 15 direct-color
+spans match. Sixty-one draws have candidate Structure3 face owners, but that
+does not identify the face selected at runtime. The two unmatched commands at
+VDP1 offsets `0x0cbe0` and `0x0cc20` are zero-size bank-mode draws; they remain
+unbound. Sequence-level DGN admission, transform/culling, VDP2 composition
+admission, and production rendering remain blocked.
+
+Run the real-data source-join regression with the external capture and retail
+corpus:
+
+```sh
+capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_face_vdp2_hud_join_20261030/capture-301
+export FIRESTAFF_NEXUS_YMIR_GAMEPLAY_FRAME300_CAPTURE_DIR="$capture/dumps"
+export FIRESTAFF_NEXUS_DATA_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_vdp1_frame8037_retail_japan
+ctest --test-dir build -R '^nexus_v1_vdp1_gameplay_frame300_source_join_real$' --output-on-failure
+```

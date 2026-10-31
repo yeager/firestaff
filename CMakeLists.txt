@@ -41971,6 +41971,15 @@ add_executable(test_nexus_v1_dgn_material_raster
             LABELS "nexus;saturn;ymir;frame8037;real-data;source-join;skip-safe"
             SKIP_RETURN_CODE 77
         )
+        add_test(
+            NAME nexus_v1_vdp1_gameplay_frame300_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_gameplay_frame300_source_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_gameplay_frame300_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
     endif()
 
     add_executable(test_nexus_v1_vdp2_tilemap_capture_compositor
