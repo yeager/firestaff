@@ -1049,7 +1049,7 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.ceiling_gdat_light_word = 100u;
     room.raw_tile = 0x30u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
-    assert(ambient == 90 && darkness == 0); /* class-1 ceiling term, distance 1 */
+    assert(ambient == 94 && darkness == 0); /* 100 - table1d672b[1] (6). */
     ambient = 0;
     evidence.ceiling_gdat_light_word = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
@@ -1057,19 +1057,19 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.ceiling_gdat_light_word = 100u;
     room.raw_tile = 0x40u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
-    assert(ambient == 90 && darkness == 0); /* 100 - distance loss 10. */
+    assert(ambient == 94 && darkness == 0); /* 100 - ceiling falloff 6. */
     evidence.teleporter_present = 1u;
     node.weather_index = 1u;
     node.weather_delta = 1u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
-    assert(ambient == 134 && darkness == 0); /* 50 - weather loss 6. */
+    assert(ambient == 138 && darkness == 0); /* prior 94 + (50 - 6). */
     evidence.creature_present = 1u;
     evidence.creature_f8_word = 0x8014u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
-    assert(ambient == 188 && darkness == 0); /* creature 20-10 + 50-6. */
+    assert(ambient == 192 && darkness == 0); /* 20-10 + 50-6, separate falloffs. */
     evidence.creature_query_known = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
-    assert(ambient == 188 && darkness == 0);
+    assert(ambient == 192 && darkness == 0);
     room.raw_tile = 0xb0u;
     room.first_record_link = 0x0441u;
     room.ceiling_ornament_word = 0x00ffu;
@@ -1080,7 +1080,22 @@ static void test_mode7_flags3_prepass_evidence(void)
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
     evidence.record_chain_known_no_darkness = 1u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
-    assert(ambient == 188 && darkness == 0);
+    assert(ambient == 192 && darkness == 0);
+
+    /* SKULLWIN/c_light.cpp:455-481 zeros vw_24 beyond distance 8 but still
+     * attenuates creature F8 into RG6 with table1d673d[5] and a floor of 2. */
+    room.raw_tile = 0x30u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    evidence.ceiling_gdat_light_word = 100u;
+    evidence.creature_query_known = 1u;
+    evidence.creature_present = 1u;
+    evidence.creature_f8_word = 20u;
+    evidence.teleporter_present = 0u;
+    node.distance = 9u;
+    ambient = 0;
+    darkness = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 2 && darkness == 0);
 }
 
 static void test_check_recompute_clean(void)

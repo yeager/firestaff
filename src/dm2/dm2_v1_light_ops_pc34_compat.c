@@ -341,7 +341,8 @@ static int dm2_v1_mode7_flags3_floor_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_Mode7Flags3Evidence *evidence,
     uint8_t weather_index, uint8_t weather_delta,
-    int16_t *tile_light, int16_t *weather_light)
+    int16_t *tile_light, int16_t *weather_light,
+    int16_t *creature_light)
 {
     static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
     uint16_t light;
@@ -358,9 +359,10 @@ static int dm2_v1_mode7_flags3_floor_terms(
         !evidence || !evidence->valid ||
         !evidence->teleporter_detail_known ||
         !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
-        !tile_light || !weather_light) return 0;
+        !tile_light || !weather_light || !creature_light) return 0;
     *tile_light = 0;
     *weather_light = 0;
+    *creature_light = 0;
     /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
      * before flags 2 reads the live creature F8 term. A class-1/2 no-record
      * room proves the DBE/DBF darkness chain empty for this narrow branch. */
@@ -378,8 +380,7 @@ static int dm2_v1_mode7_flags3_floor_terms(
         }
     }
     if (evidence->creature_present)
-        *tile_light = (int16_t)((uint16_t)*tile_light +
-            (evidence->creature_f8_word & 0x7fffu));
+        *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
     return 1;
 }
 
@@ -388,6 +389,7 @@ int dm2_v1_mode7_on_node(
     int16_t *v1e0974, int16_t *v1e0978)
 {
     int16_t tile_light = 0, darkness = 0, weather_light = 0;
+    int16_t creature_light = 0;
     if (!node || !v1e0974 || !v1e0978) return -1;
     if (node->source_flags != 3u && node->source_flags != 4u) return -1;
     /* Both SK1C9A action-23 call sites test v1e08ae bit 0x10 before
@@ -403,14 +405,24 @@ int dm2_v1_mode7_on_node(
             node->prepass->ceiling_gdat_known &&
             node->prepass->ceiling_gdat_light_word == 0u)
             return 1;
-        if (node->distance > 8u || node->floor ||
+        if (node->floor ||
             !dm2_v1_mode7_flags3_floor_terms(
                 node->stone_room, node->prepass,
                 node->weather_index, node->weather_delta,
-                &tile_light, &weather_light)) return -1;
-        return dm2_v1_mode7_light_accumulate_tile(
-            node->distance, tile_light, 0, weather_light,
-            v1e0974, v1e0978) ? 1 : -1;
+                &tile_light, &weather_light, &creature_light)) return -1;
+        /* sklight.cpp:455-481: ceiling/teleporter light (vw_24) uses
+         * table1d672b and becomes zero past distance 8. Creature F8 light
+         * remains in RG6, uses table1d673d, and still contributes past 8. */
+        /* Keep the two source accumulators distinct: the first argument
+         * receives RG6, while the weather argument receives vw_24. */
+        {
+            int16_t ceiling_light = (int16_t)((uint16_t)tile_light +
+                                               (uint16_t)weather_light);
+            if (node->distance > 8u) ceiling_light = 0;
+            return dm2_v1_mode7_light_accumulate_tile(
+                node->distance, creature_light, 0, ceiling_light,
+                v1e0974, v1e0978) ? 1 : -1;
+        }
     }
     if ((node->effective_flags & 2u) == 0u) return 0;
     if (node->distance > 8u ||
