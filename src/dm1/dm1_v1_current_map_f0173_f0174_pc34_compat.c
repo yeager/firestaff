@@ -124,6 +124,22 @@ int F0173_DUNGEON_SetCurrentMap(
         return 0;
     }
 
+    /* ReDMCSB returns before refreshing any cached pointers when the
+     * requested map is already current. Keep F0174 free to update the
+     * party-map cache after this no-op. */
+    if (runtime->valid && runtime->currentMapIndex == mapIndex) {
+        if (out) {
+            out->valid = 1;
+            out->previousCurrentMapIndex = previousMapIndex;
+            out->currentMapIndex = runtime->currentMapIndex;
+            out->currentMapWidth = runtime->currentMapWidth;
+            out->currentMapHeight = runtime->currentMapHeight;
+            out->updatedCurrentMap = 0;
+            out->updatedPartyMap = 0;
+        }
+        return 1;
+    }
+
     publish_current_map(runtime, map);
     runtime->f0173CallCount += 1;
 

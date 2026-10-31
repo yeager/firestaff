@@ -66,6 +66,13 @@ static void test_f0173_updates_current_map_only(void)
     expect_int("f0173_party_dir_unchanged", dd.party.facing, 2);
     expect_contains("f0173_source", receipt.sourceEvidence,
                     "F0173_DUNGEON_SetCurrentMap");
+
+    expect_int("f0173_same_map_accept",
+               DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(&dd, 1, &receipt),
+               1);
+    expect_int("f0173_same_map_current", dd.currentMapIndex, 1);
+    expect_int("f0173_same_map_width", dd.currentMapWidth, 11);
+    expect_int("f0173_same_map_party_preserved", dd.party.mapIndex, 0);
 }
 
 static void test_f0174_updates_current_and_party_map(void)

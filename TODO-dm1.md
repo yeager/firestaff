@@ -1,5 +1,12 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: the source returns
+without refreshing current-map caches when the requested map is already
+selected. Both Firestaff adapters now preserve that no-op; the metadata-aware
+adapter still lets F0174 refresh party-map caches. Raw map/thing-column and
+ornament caches in the simpler dungeon-data adapter, plus live transition
+ownership and platform parity, remain open.
+
 2026-10-31 ReDMCSB `OBJECT.C:F0031` IIGS M564 name-table route: native
 startup now reads `GRAPHICS.GAME` raw record 556 and sends the MEDIA060
 high-bit-terminated stream through the 199-entry object-name parser before

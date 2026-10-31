@@ -88,6 +88,15 @@ static void test_f0173_sets_current_map_only(void)
     assert(runtime.partyMapIndex == 9);
     assert(runtime.f0173CallCount == 1);
     assert(runtime.f0174CallCount == 0);
+
+    assert(F0173_DUNGEON_SetCurrentMap(&runtime, maps, 3, 2, &result) == 1);
+    assert(result.valid == 1);
+    assert(result.previousCurrentMapIndex == 2);
+    assert(result.currentMapIndex == 2);
+    assert(result.updatedCurrentMap == 0);
+    assert(result.updatedPartyMap == 0);
+    assert(runtime.f0173CallCount == 1);
+    assert(runtime.currentMapBytes == maps[1].mapBytes);
 }
 
 static void test_f0174_sets_current_and_party_map(void)
