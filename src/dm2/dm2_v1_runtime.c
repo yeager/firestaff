@@ -2017,9 +2017,9 @@ static int dm2_runtime_light_mode8_step(
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         branch = 15u;
         loader = dm2_v1_boot_asset_loader(rt->boot);
-        if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!loader || !dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, nx, ny, (uint32_t)rt->tick_count,
-                &room))
+                (int)rt->view_dir, &room))
             return -1;
         if (room.source_tile_type == 2u) DM2_LIGHT_EDGE_RETURN(16u, 0);
         if ((raw >> 5) == 5) {
@@ -2395,9 +2395,9 @@ static int dm2_runtime_mode7_on_node(
         branch = 34u;
     } else if (source_flags == 3u && (raw >> 5) == 5) {
         branch = 27u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room) &&
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) &&
             !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
         if (!dm2_runtime_mode7_flags3_evidence(
@@ -2406,9 +2406,9 @@ static int dm2_runtime_mode7_on_node(
         node.prepass = &prepass;
     } else if (source_flags == 3u && (raw >> 5) == 2 && first == -1) {
         branch = 33u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room) ||
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room) ||
             !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
@@ -2459,9 +2459,9 @@ static int dm2_runtime_mode7_on_node(
         node.stone_room = &room;
     } else if ((raw >> 5) == 2 || (raw >> 5) == 5) {
         branch = 32u;
-        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 dungeon, loader, map, x, y,
-                (uint32_t)rt->tick_count, &room)) goto unknown;
+                (uint32_t)rt->tick_count, (int)rt->view_dir, &room)) goto unknown;
         node.stone_room = &room;
     } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
         branch = 36u;

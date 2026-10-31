@@ -1743,8 +1743,7 @@ int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,D
 
 /* Bounded c_light SUMMARIZE_STONE_ROOM branches for class-2 no-record,
  * DB0/DB1 prefixes, DB2 C02 static/tick-selected ornaments, DB3
- * map-local floor-actuator ornaments, and class-5 DB1-first roots. The
- * direction-specific DB3 subtype 0x27 remains outside this receipt. */
+ * map-local floor-actuator ornaments, and class-5 DB1-first roots. */
 typedef struct {
     int valid;
     int level;
@@ -1761,6 +1760,12 @@ typedef struct {
 int dm2_v1_dungeon_c_light_stone_room_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out);
+/* Direction-aware summary for skproject DB3 subtype 0x27; use direction -1
+ * only when the caller cannot authenticate the source view direction. */
+int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick, int direction,
     DM2_V1_CLightStoneRoomReceipt *out);
 /* skproject SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2659-2707:
  * class-3 and bit-2 class-4 tiles summarize as types 0x10..0x13. The

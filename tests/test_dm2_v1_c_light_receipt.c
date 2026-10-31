@@ -210,10 +210,30 @@ static void test_class2_db4plus_chain_receipt(void)
               &dungeon, &loader, 0, 0, 0, 7u, &room));
 
     raw[101] = 0x10u;
-    raw[98] = 0x27u; /* Direction-specific source case lacks direction input. */
-    CHECK("class-2 DB3 direction-specific ornament stays closed",
+    raw[98] = 0xa7u; raw[99] = 0u; /* subtype 0x27, source direction 0. */
+    raw[100] = 0u;
+    CHECK("class-2 DB3 subtype-27 skips when the source view direction is unavailable",
           !dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 7u, &room));
+    CHECK("class-2 DB3 subtype-27 keeps frame zero when matched and inactive",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_animation_frame == 0u);
+    raw[100] = 1u;
+    assert(dm2_v1_query_ornate_anim_frame_receipt(
+        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u, 7u, 0u,
+        &expected_animation));
+    CHECK("class-2 DB3 subtype-27 animates when matched and active",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+    CHECK("class-2 DB3 subtype-27 leaves mismatched direction unornamented",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 1, &room) &&
+              room.ceiling_ornament_index == 0xffu &&
+              room.ceiling_ornament_word == 0x00ffu);
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)

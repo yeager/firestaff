@@ -6709,9 +6709,9 @@ int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int leve
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;
     memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
 
-int dm2_v1_dungeon_c_light_stone_room_receipt(
+int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
-    int level, int x, int y, uint32_t tick,
+    int level, int x, int y, uint32_t tick, int direction,
     DM2_V1_CLightStoneRoomReceipt *out)
 {
     DM2_V1_QueryOrnateAnimFrameReceipt animation;
@@ -6764,7 +6764,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
          * records do not add ornament state. DB2 C02 records select the
          * source's static, state-selected, or tick-animated ceiling frame.
          * DB3 floor decorations resolve through the authenticated map-local
-         * floor list. The direction-specific subtype 0x27 remains closed.
+         * floor list; subtype 0x27 consumes the source view direction.
          * The source skips all DB0-DB3 links, then preserves the first DB4+
          * root for c_light's creature and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
@@ -6846,10 +6846,27 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                         if (floor_count < 0 || ordinal > (unsigned)floor_count)
                             return 0;
                         subtype = word2 & 0x7fu;
-                        /* c_gui_vp.cpp:2915-2927 gates subtype 0x27 on
-                         * ddat.v1d3248; this receipt has no source direction. */
-                        if (subtype == 0x27u) return 0;
-                        if ((subtype == 0x2cu || subtype == 0x32u) &&
+                        if (subtype == 0x27u) {
+                            unsigned actuator_direction = word2 >> 7;
+                            if (direction < 0 || direction > 3) return 0;
+                            if (actuator_direction > 0u &&
+                                actuator_direction - 1u ==
+                                    (unsigned)direction) {
+                                if ((record[4] & 1u) != 0u) {
+                                    memset(&animation, 0, sizeof(animation));
+                                    if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                            loader, 10,
+                                            floor_list[ordinal - 1u], tick, 0u,
+                                            &animation) ||
+                                        !animation.accepted ||
+                                        animation.receipt_hash == 0u) return 0;
+                                    frame = animation.frame;
+                                    animation_hash = animation.receipt_hash;
+                                }
+                            } else {
+                                goto next_class2_ornament;
+                            }
+                        } else if ((subtype == 0x2cu || subtype == 0x32u) &&
                             (record[4] & 1u) == 0u) {
                             uint32_t delay = (word2 >> 7) & 0xffu;
                             memset(&animation, 0, sizeof(animation));
@@ -6871,6 +6888,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                         class2_ornament_found = 1;
                     }
                 }
+next_class2_ornament:
                 {
                     int next_link = dm2_v1_dungeon_get_next_thing(d, link);
                     if (next_link < 0 || next_link == (int)link) return 0;
@@ -6926,6 +6944,15 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     out->ornament_source_hash = animation.receipt_hash;
     out->valid = 1;
     return 1;
+}
+
+int dm2_v1_dungeon_c_light_stone_room_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    return dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+        d, loader, level, x, y, tick, -1, out);
 }
 
 int dm2_v1_dungeon_c_light_class34_receipt(
