@@ -66,18 +66,7 @@ assertion because no explicit DM2 corpus was selected for that standalone test.
 
 ### Dynamic c_light platform coverage (2026-10-31)
 
-The supplied DOS `DUNGEON.DAT` descriptor scan reports dynamic-light maps 1–43;
-map 0 is static. `dm2_v1_runtime.c:dm2_runtime_try_light_mode8` currently
-admits only four FM Towns positions (map 3 at `(13,9)/(13,10)` and map 38 at
-`(6,5)/(6,6)`) before attempting the mode-8/mode-7 visibility walks. The
-source-backed DOS New Game route reaches map 0 at `(1,8)`, so its successful
-real-media startup/frame regression does not exercise dynamic c_light. The
-same current runtime path has no Amiga or Macintosh position admission. This
-is a confirmed platform-coverage gap for skproject
-`SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and
-`DM2_CHECK_RECOMPUTE_LIGHT`; descriptor counts and source mapping do not close
-the gameplay function. Extend the complete walk/evidence contract with
-platform-specific real-media start states before enabling those runtime lanes.
+The supplied DOS `DUNGEON.DAT` descriptor scan reports dynamic-light maps 1–43; map 0 is static. `dm2_v1_runtime.c:dm2_runtime_try_light_mode8` now attempts the source mode-8/mode-7 walks at any position on an authenticated dynamic-light map. A commit still requires complete source-walk receipts; any unsupported tile or record branch blocks the transaction. A new real-media regression targets FM Towns map 3 at `(8,4)`, outside the former four-position whitelist, but it could not be executed locally because `FIRESTAFF_DM2_FMTOWNS_ROOT` and local original-game media are absent. Existing original-media coverage remains limited to FM Towns maps 3/38 routes. DOS, Amiga, and Macintosh dynamic-runtime behavior is still unverified; the DOS New Game route reaches static-light map 0 at `(1,8)`. This remains a platform-coverage gap for skproject `SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and `DM2_CHECK_RECOMPUTE_LIGHT`.
 
 ### DBE/DBF darkness terms in dynamic c_light (2026-10-31)
 

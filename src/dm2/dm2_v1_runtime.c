@@ -2466,11 +2466,12 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     rt->c_light_visibility.mode8_complete = 0u;
     rt->c_light_visibility.mode7_complete = 0u;
     rt->c_light_visibility.source_state_hash = 0u;
-    /* Only these original FM Towns starts have independently covered walk
-     * branches and a checked map-3/map-38 teleporter handoff. */
-    if (!((rt->dungeon_level == 3 && x == 13 && (y == 9 || y == 10)) ||
-          (rt->dungeon_level == 38 && x == 6 && (y == 5 || y == 6))) ||
-        !dm2_v1_runtime_light_source_identity(&identity) ||
+    /* skproject c_light.cpp::DM2_CHECK_RECOMPUTE_LIGHT (490-592) runs both
+     * walks for every dynamic-light map. Admit by authenticated live inputs
+     * and the complete source-walk receipts below, not by a short list of
+     * map and coordinate fixtures. Any unsupported tile/record branch still
+     * blocks the entire light transaction. */
+    if (!dm2_v1_runtime_light_source_identity(&identity) ||
         !identity.valid) return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     raw_start = dm2_v1_dungeon_get_tile_raw(
