@@ -47,9 +47,12 @@ rows. Firestaff's DGN material join matches 66 of 68 textured draws to
 hash-verified Japanese retail data: 51 indexed palettes and 15 direct-color
 spans match. Sixty-one draws have candidate Structure3 face owners, but that
 does not identify the face selected at runtime. The two unmatched commands at
-VDP1 offsets `0x0cbe0` and `0x0cc20` are zero-size bank-mode draws; they remain
-unbound. Sequence-level DGN admission, transform/culling, VDP2 composition
-admission, and production rendering remain blocked.
+VDP1 offsets `0x0cbe0` and `0x0cc20` are zero-size bank-mode draws. Their four
+vertices resolve to `(159,-16)` after the captured local origin is applied,
+and both enable inside-mode user clipping against `(0,0)..(320,224)`. The trace
+therefore proves that these unbound commands contribute no visible pixels in
+this frame. Sequence-level DGN admission, the active face, transform/culling,
+and production rendering remain unresolved.
 
 Run the real-data source-join regression with the external capture and retail
 corpus:

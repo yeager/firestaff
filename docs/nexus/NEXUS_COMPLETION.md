@@ -47,8 +47,9 @@ independent hardware parity or full Nexus gameplay coverage. See
 [`nexus_vdp2_gameplay_frame300_composition.md`](../nexus_vdp2_gameplay_frame300_composition.md).
 The same 83-command VDP1 trace joins 66 of 68 textured draws to authentic
 Japanese retail DGN data, including 51 indexed palettes and 15 direct-color
-spans. Sixty-one draws have candidate face owners; two zero-size draws remain
-unbound, and the active face, transform, and culling remain unresolved.
+spans. Sixty-one draws have candidate face owners. The two unbound zero-size draws are
+proven outside the active user clip and contribute no pixels in this frame. The
+active face, transform, and culling remain unresolved.
 
 The separate Ymir-stepper capture path now rasterizes all 124 mode-1 distorted
 sprites and 28 flat polygons in authentic frame-13162 trace rows 8–167. The

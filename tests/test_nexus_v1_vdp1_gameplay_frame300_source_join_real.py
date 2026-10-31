@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import os
 from pathlib import Path
@@ -36,6 +37,45 @@ def run(command: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, check=False, capture_output=True, text=True)
 
 
+def verify_unmatched_draws(trace_path: Path) -> bool:
+    with trace_path.open(newline="", encoding="ascii") as stream:
+        rows = {
+            int(row["index"]): row
+            for row in csv.DictReader(stream)
+            if int(row["frame"]) == 300
+        }
+    if len(rows) != 83:
+        return False
+    clip = rows[6]
+    if ((int(clip["word0"], 0) & 0x000F) != 8 or
+            tuple(int(clip[f"word{i}"], 0) for i in (6, 7, 10, 11)) !=
+            (0, 0, 320, 224)):
+        return False
+    if any((int(rows[index]["word0"], 0) & 0x000F) == 8
+           for index in range(7, 66)):
+        return False
+    for index, address in ((63, 0x0CBE0), (65, 0x0CC20)):
+        row = rows[index]
+        command = int(row["word0"], 0)
+        draw_mode = int(row["word2"], 0)
+        if (int(row["address"], 0) != address or
+                (command & 0x000F) != 2 or
+                ((draw_mode >> 3) & 7) != 0 or
+                (draw_mode & 0x0400) == 0 or (draw_mode & 0x0200) != 0 or
+                int(row["word5"], 0) != 0 or
+                tuple(int(row[f"word{i}"], 0) for i in range(6, 14)) !=
+                (0xFFFF, 0xFF80, 0xFFFF, 0xFF80,
+                 0xFFFF, 0xFF80, 0xFFFF, 0xFF80) or
+                (int(row["local_x"], 0), int(row["local_y"], 0)) != (160, 112)):
+            return False
+        effective_x = 160 + (-1)
+        effective_y = 112 + (-128)
+        if not (0 <= effective_x <= 320 and 0 <= effective_y <= 224):
+            continue
+        return False
+    return True
+
+
 def main() -> int:
     capture_root = os.environ.get(
         "FIRESTAFF_NEXUS_YMIR_GAMEPLAY_FRAME300_CAPTURE_DIR"
@@ -58,6 +98,9 @@ def main() -> int:
         if not path.is_file() or sha256(path) != expected:
             print(f"FAIL: authentic frame-300 capture hash mismatch: {name}")
             return 1
+    if not verify_unmatched_draws(capture / "vdp1-command-trace.csv"):
+        print("FAIL: the two unbound frame-300 draws are not proven clipped by the trace")
+        return 1
     lev01 = retail / "LEV01.DGN"
     if not lev01.is_file() or sha256(lev01) != EXPECTED_DGN_HASH:
         print("SKIP: source join requires the captured Japanese retail LEV01.DGN revision")
@@ -125,7 +168,8 @@ def main() -> int:
     print("PASS: frame 300 contains an 83-record authenticated VDP1 chain with zero dropped rows")
     print("PASS: 66/68 textured commands match hash-verified retail DGN sources")
     print("PASS: 51 palettes and 15 direct-color spans match; 61 draws have candidate face owners")
-    print("PASS: two zero-size draws remain unbound; semantic admission stays blocked")
+    print("PASS: two unbound zero-size draws are clipped outside the captured viewport")
+    print("PASS: selected face, transform/culling, and semantic admission remain unresolved")
     return 0
 
 
