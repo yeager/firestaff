@@ -6,13 +6,25 @@
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native
 > movement and inventory transactions. Source-only loaders cover all seven
 > dungeons in both regions, but do not establish their retail runtime
-> semantics. The reported 3–5 second title-menu hold remains unverified in a
-> visibly confirmed original-game capture. A separate US save-state replay
+> semantics. Native M11 rejects the authentic empty JP BRAM as Continue;
+> positive JP progress restoration remains unverified because no authentic
+> progressed JP BRAM is available. A cold Japanese emulator route visibly
+> reaches the Akutuba dungeon after a four-second System Card RUN hold and short
+> Button I menu/story presses; the reported 3–5 second hold on the selected
+> title-menu action itself remains untested. A separate US save-state replay
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save
-> behavior, and full gameplay remain evidence-gated. Capture tools are
-> research instruments only and are never a Firestaff runtime dependency. See the
+> behavior, and full gameplay remain evidence-gated. Three JP PCE Fast
+> reference UP runs bind scripted `up@61:120` to the same-frame guest read at
+> `$44C1` and the shared event order through `$D334` read, `$D349` write, and
+> `$D334` reread of `$2912`, absent in three neutral controls. The order does
+> not prove causality; the byte's meaning and game effect remain unidentified.
+> A cold JP emulator capture also reached a
+> first-person dungeon view, but lacks a game-owned input/loader join and a
+> matched Firestaff frame. The native Firestaff snapshot is nonblack but has no
+> paired retail frame. Capture tools are research instruments only and are
+> never a Firestaff runtime dependency. See the
 > [current platform status](../PLATFORM_STATUS.md#therons-quest),
 > [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
 > [input notes](../theron/theron_input.md). A cold System Card RUN capture

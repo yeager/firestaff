@@ -371,6 +371,62 @@ if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
 fi
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 8388608 >/dev/null
+cat >"$input_test_dir/pce-fast-consumed.trace" <<'THERON_PCE_FAST_INPUT'
+source=mednafen-pce-fast-instrumented-input
+scripted_pce_input_event frame=61 key=up mask=0010 hold=1 port=0
+scripted_pce_input_apply frame=61 scripted=0010 port=0
+pce_input_read frame=61 cpu_pc=44ca physical_pc=001044ca register=1000 raw=0010 sel=1 clr=0 index=0 value=3e module=pce_fast device_type=1 device_raw=0000 scripted_port=0 scripted_mask=0010
+THERON_PCE_FAST_INPUT
+pce_fast_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/pce-fast-consumed.trace" up@61:1 16)
+if [[ "$pce_fast_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$pce_fast_receipt" != *'controller_read_witness_pc=44ca'* ]]; then
+    printf 'FAIL: PCE Fast input receipt was not tied to its module-tagged read:\n%s\n' \
+        "$pce_fast_receipt" >&2
+    exit 1
+fi
+sed 's/ module=pce_fast device_type=1 device_raw=0000 scripted_port=0 scripted_mask=0010//' \
+    "$input_test_dir/pce-fast-consumed.trace" >"$input_test_dir/pce-fast-ambiguous.trace"
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/pce-fast-ambiguous.trace" up@61:1 16 \
+    >"$input_test_dir/pce-fast-ambiguous.stdout" \
+    2>"$input_test_dir/pce-fast-ambiguous.stderr"; then
+    printf '%s\n' 'FAIL: PCE Fast input verifier accepted an untagged mixed trace row' >&2
+    exit 1
+fi
+if ! grep -Fq 'without module=pce_fast' "$input_test_dir/pce-fast-ambiguous.stderr"; then
+    printf '%s\n' 'FAIL: ambiguous PCE Fast trace lacked a clear diagnostic' >&2
+    cat "$input_test_dir/pce-fast-ambiguous.stderr" >&2
+    exit 1
+fi
+sed 's/scripted_port=0 scripted_mask=0010/scripted_port=1 scripted_mask=0010/' \
+    "$input_test_dir/pce-fast-consumed.trace" >"$input_test_dir/pce-fast-wrong-slot.trace"
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/pce-fast-wrong-slot.trace" up@61:1 16 \
+    >"$input_test_dir/pce-fast-wrong-slot.stdout" \
+    2>"$input_test_dir/pce-fast-wrong-slot.stderr"; then
+    printf '%s\n' 'FAIL: PCE Fast verifier accepted a read from a different controller slot' >&2
+    exit 1
+fi
+if ! grep -Fq 'different scripted controller slot' "$input_test_dir/pce-fast-wrong-slot.stderr"; then
+    printf '%s\n' 'FAIL: wrong-slot PCE Fast input lacked a clear diagnostic' >&2
+    cat "$input_test_dir/pce-fast-wrong-slot.stderr" >&2
+    exit 1
+fi
+sed 's/scripted_mask=0010$/scripted_mask=0000/' \
+    "$input_test_dir/pce-fast-consumed.trace" >"$input_test_dir/pce-fast-mask-mismatch.trace"
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/pce-fast-mask-mismatch.trace" up@61:1 16 \
+    >"$input_test_dir/pce-fast-mask-mismatch.stdout" \
+    2>"$input_test_dir/pce-fast-mask-mismatch.stderr"; then
+    printf '%s\n' 'FAIL: PCE Fast verifier accepted a read mask different from its apply receipt' >&2
+    exit 1
+fi
+if ! grep -Fq 'same-frame scripted apply receipt and plan' "$input_test_dir/pce-fast-mask-mismatch.stderr"; then
+    printf '%s\n' 'FAIL: mismatched PCE Fast input lacked a clear diagnostic' >&2
+    cat "$input_test_dir/pce-fast-mask-mismatch.stderr" >&2
+    exit 1
+fi
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 8388609 \
     >"$input_test_dir/oversized-read-limit.stdout" \
@@ -1620,6 +1676,7 @@ if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
+   ! grep -Fq 'module=pce_fast device_type=%u device_raw=%04x scripted_port=%u scripted_mask=%04x' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
    ! grep -Fq 'TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
     printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
     exit 1
@@ -1649,6 +1706,7 @@ if ! awk '
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   ! grep -Fq 'theron-scripted-pce-fast-input.rendered.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_PORT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
    ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u port=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||

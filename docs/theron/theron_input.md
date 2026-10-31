@@ -7,9 +7,12 @@ input paths that do not populate scancodes.
 
 Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
 are research instruments only and do not run or replace the game in Firestaff.
-The original System Card's cold RUN callback has been traced separately, but
-the latest authentic capture remains before confirmed game-owned code; it does
-not verify the reported multi-second title-menu action hold. See the
+The original System Card's cold RUN callback has been traced separately. A
+cold Japanese emulator route now visibly reaches the Akutuba dungeon after a
+four-second RUN hold at the System Card prompt and ordinary short Button I
+menu/story presses. The reported 3–5 second hold on the selected title-menu
+action itself remains untested, and the trace still lacks a confirmed
+game-owned input/loader join. See the
 [capture readiness record](THERON_CAPTURE_READINESS.md).
 
 ## PC Engine button mapping
@@ -54,7 +57,9 @@ respectively.
 These are Firestaff's native-runtime bindings, not a PC Engine timing model.
 On 2026-10-24, separate SDL key-down events advanced authentic JP media from
 title through stage select and Soul Room into a loaded dungeon. A continuous
-3–5 second hold has not been verified in Firestaff. The retail manual
+3–5 second hold has not been verified in Firestaff. The cold reference route
+confirms a four-second RUN hold to leave the System Card, not a long hold on
+the selected game-menu action. The retail manual
 documents Button I as the menu selection control but gives no multi-second
 timing rule. See [DMWeb and Greatstone references](../DMWEB_REFERENCE.md) and
 the dated evidence in [TODO-theron.md](../../TODO-theron.md).
