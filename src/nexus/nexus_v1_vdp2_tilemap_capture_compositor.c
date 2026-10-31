@@ -537,9 +537,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
     receipt.original_ymir_capture_verified = 1;
     receipt.nbg2_tilemap_mode = 1;
     receipt.pnd_size_two_words = 1;
-    receipt.colour_code_256 = bpp == 8;
-    receipt.nbg1_enabled = (bgon & 0x0002U) != 0U;
-    receipt.bits_per_pixel = bpp;
+    receipt.colour_code_256 = 1;
     receipt.name_table_vram_offset = (int)map_base;
     receipt.map_page_columns = 64;
     receipt.map_page_rows = 64;
@@ -710,7 +708,9 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     memset(plane, 0, sizeof(*plane));
     receipt.registers_verified = receipt.original_ymir_capture_verified = 1;
     receipt.nbg1_tilemap_mode = receipt.pnd_size_two_words = 1;
-    receipt.colour_code_256 = 1;
+    receipt.colour_code_256 = bpp == 8;
+    receipt.nbg1_enabled = (bgon & 0x0002U) != 0U;
+    receipt.bits_per_pixel = bpp;
     receipt.name_table_vram_offset = (int)map_base;
     receipt.map_page_columns = receipt.map_page_rows = 64;
     receipt.visible_columns = 40; receipt.visible_rows = 28;
