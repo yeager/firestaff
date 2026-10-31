@@ -460,6 +460,7 @@ int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt receipt;
     const uint8_t *registers;
     uint16_t base_h, base_v, inc_h, inc_v;
+    unsigned int blend_ratio;
     size_t state_index;
     unsigned int y, x;
 
@@ -487,6 +488,7 @@ int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
         SCAN_REG(0xe4U) != 0U || SCAN_REG(0xe6U) != 0U ||
         SCAN_REG(0xe0U) != 0x1536U || SCAN_REG(0xf8U) != 0x0404U ||
         SCAN_REG(0xecU) != 0x0043U || SCAN_REG(0x100U) != 0x1010U) return 0;
+    blend_ratio = 31U - (SCAN_REG(0x108U) & 31U);
     base_h = (uint16_t)(((SCAN_REG(0x70U) & 0x07ffU) << 8U) |
                         (SCAN_REG(0x72U) >> 8U));
     base_v = (uint16_t)(((SCAN_REG(0x74U) & 0x07ffU) << 8U) |
@@ -542,21 +544,8 @@ int nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(
             uint32_t lower = (sprite & 0x8000U) ? capture_rgb555(sprite) : UINT32_C(0xff000000);
             if (index != 0U) {
                 uint16_t top = read_be16(input->vdp2_cram + (size_t)index * 2U);
-                uint32_t ratio = 31U - (SCAN_REG(0x108U) & 31U);
-                {
-                    uint32_t top_rgb = capture_rgb555(top);
-                    uint32_t channels[3];
-                    unsigned int shifts[3] = {16U, 8U, 0U};
-                    unsigned int c;
-                    for (c = 0U; c < 3U; ++c) {
-                        int hi = (int)((top_rgb >> shifts[c]) & 0xffU);
-                        int lo = (int)((lower >> shifts[c]) & 0xffU);
-                        int value = lo + (((hi - lo) * (int)ratio) >> 5);
-                        channels[c] = (uint32_t)(value < 0 ? 0 : value > 255 ? 255 : value);
-                    }
-                    framebuffer->rgba_buffer[dest] = UINT32_C(0xff000000) |
-                        (channels[0] << 16U) | (channels[1] << 8U) | channels[2];
-                }
+                framebuffer->rgba_buffer[dest] =
+                    capture_blend_555(top, lower, blend_ratio);
                 ++receipt.nbg0_pixels;
             } else {
                 framebuffer->rgba_buffer[dest] = lower;
