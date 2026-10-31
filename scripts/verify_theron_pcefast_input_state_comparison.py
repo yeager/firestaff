@@ -77,9 +77,12 @@ def verify_up(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
     log = log_path.read_text(encoding="utf-8", errors="replace")
     require(f'Loading "{EXPECTED_CUE_PATH}"' in log and f"Theron autoload state loaded: {EXPECTED_STATE_PATH}" in log,
             f"{capture_id}: log does not bind the expected authentic CUE and saved state")
+    require("Signal has been caught and dealt with: SIGTERM" in log,
+            f"{capture_id}: log does not show the expected timed capture termination")
 
     events = read_records(input_path, "scripted_pce_input_event")
     applies = read_records(input_path, "scripted_pce_input_apply")
+    plans = read_records(input_path, "scripted_pce_input_plan")
     polls = read_records(input_path, "pce_input_read")
     input_text = input_path.read_text(errors="replace")
     require("source=mednafen-pce-fast-instrumented-input" in input_text,
@@ -87,11 +90,26 @@ def verify_up(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
     if shared_sequence:
         require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
                 f"{capture_id}: input trace lacks the shared event-sequence header")
-    matching_events = [r for r in events if r.get("frame") == "61" and r.get("key") == "up" and r.get("mask") == "0010" and r.get("port") == "0"]
-    matching_applies = [r for r in applies if r.get("frame") == "61" and r.get("scripted") == "0010" and r.get("port") == "0"]
-    matching_polls = [r for r in polls if r.get("frame") == "61" and r.get("cpu_pc") == "44c1" and r.get("physical_pc") == "000d04c1" and r.get("raw") == "0010" and r.get("sel") == "1" and r.get("value") == "3e" and r.get("module") == "pce_fast" and r.get("device_type") == "1" and r.get("scripted_port") == "0" and r.get("scripted_mask") == "0010"]
-    require(len(matching_events) == len(matching_applies) == len(matching_polls) == 1,
-            f"{capture_id}: expected one frame-61 UP event/apply/$44C1 read")
+    require(len(plans) == 1 and plans[0].get("valid") == "1" and
+            plans[0].get("events") == "1" and plans[0].get("port") == "0",
+            f"{capture_id}: input plan is not exactly one valid slot-0 event")
+    require(len(events) == 1 and events[0].get("frame") == "61" and
+            events[0].get("key") == "up" and events[0].get("mask") == "0010" and
+            events[0].get("hold") == "120" and events[0].get("port") == "0",
+            f"{capture_id}: expected exactly one frame-61 UP event held for 120 frames")
+    apply_frames = sorted(int(r["frame"]) for r in applies
+                          if r.get("scripted") == "0010" and r.get("port") == "0")
+    require(len(applies) == 120 and apply_frames == list(range(61, 181)),
+            f"{capture_id}: UP apply trace does not cover exactly frames 61 through 180")
+    matching_polls = [r for r in polls if r.get("frame") == "61" and
+                      r.get("cpu_pc") == "44c1" and r.get("physical_pc") == "000d04c1" and
+                      r.get("raw") == "0010" and r.get("sel") == "1" and
+                      r.get("value") == "3e" and r.get("module") == "pce_fast" and
+                      r.get("device_type") == "1" and r.get("index") == "0" and
+                      r.get("device_raw") == "0000" and r.get("scripted_port") == "0" and
+                      r.get("scripted_mask") == "0010"]
+    require(len(matching_polls) == 1,
+            f"{capture_id}: expected one slot-0 frame-61 UP poll with neutral physical input")
     if shared_sequence:
         require("event_sequence" in matching_polls[0],
                 f"{capture_id}: frame-61 UP poll has no shared event sequence")
@@ -109,17 +127,18 @@ def verify_up(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
     def seq(record: dict[str, str]) -> int:
         return int(record["event_sequence"])
 
+    poll_sequence = int(matching_polls[0]["event_sequence"]) if shared_sequence else -1
     ordered = None
     for writer in up_writes:
-        prior = [r for r in before if seq(r) < seq(writer)]
+        prior = [r for r in before if seq(r) < seq(writer) and
+                 (not shared_sequence or seq(r) > poll_sequence)]
         later = [r for r in selected_reads if r.get("reader_pc") == "d334" and r.get("reader_code_bytes") == "cd1229d00dee2029" and r.get("value") == "10" and seq(r) > seq(writer)]
-        if prior and later:
+        if prior and later and (not shared_sequence or seq(writer) > poll_sequence):
             ordered = (writer, prior[-1], later[0])
             break
     require(ordered is not None, f"{capture_id}: no ordered $00 read → $10 write → $10 read")
     writer, prior_read, later_read = ordered
     if shared_sequence:
-        poll_sequence = int(matching_polls[0]["event_sequence"])
         require(poll_sequence < seq(prior_read) < seq(writer) < seq(later_read),
                 f"{capture_id}: shared event order does not place the $44C1 poll before the $2912 transaction")
         return (f"{capture_id}: $44C1 poll event {poll_sequence} → $D334 read $00 event {seq(prior_read)} → "
@@ -150,23 +169,51 @@ def verify_neutral(run: dict[str, Any], root: Path, *, shared_sequence: bool) ->
     if shared_sequence:
         require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
                 f"{capture_id}: input trace lacks the shared event-sequence header")
-    require(polls and all(r.get("raw") == "0000" and r.get("scripted_mask") == "0000" for r in polls),
+    require(polls and all(r.get("raw") == "0000" and r.get("scripted_mask") == "0000" and
+                          r.get("device_raw") == "0000" for r in polls),
             f"{capture_id}: neutral trace contains a nonzero physical or scripted input poll")
-    neutral_polls = [r for r in polls if r.get("frame") == "61" and r.get("cpu_pc") == "44c1" and r.get("module") == "pce_fast"]
-    require(neutral_polls and all(r.get("raw") == "0000" and r.get("value") == "3f" and r.get("scripted_mask") == "0000" for r in neutral_polls),
-            f"{capture_id}: no frame-61 neutral $44C1 poll with zero input")
+    neutral_polls = [r for r in polls if r.get("frame") == "61" and
+                     r.get("cpu_pc") == "44c1" and r.get("module") == "pce_fast" and
+                     r.get("device_type") == "1" and r.get("index") == "0"]
+    require(neutral_polls and all(r.get("raw") == "0000" and r.get("value") == "3f" and
+                                  r.get("scripted_mask") == "0000" and
+                                  r.get("device_raw") == "0000" for r in neutral_polls),
+            f"{capture_id}: no slot-0 frame-61 neutral $44C1 poll with zero input")
     if shared_sequence:
         require(all("event_sequence" in r for r in neutral_polls),
                 f"{capture_id}: a frame-61 neutral poll has no shared event sequence")
 
     consumers = read_records(consumer_path, "main_ram_consumer_read")
     writes = read_records(write_path, "main_ram_target_write")
+    consumer_text = consumer_path.read_text(errors="replace")
+    write_text = write_path.read_text(errors="replace")
+    truncations = [line.lower() for line in consumer_text.splitlines()
+                   if line.startswith("main_ram_consumer_truncated=")]
+    target_truncated = any(
+        "target_range_sample_limit" in line or
+        ("main_ram_sample_limit" in line and
+         "reason=per_offset_sample_limit" not in line) or
+        re.search(r"reason=per_offset_sample_limit offset=(?:0x)?0*2912(?:\s|$)", line)
+        for line in truncations
+    )
+    require(not target_truncated,
+            f"{capture_id}: neutral consumer trace was truncated for $2912 before capture termination")
+    require("main_ram_target_write_truncated=" not in write_text,
+            f"{capture_id}: neutral target-write trace was truncated before capture termination")
+    require("Signal has been caught and dealt with: SIGTERM" in log,
+            f"{capture_id}: neutral log does not show the expected timed capture termination")
     selected_reads = [r for r in consumers if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
     selected_writes = [r for r in writes if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
     require(not [r for r in selected_reads if r.get("reader_pc") == "d334"],
             f"{capture_id}: neutral trace unexpectedly entered the $D334 consumer")
     require(not [r for r in selected_writes if r.get("writer_pc") == "d349"],
             f"{capture_id}: neutral trace unexpectedly entered the $D349 writer")
+    # The capture constraint is a ten-second PCE Fast run. Require at least
+    # 50 target writes per second (below the source's ~60 Hz cadence) so a
+    # short or late-starting trace cannot masquerade as a full neutral control.
+    require(len(selected_writes) >= 500,
+            f"{capture_id}: neutral $2912 trace covers only {len(selected_writes)} writes; "
+            "expected at least 500 across the bounded ten-second capture")
     require(selected_writes and all(r.get("writer_pc") == "d2f2" and r.get("writer_code_bytes") == "9c12299c202960ad" and r.get("value") == "00" for r in selected_writes),
             f"{capture_id}: neutral $D2F2 zero writes were missing or mismatched")
     return f"{capture_id}: frame-61 neutral $44C1 poll; no $D334/$D349 path; {len(selected_writes)} zero writes at $D2F2"

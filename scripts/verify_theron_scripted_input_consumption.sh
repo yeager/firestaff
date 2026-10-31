@@ -129,7 +129,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
         failure = "legacy PCE input result did not immediately follow its raw read"
         pending_result = 0
     }
-    /^source=mednafen-pce-fast-instrumented-input$/ {
+    /^source=mednafen-pce-fast-instrumented-input([[:space:]]|$)/ {
         trace_is_pce_fast = 1
         next
     }
@@ -149,6 +149,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
             read_frame = ""
             read_module = ""
             read_device_type = ""
+            read_device_raw = -1
             read_scripted_port = ""
             read_scripted_mask = ""
             for (i = 1; i <= NF; i++) {
@@ -170,6 +171,8 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                     read_module = substr($i, 8)
                 if ($i ~ /^device_type=[0-9]+$/)
                     read_device_type = substr($i, 13)
+                if ($i ~ /^device_raw=[0-9a-fA-F]+$/)
+                    read_device_raw = hex_to_dec(substr($i, 12))
                 if ($i ~ /^scripted_port=[0-4]$/)
                     read_scripted_port = substr($i, 15)
                 if ($i ~ /^scripted_mask=[0-9a-fA-F]+$/)
@@ -198,7 +201,9 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                                 (read_frame + 0) < (planned_frame[event_index] + planned_hold[event_index]))
                                 expected_frame_mask = mask_union(expected_frame_mask,
                                                                  planned_mask[event_index])
-                        if (read_frame_port != expected_input_index)
+                        if (read_index != expected_input_index || read_device_raw != 0)
+                            failure = "PCE Fast scripted read selected a different or physically active controller slot"
+                        else if (read_frame_port != expected_input_index)
                             failure = "PCE Fast same-frame apply receipt targets a different controller slot"
                         else if (read_scripted_mask_value < 0 || read_frame_mask == "" ||
                                  read_scripted_mask_value != (read_frame_mask + 0) ||
