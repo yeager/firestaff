@@ -166,7 +166,7 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
           "C011 mismatch leaves the hand, raw chain, and timeline unchanged");
 }
 
-static void test_c017_removes_head_sensor(void)
+static void test_c017_preserves_head_sensor(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
@@ -208,10 +208,11 @@ static void test_c017_removes_head_sensor(void)
     queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
         &profile, 0, 0, 0);
     CHECK(queued == 1 &&
-              read_le16(raw, 66) == 0xfffeu &&
-              read_le16(raw, 68) == 0xffffu &&
-              profile.party_state.LeaderHandThing == 0xffffu,
-          "C017 at the Thing-list head is removed after consuming the hand");
+              read_le16(raw, 66) == (unsigned short)(3u << 10) &&
+              read_le16(raw, 68) == 0xfffeu &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.timeline_queue.eventCount == 1,
+          "source C017 head case retains its Thing while consuming hand and triggering");
 }
 
 static void test_later_c004_uses_hand_filled_by_storage_sensor(void)
@@ -579,7 +580,7 @@ int main(void)
 {
     test_c011_runtime_hand_roundtrips_save();
     test_c011_wrong_object_type_rejects_without_mutation();
-    test_c017_removes_head_sensor();
+    test_c017_preserves_head_sensor();
     test_later_c004_uses_hand_filled_by_storage_sensor();
     test_f0275_processes_all_matching_sensors_in_source_order();
     test_c002_uses_hand_occupancy_and_revert_only();

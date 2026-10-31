@@ -19,8 +19,10 @@ editions, platforms, and original-media outcomes remain open.
 and `MOVESENS.C:1412-1414` compares that value with Sensor.Data before applying
 RevertEffect. Therefore reverted C003/C004/C011/C017 sensors can trigger while
 the leader's hand is empty. Firestaff now preserves that predicate, avoids
-removing an absent hand object, and still applies C017's sensor removal. The
-focused CSB F0275 regression passes 24 assertions. This is PC34 runtime
+removing an absent hand object, and applies C017's source unlink when a previous
+Thing exists; ReDMCSB skips the unlink when C017 is the list's first Thing
+(`MOVESENS.C:1415-1427`). The focused CSB F0275 regression checks both cases.
+The 24 assertions pass. This is PC34 runtime
 coverage; Atari ST, Amiga, FM Towns, other editions, and original-media sensor
 outcomes remain open.
 

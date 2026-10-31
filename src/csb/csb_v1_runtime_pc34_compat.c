@@ -12262,7 +12262,6 @@ static int csb_v1_runtime_remove_wall_sensor_after_previous(
     uint16_t previous_thing,
     uint16_t sensor_thing)
 {
-    uint8_t *first_ptr;
     uint8_t *previous_record;
     uint8_t *sensor_record;
     uint16_t next_thing;
@@ -12270,38 +12269,31 @@ static int csb_v1_runtime_remove_wall_sensor_after_previous(
     int sensor_type;
     int sensor_size;
 
-    if (!dungeon || sensor_thing == 0xFFFEu || sensor_thing == 0xFFFFu) {
+    if (!dungeon || previous_thing == sensor_thing ||
+        sensor_thing == 0xFFFEu || sensor_thing == 0xFFFFu) {
         return 0;
     }
-    first_ptr = csb_v1_runtime_square_first_thing_ptr(
-        dungeon, level, map_x, map_y);
-    previous_record = NULL;
-    if (previous_thing != sensor_thing) {
-        previous_record = csb_v1_runtime_mutable_thing_record(
-            dungeon,
-            previous_thing,
-            NULL,
-            &previous_size);
-    }
+    previous_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        previous_thing,
+        NULL,
+        &previous_size);
     sensor_record = csb_v1_runtime_mutable_thing_record(
         dungeon,
         sensor_thing,
         &sensor_type,
         &sensor_size);
-    if (!first_ptr || !sensor_record || sensor_size < 2 || sensor_type != 3 ||
-        (previous_thing == sensor_thing &&
-         (csb_v1_runtime_read_u16(first_ptr) & 0x3FFFu) !=
-             (sensor_thing & 0x3FFFu)) ||
-        (previous_thing != sensor_thing &&
-         (!previous_record || previous_size < 2))) {
+    if (!previous_record || previous_size < 2 || !sensor_record ||
+        sensor_size < 2 || sensor_type != 3) {
         return 0;
     }
     next_thing = csb_v1_runtime_read_u16(sensor_record);
-    if (previous_thing == sensor_thing) {
-        csb_v1_runtime_write_u16(first_ptr, next_thing);
-    } else {
-        csb_v1_runtime_write_u16(previous_record, next_thing);
-    }
+    /* ReDMCSB MOVESENS.C:1415-1427 exits before unlinking when the current
+     * C017 is the first Thing; callers preserve that source list-head case. */
+    (void)level;
+    (void)map_x;
+    (void)map_y;
+    csb_v1_runtime_write_u16(previous_record, next_thing);
     csb_v1_runtime_write_u16(sensor_record, 0xFFFFu);
     return 1;
 }
@@ -12556,7 +12548,8 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 rotate_after = 1;
             } else if (sensor_type ==
                        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
-                remove_current_sensor = 1;
+                /* MOVESENS.C:1415-1427 cannot cut a C017 at the Thing head. */
+                remove_current_sensor = previous_thing != (uint16_t)thing;
             }
             break;
         case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
