@@ -249,6 +249,19 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_index == 0x20u &&
               room.ceiling_animation_frame == expected_animation.frame &&
               room.ornament_source_hash == expected_animation.receipt_hash);
+    raw[98] = 0u; raw[99] = 0x2cu; /* continuous animator, zero delay. */
+    raw[100] = 0x10u; raw[101] = 0u; /* inactive; source queries animation. */
+    CHECK("class-2 DB3 subtype-2c reads big-endian inactive state",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+    raw[101] = 1u; /* Active state suppresses subtype-2c animation. */
+    CHECK("class-2 DB3 subtype-2c reads big-endian active state",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x0020u);
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
