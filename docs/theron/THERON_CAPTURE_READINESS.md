@@ -8,8 +8,8 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 
 The latest original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route reached start, left-event
-and reentry. Its wrapper remains incomplete because the exhaustive BIOS trace
-hit its row cap; the next useful capture should scope BIOS tracing to the
+and reentry with 132 `$C852` fetches. Its wrapper completed but rejected the
+capture package because the exhaustive BIOS trace hit its row cap; the next useful capture should scope BIOS tracing to the
 source-locked decision/status path. The existing capture also joins generated-
 row publication bytes to later reads and a work-buffer copy. Enable the bounded
 fetch hook with
@@ -22,12 +22,15 @@ main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.
 
-The 2026-10-31 authentic US cold run reached Drator `start`, `left-event` and
-`reentered-event` at level `$03`, position `$02,$03`. The rebuilt reference
-binary recorded 27 `$C852` fetches at physical `$0DC852`. The first five
+The isolated 2026-10-31 authentic US cold run reached Drator `start`,
+`left-event` and `reentered-event` at level `$03`, position `$02,$03`. The
+rebuilt reference binary recorded 132 `$C852` fetches at physical `$0DC852`.
+The first five
 512-byte runtime windows have SHA-256
 `c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`, exactly
-matching the authentic US Track 02 candidate at raw offset `$A3AD2`. Later
+matching the authentic US Track 02 candidate at raw offset `$A3AD2`. The
+[HuC6280 disassembly](../source-lock/theron-disassembly/theron-us-c852-a3ad2-20261031.asm)
+records this 512-byte source window. Later
 windows vary as execution advances. This maps the captured runtime code window
 to that source occurrence; it does not prove `$C852` is the generated-row
 consumer or assign semantics to the row bytes. The filtered
@@ -38,14 +41,13 @@ writes to physical `$1F093B-$1F093D`
 by reads of those bytes at events 10,644,912–10,644,914. A later PC `$45C3`
 `TII $2935,$2400,$000A` reads the same offsets and values at events
 10,647,071–10,647,073. The target-write trace retained 139 rows. Callback-state
-verification passed with 403,975 rows (87 reads and 403,888 writes), but the
+verification passed with 412,791 rows (87 reads and 412,704 writes), but the
 System Card I/O/RAM trace reached its 8,388,608-row cap. Its former verifier
 loaded all 8.4 million rows into a list and reached about 3.2 GB RSS before it
-was stopped, so wrapper verification did not finish. The verifier now checks
-rows incrementally with bounded memory, and iterator-mode regression coverage
-passes. The full retained trace was processed with about 18 MB RSS and rejected
-only at its explicit truncation marker, confirming both the streaming memory
-bound and fail-closed behavior.
+was stopped. The current streaming verifier processed the trace with about
+18 MB RSS and correctly rejected the explicit cap marker. The wrapper
+completed, but the capture package is not accepted because the trace is
+truncated. Iterator-mode regression coverage passes.
 
 The generator receipt and this cold run now prove a same-session write/read
 match for row offsets 6–8 and a ten-byte copy into a work buffer. The capture

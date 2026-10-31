@@ -2,27 +2,23 @@
 
 ## 2026-10-31 — authentic US cold Drator row byte join and runtime source mapping
 
-- Follow-up with a rebuilt PCE Fast binary reached Drator `start` and
-  `left-event`, then captured two runtime `$C852` fetches at physical
-  `$0DC852` (shared events 10,644,900 and 10,648,164). Their 512-byte windows begin `a5ba85a9a5b885a8`; the first five hash to
-  `c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`, an
-  exact match for authenticated US Track 02 raw offset `$A3AD2`. The later
-  windows vary as execution advances. The cold route reached `reentered-event`
-  at level `$03`, position `$02,$03`. Wrapper verification is still pending.
-- The same capture's target-write and consumer traces join physical
-  `$1F093B-$1F093D` writes (`$02,$03,$00`) at events 10,644,901, 10,644,902
-  and 10,644,910 to reads of the same values at events 10,644,912–10,644,914.
-  A later `$45C3` TII read confirms the ten-byte row copy from `$2935` to
-  `$2400`, including offsets 6–8. Raw trace hashes and exact rows are in the
-  source-lock report. The exact source-byte mapping is established; direct `$C852` consumer
-  attribution and field meanings remain open.
+- An isolated cold capture reached Drator `start`, `left-event`, and
+  `reentered-event` (level `$03`, position `$02,$03`) and recorded 132 `$C852`
+  opcode fetches. The first five 512-byte windows match authenticated US
+  Track 02 raw offset `$A3AD2`, SHA-256
+  `c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`.
+  The 132-row trace SHA-256 is
+  `af0e870c3405700baf34b984bb26b9ef301d06f6ecb4f1b86d28058c7357b3d4`. The
+  [HuC6280 listing](docs/source-lock/theron-disassembly/theron-us-c852-a3ad2-20261031.asm)
+  records the exact 512-byte source window and disassembly.
 - The filtered `$1F093B-$1F093D` observer reached its 1,048,576-row limit
   before route reentry in the row-consumer trace; the cold route later reached
   reentry in its route diagnostic. Callback-state verification passed for 403,975 rows
-  (87 reads, 403,888 writes). The 8,388,608-row System Card I/O/RAM trace
+  (87 reads, 403,888 writes). In the later isolated capture it passed for
+  412,791 rows (87 reads, 412,704 writes). The 8,388,608-row System Card I/O/RAM trace
   reached its cap. The streaming verifier processed it at about 18 MB RSS and
-  correctly rejected its explicit truncation marker, so wrapper verification
-  remains incomplete.
+  correctly rejected its explicit truncation marker. The wrapper completed
+  and reported the capped trace; the capture package remains unaccepted.
 - Updated the documentation to retain these limits. A search of the authentic
   Track 02 BIN found seven occurrences of the initial runtime `$C852` prefix.
   Their first 128 bytes match, while their 512-byte windows are distinct. The
@@ -112,7 +108,7 @@
 - Corrected outdated statements that called the row-byte join absent and
   updated wrapper status to reflect that the streaming verifier rejects the
   explicitly truncated BIOS trace. Native gameplay, `$C852` consumer semantics
-  and full wrapper verification remain open.
+  and full capture-package acceptance remain open.
 
 ## 2026-10-31 — reconcile Theron documentation with verified evidence
 

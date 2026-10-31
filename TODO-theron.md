@@ -10,11 +10,14 @@ reader PC `$CBC9` read the same addresses and values. Later, PC `$45C3` executed
 10,647,071–73. These observations establish byte-level row consumption, not
 field meanings or complete native creature behavior.
 
-The same run recorded 27 runtime `$C852` fetches at physical `$0DC852`. The
-first five 512-byte windows exactly match the authenticated US Track 02 source
+The isolated cold run recorded 132 runtime `$C852` fetches at physical
+`$0DC852`; the first five 512-byte windows exactly match the authenticated US Track 02 source
 at raw offset `$A3AD2` (SHA-256
-`c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`). Later
-windows vary with execution. The cold route reached `reentered-event` at level
+`c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`). Its
+512-byte HuC6280 disassembly is recorded in
+[the source-lock listing](docs/source-lock/theron-disassembly/theron-us-c852-a3ad2-20261031.asm).
+The runtime trace SHA-256 is
+`af0e870c3405700baf34b984bb26b9ef301d06f6ecb4f1b86d28058c7357b3d4`. Later windows vary with execution. The cold route reached `reentered-event` at level
 `$03`, position `$02,$03`. This identifies the code source for the captured
 window; the next analysis is to source-map readers `$CBC9` and `$45C3` and trace
 the buffer's downstream use. The filtered row trace reached its 1,048,576-row
@@ -23,9 +26,11 @@ direction or creature fields without source and runtime proof.
 
 The System Card I/O/RAM trace hit its 8,388,608-row cap. The new streaming
 verifier processed the full file at about 18 MB RSS and correctly rejected the
-truncation marker. Callback-state verification passed at 403,975 rows. The
-capture wrapper therefore remains incomplete; use source-locked PC-specific
-BIOS traces or a strictly verified handoff scope to avoid repeated polling.
+truncation marker. In the 132-fetch capture, callback-state verification
+passed at 412,791 rows (87 reads and 412,704 writes). The capture wrapper
+completed but rejected the capped BIOS trace, so the capture package remains
+unaccepted. Use source-locked PC-specific BIOS traces or a strictly verified
+handoff scope to avoid repeated polling.
 
 Raw traces and user media remain outside Git. No Drator-positioned save or
 state artifact is checked into the repository; reproduce the route from the

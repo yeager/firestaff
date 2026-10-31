@@ -23,9 +23,9 @@ contains only the next cross-game work items, not a complete Theron inventory.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron US (Drator) generated-row consumer join.** The cold Drator
-   reference now records 27 runtime `$C852` fetches at physical `$0DC852`; its
-   first five 512-byte windows exactly match authenticated US Track 02 raw
+5. **Theron US (Drator) generated-row consumer join.** The isolated cold
+   Drator reference records 132 runtime `$C852` fetches at physical `$0DC852`;
+   its first five 512-byte windows exactly match authenticated US Track 02 raw
    offset `$A3AD2`. The route reached `left-event` and `reentered-event`, and
    same-session writes/reads of generated-row offsets 6–8 plus a later ten-byte
    work-buffer copy are proven. The consumer observer reached its cap after

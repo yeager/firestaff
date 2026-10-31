@@ -58,21 +58,30 @@ The route reached Drator `start` at level `$02`, position `$02,$03`, then
 `left-event` at `$03,$03`, and `reentered-event` at level `$03`, position
 `$02,$03`.
 
-The bounded `$C852` trace contains 27 opcode fetches at physical `$0DC852`.
+The bounded `$C852` trace contains 132 opcode fetches at physical `$0DC852`
+(trace SHA-256 `af0e870c3405700baf34b984bb26b9ef301d06f6ecb4f1b86d28058c7357b3d4`).
 The first five carry identical 512-byte windows, SHA-256
 `c2396321541223629083719fe542d90c5ba81ad63e85af1ba9353aa339e72351`. That
 hash exactly matches the candidate at raw offset `$A3AD2` in the hash-verified
 US Track 02 BIN; the other six candidates have distinct window hashes. This
 establishes the source bytes for this captured runtime code window. It does not
 show that `$C852` consumes the generated row or establish any row-field
-meaning.
+meaning. The first instruction sequence is `LDA $BA; STA $A9; LDA $B8; STA $A8;
+LDX $A9; LDY $A8; JSR $5039`; the complete 512-byte linear listing is linked
+above. These instruction bytes do not assign semantics to the zero-page values.
 
-The follow-up was stopped before its capture wrapper completed final
-verification. The System Card I/O/RAM file reached its explicit row cap, and
-the streaming verifier correctly rejected the truncation marker. Treat the
-source-byte match and route receipts as verified trace observations, but do
-not treat this wrapper run as a fully verified capture package. The raw trace
-and emulator profile remain on TRV2 outside Git.
+For this isolated run, the capture wrapper independently verified 65,536
+System Card status rows and 412,791 callback-state rows (87 reads, 412,704
+writes). The System Card I/O/RAM stream reached its configured 8,388,608-row
+cap. Its streaming verifier processed the 2.7 GB trace with about 18 MB RSS
+and rejected the explicit truncation marker. Thus the bounded source and route
+receipts and these two sidecar validations are verified, while the full
+wrapper package is incomplete.
+
+The wrapper completed, but its System Card I/O/RAM verifier rejected the file
+at its explicit row cap. Treat the source-byte match, route receipts and
+passing sidecar checks as verified observations; this is not a fully accepted
+capture package. The raw trace and emulator profile remain on TRV2 outside Git.
 
 ### Same-session generated-row byte reads
 
@@ -136,9 +145,8 @@ as execution advances, but the repeated first-five window provides an exact
 source-byte join. The runtime fetch at physical `$0DC852` therefore maps to the
 Track 02 code copy beginning `$A3AD2` in the authenticated US BIN.
 
-The verified trace prefix recorded 27 `$C852` hits before the capture was
-stopped. The wrapper result is incomplete and was not accepted as complete. The cold
-route reached `start` (level `$02`, position `$02,$03`), `left-event` (position `$03,$03`),
+The verified trace contains 132 `$C852` hits. The wrapper completed,
+reported the cap and did not accept the capture package. The cold route reached `start` (level `$02`, position `$02,$03`), `left-event` (position `$03,$03`),
 and `reentered-event` (level `$03`, position `$02,$03`). The source-byte join
 is conclusive for the captured code window, but it does not establish that
 `$C852` reads the generated row, identify the meaning of the bytes, or prove
