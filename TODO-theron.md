@@ -184,9 +184,10 @@ a dummy SDL display and produced no rendered-game frame.
    title and is not a Continue test. Extend the proven transaction to all
    regional save cases and bind later quest artifacts and their pickup, exit,
    chapter transition, and completion consumers. Keep the campaign-completion
-   bit distinct from
-   quest-item collection. Connect the source-gated writer only to proven
-   progress, then reopen the changed save in the original runtime. The
+   bit distinct from quest-item collection. The native Save Game input now
+   writes the classified original-format BRAM at the between-stage boundary,
+   and remains blocked in a loaded dungeon. Continue with all regional save
+   cases and reopen the changed save in the original runtime. The
    [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
    records the currently authenticated structure and limits.
 3. **Complete source-bound presentation and event output.** Bind gameplay

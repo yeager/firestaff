@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v1_srm_classifier.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_world.h"
 
@@ -23,6 +24,8 @@ int main(int argc, char** argv) {
     int source_body_ready;
     int i;
     int failures = 0;
+    char saved_bram_path[THERON_V1_SRM_PATH_MAX] = {0};
+    uint8_t saved_bram_before_dungeon[THERON_V1_PCE_BRAM_BYTES];
 
     if (argc != 4) {
         fprintf(stderr, "usage: %s DATA_DIR TRACK02 BRAM\n", argv[0]);
@@ -91,6 +94,42 @@ int main(int argc, char** argv) {
         view.theronState.level_loaded) {
         ++failures;
         fprintf(stderr, "FAIL: Continue remains at the source-backed stage boundary before an explicit dungeon-entry action\n");
+    }
+    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_SAVE_GAME) !=
+            M11_GAME_INPUT_REDRAW ||
+        strcmp(view.lastOutcome, "GAME SAVED") != 0 ||
+        strcmp(view.inspectTitle, "THERON SAVE") != 0 ||
+        strncmp(view.inspectDetail,
+                "ORIGINAL BACKUP RAM SAVED TO ", 29) != 0) {
+        ++failures;
+        fprintf(stderr,
+                "FAIL: authentic Continue progress saves at the source-owned between-stage boundary (outcome=%s template=%s title=%s detail=%s)\n",
+                view.lastOutcome, view.theronState.save_resume_srm_root,
+                view.inspectTitle, view.inspectDetail);
+    } else {
+        const char *path = view.inspectDetail + 29;
+        Theron_V1PceBramReceipt saved_receipt;
+        FILE *saved_file;
+        size_t saved_bytes;
+        snprintf(saved_bram_path, sizeof(saved_bram_path), "%s", path);
+        saved_file = fopen(saved_bram_path, "rb");
+        saved_bytes = saved_file
+            ? fread(saved_bram_before_dungeon, 1,
+                    sizeof(saved_bram_before_dungeon), saved_file)
+            : 0u;
+        if (saved_file) fclose(saved_file);
+        if (saved_bytes != sizeof(saved_bram_before_dungeon) ||
+            !saved_bram_path[0] ||
+            theron_v1_pce_bram_classify_path(
+                saved_bram_path, &saved_receipt) !=
+                THERON_V1_PCE_BRAM_READY ||
+            !saved_receipt.save_body_layout_proven ||
+            !saved_receipt.save_body_campaign_valid) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: stage-boundary input creates a complete original BRAM file at %s\n",
+                    saved_bram_path);
+        }
     }
     if (!world || !source_body_ready ||
         source_body.ram_267c_campaign_byte != 0x01u ||
@@ -229,6 +268,25 @@ int main(int argc, char** argv) {
                         save_result, view.dialogOverlayActive,
                         view.theronState.startup_phase,
                         view.theronState.level_loaded);
+            }
+            {
+                uint8_t saved_bram_after_dungeon[
+                    THERON_V1_PCE_BRAM_BYTES];
+                FILE *saved_file = saved_bram_path[0]
+                    ? fopen(saved_bram_path, "rb") : NULL;
+                size_t saved_bytes = saved_file
+                    ? fread(saved_bram_after_dungeon, 1,
+                            sizeof(saved_bram_after_dungeon), saved_file)
+                    : 0u;
+                if (saved_file) fclose(saved_file);
+                if (saved_bytes != sizeof(saved_bram_after_dungeon) ||
+                    memcmp(saved_bram_before_dungeon,
+                           saved_bram_after_dungeon,
+                           sizeof(saved_bram_after_dungeon)) != 0) {
+                    ++failures;
+                    fprintf(stderr,
+                            "FAIL: in-dungeon save input leaves the last original BRAM file unchanged\n");
+                }
             }
             static const int movement_inputs[4] = {
                 M12_MENU_INPUT_UP,

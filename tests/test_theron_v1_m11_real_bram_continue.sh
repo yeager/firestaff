@@ -24,4 +24,21 @@ fi
     echo "FAIL: Backup RAM is not the authenticated Akutuba-complete capture" >&2
     exit 1
 }
-exec "$probe" "$data_root" "$track02" "$bram"
+original_home=$HOME
+mkdir -p "$original_home/.cache"
+test_home=$(mktemp -d "$original_home/.cache/firestaff-theron-m11-save.XXXXXX")
+trap 'rm -rf "$test_home"' EXIT HUP INT TERM
+HOME=$test_home
+FIRESTAFF_THERON_BRAM_PATH=$bram
+export HOME
+export FIRESTAFF_THERON_BRAM_PATH
+"$probe" "$data_root" "$track02" "$bram"
+if command -v md5 >/dev/null 2>&1; then
+    bram_after_md5=$(md5 -q "$bram")
+else
+    bram_after_md5=$(md5sum "$bram" | awk '{print $1}')
+fi
+[ "$bram_after_md5" = "$bram_md5" ] || {
+    echo "FAIL: stage-boundary save modified the authenticated input BRAM" >&2
+    exit 1
+}

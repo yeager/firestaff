@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — write authentic BRAM from the between-stage save input
+
+Connected Theron's Save Game input to the existing source-bound original BRAM
+writer only at the stage-selection boundary with campaign progress and a
+classifier-verified authentic BRAM template. The writer saves to the user's
+`saves/theron/theron-original.bram`; a loaded dungeon still reports that
+in-dungeon saves are unavailable. A real-media M11 integration assertion
+checks that the Continue state creates a correctly sized, classified original
+BRAM image, that dungeon Save Game input leaves that output byte-identical,
+and that the authenticated input BRAM hash remains unchanged. The wrapper
+isolates user data under a temporary home directory. Built on TRV2 and ran
+`theron_v1_m11_real_bram_continue` three times; all three loops passed against
+the authentic US Track 02 and Ak-Tu-Ba-complete BRAM. Reopening the newly
+written BRAM in the original runtime and regional save coverage remain open.
+
 ## 2026-10-31 — continue authentic US BRAM into the next native dungeon
 
 On TRV2, built the existing `theron_v1_m11_real_bram_continue` integration

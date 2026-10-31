@@ -39,6 +39,7 @@
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_srm_classifier.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -31377,10 +31378,12 @@ static void m11_theron_apply_startup_state_receipt(
             receipt->save_resume_tqsv_slots;
         state->theronState.save_resume_srm_slots =
             receipt->save_resume_srm_slots;
-        snprintf(state->theronState.save_resume_srm_root,
-                 sizeof(state->theronState.save_resume_srm_root),
-                 "%s",
-                 receipt->save_resume_srm_root);
+        if (receipt->save_resume_srm_root[0]) {
+            snprintf(state->theronState.save_resume_srm_root,
+                     sizeof(state->theronState.save_resume_srm_root),
+                     "%s",
+                     receipt->save_resume_srm_root);
+        }
     }
 }
 
@@ -33538,6 +33541,22 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
         goto fail;
     }
+    /* A launch may name the authentic original BRAM file explicitly. Keep
+     * it as the save template only after the production classifier verifies
+     * its source format and writer-owned body; arbitrary quicksave paths must
+     * never become a Theron persistence template. */
+    if (savePath && savePath[0]) {
+        Theron_V1PceBramReceipt template_receipt;
+        if (theron_v1_pce_bram_classify_path(savePath, &template_receipt) ==
+                THERON_V1_PCE_BRAM_READY &&
+            template_receipt.save_body_layout_proven &&
+            template_receipt.save_body_campaign_valid &&
+            template_receipt.save_slot_tail_unconsumed_padding) {
+            snprintf(state->theronState.save_resume_srm_root,
+                     sizeof(state->theronState.save_resume_srm_root),
+                     "%s", savePath);
+        }
+    }
     m11_theron_bind_track19_item_names(
         state, dataDir, verifiedPath, verifiedMd5,
         campaignMedia && campaignMedia->source ==
@@ -33648,13 +33667,50 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        /* THQUEST.ASM T080 owns the original save boundary: Theron's Quest
-         * writes progress when a stage is cleared and offers no in-dungeon
-         * save transaction. Do not pass the opaque Theron world through the
-         * generic DM1 serializer; that would create a host file which looks
-         * like a quicksave but cannot restore a source-owned Theron state. */
-        m11_set_status(state, "SAVE", "THERON SAVES AFTER STAGE CLEAR");
-        return 0;
+        char user_data[FSP_PATH_MAX];
+        char save_root[FSP_PATH_MAX];
+        char save_path[M11_GAME_VIEW_PATH_CAPACITY];
+        Theron_V1_World *world =
+            (Theron_V1_World *)state->theronWorld;
+        const char *template_path =
+            state->theronState.save_resume_srm_root;
+
+        /* THQUEST.ASM T080 owns persistence at the between-stage boundary.
+         * The BRAM writer changes only its 134 source-proven bytes and
+         * preserves the authenticated template's other data. Never serialize
+         * the opaque Theron world through the generic DM1 quicksave format. */
+        if (state->theronState.startup_phase !=
+                THERON_STARTUP_PHASE_STAGE_SELECT ||
+            state->theronState.level_loaded || !world ||
+            (world->campaign_completion_mask & 0x7Fu) == 0u) {
+            m11_set_status(state, "SAVE", "THERON SAVES AFTER STAGE CLEAR");
+            return 0;
+        }
+        if (!template_path || !template_path[0]) {
+            m11_set_status(state, "SAVE", "ORIGINAL SAVE TEMPLATE REQUIRED");
+            return 0;
+        }
+        if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+            !FSP_JoinPath(save_root, sizeof(save_root), user_data,
+                          "saves/theron") ||
+            !FSP_CreateDirectoryRecursive(save_root) ||
+            !theron_v1_startup_pce_bram_save_path(
+                save_root, save_path, sizeof(save_path))) {
+            m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+            return 0;
+        }
+        if (!theron_v1_startup_write_pce_bram_theron_record(
+                world, template_path, save_path)) {
+            m11_set_status(state, "SAVE", "ORIGINAL SAVE WRITE FAILED");
+            return 0;
+        }
+        M12_Config_SetLastSavePath(save_path);
+        m11_set_status(state, "SAVE", "GAME SAVED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "THERON SAVE");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "ORIGINAL BACKUP RAM SAVED TO %s", save_path);
+        return 1;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         DM2_V1_BootProfile *profile =
@@ -39713,9 +39769,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_SAVE_GAME) {
-            /* THQUEST.ASM T080 exposes persistence at the stage boundary,
-             * not as an in-dungeon Save Game transaction. */
-            m11_set_status(state, "SAVE", "NO IN-DUNGEON SAVES");
+            /* T080 owns the between-stage BRAM write; never route an
+             * in-dungeon save request through the host quicksave format. */
+            if (state->theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT &&
+                !state->theronState.level_loaded) {
+                M11_GameView_QuickSave(state);
+            } else {
+                m11_set_status(state, "SAVE", "NO IN-DUNGEON SAVES");
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
