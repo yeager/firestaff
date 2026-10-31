@@ -58,6 +58,12 @@ def register_score(data: bytes, byte_order: str) -> int:
 
 
 def detect_byte_order(data: bytes) -> str:
+    big_tvmd = register(data, 0x000, "big")
+    little_tvmd = register(data, 0x000, "little")
+    if big_tvmd == 0x8000:
+        return "big"
+    if little_tvmd == 0x8000:
+        return "little"
     big_score = register_score(data, "big")
     little_score = register_score(data, "little")
     return "little" if little_score > big_score else "big"
