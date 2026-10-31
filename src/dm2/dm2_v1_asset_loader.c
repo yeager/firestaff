@@ -3150,13 +3150,23 @@ int dm2_v1_query_ornate_anim_frame_receipt(
         sequence = dm2_v1_asset_load_text_sized(loader, category, index,
                                                 ANIMATION_FIELD,
                                                 &sequence_size);
-        if (!sequence || sequence_size == 0u) return 0;
+        if (!sequence || sequence_size == 0u) {
+            /* c_querydb.cpp:489-517: a missing/empty animation text query
+             * sets the source length to one and returns frame 1. */
+            length = 1u;
+            frame = 1u;
+            goto accepted_frame;
+        }
         while (sequence_length < sequence_size && sequence[sequence_length]) {
             if (!dm2_base36_frame(sequence[sequence_length], &frame)) return 0;
             ++sequence_length;
         }
-        if (sequence_length == 0u || sequence_length == sequence_size)
-            return 0;
+        if (sequence_length == 0u) {
+            length = 1u;
+            frame = 1u;
+            goto accepted_frame;
+        }
+        if (sequence_length == sequence_size) return 0;
         if (!dm2_base36_frame(
                 sequence[(tick + delta) % sequence_length], &frame)) {
             return 0;
@@ -3165,6 +3175,7 @@ int dm2_v1_query_ornate_anim_frame_receipt(
         out_receipt->used_text_sequence = 1u;
     }
 
+accepted_frame:
     out_receipt->accepted = 1u;
     out_receipt->length = length;
     out_receipt->frame_base = frame_base;
