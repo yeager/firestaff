@@ -30,9 +30,12 @@ and creature terms.
 Class-4 direction mismatches now follow the source's direction-plus-one
 adjacent-square route. Empty roots and decoded record classes above 3 match
 the source query's early-return behavior; classes 0-3 still need the exact
-`query_0cee_1a46` orientation/type filters. Original-media dynamic-light
-evidence is still needed for every supported DM2 platform; the existing
-FM Towns-only runtime receipt does not close DOS, Amiga, or Macintosh behavior.
+`query_0cee_1a46` orientation/type filters. A flagged center or adjacent
+root is rejected if its first-thing table lookup fails; regressions cover both
+malformed-root cases so the loader's `-1` error sentinel cannot become an
+empty-root receipt. Original-media dynamic-light evidence is still needed for
+every supported DM2 platform; the existing FM Towns-only runtime receipt does
+not close DOS, Amiga, or Macintosh behavior.
 
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
