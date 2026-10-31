@@ -6744,8 +6744,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                 first == (int)DM2_THING_NULL_MARKER;
             if ((raw & 0x08) != 0 && first >= 0 &&
                 first != (int)DM2_THING_END_MARKER &&
-                first != (int)DM2_THING_NULL_MARKER &&
-                (first_type <= 3u || first_type >= 4u)) {
+                first != (int)DM2_THING_NULL_MARKER) {
                 accepted = 1;
             }
         } else if (raw_class == 5u && (raw & 0x0c) != 0x0c &&
