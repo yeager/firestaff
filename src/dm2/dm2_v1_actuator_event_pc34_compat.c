@@ -569,15 +569,21 @@ static int item_teleport_visitor(void *context,
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
         memset(&move_receipt, 0, sizeof(move_receipt));
-        if (dm2_v1_move_record_to(ctx->pool_set, ctx->dungeon, ctx->queue,
-                                   handle,
-                                   (int16_t)ctx->src_x, (int16_t)ctx->src_y,
-                                   (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
-                                   (int16_t)ctx->dst_dir,
-                                   ctx->map, ctx->game_tick,
-                                   &move_receipt) == 1) {
-            ctx->receipt->items_moved++;
+        int moved = dm2_v1_move_record_to(
+            ctx->pool_set, ctx->dungeon, ctx->queue, handle,
+            (int16_t)ctx->src_x, (int16_t)ctx->src_y,
+            (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
+            (int16_t)ctx->dst_dir, ctx->map, ctx->game_tick,
+            &move_receipt);
+        if (!moved || move_receipt.fail_closed) {
+            /* MOVE_RECORD_TO may return 1 with a fail-closed receipt after
+             * a source cut fails. Never present that partial chain state as
+             * a successful teleport; the owning mecha transaction rolls it
+             * back before publishing any changes. */
+            ctx->receipt->fail_closed = 1;
+            return 1;
         }
+        ctx->receipt->items_moved++;
     }
 
     if (ctx->only_first_item && ctx->receipt->items_moved > 0) {
