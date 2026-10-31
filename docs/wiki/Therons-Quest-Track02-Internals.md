@@ -11,6 +11,14 @@ current evidence boundary and next joins are summarized in
 [`THERON_CAPTURE_READINESS.md`](../theron/THERON_CAPTURE_READINESS.md) and
 [`TODO-theron.md`](../../TODO-theron.md).
 
+**Reference trace boundary (2026-10-31):** an isolated authentic JP save-state
+run verifies that the corrected PCE Fast instrumentation gate admits 4,096
+bounded VRAM commit records after the scripted guest read at `$44C1` in shared
+event order. The wrapper reports `transition=missing`; the state-only capture
+does not join a cold CD handoff, decode VRAM semantics, prove a visible input
+effect, or establish native parity. See the
+[source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+
 Native direct launch enters the Theron title/startup path without Firestaff's
 Run menu or a System Card. The Debug boot-probe receipt remained at
 `levelLoaded=0`; it does not establish Track 02 dungeon loading or gameplay.

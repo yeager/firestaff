@@ -26,6 +26,12 @@ faces a wall: UP, neutral, and DOWN reference screenshots retain the same
 front wall, with no `$C1FC` TII or `$2040/$2041` position write observed by the
 bounded movement hooks. It does not prove movement or renderer parity; see the
 [blocked-wall probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+An isolated JP PCE Fast state-only run also verified the corrected input gate:
+the scripted guest read at `$44C1` (`raw=0010`, event 58758) precedes the first
+of 4,096 bounded VRAM commit rows (event 58761). The capture reports
+`transition=missing`; this checks instrumentation and event ordering only. It
+does not establish causality, VRAM meaning, a visible response, a cold media
+handoff, or Firestaff parity. See the [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon

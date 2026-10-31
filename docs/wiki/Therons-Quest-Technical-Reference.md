@@ -46,6 +46,14 @@
 > proof. This is not successful movement or rendering evidence. See the
 > [blocked-wall report](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
+> **Input-gated VRAM trace (2026-10-31):** a corrected PCE Fast callback
+> gates the bounded VRAM trace on the guest-visible controller value. An
+> authentic JP state-only run records the scripted `$44C1` read at shared
+> event 58758, followed by 4,096 contiguous commit rows beginning at event
+> 58761. The run reports `transition=missing`; it verifies the trace gate and
+> ordering only. It does not prove input causality, VRAM semantics, visible
+> gameplay, cold media handoff, or parity. See the [source-locked report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. The explicit
