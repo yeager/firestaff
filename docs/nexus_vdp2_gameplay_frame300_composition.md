@@ -45,8 +45,10 @@ FACE portrait selection, or behavior in other game states.
 The same 83-record Ymir trace has a complete command chain and zero dropped
 rows. Firestaff's DGN material join matches 66 of 68 textured draws to
 hash-verified Japanese retail data: 51 indexed palettes and 15 direct-color
-spans match. Sixty-one draws have candidate Structure3 face owners, but that
-does not identify the face selected at runtime. The two unmatched commands at
+spans match. The analyzer's per-command palette receipts are checked against
+those totals by the real-data regression. Sixty-one draws have candidate
+Structure3 face owners, but the selected face is still unresolved. The two
+unmatched commands at
 VDP1 offsets `0x0cbe0` and `0x0cc20` are zero-size bank-mode draws. Their four
 vertices resolve to `(159,-16)` after the captured local origin is applied,
 and both enable inside-mode user clipping against `(0,0)..(320,224)`. The trace
