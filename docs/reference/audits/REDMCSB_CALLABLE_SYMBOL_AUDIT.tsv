@@ -1110,7 +1110,7 @@ F	1111	F1111_CPSX	AMIGINIT.C;FLOPPYAM.C;FIO1.C;HINT001.C;UTIO.C;CNFG.C	missing	u
 F	1114	F1114_CloseTrackdiskDevice	FLOPPYAM.C;CNFG.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1127	F1127_TransitionFromPaletteToPalette	PALETTE.C;UTAMSCR.C;VDEO1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1128	F1128_IsLeftMouseButtonDown	FILLBOX.C;HINTDATA.C;HINT001.C;UTIO.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c reads only caller-owned mouse status, with no host polling or synthesized button state; focused mouse-accessor test covers the F1128 route.
-F	1131	F1131_InvertBox	FILLBOX.C;CEDTINCN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1131	F1131_InvertBox	FILLBOX.C;CEDTINCN.C;DEFS.H	implemented-narrow	implemented_narrow	Amiga A31/A35 FILLBOX complement-fill route preserves XYWH bounds, raster setup, bottom-scanline wait and WaitBlit sequence
 F	1132	F1132_ConvertBoxCoordinates	BLIT.C;BLITMASK.C;CONVBOXC.C;GRF1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1133	F1133_AddCopperInterrupt	AMIGINIT.C;COPERINT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1134	F1134_RemoveCopperInterrupt	AMIGINIT.C;COPERINT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

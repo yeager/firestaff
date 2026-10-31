@@ -1112,7 +1112,7 @@ F1111_CPSX	F	CPSX	AMIGINIT.C:551	-	MISSING	No exact numbered token found in Fire
 F1114_CloseTrackdiskDevice	F	CloseTrackdiskDevice	CNFG.C:10	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1127_TransitionFromPaletteToPalette	F	TransitionFromPaletteToPalette	PALETTE.C:136	src/dm1/dm1_v1_palette_font_pc34_compat.c:145	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1128_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	FILLBOX.C:6	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1131_InvertBox	F	InvertBox	CEDTINCN.C:42	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1131_InvertBox	F	InvertBox	FILLBOX.C:736-751;CEDTINCN.C:42;DEFS.H:175-177	include/redmcsb_f1131_invert_box_amiga_compat.h	IMPLEMENTED_NARROW	Amiga A31/A35 source adapter preserves XYWH zone semantics and raster order: COMPLEMENT mode, pen -1, mask 0x0f, wait through bottom scanline, RectFill to x+w-1/y+h-1, then WaitBlit. Other platform routines remain separate source symbols.
 F1132_ConvertBoxCoordinates	F	ConvertBoxCoordinates	BLIT.C:2036	src/dm1/dm1_v1_blit_fill_pc34_compat.c:149	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1133_AddCopperInterrupt	F	AddCopperInterrupt	AMIGINIT.C:550	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1134_RemoveCopperInterrupt	F	RemoveCopperInterrupt	AMIGINIT.C:668	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
