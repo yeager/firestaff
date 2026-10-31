@@ -1,3 +1,13 @@
+2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:
+Both live and GAME_LOAD candidate door-step paths now queue sound 0x8e while
+moving and 0x8f on the final step, before scheduling the continuation. Sound
+lookup failure does not block a door step; the live path restores sound/timer
+queue state on a failed enqueue, and the candidate path restores its cloned
+sound owner. The source `SKW_IS_REBIRTH_ALTAR` selector depends on map-header
+bytes not yet represented by these runtime owners, so both currently pass the
+source no-altar value 0xff. Altar-door sound selection, exact resource edge
+parity, and platform mapping remain open.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` DB2 text animation cases:
 The extended query now walks DB2 text and DB3 actuator records in list order.
 DB2 TextMode-1 static extensions stay on the static path; ext-usage 1/2 and

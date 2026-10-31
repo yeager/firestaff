@@ -5427,7 +5427,7 @@ static int dm2_game_load_candidate_attack_schedule(
     int16_t record_handle, int map_id, unsigned long game_tick, int x, int y);
 static int dm2_game_load_candidate_queue_door_collision_noise(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
-    int map, int x, int y, int cls1, int cls2, int cls3,
+    int map, int x, int y, int cls1, int cls2, int cls3, int cls_alt,
     int volume, int delay_mode, uint32_t game_tick);
 
 int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
@@ -5658,7 +5658,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                             candidate, map, x, y,
                             DM2_GDAT_CATEGORY_CHAMPIONS,
                             candidate->party.hero[i].herotype,
-                            DM2_SOUND_CHAMPION_BUMP, 0x64, 0xc8,
+                            DM2_SOUND_CHAMPION_BUMP, 0xfe, 0x64, 0xc8,
                             game_tick))
                         goto door_rollback;
                     collision_sound_count++;
@@ -5737,12 +5737,12 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                         if (!dm2_game_load_candidate_queue_door_collision_noise(
                                 candidate, map, x, y,
                                 DM2_GDAT_CATEGORY_CREATURES, creature_cls2,
-                                DM2_SOUND_CREATURE_GET_HIT, 0x46, 0x80,
+                                DM2_SOUND_CREATURE_GET_HIT, 0xfe, 0x46, 0x80,
                                 game_tick) ||
                             !dm2_game_load_candidate_queue_door_collision_noise(
                                 candidate, map, x, y,
                                 DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
-                                DM2_SOUND_STD_KNOCK, 0x46, 0x80,
+                                DM2_SOUND_STD_KNOCK, 0xfe, 0x46, 0x80,
                                 game_tick))
                             goto door_rollback;
                         collision_sound_count += 2;
@@ -5802,6 +5802,39 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
         if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
             goto door_rollback;
         receipt.state_after = (uint8_t)new_state;
+        if (new_state != old_state) {
+            if (dm2_v1_dungeon_set_tile_raw(
+                    &candidate->dungeon, map, x, y,
+                    dm2_door_set_state((uint16_t)raw_tile, new_state)) != 0)
+                goto door_rollback;
+            tile_mutated = 1;
+        }
+        {
+            int reached_target =
+                (receipt.direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+                 new_state == DM2_DOOR_STATE_OPEN) ||
+                (receipt.direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+                 new_state == DM2_DOOR_STATE_CLOSED);
+            DM2_V1_GameLoadSoundOwner step_sound_backup;
+            memset(&step_sound_backup, 0, sizeof(step_sound_backup));
+            /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while
+             * moving and 0x8f on the final step. Map-header altar metadata
+             * is not represented in this candidate owner yet. */
+            if (dm2_v1_game_load_runtime_candidate_sound_clone(
+                    &step_sound_backup, &candidate->sound_owner)) {
+                if (!dm2_game_load_candidate_queue_door_collision_noise(
+                        candidate, map, x, y, DM2_GDAT_CATEGORY_DOORS,
+                        reached_target ? 0x8f : 0x8e, 0xfe, 0xff,
+                        0x5f, 0x80, game_tick)) {
+                    dm2_v1_game_load_runtime_candidate_sound_free(
+                        &candidate->sound_owner);
+                    candidate->sound_owner = step_sound_backup;
+                    memset(&step_sound_backup, 0, sizeof(step_sound_backup));
+                }
+                dm2_v1_game_load_runtime_candidate_sound_free(
+                    &step_sound_backup);
+            }
+        }
         if ((receipt.direction == 0u && new_state != DM2_DOOR_STATE_OPEN) ||
             (receipt.direction == 1u && new_state != DM2_DOOR_STATE_CLOSED)) {
             next_timer = timer_entry;
@@ -5809,13 +5842,6 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
             if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
                 goto door_rollback;
             queued = 1;
-        }
-        if (new_state != old_state) {
-            if (dm2_v1_dungeon_set_tile_raw(
-                    &candidate->dungeon, map, x, y,
-                    dm2_door_set_state((uint16_t)raw_tile, new_state)) != 0)
-                goto door_rollback;
-            tile_mutated = 1;
         }
         receipt.door_state_mutated = new_state != old_state;
         {
@@ -8648,7 +8674,7 @@ static int16_t dm2_game_load_candidate_cloud_wound_party(
  * caller's timer/sound transaction. */
 static int dm2_game_load_candidate_queue_door_collision_noise(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
-    int map, int x, int y, int cls1, int cls2, int cls3,
+    int map, int x, int y, int cls1, int cls2, int cls3, int cls_alt,
     int volume, int delay_mode, uint32_t game_tick)
 {
     DM2_V1_SoundQueueState state;
@@ -8688,7 +8714,7 @@ static int dm2_game_load_candidate_queue_door_collision_noise(
     memset(&sound, 0, sizeof(sound));
     if (!dm2_v1_sound_queue_noise_gen2(
             &state, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3,
-            (int8_t)0xfe, (int16_t)x, (int16_t)y, 1,
+            (int8_t)cls_alt, (int16_t)x, (int16_t)y, 1,
             (int16_t)volume, (int16_t)delay_mode, &env, &sound) ||
         !sound.valid)
         return 0;

@@ -8817,7 +8817,7 @@ static int dm2_runtime_update_weather_timer(void *user,
  * type-0x15 timer through the same runtime timer owner. */
 static int dm2_runtime_queue_door_collision_noise(
     DM2_V1_RuntimeState *rt, int map, int x, int y,
-    int cls1, int cls2, int cls3, int volume, int delay,
+    int cls1, int cls2, int cls3, int cls_alt, int volume, int delay,
     uint32_t game_tick, uint16_t source_index)
 {
     DM2_V1_SoundQueueEnv env;
@@ -8834,7 +8834,7 @@ static int dm2_runtime_queue_door_collision_noise(
     memset(&sound, 0, sizeof(sound));
     if (!dm2_v1_sound_queue_noise_gen2(
             &rt->sound_queue, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3,
-            (int8_t)0xfe, (int16_t)x, (int16_t)y, 1, (int16_t)volume,
+            (int8_t)cls_alt, (int16_t)x, (int16_t)y, 1, (int16_t)volume,
             (int16_t)delay, &env, &sound) || !sound.valid)
         return 0;
     if (sound.timer_queue_pending) {
@@ -9041,7 +9041,7 @@ static int dm2_runtime_door_step_timer(void *user,
             if ((hit_mask & (1 << i)) == 0) continue;
             if (!dm2_runtime_queue_door_collision_noise(
                     rt, map, x, y, DM2_GDAT_CATEGORY_CHAMPIONS,
-                    hero_type, DM2_SOUND_CHAMPION_BUMP, 0x64, 0xC8,
+                    hero_type, DM2_SOUND_CHAMPION_BUMP, 0xfe, 0x64, 0xC8,
                     receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
                     source_index)) {
                 rt->source_party = party_before;
@@ -9221,11 +9221,11 @@ static int dm2_runtime_door_step_timer(void *user,
                     if (!dm2_runtime_queue_door_collision_noise(
                             rt, map, x, y, DM2_GDAT_CATEGORY_CREATURES,
                             creature_cls2, DM2_SOUND_CREATURE_GET_HIT,
-                            0x46, 0x80, game_tick, source_index) ||
+                            0xfe, 0x46, 0x80, game_tick, source_index) ||
                         !dm2_runtime_queue_door_collision_noise(
                             rt, map, x, y,
                             DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
-                            DM2_SOUND_STD_KNOCK, 0x46, 0x80,
+                            DM2_SOUND_STD_KNOCK, 0xfe, 0x46, 0x80,
                             game_tick, source_index))
                         goto door_creature_rollback;
 
@@ -9299,6 +9299,35 @@ door_creature_rollback:
                       new_state == DM2_DOOR_STATE_OPEN) ||
                      (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                       new_state == DM2_DOOR_STATE_CLOSED);
+    /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while moving
+     * and 0x8f on the final step. Map-header altar metadata is not yet
+     * present in this runtime owner, so preserve the source no-altar value. */
+    if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
+        rt->sound_queue.ssound_entries_capacity > 0u) {
+        DM2_V1_SoundQueueState sound_before = rt->sound_queue;
+        DM2_V1_SourceTimerQueue timers_before = rt->timer_queue;
+        size_t entries_bytes =
+            (size_t)rt->sound_queue.ssound_entries_capacity *
+            sizeof(*rt->sound_queue.ssound_entries);
+        DM2_V1_SoundSsoundEntry *entries_before =
+            (DM2_V1_SoundSsoundEntry *)malloc(entries_bytes);
+        if (entries_before) {
+            memcpy(entries_before, rt->sound_queue.ssound_entries,
+                   entries_bytes);
+            if (!dm2_runtime_queue_door_collision_noise(
+                    rt, map, x, y, DM2_GDAT_CATEGORY_DOORS,
+                    reached_target ? 0x8f : 0x8e, 0xfe, 0xff,
+                    0x5f, 0x80,
+                    receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
+                    source_index)) {
+                rt->sound_queue = sound_before;
+                memcpy(sound_before.ssound_entries, entries_before,
+                       entries_bytes);
+                rt->timer_queue = timers_before;
+            }
+            free(entries_before);
+        }
+    }
     if (reached_target) {
         door_attributes &= (uint16_t)~0x0400u;
     } else {
