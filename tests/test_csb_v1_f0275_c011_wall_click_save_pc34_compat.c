@@ -343,6 +343,76 @@ static void test_c003_matches_hand_type_and_revert(void)
           "C003 suppresses a matching hand type when RevertEffect is set");
 }
 
+static void test_reverted_object_sensors_match_empty_hand_sentinel(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "non-reverted C003 stays inactive for the empty-hand sentinel");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "RevertEffect C003 triggers for the source empty-hand type sentinel");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 4u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xfffeu &&
+              profile.timeline_queue.eventCount == 1,
+          "RevertEffect C004 triggers empty-handed without removing an object");
+}
+
+static void test_reverted_c011_and_c017_work_without_hand_object(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu,
+          "RevertEffect C011 triggers for an empty hand without consuming one");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 17u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1 &&
+              read_le16(raw, 66) == (uint16_t)(3u << 10) &&
+              read_le16(raw, 68) == 0xfffeu &&
+              read_le16(raw, 100) == 0xffffu &&
+              read_le16(raw, 108) == 0xfffeu,
+          "RevertEffect C017 removes its sensor and triggers without a hand object");
+}
+
 static void test_c001_hold_does_not_trigger(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -515,6 +585,8 @@ int main(void)
     test_c002_uses_hand_occupancy_and_revert_only();
     test_c001_hold_does_not_trigger();
     test_c003_matches_hand_type_and_revert();
+    test_reverted_object_sensors_match_empty_hand_sentinel();
+    test_reverted_c011_and_c017_work_without_hand_object();
     test_c004_removes_matching_hand_object();
     test_c001_ignores_objects_in_other_wall_cells();
     test_c001_triggers_even_with_object_on_clicked_cell();

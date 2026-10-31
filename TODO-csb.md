@@ -14,6 +14,16 @@ to every sensor type. Focused regressions verify ordered dispatch, C001 and
 C002 semantics, and the Thing cell bit layout. Other F0275 sensor types,
 editions, platforms, and original-media outcomes remain open.
 
+2026-10-31 ReDMCSB F0275 reverted object sensors with an empty hand:
+`OBJECT.C:F0032` returns `C0xFFFF_ICON_NONE` (`-1`) for the empty-hand Thing,
+and `MOVESENS.C:1412-1414` compares that value with Sensor.Data before applying
+RevertEffect. Therefore reverted C003/C004/C011/C017 sensors can trigger while
+the leader's hand is empty. Firestaff now preserves that predicate, avoids
+removing an absent hand object, and still applies C017's sensor removal. The
+focused CSB F0275 regression passes 24 assertions. This is PC34 runtime
+coverage; Atari ST, Amiga, FM Towns, other editions, and original-media sensor
+outcomes remain open.
+
 2026-10-31 CSB Atari ST authentic campaign regression: the local
 `csb_v1_atari_stx_native_cli_boot` CTest passed (199.49 s) using the installed
 original Atari ST STX and shared CSB media root. It verified the native title

@@ -12533,14 +12533,15 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             break;
         case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
             /* MOVESENS.C:1412-1414 compares hand type with Sensor.Data and
-             * applies RevertEffect; objects already on the wall are ignored. */
-            trigger = (object_type >= 0 &&
-                       ((sensor_data == object_type) !=
-                        (int)((flags_word >> 5) & 0x01u)));
+             * applies RevertEffect; F0032 returns -1 for an empty hand, so a
+             * reverted sensor triggers when that sentinel does not match
+             * Sensor.Data. Objects on the wall are ignored. */
+            trigger = ((sensor_data == object_type) !=
+                       (int)((flags_word >> 5) & 0x01u));
             break;
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE:
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR:
-            if (!leader_hand_thing ||
+            if ((object_type >= 0 && !leader_hand_thing) ||
                 csb_v1_runtime_has_later_wall_cell_sensor(
                     dungeon,
                     (uint16_t)thing,
@@ -12548,28 +12549,26 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = (object_type >= 0 &&
-                       ((sensor_data == object_type) !=
-                        (int)((flags_word >> 5) & 0x01u)));
+            trigger = ((sensor_data == object_type) !=
+                       (int)((flags_word >> 5) & 0x01u));
+            if (object_type >= 0) storage_action = 3;
             if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
                 rotate_after = 1;
             } else if (sensor_type ==
                        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
                 remove_current_sensor = 1;
             }
-            storage_action = 3;
             break;
         case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
             /* MOVESENS.C F0275 C004 consumes a matching hand object.
              * C011/C017 alone require the final same-cell sensor. */
-            if (!leader_hand_thing) {
+            if (object_type >= 0 && !leader_hand_thing) {
                 trigger = 0;
                 break;
             }
-            trigger = (object_type >= 0 &&
-                       ((sensor_data == object_type) !=
-                        (int)((flags_word >> 5) & 0x01u)));
-            storage_action = 3;
+            trigger = ((sensor_data == object_type) !=
+                       (int)((flags_word >> 5) & 0x01u));
+            if (object_type >= 0) storage_action = 3;
             break;
         case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
             if (!leader_hand_thing ||
