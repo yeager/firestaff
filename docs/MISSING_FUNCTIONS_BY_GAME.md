@@ -165,12 +165,14 @@ requirements above.
 - **Structure1F/VDP1:** several material, texture/palette, and replay gates
   remain capture- or host-route-dependent.
 - **VDP2 NBG1 tilemap:** corrected Saturn word/byte address and character-stride
-  math was merged in PR #19. A frame-239 capture-only plane decoder now records
-  the 40×28 visible 8bpp page. The authentic raw-snapshot test decodes 148
-  nontransparent samples, all within eight RGB levels of the retained Ymir
-  screenshot (maximum error seven). A capture-only VDP1/VDP2 stack now also
-  matches all 286,720 doubled screenshot samples exactly for this frame, using
-  its hash-pinned VDP1 FBS and the Ymir software renderer's priority tie rule.
+  math was merged in PR #19. The bounded capture decoder now reads both 4bpp and
+  8bpp NBG1 tilemaps. For the authentic Japanese MAPD pass at VDP1 frame 891 /
+  VDP2 serial 1280, the hash-pinned raw-snapshot regression accepts the observed
+  `BGON=0x0002`, `CHCTLA=0x0013`, `MAP1A/B=0x1717` state and decodes all 1,120
+  visible cells as a 40×28 4bpp plane (71,680 written pixels, no transparent
+  pixels). This verifies an isolated captured NBG1 layer, not final screen
+  composition or retail source ownership. The separate frame-239 8bpp plane
+  comparison and exact doubled-screenshot stack match remain frame-specific.
   Arbitrary-frame composition, retail asset ownership, text/page mapping,
   placement, and production rendering remain unresolved.
 - **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
