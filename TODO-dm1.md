@@ -314,6 +314,13 @@ startup handoff and first-frame receipts, and verified the archive remained
 unchanged. SDL dummy does not establish native display or physical-input
 parity.
 
+The matching French v1.3 no-game route,
+`m12_main_menu_dm1-atari-st-13_runtime_real_media`, also passed on the same
+current-source build in 91.26 seconds against
+`Dungeon-Master_Atari-ST_FR_Version-13.zip`. It reached the first Hall runtime
+and verified the original archive remained unchanged. This verifies the
+named M12 route only; native display and physical-input parity remain open.
+
 2026-10-28 authentic Amiga 2.0 menu pacing retest: the updated
 `dm1_v1_amiga_v20_archive_cli_boot` passed against the installed original
 ZIP -> ZIP -> ADF preservation archive using the fast-dev build. It covers
