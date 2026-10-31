@@ -46,9 +46,11 @@ int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
                                 int index,
                                 DM2_V1_MacResourceTypeReceipt *out_receipt);
 
-/* Read the original Macintosh CD image contained in a ZIP without creating
- * a mounted or extracted game-data directory.  The returned forks are owned
- * by the caller and must be freed with dm2_v1_mac_media_free(). */
+/* Read original Macintosh media from a ZIP. Supports either the retail CUE
+ * plus raw CD image, or a ZIP repack of authentic extracted HFS forks (with
+ * AppleDouble sidecars retained for resource forks). No files are mounted or
+ * extracted to disk. Returned forks are caller-owned and must be freed with
+ * dm2_v1_mac_media_free(). */
 typedef struct {
     uint8_t *graphics;
     size_t graphics_size;

@@ -152,9 +152,7 @@ def instrument(root: Path) -> None:
     replace_once(
         root,
         "src/pce/huc6280.h",
-        "\t const uint16 reader_pc = GetRegister(GSREG_PC);\n"
         "\t const uint8 reader_mpr = MPR[reader_pc >> 13];\n",
-        "\t const uint16 reader_pc = GetRegister(GSREG_PC);\n"
         "\t const uint8 reader_mpr = MPR[reader_pc >> 13];\n"
         "\t if((address >= 0x77DC && address <= 0x77DD) ||\n"
         "\t    (address >= 0x00C5 && address <= 0x00CA) ||\n"

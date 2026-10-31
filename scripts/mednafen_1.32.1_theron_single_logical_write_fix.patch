@@ -1,27 +1,23 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -482,3 +482,11 @@
-  TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
-                                      writer_physical_pc);
-+	 TheronPCECDTraceMainRAMProvenanceWrite(address, physical_address, V,
-+	                                       GetRegister(GSREG_PC),
-+	                                       (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                       (GetRegister(GSREG_PC) & 0x1FFF));
-+	 TheronPCECDTraceRecordWatchWrite(address, physical_address, V,
-+	                                  GetRegister(GSREG_PC),
-+	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                  (GetRegister(GSREG_PC) & 0x1FFF));
- 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
-@@ -500,6 +508,14 @@
- 	  TheronPCECDTraceMainRAMConsumerWrite(
- 	   address & 0x1FFFu, address, data, writer_pc, writer_physical_pc);
- 	 }
-+	 TheronPCECDTraceMainRAMProvenanceWrite(address & 0x1FFFu, address, data,
-+	                                        GetRegister(GSREG_PC),
-+	                                        (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                        (GetRegister(GSREG_PC) & 0x1FFF));
-+	 TheronPCECDTraceRecordWatchWrite(address & 0x1FFFu, address, data,
-+	                                  GetRegister(GSREG_PC),
-+	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                  (GetRegister(GSREG_PC) & 0x1FFF));
- 	}
+@@ -489,2 +489,6 @@
+FIRESTAFF_PATCH_TAB_CONTEXT  TheronPCECDTraceMainRAMConsumerWrite(
+FIRESTAFF_PATCH_TAB_CONTEXT   address, physical_address, V, writer_pc, writer_physical_pc);
++          TheronPCECDTraceMainRAMProvenanceWrite(address, physical_address, V,
++                                                 writer_pc, writer_physical_pc);
++          TheronPCECDTraceRecordWatchWrite(address, physical_address, V,
++                                           writer_pc, writer_physical_pc);
+@@ -499,1 +501,12 @@
+-	 WriteMap[(address >> 13) & 0xFF](address, data);
++         if(address >= 0x1f0000 && address < 0x1f8000)
++         {
++          const uint16 writer_pc = GetRegister(GSREG_PC);
++          const uint8 writer_mpr = MPR[writer_pc >> 13];
++          const uint32 writer_physical_pc =
++           (writer_mpr << 13) | (writer_pc & 0x1FFF);
++          TheronPCECDTraceMainRAMProvenanceWrite(address & 0x1FFFu, address, data,
++                                                 writer_pc, writer_physical_pc);
++          TheronPCECDTraceRecordWatchWrite(address & 0x1FFFu, address, data,
++                                           writer_pc, writer_physical_pc);
++         }
++         WriteMap[(address >> 13) & 0xFF](address, data);

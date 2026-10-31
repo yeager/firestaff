@@ -5947,6 +5947,8 @@ static int m11_play_dm1_amiga_swsh_if_available(
     int skipSwoosh) {
     int versionIndex;
     const M12_AssetVersionStatus* version;
+    uint8_t* graphics = NULL;
+    size_t graphicsBytes = 0U;
     char swooshPath[FSP_PATH_MAX];
     uint8_t* executable = NULL;
     size_t executableBytes = 0U;
@@ -5984,30 +5986,37 @@ static int m11_play_dm1_amiga_swsh_if_available(
                                           (size_t)versionIndex);
     if (!version || strstr(version->matchedPath, "[HD]") != NULL) return -1;
     if (skipSwoosh) return 1;
+    if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
+        !asset_read_path_alloc(version->matchedPath, &graphics,
+                               &graphicsBytes) ||
+        !asset_read_path_alloc(swooshPath, &executable,
+                               &executableBytes)) {
+        goto cleanup;
+    }
     if (strcmp(version->versionId, "amiga20-en") == 0 ||
         strcmp(version->versionId, "amiga20-fr") == 0 ||
-        strcmp(version->versionId, "amiga20-de") == 0 ||
         strcmp(version->versionId, "amiga21-en") == 0) {
-        {
-            int read_ok = m11_dm1_amiga_read_original_disk(
-                version, &originalDisk, &originalDiskBytes);
-            int valid = read_ok && dm1_v1_amiga_original_disk_check(
-                originalDisk, originalDiskBytes, 1);
-            if (!valid) {
-                if (g_m11_debug_startup_detail) {
-                    fprintf(stderr, "firestaff: startup-media-rejected game=dm1 platform=amiga phase=original-disk reason=F0906-F0907 read=%d bytes=%zu\n",
-                            read_ok, originalDiskBytes);
-                }
-                free(originalDisk);
-                return 0;
+        /* ReDMCSB SWSH.C MEDIA441 enables F0906/F0907 only for A20E,
+         * A20F and A21E. A20G (the German A20 package, also sharing media
+         * with A22G) does not compile that original-disk gate. */
+        int read_ok = m11_dm1_amiga_read_original_disk(
+            version, &originalDisk, &originalDiskBytes);
+        int valid = read_ok && dm1_v1_amiga_original_disk_check(
+            originalDisk, originalDiskBytes, 1);
+        if (!valid) {
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr, "firestaff: startup-media-rejected game=dm1 platform=amiga phase=original-disk reason=F0906-F0907 read=%d bytes=%zu\n",
+                        read_ok, originalDiskBytes);
             }
+            goto cleanup;
         }
         free(originalDisk);
+        originalDisk = NULL;
+    } else if (strcmp(version->versionId, "amiga20-de") == 0 &&
+               g_m11_debug_startup_detail) {
+        fprintf(stderr, "firestaff: startup-media-check-skipped game=dm1 edition=amiga20-de check=F0906-F0907 reason=not-compiled-for-A20G-A22G\n");
     }
-    if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
-        !asset_read_path_alloc(swooshPath, &executable,
-                                       &executableBytes) ||
-        !executable ||
+    if (!executable ||
         !dm1_v1_amiga_swsh_parse(executable, executableBytes, &assets)) {
         goto cleanup;
     }
@@ -6142,7 +6151,9 @@ static int m11_play_dm1_amiga_swsh_if_available(
 cleanup:
     g_m11_intro_local_audio = NULL;
     if (audioInitialized) M11_Audio_Shutdown(&audio);
+    free(graphics);
     free(executable);
+    free(originalDisk);
     free(indexed);
     free(rgba);
     return completed;

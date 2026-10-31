@@ -2,6 +2,15 @@
 
 ## Authenticated startup handoff (2026-08-08)
 
+**Native status (2026-10-31):** Firestaff's bounded JP fresh-start and US
+Continue routes consume authentic Track 02 data in the native C/SDL runtime.
+Continue reaches dungeon 2 with its authentic Ak-Tu-Ba-complete BRAM; the JP
+fresh start reaches a source-verified loaded dungeon. These routes do not
+prove the original game-owned cold handoff or complete gameplay parity. The
+current evidence boundary and next joins are summarized in
+[`THERON_CAPTURE_READINESS.md`](../theron/THERON_CAPTURE_READINESS.md) and
+[`TODO-theron.md`](../../TODO-theron.md).
+
 Firestaff verifies the US CUE/Track 02 and System Card boundaries, then records
 the original media reads required for startup. This proves the startup/media
 transport only; it does not promote the Track 02 payload to semantic level,

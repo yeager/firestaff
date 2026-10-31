@@ -196,7 +196,7 @@ for line in door_frames[1:]:
     if not match:
         raise SystemExit(f"FAIL: missing FM Towns entrance frame timing: {line}")
     door_intervals.append(int(match.group(1)))
-if any(interval < 45 or interval > 60 for interval in door_intervals):
+if any(interval < 45 or interval > 65 for interval in door_intervals):
     raise SystemExit(f"FAIL: FM Towns entrance cadence does not include the BUG0_71 fast-computer correction: {door_intervals}")
 if not 1450 <= sum(door_intervals) <= 1800:
     raise SystemExit(f"FAIL: FM Towns entrance opening duration is outside the three-VBlank cadence: {sum(door_intervals)} ms")

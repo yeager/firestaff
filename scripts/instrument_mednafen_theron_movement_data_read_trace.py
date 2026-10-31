@@ -42,8 +42,18 @@ def main() -> None:
         "\t if(!TheronPCECDInstructionFetch)\n"
         "\t  TheronPCECDTraceMovementDataRead(address, physical_address, ret, reader_pc,\n"
         "\t                                     (reader_mpr << 13) | (reader_pc & 0x1FFF));\n")
+    rdop_anchor = "\tINLINE uint8 RdOp(unsigned int address)\n\t{\n\t return RdMem(address);\n\t}\n"
+    if huc.read_text(encoding="utf-8").count(rdop_anchor) == 0:
+        rdop_anchor = (
+            "\tINLINE uint8 RdOp(unsigned int address)\n\t{\n"
+            "\t const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;\n"
+            "\t TheronPCEVDCInstructionFetchInProgress = true;\n"
+            "\t const uint8 ret = RdMem(address);\n"
+            "\t TheronPCEVDCInstructionFetchInProgress = previous_fetch;\n"
+            "\t return ret;\n\t}\n"
+        )
     replace_once(huc,
-        "\tINLINE uint8 RdOp(unsigned int address)\n\t{\n\t return RdMem(address);\n\t}\n",
+        rdop_anchor,
         "\tINLINE uint8 RdOp(unsigned int address)\n\t{\n"
         "\t const bool previous_fetch = TheronPCECDInstructionFetch;\n"
         "\t TheronPCECDInstructionFetch = true;\n"

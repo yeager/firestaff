@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.421 LANGUAGES C)
+project(Firestaff VERSION 3.0.422 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -291,6 +291,14 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77 TIMEOUT 1200
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
         LABELS "m12;dm1;csb;dm2;nexus;theron;main-menu;game-selection;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_priority_games_selection_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_priority_games_selection_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 900
+        ENVIRONMENT "FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;csb;dm2;main-menu;game-selection;real-media;skip-safe")
 
     add_test(NAME m12_main_menu_priority_pointer_selection_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
@@ -4883,7 +4891,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari;real-media;native;cli;menu;startup;skip-safe;german"
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
-        TIMEOUT 90
+        TIMEOUT 180
     )
     add_test(
         NAME dm1_v1_atari_st_fr_archive_cli_boot

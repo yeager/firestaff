@@ -428,7 +428,7 @@ fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
-pce_input_read frame=9600 cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
+pce_input_read frame=9600 cpu_pc=e4c8 register=1000 raw=0000 sel=0 clr=0 index=0 value=07
 THERON_SYSTEM_CARD_INPUT
 system_card_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/system-card-only.trace" run@9600:90 131072)
@@ -460,9 +460,9 @@ THERON_SAME_FRAME_INPUT
 cat >"$input_test_dir/legacy-pce-result.trace" <<'THERON_LEGACY_PCE_INPUT'
 scripted_pce_input_event frame=60 key=up mask=0010 hold=60
 scripted_pce_input_apply frame=60 physical=0000 scripted=0010 combined=0010
-pce_input_read frame=60 cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
-pce_input_port0 raw=0010
-pce_input_result frame=60 cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+pce_input_read frame=60 cpu_pc=44ca register=1000 raw=0000 sel=1 clr=0 index=0
+pce_input_port0 raw=0000
+pce_input_result frame=60 cpu_pc=44ca register=1000 raw=0000 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_INPUT
 legacy_pce_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/legacy-pce-result.trace" up@60:60 1)
@@ -506,9 +506,9 @@ fi
 cat >"$input_test_dir/legacy-mirrored-port.trace" <<'THERON_LEGACY_MIRRORED_PORT'
 scripted_pce_input_event frame=61 key=run mask=0008 hold=2
 scripted_pce_input_apply frame=61 physical=0000 scripted=0008 combined=0008
-pce_input_read frame=61 cpu_pc=42ab register=13ff raw=0008 sel=0 clr=0 index=0
-pce_input_port0 raw=0008
-pce_input_result frame=61 cpu_pc=42ab register=13ff raw=0008 value=07 sel=0 clr=0 index=0 sp=f2 stack=4b436d74
+pce_input_read frame=61 cpu_pc=42ab register=13ff raw=0000 sel=0 clr=0 index=0
+pce_input_port0 raw=0000
+pce_input_result frame=61 cpu_pc=42ab register=13ff raw=0000 value=07 sel=0 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_MIRRORED_PORT
 legacy_mirrored_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/legacy-mirrored-port.trace" run@61:2 4)
@@ -632,7 +632,7 @@ fi
 cat >"$input_test_dir/direction-readback.trace" <<'THERON_DIRECTION_READBACK'
 scripted_pce_input_event frame=45 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=45 physical=0000 scripted=0010 combined=0010
-pce_input_read frame=45 cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=0 value=0e
+pce_input_read frame=45 cpu_pc=8123 register=1000 raw=0000 sel=1 clr=0 index=0 value=0e
 THERON_DIRECTION_READBACK
 direction_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/direction-readback.trace" up@45 1)
@@ -1113,7 +1113,7 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'CXXFLAGS="${CXXFLAGS:--O2}" ./configure' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" init --quiet' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" add --all --force' "$build_script" ||
-   ! grep -Fq 'apply --recount --ignore-space-change' "$build_script" ||
+   ! grep -Fq 'apply --recount --whitespace=nowarn' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_grab_trace.patch' "$build_script" ||
@@ -1126,7 +1126,7 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
     exit 1
 fi
 if [[ ! -f "$consumer_read_patch" ]] ||
-   ! grep -Fq '@@ -407,11 +409,30 @@' "$consumer_read_patch" ||
+   ! grep -Fq '@@ -407,11 +409,37 @@' "$consumer_read_patch" ||
    ! grep -Fq 'const uint16 reader_pc = GetRegister(GSREG_PC);' "$consumer_read_patch"; then
     printf 'FAIL: main-RAM consumer patch must retain its applicable hunk span and reader context\n' >&2
     exit 1
@@ -1201,7 +1201,7 @@ if ! grep -Fq 'pce_fast_movement_context_trace="${trace}.pce-fast-movement-conte
     exit 1
 fi
 if [[ ! -f "$ram_provenance_patch" ]] ||
-   ! grep -Fq '@@ -420,8 +428,12 @@' "$ram_provenance_patch" ||
+   ! grep -Fq '@@ -420,11 +428,15 @@' "$ram_provenance_patch" ||
    ! grep -Fq 'const uint8 reader_mpr = MPR[reader_pc >> 13];' "$ram_provenance_patch"; then
     printf 'FAIL: RAM-provenance patch must follow the consumer-reader patch context\n' >&2
     exit 1
@@ -1920,7 +1920,7 @@ if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerRead' "$consumer_read_patch" ||
    ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDMainRAMConsumerTraceLimit' "$consumer_read_patch" ||
-   ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x' "$consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x instruction_pc=%04x instruction_physical_pc=%06x instruction_opcode=%02x a=%02x x=%02x y=%02x sp=%02x p=%02x' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_target_write sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
    grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
