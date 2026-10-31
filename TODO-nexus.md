@@ -49,14 +49,17 @@ character-address rule. This fixes the byte fetch for that layer path; NBG1
 retail source ownership and whole-screen VDP2/HUD composition remain open. See
 [`docs/nexus_vdp2_nbg1_8bpp_stride.md`](docs/nexus_vdp2_nbg1_8bpp_stride.md).
 
-## 2026-10-30 — NBG2 capture plane
+## 2026-10-30 — NBG2 capture plane and palette handoff
 
-A hash-pinned Ymir frame-239 test now decodes the authentic NBG2 8bpp map page
-at byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
+A hash-pinned Ymir frame-239 test decodes the authentic NBG2 8bpp map page at
+byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
 nonzero pixels; 9,258 CRAM colors match the native screenshot sample within
-eight levels. This remains a capture-only layer measurement; full VDP2 layer
-priority/color calculation and named retail source ownership are unresolved.
-See [`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
+eight levels. The decoder and priority stack now apply the NBG2 PND palette
+number and RGB555 CRAM wrap. Rerun the authentic frame-239 plane and full-stack
+comparisons against this revision before treating the palette handoff as
+verified. This remains a capture-only measurement; full VDP2 color calculation
+and named retail source ownership are unresolved. See
+[`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
 
 The same frame also verifies the existing NBG0 8bpp bitmap lane at VRAM byte
 offset zero: 3,954 of 3,968 nontransparent CRAM samples match within eight
