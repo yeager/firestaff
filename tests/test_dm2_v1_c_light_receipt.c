@@ -21,7 +21,7 @@ static void test_class2_db4plus_chain_receipt(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader loader;
     DM2_V1_CLightStoneRoomReceipt room;
-    uint8_t raw[64] = {0};
+    uint8_t raw[80] = {0};
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&loader, 0, sizeof(loader));
@@ -40,6 +40,8 @@ static void test_class2_db4plus_chain_receipt(void)
     dungeon.thing_type_counts[0] = 1;
     dungeon.thing_data_bases[1] = 40;
     dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[2] = 48;
+    dungeon.thing_type_counts[2] = 2;
     dungeon.thing_data_bases[4] = 16;
     dungeon.thing_type_counts[4] = 2;
     loader.loaded = 1;
@@ -82,7 +84,18 @@ static void test_class2_db4plus_chain_receipt(void)
 
     raw[3] = (uint8_t)((2u << 10) | 1u);
     raw[4] = (uint8_t)(((2u << 10) | 1u) >> 8);
-    CHECK("class-2 DB2 prefix stays closed without ornament evidence",
+    raw[52] = 1u; raw[53] = 0x10u; /* DB2 w0 links to DB4 index 1. */
+    raw[54] = 0x92u; raw[55] = 0u; /* C02, ext usage 0, ornament 0x12. */
+    CHECK("class-2 DB2 ext-0 keeps its static ornament and DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0x12u &&
+              room.ceiling_ornament_word == 0x0012u &&
+              room.ceiling_animation_frame == 0u);
+
+    raw[55] = 2u; /* ext usage 2 requires animated-frame evidence. */
+    CHECK("class-2 DB2 animation branch remains closed without tick evidence",
           !dm2_v1_dungeon_c_light_stone_room_receipt(
               &dungeon, &loader, 0, 0, 0, 0u, &room));
 }

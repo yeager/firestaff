@@ -6722,6 +6722,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     unsigned raw_class;
     unsigned first_type = DM2_THING_TYPE_COUNT;
     int accepted = 0;
+    int class2_ornament_found = 0;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -6744,7 +6745,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
             if ((raw & 0x08) != 0 && first >= 0 &&
                 first != (int)DM2_THING_END_MARKER &&
                 first != (int)DM2_THING_NULL_MARKER &&
-                (first_type <= 1u || first_type >= 4u)) {
+                (first_type <= 2u || first_type >= 4u)) {
                 accepted = 1;
             }
         } else if (raw_class == 5u && (raw & 0x0c) != 0x0c &&
@@ -6760,13 +6761,14 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
             ? DM2_THING_END_MARKER : (uint16_t)first;
         unsigned length = 0u;
 
-        /* skproject c_gui_vp.cpp:2876-2903 and 3082-3086: DB0/DB1
-         * prefix records do not add ornament state. The source skips all
-         * DB0-DB3 links, then preserves the first DB4+ root for c_light's
-         * creature and DBE/DBF scans. Keep this bounded slice fail-closed
-         * when DB2/DB3 ornament or animation selection is encountered. */
+        /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
+         * records do not add ornament state. DB2 ext-usage zero sets a
+         * static ceiling ornament; other DB2 animation/state selectors and
+         * DB3 actuator branches remain closed. The source skips all DB0-DB3
+         * links, then preserves the first DB4+ root for c_light's creature
+         * and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
-            (((summary_root >> 10) & 0x0fu) <= 1u)) {
+            (((summary_root >> 10) & 0x0fu) <= 2u)) {
             uint16_t link = summary_root;
             if (!dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
             while (link != DM2_THING_END_MARKER) {
@@ -6775,18 +6777,32 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                 int type = (int)((link >> 10) & 0x0fu);
                 int size = 0;
                 if (type >= 4) break;
-                if (type > 1 || ++length > 256u) return 0;
+                if (type > 2 || ++length > 256u) return 0;
                 record = dm2_v1_dungeon_get_thing_record(
                     d, link, &type, NULL, &size);
-                if (!record || type > 1 || size < 2) return 0;
+                if (!record || type > 2 || size < 2) return 0;
+                if (type == 2) {
+                    uint16_t word2;
+                    if (size < 4) return 0;
+                    word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
+                    if ((word2 & 0x0006u) == 0x0002u) {
+                        unsigned ext_usage = (word2 >> 8) & 0x1fu;
+                        if (ext_usage != 0u) return 0;
+                        out->ceiling_ornament_index =
+                            (uint8_t)(word2 >> 3);
+                        out->ceiling_ornament_word =
+                            out->ceiling_ornament_index;
+                        out->ceiling_animation_frame = 0u;
+                        class2_ornament_found = 1;
+                    }
+                }
                 {
                     int next_link = dm2_v1_dungeon_get_next_thing(d, link);
                     if (next_link < 0 || next_link == (int)link) return 0;
                     next = (uint16_t)next_link;
                 }
                 if (next != DM2_THING_END_MARKER &&
-                    (((next >> 10) & 0x0fu) == 2u ||
-                     ((next >> 10) & 0x0fu) == 3u)) return 0;
+                    ((next >> 10) & 0x0fu) == 3u) return 0;
                 link = next;
             }
             summary_root = link;
@@ -6800,8 +6816,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
             summary_root == DM2_THING_END_MARKER ||
                 first == (int)DM2_THING_NULL_MARKER
                 ? DM2_THING_NULL_MARKER : summary_root;
-        out->ceiling_ornament_word = 0x00ffu;
-        out->ceiling_ornament_index = 0xffu;
+        if (!class2_ornament_found) {
+            out->ceiling_ornament_word = 0x00ffu;
+            out->ceiling_ornament_index = 0xffu;
+        }
         out->valid = 1;
         return 1;
     }
