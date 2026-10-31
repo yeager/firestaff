@@ -669,6 +669,12 @@ static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
 static DM2_V1_RuntimeItemRenderReceipt g_dm2_last_item_render;
+static DM2_V1_ViewportItemMaterialTrace
+    g_dm2_last_item_material_traces[DM2_MAX_PRESENTED_ITEM_MATERIALS];
+static int g_dm2_last_item_material_trace_count;
+static DM2_V1_RuntimeHudMaterialTrace
+    g_dm2_last_hud_material_traces[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
+static int g_dm2_last_hud_material_trace_count;
 static int g_dm2_last_asset_item_count = 0;
 static int g_dm2_last_fallback_item_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
@@ -691,6 +697,8 @@ static DM2_V1_RuntimeCreatureDamageReceipt g_dm2_last_creature_damage;
 static DM2_V1_RuntimeWieldAttackReceipt g_dm2_last_wield_attack;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
+static DM2_V1_HudPartyState g_dm2_last_hud_party;
+static int g_dm2_last_hud_party_valid;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
@@ -12298,7 +12306,11 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
 {
     DM2_V1_HudPartyState hud;
 
-    if (!rt || !viewport || !rt->session_snapshot_valid) return;
+    if (!rt || !viewport || !rt->session_snapshot_valid) {
+        memset(&g_dm2_last_hud_party, 0, sizeof(g_dm2_last_hud_party));
+        g_dm2_last_hud_party_valid = 0;
+        return;
+    }
 
     /* skproject/SKWIN keeps HP, stamina, mana, leader, and champion names in
      * glbChampionSquad plus the selected leader field before the T560 HUD
@@ -12323,6 +12335,17 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
         rt->session_snapshot.leader_index < hud.champion_count &&
         party_direction >= 0 && party_direction <= 3;
+    hud.amiga_squad_route_valid =
+        rt->boot && rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+        !rt->outdoor && rt->source_party_valid &&
+        rt->source_curacthero == 0 &&
+        rt->source_party.heros_in_party == hud.champion_count &&
+        rt->source_party.heros_in_party > 0 &&
+        rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
+        party_direction >= 0 && party_direction <= 3;
+    hud.amiga_party_direction = (uint8_t)(party_direction & 3);
+    hud.amiga_invisibility_source_bound = hud.amiga_squad_route_valid;
+    hud.amiga_invisibility = rt->source_savegames1[2];
     hud.towns_selected_hero_source_bound =
         hud.towns_squad_route_valid && rt->source_curacthero > 0 &&
         rt->source_curacthero <= rt->source_party.heros_in_party;
@@ -12440,6 +12463,19 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
                 dst->portrait_type_source_bound = 1;
             }
         }
+        if (hud.amiga_squad_route_valid &&
+            slot < rt->source_party.heros_in_party) {
+            const DM2_V1_Hero *source_hero = &rt->source_party.hero[slot];
+            dst->occupied = 1;
+            if (source_hero->partypos >= 0 && source_hero->partypos <= 3) {
+                dst->amiga_party_position = (uint8_t)source_hero->partypos;
+                dst->amiga_party_position_source_bound = 1;
+            }
+            if (source_hero->absdir >= 0 && source_hero->absdir <= 3) {
+                dst->amiga_absdir = (uint8_t)source_hero->absdir;
+                dst->amiga_absdir_source_bound = 1;
+            }
+        }
         if (rt->source_party_valid &&
             slot < rt->source_party.heros_in_party) {
             dst->current_hp = rt->source_party.hero[slot].curHP;
@@ -12464,6 +12500,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
 
     }
     dm2_v1_viewport_set_hud_party(viewport, &hud);
+    g_dm2_last_hud_party = hud;
+    g_dm2_last_hud_party_valid = 1;
 }
 
 /* ReDMCSB/skproject SkWinCore.cpp::UPDATE_RIGHT_PANEL redraws both hand
@@ -12499,8 +12537,8 @@ static void dm2_runtime_bind_source_squad_hands(
             rt->session_snapshot.original_champion_records[player];
         uint8_t party_position = raw[0x1d];
         if (party_position > 3u ||
-            !viewport->hud_party.champions[player].towns_current_hp_source_bound ||
-            viewport->hud_party.champions[player].towns_current_hp <= 0) {
+            !viewport->hud_party.champions[player].current_hp_source_bound ||
+            viewport->hud_party.champions[player].current_hp <= 0) {
             continue;
         }
         for (int hand = 0; hand < 2; ++hand) {
@@ -12956,6 +12994,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
+    memset(g_dm2_last_item_material_traces, 0,
+           sizeof(g_dm2_last_item_material_traces));
+    g_dm2_last_item_material_trace_count = 0;
+    memset(g_dm2_last_hud_material_traces, 0,
+           sizeof(g_dm2_last_hud_material_traces));
+    g_dm2_last_hud_material_trace_count = 0;
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
@@ -13350,6 +13394,43 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
             rt->boot, rt->outdoor, &hud_material_plan);
     }
+    if (rt->boot && rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+        viewport.hud_party_valid && !rt->outdoor) {
+        DM2_V1_BootExpandedRectReceipt squad_panel_rect;
+        DM2_V1_ViewportRect destination;
+        const DM2_V1_AssetLoader *loader =
+            dm2_v1_boot_asset_loader(rt->boot);
+        memset(&squad_panel_rect, 0, sizeof(squad_panel_rect));
+        if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+            !dm2_v1_asset_loader_uses_physical_16_color_palette(loader) ||
+            !rt->gdat_scene_material_plan.valid ||
+            !dm2_v1_boot_query_expanded_rect_receipt(
+                rt->boot, 47u, &squad_panel_rect) ||
+            !squad_panel_rect.valid || !squad_panel_rect.receipt_hash ||
+            (squad_panel_rect.rect.x & 1) != 0 ||
+            (squad_panel_rect.rect.y & 1) != 0 ||
+            squad_panel_rect.rect.w <= 0 || squad_panel_rect.rect.h <= 0) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
+        } else {
+            /* SKProject SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE
+             * draws GRAPHICSSET/<current style>/0xF5 at RECT_47 before the
+             * dynamic squad icons. Replace the generic portrait-panel guess
+             * with that authenticated Amiga image and placement. */
+            destination = (DM2_V1_ViewportRect){
+                squad_panel_rect.rect.x / 2,
+                squad_panel_rect.rect.y / 2,
+                squad_panel_rect.rect.w,
+                squad_panel_rect.rect.h };
+            if (!dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+                    loader, &hud_material_plan,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
+                    DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    rt->gdat_scene_material_plan.graphicsset, 0xf5,
+                    &destination, 47u, squad_panel_rect.raw4_hash)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
+            }
+        }
+    }
     dm2_v1_viewport_set_gdat_hud_material_plan(
         &viewport, &hud_material_plan);
     if (rt->boot && rt->boot->graphics_dat &&
@@ -13360,6 +13441,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
            rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
           viewport.hud_party_valid && hud_material_plan.valid &&
           hud_material_plan.mac_native_layout) ||
+         (rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+          viewport.hud_party_valid && hud_material_plan.valid &&
+          hud_material_plan.amiga_native_move_arrows) ||
          (viewport.hud_party_valid && hud_material_plan.valid &&
           hud_material_plan.source_native_layout))) {
         dm2_v1_viewport_set_asset_loader(
@@ -13451,6 +13535,39 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         ? hud_material_plan.command_hash : 0u;
     hud_material_plan_command_count = hud_material_plan_consumed
         ? hud_material_plan.command_count : 0;
+    if (hud_material_plan.valid && hud_material_plan.command_count > 0) {
+        int trace_count = hud_material_plan.command_count;
+        if (trace_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            trace_count = DM2_V1_GDAT_HUD_M11_COMMAND_MAX;
+        }
+        for (int i = 0; i < trace_count; ++i) {
+            const DM2_V1_GdatHudM11Command *command =
+                &hud_material_plan.commands[i];
+            DM2_V1_RuntimeHudMaterialTrace *trace =
+                &g_dm2_last_hud_material_traces[i];
+            trace->consumed = hud_material_plan_consumed;
+            trace->kind = command->kind;
+            trace->gdat_category = command->gdat_category;
+            trace->gdat_index = command->gdat_index;
+            trace->gdat_field = command->gdat_field;
+            trace->viewport_gdat_index = command->viewport_gdat_index;
+            trace->width = command->width;
+            trace->height = command->height;
+            trace->destination_rect_id = command->destination_rect_id;
+            trace->source_state_flags = command->source_state_flags;
+            trace->source_transparency_key =
+                command->source_transparency_key;
+            trace->animation_direction = command->animation_direction;
+            trace->animation_frame = command->animation_frame;
+            trace->destination = command->destination;
+            trace->destination_table_hash =
+                command->destination_table_hash;
+            trace->raw_hash = command->raw_hash;
+            trace->decoded_hash = command->decoded_hash;
+            trace->palette_hash = command->palette_hash;
+        }
+        g_dm2_last_hud_material_trace_count = trace_count;
+    }
     dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
@@ -13502,6 +13619,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (!item_material_plan_consumed) {
         item_drawn_material_hash = 0u;
         item_drawn_material_count = 0;
+    } else if (viewport.item_material_trace_count == item_drawn_material_count &&
+               viewport.item_material_trace_count <=
+                   DM2_MAX_PRESENTED_ITEM_MATERIALS) {
+        memcpy(g_dm2_last_item_material_traces,
+               viewport.item_material_traces,
+               (size_t)viewport.item_material_trace_count *
+                   sizeof(g_dm2_last_item_material_traces[0]));
+        g_dm2_last_item_material_trace_count =
+            viewport.item_material_trace_count;
     }
     if (viewport.asset_wall_drawn_count > 0 &&
         viewport.source_materials_required &&
@@ -15232,6 +15358,44 @@ int dm2_v1_runtime_last_item_render_receipt(
         return 0;
     }
     *out_receipt = g_dm2_last_item_render;
+    return 1;
+}
+
+int dm2_v1_runtime_last_item_material_trace_count(void) {
+    return g_dm2_last_item_material_trace_count;
+}
+
+int dm2_v1_runtime_last_item_material_trace(
+    int index, DM2_V1_ViewportItemMaterialTrace *out_trace) {
+    if (!out_trace || index < 0 ||
+        index >= g_dm2_last_item_material_trace_count) {
+        if (out_trace) memset(out_trace, 0, sizeof(*out_trace));
+        return 0;
+    }
+    *out_trace = g_dm2_last_item_material_traces[index];
+    return 1;
+}
+
+int dm2_v1_runtime_last_hud_material_trace_count(void) {
+    return g_dm2_last_hud_material_trace_count;
+}
+
+int dm2_v1_runtime_last_hud_material_trace(
+    int index, DM2_V1_RuntimeHudMaterialTrace *out_trace) {
+    if (!out_trace || index < 0 || index >= g_dm2_last_hud_material_trace_count) {
+        return 0;
+    }
+    *out_trace = g_dm2_last_hud_material_traces[index];
+    return 1;
+}
+
+int dm2_v1_runtime_last_hud_party_state(
+    DM2_V1_HudPartyState *out_party) {
+    if (!out_party || !g_dm2_last_hud_party_valid) {
+        if (out_party) memset(out_party, 0, sizeof(*out_party));
+        return 0;
+    }
+    *out_party = g_dm2_last_hud_party;
     return 1;
 }
 

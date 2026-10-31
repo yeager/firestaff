@@ -1,9 +1,22 @@
 #include "asset_loader_m11.h"
+#include "csb_v1_atari_f0113_fluxcage_blit.h"
+#include "csb_v1_atari_f0113_fluxcage_plan.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static unsigned long long hash_pixels(const unsigned char *pixels, size_t count)
+{
+    unsigned long long hash = 14695981039346656037ull;
+    size_t index;
+    for (index = 0u; index < count; ++index) {
+        hash ^= pixels[index];
+        hash *= 1099511628211ull;
+    }
+    return hash;
+}
 
 int main(int argc, char **argv)
 {
@@ -23,6 +36,184 @@ int main(int argc, char **argv)
     if (!loader.csbAtariSt || loader.graphicCount != 563u) {
         M11_AssetLoader_Shutdown(&loader);
         return 2;
+    }
+    {
+        /* ReDMCSB MEDIA020 G0188 D3L/D2L/D1L/D0L selects mask records
+         * 69..72; the byte widths in G0188 become target pixel widths by
+         * doubling. Decode the actual Atari media and compare those mask
+         * assets with the source dimensions. */
+        static const unsigned int mask_graphics[] = {69u, 70u, 71u, 72u};
+        static const unsigned short mask_dimensions[][2] = {
+            {96u, 51u}, {80u, 71u}, {64u, 111u}, {32u, 136u}
+        };
+        unsigned int field_index;
+        for (field_index = 0u;
+             field_index < sizeof(mask_graphics) / sizeof(mask_graphics[0]);
+             ++field_index) {
+            const unsigned int graphic = mask_graphics[field_index];
+            const unsigned short expected_width = mask_dimensions[field_index][0];
+            const unsigned short expected_height = mask_dimensions[field_index][1];
+            unsigned short width = 0u, height = 0u;
+            const M11_AssetSlot *asset;
+            if (!M11_AssetLoader_QuerySize(&loader, graphic, &width, &height) ||
+                width != expected_width || height != expected_height ||
+                !(asset = M11_AssetLoader_Load(&loader, graphic)) ||
+                !asset->loaded || !asset->pixels || asset->width != expected_width ||
+                asset->height != expected_height) {
+                fprintf(stderr,
+                        "CSB Atari MEDIA020 F0113 mask %u failed authentic %ux%u decode (%ux%u)\n",
+                        graphic, expected_width, expected_height, width, height);
+                M11_AssetLoader_Shutdown(&loader);
+                return 21;
+            }
+        }
+    }
+    {
+        /* C074 is the 32x32 field source in the authenticated Atari bank.
+         * ReDMCSB DEFS.H M076 counts 64 eight-byte/16-pixel source units.
+         * BLITMASK.C F0133 treats lastUnit as an exclusive restart sentinel:
+         * its Atari loop writes the current unit, increments firstUnit, then
+         * compares with lastUnit (lines 222-231). Thus last=64 resets before
+         * reading unit 64; the authentic source needs exactly 64 units. */
+        unsigned short width = 0u, height = 0u;
+        const unsigned int source_units_from_media = 64u;
+        const unsigned int last_unit_base = 63u;
+        const unsigned int last_unit_random_range = 2u;
+        const unsigned int max_last_unit = last_unit_base +
+                                           last_unit_random_range - 1u;
+        const M11_AssetSlot *asset;
+        if (!M11_AssetLoader_QuerySize(&loader, 74u, &width, &height) ||
+            width != 32u || height != 32u ||
+            ((unsigned int)width * height) / 16u != source_units_from_media ||
+            max_last_unit > source_units_from_media ||
+            !(asset = M11_AssetLoader_Load(&loader, 74u)) ||
+            !asset->loaded || !asset->pixels || asset->width != 32u ||
+            asset->height != 32u) {
+            fprintf(stderr,
+                    "CSB Atari C074 authentic F0133 source units invalid (%ux%u)\n",
+                    width, height);
+            M11_AssetLoader_Shutdown(&loader);
+            return 22;
+        }
+    }
+    {
+        /* Compose original C074 with original field masks through the exact
+         * MEDIA020 F0113/F0133/F0132 planner and pixel path. This tests the
+         * source pixel boundary without fabricating dungeon/game state. */
+        static const unsigned short target_squares[] = {1u, 3u};
+        static const unsigned int expected_masks[] = {69u, 0u};
+        static const unsigned int expected_pixel_counts[] = {757u, 1279u};
+        static const unsigned long long expected_hashes[] = {
+            0x85a19ec6443e5fc0ull, 0x8a956c37188746ceull
+        };
+        unsigned int composition_index;
+        for (composition_index = 0u; composition_index < 2u;
+             ++composition_index) {
+            CSB_V1_AtariF0113FluxcageInput input;
+            CSB_V1_AtariF0113FluxcagePlan plan;
+            const M11_AssetSlot *field;
+            const M11_AssetSlot *mask = NULL;
+            unsigned char frame[320u * 200u];
+            unsigned int written_in_clip = 0u;
+            int written;
+            unsigned int y;
+
+            memset(&input, 0, sizeof(input));
+            input.explosion_type = CSB_V1_ATARI_F0113_C050;
+            input.view_square = (int)target_squares[composition_index];
+            input.door_front_view_pass = 2;
+            if (csb_v1_atari_f0113_plan_fluxcage(&input, &plan) !=
+                    CSB_V1_ATARI_F0113_FLUXCAGE_DRAW_FIELD ||
+                plan.graphic_index != 74 ||
+                (composition_index == 0u &&
+                 plan.mask_graphic_index != (int)expected_masks[0]) ||
+                (composition_index == 1u &&
+                 (plan.mask_graphic_index != -1 ||
+                  plan.mask_flip_horizontal))) {
+                fprintf(stderr,
+                        "CSB Atari F0113 real-media composition plan failed at square %u\n",
+                        target_squares[composition_index]);
+                M11_AssetLoader_Shutdown(&loader);
+                return 23;
+            }
+            field = M11_AssetLoader_Load(&loader, 74u);
+            if (expected_masks[composition_index] != 0u) {
+                mask = M11_AssetLoader_Load(&loader,
+                    expected_masks[composition_index]);
+            }
+            if (!field || !field->loaded || !field->pixels ||
+                (expected_masks[composition_index] != 0u &&
+                 (!mask || !mask->loaded || !mask->pixels))) {
+                fprintf(stderr,
+                        "CSB Atari F0113 original media missing for composition\n");
+                M11_AssetLoader_Shutdown(&loader);
+                return 24;
+            }
+            memset(frame, 0xee, sizeof(frame));
+            written = csb_v1_atari_f0113_blit_fluxcage(
+                &plan, field->pixels, field->width, field->height,
+                mask ? mask->pixels : NULL, mask ? mask->width : 0,
+                mask ? mask->height : 0,
+                composition_index == 0u ? 64 : 60, 0, frame, 320, 200,
+                48, 33);
+            if (written <= 0) {
+                fprintf(stderr,
+                        "CSB Atari F0113 original-media composition drew no pixels\n");
+                M11_AssetLoader_Shutdown(&loader);
+                return 25;
+            }
+            for (y = 0u; y < 200u; ++y) {
+                unsigned int x;
+                for (x = 0u; x < 320u; ++x) {
+                    const unsigned char color = frame[y * 320u + x];
+                    const unsigned int in_clip =
+                        x >= 48u + plan.destination_frame[0] &&
+                        x <= 48u + plan.destination_frame[1] &&
+                        y >= 33u + plan.destination_frame[2] &&
+                        y <= 33u + plan.destination_frame[3];
+                    if (!in_clip && color != 0xeeu) {
+                        fprintf(stderr,
+                                "CSB Atari F0113 composition escaped G0163 clip\n");
+                        M11_AssetLoader_Shutdown(&loader);
+                        return 26;
+                    }
+                    if (in_clip && color != 0xeeu) {
+                        if (color != 7u && color != 11u) {
+                            fprintf(stderr,
+                                    "CSB Atari F0113 composition emitted unexpected C074 color %u\n",
+                                    (unsigned)color);
+                            M11_AssetLoader_Shutdown(&loader);
+                            return 27;
+                        }
+                        ++written_in_clip;
+                    }
+                }
+            }
+            if (written_in_clip != (unsigned int)written) {
+                fprintf(stderr,
+                        "CSB Atari F0113 composition pixel count mismatch %u != %d\n",
+                        written_in_clip, written);
+                M11_AssetLoader_Shutdown(&loader);
+                return 28;
+            }
+            {
+                const unsigned long long hash =
+                    hash_pixels(frame, sizeof(frame));
+                if ((unsigned int)written !=
+                        expected_pixel_counts[composition_index] ||
+                    hash != expected_hashes[composition_index]) {
+                    fprintf(stderr,
+                            "CSB Atari F0113 composition changed at square %u: pixels=%d hash=%016llx\n",
+                            target_squares[composition_index], written, hash);
+                    M11_AssetLoader_Shutdown(&loader);
+                    return 29;
+                }
+                fprintf(stderr,
+                        "F0113 composition square=%u mask=%d pixels=%d hash=%016llx\n",
+                        target_squares[composition_index],
+                        plan.mask_graphic_index, written, hash);
+            }
+        }
     }
     {
         /* ReDMCSB DUNVIEW.C MEDIA020 G0211 dimensions and M614 mapping:

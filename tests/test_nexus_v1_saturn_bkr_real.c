@@ -262,12 +262,22 @@ int main(void)
                 corpus[file_index].champion_count * 0xE0U ||
             payload_receipt.declared_payload_span !=
                 0x274U + corpus[file_index].champion_count * 0xE0U ||
+            !payload_receipt.loader_tuple.valid ||
+            payload_receipt.loader_tuple.level != 1U ||
+            payload_receipt.loader_tuple.heading != 0x4000U ||
+            payload_receipt.loader_tuple.x != 20U ||
+            payload_receipt.loader_tuple.y != 26U ||
+            !file_receipt.nexus_payload.loader_tuple.valid ||
+            file_receipt.nexus_payload.loader_tuple.level != 1U ||
+            file_receipt.nexus_payload.loader_tuple.heading != 0x4000U ||
+            file_receipt.nexus_payload.loader_tuple.x != 20U ||
+            file_receipt.nexus_payload.loader_tuple.y != 26U ||
             !malformed_payloads_rejected || failed) {
             fprintf(stderr,
                     "FAIL: authentic BKR parse/hash mismatch: %s "
                     "image_hash=%d parse=%d file_probe=%d valid=%d geometry=%u/%u "
                     "entries=%u payload=%u name=%s allocated=%u "
-                    "payload_hash=%d roster=%u/%u leader=%u/%u records=%u+%u span=%u bad_payloads=%d\n",
+                    "payload_hash=%d roster=%u/%u leader=%u/%u records=%u+%u span=%u tuple=%d/%u/%04x/%u/%u bad_payloads=%d\n",
                     corpus[file_index].filename, image_hash_valid, parse_valid,
                     file_probe_valid, receipt.valid, receipt.block_bytes,
                     receipt.block_count,
@@ -280,14 +290,23 @@ int main(void)
                     payload_receipt.champion_records_offset,
                     payload_receipt.champion_record_stride,
                     payload_receipt.declared_payload_span,
+                    payload_receipt.loader_tuple.valid,
+                    (unsigned)payload_receipt.loader_tuple.level,
+                    (unsigned)payload_receipt.loader_tuple.heading,
+                    (unsigned)payload_receipt.loader_tuple.x,
+                    (unsigned)payload_receipt.loader_tuple.y,
                     malformed_payloads_rejected);
             failed = 1;
         } else {
             payloads[file_index] = payload;
             payload_sizes[file_index] = entries[0].payload_bytes;
-            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, health %d/%d, stamina %d/%d, mana %d/%d)\n",
+            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, loader tuple %u/%04x/%u/%u, health %d/%d, stamina %d/%d, mana %d/%d)\n",
                    corpus[file_index].filename, receipt.image_bytes,
                    entries[0].payload_bytes, payload_receipt.champion_count,
+                   (unsigned)payload_receipt.loader_tuple.level,
+                   (unsigned)payload_receipt.loader_tuple.heading,
+                   (unsigned)payload_receipt.loader_tuple.x,
+                   (unsigned)payload_receipt.loader_tuple.y,
                    payload_receipt.champion_health_current[0],
                    payload_receipt.champion_max_health[0],
                    payload_receipt.champion_stamina_current[0],

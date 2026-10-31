@@ -7,6 +7,14 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+if invalid_build_output=$(env FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST=invalid "$build_script" 2>&1); then
+    printf '%s\n' 'FAIL: Mednafen build accepted an invalid PCE Fast enable value' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST must be 0 or 1' <<<"$invalid_build_output"; then
+    printf '%s\n' 'FAIL: Mednafen build did not validate the PCE Fast enable option' >&2
+    exit 1
+fi
 huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
@@ -65,8 +73,13 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
 fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
+python3 "$repo/tests/test_theron_pce_fast_cd_ram_writer_pc_trace_patch.py"
 python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
 python3 "$repo/tests/test_verify_theron_jp_ram_loop_source_candidates.py"
+python3 "$repo/tests/test_verify_theron_syscard_status_trace.py"
+python3 "$repo/tests/test_instrument_mednafen_theron_syscard_status_trace.py"
+python3 "$repo/tests/test_verify_theron_syscard_callback_state_trace.py"
+python3 "$repo/tests/test_instrument_mednafen_theron_syscard_callback_state_trace.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -211,7 +224,9 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_r
    grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_first = 0x68 * 8192 + 0x04d2' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_last = 0x68 * 8192 + 0x04e6' "$cd_ram_write_patch" ||
-   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
+   ! grep -Fq 'ram_loop_first = 0x80 * 8192 + 0x00d2' "$cd_ram_write_patch" ||
+   ! grep -Fq 'ram_loop_last = 0x80 * 8192 + 0x00e3' "$cd_ram_write_patch" ||
+   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !ram_loop_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
    ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded CD RAM target-write trace must include the source-locked poll-code window' >&2
     exit 1
@@ -1660,7 +1675,9 @@ if ! grep -Fq 'TheronIrq2TraceCriticalSamples[critical_slot] < 4096' "$repo/scri
     printf 'FAIL: IRQ evidence must remain bounded during System Card polling loops\n' >&2
     exit 1
 fi
-if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
+if ! grep -Fq 'pce_fast_enabled=${FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST:-0}' "$build_script" ||
+   ! grep -Fq 'pce_fast_enabled" == 1' "$build_script" ||
+   ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
    ! grep -Fq 'for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$script" ||
    ! grep -Fq 'grep -aFq "$marker" "$binary"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
@@ -1729,6 +1746,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
     exit 1
 fi
 system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
+system_card_bootstrap_follow_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_bootstrap_follow.patch
+cd_shared_event_sequence_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch
 if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x44C1 || pc == 0x44D2' "$system_card_dispatch_patch" ||
@@ -1741,6 +1760,32 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144' "$system_card_dispatch_patch" ||
    ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'target_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_branch_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_branch_follow_truncated cap=4096' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq -- '--allow-missing-launch' "$script" ||
+   ! grep -Fq 'BLOCKED: BIOS-to-$4000 launch branch was not observed' "$script" ||
+   ! grep -Fq 'system-card-bootstrap-follow-v4 event_sequence_source=TheronTraceCDSharedEventSequence' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
+   ! grep -Fq 'static unsigned int bootstrap_started = 0' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'if(!target_armed && pc == 0x4000)' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace"' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the PCE Fast System Card bootstrap-follow hook' "$script" ||
+   ! grep -Fq 'verify_theron_jp_syscard_bootstrap_follow.py' "$script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_bootstrap_follow.py' "$build_script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_status_trace.py' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$script" ||
+   ! grep -Fq 'verify_theron_syscard_status_trace.py' "$script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_callback_state_trace.py' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE' "$script" ||
+   ! grep -Fq 'verify_theron_syscard_callback_state_trace.py' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-status-read-v1' "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" ||
+   ! grep -Fq 'pce_fast_system_card_bootstrap_follow_status=%s' "$script" ||
    ! grep -Fq 'code_follow_complete event_sequence=%u count=%u' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace"' "$script" ||
    ! grep -Fq 'system_card_code_follow_trace="${trace}.system-card-code-follow"' "$script" ||
@@ -1774,6 +1819,13 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
     exit 1
 fi
 source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
+writer_pc_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_writer_pc_trace.patch"
+if [[ ! -f "$writer_pc_trace_patch" ]] ||
+   ! grep -Fq 'cd_ram_writer_pc_truncated sequence=%u limit=%u reason=sample-cap' "$writer_pc_trace_patch" ||
+   ! grep -Fq 'line.startswith("cd_ram_writer_pc_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py"; then
+    printf '%s\n' 'FAIL: writer-PC trace cap must be explicit and rejected by the source verifier' >&2
+    exit 1
+fi
 if [[ ! -f "$source_chain_verifier" ]] ||
    ! grep -Fq 'verify_read_rows(read_path, track02)' "$source_chain_verifier" ||
    ! grep -Fq 'verify_writer_rows(write_path)' "$source_chain_verifier" ||

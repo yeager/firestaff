@@ -1,5 +1,88 @@
 # Firestaff TODO — DM2
 
+2026-10-30 Amiga HUD movement arrows: the authentic no-game Amiga runtime
+trace showed the source HUD plan had only the squad panel and party portraits;
+all six movement arrows were absent. SKProject
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_ARROW_PANEL` selects
+`INTERFACE_GENERAL/3` fields 2, 4, 6, 8, 10 and 12 and blits them through
+`RECT_040..RECT_045`. The Amiga HUD plan now binds those six images from the
+original Amiga `GRAPHICS.DAT`, keeps the existing `GRAPHICSSET/<style>/0xF5`
+squad panel at `RECT_47`, and omits the unsupported generic PC top/action/gold
+strips. The Amiga native CLI capture check now verifies all six authentic
+arrow destinations. The remaining top character/status layout and right-side
+panel content still need source-backed comparison with Amiga gameplay captures;
+the SDL-dummy capture is not proof of native-display pixel parity.
+
+2026-10-30 authentic DOS SKSAVE0 HUD trace: extended the `--debug` frame
+receipt with per-slot party data, occupied/portrait-bound masks, champion
+identity, HP, and source HeroType. Running the original DOS English archive
+with its bundled `data/sksave0.dat` reaches map 11 with four record slots,
+but only slots 0, 2, and 3 occupied (`occupied-mask=d`); slot 1 is empty, so
+the three rendered portrait commands do not by themselves prove a missing
+fourth champion. The two occupied slots carry source HeroTypes 48 and 32, and
+their GDAT lookups fall back to the generic `(0x15, 0xfe, 0xfe)` image instead
+of finding matching `CHAMPIONS` images. SKProject `skhero.h` defines
+`herotype` at byte `0x101`, and `skguidrw.cpp::DM2_UPDATE_RIGHT_PANEL`
+passes `party.hero[i].herotype` directly to the GDAT lookup. Confirm those
+bytes and image owners against the original executable before changing the
+mapping; the current evidence is limited to the authentic DOS save and
+SDL-dummy runtime. Reproduce on fresh Amiga, FM Towns, and Macintosh parties
+with their own original media because the DOS save cannot establish those
+platforms' HUD behavior. Full PC/Towns viewport and HUD parity remains open.
+
+2026-10-30 Amiga v5 palette and squad-panel correction: authenticated Amiga
+`GRAPHICS.DAT` images now use physical 16-color indices instead of reading
+the final compressed-image bytes as a second palette map. The runtime replaces
+the generic stretched portrait-panel guess with the current map style's
+`GRAPHICSSET/<style>/0xF5` image at authenticated `RECT_47`, matching
+SKProject's squad-panel source route. The real-media Amiga test verifies the
+43x43 IMG3 source, four-bit pixels, physical palette and RECT_47 coordinates.
+The no-game M12 menu test also requires the F5 plan at RECT_47 and a complete
+consumed HUD plan; it passed against the original Amiga archive.
+The Amiga native CLI test passed and its 320x200 presented capture no longer
+shows the oversized starburst. DOS and FM Towns native CLI tests also passed
+against their authentic archives; the Macintosh extracted-media native CLI
+test passed against the original extracted files. The separate Macintosh ZIP
+test was skipped because its expected ZIP path is unavailable. These are
+startup/runtime smoke checks, not proof of full cross-platform pixel parity
+or native-display behavior. The focused
+`m12_main_menu_dm2_amiga_runtime_real_media` test also passed after the panel
+binding change.
+
+2026-10-30 DM2 runtime render diagnostics and cross-platform HUD gap: added
+`--debug`-only `dm2-render-debug` and per-command `dm2-render-hud` output at
+the M11 frame handoff. It reports
+the selected platform, pose, render acceptance, source-asset/fallback state,
+blocked-material count, palette and scene identities, HUD plan identity and
+consumption, portrait counts, and HUD frame hash. It emits only when the
+reported frame state changes. The product target builds successfully. Using
+installed original media, direct runtime probes accepted real frames with no
+core fallbacks on DOS, FM Towns, Amiga, and Macintosh; Towns and Amiga probes
+also remained silent for this trace when run without `--debug`. The authentic
+DOS `sksave0.dat` and the other three installed DOS save slots report four
+champions while the DOS renderer's portrait counter reports three. Determine
+whether the remaining slot is dead or mirror-hidden before classifying this
+as an omission. Towns reports a five-command native HUD plan; its command
+builder includes `FMTOWNS_STATUS_PANE`, so the generic composition receipt's
+zero `hud_top_bar_command_consumed` and `hud_status_panel_command_consumed`
+fields do not mean that Towns top panes were skipped. The `asset-events`
+counter is platform-specific: Towns increments it for spell/status icons,
+figures, auras, and portrait-like elements, so it must not be interpreted as
+a portrait count. Likewise, `audit-core-pixels` and the interface-asset audit
+describe decoded source assets, not pixels actually drawn in that frame.
+Macintosh completed its authentic 210-frame title movie, entered runtime,
+and moved twice. On the authentic PC start pose `(1,8,north)`, the 8-command
+plan resolves to six movement arrows, one champion portrait, and one status
+pane; its debug receipt reports no generic top/status commands. The authentic
+Towns start pose uses a separate 5-command squad plan and also reports no
+generic top/status commands. Both presented captures have large dark HUD
+regions, so plan completion is not sufficient evidence that the HUD matches
+the source. Compare these same poses with original-game captures before
+changing composition. Full viewport/HUD parity remains open. Current source
+reference: SKProject
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` and
+`SKWINSPX/src/v5/skguidrw.cpp::DM2_UPDATE_RIGHT_PANEL`.
+
 2026-10-30 static startup-menu timing regression: re-enabled
 `dm2_v1_startup_static_menu_timing` by linking the focused test against the
 existing `firestaff_dm2` library. The receipt is checked at source ticks 0,
@@ -840,12 +923,36 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   region checks and runtime frame ownership. This verifies complete nonblank
   regions and source material consumption; it does not establish visual parity
   with every platform capture. Amiga IMG3 entries mapped in
-  `dtRaw8/0/0/0` now compose the source overlay with its tracked underlay via
+  `dtRaw8/0/0/0` compose the source overlay with its tracked underlay via
   `DM2_DECODE_IMG3_OVERLAY`; a real-media test covers
-  `INTERFACE_GENERAL/2/0` (77x37). Amiga still uses its prior HUD renderer:
-  enabling the generic source-native route removes source panel background
-  draws and fails the top-HUD coverage check. Map those panel draws to the
-  original Amiga source before enabling that route.
+  `INTERFACE_GENERAL/2/0` (77x37). The Amiga HUD now draws the six
+  `INTERFACE_GENERAL/3` movement arrows at RECT_040..RECT_045, the F5 party
+  backdrop and source-backed squad figure, plus the state-specific
+  `INTERFACE_GENERAL/2` status slab at RECT_0xA1+champion, and source-bound
+  `INTERFACE_GENERAL/4` hand-action panels at RECT_046..RECT_04d, following
+  SKProject `skguidrw.cpp::DRAW_ARROW_PANEL`, `DRAW_PLAYER_3STAT_PANE`,
+  `DRAW_HAND_ACTION_ICONS` and `DRAW_SQUAD_POS_INTERFACE`. The hand bindings
+  now use the shared source HP receipt instead of requiring Towns-only state.
+  The authentic-media CLI test checks the first status slab, both first-hero
+  hand panels, all six arrows and RECT_53 figure. The captured startup frame
+  still shows sparse/black unused HUD space with only the initial champion;
+  visual parity against a same-pose Amiga reference and the rest of the
+  status/portrait layout remain open.
+
+- 2026-10-30: added an edition-pinned audit for all 64 authentic hand-action
+  GDAT routes across DOS EN/FR, Mac EN, FM Towns JA, and Amiga EN. It checks
+  the selected edition's GRAPHICS.DAT MD5, decoded source image bytes and RAW4
+  destination, then consumes the source receipts into a bounded local test
+  surface. On 2026-10-30, all five local original editions passed with 64/64
+  decoded routes, receipts and test-surface consumptions. This is not a test
+  of the production viewport/HUD renderer or presented-pixel parity. The
+  Survey frame has a source receipt and clipped RAW4 placement on DOS EN/FR,
+  Mac EN and Amiga EN; its test consumer does not implement the source crop.
+  GDAT v4 FM Towns has no Survey-frame route in this audit. CTest skips when
+  optional original media are absent. The French-labelled Mac `.sit` in local
+  scratch was byte-identical to Mac EN, so it is not evidence of a distinct
+  French build. There is no separate JewelCase GDAT in the local data set, so
+  that edition remains unverified.
 
 - 2026-10-24: the user reports that the DM2 Amiga HUD and viewport are very
   broken. A fresh authentic-media M4 debug capture reaches map 0 at (1,8),

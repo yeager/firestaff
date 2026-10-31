@@ -285,6 +285,13 @@ run_case(
     0,
 )
 run_case(
+    "shared-event-sequence-source-headers",
+    "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+)
+run_case(
     "track02-triggered-vram-prefix",
     "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\ncd_data_port_read sequence=0 event_sequence=12\n",
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=15\n",

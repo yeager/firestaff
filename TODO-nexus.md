@@ -52,8 +52,11 @@ same-run frontend screenshot after 2× downscaling. A hash-pinned real-data
 CTest verifies all 71,680 native RGB pixels in both passes. This is
 emulator-internal frame composition, not original-Saturn or production-renderer
 parity. The replay consumes the captured FBS, NBG0 bitmap, CRAM, and registers;
-pixel-to-retail-command/source ownership remains incomplete. Keep the
-production title gate closed. Evidence details are in
+pixel-to-retail-command/source ownership remains incomplete. The capture shows
+the retail title and three menu choices with `BGON=0x0001` and ratio register
+`0x100=0x1000`; 2,990 VDP1 palette/special pixels still lack complete
+per-command CLUT/CRAM provenance to retail source data. Keep the production
+title gate closed. Evidence details are in
 [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
 The test and its external-data reproduction instructions are in
 [`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).

@@ -976,6 +976,10 @@ typedef struct {
     uint8_t towns_party_position;
     int towns_absdir_source_bound;
     uint8_t towns_absdir;
+    int amiga_party_position_source_bound;
+    uint8_t amiga_party_position;
+    int amiga_absdir_source_bound;
+    uint8_t amiga_absdir;
     int towns_current_hp_source_bound;
     int16_t towns_current_hp;
     int towns_spell_cooldown_source_bound;
@@ -990,6 +994,10 @@ typedef struct DM2_V1_HudPartyState {
     int champion_count;
     int leader_index;
     int towns_squad_route_valid;
+    int amiga_squad_route_valid;
+    uint8_t amiga_party_direction;
+    int amiga_invisibility_source_bound;
+    uint8_t amiga_invisibility;
     int towns_selected_hero_source_bound;
     int towns_selected_hero_index;
     int towns_status_hero_source_bound;
@@ -1630,6 +1638,22 @@ typedef struct {
     int draw_order;
 } DM2_V1_ItemAssetBlit;
 
+/* Bounded per-frame item draw receipt used by --debug to identify source
+ * assets and their final placement without retaining decoded pixels. */
+typedef struct {
+    int source_kind;
+    int gdat_index;
+    int item_index;
+    uint16_t object_id;
+    int item_category;
+    int item_type;
+    int frame_index;
+    int depth;
+    int source_width;
+    int source_height;
+    DM2_V1_ViewportRect destination;
+} DM2_V1_ViewportItemMaterialTrace;
+
 typedef struct {
     uint8_t  projectile_category; /* source-owned GDAT category; 0 = unavailable */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
@@ -2104,6 +2128,9 @@ typedef struct {
     int item_material_drawn_count;
     int item_material_gdat_indices[DM2_MAX_PRESENTED_ITEM_MATERIALS];
     uint8_t item_material_source_kinds[DM2_MAX_PRESENTED_ITEM_MATERIALS];
+    int item_material_trace_count;
+    DM2_V1_ViewportItemMaterialTrace item_material_traces[
+        DM2_MAX_PRESENTED_ITEM_MATERIALS];
     int last_item_render_valid;
     int last_item_asset_blit_valid;
     int last_item_source_kind;

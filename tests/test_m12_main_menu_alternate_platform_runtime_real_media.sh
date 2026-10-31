@@ -9,6 +9,8 @@ data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
 dm1_pc="$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 dm1_atari="$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip"
+dm1_atari_st12="$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+dm1_atari_st13="$data_root/dm1/Dungeon-Master_Atari-ST_FR_Version-13.zip"
 csb_atari="$data_root/csb/chaos_strikes_back_ftl.zip"
 dm2_pc="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 
@@ -22,6 +24,18 @@ case "$route" in
     dm1-atari-st)
         selected_game=dm1; game_down=0; platform_down=2
         selected_archive=$dm1_atari; edition=st10a-en; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-12)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st12; edition=st12-en; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
+    dm1-atari-st-13)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st13; edition=st13-fr; platform='Atari ST'
         width=960; height=540; duration=90000
         game_input='wait30,enter,wait60,enter'
         ;;
@@ -63,7 +77,7 @@ trap cleanup EXIT HUP INT TERM
 print_diagnostics() {
     local log_file=$1
     local matched
-    matched=$(grep -E '(^| )(FAIL:|CSB READY:|DM1 READY:|DM2 READY:|firestaff: launch phase=|firestaff: csb-atari-animation|FIRESTAFF BOOT PROBE READY:)' "$log_file" | tail -25 || true)
+    matched=$(grep -E '(^| )(FAIL:|CSB READY:|DM1 READY:|DM2 READY:|firestaff: launch phase=|firestaff: csb-atari-animation|firestaff: dm2-render-debug|firestaff: dm2-render-item|FIRESTAFF BOOT PROBE READY:)' "$log_file" | tail -25 || true)
     if [[ -n "$matched" ]]; then
         printf '%s\n' "$matched" >&2
     else
@@ -82,6 +96,11 @@ for game_id in dm1 csb dm2; do
     [[ -d "$source_game_dir" ]] || continue
     while IFS= read -r -d '' archive; do
         [[ -f "$archive" ]] || continue
+        if [[ ( "$route" == dm1-atari-st-12 || "$route" == dm1-atari-st-13 ) &&
+              "$game_id" == dm1 &&
+              $(basename "$archive") != $(basename "$selected_archive") ]]; then
+            continue
+        fi
         ln -s "$(python3 - "$archive" <<'PY'
 import os
 import sys
@@ -158,6 +177,14 @@ fi
 if ! python3 "$(dirname "$0")/verify_m12_alternate_platform_runtime.py" "$route" "$probe"; then
     cat "$log" >&2
     exit 1
+fi
+if [[ "$route" == dm2-pc ]]; then
+    if ! grep -Eq '^firestaff: dm2-render-debug .*item-traces:[1-9][0-9]*([[:space:]]|$)' "$log" ||
+       ! grep -Eq '^firestaff: dm2-render-item game=dm2 platform=pc-en .* gdat=[0-9a-f]+ .* rect=-?[0-9]+,-?[0-9]+,[1-9][0-9]*,[1-9][0-9]*$' "$log"; then
+        printf 'FAIL: authentic DM2 PC startup did not produce a populated source item render trace\n' >&2
+        print_diagnostics "$log"
+        exit 1
+    fi
 fi
 if [[ $(firestaff_sha256_file "$selected_archive") != "$archive_hash" ]]; then
     printf 'FAIL: original %s source changed during M12 runtime selection\n' "$route" >&2

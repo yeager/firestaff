@@ -1,3 +1,8 @@
+- 2026-10-30: `dm1_v1_fmtowns_archive_cli_boot` passed on the current M4
+  build in 202.56 seconds against the installed authentic Japanese/English
+  FM Towns archive. This covers the tested menu and CLI startup routes only;
+  it does not establish physical-display or complete DM1 platform parity.
+
 - 2026-10-30: Rechecked the two reported DM1 PC 3.4 combat/object symptoms on
   current `main`. `m11_dm1_pc34_first_monster_combat_real` passed against the
   installed original archive and recorded creature damage on the covered
@@ -4420,3 +4425,17 @@ not used as its final verification.
   `dm1_v1_pc34_native_cli_boot` passed against original PC34 media. These
   checks verify startup ownership and runtime entry, not complete visual
   parity.
+
+- 2026-10-30: Fixed authentic Apple IIGS floor-item drops after the first
+  descent. The source map can retain a Thing-list flag with an empty compact
+  SFT row; `F0514_DUNGEON_LinkThingToList_Compat` now reuses that row as the
+  new head without changing column offsets. ReDMCSB `DUNGEON.C:F0163` confirms
+  the flagged-square path resolves the existing row through `F0161`. The
+  focused F0514/F0515 test and `m11_dm1_iigs_startup_real_media` passed. The
+  authentic-media test checks that the original torch drops to the current
+  floor square, is picked up again, and returns to the same champion hand
+  without losing or duplicating its Thing. `--debug` also reports a single
+  action-scoped floor-drop receipt (source, map square, Thing ID, compact SFT
+  row, list flag, and chain head before/after); it is gated so ordinary play
+  stays quiet. This is a gameplay transaction fix, not a claim of complete
+  IIGS parity.

@@ -1982,6 +1982,17 @@ int F0514_DUNGEON_LinkThingToList_Compat(
             return 1;
         }
         thingInList = F0511_DUNGEON_GetSquareFirstThing_Compat(dungeon, things, mapIndex, mapX, mapY);
+        /* F0163 can also receive an already-flagged square whose compact
+         * SFT row is empty (THING_ENDOFLIST).  Reuse that existing row as
+         * the new head; there is no column-count insertion to perform. */
+        if (thingInList == THING_ENDOFLIST || thingInList == THING_NONE) {
+            squareIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+                dungeon, mapIndex, mapX, mapY);
+            if (squareIndex < 0 ||
+                squareIndex >= things->squareFirstThingCount) return 0;
+            things->squareFirstThings[squareIndex] = thingToLink;
+            return 1;
+        }
     }
     if (thingInList == THING_NONE || thingInList == THING_ENDOFLIST) return 0;
     tail = thingInList;

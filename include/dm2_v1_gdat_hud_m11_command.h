@@ -24,7 +24,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE,
-    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE
+    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE,
+    DM2_V1_GDAT_HUD_M11_COMMAND_AMIGA_SQUAD_FIGURE
 };
 
 enum {
@@ -82,6 +83,9 @@ typedef struct DM2_V1_GdatHudM11CommandPlan {
     int valid;
     int source_native_layout;
     int mac_native_layout;
+    /* Amiga keeps the shared champion presentation, but draws movement
+     * arrows from the native RECT_040..RECT_045 panel. */
+    int amiga_native_move_arrows;
     int command_count;
     uint32_t command_hash;
     DM2_V1_GdatHudM11Command commands[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
@@ -183,6 +187,16 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int kind,
+    int category,
+    int index,
+    int field,
+    const DM2_V1_ViewportRect *destination,
+    uint16_t destination_rect_id,
+    uint32_t destination_table_hash);
 int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
@@ -196,6 +210,22 @@ int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect destinations[6],
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int hero_index,
+    int relative_position,
+    int figure_direction,
+    int invisible,
+    const DM2_V1_ViewportRect *destination,
+    uint32_t destination_table_hash);
+
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash);
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect arrow_destinations[6],

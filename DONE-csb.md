@@ -1,3 +1,19 @@
+- 2026-10-30: Implemented the CSB Atari MEDIA020 F0113 Fluxcage field route.
+  The F0115 pass rescans the authentic C15 chain, binds the last matching C050
+  to its live runtime explosion, and applies ReDMCSB visibility, door-pass,
+  endgame, and RNG rules. F0133/F0132 composition uses original C074 and masks
+  with source-defined G0188/G0163 geometry. The source-plan test passes, and
+  the original Atari `GRAPHICS.DAT` test pins masked D3L and unmasked D2C
+  compositions. The installed S21E save cannot reach a C050 scenario, so live
+  chain binding, RNG progression, ordering, and final in-game output remain
+  open in `TODO-csb.md`; this is not full CSB Atari viewport parity.
+
+- 2026-10-30: `csb_v1_fmtowns_native_cli_boot` passed in 138.00 seconds and
+  `csb_v1_amiga_native_cli_boot` passed in 71.39 seconds on the current M4
+  build against installed authentic media. These checks cover their tested
+  menu/CLI startup routes only; they do not establish physical-display or
+  complete CSB platform parity.
+
 - 2026-10-30: Added `return_to_menu_rescans_csb_atari_only_real_media` to
   cover the case where authentic Atari ST is the only CSB edition installed.
   The test reached the original Atari runtime, returned to M12, and verified
@@ -1234,3 +1250,10 @@ Reviewed 2026-08-29. Completed work only.
   Menu. It requires the direct-session exit trace and rejects a return-menu
   rescan. The complete CTest passed locally in 212.17 seconds; this verifies
   the Atari direct-launch lifecycle, not full CSB parity.
+- 2026-10-30: Installed France-region CSB Atari preservation media now passes
+  `csb_v1_atari_french_preservation_zip_cli_boot` against its original ZIP.
+  The test verifies source-owned title startup, map-0 runtime, first movement,
+  and M12 start-menu launch; its receipt reports the English v2.0/v2.1
+  campaign, so this proves the preservation archive route and does not claim a
+  French-language edition. SDL dummy devices were used; native display,
+  physical input, and audio remain unverified.

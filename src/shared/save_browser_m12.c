@@ -167,12 +167,14 @@ static int ascii_equal_ci(const char* a, const char* b) {
     return *a == '\0' && *b == '\0';
 }
 
-/* ReDMCSB FILENAME.C:37-42,84-104 uses DMGAME~ with EN/FR/DE
- * suffixes. This admits names only; the format-5 receipt below owns validity. */
+/* ReDMCSB FILENAME.C MEDIA733_I34M and F0745 (44-55,84-104) substitutes
+ * DMSAVE~ with EN/FR/DE suffixes. The browser admits names only; the save
+ * parser and original handoff still own validity. */
 static int is_dm1_original_save_basename(const char* name) {
     static const char* const names[]={
         "DMGAME.DAT", "DMGAME.BAK", "DMGAMEF.DAT", "DMGAMEF.BAK",
-        "DMGAMEG.DAT", "DMGAMEG.BAK"
+        "DMGAMEG.DAT", "DMGAMEG.BAK",
+        "DMSAVEF.DAT", "DMSAVEF.BAK", "DMSAVEG.DAT", "DMSAVEG.BAK"
     };
     size_t i;
     if (!name) return 0;

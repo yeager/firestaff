@@ -93,6 +93,12 @@ The build script copies the source, applies Firestaff capture patches, builds,
 and runs the SDL2 link check. The Mednafen build is a local working artifact;
 it must not be committed.
 
+To enable the PCE Fast reference core without enabling the optional memory
+snapshot, VRAM commit, or pointer instrumentation, set
+`FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST=1` for the build command. Optional trace
+features remain independently controlled by their `FIRESTAFF_THERON_*_SUPPORT`
+settings.
+
 ## Capture modes
 
 ### Pixel-exact video

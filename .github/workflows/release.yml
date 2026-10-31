@@ -143,7 +143,7 @@ jobs:
           - arch: x86_64
             runner: macos-15-intel
           - arch: arm64
-            runner: macos-14
+            runner: macos-15
     env:
       FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
       FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
@@ -536,7 +536,7 @@ jobs:
   ios:
     name: iOS arm64
     needs: preflight
-    runs-on: macos-14
+    runs-on: macos-15
     permissions:
       contents: read
     env:

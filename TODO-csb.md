@@ -1,5 +1,22 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
+Atari package contains a separate `st20-21-hd-en` installation. The new
+real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build
+scratch, verifies the original `GRAPHICS.DAT` and `DUNGEON.DAT` fingerprints,
+and runs the selected hard-disk edition through direct CLI startup, title
+acceptance, first runtime viewport, and the no-game M12 menu. The local test
+passed and the outer 7z archive hash remained unchanged. SDL dummy verifies
+source startup and menu handoff, not native Atari display or physical input.
+
+2026-10-30 CSB Amiga M12 startup recheck: both
+`m12_main_menu_csb_amiga35_runtime_real_media` and
+`m12_main_menu_csb_amiga_multi_runtime_real_media` passed against the installed
+original archives. Each test selects CSB through the no-game M12 menu and
+checks the authentic first runtime and unchanged source archive. These
+headless SDL routes verify menu selection and media handoff; native display,
+audio output and physical input remain unverified.
+
 2026-10-30 CSB Atari S21E Fluxcage capture route audit: ReDMCSB identifies
 the installed edition as Atari ST 2.1 English (S21E). Its authentic Utility
 `MINI.DAT` starts on map 4 at (22,18). A generous static reachability graph
@@ -12,10 +29,20 @@ the entire routine is guarded by MEDIA720, which excludes S21E, and the older
 S21E F0372 route only triggers an existing wall sensor. Source review used
 `Documentation/Readme.htm:21-22`, `COMPILE.H:602-603`, `DEFS.H:1025-1034`,
 `CLIKMENU.C:124-169`, `DUNGEON.C:1534-1581`, `MOVESENS.C:475-493,564-575`,
-`CLIKVIEW.C:4-27,29-76,403-448`, and `MEDIA81.H:258`. This is a limit of the
-available authentic save route, not evidence that the live F0113 Fluxcage
-renderer is correct; the renderer and an authentic C050 gameplay capture
-remain open.
+`CLIKVIEW.C:4-27,29-76,403-448`, and `MEDIA81.H:258`. The live F0113 renderer
+is now source-derived and its mask/no-mask pixel composition is checked
+against authentic `GRAPHICS.DAT`. The available authentic save still does not
+reach a C050 Fluxcage, so end-to-end C15 binding, RNG progression, and final
+in-game layering remain unverified.
+
+2026-10-30 CSB Atari MEDIA020 F0113 Fluxcage renderer: source-table planning,
+F0115 deferred C15-chain binding, and F0133/F0132 Atari pixel composition are
+implemented from ReDMCSB `DUNVIEW.C`, `BLITMASK.C`, `BLIT.C`, `DEFS.H`, and the
+G0188/G0163 tables. The plan test passes; the authentic Atari `GRAPHICS.DAT`
+asset/composition test checks masks 69–72, C074's 64 source units, masked D3L
+and unmasked D2C output fingerprints. This does not yet prove the runtime C15
+chain lookup, RNG state, draw ordering, or rendered result in a real C050 game
+scenario. Full CSB Atari viewport parity remains open.
 
 2026-10-30 CSB Atari-only return/rescan regression: the shared return-to-menu
 test now has an isolated mode that stages only the authentic Atari ST archive.
@@ -33,8 +60,9 @@ weapon ordinals outside the 14 aspects supported by the projectile planner
 remain safely rejected. Build, C559 unit checks, the real-media Atari C559
 cache comparison, and the real-media projectile-plan test pass. The stock
 campaign has no live C14 scenario, so the rendered projectile path still lacks
-an end-to-end gameplay assertion. Explosion/Fluxcage and F0113 field
-composition and full viewport parity remain open.
+an end-to-end gameplay assertion. Ordinary explosion gameplay and full
+viewport parity remain open; F0113 source and authentic-asset composition are
+implemented, but its live C050 route still lacks an end-to-end assertion.
 
 2026-10-30 CSB Atari D0C F133 pattern pass: the live F0115 route now selects
 the original M636 graphics 351–359 and tiles their indexed 8-byte units into
@@ -45,8 +73,9 @@ logs the selected bitmap, unit range, and written pixel count in debug mode.
 The compositor has a synthetic contract test, and the real-media Atari asset
 test decodes all nine selectable M636 patterns. The source check used
 ReDMCSB `VIDEO.C` F133 around lines 839–1006 and `DUNVIEW.C` around lines
-1860–1877. D0C Fluxcage F0113 rendering and an end-to-end live explosion
-capture remain open; this work alone does not establish full viewport parity.
+1860–1877. F0113 rendering now has a source-derived implementation and
+authentic asset-composition checks; an end-to-end live explosion capture
+remains open. This work alone does not establish full viewport parity.
 
 2026-10-30 CSB Atari F0115 ordinary explosion work in progress: the new
 planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226/G0228 and native
@@ -64,10 +93,10 @@ F0114 around lines 4490-4545; F0115 explosion dispatch around lines
 6025-6215; tables around lines 1319, 1533, 1565, and 1871-1905. Build and
 eight focused Atari plan, asset and viewport tests pass, including the
 original-media native-asset test. D0C pattern compositing is now implemented
-and source-asset checked, but Fluxcage F0113 field rendering and an end-to-end
-live explosion capture still need implementation and verification. Do not
-claim the CSB Atari viewport or explosion behavior is complete based on these
-checks.
+and source-asset checked. F0113 now has a source-derived renderer and
+authentic-asset composition checks, but an end-to-end live explosion capture
+is still missing. Do not claim the CSB Atari viewport or explosion behavior
+is complete based on these checks.
 
 2026-10-29 CSB FM Towns renamed-ZIP discovery: the scanner previously
 admitted only two hard-coded ZIP basenames, so an authentic archive selected
@@ -98,10 +127,10 @@ bitmaps, G0075 palette changes, flips and C10 transparency. Its item/weapon
 C14 selectors now consume original C559 G0237/G0238 data; positive selectors
 use the native G0209 object-as-projectile route. The stock campaign does not
 contain a live C14 scenario, so rendered projectile pixels still lack an
-end-to-end gameplay assertion. Explosion/Fluxcage and F0113 teleporter/field
-composition remain absent, and the Atari HUD lacks ReDMCSB's complete dynamic
-champion presentation. Add source-derived projectile, explosion and field
-regressions before claiming functional parity.
+end-to-end gameplay assertion. Explosion/Fluxcage gameplay still lacks an
+end-to-end runtime assertion; F0113 source and authentic-asset composition
+are implemented. The Atari HUD also lacks ReDMCSB's complete dynamic champion
+presentation. Add live gameplay regressions before claiming functional parity.
 
 2026-10-29 CSB Atari alcove-order correction: the order-zero F0115 object
 pass is now dispatched only for the D1C front-wall view square. ReDMCSB
@@ -1058,11 +1087,21 @@ native Retina window, physical input, audio output or visual parity.
 
 2026-10-13 extended original-media archive matrix on the Mac mini M4, source
 commit `458bf820e`: the Atari nested ZIP, original Atari archive, and Amiga ADF
-CLI/start-menu tests passed. The French Atari preservation ZIP test was skipped
-because `chaos_strikes_back_ftl_france.zip` is not present in the CSB data
-directory; the available original Atari archive contains English v2.0/v2.1
-game and utility disks only. Do not replace the missing French source with
-synthetic media. These headless runs do not verify native display or audio.
+CLI/start-menu tests passed. The France-region Atari preservation ZIP was not
+present then, so its test skipped. These headless runs do not verify native
+display or audio.
+
+2026-10-30 current-source retest on the Mac mini M4: after the user-provided
+original-media collection gained
+`~/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip`, both the direct
+`tests/test_csb_v1_atari_nested_zip_cli_boot.sh` run and CTest
+`csb_v1_atari_french_preservation_zip_cli_boot` passed (1/1, 2.94 seconds).
+The test verified the archive's source-owned Atari title, CLI transition into
+the original map-0 runtime, first movement, and start-menu launch. Its receipt
+identifies the loaded campaign as `csb-st20-21-en`; this verifies the
+France-region preservation archive route, not a French-language edition.
+Original media remains outside Git. SDL dummy video/audio was used, so this
+does not establish native display, physical input, or audible output.
 
 2026-10-12 shared FTL decoder bounds: the ReDMCSB `DECOMPDU.C` F0455 token
 reader now fails on truncated input instead of synthesizing zero bits after
@@ -1221,12 +1260,6 @@ development-only conversion evidence below.
   gameplay and full original-disk parity remain open. Use hashes in
   `data/asset_validator_checksums_m12.json` and
   `parity-evidence/csb_v1_l10n_source_catalog.md` for future oracle checks.
-
-- Restore the original French Atari ST preservation ZIP before revalidating
-  `csb_v1_atari_french_preservation_zip_cli_boot`. The test currently skips:
-  `/Users/bosse/.firestaff/data/csb/chaos_strikes_back_ftl_france.zip` is absent
-  from the configured data directory. Do not treat the earlier French ZIP
-  evidence as a current local-media run until the authentic archive is present.
 
 - Verify the natural F31 closed-door melee path on the reported M5. Its
   C04 sound now schedules ReDMCSB's C20 event one tick later, and EN/JA

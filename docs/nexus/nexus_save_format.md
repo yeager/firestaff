@@ -76,6 +76,17 @@ after reporting metadata. Neither function searches for a card or applies
 payload fields to runtime state. The title menu does not yet select this file
 or resume the game from it.
 
+The payload probe now also exposes a read-only `loader_tuple` from payload
+bytes `+0x10..+0x17`: level, heading, X, and Y. Hash-verified SH-2
+disassembly maps the source loads at `+0x10` and `+0x14` to the eight-byte
+loader record written at WRAM-HI `0x06064544`. The authentic two-, three-, and
+four-champion BKR files all contain `level=1`, `heading=0x4000`, `X=20`,
+`Y=26`; the two-champion run's final WRAM-HI matches those bytes. The run's
+read-trace interval did not include the source addresses, so source selection
+is static evidence and destination writes are dynamic evidence. The receipt
+does not apply the tuple to engine state, and the other saved-world fields
+remain unmapped.
+
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
 `iwa\\loader.c` source label. Their file offsets are recorded as `0x36fec`,

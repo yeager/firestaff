@@ -15,7 +15,20 @@ Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
 retail Load screen showed `B01  0:06 NORMAL`, then entered the four-champion
 dungeon view. The isolated BKR copy retained its hash after loading. A paired
 Up-input replay changed the rendered gameplay view. These captures verify the
-retail reference flow in Ymir only. Separate 2026-10-29 cold boots installed
+retail reference flow in Ymir only. A 2026-10-30 Ymir `--debug` loader trace
+now identifies one exact Continue payload transfer: the authentic two-champion BKR tuple (level 1, heading
+`0x4000`, X 20, Y 26) is copied into Saturn WRAM-HI at `0x06064544` before
+level initialization. The retained SH-2 write trace records the two copy
+instructions and the final WRAM dump matches the BKR tuple bytes. This narrows
+the earlier unknown payload interpretation; native backup selection, full
+runtime loading, and Firestaff engine handoff remain unimplemented or
+unverified. A paired Continue movement trace now also maps heading `0x4000`
+to Firestaff East: Up moves the authentic start cell from X 20 to X 21, while
+the same cold-boot/menu schedule without Up retains X 20. Together with the
+New Game `0x8000` North capture, these calibrate two retail headings; `0x0000`
+and `0xc000` remain unmapped. See the Continue loader and movement evidence
+notes below.
+Separate 2026-10-29 cold boots installed
 the authentic two-champion retail-written BKR before power-on, reached the
 Load panel with `B01  0:06 NORMAL`, accepted that entry, and entered a dungeon
 view with two champion HUD panels. The internal backup-RAM image retained its
@@ -59,8 +72,68 @@ source.
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Five Y-open Magic-window directional captures each join nine 8bpp VDP1 command sources to entries 99–106 and 144; all 31 nonzero indices in those joined surfaces match both PALT and same-run CRAM. Six paired Magic composer captures additionally bind numeric choices `0xDA`–`0xDF` to selected-state entries 107–112 and command-88 VDP1 sources/coordinates; the glyph names and full-menu coordinate/index table remain unknown. Other Load-panel pixels, complete title/menu composition, full VDP1 dispatch ownership and admitted Firestaff rendering remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
-| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
+| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains; the payload probe exposes the statically joined level/heading/X/Y loader tuple at `+0x10..+0x17` as a read-only receipt. Retail Continue copies it to WRAM-HI `0x06064544`; selecting saves in Firestaff and applying the tuple to the engine remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
+
+## Continue payload to loader tuple (2026-10-30)
+
+A 17,000-frame Ymir `--debug` run used the authentic Japanese retail disc and
+hash-verified two-champion backup RAM. At frame 12931, the master SH-2 executed
+stores at PCs `0x0602254a` and `0x0602254e`, writing `0x00014000` and
+`0x0014001a` to `0x06064544` and `0x06064548`. The final WRAM-HI bytes at
+`0x06064544..0x0606454b` are `00 01 40 00 00 14 00 1a`: level 1, heading
+`0x4000`, X 20, Y 26. The BKR used in that profile has SHA-256
+`3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634`.
+
+The first trace did not include source reads. A follow-up 17,500-frame Ymir
+`--debug` capture retained both the source-read register snapshots and the
+destination writes. The master SH-2 read four bytes at `0x00204010` from PC
+`0x06022548`, then four bytes at `0x00204014` from PC `0x0602254c`. The same
+run's WRAM-HI instruction bytes are `52 e4 20 22 52 e5 10 21`: opcode
+`0x52e4` is `MOV.L @(4,R14),R2`, `0x2022` is `MOV.L R2,@R0`, `0x52e5` is
+`MOV.L @(5,R14),R2`, and `0x1021` is `MOV.L R2,@(1,R0)`. The aligned
+snapshots show `R14=0x00204000` and `R0=0x06064544`; before the second load,
+`R2=0x00014000`. At frame 12931, the two following stores write
+`0x00014000` to `0x06064544` and `0x0014001a` to `0x06064548`. The final
+WRAM-HI bytes match the authentic BKR payload tuple exactly. Both trace bundles
+are complete with zero dropped rows. Run the external evidence verifier with
+`python3 scripts/verify_nexus_bkr_source_read_join.py <evidence-directory>`;
+the evidence package is
+`firestaff-evidence/nexus/nexus_bkr_continue_source_read_20261031` on
+`Extern-disk`.
+
+This closes the source-read-to-loader-tuple transfer with dynamic reads,
+instruction bytes, stores and final memory. It does not establish Firestaff's
+save selection, coordinate conversion, game entry, or gameplay parity.
+
+## Continue heading from retail movement (2026-10-30)
+
+Two isolated Ymir `--debug` cold boots used the same hash-verified Japanese
+retail CUE, `DM.BIN`, Japanese IPL, and two-champion BKR. Both ran the same
+scheduled menu inputs and a complete filtered SH-2 write trace over
+`[0x060746c0,0x06074740)`. One run added only 30 frames of Up at capture frame
+17000; the other was the no-up control. Both trace bundles are complete with
+zero dropped rows, and the control exited with status 0.
+
+At VDP1 frame 12931, the Continue loader copied the BKR tuple to WRAM-HI
+`0x06064544..0x0606454b`: level 1, heading `0x4000`, X 20, Y 26. The body-cell
+writer at PC `0x0601896a` initialized `0x060746e8` to `0x0014001a` (X 20, Y 26).
+After the scheduled Up hold, PC `0x0601942c` wrote `0x0015001a` (X 21, Y 26)
+at VDP1 frame 14145. The no-up control's final WRAM-HI retains X 20, Y 26 and
+its complete filtered trace has no later body-cell write. The BKR input hash
+is `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634`.
+
+The earlier New Game Up/control pair establishes that level-1 heading
+`0x8000` moves toward decreasing DGN Y, Firestaff North. The independent
+Continue pair establishes that heading `0x4000` moves toward increasing DGN
+X, Firestaff East. `nexus_v1_game_parse_retail_start_entry` now resolves those
+two headings and continues to leave `0x0000` and `0xc000` unknown. The
+authentic Japanese table contains all four angle values, but the other two
+still need matching retail movement captures. This does not yet connect BKR
+save selection or the Continue tuple to the Firestaff engine. Raw logs,
+complete bounded traces, final WRAM-HI images, and hashes are retained in
+`firestaff-evidence/nexus/nexus_bkr_continue_heading_move_20261030/` on
+`Extern-disk`.
 
 ## Deterministic title-state replay (2026-10-26)
 
@@ -1696,11 +1769,10 @@ trace and are not substituted for the selected table entry.
 
 Enabled table entries use angle words `0x0000`, `0x4000`, `0x8000`, and
 `0xc000`, consistent with quarter-turns in a 16-bit angle field.
-`FUN_0601f584` stores the value in an object field, but its analyzed caller
-chain does not bind `0x8000` to a world axis or Firestaff's
-north/east/south/west enum. The native runtime therefore still blocks starting
-gameplay until that mapping is established. Raw Ymir traces and Ghidra exports
-are retained externally in
+`FUN_0601f584` stores the value in an object field. Static analysis alone does
+not name its axis. Paired retail input captures now map `0x8000` to North and
+`0x4000` to East; the `0x0000` and `0xc000` rows remain unmapped and rejected.
+Raw Ymir traces and Ghidra exports are retained externally in
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
 no-input control beside it.
 
@@ -1726,18 +1798,23 @@ coordinates: the retail table cell center `(29,47)` maps exactly to
 input moves only Y by `-0x400`, with angle unchanged. In this captured level-1
 start, Up therefore moves toward decreasing DGN Y, which is Firestaff North;
 the retail heading `0x8000` maps to North. The one-frame left/right angle
-changes (`+100`/`-100`) are consistent with that mapping. This binds the
-level-1 retail start heading, but does not establish mappings for every angle
-word or the complete gameplay ownership path.
+changes (`+100`/`-100`) are consistent with that mapping. A later paired
+Continue capture separately maps `0x4000` to East by observing an Up-driven
+cell change from `(20,26)` to `(21,26)` with an unchanged no-up control. The
+other two source headings and the complete gameplay ownership path remain
+unverified.
 
 The launcher now parses the selected eight-byte record from hash-verified
 `DM.BIN` and admits only this calibrated level-1 heading to a New Game start.
 It loads the hash-verified `LEV01.DGN`, checks `(29,47)` against the loaded
 cell geometry, and creates the dungeon-start receipt before producing the
-runtime handoff. Other raw headings remain unmapped and are rejected. The
-viewport, material, and HUD routes retain their independent evidence gates;
-this loader change does not establish complete playability. The `firestaff`
-target compiled successfully on TRV2. The real-data
+runtime handoff. The New Game table uses heading `0x8000`, which resolves to
+North. The independently calibrated `0x4000` heading resolves to East, but
+the BKR Continue flow is not wired to this start parser. Headings `0x0000`
+and `0xc000` remain unmapped and rejected. The viewport, material, and HUD
+routes retain their independent evidence gates; this loader change does not
+establish complete playability. The `firestaff` target compiled successfully
+on TRV2. The real-data
 `nexus_v1_launch_smoke_probe` passed 22/22 checks, including this launcher
 start receipt. It does not exercise the interactive M11 route or provide a
 Ymir capture of that handoff.

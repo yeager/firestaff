@@ -1,3 +1,11 @@
+- 2026-10-30: The complete `dm2_v1_fmtowns_native_cli_boot` CTest passed on
+  the current M4 build in 286.31 seconds against the installed original
+  Japanese FM Towns archive. It covered the bare `--game dm2` AUTO route,
+  isolated and mixed-media M12 selection, direct title/New Game startup, and
+  the first runtime frame. This confirms the tested launcher and CLI paths;
+  it does not establish physical display/input parity or full DM2 platform
+  parity.
+
 - 2026-10-30: Added an authentic-media M12 pointer regression for selecting
   DM2 Amiga while the deferred startup scan is running. The first platform
   click is recorded as safely deferred in `--debug`; after scan publication,

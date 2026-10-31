@@ -62,6 +62,8 @@
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_atari_f0113_fluxcage_plan.h"
+#include "csb_v1_atari_f0113_fluxcage_blit.h"
 #include "csb_v1_atari_f0133_indexed_blit.h"
 #include "csb_v1_atari_f0128_cell_schedule.h"
 #include "csb_v1_atari_st_wall_ornament_data.h"
@@ -6388,15 +6390,177 @@ static int m11_csb_atari_st_draw_explosions_for_square(
     return drawn;
 }
 
+/* ReDMCSB F0115 keeps the last visible C050 C15 record while scanning the
+ * source thing chain, then calls F0113 once after ordinary explosions. Keep
+ * that deferred field pass separate and bind it to the live runtime entry. */
+static int m11_csb_atari_st_draw_fluxcage_for_square(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, int door_pass)
+{
+    CSB_V1_BootProfile *boot;
+    CSB_V1_RuntimeProfile *mutable_runtime;
+    const struct ExplosionInstance_Compat *fluxcage = NULL;
+    CSB_V1_AtariF0113FluxcageInput input;
+    CSB_V1_AtariF0113FluxcagePlan plan;
+    const M11_AssetSlot *field;
+    const M11_AssetSlot *mask = NULL;
+    int map_x;
+    int map_y;
+    int thing;
+    int links;
+    int plan_result;
+    int last_unit;
+    int first_unit;
+    int pixels;
+    unsigned int source_unit_count;
+    unsigned int max_last_unit;
+
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        forward < 0 || forward > 3 || side < -1 || side > 1 ||
+        view_square < 0 || view_square > 11 || door_pass < 0 || door_pass > 2 ||
+        !state->csbAtariStRuntimeHandoffComplete ||
+        !state->assetLoader.csbAtariSt) return -1;
+
+    map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (thing < 0) return 0;
+    boot = (CSB_V1_BootProfile *)state->csbBootProfile;
+    mutable_runtime = boot ? &boot->runtime : NULL;
+    if (!mutable_runtime || mutable_runtime != runtime) return -1;
+
+    /* F0115 restarts the cell's source chain and stores the last admitted
+     * Fluxcage pointer. A decoded C15 record alone cannot authorize a draw. */
+    for (links = 0; links < 4096 && thing != CSB_THING_ENDOFLIST &&
+         thing != CSB_THING_PARTY; ++links) {
+        const uint16_t source_thing = (uint16_t)thing;
+        const uint16_t source_slot = source_thing & 0x03ffu;
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
+        int next;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, source_thing, &type, NULL, &record_size);
+        if (!record) return -1;
+        if (type == 15 && record_size >= 4 &&
+            (record[2] & 0x7fu) == C050_EXPLOSION_FLUXCAGE) {
+            int list_index;
+            for (list_index = 0;
+                 list_index < runtime->explosions.count &&
+                 list_index < EXPLOSION_LIST_CAPACITY; ++list_index) {
+                const struct ExplosionInstance_Compat *candidate =
+                    &runtime->explosions.entries[list_index];
+                if (candidate->slotIndex == (int)source_slot &&
+                    candidate->mapIndex == runtime->current_level &&
+                    candidate->mapX == map_x && candidate->mapY == map_y &&
+                    candidate->explosionType == C050_EXPLOSION_FLUXCAGE &&
+                    (record[2] & 0x7fu) ==
+                        (uint8_t)candidate->explosionType &&
+                    ((record[2] >> 7) & 1u) == (candidate->centered != 0) &&
+                    record[3] == (uint8_t)candidate->attack) {
+                    fluxcage = candidate;
+                    break;
+                }
+            }
+        }
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon,
+                                                        source_thing);
+        if (next == CSB_THING_ENDOFLIST || next == CSB_THING_PARTY) break;
+        if (next < 0) return -1;
+        thing = next;
+    }
+    if (!fluxcage) return 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosion_type = fluxcage->explosionType;
+    input.view_square = view_square;
+    input.door_front_view_pass = door_pass;
+    input.suppress_during_endgame = state->endgameDoNotDrawFluxcages;
+    plan_result = csb_v1_atari_f0113_plan_fluxcage(&input, &plan);
+    if (plan_result < 0) return -1;
+    if (plan_result != CSB_V1_ATARI_F0113_FLUXCAGE_DRAW_FIELD) return 0;
+
+    if (plan.graphic_index != CSB_V1_ATARI_F0113_FLUXCAGE_GRAPHIC ||
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)plan.graphic_index)) return -1;
+    field = M11_AssetLoader_Load(&state->assetLoader,
+        (unsigned int)plan.graphic_index);
+    if (!field || !field->loaded || !field->pixels ||
+        field->width != 32u || field->height != 32u) return -1;
+    source_unit_count = (unsigned int)(field->width / 16u) * field->height;
+    max_last_unit = (unsigned int)plan.base_last_unit +
+        (unsigned int)plan.last_unit_random_range - 1u;
+    if (source_unit_count != 64u || plan.base_last_unit <= 0 ||
+        plan.last_unit_random_range != 2 ||
+        plan.first_unit_random_range != 32 ||
+        max_last_unit > source_unit_count ||
+        plan.first_unit_random_range > plan.base_last_unit) return -1;
+
+    if (plan.mask_graphic_index >= 0) {
+        if (!m11_csb_install_runtime_source_graphic(
+                state, (unsigned int)plan.mask_graphic_index)) return -1;
+        mask = M11_AssetLoader_Load(&state->assetLoader,
+            (unsigned int)plan.mask_graphic_index);
+        if (!mask || !mask->loaded || !mask->pixels ||
+            mask->width != (unsigned int)plan.source_pixel_width ||
+            mask->height != (unsigned int)plan.source_height) return -1;
+    } else if (plan.mask_index != -1 || plan.mask_flip_horizontal ||
+               plan.source_pixel_width != 0 || plan.source_height != 0) {
+        return -1;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0133 argument order: lastUnit first, then firstUnit.
+     * M005_RANDOM(2) consumes one bit; M003_RANDOM(32) masks the next RNG
+     * result with 31. Both draws occur only when the deferred F0113 route is
+     * actually visible, after the C15 source-chain scan. */
+    last_unit = plan.base_last_unit +
+        csb_v1_runtime_main_random_bit(mutable_runtime);
+    first_unit = csb_v1_runtime_main_random_mask(mutable_runtime, 31);
+    if (last_unit < 0 || first_unit < 0) return -1;
+
+    pixels = csb_v1_atari_f0113_blit_fluxcage(
+        &plan, field->pixels, (int)field->width, (int)field->height,
+        mask ? mask->pixels : NULL, mask ? (int)mask->width : 0,
+        mask ? (int)mask->height : 0,
+        last_unit, first_unit, framebuffer, framebuffer_width,
+        framebuffer_height, 48, 33);
+    if (pixels < 0) return -1;
+    if (state->debugMovementTraceEnabled) {
+        fprintf(stderr,
+            "firestaff: viewport game=csb platform=atari "
+            "pass=f0113-fluxcage status=%s slot=%d map=%d:%d,%d "
+            "square=%d graphic=%d mask=%d flip=%d last=%d first=%d "
+            "mask-size=%ux%u frame=%u,%u,%u,%u pixels=%d\n",
+            pixels ? "drawn" : "clipped-or-transparent",
+            fluxcage->slotIndex, runtime->current_level, map_x, map_y,
+            view_square, plan.graphic_index, plan.mask_graphic_index,
+            plan.mask_flip_horizontal, last_unit, first_unit,
+            mask ? mask->width : 0u, mask ? mask->height : 0u,
+            plan.destination_frame[0],
+            plan.destination_frame[2],
+            plan.destination_frame[1] - plan.destination_frame[0] + 1,
+            plan.destination_frame[3] - plan.destination_frame[2] + 1,
+            pixels);
+    }
+    return pixels;
+}
+
 static int m11_csb_atari_st_draw_f0115_pass(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
     const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
     int forward, int side, int view_square, uint16_t cell_order)
 {
     /* Four view cells each emit object/creature/projectile, followed by the
-     * source-owned explosion and Fluxcage passes. The latter two are not yet
-     * bound to Atari graphics, but reserving them here preserves the source
-     * schedule without aborting the visible object/creature layers. */
+     * source-owned explosion scan and deferred Fluxcage field pass. */
     CSB_V1_AtariF0115PassEvent events[14];
     int event_count;
     int event_index;
@@ -6426,9 +6590,11 @@ static int m11_csb_atari_st_draw_f0115_pass(
                 state, dungeon, runtime, framebuffer, 320, 200,
                 forward, side, view_square, event->door_front_view_pass,
                 cell_order);
+        } else if (event->layer == CSB_V1_ATARI_F0115_FLUXCAGE_LAYER) {
+            result = m11_csb_atari_st_draw_fluxcage_for_square(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, event->door_front_view_pass);
         } else {
-            /* Fluxcage remains an F0113 field pass; do not fold it into the
-             * ordinary explosion/projectile blitters. */
             continue;
         }
         if (result < 0) return result;
@@ -22564,6 +22730,43 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
  * Drop: take item from champion hand/slot -> current cell
  * ================================================================ */
 
+/* One action-level receipt for --debug. Keep the compact SFT state visible
+ * when diagnosing an item that appears to vanish, without adding per-frame
+ * logging or changing the normal game output. */
+static void m11_debug_trace_floor_drop(const M11_GameViewState* state,
+                                       const char* source,
+                                       unsigned short thing,
+                                       unsigned short beforeHead,
+                                       int linked) {
+    int mapIndex, mapX, mapY, sftIndex = -1, flagged = 0;
+    unsigned short afterHead;
+    const struct DungeonMapDesc_Compat* map;
+    if (!state || !state->debugMovementTraceEnabled || !state->world.dungeon ||
+        !state->world.things) return;
+    mapIndex = state->world.party.mapIndex;
+    mapX = state->world.party.mapX;
+    mapY = state->world.party.mapY;
+    afterHead = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
+    if (m11_world_has_compact_sft(&state->world))
+        sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+            state->world.dungeon, mapIndex, mapX, mapY);
+    if (mapIndex >= 0 && mapIndex < (int)state->world.dungeon->header.mapCount) {
+        map = &state->world.dungeon->maps[mapIndex];
+        if (mapX >= 0 && mapY >= 0 && mapX < (int)map->width &&
+            mapY < (int)map->height && state->world.dungeon->tiles &&
+            state->world.dungeon->tiles[mapIndex].squareData) {
+            size_t squareOffset = (size_t)mapX * map->height + (size_t)mapY;
+            flagged = (state->world.dungeon->tiles[mapIndex].squareData[squareOffset] &
+                       DUNGEON_SQUARE_MASK_THING_LIST) != 0;
+        }
+    }
+    fprintf(stderr,
+        "DM1 floor-drop source=%s map=%d square=%d,%d thing=%04X compact=%d sft=%d flagged=%d before=%04X after=%04X result=%s\n",
+        source ? source : "unknown", mapIndex, mapX, mapY, thing,
+        m11_world_has_compact_sft(&state->world), sftIndex, flagged,
+        beforeHead, afterHead, linked ? "linked" : "rejected");
+}
+
 int M11_GameView_DropItem(M11_GameViewState* state) {
     struct ChampionState_Compat* champ;
     unsigned short item = THING_NONE;
@@ -22601,17 +22804,24 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
      * the pointer helper's viewport-cell hit testing. */
     item = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
     if (item != THING_NONE) {
+        unsigned short beforeHead = m11_square_chain_head(
+            &state->world, state->world.party.mapIndex,
+            state->world.party.mapX, state->world.party.mapY);
         DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
         if (!m11_prepend_thing_to_square(&state->world,
                                          state->world.party.mapIndex,
                                          state->world.party.mapX,
                                          state->world.party.mapY,
                                          item)) {
+            m11_debug_trace_floor_drop(state, "mouse-hand", item,
+                                       beforeHead, 0);
             (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
             m11_set_status(state, "DROP",
                            M11_DM1_PRESENTED("DROP TARGET UNAVAILABLE"));
             return 0;
         }
+        m11_debug_trace_floor_drop(state, "mouse-hand", item,
+                                   beforeHead, 1);
         m11_get_source_item_name(state, state->world.things, item,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "DROP", "ITEM DROPPED");
@@ -22652,16 +22862,25 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
 
     item = champ->inventory[dropSlot];
     champ->inventory[dropSlot] = THING_NONE;
+    {
+        unsigned short beforeHead = m11_square_chain_head(
+            &state->world, state->world.party.mapIndex,
+            state->world.party.mapX, state->world.party.mapY);
 
-    if (!m11_prepend_thing_to_square(&state->world,
-                                     state->world.party.mapIndex,
-                                     state->world.party.mapX,
-                                     state->world.party.mapY,
-                                     item)) {
-        /* Restore if chain operation fails */
-        champ->inventory[dropSlot] = item;
-        m11_set_status(state, "DROP", "CHAIN ERROR");
-        return 0;
+        if (!m11_prepend_thing_to_square(&state->world,
+                                         state->world.party.mapIndex,
+                                         state->world.party.mapX,
+                                         state->world.party.mapY,
+                                         item)) {
+            m11_debug_trace_floor_drop(state, "inventory", item,
+                                       beforeHead, 0);
+            /* Restore if chain operation fails */
+            champ->inventory[dropSlot] = item;
+            m11_set_status(state, "DROP", "CHAIN ERROR");
+            return 0;
+        }
+        m11_debug_trace_floor_drop(state, "inventory", item,
+                                   beforeHead, 1);
     }
 
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
@@ -66090,6 +66309,323 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
     return hash;
 }
 
+static uint32_t m11_dm2_debug_mix_u32(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
+
+static uint32_t m11_dm2_debug_mix_text(uint32_t hash, const char *text)
+{
+    const unsigned char *cursor = (const unsigned char *)text;
+
+    if (cursor) {
+        while (*cursor) {
+            hash = m11_dm2_debug_mix_u32(hash, (uint32_t)*cursor);
+            ++cursor;
+        }
+    }
+    return m11_dm2_debug_mix_u32(hash, 0u);
+}
+
+static const char *m11_dm2_debug_platform_label(int platform)
+{
+    switch (platform) {
+    case DM2_PLATFORM_PC_EN: return "pc-en";
+    case DM2_PLATFORM_PC_FR: return "pc-fr";
+    case DM2_PLATFORM_PC_JEWEL: return "pc-jewel";
+    case DM2_PLATFORM_FMTOWNS_JA: return "fmtowns-ja";
+    case DM2_PLATFORM_MAC_EN: return "mac-en";
+    case DM2_PLATFORM_MAC_FR: return "mac-fr";
+    case DM2_PLATFORM_AMIGA_EN: return "amiga-en";
+    case DM2_PLATFORM_MEGACD_JA: return "mega-cd-ja";
+    default: return "unknown";
+    }
+}
+
+/* --debug must expose the source receipt that decided whether the DM2 frame
+ * was drawn, not just the earlier startup handoff. Log only when a receipt
+ * field or party pose changes so animation frames do not flood stderr. */
+static void m11_debug_trace_dm2_runtime_frame(
+    const M11_GameViewState *state,
+    int render_result,
+    int frame_accepted,
+    const DM2_V1_BootRuntimeRenderReceipt *render,
+    const DM2_V1_ViewportM11FrameReceipt *frame)
+{
+    static const M11_GameViewState *previous_state;
+    static uint32_t previous_signature;
+    const DM2_V1_BootProfile *profile;
+    DM2_V1_ViewportItemMaterialTrace item_trace;
+    DM2_V1_RuntimeHudMaterialTrace hud_trace;
+    DM2_V1_HudPartyState hud_party;
+    int item_trace_count;
+    int item_trace_index;
+    int hud_trace_count;
+    int hud_trace_index;
+    int hud_party_valid;
+    unsigned int hud_occupied_mask = 0u;
+    unsigned int hud_portrait_bound_mask = 0u;
+    uint32_t signature = 2166136261u;
+    int platform;
+
+    if (!state || !state->debugMovementTraceEnabled || !render || !frame) {
+        previous_state = NULL;
+        previous_signature = 0u;
+        return;
+    }
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    platform = profile ? (int)profile->platform : -1;
+    item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
+    hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
+    hud_party_valid = dm2_v1_runtime_last_hud_party_state(&hud_party);
+    if (hud_party_valid) {
+        int slot;
+        for (slot = 0; slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++slot) {
+            const DM2_V1_HudChampionState *champion =
+                &hud_party.champions[slot];
+            if (champion->occupied) hud_occupied_mask |= 1u << slot;
+            if (champion->portrait_type_source_bound) {
+                hud_portrait_bound_mask |= 1u << slot;
+            }
+        }
+    } else {
+        memset(&hud_party, 0, sizeof(hud_party));
+    }
+#define M11_DM2_DEBUG_MIX(value) \
+    (signature = m11_dm2_debug_mix_u32(signature, (uint32_t)(value)))
+    M11_DM2_DEBUG_MIX(render_result);
+    M11_DM2_DEBUG_MIX(frame_accepted);
+    M11_DM2_DEBUG_MIX(platform);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_x);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_y);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_dir);
+    M11_DM2_DEBUG_MIX(render->runtime_render_real_asset_ready);
+    M11_DM2_DEBUG_MIX(render->runtime_render_no_core_fallbacks);
+    M11_DM2_DEBUG_MIX(render->runtime_render_blocked_material_draw_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_floor_ceiling_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_wall_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_panel_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_overlay_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_frame_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_button_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_creature_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_item_count);
+    signature = m11_dm2_debug_mix_text(
+        signature, state->sourceId[0] ? state->sourceId : "dm2");
+    M11_DM2_DEBUG_MIX(item_trace_count);
+    for (item_trace_index = 0; item_trace_index < item_trace_count;
+         ++item_trace_index) {
+        if (!dm2_v1_runtime_last_item_material_trace(
+                item_trace_index, &item_trace)) continue;
+        M11_DM2_DEBUG_MIX(item_trace_index);
+        M11_DM2_DEBUG_MIX(item_trace.source_kind);
+        M11_DM2_DEBUG_MIX(item_trace.gdat_index);
+        M11_DM2_DEBUG_MIX(item_trace.item_index);
+        M11_DM2_DEBUG_MIX(item_trace.object_id);
+        M11_DM2_DEBUG_MIX(item_trace.item_category);
+        M11_DM2_DEBUG_MIX(item_trace.item_type);
+        M11_DM2_DEBUG_MIX(item_trace.frame_index);
+        M11_DM2_DEBUG_MIX(item_trace.depth);
+        M11_DM2_DEBUG_MIX(item_trace.source_width);
+        M11_DM2_DEBUG_MIX(item_trace.source_height);
+        M11_DM2_DEBUG_MIX(item_trace.destination.x);
+        M11_DM2_DEBUG_MIX(item_trace.destination.y);
+        M11_DM2_DEBUG_MIX(item_trace.destination.w);
+        M11_DM2_DEBUG_MIX(item_trace.destination.h);
+    }
+    M11_DM2_DEBUG_MIX(hud_trace_count);
+    M11_DM2_DEBUG_MIX(hud_party_valid);
+    M11_DM2_DEBUG_MIX(hud_party.champion_count);
+    M11_DM2_DEBUG_MIX(hud_party.leader_index);
+    M11_DM2_DEBUG_MIX(hud_occupied_mask);
+    M11_DM2_DEBUG_MIX(hud_portrait_bound_mask);
+    for (hud_trace_index = 0;
+         hud_party_valid && hud_trace_index < DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+         ++hud_trace_index) {
+        const DM2_V1_HudChampionState *champion =
+            &hud_party.champions[hud_trace_index];
+        M11_DM2_DEBUG_MIX(champion->occupied);
+        M11_DM2_DEBUG_MIX(champion->leader);
+        M11_DM2_DEBUG_MIX(champion->portrait_index);
+        M11_DM2_DEBUG_MIX(champion->portrait_type_source_bound);
+        M11_DM2_DEBUG_MIX(champion->state_source_bound);
+        M11_DM2_DEBUG_MIX(champion->current_hp_source_bound);
+        M11_DM2_DEBUG_MIX(champion->current_hp);
+        M11_DM2_DEBUG_MIX(champion->hp_pct);
+        signature = m11_dm2_debug_mix_text(signature, champion->name);
+    }
+    for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
+         ++hud_trace_index) {
+        if (!dm2_v1_runtime_last_hud_material_trace(
+                hud_trace_index, &hud_trace)) continue;
+        M11_DM2_DEBUG_MIX(hud_trace_index);
+        M11_DM2_DEBUG_MIX(hud_trace.consumed);
+        M11_DM2_DEBUG_MIX(hud_trace.kind);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_category);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_index);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_field);
+        M11_DM2_DEBUG_MIX(hud_trace.destination_rect_id);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.x);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.y);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.w);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.h);
+        M11_DM2_DEBUG_MIX(hud_trace.width);
+        M11_DM2_DEBUG_MIX(hud_trace.height);
+        M11_DM2_DEBUG_MIX(hud_trace.source_state_flags);
+        M11_DM2_DEBUG_MIX(hud_trace.source_transparency_key);
+        M11_DM2_DEBUG_MIX(hud_trace.animation_direction);
+        M11_DM2_DEBUG_MIX(hud_trace.animation_frame);
+        M11_DM2_DEBUG_MIX(hud_trace.decoded_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.palette_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.raw_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.destination_table_hash);
+    }
+    M11_DM2_DEBUG_MIX(render->runtime_hud_real_asset_ready);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_asset_portrait_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_fallback_portrait_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_pixel_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_interface_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_raw_interface_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_frame_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_map_load_token);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_control_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_light_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_ambient_light);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_presentation_state_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_palette_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_floor_material_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_ceiling_material_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_wall_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_required);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_consumed);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_required);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_consumed);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_creature_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_hash);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
+#undef M11_DM2_DEBUG_MIX
+    if (previous_state == state && previous_signature == signature) return;
+
+    fprintf(stderr,
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
+        state->sourceId[0] ? state->sourceId : "dm2",
+        m11_dm2_debug_platform_label(platform),
+        state->dm2State.party_x,
+        state->dm2State.party_y,
+        state->dm2State.party_dir,
+        render_result,
+        frame_accepted,
+        render->runtime_render_real_asset_ready,
+        render->runtime_render_no_core_fallbacks,
+        render->runtime_render_blocked_material_draw_count,
+        render->runtime_m11_frame_map_load_token,
+        render->runtime_m11_frame_scene_control_hash,
+        render->runtime_m11_frame_scene_light_hash,
+        render->runtime_m11_frame_scene_ambient_light,
+        render->runtime_m11_frame_presentation_state_hash,
+        render->runtime_m11_frame_palette_hash,
+        render->runtime_render_asset_floor_ceiling_count,
+        render->runtime_render_asset_wall_count,
+        render->runtime_render_asset_door_panel_count,
+        render->runtime_render_asset_door_overlay_count,
+        render->runtime_render_asset_door_frame_count,
+        render->runtime_render_asset_door_button_count,
+        render->runtime_render_asset_creature_count,
+        render->runtime_render_asset_item_count,
+        item_trace_count,
+        render->runtime_m11_frame_floor_material_hash,
+        render->runtime_m11_frame_ceiling_material_hash,
+        render->runtime_m11_frame_wall_material_plan_command_count,
+        render->runtime_m11_frame_door_material_plan_required,
+        render->runtime_m11_frame_door_material_plan_command_count,
+        render->runtime_m11_frame_door_material_plan_consumed,
+        render->runtime_m11_frame_creature_material_plan_command_count,
+        render->runtime_m11_frame_item_material_plan_command_count,
+        render->runtime_m11_frame_item_material_plan_hash,
+        render->runtime_m11_frame_hud_material_plan_required,
+        render->runtime_m11_frame_hud_material_plan_hash,
+        render->runtime_m11_frame_hud_material_plan_command_count,
+        render->runtime_m11_frame_hud_material_plan_consumed,
+        frame->composition.hud_presentation_stage,
+        render->runtime_hud_asset_portrait_count,
+        render->runtime_hud_fallback_portrait_count,
+        hud_party_valid,
+        hud_party.champion_count,
+        hud_party.leader_index,
+        hud_occupied_mask,
+        hud_portrait_bound_mask,
+        render->runtime_hud_decoded_core_pixel_count,
+        render->runtime_hud_decoded_interface_count,
+        render->runtime_hud_raw_interface_count,
+        render->runtime_hud_frame_pixel_count,
+        render->runtime_hud_frame_hash,
+        frame->composition.hud_top_bar_command_consumed,
+        frame->composition.hud_status_panel_command_consumed);
+    for (item_trace_index = 0; item_trace_index < item_trace_count;
+         ++item_trace_index) {
+        if (!dm2_v1_runtime_last_item_material_trace(
+                item_trace_index, &item_trace)) continue;
+        fprintf(stderr,
+            "firestaff: dm2-render-item game=%s platform=%s index=%d source=%d object=%04x item=%d category=%d type=%d frame=%d gdat=%08x depth=%d source-size=%dx%d rect=%d,%d,%d,%d\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform), item_trace_index,
+            item_trace.source_kind, item_trace.object_id,
+            item_trace.item_index, item_trace.item_category,
+            item_trace.item_type, item_trace.frame_index,
+            (unsigned int)item_trace.gdat_index, item_trace.depth,
+            item_trace.source_width, item_trace.source_height,
+            item_trace.destination.x, item_trace.destination.y,
+            item_trace.destination.w, item_trace.destination.h);
+    }
+    for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
+         ++hud_trace_index) {
+        if (!dm2_v1_runtime_last_hud_material_trace(
+                hud_trace_index, &hud_trace)) continue;
+        fprintf(stderr,
+            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform), hud_trace_index,
+            hud_trace.consumed, hud_trace.kind, hud_trace.viewport_gdat_index,
+            hud_trace.gdat_category, hud_trace.gdat_index,
+            hud_trace.gdat_field, hud_trace.destination_rect_id,
+            hud_trace.destination.x, hud_trace.destination.y,
+            hud_trace.destination.w, hud_trace.destination.h,
+            hud_trace.width, hud_trace.height, hud_trace.source_state_flags,
+            hud_trace.source_transparency_key,
+            hud_trace.animation_direction, hud_trace.animation_frame,
+            hud_trace.decoded_hash, hud_trace.palette_hash,
+            hud_trace.raw_hash, hud_trace.destination_table_hash);
+    }
+    if (hud_party_valid) {
+        int slot;
+        for (slot = 0; slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++slot) {
+            const DM2_V1_HudChampionState *champion =
+                &hud_party.champions[slot];
+            fprintf(stderr,
+                "firestaff: dm2-render-hero game=%s platform=%s slot=%d occupied=%d leader=%d name=%s hp-bound=%d hp=%d hp-percent=%u portrait-type-bound=%d portrait-type=%u state-bound=%d\n",
+                state->sourceId[0] ? state->sourceId : "dm2",
+                m11_dm2_debug_platform_label(platform), slot,
+                champion->occupied, champion->leader,
+                champion->name[0] ? champion->name : "-",
+                champion->current_hp_source_bound,
+                champion->current_hp, (unsigned int)champion->hp_pct,
+                champion->portrait_type_source_bound,
+                (unsigned int)champion->portrait_index,
+                champion->state_source_bound);
+        }
+    }
+    previous_state = state;
+    previous_signature = signature;
+}
+
 /* FM Towns and Amiga use a physical 16-colour display palette for the active
  * GRAPHICSSET. Their image planes contain logical nibbles, so leaving the
  * INTERFACE_GENERAL palette latched applies the wrong colours to a valid
@@ -66693,13 +67229,10 @@ static void m11_nexus_startup_exec_boot_title_frame(
     nexus_fb_init(&nexusFb);
     if (!context->state ||
         !context->state->nexusState.retail_title_menu.configuration_active) {
-        nexus_render_title((const Nexus_TitleScreen*)(
-                               context->state
-                                   ? context->state->nexusTitleScreen
-                                   : NULL),
-                           &nexusFb,
-                           command->title_frame +
-                               nexus_title_boot_warning_frames());
+        (void)nexus_render_boot_title_frame(
+            (const Nexus_TitleScreen*)context->state->nexusTitleScreen,
+            &nexusFb,
+            context->state->nexusState.title_frame);
     }
     if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
         (void)nexus_v1_retail_title_menu_render(
@@ -77163,6 +77696,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                     state);
             }
         }
+        m11_debug_trace_dm2_runtime_frame(
+            state, rendered, runtime_frame_accepted,
+            &runtime_render_receipt, &runtime_frame_receipt);
         if (rendered == -1) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,

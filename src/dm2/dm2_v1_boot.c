@@ -9059,8 +9059,140 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             source_portraits[slot].x / 2, source_portraits[slot].y / 2,
             source_portraits[slot].w / 2, source_portraits[slot].h / 2 };
     }
-    return dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
-        out_plan, party, portrait_destinations, table_hash);
+    if (!dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
+            out_plan, party, portrait_destinations, table_hash)) return 0;
+    if (profile->platform == DM2_PLATFORM_AMIGA_EN) {
+        DM2_V1_GdatHudM11CommandPlan arrows;
+        DM2_V1_ViewportRect status_pane_destinations[4];
+        uint32_t amiga_status_pane_hash = 0u;
+        memset(&arrows, 0, sizeof(arrows));
+        memset(status_pane_destinations, 0,
+               sizeof(status_pane_destinations));
+        /* SKProject's right-panel path uses RECT_47 for the squad panel.
+         * Generic top/action/gold strip guesses are PC chrome and visibly
+         * corrupt the Amiga HUD, so discard those three static commands. */
+        if (out_plan->command_count < 4 ||
+            out_plan->commands[3].kind !=
+                DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL ||
+            !dm2_v1_boot_gdat_hud_source_move_arrow_plan(profile, &arrows) ||
+            out_plan->command_count + arrows.command_count >
+                DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        for (int i = 0; i < 3; ++i) {
+            dm2_v1_asset_free_pixels(out_plan->commands[i].pixels);
+            memset(&out_plan->commands[i], 0,
+                   sizeof(out_plan->commands[i]));
+        }
+        memmove(&out_plan->commands[0], &out_plan->commands[3],
+            (size_t)(out_plan->command_count - 3) *
+                sizeof(out_plan->commands[0]));
+        out_plan->command_count -= 3;
+        memset(&out_plan->commands[out_plan->command_count], 0,
+            (size_t)3 * sizeof(out_plan->commands[0]));
+        for (int i = 0; i < arrows.command_count; ++i) {
+            out_plan->commands[out_plan->command_count++] = arrows.commands[i];
+            arrows.commands[i].pixels = NULL;
+        }
+        dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+        out_plan->amiga_native_move_arrows = 1;
+        out_plan->command_hash =
+            dm2_v1_gdat_hud_m11_command_plan_hash(out_plan);
+        out_plan->valid = out_plan->command_hash != 0u;
+        if (!out_plan->valid) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        if (party->status_hero_source_bound) {
+            for (slot = 0; slot < party->champion_count; ++slot) {
+                DM2_V1_BootExpandedRectReceipt pane_receipt;
+                if (!party->champions[slot].occupied) continue;
+                if (!dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, (uint16_t)(0xa1u + slot), &pane_receipt) ||
+                    !pane_receipt.valid || !pane_receipt.raw4_hash ||
+                    pane_receipt.rect.x < 0 || pane_receipt.rect.y < 0 ||
+                    pane_receipt.rect.w <= 0 || pane_receipt.rect.h <= 0 ||
+                    (slot != 0 && pane_receipt.raw4_hash !=
+                        amiga_status_pane_hash)) {
+                    dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                    return 0;
+                }
+                amiga_status_pane_hash = pane_receipt.raw4_hash;
+                status_pane_destinations[slot] = (DM2_V1_ViewportRect){
+                    pane_receipt.rect.x / 2,
+                    pane_receipt.rect.y / 2,
+                    pane_receipt.rect.w / 2,
+                    pane_receipt.rect.h / 2 };
+            }
+            if (!amiga_status_pane_hash ||
+                !dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+                    &gfx->loader, out_plan, party,
+                    status_pane_destinations, amiga_status_pane_hash)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+        }
+        if (party->amiga_squad_route_valid) {
+            if (!party->amiga_invisibility_source_bound ||
+                party->amiga_party_direction > 3u) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            for (slot = 0; slot < party->champion_count; ++slot) {
+                const DM2_V1_HudChampionState *hero =
+                    &party->champions[slot];
+                DM2_V1_BootExpandedRectReceipt formation;
+                DM2_V1_InterfaceRect figure_rect;
+                size_t raw_size = 0u;
+                const uint8_t *source_image;
+                int relative;
+                int direction;
+                DM2_V1_ViewportRect destination;
+                if (!hero->occupied || !hero->current_hp_source_bound ||
+                    hero->current_hp == 0) continue;
+                if (!hero->amiga_party_position_source_bound ||
+                    !hero->amiga_absdir_source_bound ||
+                    hero->amiga_party_position > 3u ||
+                    hero->amiga_absdir > 3u) continue;
+                source_image = dm2_v1_asset_load_typed_sized(
+                    &gfx->loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6,
+                    DM2_GDAT_ENTRY_TYPE_IMAGE, slot, &raw_size);
+                /* SKProject QUERY_GDAT_SQUAD_ICON leaves this figure absent
+                 * when that original GDAT slot has no image. Do not borrow
+                 * another hero's sheet or invent an icon. */
+                if (!source_image) continue;
+                relative = (hero->amiga_party_position + 4 -
+                    party->amiga_party_direction) & 3;
+                direction = (hero->amiga_absdir + 4 -
+                    party->amiga_party_direction) & 3;
+                if (raw_size == 0u ||
+                    !dm2_v1_boot_query_expanded_rect_receipt(
+                        profile, (uint16_t)(0x4fu + relative), &formation) ||
+                    !formation.valid || !formation.raw4_hash ||
+                    !dm2_v1_boot_query_blit_rect_for_dimensions(
+                        profile, (uint16_t)(0x53u + relative), 17, 17,
+                        &figure_rect) ||
+                    figure_rect.w != 17 || figure_rect.h != 17) {
+                    dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                    return 0;
+                }
+                destination = (DM2_V1_ViewportRect){
+                    figure_rect.x, figure_rect.y,
+                    figure_rect.w, figure_rect.h };
+                if (!dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
+                        &gfx->loader, out_plan, slot, relative, direction,
+                        party->amiga_invisibility != 0u, &destination,
+                        formation.raw4_hash)) {
+                    dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
 }
 
 int dm2_v1_boot_gdat_hud_static_m11_command_plan(

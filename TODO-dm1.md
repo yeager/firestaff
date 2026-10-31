@@ -1,5 +1,39 @@
 # Firestaff TODO — DM1
 
+2026-10-30 PC34 M12 startup route recheck: the authentic
+`m12_main_menu_dm1-pc_runtime_real_media` test passed. Selecting DM1 → PC from
+the no-game menu reached the PC34 first runtime, and the test confirmed that
+the original archive remained unchanged. This verifies the scripted SDL
+menu-to-runtime path; native display, audio and physical input remain
+unverified. The same recheck passed
+`m12_main_menu_dm1-atari-st_runtime_real_media` against the original Atari
+archive, with the same headless-display and physical-input boundary.
+
+2026-10-30 Apple IIGS floor-item drop recovery: the authentic G20/G21 first-
+descent test exposed a map-1 square whose Thing-list bit was set while its
+existing compact SFT row contained `THING_ENDOFLIST`. `F0514_DUNGEON_LinkThingToList_Compat`
+now reuses that row as the new head rather than rejecting a valid drop or
+inserting a duplicate row. ReDMCSB `DUNGEON.C:F0163` confirms the flagged-
+square route resolves its current head with `F0161`; the recovery is bounded
+to the existing validated row and leaves column counts unchanged. The focused
+F0514/F0515 test and `m11_dm1_iigs_startup_real_media` both pass; the latter
+verifies the original torch drops, is recovered from the floor, and returns to
+its champion hand with one owner. This closes that interaction gap only; other
+IIGS gameplay and visual parity remain open. `--debug` now reports one
+action-scoped floor-drop receipt with the source, map square, Thing ID, compact
+SFT row, list flag, and head before/after; the trace is gated by the CLI debug
+flag and emits nothing during ordinary play.
+
+2026-10-30 PC34 multilingual Save Browser admission: ReDMCSB
+`FILENAME.C` MEDIA733_I34M/F0745 resolves `DMSAVE~.DAT/.BAK` to `DMSAVEF`
+for French and `DMSAVEG` for German. M12 now admits these four basenames as
+DM1 candidates, while its normal parser and load gate still reject invalid
+bytes. The focused test checks candidate visibility/rejection and, when the
+local authentic PC34 `DMSAVE.DAT` corpus save is installed, exercises its
+unchanged bytes under all four names. This verifies filename routing with
+authentic save contents, not language-specific F/G save payloads; those
+original saves are not currently available locally.
+
 2026-10-30 X68000 raw map access step: ReDMCSB `LOADSAVE.C:2161-2163`
 constructs each map as column pointers advanced by `Height+1`, while
 `DUNGEON.C F0151` returns the byte at an in-bounds `(MapX, MapY)` coordinate.
@@ -831,11 +865,19 @@ SDL dummy does not prove native display, audio output, or physical input.
 
 2026-10-21 Amiga HD/demo follow-up:
 `dm1_v1_amiga_hd_archive_cli_boot` passed against the authentic Amiga HD ZIP.
-`dm1_v1_amiga_demo_archive_cli_boot` skipped because the required original
-`dm-amiga-demo-en.zip` is not present in the local or external archive cache;
-the installed Amiga software archive does not contain that demo package.
-Demo startup therefore remains unverified with authentic media; no substitute
-payload was created.
+At that time, `dm1_v1_amiga_demo_archive_cli_boot` skipped because the original
+`dm-amiga-demo-en.zip` was not present in the local or external archive cache;
+the installed Amiga software archive did not contain that demo package. No
+substitute payload was created.
+
+2026-10-30 Amiga demo startup retest: the original
+`~/.firestaff/data/dm1/dm-amiga-demo-en.zip` is now installed. The
+`dm1_v1_amiga_demo_archive_cli_boot` real-media test passed both when invoked
+directly and as CTest (1/1, 15.98 seconds). It verifies the authenticated
+demo GRAPHICS.DAT and DemoDun.dat hashes, direct CLI and M12 startup from the
+archive and loose original files, and leaves the source archive unchanged.
+This closes the demo startup verification gap for these paths, not native
+display, physical input, audio, or complete Amiga parity.
 
 2026-10-21 Atari outer-archive startup follow-up:
 `dm1_v1_atari_st_outer_archive_cli_boot` passed against the authentic Atari ST
@@ -3512,3 +3554,14 @@ original 18x18 frame graphics 33/34/35, and the original Apple icon atlas
 region for both English F20E and Japanese F20J. Its pixel composition check
 does not capture the live M11 framebuffer or compare it with an original-game
 frame. Hand-widget parity and full F20 HUD parity therefore remain open.
+
+2026-10-30 Apple IIGS CLI and M12 startup retest: the authentic-media
+`firestaff_iigs_cli_real_media` CTest passes for original G20 (2.0) and G21
+(2.1) data. Its direct `--game dm1 --platform apple-iigs` boot probes reach
+the active native dungeon runtime; the no-game launcher independently scans
+and selects each original edition, runs its title and mouse-controlled
+entrance, and reaches the same active runtime. The test also verifies the
+source graphics digest and leaves the original PO payload unchanged. This
+supersedes the 2026-10-16 notes that CLI/M12 IIGS startup integration was
+still pending. SDL's dummy driver does not verify physical IIGS hardware,
+native audio output, first active Hall movement, or visual parity.

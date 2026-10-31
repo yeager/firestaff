@@ -637,38 +637,437 @@ The authentic v11 trace also captures 165 instruction-fetch snapshots whose
 valid bytes overlap logical `$40D2-$40E3`, mapped to physical `$1000D2-$1000E3`.
 `verify_theron_jp_ram_loop_source_candidates.py` first validates the complete
 indexed-dispatch/code-follow sidecars, authenticates all source-valid CD reads
-against the Japanese Rev. 1 Track 02 image, validates the `$EA9C` writer rows,
-then compares each fetched byte with the latest earlier write recorded for its
-physical address. For matching values it checks whether a source-valid
-`$EA99` read of the same value occurred in the prior 16 shared events, using
-the candidate window from the existing writer verifier.
+against the Japanese Rev. 1 Track 02 image, validates the all-PC target-write
+rows and `$EA9C` writer rows, then compares each fetched byte with the latest
+earlier address-scoped write. For `$EA9C` writes, it checks whether a source-
+valid `$EA99` read of the same value occurred in the prior 16 shared events,
+using the candidate window from the existing writer verifier.
 
 Three repeated runs against the private TRV2 capture reported the same
 classification:
 
 - All 18 physical addresses were observed in 495 valid byte slots over 165
   fetch rows.
-- 491 byte slots matched the latest earlier `$EA9C` writer-PC record; four
-  differed, and no byte lacked a prior `$EA9C` record.
-- All 491 matches had an ordered, same-value source-valid `$EA99` Track 02
-  read within 16 shared events. The nearest candidate was one event earlier
-  for 386 slots and two events earlier for 105. There was one same-value
-  candidate for 416 slots and more than one for 75, yielding 611 candidate
-  read matches across the repeated fetch slots.
-- 163 fetch rows had all their in-range bytes joined to matching writer and
-  read candidates.
+- All 495 byte slots matched the latest address-scoped writer record, with no
+  missing writes or byte mismatches. The all-PC target-write trace covers
+  `$1000D9-$1000DB`; the other 15 bytes use the `$EA9C`-only writer trace.
+- 95 slots matched non-`$EA9C` writers at `$1000D9-$1000DB`. The other 400
+  matched `$EA9C` writes and had same-value, source-valid `$EA99` Track 02 read
+  candidates within 16 shared events. There were 390 unique and 10 ambiguous
+  candidates across those fetch slots.
+- All 165 fetch rows matched their address-scoped latest writes; 111 rows had
+  all in-range bytes joined to CD-read candidates.
 
-The tool reports observations and does not promote mismatches or missing joins
-into success claims. Repeated values can leave multiple reads as candidates.
-`$EA9C` is only one observed guest writer PC; other writes can be absent from
-the sidecar. This does not establish exclusive RAM provenance, game ownership,
-gameplay handoff, or parity. Raw captures and original media remain private on
-TRV2.
+The all-PC trace resolves the earlier `$EA9C`-only mismatches at `$1000D9-$1000DB`.
+In the same follow window, the fetched bytes at `$6109` are `A9 EA` (`LDA #$EA`),
+then `$610B/$610E/$6111` fetch `8D D9 40`, `8D DA 40`, and `8D DB 40`, which
+decode as stores to `$40D9`, `$40DA`, and `$40DB`. The target-write trace records
+these stores at shared events 103466, 103469, and 103472, all writing `$EA`
+through MPR2=`$80` to physical `$1000D9-$1000DB`. `$6114` fetches `RTS` and
+execution returns to `$432B`. This confirms the observed runtime writes and
+control flow; it does not establish the routine's owner or connect it to
+gameplay.
+
+The offline verifier identifies one complete execution of this helper in the
+v11 capture. Its 12 executed instruction bytes all match earlier `$EA9C`
+writer-PC stores and each has a source-valid Track 02 `$EA99` read candidate
+within 16 shared events. Eight byte slots have one candidate and four have
+multiple same-value candidates. The three helper stores are independently
+confirmed by the all-PC target-write trace. This binds executed bytes to
+authentic disc-read candidates while keeping repeated-value ambiguity and
+caller ownership explicit.
+
+The v11 all-PC target-write trace covered only three of the 18 addresses;
+the `$EA9C` writer trace was not exhaustive for the other 15. Candidate read
+matches use the same 16-event window as the existing writer verifier, and
+repeated values can leave multiple reads as candidates. Raw captures and
+original media remain private on TRV2.
+
+## 2026-10-30 — v12 expanded RAM-loop target-write trace
+
+A new cold reference run used authentic Japanese Rev. 1 media and System Card
+3.0, without loading a save state. The instrumented target-write trace records
+all observed PCs for the full physical `$1000D2-$1000E3` range. The updated
+focused verifiers report 2–6 writes for each address; 40 fetched bytes at
+`$1000D9-$1000DB` all have a prior matching write, with no mismatches or
+missing writes. Across the 165-row/$495-slot loop fetch trace, all latest
+address-scoped writes match and the source-candidate counts remain 400
+`$EA9C`-matched slots (390 unique, 10 ambiguous) and 111 fully source-candidate
+backed rows. `$1000E3` had two writes, both from `$EA9C`.
+
+The capture wrapper exited 124 with `BLOCKED: dynamic receipts absent`,
+reporting zero host keys, IRQs, and authenticated CD-RAM receipts. These bounded
+traces do not establish that scripted RUN input reached the game, a gameplay
+transition, exclusive RAM provenance, game ownership, or parity. Raw captures
+and original media remain private on TRV2.
+
+The v12 trace hashes are:
+
+- CD-RAM target writes: `574444b87cc9466c60f3a70b9aa63b0e493fb627e58297ff74a9598d386af5e4`.
+- System Card dispatch: `77abcd4b77b3b4e27ae5a8749793cca825befa2d82893208c474b4e1c94bbebb`.
+- Indirect-jump follow: `f6f72b60e0b9848f024040689400aa9490565462e0f3de493b2b31ad3eba94aa`.
+- CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
+
+## 2026-10-30 — v13 extended cold RUN trace
+
+Repeated the same cold Japanese Rev. 1/System Card 3.0 capture with
+`run@480:300`, extending the wall limit to 180 seconds and raising the CD read
+and writer trace limits to 1,048,576. The scripted event was applied at frame
+480 with mask `0008`; the System Card read it at `$E4C5` (shared event 1202),
+and the scripted-input receipt marked the controller poll boundary verified.
+This is positive input-delivery evidence only.
+
+The longer capture still had 0 CD IRQ callbacks, 0 non-System-Card polls, 0
+authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
+`transition=missing`. It recorded 63,488 source-bound CD data-port reads, the
+same sequence as v12, so increasing the capture duration did not yield further
+observed CD data-port activity. The System Card sidecar records `$C860` once and
+`$C8C7/$C8C9/$C8D2` after input, plus 207 controller polls at `$E4E1`, but has
+no `$C897` row or instruction-level `$C8C4` CD-status wait witness. The
+dedicated wait verifier therefore remains unsatisfied. The available code-
+follow still contains 256 rows; this run does not establish that execution left
+the System Card or entered gameplay. The next source target is the BIOS
+post-poll branch and its CD-status checks. The raw capture and original media remain
+private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-post-bios-wait-v13-180s-cold-20261030/`.
+
+The v13 trace hashes are:
+
+- Transition receipt: `7e8091e01bc7d5bc2c80ba76a4329ed8525564171db95fcdf155cba5efd902c9`.
+- Scripted-input receipt: `bf48c22366285ec05e6475ca7b06e4dcd25ff31e44193e7afc00c38162c65d78`.
+- System Card dispatch: `7ba48345ee331ac5dff52c8f7c71017d8fc4606fd92472a666adb85d028fb75d`.
+- Indirect-jump follow: `6ffd5a41c196ead9fcc272ec91014df6ec1d147f0f8289d5d5b694b4700a55e5`.
+- CD-RAM target writes: `cbf1878c6c8b2506e4d4fa07c67d0045cc3dbeffff4cca1a5708b45b2e0573ce`.
+- CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
+
+## 2026-10-30 — v14 source-guided RUN/SELECT dispatch
+
+The authentic System Card 3.0 code in
+`theron-system-card3-controller-poll-e4b0.asm` shows the `$E4E1-$E4FB`
+callback condition: input delta `$04` and current state `$0C`, followed by
+`JMP ($2284)`. A new cold replay held RUN at mask `$08` for 300 frames, then
+pressed SELECT at mask `$04` for one frame while RUN remained held:
+`run@480:300,select@600:1`. The scripted-input receipt confirms both events
+were applied and read at `$E4C5`. The runtime trace records `$E4FB` with
+state=`$0C`, delta=`$04`, vector `$E000`, then BIOS bootstrap PCs `$E0F3`,
+`$E109`, and `$C860`. The scripted-input receipt and bounded RAM-loop source
+verifier both passed. The RAM-loop report covers 78 fetch rows and 234 byte
+slots across all 18 physical addresses; every slot matches its latest prior
+address-scoped write, and 56 rows are fully joined to source-read candidates.
+This is direct evidence that the System Card dispatch condition and vector
+were reached, plus bounded loader-write evidence.
+
+The 60-second capture still reports 0 CD IRQ callbacks, 0 non-System-Card
+polls, 0 authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
+`transition=missing`. It records 51,200 source-bound CD data-port reads. The
+post-vector trace re-enters the BIOS bootstrap; it does not prove that control
+reached the game or that Theron gameplay began. A source-bound disassembly of
+the callback vector and bootstrap is now recorded in
+`theron-system-card3-bootstrap-e0f3.asm`. The vector resolves to `$E0F3`; its
+`$E109` loop calls `$C860`, invokes `$F0A9` and the `$E14C` routine, then either
+configures MPR6 and jumps to `$4000`, or calls `$CB03/$CB54` and retries `$C860`.
+The excerpt identifies the branch and memory operations but does not name
+their semantics. Runtime evidence still lacks the branch values needed to
+prove which route v14 took, and `$4000` has not been identified as game code.
+Raw media and trace files remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-run-select-edge-v14-60s-cold-20261030/`.
+
+The v14 trace hashes are:
+
+- Transition receipt: `4693272b8b5bd3f846a8da98ad613d1d95033f3215861dec15ae72d371374b95`.
+- Scripted-input receipt: `1f6be64bc4807d8b77c998f2dcc7891e7fe0db748900924f4fbdac5a5a31d25f`.
+- System Card dispatch: `5159154afc81d4925a6284a092198a98fd22ddd27da7618da67554c8eab24b41`.
+- Scripted PCE input: `c1e61dcaaf90bc616f21a70267303f1279acfea710e7f87b05cb1f96b63cff67`.
 
 The additional trace hashes are:
 
 - Indexed-jump dispatch trace: `94ab5079cd00b290fcb0668731d0314005a6eb77977d6629af2efe0d10e638d3`.
 - System Card dispatch trace: `accfaa21d89efa1567731ad07ac8d41aabef50058e3505f40d2a48a79887afdf`.
+- All-PC CD-RAM target-write trace: `819c48b493c75194f9e356c85a156718994091aa24c15f61ec1d1f775e51425d`.
 
 The code-follow, bounded-follow, CD read, and `$EA9C` writer hashes are the
 v11 values recorded above.
+
+## 2026-10-30 — v15 bounded bootstrap and `$4000` instruction windows
+
+Added a reference-only PCE Fast trace that independently arms a 512-fetch
+window at `$E11B` and a 128-fetch window at `$4000`. Each row records the
+logical PC, mapped physical PC and instruction-byte addresses, four memory
+bytes with a validity mask, CPU registers, and MPR0–MPR7. The verifier checks
+each window's ordering and cap independently, then validates the logical to
+physical mapping for every recorded instruction byte. It does not require one
+window to precede the other, since the two start PCs are armed independently.
+
+The cold capture used authentic Japanese Rev. 1 media, System Card 3.0, and
+`run@480:300,select@600:1`, without a save-state. Track 02 MD5 was
+`b7afb338ad31be1025b53f9aff12d73a`; the System Card MD5 was
+`ff1a674273fe3540ccef576376407d1d`. The capture produced 512 bootstrap rows
+beginning at `$E11B` and 128 target rows beginning at `$4000`; the bounded
+trace verifier passed. The target window maps `$4000` through MPR2=`$80` to
+physical `$100000`. Its rows include a repeated instruction loop at
+`$403A-$4041`; the window alone does not identify this mapped payload or its
+owner.
+
+The scripted-input receipt confirms both scheduled events were consumed at
+the System Card poll `$E4C5`; it records zero non-System-Card polls. The
+60-second capture ended with exit 124 and `transition=missing`, zero CD IRQs,
+and zero authenticated CD-to-RAM receipts. These rows show bounded CPU
+execution and address mapping only. They do not source-bind the `$4000`
+payload, prove a causal BIOS handoff, identify game-owned code, or establish
+gameplay. Raw traces and original media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v15-20261030/`.
+
+Bootstrap-follow trace SHA-256:
+`b05d637423d927c66318d38c8534e058dcb76fdeaec282c134a93415740a24aa`.
+
+## 2026-10-30 — v16 instruction-start snapshots at `$4002/$4009`
+
+A second cold reference capture used the v2 bootstrap-follow patch, which adds
+`TheronTraceCDSharedEventSequence` to every row in both independently armed
+instruction windows. The authentic Japanese Rev. 1 cue and Track 02 were
+used with System Card 3.0; Track 02 MD5 was
+`b7afb338ad31be1025b53f9aff12d73a`, System Card MD5 was
+`ff1a674273fe3540ccef576376407d1d`, and no save state was loaded. Replay input
+was `run@480:300,select@600:1`.
+
+The v2 bootstrap-follow verifier accepted 512 bootstrap rows and 128 target
+rows. The sidecars record `$4002` instruction-start bytes
+`$73 $00 $20 $01` at event 26830, and `$4009` bytes `$73 $00 $20 $00` at
+event 26846. The latest writes recorded before those samples had IDs
+14509/14512/14515/14518 and 14530/14533/14536/14539. The read sidecar
+independently authenticates Track 02 LBA 4521, user offsets 2–12 (raw-file
+offsets 2,716,578–2,716,588); the write sidecar records matching values at
+physical `$100002-$10000c`. However, v16's read/write headers do not identify
+the shared event-sequence source. The former cross-sidecar verifier therefore
+could not establish that these IDs came from one counter; its source-join
+result is withdrawn as cross-stream proof. In addition, the bootstrap hook
+samples mapped instruction bytes before the CPU opcode read, so these are
+instruction-start snapshots, not CPU fetch receipts. The captured values
+remain bounded evidence, but their source-to-write chronology needs a fresh
+capture with explicit shared-sequence header markers.
+
+The scripted-input receipt still records both events only at System Card
+poll `$E4C5`, with zero non-System-Card polls. The transition receipt records
+zero CD IRQ callbacks, zero authenticated aggregate CD-to-RAM receipts, zero
+game `$E009` dispatches, zero target-range main-RAM consumer reads, and
+`transition=missing`. The 60-second capture exited at its bounded timeout
+with 32,280 input reads. The gameplay gap remains unresolved.
+
+Raw capture files and original media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v16-20261030/`.
+The capture summary, bootstrap-follow, CD-RAM target-write, CD data-port-read,
+transition, and scripted-input SHA-256 values are:
+
+- `trace.log`: `6153913f1be2adf6d35220e8e76198e5b3ac8d541b1db90120d80325a130a982`
+- Bootstrap-follow: `9c04ba4590f6b7243c5c3420fc2d802df6f5e8858b9618ed8110a7f438e8c032`
+- CD-RAM target-write: `57682ec0f4c0b8c2278d31dcb78661efa8ccb84b839f2461efb93741afe47e11`
+- CD data-port-read: `25ecd7a59f0e1047ee00044c6da25dceea5258f76898f686446c2636d43eef1c`
+- Transition: `595e7e056872be5f2c54f5edde75e2e0089dbc3b1ba0525d46825ad53a2a342e`
+- Scripted input: `90e0e8ddea0f9951d4ad5cb408fbf03f10af0c146814a37bf642fe60e5d48eb9`
+
+## v17 shared-sequence instruction-start snapshot check
+
+A follow-up cold reference capture used authentic Japanese Rev. 1 Track 02
+(`TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`) with `run@480:300,select@600:1`;
+no save state was loaded. The capture used the patched Mednafen 1.32.1 PCE
+Fast reference core. Its CD data-port-read and CD-RAM target-write sidecar
+headers explicitly name `TheronTraceCDSharedEventSequence`, allowing the
+verifier to compare their shared sequence numbers to the bootstrap-follow
+trace rather than assuming two independent counters are comparable.
+
+`verify_theron_jp_stage2_instruction_snapshot_source.py` passed. It bound all
+11 bytes at physical `$100002-$10000C` to authentic Track 02 bytes, required
+an immediate shared-sequence CD read then equal CD-RAM write for each selected
+byte, and confirmed those values were still the latest observed writes at
+instruction-start snapshots for `$4002` (event 26830) and `$4009` (event
+26846). The corresponding latest write events were 14509/14512/14515/14518
+and 14530/14533/14536/14539. This is bounded sidecar evidence for the captured
+instruction-start memory snapshots. The hook samples before the opcode fetch;
+it does not record the actual opcode bus read, exclusive physical-memory
+provenance, or a completed loader handoff.
+
+The capture timed out with exit 124. Its transition receipt reports zero CD
+IRQ callbacks, zero authenticated CD-to-RAM receipts, zero game `$E009`
+dispatches, and no non-System-Card controller poll. Thus v17 does not prove
+gameplay or native parity. The raw game media and capture files remain private
+on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v17-20261030/`.
+
+Private trace SHA-256 values:
+
+- System Card bootstrap-follow: `9c04ba4590f6b7243c5c3420fc2d802df6f5e8858b9618ed8110a7f438e8c032`.
+- CD-RAM target writes: `bbe32a4aa7f56f5fd7336053cac723a0ff6d18b6139b6f4b1d9b49a724ec8cf8`.
+- CD data-port reads: `cf05804075b6a35e69ad823b9c6d3be661a936386c995397477df28f035a2506`.
+- Transition receipt: `8a41d252fdb74c7ac2831a752f46e2588a8c5a1dac959e07d74d98a2a6b313ff`.
+
+## v18/v19 bounded BIOS branch follow — blocked before `$E11D`
+
+The v4 reference-only bootstrap trace adds an 8,192-row general instruction
+window and a separately armed 4,096-row contiguous follow beginning at
+`$E11D`. The launch verifier requires the authentic clear-carry route
+`$E11D BCC $E12C` → `$E12C LDA #$04` → `$E12E BSR $E13D` → `$E130 JMP $4000`
+→ the immediately following `$4000` instruction. Authentic System Card 3.0
+disassembly at `$E13D` is `TAM #$04; INA; TAM #$08; INA; TAM #$10; INA;
+TAM #$20; INA; TAM #$40; RTS`; the clear route enters with A=`$04`, so MPR2
+is `$04` and `$4000` maps to physical `$008000`. The separate `$4000`
+observation window is not accepted as proof of that branch.
+
+The v18 and v19 authentic JP cold traces filled their 8,192-row bootstrap
+window and stopped at `$E966`, in the `$E95E` status-poll loop. Neither trace
+reached `$E11D`. An earlier static comparison was wrong: it disassembled the
+System Card at file offset 3422 instead of 2910. Mednafen's
+`pce_fast/huc.cpp::HuC_LoadCD()` strips the 512-byte `.pce` header before
+loading the BIOS payload into `ROMSpace`. With MPR7=`$00`, logical `$E95E`
+maps to payload offset `$095E`, so the correct file offset is
+`512 + $095E = 2910`. At that offset, MAME 0.285 `unidasm` decodes bytes
+identical to v19's runtime snapshots at `$E966-$E972`. The corrected listing
+is in [`theron-system-card3-cd-status-e95e.asm`](theron-system-card3-cd-status-e95e.asm).
+
+The authentic routine compares `$D0` and branches to `$E97A`; otherwise it
+masks status with `$B8` and accepts `$98`, `$88`, or `$80` at `$E98A`, looping
+to `$E95E` for other values. Thus `$C8` masks to `$88` and follows the
+`$E98A` path, whose first instruction is `LDA $22A4`. The v19 trace observed
+`$E98A` twice and no `$E11D`; its independent branch window remained empty,
+so strict BIOS-to-`$4000` verification failed as expected. This corrects the
+earlier claimed runtime/BIOS mismatch; it does not change the handoff or
+gameplay gap.
+
+In the v10 reference source,
+`pce_fast/pcecd.cpp::PCECD_Read()` maps reads of `$1800` to a status byte
+whose bits are BSY=`$80`, REQ=`$40`, MSG=`$20`, CD=`$10`, and IO=`$08`, from
+`PCECD_Drive_GetBSY/REQ/MSG/CD/IO()`. The 529 instruction-start snapshots at
+`$E961`, immediately after `$E95E LDA $1800`, held `$90` 501 times, `$D0` 26
+times, and `$C8` twice. These values therefore correspond in that reference
+core to BSY+CD, BSY+REQ+CD, and BSY+REQ+IO signal combinations respectively.
+They are CPU-register snapshots rather than separately instrumented bus-read
+receipts. The corrected listing also explains that `$C8` masks to `$88` and
+uses the `$E98A` branch. This is a reference-core signal interpretation, not
+proof of original-hardware bus semantics or of what runtime `$22A4` means.
+
+The v19 transition receipt reports no transition, CD IRQ callback,
+authenticated CD-to-RAM receipt, game `$E009` dispatch, non-System-Card poll,
+or host-key event. Scripted PCE inputs were consumed only by the System Card
+poll. The capture exited at its 60-second timeout. This is reference BIOS
+polling evidence only; it proves neither a BIOS handoff nor gameplay/native
+parity. Raw media and capture traces remain private on TRV2 under
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v19-20261030/`.
+
+v19 SHA-256 values: bootstrap trace
+`acd6117066e936723f08366032e157bc0ca7f6b2e61c6faf5a9842f1cd59a765`, input
+trace `7989230bac3caac712d9958fabb40498bd037598b606bdfb7b4af3aa61ed8454`,
+scripted-input receipt
+`8127070cf2079e934100dc41f56e2b46c7b18b517f2276cba491d1380c9f67d2`, and
+transition receipt
+`7e2c8224183a1f228d4ed0ab4c1c2d9c146612bd24883e1d651baed6e19473e0`.
+
+## v20 direct `$1800` SCSI-status read receipt
+
+The v20 cold reference capture used authentic Japanese Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(`ff1a674273fe3540ccef576376407d1d`) with the same bounded RUN/SELECT replay;
+no save state was loaded. The new opt-in PCE Fast hook records actual
+`PCECD_Read()` results for CPU PC `$E95E` and address `$1800`, plus the named
+BSY/REQ/MSG/CD/IO signals, DB, timestamp, and shared event sequence. The
+receipt verifier passed for 50,932 status reads with no truncation:
+
+- `$90` (BSY+CD): 50,828 reads.
+- `$D0` (BSY+REQ+CD): 92 reads.
+- `$C8` (BSY+REQ+IO): 10 reads.
+- `$D8` (BSY+REQ+CD+IO): 2 reads.
+
+The two `$D8` reads were events 8330 and 8349, both before the independent
+bootstrap-follow trace started at event 8430 / PC `$E11B`. No later `$D8`
+occurred in the remaining status reads. The bootstrap trace begins with the
+runtime snapshot `$E11B BSR $E14C`, enters `$E14C`, calls `$EFF1`, then repeats
+the runtime `$F30D-$F313` callback path through its 8,192-row cap at `$E966`.
+It does not record a return to `$E11D`; the separate `$E11D` branch-follow
+trace remains empty. The v20 replay receipt records two scripted inputs read
+only by the System Card, zero non-System-Card polls, no CD IRQ, no authenticated
+CD-to-RAM receipt, no game `$E009` dispatch, and `transition=missing`; capture
+ended at its 60-second timeout.
+
+The v19 runtime bytes at `$E966-$E972` match the authenticated System Card
+payload when decoded from the correct file offset. The earlier claim that the
+runtime bytes were unsourced is withdrawn. The v20 status and instruction
+snapshots provide emulator-reference evidence, not original-hardware bus
+proof, BIOS handoff, gameplay, or native parity. Do not assign game-level
+meaning to `$22A4`.
+
+Raw v20 files and authentic media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v20-20261030/`.
+SHA-256 values: status trace
+`9e06f652d11fc8aab55aa934447b517bc997f97bcab11688b3c1503df3e1bcda`,
+bootstrap-follow trace
+`3484f13b52fe117db61d6f868e28141b2fa2f0cbb42e8859a64d4f676c40a9bf`,
+transition receipt
+`bcb28041c7ebe38c7bc1601b5dc09f98933448b4311f98bceaee6b48ea877786`, and
+scripted-input receipt
+`ee73a88bdbb7e860f2f83ac97ad7030065077a76b4c2a7ee5631a33a0484b791`.
+
+## v21 authentic callback-state and source-bound target receipt
+
+The v21 cold reference capture used the same hash-verified JP Rev. 1 Track 02
+and System Card 3.0, with no state autoload. The bounded `RdMem()`/`WrMem()`
+accessor hook recorded 255 reads/writes of `$F8-$FB` and `$2256-$226B` with
+logical and physical addresses, MPR snapshots, caller instruction-start PC,
+values, and the shared event sequence. The verifier accepted 105 reads and
+150 writes with no truncation or mapping/order errors. It does not claim
+coverage of direct page-pointer accesses or every CPU bus cycle.
+
+The trace shows `$E14C` read `$226A=$01`; after scripted SELECT was consumed at
+the System Card poll, BIOS code wrote `$2259=$04`. `$E14C` then branched from
+`$E166` to `$E176`, stored `$02` at `$2269`, and called `$CC17`. The trace
+records `$CC17` returning at event 10054 / PC `$CC96`, then `$E17C` at event
+10055 and `$EC05` at event 10076. The 8,192-row bootstrap window ended at
+event 17377 / PC `$E966`, in the `$E95E` status loop; it contains no `$E209`,
+`$E11D`, `$E12C`, or `$E130` fetch.
+
+The independent target window did later observe `$4000` at event 55109 with
+MPR2=`$80` and physical PC `$100000`. This is not the `$E130` route: that
+route must set MPR2=`$04` and fetch physical `$008000`. The first four bytes
+in the independent window (`64 00 73 00`) were written to physical
+`$100000-$100003` by System Card PC `$EA9C`; their preceding `$EA99` data-port
+reads were source-bound to authentic Track 02 LBA 4521 user offsets 0-3 at
+events 42782/42785/42788/42791, followed by writes at 42784/42787/42790/42793.
+The full data-port verifier accepted all 51,200 reads against the hash-verified
+disc, and the writer verifier found 40,960 ordered value candidates. These
+four joined bytes establish only a narrow source-to-RAM-to-fetch chain, not
+the causal BIOS branch or a gameplay consumer.
+
+Static control flow explains the current `$2259=$04` branch: `$E176` calls
+`$CC17`, then runs `$E17C` and `$EC05`; after that, the table checks return
+through `$E209 SEC; RTS`. That arm therefore returns carry set and cannot
+take `$E11D BCC $E12C`. The clear-carry launch requires the other `$E14C`
+return path at `$E174`, when the `$2259` bit test does not select `$E176` and
+the compare reaches its clear-carry return. This is a static control-flow
+result; v21 does not capture the launch path.
+
+The transition receipt still reports no CD IRQ, game `$E009` dispatch, or
+non-System-Card input poll. This establishes a System Card callback, CD
+traffic, and a small source-bound code prefix only, not a game handoff or
+playable Theron.
+
+v21 status receipt: 50,932 reads (`$90` 50,828, `$D0` 92, `$C8` 10, `$D8` 2);
+the two `$D8` reads remain before the callback window's initial status poll.
+Private raw traces remain on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-callback-v21-20261030/`.
+SHA-256 values: status
+`742282a5b2a2fbae21206fa3bc27eb201944cc08a49f34a5501f8512eedae84f`,
+callback state
+`06f61d3020800b15f41f3b96bdf58c0e6e0282e44cd1cee7649ab2e0e73b3502`,
+bootstrap follow
+`e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`,
+CD data-port `d45448fe3f32fcc94716665008e248d233139ea37176f5a5948dd8776bf78a8b`,
+CD RAM writer `92272266d09312dc019813cac28f5f031bbce21df88f1ced9e70b533c5f93193`,
+transition `b6a859f5af248a46712c06ba4713a97c4aaa26685b20e20f2188a4af4f2ab49a`,
+and scripted-input consumption
+`467d1102c64fbb6e92ec47b35ca9b7560205a0d339ff7d200098b531a7102e80`.
+
+Next trace the `$EC05/$E900` command and status exchange through its return,
+the `$E1C0-$E209` checks, and carry at `$E11D`. Include `$1800-$1803`,
+`$224C-$2255`, `$2273-$2280`, and `$22A4` accesses with shared sequence and
+PC context. Keep the independent `$4000` observation separate from the BIOS
+branch and from game-owned consumers/native parity claims.
+
+The raw media and traces are not included in Git.

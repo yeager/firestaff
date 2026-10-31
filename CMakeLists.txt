@@ -316,7 +316,15 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga-multilingual;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-atari-st csb-atari-st dm2-pc)
+    add_test(NAME m12_main_menu_csb_amiga33_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga33_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_csb_amiga33_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-12 dm1-atari-st-13 csb-atari-st dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")
@@ -7996,6 +8004,8 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_f0115_creature_plan.c
     src/csb/csb_v1_atari_f0115_projectile_plan.c
     src/csb/csb_v1_atari_f0115_explosion_plan.c
+    src/csb/csb_v1_atari_f0113_fluxcage_plan.c
+    src/csb/csb_v1_atari_f0113_fluxcage_blit.c
     src/csb/csb_v1_atari_f0133_indexed_blit.c
     src/csb/csb_v1_atari_f0128_cell_schedule.c
     src/csb/csb_v1_atari_f0132_clip.c
@@ -18903,6 +18913,17 @@ endif()
         LABELS "csb;atari-st;real-media;cli;menu;auto-platform;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         TIMEOUT 120
+    )
+    add_test(
+        NAME csb_v1_atari_hard_disk_cli_menu_boot
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_hard_disk_cli_menu_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_hard_disk_cli_menu_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari-st;hard-disk;real-media;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 180
     )
     add_test(
         NAME csb_v1_atari_utility_mini_cli_resume
@@ -48778,6 +48799,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
     )
     add_test(
+        NAME theron_jp_syscard_bootstrap_follow_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_syscard_bootstrap_follow.py
+    )
+    add_test(
+        NAME theron_jp_stage2_instruction_snapshot_source_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_stage2_instruction_snapshot_source.py
+    )
+    add_test(
         NAME theron_v1_mednafen_pce_fast_vram_commit_patch
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh
     )
@@ -56163,6 +56194,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_
         LABELS "csb;atari;f0115;projectiles;real-media;skip-safe")
 endif()
 
+# ReDMCSB DUNVIEW.C MEDIA020 F0115/F0113 Fluxcage field selection. Geometry,
+# visibility, asset indexes and masks are source tables; pixels remain owned
+# by the authenticated Atari ST GRAPHICS.DAT checked by the native asset test.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0113_fluxcage_plan.c")
+    add_executable(test_csb_v1_atari_f0113_fluxcage_plan
+        tests/test_csb_v1_atari_f0113_fluxcage_plan.c
+        src/csb/csb_v1_atari_f0113_fluxcage_plan.c
+    )
+    target_include_directories(test_csb_v1_atari_f0113_fluxcage_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0113_fluxcage_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0113_fluxcage_plan
+        COMMAND test_csb_v1_atari_f0113_fluxcage_plan)
+    set_tests_properties(csb_v1_atari_f0113_fluxcage_plan PROPERTIES
+        LABELS "csb;atari;f0113;fluxcage;source-plan;unit;skip-safe")
+endif()
+
 # ReDMCSB DUNVIEW.C MEDIA020 F0115 G0211/G0212/G0216/G0225/G0226/G0228 explosion
 # source tables and F0114/F0115 source bitmap selection.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_explosion_plan.c")
@@ -56252,7 +56303,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     )
 endif()
 
-# M12 save browser input dispatch + delete + scroll-window contract.
+# M12 save browser input dispatch + delete + scroll-window and original-name
+# admission contract. Corrupt placeholders remain non-loadable after admission.
 # Pins the launcher-side navigation and on-disk delete path of
 # src/shared/save_browser_m12.c (M12_SaveBrowser_HandleInput + Scan
 # mtime-desc qsort + M12_SaveBrowser_DeleteSelected + GetSelected
@@ -56280,6 +56332,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_input_delete_m12.
         NAME save_browser_input_delete_m12
         COMMAND test_save_browser_input_delete_m12
     )
+    set(_dm1_pc34_multilang_save
+        "$ENV{HOME}/.firestaff/saves/dm1/original-pc34/DMSAVE.DAT")
+    if(EXISTS "${_dm1_pc34_multilang_save}")
+        set_tests_properties(save_browser_input_delete_m12 PROPERTIES
+            ENVIRONMENT
+                "FIRESTAFF_DM1_PC34_MULTILANG_SAVE=${_dm1_pc34_multilang_save}")
+    endif()
 endif()
 
 # DM1 V1 PC 3.4 native save exporter/importer regression (LSV-01) +
@@ -57190,8 +57249,55 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_dat
     add_test(NAME dm2_v1_inventory_gdat_real_data
         COMMAND test_dm2_v1_inventory_gdat_real_data)
     set_tests_properties(dm2_v1_inventory_gdat_real_data PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        LABELS "dm2;dos;gdat;inventory;real-media;in-memory;skip-safe")
+        ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-en;FIRESTAFF_DM2_GRAPHICS_MD5=25247ede4dabb6a71e5dabdfbcd5907d;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+        SKIP_RETURN_CODE 77)
+
+    # The same 64 authentic hand routes are checked against each distinct
+    # platform GDAT format when original media are already present. This
+    # verifies source decoding/receipts and an isolated test surface, not the
+    # production renderer or presented frame. No game assets are synthesized.
+    set(_dm2_hand_audit_data_dir "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2")
+    set(_dm2_hand_audit_mac_en
+        "${_dm2_hand_audit_data_dir}/mac-en/Dungeon Master II/DMFiles/Graphics.dat")
+    set(_dm2_hand_audit_fmtowns
+        "${_dm2_hand_audit_data_dir}/fmtowns_iso/DATA/GRAPHICS.DAT")
+    set(_dm2_hand_audit_dos_fr
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+    set(_dm2_hand_audit_amiga
+        "${_dm2_hand_audit_data_dir}/Dungeon-Master-II-Skullkeep_Amiga_EN.zip")
+    if(EXISTS "${_dm2_hand_audit_dos_fr}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_dos_fr
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_dos_fr PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=dos-fr;FIRESTAFF_DM2_GRAPHICS_MD5=b4d733576ea60c41737f79f212faf528;FIRESTAFF_DM2_DOS_ARCHIVE=${_dm2_hand_audit_dos_fr}"
+            LABELS "dm2;dos;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_mac_en}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_mac_en
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_mac_en PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=mac-en;FIRESTAFF_DM2_GRAPHICS_MD5=5cab25f6b975957eae4a203174e7f2a6;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_mac_en}"
+            LABELS "dm2;mac;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_fmtowns}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_fmtowns
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_fmtowns PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=fmtowns-ja;FIRESTAFF_DM2_GRAPHICS_MD5=027ff3b8ddc2c4c4cdda7ada0b0bc46c;FIRESTAFF_DM2_GRAPHICS_FILE=${_dm2_hand_audit_fmtowns}"
+            LABELS "dm2;fmtowns;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
+    if(EXISTS "${_dm2_hand_audit_amiga}")
+        add_test(NAME dm2_v1_inventory_gdat_real_data_amiga
+            COMMAND test_dm2_v1_inventory_gdat_real_data)
+        set_tests_properties(dm2_v1_inventory_gdat_real_data_amiga PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_PLATFORM=amiga-en;FIRESTAFF_DM2_GRAPHICS_MD5=1c940ea95703eaea0ecdf84d17e954b9;FIRESTAFF_DM2_AMIGA_ROOT=${_dm2_hand_audit_amiga}"
+            LABELS "dm2;amiga;gdat;inventory;real-media;test-surface;skip-safe"
+            SKIP_RETURN_CODE 77)
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c")

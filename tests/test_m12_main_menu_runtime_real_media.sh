@@ -79,6 +79,15 @@ run_main_menu_runtime_case() {
 
     python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" "$probe_route" "$probe"
 
+    if [[ "$probe_route" == dm2-amiga ]]; then
+        if ! grep -Eq '^firestaff: dm2-render-debug game=dm2 platform=amiga-en .*hud=[{]required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ' "$log" ||
+           ! grep -Eq '^firestaff: dm2-render-hud-plan game=dm2 platform=amiga-en index=[0-9]+ kind=5 .*gdat=8/2/245 rect-id=02f rect=[0-9]+,[0-9]+,43,43 size=43x43 .*table=[0-9a-f]{8}$' "$log"; then
+            printf 'FAIL: authentic DM2 Amiga runtime did not consume its GRAPHICSSET/2/F5 squad panel at RECT_47\n' >&2
+            tail -100 "$log" >&2
+            return 1
+        fi
+    fi
+
     if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
         printf 'FAIL: original %s archive changed during menu startup\n' "$game_id" >&2
         return 1

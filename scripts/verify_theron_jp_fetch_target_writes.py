@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reconcile observed writes at five JP code-fetch addresses with execution.
+"""Reconcile observed writes at JP code-fetch addresses with execution.
 
 This checks event ordering and byte values only for addresses identified by the
 2026-10-30 authentic JP cold capture. It does not authenticate disc reads,
@@ -14,17 +14,19 @@ from collections import defaultdict
 import sys
 from pathlib import Path
 
-TARGET_ADDRESSES = (0x1000D9, 0x1000DA, 0x1000DB, 0x10468D, 0x10468E)
+RAM_LOOP_ADDRESSES = tuple(range(0x1000D2, 0x1000E4))
+TARGET_ADDRESSES = (*RAM_LOOP_ADDRESSES, 0x10468D, 0x10468E)
 CAPTURED_ADDRESS_RANGES = (
     (0x0D04D2, 0x0D04E6),
     (0x0D089F, 0x0D08AB),
     (0x100000, 0x100010),
-    (0x1000D9, 0x1000DB),
+    (0x1000D2, 0x1000E3),
     (0x10468D, 0x10468E),
 )
 TARGET_SUFFIX = ".cd-ram-target-write"
 FETCH_SUFFIX = ".system-card-dispatch"
 TARGET_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
+TARGET_HEADER_SHARED_SEQUENCE = TARGET_HEADER + " event_sequence_source=TheronTraceCDSharedEventSequence"
 FETCH_HEADERS = {
     "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
     "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
@@ -57,7 +59,7 @@ def ensure_capture_pair(target_path: Path, fetch_path: Path) -> None:
 
 def read_target_writes(path: Path) -> dict[int, list[tuple[int, int, int]]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != TARGET_HEADER:
+    if not lines or lines[0] not in (TARGET_HEADER, TARGET_HEADER_SHARED_SEQUENCE):
         raise ValueError("unexpected CD-RAM target-write trace header")
     writes: dict[int, list[tuple[int, int, int]]] = defaultdict(list)
     previous_event = -1
@@ -163,7 +165,7 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
         if row_checks:
             target_rows[event] = row_checks
     if not any(fetch_bytes.values()):
-        raise ValueError("no code fetches reached the five target addresses")
+        raise ValueError("no code fetches reached the selected target addresses")
     for address in TARGET_ADDRESSES:
         if not writes.get(address):
             raise ValueError(f"no target writes captured for {address:06x}")

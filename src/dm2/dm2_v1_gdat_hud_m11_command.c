@@ -136,6 +136,9 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
     hash = dm2_v1_gdat_hud_hash_bytes(hash,
         (const uint8_t *)&plan->mac_native_layout,
         sizeof(plan->mac_native_layout));
+    hash = dm2_v1_gdat_hud_hash_bytes(hash,
+        (const uint8_t *)&plan->amiga_native_move_arrows,
+        sizeof(plan->amiga_native_move_arrows));
     for (i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->kind,
@@ -652,6 +655,53 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     return 1;
 }
 
+int dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int kind,
+    int category,
+    int index,
+    int field,
+    const DM2_V1_ViewportRect *destination,
+    uint16_t destination_rect_id,
+    uint32_t destination_table_hash)
+{
+    if (!loader || !plan || !plan->valid || !plan->command_hash ||
+        plan->command_hash != dm2_v1_gdat_hud_command_hash(plan) ||
+        !destination || destination->w <= 0 || destination->h <= 0 ||
+        destination_rect_id == 0u || destination_table_hash == 0u) {
+        return 0;
+    }
+    for (int i = 0; i < plan->command_count; ++i) {
+        DM2_V1_GdatHudM11CommandPlan replacement;
+        DM2_V1_GdatHudM11Command *old_command = &plan->commands[i];
+        int viewport_gdat_index;
+        if (old_command->kind != kind) continue;
+        viewport_gdat_index = old_command->viewport_gdat_index;
+        memset(&replacement, 0, sizeof(replacement));
+        if (!dm2_v1_gdat_hud_add_command(
+                loader, &replacement, kind, viewport_gdat_index, destination,
+                category, index, field) || replacement.command_count != 1) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&replacement);
+            return 0;
+        }
+        replacement.commands[0].destination_rect_id = destination_rect_id;
+        replacement.commands[0].destination_table_hash =
+            destination_table_hash;
+        if (category == DM2_GDAT_CATEGORY_GRAPHICSSET && field == 0xf5) {
+            /* SKProject DRAW_ICON_PICT_ENTRY passes -1: the Amiga IMG3 F5
+             * source has no color key after its tracked underlay is composed. */
+            replacement.commands[0].source_transparency_key = UINT8_MAX;
+        }
+        dm2_v1_asset_free_pixels(old_command->pixels);
+        *old_command = replacement.commands[0];
+        replacement.commands[0].pixels = NULL;
+        plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
+        return plan->command_hash != 0u;
+    }
+    return 0;
+}
+
 int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
@@ -1110,6 +1160,127 @@ int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
         return 0;
     }
     return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int hero_index,
+    int relative_position,
+    int figure_direction,
+    int invisible,
+    const DM2_V1_ViewportRect *destination,
+    uint32_t destination_table_hash)
+{
+    DM2_V1_GdatImageMetadata metadata;
+    DM2_V1_GdatHudM11Command *command;
+    uint8_t *cropped;
+    int frame;
+
+    if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+        !dm2_v1_asset_loader_uses_physical_16_color_palette(loader) ||
+        !plan || !plan->valid || !destination || hero_index < 0 ||
+        hero_index >= DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
+        relative_position < 0 || relative_position > 3 ||
+        figure_direction < 0 || figure_direction > 3 ||
+        destination->x < 0 || destination->y < 0 || destination->w != 17 ||
+        destination->h != 17 ||
+        destination->x + destination->w > DM2_VP_WIDTH ||
+        destination->y + destination->h > DM2_VP_HEIGHT ||
+        !destination_table_hash ||
+        plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_index,
+            &metadata) || metadata.bits_per_pixel != 4u ||
+        metadata.width != 136u || metadata.height != 17u) return 0;
+
+    if (!dm2_v1_gdat_hud_add_command(
+            loader, plan, DM2_V1_GDAT_HUD_M11_COMMAND_AMIGA_SQUAD_FIGURE,
+            -0x7100 - hero_index, destination,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_index)) return 0;
+    command = &plan->commands[plan->command_count - 1];
+    if (command->format != DM2_IMG_FMT_IMG3 || command->width != 136 ||
+        command->height != 17 || command->destination.w != 17 ||
+        command->destination.h != 17) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    frame = figure_direction + (invisible ? 4 : 0);
+    cropped = (uint8_t *)malloc(17u * 17u);
+    if (!cropped) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    for (int y = 0; y < 17; ++y) {
+        memcpy(cropped + y * 17,
+            command->pixels + y * 136 + frame * 17, 17u);
+    }
+    dm2_v1_asset_free_pixels(command->pixels);
+    command->pixels = cropped;
+    command->width = 17;
+    command->height = 17;
+    command->source_transparency_key = 12u;
+    command->source_state_flags = (uint8_t)(
+        (figure_direction << DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+        (invisible ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE : 0u));
+    command->destination_rect_id = (uint16_t)(0x53 + relative_position);
+    command->destination_table_hash = destination_table_hash;
+    command->animation_direction = (uint8_t)figure_direction;
+    command->animation_frame = (uint8_t)(invisible ? 1u : 0u);
+    command->decoded_hash = dm2_v1_gdat_hud_m11_command_pixel_hash(command);
+    if (!command->decoded_hash) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
+    plan->valid = plan->command_hash != 0u;
+    return plan->valid;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash)
+{
+    if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+        !plan || !plan->valid || !party || !status_pane_destinations ||
+        !status_pane_table_hash || !party->status_hero_source_bound ||
+        party->champion_count < 0 || party->champion_count > 4 ||
+        plan->command_hash != dm2_v1_gdat_hud_m11_command_plan_hash(plan))
+        return 0;
+
+    /* SKProject skguidrw.cpp::DRAW_PLAYER_3STAT_PANE uses
+     * INTERFACE_GENERAL/2/{0,1,9} at RECT_0xA1 + champion. Bind only the
+     * occupied champion states and preserve the original Amiga RAW4 table. */
+    for (int slot = 0; slot < party->champion_count; ++slot) {
+        const DM2_V1_HudChampionState *hero = &party->champions[slot];
+        const DM2_V1_ViewportRect *destination =
+            &status_pane_destinations[slot];
+        const int pane_field = !hero->current_hp_source_bound ? -1
+            : hero->current_hp == 0 ? 1
+            : party->status_hero_index == slot ? 9 : 0;
+        DM2_V1_GdatHudM11Command *command;
+        if (!hero->occupied) continue;
+        if (pane_field < 0 || destination->x < 0 || destination->y < 0 ||
+            destination->w <= 0 || destination->h <= 0 ||
+            destination->x + destination->w > DM2_VP_WIDTH ||
+            destination->y + destination->h > DM2_VP_HEIGHT ||
+            plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            !dm2_v1_gdat_hud_add_command(
+                loader, plan, DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE,
+                0x6500 + slot, destination,
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2, pane_field))
+            return 0;
+        command = &plan->commands[plan->command_count - 1];
+        command->destination_rect_id = (uint16_t)(0xa1 + slot);
+        command->destination_table_hash = status_pane_table_hash;
+        command->source_state_flags = (uint8_t)pane_field;
+    }
+    plan->command_hash = dm2_v1_gdat_hud_m11_command_plan_hash(plan);
+    plan->valid = plan->command_hash != 0u;
+    return plan->valid;
 }
 
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
