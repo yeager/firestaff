@@ -11,8 +11,10 @@ dm1_pc="$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 dm1_atari="$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip"
 dm1_atari_st11="$data_root/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
 dm1_atari_st12="$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+dm1_atari_st12_de="$data_root/dm1/Dungeon-Master_Atari-ST_DE_Version-12.zip"
 dm1_atari_st13="$data_root/dm1/Dungeon-Master_Atari-ST_FR_Version-13.zip"
 csb_atari="$data_root/csb/chaos_strikes_back_ftl.zip"
+csb_atari_france="$data_root/csb/chaos_strikes_back_ftl_france.zip"
 dm2_pc="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 
 case "$route" in
@@ -40,6 +42,12 @@ case "$route" in
         width=960; height=540; duration=90000
         game_input='wait30,enter,wait60,enter'
         ;;
+    dm1-atari-st-12-de)
+        selected_game=dm1; game_down=0; platform_down=0
+        selected_archive=$dm1_atari_st12_de; edition=st12-de; platform='Atari ST'
+        width=960; height=540; duration=90000
+        game_input='wait30,enter,wait60,enter'
+        ;;
     dm1-atari-st-13)
         selected_game=dm1; game_down=0; platform_down=0
         selected_archive=$dm1_atari_st13; edition=st13-fr; platform='Atari ST'
@@ -49,6 +57,12 @@ case "$route" in
     csb-atari-st)
         selected_game=csb; game_down=1; platform_down=2
         selected_archive=$csb_atari; edition='re:st20-21(-hd)?-en'; platform='Atari ST'
+        width=960; height=600; duration=120000
+        game_input='wait-game-runtime,key:up'
+        ;;
+    csb-atari-st-france)
+        selected_game=csb; game_down=1; platform_down=0
+        selected_archive=$csb_atari_france; edition=st20-21-en; platform='Atari ST'
         width=960; height=600; duration=120000
         game_input='wait-game-runtime,key:up'
         ;;
@@ -111,6 +125,9 @@ if [[ "$route" == dm1-atari-st-11 ]]; then
     fi
 fi
 for game_id in dm1 csb dm2; do
+    if [[ "$route" == csb-atari-st-france && "$game_id" != csb ]]; then
+        continue
+    fi
     source_game_dir="$data_root/$game_id"
     menu_game_dir="$menu_data_root/$game_id"
     mkdir -p "$menu_game_dir"
@@ -120,7 +137,12 @@ for game_id in dm1 csb dm2; do
         if [[ "$route" == dm1-atari-st-11 && "$game_id" == dm1 ]]; then
             continue
         fi
-        if [[ ( "$route" == dm1-atari-st-12 || "$route" == dm1-atari-st-13 ) &&
+        if [[ "$route" == csb-atari-st-france && "$game_id" == csb &&
+              "$(basename "$archive")" != "$(basename "$selected_archive")" ]]; then
+            continue
+        fi
+        if [[ ( "$route" == dm1-atari-st-12 || "$route" == dm1-atari-st-12-de ||
+              "$route" == dm1-atari-st-13 ) &&
               "$game_id" == dm1 &&
               $(basename "$archive") != $(basename "$selected_archive") ]]; then
             continue
@@ -135,6 +157,9 @@ PY
     done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
         \( -iname '*.zip' -o -iname '*.stx' \) -print0)
     if [[ "$game_id" == csb ]]; then
+        if [[ "$route" == csb-atari-st-france ]]; then
+            continue
+        fi
         while IFS= read -r -d '' archive; do
             [[ -f "$archive" ]] || continue
             ln -s "$(python3 - "$archive" <<'PY'

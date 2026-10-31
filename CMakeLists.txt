@@ -324,7 +324,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-13 csb-atari-st dm2-pc)
+    foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")

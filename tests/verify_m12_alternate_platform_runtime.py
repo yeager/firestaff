@@ -34,7 +34,8 @@ if route == "dm1-pc":
             startup.get("levelLoaded") != 1 or party_state != (0, 1, 3, 2, 0)):
         fail("DM1 PC-34 picker route missed its first runtime", probe)
 elif route in {
-    "dm1-atari-st", "dm1-atari-st-11", "dm1-atari-st-12", "dm1-atari-st-13"
+    "dm1-atari-st", "dm1-atari-st-11", "dm1-atari-st-12",
+    "dm1-atari-st-12-de", "dm1-atari-st-13"
 }:
     if (probe.get("sourceId") != "dm1" or startup.get("receiptReady") != 1 or
             startup.get("phase") != "dm1-runtime" or
@@ -44,7 +45,7 @@ elif route in {
             startup.get("dm1StartupHoCFirstFrameReady") != 1 or
             party_state != (0, 1, 3, 2, 0)):
         fail("DM1 Atari ST picker route missed its first Hall runtime", probe)
-elif route == "csb-atari-st":
+elif route in {"csb-atari-st", "csb-atari-st-france"}:
     if (probe.get("sourceId") != "csb" or startup.get("receiptReady") != 1 or
             startup.get("phase") != "inactive" or
             startup.get("startupActive") != 0 or
