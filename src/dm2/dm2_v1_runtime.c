@@ -9304,19 +9304,28 @@ door_creature_rollback:
      * present in this runtime owner, so preserve the source no-altar value. */
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
         rt->sound_queue.ssound_entries_capacity > 0u) {
+        DM2_V1_SkprojectRebirthAltarReceipt altar_receipt;
         DM2_V1_SoundQueueState sound_before = rt->sound_queue;
         DM2_V1_SourceTimerQueue timers_before = rt->timer_queue;
+        int cls_alt = -1;
         size_t entries_bytes =
             (size_t)rt->sound_queue.ssound_entries_capacity *
             sizeof(*rt->sound_queue.ssound_entries);
         DM2_V1_SoundSsoundEntry *entries_before =
             (DM2_V1_SoundSsoundEntry *)malloc(entries_bytes);
+        memset(&altar_receipt, 0, sizeof(altar_receipt));
+        if (map >= 0 && map < dungeon->level_count && door_record &&
+            dm2_v1_skproject_is_rebirth_altar(
+                door_record[2], dungeon->map_header_byte2[map],
+                dungeon->map_header_byte3[map],
+                dungeon->map_header_word_e[map], &altar_receipt))
+            cls_alt = altar_receipt.altar_value;
         if (entries_before) {
             memcpy(entries_before, rt->sound_queue.ssound_entries,
                    entries_bytes);
             if (!dm2_runtime_queue_door_collision_noise(
                     rt, map, x, y, DM2_GDAT_CATEGORY_DOORS,
-                    reached_target ? 0x8f : 0x8e, 0xfe, 0xff,
+                    reached_target ? 0x8f : 0x8e, 0xfe, cls_alt,
                     0x5f, 0x80,
                     receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
                     source_index)) {

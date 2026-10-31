@@ -1462,6 +1462,10 @@ typedef struct DM2_V1_DungeonData {
     /* Map_definitions::w8 low six bits are the vertical level index. */
     uint8_t map_level_number[DM2_V1_MAX_LEVELS];
     uint8_t map_graphics_flip_seed[DM2_V1_MAX_LEVELS];
+    /* Raw map-definition inputs consumed by SKW_IS_REBIRTH_ALTAR. */
+    uint8_t map_header_byte2[DM2_V1_MAX_LEVELS];
+    uint8_t map_header_byte3[DM2_V1_MAX_LEVELS];
+    uint16_t map_header_word_e[DM2_V1_MAX_LEVELS];
     int map_door_set0[DM2_V1_MAX_LEVELS];
     int map_door_set1[DM2_V1_MAX_LEVELS];
     int map_use_door0[DM2_V1_MAX_LEVELS];

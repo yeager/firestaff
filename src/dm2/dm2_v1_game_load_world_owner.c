@@ -5810,21 +5810,30 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
             tile_mutated = 1;
         }
         {
+            DM2_V1_SkprojectRebirthAltarReceipt altar_receipt;
             int reached_target =
                 (receipt.direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
                  new_state == DM2_DOOR_STATE_OPEN) ||
                 (receipt.direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                  new_state == DM2_DOOR_STATE_CLOSED);
             DM2_V1_GameLoadSoundOwner step_sound_backup;
+            int cls_alt = -1;
             memset(&step_sound_backup, 0, sizeof(step_sound_backup));
+            memset(&altar_receipt, 0, sizeof(altar_receipt));
+            if (dm2_v1_skproject_is_rebirth_altar(
+                    door_record[2],
+                    candidate->dungeon.map_header_byte2[map],
+                    candidate->dungeon.map_header_byte3[map],
+                    candidate->dungeon.map_header_word_e[map],
+                    &altar_receipt))
+                cls_alt = altar_receipt.altar_value;
             /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while
-             * moving and 0x8f on the final step. Map-header altar metadata
-             * is not represented in this candidate owner yet. */
+             * moving and 0x8f on the final step with the source altar value. */
             if (dm2_v1_game_load_runtime_candidate_sound_clone(
                     &step_sound_backup, &candidate->sound_owner)) {
                 if (!dm2_game_load_candidate_queue_door_collision_noise(
                         candidate, map, x, y, DM2_GDAT_CATEGORY_DOORS,
-                        reached_target ? 0x8f : 0x8e, 0xfe, 0xff,
+                        reached_target ? 0x8f : 0x8e, 0xfe, cls_alt,
                         0x5f, 0x80, game_tick)) {
                     dm2_v1_game_load_runtime_candidate_sound_free(
                         &candidate->sound_owner);
