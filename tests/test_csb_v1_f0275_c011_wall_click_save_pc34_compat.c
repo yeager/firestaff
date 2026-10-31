@@ -201,6 +201,45 @@ static void test_c002_uses_hand_occupancy_and_revert_only(void)
           "C002 triggers for a held object based on occupancy/revert, not Sensor.Data");
 }
 
+static void test_c004_removes_matching_hand_object(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 4u));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xffffu &&
+              profile.timeline_queue.eventCount == 1,
+          "C004 removes the matching hand object and queues its remote effect");
+}
+
+static void test_c003_matches_hand_type_and_revert(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, 8) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "C003 triggers when held object type matches Sensor.Data and RevertEffect is clear");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, 8) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "C003 suppresses a matching hand type when RevertEffect is set");
+}
+
 static void test_c001_hold_does_not_trigger(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -370,6 +409,8 @@ int main(void)
     test_f0275_processes_all_matching_sensors_in_source_order();
     test_c002_uses_hand_occupancy_and_revert_only();
     test_c001_hold_does_not_trigger();
+    test_c003_matches_hand_type_and_revert();
+    test_c004_removes_matching_hand_object();
     test_c001_ignores_objects_in_other_wall_cells();
     test_c001_triggers_even_with_object_on_clicked_cell();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
