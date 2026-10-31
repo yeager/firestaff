@@ -2812,6 +2812,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     int type, size, thing, front_thing;
     int matched = 0, changed = 0, d0_matched = 0, d0_changed = 0;
     int d1_front_matched = 0, d1_front_opaque = 0, d1_front_changed = 0;
+    int d1_pickup_ok = 0;
 
     if (!view || !data_dir ||
         snprintf(save_path, sizeof(save_path),
@@ -2866,6 +2867,27 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                 if (graphic->pixels[row * 64 + col] != 10u &&
                     with_weapon[(138 + row) * 320 + 167 + col] ==
                         graphic->pixels[row * 64 + col]) ++matched;
+    }
+    /* The original DB5 at map 6 (21,18) is rendered in D1C at
+     * x=167..230,y=138..141. ReDMCSB's Atari F0115 box must own its
+     * click zone: C080 at its center should transfer this exact record. */
+    if (matched > 0) {
+        const int click_result = M11_GameView_HandlePointerButton(
+            view, 48 + 198, 33 + 139, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        d1_pickup_ok = click_result == M11_GAME_INPUT_REDRAW &&
+            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(view) ==
+                (unsigned short)thing &&
+            csb_v1_dungeon_get_first_thing(candidate, 6, 21, 18) < 0;
+        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(view) ==
+            (unsigned short)thing) {
+            /* Restore the authentic floor state so the existing D0C and
+             * source-pixel checks continue to inspect the same record. */
+            (void)csb_dungeon_move_thing_default((uint16_t)thing, 21, 18,
+                                                  -1, -1);
+            profile->runtime.party_state.LeaderHandThing = THING_NONE;
+            profile->runtime.csbwin_object_in_hand = THING_NONE;
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(view);
+        }
     }
     /* The same genuine map-6 floor square is D0C when the party stands
      * on it facing north. G0218/F0115 places its cell-0 object at x85..148,
@@ -2955,10 +2977,11 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                         ++d1_front_changed;
         }
     }
-    expect_true(matched > 0 && changed > 0 && d0_matched > 0 && d0_changed > 0 &&
+    expect_true(matched > 0 && d1_pickup_ok && changed > 0 &&
+                    d0_matched > 0 && d0_changed > 0 &&
                     d1_front_opaque > 0 && d1_front_matched == d1_front_opaque &&
                     d1_front_changed > 0,
-                "Atari D1C/D0C weapon and F0129-scaled D1C front weapon use source graphic 372 and vanish after F0267");
+                "Atari rendered D1C bounds pick up the authentic MINI DB5 and D1C/D0C weapon graphics match source");
     /* Original MINI map 3 (14,11) is a mixed F0159 chain: DB3 0x0dd1,
      * DB5 0x5427 in absolute cell 1, then DB5 0xd428 in cell 3. From
      * (15,11) facing west both weapons occupy different D1C cells. F0115

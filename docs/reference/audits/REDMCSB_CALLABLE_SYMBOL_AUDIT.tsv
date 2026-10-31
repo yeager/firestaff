@@ -1195,7 +1195,7 @@ F	1320	F1320_FIO1_27_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact 
 F	1321	F1321_FIO1_07_SubstituteStringInFileName	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned FIO1 path substitution; source void contract retained and no filesystem/media lookup is synthesized.
 F	1322	F1322_FIO1_26_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1323	F1323_FIO1_25_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned enumeration callback; unavailable enumeration normalizes to source success with zero names, without Amiga Lock/Examine.
-F	1324	F1324_FIO1_24_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1324	F1324_FIO1_24_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	PC34 preserves FIO1.C F1324's success and zero output; null-output rejection is host safety only.
 F	1325	F1325_FIO1_04_IsDiskWriteable	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1326	F1326_FIO1_05_FormatSaveDisk	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1327	F1327_FIO1_23_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

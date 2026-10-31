@@ -1762,10 +1762,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     int level, int x, int y, uint32_t tick,
     DM2_V1_CLightStoneRoomReceipt *out);
 /* skproject SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2659-2707:
- * class-3 and bit-2 class-4 tiles summarize as types 0x10..0x13. This
- * bounded receipt admits only an empty record chain; record-bearing summaries
- * need the source's record and adjacent-tile consumers. */
-int dm2_v1_dungeon_c_light_class34_empty_receipt(
+ * class-3 and bit-2 class-4 tiles summarize as types 0x10..0x13. The
+ * class-4 side-mismatch route accepts empty roots and source query's early
+ * return for decoded record classes >3; classes 0..3 need query filtering. */
+int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
@@ -1780,6 +1780,12 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
 int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out);
+/* Bounded class-1 DB2 decoration summary for supported ext-usage 10 text
+ * records, including the source map-GDAT ceiling initializer. */
+int dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out);
 /* Flags-4 only: class 1's raw summary type is known before the bounded
  * record scan. Ornament detail is intentionally absent from this receipt. */
 int dm2_v1_dungeon_c_light_class1_flags4_receipt(

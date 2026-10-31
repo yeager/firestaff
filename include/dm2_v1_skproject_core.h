@@ -5442,9 +5442,12 @@ typedef struct {
     uint16_t wall_gfx_index;
     uint16_t wall_gfx_field;
     uint8_t found_static_text;
+    uint8_t found_text_animation;
     uint8_t found_actuator;
     uint8_t actuator_type;
+    uint8_t text_ext_usage;
     uint8_t actuator_needs_anim;
+    uint8_t blocked_text_animation_path;
 } DM2_V1_SkprojectQuery0cee1a46Receipt;
 
 int dm2_v1_skproject_query_0cee_1a46(

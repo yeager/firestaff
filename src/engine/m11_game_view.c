@@ -15,6 +15,7 @@
 #include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "firestaff/dm1/v1/G0208_pc34_compat.h"
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
@@ -63,6 +64,7 @@
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_atari_f0115_click_bounds.h"
 #include "csb_v1_atari_f0113_fluxcage_plan.h"
 #include "csb_v1_atari_f0113_fluxcage_blit.h"
 #include "csb_v1_atari_f0133_indexed_blit.h"
@@ -1482,6 +1484,27 @@ static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_alcove_item_host_presentation_receipt;
+static CSB_V1_AtariF0115ClickBounds s_m11_csb_atari_floor_click_bounds[4];
+/* G0291[C05] is separate from the four per-view-cell floor-object boxes. */
+static CSB_V1_AtariF0115ClickBounds s_m11_csb_atari_c05_click_zone[4];
+
+static void m11_csb_atari_c05_set_zone(int left, int right,
+                                        int top, int bottom)
+{
+    /* ReDMCSB F0107/F0110 copies each selected rectangle over G0291[C05];
+     * unlike a floor pile row, it does not union multiple drawings. */
+    csb_v1_atari_f0115_click_bounds_clear(s_m11_csb_atari_c05_click_zone);
+    if (right < left || bottom < top) return;
+    (void)csb_v1_atari_f0115_click_bounds_add(
+        s_m11_csb_atari_c05_click_zone, 0, left, top,
+        right - left + 1, bottom - top + 1);
+}
+
+static int m11_csb_atari_c05_contains(int x, int y)
+{
+    return csb_v1_atari_f0115_click_bounds_contains(
+        s_m11_csb_atari_c05_click_zone, 0, x, y);
+}
 /* ReDMCSB DUNVIEW.C F0115 publishes a click rectangle and pile-top THING
  * from the actual rendered object. C080 consumes this frame-local host
  * equivalent instead of a broad, fixed viewport pane. */
@@ -5838,6 +5861,23 @@ static int m11_csb_atari_st_draw_objects_for_square(
                             ? state->csbAtariStObjectAspects[
                                 object_info.object_info_index]
                             : -1);
+                    if (result > 0 &&
+                        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                        state->assetLoader.csbAtariSt && view_cell < 4 &&
+                        s_m11_dm1_floor_item_host_presentation_receipt.valid &&
+                        s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane) {
+                        const M11_Dm1FloorItemHostPresentationReceipt *drawn =
+                            &s_m11_dm1_floor_item_host_presentation_receipt;
+                        /* ReDMCSB DUNVIEW.C F0115:5030-5160 builds Atari's
+                         * G0291 row from each native rendered object box. Its
+                         * origin includes the retained viewport at (48,33),
+                         * while C080 receives viewport-relative coordinates. */
+                        (void)csb_v1_atari_f0115_click_bounds_add(
+                            s_m11_csb_atari_floor_click_bounds, view_cell,
+                            drawn->destinationX - 48,
+                            drawn->destinationY - 33,
+                            drawn->destinationW, drawn->destinationH);
+                    }
                     if (state->debugMovementTraceEnabled) {
                         fprintf(stderr,
                                 "firestaff: viewport game=csb platform=atari "
@@ -6937,6 +6977,11 @@ static int m11_csb_atari_st_draw_wall_ornament(
                   visible_span.destination_offset + x] = color;
         }
     }
+    /* ReDMCSB DUNVIEW.C F0107:3724/4168 replaces G0291[C05] with this
+     * G0205 destination rectangle. F0376/F0377 use inclusive byte bounds. */
+    m11_csb_atari_c05_set_zone(
+        (int)source_x, (int)(source_x + target_width - 1u),
+        (int)source_y, (int)(source_y + target_height - 1u));
     /* ReDMCSB DUNVIEW.C F0107 calls the zero-order F0115 pass only after
      * drawing the D1C front wall (view square M606). Side-wall ornaments and
      * D2 ornaments may use the same source artwork, but do not open the
@@ -7096,6 +7141,12 @@ static int m11_csb_present_atari_st_runtime_viewport(
     int wall_set;
     int y;
     size_t draw_index;
+
+    /* G0291 is cleared at the start of each source F0128 frame. */
+    csb_v1_atari_f0115_click_bounds_clear(
+        s_m11_csb_atari_floor_click_bounds);
+    csb_v1_atari_f0115_click_bounds_clear(
+        s_m11_csb_atari_c05_click_zone);
 
     /* Hash the exact source-owned 224x136 indexed page after its complete
      * CSBWin/ANIM command sequence.  This is deliberately distinct from the
@@ -7372,20 +7423,38 @@ static int m11_csb_present_atari_st_runtime_viewport(
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ||
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ||
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1)) {
-                const CSB_V1_CSBWinViewportProjectionRectangle *switch_projection;
+                CSB_V1_CSBWinViewportProjectionRectangle switch_projection;
                 uint8_t switch_lane = draw->wall ==
                     CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1 ? 0u :
                     draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ? 1u :
                     draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ? 2u : 3u;
-                if (!csb_v1_csbwin_viewport_door_switch_projection(
-                        &layout, switch_lane, &switch_projection) ||
-                    !m11_csb_blit_atari_st_viewport_graphic(
+                /* ReDMCSB DUNVIEW.C G0208 is ordered D3R,D3C,D2C,D1C.
+                 * Use its exact destination and source dimensions for both
+                 * the native button blit and G0291[C05], not C22E geometry. */
+                switch_projection.x1 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 0);
+                switch_projection.x2 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 1);
+                switch_projection.y1 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 2);
+                switch_projection.y2 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 3);
+                switch_projection.source_stride = (uint8_t)
+                    dm1_v1_g0208_get_pc34(switch_lane, 4);
+                switch_projection.source_height = (uint8_t)
+                    dm1_v1_g0208_get_pc34(switch_lane, 5);
+                switch_projection.source_x = 0u;
+                switch_projection.source_y = 0u;
+                if (!m11_csb_blit_atari_st_viewport_graphic(
                         /* ReDMCSB DEFS.H MEDIA020 M634 assigns the CSB
                          * Atari ST (G20E) door-button family to native
                          * GRAPHICS.DAT index 315. Index 453 belongs to the
                          * later MEDIA720 layout. */
-                        state, 315u, 0, switch_projection, viewport,
+                        state, 315u, 0, &switch_projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+                m11_csb_atari_c05_set_zone(
+                    switch_projection.x1, switch_projection.x2,
+                    switch_projection.y1, switch_projection.y2);
             }
             if (source_function && m11_csb_atari_st_draw_scheduled_cell(
                     state, dungeon, &profile->runtime, viewport,
@@ -46438,6 +46507,11 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     int queued;
     unsigned short leaderHand;
     int mirrorOrdinal = -1;
+    const CSB_V1_BootProfile *profile = state
+        ? (const CSB_V1_BootProfile *)state->csbBootProfile : NULL;
+    const int atariSt = profile &&
+        (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+         profile->variant_id == CSB_V1_VARIANT_ST21_EN);
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile) {
@@ -46448,17 +46522,22 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
         return M11_GAME_INPUT_REDRAW;
     }
-    /* ReDMCSB CLIKVIEW.C F0377 publishes the D1C F0110 button rectangle as
-     * C05.  Firestaff's admitted PC34 button material is ordinal 1, whose
-     * rendered source zone is 160..175,44..52.  Do not inspect M11's DM1
-     * shaped world snapshot here: the runtime bridge validates the loaded
-     * CSB roomDOOR and DOOR.Button record before it can queue C10. */
+    /* ReDMCSB CLIKVIEW.C F0377 consumes the frame-owned C05 box. Atari
+     * F0107/F0110 writes its actual G0205/G0208 rectangle; the admitted PC34
+     * adapter retains its separately authenticated button box. Do not
+     * inspect M11's DM1-shaped world snapshot here: the runtime bridge
+     * validates the loaded CSB roomDOOR and DOOR.Button before queueing C10. */
     if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
         int viewCell;
         for (viewCell = 0; viewCell < 4; ++viewCell) {
             unsigned short grabbed = THING_NONE;
-            if (m11_point_in_source_box(localX, localY,
-                                        g_objectPileBoxes[viewCell]) &&
+            const int hit = atariSt
+                ? csb_v1_atari_f0115_click_bounds_contains(
+                    s_m11_csb_atari_floor_click_bounds, viewCell,
+                    localX, localY)
+                : m11_point_in_source_box(localX, localY,
+                                           g_objectPileBoxes[viewCell]);
+            if (hit &&
                 csb_v1_boot_runtime_grab_floor_object_pc34(
                     (CSB_V1_BootProfile *)state->csbBootProfile,
                     viewCell, &grabbed)) {
@@ -46481,7 +46560,11 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
             }
         }
         static const int kCsbDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
-        if (m11_point_in_source_box(localX, localY, kCsbDoorButtonD1CBox) &&
+        const int doorButtonHit = atariSt
+            ? m11_csb_atari_c05_contains(localX, localY)
+            : m11_point_in_source_box(localX, localY,
+                                      kCsbDoorButtonD1CBox);
+        if (doorButtonHit &&
             csb_v1_boot_runtime_trigger_front_door_button_click_pc34(
                 (CSB_V1_BootProfile *)state->csbBootProfile,
                 THING_NONE)) {
@@ -46528,7 +46611,10 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
      * drawn portrait to prove that this is the visible source candidate,
      * rather than treating the broad C05 ornament rectangle as a synthetic
      * mirror target. */
-    if (!m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+    if (!(atariSt
+              ? m11_csb_atari_c05_contains(localX, localY)
+              : m11_point_in_source_box(localX, localY,
+                                        g_wallOrnamentBox))) {
         return M11_GAME_INPUT_IGNORED;
     }
 

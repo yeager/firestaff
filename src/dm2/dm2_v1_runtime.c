@@ -1099,10 +1099,6 @@ static void dm2_runtime_apply_door_record_metadata(
     int size = 0;
     const uint8_t *record;
     uint16_t w2;
-    int wall_gfx_index = -1;
-    int wall_gfx_field = -1;
-    uint8_t animated_field = 0u;
-    uint32_t animated_receipt = 0u;
 
     if (!dd || !door) return;
     thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
@@ -1135,36 +1131,29 @@ static void dm2_runtime_apply_door_record_metadata(
         door->door_ornate_gfx_index =
             door_ornate_list[door->ornament_index - 1u];
     }
-    if (!door->door_button &&
-        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
-                                          view_dir, 2, 8,
-                                          &wall_gfx_index,
-                                          &wall_gfx_field) == 0) {
-        door->door_wall_button = 1;
-        door->door_wall_button_index = (uint8_t)wall_gfx_index;
-        door->door_wall_button_field = (uint8_t)wall_gfx_field;
-        door->door_wall_button_x = (int16_t)x;
-        door->door_wall_button_y = (int16_t)y;
-        door->door_wall_button_object_id = (uint16_t)thing;
-    } else if (!door->door_button &&
-               dm2_v1_dungeon_resolve_actuator_wall_gfx(
-                   dd, (uint16_t)thing, view_dir, 2, 8,
-                   wall_gfx_list, wall_gfx_count,
-                   &wall_gfx_index, &wall_gfx_field) == 0) {
-        door->door_wall_button = 1;
-        door->door_wall_button_index = (uint8_t)wall_gfx_index;
-        door->door_wall_button_field = (uint8_t)wall_gfx_field;
-        door->door_wall_button_x = (int16_t)x;
-        door->door_wall_button_y = (int16_t)y;
-        door->door_wall_button_object_id = (uint16_t)thing;
-    }
-    if (door->door_wall_button && boot &&
-        dm2_v1_boot_wall_gfx_ornate_animation_field(
-            boot, door->door_wall_button_index, tick, 0u,
-            &animated_field, &animated_receipt)) {
-        /* QUERY_ORNATE_ANIM_FRAME is the sole source of a non-static field.
-         * If its selected frame cannot later decode, M11 blocks the command. */
-        door->door_wall_button_field = animated_field;
+    if (!door->door_button && boot) {
+        DM2_V1_SkprojectQuery0cee1a46Receipt decoration;
+        int16_t wall_gfx_index = -1;
+        int16_t wall_gfx_field = -1;
+        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(boot);
+
+        /* SKProject c_querydb.cpp:3296 walks DB2 text and DB3 actuator
+         * records in source order. Use its GDAT-aware result here so the
+         * viewport observes actuator state and source-tick ornate frames. */
+        if (dm2_v1_skproject_query_0cee_1a46_ext(
+                dd, (uint16_t)thing, (int16_t)view_dir, 2,
+                tick, wall_gfx_list, wall_gfx_count, loader,
+                &wall_gfx_index, &wall_gfx_field, &decoration) == 1 &&
+            decoration.valid && wall_gfx_index >= 0 &&
+            wall_gfx_index <= UINT8_MAX && wall_gfx_field >= 0 &&
+            wall_gfx_field <= UINT8_MAX) {
+            door->door_wall_button = 1;
+            door->door_wall_button_index = (uint8_t)wall_gfx_index;
+            door->door_wall_button_field = (uint8_t)wall_gfx_field;
+            door->door_wall_button_x = (int16_t)x;
+            door->door_wall_button_y = (int16_t)y;
+            door->door_wall_button_object_id = (uint16_t)thing;
+        }
     }
 }
 
@@ -2245,7 +2234,7 @@ static int dm2_runtime_mode7_flags3_evidence(
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           (room->source_tile_type >= 0x10u &&
            room->source_tile_type <= 0x13u &&
-           room->first_record_link == DM2_THING_END_MARKER) ||
+           room->first_record_link != DM2_THING_NULL_MARKER) ||
           (room->raw_tile == 0x30u &&
            room->source_tile_type == 1u)))
         return 0;
@@ -2255,17 +2244,6 @@ static int dm2_runtime_mode7_flags3_evidence(
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
     memset(evidence, 0, sizeof(*evidence));
-    if (room->source_tile_type >= 0x10u &&
-        room->source_tile_type <= 0x13u) {
-        if (room->first_record_link != DM2_THING_END_MARKER) return 0;
-        /* c_light.cpp:310-435: empty class-3/4 summary chains cannot add a
-         * ground-record term, and an empty chain proves no creature F8 term. */
-        evidence->record_chain_known = 1u;
-        evidence->record_chain_known_no_darkness = 1u;
-        evidence->creature_query_known = 1u;
-        evidence->valid = 1u;
-        return 1;
-    }
     link = (int16_t)room->first_record_link;
     if ((room->raw_tile >> 5) == 2u &&
         room->first_record_link == DM2_THING_NULL_MARKER)
@@ -2318,7 +2296,7 @@ static int dm2_runtime_mode7_flags3_evidence(
         evidence->creature_present = 1u;
         evidence->creature_f8_word = f8;
     }
-    if (!class1_ornament) {
+    if (!class1_ornament && room->source_tile_type < 0x10u) {
         memset(&detail, 0, sizeof(detail));
         memset(&detail_receipt, 0, sizeof(detail_receipt));
         if (dm2_v1_skproject_get_teleporter_detail_dungeon(
@@ -2331,16 +2309,18 @@ static int dm2_runtime_mode7_flags3_evidence(
         }
         evidence->teleporter_detail_known = 1u;
     }
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu) {
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+        room->source_tile_type < 0x10u) {
         /* SKULLWIN/c_light.cpp:252-264 queries type-11 F8 and 99 on the
          * class-1 ornament; the latter independently selects weather light. */
-        if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
-                room->ceiling_ornament_word & 0xffu, 11, 0xf8,
-                &light_word)) return 0;
-        if (class1_ornament &&
-            !dm2_v1_query_gdat_entry_data_index(loader, 10,
+        /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero when a scalar is absent;
+         * skgdtqdb.cpp then supplies zero light/weather contribution. */
+        (void)dm2_v1_query_gdat_entry_data_index(loader, 10,
+            room->ceiling_ornament_word & 0xffu, 11, 0xf8, &light_word);
+        if (class1_ornament)
+            (void)dm2_v1_query_gdat_entry_data_index(loader, 10,
                 room->ceiling_ornament_word & 0xffu, 11, 99,
-                &weather_word)) return 0;
+                &weather_word);
     }
     evidence->ceiling_gdat_known = 1u;
     evidence->ceiling_gdat_light_word = light_word;
@@ -2432,8 +2412,14 @@ static int dm2_runtime_mode7_on_node(
         node.prepass = &prepass;
     } else if (source_flags == 3u && raw == 0x30) {
         branch = 28u;
-        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
-                dungeon, loader, map, x, y, &room)) goto unknown;
+        if (((unsigned)first >> 10 & 0x0fu) == 3u) {
+            if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+                    dungeon, loader, map, x, y, &room)) goto unknown;
+        } else if (((unsigned)first >> 10 & 0x0fu) == 2u) {
+            if (!dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+                    dungeon, loader, map, x, y,
+                    (uint32_t)rt->tick_count, &room)) goto unknown;
+        } else goto unknown;
         if (!dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
@@ -2441,10 +2427,10 @@ static int dm2_runtime_mode7_on_node(
     } else if (source_flags == 3u &&
                ((raw >> 5) == 3 || (raw >> 5) == 4)) {
         branch = 35u;
-        /* skguivwp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
-         * this receipt admits only empty chains and the class-4 direction
-         * that does not redirect into an adjacent record owner. */
-        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        /* c_gui_vp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
+         * class-4 side mismatches redirect to an adjacent record owner and
+         * remain outside this receipt. */
+        if (!dm2_v1_dungeon_c_light_class34_receipt(
                 dungeon, map, x, y, direction, &room) ||
             !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
@@ -2476,7 +2462,7 @@ static int dm2_runtime_mode7_on_node(
         node.stone_room = &room;
     } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
         branch = 36u;
-        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        if (!dm2_v1_dungeon_c_light_class34_receipt(
                 dungeon, map, x, y, direction, &room)) goto unknown;
         node.stone_room = &room;
         node.source_tile_type = room.source_tile_type;

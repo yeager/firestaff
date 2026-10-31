@@ -61,6 +61,9 @@ typedef struct RedmcsbFio1HostPc34Compat {
 
 void RedmcsbFio1FileHandleInitPc34Compat(
     RedmcsbFio1FileHandlePc34Compat *file, const char *file_name);
+int32_t F1320_FIO1_27_Pc34Compat(void);
+int16_t F1324_FIO1_24_Pc34Compat(int32_t arg0, int32_t arg1, int32_t arg2,
+                                  int16_t *out_value);
 void F1321_FIO1_07_SubstituteStringInFileNamePc34Compat(
     RedmcsbFio1FileHandlePc34Compat *file, const char *needle,
     const char *replacement);

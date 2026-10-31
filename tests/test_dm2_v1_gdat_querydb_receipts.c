@@ -913,6 +913,12 @@ static void test_querydb_word_and_ornate_receipts(void)
               frame.accepted && frame.used_text_sequence &&
               frame.length == 3u && frame.frame == 2u,
           "DM2_QUERY_ORNATE_ANIM_FRAME uses source dtText base36 sequence");
+    CHECK(dm2_v1_query_ornate_anim_frame_receipt(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 99, 7u, 3u, &frame) &&
+              frame.accepted && !frame.used_word_value &&
+              !frame.used_text_sequence && frame.length == 1u &&
+              frame.frame == 1u,
+          "DM2_QUERY_ORNATE_ANIM_FRAME defaults to frame 1 when animation is absent");
     CHECK(dm2_v1_get_ornate_anim_len_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 0, &len) &&
               len.accepted && len.used_word_value && len.length == 3u,

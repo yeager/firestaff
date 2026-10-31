@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-31 PC34 player-damage regression: on TRV2, the isolated `main`
+build's `m11_dm1_pc34_first_monster_combat_real` passed against the installed
+original PC 3.4 archive (4.28 s). The test follows the original HoC route to
+group 169, selects PUNCH through the ordinary action menu, retries only along
+the real cooldown/menu path when the source RNG misses, and requires the
+authentic group's HP to decrease. Both original-media runs reported
+`playerDamage=1`; the same test observed the original group's movement and
+attacks. Its shield comparison also reduced the measured natural attack damage
+from 24 HP to 0 HP. This confirms the current PC34 code can damage the first
+monster; it does not reproduce physical M5 input or prove every combat action.
+The test binary was built from `e27138ce`; current `main` (`45ebef84`) adds
+only Nexus files since that build, so DM1 combat code is unchanged.
+
 2026-10-31 M12 main-menu startup matrix: all ten selected real-media tests
 passed against the installed original DM1 archives: DM1-only, PC, FM Towns
 with PC media also installed, Atari ST 1.0, 1.1, 1.2 English, 1.2 German,
@@ -9,6 +22,15 @@ choice. These are SDL dummy-display startup and handoff checks; they do not
 prove native display, physical input, audio, gameplay, or visual parity. The
 DM1, CSB, and DM2 source files were unchanged between the tested executable's
 build revision and current `main` (`06689246`).
+
+2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the existing PC3.4 gates
+cover bounded scheduler, wall/ornament, door, pit/stairs, floor-ornament,
+thing-order, and field slices, including the D3R side-door button. The source
+functions also combine edition-specific bitmap/material selection, alcove
+early returns, and teleporter visibility rules. Keep the callable-symbol
+inventory rows open until the complete dispatch behavior is compared across
+supported DM1 editions and platforms; these PC3.4 slices do not establish
+whole-function parity.
 
 2026-10-30 ReDMCSB F0035 leader-hand name clear: M11's shared DM1/CSB V1
 leader-hand name renderer now invokes the source-mapped F0035 C017 black-fill
@@ -3608,3 +3630,14 @@ source graphics digest and leaves the original PO payload unchanged. This
 supersedes the 2026-10-16 notes that CLI/M12 IIGS startup integration was
 still pending. SDL's dummy driver does not verify physical IIGS hardware,
 native audio output, first active Hall movement, or visual parity.
+# ReDMCSB F0906/F0907 — Amiga retail original-disk check
+
+The ReDMCSB A20 startup path checks sector 11 for its release copyright;
+MEDIA441 A20E/A20F/A21E builds fall back to F0907, which checks the boot-sector
+checksum and compares copyright bytes including the embedded NUL. Firestaff
+reads the raw ADF from direct and ZIP-to-ZIP archive paths before the SWSH intro
+and validates these checks. The authentic A20E disk has a zero-filled sector
+11 and passes the F0907 fallback. Unit tests reject short, malformed, and
+tampered records; the real A20E graphics-media test and nested-archive CLI boot
+regression pass. This covers the identified Amiga startup lane, not other
+platforms' source-specific startup checks.

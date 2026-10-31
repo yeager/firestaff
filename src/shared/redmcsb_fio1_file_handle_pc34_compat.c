@@ -74,6 +74,24 @@ void RedmcsbFio1FileHandleInitPc34Compat(
     memcpy(file->fileName, file_name, length + 1u);
 }
 
+/* ReDMCSB Toolchains/Common/Source/FIO1.C F1320_FIO1_27_ (line 113). */
+int32_t F1320_FIO1_27_Pc34Compat(void)
+{
+    return INT32_C(234);
+}
+
+/* ReDMCSB Toolchains/Common/Source/FIO1.C F1324_FIO1_24_ (line 247). */
+int16_t F1324_FIO1_24_Pc34Compat(int32_t arg0, int32_t arg1, int32_t arg2,
+                                  int16_t *out_value)
+{
+    (void)arg0;
+    (void)arg1;
+    (void)arg2;
+    if (!out_value) return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    *out_value = 0;
+    return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
+}
+
 void F1321_FIO1_07_SubstituteStringInFileNamePc34Compat(
     RedmcsbFio1FileHandlePc34Compat *file, const char *needle,
     const char *replacement)
