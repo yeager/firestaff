@@ -6,6 +6,7 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_input_poll_pc34_compat.h"
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 /*
  * Integration test for the complete DM1 V1 Movement Command Pipeline.
@@ -1054,11 +1055,15 @@ static void test_post_move_environment_side_effects(void)
         firstThings[0] = thing_ref(THING_TYPE_SENSOR, 0);
         firstThings[1] = thing_ref(THING_TYPE_SENSOR, 1);
         sensors[0].next = THING_ENDOFLIST;
-        sensors[0].sensorType = 13;
-        sensors[0].sensorData = 31;
+        sensors[0].sensorType = DM1_SENSOR_FLOOR_PARTY;
+        sensors[0].sensorData = 0;
+        sensors[0].localEffect = 1;
+        sensors[0].localMultiple = 31;
         sensors[1].next = THING_ENDOFLIST;
-        sensors[1].sensorType = 13;
-        sensors[1].sensorData = 62;
+        sensors[1].sensorType = DM1_SENSOR_FLOOR_PARTY;
+        sensors[1].sensorData = 0;
+        sensors[1].localEffect = 1;
+        sensors[1].localMultiple = 62;
         things.loaded = 1;
         things.squareFirstThings = firstThings;
         things.squareFirstThingCount = 2;
@@ -1121,7 +1126,11 @@ static void test_post_move_environment_side_effects(void)
         things.squareFirstThingCount = 6 * 6;
         things.teleporters = teleporters;
         things.teleporterCount = 1;
-        firstThings[(3 * 6) + 2] = thing_ref(THING_TYPE_TELEPORTER, 0);
+        firstThings[1] = thing_ref(THING_TYPE_TELEPORTER, 0);
+        set_sq(tsquares, 6, 3, 2,
+            sq(DUNGEON_ELEMENT_TELEPORTER, DUNGEON_SQUARE_MASK_THING_LIST));
+        set_sq(tsquares, 6, 1, 4,
+            sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
         teleporters[0].next = THING_ENDOFLIST;
         teleporters[0].targetMapIndex = 0;
         teleporters[0].targetMapX = 1;
@@ -1130,7 +1139,8 @@ static void test_post_move_environment_side_effects(void)
         teleporters[0].absoluteRotation = 1;
         teleporters[0].scope = 0x02;
 
-        set_sq(tsquares, 6, 3, 2, sq(DUNGEON_ELEMENT_TELEPORTER, 0));
+        set_sq(tsquares, 6, 3, 2,
+            sq(DUNGEON_ELEMENT_TELEPORTER, DUNGEON_SQUARE_MASK_THING_LIST));
         setup_party(&party, 2, 2, DIR_EAST, 1);
         DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
         DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
@@ -1141,7 +1151,8 @@ static void test_post_move_environment_side_effects(void)
         EXPECT_INT("post_teleporter_closed_y", party.mapY, 2);
         EXPECT_INT("post_teleporter_closed_dir", party.direction, DIR_EAST);
 
-        set_sq(tsquares, 6, 3, 2, sq(DUNGEON_ELEMENT_TELEPORTER, 0x08));
+        set_sq(tsquares, 6, 3, 2,
+            sq(DUNGEON_ELEMENT_TELEPORTER, 0x08 | DUNGEON_SQUARE_MASK_THING_LIST));
         setup_party(&party, 2, 2, DIR_EAST, 1);
         DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
         DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
@@ -1162,14 +1173,19 @@ static void test_post_move_environment_side_effects(void)
             struct DungeonSensor_Compat sensors[2];
             struct DungeonGroup_Compat groups[1];
             int teleporterCompactSftIndex = 1;
+            int landingCompactSftIndex = 0;
             memset(sensors, 0, sizeof(sensors));
             memset(groups, 0, sizeof(groups));
             sensors[0].next = THING_ENDOFLIST;
-            sensors[0].sensorType = 13;
-            sensors[0].sensorData = 11;
+            sensors[0].sensorType = DM1_SENSOR_FLOOR_PARTY;
+            sensors[0].sensorData = 0;
+            sensors[0].localEffect = 1;
+            sensors[0].localMultiple = 11;
             sensors[1].next = THING_ENDOFLIST;
-            sensors[1].sensorType = 13;
-            sensors[1].sensorData = 22;
+            sensors[1].sensorType = DM1_SENSOR_FLOOR_PARTY;
+            sensors[1].sensorData = 0;
+            sensors[1].localEffect = 1;
+            sensors[1].localMultiple = 22;
             groups[0].next = thing_ref(THING_TYPE_SENSOR, 1);
             things.sensors = sensors;
             things.sensorCount = 2;
@@ -1177,9 +1193,7 @@ static void test_post_move_environment_side_effects(void)
             things.groupCount = 1;
             teleporters[0].next = thing_ref(THING_TYPE_SENSOR, 0);
             firstThings[teleporterCompactSftIndex] = thing_ref(THING_TYPE_TELEPORTER, 0);
-            set_sq(tsquares, 6, 1, 4,
-                sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
-            firstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
+            firstThings[landingCompactSftIndex] = thing_ref(THING_TYPE_GROUP, 0);
 
             setup_party(&party, 2, 2, DIR_EAST, 1);
             DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
@@ -1193,7 +1207,7 @@ static void test_post_move_environment_side_effects(void)
             EXPECT_INT("post_teleporter_deleted_group_thing",
                 result.postMoveDeletedGroupThing, thing_ref(THING_TYPE_GROUP, 0));
             EXPECT_INT("post_teleporter_group_unlinked_before_enter",
-                firstThings[0], thing_ref(THING_TYPE_SENSOR, 1));
+                firstThings[landingCompactSftIndex], thing_ref(THING_TYPE_SENSOR, 1));
             EXPECT_INT("post_teleporter_sensor_order_final_enter_count", result.core.enterEffects.count, 1);
             EXPECT_INT("post_teleporter_sensor_order_final_enter_text", result.core.enterEffects.effects[0].textIndex, 22);
             EXPECT_INT("post_teleporter_sensor_order_not_intermediate", result.core.enterEffects.effects[0].textIndex == 11, 0);
@@ -1223,8 +1237,10 @@ static void test_post_move_environment_side_effects(void)
         gfirstThings[0] = thing_ref(THING_TYPE_GROUP, 0);
         groups[0].next = thing_ref(THING_TYPE_SENSOR, 0);
         sensors[0].next = THING_ENDOFLIST;
-        sensors[0].sensorType = 13;
-        sensors[0].sensorData = 77;
+        sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+        sensors[0].sensorData = 0;
+        sensors[0].localEffect = 1;
+        sensors[0].localMultiple = 77;
         gthings.loaded = 1;
         gthings.squareFirstThings = gfirstThings;
         gthings.squareFirstThingCount = 1;
