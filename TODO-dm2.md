@@ -1,3 +1,51 @@
+2026-10-31 skproject `DM2_query_0cee_1a46` DB2 text animation cases:
+The extended query now walks DB2 text and DB3 actuator records in list order.
+DB2 TextMode-1 static extensions stay on the static path; ext-usage 1/2 and
+visibility-gated 4/5/7/8/13 query WALL_GFX animation field 0x0d at the source
+game tick. A zero word-value correctly falls through to dtText before the
+frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
+frame and the absent-animation fallback. Full actuator animation variants and
+viewport integration remain open.
+
+2026-10-31 runtime integration for `DM2_query_0cee_1a46`: the DM2 door metadata
+path now consumes the ordered, GDAT-aware query with the current game tick,
+map wall-GFX list, and authenticated asset loader. This makes the supported
+static/animated DB2 and state-dependent DB3 result available to the viewport's
+door-button renderer instead of relying on the old static text/ordinal helpers.
+The executable builds and `dm2_v1_skproject_core` passes. Full wall-side
+decoration integration, source-case runtime captures, and all-platform
+actuator/text behavior remain open.
+
+2026-10-31 skproject `DM2_QUERY_ORNATE_ANIM_FRAME` missing-entry fallback:
+When GDAT field 0x0d has a zero word value, skproject falls through to dtText;
+when neither has animation data, it returns frame 1 (`c_querydb.cpp:471-517`).
+Firestaff now
+returns an accepted length-one/frame-one receipt for that source fallback; the
+GDAT receipt regression covers the absent-animation case. Malformed
+unterminated sequences still fail closed.
+
+2026-10-31 skproject `DM2_query_0cee_1a46` actuator type 0x4a:
+The side-decoration query now implements the source's actuator 0x4a field as
+`active_status ^ once_only` (c_querydb.cpp:3553-3565). Big-endian regression
+cases cover all four status-bit combinations. The remaining actuator categories,
+ornate-animation behavior, and viewport integration remain open.
+
+2026-10-31 skproject `DM2_query_0cee_1a46` actuator type 0x7f:
+The source has a special branch for type 0x7e only; type 0x7f falls through to
+the default wall-GFX field zero (`c_querydb.cpp:3524`). Firestaff no longer
+requests ornate animation for type 0x7f. A big-endian DB3 regression verifies
+the static field with no GDAT animation loader.
+
+2026-10-31 skproject `DM2_query_0cee_1a46` query result and endian handling:
+The actuator side-decoration query now uses the Dungeon record-word accessor for
+DB3 words, so Mac/Amiga big-endian actuator type, status, and animation fields
+are decoded in source byte order. The wrapper now interprets
+`dm2_v1_dungeon_find_text_wall_gfx` correctly: its return value is zero for a
+static text match and negative when the walk finds no match or cannot traverse.
+A synthetic big-endian DB3 wall switch regression verifies it reaches the
+actuator branch and returns its wall-GFX index/field. Full query integration into
+the viewport renderer and the complete actuator animation cases remain open.
+
 # Firestaff TODO — DM2
 
 2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:
@@ -8,11 +56,13 @@ summarized class-0 nodes as no-op, matching `c_light.cpp:233-243`. Data-free
 mode-7 and visibility tests pass. The class-1 floor-actuator route now carries
 the source F8 and GDAT 99 weather terms through authenticated record/GDAT
 receipts; focused accumulator checks cover its light, weather and high-bit
-gates. A new HME-242 real-media regression for
-map 3 `(8,4)` compiles. That real-media test cannot run here because the
-original FM Towns archive is unavailable. Existing runtime proof remains
-FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains
-open, as do other record-derived light branches.
+gates. The HME-242 real-media regression for map 3 `(8,4)` now passes with the
+original FM Towns archive: its class-1 DB2 ext-usage-10 ornament chain reaches
+a complete mode-8/mode-7 receipt, and the resulting c_light stripe is consumed
+by the runtime frame. The class-4 and class-5 non-admission decisions also
+match SK1C9A's action-23 mask. Runtime evidence remains FM Towns-only; DOS,
+Amiga, Macintosh and other-edition runtime coverage remains open, as do other
+record-derived light branches.
 
 Source comparison found concrete unresolved `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE`
 branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
@@ -20,15 +70,25 @@ branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
 raw class-4 tiles as `0x10`/`0x11`, may redirect class-4 summaries to an
 adjacent tile according to the incoming direction, and carries the selected
 record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
-mode-7 class-3 summaries and direction-matched class-4 summaries when their
-record chain is empty. With authenticated absence of darkness and creatures,
-flags-3 contributes no term; flags-4 likewise leaves the accumulators unchanged.
-Focused direction, receipt, fail-closed evidence and accumulator regressions
-cover those cases. Record-bearing chains and class-4 direction mismatches that
-redirect to an adjacent record owner remain unresolved. Acceptance still
-requires source-owned record traversal and original-media dynamic-light evidence
-for every supported DM2 platform; the existing FM Towns-only runtime receipt
-does not close DOS, Amiga, or Macintosh behavior.
+mode-7 class-3 summaries, direction-matched class-4 summaries with their
+source record link, and class-4 mismatches whose source-selected adjacent
+root is empty or has a decoded record class above 3. Flags-3 walks up to 256
+authenticated links, accumulates DBE/DBF terms and creature F8, and passes
+focused accumulator regressions. Flags-4 is a no-op for any accepted
+class-3/4 record-chain root, because the source flag mask disables its record
+and creature terms.
+Class-4 direction mismatches now follow the source's direction-plus-one
+adjacent-square route. Empty roots and decoded record classes above 3 match
+the source query's early-return behavior. Class-0..3 roots now pass the
+bounded light receipt only when their complete record graph and linked records
+validate; `query_0cee_1a46` side-decoration fields are separate from the tile,
+root, and ornament values consumed by `c_light.cpp`. Full decoration selection
+and actuator animation remain open. A flagged center or adjacent
+root is rejected if its first-thing table lookup fails; regressions cover both
+malformed-root cases so the loader's `-1` error sentinel cannot become an
+empty-root receipt. Original-media dynamic-light evidence is still needed for
+every supported DM2 platform; the existing FM Towns-only runtime receipt does
+not close DOS, Amiga, or Macintosh behavior.
 
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
@@ -1342,16 +1402,13 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   media preservation-only.
   Remaining work is outdoor's distinct composition, transition stretching
   and same-tuple original-capture comparison; retain only GDAT-owned pixels.
-- Implement the FM Towns dynamic-light path before accepting post-teleport
-  dungeon frames. Original-media traversal from map 3 to map 38 and back
-  reaches the source coordinates, but both frames lack a c_light receipt.
-  SKProject `c_light.cpp:490-592` requires FIND_WALK_PATH modes 8 and 7,
-  visibility buffers, live light accumulators, party possessions, spells,
-  savegame light and weather. Firestaff's current pathfinders handle creature
-  movement and do not implement those light modes. GAME_LOAD now refreshes
-  the map scene after copying the live party and light state, but the light
-  traversal remains absent. Do not fill the receipt from a map descriptor or
-  a guessed minimum light level.
+- Extend authenticated FM Towns c_light coverage to the post-teleporter route
+  from map 3 `(13,11)` to map 38 `(6,6)` and back from map 38 `(6,4)` to map 3
+  `(13,9)`. A real-media frame at map 3 `(8,4)` now completes source FIND_WALK_PATH
+  modes 8 and 7 and consumes a verified c_light result; the existing DB1
+  transition checks reach the map-38 coordinates but do not assert c_light on
+  either arrival frame. Do not infer those receipts from transition success,
+  a map descriptor, or a guessed minimum light level.
   The source order is `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v5/sklight.cpp`,
   lines 490-592): mode 8 clears and fills `v1e08c8/v1e08cc` visibility data;
   mode 7 traverses the admitted cells and calls
@@ -1359,16 +1416,13 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   Those calls update `v1e0974/v1e0978`; only then may
   `RECALC_LIGHT_LEVEL` combine the party hand charges, `savegames1.w_00`,
   GRAPHICSSET words 0x67/0x68 and weather into the clamped light level.
-  The runtime now binds the original party, record charge fields, executable
+  The runtime binds the original party, record charge fields, executable
   tables, GRAPHICSSET words, savegame light and weather to the source light
-  routine. It publishes no dynamic-light receipt until the map-matched
-  visibility owner reports complete mode-8 and mode-7 traversal. Those modes
-  still lack a live producer; the existing creature movement path is not a
-  substitute. An
-  implementation must retain the map, party position, tick, records and GDAT
-  identities across both traversals and the final frame receipt. The
-  original-media acceptance case is map 3 (13,11) -> map 38 (6,6), then map
-  38 (6,4) -> map 3 (13,9), with valid `c_light` on both resulting frames.
+  routine, and withholds the receipt unless both map-matched traversals finish.
+  Extend the retained identities and completion proof through both real DB1
+  transitions, then require valid `c_light` receipts on the map-38 and return
+  frames. Keep this FM Towns evidence separate from still-unverified DOS,
+  Amiga and Macintosh rendering paths.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they
@@ -1674,3 +1728,5 @@ real-media test verifies that the live Fireball enters the center-cell call
 schedule. The schedule does not consume pixels. Next, bind TEMP_PICST
 placement/frame selection and ordinary flying-item materials to their proven
 destination transforms before drawing.
+
+2026-10-31 skproject class-4 light roots: Rechecked `c_gui_vp.cpp:2672-2707`, `c_querydb.cpp:3296-3700`, and `c_light.cpp:231-435`. The side-mismatch route invokes `query_0cee_1a46`, whose side-decoration writes do not change the three summary fields consumed by the light calculation. Firestaff now admits class-0..3 adjacent roots only after a complete bounded record-list walk validates every record and end marker; higher classes preserve the query's source early return. The focused `dm2_v1_light_ops` test passes for a valid DB3 root and rejects an unresolved root. This closes the class-0..3 light-input admission gap only; full side-decoration query behavior, actuator animation, and platform/runtime coverage remain open.

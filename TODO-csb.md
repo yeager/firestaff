@@ -12,6 +12,33 @@ not physical Atari input or visual parity; it does not verify player damage
 against monsters. The CSB source was unchanged between the test executable's
 build revision and current `main` (`0a503955`).
 
+2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the shared PC3.4 viewport
+contracts cover bounded side-wall scheduling, ornament, door, pit/stairs,
+floor-ornament, thing-order, and field slices, including the D3R side-door
+button. The full side-square dispatch still has edition/platform-specific
+material branches and early-return/teleporter conditions. Keep CSB D3L/D3R
+parity open until the source behavior is compared against every supported
+CSB platform and edition; shared PC3.4 tests are not proof of that coverage.
+
+2026-10-31 Atari C05 ornament hit-zone correction: the older 2026-10-29
+"live-renderer coverage gap" below overstates the missing Atari wall-ornament
+pass. Firestaff does render selected source-derived wall ornaments in
+`m11_csb_atari_st_draw_wall_ornament` using the G0194/G0205 tables. ReDMCSB
+F0107 copies each visible ornament's G0205 rectangle into
+`G0291[C05]` (`DUNVIEW.C:3724`, `4168`); F0377 then hit-tests that byte box
+with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff now records
+the latest rendered G0205 ornament or ReDMCSB G0208 door-switch rectangle
+each Atari F0128 frame and routes Atari C080 through that inclusive box; PC
+keeps its separate box. G0208's D3R/D3C/D2C/D1C rows come directly from
+`DUNVIEW.C:1210-1216`; Atari button rendering and C05 hit testing now share
+those exact destination bounds and native source dimensions. The bounds
+regression covers C05 overwrite versus F0115 floor-box union, and the updated
+M11 translation unit compiles. A
+matching original-media sensor or door-button click has not run locally
+because the Atari package is absent.
+This correction does not close the still-open Atari floor/door ornament,
+creature, projectile, or explosion rendering and hit behavior.
+
 2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
 Atari package contains a separate `st20-21-hd-en` installation. The new
 real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build
@@ -410,6 +437,24 @@ for floor-object piles and rendered wall ornaments are not carried into Atari
 C080, and the Atari renderer currently omits those object/ornament passes.
 Implement those render receipts and use their bounds for hit testing before
 claiming pickup or wall-sensor parity; verify against original campaign media.
+
+2026-10-31 correction and implementation for Atari F0115 floor-object click
+bounds: ReDMCSB compiles Atari ST through MEDIA009. `DUNVIEW.C F0115`
+computes each rendered object's clipped box and unions it into
+`G0291_aauc_DungeonViewClickableBoxes[viewCell]` (`DUNVIEW.C:4915-5160`);
+`DUNVIEW.C:8348-8349` clears those boxes each frame. `CLIKVIEW.C F0377:410-440`
+hit-tests the byte boxes with screen Y adjusted by the 33-pixel viewport
+origin. The preceding 2026-10-29 note incorrectly assigned this Atari path to
+MEDIA720's `G2210`/`F0798` zones. Firestaff now unions native Atari F0115
+object draw receipts per view-cell and uses those bounds for Atari C080 floor
+pickup; no rendered receipt means no pickup hit. A focused union/boundary test
+passes. The authentic Atari MINI.DAT D1C weapon regression now clicks the
+center of the pixel-verified rendered box and checks that the exact DB5 record
+moves to the leader hand and leaves its source square; its test source compiles
+as an object. The original Atari STX package is not installed in this workspace,
+so this new original-media assertion has not run locally. This does not close
+the C05 wall-ornament zone, door-button interaction, or full Atari pointer
+parity; verify those separately before claiming completion.
 
 2026-10-29 Atari ST real-session campaign route: the native CLI regression now
 uses the original Atari campaign package and hard-disk `DUNGEON.DAT` with

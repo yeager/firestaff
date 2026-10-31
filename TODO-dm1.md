@@ -23,6 +23,15 @@ prove native display, physical input, audio, gameplay, or visual parity. The
 DM1, CSB, and DM2 source files were unchanged between the tested executable's
 build revision and current `main` (`06689246`).
 
+2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the existing PC3.4 gates
+cover bounded scheduler, wall/ornament, door, pit/stairs, floor-ornament,
+thing-order, and field slices, including the D3R side-door button. The source
+functions also combine edition-specific bitmap/material selection, alcove
+early returns, and teleporter visibility rules. Keep the callable-symbol
+inventory rows open until the complete dispatch behavior is compared across
+supported DM1 editions and platforms; these PC3.4 slices do not establish
+whole-function parity.
+
 2026-10-30 ReDMCSB F0035 leader-hand name clear: M11's shared DM1/CSB V1
 leader-hand name renderer now invokes the source-mapped F0035 C017 black-fill
 adapter before the F0034 name draw. ReDMCSB `OBJECT.C:274-286` clears the same
@@ -3621,3 +3630,14 @@ source graphics digest and leaves the original PO payload unchanged. This
 supersedes the 2026-10-16 notes that CLI/M12 IIGS startup integration was
 still pending. SDL's dummy driver does not verify physical IIGS hardware,
 native audio output, first active Hall movement, or visual parity.
+# ReDMCSB F0906/F0907 — Amiga retail original-disk check
+
+The ReDMCSB A20 startup path checks sector 11 for its release copyright;
+MEDIA441 A20E/A20F/A21E builds fall back to F0907, which checks the boot-sector
+checksum and compares copyright bytes including the embedded NUL. Firestaff
+reads the raw ADF from direct and ZIP-to-ZIP archive paths before the SWSH intro
+and validates these checks. The authentic A20E disk has a zero-filled sector
+11 and passes the F0907 fallback. Unit tests reject short, malformed, and
+tampered records; the real A20E graphics-media test and nested-archive CLI boot
+regression pass. This covers the identified Amiga startup lane, not other
+platforms' source-specific startup checks.

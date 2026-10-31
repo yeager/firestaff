@@ -26,12 +26,17 @@ int dm2_v1_mode7_go_there_tile_admission(uint8_t raw_tile,
     (void)first_record_link;
     /* SK1C9A.cpp:3190-3340 maps GO_THERE tile classes to capability
      * bits. Action 23 sets v1e0576=0x227 at :6873-6882. Empty class-0
-     * squares still need the party-square blocker below. Classes 3 and 7
+     * squares still need the party-square blocker below. Classes 3, 4 and 7
      * have no overlapping capability bit (or are rejected outright).
+     * SK1C9A.cpp:2690-2797 leaves the class-4 GO_THERE capability word zero,
+     * so it fails the action-23 mask check without traversing the tile.
+     * Class-5 portal raw values other than the explicit B0/B8 handlers below
+     * do not establish action-23 destination admission.
      * Class 6 with bit 0x04 has capability 0x2 and needs blocker proof;
      * other class-6 tiles have no action-23 capability.
      * Other branches need movement and record evidence before admission. */
-    if (type == 3u || type == 7u ||
+    if (type == 3u || type == 4u || type == 7u ||
+        (type == 5u && raw_tile != 0xb0u && raw_tile != 0xb8u) ||
         (type == 6u && (raw_tile & 0x04u) == 0u)) return 0;
     return -1;
 }
@@ -244,7 +249,9 @@ int dm2_v1_mode7_flags4_class2_terms(
     if (!room || !room->valid ||
         (room->raw_tile >> 5) != 2u ||
         room->first_record_link != DM2_THING_NULL_MARKER ||
-        (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
+        (((room->raw_tile >> 5) != 3u &&
+          (room->raw_tile >> 5) != 4u) &&
+         room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !out_tile_light || !out_darkness || !out_weather_light) return 0;
     /* sklight.cpp:231-435: class 1/2 bypasses the class-0 flags-4 branch.
      * The remaining floor and creature probes require flags 1 and 2,
@@ -352,15 +359,30 @@ static int dm2_v1_mode7_flags3_floor_terms(
             evidence && evidence->record_chain_known) ||
           ((room->raw_tile >> 5) == 2u &&
            room->first_record_link == DM2_THING_NULL_MARKER) ||
+          ((room->raw_tile >> 5) == 3u &&
+           room->source_tile_type >= 0x12u &&
+           room->source_tile_type <= 0x13u &&
+           evidence && evidence->record_chain_known) ||
+          ((room->raw_tile >> 5) == 4u &&
+           room->source_tile_type >= 0x10u &&
+           room->source_tile_type <= 0x11u &&
+           evidence && evidence->record_chain_known) ||
           ((room->raw_tile >> 5) == 5u &&
            ((room->first_record_link >> 10) & 0x0fu) == 1u &&
            evidence && (evidence->record_chain_known ||
                         evidence->record_chain_known_no_darkness))) ||
-        (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
+        (((room->raw_tile >> 5) != 3u &&
+          (room->raw_tile >> 5) != 4u) &&
+         room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !evidence || !evidence->valid ||
         ((room->raw_tile >> 5) != 1u &&
+         (room->raw_tile >> 5) != 3u &&
+         (room->raw_tile >> 5) != 4u &&
          !evidence->teleporter_detail_known) ||
-        !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
+        !evidence->creature_query_known ||
+        (((room->raw_tile >> 5) != 3u &&
+          (room->raw_tile >> 5) != 4u) &&
+         !evidence->ceiling_gdat_known) ||
         !tile_light || !weather_light || !creature_light ||
         !record_darkness) return 0;
     *tile_light = 0;
@@ -399,7 +421,9 @@ static int dm2_v1_mode7_flags3_floor_terms(
     }
     if (evidence->creature_present)
         *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
-    if ((room->raw_tile >> 5) == 5u) {
+    if ((room->raw_tile >> 5) == 3u ||
+        (room->raw_tile >> 5) == 4u ||
+        (room->raw_tile >> 5) == 5u) {
         if (evidence->record_chain_known)
             *record_darkness = evidence->record_darkness;
         else if (!evidence->record_chain_known_no_darkness)
@@ -408,12 +432,12 @@ static int dm2_v1_mode7_flags3_floor_terms(
     return 1;
 }
 
-static int dm2_v1_mode7_class34_empty_room(
+static int dm2_v1_mode7_class34_room(
     const DM2_V1_CLightStoneRoomReceipt *room)
 {
     unsigned raw_class;
     if (!room || !room->valid ||
-        room->first_record_link != DM2_THING_END_MARKER) return 0;
+        room->first_record_link == DM2_THING_NULL_MARKER) return 0;
     raw_class = room->raw_tile >> 5;
     if (raw_class == 3u)
         return room->source_tile_type == 0x12u ||
@@ -424,33 +448,18 @@ static int dm2_v1_mode7_class34_empty_room(
     return 0;
 }
 
-static int dm2_v1_mode7_class34_empty_noop(
-    const DM2_V1_CLightStoneRoomReceipt *room,
-    const DM2_V1_Mode7Flags3Evidence *evidence)
-{
-    if (!dm2_v1_mode7_class34_empty_room(room) ||
-        !evidence || !evidence->valid ||
-        !evidence->record_chain_known ||
-        !evidence->record_chain_known_no_darkness ||
-        !evidence->creature_query_known || evidence->creature_present)
-        return 0;
-    /* SKULLWIN/c_light.cpp:310-435: with an accepted summary type 0x10..13,
-     * flags 3/4 contribute through the ground-record and creature paths.
-     * Empty records and an absent creature leave both accumulators unchanged. */
-    return 1;
-}
-
-static int dm2_v1_mode7_flags4_class34_empty_terms(
+static int dm2_v1_mode7_flags4_class34_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     int16_t *out_tile_light, int16_t *out_darkness,
     int16_t *out_weather_light)
 {
-    if (!dm2_v1_mode7_class34_empty_room(room) ||
+    if (!dm2_v1_mode7_class34_room(room) ||
         !out_tile_light || !out_darkness || !out_weather_light)
         return 0;
-    /* SKULLWIN/c_light.cpp:310-435: flags 4 skip the class-0 floor,
-     * ceiling and ground-record branches. An empty accepted class-3/4
-     * summary has no creature F8 term either. */
+    /* SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE:304-305,
+     * 423-435: flags 4 clears both flags-1 ground-record and flags-2
+     * creature paths, so accepted class-3/4 summaries are no-op for any
+     * authenticated record-chain root. */
     *out_tile_light = 0;
     *out_darkness = 0;
     *out_weather_light = 0;
@@ -490,12 +499,6 @@ int dm2_v1_mode7_on_node(
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
-        if (node->source_tile_type >= 0x10u &&
-            node->source_tile_type <= 0x13u) {
-            if (!dm2_v1_mode7_class34_empty_noop(
-                    node->stone_room, node->prepass)) return -1;
-            return 1;
-        }
         /* SKProject c_light.cpp:233-243: a summarized class-0 tile with
          * mode-7 flags 3 exits to L_fin before any GDAT or record query. */
         if (node->source_tile_type == 0u) return 1;
@@ -547,7 +550,7 @@ int dm2_v1_mode7_on_node(
                !dm2_v1_mode7_flags4_class5_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light) &&
-               !dm2_v1_mode7_flags4_class34_empty_terms(
+               !dm2_v1_mode7_flags4_class34_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light)) return -1;
     if (!dm2_v1_mode7_light_accumulate_tile(

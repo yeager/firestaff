@@ -36,6 +36,7 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
 #include "firestaff_l10n.h"
+#include "firestaff_zip_extract.h"
 #include "asset_find_by_hash.h"
 #include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "fs_portable_compat.h"
@@ -5296,6 +5297,70 @@ static int m11_dm1_amiga_swsh_path(const M12_AssetVersionStatus* version,
     return m11_dm1_amiga_sibling_path(version, "swoosh", outPath, outPathBytes);
 }
 
+static int m11_dm1_amiga_read_original_disk(
+    const M12_AssetVersionStatus* version,
+    uint8_t** outDisk, size_t* outDiskBytes) {
+    const char* matched;
+    const char* first;
+    const char* second;
+    const char* final_separator = NULL;
+    const char* scan;
+    size_t disk_path_bytes;
+    if (outDisk) *outDisk = NULL;
+    if (outDiskBytes) *outDiskBytes = 0u;
+    if (!version || !outDisk || !outDiskBytes) return 0;
+    matched = version->matchedPath;
+    if (!matched || !matched[0]) return 0;
+    for (scan = matched; (scan = strstr(scan, "::")) != NULL; scan += 2)
+        final_separator = scan;
+    if (!final_separator) return 0;
+    /* The last virtual component before GRAPHICS.DAT must be the raw ADF. */
+    if ((size_t)(final_separator - matched) < 4u ||
+        toupper((unsigned char)final_separator[-4]) != '.' ||
+        toupper((unsigned char)final_separator[-3]) != 'A' ||
+        toupper((unsigned char)final_separator[-2]) != 'D' ||
+        toupper((unsigned char)final_separator[-1]) != 'F') return 0;
+    disk_path_bytes = (size_t)(final_separator - matched);
+    first = strstr(matched, "::");
+    second = first ? strstr(first + 2, "::") : NULL;
+    if (first && second && (size_t)(second - first) >= 7u &&
+        toupper((unsigned char)second[-4]) == '.' &&
+        toupper((unsigned char)second[-3]) == 'Z' &&
+        toupper((unsigned char)second[-2]) == 'I' &&
+        toupper((unsigned char)second[-1]) == 'P') {
+        char inner_path[FSP_PATH_MAX];
+        char adf_name[FSP_PATH_MAX];
+        size_t inner_path_bytes = (size_t)(second - matched);
+        size_t adf_name_bytes = (size_t)(final_separator - (second + 2));
+        uint8_t* inner = NULL;
+        size_t inner_bytes = 0u;
+        if (inner_path_bytes == 0u || inner_path_bytes >= sizeof(inner_path) ||
+            adf_name_bytes == 0u || adf_name_bytes >= sizeof(adf_name)) return 0;
+        memcpy(inner_path, matched, inner_path_bytes);
+        inner_path[inner_path_bytes] = '\0';
+        memcpy(adf_name, second + 2, adf_name_bytes);
+        adf_name[adf_name_bytes] = '\0';
+        if (!asset_read_virtual_path_alloc(inner_path, &inner, &inner_bytes) ||
+            firestaff_zip_extract_memory_by_suffix(
+                inner, inner_bytes, adf_name, outDisk, outDiskBytes) != 0) {
+            free(inner);
+            free(*outDisk);
+            *outDisk = NULL;
+            *outDiskBytes = 0u;
+            return 0;
+        }
+        free(inner);
+        return 1;
+    }
+    if (disk_path_bytes == 0u || disk_path_bytes >= FSP_PATH_MAX) return 0;
+    {
+        char disk_path[FSP_PATH_MAX];
+        memcpy(disk_path, matched, disk_path_bytes);
+        disk_path[disk_path_bytes] = '\0';
+        return asset_read_virtual_path_alloc(disk_path, outDisk, outDiskBytes);
+    }
+}
+
 static int m11_dm1_amiga_read_startup_companions(
     const M12_AssetVersionStatus* version,
     uint8_t** dungeonData, size_t* dungeonBytes,
@@ -5885,6 +5950,8 @@ static int m11_play_dm1_amiga_swsh_if_available(
     char swooshPath[FSP_PATH_MAX];
     uint8_t* executable = NULL;
     size_t executableBytes = 0U;
+    uint8_t* originalDisk = NULL;
+    size_t originalDiskBytes = 0u;
     DM1_V1_AmigaSwshAssets assets;
     uint8_t* indexed = NULL;
     uint8_t* rgba = NULL;
@@ -5917,6 +5984,26 @@ static int m11_play_dm1_amiga_swsh_if_available(
                                           (size_t)versionIndex);
     if (!version || strstr(version->matchedPath, "[HD]") != NULL) return -1;
     if (skipSwoosh) return 1;
+    if (strcmp(version->versionId, "amiga20-en") == 0 ||
+        strcmp(version->versionId, "amiga20-fr") == 0 ||
+        strcmp(version->versionId, "amiga20-de") == 0 ||
+        strcmp(version->versionId, "amiga21-en") == 0) {
+        {
+            int read_ok = m11_dm1_amiga_read_original_disk(
+                version, &originalDisk, &originalDiskBytes);
+            int valid = read_ok && dm1_v1_amiga_original_disk_check(
+                originalDisk, originalDiskBytes, 1);
+            if (!valid) {
+                if (g_m11_debug_startup_detail) {
+                    fprintf(stderr, "firestaff: startup-media-rejected game=dm1 platform=amiga phase=original-disk reason=F0906-F0907 read=%d bytes=%zu\n",
+                            read_ok, originalDiskBytes);
+                }
+                free(originalDisk);
+                return 0;
+            }
+        }
+        free(originalDisk);
+    }
     if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
         !asset_read_path_alloc(swooshPath, &executable,
                                        &executableBytes) ||

@@ -5961,6 +5961,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     DM2_V1_SkprojectCreatureAISpec ai_spec;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_DungeonData dungeon;
     uint8_t pool3_bytes[64];
     uint8_t gdat_blob[16];
     uint8_t creature_rec[8];
@@ -6114,6 +6115,138 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               NULL, 0u, 0, 0, &wall_idx, &wall_field, &q1a46) &&
               q1a46.blocked_missing_dungeon,
           "DM2_query_0cee_1a46 fails closed without dungeon data");
+    {
+        /* Mac/Amiga DB3 words are big-endian. Actuator type 0x4a with
+         * graphic 1 selects active XOR once-only without animation GDAT. */
+        uint8_t actuator_record_be[8] = {
+            0xffu, 0xfeu, 0x00u, 0x4au, 0x10u, 0x00u, 0x00u, 0x00u
+        };
+        uint8_t wall_graphics[1] = { 0x22u };
+        int ordinal = -1;
+        memset(&dungeon, 0, sizeof(dungeon));
+        dungeon.raw_data = actuator_record_be;
+        dungeon.raw_size = (int)sizeof(actuator_record_be);
+        dungeon.square_bytes = 1;
+        dungeon.words_big_endian = 1;
+        dungeon.record_graph_complete = 1;
+        dungeon.thing_type_counts[3] = 1;
+        dungeon.thing_data_bases[3] = 0;
+        int result = dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46);
+        CHECK(result == 1 &&
+                  q1a46.valid && q1a46.found_actuator &&
+                  q1a46.actuator_type == 0x4au &&
+                  wall_idx == 0x22 && wall_field == 0,
+              "DM2_query_0cee_1a46 decodes big-endian XOR state (0,0)");
+        actuator_record_be[5] = 0x04u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x4au && wall_field == 1,
+              "DM2_query_0cee_1a46 XOR state (0,1)");
+        actuator_record_be[5] = 0x01u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  wall_field == 1,
+              "DM2_query_0cee_1a46 XOR state (1,0)");
+        actuator_record_be[5] = 0x05u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  wall_field == 0,
+              "DM2_query_0cee_1a46 XOR state (1,1)");
+        actuator_record_be[5] = 0u;
+        CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+                  &dungeon, 0x0c00u, 0, 0, 32, &ordinal) == 0 &&
+                  ordinal == 1,
+              "actuator wall-GFX ordinal reads big-endian GraphicNumber");
+        /* c_querydb.cpp:3524 only special-cases 0x7e. Type 0x7f falls
+         * through to the default zero field, regardless of active status. */
+        actuator_record_be[3] = 0x7fu;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.valid && q1a46.found_actuator &&
+                  q1a46.actuator_type == 0x7fu && wall_field == 0,
+              "DM2_query_0cee_1a46 type 0x7f uses source default field");
+    }
+    {
+        /* TextMode 1 with ext-usage zero is a static wall ornament. */
+        uint8_t text_record_be[4] = { 0xffu, 0xfeu, 0x00u, 0x2au };
+        int text_idx = -1, text_field = -1;
+        memset(&dungeon, 0, sizeof(dungeon));
+        dungeon.raw_data = text_record_be;
+        dungeon.raw_size = (int)sizeof(text_record_be);
+        dungeon.square_bytes = 1;
+        dungeon.words_big_endian = 1;
+        dungeon.record_graph_complete = 1;
+        dungeon.thing_type_counts[2] = 1;
+        dungeon.thing_data_bases[2] = 0;
+        int text_result = dm2_v1_dungeon_find_text_wall_gfx(
+                  &dungeon, 0x0800u, 0, 0, 32,
+                  &text_idx, &text_field);
+        CHECK(text_result == 0 &&
+                  text_idx == 5 && text_field == 1,
+              "static text wall-GFX query reads big-endian TextMode");
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 0u, NULL, 0, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.valid && q1a46.found_static_text &&
+                  wall_idx == 5 && wall_field == 1,
+              "extended side-decoration query returns static big-endian DB2 text");
+    }
+    {
+        uint8_t animated_text_record_be[4] = {
+            0xffu, 0xfeu, 0x10u, 0x2au /* ext usage 2, ornament 5 */
+        };
+        uint8_t animation_data[2] = { 3u, 0u };
+        uint32_t raw_offset = 0u, raw_size = 2u;
+        DM2_V1_GdatEntry animation_entry = {
+            DM2_GDAT_CATEGORY_WALL_GFX, 5u,
+            DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 3u
+        };
+        DM2_V1_AssetLoader animation_loader;
+        int text_index_out = -1, text_field_out = -1;
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(&animation_loader, 0, sizeof(animation_loader));
+        dungeon.raw_data = animated_text_record_be;
+        dungeon.raw_size = (int)sizeof(animated_text_record_be);
+        dungeon.square_bytes = 1;
+        dungeon.words_big_endian = 1;
+        dungeon.record_graph_complete = 1;
+        dungeon.thing_type_counts[2] = 1;
+        dungeon.thing_data_bases[2] = 0;
+        animation_loader.data = animation_data;
+        animation_loader.data_size = sizeof(animation_data);
+        animation_loader.loaded = 1;
+        animation_loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+        animation_loader.raw_data_count = 1u;
+        animation_loader.raw_offsets = &raw_offset;
+        animation_loader.raw_sizes = &raw_size;
+        animation_loader.entries = &animation_entry;
+        animation_loader.entry_count = 1u;
+        int text_animation_result = dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46);
+        CHECK(text_animation_result == 1 &&
+                  q1a46.valid && q1a46.found_text_animation &&
+                  q1a46.text_ext_usage == 2u && wall_idx == 5 &&
+                  wall_field == 2,
+              "DM2_query_0cee_1a46 animates big-endian DB2 ext usage 2");
+        animation_entry.data_index = 0u;
+        int animation_fallback_result = dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 7u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46);
+        CHECK(animation_fallback_result == 1 &&
+                  q1a46.found_text_animation && wall_field == 2,
+              "text ext-usage 2 uses frame-one fallback when GDAT animation is absent");
+        CHECK(dm2_v1_dungeon_find_text_wall_gfx(
+                  &dungeon, 0x0800u, 0, 0, 32,
+                  &text_index_out, &text_field_out) == -1,
+              "static text-wall helper defers ext-usage 2 to GDAT query");
+    }
 
     /* DM2_query_48ae_011a */
     memset(pool3_bytes, 0, sizeof(pool3_bytes));

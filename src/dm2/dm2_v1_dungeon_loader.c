@@ -5189,7 +5189,7 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
         if (type > 3) return -1;
 
         if (type == 2 && size >= 4) {
-            w2 = RD16(record + 2);
+            w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
             text_mode = (int)((w2 >> 1) & 3u);
             text_index = (int)((w2 >> 3) & 0x1fffu);
             ext_usage = (text_index >> 8) & 0x1f;
@@ -5198,25 +5198,27 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
             relative_side = ((object_dir - (view_dir & 3)) & 3);
             ornate = text_index & 0xff;
 
-            /* skproject SKWINSPX/src/v4/skdungn.cpp _0cee_1a46 handles
-             * DB2 TextMode()==1 as WALL_GFX ornament metadata.  This bounded
-             * startup helper covers the static cases that do not need the
-             * GDAT animation query: ext usages 0/6 are accepted immediately,
-             * 2 is always present, and 5/13 depend on TextVisibility(). */
+            /* skproject c_querydb.cpp:3570-3676 writes these text ornaments
+             * directly when no animation frame is requested. Animated
+             * usages are resolved by query_0cee_1a46_ext, which has GDAT and
+             * game-tick state; this owner remains the static-only route. */
             if (text_mode == 1 && relative_side == side_index) {
                 switch (ext_usage) {
                     case 0:
+                    case 3:
                     case 6:
                         accepts_static_wall_gfx = 1;
                         break;
+                    case 1:
                     case 2:
-                        accepts_static_wall_gfx = 1;
-                        frame = 0;
-                        break;
+                        return -1;
+                    case 4:
                     case 5:
+                    case 7:
+                    case 8:
                     case 13:
-                        accepts_static_wall_gfx = text_visible != 0;
-                        frame = 0;
+                        if (text_visible) return -1;
+                        accepts_static_wall_gfx = 1;
                         break;
                     default:
                         accepts_static_wall_gfx = 0;
@@ -5270,7 +5272,8 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
         if (type > 3) return -1;
 
         if (type == 3 && size >= 8) {
-            int ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
+            int ordinal = (int)((dm2_v1_dungeon_read_record_u16(
+                d, record + 4) >> 12) & 0x0fu);
             object_dir = (int)((thing >> 14) & 3u);
             relative_side = ((object_dir - (view_dir & 3)) & 3);
             /* skproject SKWINSPX/src/v4/skdungn.cpp
@@ -6778,7 +6781,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
-int dm2_v1_dungeon_c_light_class34_empty_receipt(
+int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out)
 {
@@ -6791,18 +6794,74 @@ int dm2_v1_dungeon_c_light_class34_empty_receipt(
     if (!d || direction < 0 || direction > 3) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    if (raw < 0 || raw > 0xff || first != -1) return 0;
+    if (raw < 0 || raw > 0xff || first < -1 ||
+        first == DM2_THING_NULL_MARKER ||
+        (d->square_bytes == 1 && (raw & 0x10) != 0 && first < 0))
+        return 0;
     if (((unsigned)raw >> 5) == 3u) {
         /* c_gui_vp.cpp:2659-2669: class 3 summarizes as 0x12/0x13. */
         base = 0x12u;
     } else if (((unsigned)raw >> 5) == 4u) {
         /* c_gui_vp.cpp:2672-2707: class 4 summarizes as 0x10/0x11.
-         * A side mismatch follows an adjacent tile record chain; keep this
-         * receipt to the no-adjacent-route case until that owner is ported. */
+         * On a side mismatch, source advances direction once, selects that
+         * adjacent square's record root, then calls query_0cee_1a46. That
+         * query writes side-decoration fields (summary words 3..6);
+         * c_light.cpp:231-435 consumes summary words 0 and 2 for this class-4
+         * path. The bounded light receipt validates the record walk below
+         * without claiming decoration rendering parity. */
         source_side = ((unsigned)raw & 0x08u) >> 3;
         direction_side = (unsigned)direction & 1u;
-        if (source_side != direction_side) return 0;
-        base = 0x10u;
+        if (source_side != direction_side) {
+            static const int8_t dx[4] = { 0, 1, 0, -1 };
+            static const int8_t dy[4] = { -1, 0, 1, 0 };
+            unsigned adjacent_direction = ((unsigned)direction + 1u) & 3u;
+            int adjacent_x = x + dx[adjacent_direction];
+            int adjacent_y = y + dy[adjacent_direction];
+            int adjacent_raw = dm2_v1_dungeon_get_tile_raw(
+                d, level, adjacent_x, adjacent_y);
+            int adjacent_first;
+            if (adjacent_raw < 0 || adjacent_raw > 0xff) return 0;
+            adjacent_first = dm2_v1_dungeon_get_first_thing(
+                d, level, adjacent_x, adjacent_y);
+            if (adjacent_first == DM2_THING_NULL_MARKER ||
+                (d->square_bytes == 1 && (adjacent_raw & 0x10) != 0 &&
+                 adjacent_first < 0)) return 0;
+            if (adjacent_first >= 0 &&
+                adjacent_first != DM2_THING_END_MARKER) {
+                unsigned adjacent_record_class =
+                    (((unsigned)adjacent_first >> 8) & 0x3cu) >> 2;
+                uint16_t thing = (uint16_t)adjacent_first;
+                uint16_t seen[256];
+                unsigned seen_count = 0u;
+                /* query_0cee_1a46 walks records 0..3 to update side
+                 * decorations. Keep the light input usable for those roots
+                 * after validating that bounded walk; its side fields are
+                 * not read by ADD_BACKGROUND_LIGHT_FROM_TILE. Record classes
+                 * above 3 return before that query dereferences the record. */
+                if (adjacent_record_class <= 3u &&
+                    !dm2_v1_dungeon_record_list_traversal_allowed(d))
+                    return 0;
+                while (adjacent_record_class <= 3u &&
+                       thing != DM2_THING_END_MARKER) {
+                    int next;
+                    if (thing == DM2_THING_NULL_MARKER ||
+                        seen_count >= sizeof(seen) / sizeof(seen[0]))
+                        return 0;
+                    for (unsigned i = 0u; i < seen_count; ++i)
+                        if (seen[i] == thing) return 0;
+                    seen[seen_count++] = thing;
+                    if (!dm2_v1_dungeon_get_thing_record(
+                            d, thing, NULL, NULL, NULL)) return 0;
+                    next = dm2_v1_dungeon_get_next_thing(d, thing);
+                    if (next < 0 || next == (int)thing) return 0;
+                    thing = (uint16_t)next;
+                }
+            }
+            first = adjacent_first;
+            base = 0x11u;
+        } else {
+            base = 0x10u;
+        }
     } else {
         return 0;
     }
@@ -6813,8 +6872,10 @@ int dm2_v1_dungeon_c_light_class34_empty_receipt(
     source_side = ((unsigned)raw & 0x08u) >> 3;
     direction_side = (unsigned)direction & 1u;
     out->source_tile_type = (uint8_t)(base +
-        (source_side != direction_side ? 1u : 0u));
-    out->first_record_link = DM2_THING_END_MARKER;
+        (((unsigned)raw >> 5) == 3u && source_side != direction_side ?
+             1u : 0u));
+    out->first_record_link = first == -1 ? DM2_THING_END_MARKER :
+        (uint16_t)first;
     out->ceiling_ornament_word = 0x00ffu;
     out->ceiling_ornament_index = 0xffu;
     out->valid = 1;
@@ -6944,6 +7005,96 @@ int dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
     out->first_record_link = first;
     out->ceiling_ornament_index = floor_list[ordinal - 1];
     out->ceiling_ornament_word = out->ceiling_ornament_index;
+    out->valid = 1;
+    return 1;
+}
+
+int dm2_v1_dungeon_c_light_class1_text_decoration_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    uint16_t link;
+    uint16_t graphics_word = 0u;
+    int raw, first, graphicsset;
+    unsigned count = 0u;
+    int found_ext10 = 0;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !loader || !loader->loaded ||
+        !dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw != 0x30 || first < 0 ||
+        ((unsigned)first >> 10 & 0x0fu) != 2u) return 0;
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15) return 0;
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero when the scalar is absent;
+     * the source leaves the summary word at FF in that case. */
+    (void)dm2_v1_query_gdat_entry_data_index(
+        loader, 8, graphicsset, 11, 0x6b, &graphics_word);
+    out->ceiling_ornament_index = 0xffu;
+    out->ceiling_ornament_word = 0x00ffu;
+    if (graphics_word != 0u) {
+        out->ceiling_ornament_index = (uint8_t)graphics_word;
+        out->ceiling_ornament_word = (uint8_t)graphics_word;
+        if ((graphics_word & 0x8000u) != 0u) {
+            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+            memset(&animation, 0, sizeof(animation));
+            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                    loader, 10, graphics_word & 0xffu, tick, 0u,
+                    &animation) || !animation.accepted ||
+                animation.receipt_hash == 0u) return 0;
+            out->ceiling_animation_frame = animation.frame;
+            out->ornament_source_hash = animation.receipt_hash;
+            out->ceiling_ornament_word = (uint16_t)(
+                (uint8_t)graphics_word |
+                (uint16_t)((uint32_t)animation.frame * 10u << 8));
+        }
+    }
+    link = (uint16_t)first;
+    while (link != DM2_THING_END_MARKER) {
+        const uint8_t *record;
+        uint16_t word;
+        int type = -1, size = 0;
+        if (++count > 32u) return 0;
+        record = dm2_v1_dungeon_get_thing_record(
+            d, link, &type, NULL, &size);
+        if (!record || type != 2 || size < 4) return 0;
+        word = dm2_v1_dungeon_read_record_u16(d, record + 2);
+        if ((word & 6u) == 2u) {
+            unsigned ext_usage = (word >> 8) & 0x1fu;
+            /* SKProject skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM: DB2
+             * ext usage 10 replaces the map-GDAT ornament with the text's
+             * ornament, using frame zero. Other ext usages can alter the
+             * frame or depend on state not owned by this receipt. */
+            if (ext_usage == 10u) {
+                uint8_t ornament = (uint8_t)(word >> 3);
+                out->ceiling_ornament_index = ornament;
+                out->ceiling_ornament_word = ornament;
+                out->ceiling_animation_frame = 0u;
+                out->ornament_source_hash = 0x54324431u ^
+                    ((uint32_t)link << 8) ^ word;
+                if (out->ornament_source_hash == 0u)
+                    out->ornament_source_hash = 1u;
+                found_ext10 = 1;
+            } else if (ext_usage != 6u) {
+                return 0;
+            }
+        }
+        {
+            int next = dm2_v1_dungeon_get_next_thing(d, link);
+            if (next < 0 || next == (int)link) return 0;
+            link = (uint16_t)next;
+        }
+    }
+    if (!found_ext10) return 0;
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    out->source_tile_type = 1u;
+    out->first_record_link = (uint16_t)first;
     out->valid = 1;
     return 1;
 }
