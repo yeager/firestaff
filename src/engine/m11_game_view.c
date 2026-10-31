@@ -33699,8 +33699,11 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
             return 0;
         }
-        if (!theron_v1_startup_write_pce_bram_theron_record(
-                world, template_path, save_path)) {
+        if (!(strcmp(template_path, save_path) == 0
+                  ? theron_v1_startup_update_pce_bram_theron_save(
+                        world, save_path)
+                  : theron_v1_startup_write_pce_bram_theron_record(
+                        world, template_path, save_path))) {
             m11_set_status(state, "SAVE", "ORIGINAL SAVE WRITE FAILED");
             return 0;
         }

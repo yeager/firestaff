@@ -999,10 +999,11 @@ static int theron_v1_startup_bram_atomic_replace(
 #endif
 }
 
-int theron_v1_startup_write_pce_bram_theron_record(
+static int theron_v1_startup_write_pce_bram_theron_record_impl(
     const Theron_V1_World *world,
     const char *template_path,
-    const char *destination_path) {
+    const char *destination_path,
+    int allow_same_managed_save) {
     uint8_t template_data[THERON_V1_PCE_BRAM_BYTES];
     uint8_t encoded_data[THERON_V1_PCE_BRAM_BYTES];
     uint8_t verify_data[THERON_V1_PCE_BRAM_BYTES];
@@ -1017,7 +1018,8 @@ int theron_v1_startup_write_pce_bram_theron_record(
         !destination_path || !destination_path[0] ||
         strlen(template_path) >= sizeof(template_physical) ||
         strlen(destination_path) >= sizeof(destination_physical) ||
-        strcmp(template_path, destination_path) == 0 ||
+        (strcmp(template_path, destination_path) == 0 &&
+         !allow_same_managed_save) ||
         !theron_v1_startup_bram_read_exact(template_path, template_data) ||
         theron_v1_pce_bram_classify(
             template_data, sizeof(template_data), &receipt) !=
@@ -1034,7 +1036,9 @@ int theron_v1_startup_write_pce_bram_theron_record(
         FSP_ResolvePhysicalPath(destination_physical,
                                 sizeof(destination_physical),
                                 destination_path) &&
-        strcmp(template_physical, destination_physical) == 0) {
+        strcmp(template_physical, destination_physical) == 0 &&
+        (!allow_same_managed_save ||
+         strcmp(template_path, destination_path) != 0)) {
         return 0;
     }
 
@@ -1075,6 +1079,24 @@ cleanup:
     if (file) fclose(file);
     if (!ok) remove(temporary_path);
     return ok;
+}
+
+int theron_v1_startup_write_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const char *template_path,
+    const char *destination_path) {
+    return theron_v1_startup_write_pce_bram_theron_record_impl(
+        world, template_path, destination_path, 0);
+}
+
+int theron_v1_startup_update_pce_bram_theron_save(
+    const Theron_V1_World *world,
+    const char *save_path) {
+    /* This entry point is only for the app-managed save path after Continue.
+     * The writer still stages, verifies, fsyncs and atomically replaces the
+     * file; imported/original BRAMs use the non-aliasing API above. */
+    return theron_v1_startup_write_pce_bram_theron_record_impl(
+        world, save_path, save_path, 1);
 }
 
 static void theron_v1_startup_continue_reset_world_runtime(

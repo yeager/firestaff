@@ -582,17 +582,20 @@ int main(int argc, char** argv) {
         if (!theron_v1_pce_bram_decode_original_body_path(
                 saved_bram_path, &saved_body) ||
             !saved_body.layout_verified || !saved_body.semantics_verified ||
-            !set_test_environment("FIRESTAFF_THERON_BRAM_PATH",
-                                  saved_bram_path)) {
+            !set_test_environment("FIRESTAFF_THERON_BRAM_PATH", NULL)) {
             ++failures;
             fprintf(stderr,
                     "FAIL: written BRAM decodes and selects as the next authentic M11 Continue source\n");
         } else {
-            spec.savePath = saved_bram_path;
+            /* Exercise the normal no-override Continue lookup under the
+             * isolated XDG_DATA_HOME established by the shell wrapper. */
+            spec.savePath = NULL;
             M11_GameView_Init(&view);
             if (!M11_GameView_Start(&view, &spec) ||
                 view.theronState.save_resume_claim !=
                     THERON_V1_STARTUP_RESUME_SRM ||
+                strcmp(view.theronState.save_resume_srm_root,
+                       saved_bram_path) != 0 ||
                 M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
                     M11_GAME_INPUT_REDRAW ||
                 M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
@@ -652,6 +655,15 @@ int main(int argc, char** argv) {
                     ++failures;
                     fprintf(stderr,
                             "FAIL: native Continue restores only campaign and Theron fields present in the written BRAM\n");
+                }
+                if (M11_GameView_HandleInput(
+                        &view, M12_MENU_INPUT_SAVE_GAME) !=
+                        M11_GAME_INPUT_REDRAW ||
+                    strcmp(view.lastOutcome, "GAME SAVED") != 0 ||
+                    strcmp(view.inspectTitle, "THERON SAVE") != 0) {
+                    ++failures;
+                    fprintf(stderr,
+                            "FAIL: a BRAM found through default XDG Continue can be saved again\n");
                 }
             }
             M11_GameView_Shutdown(&view);

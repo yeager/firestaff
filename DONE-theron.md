@@ -29,8 +29,21 @@ isolates user data under a temporary home directory. Built on TRV2 and ran
 the authentic US Track 02 and Ak-Tu-Ba-complete BRAM. Reopening the newly
 written BRAM in a fresh native M11 launch now selects Continue and restores
 the campaign byte, seven attributes, and twenty temporary/persistent skill
-experience pairs from the classified output. Reopening the new BRAM in the
-original runtime and regional save coverage remain open.
+experience pairs from the classified output. The subsequent XDG Continue and
+repeat-save check is recorded below; regional save coverage remains open.
+
+## 2026-10-31 — resume and update the default XDG Continue save
+
+Aligned the default Theron Continue root with the `FSP_GetUserDataDir()` path
+used by stage-select Save Game, so an `XDG_DATA_HOME` outside the asset tree
+does not hide the generated BRAM. A resumed Firestaff-managed BRAM now uses
+the same verified temporary-file and atomic-replace flow for another save;
+the normal writer still rejects template/destination aliases for imported or
+original BRAMs. Extended `theron_v1_m11_real_bram_continue` to find the prior
+save through default lookup with the original-BRAM override unset, verify the
+resolved XDG path, and save again. The focused CTest passed locally using the
+authentic US Track 02 and Ak-Tu-Ba-complete BRAM with isolated user data. This
+does not establish retail-device SRAM behavior.
 
 ## 2026-10-31 — continue authentic US BRAM into the next native dungeon
 

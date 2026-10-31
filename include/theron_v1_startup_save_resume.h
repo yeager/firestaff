@@ -299,6 +299,13 @@ int theron_v1_startup_write_pce_bram_theron_record(
     const char *template_path,
     const char *destination_path);
 
+/* Atomically update an existing Firestaff-managed Continue BRAM in place.
+ * Do not use for an imported or original user BRAM; those require distinct
+ * template and destination paths through the function above. */
+int theron_v1_startup_update_pce_bram_theron_save(
+    const Theron_V1_World *world,
+    const char *save_path);
+
 /* Build the canonical user-save path below a configured Theron save root. */
 int theron_v1_startup_pce_bram_save_path(
     const char *save_root,
