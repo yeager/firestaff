@@ -818,7 +818,8 @@ int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt r0;
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt r1;
     Nexus_V1_Vdp2Nbg2CapturePlaneReceipt r2;
-    uint16_t sfprmd, ccctl, spctl, craofb;
+    uint16_t sfprmd, ccctl, spctl, craofb, ramctl;
+    uint32_t cram_mode;
     size_t pixel;
     int ok = 0;
 
@@ -840,7 +841,10 @@ int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
     ccctl = STACK_REG(0xecU);
     spctl = STACK_REG(0xe0U);
     craofb = STACK_REG(0xe6U);
-    if (STACK_REG(0x00U) != 0x8000U || STACK_REG(0x20U) != 0x0007U ||
+    ramctl = STACK_REG(NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET);
+    cram_mode = (ramctl >> 12U) & 3U;
+    if (cram_mode >= 2U ||
+        STACK_REG(0x00U) != 0x8000U || STACK_REG(0x20U) != 0x0007U ||
         STACK_REG(0x28U) != 0x1013U || STACK_REG(0x2aU) != 0x0002U ||
         STACK_REG(0x2cU) != 0U || STACK_REG(0x32U) != 0U ||
         STACK_REG(0x34U) != 0U || STACK_REG(0x3aU) != 0U ||
@@ -923,9 +927,16 @@ int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
             uint8_t priority = (uint8_t)(STACK_REG(0xfaU) & 7U);
             priority = (uint8_t)((priority & (uint8_t)~1U) |
                 ((sfprmd & 0x0030U) == 0x0010U ? ((nbg2_meta >> 13U) & 1U) : 0U));
-            ymir_stack_consider(plane, pixel, priority, 2U,
-                NEXUS_V1_VDP2_STACK_LAYER_NBG2,
-                nbg2->rgba_buffer[pixel]);
+            {
+                uint32_t cram_index =
+                    (((uint32_t)(nbg2_meta & 0x70U) << 4U) + i2) &
+                    (cram_mode == 0U ? 0x3ffU : 0x7ffU);
+                ymir_stack_consider(plane, pixel, priority, 2U,
+                    NEXUS_V1_VDP2_STACK_LAYER_NBG2,
+                    ymir_rgb555_shift(read_vram16_ordered(
+                        vdp2_cram + (size_t)cram_index * 2U,
+                        register_byte_order)));
+            }
         }
         if ((sprite & 0x8000U) != 0U) {
             ymir_stack_consider(plane, pixel,
