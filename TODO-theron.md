@@ -20,6 +20,13 @@ Next identify `$2912` from its readers/writers and join the instruction caller
 to party pose and visible output under UP and neutral. The evidence still does
 not prove movement or parity. See the [same-state comparison
 report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+One follow-up UP/neutral trace reproduces that latch ordering, but the F5 pose
+faces a wall: separate UP, neutral, and DOWN screenshots all retain the same
+front wall, and the bounded observer sees no `$C1FC` TII or `$2040/$2041`
+position write. This does not show a movement defect or prove screen parity.
+Next capture an authentic reachable position and join input through a changed
+party position to the visible screen; details and trace hashes are in the
+[blocked-wall probe](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
 ## 2026-10-31 — cold JP emulator route reaches the dungeon; BRAM stays empty
 

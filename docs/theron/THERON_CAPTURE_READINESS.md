@@ -47,6 +47,16 @@ remain unproven. See the [guest-read
 receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
 and [same-state comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
+A follow-up single UP/neutral pair reproduces the `$D334` read → `$D349` write
+→ `$D334` read sequence. The authenticated F5 pose faces a wall: separate UP,
+neutral, and DOWN screenshots retain the same front wall, and the bounded
+observer records no `$C1FC` TII or `$2040/$2041` position write. This is a
+blocked-wall observation, not a gameplay or renderer result. The next movement
+capture needs an authentic reachable position and a same-session input,
+position, and screen join. See the [blocked-wall
+probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md)
+for source hashes, event IDs, and trace hashes.
+
 ## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
 
 A fresh isolated macOS Debug configuration built the native Firestaff target

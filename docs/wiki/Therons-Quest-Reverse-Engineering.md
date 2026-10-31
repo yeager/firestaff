@@ -21,6 +21,11 @@ shared event order from `$44C1` poll (2342) through `$D334` read `$00` (3000),
 consumer/writer path appears in controls. This does not establish causality,
 identify the byte's semantics, or prove movement. See the
 [source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+The follow-up UP/neutral trace reproduces the latch order, but the F5 save
+faces a wall: UP, neutral, and DOWN reference screenshots retain the same
+front wall, with no `$C1FC` TII or `$2040/$2041` position write observed by the
+bounded movement hooks. It does not prove movement or renderer parity; see the
+[blocked-wall probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
