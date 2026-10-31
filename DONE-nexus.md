@@ -1,5 +1,19 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-30 — Exact Ymir VDP1 replay for one captured frame
+
+- The capture-only integer stepper replays 124 indexed mode-1 distorted
+  sprites and 28 flat polygons from the authenticated frame-13162 Ymir trace.
+- Its real-data CTest pins the complete 168-row trace, VDP1 VRAM/FBS/registers,
+  VDP2 registers, and frame receipt. The 320x224 output matches Ymir FBS buffer
+  0 exactly across all 71,680 RGB555 pixels and opacity bits.
+- The companion frame-window test verifies that the other eight mode-5 draws
+  are transparent, accounting for all 160 draws in the captured window.
+- The stepper claims no DGN ownership and retains `renderer_permitted=false`.
+  This single captured-state replay is not Saturn hardware parity, arbitrary-
+  frame parity, or production renderer admission. See
+  [`docs/nexus_vdp1_frame13162_dgn_window.md`](docs/nexus_vdp1_frame13162_dgn_window.md).
+
 ## 2026-10-30 — Admit authentic CUE-only Nexus media
 
 - M12 now binds a Saturn CUE/BIN source to its own ISO data track and admits
