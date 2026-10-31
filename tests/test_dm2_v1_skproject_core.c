@@ -6231,6 +6231,35 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   summary_words[3] == (int16_t)0x1422u &&
                   summary_words[4] == 0 && summary_words[7] == 0,
               "DM2_query_0cee_1a46 type 0x41 returns actuator data in packed summary frame bits");
+        {
+            static const struct {
+                uint8_t actuator_type;
+                uint8_t status_bits;
+                int16_t expected_field;
+                const char *label;
+            } static_cases[] = {
+                { 0x17u, 0u, 1, "type 0x17 inactive state" },
+                { 0x1au, 0u, 1, "type 0x1a inactive state" },
+                { 0x1bu, 1u, 2, "type 0x1b active/once-only mismatch" },
+                { 0x2cu, 0u, 1, "type 0x2c inactive animator" },
+                { 0x32u, 0u, 1, "type 0x32 inactive animator" }
+            };
+            for (size_t case_index = 0;
+                 case_index < sizeof(static_cases) / sizeof(static_cases[0]);
+                 ++case_index) {
+                actuator_record_be[2] = 0u;
+                actuator_record_be[3] = static_cases[case_index].actuator_type;
+                actuator_record_be[4] = 0x10u;
+                actuator_record_be[5] = static_cases[case_index].status_bits;
+                CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                          &dungeon, 0x0c00u, 0, 0, 9u, wall_graphics, 1,
+                          NULL, &wall_idx, &wall_field, &q1a46) == 1 &&
+                          q1a46.actuator_type ==
+                              static_cases[case_index].actuator_type &&
+                          wall_field == static_cases[case_index].expected_field,
+                      static_cases[case_index].label);
+            }
+        }
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */
