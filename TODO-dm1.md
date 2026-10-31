@@ -8,9 +8,10 @@ checks reverted C003/C004 triggers with an empty hand and confirms C004
 consumes no nonexistent object. The same source review found C017 had no live
 unlink in M11: successful non-head C017 sensors now leave the square Thing
 chain, while a head C017 remains linked and still triggers, matching
-`MOVESENS.C:1415-1427`. F0723 predicates and F0726 receipt propagation have focused tests, and the
-live PC34 owner builds; runtime C017 chain mutation and other F0275 routes, supported editions/platforms,
-and end-to-end original-media sensor outcomes remain open.
+`MOVESENS.C:1415-1427`. F0723 predicates and F0726 receipt propagation have focused tests; the
+live PC34 owner builds and its M11 C080 regression now verifies non-head unlink
+and head retention through real square chains. Other F0275 routes, supported
+editions/platforms, and end-to-end original-media sensor outcomes remain open.
 
 2026-10-31 ReDMCSB F0271 interleaved sensor cells: `MOVESENS.C:1100-1148`
 continues through the contiguous sensor Thing run while selecting the last
