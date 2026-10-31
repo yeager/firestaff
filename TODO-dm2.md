@@ -7,6 +7,12 @@ frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
 frame and the absent-animation fallback. Full actuator animation variants and
 viewport integration remain open.
 
+The source orientation mask is now preserved for DB2 ext-usage 14 and active,
+once-only DB3 actuator 0x7e records. A regression verifies that a later
+same-facing DB2 ornament cannot overwrite an ext-usage-14 side clear. This
+closes those visited-orientation cases only; other actuator animation variants,
+viewport integration, source captures, and all-platform behavior remain open.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` packed output parity:
 `dm2_v1_skproject_query_0cee_1a46_ext_summary` now exposes the source's
 in-place `s_8wordarray[3..7]` updates while preserving the simpler renderer

@@ -6341,6 +6341,29 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.text_summary_value == 0 &&
                   !q1a46.summary_word7_written,
               "DB2 ext usage 14 clears other side slots without writing word 7");
+        {
+            /* skproject sets the visited-orientation bit for ext usage 14.
+             * A later same-facing DB2 ornament must not replace that clear. */
+            uint8_t same_orientation_records[8] = {
+                0x08u, 0x01u, 0x70u, 0x2au,
+                0xffu, 0xfeu, 0x00u, 0x2au
+            };
+            dungeon.raw_data = same_orientation_records;
+            dungeon.raw_size = (int)sizeof(same_orientation_records);
+            dungeon.thing_type_counts[2] = 2;
+            text_summary[3] = -1;
+            text_summary[7] = 0;
+            CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                      &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                      &animation_loader, text_summary, &wall_idx,
+                      &wall_field, &q1a46) == 0 &&
+                      q1a46.text_summary_written &&
+                      !q1a46.found_static_text && text_summary[3] == 0,
+                  "DB2 ext usage 14 suppresses later same-orientation decoration");
+        }
+        dungeon.raw_data = animated_text_record_be;
+        dungeon.raw_size = (int)sizeof(animated_text_record_be);
+        dungeon.thing_type_counts[2] = 1;
         animated_text_record_be[3] = 0x2bu; /* visible -> absent marker */
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,

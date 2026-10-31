@@ -13816,6 +13816,7 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
     DM2_V1_SkprojectQuery0cee1a46Receipt receipt;
     int16_t wall_gfx_index = -1;
     int16_t wall_gfx_field = -1;
+    uint8_t visited_orientations = 0u;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -13861,6 +13862,9 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
             record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
             if (!record || size < 2) break;
             if (type > 3) break;
+            object_dir = (int)((thing >> 14) & 3u);
+            if ((visited_orientations & (uint8_t)(1u << object_dir)) != 0u)
+                goto next_thing;
 
             if (type == 2 && size >= 4) {
                 uint16_t text_word = dm2_v1_dungeon_read_record_u16(
@@ -13901,6 +13905,7 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
                             summary_words[7] = receipt.summary_word7;
                         }
                     }
+                    visited_orientations |= (uint8_t)(1u << object_dir);
                     goto next_thing;
                 }
                 if (text_mode == 1 && relative_side == side_index) {
@@ -14013,6 +14018,8 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
                                 }
                             }
                             si = 1;
+                            visited_orientations |=
+                                (uint8_t)(1u << object_dir);
                         }
                         break;
                     case 0x17: /* 2-state wall switch */
