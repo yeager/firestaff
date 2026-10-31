@@ -13663,7 +13663,11 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
     word = csb_v1_runtime_read_u16(record + 2);
     type = (word >> 8) & 0x7f;
     power = word & 0xff;
-    if (type < 0 || type > 14) return 0; /* C15 is handled by the complete water path. */
+    /* PANEL.C F0349 switches on potion Type without rejecting the valid
+     * no-effect entries C03, C19 or C20; after the switch it always writes
+     * C20. C15 has its own complete water path above. */
+    if (type != 3 && (type < 6 || type > 14) && type != 19 && type != 20)
+        return 0;
     old_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
     if (old_weight <= 0 || leader->Load < old_weight) return 0;
     counter = ((511 - power) / (32 + (power + 1) / 8)) >> 1;
