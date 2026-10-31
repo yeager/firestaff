@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB F0046 message expiry: `TEXT.C:1663-1666` assigns 70 game
+ticks to MEDIA099, which covers Firestaff's supported A31/A35 Amiga variants,
+as well as the PC and FM Towns lanes. MEDIA413 assigns 200 ticks to the older
+A20/A21/A22 Amiga editions, which are not represented by the current Firestaff
+variant IDs. A regression now checks all four supported Amiga variants at the
+69/70-tick boundary. This verifies the source timer contract, not the complete
+Amiga message-area rendering or timing on original hardware.
+
 2026-10-31 ReDMCSB F0032 object type and F0275 result semantics: F0032 maps
 the loaded Thing through F0141 and returns `G0237.Type`; weapon subtype 8 maps
 to Type 32 and subtype 27 to Type 51. The CSB wall-click and moving-object
