@@ -34,6 +34,10 @@ its resulting BRAM is byte-identical to the known empty JP slot. The reported
 3–5 second hold on the selected title-menu action itself remains untested. See
 the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
 and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
+Native Debug direct launch with authentic US Track 02 enters Theron's
+title/startup path without Firestaff's Run menu or a System Card. Its boot
+probe stops before dungeon loading (`levelLoaded=0`); this confirms launch
+selection only. See the [source-locked direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
 Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture

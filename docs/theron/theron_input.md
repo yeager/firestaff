@@ -7,6 +7,11 @@ input paths that do not populate scancodes.
 
 Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
 are research instruments only and do not run or replace the game in Firestaff.
+Native direct launch enters the Theron title/startup path without showing
+Firestaff's Run menu or booting a System Card. A US Debug launch probe stopped
+before dungeon loading (`levelLoaded=0`); loaded-dungeon evidence comes from
+the separate JP fresh-start and US Continue routes. See the
+[direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
 The original System Card's cold RUN callback has been traced separately. A
 cold Japanese emulator route now visibly reaches the Akutuba dungeon after a
 four-second RUN hold at the System Card prompt and ordinary short Button I

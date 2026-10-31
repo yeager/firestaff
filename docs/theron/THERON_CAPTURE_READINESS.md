@@ -1,5 +1,15 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — native Debug direct launch bypasses Firestaff's Run menu
+
+An isolated macOS Debug build launched the native Theron title/startup path
+directly from authentic US Track 02 data without showing Firestaff's Run menu
+or booting a PC Engine System Card. The `--boot-probe` receipt remained in the
+startup phase with `levelLoaded=0`; this is a launch-boundary check, not a
+loaded-dungeon or gameplay result. The existing JP fresh-start and US Continue
+tests remain the evidence for reaching native dungeons. See the
+[source-locked launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+
 ## 2026-10-31 — authentic JP empty BRAM at native startup
 
 The native M11 startup integration pairs authentic Japanese Rev. 1 Track 02

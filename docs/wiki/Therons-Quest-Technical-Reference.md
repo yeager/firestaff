@@ -32,6 +32,18 @@
 > `$E166->$E176`; no confirmed game-owned handoff was observed. See the
 > [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+> **Native direct launch (2026-10-31):** Firestaff enters Theron's native
+> title/startup path without its Run menu or a System Card. The US Debug
+> boot-probe receipt remains at `levelLoaded=0`; this does not add a dungeon
+> or gameplay claim. See the [direct-launch evidence note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+
+> **JP movement capture limit (2026-10-31):** A same-state UP, neutral and
+> DOWN reference check faces a wall in all three captures. The bounded
+> position observer sees neither a `$C1FC` TII candidate nor writes through
+> `$2040/$2041`; the separate `$2912` input/RAM event ordering is not causal
+> proof. This is not successful movement or rendering evidence. See the
+> [blocked-wall report](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. The explicit

@@ -2091,7 +2091,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'sleep "$host_key_current_hold"' "$script" ||
    ! grep -Fq 'quartz_arguments=("$host_key_current_code" "$host_key_current_hold" "$mednafen_ui_pid")' "$script" ||
    ! grep -Fq 'requested_host_key_holds_seconds=%s' "$script" ||
-   ! grep -Eq 'THERON_CAPTURE_HOST_KEY_HOLDS=4([[:space:]]|$)' "$repo/docs/theron/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
+   ! grep -Fq 'four-second RUN hold at the System Card' "$repo/docs/theron/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
    ! grep -Fq 'host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||

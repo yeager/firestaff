@@ -1,5 +1,28 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — synchronize current Theron evidence summaries
+
+Updated the project status and documentation index, the Japanese platform
+row, the technical reference, and the local emulator runbook notice. The
+summaries now state the new F5 blocked-wall result alongside the existing
+UP-to-`$2912` event ordering, without claiming causality, movement or a
+renderer effect. Replaced 573 lines of a mixed, stale machine-specific
+runbook with current Theron-only capture constraints, and identified retired
+paths as unsupported. Updated its regression's documentation assertion to
+check the documented four-second System Card hold instead of an old shell
+example. No runtime code, game media, emulator artifact or save was added.
+The capture-script documentation regression and `git diff --check` passed.
+
+## 2026-10-31 — document native direct launch without the Run menu
+
+Recorded that a macOS Debug direct launch with authentic US Track 02 enters
+Theron's title/startup path without Firestaff's Run menu or a System Card. The
+boot probe remained in startup with `levelLoaded=0`, so this adds no dungeon
+or gameplay claim. Updated the README, project status, capture-readiness
+summary, and documentation index to link to the same source-locked note.
+Loaded-dungeon support remains established by the separate JP fresh-start and
+US Continue routes.
+
 ## 2026-10-31 — verify the authentic empty JP BRAM at native M11 startup
 
 Added `theron_v1_m11_jp_empty_bram`, a bounded native startup integration

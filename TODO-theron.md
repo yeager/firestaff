@@ -1,5 +1,26 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — next JP movement capture needs a reachable authentic pose
+
+The latest F5 UP/neutral/DOWN replay keeps the same front wall in all three
+screenshots. The bounded observer records no `$C1FC` TII candidate or write at
+`$2040/$2041`; the earlier `$44C1` to `$2912` event ordering is not proof of
+causality or movement. Do not derive world tiles, position semantics or
+renderer behavior from this blocked-wall state. Capture from an authentic
+reachable pose and join guest input, a changed party position, and the
+presented reference frame within the same session. See the [source-locked
+blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+
+## 2026-10-31 — direct launch bypasses Firestaff's Run menu; dungeon proof remains separate
+
+A native macOS Debug launch with authentic US Track 02 enters Theron's
+title/startup path without showing Firestaff's Run menu or booting a System
+Card. Its direct-launch boot probe reports `levelLoaded=0`, so direct entry to
+a loaded dungeon is not established by this check. The independently verified
+JP fresh-start and US Continue routes remain the loaded-dungeon evidence. Do
+not add a synthetic starting party or pose to shorten this path. See the
+[source-locked launch note](docs/source-lock/theron-native-debug-direct-launch-20261031.md).
+
 ## 2026-10-31 — US saved-state scripted-input trace remains inconclusive
 
 An existing US state file loaded successfully in an instrumented PCE Fast
