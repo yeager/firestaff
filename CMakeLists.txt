@@ -63785,6 +63785,17 @@ set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip;FIRESTAFF_DM1_AMIGA_DISASSEMBLY=1"
     LABELS "dm1;amiga;graphics;real-data;in-memory;skip-safe")
 
+add_executable(test_dm1_v1_amiga_original_disk_check
+    tests/test_dm1_v1_amiga_original_disk_check.c
+    src/dm1/dm1_v1_amiga_swsh.c)
+target_include_directories(test_dm1_v1_amiga_original_disk_check PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga_original_disk_check PRIVATE firestaff_m12)
+add_test(NAME test_dm1_v1_amiga_original_disk_check
+    COMMAND test_dm1_v1_amiga_original_disk_check)
+set_tests_properties(test_dm1_v1_amiga_original_disk_check PROPERTIES
+    LABELS "dm1;amiga;startup;source;unit;skip-safe")
+
 add_executable(test_dm1_v1_amiga_title_f0437_real_media
     tests/test_dm1_v1_amiga_title_f0437_real_media.c
     src/dm1/dm1_v1_amiga_title_f0437.c

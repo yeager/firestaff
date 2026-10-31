@@ -6,8 +6,18 @@
 
 enum {
     AMIGA_HUNK_DATA = 0x000003eau,
-    AMIGA_SWSH_MAX_EXECUTABLE_BYTES = 8 * 1024 * 1024
+    AMIGA_SWSH_MAX_EXECUTABLE_BYTES = 8 * 1024 * 1024,
+    AMIGA_DISK_SECTOR_BYTES = 512,
+    AMIGA_DISK_SECTOR_COUNT = 11,
+    AMIGA_BOOT_SECTOR_BYTES = 1024
 };
+
+static const char g_amiga_disk_copyright_short[] =
+    "Copyright (C) 1988 Software Heaven, Inc.";
+static const char g_amiga_disk_copyright_long[] =
+    "Copyright (C) 1988 Software Heaven, Inc.  All Rights Reserved.  NOT FOR DISTRIBUTION.";
+static const char g_amiga_disk_boot_copyright[] =
+    "Copyright (C) 1988 Software Heaven Inc. / FTL Games";
 
 typedef struct {
     const char* md5;
@@ -71,6 +81,41 @@ static int profile_payload_valid(const uint8_t* data,
         }
     }
     return colorEvents > 0u && waitEvents > 0u;
+}
+
+int dm1_v1_amiga_original_disk_check(const uint8_t* adf_bytes,
+                                     size_t adf_byte_count,
+                                     int allow_boot_sector_fallback) {
+    const size_t second_track_offset =
+        (size_t)AMIGA_DISK_SECTOR_BYTES * AMIGA_DISK_SECTOR_COUNT;
+    const size_t copyright_offset = 52u;
+    size_t cursor;
+    size_t copyright_index = 0u;
+    if (!adf_bytes || adf_byte_count < second_track_offset +
+            AMIGA_DISK_SECTOR_BYTES) return 0;
+    if (memcmp(adf_bytes + second_track_offset,
+               g_amiga_disk_copyright_short,
+               sizeof(g_amiga_disk_copyright_short) - 1u) == 0 ||
+        memcmp(adf_bytes + second_track_offset,
+               g_amiga_disk_copyright_long,
+               sizeof(g_amiga_disk_copyright_long) - 1u) == 0) {
+        return 1;
+    }
+    /* MEDIA441 A20E/A20F/A21E falls back to F0907 after a failed sector-11
+     * read. F0907 checks the Amiga boot checksum word then cycles the exact
+     * ReDMCSB copyright text from byte 52 through the 1 KiB read buffer. */
+    if (!allow_boot_sector_fallback ||
+        adf_byte_count < AMIGA_BOOT_SECTOR_BYTES ||
+        read_be32(adf_bytes + 4u) != UINT32_C(0xe3a6ec5b)) return 0;
+    for (cursor = copyright_offset; cursor < AMIGA_BOOT_SECTOR_BYTES;
+         ++cursor) {
+        if (adf_bytes[cursor] !=
+            (uint8_t)g_amiga_disk_boot_copyright[copyright_index]) return 0;
+        ++copyright_index;
+        if (g_amiga_disk_boot_copyright[copyright_index] == '\0')
+            copyright_index = 0u;
+    }
+    return 1;
 }
 
 int dm1_v1_amiga_swsh_parse(const uint8_t* bytes,

@@ -33,6 +33,12 @@ int dm1_v1_amiga_swsh_parse(const uint8_t* bytes,
                             size_t byteCount,
                             DM1_V1_AmigaSwshAssets* outAssets);
 
+/* ReDMCSB SWSH.C F0906/F0907: verify the original Amiga disk's sector-11
+ * copyright marker, or its exact boot-sector checksum/copyright fallback. */
+int dm1_v1_amiga_original_disk_check(const uint8_t* adf_bytes,
+                                     size_t adf_byte_count,
+                                     int allow_boot_sector_fallback);
+
 /* Expand the four original 320x200 Amiga bitplanes to 8-bit color indexes. */
 int dm1_v1_amiga_swsh_decode_logo(const DM1_V1_AmigaSwshAssets* assets,
                                   uint8_t* outIndexed,
