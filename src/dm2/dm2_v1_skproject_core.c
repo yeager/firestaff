@@ -13869,8 +13869,6 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                 int text_ext_usage = (text_index >> 8) & 0x1fu;
                 int decoration = text_index & 0xff;
                 int text_visible = (text_word & 1u) != 0u;
-                int text_summary_write = 0;
-                int text_summary_value = 0;
                 int animate = text_ext_usage == 1 || text_ext_usage == 2 ||
                     ((text_ext_usage == 4 || text_ext_usage == 5 ||
                       text_ext_usage == 7 || text_ext_usage == 8 ||
@@ -13883,24 +13881,17 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
 
                 object_dir = (int)((thing >> 14) & 3u);
                 relative_side = ((object_dir - (view_dir & 3)) & 3);
-                if (text_mode == 1 && relative_side == side_index) {
-                    if (text_ext_usage == 0) {
-                        text_summary_write = 1;
-                    } else if (text_ext_usage == 2) {
-                        text_summary_write = 1;
-                        text_summary_value = 1;
-                    } else if (text_ext_usage == 4 || text_ext_usage == 5 ||
-                               text_ext_usage == 7 || text_ext_usage == 8 ||
-                               text_ext_usage == 13) {
-                        text_summary_write = 1;
-                        text_summary_value = text_visible ? 0 : 1;
-                    }
-                    if (text_summary_write) {
-                        receipt.text_summary_written = 1u;
-                        receipt.text_summary_side = (int16_t)side_index;
-                        receipt.text_summary_value =
-                            (int16_t)text_summary_value;
-                    }
+                if (text_mode == 1 && relative_side == side_index &&
+                    text_ext_usage == 14) {
+                    /* c_querydb.cpp:3648-3671 clears this side slot and
+                     * writes word 7 for the special DB2 text usage. */
+                    receipt.text_summary_written = 1u;
+                    receipt.text_summary_side =
+                        (int16_t)(relative_side + 3);
+                    receipt.text_summary_value = 0;
+                    receipt.summary_word7_written = 1u;
+                    receipt.summary_word7 = text_visible ? -1 : (int16_t)thing;
+                    goto next_thing;
                 }
                 if (text_mode == 1 && relative_side == side_index) {
                     int frame = 0;
@@ -13931,6 +13922,15 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     wall_gfx_field = (int16_t)(frame + 1);
                     receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
                     receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+                    /* s_8wordarray stores the ornament index in bits 0..7
+                     * and QUERY_ORNATE_ANIM_FRAME in bits 10..15. Its
+                     * side slots are 3..6, while the public helper accepts
+                     * a relative side in 0..3. */
+                    receipt.text_summary_written = 1u;
+                    receipt.text_summary_side =
+                        (int16_t)(relative_side + 3);
+                    receipt.text_summary_value = (int16_t)(
+                        (((int)wall_gfx_field - 1) << 10) | decoration);
                     *out_wall_gfx_index = wall_gfx_index;
                     *out_wall_gfx_field = wall_gfx_field;
                     receipt.valid = 1;
