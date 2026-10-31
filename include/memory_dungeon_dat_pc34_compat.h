@@ -116,6 +116,7 @@ struct DungeonDatState_Compat {
     int                           dm1SensorFloorC005PartyTypeFix;
     int                           dm1SensorFloorC009Supported;
     int                           dm1SensorFloorC009VersionLimit;
+    int                           dm1SensorF0268PriorityByEffect;
     /* A PC34 save tail is already checksum-validated by F0435. Retain the
      * exact source bytes until a live world serializer explicitly replaces
      * them, so F0433 can round-trip an original save without lossy decode /

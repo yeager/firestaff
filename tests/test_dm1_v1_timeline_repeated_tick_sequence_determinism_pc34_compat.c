@@ -662,6 +662,43 @@ static void test_d9_reactions_sort_across_untyped_events(void)
           "D10h: C29 follows C38 across untyped events");
 }
 
+static void test_d10_f0268_square_event_type_and_priority_order(void)
+{
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat event;
+    struct TimelineEvent_Compat popped[4];
+    F0720_TIMELINE_Init_Compat(&queue, 0u);
+    event = make_event(TIMELINE_EVENT_SENSOR_DELAYED, 700u, 0, 1, 1, 0,
+        DM1_EVENT_DOOR, DM1_EFFECT_SET, 0, 0, 1);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10a: F0268 SET door event schedules");
+    event.aux1 = DM1_EFFECT_CLEAR;
+    event.aux4 = 3;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10b: F0268 CLEAR door event schedules");
+    event.aux1 = DM1_EFFECT_TOGGLE;
+    event.aux4 = 2;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10c: F0268 TOGGLE door event schedules");
+    event = make_reaction_event(DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+                                0, 0, 4);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10d: same-tick C29 schedules with the C10 F0268 events");
+    for (int i = 0; i < 4; ++i) {
+        CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
+              "D10e: pop source-ordered event");
+    }
+    CHECK(popped[0].kind == TIMELINE_EVENT_CREATURE_REACTION,
+          "D10f: higher source C29 type precedes C10");
+    CHECK(popped[1].aux1 == DM1_EFFECT_CLEAR && popped[1].aux4 == 3,
+          "D10g: MEDIA716 CLEAR priority 3 precedes C10 peers");
+    CHECK(popped[2].aux1 == DM1_EFFECT_TOGGLE && popped[2].aux4 == 2,
+          "D10h: MEDIA716 TOGGLE priority 2 follows CLEAR");
+    CHECK(popped[3].aux1 == DM1_EFFECT_SET && popped[3].aux4 == 1 &&
+              popped[3].kind == TIMELINE_EVENT_SENSOR_DELAYED,
+          "D10i: MEDIA716 SET priority 1 follows TOGGLE across event kinds");
+}
+
 /* ------------------------------------------------------------------
  *  main
  * ------------------------------------------------------------------ */
@@ -681,6 +718,7 @@ int main(void) {
     test_d8_pop_sequence_equal_tick_tiebreak();
     test_d9_source_ordered_group_reactions();
     test_d9_reactions_sort_across_untyped_events();
+    test_d10_f0268_square_event_type_and_priority_order();
 
     printf("\n%d/%d checks passed\n", g_checks - g_failures, g_checks);
     if (g_failures > 0) {

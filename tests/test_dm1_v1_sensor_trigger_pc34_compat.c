@@ -2190,13 +2190,33 @@ static void test_floor_sensor_edition_policy(void) {
               "7f9458e4a3972d06e649a6fa85a7f34b", &policy) == 1 &&
               policy.floorC009Supported == 1 &&
               policy.floorC009VersionLimit == 36 &&
-              policy.floorC005PartyTypeFix == 1,
-          "Edition policy: Amiga 3.6 uses MEDIA744 limit and fixed C005");
+              policy.floorC005PartyTypeFix == 1 &&
+              policy.f0268PriorityByEffect == 1,
+          "Edition policy: Amiga 3.6 uses MEDIA744 and MEDIA716 sensor rules");
     CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
               "1045a36952e64eb2bc7b4c7b2965b112", &policy) == 1 &&
               policy.floorC009VersionLimit == 34 &&
-              policy.floorC005PartyTypeFix == 1,
+              policy.floorC005PartyTypeFix == 1 &&
+              policy.f0268PriorityByEffect == 0,
           "Edition policy: IIGS uses MEDIA707 limit and fixed C005");
+    {
+        int priority = -1;
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_SET, 1, &priority) == 1 && priority == 1,
+              "MEDIA716 F0268 SET receives priority 1");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_CLEAR, 1, &priority) == 1 && priority == 3,
+              "MEDIA716 F0268 CLEAR receives priority 3");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_TOGGLE, 1, &priority) == 1 && priority == 2,
+              "MEDIA716 F0268 TOGGLE receives priority 2");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_CLEAR, 0, &priority) == 1 && priority == 0,
+              "other editions keep F0268 priority zero");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_HOLD, 1, &priority) == 0,
+              "unresolved F0268 HOLD cannot be assigned a priority");
+    }
     CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
               "not-an-admitted-edition", &policy) == 0,
           "Edition policy: unknown graphics identity does not resolve");

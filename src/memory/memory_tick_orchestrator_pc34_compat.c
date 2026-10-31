@@ -5187,8 +5187,9 @@ static int orch_f0248_schedule_remote_effect_compat(
     const struct SensorTriggerResult_Compat* trigger)
 {
     struct TimelineEvent_Compat event;
+    int priority;
 
-    if (!world || !source || !trigger || !trigger->triggered ||
+    if (!world || !world->dungeon || !source || !trigger || !trigger->triggered ||
         trigger->isLocal ||
         (trigger->targetEventType != DM1_EVENT_WALL &&
          (trigger->targetEventType < DM1_EVENT_FAKEWALL ||
@@ -5207,6 +5208,11 @@ static int orch_f0248_schedule_remote_effect_compat(
     event.cell = trigger->targetCell;
     event.aux0 = trigger->targetEventType;
     event.aux1 = trigger->resolvedEffect;
+    if (!DM1_V1_F0268_EventPriority_Compat(
+            trigger->resolvedEffect,
+            world->dungeon->dm1SensorF0268PriorityByEffect,
+            &priority)) return 0;
+    event.aux4 = priority;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
@@ -9099,6 +9105,8 @@ static int orch_schedule_projectile_door_impact_followup_compat(
     struct GameWorld_Compat* world,
     const struct ProjectileTickResult_Compat* tickResult)
 {
+    struct TimelineEvent_Compat event;
+    int priority;
     if (!world || !tickResult) return 0;
     if (!tickResult->emittedDoorDestructionEvent &&
         !tickResult->emittedDoorToggleEvent) {
@@ -9108,8 +9116,17 @@ static int orch_schedule_projectile_door_impact_followup_compat(
         tickResult->outNextTick.kind == 0) {
         return 0;
     }
+    event = tickResult->outNextTick;
+    if (tickResult->emittedDoorToggleEvent) {
+        if (!world->dungeon ||
+            !DM1_V1_F0268_EventPriority_Compat(
+                event.aux1,
+                world->dungeon->dm1SensorF0268PriorityByEffect,
+                &priority)) return 0;
+        event.aux4 = priority;
+    }
     return F0721_TIMELINE_Schedule_Compat(
-        &world->timeline, &tickResult->outNextTick);
+        &world->timeline, &event);
 }
 
 static int orch_handle_projectile_move_event_compat(
@@ -10603,6 +10620,11 @@ static void orch_f0267_dispatch_sensor_results_compat(
             resolved.targetEventType == DM1_EVENT_PIT ||
             resolved.targetEventType == DM1_EVENT_DOOR) {
             struct TimelineEvent_Compat event;
+            int priority;
+            if (!DM1_V1_F0268_EventPriority_Compat(
+                    resolved.resolvedEffect,
+                    world->dungeon->dm1SensorF0268PriorityByEffect,
+                    &priority)) continue;
             memset(&event, 0, sizeof(event));
             event.kind = TIMELINE_EVENT_SQUARE_STATE;
             event.fireAtTick = world->gameTick +
@@ -10613,6 +10635,7 @@ static void orch_f0267_dispatch_sensor_results_compat(
             event.cell = resolved.targetCell;
             event.aux0 = resolved.targetEventType;
             event.aux1 = resolved.resolvedEffect;
+            event.aux4 = priority;
             if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &event)) {
                 moveResult->sensorDispatchOverflow = 1;
             }

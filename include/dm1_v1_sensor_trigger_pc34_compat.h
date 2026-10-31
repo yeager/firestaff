@@ -151,6 +151,7 @@ struct Dm1SensorEditionPolicy_Compat {
     int floorC005PartyTypeFix;
     int floorC009Supported;
     int floorC009VersionLimit;
+    int f0268PriorityByEffect;
 };
 
 /* Resolve ReDMCSB MEDIA guards for C005/C009 from M12's authenticated
@@ -158,6 +159,11 @@ struct Dm1SensorEditionPolicy_Compat {
 int DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
     const char* graphicsMd5,
     struct Dm1SensorEditionPolicy_Compat* outPolicy);
+
+/* ReDMCSB MEDIA716 maps A36M F0268 effects to native event priorities.
+ * Other admitted editions use priority zero. */
+int DM1_V1_F0268_EventPriority_Compat(
+    int effect, int priorityByEffect, int* outPriority);
 
 /* ================================================================
  *  Wall sensor context

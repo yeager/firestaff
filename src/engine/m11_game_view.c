@@ -10104,6 +10104,7 @@ static void m11_bind_dm1_sensor_edition_policy(
     dungeon->dm1SensorFloorC005PartyTypeFix = 0;
     dungeon->dm1SensorFloorC009Supported = 0;
     dungeon->dm1SensorFloorC009VersionLimit = 0;
+    dungeon->dm1SensorF0268PriorityByEffect = 0;
     /* A live runtime with no matched source profile fails closed for these
      * edition-sensitive floor sensors. Zero-bound policy is reserved for
      * isolated legacy callers and explicit PC34 compatibility tests. */
@@ -10115,6 +10116,7 @@ static void m11_bind_dm1_sensor_edition_policy(
     dungeon->dm1SensorFloorC005PartyTypeFix = policy.floorC005PartyTypeFix;
     dungeon->dm1SensorFloorC009Supported = policy.floorC009Supported;
     dungeon->dm1SensorFloorC009VersionLimit = policy.floorC009VersionLimit;
+    dungeon->dm1SensorF0268PriorityByEffect = policy.f0268PriorityByEffect;
 }
 
 static int m11_apply_dm1_startup_runtime_start_receipt(
@@ -20471,6 +20473,13 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                     deferEv.cell = e->destCell;
                     deferEv.aux0 = eventType;
                     deferEv.aux1 = e->textIndex;
+                    if (!state->world.dungeon ||
+                        !DM1_V1_F0268_EventPriority_Compat(
+                            e->textIndex,
+                            state->world.dungeon->dm1SensorF0268PriorityByEffect,
+                            &deferEv.aux4)) {
+                        break;
+                    }
                     (void)F0721_TIMELINE_Schedule_Compat(
                         &state->world.timeline, &deferEv);
                 }
