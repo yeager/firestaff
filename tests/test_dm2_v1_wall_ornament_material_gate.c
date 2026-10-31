@@ -81,6 +81,44 @@ int main(void)
         puts("PASS: skproject GDAT rectangle table decoding");
     }
     {
+        /* A 2x2 child anchored at the upper-left of a 3x3 containment parent
+         * draws from (0,0), clipped to the parent's 3x3 bounds. */
+        static const uint8_t raw_rects[] = {
+            0x0du, 0xfcu, 0x01u, 0x00u,
+            0x00u, 0x10u, 0x01u, 0x10u,
+            9u, 0u, 0u, 0u, 3u, 0u, 3u, 0u,
+            0u, 0u, 0x00u, 0x10u, 2u, 0u, 2u, 0u
+        };
+        DM2_V1_WallOrnamentBlitRect blit;
+        if (!dm2_v1_wall_ornament_query_blit_rect(
+                raw_rects, sizeof(raw_rects), 0x1001u, 0, -1, 4, 4, &blit) ||
+            blit.destination_x != 0 || blit.destination_y != 0 ||
+            blit.destination_width != 3 || blit.destination_height != 3 ||
+            blit.source_x != 0 || blit.source_y != 0 ||
+            blit.source_width != 3 || blit.source_height != 3) {
+            fputs("FAIL: skproject QUERY_BLIT_RECT parent clipping\n", stderr);
+            return 1;
+        }
+        {
+            static const uint8_t big_endian_rects[] = {
+                0xfcu, 0x0du, 0x00u, 0x01u,
+                0x10u, 0x00u, 0x10u, 0x01u,
+                0x00u, 0x09u, 0x00u, 0x00u, 0x00u, 0x03u, 0x00u, 0x03u,
+                0x00u, 0x00u, 0x10u, 0x00u, 0x00u, 0x02u, 0x00u, 0x02u
+            };
+            if (!dm2_v1_wall_ornament_query_blit_rect(
+                    big_endian_rects, sizeof(big_endian_rects), 0x1001u,
+                    1, -1, 4, 4, &blit) ||
+                blit.destination_x != 0 || blit.destination_y != 0 ||
+                blit.destination_width != 3 || blit.destination_height != 3 ||
+                blit.source_width != 3 || blit.source_height != 3) {
+                fputs("FAIL: big-endian QUERY_BLIT_RECT parity\n", stderr);
+                return 1;
+            }
+        }
+        puts("PASS: skproject QUERY_BLIT_RECT placement and clipping");
+    }
+    {
         uint16_t rect_number = 0u;
         if (!dm2_v1_wall_ornament_rect_number(3, 0, 12u, &rect_number) ||
             rect_number != 3187u ||
@@ -128,6 +166,7 @@ int main(void)
     plan.ornaments[0].gdat_index =
         dm2_v1_viewport_wall_gfx_map_chip_graphic_index(7);
     plan.ornaments[0].dst_rect = (DM2_V1_ViewportRect){ 100, 60, 16, 16 };
+    plan.ornaments[0].src_rect = (DM2_V1_ViewportRect){ 0, 0, 4, 4 };
     plan.ornaments[0].material_hash = 0u; /* not validated in this gate */
     dm2_v1_viewport_set_gdat_wall_ornament_material_plan(&viewport, &plan);
     memset(framebuffer, 0, sizeof(framebuffer));

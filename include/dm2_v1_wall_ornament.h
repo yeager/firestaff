@@ -57,12 +57,34 @@ typedef struct {
     int16_t height;
 } DM2_V1_RectTableNode;
 
+typedef struct {
+    int16_t destination_x;
+    int16_t destination_y;
+    int16_t destination_width;
+    int16_t destination_height;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t source_width;
+    int16_t source_height;
+} DM2_V1_WallOrnamentBlitRect;
+
 int dm2_v1_wall_ornament_rect_number(
     int source_cell, int lateral, unsigned position, uint16_t *out_rect_number);
 
 int dm2_v1_wall_ornament_rect_table_query(
     const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
     DM2_V1_RectTableNode *out);
+
+/* Resolve skproject QUERY_BLIT_RECT for an already-decoded image size. */
+int dm2_v1_wall_ornament_query_blit_rect(
+    const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
+    int big_endian, int alignment_override, int image_width, int image_height,
+    DM2_V1_WallOrnamentBlitRect *out);
+
+int dm2_v1_wall_ornament_query_loaded_blit_rect(
+    const DM2_V1_AssetLoader *loader, uint16_t rect_number,
+    int alignment_override, int image_width, int image_height,
+    DM2_V1_WallOrnamentBlitRect *out);
 
 int dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(
     const DM2_V1_AssetLoader *loader,

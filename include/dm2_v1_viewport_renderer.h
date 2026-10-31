@@ -508,7 +508,11 @@ typedef struct DM2_V1_DoorRenderPlan {
 typedef struct {
     int view_square;
     int gdat_index;
+    uint8_t image_field;
+    uint16_t colorkey;
     DM2_V1_ViewportRect dst_rect;
+    DM2_V1_ViewportRect src_rect;
+    uint8_t mirror_flip;
     uint32_t material_hash;
 } DM2_V1_WallOrnamentRender;
 
@@ -1254,6 +1258,7 @@ typedef struct {
     uint8_t  wall_ornate_gfx_index; /* GDAT WALL_GFX ornament index (0=none) */
     uint8_t  wall_ornate_gfx_field; /* source query frame/field (1=first frame) */
     uint16_t wall_ornate_rect_number; /* skproject QUERY_RECTNO_FOR_WALL_ORNATE */
+    uint8_t  wall_ornate_ref_point; /* packed WALL_GFX position high byte */
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
     uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */

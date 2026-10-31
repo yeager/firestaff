@@ -2768,6 +2768,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                 surface->wall_ornate_gfx_index = 0u;
                 surface->wall_ornate_gfx_field = 0u;
                 surface->wall_ornate_rect_number = 0u;
+                surface->wall_ornate_ref_point = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
                 /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
@@ -2800,17 +2801,29 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                             ornament_field > 0 && ornament_field <= UINT8_MAX) {
                             uint16_t ornament_position = 0u;
                             uint16_t rect_number = 0u;
+                            uint16_t position_value = 0u;
+                            unsigned position = 12u;
+                            uint8_t ref_point = 0u;
                             if (dm2_v1_asset_load_word_value(
                                     loader, DM2_GDAT_CATEGORY_WALL_GFX,
                                     (uint8_t)ornament_index,
                                     DM2_V1_WALL_ORNATE_POSITION_FIELD,
                                     &ornament_position) &&
-                                ornament_position <= 24u &&
+                                ornament_position != 0u) {
+                                ref_point = (uint8_t)(ornament_position >> 8);
+                                position_value = ornament_position & 0xffu;
+                                if (position_value < 1u || position_value > 25u)
+                                    position = 25u;
+                                else
+                                    position = position_value - 1u;
+                            }
+                            if (
                                 dm2_v1_wall_ornament_rect_number(
                                     visible_cells[i].source_cell,
                                     visible_cells[i].lateral,
-                                    ornament_position, &rect_number)) {
+                                    position, &rect_number)) {
                                 surface->wall_ornate_rect_number = rect_number;
+                                surface->wall_ornate_ref_point = ref_point;
                             }
                             surface->wall_ornate_gfx_index =
                                 (uint8_t)ornament_index;
@@ -12716,6 +12729,97 @@ static void dm2_runtime_bind_source_squad_hands(
     }
 }
 
+/* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
+ * Build placements from the active map's source-owned WALL_GFX fields and
+ * INTERFACE_GENERAL RAW4 rectangle graph. */
+static void dm2_runtime_bind_wall_ornament_plan(
+    DM2_V1_ViewportState *viewport, const DM2_V1_AssetLoader *loader,
+    DM2_V1_WallOrnamentRenderPlan *plan)
+{
+    static const int stretch_by_distance[5] = { 0x60, 0x40, 0x2b, 0x1c, 0x13 };
+    uint32_t plan_hash = 2166136261u;
+
+    if (!viewport || !loader || !plan) return;
+    memset(plan, 0, sizeof(*plan));
+    for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+        const DM2_ViewSquare *surface = &viewport->squares[square];
+        DM2_V1_WallOrnamentReceipt receipt;
+        DM2_V1_WallOrnamentBlitRect blit;
+        DM2_V1_WallOrnamentRender *entry;
+        int distance, lateral, stretch_x, stretch_y;
+        int scaled_width, scaled_height;
+        int source_x0, source_y0, source_x1, source_y1;
+        if (surface->square_type != DM2_SQUARE_WALL ||
+            surface->wall_ornate_gfx_index == 0u) continue;
+        if (!surface->wall_ornate_rect_number ||
+            plan->ornament_count >= DM2_V1_WALL_ORNAMENT_RENDER_MAX ||
+            surface->wall_ornate_gfx_field == 0u ||
+            !dm2_v1_wall_ornament_material_receipt(
+                loader, surface->wall_ornate_gfx_index,
+                surface->wall_ornate_gfx_field, &receipt)) return;
+        switch (square) {
+        case DM2_SQ_D0C: distance = 0; lateral = 0; break;
+        case DM2_SQ_D0L: distance = 0; lateral = -1; break;
+        case DM2_SQ_D0R: distance = 0; lateral = 1; break;
+        case DM2_SQ_D1C: distance = 1; lateral = 0; break;
+        case DM2_SQ_D1L: distance = 1; lateral = -1; break;
+        case DM2_SQ_D1R: distance = 1; lateral = 1; break;
+        case DM2_SQ_D2C: distance = 2; lateral = 0; break;
+        case DM2_SQ_D2L: distance = 2; lateral = -2; break;
+        case DM2_SQ_D2R: distance = 2; lateral = 2; break;
+        case DM2_SQ_D3C: distance = 3; lateral = 0; break;
+        case DM2_SQ_D3L: distance = 3; lateral = -3; break;
+        case DM2_SQ_D3R: distance = 3; lateral = 3; break;
+        default: return;
+        }
+        stretch_x = stretch_y = stretch_by_distance[distance];
+        if (distance == 2 && (lateral <= -2 || lateral >= 2))
+            stretch_x = 0x72;
+        else if (distance == 3 && (lateral <= -2 || lateral >= 2))
+            stretch_x = 0x4c;
+        scaled_width = ((int)receipt.decoded_width * stretch_x +
+                        (stretch_x >> 1)) >> 6;
+        scaled_height = ((int)receipt.decoded_height * stretch_y +
+                         (stretch_y >> 1)) >> 6;
+        if (scaled_width <= 0 || scaled_height <= 0 ||
+            !dm2_v1_wall_ornament_query_loaded_blit_rect(
+                loader, surface->wall_ornate_rect_number,
+                surface->wall_ornate_ref_point,
+                scaled_width, scaled_height, &blit)) return;
+        source_x0 = (blit.source_x * (int)receipt.decoded_width) / scaled_width;
+        source_y0 = (blit.source_y * (int)receipt.decoded_height) / scaled_height;
+        source_x1 = ((blit.source_x + blit.source_width) *
+                     (int)receipt.decoded_width + scaled_width - 1) /
+                    scaled_width;
+        source_y1 = ((blit.source_y + blit.source_height) *
+                     (int)receipt.decoded_height + scaled_height - 1) /
+                    scaled_height;
+        if (source_x0 < 0 || source_y0 < 0 || source_x1 > receipt.decoded_width ||
+            source_y1 > receipt.decoded_height || source_x1 <= source_x0 ||
+            source_y1 <= source_y0) return;
+        entry = &plan->ornaments[plan->ornament_count++];
+        entry->view_square = square;
+        entry->gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
+            surface->wall_ornate_gfx_index);
+        entry->image_field = surface->wall_ornate_gfx_field;
+        entry->colorkey = receipt.colorkey;
+        entry->dst_rect = (DM2_V1_ViewportRect){
+            blit.destination_x, blit.destination_y,
+            blit.destination_width, blit.destination_height };
+        entry->src_rect = (DM2_V1_ViewportRect){
+            source_x0, source_y0, source_x1 - source_x0,
+            source_y1 - source_y0 };
+        entry->mirror_flip = 0u;
+        entry->material_hash = receipt.material_hash;
+        plan_hash ^= receipt.material_hash + (uint32_t)surface->wall_ornate_rect_number +
+            ((uint32_t)square << 24);
+        plan_hash *= 16777619u;
+    }
+    if (plan->ornament_count == 0) return;
+    plan->valid = plan_hash != 0u;
+    dm2_v1_viewport_set_gdat_wall_ornament_material_plan(viewport, plan);
+}
+
 /* ReDMCSB/skproject SkWinCore.cpp::DISPLAY_RIGHT_PANEL_SQUAD_HANDS keeps
  * the selected champion and selected hand in party.curacthero/curactmode,
  * then calls DRAW_HAND_ACTION_ICONS. Without a source-selected champion
@@ -13085,6 +13189,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int door_map_chip_material_plan_required = 0;
     int door_map_chip_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
+    DM2_V1_WallOrnamentRenderPlan wall_ornament_render_plan;
     DM2_V1_GdatSceneM11CommandPlan scene_material_plan;
     const DM2_V1_GdatSceneM11CommandPlan *scene_material_plan_for_m11;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
@@ -13216,6 +13321,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (rt->boot && rt->boot->graphics_dat) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
+    }
+    memset(&wall_ornament_render_plan, 0,
+           sizeof(wall_ornament_render_plan));
+    if (viewport.asset_loader && !rt->outdoor) {
+        dm2_runtime_bind_wall_ornament_plan(
+            &viewport, viewport.asset_loader, &wall_ornament_render_plan);
     }
     dm2_v1_viewport_set_source_materials_required(
         &viewport,
