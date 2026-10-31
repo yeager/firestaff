@@ -395,26 +395,28 @@ PY
         printf '%s\n' "$campaign_output" >&2
         exit 1
     }
-    printf '%s\n' "$campaign_output" | grep -Fq \
-        'input=pointer-click point=216,81 result=1 last-ui-action="CSB" last-ui-outcome="DOOR SWITCH"' || {
+    printf '%s\n' "$campaign_output" | grep -F \
+        'input=pointer-click point=216,81 result=1 last-ui-action="CSB" last-ui-outcome="DOOR SWITCH"' \
+        >/dev/null || {
         echo "FAIL: authentic Atari campaign did not activate the source button door" >&2
         printf '%s\n' "$campaign_output" >&2
         exit 1
     }
-    printf '%s\n' "$campaign_output" | grep -Fq \
-        'level=1 party=18,4,0 dir=2 champions=2 leader=0 active-monsters=12' || {
+    printf '%s\n' "$campaign_output" | grep -F \
+        'level=1 party=18,4,0 dir=2 champions=2 leader=0 active-monsters=12' \
+        >/dev/null || {
         echo "FAIL: authentic Atari stair transition did not load map-1 monster groups" >&2
         printf '%s\n' "$campaign_output" >&2
         exit 1
     }
-    printf '%s\n' "$campaign_output" | grep -Fq \
-        'type=monster-moved' || {
+    printf '%s\n' "$campaign_output" | grep -F 'type=monster-moved' \
+        >/dev/null || {
         echo "FAIL: authentic Atari map-1 groups did not move during the real-time wait" >&2
         printf '%s\n' "$campaign_output" >&2
         exit 1
     }
-    printf '%s\n' "$campaign_output" | grep -Fq \
-        'target=champion index=' || {
+    printf '%s\n' "$campaign_output" | grep -F 'target=champion index=' \
+        >/dev/null || {
         echo "FAIL: authentic Atari map-1 combat did not report champion health changes" >&2
         printf '%s\n' "$campaign_output" >&2
         exit 1

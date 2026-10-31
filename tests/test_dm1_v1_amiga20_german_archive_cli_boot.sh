@@ -86,6 +86,7 @@ trace_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 }
 if ! grep -Fq 'platform=amiga-v20 phase=title-f0437' <<<"$trace_output" ||
    ! grep -Fq 'platform=amiga-v20 phase=entrance-f0441' <<<"$trace_output" ||
+   ! grep -Fq 'startup-media-check-skipped game=dm1 edition=amiga20-de check=F0906-F0907 reason=not-compiled-for-A20G-A22G' <<<"$trace_output" ||
    ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$trace_output"; then
     printf '%s\n' "$trace_output" >&2
     echo 'FAIL: authentic German Amiga 2.0 CLI skipped its authenticated source title or entrance' >&2

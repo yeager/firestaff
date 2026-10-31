@@ -1,43 +1,18 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-31 — JP PCE Fast poll and `$2912` transaction share event ordering
+## 2026-10-31 — US saved-state scripted-input trace remains inconclusive
 
-Three independent replays from the authentic JP Akutuba F5 dungeon state
-applied `up@61:120` on controller slot 0. All three match the PCE Fast guest
-read at `$44C1`: internal `raw=0010`, active-low `value=3e`, and the same-frame
-scripted mask and port. Three same-state neutral controls show no `$D334`
-consumer reads or `$D349` writes to `$2912`; the three UP runs each show
-`$D334` reading `$2912=00`, `$D349` writing `$10`, then `$D334` reading `$10`.
-The current trace patch gives the `$44C1` guest poll the same
-`TheronTraceCDSharedEventSequence` counter as the RAM hooks. All three UP runs
-repeat poll event 2342 → `$D334` read event 3000 → `$D349` write event 3001 →
-`$D334` read event 3023. Three neutral controls have no `$D334`/`$D349` path.
-The event order advances the input-to-consumer join, but does not prove
-causality, identify `$2912`, or establish a movement/render effect. Trace
-hashes and authentic media/state provenance are in the
-[JP PCE Fast input receipt](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
-Next identify `$2912` from its readers/writers and join the instruction caller
-to party pose and visible output under UP and neutral. The evidence still does
-not prove movement or parity. See the [same-state comparison
-report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
-One follow-up UP/neutral trace reproduces that latch ordering, but the F5 pose
-faces a wall: separate UP, neutral, and DOWN screenshots all retain the same
-front wall, and the bounded observer sees no `$C1FC` TII or `$2040/$2041`
-position write. This does not show a movement defect or prove screen parity.
-Next capture an authentic reachable position and join input through a changed
-party position to the visible screen; details and trace hashes are in the
-[blocked-wall probe](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
-
-## 2026-10-31 — cold JP emulator route reaches the dungeon; BRAM stays empty
-
-An isolated cold Mednafen PCE Fast run reached the authentic Japanese Akutuba
-dungeon after the four-second System Card RUN hold, New Game/file selection,
-and story advancement. Its only 2 KiB `.sav` output hashes to the known empty
-JP BRAM (`dbdedb0ec809227b289c2bc5b18b9c9d`); it is not a progressed save.
-This confirms cold startup and New Game navigation, but not a held menu action or positive Continue evidence.
-Next clear the original Akutuba stage, classify the resulting BRAM, and use it
-only if its contents and provenance show real progress. See the
-[capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md#2026-10-31--cold-jp-emulator-route-reaches-akutuba-but-saves-no-progress).
+An existing US state file loaded successfully in an instrumented PCE Fast
+reference run with the original US CUE. The run's shared trace file contains
+1,354 short-format input-read rows at `$44CA/$44DB`, all with `raw=0000`, while
+the separate input script log records Right/Down/Button I mask application.
+The standard-PCE and PCE Fast instrumenters share the same trace path and row
+label, so these rows are not a verified PCE Fast read receipt. The different
+close-time RAM/VRAM/SAT snapshots are also not attributed to an action, pose,
+map cell, or display consumer. Source ownership, input consumption, and a
+renderer mapping remain unproven. Separate the trace streams and join a
+source-backed state change to same-session VDC/VRAM writes before using this
+route for parity. See the [capture report](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
 
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 
@@ -105,13 +80,8 @@ The JP counterpart, `theron_v1_m11_jp_fresh_start`, now covers the authentic
 title-to-level-0 path independently. It compares all eight decoded roster
 names, confirms Theron is admitted, and requires a source-verified level header
 with zero quest progress. The warning-as-error build and three repeated CTest
-runs passed against the hash-locked original JP BIN. A separate native M11
-integration now pairs that original BIN with the authentic captured empty JP
-BRAM and confirms the zero-campaign slot is not offered as Continue; it passed
-three TRV2 loops without changing either input. No authentic progressed JP
-BRAM is currently available, so positive JP Continue/save round-trip and
-retail JP progress restoration remain unverified. Neither test proves retail
-input parity or full gameplay parity.
+runs passed against the hash-locked original JP BIN. This does not prove JP
+Continue/save semantics, retail input parity, or full gameplay parity.
 
 2026-10-31 save-resume follow-up: the default Continue root now uses the same
 `FSP_GetUserDataDir()/saves/theron` directory as Save Game, including when

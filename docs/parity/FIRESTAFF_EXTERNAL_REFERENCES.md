@@ -218,7 +218,9 @@ See `docs/parity/PARITY_REFERENCES.md` for:
 - Many Altars of Vi to resurrect dead champions
 - Goal: retrieve 7 valuable items, one per dungeon
 
-**Parity status:** OUT OF SCOPE FOR V1. Firestaff V1 targets 1:1 parity with DM1, CSB, DM2 only (per MEMORY.md product contract). Theron's Quest is documented here as reference knowledge only.
+**Parity status:** In scope for Firestaff's native Theron runtime; complete
+parity is not yet achieved. The current native routes and evidence boundaries
+are summarized in the [Theron capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
 
 ---
 

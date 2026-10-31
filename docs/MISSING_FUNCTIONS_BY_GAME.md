@@ -201,6 +201,14 @@ evidence.
 
 ## Theron
 
+Firestaff has bounded native real-media routes for both admitted regions: JP
+fresh start reaches source-verified Ak-Tu-Ba level 0; US Track 02 with matching
+Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises
+movement and item transactions. Source-only loaders cover all seven dungeons
+per region. These results are recorded in the
+[capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); they do not
+establish complete retail gameplay or visual parity.
+
 ### Missing Original Data or Verification
 
 - **Save body layout:** SRM/save correlation and the complete body layout are
@@ -209,20 +217,22 @@ evidence.
   hash-bound authentic-media and `--debug` build receipts per checkpoint, but
   a same-state original-versus-Firestaff image pair and reviewed receipt
   producers are still missing.
-- **Startup media:** authentic decoding and pixel evidence for Track 02
-  startup art, text, and audio are missing.
+- **Startup media parity:** source-bound decoding and paired pixel/audio
+  evidence for Track 02 startup art and text are missing; bounded native
+  startup routes already exist.
 - **Post-$3800 chain:** the continuation consumer after the authenticated
   `$3800` boundary needs further live capture.
-- **JP runtime:** Japanese-specific media/capture verification and some offset
-  questions remain; they must not be derived from US data.
+- **JP continuation:** authentic Japanese Continue/save semantics and broader
+  Japanese campaign behavior remain unverified; do not derive them from US
+  data.
 - **Broader original corpus:** more authentic CUE/BIN/ISO combinations are
   needed for version and media breadth.
 
 ### Missing or Incomplete Functionality
 
-- **JP runtime is limited:** the authentic JP Rev 1 CUE reaches native title →
-  stage → Soul Room → Akutuba and can source-bind Drator, but this is not broad
-  gameplay or transition parity.
+- **Native gameplay breadth is limited:** the verified JP fresh-start and US
+  Continue paths cover bounded launch and input slices, not the full campaign
+  or every gameplay system.
 - Complete source-owned semantics for later levels, objects, champion data,
   and save/load are incomplete.
 - Authentic runtime traces are needed for doors, pits, teleporters, altars,
