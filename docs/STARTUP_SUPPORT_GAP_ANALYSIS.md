@@ -225,6 +225,21 @@ isolated-root test assertions; it is not counted as a pass. The no-media
 `unsupported_game_platforms_cli_rejected_before_renderer` test also passed,
 confirming invalid game/platform pairs fail before the renderer.
 
+### 2026-10-31 current-main M12 retest
+
+After rebuilding `main` at `751e98d8397e9b9f71ee7a4f306d2a173121a98`, the
+isolated original-media no-game M12 checks passed again: DM1 in 122.24 seconds,
+CSB in 123.86 seconds, and DM2 in 162.24 seconds. Each check returned to the
+menu, rescanned the data root, and verified its named runtime handoff. The
+`m12_main_menu_dm1-fmtowns-with-pc_runtime_real_media` route also passed in
+62.43 seconds with authentic DM1 FM Towns and PC archives present together;
+the menu selected FM Towns and reached its first Hall frame. Both original
+archives retained their pre-test hashes. These SDL dummy-driver checks cover
+the named menu and runtime routes only, not native rendering or full gameplay.
+GitHub Actions run
+[`41178574316`](https://github.com/yeager/firestaff/actions/runs/41178574316)
+completed successfully for `751e98d`.
+
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
 `0x06010040`. The English-version `MENU.BPK` has an authenticated hash and is
