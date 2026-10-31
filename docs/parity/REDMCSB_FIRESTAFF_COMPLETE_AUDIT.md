@@ -146,9 +146,11 @@ lighting and nonzero retail DBE/DBF media cases remain unverified. The ordered
 summary word 7. DB2 TextMode-1 side-summary writes now preserve the packed ornament/frame
 word in source slots 3..6; ext-usage 5 selects animation only when visible.
 Ext-usage 14 clears the selected side slot 3..6 and writes the record handle or
-visible-text absent marker to summary word 7 only when that slot is 5. The full output-array contract,
-consumption of every summary slot in the viewport, and all-platform runtime
-behavior remain open. Do not treat
+visible-text absent marker to summary word 7 only when that slot is 5. The
+runtime now selects the visible ornament side from viewport lateral position
+and publishes its WALL_GFX index and source field on `DM2_ViewSquare`; source
+placement and animated-frame rendering, full output-array compatibility,
+source captures, and all-platform runtime behavior remain open. Do not treat
 these bounded receipts as full DM2 parity.
 
 ## Gate

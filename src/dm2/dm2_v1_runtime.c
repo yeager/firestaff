@@ -2763,8 +2763,45 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         {
             DM2_ViewSquare *surface = &viewport->squares[visible_cells[i].square];
             if (square_type == DM2_SQUARE_WALL) {
+                surface->wall_ornate_gfx_index = 0u;
+                surface->wall_ornate_gfx_field = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
+                /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
+                 * through _0cee_1a46; DRAW_WALL_ORNATE selects slot 4/5/6
+                 * from the lateral offset. Query only the visible relative
+                 * side here, preserving DB2/DB3 list order and source tick. */
+                if (map_x >= 0 &&
+                    map_x < dd->level_widths[rt->dungeon_level] &&
+                    map_y >= 0 && map_y < dd->level_heights[rt->dungeon_level]) {
+                    int first_thing = dm2_v1_dungeon_get_first_thing(
+                        dd, rt->dungeon_level, map_x, map_y);
+                    int side_index = visible_cells[i].lateral < 0 ? 1 :
+                        (visible_cells[i].lateral > 0 ? 3 : 2);
+                    if (first_thing >= 0 &&
+                        first_thing != DM2_THING_END_MARKER) {
+                        DM2_V1_SkprojectQuery0cee1a46Receipt decoration;
+                        int16_t ornament_index = -1;
+                        int16_t ornament_field = -1;
+                        const DM2_V1_AssetLoader *loader =
+                            dm2_v1_boot_asset_loader(rt->boot);
+                        if (dm2_v1_skproject_query_0cee_1a46_ext(
+                                dd, (uint16_t)first_thing, (int16_t)dir,
+                                (int16_t)side_index,
+                                (uint32_t)rt->tick_count,
+                                rt->map_wall_gfx_list,
+                                rt->map_wall_gfx_count, loader,
+                                &ornament_index, &ornament_field,
+                                &decoration) == 1 && decoration.valid &&
+                            ornament_index > 0 && ornament_index <= UINT8_MAX &&
+                            ornament_field > 0 && ornament_field <= UINT8_MAX) {
+                            surface->wall_ornate_gfx_index =
+                                (uint8_t)ornament_index;
+                            surface->wall_ornate_gfx_field =
+                                (uint8_t)ornament_field;
+                        }
+                    }
+                }
             } else if (square_type == DM2_SQUARE_FLOOR) {
                 surface->square_type = DM2_SQUARE_FLOOR;
                 surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
