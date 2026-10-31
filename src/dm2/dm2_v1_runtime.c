@@ -9041,7 +9041,8 @@ static int dm2_runtime_door_step_timer(void *user,
             if ((hit_mask & (1 << i)) == 0) continue;
             if (!dm2_runtime_queue_door_collision_noise(
                     rt, map, x, y, DM2_GDAT_CATEGORY_CHAMPIONS,
-                    hero_type, DM2_SOUND_CHAMPION_BUMP, 0xfe, 0x64, 0xC8,
+                    DM2_SOUND_CHAMPION_BUMP, 0xfe, hero_type,
+                    0x64, 0xC8,
                     receipt ? receipt->game_tick : (uint32_t)rt->tick_count,
                     source_index)) {
                 rt->source_party = party_before;
@@ -9220,12 +9221,14 @@ static int dm2_runtime_door_step_timer(void *user,
                         goto door_creature_rollback;
                     if (!dm2_runtime_queue_door_collision_noise(
                             rt, map, x, y, DM2_GDAT_CATEGORY_CREATURES,
-                            creature_cls2, DM2_SOUND_CREATURE_GET_HIT,
-                            0xfe, 0x46, 0x80, game_tick, source_index) ||
+                            DM2_SOUND_CREATURE_GET_HIT, 0xfe,
+                            creature_cls2, 0x46, 0x80,
+                            game_tick, source_index) ||
                         !dm2_runtime_queue_door_collision_noise(
                             rt, map, x, y,
-                            DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
-                            DM2_SOUND_STD_KNOCK, 0xfe, 0x46, 0x80,
+                            DM2_GDAT_CATEGORY_MISCELLANEOUS,
+                            DM2_SOUND_STD_KNOCK, 0xfe, 0xfe,
+                            0x46, 0x80,
                             game_tick, source_index))
                         goto door_creature_rollback;
 

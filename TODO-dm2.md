@@ -5,9 +5,10 @@ scheduling the continuation. The dungeon loader retains map descriptor bytes
 2/3 and word E, and both owners
 resolve the source altar selector through
 `dm2_v1_skproject_is_rebirth_altar`. Sound lookup failure does not block a door
-step; failed live and candidate enqueues restore their sound/timer state. Exact
-platform-specific source resource edges and supported-edition mapping remain
-open.
+step; failed live and candidate enqueues restore their sound/timer state. The
+party and creature collision calls now pass GEN2 fields in source order:
+category, sound id, 0xfe, and alternate class. Exact platform-specific source
+resource edges and supported-edition mapping remain open.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` DB2 text animation cases:
 The extended query now walks DB2 text and DB3 actuator records in list order.

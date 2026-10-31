@@ -5657,8 +5657,8 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                     if (!dm2_game_load_candidate_queue_door_collision_noise(
                             candidate, map, x, y,
                             DM2_GDAT_CATEGORY_CHAMPIONS,
-                            candidate->party.hero[i].herotype,
-                            DM2_SOUND_CHAMPION_BUMP, 0xfe, 0x64, 0xc8,
+                            DM2_SOUND_CHAMPION_BUMP, 0xfe,
+                            candidate->party.hero[i].herotype, 0x64, 0xc8,
                             game_tick))
                         goto door_rollback;
                     collision_sound_count++;
@@ -5736,13 +5736,15 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                         tile_mutated = 1;
                         if (!dm2_game_load_candidate_queue_door_collision_noise(
                                 candidate, map, x, y,
-                                DM2_GDAT_CATEGORY_CREATURES, creature_cls2,
-                                DM2_SOUND_CREATURE_GET_HIT, 0xfe, 0x46, 0x80,
+                                DM2_GDAT_CATEGORY_CREATURES,
+                                DM2_SOUND_CREATURE_GET_HIT, 0xfe,
+                                creature_cls2, 0x46, 0x80,
                                 game_tick) ||
                             !dm2_game_load_candidate_queue_door_collision_noise(
                                 candidate, map, x, y,
-                                DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
-                                DM2_SOUND_STD_KNOCK, 0xfe, 0x46, 0x80,
+                                DM2_GDAT_CATEGORY_MISCELLANEOUS,
+                                DM2_SOUND_STD_KNOCK, 0xfe, 0xfe,
+                                0x46, 0x80,
                                 game_tick))
                             goto door_rollback;
                         collision_sound_count += 2;
