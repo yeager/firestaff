@@ -17,6 +17,17 @@ candidate, a disposition, and notes. An implementation disposition may cover
 a narrow function slice and does not by itself prove integration into a
 playable game route or parity on every supported platform.
 
+This is not yet a complete inventory of callable skproject source. The
+repository README identifies `SKWINSPX` as its newer unified Windows/Linux/DOS
+engine, while the current ledger includes only one selected SPX definition and
+otherwise inventories the older `SKWIN`/`SKULLWIN` trees. `SKWINDOS` is also
+outside the ledger. At the locked source checkout, `SKWINSPX/src` contains 131
+`.cpp`/`.c` files (case-insensitive extension) and `SKWINDOS/src` contains 26. Their definitions must be
+inventoried and compared with the older source where they overlap before the
+DM2 function audit can claim full source coverage. Editor and asset-tool trees
+(`DM2GDED`, `DMDC2`, and `Utils`) are excluded because they do not implement
+the game runtime.
+
 ## Inventory
 
 | Source set | Definitions | Result |
@@ -98,10 +109,11 @@ still lacks source-by-source mutation and all-edition/platform parity proof.
 before treating a mapping as a parity result.
 
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
-claims that a supported DM2 game feature is implemented. The inventory also
-does not establish that every relevant callable was covered on DOS, Amiga,
-FM Towns, and Macintosh. That requires platform-specific source-function
-rows and runtime evidence.
+claims that a supported DM2 game feature is implemented. The current 1,754
+rows are a scoped subset, not the total of skproject functions relevant to
+Firestaff: most `SKWINSPX` and all `SKWINDOS` definitions are not inventoried.
+Completing that source inventory and attaching per-platform runtime evidence
+remain required for DOS, Amiga, FM Towns, and Macintosh.
 
 ## Machine check
 
