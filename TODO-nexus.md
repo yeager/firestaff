@@ -4,6 +4,16 @@ Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-10-31 — Frame-59 title-prompt composition
+
+The exact Japanese Ymir title-prompt frame now has a hash-pinned, capture-only
+NBG0-over-VDP1 replay and a real-data regression against the raw RGB reference
+and screenshot. The visible 921-byte TITL span is joined, but the complete
+NBG0 source transform and source owner remain unresolved. This lane does not
+cover the later title menu, configuration/Load panels, arbitrary display
+register profiles, or production rendering. See
+[`docs/nexus_vdp2_title_frame59_composition.md`](docs/nexus_vdp2_title_frame59_composition.md).
+
 ## 2026-10-30 — NBG1 8bpp character stride
 
 The generic source-bound NBG1 compositor now follows Saturn's 32-byte PND

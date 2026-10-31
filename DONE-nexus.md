@@ -14,6 +14,24 @@
   frame parity, or production renderer admission. See
   [`docs/nexus_vdp1_frame13162_dgn_window.md`](docs/nexus_vdp1_frame13162_dgn_window.md).
 
+## 2026-10-31 — Replay the authentic frame-59 title prompt
+
+- The capture-only NBG0-over-VDP1 compositor accepts the hash-pinned Ymir
+  frame-59 zero-scroll, zero-palette-bank register profile. It writes 18,513
+  NBG0 pixels and 53,167 captured VDP1 pixels and matches all 71,680 RGB
+  pixels in the retained native-size Ymir reference.
+- The real-data CTest also compares the replay with the authentic 640×448
+  screenshot: all 286,720 doubled samples are within eight RGB levels, with
+  maximum channel error eight. The test pins the raw capture, complete VDP1
+  command bundle/trace, register receipt, reference and screenshot hashes.
+- The two VDP1 framebuffer buffers are byte-identical. The raw VDP2 register
+  word at offset `0xf8` is `0x0004`; an older evidence note's `0x01f4` value
+  does not match the hash-pinned register dump. The compositor stays
+  capture-only and does not claim full bitmap source ownership or production
+  renderer admission.
+- Evidence and reproduction steps are in
+  [`docs/nexus_vdp2_title_frame59_composition.md`](docs/nexus_vdp2_title_frame59_composition.md).
+
 ## 2026-10-30 — Admit authentic CUE-only Nexus media
 
 - M12 now binds a Saturn CUE/BIN source to its own ISO data track and admits

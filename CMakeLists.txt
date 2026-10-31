@@ -41964,6 +41964,34 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "nexus;saturn;ymir;frame8037;real-data;capture-only;skip-safe"
         SKIP_RETURN_CODE 77
     )
+    add_executable(test_nexus_v1_vdp2_title_frame59_real
+        tests/test_nexus_v1_vdp2_title_frame59_real.c
+        src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_title_frame59_real PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_title_frame59_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_title_frame59_real.py
+            $<TARGET_FILE:test_nexus_v1_vdp2_title_frame59_real>
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-vdp2-title-frame59-replay.rgb
+    )
+    set_tests_properties(nexus_v1_vdp2_title_frame59_real PROPERTIES
+        LABELS "nexus;saturn;ymir;title;frame59;real-data;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME nexus_v1_vdp1_frame8037_source_join_real

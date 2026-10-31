@@ -17,6 +17,8 @@
 #define NEXUS_V1_VDP2_YMIR_MENU_HEIGHT 224U
 #define NEXUS_V1_VDP2_YMIR_MENU_MAX_VDP1_COMMANDS 16U
 #define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES (512U * 256U * 2U)
+#define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_PAIR_BYTES \
+    (NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES * 2U)
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
  * exact byte matches; placement is explicit because registers alone do not
@@ -129,6 +131,33 @@ typedef struct {
 } Nexus_V1_Vdp2YmirMenuCaptureFramebuffer;
 
 typedef struct {
+    const uint8_t *vdp1_framebuffers;
+    size_t vdp1_framebuffers_size;
+    const uint8_t *vdp2_vram;
+    size_t vdp2_vram_size;
+    const uint8_t *vdp2_cram;
+    size_t vdp2_cram_size;
+    const uint8_t *vdp2_registers;
+    size_t vdp2_registers_size;
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    int original_ymir_capture_verified;
+    int nbg0_over_vdp1_order_verified;
+} Nexus_V1_Vdp2YmirTitlePromptCaptureInput;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int nbg0_over_vdp1_order_verified;
+    int width;
+    int height;
+    int nbg0_overlay_pixels;
+    int vdp1_background_pixels;
+} Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt;
+
+typedef struct {
     int valid;
     int capture_only;
     int renderer_permitted;
@@ -182,5 +211,14 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
     const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
     Nexus_V1_Vdp2YmirMenuCaptureReceipt *out_receipt);
+
+/* Replay the observed title-prompt lane: NBG0's 8bpp bitmap overlays the
+ * captured VDP1 framebuffer. Only the zero-scroll, zero-palette-bank
+ * register profile is admitted. This capture-only join establishes neither
+ * retail asset ownership nor production renderer permission. */
+int nexus_v1_vdp2_capture_replay_ymir_title_prompt(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirTitlePromptCaptureInput *input,
+    Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt *out_receipt);
 
 #endif

@@ -371,6 +371,87 @@ static uint32_t capture_blend_555(uint16_t source, uint32_t lower,
         ((uint32_t)green << 8U) | blue;
 }
 
+int nexus_v1_vdp2_capture_replay_ymir_title_prompt(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirTitlePromptCaptureInput *input,
+    Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2YmirTitlePromptCaptureReceipt receipt;
+    const uint8_t *registers;
+    unsigned int x;
+    unsigned int y;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.width = (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH;
+    receipt.height = (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !input || !input->vdp1_framebuffers ||
+        !input->vdp2_vram || !input->vdp2_cram || !input->vdp2_registers ||
+        input->vdp1_framebuffers_size !=
+            NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_PAIR_BYTES ||
+        input->vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        input->vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        input->vdp2_registers_size < 0x120U ||
+        input->register_byte_order !=
+            NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+        !input->original_ymir_capture_verified ||
+        !input->nbg0_over_vdp1_order_verified ||
+        memcmp(input->vdp1_framebuffers,
+               input->vdp1_framebuffers +
+                   NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES,
+               NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES) != 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    registers = input->vdp2_registers;
+#define TITLE_REG(offset) read_register16_ordered( \
+        registers, (offset), input->register_byte_order)
+    if (TITLE_REG(0x00U) != 0x8000U || TITLE_REG(0x0eU) != 0x0300U ||
+        TITLE_REG(0x20U) != 0x0001U || TITLE_REG(0x28U) != 0x0013U ||
+        TITLE_REG(0x2cU) != 0U || TITLE_REG(0x34U) != 0U ||
+        TITLE_REG(0x70U) != 0U || TITLE_REG(0x72U) != 0U ||
+        TITLE_REG(0x74U) != 0U || TITLE_REG(0x76U) != 0U ||
+        TITLE_REG(NEXUS_V1_VDP2_CRAOFA_OFFSET) != 0U ||
+        TITLE_REG(0xe6U) != 0U || TITLE_REG(0xecU) != 0x0043U ||
+        TITLE_REG(0xf8U) != 0x0004U || TITLE_REG(0x100U) != 0x1000U) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.registers_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.nbg0_over_vdp1_order_verified = 1;
+    for (y = 0U; y < NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++y) {
+        for (x = 0U; x < NEXUS_V1_VDP2_YMIR_MENU_WIDTH; ++x) {
+            size_t source_pixel =
+                (size_t)y * NEXUS_V1_VDP2_NBG0_BITMAP_WIDTH + x;
+            uint8_t index = input->vdp2_vram[source_pixel];
+            uint16_t color;
+            if (index != 0U) {
+                color = read_be16(input->vdp2_cram + (size_t)index * 2U);
+                framebuffer->rgba_buffer[
+                    (size_t)y * NEXUS_V1_VDP2_YMIR_MENU_WIDTH + x] =
+                    capture_rgb555(color);
+                ++receipt.nbg0_overlay_pixels;
+            } else {
+                color = read_be16(input->vdp1_framebuffers +
+                                  source_pixel * 2U);
+                framebuffer->rgba_buffer[
+                    (size_t)y * NEXUS_V1_VDP2_YMIR_MENU_WIDTH + x] =
+                    capture_rgb555(color);
+                ++receipt.vdp1_background_pixels;
+            }
+        }
+    }
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef TITLE_REG
+    return 1;
+}
+
 int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
     const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
