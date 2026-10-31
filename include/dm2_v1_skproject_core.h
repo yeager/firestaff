@@ -5477,6 +5477,23 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     int16_t *out_wall_gfx_field,
     DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);
 
+/* Source-shaped variant retaining DM2_query_0cee_1a46's in-place writes to
+   s_8wordarray[3..7]. Existing callers that only need the selected wall
+   material may continue to use the wrapper above. */
+int dm2_v1_skproject_query_0cee_1a46_ext_summary(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader,
+    int16_t summary_words[8],
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a — object frame-class query
    from GDAT loadability.  The source reads cls1/cls2 from the object record and
    returns a frame class based on whether GDAT entries 0x8/0x9/0xa/0xc are

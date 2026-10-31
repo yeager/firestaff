@@ -6124,6 +6124,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         };
         uint8_t wall_graphics[1] = { 0x22u };
         int ordinal = -1;
+        int16_t summary_words[8] = { 11, 12, 13, 14, 15, 16, 17, 18 };
         memset(&dungeon, 0, sizeof(dungeon));
         dungeon.raw_data = actuator_record_be;
         dungeon.raw_size = (int)sizeof(actuator_record_be);
@@ -6173,11 +6174,13 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.actuator_type == 0x7fu && wall_field == 0,
               "DM2_query_0cee_1a46 type 0x7f uses source default field");
         actuator_record_be[3] = 0x3fu;
-        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
                   &dungeon, 0x0c00u, 2, 2, 0u, wall_graphics, 1, NULL,
-                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  summary_words, &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.summary_word7_written &&
                   q1a46.summary_word7 == 0x0c00 &&
+                  summary_words[7] == 0x0c00 &&
+                  summary_words[5] == 0x22 && summary_words[3] == 14 &&
                   q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
                   wall_idx == 0x22 && wall_field == 0,
               "DM2_query_0cee_1a46 type 0x3f preserves shop summary word 7 and wall ornament on side 2");
@@ -6216,11 +6219,24 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.actuator_type == 0x46u && wall_field == 1,
               "DM2_query_0cee_1a46 type 0x46 returns active state");
+        /* c_querydb.cpp:3529-3533 assigns type 0x41's actuator data to RG2;
+         * the common summary write stores it in the high frame bits. */
+        actuator_record_be[2] = 0x02u;
+        actuator_record_be[3] = 0xc1u; /* type 0x41, data 5 */
+        memset(summary_words, 0, sizeof(summary_words));
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  summary_words, &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x41u && wall_field == 5 &&
+                  summary_words[3] == (int16_t)0x1422u &&
+                  summary_words[4] == 0 && summary_words[7] == 0,
+              "DM2_query_0cee_1a46 type 0x41 returns actuator data in packed summary frame bits");
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */
         uint8_t text_record_be[4] = { 0xffu, 0xfeu, 0x00u, 0x2au };
         int text_idx = -1, text_field = -1;
+        int16_t text_summary[8] = { 0, 0, 0, -1, -1, -1, -1, 0 };
         memset(&dungeon, 0, sizeof(dungeon));
         dungeon.raw_data = text_record_be;
         dungeon.raw_size = (int)sizeof(text_record_be);
@@ -6235,15 +6251,16 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(text_result == 0 &&
                   text_idx == 5 && text_field == 1,
               "static text wall-GFX query reads big-endian TextMode");
-        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
                   &dungeon, 0x0800u, 0, 0, 0u, NULL, 0, NULL,
-                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  text_summary, &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.valid && q1a46.found_static_text &&
                   wall_idx == 5 && wall_field == 1 &&
                   q1a46.text_summary_written &&
                   q1a46.text_summary_side == 3 &&
-                  q1a46.text_summary_value == 5,
-              "extended side-decoration query returns static big-endian DB2 text");
+                  q1a46.text_summary_value == 5 &&
+                  text_summary[3] == 5 && text_summary[4] == -1,
+              "extended side-decoration query returns static text and mutates source summary array");
     }
     {
         uint8_t animated_text_record_be[4] = {
@@ -6304,15 +6321,18 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               "DB2 ext usage 5 animates visible ornament and packs its summary word");
         animated_text_record_be[2] = 0x70u;
         animated_text_record_be[3] = 0x2au; /* ext usage 14, invisible */
-        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+        int16_t text_summary[8] = { 0, 0, 0, -1, -1, -1, -1, 0 };
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
                   &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,
-                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
+                  &animation_loader, text_summary, &wall_idx, &wall_field,
+                  &q1a46) == 0 &&
                   q1a46.text_summary_written &&
                   q1a46.text_summary_side == 5 &&
                   q1a46.text_summary_value == 0 &&
                   q1a46.summary_word7_written &&
-                  q1a46.summary_word7 == 0x0800,
-              "DB2 ext usage 14 clears side slot 5 and writes record handle");
+                  q1a46.summary_word7 == 0x0800 &&
+                  text_summary[5] == 0 && text_summary[7] == 0x0800,
+              "DB2 ext usage 14 clears side slot 5 and writes record handle into source summary array");
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
                   &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&

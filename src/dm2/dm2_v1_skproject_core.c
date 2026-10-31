@@ -13797,7 +13797,7 @@ int dm2_v1_skproject_query_0cee_1a46(
    Walks thing list for text (type 2) and actuator (type 3) records.
    For actuators, resolves GraphicNumber via wall decoration table
    and computes animation frame via QUERY_ORNATE_ANIM_FRAME. */
-int dm2_v1_skproject_query_0cee_1a46_ext(
+static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
     const struct DM2_V1_DungeonData *d,
     uint16_t first_thing,
     int16_t view_dir,
@@ -13806,6 +13806,7 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     const uint8_t *wall_gfx_list,
     int wall_gfx_count,
     const void *asset_loader_ptr,
+    int16_t summary_words[8],
     int16_t *out_wall_gfx_index,
     int16_t *out_wall_gfx_field,
     DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
@@ -13889,10 +13890,16 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     receipt.text_summary_side =
                         (int16_t)(relative_side + 3);
                     receipt.text_summary_value = 0;
+                    if (summary_words) {
+                        summary_words[relative_side + 3] = 0;
+                    }
                     if (relative_side + 3 == 5) {
                         receipt.summary_word7_written = 1u;
                         receipt.summary_word7 = text_visible
                             ? -1 : (int16_t)thing;
+                        if (summary_words) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
                     }
                     goto next_thing;
                 }
@@ -13934,6 +13941,10 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         (int16_t)(relative_side + 3);
                     receipt.text_summary_value = (int16_t)(
                         (((int)wall_gfx_field - 1) << 10) | decoration);
+                    if (summary_words) {
+                        summary_words[relative_side + 3] =
+                            receipt.text_summary_value;
+                    }
                     *out_wall_gfx_index = wall_gfx_index;
                     *out_wall_gfx_field = wall_gfx_field;
                     receipt.valid = 1;
@@ -13986,6 +13997,9 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         receipt.summary_word7_written = 1u;
                         receipt.summary_word7 = relative_side == 2
                             ? (int16_t)thing : -1;
+                        if (summary_words) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
                         break;
                     case 0x7e: /* resuscitation */
                         if (once_only != 0) {
@@ -13994,6 +14008,9 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                                  * actuator datum to summary word 7. */
                                 receipt.summary_word7_written = 1u;
                                 receipt.summary_word7 = (int16_t)actuator_data;
+                                if (summary_words) {
+                                    summary_words[7] = receipt.summary_word7;
+                                }
                             }
                             si = 1;
                         }
@@ -14028,8 +14045,11 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         }
                         break;
                     case 0x41: /* ornate step animator */
-                        /* The original sets only the animation probe word;
-                         * without a proven sequence our frame stays zero. */
+                        /* c_querydb.cpp:3529-3533 copies the actuator data
+                         * word into RG2; the common summary write shifts it
+                         * into bits 10..15 even though no GDAT animation is
+                         * queried for this subtype. */
+                        di = (int)actuator_data;
                         break;
                     case 0x46: /* sealable push button */
                         di = (int)active_status;
@@ -14064,6 +14084,13 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     wall_gfx_field = (int16_t)di;
                     receipt.wall_gfx_index = (uint16_t)decoration;
                     receipt.wall_gfx_field = (uint16_t)di;
+                    if (summary_words) {
+                        summary_words[relative_side + 3] = (int16_t)(
+                            (((uint16_t)di << 10) | decoration));
+                        if (receipt.summary_word7_written) {
+                            summary_words[7] = receipt.summary_word7;
+                        }
+                    }
                     *out_wall_gfx_index = wall_gfx_index;
                     *out_wall_gfx_field = wall_gfx_field;
                     receipt.valid = 1;
@@ -14082,6 +14109,45 @@ next_thing:
     receipt.blocked_no_wall_gfx = 1;
     if (out_receipt) *out_receipt = receipt;
     return 0;
+}
+
+int dm2_v1_skproject_query_0cee_1a46_ext(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader_ptr,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    return dm2_v1_skproject_query_0cee_1a46_ext_impl(
+        d, first_thing, view_dir, side_index, game_tick,
+        wall_gfx_list, wall_gfx_count, asset_loader_ptr, NULL,
+        out_wall_gfx_index, out_wall_gfx_field, out_receipt);
+}
+
+int dm2_v1_skproject_query_0cee_1a46_ext_summary(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader_ptr,
+    int16_t summary_words[8],
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    return dm2_v1_skproject_query_0cee_1a46_ext_impl(
+        d, first_thing, view_dir, side_index, game_tick,
+        wall_gfx_list, wall_gfx_count, asset_loader_ptr, summary_words,
+        out_wall_gfx_index, out_wall_gfx_field, out_receipt);
 }
 
 /* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a. */

@@ -7,6 +7,18 @@ frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
 frame and the absent-animation fallback. Full actuator animation variants and
 viewport integration remain open.
 
+2026-10-31 skproject `DM2_query_0cee_1a46` packed output parity:
+`dm2_v1_skproject_query_0cee_1a46_ext_summary` now exposes the source's
+in-place `s_8wordarray[3..7]` updates while preserving the simpler renderer
+wrapper. Its ordered text path writes packed decoration/frame values and the
+usage-14 clear/record marker; actuator shop/resurrection branches write word 7.
+Actuator type `0x41` now returns its source actuator-data word in the packed
+frame bits rather than zero (`c_querydb.cpp:3529-3533`, `3703-3723`). Synthetic
+big-endian regression coverage checks the type-`0x41` value and packed array
+write, plus type-`0x3f` word-7 mutation. Runtime composition still uses its
+direct wall index/field output, and other actuator, source-capture, and
+all-platform cases remain open.
+
 2026-10-31 runtime integration for `DM2_query_0cee_1a46`: the DM2 door metadata
 path now consumes the ordered, GDAT-aware query with the current game tick,
 map wall-GFX list, and authenticated asset loader. This makes the supported
