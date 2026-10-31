@@ -12,11 +12,15 @@ A second capture-only regression scans the complete 174-row frame trace and
 resolves 113 executed type-2 mode-1 draws to unique `LEV00.DGN` image and CLUT
 sources. It submits those commands in trace order to Firestaff's RGBA sequence
 compositor and records 145,171 written pixels. The other 49 of the frame's 162
-draw commands remain explicit capture gaps. This proves command/source/CLUT
-composition for the joined subset; the isolated output is not compared to the
-Ymir screenshot or framebuffer, and it does not close the gaps or enable the
-production renderer. The receipt retains `capture_only=true` and
-`renderer_permitted=false`.
+draw commands remain gaps in that DGN-bound sequence. A separate check binds
+11 of those commands to hash-pinned all-zero 4bpp spans in both the raw and
+trace-reconstructed VDP1 VRAM; all 9,952 source texels are transparent under
+the captured PMOD, and the no-op compositor leaves the framebuffer unchanged.
+These 11 checks claim no DGN image or CLUT owner. The sequence proves
+command/source/CLUT composition for the joined subset; its isolated output is
+not compared to the Ymir screenshot or framebuffer, and it does not close the
+other sequence gaps or enable the production renderer. The receipt retains
+`capture_only=true` and `renderer_permitted=false`.
 
 Run this regression with the complete private Ymir capture bundle available at
 the configured capture path and the user's retail data:
@@ -28,6 +32,17 @@ ctest --test-dir build -R '^nexus_v1_vdp1_frame13162_dgn113_replay$' --output-on
 
 The capture bundle is not committed. When it is absent from the checkout, the
 CTest is skip-safe; a skip is not evidence that the 113-command replay ran.
+To run it directly against the external capture bundle, pass its path to the
+test executable:
+
+```sh
+build/test_nexus_v1_vdp1_frame13162_dgn113_replay \
+  "$FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR" \
+  "$FIRESTAFF_WORKSPACE_DATA_DIR/nexus/LEV00.DGN" \
+  tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv \
+  parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp1-command-execution-frame13162.json \
+  /tmp/nexus-frame13162-dgn113.rgba
+```
 
 The execution receipt also includes rows 6 and 7, and the test checks those
 commands against the reconstructed command bytes. Row 6 sets the inclusive

@@ -19,6 +19,7 @@
 #define VDP1_FBS_BYTES 0x80000U
 #define COMMAND_BYTES 32U
 #define CSV_COLUMNS 22U
+#define TRANSPARENT_NOOP_ROWS 11U
 
 typedef struct { uint8_t *data; size_t size; } Blob;
 
@@ -35,6 +36,166 @@ typedef struct {
     const char *name;
     const char *sha256;
 } ManifestEntry;
+
+typedef struct {
+    unsigned int index;
+    uint32_t command_address;
+    uint32_t texture_start;
+    uint32_t texture_end;
+    uint16_t colour_control;
+    const char *texture_sha256;
+} TransparentNoopEvidence;
+
+static uint16_t read_le16(const uint8_t *bytes);
+
+static int captured_vram_command_matches_trace(
+    const uint8_t *captured_vram, size_t captured_vram_size,
+    const TraceRow *row)
+{
+    unsigned int byte;
+    if (!captured_vram || !row ||
+        row->address > captured_vram_size ||
+        COMMAND_BYTES > captured_vram_size - row->address) return 0;
+    /* The raw Saturn snapshot stores VDP1 words big-endian; trace rows are
+     * serialized little-endian. Compare the same 16-bit command words. */
+    for (byte = 0U; byte < COMMAND_BYTES; byte += 2U) {
+        if (captured_vram[row->address + byte] != row->command[byte + 1U] ||
+            captured_vram[row->address + byte + 1U] != row->command[byte])
+            return 0;
+    }
+    return 1;
+}
+
+static int verify_transparent_noop_evidence(
+    const TraceRow rows[TRACE_ROWS], const uint8_t executed[TRACE_ROWS],
+    const Blob *captured_vram, const Blob *reconstructed_vram,
+    unsigned int *out_no_op_pixels)
+{
+    static const TransparentNoopEvidence expected[TRANSPARENT_NOOP_ROWS] = {
+        {134U, 0x01360U, 0x4dfe0U, 0x4e1a0U, 0x3290U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {162U, 0x01480U, 0x4dfe0U, 0x4e1a0U, 0x3290U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {136U, 0x013a0U, 0x4e900U, 0x4ead0U, 0x3280U,
+            "7c4c2b940c41426e36a4cf6c83afababacfb8bb1a1dc39162a95bb812e1d109f"},
+        {139U, 0x00be0U, 0x4e900U, 0x4ead0U, 0x3280U,
+            "7c4c2b940c41426e36a4cf6c83afababacfb8bb1a1dc39162a95bb812e1d109f"},
+        {163U, 0x014a0U, 0x4e900U, 0x4ead0U, 0x3280U,
+            "7c4c2b940c41426e36a4cf6c83afababacfb8bb1a1dc39162a95bb812e1d109f"},
+        {137U, 0x013c0U, 0x4e1a0U, 0x4e360U, 0x3280U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {140U, 0x00c00U, 0x4e1a0U, 0x4e360U, 0x3280U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {164U, 0x014c0U, 0x4e1a0U, 0x4e360U, 0x3280U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {167U, 0x00cc0U, 0x4e1a0U, 0x4e360U, 0x3280U,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {143U, 0x01280U, 0x4f9e0U, 0x4fba0U, 0x325cU,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"},
+        {158U, 0x00c60U, 0x4f9e0U, 0x4fba0U, 0x325cU,
+            "5c55c8f4db4010ba9203d83536d0609856af8c847ac039e37e7dde8fbd574b61"}
+    };
+    Nexus_Framebuffer framebuffer;
+    Nexus_Framebuffer before;
+    unsigned int i;
+    unsigned int no_op_pixels = 0U;
+
+    if (!rows || !executed || !captured_vram || !captured_vram->data ||
+        !reconstructed_vram || !reconstructed_vram->data ||
+        !out_no_op_pixels ||
+        captured_vram->size != VDP1_VRAM_BYTES ||
+        reconstructed_vram->size != VDP1_VRAM_BYTES) return 0;
+    memset(&framebuffer, 0xa5, sizeof(framebuffer));
+    for (i = 0U; i < TRANSPARENT_NOOP_ROWS; ++i) {
+        const TransparentNoopEvidence *evidence = &expected[i];
+        const TraceRow *row = &rows[evidence->index];
+        Nexus_V1_Vdp1TextureCommand parsed;
+        Nexus_V1_Vdp1CaptureCompositeInput input;
+        Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
+        uint32_t span_size = evidence->texture_end - evidence->texture_start;
+        const uint8_t *captured_span;
+        const uint8_t *reconstructed_span;
+        char span_sha[65];
+        uint32_t byte;
+
+        if (!executed[evidence->index] || row->index != evidence->index ||
+            row->address != evidence->command_address ||
+            row->address > VDP1_VRAM_BYTES - COMMAND_BYTES ||
+            !captured_vram_command_matches_trace(captured_vram->data,
+                captured_vram->size, row) ||
+            (read_le16(row->command) & 0x000fU) != 2U ||
+            read_le16(row->command + 4U) != 0x048cU ||
+            (read_le16(row->command + 4U) & 0x0040U) != 0U ||
+            (read_le16(row->command + 4U) & 0x0080U) == 0U ||
+            read_le16(row->command + 6U) != evidence->colour_control ||
+            nexus_v1_vdp1_texture_command_parse(row->command,
+                COMMAND_BYTES, &parsed) != 0 || !parsed.texture_command ||
+            parsed.command_type != 2U || parsed.colour_mode != 1U ||
+            parsed.draw_mode != 0x048cU ||
+            parsed.texture_source_byte_offset != evidence->texture_start ||
+            parsed.texture_source_byte_offset > VDP1_VRAM_BYTES ||
+            parsed.texture_byte_count != span_size ||
+            span_size != (uint32_t)parsed.texture_width * parsed.texture_height / 2U ||
+            parsed.texture_byte_count > VDP1_VRAM_BYTES -
+                parsed.texture_source_byte_offset ||
+            evidence->texture_end > VDP1_VRAM_BYTES) {
+            fprintf(stderr, "transparent no-op command evidence mismatch at trace index %u\n",
+                evidence->index);
+            return 0;
+        }
+        captured_span = captured_vram->data + evidence->texture_start;
+        reconstructed_span = reconstructed_vram->data + evidence->texture_start;
+        if (memcmp(captured_span, reconstructed_span, span_size) != 0 ||
+            firestaff_x68k_media_receipt_sha256_hex(reconstructed_span,
+                span_size, span_sha, sizeof(span_sha)) != 0 ||
+            strcmp(span_sha, evidence->texture_sha256) != 0) {
+            fprintf(stderr, "transparent no-op texture bytes/hash mismatch at trace index %u\n",
+                evidence->index);
+            return 0;
+        }
+        for (byte = 0U; byte < span_size; ++byte) {
+            if (captured_span[byte] != 0U || reconstructed_span[byte] != 0U) {
+                fprintf(stderr, "transparent no-op source is not all zero at trace index %u\n",
+                    evidence->index);
+                return 0;
+            }
+        }
+        memset(&input, 0, sizeof(input));
+        input.command = row->command;
+        input.command_size = COMMAND_BYTES;
+        input.texture_span = reconstructed_span;
+        input.texture_span_size = (int)span_size;
+        input.original_saturn_capture_verified = 1;
+        input.transparent_capture_noop_verified = 1;
+        if (row->local_x != 160 || row->local_y != 112) {
+            fprintf(stderr, "transparent no-op local origin mismatch at trace index %u\n",
+                evidence->index);
+            return 0;
+        }
+        input.screen_origin_x = row->local_x;
+        input.screen_origin_y = row->local_y;
+        before = framebuffer;
+        if (!nexus_v1_vdp1_capture_composite_mode1(
+                &framebuffer, &input, &receipt) || !receipt.valid ||
+            !receipt.original_saturn_capture_verified ||
+            !receipt.transparent_noop_verified || receipt.renderer_permitted ||
+            receipt.source_join_verified || receipt.palette_join_verified ||
+            receipt.written_pixels != 0 ||
+            receipt.transparent_pixels != (int)(parsed.texture_width *
+                parsed.texture_height) ||
+            memcmp(&framebuffer, &before, sizeof(framebuffer)) != 0) {
+            fprintf(stderr, "transparent no-op compositor receipt mismatch at trace index %u\n",
+                evidence->index);
+            return 0;
+        }
+        no_op_pixels += (unsigned int)receipt.transparent_pixels;
+    }
+    printf("AUTHENTIC TRANSPARENT NO-OP EVIDENCE: %u executed mode-1 draws, "
+        "%u transparent texels, zero writes; no DGN owner or palette join; "
+        "renderer_permitted=false\n", TRANSPARENT_NOOP_ROWS, no_op_pixels);
+    *out_no_op_pixels = no_op_pixels;
+    return 1;
+}
 
 static Blob read_blob(const char *path)
 {
@@ -358,6 +519,8 @@ static int write_rgba(const char *path,
 
 static int write_receipt(const char *path, const char *rgba_path,
                          const char *capture_sha, const char *dgn_sha,
+                         unsigned int transparent_noop_commands,
+                         unsigned int transparent_noop_texels,
                          const uint32_t *indices, unsigned int count,
                          const Nexus_V1_Vdp1CommandSequenceReceipt *sequence,
                          const Nexus_V1_Vdp1RgbaCaptureSequenceReceipt *replay)
@@ -383,6 +546,11 @@ static int write_receipt(const char *path, const char *rgba_path,
             sequence->local_coordinate_count, sequence->user_clip_count);
     fprintf(file, "dgn_image_clut_joins=%u\nsource_joins_verified=%d\npalette_joins_verified=%d\n",
             count, replay->source_joins_verified, replay->palette_joins_verified);
+    fprintf(file, "transparent_zero_noop_commands=%u\n"
+        "transparent_zero_noop_texels=%u\n"
+        "transparent_zero_noop_source_join=false\n"
+        "transparent_zero_noop_palette_join=false\n",
+        transparent_noop_commands, transparent_noop_texels);
     fprintf(file, "capture_gap_commands=%d\nwritten_pixels=%d\ngouraud_applied=%d\n",
             replay->capture_gap_commands, replay->written_pixels,
             replay->gouraud_commands_applied);
@@ -424,6 +592,7 @@ int main(int argc, char **argv)
     Blob registers = {0};
     Nexus_V1_Vdp1RgbaCaptureFramebuffer *rgba = NULL;
     unsigned int joined = 0U;
+    unsigned int transparent_noop_pixels = 0U;
     unsigned int clip_updates = 0U;
     unsigned int local_updates = 0U;
     int clip_x0 = 0, clip_y0 = 0, clip_x1 = 0, clip_y1 = 0;
@@ -517,6 +686,12 @@ int main(int argc, char **argv)
         !verify_external_trace(&raw_trace, rows, &reconstructed_vram) ||
         !parse_execution_json(&execution_fixture, rows, executed)) {
         fprintf(stderr, "frame-13162 trace fixture, capture trace, or execution JSON is inconsistent\n");
+        goto done;
+    }
+    if (!verify_transparent_noop_evidence(rows, executed,
+            &snapshot_vram, &reconstructed_vram,
+            &transparent_noop_pixels)) {
+        fprintf(stderr, "authentic transparent no-op validation failed\n");
         goto done;
     }
     if (!strstr((const char *)bundle.data, "capture_frame_index=13162\n") ||
@@ -701,6 +876,7 @@ int main(int argc, char **argv)
         firestaff_x68k_media_receipt_sha256_hex(dgn.data, dgn.size,
             dgn_sha, sizeof(dgn_sha)) != 0 ||
         !write_receipt(receipt_path, rgba_path, fbs_sha, dgn_sha,
+            TRANSPARENT_NOOP_ROWS, transparent_noop_pixels,
             joined_indices, joined, &sequence, &rgba_receipt)) {
         fprintf(stderr, "could not write replay output and receipt\n");
         goto done;
