@@ -131,6 +131,13 @@ Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
 
+The next capture tool now includes a bounded `$1800-$1803` I/O and
+`$224C-$2255`, `$2273-$2280`, `$22A4` memory observer. Its offline verifier
+requires the authenticated System Card image and checks each event's access
+kind, value, PC mapping, and opcode bytes against that BIOS. No new trace has
+been collected with this observer yet; collect one before drawing conclusions
+about the status callback or `$E209/$E11D` carry path.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source

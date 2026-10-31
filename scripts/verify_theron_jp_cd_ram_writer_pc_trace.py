@@ -15,6 +15,7 @@ import hashlib
 import sys
 from pathlib import Path
 
+from theron_python_compat import zip_strict
 TRACK02_MD5 = "b7afb338ad31be1025b53f9aff12d73a"
 TRACK02_SIZE = 8_102_640
 TRACK02_START_LBA = 3_590
@@ -45,7 +46,7 @@ def parse_fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
 def ensure_capture_pair(paths: list[Path]) -> None:
     suffixes = [WRITE_SUFFIX, READ_SUFFIX, DISPATCH_SUFFIX]
     bases = []
-    for path, suffix in zip(paths, suffixes, strict=True):
+    for path, suffix in zip_strict(paths, suffixes):
         if path.parent.resolve() != paths[0].parent.resolve() or not path.name.endswith(suffix):
             raise ValueError("trace files are not from one capture directory")
         bases.append(path.name[: -len(suffix)])
@@ -242,7 +243,7 @@ def link_code_to_writes(code_rows: list[dict[str, str]], writes: list[dict[str, 
         values = bytes.fromhex(row["bytes"])
         addresses = [int(value, 16) for value in row["physical_bytes"].split(",")]
         row_backed = True
-        for address, value in zip(addresses, values, strict=True):
+        for address, value in zip_strict(addresses, values):
             address_writes = writes_by_address.get(address)
             if not address_writes:
                 row_backed = False

@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — add bounded BIOS I/O and RAM receipts
+
+Added an opt-in Mednafen sidecar for System Card reads and writes at
+`$1800-$1803`, `$224C-$2255`, `$2273-$2280`, and `$22A4`. Each row includes
+the shared event sequence, access direction and value, logical and physical
+data addresses, CPU PC mapping, mapped instruction bytes, and MPR state. The
+verifier requires the authentic hash-locked System Card image and rejects
+unmapped opcodes, source-byte mismatches, invalid mappings, reordered rows,
+and cap overflow. Instrumenter and verifier regression tests cover insertion,
+idempotence, read/write cases, and malformed evidence. This records BIOS
+activity only; no new capture has been collected, and no gameplay state or
+Theron parity is established. The next capture remains open in `TODO-theron.md`.
+
 ## 2026-10-31 — retain BIOS decisions beyond the bootstrap trace cap
 
 Added an opt-in Mednafen decision-PC sidecar with the shared event sequence,

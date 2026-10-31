@@ -82,6 +82,8 @@ python3 "$repo/tests/test_verify_theron_syscard_callback_state_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_callback_state_trace.py"
 python3 "$repo/tests/test_verify_theron_syscard_decision_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_decision_trace.py"
+python3 "$repo/tests/test_verify_theron_syscard_io_ram_trace.py"
+python3 "$repo/tests/test_instrument_mednafen_theron_syscard_io_ram_trace.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -1782,10 +1784,14 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'instrument_mednafen_theron_syscard_bootstrap_follow.py' "$build_script" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_status_trace.py' "$build_script" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_decision_trace.py' "$build_script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_io_ram_trace.py' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE' "$script" ||
    ! grep -Fq 'verify_theron_syscard_status_trace.py' "$script" ||
    ! grep -Fq 'verify_theron_syscard_decision_trace.py' "$script" ||
+   ! grep -Fq 'verify_theron_syscard_io_ram_trace.py' "$script" ||
+   ! grep -Fq 'logical_ranges=1800-1803,224c-2255,2273-2280,22a4' "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_callback_state_trace.py' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE' "$script" ||
    ! grep -Fq 'verify_theron_syscard_callback_state_trace.py' "$script" ||
