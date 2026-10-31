@@ -18,8 +18,10 @@ with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff now records
 the latest rendered G0205 ornament or ReDMCSB G0208 door-switch rectangle
 each Atari F0128 frame and routes Atari C080 through that inclusive box; PC
 keeps its separate box. G0208's D3R/D3C/D2C/D1C rows come directly from
-`DUNVIEW.C:1210-1216`. The bounds regression covers C05 overwrite versus
-F0115 floor-box union, and the updated M11 translation unit compiles. A
+`DUNVIEW.C:1210-1216`; Atari button rendering and C05 hit testing now share
+those exact destination bounds and native source dimensions. The bounds
+regression covers C05 overwrite versus F0115 floor-box union, and the updated
+M11 translation unit compiles. A
 matching original-media sensor or door-button click has not run locally
 because the Atari package is absent.
 This correction does not close the still-open Atari floor/door ornament,

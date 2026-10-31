@@ -7422,28 +7422,38 @@ static int m11_csb_present_atari_st_runtime_viewport(
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ||
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ||
                  draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1)) {
-                const CSB_V1_CSBWinViewportProjectionRectangle *switch_projection;
+                CSB_V1_CSBWinViewportProjectionRectangle switch_projection;
                 uint8_t switch_lane = draw->wall ==
                     CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1 ? 0u :
                     draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ? 1u :
                     draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ? 2u : 3u;
-                if (!csb_v1_csbwin_viewport_door_switch_projection(
-                        &layout, switch_lane, &switch_projection) ||
-                    !m11_csb_blit_atari_st_viewport_graphic(
+                /* ReDMCSB DUNVIEW.C G0208 is ordered D3R,D3C,D2C,D1C.
+                 * Use its exact destination and source dimensions for both
+                 * the native button blit and G0291[C05], not C22E geometry. */
+                switch_projection.x1 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 0);
+                switch_projection.x2 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 1);
+                switch_projection.y1 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 2);
+                switch_projection.y2 = (uint8_t)dm1_v1_g0208_get_pc34(
+                    switch_lane, 3);
+                switch_projection.source_stride = (uint8_t)
+                    dm1_v1_g0208_get_pc34(switch_lane, 4);
+                switch_projection.source_height = (uint8_t)
+                    dm1_v1_g0208_get_pc34(switch_lane, 5);
+                switch_projection.source_x = 0u;
+                switch_projection.source_y = 0u;
+                if (!m11_csb_blit_atari_st_viewport_graphic(
                         /* ReDMCSB DEFS.H MEDIA020 M634 assigns the CSB
                          * Atari ST (G20E) door-button family to native
                          * GRAPHICS.DAT index 315. Index 453 belongs to the
                          * later MEDIA720 layout. */
-                        state, 315u, 0, switch_projection, viewport,
+                        state, 315u, 0, &switch_projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
-                /* ReDMCSB DUNVIEW.C F0110 copies G0208[0][view] into
-                 * G0291[C05]. Use the source table rather than assuming the
-                 * CSBWin layout's switch projection has identical bounds. */
                 m11_csb_atari_c05_set_zone(
-                    dm1_v1_g0208_get_pc34(switch_lane, 0),
-                    dm1_v1_g0208_get_pc34(switch_lane, 1),
-                    dm1_v1_g0208_get_pc34(switch_lane, 2),
-                    dm1_v1_g0208_get_pc34(switch_lane, 3));
+                    switch_projection.x1, switch_projection.x2,
+                    switch_projection.y1, switch_projection.y2);
             }
             if (source_function && m11_csb_atari_st_draw_scheduled_cell(
                     state, dungeon, &profile->runtime, viewport,
