@@ -9016,6 +9016,84 @@ static int16_t dm2_runtime_get_ornate_anim_len(
     return 1;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    int map;
+    int failed;
+} DM2_RuntimeCreatureKillerContext;
+
+static uint16_t dm2_runtime_creature_killer_get_at(
+    void *context, int16_t x, int16_t y)
+{
+    DM2_RuntimeCreatureKillerContext *ctx =
+        (DM2_RuntimeCreatureKillerContext *)context;
+    int16_t handle;
+    if (!ctx || !ctx->runtime || !ctx->runtime->boot ||
+        !ctx->runtime->boot->dungeon_data)
+        return 0xffffu;
+    handle = dm2_v1_get_creature_at(
+        &ctx->runtime->record_pools,
+        (const DM2_V1_DungeonData *)ctx->runtime->boot->dungeon_data,
+        ctx->map, x, y);
+    return handle < 0 ? 0xffffu : (uint16_t)handle;
+}
+
+static int dm2_runtime_creature_killer_type_matches(
+    void *context, uint16_t handle, uint16_t filter)
+{
+    DM2_RuntimeCreatureKillerContext *ctx =
+        (DM2_RuntimeCreatureKillerContext *)context;
+    const uint8_t *record;
+    if (!ctx || !ctx->runtime ||
+        dm2_v1_record_handle_pool((int16_t)handle) != DM2_DB_CREATURE)
+        return 0;
+    record = dm2_v1_record_pool_address(
+        &ctx->runtime->record_pools, (int16_t)handle);
+    if (!record || ctx->runtime->record_pools.pools[DM2_DB_CREATURE].record_size < 10)
+        return 0;
+    /* c_1c9a.cpp::DM2_1c9a_09b9 compares DB4 word@8 with the filter. */
+    return ((uint16_t)record[8] | ((uint16_t)record[9] << 8)) == filter;
+}
+
+static void dm2_runtime_creature_killer_set_ai_state(
+    void *context, uint16_t handle, int16_t x, int16_t y,
+    int16_t state, int16_t value)
+{
+    DM2_RuntimeCreatureKillerContext *ctx =
+        (DM2_RuntimeCreatureKillerContext *)context;
+    DM2_V1_CaiiAiTurnReceipt receipt;
+    if (!ctx || !ctx->runtime || !ctx->runtime->caii_ready ||
+        !dm2_v1_caii_ai_13e4_0360(
+            &ctx->runtime->record_pools,
+            (const DM2_V1_DungeonData *)ctx->runtime->boot->dungeon_data,
+            &ctx->runtime->caii, &ctx->runtime->timer_queue,
+            ctx->map, (unsigned long)ctx->runtime->tick_count,
+            (int16_t)handle, x, y, state, value, &receipt) ||
+        !receipt.completed) {
+        if (ctx) ctx->failed = 1;
+    }
+}
+
+static void dm2_runtime_creature_killer_attack(
+    void *context, uint16_t handle, int16_t x, int16_t y,
+    int32_t attack_word, int16_t attack_strength, int16_t hp_delta)
+{
+    DM2_RuntimeCreatureKillerContext *ctx =
+        (DM2_RuntimeCreatureKillerContext *)context;
+    DM2_V1_CaiiAttackReceipt receipt;
+    if (!ctx || !ctx->runtime || !ctx->runtime->caii_ready ||
+        !dm2_v1_caii_attack_creature(
+            &ctx->runtime->record_pools,
+            (const DM2_V1_DungeonData *)ctx->runtime->boot->dungeon_data,
+            &ctx->runtime->caii, &ctx->runtime->timer_queue,
+            &ctx->runtime->session_rng, ctx->map,
+            (unsigned long)ctx->runtime->tick_count,
+            (int16_t)handle, x, y, x, y, (uint32_t)attack_word,
+            attack_strength, hp_delta, &receipt)) {
+        if (ctx) ctx->failed = 1;
+    }
+}
+
 static int dm2_runtime_actuate_wall_mecha_timer(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
@@ -9025,8 +9103,13 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_GlobVarState global_state;
+    DM2_V1_CreatureKillerCallbacks creature_killer_cb;
+    DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    size_t caii_backup_size = 0u;
     int backup_ready = 0;
     int map, x, y, action, direction;
 
@@ -9042,6 +9125,27 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     direction = (int)(uint8_t)(timer->value_b & 0xff);
     action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
     game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    rng_backup = rt->session_rng;
+    memset(&creature_killer_cb, 0, sizeof(creature_killer_cb));
+    memset(&creature_killer_ctx, 0, sizeof(creature_killer_ctx));
+    if (rt->caii_ready && map >= 0 && map <
+            ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count) {
+        DM2_V1_DungeonData *dungeon =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        creature_killer_ctx.runtime = rt;
+        creature_killer_ctx.map = map;
+        creature_killer_cb.ctx = &creature_killer_ctx;
+        creature_killer_cb.map_width = dungeon->level_widths[map];
+        creature_killer_cb.map_height = dungeon->level_heights[map];
+        creature_killer_cb.get_creature_at =
+            dm2_runtime_creature_killer_get_at;
+        creature_killer_cb.creature_type_matches =
+            dm2_runtime_creature_killer_type_matches;
+        creature_killer_cb.set_creature_ai_state =
+            dm2_runtime_creature_killer_set_ai_state;
+        creature_killer_cb.attack_creature =
+            dm2_runtime_creature_killer_attack;
+    }
     if (game) {
         memcpy(global_state.bit_vars, game->glob_vars.bit_vars,
                sizeof(global_state.bit_vars));
@@ -9052,6 +9156,13 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
+    if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
+        caii_backup_size = (size_t)rt->caii.capacity *
+            DM2_V1_CAII_SLOT_SIZE;
+        caii_backup = (uint8_t *)malloc(caii_backup_size);
+        if (!caii_backup) goto wall_mecha_reject;
+        memcpy(caii_backup, rt->caii.slots, caii_backup_size);
+    }
     if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
         !rt->boot->dungeon_data ||
         ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size <= 0 ||
@@ -9067,9 +9178,12 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        game ? &global_state : NULL, dm2_runtime_get_ornate_anim_len, rt,
+        game ? &global_state : NULL,
+        rt->caii_ready ? &creature_killer_cb : NULL,
+        dm2_runtime_get_ornate_anim_len, rt,
         &event);
-    if (!event.valid || event.fail_closed != 0) {
+    if (!event.valid || event.fail_closed != 0 ||
+        creature_killer_ctx.failed) {
         goto wall_mecha_reject;
     }
     if (game) {
@@ -9082,6 +9196,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
+    free(caii_backup);
     rt->actuator_tile_wall_mecha++;
     return 1;
 
@@ -9093,9 +9208,13 @@ wall_mecha_reject:
         dm2_v1_record_pool_set_free(&rt->record_pools);
         rt->record_pools = pool_backup;
         memset(&pool_backup, 0, sizeof(pool_backup));
+        if (caii_backup && rt->caii.slots)
+            memcpy(rt->caii.slots, caii_backup, caii_backup_size);
+        rt->session_rng = rng_backup;
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
+    free(caii_backup);
     return 0;
 }
 
@@ -9108,8 +9227,13 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_GlobVarState global_state;
+    DM2_V1_CreatureKillerCallbacks creature_killer_cb;
+    DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    size_t caii_backup_size = 0u;
     int backup_ready = 0;
     int map, x, y, action, direction;
 
@@ -9125,6 +9249,27 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     direction = (int)(uint8_t)(timer->value_b & 0xff);
     action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
     game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    rng_backup = rt->session_rng;
+    memset(&creature_killer_cb, 0, sizeof(creature_killer_cb));
+    memset(&creature_killer_ctx, 0, sizeof(creature_killer_ctx));
+    if (rt->caii_ready && map >= 0 && map <
+            ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count) {
+        DM2_V1_DungeonData *dungeon =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        creature_killer_ctx.runtime = rt;
+        creature_killer_ctx.map = map;
+        creature_killer_cb.ctx = &creature_killer_ctx;
+        creature_killer_cb.map_width = dungeon->level_widths[map];
+        creature_killer_cb.map_height = dungeon->level_heights[map];
+        creature_killer_cb.get_creature_at =
+            dm2_runtime_creature_killer_get_at;
+        creature_killer_cb.creature_type_matches =
+            dm2_runtime_creature_killer_type_matches;
+        creature_killer_cb.set_creature_ai_state =
+            dm2_runtime_creature_killer_set_ai_state;
+        creature_killer_cb.attack_creature =
+            dm2_runtime_creature_killer_attack;
+    }
     if (game) {
         memcpy(global_state.bit_vars, game->glob_vars.bit_vars,
                sizeof(global_state.bit_vars));
@@ -9135,6 +9280,13 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
+    if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
+        caii_backup_size = (size_t)rt->caii.capacity *
+            DM2_V1_CAII_SLOT_SIZE;
+        caii_backup = (uint8_t *)malloc(caii_backup_size);
+        if (!caii_backup) goto floor_mecha_reject;
+        memcpy(caii_backup, rt->caii.slots, caii_backup_size);
+    }
     if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
         !rt->boot->dungeon_data ||
         ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size <= 0 ||
@@ -9150,9 +9302,12 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        game ? &global_state : NULL, dm2_runtime_get_ornate_anim_len, rt,
+        game ? &global_state : NULL,
+        rt->caii_ready ? &creature_killer_cb : NULL,
+        dm2_runtime_get_ornate_anim_len, rt,
         &event);
-    if (!event.valid || event.fail_closed != 0) {
+    if (!event.valid || event.fail_closed != 0 ||
+        creature_killer_ctx.failed) {
         goto floor_mecha_reject;
     }
     if (game) {
@@ -9165,6 +9320,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
+    free(caii_backup);
     rt->floor_mecha_timers++;
     return 1;
 
@@ -9176,9 +9332,13 @@ floor_mecha_reject:
         dm2_v1_record_pool_set_free(&rt->record_pools);
         rt->record_pools = pool_backup;
         memset(&pool_backup, 0, sizeof(pool_backup));
+        if (caii_backup && rt->caii.slots)
+            memcpy(rt->caii.slots, caii_backup, caii_backup_size);
+        rt->session_rng = rng_backup;
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
+    free(caii_backup);
     rt->actuator_tile_pitfall_rejected++;
     return 0;
 }

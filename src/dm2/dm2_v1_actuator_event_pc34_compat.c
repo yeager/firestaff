@@ -1093,6 +1093,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               int action_type, int direction,
                               uint32_t game_tick,
                               DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
@@ -1119,7 +1120,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
     ctx.global_state      = global_state;
-    ctx.creature_killer_cb = NULL;
+    ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
     ctx.receipt     = receipt;
@@ -1423,6 +1424,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                int action_type, int direction,
                                uint32_t game_tick,
                                DM2_V1_GlobVarState *global_state,
+                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
@@ -1449,7 +1451,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
     ctx.global_state      = global_state;
-    ctx.creature_killer_cb = NULL;
+    ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
     ctx.receipt     = receipt;
@@ -1471,24 +1473,29 @@ int dm2_v1_activate_creature_killer(
     int16_t actu_type, int16_t action_type,
     DM2_V1_CreatureKillerReceipt *receipt)
 {
-    int16_t dx_abs, dy_abs, origin_x, origin_y, span_x, span_y;
-    int16_t ix, iy;
+    int dx_abs, dy_abs, origin_x, origin_y, span_x, span_y;
+    int ix, iy;
 
     if (!receipt) return 0;
     memset(receipt, 0, sizeof(*receipt));
     if (!cb || !cb->get_creature_at || !cb->creature_type_matches) return 0;
 
-    dx_abs = (int16_t)((actu_x - timer_x) < 0 ? -(actu_x - timer_x) : (actu_x - timer_x));
-    dy_abs = (int16_t)((actu_y - timer_y) < 0 ? -(actu_y - timer_y) : (actu_y - timer_y));
-    origin_x = (int16_t)(actu_x - dx_abs);
-    origin_y = (int16_t)(actu_y - dy_abs);
-    span_x = (int16_t)(2 * dx_abs + 1);
-    span_y = (int16_t)(2 * dy_abs + 1);
+    /* c_tim_proc.cpp:2925-2934 truncates the differences to signed 16-bit
+     * before taking their absolute values. Keep the accumulator wide so
+     * the -32768 case becomes +32768 instead of overflowing. */
+    dx_abs = (int)(int16_t)(actu_x - timer_x);
+    dy_abs = (int)(int16_t)(actu_y - timer_y);
+    if (dx_abs < 0) dx_abs = -dx_abs;
+    if (dy_abs < 0) dy_abs = -dy_abs;
+    origin_x = (int)actu_x - dx_abs;
+    origin_y = (int)actu_y - dy_abs;
+    span_x = 2 * dx_abs + 1;
+    span_y = 2 * dy_abs + 1;
 
     for (iy = span_y - 1; iy >= 0; iy--) {
         for (ix = span_x - 1; ix >= 0; ix--) {
-            int16_t cx = (int16_t)(origin_x + ix);
-            int16_t cy = (int16_t)(origin_y + iy);
+            int cx = origin_x + ix;
+            int cy = origin_y + iy;
             uint16_t creature_rec;
 
             if (cx < 0 || cx >= cb->map_width) continue;
