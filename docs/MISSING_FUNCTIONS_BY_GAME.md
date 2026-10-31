@@ -217,10 +217,14 @@ A matched three-run JP PCE Fast state-only comparison records Button II+UP
 guest reads followed by repeatable `$C1FC` transfers from `$20B4` to candidate
 bytes `$2040/$2041`; three Button II-only controls retain the prior bytes.
 Source-locked analysis also associates `$C1FC` with copying teleporter
-destination coordinates. The trace does not identify its caller or active-map
-object, so it cannot establish that the observed transfer is player movement.
+destination coordinates. A follow-up three-run capture records the same
+128-instruction path through `$C1D6` and into `$C1FC`, but does not source-bind
+the tested fields, establish gameplay purpose, or identify an active-map
+object. It therefore cannot establish that the transfer is player movement.
 Map identity, byte semantics, collision outcome, visible response, cold CD
-handoff and native parity remain open. The separate short-format US
+handoff and native parity remain open. See the [dynamic instruction-context
+capture](source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+The separate short-format US
 `$44CA/$44DB` trace is still ambiguous because standard-PCE and PCE Fast share
 an instrumentation path and label.
 

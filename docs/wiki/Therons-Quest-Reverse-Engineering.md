@@ -32,10 +32,13 @@ Button II-only controls retain their previous values. This is input-conditioned
 state transfer, not yet mapped movement: active-map identity, field semantics,
 collision outcome and rendered response remain open. The same `$C1FC` TII is
 also associated in the source-locked analysis with copying teleporter
-destination coordinates. Since the capture does not identify the caller or
-active-map object, it cannot distinguish movement from teleporter resolution.
-See the [comparison
-bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+destination coordinates. A follow-up three-run trace records the identical
+128-instruction path into `$C1FC`, including a `$C1D6` call/return and
+conditional fall-through. The code history does not source-bind the tested
+fields, establish gameplay purpose, or identify the active-map object, so it
+still cannot distinguish player movement from teleporter resolution. See the
+[comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
 An isolated JP PCE Fast state-only run also verified the corrected input gate:
 the scripted guest read at `$44C1` (`raw=0010`, event 58758) precedes the first
 of 4,096 bounded VRAM commit rows (event 58761). The capture reports

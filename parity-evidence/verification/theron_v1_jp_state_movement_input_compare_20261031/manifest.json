@@ -147,10 +147,46 @@
     "authenticatedCdRamReceiptsPerRun": 0,
     "sourceBoundCdDataPortReadsPerRun": 0
   },
+  "followUpInstructionContext": {
+    "date": "2026-10-31",
+    "runs": 3,
+    "stateOnly": true,
+    "autoloadStateSha256": "2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee",
+    "instrumentedMednafenSha256": "223cb2e079e0bee75c60f54a055c280c38fda4e928238cada5d017bb7c2181b7",
+    "target": {
+      "frame": 469,
+      "pc": "c1fc",
+      "mpr6": "6e",
+      "physicalPc": "0dc1fc",
+      "instruction": "TII $20B4,$2040,$0002"
+    },
+    "instructionContextRecordCount": 128,
+    "instructionSequence": [12522864, 12522991],
+    "instructionContextRecordSha256PerRun": [
+      "9924db9f54762133a9847ed10ed52f547bec85a5c810890c898a1c0f6530f2d5",
+      "9924db9f54762133a9847ed10ed52f547bec85a5c810890c898a1c0f6530f2d5",
+      "9924db9f54762133a9847ed10ed52f547bec85a5c810890c898a1c0f6530f2d5"
+    ],
+    "movementContextSha256PerRun": [
+      "3667514b329a209f1ba50a8ce5fad4daf274fadfd0cc0c4ddfcae07b2de7b448",
+      "3667514b329a209f1ba50a8ce5fad4daf274fadfd0cc0c4ddfcae07b2de7b448",
+      "3667514b329a209f1ba50a8ce5fad4daf274fadfd0cc0c4ddfcae07b2de7b448"
+    ],
+    "inputPlan": "ii@61:120,right@62:120,ii@190:120,up@191:120,ii@330:120,right@331:120,ii@460:120,up@461:120",
+    "summary": "The identical 128-record window ends with the $C1FC opcode and includes 127 preceding instructions, including JSR $C14E and return and the conditional sequence at $C1E9-$C1FA falling through to $C1FC in every replay.",
+    "nonClaims": [
+      "The source-level meaning of the checked RAM fields and the routine's gameplay purpose are unresolved.",
+      "The active dungeon map and any associated object row are unidentified.",
+      "The state-only replay bypasses cold CD handoff and authenticated CD-to-RAM receipts.",
+      "Collision, passability, rendered response, and native Firestaff parity are unverified."
+    ],
+    "report": "../../../docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md",
+    "rawCaptures": "private TRV2 evidence; not committed"
+  },
   "nonClaims": [
     "The active dungeon map and tile/passability semantics for this JP state are unidentified.",
     "Candidate RAM bytes do not independently prove a party coordinate or heading in this JP state.",
-    "The same $C1FC TII is associated in source-locked analysis with the Track 02 teleporter destination path; these traces do not capture the caller or active-map object row needed to distinguish that path from movement.",
+    "A follow-up three-run instruction-context trace records the bounded path into $C1FC, but source-level field meaning, routine purpose, and the active-map object row remain unresolved; the transfer cannot yet be assigned to player movement rather than teleporter resolution.",
     "No visible renderer response or paired retail image is established; movement-arm VRAM snapshots vary between one loop and the other two.",
     "Save-state autoload bypasses the original game-owned cold CD-to-RAM handoff.",
     "No Firestaff runtime behavior, native gameplay parity, or release readiness is established."

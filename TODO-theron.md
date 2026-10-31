@@ -8,11 +8,15 @@ record Button II+UP guest reads followed by `$C1FC` TII transfers from
 controls retain the previous values. This is repeatable input-conditioned
 state transfer, not yet a confirmed coordinate update or successful movement.
 The same `$C1FC` instruction is also associated with the Track 02 teleporter
-destination path. The trace does not identify its caller or active-map object
-row, so first disambiguate a movement step from teleporter resolution; then
-bind the active map, passability/collision behavior, and original rendered
-frame. All six state-only captures lack a cold CD handoff; variable VRAM
-snapshots do not establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+destination path. A follow-up three-run trace now records an identical bounded
+instruction path through `$C1D6` (`JSR $C14E`) and return, then conditional
+fall-through into `$C1FC`. That path still does not source-bind the tested RAM
+fields, identify an active-map object, or establish whether this is player
+movement or teleporter resolution. Next bind the fields and routine to the
+active map, then establish passability/collision behavior and an original
+rendered response. All state-only captures lack a cold CD handoff; variable
+VRAM snapshots do not establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md),
+[dynamic instruction-context capture](docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md),
 and [source-locked teleporter analysis](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction).
 
 ## 2026-10-31 — input-gated PCE Fast VRAM event-order trace captured

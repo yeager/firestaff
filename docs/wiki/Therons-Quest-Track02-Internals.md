@@ -46,11 +46,14 @@ needed. See the [source-locked movement boundary](../source-lock/theron-disassem
 Later matched state-only runs show repeatable Button II+UP-conditioned TII
 transfers from `$20B4` to candidate `$2040/$2041` bytes, absent in Button II-only
 controls. The same `$C1FC` TII is associated in the source-locked analysis with
-copying teleporter destination coordinates. These runs do not identify its
-caller or active-map object, so they do not prove that the transfer is player
-movement. Coordinate semantics, collision behavior, rendered change and cold
-media provenance also remain unresolved. See the
-[comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+copying teleporter destination coordinates. A follow-up three-run trace records
+the same 128-instruction path through `$C1D6` and into `$C1FC`, including a
+call/return and conditional fall-through. It does not source-bind the tested
+fields, establish gameplay purpose, or identify an active-map object, so it
+does not prove that the transfer is player movement. Coordinate semantics,
+collision behavior, rendered change and cold media provenance also remain
+unresolved. See the [comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
 
 ## Why the Disc Is Not an ISO Filesystem
 

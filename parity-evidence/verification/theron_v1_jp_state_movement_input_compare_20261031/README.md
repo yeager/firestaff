@@ -33,10 +33,14 @@ manifest records their SHA-256 values.
 There is a concrete alternative to interpreting this transfer as player
 movement: Firestaff's source-locked Track 02 teleporter analysis associates
 the same `$C1FC` `TII $20B4,$2040,$0002` instruction with copying a packed
-teleporter destination before the destination-tile check. These traces do not
-include a call-stack/caller receipt or the active map's source object row, so
-they cannot distinguish a movement path from teleporter resolution. See the
-[teleporter handoff analysis](../../../docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction)
+teleporter destination before the destination-tile check. A follow-up capture
+now records the 128 preceding PCE Fast instructions, including the same
+`$C1D6` call/return and conditional fall-through path into `$C1FC` in three
+replays. This bounds the dynamic instruction context, but does not source-bind
+the checked fields, identify an active-map object, or assign gameplay purpose
+to the routine. It therefore still cannot distinguish a player step from
+teleporter resolution. See the [control-flow capture](../../../docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md),
+the [teleporter handoff analysis](../../../docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction)
 and [native implementation boundary](../../../src/theron/theron_v1_mechanics.c).
 
 ## Provenance

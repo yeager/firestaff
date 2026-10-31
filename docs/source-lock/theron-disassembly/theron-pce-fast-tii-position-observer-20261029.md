@@ -144,6 +144,26 @@ untraced instructions, DMA, and other uninstrumented events do not receive
 sequence values. Two hook rows may describe one store and consume adjacent
 values.
 
+## Dynamic instruction context — 2026-10-31
+
+The capture-only observer now retains a 128-record PCE Fast instruction
+window ending at the `$C1FC` target opcode (127 earlier instructions plus the
+target) and flushes it when the candidate TII transfer is observed.
+Three state-only replays from the same authentic JP Akutuba F5 state produced
+identical instruction-context hashes. They show the same bounded control-flow
+path through `$C1D6` (`JSR $C14E`), return to `$C1D9`, and the conditional
+sequence at `$C1E9`–`$C1FA` falling through to `$C1FC`. The dynamic history
+therefore improves on the earlier missing-instruction-context limitation; it
+does not provide a source-level meaning for the checked RAM fields or identify
+the active map/object. See the [control-flow capture](theron-pce-fast-tii-control-flow-20261031.md)
+for exact hashes, instruction rows, and provenance.
+
+This still does not disambiguate the player-movement hypothesis from the
+source-locked Track 02 teleporter-destination path. The capture remains
+state-only, without authenticated cold CD handoff, active-map identity,
+collision/passability evidence, a paired rendered response, or native
+Firestaff parity.
+
 ## Follow-up comparison — 2026-10-31
 
 Three authentic-state action replays and three matched controls repeat the

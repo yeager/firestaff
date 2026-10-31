@@ -22,8 +22,12 @@ authenticated CD-to-RAM receipt. This is reference evidence only; it does not
 establish native gameplay parity. See the
 [state-only comparison](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
 The same `$C1FC` TII is associated in the source-locked teleporter analysis
-with copying destination coordinates; without a caller and active-map object
-receipt, the current trace cannot distinguish that path from movement.
+with copying destination coordinates. A follow-up three-run trace records an
+identical 128-instruction context into `$C1FC`, including a `$C1D6` call/return
+and conditional fall-through. This bounds the dynamic path but does not
+source-bind the tested fields, establish the routine's gameplay purpose, or
+identify the active-map object. The movement-versus-teleporter question stays
+open. See the [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
 
 ## 2026-10-31 — corrected input-gated PCE Fast VRAM trace captured
 

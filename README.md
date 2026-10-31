@@ -155,12 +155,15 @@ renderer behavior.
 A same-state Japanese F5 wall probe found no candidate position writes for
 UP, neutral or DOWN. A later matched three-run comparison from the same
 authentic save found repeatable `$20B4->$2040` TII transfers after Button II+UP
-reads; three Button II-only controls retained the candidate bytes. Source-locked analysis associates the same TII with teleporter destination
-copying; these traces do not identify the caller or active-map object. This is
-input-conditioned state-transfer evidence, not proof of mapped movement,
-collision semantics, a visible response, or parity. The active map and
-position meaning remain unknown, and the state-only runs lack a cold CD
-handoff. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+reads; three Button II-only controls retained the candidate bytes. A follow-up
+three-run trace records the same 128-instruction path into `$C1FC`, including
+a `$C1D6` call/return and conditional fall-through. Source-locked analysis
+also associates the TII with teleporter destination copying; the dynamic path
+does not establish the routine's gameplay purpose or identify the active-map
+object. This is input-conditioned state-transfer evidence, not proof of
+mapped movement, collision semantics, a visible response, or parity. The
+active map and position meaning remain unknown, and the state-only runs lack a
+cold CD handoff. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
 and the historical [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
 The reference-only Mednafen instrumentation chain, including the input-gated

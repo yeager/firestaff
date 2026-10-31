@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — capture repeatable PCE Fast TII instruction context
+
+Extended the capture-only PCE Fast observer to retain a 128-record instruction
+window ending at the candidate `$C1FC` opcode. Three authentic JP Akutuba F5
+state-only replays produced identical context hashes at frame 469, MPR6
+`$6E`. The path includes a `$C1D6` call/return and conditional fall-through
+into `$C1FC`. The trace does not establish the routine's gameplay purpose,
+the tested fields' semantics, active-map identity, collision, visible response,
+cold CD handoff, or native parity. The input-context alternative between
+player movement and teleporter resolution remains open. Raw traces and game
+media remain outside Git; see the [control-flow capture](docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+
 ## 2026-10-31 — align current Theron documentation and control claims
 
 Refreshed the README, documentation index, project status, completion matrix,

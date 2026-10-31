@@ -53,10 +53,14 @@
 > passability, visible movement, cold CD handoff or parity. See the
 > [comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
 
-> **TII caller ambiguity (2026-10-31):** the same `$C1FC` instruction is
-> associated in the source-locked analysis with copying teleporter destination
-> coordinates. The matched state-only capture does not identify the caller or
-> active-map object, so its transfer cannot yet be assigned to movement.
+> **TII control-flow boundary (2026-10-31):** three state-only replays now
+> record an identical 128-instruction context into `$C1FC`, including a
+> `$C1D6` call/return and conditional fall-through. This bounds the dynamic
+> instruction path but does not source-bind the tested fields, establish the
+> routine's gameplay purpose, or identify the active-map object. Since the
+> same TII is associated with teleporter destination copying, its transfer
+> cannot yet be assigned to player movement. See the
+> [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
 
 > **Input-gated VRAM trace (2026-10-31):** a corrected PCE Fast callback
 > gates the bounded VRAM trace on the guest-visible controller value. An
