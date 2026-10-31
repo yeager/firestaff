@@ -162,11 +162,12 @@ instrumented PCE Fast binary built and installed on TRV2. An authentic JP save
 state loaded, and its guest input trace records scripted UP at `$44C1` with
 port `raw=0010`, while the controller device value is `device_raw=0000`. This
 exposed and fixed a callback mismatch: the gate now receives the guest port
-value. The corrected full build and three patch-verification loops pass, but
-the gate has not yet been recaptured. The prior capture emitted no VRAM rows;
-the wrapper then stopped at its cold System Card status-read check because
-save-state autoload bypasses that path. An input-to-VRAM join and successful
-end-to-end capture remain unverified.
+value. A corrected bounded state capture now validates 4,096 gated VRAM
+commits after that authentic guest read in shared event order. State-only
+mode skips cold System Card checks and reports `transition=missing`. This
+verifies the trace gate and bounded event ordering only; causality, VRAM
+semantics, a visible response, a cold handoff, and renderer parity remain
+open. See the [source-locked trace report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 A follow-up cold US capture validates all three scripted inputs at System
 Card controller polls and records one `$E009` dispatch. It observes no
 game-owned poll or runtime CD source-read join, so the observation does not

@@ -26,6 +26,15 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+state_trace_only=${THERON_CAPTURE_STATE_TRACE_ONLY:-0}
+if [[ "$state_trace_only" != 0 && "$state_trace_only" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE' >&2
+    exit 1
+fi
 huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
     if [[ -n ${THERON_CAPTURE_MEDNAFEN_MODULE:-} &&
@@ -44,6 +53,10 @@ if [[ -n "$huc6280_23ad_trace" ]]; then
         printf '%s\n' 'FAIL: HuC6280 $23AD trace requires a cold start from original media; save-state autoload bypasses loader provenance' >&2
         exit 1
     fi
+fi
+if [[ "$state_trace_only" == 1 && "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires the PCE Fast module' >&2
+    exit 1
 fi
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
@@ -2257,7 +2270,7 @@ pce_fast_indirect_jump_follow_trace_rows=0
 pce_fast_indirect_jump_follow_trace_windows=0
 pce_fast_indirect_jump_follow_trace_open_windows=0
 pce_fast_indirect_jump_follow_trace_truncated_windows=0
-if [[ "$capture_mednafen_module" == pce_fast ]]; then
+if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]]; then
     if [[ ! -s "$system_card_code_follow_trace" ]] ||
        ! grep -Fqx 'source=mednafen-pce-fast-system-card-code-follow-v1 start_pc=6148 limit=256 terminal=next-instruction-fetch event_sequence_source=TheronTraceCDSharedEventSequence' \
            "$system_card_code_follow_trace"; then
@@ -2329,6 +2342,9 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     system_card_bootstrap_follow_status=${system_card_bootstrap_follow_status_field#status=}
     system_card_bootstrap_follow_rows=${system_card_bootstrap_follow_rows_field#bootstrap_rows=}
     system_card_target_follow_rows=${system_card_target_follow_rows_field#target_rows=}
+elif [[ "$capture_mednafen_module" == pce_fast ]]; then
+    system_card_code_follow_status=not_applicable_state_autoload
+    system_card_bootstrap_follow_status=not_applicable_state_autoload
 fi
 if [[ "$pce_fast_indirect_jump_trace_enabled" == 1 ]]; then
     if [[ ! -s "$pce_fast_indirect_jump_trace" ]]; then
@@ -3004,6 +3020,7 @@ fi
     printf 'pce_fast_indirect_jump_follow_trace_open_windows=%s\n' "$pce_fast_indirect_jump_follow_trace_open_windows"
     printf 'pce_fast_indirect_jump_follow_trace_truncated_windows=%s\n' "$pce_fast_indirect_jump_follow_trace_truncated_windows"
     printf 'pce_fast_system_card_code_follow_status=%s\n' "$system_card_code_follow_status"
+    printf 'state_trace_only=%s\n' "$state_trace_only"
     printf 'pce_fast_system_card_code_follow_rows=%s\n' "$system_card_code_follow_rows"
     printf 'pce_fast_system_card_bootstrap_follow_status=%s\n' "$system_card_bootstrap_follow_status"
     printf 'pce_fast_system_card_bootstrap_follow_rows=%s\n' "$system_card_bootstrap_follow_rows"
@@ -3154,6 +3171,7 @@ if [[ "$host_input_requested" == 1 && "$transition_host_key_count" -eq 0 ]]; the
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
     exit 1
 fi
+if [[ "$state_trace_only" != 1 ]]; then
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$trace" ||
@@ -3204,5 +3222,10 @@ if ! awk '
     printf 'BLOCKED: raw sector span lacks a following authenticated CD->RAM origin receipt (exit=%s)\n' "$status"
     exit 1
 fi
+fi
 
-printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"
+if [[ "$state_trace_only" == 1 ]]; then
+    printf 'PASS: bounded PCE Fast save-state reference traces validated; cold-start and CD handoff are not claimed (exit=%s)\n' "$status"
+else
+    printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"
+fi

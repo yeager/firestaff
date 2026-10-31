@@ -1,23 +1,24 @@
 # Theron Capture Readiness
 
-## 2026-10-31 — input-gated PCE Fast VRAM trace callback corrected; recapture pending
+## 2026-10-31 — corrected input-gated PCE Fast VRAM trace captured
 
-The complete reference-only Mednafen trace patch chain applied to an isolated
-source copy, and the corrected instrumented PCE Fast binary built and
-installed on TRV2. An authentic Japanese dungeon save state loaded. Its input
-sidecar records scripted UP on frame 61 at guest PC `$44C1`, with guest port
-`raw=0010`; the controller device value is `device_raw=0000`. The callback
-now passes `pce_jp_data[index]` to the gate, matching the guest-read value.
-Three isolated patch-application regression loops passed, and the full build
-compiled and linked the corrected hook.
+The complete reference-only Mednafen trace patch chain applied in three
+isolated regression loops, and the corrected instrumented PCE Fast binary
+built and installed on TRV2. The callback passes guest-visible
+`pce_jp_data[index]` to the gate. A bounded authentic JP Akutuba-state replay
+then recorded the scripted UP at guest PC `$44C1`, port `raw=0010`, event
+sequence `58758`; its first gated VRAM commit follows at shared event sequence
+`58761`. The capture wrapper validated the V5 trace schema, 4,096 contiguous
+commit rows, same-frame input receipt, and close-time snapshots. Its
+state-only mode marks cold System Card checks not applicable because autoload
+bypasses that path.
 
-The prior state capture emitted no VRAM rows with the old callback. Its
-wrapper then exited during closeout because save-state autoload bypasses the
-cold System Card status-read path that the normal capture requires. A new
-capture with the corrected binary is still pending. The build verifies the
-instrumentation compiles; it does not verify gate behavior, an input-to-VRAM
-join, or gameplay/render semantics. Native support and parity status remain
-unchanged. See the [Theron TODO entry](../../TODO-theron.md).
+The transition receipt remains `missing`; no cold-start CD-to-RAM handoff,
+map binding, semantic VRAM interpretation, visible input effect, causality,
+or renderer/Firestaff comparison is established. This verifies gated trace
+capture only and does not change native Theron support or parity status. See
+the [source-locked capture report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md)
+and [Theron TODO](../../TODO-theron.md).
 
 ## 2026-10-31 — JP title-menu four-second Button I hold visibly advances
 

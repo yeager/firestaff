@@ -1,17 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — correct input-gated PCE Fast VRAM trace callback
+## 2026-10-31 — capture input-gated PCE Fast VRAM event ordering
 
 Updated the PCE Fast input hook to pass the guest-visible controller port
 value (`pce_jp_data[index]`) into the VRAM trace gate, rather than the
 controller device's raw value. The complete reference instrumentation patch
 chain applied in three isolated test loops, and a corrected PCE Fast
 instrumented Mednafen build/install succeeded on TRV2. The regression now
-checks this exact callback argument. The prior authentic-state run exposed the
-mismatch but used the old binary; a corrected runtime recapture and
-input-to-VRAM join remain open. The capture wrapper's cold System Card
-closeout check is not satisfied by a save-state route. Firestaff support and
-parity status are unchanged; the trace tooling is reference-only.
+checks this exact callback argument. A bounded authentic JP save-state replay
+validated 4,096 V5 commit records after the matching guest `$44C1 raw=0010`
+read in shared event order (`58758` to `58761`). State-only mode correctly
+skips cold System Card checks and reports the transition as missing. This
+verifies bounded trace gating and ordering, not causality, rendering,
+gameplay, or native Theron parity. Trace artifacts and original media remain
+outside Git. See the [source-locked
+report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
 ## 2026-10-31 — document the authentic JP four-second title-action capture
 

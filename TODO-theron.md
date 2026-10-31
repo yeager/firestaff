@@ -1,21 +1,20 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-31 — input-gated PCE Fast VRAM trace callback corrected; recapture pending
+## 2026-10-31 — input-gated PCE Fast VRAM event-order trace captured
 
 The complete reference-only Mednafen instrumentation patch chain applied to
 an isolated source copy, and the corrected instrumented PCE Fast binary built
 and installed on TRV2. The authentic Japanese dungeon state records scripted
 UP at guest PC `$44C1` with port `raw=0010`, while the controller device value
-is `device_raw=0000`. The callback now passes `pce_jp_data[index]`, matching
-the guest port value, and the patch test passed three isolated application
-loops. The full build compiles the corrected input object.
-
-The prior state capture emitted no VRAM rows with the old callback. Its wrapper
-then failed the required System Card status-read check because state autoload
-bypasses that cold-boot path. A new capture with the corrected binary is still
-needed; do not infer gate success, input-to-VRAM causality, or rendering from
-the build alone. Native Theron support and parity status are unchanged. See
-the [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
+is `device_raw=0000`. After correcting the callback to pass
+`pce_jp_data[index]`, an isolated state-only capture validated 4,096
+contiguous VRAM commit rows. The first row is shared event sequence `58761`,
+after the matching guest read at `58758`. The capture wrapper explicitly
+reports `transition=missing`; no cold-start CD handoff is claimed. This is an
+event-order receipt, not proof that UP caused a specific VRAM write, a visible
+response, decoded graphics meaning, or native parity. The source-locked report
+records artifact hashes and scope. Native Theron support and parity status
+are unchanged. See the [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
 
 ## 2026-10-31 — next JP movement capture needs a reachable authentic pose
 

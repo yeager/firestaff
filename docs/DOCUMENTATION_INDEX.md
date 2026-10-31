@@ -82,6 +82,7 @@ remain at the top of `docs/`.
 - [Theron native Debug direct launch](source-lock/theron-native-debug-direct-launch-20261031.md) — confirms the Firestaff Run menu is bypassed; the startup probe did not load a dungeon
 - [Theron authentic empty JP BRAM M11 regression](../tests/test_theron_v1_m11_jp_empty_bram.c) — native UI rejection of the captured empty JP slot; positive JP progress restoration remains unverified
 - [Theron JP PCE Fast input receipt](source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md) — three authentic-state runs bind a scripted direction mask to its same-frame PCE Fast guest read
+- [Theron JP PCE Fast input-gated VRAM trace](source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md) — corrected PC/raw gate admits 4,096 bounded VRAM commits after an authentic-state guest read; event ordering does not prove causality or parity
 - [Theron JP PCE Fast state comparison](source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md) — three UP/control pairs share an event sequence from the `$44C1` guest poll through the `$D334`/`$D349` `$2912` transaction; ordering is repeatable, while causality and gameplay semantics remain unproven
 - [Theron JP blocked-wall movement probe](source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md) — UP, neutral and DOWN leave the authentic F5 wall image unchanged; bounded position hooks record no movement, so this is not movement or renderer evidence
 - [Theron JP four-second title-action capture](source-lock/theron-jp-four-second-title-action-capture-20261031.md) — authentic cold JP route confirms four-second Button I holds on NEW GAME and FILE 1 advance into Akutuba; `.mc0` is an emulator state, not BRAM, and no game-owned loader join is claimed
@@ -167,8 +168,11 @@ emulator saves, private capture logs or generated placeholder art.
 **Last reviewed:** 2026-10-31. The current status reflects the source and
 authenticated-media evidence recorded on the linked status and per-game
 work-log pages. Theron's reference-only Mednafen trace tooling passes
-patch-only application and instrumented PCE build checks. A cold US follow-up
-validates three scripted inputs at System Card controller polls, while its
-`$E009` dispatch remains unjoined to game-owned polling and runtime CD data;
-native support status is unchanged. Each receipt remains bounded to
-its cited edition, route and test; it does not imply complete parity.
+patch-only application and instrumented PCE build checks. A corrected PCE Fast
+state capture validates the input-gated VRAM trace after the authentic guest
+read; its bounded 4,096-row receipt does not establish causality or a renderer
+join. A cold US follow-up validates three scripted inputs at System Card
+controller polls, while its `$E009` dispatch remains unjoined to game-owned
+polling and runtime CD data; native support status is unchanged. Each receipt
+remains bounded to its cited edition, route and test; it does not imply
+complete parity.

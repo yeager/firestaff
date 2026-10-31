@@ -261,6 +261,25 @@ if [[ "$vram_commit_max_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
     printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit limit did not reach the missing-media gate' >&2
     exit 1
 fi
+state_trace_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_STATE_TRACE_ONLY=2 "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: state-only trace mode accepted a value other than 0 or 1' >&2
+    exit 1
+}
+if [[ "$state_trace_invalid_output" != *'THERON_CAPTURE_STATE_TRACE_ONLY must be 0 or 1'* ]]; then
+    printf '%s\n' 'FAIL: invalid state-only trace mode lacked a precise diagnostic' >&2
+    exit 1
+fi
+state_trace_missing_state_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast THERON_CAPTURE_STATE_TRACE_ONLY=1 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: state-only trace mode accepted a missing autoload state' >&2
+    exit 1
+}
+if [[ "$state_trace_missing_state_output" != *'THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE'* ]]; then
+    printf '%s\n' 'FAIL: missing state-only autoload lacked a precise diagnostic' >&2
+    exit 1
+fi
 code_ram_write_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=2 \
     "$script" 2>&1) && {
