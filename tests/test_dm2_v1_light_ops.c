@@ -175,11 +175,27 @@ static void test_proceed_light_darkness(void)
     };
     dm2_v1_proceed_light(0x06, 64, &cb, NULL);
     assert(g_recalc == 1);
-    /* Retail SKULL.EXP table1d6702[8] = 59.  The clamped step is eight,
-     * darkness schedules timer value eight and applies -2 * 59. */
-    assert(g_queued_val == 8);
-    assert(g_light == 382);
-    printf("  PASS: proceed_light_darkness\n");
+    /* c_light.cpp:641-646 halves step 8 and decrements to 3 even for
+     * darkness; the timer uses +3 and the delta is -2 * table[3]. */
+    assert(g_queued_val == 3 && g_queued_tick == 1016u);
+    assert(g_light == 452);
+    printf("  PASS: proceed_light_darkness_source_step\n");
+}
+
+static void test_proceed_light_bright(void)
+{
+    g_light = 100;
+    g_recalc = 0;
+    DM2_V1_ProceedLightCallbacks cb = {
+        &g_light, dm2_v1_light_table, 16, 200, mock_queue, mock_recalc
+    };
+    dm2_v1_proceed_light(0x27, 64, &cb, NULL);
+    assert(g_recalc == 1);
+    /* step 8 halves/decrements to 3; table[3] adds 24 and the timer
+     * value is -3, due at game tick 10200. */
+    assert(g_queued_val == -3 && g_queued_tick == 10200u);
+    assert(g_light == 124);
+    printf("  PASS: proceed_light_bright_source_step\n");
 }
 
 static void test_proceed_light_torch(void)
@@ -191,12 +207,11 @@ static void test_proceed_light_torch(void)
     };
     dm2_v1_proceed_light(0x26, 80, &cb, NULL);
     assert(g_recalc == 1);
-    /* step = max(8, between(32,256,81)/8) = max(8,10) = 10
-     * torch: delay = ((10-3)*128)+2000 = 2896
-     * step = 10/4 + 1 = 3, then halve=1, dec=0
-     * timer_val = -0 = 0 ... hmm, let's just verify timer was queued */
-    assert(g_queued_val <= 0); /* non-darkness stores negative */
-    printf("  PASS: proceed_light_torch\n");
+    /* step 10 becomes 10/4 + 1 = 3; source skip00710 bypasses the
+     * half-step/decrement used by darkness and bright light. */
+    assert(g_queued_val == -3 && g_queued_tick == 3396u);
+    assert(g_light == 124);
+    printf("  PASS: proceed_light_torch_source_step\n");
 }
 
 static void test_proceed_light_invalid(void)
@@ -1436,6 +1451,7 @@ int main(void)
     test_mode7_class34_receipts();
     test_mode7_flags4_original_media();
     test_proceed_light_darkness();
+    test_proceed_light_bright();
     test_proceed_light_torch();
     test_proceed_light_invalid();
     test_recalc_light_level_source_branches();

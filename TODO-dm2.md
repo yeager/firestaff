@@ -48,6 +48,15 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 skproject `DM2_PROCEED_LIGHT` darkness-step parity: the source at
+`SKULLWIN/c_light.cpp:625-646` sets `skip00710` for torch type `0x26` after its
+quarter-step adjustment, while darkness type `0x06` and bright light type
+`0x27` halve and decrement their steps. Firestaff now preserves this distinction
+for timer values and `table1d6702` deltas. Focused regressions assert exact
+darkness, torch, and bright-light ticks and global-light deltas. This checks the
+shared algorithm; original-media runtime timing and DOS, Amiga, FM Towns, and
+Macintosh lane behavior remain open.
+
 2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:
 `dm2_runtime_try_light_mode8` now attempts authenticated dynamic-light maps
 without the former four-coordinate FM Towns gate; incomplete source walks still
