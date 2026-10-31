@@ -1,5 +1,18 @@
 # Firestaff TODO — DM1
 
+2026-10-31 PC34 player-damage regression: on TRV2, the isolated `main`
+build's `m11_dm1_pc34_first_monster_combat_real` passed against the installed
+original PC 3.4 archive (4.28 s). The test follows the original HoC route to
+group 169, selects PUNCH through the ordinary action menu, retries only along
+the real cooldown/menu path when the source RNG misses, and requires the
+authentic group's HP to decrease. Both original-media runs reported
+`playerDamage=1`; the same test observed the original group's movement and
+attacks. Its shield comparison also reduced the measured natural attack damage
+from 24 HP to 0 HP. This confirms the current PC34 code can damage the first
+monster; it does not reproduce physical M5 input or prove every combat action.
+The test binary was built from `e27138ce`; current `main` (`45ebef84`) adds
+only Nexus files since that build, so DM1 combat code is unchanged.
+
 2026-10-31 M12 main-menu startup matrix: all ten selected real-media tests
 passed against the installed original DM1 archives: DM1-only, PC, FM Towns
 with PC media also installed, Atari ST 1.0, 1.1, 1.2 English, 1.2 German,
