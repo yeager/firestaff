@@ -21,7 +21,7 @@ static void test_class2_db4plus_chain_receipt(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader loader;
     DM2_V1_CLightStoneRoomReceipt room;
-    uint8_t raw[8] = {0};
+    uint8_t raw[64] = {0};
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&loader, 0, sizeof(loader));
@@ -35,11 +35,19 @@ static void test_class2_db4plus_chain_receipt(void)
     dungeon.square_first_thing_count = 1;
     dungeon.raw_data = raw;
     dungeon.raw_size = (int)sizeof(raw);
+    dungeon.record_graph_complete = 1;
+    dungeon.thing_data_bases[0] = 8;
+    dungeon.thing_type_counts[0] = 1;
+    dungeon.thing_data_bases[1] = 40;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[4] = 16;
+    dungeon.thing_type_counts[4] = 2;
     loader.loaded = 1;
     raw[0] = 0x58u; /* class 2, bit 0x08, and a square Thing list */
     raw[1] = 0u; raw[2] = 0u; /* first column entry = SFT ordinal zero */
     raw[3] = (uint8_t)((4u << 10) | 1u);
     raw[4] = (uint8_t)(((4u << 10) | 1u) >> 8);
+    raw[32] = 0xfeu; raw[33] = 0xffu; /* DB4 index 1 ends the list. */
 
     CHECK("class-2 bit-08 DB4+ root is retained past the ornament loop",
           dm2_v1_dungeon_c_light_stone_room_receipt(
@@ -48,6 +56,22 @@ static void test_class2_db4plus_chain_receipt(void)
               room.source_tile_type == 2u &&
               room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
               room.ceiling_ornament_word == 0x00ffu);
+
+    raw[3] = 0u; raw[4] = 0u; /* DB0 prefix, then the same DB4 root. */
+    raw[8] = 1u; raw[9] = 0x10u;
+    CHECK("class-2 DB0 prefix skips to the retained DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.source_tile_type == 2u &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u));
+
+    raw[3] = 0u; raw[4] = 4u; /* DB1 index 0. */
+    raw[40] = 1u; raw[41] = 0x10u;
+    CHECK("class-2 DB1 prefix skips to the retained DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.source_tile_type == 2u &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u));
 
     raw[3] = 0xffu;
     raw[4] = 0xffu;

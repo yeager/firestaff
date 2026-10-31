@@ -1741,9 +1741,9 @@ int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int leve
 typedef struct { int valid; uint8_t w0,w2,w6[4]; uint16_t xvalue; } DM2_V1_StoneRoomBaseCellReceipt;
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out);
 
-/* The class-2 no-record and class-5 DB1-first source branches of
- * SUMMARIZE_STONE_ROOM used by c_light. Other record branches remain outside
- * this receipt. */
+/* Bounded c_light SUMMARIZE_STONE_ROOM branches for class-2 no-record,
+ * DB0/DB1-to-DB4+ prefixes, and class-5 DB1-first roots. DB2/DB3 decoration
+ * and animation branches remain outside this receipt. */
 typedef struct {
     int valid;
     int level;
