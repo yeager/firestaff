@@ -754,3 +754,37 @@ retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
 The replay and real-data CTest are documented in
 [`nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).
+
+### 2026-10-31 — Retail MAPD transfers joined to Ymir render passes
+
+An authentic Japanese retail capture used CUE SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`,
+`TITLE.BIN` SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`,
+and initial Ymir state SHA-256
+`79b53c785456ddc8d4d19a5a510ecc008cc14bf08c0464ecfebb0d5849a40a52`.
+The deterministic run held Control Pad 1 Start from frame 0 for 60 frames and
+used `--debug`. Ymir recorded 690,480 VDP2 writes; replay found retail planes
+`N@891,E@930,X@959,U@998,S@1036`, and the replayed 512 KiB VRAM matched the
+same-run dump (SHA-256
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`).
+
+Pass-indexed raw VDP1/VDP2 snapshots join exactly to all 163 same-run rendered
+passes by `(VDP1 frame, VDP2 serial)`. At frame 891 / serial 1280, NBG1 is
+enabled (`BGON=0x0002`) and the map region equals retail plane N. Plane E is
+uploaded at frame 930; its bytes and NBG1 enable are present on frame 931 /
+serial 1320. Planes X and U match VRAM at frames 959 and 998 while NBG1 is
+disabled (`BGON=0x0001`). Plane S matches both passes at frame 1036 while
+NBG1 is enabled. MAP1A/B remains `0x1717`, PLSZ and MPOFN remain zero. The
+external evidence package is
+`firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/`.
+
+The capture-only NBG1 decoder currently requires `BGON=0x0007` and
+`CHCTLA=0x1013`; these authentic frames use `BGON=0x0001` or `0x0002` and
+`CHCTLA=0x0013`, so the decoder rejects them. The next consumer step is to
+decode these register states and compare Firestaff's NBG1/VPD1 composition
+against the corresponding same-pass RGBX buffers. The producer-side map match
+does not grant renderer permission or establish Firestaff pixel parity. The
+render-state receipt marks its legacy frame-row status incomplete because
+several VDP1 frame labels contain multiple VDP2 passes; all 163 per-pass
+buffers and snapshot pairs are present.
