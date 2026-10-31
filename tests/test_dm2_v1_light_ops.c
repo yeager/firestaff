@@ -1113,6 +1113,7 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.record_chain_known_no_darkness = 1u;
     evidence.creature_query_known = 1u;
     evidence.creature_present = 0u;
+    evidence.ceiling_gdat_known = 1u;
     node.source_tile_type = 0x13u;
     ambient = 11;
     darkness = 17;
@@ -1120,12 +1121,23 @@ static void test_mode7_flags3_prepass_evidence(void)
      * ground-record or creature term under the flags-3 prepass. */
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 11 && darkness == 17);
-    evidence.record_chain_known_no_darkness = 0u;
+    evidence.record_darkness = 50;
+    ambient = 0;
+    darkness = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 0 && darkness == 40);
+    evidence.record_darkness = 0;
+    evidence.record_chain_known = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
-    evidence.record_chain_known_no_darkness = 1u;
+    evidence.record_chain_known = 1u;
     evidence.creature_present = 1u;
-    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    evidence.creature_f8_word = 80u;
+    ambient = 0;
+    darkness = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 70 && darkness == 0);
     evidence.creature_present = 0u;
+    evidence.creature_f8_word = 0u;
     room.raw_tile = 0x40u;
     room.source_tile_type = 1u;
     room.first_record_link = DM2_THING_NULL_MARKER;
@@ -1237,10 +1249,11 @@ static void test_mode7_flags3_prepass_evidence(void)
     assert(ambient == 23 && darkness == 31);
 }
 
-static void test_mode7_class34_empty_receipts(void)
+static void test_mode7_class34_receipts(void)
 {
     DM2_V1_DungeonData dungeon;
     DM2_V1_CLightStoneRoomReceipt room;
+    uint8_t linked_tile[5] = {0x70u, 0u, 0u, 0u, 0x3cu};
     uint8_t tile = 0x60u;
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.level_count = 1;
@@ -1249,24 +1262,39 @@ static void test_mode7_class34_empty_receipts(void)
     dungeon.square_bytes = 1;
     dungeon.raw_data = &tile;
     dungeon.raw_size = 1;
-    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 0, &room));
     assert(room.valid && room.raw_tile == 0x60u &&
            room.source_tile_type == 0x12u &&
            room.first_record_link == DM2_THING_END_MARKER);
-    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 1, &room));
     assert(room.source_tile_type == 0x13u);
+    dungeon.raw_data = linked_tile;
+    dungeon.raw_size = sizeof(linked_tile);
+    dungeon.column_index_base = 1;
+    dungeon.square_first_thing_base = 3;
+    dungeon.square_first_thing_count = 1;
+    linked_tile[0] = 0x70u;
+    assert(dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 0, 0, 0, &room));
+    assert(room.source_tile_type == 0x12u &&
+           room.first_record_link == 0x3c00u);
+    dungeon.raw_data = &tile;
+    dungeon.raw_size = 1;
+    dungeon.column_index_base = 0;
+    dungeon.square_first_thing_base = 0;
+    dungeon.square_first_thing_count = 0;
     tile = 0x80u;
-    assert(dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 0, &room));
     assert(room.source_tile_type == 0x10u);
-    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 1, &room));
     tile = 0x40u;
-    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 0, &room));
-    assert(!dm2_v1_dungeon_c_light_class34_empty_receipt(
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 4, &room));
 }
 
@@ -1313,7 +1341,7 @@ int main(void)
     test_mode7_tile_accumulator();
     test_mode7_flags4_source_branches();
     test_mode7_flags3_prepass_evidence();
-    test_mode7_class34_empty_receipts();
+    test_mode7_class34_receipts();
     test_mode7_flags4_original_media();
     test_proceed_light_darkness();
     test_proceed_light_torch();

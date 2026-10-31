@@ -2245,7 +2245,7 @@ static int dm2_runtime_mode7_flags3_evidence(
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           (room->source_tile_type >= 0x10u &&
            room->source_tile_type <= 0x13u &&
-           room->first_record_link == DM2_THING_END_MARKER) ||
+           room->first_record_link != DM2_THING_NULL_MARKER) ||
           (room->raw_tile == 0x30u &&
            room->source_tile_type == 1u)))
         return 0;
@@ -2255,17 +2255,6 @@ static int dm2_runtime_mode7_flags3_evidence(
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
     memset(evidence, 0, sizeof(*evidence));
-    if (room->source_tile_type >= 0x10u &&
-        room->source_tile_type <= 0x13u) {
-        if (room->first_record_link != DM2_THING_END_MARKER) return 0;
-        /* c_light.cpp:310-435: empty class-3/4 summary chains cannot add a
-         * ground-record term, and an empty chain proves no creature F8 term. */
-        evidence->record_chain_known = 1u;
-        evidence->record_chain_known_no_darkness = 1u;
-        evidence->creature_query_known = 1u;
-        evidence->valid = 1u;
-        return 1;
-    }
     link = (int16_t)room->first_record_link;
     if ((room->raw_tile >> 5) == 2u &&
         room->first_record_link == DM2_THING_NULL_MARKER)
@@ -2318,7 +2307,7 @@ static int dm2_runtime_mode7_flags3_evidence(
         evidence->creature_present = 1u;
         evidence->creature_f8_word = f8;
     }
-    if (!class1_ornament) {
+    if (!class1_ornament && room->source_tile_type < 0x10u) {
         memset(&detail, 0, sizeof(detail));
         memset(&detail_receipt, 0, sizeof(detail_receipt));
         if (dm2_v1_skproject_get_teleporter_detail_dungeon(
@@ -2331,7 +2320,8 @@ static int dm2_runtime_mode7_flags3_evidence(
         }
         evidence->teleporter_detail_known = 1u;
     }
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu) {
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+        room->source_tile_type < 0x10u) {
         /* SKULLWIN/c_light.cpp:252-264 queries type-11 F8 and 99 on the
          * class-1 ornament; the latter independently selects weather light. */
         if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
@@ -2441,10 +2431,10 @@ static int dm2_runtime_mode7_on_node(
     } else if (source_flags == 3u &&
                ((raw >> 5) == 3 || (raw >> 5) == 4)) {
         branch = 35u;
-        /* skguivwp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
-         * this receipt admits only empty chains and the class-4 direction
-         * that does not redirect into an adjacent record owner. */
-        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        /* c_gui_vp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
+         * class-4 side mismatches redirect to an adjacent record owner and
+         * remain outside this receipt. */
+        if (!dm2_v1_dungeon_c_light_class34_receipt(
                 dungeon, map, x, y, direction, &room) ||
             !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
@@ -2476,7 +2466,7 @@ static int dm2_runtime_mode7_on_node(
         node.stone_room = &room;
     } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
         branch = 36u;
-        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+        if (!dm2_v1_dungeon_c_light_class34_receipt(
                 dungeon, map, x, y, direction, &room)) goto unknown;
         node.stone_room = &room;
         node.source_tile_type = room.source_tile_type;

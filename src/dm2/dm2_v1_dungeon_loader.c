@@ -6778,7 +6778,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
-int dm2_v1_dungeon_c_light_class34_empty_receipt(
+int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out)
 {
@@ -6791,7 +6791,8 @@ int dm2_v1_dungeon_c_light_class34_empty_receipt(
     if (!d || direction < 0 || direction > 3) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    if (raw < 0 || raw > 0xff || first != -1) return 0;
+    if (raw < 0 || raw > 0xff || first < -1 || first == DM2_THING_NULL_MARKER)
+        return 0;
     if (((unsigned)raw >> 5) == 3u) {
         /* c_gui_vp.cpp:2659-2669: class 3 summarizes as 0x12/0x13. */
         base = 0x12u;
@@ -6814,7 +6815,8 @@ int dm2_v1_dungeon_c_light_class34_empty_receipt(
     direction_side = (unsigned)direction & 1u;
     out->source_tile_type = (uint8_t)(base +
         (source_side != direction_side ? 1u : 0u));
-    out->first_record_link = DM2_THING_END_MARKER;
+    out->first_record_link = first == -1 ? DM2_THING_END_MARKER :
+        (uint16_t)first;
     out->ceiling_ornament_word = 0x00ffu;
     out->ceiling_ornament_index = 0xffu;
     out->valid = 1;
