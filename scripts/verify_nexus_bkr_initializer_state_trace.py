@@ -7,6 +7,20 @@ import argparse
 import csv
 from pathlib import Path
 
+READ_REQUIRED_FIELDS = {
+    "sh2", "origin", "instruction_pc", "caller_return_address",
+    "caller_target", "address", "width",
+}
+SNAPSHOT_REQUIRED_FIELDS = {
+    "sh2", "read_row", "origin", "instruction_pc", "address", "width",
+    "registers_available", "pc", "r14",
+}
+WRITE_REQUIRED_FIELDS = {
+    "sh2", "vdp1_frame", "origin", "instruction_pc",
+    "caller_return_address", "caller_target", "address", "width",
+    "value", "caller_stack_targets",
+}
+
 
 def read_bundle(path: Path) -> dict[str, str]:
     result: dict[str, str] = {}
@@ -22,14 +36,36 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def read_trace(path: Path, required_fields: set[str], label: str) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        require(reader.fieldnames is not None and
+                required_fields <= set(reader.fieldnames),
+                f"{label} is missing required columns")
+        rows = list(reader)
+    for index, row in enumerate(rows, start=1):
+        require(all(row.get(field) for field in required_fields),
+                f"{label} row {index} is missing required data")
+    return rows
+
+
 def verify_consumer_reads(root: Path) -> None:
     dumps = root / "dumps"
-    with (dumps / "sh2-memory-read-trace.csv").open(
-            newline="", encoding="utf-8") as stream:
-        reads = list(csv.DictReader(stream))
+    reads = read_trace(dumps / "sh2-memory-read-trace.csv",
+                       READ_REQUIRED_FIELDS, "consumer read trace")
     with (dumps / "sh2-memory-read-register-snapshots.csv").open(
             newline="", encoding="utf-8") as stream:
-        snapshots = list(csv.DictReader(stream))
+        reader = csv.DictReader(stream)
+        require(reader.fieldnames is not None and
+                SNAPSHOT_REQUIRED_FIELDS <= set(reader.fieldnames),
+                "register snapshot file is missing required columns")
+        snapshots = list(reader)
+    for index, snapshot in enumerate(snapshots, start=1):
+        require(all(snapshot.get(field) for field in SNAPSHOT_REQUIRED_FIELDS),
+                f"register snapshot row {index} is incomplete")
+    snapshot_ids = [int(row["read_row"]) for row in snapshots]
+    require(sorted(snapshot_ids) == list(range(len(snapshots))),
+            "register snapshot row IDs are incomplete or duplicated")
     bundle = read_bundle(dumps / "sh2-memory-read-trace-bundle.txt")
     require(bundle.get("bundle_complete") == "1" and
             bundle.get("trace_file_complete") == "1" and
@@ -48,23 +84,27 @@ def verify_consumer_reads(root: Path) -> None:
         0x0602107E: (0x85E3, 0x0606454A),
         0x06021092: (0x85E1, 0x06064546),
     }
-    require(len(reads) == len(snapshots), "read/snapshot row counts differ")
-    for index, (read, regs) in enumerate(zip(reads, snapshots)):
-        require(int(regs["read_row"]) == index,
-                "register snapshot row IDs no longer match capture order")
-        pc = int(read["instruction_pc"], 0)
-        if pc not in expected:
-            continue
-        opcode, address = expected[pc]
-        require(read["sh2"] == "master" and read["origin"] == "cpu" and
-                read["caller_target"] == "0x6020fee" and
-                read["caller_return_address"] == "0x6011196" and
-                read["width"] == "2" and
-                regs["registers_available"] == "1" and
-                regs["pc"] == read["instruction_pc"] and
-                int(read["address"], 0) == address and
-                int(regs["r14"], 0) == 0x06064544,
-                f"consumer read/register join changed at {pc:#x}")
+    require(len(reads) == len(snapshots),
+            "read trace and independent register-snapshot counts differ")
+    for pc, (opcode, address) in expected.items():
+        matching_reads = [row for row in reads
+                          if int(row["instruction_pc"], 0) == pc and
+                          int(row["address"], 0) == address]
+        require(matching_reads and all(
+                    row["sh2"] == "master" and row["origin"] == "cpu" and
+                    row["caller_target"] == "0x6020fee" and
+                    row["caller_return_address"] == "0x6011196" and
+                    row["width"] == "2"
+                    for row in matching_reads),
+                f"consumer read trace changed at {pc:#x}")
+        matching_snapshots = [row for row in snapshots
+                              if int(row["pc"], 0) == pc]
+        require(any(
+                    row["sh2"] == "master" and
+                    row["registers_available"] == "1" and
+                    int(row["r14"], 0) == 0x06064544
+                    for row in matching_snapshots),
+                f"independent R14 snapshots changed at {pc:#x}")
         offset = pc - 0x06000000
         require(int.from_bytes(consumer_wram[offset:offset + 2], "big") == opcode,
                 f"consumer SH-2 opcode changed at {pc:#x}")
@@ -79,10 +119,12 @@ def verify_consumer_reads(root: Path) -> None:
 def verify(root: Path, consumer_root: Path) -> None:
     verify_consumer_reads(consumer_root)
     dumps = root / "dumps"
-    rows = list(csv.DictReader(
-        (dumps / "sh2-memory-write-trace.csv").open(newline="", encoding="utf-8")))
+    rows = read_trace(dumps / "sh2-memory-write-trace.csv",
+                      WRITE_REQUIRED_FIELDS, "initializer write trace")
     bundle = read_bundle(dumps / "sh2-memory-write-trace-bundle.txt")
-    require(bundle.get("bundle_complete") == "1", "write trace bundle is incomplete")
+    require(bundle.get("bundle_complete") == "1" and
+            bundle.get("trace_file_complete") == "1",
+            "write trace bundle/file is incomplete")
     require(bundle.get("trace_rows") == str(len(rows)) == "5244",
             "trace row count changed")
     require(bundle.get("address_begin") == "0x606455c" and
@@ -132,9 +174,10 @@ def verify(root: Path, consumer_root: Path) -> None:
             "runtime actor heading differs from the BKR heading")
 
     print("PASS: complete 5,244-row SH-2 write trace; zero dropped rows")
-    print("PASS: consumer snapshots/opcodes join R14 base to each tuple field address")
+    print("PASS: independent snapshots show R14 at the tuple base for each consumer instruction PC")
     print("PASS: FUN_0601f584, called from FUN_06020fee, registers actor/body pointers")
     print("PASS: authentic BKR X/Y body cell and heading are present in final runtime state")
+    print("LIMIT: snapshots have no shared per-read ID and are not joined to exact read events")
     print("LIMIT: this validates authentic Continue initialization; keyboard/mouse parity is separate")
 
 

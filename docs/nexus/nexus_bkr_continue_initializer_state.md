@@ -8,7 +8,7 @@ The capture ran 17,500 scheduled frames and recorded SH-2 writes in `[0x0606455c
 
 ## Runtime chain
 
-The loader had already placed the authentic tuple `00 01 40 00 00 14 00 1a` at `0x06064544`: level 1, heading `0x4000`, X 20, Y 26. The consumer read trace and SH-2 prologue establish that `FUN_06020fee` receives this address as its tuple base. Its indirect callback points to `FUN_0601f584`; the callback's captured write rows retain both `FUN_0601f584` and `FUN_06020fee` in the call context.
+The loader had already placed the authentic tuple `00 01 40 00 00 14 00 1a` at `0x06064544`: level 1, heading `0x4000`, X 20, Y 26. The consumer read trace records accesses to the four tuple fields in the `FUN_06020fee` call context. Separately, the SH-2 prologue moves the argument base from `R4` into `R14`, and register snapshots at each observed tuple-reading instruction PC include `R14 = 0x06064544`. The read trace and register-snapshot file have equal row counts but no shared per-read identity, so the snapshots corroborate the tuple base independently; they are not joined to individual read rows. The indirect callback points to `FUN_0601f584`; its captured write rows retain both `FUN_0601f584` and `FUN_06020fee` in the call context.
 
 At frame 12931, the dynamic write trace records:
 
@@ -20,7 +20,7 @@ At frame 12931, the dynamic write trace records:
 | `0x0601f5b4` | `0x06064564` | `0x060746e8` | Body child at allocated object `+0x28` |
 | `0x0601f5d6` | `0x0606456c` | `0xffffffff` | Retail initializer field |
 
-The final memory dump shows body cell `0x060746e8 = 0x0014001a`, preserving the authentic X/Y pair `(20,26)`. The actor record at `0x060792b0` has heading `0x4000` at offset `+0x0e`, matching the BKR tuple. The actor/body pointers, tuple reads, callback disassembly and final state together establish that retail Continue initialization creates gameplay state from this saved position and heading.
+The final memory dump shows body cell `0x060746e8 = 0x0014001a`, preserving the authentic X/Y pair `(20,26)`. The actor record at `0x060792b0` has heading `0x4000` at offset `+0x0e`, matching the BKR tuple. The actor/body pointers, tuple reads, callback disassembly and final state together show that retail Continue initialization creates gameplay state from this saved position and heading. The independent snapshots are corroborating context, not a per-read register join.
 
 This is initialization evidence for one authentic Continue path. It does not establish complete Firestaff parity or keyboard/mouse behavior. A separate external evidence package, `nexus_bkr_continue_heading_move_20261030`, records the subsequent Up-to-grid-cell movement result.
 
