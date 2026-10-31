@@ -33,6 +33,16 @@ rather than unique level ownership. The independent
 output against both Ymir VDP2 pass buffers, while source and face joins keep
 semantic admission blocked.
 
+The same hash-pinned frame-8037 screenshot also verifies five Japanese
+title-menu sprites at VDP1 command indices 171–175. Their texels bind to
+`TITLE.BIN` offsets `0x15f6`, `0x446`, `0x576`, and `0x7d6`; their CLUT words
+bind to Japanese `TITLE.BIN` palette spans. All 1,495 visible sprite sample
+points match the screenshot exactly, with NBG0 transparent at those points and
+the captured VDP2 back-screen color calculation applied. This verifies the
+selected “New Game” menu state’s sprite contribution, not menu input handling
+or transition behavior. The screenshot time association is not independently
+attested by a retained run log.
+
 ## Reproduce with authentic external data
 
 Extract the hash-pinned raw dumps from
@@ -54,6 +64,7 @@ Nexus data directory:
 ```sh
 FIRESTAFF_NEXUS_YMIR_FRAME8037_CAPTURE_DIR=/path/to/external/dumps \
 FIRESTAFF_NEXUS_DATA_DIR=/path/to/authentic/Japanese/Nexus/data \
+FIRESTAFF_NEXUS_YMIR_FRAME8037_SCREENSHOT=/path/to/external/title-menu-frame-8037.png \
 ctest --test-dir build -R '^nexus_v1_vdp1_frame8037_source_join_real$' --output-on-failure
 ```
 

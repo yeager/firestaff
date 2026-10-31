@@ -52,6 +52,13 @@ does not change Nexus production readiness. VDP2 composition, full title/menu
 and gameplay source ownership, and production renderer admission remain open.
 See [`docs/nexus_vdp1_frame13162_dgn_window.md`](../nexus_vdp1_frame13162_dgn_window.md).
 
+The same frame-8037 screenshot verifies all five Japanese `TITLE.BIN`
+title-menu sprites at command indices 171–175: their source and CRAM palette
+spans are bound, and all 1,495 visible sprite samples match exactly against
+the captured VDP2 back-screen color calculation. The screenshot's frame timing
+is not independently attested by a retained run log; this does not prove menu
+input or transition behavior.
+
 For the Japanese title-menu endpoint at frame 8037, the full capture-only VDP
 composition matches both same-run Ymir VDP2 pass buffers exactly. A real-data
 source test also binds 126 of 137 informative VDP1 texture spans to
