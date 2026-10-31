@@ -782,7 +782,8 @@ fi
 capture_cue="$cue"
 capture_cue_needs_split_iso=0
 capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
-capture_jp_iso_sibling="$(dirname -- "$cue")/TQJP02End.iso"
+capture_jp_iso_head="$(dirname -- "$cue")/TQJP19.iso"
+capture_jp_iso_tail="$(dirname -- "$cue")/TQJP02End.iso"
 if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
       ( "$track02_member" == 'TQUS02.iso' ||
         "$track02_member" == 'TQUS02End.iso' ) &&
@@ -800,16 +801,28 @@ if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
     fi
 fi
 if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
-      "$track02_member" == 'TQJP02.iso' &&
-      -f "$capture_jp_iso_sibling" ]]; then
-    split_iso_md5=$(md5_file "$capture_jp_iso_sibling") || split_iso_md5=
-    if [[ "$split_iso_md5" == 397039af02d50d15c70b74088eb8a1cb ]]; then
-        # The Japanese retail CUE names TQJP02.iso, while the supplied
-        # archive retains the complete authenticated payload as TQJP02End.iso.
-        # Keep the same private CUE normalization used by the US split route.
+      ( "$track02_member" == 'TQJP02.iso' ||
+        "$track02_member" == 'TQJP02End.iso' ) &&
+      -f "$capture_jp_iso_head" && -f "$capture_jp_iso_tail" ]]; then
+    jp_head_md5=$(md5_file "$capture_jp_iso_head") || jp_head_md5=
+    jp_tail_md5=$(md5_file "$capture_jp_iso_tail") || jp_tail_md5=
+    if [[ "$jp_head_md5" == f9f069a5e489b91207f3156059b756f1 &&
+          "$jp_tail_md5" == 397039af02d50d15c70b74088eb8a1cb ]]; then
+        capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQJP02-62a39bbf43415c9739c41c2481080a49.iso"
+        mkdir -p "$(dirname -- "$capture_split_iso_cache")"
+        if [[ ! -f "$capture_split_iso_cache" ]] ||
+           [[ "$(md5_file "$capture_split_iso_cache" || true)" != 62a39bbf43415c9739c41c2481080a49 ]]; then
+            capture_split_iso_tmp="$capture_split_iso_cache.tmp.$$"
+            cat -- "$capture_jp_iso_head" "$capture_jp_iso_tail" > "$capture_split_iso_tmp"
+            if [[ "$(md5_file "$capture_split_iso_tmp" || true)" != 62a39bbf43415c9739c41c2481080a49 ]]; then
+                rm -f -- "$capture_split_iso_tmp"
+                printf '%s\n' 'FAIL: JP split Track 02 projection hash mismatch' >&2
+                exit 1
+            fi
+            mv -f -- "$capture_split_iso_tmp" "$capture_split_iso_cache"
+        fi
         capture_cue_needs_split_iso=1
-        capture_split_iso_cache="$capture_jp_iso_sibling"
-        track02_path="$capture_jp_iso_sibling"
+        track02_path="$capture_split_iso_cache"
     fi
 fi
 if [[ ! -f "$track02_path" ]]; then

@@ -23,6 +23,8 @@
 #define THERON_V1_TRACK02_CUE_MAX_BYTES (1024u * 1024u)
 #define THERON_V1_TRACK02_US_SPLIT_HEAD_MD5 "51b40a17b92a30339957ba564aa0015c"
 #define THERON_V1_TRACK02_US_SPLIT_TAIL_MD5 "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
+#define THERON_V1_TRACK02_JP_SPLIT_HEAD_MD5 "f9f069a5e489b91207f3156059b756f1"
+#define THERON_V1_TRACK02_JP_SPLIT_TAIL_MD5 "397039af02d50d15c70b74088eb8a1cb"
 
 static int theron_v1_track02_media_mkdir(const char *path) {
     if (!path || !path[0]) return 0;
@@ -78,11 +80,11 @@ static const char *theron_v1_track02_media_extension(const char *path) {
     return dot ? dot : "";
 }
 
-/* A known digest establishes identity, not that supplied bytes contain usable
- * source data. The legacy JP Rev. 1 ISO digest identifies an all-zero stub;
- * the separate full CUE projection has its own authenticated identity. Check
- * only the legacy exact edition here. Returns -1 on I/O failure, 0 if any
- * byte is nonzero, and 1 for a nonempty all-zero payload. */
+/* A known digest establishes identity, not that supplied bytes contain a
+ * complete image. The JP Rev. 1 digest identifies an authentic empty suffix;
+ * the exact split pair is materialized above before this standalone tail is
+ * rejected. Returns -1 on I/O failure, 0 if any byte is nonzero, and 1 for a
+ * nonempty all-zero payload. */
 static int theron_v1_track02_media_is_all_zero(const char *path) {
     unsigned char buffer[4096];
     FILE *file;
@@ -388,11 +390,16 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
     return 1;
 }
 
-/* Materialize only the documented US split image. Decode.bat specifies the
- * byte order (19 followed by 02End); accepting 02End as an alias produced a
- * valid-looking but truncated ISO and a later startup hang. */
-static int theron_v1_track02_media_materialize_us_split(
-    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
+/* Materialize a regional split projection only when both original members
+ * and the resulting complete Track 02 hash match their pinned identities.
+ * The JP pair is independently cross-checked against the MODE1/2352 raw BIN;
+ * its empty 149-sector tail is not launchable by itself. */
+static int theron_v1_track02_media_materialize_split_iso(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY],
+    const char *cue_name, const char *tail_name, const char *head_name,
+    const char *expected_head_md5, const char *expected_tail_md5,
+    const char *expected_image_md5,
+    const char *cache_name) {
     char *leaf;
     char parent[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
     char head[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
@@ -401,9 +408,9 @@ static int theron_v1_track02_media_materialize_us_split(
     char cache_dir[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
     char cache_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
     char temp_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
-    char head_md5[33];
-    char tail_md5[33];
-    char image_md5[33];
+    char actual_head_md5[33];
+    char actual_tail_md5[33];
+    char actual_image_md5[33];
     const char *home;
     FILE *out;
     size_t prefix;
@@ -412,20 +419,21 @@ static int theron_v1_track02_media_materialize_us_split(
     leaf = strrchr(payload_path, '/');
     if (!leaf) leaf = strrchr(payload_path, '\\');
     leaf = leaf ? leaf + 1 : payload_path;
-    /* A file picker may select either the CUE-declared name (which is
-     * missing in this split distribution) or its physical End extent. Both
-     * spellings identify the same pair, but neither accepts the tail alone. */
-    if (!theron_v1_track02_media_ieq(leaf, "TQUS02.iso") &&
-        !theron_v1_track02_media_ieq(leaf, "TQUS02End.iso")) return 0;
+    /* A file picker may select either the CUE-declared payload or its End
+     * member. Neither spelling admits the tail alone: both original members
+     * must be present and hash-verified before a full image is materialized. */
+    if (!theron_v1_track02_media_ieq(leaf, cue_name) &&
+        !theron_v1_track02_media_ieq(leaf, tail_name)) return 0;
     prefix = (size_t)(leaf - payload_path);
     if (prefix == 0u || prefix >= sizeof(parent) ||
         snprintf(parent, sizeof(parent), "%.*s", (int)prefix, payload_path) >=
             (int)sizeof(parent) ||
-        snprintf(head, sizeof(head), "%sTQUS19.iso", parent) >= (int)sizeof(head) ||
-        snprintf(tail, sizeof(tail), "%sTQUS02End.iso", parent) >= (int)sizeof(tail) ||
-        !m12_file_md5_hex(head, head_md5) || !m12_file_md5_hex(tail, tail_md5) ||
-        strcmp(head_md5, THERON_V1_TRACK02_US_SPLIT_HEAD_MD5) != 0 ||
-        strcmp(tail_md5, THERON_V1_TRACK02_US_SPLIT_TAIL_MD5) != 0) return 0;
+        snprintf(head, sizeof(head), "%s%s", parent, head_name) >= (int)sizeof(head) ||
+        snprintf(tail, sizeof(tail), "%s%s", parent, tail_name) >= (int)sizeof(tail) ||
+        !m12_file_md5_hex(head, actual_head_md5) ||
+        !m12_file_md5_hex(tail, actual_tail_md5) ||
+        strcmp(actual_head_md5, expected_head_md5) != 0 ||
+        strcmp(actual_tail_md5, expected_tail_md5) != 0) return 0;
 
     home = getenv("HOME");
 #if defined(_WIN32)
@@ -441,10 +449,10 @@ static int theron_v1_track02_media_materialize_us_split(
         snprintf(cache_dir, sizeof(cache_dir), "%s/cache/theron", cache_root) >=
             (int)sizeof(cache_dir) ||
         !theron_v1_track02_media_mkdir(cache_dir) ||
-        snprintf(cache_path, sizeof(cache_path), "%s/TQUS02-%s.iso", cache_dir,
-                 THERON_TRACK02_MD5_US_ISO) >= (int)sizeof(cache_path)) return 0;
-    if (m12_file_md5_hex(cache_path, image_md5) &&
-        strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) == 0) {
+        snprintf(cache_path, sizeof(cache_path), "%s/%s-%s.iso", cache_dir,
+                 cache_name, expected_image_md5) >= (int)sizeof(cache_path)) return 0;
+    if (m12_file_md5_hex(cache_path, actual_image_md5) &&
+        strcmp(actual_image_md5, expected_image_md5) == 0) {
         snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", cache_path);
         return 1;
     }
@@ -459,8 +467,8 @@ static int theron_v1_track02_media_materialize_us_split(
         if (!io_failed && !theron_v1_track02_media_copy_file(out, tail)) io_failed = 1;
         if (fclose(out) != 0) io_failed = 1;
         if (io_failed ||
-            !m12_file_md5_hex(temp_path, image_md5) ||
-            strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
+            !m12_file_md5_hex(temp_path, actual_image_md5) ||
+            strcmp(actual_image_md5, expected_image_md5) != 0 ||
             rename(temp_path, cache_path) != 0) {
             remove(temp_path);
             return 0;
@@ -470,10 +478,26 @@ static int theron_v1_track02_media_materialize_us_split(
     return 1;
 }
 
-/* Legacy JP archive naming may retain TQJP02.iso while the split tail is
- * named TQJP02End.iso. The tail is the source-owned Track 02 member; the
- * separate TQJP19.iso is Track 19 and must never be concatenated into Track
- * 02. Accept only exact known complete/stub member digests. */
+static int theron_v1_track02_media_materialize_us_split(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
+    return theron_v1_track02_media_materialize_split_iso(
+        payload_path, "TQUS02.iso", "TQUS02End.iso", "TQUS19.iso",
+        THERON_V1_TRACK02_US_SPLIT_HEAD_MD5,
+        THERON_V1_TRACK02_US_SPLIT_TAIL_MD5,
+        THERON_TRACK02_MD5_US_ISO, "TQUS02");
+}
+
+static int theron_v1_track02_media_materialize_jp_split(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
+    return theron_v1_track02_media_materialize_split_iso(
+        payload_path, "TQJP02.iso", "TQJP02End.iso", "TQJP19.iso",
+        THERON_V1_TRACK02_JP_SPLIT_HEAD_MD5,
+        THERON_V1_TRACK02_JP_SPLIT_TAIL_MD5,
+        THERON_TRACK02_MD5_JP_ISO, "TQJP02");
+}
+
+/* Preserve the legacy exact JP End-member identity when a complete matching
+ * split pair is unavailable; the standalone empty suffix is rejected below. */
 static int theron_v1_track02_media_resolve_jp_complete_alias(
     char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
     char *leaf;
@@ -663,6 +687,7 @@ int theron_v1_track02_raw_media_intake_discover(
     }
     if (strstr(receipt.payload_path, "::") == NULL) {
         (void)theron_v1_track02_media_materialize_us_split(receipt.payload_path);
+        (void)theron_v1_track02_media_materialize_jp_split(receipt.payload_path);
         (void)theron_v1_track02_media_resolve_jp_complete_alias(receipt.payload_path);
     }
     if (!theron_v1_track02_media_file_size(receipt.payload_path,

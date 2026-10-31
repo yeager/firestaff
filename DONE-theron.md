@@ -113,7 +113,8 @@
 ## 2026-10-31 — reconcile Theron documentation with verified evidence
 
 Updated the active status and acquisition pages to distinguish the authentic
-JP Track 02 BIN from the zero-filled `TQJP02End.iso` placeholder, and corrected
+JP Track 02 BIN from the `TQJP02End.iso` partial suffix, then believed to be a
+placeholder, and corrected
 save-gap summaries to reflect the verified US BRAM Continue route and the
 empty-JP rejection while keeping positive JP progress and `.srm` body import
 open. Clarified that the PCE key table documents Mednafen reference bindings.
@@ -131,6 +132,19 @@ setting still filters physical data addresses, not instruction PCs. Shell and
 Python syntax checks pass. At the time of this entry, the real Drator replay
 had not yet been captured; see the newer capture report above. The
 consumer-to-row join and native viewport evidence remain open.
+
+## 2026-11-01 — correct JP Track 02 split provenance
+
+The earlier classification of `TQJP02End.iso` as synthetic or an unrelated
+zero-filled stub was incorrect. Its 149 sectors are the authentic empty suffix
+of the JP Track 02 projection: `TQJP19.iso` matches the first 3,072 sectors,
+and concatenating the exact-hash-verified pair matches the complete
+6,596,608-byte MODE1/2048 projection extracted from authentic `TQJP02.bin`
+(MD5 `62a39bbf43415c9739c41c2481080a49`). Native intake and the reference
+capture script now materialize the full image only after verifying both
+members and the resulting hash. The suffix by itself remains rejected. Older
+entries below preserve the evidence and conclusions available on their dates;
+this correction supersedes their description of the bytes as a placeholder.
 
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 

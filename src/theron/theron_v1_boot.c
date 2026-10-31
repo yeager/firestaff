@@ -491,7 +491,7 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
  * JP Track 02 MD5: b7afb338ad31be1025b53f9aff12d73a
  * US Track 02 MD5: f23601102138f87c33025877767ebf76
  * JP CUE Track 02 ISO MD5: 62a39bbf43415c9739c41c2481080a49
- * JP Rev 1 zero stub MD5:   397039af02d50d15c70b74088eb8a1cb
+ * JP Rev 1 149-sector empty suffix MD5: 397039af02d50d15c70b74088eb8a1cb
  * US Track 02 ISO MD5:       ceb02343868f80cec899e9b239aff2da
  * Source: cdromance.org (2026-05-27)
  * Additional ISO names: MyAbandonware TG-CD English/Japanese Rev 1 page
@@ -861,7 +861,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
      * JP: b7afb338ad31be1025b53f9aff12d73a
      * US: f23601102138f87c33025877767ebf76
      * JP CUE ISO: 62a39bbf43415c9739c41c2481080a49
-     * JP stub:    397039af02d50d15c70b74088eb8a1cb
+     * JP suffix:  397039af02d50d15c70b74088eb8a1cb
      * US ISO:       ceb02343868f80cec899e9b239aff2da */
     if (profile->graphics_path[0]) {
         char md5hex[33] = {0};

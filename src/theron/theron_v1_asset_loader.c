@@ -159,11 +159,9 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     }
 
     /* Track 02 media ownership is centralized in raw-media intake. It
-     * hash-verifies and materializes only the documented US split image.
-     * JP's similarly named End payload has a known digest but is zero-filled
-     * in the supplied data set and is rejected as launch media by intake. Do
-     * not reconstruct bytes here: a second path-only implementation could
-     * accept a truncated US tail or unusable JP payload. */
+     * hash-verifies and materializes the documented US and JP split images.
+     * The JP End payload is an authentic empty suffix, not a complete image;
+     * intake rejects it when the verified prefix is unavailable. */
 
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);

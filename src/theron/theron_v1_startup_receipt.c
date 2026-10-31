@@ -650,8 +650,8 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     }
 
     /* Populate bank-signal summary fields from the digest-bound decoder.
-     * The legacy JP zero stub has no anchors; the complete CUE ISO carries
-     * its own verified byte-layout anchors. */
+     * The standalone JP empty suffix has no anchors; the complete CUE ISO
+     * projection carries its own verified byte-layout anchors. */
     receipt->descriptor_offset         = (uint64_t)signal.descriptor_offset;
     receipt->descriptor_size           = (uint64_t)signal.descriptor_size;
     receipt->descriptor_value_count    = (uint64_t)signal.value_count;

@@ -948,7 +948,9 @@ if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
     exit 1
 fi
 if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
+   ! grep -Fq 'TQJP19.iso' "$script" ||
    ! grep -Fq 'TQJP02End.iso' "$script" ||
+   ! grep -Fq '62a39bbf43415c9739c41c2481080a49' "$script" ||
    ! grep -Fq '397039af02d50d15c70b74088eb8a1cb' "$script" ||
    ! grep -Fq 'THERON_US_CUE/THERON_CUE' "$script"; then
     printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
@@ -2204,7 +2206,7 @@ if ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$party_ram_trace_patch" ||
    [[ $(grep -Fc '+ TheronTracePartyRAMWrite(A, V);' "$party_ram_trace_patch") -ne 2 ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace"' "$script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch' "$build_script" ||
+   ! grep -Fq 'instrument_mednafen_theron_pce_fast_party_trace_budget.py' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch' "$build_script"; then
     printf '%s\n' 'FAIL: Theron party-RAM writer tracing must cover mirrored BaseRAM writes with current HuC6280 PC' >&2
     exit 1

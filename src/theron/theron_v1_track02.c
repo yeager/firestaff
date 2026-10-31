@@ -3811,8 +3811,8 @@ const char *theron_v1_track02_source_evidence(void) {
            "earlier at descriptor offsets 0x70b4d6, 0x70d996, 0x70ffd4 "
            "and span offsets 0x2d4ab0, 0x47c710, 0x711f10; JP Rev 1 ISO "
            THERON_TRACK02_MD5_JP_REV1_ISO
-           " identifies a legacy zero-filled stub, so no "
-           "dungeon-bank offset is claimed for that representation. The full "
+           " identifies the authentic empty JP suffix, not a complete image. "
+           "The full "
            "CUE projection " THERON_TRACK02_MD5_JP_ISO
            " authenticates three bank-stride descriptor anchors at offsets "
            "0x5b2406, 0x5b4406, 0x5b6584 and opaque spans at "

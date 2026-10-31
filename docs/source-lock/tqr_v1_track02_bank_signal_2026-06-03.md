@@ -12,7 +12,7 @@ a dungeon map-grid parser, a dungeon descriptor table, or loader parity.
 | US Track 02 ISO | `TQUS19.iso + TQUS02End.iso` | `ceb02343868f80cec899e9b239aff2da` | Supplied retail image contains three exact descriptor/span pairs; the tail alone is not a Track 02 image. |
 | US Track 02 raw BIN | `Dungeon Master - Theron's Quest (USA) (Track 02).bin` | `f23601102138f87c33025877767ebf76` | Three exact raw-sector bank anchors found. |
 | JP Track 02 raw BIN | `Dungeon Master - Theron's Quest (Japan) (Track 02).bin` | `b7afb338ad31be1025b53f9aff12d73a` | Three exact raw-sector bank anchors found, one raw CD sector earlier than the US anchors. |
-| JP Rev 1 Track 02 ISO | `TQJP02End.iso` | `397039af02d50d15c70b74088eb8a1cb` | Image is zero-filled in the available asset, so no dungeon-bank offset is claimed. |
+| JP Rev 1 Track 02 ISO projection | `TQJP19.iso + TQJP02End.iso` | `62a39bbf43415c9739c41c2481080a49` | Prefix (3,072 sectors) and authentic empty suffix (149 sectors) match the complete projection from the hash-verified raw BIN; standalone suffix is incomplete. Three bank-stride descriptor anchors and opaque spans are present in the full image. |
 
 ## Supplied Retail US ISO Signal
 
@@ -227,7 +227,7 @@ non-corpus media and does not permit fallback visuals.
   prefix, which must not pass
 - a negative fixture where the old 16-byte boundary prefix exists without the
   full 44-byte post-boundary span, which must not pass
-- the JP Rev 1 zero-filled image outcome as insufficient evidence
+- the JP Rev 1 full CUE projection's three exact descriptor/span anchors
 - the US raw Track 02 BIN descriptor/span anchors at three exact offsets
 - the JP raw Track 02 BIN descriptor/span anchors at three exact offsets
 - the retail US ISO startup-level header at `0x5a9114`, its `0x92f2`

@@ -23,20 +23,23 @@ ISO files so a valid-looking image cannot be attached to the wrong loader.
 |---|---:|---|---|
 | `TQUS02.bin` | 8,104,992 | `f23601102138f87c33025877767ebf76` | US Track 02, raw MODE1/2352 |
 | `TQJP02.bin` | 8,102,640 | `b7afb338ad31be1025b53f9aff12d73a` | JP Track 02, raw MODE1/2352 |
-| `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | Hash-identified 149-sector JP Rev. 1 payload; supplied bytes are zero-filled and rejected as launch media |
+| `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | Authentic empty 149-sector suffix of JP Track 02; not launchable alone |
 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | US Track 19 ISO |
 | `Dungeon Master - Theron's Quest (USA) (Track 19).bin` | 7,754,544 | `fd45d13690a214b17b48a6b7c05b93b4` | US Track 19 raw MODE1/2352; 225-sector pregap, 2,922 ISO-equivalent payload sectors, 150-sector tail |
-| `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | JP Track 19 ISO |
+| `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | JP Track 19 ISO; its bytes also equal the first 3,072 sectors of the JP Track 02 ISO projection |
 | `Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin` | 7,752,192 | `27d54f58154662885bb67d5967e5111e` | JP Rev. 1 Track 19, raw MODE1/2352 with 224-sector CUE pregap |
 | `TQUS02-ceb02343868f80cec899e9b239aff2da.iso` | 6,596,608 | `ceb02343868f80cec899e9b239aff2da` | Materialized US split Track 02 ISO |
 
-`TQJP19.iso` is not the JP Track 02 image. Its `f9f069…` identity belongs to
-the Track 19 metadata readers. The JP `TQJP02End.iso` file is a distinct
-149-sector, hash-identified Track 02 payload, but the supplied bytes are
-zero-filled; its identity and length do not establish dungeon-bank content,
-and file-backed campaign discovery now rejects it as unstartable.
-It must not be treated as a full six-megabyte Track 19 projection. The US distribution is the one that needs
-the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
+`TQJP19.iso` remains the JP Track 19 metadata source by filename and content
+role. Independently, its exact 6,291,456 bytes match the first 3,072 MODE1/2048
+sectors after the 224-sector INDEX 01 pregap in authentic `TQJP02.bin`.
+`TQJP02End.iso` matches the remaining 149 sectors (raw sectors 3296–3444);
+these user-data bytes are all zero in both sources. Concatenating the two
+verified files produces the complete 6,596,608-byte JP Track 02 ISO projection
+with MD5 `62a39bbf43415c9739c41c2481080a49`, byte-for-byte equal to the
+projection from the authentic raw BIN. The tail alone remains incomplete and
+is rejected as launch media. Native intake now materializes this JP pair with
+the same component and complete-image hash checks used for the US split pair.
 
 ## Real bindings currently admitted
 

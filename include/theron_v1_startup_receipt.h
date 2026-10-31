@@ -65,7 +65,7 @@ extern "C" {
  *      hash-verified MD5, the boot-profile direct launch succeeded, and the
  *      Track 02 bank-signal decoder either confirmed the known
  *      descriptor/span anchors (raw BIN / full JP CUE ISO variants) or the
- *      JP Rev 1 zero-fill contract (legacy stub variant). Never set without an actual
+ *      JP Rev 1 empty-suffix contract. Never set without an actual
  *      file/MD5 round-trip.
  *
  *   SKIPPED             — caller asked to probe a file that does not exist,
@@ -357,7 +357,7 @@ int theron_v1_startup_receipt_md5_is_known(const char *expected_md5);
  *
  * Returns 1 when the verdict is REAL_ASSET_RECEIPT (file existed, MD5
  * matched, direct-launch succeeded, bank-signal decoder consumed the
- * bytes and emitted anchors or a JP Rev 1 zero-fill verdict).
+ * bytes and emitted anchors or a JP Rev 1 empty-suffix verdict).
  *
  * Returns 0 in every other case; the receipt is still filled with a
  * deterministic verdict so the audit trail is consistent. */
