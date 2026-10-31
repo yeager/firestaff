@@ -1228,8 +1228,8 @@ PROCESS_TIMER_DESTROY_DOOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1137	void SkWinC
 ACTIVATE_RELAY1	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1154	void SkWinCore::ACTIVATE_RELAY1(Timer *ref, Actuator *pr4, X16 delayAsMult) 	0	UNREVIEWED
 ACTIVATE_RELAY2	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1185	void SkWinCore::ACTIVATE_RELAY2(Timer *ref, Actuator *pr4, X16 xx)	0	UNREVIEWED
 _3a15_0d5c	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1234	void SkWinCore::_3a15_0d5c(Timer *ref, Actuator *pr4) { // TODO: Unr	0	UNREVIEWED
-ACTIVATE_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1240	void SkWinCore::ACTIVATE_ORNATE_ANIMATOR(Timer *ref, Actuator *pr4, ObjectID rl, X16 isWall)	0	UNREVIEWED
-ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1290	void SkWinCore::ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(ObjectID rl, Timer *ref, Actuator *pr4, X16 isWall)	0	UNREVIEWED
+ACTIVATE_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1240	void SkWinCore::ACTIVATE_ORNATE_ANIMATOR(Timer *ref, Actuator *pr4, ObjectID rl, X16 isWall)	0	PARTIAL
+ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1290	void SkWinCore::ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(ObjectID rl, Timer *ref, Actuator *pr4, X16 isWall)	0	PARTIAL
 ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1346	void SkWinCore::ACTIVATE_ITEM_TELEPORT(Timer *ref, Actuator *pr4, ObjectID rl, X16 isFloor, X16 recycler, ObjectID *prl, X16 capture, X16 onlyFirstItem)	0	UNREVIEWED
 ACTIVATE_INVERSE_FLAG	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1504	void SkWinCore::ACTIVATE_INVERSE_FLAG(Timer *ref, Actuator *pr4) 	0	UNREVIEWED
 ACTIVATE_TEST_FLAG	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1516	void SkWinCore::ACTIVATE_TEST_FLAG(Timer *ref, Actuator *pr4)	0	UNREVIEWED
