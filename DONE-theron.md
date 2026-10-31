@@ -10,7 +10,7 @@ teleporter-destination source association, and keep player movement,
 active-map/field meaning, collision, visible response, and cold CD handoff
 unresolved. The platform entries also state native input coverage separately
 from retail input and display parity. No implementation or game data changed.
-`git diff --check` passed; internal Markdown-link validation remains to run.
+`git diff --check` and the repository-local Markdown-link validation passed.
 
 ## 2026-10-31 — capture repeatable PCE Fast TII instruction context
 
