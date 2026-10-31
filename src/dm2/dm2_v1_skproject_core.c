@@ -13962,7 +13962,15 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                             ? (int16_t)thing : -1;
                         goto next_thing;
                     case 0x7e: /* resuscitation */
-                        if (once_only != 0) si = 1;
+                        if (once_only != 0) {
+                            if (relative_side == 2) {
+                                /* c_querydb.cpp:3524-3541 writes the
+                                 * actuator datum to summary word 7. */
+                                receipt.summary_word7_written = 1u;
+                                receipt.summary_word7 = (int16_t)actuator_data;
+                            }
+                            si = 1;
+                        }
                         break;
                     case 0x17: /* 2-state wall switch */
                         di = (int)once_only;
