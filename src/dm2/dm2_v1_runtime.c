@@ -2231,7 +2231,10 @@ static int dm2_runtime_mode7_flags3_evidence(
         !rt->record_pools_valid ||
         !((room->raw_tile >> 5) == 5u ||
           ((room->raw_tile >> 5) == 2u &&
-           room->first_record_link == DM2_THING_NULL_MARKER) ||
+           (room->first_record_link == DM2_THING_NULL_MARKER ||
+            ((room->raw_tile & 0x08u) != 0u &&
+             ((room->first_record_link >> 10) & 0x0fu) >= 4u &&
+             room->source_tile_type == 2u))) ||
           (room->source_tile_type >= 0x10u &&
            room->source_tile_type <= 0x13u &&
            room->first_record_link != DM2_THING_NULL_MARKER) ||
