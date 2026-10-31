@@ -40,7 +40,6 @@ int main(void)
     assert(capture.calls == 2);
     assert(capture.handle == -1);
 
-    capture.result = -1;
     capture.result = INT32_MIN;
     assert(redmcsb_f0919_prim_file_seek_pc34_compat(
                INT32_MIN, INT32_MIN, capture_seek, &capture) == 0);
