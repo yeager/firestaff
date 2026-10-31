@@ -1,3 +1,11 @@
+2026-10-31 skproject `STEP_DOOR` timer direction source:
+The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
+door direction or rejects values outside 0/1. Both GAME_LOAD owners derive
+movement from the door record DoorBit09, matching SKWINDOS `SKW_STEP_DOOR`
+and SPX `STEP_DOOR`. This closes that timer-field mismatch only; the direct
+world-owner still has structural collision blockers, and supported-platform
+source mapping remains open.
+
 2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:
 Both live and GAME_LOAD candidate door-step paths now queue source sound 0x8f
 only when the resulting door state is 4; every other state queues 0x8e before

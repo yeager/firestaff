@@ -5511,7 +5511,8 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
     receipt.map = map;
     receipt.x = (int16_t)x;
     receipt.y = (int16_t)y;
-    receipt.direction = timer_entry.actor;
+    /* SKWINDOS/SKWINSPX STEP_DOOR derives direction from DoorBit09. */
+    receipt.direction = 0u;
     link = timer_entry.wvalueB;
     receipt.door_record_link = link;
     if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
@@ -13589,7 +13590,7 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     const int x = timer ? (int)(uint8_t)timer->xA : -1;
     const int y = timer ? (int)(uint8_t)timer->yA : -1;
     const int16_t link = timer ? timer->wvalueB : DM2_V1_RECORD_HANDLE_NULL;
-    int direction = timer ? (int)timer->actor : -1;
+    int direction = 0;
     const uint8_t *door;
     int raw_tile;
     int16_t chain_link;
@@ -13605,7 +13606,7 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !timer ||
         timer->ttype != 0x01u || map < 0 ||
-        map >= owner->dungeon.level_count || direction < 0 || direction > 1 ||
+        map >= owner->dungeon.level_count ||
         link == DM2_V1_RECORD_HANDLE_NULL || link == DM2_V1_RECORD_HANDLE_END ||
         dm2_v1_record_handle_pool(link) != 0) {
         return 0;
