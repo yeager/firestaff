@@ -21,6 +21,17 @@ to party pose and visible output under UP and neutral. The evidence still does
 not prove movement or parity. See the [same-state comparison
 report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
+## 2026-10-31 — cold JP emulator route reaches the dungeon; BRAM stays empty
+
+An isolated cold Mednafen PCE Fast run reached the authentic Japanese Akutuba
+dungeon after the four-second System Card RUN hold, New Game/file selection,
+and story advancement. Its only 2 KiB `.sav` output hashes to the known empty
+JP BRAM (`dbdedb0ec809227b289c2bc5b18b9c9d`); it is not a progressed save.
+This confirms cold startup and New Game navigation, but not a held menu action or positive Continue evidence.
+Next clear the original Akutuba stage, classify the resulting BRAM, and use it
+only if its contents and provenance show real progress. See the
+[capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md#2026-10-31--cold-jp-emulator-route-reaches-akutuba-but-saves-no-progress).
+
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined
 
 The authentic US cold standard-PCE run loaded no save state and configured no

@@ -12,6 +12,24 @@ positive JP Continue/save round-trip and retail JP save compatibility remain
 unverified. See the [source-locked save-body report](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
 and [`DONE-theron.md`](../../DONE-theron.md).
 
+## 2026-10-31 — cold JP emulator route reaches Akutuba but saves no progress
+
+An isolated Mednafen 1.32.1 PCE Fast profile booted the authentic Japanese
+Rev. 1 disc from cold media, held RUN for four seconds at the System Card
+prompt, selected New Game and the first file, advanced the Akutuba story
+screens, and reached the first-person dungeon. The profile was kept separate
+from Firestaff data. Its only 2,048-byte `.sav` output has SHA-256
+`de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa` and
+MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`, exactly matching the already
+verified empty JP BRAM. No stage-clear or progressed BRAM was produced. The
+screenshots and emulator state remain private under
+`/home/trv2/firestaff-theron-evidence/emulator-created-20261031/jp-progress-attempt1/`;
+they are reference artifacts, not Firestaff output or parity evidence. The
+cold route confirms the long RUN hold and New Game navigation, but not a
+game-owned input trace, stage completion, positive save/Continue, or native
+rendering parity. Continue by completing the original Akutuba stage and
+validating any resulting BRAM before using it as positive-save evidence.
+
 ## 2026-10-31 — JP PCE Fast poll-to-RAM event ordering
 
 Three isolated emulator runs replayed `up@61:120` from an authentic JP

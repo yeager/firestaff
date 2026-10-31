@@ -8,8 +8,10 @@
 > dungeons in both regions, but do not establish their retail runtime
 > semantics. Native M11 rejects the authentic empty JP BRAM as Continue;
 > positive JP progress restoration remains unverified because no authentic
-> progressed JP BRAM is available. The reported 3–5 second title-menu hold remains unverified in a
-> visibly confirmed original-game capture. A separate US save-state replay
+> progressed JP BRAM is available. A cold Japanese emulator route visibly
+> reaches the Akutuba dungeon after a four-second System Card RUN hold and short
+> Button I menu/story presses; the reported 3–5 second hold on the selected
+> title-menu action itself remains untested. A separate US save-state replay
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save

@@ -23,8 +23,13 @@ identify the byte's semantics, or prove movement. See the
 [source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
-BRAM is available. See the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
-The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
+BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
+after a four-second System Card RUN hold and short Button I menu/story presses;
+its resulting BRAM is byte-identical to the known empty JP slot. The reported
+3–5 second hold on the selected title-menu action itself remains untested. See
+the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
+and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
+Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture
 readiness](../theron/THERON_CAPTURE_READINESS.md), and the

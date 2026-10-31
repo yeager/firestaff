@@ -232,11 +232,12 @@ THERON_CAPTURE_INPUT_ROUTE=pid \
 scripts/capture_theron_mednafen_live_trace.sh
 ```
 
-This example only holds RUN to leave the System Card startup. Do not schedule
-the title/menu Button I sequence blindly: first confirm that the original
-Theron menu is visibly present, then hold the selected Button I action for
-3–5 seconds as requested by the operator and record the resulting screen. The
-multi-second selection timing is not yet independently confirmed; see
+This example only holds RUN to leave the System Card startup. A cold Japanese
+PCE Fast route has since visibly reached the Akutuba dungeon after that
+four-second RUN hold, New Game/file selection and short story-advance presses.
+Its selected title-menu action was not held for 3–5 seconds, so that reported
+timing remains untested. Capture the selected-action hold separately and
+record the resulting screen. See
 [`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md). DMWeb provides
 retail-edition and manual context. Greatstone's Theron material is the CSBWin
 custom-dungeon conversion, not the PC Engine game's retail data; neither
@@ -382,8 +383,10 @@ Held keys are sampled at Theron's input boundary rather than relying on
 macOS/SDL autorepeat. A short touch corresponds to Button I and a long touch
 to Button II. This paragraph describes Firestaff's native bindings. For an
 original emulator capture, the menu's selected Button I action may require the
-operator-reported 3–5 second hold; this is still awaiting a fresh visible
-capture and must not be inferred from Firestaff's input routing.
+operator-reported 3–5 second hold. A cold route now confirms the separate
+four-second System Card RUN hold and reaches the dungeon, but used short
+Button I presses for menu/story advancement. The selected-action hold remains
+untested and must not be inferred from Firestaff's input routing.
 
 With `-GAMEPORT0 KEY`, Tsugaru uses keyboard emulation for gamepad 0:
 
