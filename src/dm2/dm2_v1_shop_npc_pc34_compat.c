@@ -8,6 +8,66 @@
 
 #include <string.h>
 
+#define DM2_SHOP_STOCK_ITEM_COUNT 512u
+
+int dm2_v1_shop_select_masked_stock(
+    const uint16_t *item_list,
+    size_t item_count,
+    uint16_t current_item,
+    const uint8_t item_mask[64],
+    int direction,
+    DM2_V1_ShopStockSelection *out_selection)
+{
+    size_t index = 0u;
+    size_t attempts;
+    size_t limit;
+    int found_current = 0;
+
+    if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+    if (!out_selection || !item_mask || direction == 0 ||
+        (item_count != 0u && !item_list) ||
+        item_count > (size_t)UINT16_MAX + 1u) return 0;
+
+    if (item_count != 0u) {
+        for (index = 0u; index < item_count; ++index) {
+            if ((item_list[index] & 0x01ffu) == (current_item & 0x01ffu)) {
+                found_current = 1;
+                break;
+            }
+        }
+        if (!found_current) index = item_count;
+        limit = item_count;
+    } else {
+        index = current_item & 0x01ffu;
+        limit = DM2_SHOP_STOCK_ITEM_COUNT;
+    }
+
+    for (attempts = 0u; attempts < limit; ++attempts) {
+        uint16_t raw_entry;
+        uint16_t item;
+
+        if (direction > 0) {
+            if (index >= limit || index + 1u >= limit) index = 0u;
+            else ++index;
+        } else {
+            if (index == 0u || index >= limit) index = limit - 1u;
+            else --index;
+        }
+
+        raw_entry = item_count != 0u ? item_list[index] : (uint16_t)index;
+        item = (uint16_t)(raw_entry & 0x01ffu);
+        if ((item_mask[item >> 3] & (uint8_t)(1u << (item & 7u))) == 0u)
+            continue;
+
+        out_selection->item = item;
+        out_selection->list_index = (uint16_t)index;
+        out_selection->raw_list_entry = raw_entry;
+        out_selection->from_list = item_count != 0u ? 1u : 0u;
+        return 1;
+    }
+    return 0;
+}
+
 int dm2_v1_classify_shop_element(
     int16_t actuator_type,
     int16_t creature_ai_ref,

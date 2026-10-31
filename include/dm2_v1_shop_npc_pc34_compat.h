@@ -34,6 +34,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,10 +54,36 @@ typedef struct {
     int is_merchant_guard;
 } DM2_V1_ShopClassification;
 
+/* Result of the source SHOP_GLASS stock selector. */
+typedef struct {
+    uint16_t item;
+    uint16_t list_index;
+    uint16_t raw_list_entry;
+    uint8_t from_list;
+} DM2_V1_ShopStockSelection;
+
 int dm2_v1_classify_shop_element(
     int16_t actuator_type,
     int16_t creature_ai_ref,
     DM2_V1_ShopClassification *result);
+
+/*
+ * Select the next item accepted by the 64-byte CREATURES item mask.
+ * list entries are already decoded host-order words from WALL_GFX/dt08/0x13;
+ * only their low nine bits identify the item, while the complete selected
+ * word is retained for the source high-bit allocation rule.
+ *
+ * Source: SKWIN/SkWinCore.cpp::_32cb_0f82_SHOP_GLASS (22703-22814).
+ * direction is +1 for forward and -1 for backward source cycling. Returns 1
+ * with the selected item, 0 when no masked list entry is eligible.
+ */
+int dm2_v1_shop_select_masked_stock(
+    const uint16_t *item_list,
+    size_t item_count,
+    uint16_t current_item,
+    const uint8_t item_mask[64],
+    int direction,
+    DM2_V1_ShopStockSelection *out_selection);
 
 #ifdef __cplusplus
 }
