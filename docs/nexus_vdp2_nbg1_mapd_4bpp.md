@@ -98,3 +98,24 @@ character bytes checked at the map origin are nonzero. Do not apply a fixed
 same-frame source or per-scanline state trace explains the difference. VDP1,
 other layer ownership, and full color-calculation composition remain separate
 parity work.
+
+## SH-2 register-write trace
+
+A separate Ymir run traced writes across the full VDP2 register range in frame
+891. Its complete receipt records 127 CPU writes, no DMA writes, and no dropped
+rows. The frame-wide register copy set `BGON=0x0002`, `CHCTLA=0x0013`,
+`MPABN1=MPCDN1=0x1717`, and zero NBG1 scroll/zoom words at offsets `0x80`–
+`0x8e`. All writes came from the SH-2 word-copy loop at PC `0x060856ec`.
+
+This independently confirms the active NBG1 setup, but it does not resolve the
+upper-row transparency: the trace contains a frame-wide copy, not scanline
+state transitions. Window registers are not written in this trace and their
+values must be checked in the same-frame register snapshot.
+
+The raw trace, receipt, same-run register snapshot, VDP2 memory, and high work
+RAM are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/register-write-frame891-full-20261101/`.
+The CSV SHA-256 is
+`c8dadb7ec6f89e0dafb83301a75add3ebf2e0b1d59b8df87700886bf2cb3bcc9` and the
+complete-receipt SHA-256 is
+`9495034ec43c3149b02a0c0519cf8d81911bf6a1da2b80b0bbad36a3b4668daf`.
