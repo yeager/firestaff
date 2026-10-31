@@ -2828,6 +2828,21 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                 surface->wall_rendered_record_root_valid = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
+                /* SkWinCore.cpp SUMMARIZE_STONE_ROOM (10061-10073) fills
+                 * xsrd.id4 before DRAW_WALL_ORNATE (22967-22990) applies the
+                 * SeeThruWalls display gate. Preserve that root regardless
+                 * of whether this frame draws the ornament. */
+                if (map_x >= 0 &&
+                    map_x < dd->level_widths[rt->dungeon_level] &&
+                    map_y >= 0 &&
+                    map_y < dd->level_heights[rt->dungeon_level] &&
+                    dm2_runtime_wall_rendered_record_root(
+                        dd, rt->dungeon_level, map_x, map_y,
+                        &rendered_record_root)) {
+                    surface->wall_rendered_record_root =
+                        rendered_record_root;
+                    surface->wall_rendered_record_root_valid = 1u;
+                }
                 /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
                  * through _0cee_1a46; DRAW_WALL_ORNATE selects slot 4/5/6
                  * from the lateral offset. Query only the visible relative
@@ -2841,13 +2856,6 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                         dd, rt->dungeon_level, map_x, map_y);
                     int side_index = visible_cells[i].lateral < 0 ? 1 :
                         (visible_cells[i].lateral > 0 ? 3 : 2);
-                    if (dm2_runtime_wall_rendered_record_root(
-                            dd, rt->dungeon_level, map_x, map_y,
-                            &rendered_record_root)) {
-                        surface->wall_rendered_record_root =
-                            rendered_record_root;
-                        surface->wall_rendered_record_root_valid = 1u;
-                    }
                     if (first_thing >= 0 &&
                         first_thing != DM2_THING_END_MARKER) {
                         DM2_V1_SkprojectQuery0cee1a46Receipt decoration;

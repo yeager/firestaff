@@ -46,7 +46,8 @@ handle, applies an early facing gate, renders DB5..DB10 items with wall-specific
 `DRAW_ITEM` geometry, handles two cloud types, and creates the clickable item
 zone only for front cell 3. Firestaff now retains a bounded first DB4+ record
 root on each eligible projected wall square, following the `w4=id4` handoff
-from `SUMMARIZE_STONE_ROOM`; it still has no wall-cell item material/placement
+from `SUMMARIZE_STONE_ROOM` before and independently of the `SeeThruWalls`
+front-cell ornament gate; it still has no wall-cell item material/placement
 pass, matching cloud route, or front-wall click target. The next work is to
 consume that root with the source facing gate and wall-specific geometry. The
 shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
