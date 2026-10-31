@@ -1,3 +1,14 @@
+2026-11-01 skproject source inventory and legacy DOS shooter review:
+The active-source inventory generator now includes all C/C++ definitions in
+legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
+The locked checkout yields 3,929 active definitions (2,724 SPX and 1,205 DOS);
+3,876 remain unreviewed, 48 are partial, and 5 have mapped parity entries.
+The combined skproject backlog is 3,953 rows. The legacy DOS and SPX shooter
+source rows are now marked partial: Firestaff still lacks a live owner for the
+source DB14 allocation, projectile record initialization/tile append, and
+C1D/C1E follow-up timer transaction. Review and implement the remaining rows
+against skproject for each supported DOS, Amiga, FM Towns, and Macintosh lane.
+
 2026-10-31 skproject `STEP_DOOR` timer direction source:
 The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
 door direction or rejects values outside 0/1. Both GAME_LOAD owners derive
