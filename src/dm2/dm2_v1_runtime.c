@@ -9033,8 +9033,7 @@ static void dm2_runtime_queue_ornate_activation_sounds(
     int16_t link;
     long budget = 1;
 
-    if (!rt || !before || !rt->record_pools_valid ||
-        !rt->sound_queue_ready || !rt->boot ||
+    if (!rt || !before || !rt->record_pools_valid || !rt->boot ||
         !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
         !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
         map < 0 || map >= dungeon->level_count ||
@@ -9075,7 +9074,7 @@ static void dm2_runtime_queue_ornate_activation_sounds(
             if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
                 decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
                                      : rt->map_floor_gfx_list[gfx_index - 1u];
-            if (decoration != 0xffu) {
+            if (decoration != 0xffu && rt->sound_queue_ready) {
                 if (dm2_v1_query_gdat_entry_data_index(
                         loader, (uint8_t)category, decoration,
                         DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row))
@@ -9087,6 +9086,72 @@ static void dm2_runtime_queue_ornate_activation_sounds(
                     (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
                     (int16_t)sound_row, (int16_t)0x8c,
                     (int16_t)0x80, &env, &sound);
+            }
+        } else if (dm2_v1_record_handle_pool(link) == 3 &&
+                   dm2_actu_type(old_record) == DM2_ACTU_ORNATE_ANIMATOR &&
+                   dm2_actu_once_only(old_record) == 0 &&
+                   dm2_actu_once_only(record) == 1 &&
+                   dm2_actu_active_status(old_record) == 0 &&
+                   dm2_actu_active_status(record) != 0 &&
+                   dm2_actu_sound_effect(old_record) &&
+                   (dm2_actu_data(old_record) & 0x100u) == 0u) {
+            uint16_t gfx_word = (uint16_t)record[4] |
+                ((uint16_t)record[5] << 8);
+            uint8_t gfx_index = (uint8_t)(gfx_word >> 12);
+            uint8_t decoration = 0xffu;
+            uint16_t sound_row = 0xffffu;
+            int16_t anim_len = dm2_runtime_get_ornate_anim_len(
+                rt, record, is_wall);
+            if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
+                decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
+                                     : rt->map_floor_gfx_list[gfx_index - 1u];
+            if (anim_len < 1 || decoration == 0xffu) {
+                link = next;
+                continue;
+            }
+            if (dm2_v1_query_gdat_entry_data_index(
+                    loader, (uint8_t)category, decoration,
+                    DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row)) {
+                /* DM2_TRY_ORNATE_NOISE adds one to the source 0xffff-based
+                 * GDAT entry index when it calls QUERY_NOISE_GEN2. */
+            }
+            {
+                uint32_t phase_sum =
+                    (uint32_t)(dm2_actu_data(record) & 0xffu) +
+                    rt->tick_count + sound_row;
+                uint32_t phase = phase_sum % (uint32_t)anim_len;
+                uint32_t delay = (uint32_t)anim_len - phase;
+                DM2_V1_SourceTimer noise_timer;
+                memset(&noise_timer, 0, sizeof(noise_timer));
+                noise_timer.ticks_and_map =
+                    ((uint32_t)(map & 0xff) << 24) |
+                    ((rt->tick_count + delay) &
+                     DM2_V1_SOURCE_TIMER_TICK_MASK);
+                noise_timer.type = DM2_V1_TIMER_ORNATE_NOISE;
+                noise_timer.actor = 0;
+                noise_timer.value_a = (int16_t)((uint8_t)x |
+                    ((uint16_t)(uint8_t)y << 8));
+                noise_timer.value_b = link;
+                if (dm2_v1_source_timer_enqueue(
+                        &rt->timer_queue, &noise_timer, 0u) ==
+                    DM2_V1_SOURCE_TIMER_OK) {
+                    uint8_t *record_mut = dm2_v1_record_pool_address_mut(
+                        &rt->record_pools, link);
+                    if (record_mut) {
+                        dm2_actu_set_data(record_mut,
+                            (uint16_t)(dm2_actu_data(record_mut) | 0x100u));
+                        if (phase == 0u && rt->sound_queue_ready) {
+                            DM2_V1_SoundQueueReceipt sound;
+                            memset(&sound, 0, sizeof(sound));
+                            (void)dm2_v1_sound_queue_noise_gen2(
+                                &rt->sound_queue, (int8_t)category,
+                                (int8_t)decoration, (int8_t)0x88,
+                                (int8_t)0xfe, (int16_t)x, (int16_t)y,
+                                1, (int16_t)0x8c, (int16_t)0x80,
+                                &env, &sound);
+                        }
+                    }
+                }
             }
         }
         link = next;
