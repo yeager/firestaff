@@ -13815,7 +13815,6 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     DM2_V1_SkprojectQuery0cee1a46Receipt receipt;
     int16_t wall_gfx_index = -1;
     int16_t wall_gfx_field = -1;
-    int ok;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -13838,34 +13837,15 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-
-    {
-        int text_idx = -1, text_field = -1;
-        ok = dm2_v1_dungeon_find_text_wall_gfx(
-            d, first_thing, view_dir, side_index, 32,
-            &text_idx, &text_field);
-        wall_gfx_index = (int16_t)text_idx;
-        wall_gfx_field = (int16_t)text_field;
-    }
-    if (ok == 0) {
-        receipt.found_static_text = 1u;
-        receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
-        receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
-        *out_wall_gfx_index = wall_gfx_index;
-        *out_wall_gfx_field = wall_gfx_field;
-        receipt.valid = 1;
-        if (out_receipt) *out_receipt = receipt;
-        return 1;
-    }
-
-    /* Actuator (type 3) ornate animation path — skproject _0cee_1a46:505-651 */
-    if (!wall_gfx_list || wall_gfx_count <= 0) {
-        receipt.blocked_actuator_animation_path = 1;
-        receipt.blocked_no_wall_gfx = 1;
+    if (!d->raw_data || !d->record_graph_complete) {
+        receipt.blocked_missing_record_pool = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
 
+    /* Ordered DB2/DB3 side-decoration walk — skproject c_querydb.cpp:3296.
+     * The source's visited-orientation mask makes the first matching record
+     * authoritative for a side. */
     {
         uint16_t thing = first_thing;
         int max_steps = 32;
@@ -13880,6 +13860,63 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
             record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
             if (!record || size < 2) break;
             if (type > 3) break;
+
+            if (type == 2 && size >= 4) {
+                uint16_t text_word = dm2_v1_dungeon_read_record_u16(
+                    d, record + 2);
+                int text_mode = (int)((text_word >> 1) & 3u);
+                int text_index = (int)((text_word >> 3) & 0x1fffu);
+                int text_ext_usage = (text_index >> 8) & 0x1fu;
+                int decoration = text_index & 0xff;
+                int text_visible = (text_word & 1u) != 0u;
+                int animate = text_ext_usage == 1 || text_ext_usage == 2 ||
+                    ((text_ext_usage == 4 || text_ext_usage == 5 ||
+                      text_ext_usage == 7 || text_ext_usage == 8 ||
+                      text_ext_usage == 13) && text_visible);
+                int static_text = text_ext_usage == 0 ||
+                    text_ext_usage == 3 || text_ext_usage == 6 ||
+                    ((text_ext_usage == 4 || text_ext_usage == 5 ||
+                      text_ext_usage == 7 || text_ext_usage == 8 ||
+                      text_ext_usage == 13) && !text_visible);
+
+                object_dir = (int)((thing >> 14) & 3u);
+                relative_side = ((object_dir - (view_dir & 3)) & 3);
+                if (text_mode == 1 && relative_side == side_index) {
+                    int frame = 0;
+                    if (animate) {
+                        DM2_V1_QueryOrnateAnimFrameReceipt anim_receipt;
+                        if (!asset_loader ||
+                            !dm2_v1_query_ornate_anim_frame_receipt(
+                                asset_loader, 0x09, decoration,
+                                game_tick, 0u, &anim_receipt) ||
+                            !anim_receipt.accepted) {
+                            receipt.blocked_text_animation_path = 1u;
+                            receipt.text_ext_usage = (uint8_t)text_ext_usage;
+                            if (out_receipt) *out_receipt = receipt;
+                            return 0;
+                        }
+                        frame = (int)anim_receipt.frame;
+                        receipt.found_text_animation = 1u;
+                        receipt.text_ext_usage = (uint8_t)text_ext_usage;
+                    } else if (!static_text) {
+                        /* Other TextMode-1 extensions do not publish a
+                         * decoration in the source query. */
+                        goto next_thing;
+                    } else {
+                        receipt.found_static_text = 1u;
+                        receipt.text_ext_usage = (uint8_t)text_ext_usage;
+                    }
+                    wall_gfx_index = (int16_t)decoration;
+                    wall_gfx_field = (int16_t)(frame + 1);
+                    receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
+                    receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+                    *out_wall_gfx_index = wall_gfx_index;
+                    *out_wall_gfx_field = wall_gfx_field;
+                    receipt.valid = 1;
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
+            }
 
             if (type == 3 && size >= 8) {
                 /* Mac and Amiga Dungeon records store words big-endian.
@@ -13903,6 +13940,12 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     uint32_t bp0c = game_tick;
                     uint32_t bp10 = 0;
 
+                    if (!wall_gfx_list || wall_gfx_count <= 0) {
+                        receipt.blocked_actuator_animation_path = 1u;
+                        receipt.blocked_no_wall_gfx = 1u;
+                        if (out_receipt) *out_receipt = receipt;
+                        return 0;
+                    }
                     if ((int)graphic_number > wall_gfx_count) goto next_thing;
                     decoration = wall_gfx_list[graphic_number - 1];
                     if (decoration == 0xffu) goto next_thing;

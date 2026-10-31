@@ -5198,25 +5198,27 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
             relative_side = ((object_dir - (view_dir & 3)) & 3);
             ornate = text_index & 0xff;
 
-            /* skproject SKWINSPX/src/v4/skdungn.cpp _0cee_1a46 handles
-             * DB2 TextMode()==1 as WALL_GFX ornament metadata.  This bounded
-             * startup helper covers the static cases that do not need the
-             * GDAT animation query: ext usages 0/6 are accepted immediately,
-             * 2 is always present, and 5/13 depend on TextVisibility(). */
+            /* skproject c_querydb.cpp:3570-3676 writes these text ornaments
+             * directly when no animation frame is requested. Animated
+             * usages are resolved by query_0cee_1a46_ext, which has GDAT and
+             * game-tick state; this owner remains the static-only route. */
             if (text_mode == 1 && relative_side == side_index) {
                 switch (ext_usage) {
                     case 0:
+                    case 3:
                     case 6:
                         accepts_static_wall_gfx = 1;
                         break;
+                    case 1:
                     case 2:
-                        accepts_static_wall_gfx = 1;
-                        frame = 0;
-                        break;
+                        return -1;
+                    case 4:
                     case 5:
+                    case 7:
+                    case 8:
                     case 13:
-                        accepts_static_wall_gfx = text_visible != 0;
-                        frame = 0;
+                        if (text_visible) return -1;
+                        accepts_static_wall_gfx = 1;
                         break;
                     default:
                         accepts_static_wall_gfx = 0;
