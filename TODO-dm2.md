@@ -14,6 +14,22 @@ original FM Towns archive is unavailable. Existing runtime proof remains
 FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains
 open, as do other record-derived light branches.
 
+Source comparison found concrete unresolved `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE`
+branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
+(:2497-3087) classifies raw class-3 tiles as summary types `0x12`/`0x13` and
+raw class-4 tiles as `0x10`/`0x11`, may redirect class-4 summaries to an
+adjacent tile according to the incoming direction, and carries the selected
+record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff's mode-7 node owner currently
+ignores `direction`/`source_facing` and rejects raw class-3/4 nodes in its
+flags-3 and flags-4 paths (`src/dm2/dm2_v1_runtime.c::dm2_runtime_mode7_on_node`),
+even though the adjacent mode-8 owner admits one no-creature DB0 class-4 edge.
+Implement the source summary and adjacent-record ownership for these variants,
+then route their flags-3/flags-4 light terms through the authenticated runtime
+walk. Acceptance requires focused record-link/direction regressions and
+original-media dynamic-light evidence for every supported DM2 platform; the
+existing FM Towns-only runtime receipt does not close DOS, Amiga, or Macintosh
+behavior.
+
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
 tails with source byte order and a 256-link limit. DBE selector `FF80` and DBF
