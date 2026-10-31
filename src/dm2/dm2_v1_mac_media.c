@@ -84,6 +84,35 @@ static int read_xattr_fork(const char *path, const char *name,
 #endif
 }
 
+static int extract_appledouble_fork(const uint8_t *container,
+                                    size_t container_size,
+                                    uint8_t **out, size_t *out_size) {
+    uint16_t entries;
+    size_t i;
+    if (!container || !out || !out_size) return -1;
+    *out = NULL;
+    *out_size = 0u;
+    if (container_size < 26u || be32(container) != UINT32_C(0x00051607) ||
+        be32(container + 4u) != UINT32_C(0x00020000)) return -1;
+    entries = be16(container + 24u);
+    if ((size_t)entries > (container_size - 26u) / 12u) return -1;
+    for (i = 0u; i < entries; ++i) {
+        const uint8_t *entry = container + 26u + i * 12u;
+        uint32_t id = be32(entry);
+        uint32_t offset = be32(entry + 4u);
+        uint32_t length = be32(entry + 8u);
+        if (id != 2u) continue; /* AppleDouble resource fork */
+        if (offset > container_size || length > container_size - offset ||
+            length == 0u || length > 64u * 1024u * 1024u) return -1;
+        *out = (uint8_t *)malloc(length);
+        if (!*out) return -1;
+        memcpy(*out, container + offset, length);
+        *out_size = length;
+        return 0;
+    }
+    return -1;
+}
+
 static int read_appledouble_fork(const char *path,
                                  uint8_t **out, size_t *out_size) {
     char sidecar[4096];
@@ -91,8 +120,7 @@ static int read_appledouble_fork(const char *path,
     size_t parent_length;
     uint8_t *container = NULL;
     size_t container_size = 0u;
-    uint16_t entries;
-    size_t i;
+    int rc;
     if (!path || !out || !out_size) return -1;
     separator = strrchr(path, '/');
 #if defined(_WIN32)
@@ -108,37 +136,10 @@ static int read_appledouble_fork(const char *path,
     sidecar[parent_length] = '.';
     sidecar[parent_length + 1u] = '_';
     strcpy(sidecar + parent_length + 2u, path + parent_length);
-    if (read_loose_file(sidecar, &container, &container_size) != 0 ||
-        container_size < 26u || be32(container) != UINT32_C(0x00051607) ||
-        be32(container + 4u) != UINT32_C(0x00020000)) {
-        free(container);
-        return -1;
-    }
-    entries = be16(container + 24u);
-    if ((size_t)entries > (container_size - 26u) / 12u) {
-        free(container);
-        return -1;
-    }
-    for (i = 0u; i < entries; ++i) {
-        const uint8_t *entry = container + 26u + i * 12u;
-        uint32_t id = be32(entry);
-        uint32_t offset = be32(entry + 4u);
-        uint32_t length = be32(entry + 8u);
-        if (id != 2u) continue; /* AppleDouble resource fork */
-        if (offset > container_size || length > container_size - offset ||
-            length == 0u || length > 64u * 1024u * 1024u) {
-            free(container);
-            return -1;
-        }
-        *out = (uint8_t *)malloc(length);
-        if (!*out) { free(container); return -1; }
-        memcpy(*out, container + offset, length);
-        *out_size = length;
-        free(container);
-        return 0;
-    }
+    if (read_loose_file(sidecar, &container, &container_size) != 0) return -1;
+    rc = extract_appledouble_fork(container, container_size, out, out_size);
     free(container);
-    return -1;
+    return rc;
 }
 
 int dm2_v1_mac_media_read_loose_movie(
@@ -555,6 +556,117 @@ int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
     return 0;
 }
 
+static int read_zip_appledouble_fork(const char *zip_path,
+                                    const char *name,
+                                    uint8_t **out, size_t *out_size) {
+    char sidecar[512];
+    uint8_t *container = NULL;
+    size_t container_size = 0u;
+    int rc;
+    if (!zip_path || !name || !out || !out_size ||
+        snprintf(sidecar, sizeof(sidecar), "._%s", name) < 0 ||
+        strlen(name) + 3u > sizeof(sidecar)) return -1;
+    if (firestaff_zip_extract_by_name(zip_path, sidecar, &container,
+                                      &container_size) != 0) return -1;
+    rc = extract_appledouble_fork(container, container_size, out, out_size);
+    free(container);
+    return rc;
+}
+
+static int read_zip_loose_fork(const char *zip_path, const char *name,
+                               uint8_t **out_data, size_t *out_data_size,
+                               uint8_t **out_resource,
+                               size_t *out_resource_size) {
+    if (!zip_path || !name || !out_data || !out_data_size ||
+        !out_resource || !out_resource_size ||
+        firestaff_zip_extract_by_name(zip_path, name, out_data,
+                                      out_data_size) != 0) return -1;
+    *out_resource = NULL;
+    *out_resource_size = 0u;
+    (void)read_zip_appledouble_fork(zip_path, name, out_resource,
+                                    out_resource_size);
+    return 0;
+}
+
+static int read_zip_loose_media(const char *zip_path, DM2_V1_MacMedia *out) {
+    static const char *const sound_names[DM2_V1_MAC_SOUND_RESOURCE_COUNT] = {
+        "Music", "General.sounds", "Weapon.sounds"
+    };
+    static const char *const movie_names[DM2_V1_MAC_MOVIE_COUNT] = {
+        "Title.MooV", "Story.MooV", "Swoosh.MooV", "Credits.MooV",
+        "Ending.MooV"
+    };
+    uint8_t *ignored_resource = NULL;
+    size_t ignored_resource_size = 0u;
+    size_t i;
+    if (read_zip_loose_fork(zip_path, "Graphics.dat", &out->graphics,
+                            &out->graphics_size, &ignored_resource,
+                            &ignored_resource_size) != 0) return -1;
+    free(ignored_resource);
+    ignored_resource = NULL;
+    if (read_zip_loose_fork(zip_path, "Dungeon.dat", &out->dungeon,
+                            &out->dungeon_size, &ignored_resource,
+                            &ignored_resource_size) != 0) {
+        free(ignored_resource);
+        return -1;
+    }
+    free(ignored_resource);
+    ignored_resource = NULL;
+    ignored_resource_size = 0u;
+    if (read_zip_loose_fork(zip_path, "md.dat", &out->music_map,
+                            &out->music_map_size, &ignored_resource,
+                            &ignored_resource_size) != 0) {
+        out->music_map = NULL;
+        out->music_map_size = 0u;
+    }
+    free(ignored_resource);
+    for (i = 0u; i < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++i) {
+        uint8_t *data = NULL;
+        size_t data_size = 0u;
+        if (read_zip_loose_fork(zip_path, sound_names[i], &data, &data_size,
+                                &out->sound_resource_fork[i],
+                                &out->sound_resource_fork_size[i]) == 0 &&
+            out->sound_resource_fork[i] &&
+            out->sound_resource_fork_size[i] != 0u) {
+            out->sound_resource_fork_present_mask |= (uint32_t)1u << i;
+        }
+        free(data);
+    }
+    for (i = 0u; i < DM2_V1_MAC_MOVIE_COUNT; ++i) {
+        if (read_zip_loose_fork(zip_path, movie_names[i], &out->movie[i],
+                                &out->movie_size[i],
+                                &out->movie_resource[i],
+                                &out->movie_resource_size[i]) != 0) continue;
+        out->movie_present_mask |= (uint32_t)1u << i;
+        if (out->movie_resource[i] && out->movie_resource_size[i] != 0u) {
+            out->movie_resource_present_mask |= (uint32_t)1u << i;
+            if (copy_resource_type(out->movie_resource[i],
+                                   out->movie_resource_size[i], "moov",
+                                   &out->movie_moov[i],
+                                   &out->movie_moov_size[i]) == 0 &&
+                out->movie_moov_size[i] >= 8u &&
+                memcmp(out->movie_moov[i] + 4u, "moov", 4u) == 0) {
+                out->movie_moov_present_mask |= (uint32_t)1u << i;
+            } else {
+                free(out->movie_moov[i]);
+                out->movie_moov[i] = NULL;
+                out->movie_moov_size[i] = 0u;
+            }
+        }
+    }
+    if (read_zip_loose_fork(zip_path, "Dungeon Master II",
+                            &out->application_data,
+                            &out->application_data_size,
+                            &out->application_resource,
+                            &out->application_resource_size) != 0) {
+        out->application_data = NULL;
+        out->application_data_size = 0u;
+        out->application_resource = NULL;
+        out->application_resource_size = 0u;
+    }
+    return 0;
+}
+
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     uint8_t *image = NULL, *cue = NULL;
     size_t image_size = 0, cue_size = 0;
@@ -565,19 +677,21 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     /* The original CUE owns the data-image name. A multi-track archive can
      * contain several BINs, so selecting the first suffix match would make
      * the HFS reader depend on ZIP member order rather than source media. */
-    if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
-        !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
-                                        image_member, sizeof(image_member)) ||
+    if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) == 0 &&
+        fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                       image_member, sizeof(image_member)) &&
         firestaff_zip_extract_by_name(zip_path, image_member, &image,
-                                      &image_size) != 0) {
+                                      &image_size) == 0) {
         free(cue);
+        rc = dm2_v1_mac_media_read_image(image, image_size, out);
         free(image);
-        return -1;
+        return rc;
     }
     free(cue);
-    rc = dm2_v1_mac_media_read_image(image, image_size, out);
     free(image);
-    return rc;
+    if (read_zip_loose_media(zip_path, out) == 0) return 0;
+    dm2_v1_mac_media_free(out);
+    return -1;
 }
 
 int dm2_v1_mac_media_read_image(const uint8_t *image, size_t image_size,

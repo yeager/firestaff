@@ -27,10 +27,18 @@ no_game_data_root="$scratch/dm2-mac-no-game-data-$$"
 no_game_home="$scratch/dm2-mac-no-game-home-$$"
 no_game_probe="$scratch/dm2-mac-no-game-$$.json"
 no_game_output="$scratch/dm2-mac-no-game-$$.log"
-no_game_hashes="$scratch/dm2-mac-no-game-hashes-$$.txt"
+source_hashes="$scratch/dm2-mac-source-hashes-$$.txt"
+repacked_zip="$scratch/Dungeon-Master-II-Skullkeep_Mac_EN-Original-Files-$$.zip"
+zip_data_root="$scratch/dm2-mac-zip-data-$$"
+zip_probe="$scratch/dm2-mac-zip-$$.json"
+zip_output="$scratch/dm2-mac-zip-$$.log"
 cleanup() {
     rm -f "$probe" "$output" "$menu_probe" "$menu_output" \
-        "$no_game_probe" "$no_game_output" "$no_game_hashes"
+        "$no_game_probe" "$no_game_output" "$source_hashes" \
+        "$repacked_zip" "$zip_probe" "$zip_output"
+    if [ -d "$zip_data_root" ]; then
+        rm -rf "$zip_data_root"
+    fi
     if [ -d "$no_game_data_root" ]; then
         rm -rf "$no_game_data_root"
     fi
@@ -43,6 +51,27 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+python3 - "$data_dir" "$repacked_zip" <<'PY'
+from pathlib import Path
+import sys
+import zipfile
+
+source = Path(sys.argv[1])
+required = ("Graphics.dat", "Dungeon.dat", "Title.MooV")
+if any(not (source / name).is_file() for name in required):
+    raise SystemExit("SKIP: required authentic extracted Macintosh files are missing")
+with zipfile.ZipFile(sys.argv[2], "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    for path in sorted(source.iterdir()):
+        if path.is_file():
+            archive.write(path, "HFS/DMFiles/" + path.name)
+PY
+
+for media_path in "$data_dir"/*; do
+    [ -f "$media_path" ] || continue
+    media_name=${media_path##*/}
+    printf '%s %s\n' "$media_name" \
+        "$(firestaff_sha256_file "$media_path")" >>"$source_hashes"
+done
 graphics_before=$(firestaff_sha256_file "$data_dir/Graphics.dat")
 dungeon_before=$(firestaff_sha256_file "$data_dir/Dungeon.dat")
 movie_before=$(firestaff_sha256_file "$data_dir/Title.MooV")
@@ -94,10 +123,49 @@ if (
     raise SystemExit(f"FAIL: extracted original DM2 Macintosh route: {probe}")
 PY
 
-if ! FIRESTAFF_DATA="$data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+if ! FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$zip_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform mac --data-dir "$repacked_zip" \
+    --width 320 --height 200 \
+    --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:right,wait:30,key:s,wait:30,key:up' \
+    --duration 45000 >"$zip_output" 2>&1; then
+    cat "$zip_output" >&2
+    exit 1
+fi
+python3 - "$zip_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe.get("startup", {})
+party = probe.get("party", {})
+frame = probe.get("dm2RuntimeFrame", {})
+movie = probe.get("dm2Startup", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or probe.get("bootAssetMd5") != "5cab25f6b975957eae4a203174e7f2a6"
+    or movie.get("platform") != 4
+    or movie.get("movieComplete") != 1
+    or movie.get("movieRejected") != 0
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("levelLoaded") != 1
+    or (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+        party.get("direction"), party.get("championCount")) != (0, 3, 8, 1, 1)
+    or frame != {"accepted": 1, "realAssets": 1,
+                 "noCoreFallbacks": 1, "fallbackDraws": 0}
+):
+    raise SystemExit(f"FAIL: original-files ZIP DM2 Macintosh route: {probe}")
+PY
+
+mkdir -p "$zip_data_root/dm2"
+cp "$repacked_zip" \
+    "$zip_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+if ! FIRESTAFF_DATA="$zip_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --scale-mode 0 --width 1920 --height 1080 --menu --game dm2 --platform mac \
+    --data-dir "$zip_data_root" \
     --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:up,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
     --duration 44000 >"$menu_output" 2>&1; then
     cat "$menu_output" >&2
@@ -144,19 +212,12 @@ if (
 PY
 
 # Exercise the first-run collection picker with no selected game. The staged
-# tree contains only symlinks to the user's authentic extracted Macintosh
-# files, so the menu must discover the retail edition and reach its native
+# ZIP contains only authentic Macintosh files and AppleDouble sidecars, so the
+# menu must discover the retail edition and reach its native
 # movie, New Game, mirror-selection, and dungeon paths without CLI hints.
 mkdir -p "$no_game_data_root/dm2" "$no_game_home"
-for name in Graphics.dat Dungeon.dat Title.MooV Credits.MooV Swoosh.MooV \
-    Ending.MooV md.dat qstrat.dat; do
-    ln -s "$data_dir/$name" "$no_game_data_root/dm2/$name"
-done
-for name in Graphics.dat Dungeon.dat Title.MooV Credits.MooV Swoosh.MooV \
-    Ending.MooV md.dat qstrat.dat; do
-    printf '%s %s\n' "$name" \
-        "$(firestaff_sha256_file "$data_dir/$name")" >>"$no_game_hashes"
-done
+cp "$repacked_zip" \
+    "$no_game_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
 if ! FIRESTAFF_CONFIG_PATH="$no_game_home/config.toml" \
     FIRESTAFF_DATA="$no_game_data_root" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -171,7 +232,7 @@ if ! FIRESTAFF_CONFIG_PATH="$no_game_home/config.toml" \
     exit 1
 fi
 if ! grep -Fq 'startup game=none mode=menu' "$no_game_output" ||
-   ! grep -Fq 'launch phase=game-handoff mode=menu game=dm2 platform=Macintosh edition=mac-en-retail source=' "$no_game_output"; then
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm2 platform=Macintosh edition=mac-en-retail source=$no_game_data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" "$no_game_output"; then
     echo 'FAIL: no-game M12 picker did not select authentic DM2 Macintosh media' >&2
     cat "$no_game_output" >&2
     exit 1
@@ -218,9 +279,9 @@ while read -r name expected_hash; do
             "$name" >&2
         exit 1
     fi
-done <"$no_game_hashes"
+done <"$source_hashes"
 
 [ "$graphics_before" = "$(firestaff_sha256_file "$data_dir/Graphics.dat")" ]
 [ "$dungeon_before" = "$(firestaff_sha256_file "$data_dir/Dungeon.dat")" ]
 [ "$movie_before" = "$(firestaff_sha256_file "$data_dir/Title.MooV")" ]
-echo 'PASS: extracted original DM2 Macintosh CLI, selected-game menu, and no-game collection picker reach runtime'
+echo 'PASS: original DM2 Macintosh files and ZIP media reach runtime through CLI, selected-game menu, and no-game picker'
