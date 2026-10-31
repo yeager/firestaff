@@ -92,6 +92,18 @@ int main(void)
     CHECK(!csb_v1_runtime_text_message_active_pc34(&profile),
           "F0046 expires the authentic C015 message exactly at tick 70");
 
+    profile.variant_id = CSB_V1_VARIANT_AMIGA35_EN;
+    profile.csbwin_text_message_receipt.valid = 1;
+    profile.csbwin_text_message_receipt.text[0] = 'X';
+    profile.csbwin_text_message_receipt.text[1] = '\0';
+    profile.csbwin_text_message_receipt.source_game_time = profile.game_time;
+    profile.game_time += 199u;
+    CHECK(csb_v1_runtime_text_message_active_pc34(&profile),
+          "Amiga MEDIA413 retains a C015 row through tick 199");
+    profile.game_time += 1u;
+    CHECK(!csb_v1_runtime_text_message_active_pc34(&profile),
+          "Amiga MEDIA413 expires a C015 row at tick 200");
+
     make_dungeon(&dungeon, raw, 0);
     prepare_party(&profile, &dungeon);
     CHECK(move_forward(&profile), "F0267 still moves onto an invisible C02 square");
