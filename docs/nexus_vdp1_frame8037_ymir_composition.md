@@ -19,6 +19,16 @@ same frame. The compositor resolves these samples from the captured FBS,
 CRAM, bitmap, and register bytes. This does not join each displayed pixel to a
 retail command or source asset.
 
+The complete 8037 VDP1 command trace has 137 textured draw commands. Against
+the hash-verified Japanese retail data, 126 captured texture spans exactly
+match retail source bytes; 121 of those also match decoded DGN Structure2
+image records. The other 11 spans contain only zero bytes and are kept
+unowned. Some DGN byte-identical records occur in multiple levels, so these
+matches establish source candidates rather than unique level ownership. The
+independent `nexus_v1_vdp2_ymir_frame8037_real` check still proves the complete
+composed output against both Ymir VDP2 pass buffers, while this source check
+keeps semantic admission blocked.
+
 ## Reproduce with authentic external data
 
 Extract the hash-pinned raw dumps from
@@ -33,6 +43,21 @@ FIRESTAFF_NEXUS_YMIR_FRAME8037_CAPTURE_DIR=/path/to/external/dumps \
 FIRESTAFF_NEXUS_YMIR_FRAME8037_REFERENCE_DIR=/path/to/external/vdp2-frames \
 ctest --test-dir build -R '^nexus_v1_vdp2_ymir_frame8037_real$' --output-on-failure
 ```
+
+The retail source comparison uses the same capture bundle and the authentic
+Nexus data directory:
+
+```sh
+FIRESTAFF_NEXUS_YMIR_FRAME8037_CAPTURE_DIR=/path/to/external/dumps \
+FIRESTAFF_NEXUS_DATA_DIR=/path/to/authentic/Japanese/Nexus/data \
+ctest --test-dir build -R '^nexus_v1_vdp1_frame8037_source_join_real$' --output-on-failure
+```
+
+The source test pins `TITLE.BIN` to SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3` and
+`LEV00.DGN` to SHA-256
+`24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a` before it
+reads any command-source bytes.
 
 The test pins SHA-256 for the FBS, VDP2 VRAM, CRAM, registers, command trace,
 capture receipts, and both Ymir pass files. It skips when the external capture

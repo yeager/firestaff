@@ -386,6 +386,7 @@ def main() -> int:
     retail_files, rejected_files = authenticated_retail_files(args.data_dir)
     joined_draws = 0
     dgn_structure2_joined_draws = 0
+    uninformative_draws = 0
     for offset, colour_mode, source_offset, source in draws:
         source_hash = hashlib.sha256(source).hexdigest()
         exact: list[str] = []
@@ -412,6 +413,8 @@ def main() -> int:
             exact or swapped_exact or dgn_exact or dgn_swapped_exact or
             file_exact or file_word_swap
         ) and has_informative_source(source)
+        if not has_informative_source(source):
+            uninformative_draws += 1
         dgn_structure2_joined = bool(
             dgn_exact or dgn_swapped_exact
         ) and has_informative_source(source)
@@ -439,6 +442,7 @@ def main() -> int:
         print(f"source_informative={int(has_informative_source(source))}")
     print(f"source_joined_draws={joined_draws}/{len(draws)}")
     print(f"dgn_structure2_joined_draws={dgn_structure2_joined_draws}/{len(draws)}")
+    print(f"source_uninformative_draws={uninformative_draws}/{len(draws)}")
     print("source_join=" + aggregate_source_join_status(len(draws), joined_draws))
     print("semantic_admission=blocked")
     return 0
