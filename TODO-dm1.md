@@ -1,5 +1,22 @@
 # Firestaff TODO — DM1
 
+2026-10-31 ReDMCSB `OBJECT.C:F0031` IIGS M564 name-table route: native
+startup now reads `GRAPHICS.GAME` raw record 556 and sends the MEDIA060
+high-bit-terminated stream through the 199-entry object-name parser before
+inventory labels. Verify against authentic G14ED/G20E/G21E media and confirm
+the names are visible in the IIGS runtime; full-table and runtime evidence are
+still missing. This closes only the missing code path, not IIGS or DM1
+function/platform parity.
+
+2026-10-31 ReDMCSB `BASE.C:F0023-F0030` helpers: the callable inventory
+maps signed absolute value, minimum, maximum, inclusive clamp, the F0027 LCG
+and its F0028/F0029 bit extracts, plus bounded F0030 scaled products to narrow
+PC34 helpers and source lines. F0028/F0029 use HORIZCNT on Apple IIGS. Global
+seed ownership, call order, the IIGS hardware branches, general unsigned
+overflow behavior in F0030, and runtime-owner use still need mapping for every
+other supported DM1 edition/platform. This does not close the all-platform
+source-function requirement.
+
 2026-10-31 HoC PC34 real-media viewport material smoke check:
 `m11_dm1_hoc_real_mirror_viewport_material` passed against the installed
 original DOS 3.4 archive. It verifies a bounded real-game mirror/viewport
@@ -3672,3 +3689,20 @@ and validates these checks. The authentic A20E disk has a zero-filled sector
 tampered records; the real A20E graphics-media test and nested-archive CLI boot
 regression pass. This covers the identified Amiga startup lane, not other
 platforms' source-specific startup checks.
+
+# ReDMCSB F0039 — slot-box icon index
+
+The source-symbol inventory now maps `OBJECT.C:515-526`
+`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff adapter over the DM1
+PC34 `G0030` slot-box table. The focused regression checks all 46 entries,
+adapter delegation, and invalid-index handling. This establishes only the
+bounded PC34 function mapping; Atari ST, Amiga, FM Towns, and other edition
+runtime integration and parity remain open.
+
+# ReDMCSB F0619 — slot-box border rectangle
+
+`OBJECT.C:378-389` resolves the slot's ZoneIndex through F0618/F0635 and adds
+the configured text margin on MEDIA508/MEDIA720. Firestaff currently has the
+PC34 G0030 table and ZoneIndex accessor, but no equivalent zone rectangle
+resolver. Implement and gate the behavior against each applicable edition;
+the slot table alone does not provide F0619 parity.
