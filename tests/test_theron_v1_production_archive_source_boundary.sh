@@ -16,9 +16,11 @@ if [[ ! -f "$cmake_file" ]]; then
 fi
 
 # These translation units contain inferred/procedural or compatibility-only
-# routes. CMake must keep them outside the production archive until an
-# original Track 02 consumer binds the corresponding records. Keep this list
-# synchronized with the THERON_SOURCES exclusion block in CMakeLists.txt.
+# routes. Most must stay outside the production archive until an original
+# Track 02 consumer binds the corresponding records. The V2.2 modern asset
+# manifest reader is an explicit exception: startup uses it to validate the
+# installed pack, while its pixel fallback remains fail-closed. Keep these
+# lists synchronized with the THERON_SOURCES source graph in CMakeLists.txt.
 for source in \
     theron_v1_compat.c \
     theron_v1_shop.c \
@@ -30,7 +32,6 @@ for source in \
     theron_v1_ui_chrome.c \
     theron_v1_viewport.c \
     theron_v22_inplace_draw_pc34.c \
-    theron_v22_modern_assets_pc34.c \
     theron_v1_startup_receipt.c \
     theron_v2_hud_overlay_pc34.c; do
     object="${source}.o"
@@ -47,6 +48,18 @@ for source in \
         exit 1
     fi
 done
+
+# The manifest reader is needed by the production V2.2 presentation-mode
+# resolver. It validates provenance and availability only; it does not
+# synthesize or provide replacement artwork.
+if ! grep -Fq 'src/theron/theron_v22_modern_assets_pc34.c' "$cmake_file"; then
+    printf 'FAIL: required Theron V2.2 manifest reader is absent from CMake source graph\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'src/theron/theron_v2_presentation_mode_pc34.c' "$cmake_file"; then
+    printf 'FAIL: Theron V2.2 presentation resolver is absent from CMake source graph\n' >&2
+    exit 1
+fi
 
 # Fixture constructors/resetters are compile-time test helpers even when
 # their implementation shares a production translation unit. They must not
