@@ -417,9 +417,13 @@ origin. The preceding 2026-10-29 note incorrectly assigned this Atari path to
 MEDIA720's `G2210`/`F0798` zones. Firestaff now unions native Atari F0115
 object draw receipts per view-cell and uses those bounds for Atari C080 floor
 pickup; no rendered receipt means no pickup hit. A focused union/boundary test
-passes. This does not close the C05 wall-ornament zone, door-button
-interaction, or original-media pickup behavior; verify those separately
-before claiming full Atari pointer parity.
+passes. The authentic Atari MINI.DAT D1C weapon regression now clicks the
+center of the pixel-verified rendered box and checks that the exact DB5 record
+moves to the leader hand and leaves its source square; its test source compiles
+as an object. The original Atari STX package is not installed in this workspace,
+so this new original-media assertion has not run locally. This does not close
+the C05 wall-ornament zone, door-button interaction, or full Atari pointer
+parity; verify those separately before claiming completion.
 
 2026-10-29 Atari ST real-session campaign route: the native CLI regression now
 uses the original Atari campaign package and hard-disk `DUNGEON.DAT` with
