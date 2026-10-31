@@ -403,10 +403,11 @@ int dm2_v1_mode7_record_darkness_term(
         /* SKULLWIN/c_light.cpp:386-397: DBE needs selector FF80. */
         if (word_2 == 0xff80u) term = (int)(byte_4 / 2u) - 45;
     } else {
-        /* SKULLWIN/c_light.cpp:398-405: DBF selectors 2/30 contribute half the
-         * high byte; every other selector is ignored. */
+        /* SKULLWIN/c_light.cpp:398-405 accepts a zero low-seven-bit selector
+         * as well as selectors 2 and 30. Each admitted DBF term contributes
+         * half of word_2's high byte; other nonzero selectors are ignored. */
         uint16_t selector = word_2 & 0x007fu;
-        if (selector == 2u || selector == 0x30u)
+        if (selector == 0u || selector == 2u || selector == 0x30u)
             term = (int)((word_2 >> 8) / 2u);
     }
     *out_term = (int16_t)term;

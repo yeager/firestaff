@@ -1035,6 +1035,8 @@ static void test_mode7_flags3_prepass_evidence(void)
                                              &term) && term == 50);
     assert(dm2_v1_mode7_record_darkness_term(15u, 0x6430u, 0u,
                                              &term) && term == 50);
+    assert(dm2_v1_mode7_record_darkness_term(15u, 0x6400u, 0u,
+                                             &term) && term == 50);
     assert(dm2_v1_mode7_record_darkness_term(15u, 0x6403u, 0u,
                                              &term) && term == 0);
     assert(!dm2_v1_mode7_record_darkness_term(4u, 0u, 0u, &term));
