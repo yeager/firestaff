@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-10-24
+Last updated: 2026-10-31
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -20,7 +20,7 @@ number of hashes or presented as 41 separately verified ports.
 | CSB | 2 | 9 | 37.0% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
 | DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
-| Theron's Quest | 1 | 4 | 72.0% | JP Rev 1 CUE/BIN reaches the Track 02 runtime route, and the US CloneCD ZIP reaches direct and start-menu launch through its verified Track 02 slice. Level-transition consumer captures remain open. |
+| Theron's Quest | 1 | 4 | 72.0% | Native JP fresh start reaches source-verified Ak-Tu-Ba level 0; authentic US Track 02 plus matching BRAM reaches dungeon 2 through Continue with bounded movement/item transactions. All seven dungeon source records load per region. Retail-frame parity, game-owned cold handoff, broader campaign, combat and save semantics remain open. |
 | **Total** | **9** | **41** | **42.7%** | Unweighted mean of the 9 runtime targets: 384/900. |
 
 The family and total means are derived from the nine target scores in the
@@ -57,7 +57,7 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
-| Theron V1 | 72% | 72/100 | `hw_config_cd_play_vdc_joypad_proven` | Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed. |
+| Theron V1 | 72% | 72/100 | `hw_config_cd_play_vdc_joypad_proven` | Native JP fresh-start and US BRAM-Continue routes are verified. Original-versus-Firestaff frame regression (0/10), dynamic source-bound viewport, broader gameplay and original save/audio semantics remain open. |
 
 ## Recent evidence incorporated
 
@@ -71,7 +71,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 | CSB V2 | HUD overlay probe, smooth movement/runtime binding, phase-gate verification, filter config/chain/dispatch, texture upscale, V2.2 shape probes, and CTest registration of previously build-only probes. |
 | DM2 V1 | Authentic DOS MVE → SKULL → New Game CLI, Amiga title/runtime, FM Towns title/New Game/champion/runtime, and Mac retail boot; the separately supplied Mac First Chapter demo is fail-closed and cannot select a retail sibling; door/button toggle boundary; minimap level-transition/save-load gate; weather/timer save round-trip; projectile-vs-creature collision; creature death/drop observer; pressure plate and trigger gates; focused combat/shop probes. |
 | Nexus V1 | DMDF palette/string bounds, DGN malformed actor guard, BPK/BPX archive boundaries, Saturn font parse/render determinism, save-slot round-trip, mechanics parity slices, and renderer/data loader probes. |
-| Theron V1 | Track 02 bank/object marker, save/progress round-trip, shop purchase edges, launcher scan reuse, mechanics/champion/progression probes, and runtime screenshot-readiness manifests. |
+| Theron V1 | Authentic JP fresh-start and US BRAM-Continue integration tests on macOS Debug; all-seven source dungeon loaders per region; Track 02 bank/object marker, save/progress round-trip, mechanics/champion/progression probes, and runtime screenshot-readiness manifests. The renderer and original-game consumer gaps remain open. |
 | Cross-cutting | Nested ZIP deflate cache materialization, ISO/BIN case-insensitive duplicate-hash scanning, M12 no-data/data-dir cache gates, 19-language launcher and game-domain l10n layout validation, and Tier 1 strict boot coverage. |
 
 ## Detail
@@ -186,9 +186,9 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 8/10 | Track 02 JP/US provenance, launcher scan reuse, and hash/profile evidence exist. |
 | `definition_matrix` | 7/10 | Comprehensive Theron V1 parity definition matrix with 10 categories, 40+ gates, proven/open status, and bound-byte totals. |
-| `launch_smoke` | 7/10 | Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, and dynamic payload. Disassembly chain test exercises 17 verification functions. |
-| `core_input_movement` | 13/15 | Joypad button-to-action mapping proven for all five groups (I=$01, II=$02, Select=$04, Run=$08, D-pad=$F0) via AND #mask + BEQ/BNE patterns. 64 action sites with combined mask $FF. Command VM 10 handlers classified. Joypad read routine, timer, and IRQ proven. |
-| `viewport_ui_render` | 16/20 | All 32 VDC registers proven accessed via st0 #reg. MWR (BAT size), CR (sprite/BG enable), SATB DMA, horizontal timing (HSR/HDR), vertical timing (VPR/VDW/VCR) all proven. VCE palette 438 accesses, VRAM clear/tile transfer proven. Rendering pipeline 5 tiers, 2310 bound bytes. |
-| `gameplay_systems` | 14/15 | Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered. |
+| `launch_smoke` | 7/10 | Authentic native JP fresh start and US BRAM Continue routes are integration-tested; all-seven source loaders pass. The independent System Card/BIOS cold-reference handoff remains unjoined to game-owned code, so the native route evidence does not establish the original cold-boot chain. |
+| `core_input_movement` | 13/15 | Static disassembly classifies all five controller button groups and the bounded command handlers. Native Firestaff integration tests verify bounded input transactions on authentic US/JP data; original-game action semantics and a game-owned cold poll remain unproven. |
+| `viewport_ui_render` | 16/20 | Static disassembly records VDC/VCE register use and a five-tier original rendering pipeline (2,310 bytes bound). This is reference-code evidence only: it does not prove Firestaff's dynamic viewport, retail graphics mapping, or paired pixel parity. |
+| `gameplay_systems` | 14/15 | Authentic US BRAM Continue restores a bounded campaign slice; host-level save/progression and Track 02 parser tests cover additional slices. Original retail save mutation, item/quest semantics, combat and broader campaign consumers remain open. |
 | `audio_timing` | 7/10 | CD_PLAY track parameter fully mapped: two code-region sites both load track $0E via LDA #$0E → STA $FF; four data false positives filtered. System card catalog: 279 JSR sites to 17 BIOS vectors. |
 | `original_overlay_regression` | 0/10 | No representative original overlay regression proof for Theron. |

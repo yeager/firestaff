@@ -109,8 +109,8 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | 🟡 | — | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. Greatstone's similarly named custom-dungeon entry is not PC Engine media. |
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | 🟡 | — | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | 🟣 | — | yes (Track 02) | Authentic JP Rev. 1 Track 02 reaches a bounded native fresh-start route through Ak-Tu-Ba to loaded dungeon level 0; authentic all-seven-dungeon source loaders also pass. The independent cold reference capture remains at the System Card BIOS and does not prove the original game's handoff. Native renderer/retail-frame parity, broader gameplay and saves remain open. See [Theron platform status](PLATFORM_STATUS.md#therons-quest). Greatstone's similarly named custom-dungeon entry is not PC Engine media. |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | 🟣 | — | yes (Track 02) | Authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through native Continue and exercises bounded movement/item transactions; all seven source dungeon records load. This does not establish retail-frame parity, full campaign behavior or original save semantics. See [Theron platform status](PLATFORM_STATUS.md#therons-quest). |
 
 ## DM Nexus — 1 known version
 
@@ -134,7 +134,7 @@ future hashes or launch profiles.
 | DM1 | 2 (PC 3.4 EN + Multilingual) | 5 (Atari ST) | 22 (Amiga/PC-98/Apple IIGS/FM-Towns/X68000/SNES) | 0 | 22+ |
 | CSB | 1 (Amiga 3.5 EN hash set) | 2 (Atari ST, with local v2.0 hashes) | 7 (Amiga 3.1/3.3, PC-98, FM-Towns, X68000) | 1 (Amiga 3.5 multilingual) | 11 |
 | DM2 | 1 (PC EN) | 0 | 13 (Amiga/Mac/PC-98/PS/V/PC-9821/Sega-CD/FM-Towns/Demo/Beta) | 0 | 13+ |
-| TQ | 2 (JP + EN Track 02 launch/readiness) | 0 | 0 | 0 | 2 |
+| TQ | 2 (JP fresh start + US BRAM Continue bounded native routes) | 0 | 0 | 0 | 2 |
 | Nexus | 0 | 0 | 0 | 1 (Saturn JP) | 1 |
 | **Total** | **6** | **7** | **42** | **2** | **49+** |
 

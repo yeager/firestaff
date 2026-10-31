@@ -1,15 +1,16 @@
 # Firestaff TODO — active cross-game work
 
-2026-10-31 Theron JP fresh-campaign follow-up: the new native M11 integration
-test passes three repeated runs against the authenticated `TQJP02.bin`. It
-checks the source roster names and the handoff into source-verified Ak-Tu-Ba
-level 0, with no Continue claim or quest progress. This closes only that
-Japanese startup-path evidence gap. Full Theron parity remains open, including
-source-backed map transitions and stairs, all-level/runtime behavior,
-combat, item and quest consumers, save interoperability, and full keyboard,
-mouse, presentation, and audio parity. Do not infer stair or quest behavior
-from menu roster indices or fabricated states; extend coverage from original
-media and source-bound captures.
+2026-10-31 Theron native real-media routes: the macOS Debug build passed the
+authentic US `theron_v1_m11_real_bram_continue` and JP
+`theron_v1_m11_jp_fresh_start` CTest cases. JP fresh start reaches source-
+verified Ak-Tu-Ba level 0; US matching authentic Track 02 and Ak-Tu-Ba-complete
+BRAM reach dungeon 2 through Continue and exercise bounded movement and item
+transactions. Source-only loaders cover all seven dungeons in both regions.
+These are bounded native routes, not complete parity. Original-frame pairing,
+dynamic source-bound viewport, cold game-owned handoff/input, later campaign
+and save semantics, combat, quest-item consumers, and audio remain open. Do
+not infer stair or quest behavior from roster indices or fixtures. See the
+[Theron capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
 
 2026-10-31 authentic-media launch audit: on base `d64d70d0`, the real-media
 CLI matrix passed DM1 PC-34, CSB Atari ST/Amiga/FM Towns, and DM2
