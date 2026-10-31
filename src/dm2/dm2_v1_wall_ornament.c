@@ -1,6 +1,60 @@
 #include "dm2_v1_wall_ornament.h"
 #include <string.h>
 
+static uint16_t dm2_wall_ornament_rect_read_u16(const uint8_t *p)
+{
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+int dm2_v1_wall_ornament_rect_table_query(
+    const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
+    DM2_V1_RectTableNode *out)
+{
+    uint16_t range_count;
+    size_t ranges_end;
+    size_t cursor;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!raw_rects || !out || rect_number == 0u || raw_length < 4u ||
+        dm2_wall_ornament_rect_read_u16(raw_rects) != 0xfc0du) {
+        return 0;
+    }
+    range_count = dm2_wall_ornament_rect_read_u16(raw_rects + 2u);
+    if ((size_t)range_count > (raw_length - 4u) / 4u) return 0;
+    ranges_end = 4u + (size_t)range_count * 4u;
+    cursor = ranges_end;
+    for (uint16_t range = 0u; range < range_count; ++range) {
+        size_t range_offset = 4u + (size_t)range * 4u;
+        uint16_t first = dm2_wall_ornament_rect_read_u16(
+            raw_rects + range_offset);
+        uint16_t last = dm2_wall_ornament_rect_read_u16(
+            raw_rects + range_offset + 2u);
+        size_t count;
+        size_t bytes;
+
+        if (last < first) return 0;
+        count = (size_t)last - (size_t)first + 1u;
+        if (count > (raw_length - cursor) / 8u) return 0;
+        bytes = count * 8u;
+        if (rect_number >= first && rect_number <= last) {
+            size_t node_offset = cursor +
+                ((size_t)rect_number - (size_t)first) * 8u;
+            out->rect_number = rect_number;
+            out->x = (int16_t)dm2_wall_ornament_rect_read_u16(
+                raw_rects + node_offset);
+            out->y = (int16_t)dm2_wall_ornament_rect_read_u16(
+                raw_rects + node_offset + 2u);
+            out->width = (int16_t)dm2_wall_ornament_rect_read_u16(
+                raw_rects + node_offset + 4u);
+            out->height = (int16_t)dm2_wall_ornament_rect_read_u16(
+                raw_rects + node_offset + 6u);
+            return 1;
+        }
+        cursor += bytes;
+    }
+    return 0;
+}
+
 static uint32_t dm2_wall_ornament_hash_step(uint32_t hash, uint32_t value)
 {
     hash ^= value;

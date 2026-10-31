@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V1_WALL_ORNAMENT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "dm2_v1_weather_gdat.h"
 
@@ -43,6 +44,22 @@ typedef struct {
     uint32_t decoded_pixels_hash;
     uint32_t material_hash;
 } DM2_V1_WallOrnamentReceipt;
+
+/* Decoded skproject RectTable node from GDAT fmtRect (0x04). The raw table
+ * starts with 0xfc0d, a range count, range bounds, then four little-endian
+ * words per rectangle. Source: SKWINSPX/src/v4/skcore.cpp COMPRESS_RECTS /
+ * QUERY_RECT and skbltgfx.cpp QUERY_BLIT_RECT. */
+typedef struct {
+    uint16_t rect_number;
+    int16_t x;
+    int16_t y;
+    int16_t width;
+    int16_t height;
+} DM2_V1_RectTableNode;
+
+int dm2_v1_wall_ornament_rect_table_query(
+    const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
+    DM2_V1_RectTableNode *out);
 
 int dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(
     const DM2_V1_AssetLoader *loader,

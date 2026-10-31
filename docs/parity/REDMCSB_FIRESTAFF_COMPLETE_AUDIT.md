@@ -148,8 +148,10 @@ word in source slots 3..6; ext-usage 5 selects animation only when visible.
 Ext-usage 14 clears the selected side slot 3..6 and writes the record handle or
 visible-text absent marker to summary word 7 only when that slot is 5. The
 runtime now selects the visible ornament side from viewport lateral position
-and publishes its WALL_GFX index and source field on `DM2_ViewSquare`; source
-placement and animated-frame rendering, full output-array compatibility,
+and publishes its WALL_GFX index and source field on `DM2_ViewSquare`. A
+bounds-checked parser for skproject's GDAT `fmtRect` ranges and four-word
+rectangle nodes is covered with synthetic fixtures; source `QUERY_BLIT_RECT`
+placement/clipping and animated-frame rendering, full output-array compatibility,
 source captures, and all-platform runtime behavior remain open. Do not treat
 these bounded receipts as full DM2 parity.
 

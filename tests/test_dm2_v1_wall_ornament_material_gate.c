@@ -6,6 +6,7 @@
  * substitute.  Exact destination rectangles are owned by the runtime plan.
  */
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_wall_ornament.h"
 #include "dm2_v1_world_model.h"
 
 #include <stdio.h>
@@ -55,6 +56,30 @@ int main(void)
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     DM2_V1_ViewportState viewport;
     DM2_V1_WallOrnamentRenderPlan plan;
+
+    {
+        static const uint8_t raw_rects[] = {
+            0x0du, 0xfcu, 0x02u, 0x00u,
+            0x00u, 0x10u, 0x01u, 0x10u,
+            0x04u, 0x10u, 0x04u, 0x10u,
+            10u, 0u, 20u, 0u, 30u, 0u, 40u, 0u,
+            11u, 0u, 21u, 0u, 31u, 0u, 41u, 0u,
+            14u, 0u, 24u, 0u, 34u, 0u, 44u, 0u
+        };
+        DM2_V1_RectTableNode node;
+        if (!dm2_v1_wall_ornament_rect_table_query(
+                raw_rects, sizeof(raw_rects), 0x1001u, &node) ||
+            node.rect_number != 0x1001u || node.x != 11 || node.y != 21 ||
+            node.width != 31 || node.height != 41 ||
+            dm2_v1_wall_ornament_rect_table_query(
+                raw_rects, sizeof(raw_rects) - 1u, 0x1004u, &node) ||
+            dm2_v1_wall_ornament_rect_table_query(
+                raw_rects, sizeof(raw_rects), 0x2000u, &node)) {
+            fputs("FAIL: skproject GDAT rectangle table decoding\n", stderr);
+            return 1;
+        }
+        puts("PASS: skproject GDAT rectangle table decoding");
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
