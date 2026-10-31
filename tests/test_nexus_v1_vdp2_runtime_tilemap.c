@@ -52,6 +52,29 @@ static int bytes_have_sha256(const uint8_t *bytes, size_t size,
         strcmp(actual, expected) == 0;
 }
 
+static int capture_plane_have_sha256(
+    const Nexus_V1_Vdp2CapturePlane *plane, const char *expected)
+{
+    const size_t pixels = NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+        NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT;
+    uint8_t *serialized;
+    size_t pixel;
+    int matches;
+    if (!plane || !expected) return 0;
+    serialized = (uint8_t *)malloc(pixels * 4U);
+    if (!serialized) return 0;
+    for (pixel = 0U; pixel < pixels; ++pixel) {
+        uint32_t rgba = plane->rgba_buffer[pixel];
+        serialized[pixel * 4U] = plane->index_buffer[pixel];
+        serialized[pixel * 4U + 1U] = (uint8_t)(rgba >> 16U);
+        serialized[pixel * 4U + 2U] = (uint8_t)(rgba >> 8U);
+        serialized[pixel * 4U + 3U] = (uint8_t)rgba;
+    }
+    matches = bytes_have_sha256(serialized, pixels * 4U, expected);
+    free(serialized);
+    return matches;
+}
+
 static int write_capture_plane(const char *path,
                                const Nexus_V1_Vdp2CapturePlane *plane)
 {
@@ -297,6 +320,8 @@ static int run_external_ymir_mapd_nbg1_pass(void)
         receipt.visible_columns != 40 || receipt.visible_rows != 28 ||
         receipt.tiles_decoded != 1120 || receipt.written_pixels != 71680 ||
         receipt.transparent_pixels != 0 ||
+        !capture_plane_have_sha256(plane,
+            "a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea") ||
         !write_capture_plane(output_path, plane))
         goto cleanup;
     ok = 1;
