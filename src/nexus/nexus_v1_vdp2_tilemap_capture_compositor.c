@@ -668,10 +668,11 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt *out_receipt)
 {
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
-    uint16_t bgon, chctla, pncn1, plsz, mpofn, mapa, mapb, craofa;
+    uint16_t bgon, chctla, pncn1, plsz, mpofn, mapa, mapb, craofa, ramctl;
     uint32_t map_base;
     unsigned int x, y;
     int bpp;
+    int cram_mode;
     memset(&receipt, 0, sizeof(receipt));
     receipt.capture_only = 1;
     receipt.name_table_vram_offset = -1;
@@ -689,11 +690,13 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     mpofn = NBG1_REG(0x3cU); mapa = NBG1_REG(0x44U) & 0x3fU;
     mapb = NBG1_REG(0x46U) & 0x3fU;
     craofa = NBG1_REG(NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    ramctl = NBG1_REG(NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET);
+    cram_mode = (ramctl >> 12U) & 3U;
     bpp = ((chctla >> 12U) & 3U) == 0U ? 4 :
         (((chctla >> 12U) & 3U) == 1U ? 8 : 0);
     if (NBG1_REG(0x00U) != 0x8000U || (bgon & 0x0002U) == 0U ||
-        (bgon & ~0x1f3fU) != 0U || (chctla & 0x0200U) != 0U ||
-        (chctla & 0x0100U) != 0U || bpp == 0 ||
+        (bgon & 0x0200U) != 0U || (bgon & ~0x1f3fU) != 0U || (chctla & 0x0200U) != 0U ||
+        (chctla & 0x0100U) != 0U || bpp == 0 || cram_mode >= 2 ||
         pncn1 != 0U || (plsz & 0x000cU) != 0U ||
         ((mpofn >> 4U) & 7U) != 0U || mapa != 0x17U || mapb != 0x17U ||
         (craofa & 0x70U) != 0U || (NBG1_REG(0xf8U) & 0x0700U) != 0x0400U ||
@@ -733,7 +736,9 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
         }
         {
             uint32_t cram_index = bpp == 4
-                ? ((uint32_t)(attr & 0x7fU) * 16U + index) : index;
+                ? ((uint32_t)(attr & 0x7fU) * 16U + index)
+                : (((uint32_t)(attr & 0x70U) << 4U) + index);
+            cram_index &= cram_mode == 0 ? 0x3ffU : 0x7ffU;
             uint16_t color555 = read_vram16_ordered(
                 vdp2_cram + (size_t)cram_index * 2U, register_byte_order);
             plane->index_buffer[dst] = index;
