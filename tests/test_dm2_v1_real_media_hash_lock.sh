@@ -8,7 +8,8 @@ check_media() {
     shift
     identities=$*
     path="$root/$name"
-    duplicate_path="${path%.zip} (1).zip"
+    extension=${path##*.}
+    duplicate_path="${path%.*} (1).$extension"
     found=0
     for candidate in "$path" "$duplicate_path"; do
         if [ ! -f "$candidate" ]; then
@@ -29,7 +30,7 @@ check_media() {
         done
     done
     if [ "$found" -eq 0 ]; then
-        echo "SKIP: DM2 real-media corpus is not staged: $path (or duplicate-suffixed archive)"
+        echo "SKIP: DM2 real-media corpus is not staged: $path (or duplicate-suffixed file)"
         exit 77
     fi
     echo "FAIL: DM2 real-media identity not found as $path or $duplicate_path" >&2
