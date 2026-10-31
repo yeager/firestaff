@@ -5,7 +5,10 @@
 without the former four-coordinate FM Towns gate; incomplete source walks still
 block the transaction. `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` flags 3 now resolves
 summarized class-0 nodes as no-op, matching `c_light.cpp:233-243`. Data-free
-mode-7 and visibility tests pass, and a new HME-242 real-media regression for
+mode-7 and visibility tests pass. The class-1 floor-actuator route now carries
+the source F8 and GDAT 99 weather terms through authenticated record/GDAT
+receipts; focused accumulator checks cover its light, weather and high-bit
+gates. A new HME-242 real-media regression for
 map 3 `(8,4)` compiles. That real-media test cannot run here because the
 original FM Towns archive is unavailable. Existing runtime proof remains
 FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains

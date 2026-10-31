@@ -349,7 +349,7 @@ static int dm2_v1_mode7_flags3_floor_terms(
     unsigned index;
     if (!room || !room->valid ||
         !(((room->raw_tile >> 5) == 1u && room->raw_tile == 0x30u &&
-            room->first_record_link == DM2_THING_NULL_MARKER) ||
+            evidence && evidence->record_chain_known) ||
           ((room->raw_tile >> 5) == 2u &&
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           ((room->raw_tile >> 5) == 5u &&
@@ -358,7 +358,8 @@ static int dm2_v1_mode7_flags3_floor_terms(
                         evidence->record_chain_known_no_darkness))) ||
         (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !evidence || !evidence->valid ||
-        !evidence->teleporter_detail_known ||
+        ((room->raw_tile >> 5) != 1u &&
+         !evidence->teleporter_detail_known) ||
         !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
         !tile_light || !weather_light || !creature_light ||
         !record_darkness) return 0;
@@ -366,11 +367,25 @@ static int dm2_v1_mode7_flags3_floor_terms(
     *weather_light = 0;
     *creature_light = 0;
     *record_darkness = 0;
-    /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
-     * before flags 2 reads the live creature F8 term. A class-1/2 no-record
-     * room proves the DBE/DBF darkness chain empty for this narrow branch. */
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
-        evidence->ceiling_gdat_light_word != 0u) {
+    /* SKULLWIN/c_light.cpp:244-289 handles class-1 F8/99 before the later
+     * class-2/5 teleporter branch; class-1's F8 high bit can gate its light. */
+    if ((room->raw_tile >> 5) == 1u) {
+        if (!evidence->ceiling_weather_gdat_known) return 0;
+        if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+            evidence->ceiling_gdat_light_word != 0u) {
+            light = evidence->ceiling_gdat_light_word & 0x7fffu;
+            if (evidence->ceiling_weather_gdat_word != 0u) {
+                index = (unsigned)weather_index + (unsigned)weather_delta;
+                if (index > 5u) index = 5u;
+                *weather_light = (int16_t)((uint32_t)light *
+                    (uint32_t)weather_scale[index] / 100u);
+            } else if ((evidence->ceiling_gdat_light_word & 0x8000u) == 0u ||
+                       (room->ceiling_ornament_word & 0xff00u) != 0u) {
+                *tile_light = (int16_t)light;
+            }
+        }
+    } else if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+               evidence->ceiling_gdat_light_word != 0u) {
         light = evidence->ceiling_gdat_light_word & 0x7fffu;
         if (evidence->teleporter_present) {
             index = (unsigned)weather_index + (unsigned)weather_delta;

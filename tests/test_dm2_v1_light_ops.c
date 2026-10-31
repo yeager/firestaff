@@ -1116,8 +1116,27 @@ static void test_mode7_flags3_prepass_evidence(void)
     ambient = 0;
     darkness = 0;
     room.raw_tile = 0x30u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    room.ceiling_ornament_word = 0x0028u;
+    evidence.record_chain_known = 1u;
+    evidence.ceiling_weather_gdat_known = 1u;
+    evidence.ceiling_weather_gdat_word = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 94 && darkness == 0); /* 100 - table1d672b[1] (6). */
+    evidence.ceiling_weather_gdat_word = 1u;
+    node.weather_index = 1u;
+    node.weather_delta = 1u;
+    ambient = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 44 && darkness == 0); /* class-1 GDAT 99 weather term */
+    evidence.ceiling_weather_gdat_word = 0u;
+    evidence.ceiling_gdat_light_word = 0x8064u;
+    ambient = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 0 && darkness == 0); /* F8 high-bit source gate */
+    evidence.ceiling_gdat_light_word = 100u;
+    node.weather_index = 0u;
+    node.weather_delta = 0u;
     ambient = 0;
     evidence.ceiling_gdat_light_word = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
@@ -1144,6 +1163,7 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.creature_query_known = 1u;
     evidence.creature_present = 0u;
     evidence.teleporter_present = 0u;
+    evidence.record_chain_known = 0u;
     evidence.record_chain_known_no_darkness = 0u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
     evidence.record_chain_known_no_darkness = 1u;
@@ -1168,6 +1188,7 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.creature_present = 1u;
     evidence.creature_f8_word = 20u;
     evidence.teleporter_present = 0u;
+    evidence.record_chain_known = 1u;
     node.distance = 9u;
     ambient = 0;
     darkness = 0;

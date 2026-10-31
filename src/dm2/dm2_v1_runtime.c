@@ -2235,13 +2235,19 @@ static int dm2_runtime_mode7_flags3_evidence(
     int16_t creature = (int16_t)0xffff;
     unsigned length = 0u;
     uint16_t light_word = 0u;
+    uint16_t weather_word = 0u;
     int32_t record_darkness = 0;
+    int class1_ornament;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
         !rt->record_pools_valid ||
         !((room->raw_tile >> 5) == 5u ||
           ((room->raw_tile >> 5) == 2u &&
-           room->first_record_link == DM2_THING_NULL_MARKER)))
+           room->first_record_link == DM2_THING_NULL_MARKER) ||
+          (room->raw_tile == 0x30u &&
+           room->source_tile_type == 1u)))
         return 0;
+    class1_ornament = room->raw_tile == 0x30u &&
+        room->source_tile_type == 1u;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
@@ -2298,23 +2304,36 @@ static int dm2_runtime_mode7_flags3_evidence(
         evidence->creature_present = 1u;
         evidence->creature_f8_word = f8;
     }
-    memset(&detail, 0, sizeof(detail));
-    memset(&detail_receipt, 0, sizeof(detail_receipt));
-    if (dm2_v1_skproject_get_teleporter_detail_dungeon(
-            dungeon, &rt->record_pools, map, x, y,
-            &detail, &detail_receipt)) {
-        if (!detail_receipt.valid) return 0;
-        evidence->teleporter_present = 1u;
-    } else if (!detail_receipt.blocked_tile_not_teleporter) {
-        return 0;
+    if (!class1_ornament) {
+        memset(&detail, 0, sizeof(detail));
+        memset(&detail_receipt, 0, sizeof(detail_receipt));
+        if (dm2_v1_skproject_get_teleporter_detail_dungeon(
+                dungeon, &rt->record_pools, map, x, y,
+                &detail, &detail_receipt)) {
+            if (!detail_receipt.valid) return 0;
+            evidence->teleporter_present = 1u;
+        } else if (!detail_receipt.blocked_tile_not_teleporter) {
+            return 0;
+        }
+        evidence->teleporter_detail_known = 1u;
     }
-    evidence->teleporter_detail_known = 1u;
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
-        !dm2_v1_query_gdat_entry_data_index(loader, 10,
-            room->ceiling_ornament_word & 0xffu, 11, 0xf8,
-            &light_word)) return 0;
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu) {
+        /* SKULLWIN/c_light.cpp:252-264 queries type-11 F8 and 99 on the
+         * class-1 ornament; the latter independently selects weather light. */
+        if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room->ceiling_ornament_word & 0xffu, 11, 0xf8,
+                &light_word)) return 0;
+        if (class1_ornament &&
+            !dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room->ceiling_ornament_word & 0xffu, 11, 99,
+                &weather_word)) return 0;
+    }
     evidence->ceiling_gdat_known = 1u;
     evidence->ceiling_gdat_light_word = light_word;
+    if (class1_ornament) {
+        evidence->ceiling_weather_gdat_known = 1u;
+        evidence->ceiling_weather_gdat_word = weather_word;
+    }
     evidence->valid = 1u;
     return 1;
 }
@@ -2397,20 +2416,12 @@ static int dm2_runtime_mode7_on_node(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
-    } else if (source_flags == 3u && (raw >> 5) == 1) {
+    } else if (source_flags == 3u && raw == 0x30) {
         branch = 28u;
-        uint16_t ceiling_word = 0u;
         if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
-        /* Source type-11 GDAT lookup returns zero for an absent F8 entry.
-         * A nonzero value needs the remaining class-1 prepass branches. */
-        if (dm2_v1_query_gdat_entry_data_index(loader, 10,
-                room.ceiling_ornament_index, 11, 0xf8,
-                &ceiling_word) && ceiling_word != 0u) goto unknown;
-        memset(&prepass, 0, sizeof(prepass));
-        prepass.valid = 1u;
-        prepass.ceiling_gdat_known = 1u;
-        prepass.ceiling_gdat_light_word = ceiling_word;
+        if (!dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
     } else if (source_flags != 4u) {

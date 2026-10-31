@@ -194,9 +194,10 @@ int dm2_v1_mode7_tile_cache_node(
 int dm2_v1_mode7_tile_cache_action23_gate(
     const DM2_V1_Mode7TileCache *cache);
 
-/* Live evidence needed for the flags-3 stone-room prepass. Class-5 cells
- * require a bounded live record scan; DBE/DBF terms feed v1e0978 separately
- * from ceiling/teleporter and creature F8 light. */
+/* Live evidence needed for the flags-3 stone-room prepass. Class-1 cells
+ * retain separate F8/99 GDAT results; class-5 cells require a bounded live
+ * record scan, with DBE/DBF terms feeding v1e0978 apart from ceiling,
+ * teleporter and creature F8 light. */
 typedef struct {
     uint8_t valid;
     uint8_t teleporter_detail_known;
@@ -207,6 +208,8 @@ typedef struct {
     uint8_t record_chain_known_no_darkness;
     uint8_t ceiling_gdat_known;
     uint16_t ceiling_gdat_light_word;
+    uint8_t ceiling_weather_gdat_known;
+    uint16_t ceiling_weather_gdat_word;
     uint16_t creature_f8_word;
     int16_t record_darkness;
 } DM2_V1_Mode7Flags3Evidence;
