@@ -6,6 +6,13 @@ selected. Both Firestaff adapters now preserve that no-op; the metadata-aware
 adapter still lets F0174 refresh party-map caches. Raw map/thing-column and
 ornament caches in the simpler dungeon-data adapter, plus live transition
 ownership and platform parity, remain open.
+2026-11-01 DM1 Amiga 3.6 no-game M12 runtime retest at `93c644549`: the
+local `m12_main_menu_runtime_real_media` test passed with
+`FIRESTAFF_MAIN_MENU_GAME=dm1-amiga` (90.52 s) against the installed original
+Amiga 3.6 archive. It selected the edition through the no-game launcher and
+reached the first runtime receipt; the test confirmed the original archive
+remained unchanged. This is SDL dummy-driver startup evidence, not native
+display/input or complete Amiga gameplay parity.
 
 2026-10-31 ReDMCSB `OBJECT.C:F0031` IIGS M564 name-table route: native
 startup now reads `GRAPHICS.GAME` raw record 556 and sends the MEDIA060
