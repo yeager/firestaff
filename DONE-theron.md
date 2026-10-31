@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — bounded `$C852` fetch hook is instrumented; clean build remains open
+
+- ✅ Added the opt-in `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` reference
+  hook. It records the fetched opcode, physical PC, MPRs, registers and shared
+  event sequence after `RdAtPC()` and before instruction dispatch, capped at
+  4,096 rows. Manual source inspection confirmed the insertion point in
+  Mednafen 1.32.1.
+- ⏳ A clean-source end-to-end patch-chain application and instrumented build
+  are not verified. The patch-only loop exposed context mismatches in the
+  PCE Fast and VDC instruction-PC patch stages; fix and repeat that loop before
+  using the hook for an evidence capture.
+- Scope: this is reference instrumentation only. It does not establish a
+  same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
+  See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## 2026-10-31 — reconcile Theron documentation with verified evidence
 
 Updated the active status and acquisition pages to distinguish the authentic

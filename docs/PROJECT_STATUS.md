@@ -21,6 +21,12 @@ It confirms trace-gate operation and event ordering only: the run reports
 `transition=missing` and does not prove causality, a visible response, cold
 media handoff, or Firestaff parity. See the [source-locked capture report](source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
+The opt-in `$C852` fetch hook is documented for a future Drator consumer join.
+Its placement was manually checked against Mednafen 1.32.1, but the complete
+clean-source instrumentation patch chain and build remain unverified because
+instruction-PC patch contexts still fail. It is not yet capture-ready; see
+[Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+
 The latest local M12 real-media sweep separately exercised keyboard and mouse
 selection for all five game cards. Its first-runtime route passed for DM1,
 CSB, DM2 and Theron US; a direct Theron JP selection also passed. Nexus

@@ -17,6 +17,11 @@ consumer-read trace, which records reader PC/MPR and row data reads. Its
 data-read addresses; it is not a code-PC filter. A logical-PC hit in another
 physical bank does not close the join. Keep row bytes opaque; do not label
 them as coordinates, direction or creature fields.
+The hook was manually checked at the Mednafen 1.32.1 fetched-opcode point, but
+the complete clean-source patch chain and instrumented build are not verified.
+The patch-only loop found context mismatches in the PCE Fast instruction-PC
+and VDC instruction-PC stages. Repair and repeat that loop before relying on
+this hook for a capture.
 This reference capture is evidence-enabling work; the native viewport still
 requires a separate same-run map, pose, VDC/VCE/VRAM and rendered-frame join.
 Do not reuse an occupied capture profile or evidence directory; coordinate
