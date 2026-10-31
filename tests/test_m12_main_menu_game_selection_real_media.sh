@@ -45,6 +45,7 @@ fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} != 1 &&
       ( ( ! -f "$nexus_dm" && ! -f "$nexus_cue" ) || ! -f "$theron_track" ) ]]; then
     echo 'SKIP: authentic Nexus DM.BIN or Japanese CUE/BIN media and Theron TQUS02.bin are required for the five-game selector test'
     exit 77
@@ -52,6 +53,7 @@ fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} != 1 &&
       ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
     echo 'SKIP: authentic Japanese Nexus CUE payloads are incomplete'
     exit 77
@@ -123,7 +125,18 @@ PY
         \( -iname '*.zip' -o -iname '*.stx' \) -print0)
 done
 
-if has_authentic_nexus_cue; then
+main_menu_data_root=$data_root
+if [[ ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} == 1 ]]; then
+    main_menu_data_root=$archive_data_root
+    csb_amiga_multi_archive="$data_root/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
+    if [[ -f "$csb_amiga_multi_archive" ]]; then
+        ln -s "$csb_amiga_multi_archive" "$archive_data_root/csb/$(basename "$csb_amiga_multi_archive")"
+        original_sources+=("$csb_amiga_multi_archive")
+        original_source_hashes+=("$(firestaff_sha256_file "$csb_amiga_multi_archive")")
+    fi
+fi
+
+if [[ ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} != 1 ]] && has_authentic_nexus_cue; then
     original_sources+=("$nexus_cue")
     original_source_hashes+=("$(firestaff_sha256_file "$nexus_cue")")
     while IFS= read -r cue_payload; do
@@ -142,7 +155,7 @@ for line in cue.read_text(errors="strict").splitlines():
 PY
     )
 fi
-if [[ -f "$theron_track" ]]; then
+if [[ ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} != 1 && -f "$theron_track" ]]; then
     original_sources+=("$theron_track")
     original_source_hashes+=("$(firestaff_sha256_file "$theron_track")")
 fi
@@ -333,12 +346,15 @@ alternate_platform_cases=0
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 ]]; then
-    run_game_picker_case dm1 "$dm1_archive" \
-        'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
-    run_game_picker_case csb "$csb_archive" \
-        'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
-    run_game_picker_case dm2 "$dm2_archive" \
-        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+    run_game_picker_case dm1 "$main_menu_data_root/dm1/$(basename "$dm1_archive")" \
+        'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        fmtowns-en keyboard 'FM Towns' "$main_menu_data_root"
+    run_game_picker_case csb "$main_menu_data_root/csb/$(basename "$csb_archive")" \
+        'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        fmtowns-en keyboard 'FM Towns' "$main_menu_data_root"
+    run_game_picker_case dm2 "$main_menu_data_root/dm2/$(basename "$dm2_archive")" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        fmtowns-ja keyboard 'FM Towns' "$main_menu_data_root"
 fi
 
 # Keep authentic pointer routes for DM1, CSB, and DM2 independently
@@ -468,12 +484,16 @@ if [[ -f "$csb_amiga_archive" ]]; then
 fi
 csb_amiga_multi_archive="$data_root/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
 if [[ -f "$csb_amiga_multi_archive" ]]; then
+    csb_amiga_multi_picker_archive=$csb_amiga_multi_archive
+    if [[ ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} == 1 ]]; then
+        csb_amiga_multi_picker_archive="$main_menu_data_root/csb/$(basename "$csb_amiga_multi_archive")"
+    fi
     # Exercise actual SDL keyboard routing through Game Options. Right on the
     # version row changes the authentic A31 English selection to the matching
     # A31 multilingual edition before launch.
-    run_game_picker_case csb "$csb_amiga_multi_archive" \
+    run_game_picker_case csb "$csb_amiga_multi_picker_archive" \
         'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:right,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter' \
-        amiga31-multi keyboard Amiga "$data_root" \
+        amiga31-multi keyboard Amiga "$main_menu_data_root" \
         csb-amiga-version-right-arrow resolved
 fi
 if [[ -f "$data_root/csb/Chaos Strikes Back.stx" ]]; then
@@ -666,11 +686,25 @@ if [[ ! -f "$nexus_source" ]]; then
 fi
 
 run_default_root_game_picker_case dm1 "$dm1_archive" \
-    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en \
+    'FM Towns' \
+    "${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:+$archive_data_root}"
 run_default_root_game_picker_case csb "$csb_archive" \
-    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en \
+    'FM Towns' \
+    "${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:+$archive_data_root}"
 run_default_root_game_picker_case dm2 "$dm2_archive" \
-    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja \
+    'FM Towns' \
+    "${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:+$archive_data_root}"
+
+# Keep the focused priority-game test bounded to DM1, CSB and DM2. The full
+# five-game picker test below continues to cover Nexus and Theron when those
+# games are in scope; this variant never starts either game.
+if [[ ${FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY:-0} == 1 ]]; then
+    echo 'PASS: DM1, CSB and DM2 default-root picker routes completed with authentic media'
+    exit 0
+fi
 
 # The other two games must resolve from the same documented default root.
 # Their authentic launch owners may be loose binaries, CUE/BIN sets or full
