@@ -736,7 +736,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
                 ? ((uint32_t)(attr & 0x7fU) * 16U + index) : index;
             uint16_t color555 = read_vram16_ordered(
                 vdp2_cram + (size_t)cram_index * 2U, register_byte_order);
-            plane->index_buffer[dst] = (uint8_t)cram_index;
+            plane->index_buffer[dst] = index;
             if (!index) {
                 ++receipt.transparent_pixels;
             } else {
