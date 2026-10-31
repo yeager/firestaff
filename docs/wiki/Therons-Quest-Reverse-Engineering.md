@@ -15,6 +15,11 @@ RUN trace binds `$1800=$C8`, `$1801=$04`, `$2259=$04`, and `$E166->$E176`, but
 does not observe a confirmed game-owned handoff. A separate US save-state
 mouse replay proves guest reads and candidate command consumption only; it
 has no runtime CD provenance and establishes no semantic action or movement.
+Three same-state PCE Fast UP runs and neutral controls also show a repeatable
+`$2912` main-RAM update under UP (`$D334` read `00`, `$D349` write `10`, later
+`$D334` read `10`) and no such consumer path in controls. This does not identify
+the byte's semantics, prove movement, or connect the poll to the RAM trace's
+event counter. See the [source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture

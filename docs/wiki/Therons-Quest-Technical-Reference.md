@@ -12,9 +12,10 @@
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save
 > behavior, and full gameplay remain evidence-gated. Three JP PCE Fast
-> reference replays now bind scripted `up@61:120` to the same-frame guest
-> controller read at `$44C1`; this proves delivery only, with caller and state
-> effect still unidentified. A cold JP emulator capture also reached a
+> reference UP runs bind scripted `up@61:120` to the same-frame guest read at
+> `$44C1` and a repeatable `$2912` RAM update absent in three neutral controls.
+> The poll has not yet been joined to the RAM traces' event counter, and the
+> byte's meaning and game effect remain unidentified. A cold JP emulator capture also reached a
 > first-person dungeon view, but lacks a game-owned input/loader join and a
 > matched Firestaff frame. The native Firestaff snapshot is nonblack but has no
 > paired retail frame. Capture tools are research instruments only and are

@@ -5,13 +5,16 @@
 Three isolated emulator runs replayed `up@61:120` from an authentic JP
 Akutuba F5 dungeon state. The PCE Fast trace binds the scripted mask and
 controller slot to the same-frame active-low guest read at `$44C1`
-(`raw=0010`, `value=3e`). The verifier rejects ambiguous module/slot/mask
-records and matches each guest read against its apply receipt. This establishes
-input delivery to a guest poll only; it does not identify the poll's caller or
-prove a game-state or screen change. The older October 9 `$2912` consumer trace
-used a different save-state identity, so its state update cannot be attributed
-to this replay. Continue the source trace from this same authenticated state
-into a game-owned consumer. See the [hash-locked receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
+(`raw=0010`, `value=3e`). A further three UP runs from the same exact state
+and three neutral controls compare the `$2912` main-RAM consumer: each UP run
+records `$D334` reading `00`, `$D349` writing `10`, then `$D334` reading `10`;
+the controls show no `$D334` or `$D349` access. The verifier rejects ambiguous
+module/slot/mask records and confirms the ordered RAM transaction. The input
+poll does not yet expose the same event counter as those RAM accesses, so the
+caller path and causal instruction-level join remain incomplete. `$2912`'s
+meaning, party movement, and screen effect are unproven. See the [guest-read
+receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
+and [same-state comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
 ## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
 

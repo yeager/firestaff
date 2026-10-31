@@ -51,6 +51,9 @@ Trace SHA-256 values:
 ## Follow-up
 
 The active-low guest value `3e` agrees with the internal UP bit `0010` in the
-direction bank. Continue from this authentic poll by tracing the instructions
-after `$44C1` into their caller and resulting game-owned state. Do not infer a
-movement or menu action from the input receipt alone.
+direction bank. A separate same-state comparison now records a repeatable
+`$2912` RAM update in three UP runs and no `$D334`/`$D349` consumer path in
+three neutral controls. See the [source-locked comparison report](theron-jp-pcefast-input-state-compare-20261031.md).
+The frame-61 poll does not yet share the RAM traces' event sequence, and the
+`$2912` field's gameplay meaning, movement effect, and visible response remain
+unverified.
