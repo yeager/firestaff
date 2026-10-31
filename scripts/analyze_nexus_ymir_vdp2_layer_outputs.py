@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare one authentic Ymir VDP2 layer pass with its same-pass RGBX frame."""
+"""Compare an authentic Ymir VDP2 layer with its same-pass RGBX frame and optional decoded plane."""
 
 from __future__ import annotations
 
@@ -92,6 +92,7 @@ def analyze(args: argparse.Namespace) -> dict[str, object]:
     try:
         trace = args.trace.read_bytes()
         reference = args.reference_rgbx.read_bytes()
+        decoded_plane = args.decoded_plane.read_bytes() if args.decoded_plane else None
     except OSError as error:
         raise TraceError(f"cannot read input: {error}") from error
     if len(trace) < len(MAGIC) or trace[: len(MAGIC)] != MAGIC:
@@ -119,6 +120,11 @@ def analyze(args: argparse.Namespace) -> dict[str, object]:
     if len(reference) != expected_reference_bytes:
         raise TraceError(
             f"reference must contain {expected_reference_bytes} RGBX bytes, got {len(reference)}"
+        )
+    if decoded_plane is not None and len(decoded_plane) != expected_reference_bytes:
+        raise TraceError(
+            "decoded plane must contain "
+            f"{expected_reference_bytes} index/RGB bytes, got {len(decoded_plane)}"
         )
     try:
         expected_trace_bytes = int(receipt["bytes_written"])
@@ -193,8 +199,17 @@ def analyze(args: argparse.Namespace) -> dict[str, object]:
     special_color_calc = 0
     colors_seen: set[bytes] = set()
     rgba = bytearray(args.width * args.height * 4)
+    decoded_active_pixels = 0
+    decoded_active_rgb_matches = 0
+    decoded_active_index_zero = 0
+    decoded_inactive_pixels = 0
+    decoded_inactive_rgb_matches = 0
+    decoded_inactive_index_zero = 0
+    decoded_active_rows: list[int] = []
     for y in range(args.height):
         colors, priorities, special_flags = rows[y]
+        if any(priorities):
+            decoded_active_rows.append(y)
         for x in range(args.width):
             offset = x * 4
             color = colors[offset : offset + 4]
@@ -206,6 +221,18 @@ def analyze(args: argparse.Namespace) -> dict[str, object]:
             out = (y * args.width + x) * 4
             rgba[out : out + 3] = color[:3]
             rgba[out + 3] = 0xFF
+            if decoded_plane is not None:
+                plane_pixel = (y * args.width + x) * 4
+                plane_index = decoded_plane[plane_pixel]
+                plane_rgb = decoded_plane[plane_pixel + 1 : plane_pixel + 4]
+                if priorities[x] != 0:
+                    decoded_active_pixels += 1
+                    decoded_active_index_zero += plane_index == 0
+                    decoded_active_rgb_matches += color[:3] == plane_rgb
+                else:
+                    decoded_inactive_pixels += 1
+                    decoded_inactive_index_zero += plane_index == 0
+                    decoded_inactive_rgb_matches += color[:3] == plane_rgb
 
     result: dict[str, object] = {
         "trace_sha256": hashlib.sha256(trace).hexdigest(),
@@ -223,6 +250,26 @@ def analyze(args: argparse.Namespace) -> dict[str, object]:
         "special_color_calc_pixels": special_color_calc,
         "interpretation": "same-pass layer-to-final comparison; this layer alone is not the composed frame",
     }
+    if decoded_plane is not None:
+        row_ranges: list[list[int]] = []
+        for y in decoded_active_rows:
+            if not row_ranges or y != row_ranges[-1][1] + 1:
+                row_ranges.append([y, y])
+            else:
+                row_ranges[-1][1] = y
+        result["decoded_plane_comparison"] = {
+            "decoded_plane_sha256": hashlib.sha256(decoded_plane).hexdigest(),
+            "format": "palette_index_u8,rgb_u8x3",
+            "active_priority_pixels": decoded_active_pixels,
+            "active_priority_rgb_matches": decoded_active_rgb_matches,
+            "active_priority_rgb_mismatches": decoded_active_pixels - decoded_active_rgb_matches,
+            "active_priority_index_zero_pixels": decoded_active_index_zero,
+            "active_priority_row_ranges_inclusive": row_ranges,
+            "zero_priority_pixels": decoded_inactive_pixels,
+            "zero_priority_rgb_matches": decoded_inactive_rgb_matches,
+            "zero_priority_index_zero_pixels": decoded_inactive_index_zero,
+            "interpretation": "compare plane RGB only against Ymir layer pixels with nonzero priority; zero-priority pixels are reported separately",
+        }
     if args.output_rgba:
         try:
             args.output_rgba.parent.mkdir(parents=True, exist_ok=True)
@@ -249,6 +296,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--layer", required=True, type=int, choices=range(len(LAYER_NAMES)))
     parser.add_argument("--width", required=True, type=int)
     parser.add_argument("--height", required=True, type=int)
+    parser.add_argument(
+        "--decoded-plane",
+        type=Path,
+        help="optional Firestaff plane with one palette-index byte followed by RGB bytes per pixel",
+    )
     parser.add_argument("--output-rgba", type=Path, help="optional extracted layer RGBA image")
     parser.add_argument("--output-json", type=Path, help="optional machine-readable report")
     args = parser.parse_args(argv)

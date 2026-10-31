@@ -71,6 +71,25 @@ Firestaff plane yields exact RGB equality for all 44,800 active pixels;
 full Ymir composition is not a valid isolated-layer parity measure and is
 removed here.
 
+Reproduce the layer-to-plane comparison with the hash-pinned authentic
+artifacts:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031
+trace="$evidence/layer-trace-frame891-start60-20261101"
+python3 scripts/analyze_nexus_ymir_vdp2_layer_outputs.py \
+  "$trace/layers.csv" "$trace/layers.csv.receipt.txt" \
+  "$trace/vdp1-891-vdp2-1280-320x224.rgbx8888le" \
+  "$evidence/rendered-frames/index.csv" \
+  --frame 891 --serial 1280 --layer 3 --width 320 --height 224 \
+  --decoded-plane "$evidence/firestaff-nbg1-4bpp-plane-frame891-1280.rgba"
+```
+
+The JSON reports 44,800/44,800 exact RGB matches where Ymir gives the layer
+nonzero priority, and separately reports the 249/26,880 matches in zero-
+priority pixels. Its layer-to-final RGB count compares against the full frame
+and must not be used as an isolated-layer parity score.
+
 The upper-row discrepancy remains unresolved: Firestaff's isolated plane has
 nonzero palette indices in those rows while Ymir's traced NBG1 layer is fully
 transparent. The captured WCTLA–WCTLD window controls are zero, and the PND and

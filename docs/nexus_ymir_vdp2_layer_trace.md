@@ -38,5 +38,13 @@ optional RGBA output is derived from the selected Ymir layer. A single layer is
 not represented as the final composed frame; VDP1, other enabled layers, and
 composition rules still need to be evaluated.
 
+To compare an existing Firestaff-decoded plane with the traced layer, pass
+`--decoded-plane PATH`. The plane format is four bytes per pixel:
+`palette_index_u8, red_u8, green_u8, blue_u8`. The JSON reports RGB matches
+separately for pixels where the Ymir layer has nonzero priority and pixels
+where its priority is zero. Only the first group is an isolated-layer color
+comparison; the zero-priority group is coverage evidence and must not be
+treated as a color-parity score.
+
 Keep captures outside Git. The trace is useful only when it comes from the same
 authentic game run as its rendered-frame reference.
