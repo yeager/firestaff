@@ -25,7 +25,7 @@ ledger. The supplemental
 `SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists per-file `ctags -x`
 definitions from `SKWINSPX/src` and `SKWINDOS/src` at the locked checkout:
 3,097 definition rows, 2,848 distinct names, and 249 repeated-name
-definitions. Of those 3,097 rows, 3,063 remain `UNREVIEWED` and 34 definitions are
+definitions. Of those 3,097 rows, 3,063 remain `UNREVIEWED` and 39 definitions are
 `PARTIAL` in `SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv`; exact name overlap with the older ledger is only a search hint, not
 proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -42,11 +42,11 @@ runtime.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,095 |
+| `IMPLEMENTED_PARITY` | 1,092 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 24 |
+| `PARTIAL` | 27 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -57,6 +57,8 @@ definitions, plus SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, as `PARTIAL` with sourc
 `DM2_ALLOC_MEMORY_RAM` body also ignores the clean flag and always clears
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
+
+The SKULLWIN shooter audit also follows live callers: `DM2_ACTIVATE_SHOOTER` reaches a fail-closed helper before projectile creation, while `DM2_SHOOT_ITEM` and `DM2_CREATURE_SHOOT_ITEM` helpers have no live callers. Their source projectile allocation, initialization, timer, and creature lifecycle behavior is therefore `PARTIAL`, not parity-complete. Matching SKWINSPX v4/v5 source definitions are recorded in the supplemental review ledger. The matching DOS implementations live in top-level `SKWINDOS/` files outside the supplemental `SKWINDOS/src` inventory scope, so they remain unreviewed in that supplemental ledger.
 
 The older allocator rows were rechecked against the current Firestaff call graph. The 16 `SKULLWIN/c_alloc.cpp` entries previously marked `IMPLEMENTED_PARITY` now remain `PARTIAL`: their mapped `dm2_v1_skproject_*_classify` routines produce classifier receipts or mutate a model, but no live Firestaff allocator owner calls them. This does not prove the source free-pool allocation, pointer movement, setup/teardown, and runtime behavior. The analogous `SKWINSPX` and `SKWINDOS` definitions remain individually unreviewed in the supplemental inventory.
 
@@ -148,8 +150,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,122 open rows: 3,063 unreviewed `SKWINSPX` and
-`SKWINDOS` definitions, 34 partial SPX/DOS rows, 16 partial allocator
+At this revision it reports 3,127 open rows: 3,063 unreviewed `SKWINSPX` and
+`SKWINDOS` definitions, 39 partial SPX/DOS rows, 16 partial allocator
 rows in the older ledger, and 9 other unresolved older rows. Exact-name overlap is shown only as a
 candidate for source comparison.
 
