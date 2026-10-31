@@ -6235,10 +6235,13 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             ? intent.options.versionIndex
             : (optionsSlot >= 0 && optionsSlot < M12_CONFIG_GAME_COUNT
                    ? menuState->gameOptions[optionsSlot].versionIndex : -1);
+        const M12_AssetVersionStatus *selectedVersion = versionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
+                                         (size_t)versionIndex)
+            : NULL;
         const int selectedIsAmiga = versionIndex >= 0 &&
             M12_AssetStatus_GetVersionArchitecture(
                 "csb", (size_t)versionIndex) == M12_ARCH_AMIGA;
-        CSB_V1_BootProfile amigaBoot;
         CSB_V1_AmigaSwshFtlAssets amigaAssets;
         char amigaPath[FSP_PATH_MAX];
         char amigaMd5[33];
@@ -6256,25 +6259,29 @@ static int m11_play_ftl_swoosh_for_game_if_available(
         Uint64 audioStartedAt = 0u;
         Uint64 soundDurationMs = 0u;
 
-        memset(&amigaBoot, 0, sizeof(amigaBoot));
         memset(&amigaAssets, 0, sizeof(amigaAssets));
         memset(&amigaAudio, 0, sizeof(amigaAudio));
-        csb_v1_boot_profile_init(&amigaBoot);
         /* APPA.C's SWSH.FTL prelude belongs to the selected Amiga program.
          * A shared library may also contain an Amiga package when Atari ST
          * or FM Towns is selected; discovering that sibling must not prepend
-         * another platform's logo to the selected startup sequence. */
+         * another platform's logo to the selected startup sequence. Use the
+         * launch intent's matched graphics member directly: rescanning the
+         * broad data directory can select the A31E English disk before the
+         * menu's A31M choice, which silently skips this A31M/A33M prelude.
+         * ReDMCSB APPA.C F0904/F0907 resolves SWSH from the selected disk. */
         if (selectedIsAmiga &&
-            csb_v1_boot_scan_assets(&amigaBoot, dataDir) == 0 &&
-            amigaBoot.assets_verified &&
-            amigaBoot.variant_id == CSB_V1_VARIANT_AMIGA31_MULTI) {
+            selectedVersion && selectedVersion->matched &&
+            selectedVersion->versionId &&
+            strcmp(selectedVersion->versionId, "amiga31-multi") == 0 &&
+            strcmp(selectedVersion->matchedMd5,
+                   "61fbfd56887c94adc26888a9491c6611") == 0) {
             amigaProfile = 1;
         }
         if (amigaProfile) {
             /* ReDMCSB APPA.C calls FTL_SWSH before FTL_ANIM and ignores a
              * missing prelude. Bind only to the selected Amiga disk member;
              * the PC SWOOSH finder must not substitute another edition. */
-            if (csb_v1_amiga_selected_companion(amigaBoot.graphics_path,
+            if (csb_v1_amiga_selected_companion(selectedVersion->matchedPath,
                     "SWSH.FTL", amigaPath, sizeof(amigaPath)) &&
                 asset_file_md5_hex(amigaPath, amigaMd5) &&
                 strcmp(amigaMd5, "ff3872baaed8ee4e83ee3c0684b2eeec") == 0 &&

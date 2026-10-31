@@ -1,3 +1,11 @@
+# Unreleased
+
+## User-facing changes
+
+- `CSB Amiga startup`: use the selected authentic A31M disk for its SWSH
+  intro, preventing a sibling edition in the data directory from suppressing
+  the animation.
+
 # Firestaff v3.0.422
 
 ## User-facing changes
