@@ -48,10 +48,14 @@ def main() -> int:
                 current = actual[offset:offset + 3]
                 ref = screenshot_rgb.getpixel((x * 2, y * 2))
                 old_exact += prior == bytes(ref)
-                live_exact += current == bytes(ref)
-        if old_exact != 70454 or live_exact != 71680:
-            raise SystemExit(f"unexpected authentic screenshot match: old={old_exact}/71680 live={live_exact}/71680")
-        print(f"PASS: baseline={old_exact}/71680 and live-row replay={live_exact}/71680 exact screenshot samples")
+                for dy in range(2):
+                    for dx in range(2):
+                        live_exact += current == bytes(
+                            screenshot_rgb.getpixel((x * 2 + dx, y * 2 + dy))
+                        )
+        if old_exact != 70454 or live_exact != 286720:
+            raise SystemExit(f"unexpected authentic screenshot match: old={old_exact}/71680 live={live_exact}/286720")
+        print(f"PASS: baseline={old_exact}/71680 top-left samples; live-row replay={live_exact}/286720 doubled screenshot samples exact")
         return 0
     finally:
         output.unlink(missing_ok=True)

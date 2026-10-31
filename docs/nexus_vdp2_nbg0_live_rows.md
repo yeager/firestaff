@@ -19,8 +19,9 @@ The trace observes one consistent live row tuple over output rows 4–116:
 NBG0 H/V scroll `0x1f79/0x0bcd` and H/V increments `0xcd/0xcd` in 11.8/8.8
 fixed-point units. The captured final registers encode H/V scroll
 `0x1f65/0x0bc6`. The older snapshot-only Firestaff replay matches 70,454 of
-71,680 screenshot sample pixels; applying the live row state yields 71,680 of
-71,680 exact matches. The test pins the VDP1 FBS, VDP2 VRAM, CRAM, register
+71,680 upper-left screenshot sample pixels; applying the live row state yields
+286,720 of 286,720 exact matches across all four samples in each 2×2 screenshot
+block. The test pins the VDP1 FBS, VDP2 VRAM, CRAM, register
 snapshot, baseline replay, and screenshot by SHA-256.
 
 This compositor admits the observed profile only: `BGON=0x0003`,

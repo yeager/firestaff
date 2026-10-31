@@ -11,7 +11,8 @@
 - The real-data CTest pins the VDP1/VDP2 dumps, screenshot, and retained
   baseline replay. The replay receipt reports 21,455 NBG0-selected pixels and
   50,225 VDP1-selected pixels; the prior replay matched 70,454 screenshot
-  samples, while the scanline replay matches 71,680/71,680.
+  upper-left samples, while the scanline replay matches all 286,720 samples
+  across the 2× screenshot blocks exactly.
 - This remains capture-only; a screenshot match does not by itself prove a
   source-to-VRAM timing join or authorize production renderer admission.
   Evidence and reproduction are in
