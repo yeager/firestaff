@@ -6,6 +6,31 @@ static uint16_t dm2_wall_ornament_rect_read_u16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+int dm2_v1_wall_ornament_rect_number(
+    int source_cell, int lateral, unsigned position, uint16_t *out_rect_number)
+{
+    static const uint16_t side_rect_base[16] = {
+        0xffffu, 0x1149u, 0x1162u, 0xffffu,
+        0x1194u, 0x11adu, 0xffffu, 0x11dfu,
+        0x11f8u, 0x1211u, 0x122au, 0xffffu,
+        0x125cu, 0x1275u, 0x128eu, 0x12a7u
+    };
+    unsigned base;
+
+    if (out_rect_number) *out_rect_number = 0u;
+    if (!out_rect_number || source_cell < 0 || source_cell >= 16 ||
+        position >= 25u) return 0;
+    if (lateral == 0) {
+        base = 3100u + (unsigned)source_cell * 25u;
+    } else {
+        if (side_rect_base[source_cell] == 0xffffu) return 0;
+        base = side_rect_base[source_cell];
+    }
+    if (base + position > UINT16_MAX) return 0;
+    *out_rect_number = (uint16_t)(base + position);
+    return 1;
+}
+
 int dm2_v1_wall_ornament_rect_table_query(
     const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
     DM2_V1_RectTableNode *out)

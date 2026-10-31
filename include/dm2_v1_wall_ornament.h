@@ -57,6 +57,9 @@ typedef struct {
     int16_t height;
 } DM2_V1_RectTableNode;
 
+int dm2_v1_wall_ornament_rect_number(
+    int source_cell, int lateral, unsigned position, uint16_t *out_rect_number);
+
 int dm2_v1_wall_ornament_rect_table_query(
     const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
     DM2_V1_RectTableNode *out);

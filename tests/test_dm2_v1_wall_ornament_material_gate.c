@@ -80,6 +80,21 @@ int main(void)
         }
         puts("PASS: skproject GDAT rectangle table decoding");
     }
+    {
+        uint16_t rect_number = 0u;
+        if (!dm2_v1_wall_ornament_rect_number(3, 0, 12u, &rect_number) ||
+            rect_number != 3187u ||
+            !dm2_v1_wall_ornament_rect_number(1, -1, 12u, &rect_number) ||
+            rect_number != 0x1155u ||
+            !dm2_v1_wall_ornament_rect_number(2, 1, 24u, &rect_number) ||
+            rect_number != 0x117au ||
+            dm2_v1_wall_ornament_rect_number(3, 1, 12u, &rect_number) ||
+            dm2_v1_wall_ornament_rect_number(1, 0, 25u, &rect_number)) {
+            fputs("FAIL: skproject wall-ornament rectangle selection\n", stderr);
+            return 1;
+        }
+        puts("PASS: skproject wall-ornament rectangle selection");
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
