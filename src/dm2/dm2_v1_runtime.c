@@ -2680,6 +2680,46 @@ int dm2_v1_runtime_see_thru_walls_active_for_queue(
     return 0;
 }
 
+/* SkWinCore.cpp SUMMARIZE_STONE_ROOM stores the first post-actuator record
+ * in ExtendedTileInfo::w4 (the xsrd.id4 handle). Keep that identity on the
+ * projected wall square for DRAW_ALCOVE_ITEMS and other wall-cell consumers;
+ * the source query itself remains responsible for deciding whether the
+ * selected ornament is an alcove. */
+static int dm2_runtime_wall_rendered_record_root(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    uint16_t *out_root)
+{
+    uint16_t seen[256];
+    int seen_count = 0;
+    int thing;
+
+    if (out_root) *out_root = DM2_THING_END_MARKER;
+    if (!dungeon || !out_root) return 0;
+    thing = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    while (thing >= 0 && thing != DM2_THING_END_MARKER && seen_count < 256) {
+        uint16_t handle = (uint16_t)thing;
+        int type = (handle >> 10) & 0x0f;
+        int repeated = 0;
+        for (int i = 0; i < seen_count; ++i) {
+            if (seen[i] == handle) {
+                repeated = 1;
+                break;
+            }
+        }
+        if (repeated ||
+            !dm2_v1_dungeon_get_thing_record(dungeon, handle, NULL, NULL, NULL))
+            return 0;
+        seen[seen_count++] = handle;
+        if (type > 3) {
+            *out_root = handle;
+            return 1;
+        }
+        if (dungeon->g1_w0_chains_disabled) return 0;
+        thing = dm2_v1_dungeon_get_next_thing(dungeon, handle);
+    }
+    return 0;
+}
+
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                                                  DM2_V1_ViewportState *viewport,
                                                  int party_dir,
@@ -2778,10 +2818,14 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         {
             DM2_ViewSquare *surface = &viewport->squares[visible_cells[i].square];
             if (square_type == DM2_SQUARE_WALL) {
+                uint16_t rendered_record_root = DM2_THING_END_MARKER;
                 surface->wall_ornate_gfx_index = 0u;
                 surface->wall_ornate_gfx_field = 0u;
                 surface->wall_ornate_rect_number = 0u;
                 surface->wall_ornate_ref_point = 0u;
+                surface->wall_rendered_record_root =
+                    DM2_THING_END_MARKER;
+                surface->wall_rendered_record_root_valid = 0u;
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
                 /* SkWinCore::SUMMARIZE_STONE_ROOM builds side slots 3..6
@@ -2797,6 +2841,13 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                         dd, rt->dungeon_level, map_x, map_y);
                     int side_index = visible_cells[i].lateral < 0 ? 1 :
                         (visible_cells[i].lateral > 0 ? 3 : 2);
+                    if (dm2_runtime_wall_rendered_record_root(
+                            dd, rt->dungeon_level, map_x, map_y,
+                            &rendered_record_root)) {
+                        surface->wall_rendered_record_root =
+                            rendered_record_root;
+                        surface->wall_rendered_record_root_valid = 1u;
+                    }
                     if (first_thing >= 0 &&
                         first_thing != DM2_THING_END_MARKER) {
                         DM2_V1_SkprojectQuery0cee1a46Receipt decoration;

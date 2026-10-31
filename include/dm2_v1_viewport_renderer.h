@@ -1266,6 +1266,8 @@ typedef struct {
     uint8_t  wall_ornate_gfx_field; /* source query frame/field (1=first frame) */
     uint16_t wall_ornate_rect_number; /* skproject QUERY_RECTNO_FOR_WALL_ORNATE */
     uint8_t  wall_ornate_ref_point; /* packed WALL_GFX position high byte */
+    uint16_t wall_rendered_record_root; /* SUMMARIZE_STONE_ROOM xsrd.id4 */
+    uint8_t  wall_rendered_record_root_valid;
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
     uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */

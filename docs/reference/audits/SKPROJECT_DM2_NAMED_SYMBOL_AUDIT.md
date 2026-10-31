@@ -44,10 +44,11 @@ The tail of the inventory includes `DRAW_ALCOVE_ITEMS` and
 `DRAW_ALCOVE_ITEMS`: skproject reads each rendered wall cell's `id4` record
 handle, applies an early facing gate, renders DB5..DB10 items with wall-specific
 `DRAW_ITEM` geometry, handles two cloud types, and creates the clickable item
-zone only for front cell 3. Firestaff's source item material route currently
-starts from floor-tile roots and its static-object plans do not model this wall
-placement. The next required owner is the renderer-cell record bridge, followed
-by wall-specific item/cloud rendering and the front-wall click target. The
+zone only for front cell 3. Firestaff now retains a bounded first DB4+ record
+root on each eligible projected wall square, following the `w4=id4` handoff
+from `SUMMARIZE_STONE_ROOM`; it still has no wall-cell item material/placement
+pass, matching cloud route, or front-wall click target. The next work is to
+consume that root with the source facing gate and wall-specific geometry. The
 shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
 creature item masks, merchandise WALL_GFX assets, and its name/price display;
 the runtime entry and panel builder currently fail closed.
