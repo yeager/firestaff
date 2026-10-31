@@ -15,6 +15,12 @@
 static int withhold_material;
 static int plan_valid;
 
+static void write_le16(uint8_t *out, uint16_t value)
+{
+    out[0] = (uint8_t)value;
+    out[1] = (uint8_t)(value >> 8);
+}
+
 static int fetch_asset(void *user, int gdat_index, const uint8_t **pixels,
                        int *width, int *height, int *stride)
 {
@@ -113,6 +119,57 @@ int main(void)
                 blit.destination_width != 3 || blit.destination_height != 3 ||
                 blit.source_width != 3 || blit.source_height != 3) {
                 fputs("FAIL: big-endian QUERY_BLIT_RECT parity\n", stderr);
+                return 1;
+            }
+        }
+        {
+            uint8_t anchor_table[4u + 4u + 9u * 8u] = { 0 };
+            static const int16_t expected_x[9] = { 98, 100, 97, 97, 100, 98, 97, 98, 100 };
+            static const int16_t expected_y[9] = { 77, 80, 80, 75, 75, 80, 77, 75, 77 };
+            DM2_V1_WallOrnamentBlitRect anchored;
+            anchor_table[0] = 0x0du;
+            anchor_table[1] = 0xfcu;
+            write_le16(anchor_table + 2u, 1u);
+            write_le16(anchor_table + 4u, 0x1000u);
+            write_le16(anchor_table + 6u, 0x1008u);
+            for (uint16_t mode = 0u; mode < 9u; ++mode) {
+                uint8_t *row = anchor_table + 8u + (size_t)mode * 8u;
+                write_le16(row, mode);
+                write_le16(row + 2u, 0u);
+                write_le16(row + 4u, 100u);
+                write_le16(row + 6u, 80u);
+            }
+            for (uint16_t mode = 0u; mode < 9u; ++mode) {
+                if (!dm2_v1_wall_ornament_query_blit_rect(
+                        anchor_table, sizeof(anchor_table),
+                        (uint16_t)(0x1000u + mode), 0, -1, 4, 6,
+                        &anchored) ||
+                    anchored.destination_x != expected_x[mode] ||
+                    anchored.destination_y != expected_y[mode] ||
+                    anchored.destination_width != 4 ||
+                    anchored.destination_height != 6) {
+                    fputs("FAIL: skproject QUERY_BLIT_RECT anchor mode\n", stderr);
+                    return 1;
+                }
+            }
+        }
+        {
+            static const uint8_t nested_table[] = {
+                0x0du, 0xfcu, 0x01u, 0x00u,
+                0x00u, 0x10u, 0x02u, 0x10u,
+                10u, 0u, 1u, 0x10u, 1u, 0u, 1u, 0u,
+                1u, 0u, 2u, 0x10u, 0u, 0u, 0u, 0u,
+                9u, 0u, 0u, 0u, 4u, 0u, 4u, 0u
+            };
+            DM2_V1_WallOrnamentBlitRect nested;
+            if (!dm2_v1_wall_ornament_query_blit_rect(
+                    nested_table, sizeof(nested_table), 0x1000u,
+                    0, -1, 4, 4, &nested) ||
+                nested.destination_x != 1 || nested.destination_y != 1 ||
+                nested.destination_width != 3 ||
+                nested.destination_height != 3 || nested.source_x != 0 ||
+                nested.source_y != 0) {
+                fputs("FAIL: skproject QUERY_BLIT_RECT nested anchor mode\n", stderr);
                 return 1;
             }
         }
