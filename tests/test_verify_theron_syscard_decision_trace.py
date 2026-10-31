@@ -85,6 +85,7 @@ def main() -> None:
     marker = f"decision_truncated cap={verifier.CAP}"
     cap_cases = (
         (cap_rows + [marker], "reached its configured row cap"),
+        (cap_rows, "reached its configured row cap"),
         ([verifier.HEADER], "contains no requested instruction starts"),
         ([verifier.HEADER, marker], "truncation marker disagrees"),
         (cap_rows + [row(verifier.CAP, 30 + verifier.CAP, "e209")],

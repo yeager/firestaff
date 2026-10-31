@@ -114,7 +114,7 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
             raise ValueError("decision trace exceeds its configured cap")
     if rows == 0:
         raise ValueError("decision trace contains no requested instruction starts")
-    if truncated:
+    if rows == CAP:
         raise ValueError("decision trace reached its configured row cap")
     return {"rows": rows, "pcs": len(pcs)}
 
