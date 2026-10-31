@@ -63,9 +63,9 @@ then wrap to 2), and the cell-3-only clickable zone. The next work is to
 consume that root with the source facing gate, this wall-specific placement,
 and the corresponding clipping. The shop-glass routine now resolves the live wall/floor actuator pair and begins
 its mask/whitelist/ownership transition in source byte order. The separate
-`ddat.v1d67bc` hand-container owner, sold-out artwork, item name/prices,
-DB14 allocation and buy/sell remain open. The selected merchandise image and
-nav board now use their source GDAT images, palettes, offsets and clipped
+`ddat.v1d67bc` hand-container owner, item name/prices, DB14 allocation and
+buy/sell remain open. The selected merchandise image, conditional sold-out
+icon and nav board use their source GDAT images, palettes, offsets and clipped
 rectangles on the live render route; incomplete ownership still fails closed.
 
 Open source-owned behavior includes the

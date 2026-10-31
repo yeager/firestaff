@@ -542,8 +542,10 @@ typedef struct {
     uint16_t shop_current_item;
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
-    /* Source QUERY_TEMP_PICST merchandise and navigation artwork. */
+    uint8_t shop_soldout_icon_required;
+    /* Source QUERY_TEMP_PICST merchandise, sold-out, and nav artwork. */
     DM2_V1_ShopImageRender shop_item;
+    DM2_V1_ShopImageRender shop_soldout;
     DM2_V1_ShopImageRender shop_navigation;
 } DM2_V1_WallOrnamentRender;
 

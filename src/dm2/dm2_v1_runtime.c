@@ -12855,6 +12855,7 @@ typedef struct {
     uint16_t floor_w4;
     uint16_t current_item;
     uint16_t records_scanned;
+    uint8_t soldout_icon_required;
     uint32_t identity_hash;
 } DM2_V1_ShopGlassActuatorPair;
 
@@ -12954,16 +12955,32 @@ static int dm2_runtime_shop_tile_has_item(
         if (type < 0 || type > 15 ||
             !dm2_v1_record_pool_address(&rt->record_pools,
                                         (int16_t)link)) return -1;
-        if (type >= 5 && type <= 10) {
+        if (type == 4) {
+            const uint8_t *creature = dm2_v1_record_pool_address(
+                &rt->record_pools, (int16_t)link);
+            int16_t possession;
+            if (!creature || dm2_v1_record_pool_record_size(4) < 4)
+                return -1;
+            possession = (int16_t)dm2_runtime_missile_rd16(
+                &rt->record_pools, creature + 2);
+            for (unsigned possessions = 0u; possessions < 256u;
+                 ++possessions) {
+                uint16_t found_type;
+                if (possession == DM2_V1_RECORD_HANDLE_END) break;
+                if (possession == DM2_V1_RECORD_HANDLE_NULL ||
+                    !dm2_runtime_shop_item_distinctive_type(
+                        rt, (uint16_t)possession, &found_type)) return -1;
+                if (found_type == distinctive) return 1;
+                if (!dm2_v1_record_pool_next_link(
+                        &rt->record_pools, possession, &possession))
+                    return -1;
+            }
+            if (possession != DM2_V1_RECORD_HANDLE_END) return -1;
+        } else if (type >= 5 && type <= 10) {
             uint16_t found_type;
             if (!dm2_runtime_shop_item_distinctive_type(
                     rt, (uint16_t)link, &found_type)) return -1;
             if (found_type == distinctive) return 1;
-            if (type == 9) {
-                int nested = dm2_runtime_shop_container_has_item(
-                    rt, (uint16_t)link, distinctive, 0u);
-                if (nested != 0) return nested;
-            }
         }
         if (!dm2_v1_record_pool_next_link(&rt->record_pools,
                                           (int16_t)link, &next)) return -1;
@@ -13074,6 +13091,8 @@ static int dm2_runtime_shop_glass_transition(
     int once_only;
     DM2_V1_CreaturesItemMaskReceipt mask;
     int have_mask = 0;
+    const uint8_t *item_list;
+    size_t item_list_size = 0u;
 
     if (!rt || !dungeon || !loader || !pair ||
         !rt->record_pools_valid || !rt->record_pools.valid ||
@@ -13100,8 +13119,6 @@ static int dm2_runtime_shop_glass_transition(
     if ((wall_w4 & 1u) == 0u || once_only) {
         DM2_V1_ShopStockFilterContext filter;
         DM2_V1_ShopStockSelection selection;
-        const uint8_t *item_list;
-        size_t item_list_size = 0u;
         size_t item_count = 0u;
         int direction = once_only ? 1 : -1;
 
@@ -13136,6 +13153,20 @@ static int dm2_runtime_shop_glass_transition(
         }
     }
 
+    /* SHOP_GLASS draws the sold-out image only when the whitelist entry is
+     * absent and the distinctive item is not already on the actuator tile
+     * or carried by a creature there (IS_DISTINCTIVE_ITEM_ON_ACTUATOR). */
+    item_list = dm2_v1_query_gdat_entry_data_ptr(
+        loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+        DM2_GDAT_ENTRY_TYPE_RAW8, 0x13, &item_list_size);
+    pair->soldout_icon_required = 0u;
+    if (!item_list) {
+        int item_present = dm2_runtime_shop_tile_has_item(
+            rt, dungeon, level, x, y, current_item);
+        if (item_present < 0) return 0;
+        pair->soldout_icon_required = (uint8_t)!item_present;
+    }
+
     wall_w4 |= 1u;
     floor_w4 |= 1u;
     dm2_runtime_missile_wr16(&rt->record_pools, wall + 4, wall_w4);
@@ -13147,6 +13178,8 @@ static int dm2_runtime_shop_glass_transition(
     pair->floor_w4 = floor_w4;
     pair->current_item = current_item;
     pair->identity_hash ^= ((uint32_t)wall_w4 << 16) | floor_w2;
+    pair->identity_hash *= 16777619u;
+    pair->identity_hash ^= pair->soldout_icon_required;
     pair->identity_hash *= 16777619u;
     if (pair->identity_hash == 0u) pair->identity_hash = 1u;
     return 1;
@@ -13275,7 +13308,7 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
  * the wall entry directly with zero explicit offsets. */
 static int dm2_runtime_bind_shop_image_render(
     const DM2_V1_AssetLoader *loader, uint8_t wall_gfx_index,
-    uint16_t rect_number, uint8_t ref_point, uint16_t item, int navigation,
+    uint16_t rect_number, uint8_t ref_point, uint16_t item, int image_kind,
     int stretch_x, int stretch_y, int mirror_flip,
     uint16_t colorkey, DM2_V1_ShopImageRender *render)
 {
@@ -13291,10 +13324,12 @@ static int dm2_runtime_bind_shop_image_render(
     int scaled_width;
     int scaled_height;
     int source_x0, source_y0, source_x1, source_y1;
+    int navigation = image_kind == 1;
+    int field = navigation ? 0x0f : (image_kind == 2 ? 0x11 : 0);
 
     if (!loader || !render || !rect_number || stretch_x <= 0 ||
         stretch_y <= 0) return 0;
-    if (navigation) {
+    if (image_kind != 0) {
         itemdb = DM2_GDAT_CATEGORY_WALL_GFX;
         itemtype = wall_gfx_index;
     } else if (!dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
@@ -13306,7 +13341,7 @@ static int dm2_runtime_bind_shop_image_render(
         return 0;
     }
     if (!dm2_v1_query_gdat_summary_image_receipt(
-            loader, itemdb, itemtype, navigation ? 0x0fu : 0u, &summary) ||
+            loader, itemdb, itemtype, field, &summary) ||
         !summary.accepted || summary.metadata.width == 0u ||
         summary.metadata.height == 0u)
         return 0;
@@ -13349,7 +13384,7 @@ static int dm2_runtime_bind_shop_image_render(
     render->valid = 1u;
     render->category = (uint8_t)itemdb;
     render->index = (uint8_t)itemtype;
-    render->field = navigation ? 0x0fu : 0u;
+    render->field = (uint8_t)field;
     render->mirror_flip = (uint8_t)mirror_flip;
     render->colorkey = colorkey;
     render->width = summary.metadata.width;
@@ -13584,12 +13619,21 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->shop_current_item = pair.current_item;
                 entry->shop_glass_pair_valid = 1u;
                 entry->shop_glass_render_pending = 1u;
+                entry->shop_soldout_icon_required =
+                    pair.soldout_icon_required;
                 if (!dm2_runtime_bind_shop_image_render(
                         loader, surface->wall_ornate_gfx_index,
                         surface->wall_ornate_rect_number,
                         surface->wall_ornate_ref_point, pair.current_item,
                         0, stretch_x, stretch_y, 0, receipt.colorkey,
                         &entry->shop_item) ||
+                    (pair.soldout_icon_required &&
+                     !dm2_runtime_bind_shop_image_render(
+                        loader, surface->wall_ornate_gfx_index,
+                        surface->wall_ornate_rect_number,
+                        surface->wall_ornate_ref_point, 0u, 2,
+                        stretch_x, stretch_y, 0, receipt.colorkey,
+                        &entry->shop_soldout)) ||
                     !dm2_runtime_bind_shop_image_render(
                         loader, surface->wall_ornate_gfx_index,
                         surface->wall_ornate_rect_number,
@@ -13606,6 +13650,10 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 plan_hash ^= entry->shop_item.summary_hash;
                 plan_hash *= 16777619u;
                 plan_hash ^= entry->shop_item.palette_hash;
+                plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_soldout.summary_hash;
+                plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_soldout.palette_hash;
                 plan_hash *= 16777619u;
                 plan_hash ^= entry->shop_navigation.summary_hash;
                 plan_hash *= 16777619u;

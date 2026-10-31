@@ -95,8 +95,10 @@ Macintosh/Amiga records. A validated pair routes the shop alcove away from
 the generic ornament material requirement, matching `DRAW_WALL_ORNATE`'s
 dispatch to `_32cb_0f82_SHOP_GLASS`. The selected item's GDAT image and the
 shop navigation board are resolved with their own palettes, source offsets
-and clipped destinations, then drawn in source order. The sold-out icon, item
-name, prices, high-bit DB14 allocation and buy/sell transitions remain
+and clipped destinations. When the whitelist is absent and the selected item
+is not already on the shop tile or in a creature's possession there, the
+source sold-out icon is drawn between the merchandise and navigation images.
+Item name, prices, high-bit DB14 allocation and buy/sell transitions remain
 incomplete. Party ownership
 still cannot resolve the eight hand containers because the separate
 `ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
@@ -138,18 +140,18 @@ and mutates authenticated session record pools in source byte order. Party
 ownership still cannot resolve the eight hand containers because the separate
 `ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
 candidate fails closed.
-The same source call draws the item image and nav board (now implemented with
-their GDAT images, palettes, offsets and clipped rectangles), sold-out icon
-when applicable, item name and buy/sell prices for cell 3, and may spawn a deeply
+The same source call draws the item image, sold-out icon when applicable, and
+nav board (now implemented with their GDAT images, palettes, offsets and
+clipped rectangles), item name and buy/sell prices for cell 3, and may spawn a deeply
 allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
 supplies source item prices; `SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE`
 and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
 live record/GDAT chain, panel rendering, and buy/sell state transitions against
 those owners, then verify against source-owned DM2 data on each supported
 platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
-generic price formulas. The click-direction global, sold-out artwork, names,
-prices, high-bit DB14 allocation, hand-container mode, and buy/sell transitions
-remain missing; the feature is not at parity.
+generic price formulas. The click-direction global, names, prices, high-bit
+DB14 allocation, hand-container mode, and buy/sell transitions remain missing;
+the feature is not at parity.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
 visible wall metadata now calls the source-shaped summary entry point and

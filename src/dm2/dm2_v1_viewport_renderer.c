@@ -7060,6 +7060,9 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                 s->last_wall_ornament_material_required_mask |=
                     (uint16_t)(1u << (unsigned)i);
                 if (!dm2_v1_draw_shop_image(s, &shop_item->shop_item) ||
+                    (shop_item->shop_soldout_icon_required &&
+                     !dm2_v1_draw_shop_image(
+                         s, &shop_item->shop_soldout)) ||
                     !dm2_v1_draw_shop_image(s, &shop_item->shop_navigation)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
