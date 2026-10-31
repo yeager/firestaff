@@ -23,10 +23,12 @@ window previously attributed to `$C852`. The filtered `1F093B-1F093D` main-RAM
 consumer trace hit its 1,048,576-row cap before route reentry, so no same-event
 generated-row read is established. Callback-state verification passed at
 403,975 rows. The 8,388,608-row System Card I/O/RAM trace reached its cap, and
-the whole-file verifier grew to about 3.2 GB RSS before it was stopped; wrapper
-verification remains incomplete. Make that verifier stream rows with bounded
-memory, resolve the runtime `$0DC852` code/bank mapping, then repeat with an
-event-aware consumer window or sufficient bounded sample limit. A logical-PC
+the former whole-file verifier grew to about 3.2 GB RSS. The streaming
+verifier processed the full retained trace at about 18 MB RSS and correctly
+rejected its explicit truncation marker; iterator-mode regression coverage
+passes. Resolve the runtime `$0DC852` code/bank
+mapping, then repeat with an event-aware consumer window or sufficient bounded
+sample limit. A logical-PC
 hit in another physical bank does not close the join. No Drator-positioned save or state artifact is checked into
 the repository. Obtain and verify an authentic state outside Git, or replay
 the documented original Drator route from authentic media in an isolated

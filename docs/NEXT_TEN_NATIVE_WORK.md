@@ -26,8 +26,8 @@ contains only the next cross-game work items, not a complete Theron inventory.
 5. **Theron US (Drator) generated-row consumer join.** First resolve the two
    runtime `$C852` fetch windows at physical `$0DC852` against the authentic
    ROM bank; their `a5ba85a9a5b885a8...` bytes differ from the prior static
-   attribution. Make the System Card I/O/RAM verifier stream its 8,388,608-row
-   trace within bounded memory. Then capture the filtered main-RAM reads in an
+   attribution. Rerun the retained 8,388,608-row trace through the new streaming
+   System Card I/O/RAM verifier. Then capture the filtered main-RAM reads in an
    event-aware window: the 1,048,576-row sample limit was reached before
    `reentered-event`. Callback-state verification passed at 403,975 rows, but
    the wrapper did not finish. This reference capture does not replace the
@@ -37,8 +37,9 @@ contains only the next cross-game work items, not a complete Theron inventory.
    static attribution. The filtered consumer observer hit its 1,048,576-row
    cap before reentry, callback-state verification passed, and the
    8,388,608-row System Card I/O/RAM verifier exhausted whole-file memory.
-   Source-map the runtime code, implement streaming verification, and capture
-   an event-aware consumer window. A hit in another physical bank does not
+   The streaming verifier is implemented; rerun with a capture that avoids the
+   fixed row cap, source-map the runtime code, and capture an event-aware
+   consumer window. A hit in another physical bank does not
    close the join. Keep row fields opaque. Then continue the separate
    `$C1FC` active-map and movement question: its matched input-conditioned
    transfers may be teleporter destination copying and do not yet prove

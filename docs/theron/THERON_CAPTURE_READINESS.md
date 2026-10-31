@@ -28,10 +28,13 @@ consumer trace sampled `$1F093B-$1F093D` but filled its 1,048,576-row sample
 limit before route reentry; no consumer read at the two fetch events is
 established. The target-write trace retained 139 rows. Callback-state
 verification passed with 403,975 rows (87 reads and 403,888 writes), but the
-System Card I/O/RAM trace reached its 8,388,608-row cap. Its verifier started
-loading all 8.4 million rows into a list and reached about 3.2 GB RSS before it
-was stopped; wrapper verification consequently did not finish. The cap and
-the in-memory verifier are not adequate for this capture volume.
+System Card I/O/RAM trace reached its 8,388,608-row cap. Its former verifier
+loaded all 8.4 million rows into a list and reached about 3.2 GB RSS before it
+was stopped, so wrapper verification did not finish. The verifier now checks
+rows incrementally with bounded memory, and iterator-mode regression coverage
+passes. The full retained trace was processed with about 18 MB RSS and rejected
+only at its explicit truncation marker, confirming both the streaming memory
+bound and fail-closed behavior.
 
 The generator receipt still proves the row lifecycle and a prior consumer in
 that event, while this capture establishes neither `$C852`'s same-event row

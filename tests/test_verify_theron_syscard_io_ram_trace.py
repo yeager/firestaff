@@ -69,6 +69,10 @@ def main() -> None:
         "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
         "missing_addresses": len(verifier.ADDRESSES) - 3,
     }
+    assert verifier.verify_lines(iter(rows), image) == {
+        "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
+        "missing_addresses": len(verifier.ADDRESSES) - 3,
+    }
     valid = make_row(0, 30, "write", 0x224C, 0xEC05)
     must_reject(
         [verifier.HEADER, valid.replace("logical_address=224c", "logical_address=224b")],

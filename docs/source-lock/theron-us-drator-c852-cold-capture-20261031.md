@@ -40,7 +40,10 @@ minutes and reached `start` and `left-event`, but not `reentered-event`.
   403,888 writes. The System Card I/O/RAM trace reached its configured
   8,388,608-row cap. Its verifier attempted to materialize all rows in a list,
   reached about 3.2 GB RSS, and was stopped before completing; wrapper
-  verification did not finish.
+  verification did not finish. The verifier has since been changed to process
+  rows incrementally, with iterator-mode regression coverage. The full trace was
+  processed at about 18 MB RSS and correctly rejected at its explicit
+  truncation marker.
 - The follow-up `$C852` trace contains two fetches at physical `$0DC852`, at
   shared event sequences 10,644,900 and 10,648,164. Both captured 27-byte code
   windows beginning `a5ba85a9a5b885a8`. This runtime window differs from the
@@ -58,9 +61,10 @@ verification did not finish because the I/O/RAM verifier's whole-file list
 exhausted several gigabytes of memory. This is not native Firestaff gameplay
 or renderer parity evidence. Keep row bytes semantically opaque.
 
-First make the System Card I/O/RAM verifier stream rows with bounded memory
-and give consumer tracing an event-aware capture window or a sufficiently
-large bounded sample limit. Resolve the runtime `$0DC852` bank and code bytes
+The System Card I/O/RAM verifier now streams rows with bounded memory. Rerun
+the retained capture through it and give consumer tracing an event-aware
+window or a sufficiently large bounded sample limit. Resolve the runtime
+`$0DC852` bank and code bytes
 against the authentic ROM mapping before attributing the fetch to static
 `$C852` source. Then repeat in a fresh isolated profile and accept a row
 consumer join only when same-session event order, reader PC and physical bank

@@ -13,9 +13,14 @@
   reached its cap; whole-file verification used about 3.2 GB RSS and was
   stopped, so wrapper verification did not finish.
 - Updated the documentation to retain these limits. Next capture work needs a
-  streaming I/O/RAM verifier, source-mapped runtime `$C852` code, and an
-  event-aware row-consumer observation. This does not establish native
-  gameplay or renderer parity.
+  source-mapped runtime `$C852` code and an event-aware row-consumer
+  observation. Replaced whole-file I/O/RAM loading with line-by-line
+  verification, preserving strict row checks with bounded memory; the
+  iterator path and related focused regressions passed three loops. The
+  retained 8,388,608-row trace was processed at about 18 MB RSS and correctly
+  rejected at its explicit truncation marker. This confirms bounded memory and
+  fail-closed behavior, not an accepted complete capture. It does not establish
+  native gameplay or renderer parity.
 - Rebuilt clean-source Mednafen 1.32.1 after increasing the System Card I/O/RAM
   trace cap to 8,388,608 rows and callback-state cap to 524,288 rows. Added the
   bounded 27-byte runtime code window to `$C852` fetch rows; three-loop focused
