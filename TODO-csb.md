@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the shared PC3.4 viewport
+contracts cover bounded side-wall scheduling, ornament, door, pit/stairs,
+floor-ornament, thing-order, and field slices, including the D3R side-door
+button. The full side-square dispatch still has edition/platform-specific
+material branches and early-return/teleporter conditions. Keep CSB D3L/D3R
+parity open until the source behavior is compared against every supported
+CSB platform and edition; shared PC3.4 tests are not proof of that coverage.
+
 2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
 Atari package contains a separate `st20-21-hd-en` installation. The new
 real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build

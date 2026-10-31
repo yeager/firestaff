@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the existing PC3.4 gates
+cover bounded scheduler, wall/ornament, door, pit/stairs, floor-ornament,
+thing-order, and field slices, including the D3R side-door button. The source
+functions also combine edition-specific bitmap/material selection, alcove
+early returns, and teleporter visibility rules. Keep the callable-symbol
+inventory rows open until the complete dispatch behavior is compared across
+supported DM1 editions and platforms; these PC3.4 slices do not establish
+whole-function parity.
+
 2026-10-30 ReDMCSB F0035 leader-hand name clear: M11's shared DM1/CSB V1
 leader-hand name renderer now invokes the source-mapped F0035 C017 black-fill
 adapter before the F0034 name draw. ReDMCSB `OBJECT.C:274-286` clears the same
