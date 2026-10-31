@@ -457,8 +457,10 @@ int dm2_v1_mode7_on_node(
         }
     }
     if ((node->effective_flags & 2u) == 0u) return 0;
-    if (node->distance > 8u ||
-        (!!node->floor == !!node->stone_room)) return -1;
+    /* sklight.cpp:455-481 only clears vw_24 above distance eight. RG6 and
+     * RG5 still use table1d673d at min(distance, 5), retaining the source
+     * minimum of two. Do not reject the whole flags-4 node here. */
+    if (!!node->floor == !!node->stone_room) return -1;
     if (node->floor) {
         if (!dm2_v1_mode7_flags4_floor_terms(
                 node->floor, node->weather_index, node->weather_delta,

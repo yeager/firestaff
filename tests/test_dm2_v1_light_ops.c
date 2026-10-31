@@ -975,6 +975,7 @@ static void test_mode7_flags4_source_branches(void)
 {
     DM2_V1_CLightFlags4FloorReceipt floor;
     DM2_V1_CLightStoneRoomReceipt room;
+    DM2_V1_Mode7Action23Node node;
     int16_t tile = -1, weather = -1;
     int16_t darkness = -1;
     memset(&floor, 0, sizeof(floor));
@@ -1019,6 +1020,40 @@ static void test_mode7_flags4_source_branches(void)
     room.first_record_link = 0u;
     assert(!dm2_v1_mode7_flags4_class2_terms(
         &room, &tile, &darkness, &weather));
+
+    /* sklight.cpp:455-481 clears only vw_24 beyond distance eight. The
+     * ordinary floor-light term remains in RG6 and uses table1d673d[5]. */
+    memset(&node, 0, sizeof(node));
+    floor.valid = 1;
+    floor.source_flags = 4u;
+    floor.raw_tile = 0x10u;
+    floor.first_record_link = DM2_THING_NULL_MARKER;
+    floor.floor_ornament_word = 0x0a56u;
+    floor.floor_light_word = 100u;
+    floor.weather_light_word = 0u;
+    node.cached_tile = 0x10u;
+    node.effective_flags = 2u;
+    node.source_flags = 4u;
+    node.distance = 9u;
+    node.floor = &floor;
+    {
+        int16_t ambient = 0;
+        int16_t ambient_darkness = 0;
+        assert(dm2_v1_mode7_on_node(&node, &ambient,
+                                    &ambient_darkness) == 1);
+        assert(ambient == 10 && ambient_darkness == 0);
+    }
+    /* A weather-scaled floor term is vw_24, so this one does vanish past 8. */
+    floor.weather_light_word = 1u;
+    node.weather_index = 0u;
+    node.weather_delta = 0u;
+    {
+        int16_t ambient = 0;
+        int16_t ambient_darkness = 0;
+        assert(dm2_v1_mode7_on_node(&node, &ambient,
+                                    &ambient_darkness) == 1);
+        assert(ambient == 0 && ambient_darkness == 0);
+    }
 }
 
 static void test_mode7_flags3_prepass_evidence(void)
