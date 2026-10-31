@@ -1,5 +1,17 @@
 # Firestaff TODO — CSB
 
+2026-10-31 CSB Atari ST authentic campaign regression: the local
+`csb_v1_atari_stx_native_cli_boot` CTest passed (199.49 s) using the installed
+original Atari ST STX and shared CSB media root. It verified the native title
+and ANIMATE.SCR handoff, map-0 start pose, first movement and source-derived
+input outcomes, original-media champion recruitment, Atari HUD structure,
+button-door activation, stair transition to map 1, monster movement, and
+champion health changes. Its no-game M12 route also selected the Atari
+campaign and retained source identity. This is a headless runtime regression,
+not physical Atari input or visual parity; it does not verify player damage
+against monsters. The CSB source was unchanged between the test executable's
+build revision and current `main` (`0a503955`).
+
 2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
 Atari package contains a separate `st20-21-hd-en` installation. The new
 real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build
