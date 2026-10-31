@@ -131,10 +131,11 @@ Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
 5 rendered/presented frames/s in one interval. A follow-up native Linux Debug
 run on trv2 used Xvfb only as the SDL display and authentic JP Rev. 1 Track 02;
 it reached `theron-runtime`, loaded map 0 and advanced 73 game ticks in 18
-seconds. No emulator ran the game. The latest Firestaff-presented capture is
-nonblack, but has not been paired with an original-emulator capture; original
-graphics-bank binding, palette and dungeon tile mapping are not yet connected
-to a validated renderer. These runs confirm native startup, input
+seconds. No emulator was used for this Firestaff run. The latest
+Firestaff-presented capture is nonblack, but has not been paired with an
+original-emulator capture. The original graphics-bank binding, palette and
+dungeon tile mapping are not yet connected to a validated renderer. These
+runs confirm native startup, input
 and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
@@ -156,12 +157,17 @@ the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
 renderer behavior.
 
-A same-state Japanese F5 wall probe found no candidate position writes for
-UP, neutral or DOWN. A later matched three-run comparison from the same
-authentic save found repeatable `$20B4->$2040` TII transfers after Button II+UP
-reads; three Button II-only controls retained the candidate bytes. A follow-up
-three-run trace records the same 128-instruction path into `$C1FC`, including
-a `$C1D6` call/return and conditional fall-through. Source-locked analysis
+The Japanese F5 blocked-wall probe (autoload-state SHA-256
+`2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) found
+no candidate position writes for UP, neutral or DOWN. A separate matched
+three-run comparison used the authentic JP Akutuba F5 emulator state with
+SHA-256
+`b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`; it found
+repeatable `$20B4->$2040` TII transfers after Button II+UP reads, while three
+Button II-only controls retained the candidate bytes. A follow-up three-run
+control-flow trace used the first state and records the same 128-instruction
+path into `$C1FC`, including a `$C1D6` call/return and conditional fall-through.
+Source-locked analysis
 also associates the TII with teleporter destination copying; the dynamic path
 does not establish the routine's gameplay purpose or identify the active-map
 object. This is input-conditioned state-transfer evidence, not proof of
