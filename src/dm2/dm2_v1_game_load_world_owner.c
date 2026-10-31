@@ -5540,6 +5540,45 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                                   candidate->dungeon.source_words_big_endian);
     receipt.direction = (receipt.door_record_attributes_before & 0x0200u)
         ? 0u : 1u;
+    old_state = dm2_door_get_state((uint16_t)raw_tile);
+    receipt.state_before = (uint8_t)old_state;
+    receipt.state_after = (uint8_t)old_state;
+    if (old_state == DM2_DOOR_STATE_DESTROYED ||
+        (receipt.door_record_attributes_before & 0x0400u) == 0u ||
+        (receipt.direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+         old_state == DM2_DOOR_STATE_OPEN) ||
+        (receipt.direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+         old_state == DM2_DOOR_STATE_CLOSED)) {
+        uint16_t next_attributes = receipt.door_record_attributes_before;
+        if (old_state == DM2_DOOR_STATE_DESTROYED) {
+            receipt.source_noop_destroyed = 1;
+        } else if ((receipt.door_record_attributes_before & 0x0400u) != 0u) {
+            /* SKWINDOS/SKWINSPX STEP_DOOR clears DoorBit10 and returns when
+             * the requested endpoint is already reached, before collisions. */
+            next_attributes = (uint16_t)(next_attributes &
+                (uint16_t)~0x0400u);
+            if (candidate->dungeon.source_words_big_endian) {
+                door_record[2] = (uint8_t)(next_attributes >> 8);
+                door_record[3] = (uint8_t)next_attributes;
+            } else {
+                door_record[2] = (uint8_t)next_attributes;
+                door_record[3] = (uint8_t)(next_attributes >> 8);
+            }
+        }
+        receipt.door_record_attributes_after = next_attributes;
+        receipt.door_record_state_mutated =
+            next_attributes != receipt.door_record_attributes_before;
+        receipt.valid = 1;
+        receipt.consumed = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)timer_entry.l_00 ^ ((uint32_t)old_state << 8) ^
+            (uint32_t)(uint16_t)link);
+        free(index_backup);
+        free(timer_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
     for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
         const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
         if (pool->record_count < 0 || pool->extension_count < 0 ||
