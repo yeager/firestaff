@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -14,20 +15,41 @@ def main() -> int:
         raise SystemExit("usage: test_nexus_v1_vdp2_nbg0_live_rows_real.py EXECUTABLE OUTPUT")
     root_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR")
     baseline_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY")
-    if not root_value or not baseline_value:
-        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR and FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY")
+    trace_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE")
+    if not root_value or not baseline_value or not trace_value:
+        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR, FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY, and FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE")
         return 77
     from PIL import Image
 
     root = Path(root_value)
     screenshot = root / "screenshots" / "DUNGEON MASTER NEXUS [T-9111G]-20261029T151400.554.png"
     old_replay = Path(baseline_value)
+    row_trace = Path(trace_value)
     output = Path(sys.argv[2])
     expected_screenshot_hash = "f9f2175b5f75616cbd7c942a7d65f5fcdb20012186b5069aebe77be4e4a85c94"
     if hashlib.sha256(screenshot.read_bytes()).hexdigest() != expected_screenshot_hash:
         raise SystemExit("authentic intro screenshot SHA-256 mismatch")
     if hashlib.sha256(old_replay.read_bytes()).hexdigest() != "ab4e62971ef82515764de5433b7ce933a27693f53f714115b2ff216cae847ad7":
         raise SystemExit("retained Firestaff baseline replay SHA-256 mismatch")
+    trace_bytes = row_trace.read_bytes()
+    if hashlib.sha256(trace_bytes).hexdigest() != "1f1ddff055c5189e8b42db9b15936135601f43bc7320873c14e0269a323c40ff":
+        raise SystemExit("retained Ymir live-row trace SHA-256 mismatch")
+    trace = trace_bytes.decode("utf-8")
+    if len(re.findall(r"^TARGET frame_counter=7486$", trace, re.MULTILINE)) != 1:
+        raise SystemExit("retained Ymir trace does not identify exactly frame 7486")
+    rows = re.findall(r"^ROW y=(\d+) (.*)$", trace, re.MULTILINE)
+    expected_rows = list(range(4, 117))
+    if [int(y) for y, _ in rows] != expected_rows:
+        raise SystemExit("retained Ymir trace must contain each output row 4 through 116 exactly once")
+    expected_fields = {
+        "bgon_n0": "1", "n0_transparent": "1", "n0_scroll_h": "0x1f79",
+        "n0_scroll_v": "0xbcd", "n0_inc_h": "0xcd", "n0_inc_v": "0xcd",
+        "n0_prio": "4", "n0_cc": "1", "n0_ratio": "15", "n0_sccm": "0",
+    }
+    for y, fields_text in rows:
+        fields = dict(re.findall(r"([a-z0-9_]+)=([^ ]+)", fields_text))
+        if any(fields.get(key) != value for key, value in expected_fields.items()):
+            raise SystemExit(f"retained Ymir row {y} does not match the verified NBG0 tuple")
     env = os.environ.copy()
     env["FIRESTAFF_NEXUS_NBG0_LIVE_REPLAY_RGB"] = str(output)
     process = subprocess.run([sys.argv[1]], env=env, check=False)

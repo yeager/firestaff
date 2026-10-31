@@ -14,6 +14,12 @@ The GDB row trace and prior replay are retained at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_live_row_state_20261029`
 and `../nexus_nbg0_ymir_replay_20261029`. These captures use the hash-verified
 Japanese retail disc and matching Saturn IPL; no synthetic game data is used.
+The row trace is `gdb-row-state.log` (SHA-256
+`1f1ddff055c5189e8b42db9b15936135601f43bc7320873c14e0269a323c40ff`). The
+real-data test verifies this hash, the single frame-counter marker `7486`, the
+complete row sequence 4–116, and each row's NBG0 transparency, scroll,
+increment, priority, and color-calculation fields before supplying row states
+to the C compositor.
 
 The trace observes one consistent live row tuple over output rows 4–116:
 NBG0 H/V scroll `0x1f79/0x0bcd` and H/V increments `0xcd/0xcd` in 11.8/8.8
@@ -38,16 +44,19 @@ Run the authentic regression:
 ```sh
 capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_cram_capture_20261029
 baseline=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_ymir_replay_20261029/firestaff-replay.rgb
+row_trace=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_live_row_state_20261029/gdb-row-state.log
 FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR="$capture" \
 FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY="$baseline" \
+FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE="$row_trace" \
   ctest --test-dir /path/to/firestaff-build --output-on-failure \
   -R '^nexus_v1_vdp2_nbg0_live_rows_real$'
 ```
 
 ## Limits
 
-The row-state values are caller-verified against a retained emulator trace;
-the C API does not authenticate that trace. This capture's SH-2 read trace
+The regression harness authenticates the retained row trace before passing
+row-state values to the C API; the C API itself does not authenticate that
+trace. This capture's SH-2 read trace
 overflowed and has no frame IDs, and its VDP2 write trace was not enabled.
 Therefore source-to-VRAM transfer timing and complete asset ownership remain
 unproven. This scanline compositor is capture-only and does not grant
