@@ -3,7 +3,10 @@
 **Status reviewed 2026-10-31.** These controls describe Firestaff's native
 desktop mapping. SDL regression coverage verifies command dispatch and
 bounded US pickup/reselect/drop; it does not establish full retail input
-semantics. See the [capture-readiness summary](THERON_CAPTURE_READINESS.md).
+semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
+the authentic US and Japanese Rev. 1 input suites. This still does not verify
+world-space clicks or visual parity. See the
+[capture-readiness summary](THERON_CAPTURE_READINESS.md).
 
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts

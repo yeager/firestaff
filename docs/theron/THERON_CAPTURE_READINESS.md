@@ -15,6 +15,11 @@ rejects the authentic empty BRAM, while positive JP progress restoration remains
 untested. Current claims are bounded routes, not complete gameplay or visual
 parity.
 
+On 2026-10-31, a clean macOS Debug/SDL3 build passed three repetitions each of
+the authentic USA and Japanese Rev. 1 native SDL input suites. These runs
+verify event dispatch and bounded state changes; they do not close original
+mouse-hitbox, rendered-frame or complete retail-input parity.
+
 ## 2026-10-31 — matched JP state-only comparison records candidate transfers
 
 Three PCE Fast replays from the authentic Akutuba F5 state recorded the same

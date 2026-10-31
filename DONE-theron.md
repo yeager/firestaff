@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — repeat native macOS SDL input routes for both regions
+
+Configured a clean macOS Debug build with SDL3 and built the native Firestaff
+target. Three loops each of `test_theron_v1_sdl_input_events.sh` and
+`test_theron_v1_jp_sdl_input_events.sh` passed against the authenticated local
+USA Track 02 (`f23601102138f87c33025877767ebf76`) and Japanese Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`). The suites exercise keyboard, Button II,
+mouse-panel movement and actions, touch gestures, champion selection and wait;
+the USA route also checks source-backed pickup, reselection and drop. This
+verifies native SDL dispatch and bounded game-state changes on macOS. It does
+not establish original mouse hitboxes, rendered viewport parity, or complete
+retail input semantics. No runtime code, game data or emulator process changed.
+
 ## 2026-10-31 — correct TII stack attribution and opcode documentation
 
 The reference movement-context instrumenter now locks stack reads to the
