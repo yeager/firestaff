@@ -5,6 +5,7 @@
 #include "theron_v1_world.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 unsigned short G2157_;
@@ -14,6 +15,14 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static int fail(const char* message) {
     fprintf(stderr, "FAIL: %s\n", message);
     return 1;
+}
+
+static int set_test_environment(const char *name, const char *value) {
+#if defined(_WIN32) || defined(_WIN64)
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    return value ? setenv(name, value, 1) == 0 : unsetenv(name) == 0;
+#endif
 }
 
 int main(int argc, char** argv) {
@@ -405,6 +414,86 @@ int main(int argc, char** argv) {
         }
     }
     M11_GameView_Shutdown(&view);
+    if (saved_bram_path[0]) {
+        Theron_V1PceBramBodyReceipt saved_body;
+        if (!theron_v1_pce_bram_decode_original_body_path(
+                saved_bram_path, &saved_body) ||
+            !saved_body.layout_verified || !saved_body.semantics_verified ||
+            !set_test_environment("FIRESTAFF_THERON_BRAM_PATH",
+                                  saved_bram_path)) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: written BRAM decodes and selects as the next authentic M11 Continue source\n");
+        } else {
+            spec.savePath = saved_bram_path;
+            M11_GameView_Init(&view);
+            if (!M11_GameView_Start(&view, &spec) ||
+                view.theronState.save_resume_claim !=
+                    THERON_V1_STARTUP_RESUME_SRM ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) !=
+                    M11_GAME_INPUT_REDRAW ||
+                !view.theronState.save_resume_continue_focus ||
+                M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                view.theronState.startup_phase !=
+                    THERON_STARTUP_PHASE_STAGE_SELECT ||
+                view.theronState.level_loaded) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: fresh native M11 Continue accepts the BRAM emitted by Save Game\n");
+            } else {
+                Theron_V1_World *roundtrip_world =
+                    (Theron_V1_World *)view.theronWorld;
+                int attributes[7];
+                int attributes_match = 0;
+                const Theron_V1_Champion *roundtrip_theron =
+                    roundtrip_world &&
+                            roundtrip_world->party.champion_count > 0
+                        ? &roundtrip_world->party.champions[0]
+                        : NULL;
+                if (roundtrip_theron) {
+                    attributes[0] = roundtrip_theron->luck;
+                    attributes[1] = roundtrip_theron->strength;
+                    attributes[2] = roundtrip_theron->dexterity;
+                    attributes[3] = roundtrip_theron->wisdom;
+                    attributes[4] = roundtrip_theron->vitality;
+                    attributes[5] = roundtrip_theron->anti_magic;
+                    attributes[6] = roundtrip_theron->anti_fire;
+                    attributes_match = 1;
+                    for (i = 0; i < 7; ++i) {
+                        if (attributes[i] !=
+                            saved_body.theron_max_attributes[i]) {
+                            attributes_match = 0;
+                        }
+                    }
+                }
+                if (!roundtrip_world || !roundtrip_theron ||
+                    roundtrip_world->campaign_completion_mask !=
+                        (saved_body.ram_267c_campaign_byte & 0x7fu) ||
+                    roundtrip_theron->max_health !=
+                        (int)saved_body.theron_max_health ||
+                    roundtrip_theron->max_stamina !=
+                        (int)saved_body.theron_max_stamina ||
+                    roundtrip_theron->max_mana !=
+                        (int)saved_body.theron_max_mana ||
+                    !attributes_match ||
+                    memcmp(roundtrip_theron->skill_temporary_experience,
+                           saved_body.theron_skill_temporary_experience,
+                           sizeof(saved_body.theron_skill_temporary_experience)) !=
+                        0 ||
+                    memcmp(roundtrip_theron->skill_experience,
+                           saved_body.theron_skill_experience,
+                           sizeof(saved_body.theron_skill_experience)) != 0) {
+                    ++failures;
+                    fprintf(stderr,
+                            "FAIL: native Continue restores only campaign and Theron fields present in the written BRAM\n");
+                }
+            }
+            M11_GameView_Shutdown(&view);
+        }
+    }
     if (failures) {
         fprintf(stderr, "Theron authenticated M11 Continue FAILED (%d checks)\n",
                 failures);

@@ -186,8 +186,10 @@ a dummy SDL display and produced no rendered-game frame.
    chapter transition, and completion consumers. Keep the campaign-completion
    bit distinct from quest-item collection. The native Save Game input now
    writes the classified original-format BRAM at the between-stage boundary,
-   and remains blocked in a loaded dungeon. Continue with all regional save
-   cases and reopen the changed save in the original runtime. The
+   remains blocked in a loaded dungeon, and a fresh native M11 Continue
+   restores the proven campaign and champion fields from that written file.
+   Continue with all regional save cases and reopen the changed save in the
+   original runtime. The
    [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
    records the currently authenticated structure and limits.
 3. **Complete source-bound presentation and event output.** Bind gameplay

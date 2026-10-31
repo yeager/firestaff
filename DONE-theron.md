@@ -13,7 +13,10 @@ and that the authenticated input BRAM hash remains unchanged. The wrapper
 isolates user data under a temporary home directory. Built on TRV2 and ran
 `theron_v1_m11_real_bram_continue` three times; all three loops passed against
 the authentic US Track 02 and Ak-Tu-Ba-complete BRAM. Reopening the newly
-written BRAM in the original runtime and regional save coverage remain open.
+written BRAM in a fresh native M11 launch now selects Continue and restores
+the campaign byte, seven attributes, and twenty temporary/persistent skill
+experience pairs from the classified output. Reopening the new BRAM in the
+original runtime and regional save coverage remain open.
 
 ## 2026-10-31 — continue authentic US BRAM into the next native dungeon
 
