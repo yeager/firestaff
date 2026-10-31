@@ -126,6 +126,26 @@ be reconstructed from `TITLE.CG`/MAPD alone. The receipt therefore proves
 source upload and palette residence, not the NBG0 bitmap source, NBG1 tilemap
 transform, layer placement, timing, or final title composition.
 
+### Ymir retail MAPD write replay (2026-10-31)
+
+A separate authentic Japanese retail run used Ymir's debug VDP2 memory-write
+trace. Replaying all 690,480 trace rows with Ymir's VRAM address mapping and
+big-endian write semantics reproduces the complete 512 KiB final VRAM dump
+byte for byte. The same replay exposes all five hash-pinned retail MAPD planes
+at VDP2 VRAM `0x5c000..0x5dbff`, in order: N at Ymir trace frame 891, E at 930,
+X at 959, U at 998, and S at 1036. Each transfer frame contains 3,584 writes
+into the MAPD region. The trace receipt reports zero dropped rows.
+
+Reproduce with `scripts/verify_nexus_ymir_retail_mapd_sequence.py`, using the
+Japanese retail `TITLE.BIN` with SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3` and the
+external capture bundle under
+`firestaff-evidence/nexus/nexus_mapd_ymir_relative_trace_20261031`. The verifier
+checks receipt bounds, ordered plane equality, and exact replay against Ymir's
+final VRAM dump. Its frame indices are local to this Ymir run. This proves
+producer-side MAPD bytes only; it does not establish Firestaff rendering,
+layer consumption, title pixel parity, or menu behavior.
+
 The same in-memory CUE audit rejects the other known startup bitmap as the
 NBG0 source: neither the 320×224 `LOGOBG.DG2` PP pixel payload nor its
 256-word BGR555 palette occurs in the captured VDP2 VRAM/CRAM. `LOGOBG.DG2`
