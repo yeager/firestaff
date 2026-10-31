@@ -58,8 +58,11 @@ source test also binds 126 of 137 informative VDP1 texture spans to
 hash-verified retail bytes, including 121 DGN Structure2 image matches; the
 remaining 11 spans are zero-filled and unowned. Repeated DGN images can occur
 across level files, so these matches do not establish a unique level owner or
-pixel-to-command attribution. This remains frame-specific emulator evidence
-and does not enable production rendering. See
+pixel-to-command attribution. The complete command-sequence join also verifies
+113 indexed palettes and eight direct-colour images, with at least one
+Structure3 face owner for 105 draws; selected-face, transform, and culling
+remain unresolved. This remains frame-specific emulator evidence and does not
+enable production rendering. See
 [`docs/nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).
 
 ## Japanese date/time setup VDP2 trace — 2026-10-24

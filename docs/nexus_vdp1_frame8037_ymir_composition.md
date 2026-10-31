@@ -22,12 +22,16 @@ retail command or source asset.
 The complete 8037 VDP1 command trace has 137 textured draw commands. Against
 the hash-verified Japanese retail data, 126 captured texture spans exactly
 match retail source bytes; 121 of those also match decoded DGN Structure2
-image records. The other 11 spans contain only zero bytes and are kept
-unowned. Some DGN byte-identical records occur in multiple levels, so these
-matches establish source candidates rather than unique level ownership. The
-independent `nexus_v1_vdp2_ymir_frame8037_real` check still proves the complete
-composed output against both Ymir VDP2 pass buffers, while this source check
-keeps semantic admission blocked.
+image records. The complete sequence join finds 132 type-2 draws: all 121
+informative spans bind to DGN source images, with 113 indexed palette joins
+and eight direct-colour joins. Eleven more spans are all-zero and remain
+unowned. A canonical Structure3 face owner exists for 105 draws, but this does
+not identify which face was selected or prove transform and culling. Some DGN
+images are byte-identical across levels, so those matches are source candidates
+rather than unique level ownership. The independent
+`nexus_v1_vdp2_ymir_frame8037_real` check still proves the complete composed
+output against both Ymir VDP2 pass buffers, while source and face joins keep
+semantic admission blocked.
 
 ## Reproduce with authentic external data
 

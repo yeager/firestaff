@@ -90,8 +90,44 @@ def main() -> int:
         sys.stderr.write(result.stdout)
         return 1
 
-    print("PASS: frame 8037 has 126/137 informative retail source joins, including 121 DGN matches")
-    print("PASS: the remaining 11 texture spans are uninformative zero data; semantic admission remains blocked")
+    sequence_command = [
+        sys.executable,
+        str(ROOT / "scripts" / "analyze_nexus_vdp1_dgn_command_sequence_join.py"),
+        str(capture),
+        "--data-dir",
+        data_root,
+        "--frame",
+        "8037",
+        "--ymir-bundle",
+        "--require-complete",
+    ]
+    sequence = subprocess.run(
+        sequence_command, check=False, capture_output=True, text=True
+    )
+    if sequence.returncode != 0:
+        sys.stderr.write(sequence.stdout)
+        sys.stderr.write(sequence.stderr)
+        return sequence.returncode
+
+    required_sequence_receipts = (
+        "frame=8037 chain_records=178",
+        "textured_draws=132 source_matches=121 palette_matches=113 direct_color_matches=8 face_owner_matches=105",
+        "informative_textured_draws=121 transparent_zero_filled_draws=11",
+        "bounded_failures=0 unmatched_offsets=none",
+        "sequence_dgn_material_join=verified",
+        "semantic_admission=blocked",
+    )
+    missing = [receipt for receipt in required_sequence_receipts
+               if receipt not in sequence.stdout]
+    if missing:
+        print("FAIL: frame-8037 DGN material sequence did not match the authentic receipt")
+        print("missing=" + "|".join(missing))
+        sys.stderr.write(sequence.stdout)
+        return 1
+
+    print("PASS: frame 8037 matches 126/137 informative retail spans; all 121 indexed/direct DGN draws bind source data")
+    print("PASS: DGN palette/direct-color checks cover all 121 informative draws; 11 zero spans stay transparent and unowned")
+    print("PASS: 105 draws have a canonical Structure3 face owner; selected face, transform, culling and renderer admission remain blocked")
     return 0
 
 
