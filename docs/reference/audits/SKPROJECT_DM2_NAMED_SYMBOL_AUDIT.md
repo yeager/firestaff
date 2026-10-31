@@ -42,15 +42,17 @@ runtime.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,111 |
+| `IMPLEMENTED_PARITY` | 1,095 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 8 |
+| `PARTIAL` | 24 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
 | **Total** | **1,754** |
+
+The older allocator rows were rechecked against the current Firestaff call graph. The 16 `SKULLWIN/c_alloc.cpp` entries previously marked `IMPLEMENTED_PARITY` now remain `PARTIAL`: their mapped `dm2_v1_skproject_*_classify` routines produce classifier receipts or mutate a model, but no live Firestaff allocator owner calls them. This does not prove the source free-pool allocation, pointer movement, setup/teardown, and runtime behavior. The analogous `SKWINSPX` and `SKWINDOS` definitions remain individually unreviewed in the supplemental inventory.
 
 The tail of the inventory includes `DRAW_ALCOVE_ITEMS` and
 `DRAW_WALL_ORNATE`, both still partial, plus the partial
@@ -140,9 +142,10 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,106 open rows: 3,097 unreviewed `SKWINSPX` and
-`SKWINDOS` definitions plus 9 unresolved rows from the older disposition
-ledger. Exact-name overlap is shown only as a candidate for source comparison.
+At this revision it reports 3,122 open rows: 3,097 unreviewed `SKWINSPX` and
+`SKWINDOS` definitions, 16 partial allocator rows, and 9 other unresolved rows
+from the older disposition ledger. Exact-name overlap is shown only as a
+candidate for source comparison.
 
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
