@@ -38,8 +38,9 @@ FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT=/tmp/nexus-nbg1-frame891-1280.rgba \
 The test verifies each input hash, the layer receipt, and the decoded plane bytes
 (index, red, green, and blue for each pixel). The decoded plane SHA-256 is
 `a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea`.
-This hash assertion was added after the earlier TRV2 run; rerun the opt-in command
-above against the external bundle to validate the latest decoder changes.
+The opt-in command above was rerun against PR head `c1d2664`; it passed with this
+hash. The raw inputs and decoded output are retained outside the repository in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c1d2664-validation/`.
 The same-pass Ymir RGBX render is retained externally as
 `rendered-frames/vdp1-891-vdp2-1280-320x224.rgbx8888le` with SHA-256
 `24cc53361cf3b6e0456bc9b48fddc362d6865ac491376fb203181f3108469f17`.

@@ -184,9 +184,10 @@ requirements above.
   visible 8bpp capture plane and matches 9,258 of 11,232 nontransparent CRAM
   samples to the Ymir screenshot within eight RGB levels. The decoder and
   priority-stack path now apply the NBG2 PND palette number and active RGB555
-  CRAM wrap. The authentic frame-239/full-stack comparison must be rerun
-  against this revision. Complete color calculation, retail source ownership
-  and production rendering remain unresolved.
+  CRAM wrap. The authentic frame-239 and frame-397 full-stack comparisons were rerun against
+  PR head `c1d2664` and each matched all 286,720 doubled screenshot RGB samples
+  exactly. Complete color calculation, arbitrary-state coverage, retail source
+  ownership and production rendering remain unresolved.
 - **VDP2 NBG0 bitmap:** frame 239's existing bounded 8bpp decoder matches
   3,954 of 3,968 nontransparent CRAM samples within eight levels. The exact
   frame-239 full-stack capture match verifies NBG0/NBG1/NBG2 ordering for this
