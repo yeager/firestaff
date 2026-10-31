@@ -2670,6 +2670,17 @@ static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
     dm2_runtime_refresh_gdat_scene_control(rt);
 }
 
+static int dm2_runtime_see_thru_walls_active(
+    const DM2_V1_RuntimeState *rt)
+{
+    if (!rt) return 0;
+    if (rt->timer_queue.count > DM2_V1_SOURCE_TIMER_MAX) return 1;
+    for (size_t i = 0u; i < rt->timer_queue.count; ++i) {
+        if (rt->timer_queue.timers[i].type == 0x49u) return 1;
+    }
+    return 0;
+}
+
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                                                  DM2_V1_ViewportState *viewport,
                                                  int party_dir,
@@ -2705,12 +2716,14 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     };
     DM2_V1_DungeonData *dd;
     int dir;
+    int see_thru_walls;
 
     if (!rt || !viewport || rt->outdoor || !rt->boot ||
         !rt->boot->dungeon_data) {
         return;
     }
     dir = party_dir & 3;
+    see_thru_walls = dm2_runtime_see_thru_walls_active(rt);
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     viewport->skproject_wall_cell_mask = 0u;
     for (int cell = 0; cell < DM2_V1_SKPROJECT_VIEW_CELL_COUNT; ++cell) {
@@ -2775,7 +2788,9 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                  * through _0cee_1a46; DRAW_WALL_ORNATE selects slot 4/5/6
                  * from the lateral offset. Query only the visible relative
                  * side here, preserving DB2/DB3 list order and source tick. */
-                if (map_x >= 0 &&
+                if (dm2_v1_viewport_wall_ornament_visible(
+                        visible_cells[i].source_cell, see_thru_walls) &&
+                    map_x >= 0 &&
                     map_x < dd->level_widths[rt->dungeon_level] &&
                     map_y >= 0 && map_y < dd->level_heights[rt->dungeon_level]) {
                     int first_thing = dm2_v1_dungeon_get_first_thing(

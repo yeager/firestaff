@@ -2269,6 +2269,14 @@ void dm2_v1_viewport_set_gdat_wall_ornament_material_plan(
     s->dirty = 1;
 }
 
+int dm2_v1_viewport_wall_ornament_visible(int source_cell,
+                                           int see_thru_walls)
+{
+    /* SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE: cellPos 3 is the D1 front wall;
+     * DM2_EXTENDED_MODE hides its ornament while ttySeeThruWalls is active. */
+    return !(see_thru_walls != 0 && source_cell == 3);
+}
+
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan)

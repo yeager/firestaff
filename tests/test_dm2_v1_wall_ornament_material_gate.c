@@ -190,6 +190,14 @@ int main(void)
         }
         puts("PASS: skproject wall-ornament rectangle selection");
     }
+    if (dm2_v1_viewport_wall_ornament_visible(3, 1) != 0 ||
+        dm2_v1_viewport_wall_ornament_visible(3, 0) != 1 ||
+        dm2_v1_viewport_wall_ornament_visible(2, 1) != 1) {
+        fputs("FAIL: active SeeThruWalls should hide only source cell 3 ornament\n",
+              stderr);
+        return 1;
+    }
+    puts("PASS: active SeeThruWalls suppresses only the source D1-front ornament");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);

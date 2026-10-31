@@ -2305,6 +2305,10 @@ void dm2_v1_viewport_set_gdat_wall_material_plan(
 void dm2_v1_viewport_set_gdat_wall_ornament_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_WallOrnamentRenderPlan *plan);
+/* skproject DRAW_WALL_ORNATE suppresses source viewport cell 3 while the
+ * extended SeeThruWalls effect is active. */
+int dm2_v1_viewport_wall_ornament_visible(int source_cell,
+                                           int see_thru_walls);
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan);
