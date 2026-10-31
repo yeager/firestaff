@@ -53,7 +53,9 @@ int dm1_v1_f0036_icon_atlas_admission_pc34(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!request || !request->raw_atlas_pixels || request->raw_atlas_byte_count == 0u ||
         request->graphics_dat_fingerprint == 0u || !request->first_icon_indices ||
-        request->icon_index < 0 || !request->decoded_from_original_graphics_dat ||
+        request->icon_index < 0 || request->icon_index >=
+            DM1_V1_F0036_ICON_SHEET_COUNT_PC34 * 32 ||
+        !request->decoded_from_original_graphics_dat ||
         !request->raw_record_verified || !request->no_synthetic_surface ||
         !dm1_v1_has_nonzero_bytes_pc34(request->raw_atlas_pixels,
                                         request->raw_atlas_byte_count)) return 0;
