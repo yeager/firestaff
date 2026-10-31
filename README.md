@@ -138,6 +138,12 @@ The latest cold Japanese System Card reference trace separately binds the
 not change Firestaff's native runtime or prove original title-menu input.
 See the [source-locked trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
+current summary of native runtime and original-reference evidence, including
+the authentic US mouse-held save-state replay. That replay has no runtime CD
+provenance and does not establish a semantic mouse action, movement, or
+renderer behavior.
+
 README screenshots are Firestaff-rendered only; original-emulator captures
 are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and

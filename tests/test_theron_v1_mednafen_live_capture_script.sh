@@ -771,7 +771,8 @@ if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
    ! grep -Fq 'md5_file "$destination_path"' "$bram_helper" ||
    ! grep -Fq 'theron_prepare_authentic_bram' "$script" ||
    ! grep -Fq 'firestaff-theron-authentic.sav' "$bram_helper" ||
-   ! grep -Fq '"${capture_sav_args[@]}"' "$script" ||
+   ! grep -Fq 'if [[ -n "$capture_authentic_bram_name" ]]; then' "$script" ||
+   ! grep -Fq 'launch+=(-filesys.fname_sav "$capture_authentic_bram_name")' "$script" ||
    ! grep -Fq 'mkdir -p "$home_dir/mcs"' "$script" ||
    ! grep -Fq -- '-filesys.path_state "$home_dir/mcs"' "$script"; then
     printf '%s\n' 'FAIL: isolated captures must bind backup RAM and state files to the private capture home' >&2
@@ -1615,6 +1616,8 @@ PY
 
 if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
    ! grep -Fq 'scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   ! grep -Fq 'if [[ "$pce_fast_tia_trace" == 1 ]]; then' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
    ! grep -Fq 'TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
