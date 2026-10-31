@@ -1071,3 +1071,34 @@ PC context. Keep the independent `$4000` observation separate from the BIOS
 branch and from game-owned consumers/native parity claims.
 
 The raw media and traces are not included in Git.
+
+## v22 run-only `$E14C` branch detail
+
+Re-reading the hash-locked v22 cold RUN-only capture resolves the first
+`$E14C` decision without extending its trace claims. At event 9136, `$E162`
+read `$2259=$00`; `$E166 BNE $E176` was not taken. `$E168` compared `$A=$01`
+with `$226B=$19`, and `$E16B BCS $E174` was not taken, so the code incremented
+the local counter and repeated the `$E14F` callback path. The callback-state
+sidecar records `$EA50` writing `$04` to `$2259` at event 9626. The next
+`$E162` read observed `$04` at event 9762. The instruction-start trace records
+`$E166 BNE $E176` at event 9764 and `$E176` as the next instruction at event
+9765. The run plan contained one RUN event and no SELECT event. Thus
+`$2259=$04` is not, by itself, evidence that a
+SELECT event occurred; this trace does not establish what higher-level action
+the byte represents or why `$EA50` wrote it.
+
+The capture still records no `$E174`, `$E11D`, `$E209`, or `$E130` instruction
+start before the 8,192-row bootstrap cap. The BIOS proceeds through the
+`$E176` arm and later remains in the `$E95E/$E966` status path. The independent
+`$4000` window, System Card controller poll, and scripted RUN receipt do not
+prove the clear-carry launch, a game-owned consumer, or gameplay parity.
+
+This is a reanalysis of the existing v22 capture, not a new run. Raw files
+remain on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-callback-v22-run-only-20261030/`
+and the reviewed copy is on the external disk at
+`/Volumes/Extern-disk/Firestaff-theron-captures/theron-jp-clear-carry-cold-20261031/`.
+The callback-state SHA-256 is
+`e4250b259ff0254b4c842efeaf9704a21c24e5c7deed82e51b8c3895f53498d6`; the
+bootstrap-follow SHA-256 remains
+`e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`.
