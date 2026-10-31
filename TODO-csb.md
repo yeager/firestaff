@@ -1539,8 +1539,9 @@ development-only conversion evidence below.
   The final main-draw message-area pass now preserves the live F0168-decoded
   C02/DSA receipt and cannot overwrite it with M11 telemetry; extend the same
   source ownership to the remaining inscription consumers.
-  Its persistence is also source-timed: supported Atari/Amiga/FM Towns rows
-  remain visible for 70 game ticks and disappear at the F0046 deadline.
+  Its persistence is also source-timed: Atari ST and FM Towns rows remain
+  visible for 70 game ticks, while Amiga A31/A35 rows last 200 ticks, as
+  defined by their respective F0046 implementations.
 - Keep V2.2 presentation closed until a real source-owned material/pixel
   binding exists.
 ## Deferred original-data corpus

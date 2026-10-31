@@ -7,6 +7,7 @@
 - `CSB Atari ST items`: use the authenticated source item aspects and C559 projectile selectors for the corrected native rendering path.
 - `CSB Atari ST champion HUD`: change native gameplay to render champion names, hand slots, and live status bars.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
+- `CSB Amiga messages`: keep C015 room messages visible for the source-defined 200 game ticks; Atari ST and FM Towns messages retain their 70-tick lifetime.
 - `DM2 light timing`: match skproject's half-step decrement for darkness and bright light while preserving the torch quarter-step behavior and corresponding global-light deltas.
 - `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.
 - `Nexus Saturn CUE/BIN`: admit an authentic CUE-only Japanese disc through direct CLI and menu selection while keeping its exact CUE as runtime media.
