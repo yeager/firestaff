@@ -12952,6 +12952,12 @@ static void dm2_runtime_bind_wall_ornament_plan(
         if (source_x0 < 0 || source_y0 < 0 || source_x1 > receipt.decoded_width ||
             source_y1 > receipt.decoded_height || source_x1 <= source_x0 ||
             source_y1 <= source_y0) return;
+        if (mirror_flip & 1) {
+            int mirrored_source_x0 = (int)receipt.decoded_width - source_x1;
+            int mirrored_source_x1 = (int)receipt.decoded_width - source_x0;
+            source_x0 = mirrored_source_x0;
+            source_x1 = mirrored_source_x1;
+        }
         entry = &plan->ornaments[plan->ornament_count++];
         entry->view_square = square;
         entry->gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
@@ -13032,6 +13038,14 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     overlay_y1 > overlay_receipt.decoded_height ||
                     overlay_x1 <= overlay_x0 || overlay_y1 <= overlay_y0) {
                     return;
+                }
+                if (mirror_flip & 1) {
+                    int mirrored_overlay_x0 =
+                        (int)overlay_receipt.decoded_width - overlay_x1;
+                    int mirrored_overlay_x1 =
+                        (int)overlay_receipt.decoded_width - overlay_x0;
+                    overlay_x0 = mirrored_overlay_x0;
+                    overlay_x1 = mirrored_overlay_x1;
                 }
                 entry->overlay_valid = 1u;
                 entry->overlay_image_field =
