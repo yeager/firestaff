@@ -5816,9 +5816,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
                  new_state == DM2_DOOR_STATE_OPEN) ||
                 (receipt.direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                  new_state == DM2_DOOR_STATE_CLOSED);
-            DM2_V1_GameLoadSoundOwner step_sound_backup;
             int cls_alt = -1;
-            memset(&step_sound_backup, 0, sizeof(step_sound_backup));
             memset(&altar_receipt, 0, sizeof(altar_receipt));
             if (dm2_v1_skproject_is_rebirth_altar(
                     door_record[2],
@@ -5830,18 +5828,18 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
             /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while
              * moving and 0x8f on the final step with the source altar value. */
             if (dm2_v1_game_load_runtime_candidate_sound_clone(
-                    &step_sound_backup, &candidate->sound_owner)) {
+                    &sound_backup, &candidate->sound_owner)) {
+                collision_sound_cloned = 1;
                 if (!dm2_game_load_candidate_queue_door_collision_noise(
                         candidate, map, x, y, DM2_GDAT_CATEGORY_DOORS,
                         reached_target ? 0x8f : 0x8e, 0xfe, cls_alt,
                         0x5f, 0x80, game_tick)) {
                     dm2_v1_game_load_runtime_candidate_sound_free(
                         &candidate->sound_owner);
-                    candidate->sound_owner = step_sound_backup;
-                    memset(&step_sound_backup, 0, sizeof(step_sound_backup));
+                    candidate->sound_owner = sound_backup;
+                    memset(&sound_backup, 0, sizeof(sound_backup));
+                    collision_sound_cloned = 0;
                 }
-                dm2_v1_game_load_runtime_candidate_sound_free(
-                    &step_sound_backup);
             }
         }
         if ((receipt.direction == 0u && new_state != DM2_DOOR_STATE_OPEN) ||
@@ -5877,6 +5875,11 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
         candidate->source_transaction_hash ^ candidate->candidate_hash,
         (uint32_t)timer_entry.l_00 ^ ((uint32_t)old_state << 8) ^
         ((uint32_t)receipt.state_after << 16) ^ (uint32_t)(uint16_t)link);
+    if (collision_sound_cloned) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+        memset(&sound_backup, 0, sizeof(sound_backup));
+        collision_sound_cloned = 0;
+    }
     free(index_backup);
     free(timer_backup);
     if (out_receipt) *out_receipt = receipt;

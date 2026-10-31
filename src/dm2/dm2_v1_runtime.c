@@ -9300,8 +9300,7 @@ door_creature_rollback:
                      (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                       new_state == DM2_DOOR_STATE_CLOSED);
     /* SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR queues 0x8e while moving
-     * and 0x8f on the final step. Map-header altar metadata is not yet
-     * present in this runtime owner, so preserve the source no-altar value. */
+     * and 0x8f on the final step with SKW_IS_REBIRTH_ALTAR as cls_alt. */
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
         rt->sound_queue.ssound_entries_capacity > 0u) {
         DM2_V1_SkprojectRebirthAltarReceipt altar_receipt;
