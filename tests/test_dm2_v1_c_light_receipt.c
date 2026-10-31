@@ -22,7 +22,7 @@ static void test_class2_db4plus_chain_receipt(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader loader;
     DM2_V1_CLightStoneRoomReceipt room;
-    DM2_V1_GdatEntry animation_entry;
+    DM2_V1_GdatEntry animation_entries[2];
     DM2_V1_QueryOrnateAnimFrameReceipt expected_animation;
     uint8_t animation_data[1] = {0u};
     uint8_t raw[80] = {0};
@@ -98,14 +98,17 @@ static void test_class2_db4plus_chain_receipt(void)
               room.ceiling_ornament_word == 0x0012u &&
               room.ceiling_animation_frame == 0u);
 
-    animation_entry = (DM2_V1_GdatEntry){
+    animation_entries[0] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_FLOOR_GFX, 0x52u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
+    animation_entries[1] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 0xb2u,
         DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
     loader.data = animation_data;
     loader.data_size = sizeof(animation_data);
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader.entries = &animation_entry;
-    loader.entry_count = 1u;
+    loader.entries = animation_entries;
+    loader.entry_count = 2u;
     raw[54] = 0x92u; raw[55] = 2u; /* C02 ext usage 2, ornament 0x52. */
     assert(dm2_v1_query_ornate_anim_frame_receipt(
         &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0x52u, 7u, 0u,
@@ -120,10 +123,47 @@ static void test_class2_db4plus_chain_receipt(void)
                   (uint16_t)((uint32_t)expected_animation.frame * 10u << 8)) &&
               room.ornament_source_hash == expected_animation.receipt_hash);
 
-    raw[55] = 3u; /* ext usage 3 has no bounded source model here. */
-    CHECK("class-2 DB2 unknown ext usage remains closed",
-          !dm2_v1_dungeon_c_light_stone_room_receipt(
-              &dungeon, &loader, 0, 0, 0, 7u, &room));
+    raw[55] = 0x0fu; /* ext usage 15 selects source frame one. */
+    CHECK("class-2 DB2 ext-15 selects the source static frame one",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0xf2u &&
+              room.ceiling_animation_frame == 1u &&
+              room.ceiling_ornament_word == 0x0af2u);
+
+    raw[55] = 0x11u; /* ext usage 17 selects tile bit 0x08 as the frame. */
+    CHECK("class-2 DB2 ext-17 follows the source tile-state frame bit",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0x32u &&
+              room.ceiling_animation_frame == 1u &&
+              room.ceiling_ornament_word == 0x0a32u);
+
+    raw[54] = 0x92u; raw[55] = 5u; /* ext usage 5, low flag clear. */
+    CHECK("class-2 DB2 ext-5 static branch keeps frame zero",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0xb2u &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x00b2u);
+
+    raw[54] = 0x93u; /* Same ext usage, low flag admits animation. */
+    assert(dm2_v1_query_ornate_anim_frame_receipt(
+        &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 0xb2u, 7u, 0u,
+        &expected_animation));
+    CHECK("class-2 DB2 ext-5 flag selects the animated source frame",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+
+    raw[55] = 3u; /* Source no-op ext usage leaves the summary ornament empty. */
+    CHECK("class-2 DB2 no-op ext usage preserves the root without ornament",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0xffu &&
+              room.ceiling_ornament_word == 0x00ffu);
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)

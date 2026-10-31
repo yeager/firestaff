@@ -6762,11 +6762,11 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
         unsigned length = 0u;
 
         /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
-         * records do not add ornament state. DB2 ext-usage zero sets a
-         * static ceiling ornament and ext-usage two queries its animated
-         * frame; other DB2 state selectors and DB3 actuator branches remain
-         * closed. The source skips all DB0-DB3 links, then preserves the
-         * first DB4+ root for c_light's creature and DBE/DBF scans. */
+         * records do not add ornament state. DB2 C02 records select the
+         * source's static, state-selected, or tick-animated ceiling frame.
+         * DB3 actuator branches remain closed. The source skips all DB0-DB3
+         * links, then preserves the first DB4+ root for c_light's creature
+         * and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
             (((summary_root >> 10) & 0x0fu) <= 2u)) {
             uint16_t link = summary_root;
@@ -6790,7 +6790,22 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                         uint8_t ornament = (uint8_t)(word2 >> 3);
                         uint16_t frame = 0u;
                         uint32_t animation_hash = 0u;
-                        if (ext_usage == 2u) {
+                        int set_ornament = 0;
+                        int animated = ext_usage == 2u ||
+                            (ext_usage == 5u && (word2 & 1u) != 0u);
+                        if (ext_usage == 0u || ext_usage == 10u ||
+                            ext_usage == 16u) {
+                            set_ornament = 1;
+                        } else if (ext_usage == 15u) {
+                            frame = 1u;
+                            set_ornament = 1;
+                        } else if (ext_usage == 17u) {
+                            frame = (raw & 0x08) != 0 ? 1u : 0u;
+                            set_ornament = 1;
+                        } else if (ext_usage == 5u && !animated) {
+                            set_ornament = 1;
+                        }
+                        if (animated) {
                             DM2_V1_QueryOrnateAnimFrameReceipt animation;
                             memset(&animation, 0, sizeof(animation));
                             if (!dm2_v1_query_ornate_anim_frame_receipt(
@@ -6799,16 +6814,17 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                                 animation.receipt_hash == 0u) return 0;
                             frame = animation.frame;
                             animation_hash = animation.receipt_hash;
-                        } else if (ext_usage != 0u) {
-                            return 0;
+                            set_ornament = 1;
                         }
-                        out->ceiling_ornament_index = ornament;
-                        out->ceiling_ornament_word =
-                            (uint16_t)(ornament |
-                                (uint16_t)((uint32_t)frame * 10u << 8));
-                        out->ceiling_animation_frame = frame;
-                        out->ornament_source_hash = animation_hash;
-                        class2_ornament_found = 1;
+                        if (set_ornament) {
+                            out->ceiling_ornament_index = ornament;
+                            out->ceiling_ornament_word =
+                                (uint16_t)(ornament |
+                                    (uint16_t)((uint32_t)frame * 10u << 8));
+                            out->ceiling_animation_frame = frame;
+                            out->ornament_source_hash = animation_hash;
+                            class2_ornament_found = 1;
+                        }
                     }
                 }
                 {

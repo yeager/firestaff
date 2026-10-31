@@ -1742,9 +1742,9 @@ typedef struct { int valid; uint8_t w0,w2,w6[4]; uint16_t xvalue; } DM2_V1_Stone
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out);
 
 /* Bounded c_light SUMMARIZE_STONE_ROOM branches for class-2 no-record,
- * DB0/DB1 prefixes, DB2 C02 ext-usage-0 static and ext-usage-2 animated
- * ornaments, and class-5 DB1-first roots. Other DB2 state and DB3 actuator
- * branches remain outside this receipt. */
+ * DB0/DB1 prefixes, DB2 C02 static/tick-selected ornaments, and class-5
+ * DB1-first roots. DB3 actuator-dependent branches remain outside this
+ * receipt. */
 typedef struct {
     int valid;
     int level;
