@@ -3672,3 +3672,12 @@ and validates these checks. The authentic A20E disk has a zero-filled sector
 tampered records; the real A20E graphics-media test and nested-archive CLI boot
 regression pass. This covers the identified Amiga startup lane, not other
 platforms' source-specific startup checks.
+
+# ReDMCSB F0039 — slot-box icon index
+
+The source-symbol inventory now maps `OBJECT.C:515-526`
+`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff adapter over the DM1
+PC34 `G0030` slot-box table. The focused regression checks all 46 entries,
+adapter delegation, and invalid-index handling. This establishes only the
+bounded PC34 function mapping; Atari ST, Amiga, FM Towns, and other edition
+runtime integration and parity remain open.
