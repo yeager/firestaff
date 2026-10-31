@@ -228,20 +228,28 @@ static int dm2_wall_special_anchor_offset(int node_type, int width, int height,
     }
 }
 
-int dm2_v1_wall_ornament_query_blit_rect(
+int dm2_v1_wall_ornament_query_blit_rect_with_offset(
     const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
     int big_endian, int alignment_override, int image_width, int image_height,
+    int picture_offset_x, int picture_offset_y,
     DM2_V1_WallOrnamentBlitRect *out)
 {
     DM2_WallRect main_rect, clip = { -10000, -10000, 20000, 20000 };
     int alignment, base_x, base_y, deferred_alignment = 0;
+    int offset_anchor;
     int output_width = image_width, output_height = image_height;
     uint16_t rectno = rect_number;
     int image_x, image_y, source_x, source_y, clipped_width, clipped_height;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!out || !raw_rects || image_width <= 0 || image_height <= 0 ||
+        picture_offset_x < INT16_MIN || picture_offset_x > INT16_MAX ||
+        picture_offset_y < INT16_MIN || picture_offset_y > INT16_MAX ||
         rectno == 0xffffu) return 0;
+    offset_anchor = (rectno & 0x8000u) != 0 ||
+        picture_offset_x != 0 || picture_offset_y != 0;
+    if (picture_offset_x != 0 || picture_offset_y != 0)
+        rectno |= 0x8000u;
     if (rectno & 0x8000u) rectno &= 0x7fffu;
     if (!dm2_wall_rect_query(raw_rects, raw_length, rectno, big_endian, &main_rect))
         return 0;
@@ -255,9 +263,9 @@ int dm2_v1_wall_ornament_query_blit_rect(
         base_x = 0;
         base_y = 0;
     }
-    if (rect_number & 0x8000u) {
-        base_x += image_width;
-        base_y += image_height;
+    if (offset_anchor) {
+        base_x += picture_offset_x;
+        base_y += picture_offset_y;
     }
 
     for (unsigned step = 0u; main_rect.y != 0; ++step) {
@@ -370,6 +378,16 @@ int dm2_v1_wall_ornament_query_blit_rect(
     return 1;
 }
 
+int dm2_v1_wall_ornament_query_blit_rect(
+    const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
+    int big_endian, int alignment_override, int image_width, int image_height,
+    DM2_V1_WallOrnamentBlitRect *out)
+{
+    return dm2_v1_wall_ornament_query_blit_rect_with_offset(
+        raw_rects, raw_length, rect_number, big_endian, alignment_override,
+        image_width, image_height, 0, 0, out);
+}
+
 int dm2_v1_wall_ornament_query_loaded_blit_rect(
     const DM2_V1_AssetLoader *loader, uint16_t rect_number,
     int alignment_override, int image_width, int image_height,
@@ -385,6 +403,25 @@ int dm2_v1_wall_ornament_query_loaded_blit_rect(
     return dm2_v1_wall_ornament_query_blit_rect(
         raw_rects, raw_length, rect_number, loader->big_endian,
         alignment_override, image_width, image_height, out);
+}
+
+int dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
+    const DM2_V1_AssetLoader *loader, uint16_t rect_number,
+    int alignment_override, int image_width, int image_height,
+    int picture_offset_x, int picture_offset_y,
+    DM2_V1_WallOrnamentBlitRect *out)
+{
+    const uint8_t *raw_rects;
+    size_t raw_length = 0u;
+    if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
+    raw_rects = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_length);
+    if (!raw_rects || !raw_length) return 0;
+    return dm2_v1_wall_ornament_query_blit_rect_with_offset(
+        raw_rects, raw_length, rect_number, loader->big_endian,
+        alignment_override, image_width, image_height,
+        picture_offset_x, picture_offset_y, out);
 }
 
 static uint32_t dm2_wall_ornament_hash_step(uint32_t hash, uint32_t value)

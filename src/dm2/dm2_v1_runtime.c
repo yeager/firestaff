@@ -12836,11 +12836,13 @@ static void dm2_runtime_bind_wall_ornament_plan(
     for (int square = 0; square < DM2_SQ_COUNT; ++square) {
         const DM2_ViewSquare *surface = &viewport->squares[square];
         DM2_V1_WallOrnamentReceipt receipt;
+        DM2_V1_QueryGdatSummaryImageReceipt summary_image;
         DM2_V1_WallOrnamentBlitRect blit;
         DM2_V1_WallOrnamentRender *entry;
         int distance, lateral, stretch_x, stretch_y, mirror_flip = 0;
         int image_field;
         int scaled_width, scaled_height;
+        int picture_offset_x, picture_offset_y;
         int source_x0, source_y0, source_x1, source_y1;
         if (surface->square_type != DM2_SQUARE_WALL ||
             surface->wall_ornate_gfx_index == 0u) continue;
@@ -12885,7 +12887,11 @@ static void dm2_runtime_bind_wall_ornament_plan(
         if (image_field < 0 || image_field > UINT8_MAX ||
             !dm2_v1_wall_ornament_material_receipt(
                 loader, surface->wall_ornate_gfx_index,
-                (uint8_t)image_field, &receipt)) return;
+                (uint8_t)image_field, &receipt) ||
+            !dm2_v1_query_gdat_summary_image_receipt(
+                loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                surface->wall_ornate_gfx_index, image_field,
+                &summary_image)) return;
         if (lateral == 0 && receipt.do_not_flip == 0u) {
             int graphics_flip = (viewport->party_x + viewport->party_y +
                 viewport->party_dir + viewport->gdat_scene_map_offset_x +
@@ -12902,11 +12908,20 @@ static void dm2_runtime_bind_wall_ornament_plan(
                         (stretch_x >> 1)) >> 6;
         scaled_height = ((int)receipt.decoded_height * stretch_y +
                          (stretch_y >> 1)) >> 6;
+        /* QUERY_GDAT_SUMMARY_IMAGE supplies the merged 0xfe/field offset;
+         * QUERY_PICST_IT scales it and mirrors x before DRAW_PICST forwards
+         * w28/w30 to QUERY_BLIT_RECT. */
+        picture_offset_x = dm2_v1_viewport_calc_stretched_size(
+            summary_image.metadata.query_offset_x, stretch_x);
+        picture_offset_y = dm2_v1_viewport_calc_stretched_size(
+            summary_image.metadata.query_offset_y, stretch_y);
+        if (mirror_flip & 1) picture_offset_x = -picture_offset_x;
         if (scaled_width <= 0 || scaled_height <= 0 ||
-            !dm2_v1_wall_ornament_query_loaded_blit_rect(
+            !dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
                 loader, surface->wall_ornate_rect_number,
                 surface->wall_ornate_ref_point,
-                scaled_width, scaled_height, &blit)) return;
+                scaled_width, scaled_height, picture_offset_x,
+                picture_offset_y, &blit)) return;
         source_x0 = (blit.source_x * (int)receipt.decoded_width) / scaled_width;
         source_y0 = (blit.source_y * (int)receipt.decoded_height) / scaled_height;
         source_x1 = ((blit.source_x + blit.source_width) *
@@ -12932,7 +12947,8 @@ static void dm2_runtime_bind_wall_ornament_plan(
             source_y1 - source_y0 };
         entry->mirror_flip = (uint8_t)mirror_flip;
         entry->material_hash = receipt.material_hash;
-        plan_hash ^= receipt.material_hash + (uint32_t)surface->wall_ornate_rect_number +
+        plan_hash ^= receipt.material_hash + summary_image.receipt_hash +
+            (uint32_t)surface->wall_ornate_rect_number +
             ((uint32_t)square << 24);
         plan_hash *= 16777619u;
 
@@ -12944,6 +12960,7 @@ static void dm2_runtime_bind_wall_ornament_plan(
         if (receipt.alcove_type != 2u) {
             DM2_V1_GdatImageMetadata overlay_metadata;
             DM2_V1_WallOrnamentReceipt overlay_receipt;
+            DM2_V1_QueryGdatSummaryImageReceipt overlay_summary_image;
             if (dm2_v1_asset_load_image_metadata(
                     loader, DM2_GDAT_CATEGORY_WALL_GFX,
                     surface->wall_ornate_gfx_index,
@@ -12951,22 +12968,34 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     &overlay_metadata)) {
                 int overlay_scaled_width;
                 int overlay_scaled_height;
+                int overlay_offset_x, overlay_offset_y;
                 int overlay_x0, overlay_y0, overlay_x1, overlay_y1;
                 if (!dm2_v1_wall_ornament_material_receipt(
                         loader, surface->wall_ornate_gfx_index,
                         DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
-                        &overlay_receipt)) return;
+                        &overlay_receipt) ||
+                    !dm2_v1_query_gdat_summary_image_receipt(
+                        loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                        surface->wall_ornate_gfx_index,
+                        DM2_V1_WALL_ORNATE_OVERLAY_IMAGE_FIELD,
+                        &overlay_summary_image)) return;
                 overlay_scaled_width =
                     ((int)overlay_receipt.decoded_width * stretch_x +
                      (stretch_x >> 1)) >> 6;
                 overlay_scaled_height =
                     ((int)overlay_receipt.decoded_height * stretch_y +
                      (stretch_y >> 1)) >> 6;
+                overlay_offset_x = dm2_v1_viewport_calc_stretched_size(
+                    overlay_summary_image.metadata.query_offset_x, stretch_x);
+                overlay_offset_y = dm2_v1_viewport_calc_stretched_size(
+                    overlay_summary_image.metadata.query_offset_y, stretch_y);
+                if (mirror_flip & 1) overlay_offset_x = -overlay_offset_x;
                 if (overlay_scaled_width <= 0 || overlay_scaled_height <= 0 ||
-                    !dm2_v1_wall_ornament_query_loaded_blit_rect(
+                    !dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
                         loader, surface->wall_ornate_rect_number,
                         surface->wall_ornate_ref_point,
-                        overlay_scaled_width, overlay_scaled_height, &blit)) {
+                        overlay_scaled_width, overlay_scaled_height,
+                        overlay_offset_x, overlay_offset_y, &blit)) {
                     return;
                 }
                 overlay_x0 = (blit.source_x *
@@ -12998,6 +13027,7 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->overlay_mirror_flip = (uint8_t)mirror_flip;
                 entry->overlay_material_hash = overlay_receipt.material_hash;
                 plan_hash ^= overlay_receipt.material_hash +
+                    overlay_summary_image.receipt_hash +
                     (uint32_t)surface->wall_ornate_rect_number +
                     ((uint32_t)square << 24);
                 plan_hash *= 16777619u;
