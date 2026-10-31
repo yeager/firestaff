@@ -40,6 +40,15 @@ def row(index: int, event: int, pc: str) -> str:
     return "decision " + " ".join(fields)
 
 
+def expect_rejected(lines: list[str], expected_message: str) -> None:
+    try:
+        verifier.verify_lines(lines)
+    except ValueError as error:
+        assert expected_message in str(error), str(error)
+    else:
+        raise AssertionError(f"accepted trace; expected: {expected_message}")
+
+
 def main() -> None:
     result = verifier.verify_lines([
         verifier.HEADER,
@@ -49,28 +58,41 @@ def main() -> None:
         row(3, 38, "e9c5"),
     ])
     assert result == {"rows": 4, "pcs": 4}
+
     mutations = (
-        row(0, 30, "e209").replace("physical_pc=000209", "physical_pc=000208"),
-        row(0, 30, "e209").replace("event_sequence=30", "event_sequence=030"),
-        row(0, 30, "e209").replace("logical_pc=e209", "logical_pc=e208"),
-        row(0, 30, "e209").replace("bytes=38000000", "bytes=18000000"),
-        row(0, 30, "e209").replace("valid_mask=f", "valid_mask=e"),
+        (row(0, 30, "e209").replace("physical_pc=000209", "physical_pc=000208"),
+         "logical/physical PC mapping mismatch"),
+        (row(0, 30, "e209").replace("event_sequence=30", "event_sequence=030"),
+         "malformed event_sequence"),
+        (row(0, 30, "e209").replace("logical_pc=e209", "logical_pc=e208"),
+         "decision row has an unrequested PC"),
+        (row(0, 30, "e209").replace("bytes=38000000", "bytes=18000000"),
+         "instruction bytes disagree with source lock"),
+        (row(0, 30, "e209").replace("valid_mask=f", "valid_mask=e"),
+         "source opcode bytes are unmapped"),
     )
-    for bad in mutations:
-        try:
-            verifier.verify_lines([verifier.HEADER, bad])
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("invalid decision trace row was accepted")
-    try:
-        verifier.verify_lines([
-            verifier.HEADER, row(0, 30, "e209"), row(1, 29, "e20a")
-        ])
-    except ValueError as error:
-        assert "non-increasing shared event sequence" in str(error)
-    else:
-        raise AssertionError("non-increasing decision event sequence was accepted")
+    for bad, message in mutations:
+        expect_rejected([verifier.HEADER, bad], message)
+
+    expect_rejected(
+        [verifier.HEADER, row(0, 30, "e209"), row(1, 29, "e20a")],
+        "non-increasing shared event sequence",
+    )
+
+    cap_rows = [verifier.HEADER] + [
+        row(index, 30 + index, "e209") for index in range(verifier.CAP)
+    ]
+    marker = f"decision_truncated cap={verifier.CAP}"
+    cap_cases = (
+        (cap_rows + [marker], "reached its configured row cap"),
+        ([verifier.HEADER], "contains no requested instruction starts"),
+        ([verifier.HEADER, marker], "truncation marker disagrees"),
+        (cap_rows + [row(verifier.CAP, 30 + verifier.CAP, "e209")],
+         "exceeds its configured cap"),
+    )
+    for lines, message in cap_cases:
+        expect_rejected(lines, message)
+
     print("test_verify_theron_syscard_decision_trace: PASS")
 
 
