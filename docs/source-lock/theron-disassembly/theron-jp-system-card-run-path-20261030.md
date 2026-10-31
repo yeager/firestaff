@@ -1124,6 +1124,9 @@ leaving the clear-carry launch, game-owned consumers, and native parity
 unproven. The exact run receipts remain in the ignored external-disk capture
 directory
 `/Volumes/Extern-disk/firestaff-pr221-capfix-20261031/.codex-scratch/theron-syscard-io-ram-cold-20261031/`.
+The matching 100-instruction authentic BIOS listing is preserved in
+[`theron-system-card3-ea3b-20261031.asm`](theron-system-card3-ea3b-20261031.asm);
+its repeated listing hash is recorded in that file.
 SHA-256: I/O/RAM
 `1b9fbf4238a23202bb75c64d9fdeda0e9ad7243cb563777b6b8bb2287e942c8f`,
 callback-state
