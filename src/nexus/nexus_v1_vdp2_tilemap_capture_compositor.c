@@ -471,6 +471,8 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     return 1;
 }
 
+static uint32_t ymir_rgb555_shift(uint16_t value);
+
 int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
     Nexus_V1_Vdp2CapturePlane *plane,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
@@ -577,8 +579,10 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
                  * dot index, then wraps by the active CRAM word mode. */
                 cram_index = (((uint32_t)(attr & 0x70U) << 4U) + index) &
                     (cram_mode == 0U ? 0x3ffU : 0x7ffU);
-                plane->rgba_buffer[destination] = cram_to_rgba_ordered(
-                    vdp2_cram + (size_t)cram_index * 2U, register_byte_order);
+                plane->rgba_buffer[destination] = ymir_rgb555_shift(
+                    read_vram16_ordered(
+                        vdp2_cram + (size_t)cram_index * 2U,
+                        register_byte_order));
                 ++receipt.written_pixels;
             }
         }
@@ -665,8 +669,6 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
     return 1;
 }
 
-static uint32_t ymir_rgb555_shift(uint16_t value);
-
 int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     Nexus_V1_Vdp2CapturePlane *plane,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
@@ -678,6 +680,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
 {
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
     uint16_t bgon, chctla, pncn1, plsz, mpofn, mapa, mapb, craofa, ramctl;
+    uint16_t scrctl;
     uint32_t map_base;
     unsigned int x, y;
     int bpp;
@@ -700,11 +703,13 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     mapb = NBG1_REG(0x46U) & 0x3fU;
     craofa = NBG1_REG(NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
     ramctl = NBG1_REG(NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET);
+    scrctl = NBG1_REG(0x9aU);
     cram_mode = (ramctl >> 12U) & 3U;
     bpp = ((chctla >> 12U) & 3U) == 0U ? 4 :
         (((chctla >> 12U) & 3U) == 1U ? 8 : 0);
     if (NBG1_REG(0x00U) != 0x8000U || (bgon & 0x0002U) == 0U ||
         (bgon & 0x0200U) != 0U || (bgon & ~0x1f3fU) != 0U || (chctla & 0x0200U) != 0U ||
+        (bgon & 0x0030U) == 0x0030U || (scrctl & 0x0600U) != 0U ||
         (chctla & 0x0100U) != 0U || bpp == 0 || cram_mode >= 2 ||
         pncn1 != 0U || (plsz & 0x000cU) != 0U ||
         ((mpofn >> 4U) & 7U) != 0U || mapa != 0x17U || mapb != 0x17U ||
