@@ -29,8 +29,10 @@ mkdir -p "$original_home/.cache"
 test_home=$(mktemp -d "$original_home/.cache/firestaff-theron-m11-save.XXXXXX")
 trap 'rm -rf "$test_home"' EXIT HUP INT TERM
 HOME=$test_home
+XDG_DATA_HOME=$test_home/.local/share
 FIRESTAFF_THERON_BRAM_PATH=$bram
 export HOME
+export XDG_DATA_HOME
 export FIRESTAFF_THERON_BRAM_PATH
 "$probe" "$data_root" "$track02" "$bram"
 if command -v md5 >/dev/null 2>&1; then
