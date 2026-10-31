@@ -6171,6 +6171,19 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.valid && q1a46.found_actuator &&
                   q1a46.actuator_type == 0x7fu && wall_field == 0,
               "DM2_query_0cee_1a46 type 0x7f uses source default field");
+        actuator_record_be[3] = 0x3fu;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 2, 2, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == 0x0c00,
+              "DM2_query_0cee_1a46 type 0x3f writes shop handle to summary word 7 on side 2");
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.summary_word7_written &&
+                  q1a46.summary_word7 == -1,
+              "DM2_query_0cee_1a46 type 0x3f writes absent marker off side 2");
         /* c_querydb.cpp:3418-3426 computes type 0x18 from the XOR of
          * active and once-only, without asking GDAT for an animation. */
         actuator_record_be[3] = 0x18u;

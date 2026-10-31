@@ -141,10 +141,10 @@ source-by-source mutation equivalence across editions and platforms.
 FM Towns map-3/map-38 runtime evidence only; DOS, Amiga, and Macintosh dynamic
 lighting and nonzero retail DBE/DBF media cases remain unverified. The ordered
 `DM2_query_0cee_1a46` door-decoration path is also incomplete: actuator
-0x18 XOR and 0x46 active-state fields now have focused source checks, while
-source summary word 7 (including the 0x3f shop-panel handle), the full output
-array contract, viewport integration, and all-platform runtime behavior remain
-open. Do not treat
+0x18 XOR and 0x46 active-state fields have focused source checks, and the
+0x3f shop-panel handle is now receipted in summary word 7. Other summary-word
+7 branches, the full output-array contract, viewport integration, and
+all-platform runtime behavior remain open. Do not treat
 these bounded receipts as full DM2 parity.
 
 ## Gate

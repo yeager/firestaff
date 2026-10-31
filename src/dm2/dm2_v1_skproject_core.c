@@ -13955,9 +13955,11 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
 
                     switch (actuator_type) {
                     case 0x3f: /* shop panel: source writes summary word 7 */
-                        /* This scalar result cannot represent the source's
-                         * separate summary word 7; keep it out of the wall
-                         * ornament result until that output is modeled. */
+                        /* c_querydb.cpp:3483-3492 writes the shop-panel
+                         * record only for relative side 2, otherwise -1. */
+                        receipt.summary_word7_written = 1u;
+                        receipt.summary_word7 = relative_side == 2
+                            ? (int16_t)thing : -1;
                         goto next_thing;
                     case 0x7e: /* resuscitation */
                         if (once_only != 0) si = 1;
