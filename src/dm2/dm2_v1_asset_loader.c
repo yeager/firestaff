@@ -3140,7 +3140,7 @@ int dm2_v1_query_ornate_anim_frame_receipt(
     out_receipt->index = (uint8_t)index;
 
     if (dm2_v1_asset_load_word_value(loader, category, index,
-                                     ANIMATION_FIELD, &word)) {
+                                     ANIMATION_FIELD, &word) && word != 0u) {
         length = (uint16_t)(word & 0x7fffu);
         if (length == 0u) return 0;
         frame_base = (word & 0x8000u) ? 1u : 0u;

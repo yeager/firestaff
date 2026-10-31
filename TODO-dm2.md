@@ -1,6 +1,16 @@
+2026-10-31 skproject `DM2_query_0cee_1a46` DB2 text animation cases:
+The extended query now walks DB2 text and DB3 actuator records in list order.
+DB2 TextMode-1 static extensions stay on the static path; ext-usage 1/2 and
+visibility-gated 4/5/7/8/13 query WALL_GFX animation field 0x0d at the source
+game tick. A zero word-value correctly falls through to dtText before the
+frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
+frame and the absent-animation fallback. Full actuator animation variants and
+viewport integration remain open.
+
 2026-10-31 skproject `DM2_QUERY_ORNATE_ANIM_FRAME` missing-entry fallback:
-When GDAT field 0x0d has neither a nonzero word value nor a nonempty text
-sequence, skproject returns frame 1 (`c_querydb.cpp:489-517`). Firestaff now
+When GDAT field 0x0d has a zero word value, skproject falls through to dtText;
+when neither has animation data, it returns frame 1 (`c_querydb.cpp:471-517`).
+Firestaff now
 returns an accepted length-one/frame-one receipt for that source fallback; the
 GDAT receipt regression covers the absent-animation case. Malformed
 unterminated sequences still fail closed.
