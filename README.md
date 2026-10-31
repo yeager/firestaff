@@ -443,10 +443,11 @@ Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
 Firestaff's native input path maps Enter to title, stage and Soul Room
 selection actions. These controls have not yet been shown on a rendered
-Theron frame. The mapping does not establish the original game's multi-second
-button-hold timing. For original-menu capture guidance and the current
-unverified hold, see
-[Theron input notes](docs/theron/theron_input.md). The Japanese Rev 1 CUE then
+Theron frame. An authentic Japanese reference capture confirms that four-second
+Button I holds on NEW GAME and FILE 1 advance into the Akutuba story; native
+Firestaff hold-duration parity remains unverified. For the input mapping and
+capture evidence, see [Theron input notes](docs/theron/theron_input.md). The
+Japanese Rev 1 CUE then
 reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 

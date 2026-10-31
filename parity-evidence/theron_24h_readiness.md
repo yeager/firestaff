@@ -4,9 +4,11 @@
 > set, not current overall parity or playability. For current supported routes
 > and open evidence gaps, use [project status](../docs/PROJECT_STATUS.md),
 > [platform status](../docs/PLATFORM_STATUS.md#therons-quest), and
-> [Theron capture readiness](../docs/theron/THERON_CAPTURE_READINESS.md). In
-> particular, the original-emulator multi-second menu-action hold is still
-> unverified.
+> [Theron capture readiness](../docs/theron/THERON_CAPTURE_READINESS.md).
+> The menu-action hold was unverified when this snapshot was recorded. A later
+> authentic JP capture confirmed that four-second Button I holds on NEW GAME
+> and FILE 1 advance into the Akutuba story; see the
+> [dated capture report](../docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md).
 
 Status: `PASS`
 
