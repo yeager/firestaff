@@ -13639,7 +13639,6 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
     uint8_t *record;
     uint16_t thing;
     uint16_t word;
-    uint32_t random_state;
     int thing_type, record_size, type, power, counter, adjusted;
     int old_weight, new_weight = 1, event_index, i;
 
@@ -13742,18 +13741,14 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
         if (iterations < 1) iterations = 1;
         champion->CurrentHealth = (int16_t)(champion->CurrentHealth +
                                              champion->MaximumHealth / counter);
-        random_state = profile->csbwin_random_seed;
         if (old_wounds) {
             do {
                 for (i = 0; i < iterations; ++i) {
-                    random_state = random_state * UINT32_C(0xbb40e62d) +
-                                   UINT32_C(11);
-                    champion->Wounds &= (uint16_t)(random_state >> 8);
+                    champion->Wounds &= csb_v1_runtime_main_random16(profile);
                 }
                 iterations = 1;
             } while (champion->Wounds == old_wounds && --retries);
         }
-        profile->csbwin_random_seed = random_state;
         champion->Attributes |= 0x2200u;
         break;
     }
