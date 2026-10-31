@@ -196,7 +196,8 @@ DM2, retain the more detailed [PC English Greatstone cross-check](../reference/a
 - **skproject remote:** `https://github.com/gbsphenx/skproject`
 - **Locked master HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493`
 - **Locked tree:** `a09b748f8ce1a974a642965f3a48e925e202ef9f`
-- **Canonical N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
+- **Current local checkout:** `work/skproject/` (task-local and untracked; do not commit or redistribute source files)
+- **Revision check:** `2c59a2c5a7978923ff5c822c15c3479e4d448493` (matches the locked master HEAD above)
 - **Sphenx SKWin page:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 - **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
 - **Good for:** DM2-specific source/provenance research after the Phase 0 gate passes.
