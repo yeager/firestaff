@@ -1,5 +1,29 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — join authentic world resources to the live VDC scene
+
+The production viewport still has no source-derived cell-to-screen renderer.
+The available native Firestaff US capture is an admitted, nonblack snapshot,
+but its map/pose values only resemble candidate bytes in a separate
+save-state replay; this is not a same-run world join. Other usable VRAM/VCE
+captures are save-state snapshots with `transition=missing`, while the cold
+loader traces either stop before the original game handoff or lack a paired
+atomic VDC snapshot. Keep the production viewport fail-closed until one cold
+or authenticated progressed route records, in the same execution: the exact
+JP/US Track 02 identity and source-read bytes; their source-owned decompressor
+and destination RAM span; the active dungeon/level descriptor and party pose;
+the subsequent game-owned bitmap/tile transfer into VRAM/BAT, VCE palette and
+VDC state at an atomic frame boundary; and a retail screenshot for comparison.
+Then derive the square/material, perspective, HUD, text and object ownership
+from those linked bytes and verify movement plus a no-input control across
+repeated runs. Existing allowlisted screen captures authorize screen-space
+replay only. Do not map a cell to an attractive tile by visual resemblance or
+promote a save-state input trace as cold media provenance. See the
+[source-to-RAM cold-loader boundary](docs/source-lock/theron-disassembly/theron-jp-cold-loader-byte-copy-capture-20261029.md),
+[atomic VDC capture boundary](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-13-ramvdc-replays-vdcvce-pair-is-screen-space-admitted),
+[US authentic VDC comparison](docs/source-lock/theron-us-authentic-vdc-turn-pair-2026-10-25.md),
+and [current capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## 2026-10-31 — documentation follow-up
 
 The current status pages now identify the repeated `$C1FC` instruction path
