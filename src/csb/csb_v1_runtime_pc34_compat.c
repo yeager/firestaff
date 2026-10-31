@@ -41,6 +41,7 @@
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -11644,7 +11645,8 @@ static int csb_v1_runtime_object_type_from_thing(
     if (!record || thing_type <= 4 || thing_type >= 14 || thing_size < 4) {
         return -1;
     }
-    return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+    return dm1_v1_dungeon_get_object_type_from_record_pc34(
+        thing_type, record, thing_size);
 }
 
 static void csb_v1_runtime_process_group_creature_floor_sensors_at(
@@ -12525,9 +12527,8 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             break;
         case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
             /* MOVESENS.C:1412-1414 compares hand type with Sensor.Data and
-             * applies RevertEffect; F0032 returns -1 for an empty hand, so a
-             * reverted sensor triggers when that sentinel does not match
-             * Sensor.Data. Objects on the wall are ignored. */
+             * applies RevertEffect; an empty hand maps to -1, so a reverted
+             * mismatch triggers. Objects already on the wall are ignored. */
             trigger = ((sensor_data == object_type) !=
                        (int)((flags_word >> 5) & 0x01u));
             break;
@@ -12637,18 +12638,17 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
 
         sensor_effect = (int)((flags_word >> 3) & 0x03u);
         if (sensor_effect == DM1_EFFECT_HOLD) {
-            sensor_effect = do_not_trigger ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
+            /* C002 derives HOLD from its predicate; false means CLEAR and is
+             * still dispatched. Storage's explicit do_not_trigger signal
+             * also resolves a HOLD effect to CLEAR. */
+            sensor_effect = (trigger && !do_not_trigger)
+                ? DM1_EFFECT_SET
+                : DM1_EFFECT_CLEAR;
         } else if (!trigger || do_not_trigger) {
             previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
-        if (!trigger) {
-            previous_thing = thing;
-            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-            continue;
-        }
-
         if (storage_action == 1) {
             if (!csb_v1_runtime_unlink_thing_from_square(
                     dungeon,
