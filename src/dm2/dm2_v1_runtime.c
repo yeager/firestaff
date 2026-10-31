@@ -2686,7 +2686,8 @@ int dm2_v1_runtime_see_thru_walls_active_for_queue(
  * the source query itself remains responsible for deciding whether the
  * selected ornament is an alcove. */
 static int dm2_runtime_wall_rendered_record_root(
-    const DM2_V1_DungeonData *dungeon, int map, int x, int y,
+    const DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    int map, int x, int y,
     uint16_t *out_root)
 {
     uint16_t seen[257];
@@ -2694,7 +2695,7 @@ static int dm2_runtime_wall_rendered_record_root(
     int thing;
 
     if (out_root) *out_root = DM2_THING_END_MARKER;
-    if (!dungeon || !out_root) return 0;
+    if (!rt || !dungeon || !out_root) return 0;
     thing = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     while (thing >= 0 && thing != DM2_THING_END_MARKER && seen_count < 257) {
         uint16_t handle = (uint16_t)thing;
@@ -2719,7 +2720,25 @@ static int dm2_runtime_wall_rendered_record_root(
          * DB4+ record above needs no chain traversal. */
         if (!dungeon->record_graph_complete) return 0;
         if (dungeon->g1_w0_chains_disabled) return 0;
-        thing = dm2_v1_dungeon_get_next_thing(dungeon, handle);
+        if (dungeon->source_words_big_endian) {
+            int16_t next;
+            /* The Mac wall-button path mutates live DB record links when
+             * rotating a wall. The dungeon bytes remain the authenticated
+             * original, so follow the matching live pool after that point. */
+            if (!rt->record_pools_valid ||
+                !rt->record_pools.valid ||
+                !rt->record_pools.record_graph_complete ||
+                rt->record_pools.source_words_big_endian !=
+                    dungeon->source_words_big_endian ||
+                rt->record_pools.words_big_endian != dungeon->words_big_endian ||
+                !dm2_v1_record_pool_next_link(&rt->record_pools,
+                    (int16_t)handle, &next))
+                return 0;
+            thing = next == DM2_V1_RECORD_HANDLE_NULL
+                ? -1 : (int)(uint16_t)next;
+        } else {
+            thing = dm2_v1_dungeon_get_next_thing(dungeon, handle);
+        }
     }
     return 0;
 }
@@ -2841,7 +2860,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                     map_y >= 0 &&
                     map_y < dd->level_heights[rt->dungeon_level] &&
                     dm2_runtime_wall_rendered_record_root(
-                        dd, rt->dungeon_level, map_x, map_y,
+                        rt, dd, rt->dungeon_level, map_x, map_y,
                         &rendered_record_root)) {
                     surface->wall_rendered_record_root =
                         rendered_record_root;
