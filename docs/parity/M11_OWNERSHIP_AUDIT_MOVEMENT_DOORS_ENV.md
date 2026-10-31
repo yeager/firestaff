@@ -68,9 +68,10 @@ In the original ownership model, **movement and environment behavior are not UI 
 | `memory_movement_pc34_compat.c:F0707_MOVEMENT_IsSquarePassableForContext_Compat` | context-aware square passability (PARTY / CREATURE) (pass 39) | square-element helpers in `DUNGEON.C` + creature legality in `GROUP.C` / `F0264_MOVE_IsSquareAccessibleForCreature` | **compat-owned** (post pass 39); shares element/door decoding with F0706, rejects stairs in CREATURE context |
 | `memory_movement_pc34_compat.c:F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat` | chained pit + teleporter post-move resolution (pass 29) | `F0267_MOVE_GetMoveResult_CPSCE` chained moves | **compat-owned** (post pass 29) |
 | `memory_movement_pc34_compat.c:F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` | find first sensor on square | small probe subset of `MOVESENS.C` sensor traversal | retained (still first-sensor-only) |
-| `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | execute teleport/text for `WALK_ON` only | tiny subset of `F0276` sensor result path | probe-grade retained (other sensor types still `SENSOR_EFFECT_UNSUPPORTED`) |
+| `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | probe API for teleport/text `WALK_ON` effects | tiny subset of `F0276` sensor result path | probe-grade retained; production party route uses F0718/F0719 |
 | `memory_sensor_execution_pc34_compat.c:F0717_SENSOR_EnumerateOnSquare_Compat` | enumerate ALL sensors on a square (pass 32) | thing-list walker inside `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned** (post pass 32) |
-| `memory_sensor_execution_pc34_compat.c:F0718_SENSOR_ProcessPartyEnterLeave_Compat` | process enter/leave events over every sensor on a square (pass 32) | `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned AND runtime-owned** (post pass 37); `F0888_ORCH_ApplyPlayerInput_Compat` invokes it for WALK_OFF at the pre-move square and WALK_ON at the post-resolve final square on every successful party move, surfacing every produced effect as an `EMIT_SENSOR_EFFECT` emission |
+| `memory_sensor_execution_pc34_compat.c:F0718/F0719_SENSOR_ProcessPartyEnterLeave*_Compat` | process party enter/leave events over sensors on a square, including C001-C009 gates and local C10/deferred rotation receipts | `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned AND runtime-owned (partial)**; movement routes produce effects in source order, and M11 applies F0272 OnceOnly disabling, dispatches C10 XP and applies final F0271 CLEAR/TOGGLE rotation per effect batch. Party-route OnceOnly disabling is source-shaped; leader-only C10, once-only behavior on other event routes, other local effects and original-media evidence remain open. |
+| `memory_sensor_execution_pc34_compat.c:F0276_SENSOR_ProcessObjectFloorChange_Compat` + M11 pickup/drop hooks | bounded DM1 PC34 floor object add/remove admission for C001/C002/C004/C007, with F0272 effect receipts and C01 switch sound for audible sensors after successful M11 chain mutation | object add/remove branch of `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **partial runtime-owned**; keyboard and rendered-pile M11 pickup/drop routes execute the bounded floor pass. Wall cell branches, other object mutation routes, non-PC34 editions/platforms and complete object-specific consequences remain open. |
 | `memory_door_action_pc34_compat.c:F0715_DOOR_ResolveToggleAction_Compat` | decide OPEN/CLOSE/DESTROYED target state (pass 31) | door actuator branch inside `MOVESENS.C` / `DUNGEON.C` | **compat-owned** (post pass 31) |
 | `memory_door_action_pc34_compat.c:F0716_DOOR_RouteFrontCellClick_Compat` | categorise click on front cell (pass 31) | `F0275_SENSOR_IsTriggeredByClickOnWall` | **compat-owned** (post pass 31) |
 | `memory_door_action_pc34_compat.c:F0714_DOOR_ResolveAnimationEffect_Compat` | resolve SET/CLEAR/TOGGLE vs current door state (pass 38) | TOGGLE branch inside `F0244_TIMELINE_ProcessEvent10_Square_Door` | **compat-owned** (post pass 38) |
@@ -167,17 +168,16 @@ After the orchestrator moves the party, `m11_apply_tick` calls `m11_check_post_m
 ## 4) Sensor execution is not the runtime owner yet
 
 ### Firestaff
-`F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` + `F0710_SENSOR_Execute_Compat` exist, but current usage is probe-oriented. Runtime integration is not the main movement path.
+`F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` + `F0710_SENSOR_Execute_Compat` remain probe-oriented. Party movement reaches the production F0718/F0719 route, but that route still covers only part of ReDMCSB's full sensor event/effect ownership.
 
 Observed limits:
 
-- only first sensor is surfaced
-- execution only honors `WALK_ON`
-- only teleport and text are implemented
-- unsupported sensor types are explicitly stubbed
-- no source-faithful enter/leave/add/remove processing comparable to `F0276_SENSOR_ProcessThingAdditionOrRemoval`
+- the older F0710 probe API still surfaces a bounded effect result; production party movement uses F0718/F0719 and enumerates sensors in source order
+- the party route handles C001-C009 admission, remote effects, text/teleport and C10 group-split Steal XP; CLEAR/TOGGLE local rotation is deferred until the end of each sensor batch
+- OnceOnly disabling is implemented for party effects; its other event routes, leader-only C10 and other F0270 local effects remain unsupported
+- full thing add/remove event coverage comparable to `F0276_SENSOR_ProcessThingAdditionOrRemoval` is incomplete; only bounded DM1 PC34 M11 keyboard/rendered-pile floor pickup/drop routes now invoke object admission, while wall-cell branches and other mutation paths remain open
 - no click-on-wall routing comparable to `F0275_SENSOR_IsTriggeredByClickOnWall`
-- no local-effect batching/rotation ownership comparable to `F0270/F0271`
+- remaining F0270 local-effect cases and non-party once-only routes are not source-complete; F0271 CLEAR/TOGGLE batching is wired for party WALK_ON
 
 ### ReDMCSB baseline
 Sensor/environment interaction ownership is broad and event-driven, not a single-square single-sensor single-event adapter.
@@ -247,7 +247,7 @@ Square semantics are source-owned in `CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_
 - **Unclear/mixed**
   - multi-sensor ordering
   - sensor enter/leave/add/remove semantics
-  - local effect batching/rotation
+  - remaining local effect kinds and once-only mutation on non-party routes
   - click-on-wall actuator semantics
 
 ---

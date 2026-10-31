@@ -1,15 +1,58 @@
 # ReDMCSB Firestaff complete audit
 
-Updated: 2026-05-14
+Updated: 2026-10-30
 
-This is the top-level source-review contract for comparing ReDMCSB against
-Firestaff. ReDMCSB is the oracle for DM1 V1 behavior. If Firestaff and
-ReDMCSB disagree without stronger original-runtime evidence, Firestaff is
-treated as wrong.
+This is the DM1/CSB source-review contract for comparing ReDMCSB against
+Firestaff. ReDMCSB is the primary functional reference for DM1 and CSB V1.
+If Firestaff and ReDMCSB disagree without stronger original-runtime evidence,
+Firestaff is treated as wrong. DM2 must be reviewed against skproject; DMWeb
+and Greatstone provide supporting reference material for all three games.
+A game-level result is complete only when every supported platform lane is
+covered independently.
 
 ## Scope
 
-The audit covers source-backed behavior and presentation, not only existing
+The requested parity target covers all three games and every platform lane
+Firestaff currently supports. The current documented runtime lanes are:
+
+| Game | Supported platform lanes in Firestaff |
+|---|---|
+| DM1 | PC DOS, Atari ST, Amiga, FM Towns |
+| CSB | Atari ST, Amiga, FM Towns |
+| DM2 | DOS, Amiga, FM Towns, Macintosh |
+
+These are separate implementation targets: evidence from one platform or
+edition does not close another lane. DM1 and CSB behavior uses ReDMCSB as the
+primary functional source; DM2 uses skproject. DMWeb and Greatstone are
+supporting references for all three games, with claims tied to the relevant
+game, edition, and asset identity.
+
+## Platform coverage register
+
+The repository currently documents selected runtime routes for these lanes.
+Those routes are evidence of bounded operation, not proof that every source
+function is implemented on that platform. A lane remains `PARTIAL` until its
+source functions are mapped to Firestaff behavior and platform-specific gates.
+
+| Game | Platform lane | Existing bounded-route evidence | Parity status |
+|---|---|---|---|
+| DM1 | PC DOS | `README.md` platform summary; `docs/parity/PARITY_MATRIX_DM1_V1.md` (PC DOS target) | PARTIAL |
+| DM1 | Atari ST | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
+| DM1 | Amiga | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
+| DM1 | FM Towns | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
+| CSB | Atari ST | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |
+| CSB | Amiga | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |
+| CSB | FM Towns | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |
+| DM2 | DOS | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, DOS English/French rows | PARTIAL |
+| DM2 | Amiga | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, Amiga row | PARTIAL |
+| DM2 | FM Towns | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, FM Towns row | PARTIAL |
+| DM2 | Macintosh | `README.md` Macintosh English route; Macintosh First Chapter demo remains explicitly unsupported | PARTIAL |
+
+The audit below is the DM1/CSB source-function inventory, not a substitute for
+the DM2 skproject inventory or the per-platform status register. Completion
+claims must be made per game and per supported platform lane.
+
+The source review covers behavior and presentation, not only existing
 completion percentages:
 
 | Lane | ReDMCSB source roots | Firestaff surface | Status |
@@ -41,25 +84,43 @@ bounded before DM1 V1 can be called complete:
 
 | Gap | Evidence | Required action |
 |---|---|---|
-| Creature AI stubs | `src/memory/memory_creature_ai_pc34_compat.c` still labels most creature profiles as stubs. | Replace source-proven simple cases first; create MISSING gates for complex spellcaster/archenemy behavior. |
-| Magic/combat defence stubs | memory_magic_pc34_compat.h and combat probes still describe fire/magic/psychic defence paths as stubbed. | Audit CASTER.C plus combat/champion source, then fix or gate missing semantics. |
-| Sensor execution unsupported types | Sensor probes still classify rare/complex sensors as unsupported. | Audit MOVESENS.C sensor sections; implement safe source-backed sensor classes or gate each missing type. |
+| Creature AI fidelity | `src/memory/memory_creature_ai_pc34_compat.c` lists all 27 DM1 creature profiles at FULL tier, while `F0804_CREATURE_Tick_Compat` retains a tier-0 fallback. | Do not report a broad profile-stub gap: compare each source behavior and platform profile against its gate; separately track any simplified or deferred mechanics and confirm whether any profile actually selects the fallback. |
+| Magic/combat fidelity | `memory_magic_pc34_compat` implements a bounded PC 3.4 spell and defence path; its header records the historical stub that it replaced. | Compare the implemented path against ReDMCSB for each supported DM1/CSB platform and edition; list only source-confirmed missing semantics as `MISSING`. |
+| Sensor execution unsupported types | Floor C10 group-split Steal-XP and deferred CLEAR/TOGGLE rotation have source-shaped M11 WALK_ON consumers. The F0248 wall-event route awards cell-specific C10 Steal-XP to the active leader and applies OnceOnly before dispatch. A bounded DM1 PC34 object add/remove sensor adapter now runs after successful M11 keyboard and rendered-pile pickup/drop chain changes, carrying the F0276 audible-sensor switch-sound receipt. Other mutation routes, wall-cell object branches, local effects, uncovered sensor-event paths, full platform coverage and original-media proof remain open. | Continue MOVESENS.C F0270/F0271/F0276 audit across every event path and platform; test remaining local-effect types and keep original-media claims separate from source-level behavior. |
 | Original overlay regression absent | docs/parity/COMPLETION_MATRIX.md gives DM1 V1 original_overlay_regression 0/10. | Keep source fixes separate from pixel claims until representative original overlay frames exist. |
 | V1-visible shell leakage | Previous parity docs identify custom M11/M12 surfaces that must not decide original behavior. | Audit normal V1 route and keep invented/debug surfaces unreachable unless source-backed. |
 
-## Active review lanes
+## Cross-game completion blockers
 
-Started 2026-05-14 on N2 with GPT-5.5 workers:
+The repository's current completion model remains explicitly partial for each
+primary V1 target; its scores are summaries, not function inventories:
 
-| Lane | Child session | Write ownership |
+| Game | Current repository status | Concrete missing proof |
 |---|---|---|
-| movement_input | agent:main:subagent:97014287-28a4-4ed7-b552-85dda6fe87f6 | movement/input/collision/sensor files and focused gates |
-| viewport_hud_render | agent:main:subagent:dd408b84-9613-4b85-a733-d9923a61534f | viewport/HUD/render files and focused gates |
-| gameplay_systems | agent:main:subagent:70aca479-e754-4758-84fe-68fd9008ec84 | gameplay systems files and focused gates |
-| frontend_route_capture | agent:main:subagent:109267ba-c350-4cf2-aa77-b337253ed5c2 | frontend/V1 route/capture files and focused gates |
+| DM1 V1 | 78%, `playable_verified_partial` in `parity-evidence/verification/firestaff_completion_matrix.json` | Original same-state overlay regression is 0/10; audio timing/overlap and wider per-edition functional coverage remain open. |
+| CSB V1 | 43%, `runtime_boundary_verified_partial` in `docs/parity/PARITY_MATRIX_CSB_V1.md` | Broad real-data adventuring, save/reload, original overlays, and audio playback/timing remain open across Atari ST, Amiga, and FM Towns. |
+| DM2 V1 | 36%, `runtime_slices_verified_partial` in `parity-evidence/verification/firestaff_completion_matrix.json` | The parity matrix is incomplete (4/10); renderer and original-overlay coverage are 3/20 and 0/10, and runtime wiring remains incomplete. |
 
-Workers may create local N2 commits only. Main verifies, integrates, gates,
-updates completion percentages and pushes.
+These blockers must be decomposed into source-function rows and closed for each
+supported platform lane. Do not infer platform parity from aggregate scores.
+
+## Source-symbol inventory findings
+
+The current callable-symbol audits expose concrete incomplete work. These are
+triage inputs, not direct counts of missing gameplay features: platform APIs,
+ABI aliases, unreferenced routines, and weak numeric matches must be separated
+from reachable game behavior before an implementation claim is made.
+
+| Reference inventory | Current row counts | Confirmed interpretation |
+|---|---|---|
+| ReDMCSB `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv` | 2,133 total: 805 `MISSING`, 640 `UNCERTAIN_NUMBERED_EVIDENCE`, 516 `IMPLEMENTED_NARROW`, 97 `VERIFIED_SOURCE_MAPPING`, 64 `SOURCE_NONAPPLICABLE`, 5 `PC34_SOURCE_IMPLEMENTED`, 6 `PARTIAL` | Not yet a complete DM1/CSB game-function inventory. The symbol backlog contains 1,051 open rows after existing dispositions; review reachable gameplay/UI functions per platform and explicitly classify OS/ABI-only routines. F0348 records bounded DM1/CSB statistic-adjustment routes as `PARTIAL`; DM1 tests historical edition thresholds. The CSB PC3.4 live ROS-mouth regression now covers values 120, 121, 150, 151, 169 and 170, including the strict diminishing thresholds and cap; all other edition/platform routes remain open. F0349 records bounded DM1/CSB mouth-consumption routes as `PARTIAL`: CSB has native PC3.4 effects for C06-C14 plus separate water, waterskin, and food consumers; full RNG/timer and cross-platform proof remains open. F0358 records the tested PC3.4 mouse-route resolver as `IMPLEMENTED_NARROW`; generated-table/media and other-platform equivalence remain open. F0359 records the tested DM1 PC3.4 click enqueue and locked-queue replay route as `IMPLEMENTED_NARROW`; other platform release semantics and CSB lane remain open. F0365 records the tested DM1 PC3.4 turn route as `IMPLEMENTED_NARROW`. F0376 now records the shared inclusive source-box helper, whose 38-assertion PC34 edge/equivalence gate passes. F0377 now preserves the PC34 F0375 throw lane where it overlaps the D1C door-button box; its boundary regression passes. F0374/F0375 now have bounded PC34 runtime and resolver paths: F0374 object-pile floor drop and F0375 side-zone throw are covered by focused drop/throw admission checks, while full edition/platform click-zone parity and special alcove/fountain cases remain open. F0366 records the bounded DM1 PC3.4 step route as `IMPLEMENTED_NARROW`: Firestaff now resolves teleporter records through ReDMCSB’s compact flagged-square SFT index, and the movement integration test passes with source-valid floor-sensor fixtures. CSB V1 compatibility-runtime turn/step cases also cover directional C003 turn sensors, stairs, and an open-corridor step; original-platform and cross-platform verification remain open. |
+| skproject `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` | 1,751 total: 1,111 `IMPLEMENTED_PARITY`, 560 `NOT_APPLICABLE_ARCH`, 73 `NONAPPLICABLE`, 4 `PARTIAL`, and 3 `PARTIAL_SOURCE_OWNER` | `DM2_ALLOC_NEW_RECORD`, `DM2_ALLOC_NEW_DBITEM`, `DM2_ALLOC_NEW_DBITEM_DEEPLY`, and `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` now have bounded source-owner paths: the private GAME_LOAD/SKSAVE clone commits direct DB0/ordinary-DB2/DB3/DB7/DB9 returns plus selected DB5/6/8/10/14 routes, while the generated-drop path recycles selected DB5/6/8/10 records and directly clears DB7/DB9 records in place. They remain partial: complete DB0-DB15 cursor and owner traversal, protected maps, DB4/creature-bearing DB14 deletion, timer/CAII interactions, and all-platform runtime behavior are not covered. `DM2_DEALLOC_RECORD` remains partial outside its bounded creature-delete and CAII delete-tail consumers. `DM2_ARRANGE_DUNGEON` has a bounded mutation owner integrated into New Game; source-by-source mutation and all-edition/platform parity proof remain open. `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` remains partial; bounded flags-3 ceiling and creature F8 branches use distinct skproject falloff tables, including the distance-over-eight case where only creature light remains. A bounded class-5 live DBE/DBF tail scan now decodes DBE selector FF80 and DBF zero/2/30 selectors, matching sklight.cpp:398-405 and feeds `v1e0978` with its own distance falloff; focused term/accumulator checks and the FM Towns map-3/map-38 gameplay route pass, but the real-media route has not proven a nonzero retail DBE/DBF contribution. Flags-4 mode-7 now retains ordinary floor `RG6` beyond distance 8 while clearing only weather-scaled `vw_24`, matching sklight.cpp:455-481; distance-9 regressions cover both terms. The live callback also admits the sklight.cpp class-2 no-record flags-3 ceiling branch after complete source-input checks. The live mode-8/mode-7 runtime now attempts any authenticated dynamic-light map position and requires complete source-walk receipts; unknown tile/record branches remain fail-closed. The mode-7 flags-3 class-0 no-op at skproject c_light.cpp:233-243 is now covered by a focused helper regression. The class-1 floor-actuator branch now queries authenticated GDAT F8/99 values and retains the distinct source weather term and F8 high-bit gate; focused accumulator regressions cover both. A new FM Towns map-3 (8,4) real-media regression is compiled but has not run locally because original media is unavailable. Existing runtime evidence remains FM Towns-only on maps 3 and 38; source record paths and DOS, Amiga, and Macintosh dynamic-light runtime coverage remain open. The DOS New Game start is static-light map 0 at (1,8), so it does not exercise the dynamic path. These behaviors are not closed by source mapping alone. |
+
+The inventory dispositions are repository evidence and must be checked against
+the locked source revision before implementation. For DM2 record allocation,
+deallocation, and recycling, implement the linked map-chain, recycler, record
+pool, CAII, and timer transaction as one source-owned behavior rather than
+exposing isolated free-list helpers.
 
 ## Gate
 

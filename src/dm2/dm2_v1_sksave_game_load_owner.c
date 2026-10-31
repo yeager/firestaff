@@ -2231,110 +2231,72 @@ fail:
     return 0;
 }
 
-int dm2_v1_sksave_game_load_owner_commit_db0_recycler(
-    DM2_V1_SksaveGameLoadOwner *owner, uint16_t *out_record)
+int dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+    DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
+    uint16_t *out_record)
 {
-    DM2_V1_SksaveDb0RecyclerCandidate candidate;
+    DM2_V1_SksaveRecyclerCandidate candidate;
     DM2_V1_RecordPoolSet pools;
-    DM2_V1_SksaveMapOwner map_copy;
     uint8_t *record;
     const int16_t selected = (int16_t)DM2_V1_RECORD_HANDLE_END;
-    size_t column_bytes;
-    size_t ground_bytes;
-    size_t tile_bytes;
 
     if (out_record) *out_record = (uint16_t)selected;
     if (!owner || owner->source_game_load_session_ready ||
         (!owner->valid && !owner->recycler_boundary_inspection_valid) ||
-        !owner->record_pools.valid) return 0;
+        !owner->record_pools.valid ||
+        (requested_db != 0u && requested_db != 2u && requested_db != 3u &&
+         requested_db != 7u && requested_db != 9u)) return 0;
     memset(&candidate, 0, sizeof(candidate));
-    if (!dm2_v1_sksave_game_load_owner_db0_recycler_candidate(owner,
-                                                               &candidate) ||
+    if (!dm2_v1_sksave_game_load_owner_recycler_candidate(
+            owner, requested_db, &candidate) ||
         !candidate.valid || !candidate.found ||
-        dm2_v1_record_handle_pool((int16_t)candidate.selected_link) != 0) {
+        candidate.requested_db != requested_db ||
+        dm2_v1_record_handle_pool((int16_t)candidate.selected_link) !=
+            requested_db) {
         return 0;
     }
 
     memset(&pools, 0, sizeof(pools));
-    memset(&map_copy, 0, sizeof(map_copy));
     if (!dm2_v1_record_pool_set_clone(&pools, &owner->record_pools)) {
         dm2_v1_record_pool_set_free(&pools);
         return 0;
     }
 
-    /* Clone the mutable c_map spans before the cut. The source commits the
-     * ground-stack splice and record-pool splice as one ALLOC_NEW_RECORD
-     * transaction; mutating the live map and then publishing an uncut pool
-     * clone would leave a predecessor pointing at the cleared record. */
-    map_copy = owner->map_owner;
-    column_bytes = owner->map_owner.column_index_count * sizeof(uint16_t);
-    ground_bytes = owner->map_owner.ground_stack_count * sizeof(uint16_t);
-    tile_bytes = owner->map_owner.map_tiles_size;
-    map_copy.column_indices = column_bytes != 0u
-        ? (uint16_t *)malloc(column_bytes) : NULL;
-    map_copy.ground_stack_links = ground_bytes != 0u
-        ? (uint16_t *)malloc(ground_bytes) : NULL;
-    map_copy.map_tiles = tile_bytes != 0u
-        ? (uint8_t *)malloc(tile_bytes) : NULL;
-    if ((column_bytes != 0u && !map_copy.column_indices) ||
-        (ground_bytes != 0u && !map_copy.ground_stack_links) ||
-        (tile_bytes != 0u && !map_copy.map_tiles)) {
-        free(map_copy.column_indices);
-        free(map_copy.ground_stack_links);
-        free(map_copy.map_tiles);
-        dm2_v1_record_pool_set_free(&pools);
-        return 0;
-    }
-    if (column_bytes != 0u)
-        memcpy(map_copy.column_indices, owner->map_owner.column_indices,
-               column_bytes);
-    if (ground_bytes != 0u)
-        memcpy(map_copy.ground_stack_links, owner->map_owner.ground_stack_links,
-               ground_bytes);
-    if (tile_bytes != 0u)
-        memcpy(map_copy.map_tiles, owner->map_owner.map_tiles, tile_bytes);
-
-    /* The direct-return branch owns a tile-chain unlink before
-     * ALLOC_NEW_RECORD clears the selected DB0 slot.  Apply it to the same
-     * cloned map/pool pair that will be published. */
-    if (!dm2_v1_sksave_map_owner_cut_tile_record(
-            &map_copy, &pools,
-            candidate.selected_map, candidate.selected_x,
-            candidate.selected_y, candidate.selected_link)) {
-        free(map_copy.column_indices);
-        free(map_copy.ground_stack_links);
-        free(map_copy.map_tiles);
-        dm2_v1_record_pool_set_free(&pools);
-        return 0;
-    }
-
+    /* SKULLWIN/c_record.cpp:DB88 returns ordinary DB0/DB2/DB3/DB7/DB9
+     * directly from the world recycler. DM2_ALLOC_NEW_RECORD then clears
+     * the selected record in place; it does not CUT_RECORD_FROM or rewrite
+     * the source tile chain. */
     record = dm2_v1_record_pool_address_mut(&pools,
                                              (int16_t)candidate.selected_link);
     if (!record) {
-        free(map_copy.column_indices);
-        free(map_copy.ground_stack_links);
-        free(map_copy.map_tiles);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
     }
 
-    /* ALLOC_NEW_RECORD clears the source-sized record and then marks its
-     * first link OBJECT_END_MARKER.  DB0 has no DB9 second-word special case. */
-    memset(record, 0, (size_t)pools.pools[0].record_size);
+    /* ALLOC_NEW_RECORD clears the source-sized record and marks its first
+     * link OBJECT_END_MARKER. DB9 also initializes its second link word. */
+    memset(record, 0, (size_t)pools.pools[requested_db].record_size);
     record[0] = 0xfeu;
     record[1] = 0xffu;
+    if (requested_db == 9u) {
+        record[2] = 0xfeu;
+        record[3] = 0xffu;
+    }
 
-    /* The candidate is prospective until the clone and record mutation have
-     * both succeeded.  Replacing the pool owner is the commit point. */
-    free(owner->map_owner.column_indices);
-    free(owner->map_owner.ground_stack_links);
-    free(owner->map_owner.map_tiles);
-    owner->map_owner = map_copy;
+    /* The candidate is prospective until the pool clone is cleared. Replacing
+     * the pool owner and advancing the source cursor is the commit point. */
     dm2_v1_record_pool_set_free(&owner->record_pools);
     owner->record_pools = pools;
-    owner->recycler_context.map_cursors[0] = candidate.cursor_after;
+    owner->recycler_context.map_cursors[requested_db] = candidate.cursor_after;
     if (out_record) *out_record = candidate.selected_link;
     return 1;
+}
+
+int dm2_v1_sksave_game_load_owner_commit_db0_recycler(
+    DM2_V1_SksaveGameLoadOwner *owner, uint16_t *out_record)
+{
+    return dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+        owner, 0u, out_record);
 }
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner)

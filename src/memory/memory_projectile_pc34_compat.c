@@ -824,7 +824,9 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             outResult->outNextTick.aux1       = 2;  /* C02_EFFECT_TOGGLE */
             outResult->outNextTick.aux2       = in->projectileSubtype;
             outResult->outNextTick.aux3       = in->ownerIndex;
-            outResult->outNextTick.aux4       = in->ownerKind;
+            /* F0268's native EVENT has no owner-kind payload. The M10
+             * publisher adds the edition-specific source priority. */
+            outResult->outNextTick.aux4       = 0;
             outResult->emittedDoorToggleEvent = 1;
         } else {
             /* ReDMCSB PROJEXPL.C:F0217 line 506 calls

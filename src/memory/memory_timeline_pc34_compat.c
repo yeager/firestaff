@@ -64,35 +64,53 @@ static int timeline_try_merge_event(
 
 /* ReDMCSB TIMELINE.C F0234 compares same-time events by source type and
  * priority before using the source event-pool address as its final key.
- * M11 has partial type/priority receipts but no original event-pool slots:
- * within a known type, authenticated priorities precede unknown priorities;
- * equal or unknown priorities retain stable insertion order. */
+ * M11 has authenticated source type/priority for C05-C10 square events and
+ * partial priority receipts for C29-C41 reactions, but no source event-pool
+ * slots. Equal or unknown priorities retain stable insertion order. */
+static int timeline_source_order_fields(
+    const struct TimelineEvent_Compat* event,
+    int* out_type, int* out_priority_valid, int* out_priority)
+{
+    if (!event || !out_type || !out_priority_valid || !out_priority)
+        return 0;
+    if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+        event->aux2 >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+        event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        *out_type = event->aux2;
+        *out_priority_valid =
+            (event->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0;
+        *out_priority = event->aux4 & 0xff;
+        return 1;
+    }
+    if ((event->kind == TIMELINE_EVENT_SQUARE_STATE ||
+         event->kind == TIMELINE_EVENT_SENSOR_DELAYED) &&
+        event->aux0 >= DM1_EVENT_CORRIDOR &&
+        event->aux0 <= DM1_EVENT_DOOR) {
+        *out_type = event->aux0;
+        *out_priority_valid = 1;
+        *out_priority = event->aux4 & 0xff;
+        return 1;
+    }
+    return 0;
+}
+
 static int timeline_event_precedes_same_tick(
     const struct TimelineEvent_Compat* a,
     const struct TimelineEvent_Compat* b)
 {
-    int aType;
-    int bType;
-    int aPriorityValid;
-    int bPriorityValid;
-    if (a->kind != TIMELINE_EVENT_CREATURE_REACTION ||
-        b->kind != TIMELINE_EVENT_CREATURE_REACTION ||
-        a->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
-        a->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 ||
-        b->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
-        b->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+    int aType, bType;
+    int aPriorityValid, bPriorityValid;
+    int aPriority, bPriority;
+    if (!timeline_source_order_fields(a, &aType, &aPriorityValid,
+                                      &aPriority) ||
+        !timeline_source_order_fields(b, &bType, &bPriorityValid,
+                                      &bPriority)) {
         return 0;
     }
-    aType = a->aux2;
-    bType = b->aux2;
     if (aType != bType) return aType > bType;
-    aPriorityValid =
-        (a->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0;
-    bPriorityValid =
-        (b->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0;
     if (aPriorityValid != bPriorityValid) return aPriorityValid;
-    if (aPriorityValid && (a->aux4 & 0xff) != (b->aux4 & 0xff)) {
-        return (a->aux4 & 0xff) > (b->aux4 & 0xff);
+    if (aPriorityValid && aPriority != bPriority) {
+        return aPriority > bPriority;
     }
     return 0;
 }
@@ -101,7 +119,7 @@ static int timeline_event_precedes_same_tick(
  * Other event kinds remain in their original slots, so source comparisons
  * can cross an untyped event without changing the relative order of those
  * untyped events. */
-static void timeline_insert_source_reaction(
+static void timeline_insert_source_ordered_event(
     struct TimelineQueue_Compat* queue,
     int first,
     int eventIndex)
@@ -112,18 +130,21 @@ static void timeline_insert_source_reaction(
     int insertion;
     const struct TimelineEvent_Compat moving = queue->events[eventIndex];
 
-    if (moving.kind != TIMELINE_EVENT_CREATURE_REACTION ||
-        moving.aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
-        moving.aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        return;
+    {
+        int type, priority_valid, priority;
+        if (!timeline_source_order_fields(&moving, &type,
+                                          &priority_valid, &priority))
+            return;
     }
 
     for (index = first; index < eventIndex; ++index) {
         const struct TimelineEvent_Compat* event = &queue->events[index];
-        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
-            event->aux2 >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
-            event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-            slots[slotCount++] = index;
+        {
+            int type, priority_valid, priority;
+            if (timeline_source_order_fields(event, &type,
+                                             &priority_valid, &priority)) {
+                slots[slotCount++] = index;
+            }
         }
     }
     slots[slotCount++] = eventIndex;
@@ -180,7 +201,7 @@ int F0721_TIMELINE_Schedule_Compat(
            queue->events[first - 1].fireAtTick == event->fireAtTick) {
         --first;
     }
-    timeline_insert_source_reaction(queue, first, insertIndex);
+    timeline_insert_source_ordered_event(queue, first, insertIndex);
     return 1;
 }
 

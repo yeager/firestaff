@@ -4,8 +4,9 @@
 /*
  * DM1 V1 Actuator Execution — pc34 compat layer.
  *
- * Source reference: ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent lines 1136-1232
- * and TIMELINE.C event handlers for C024_EVENT_DOOR (lines ~600-660).
+ * Related source: ReDMCSB MOVESENS.C F0268_SENSOR_AddEvent (event construction,
+ * lines 1000-1030). TIMELINE.C F0244 (line 885) resolves C10 door events;
+ * F0241 (line 711) advances their C01 door-animation state.
  *
  * This module bridges the gap between sensor trigger evaluation (which
  * produces a SensorActuatorDispatch_Compat) and the actual dungeon state
@@ -75,7 +76,7 @@ int dm1_v1_actuator_execute_dispatch_pc34(
     struct Dm1V1ActuatorResult* outResult);
 
 /* Step a door animation by one tick.
- * Source: ReDMCSB TIMELINE.C C024_EVENT_DOOR handler.
+ * Source: ReDMCSB TIMELINE.C F0241_TIMELINE_ProcessEvent1_DoorAnimation.
  *
  * If opening (targetState < currentState): decrements door state by 1.
  * If closing (targetState > currentState): increments door state by 1.

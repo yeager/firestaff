@@ -57,7 +57,7 @@ F	0033	F0033_OBJECT_GetIconIndex	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;CLIKVIEW.C
 F	033	F033_aaaz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0034	F0034_OBJECT_DrawLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	034	F034_aaau_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;DEFS.H;CHAMPION.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;DEFS.H;CHAMPION.C;ENDGAME.C	implemented-narrow	implemented_narrow	OBJECT.C source C017 black-zone adapter is consumed by the M11 DM1/CSB V1 leader-hand name renderer; focused adapter CTest, real-asset/edition parity remains open
 F	035	F035_aaaw_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	036	F036_aA19_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -393,8 +393,8 @@ F	0266	F0266_MOVE_IsKilledByProjectileImpact	IIGS.H;DEFS.H;MOVESENS.C	implemente
 F	0267	F0267_MOVE_GetMoveRes	IIGS.H	implemented-narrow	fail_closed	IIGS-only identifier is explicit in the CSB helper but rejects: available ReDMCSB corpus has no callable body or PC34 contract
 F	0267	F0267_MOVE_GetMoveResult_CPSCE	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;CHAMPION.C;GAMELOOP.C;TIMELINE.C;STARTUP2.C;PROJEXPL.C;MOVESENS.C;STARTUP1.C	implemented-narrow	implemented_narrow	MOVE.C F0267 source-locked raw Thing/source/destination receipt covers on-square move, removal, and projectile-associated placement; sensor execution remains outside this helper
 F	267	F267_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0268	F0268_SENSOR_AddEvent	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0268 source-authenticated PC34 target-square event receipt and F0238 timeline insertion
-F	268	F268_fzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0268	F0268_SENSOR_AddEvent	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	DM1 sensor/actuator routes and the CSB PC34 adapter cover narrow F0268 event construction and F0238 insertion; the PC34 adapter uses priority zero, while ReDMCSB MEDIA716 assigns effect priorities 3/2/1 on I34E/I34M/A36M. Cross-edition event construction remains open.
+F	268	F268_fzzz_	ATARIST.H	verified-source-mapping	verified_source_mapping	Atari ST/PRIM ABI alias resolves to F0268_SENSOR_AddEvent; it is not an independent callable implementation.
 F	0269	F0269_SENSOR_AddSkillExperience	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0269 source-authenticated party receipt preserves leader-only versus party-count XP division; mutation remains existing champion owner
 F	0270	F0270_SENSOR_TriggerLocalEffect	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0270 raw C03 admission distinguishes C10 steal-XP from deferred CLEAR/TOGGLE rotation
 F	0271	F0271_SENSOR_ProcessRotationEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0271 raw C03 matching-chain receipt admits only two-or-more eligible sensors; F0272+ excluded

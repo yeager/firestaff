@@ -233,18 +233,19 @@
   "schema": "firestaff.dm2_v1_phase0_provenance_gate.v1",
   "skproject": {
     "actual": {
+      "masterHead": "2c59a2c5a7978923ff5c822c15c3479e4d448493",
+      "tree": "a09b748f8ce1a974a642965f3a48e925e202ef9f",
       "commitType": "commit",
-      "masterHead": "a962896e42aaf54c76157a7b062fb5b0526929e6",
-      "tree": "a095e458cfaaa0490b9c4d4d2adf88108a8ad92f",
-      "treeFileCount": 1868,
-      "treeNameSha256": "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
+      "treeFileCount": 1872,
+      "treeNameSha256": "2e358622158efa78ac9545915bc56ce25d48c4fd1c9b904fb277cda22e57b207"
     },
     "exists": true,
     "expected": {
-      "masterHead": "a962896e42aaf54c76157a7b062fb5b0526929e6",
-      "tree": "a095e458cfaaa0490b9c4d4d2adf88108a8ad92f",
-      "treeFileCount": 1868,
-      "treeNameSha256": "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
+      "masterHead": "2c59a2c5a7978923ff5c822c15c3479e4d448493",
+      "tree": "a09b748f8ce1a974a642965f3a48e925e202ef9f",
+      "commitType": "commit",
+      "treeFileCount": 1872,
+      "treeNameSha256": "2e358622158efa78ac9545915bc56ce25d48c4fd1c9b904fb277cda22e57b207"
     },
     "mirror": "/home/trv2/.firestaff/data/firestaff-dm2-sources/skproject.git",
     "remote": "https://github.com/gbsphenx/skproject"

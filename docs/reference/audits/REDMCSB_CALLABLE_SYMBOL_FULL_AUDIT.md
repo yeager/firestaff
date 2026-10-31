@@ -2,41 +2,67 @@
 
 ## Scope
 
-This is an exhaustive ledger of ReDMCSB callable numbered symbols from `/Volumes/Extern-disk/firestaff-reference-cache/redmcsb/source/Toolchains/Common/Source`, audited against Firestaff `src/` and `include/` only. The companion TSV contains one row per audited symbol and is the source of the totals below.
+This ledger inventories numbered callable symbols in the local ReDMCSB
+`ReDMCSB_WIP20210206/Toolchains/Common/Source` archive and records candidate
+Firestaff mappings against `src/` and `include/`. ReDMCSB is the primary
+functional reference for DM1 and CSB. The TSV is a symbol-discovery and
+triage ledger; a symbol match is not proof of behavior, game-route
+integration, or platform parity.
+
+The inventory includes four-digit named callable symbols, documented unnamed
+F runtime/startup entries, and ReDMCSB Atari ST/PRIM three-digit ABI aliases.
+It excludes raw numeric constants and `S0092`, which the source identifies as
+compiler/linker BSS initialization rather than a callable symbol.
 
 ## Inventory
 
 | Kind | Count |
-| --- | ---: |
-| F | 2104 |
+|---|---:|
+| F | 2,100 |
 | E | 6 |
 | R | 8 |
 | S | 19 |
-| **Total** | **2137** |
+| **Total** | **2,133** |
 
-The inventory includes four-digit named callable symbols, documented unnamed F runtime/startup entries, and the ReDMCSB Atari ST/PRIM three-digit ABI aliases. It excludes raw numeric constants and `S0092`, which the source identifies as compiler/linker BSS initialization rather than a callable symbol.
+## Mapping rules
 
-## Mapping Rules
+- `UNCERTAIN_NUMBERED_EVIDENCE`: the same numeric token appears in Firestaff
+  source/header; behavioral equivalence is unverified.
+- `MISSING`: no exact numbered token was found in Firestaff source/header; a
+  differently named implementation may still exist.
+- `IMPLEMENTED_NARROW`: a source-locked scoped adapter has a focused test; this
+  does not establish complete host-platform equivalence.
+- `VERIFIED_SOURCE_MAPPING`: the evidence maps a source behavior but does not
+  by itself prove all caller or platform behavior.
+- `PARTIAL`: source behavior has a bounded Firestaff counterpart, with material
+  behavior or supported-platform coverage still open.
+- `SOURCE_NONAPPLICABLE`: source review found no applicable PC 3.4 route.
+- `PC34_SOURCE_IMPLEMENTED`: the source implements the behavior on PC 3.4;
+  confirm the Firestaff runtime route separately.
 
-- `UNCERTAIN_NUMBERED_EVIDENCE` means the same numeric token appears in a Firestaff source/header location. This is only a candidate trace; it does **not** claim a behaviorally equivalent or implemented ReDMCSB symbol.
-- `MISSING` means no exact numbered token was found in Firestaff `src/` or `include/`. It makes no claim about an unnamed or differently numbered implementation.
-- `IMPLEMENTED_NARROW` means a source-locked, scoped compatibility adapter has a focused regression test. It does not establish complete host-platform equivalence.
-- `SOURCE_NONAPPLICABLE` means source review found no PC 3.4 route to implement. Source locations are first textual anchors in the supplied ReDMCSB reference corpus.
-
-## Result
+## Current status
 
 | Status | Count |
-| --- | ---: |
-| IMPLEMENTED_NARROW | 342 |
-| MISSING | 824 |
-| PC34_SOURCE_IMPLEMENTED | 5 |
-| SOURCE_NONAPPLICABLE | 64 |
-| UNCERTAIN_NUMBERED_EVIDENCE | 892 |
-| VERIFIED_SOURCE_MAPPING | 10 |
-| **Total** | **2137** |
+|---|---:|
+| `MISSING` | 805 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 640 |
+| `IMPLEMENTED_NARROW` | 516 |
+| `VERIFIED_SOURCE_MAPPING` | 97 |
+| `SOURCE_NONAPPLICABLE` | 64 |
+| `PC34_SOURCE_IMPLEMENTED` | 5 |
+| `PARTIAL` | 6 |
+| **Total** | **2,133** |
 
-Machine-check the ledger shape with:
+The open rows include platform service routines, ABI aliases, unreferenced
+symbols, and gameplay/UI functions. They must be triaged by reachability and
+supported game/platform before interpreting the totals as missing game
+features. The current platform coverage register is in
+`docs/parity/REDMCSB_FIRESTAFF_COMPLETE_AUDIT.md`.
+
+## Machine check
 
 ```sh
-awk -F '\t' 'NR > 1 { count[$2]++; rows++ } END { print rows, count["F"], count["E"], count["R"], count["S"] }' docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv
+awk -F '\t' 'NR > 1 { count[$2]++; rows++ }
+  END { print rows, count["F"], count["E"], count["R"], count["S"] }' \
+  docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv
 ```

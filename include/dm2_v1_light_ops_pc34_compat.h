@@ -194,20 +194,30 @@ int dm2_v1_mode7_tile_cache_node(
 int dm2_v1_mode7_tile_cache_action23_gate(
     const DM2_V1_Mode7TileCache *cache);
 
-/* Live evidence needed for the flags-3 stone-room prepass. Class-5 cells
- * also require a bounded record scan excluding DBE/DBF darkness terms.
- * The producer authenticates teleporter, creature and GDAT F8 inputs. */
+/* Live evidence needed for the flags-3 stone-room prepass. Class-1 cells
+ * retain separate F8/99 GDAT results; class-5 cells require a bounded live
+ * record scan, with DBE/DBF terms feeding v1e0978 apart from ceiling,
+ * teleporter and creature F8 light. */
 typedef struct {
     uint8_t valid;
     uint8_t teleporter_detail_known;
     uint8_t teleporter_present;
     uint8_t creature_query_known;
     uint8_t creature_present;
+    uint8_t record_chain_known;
     uint8_t record_chain_known_no_darkness;
     uint8_t ceiling_gdat_known;
     uint16_t ceiling_gdat_light_word;
+    uint8_t ceiling_weather_gdat_known;
+    uint16_t ceiling_weather_gdat_word;
     uint16_t creature_f8_word;
+    int16_t record_darkness;
 } DM2_V1_Mode7Flags3Evidence;
+
+/* SKULLWIN/c_light.cpp:386-405: decode one DBE/DBF darkness term. */
+int dm2_v1_mode7_record_darkness_term(
+    uint8_t record_type, uint16_t word_2, uint8_t byte_4,
+    int16_t *out_term);
 
 /* One action-0x17 source call for a future shared FIND_WALK_PATH core.
  * SK1C9A's start/prepass uses flags 3, while its edge loop uses flags 4.
@@ -218,6 +228,7 @@ typedef struct {
     uint8_t effective_flags;
     uint8_t source_flags;
     uint8_t distance;
+    uint8_t source_tile_type;
     uint8_t weather_index;
     uint8_t weather_delta;
     const DM2_V1_CLightFlags4FloorReceipt *floor;

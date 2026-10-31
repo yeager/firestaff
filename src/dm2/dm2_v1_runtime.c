@@ -2222,7 +2222,7 @@ static int dm2_runtime_mode7_step(
 #undef DM2_LIGHT_EDGE_RETURN
 }
 
-static int dm2_runtime_mode7_flags3_class5_evidence(
+static int dm2_runtime_mode7_flags3_evidence(
     DM2_V1_RuntimeState *rt, int map, int x, int y,
     const DM2_V1_CLightStoneRoomReceipt *room,
     DM2_V1_Mode7Flags3Evidence *evidence)
@@ -2235,14 +2235,41 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
     int16_t creature = (int16_t)0xffff;
     unsigned length = 0u;
     uint16_t light_word = 0u;
+    uint16_t weather_word = 0u;
+    int32_t record_darkness = 0;
+    int class1_ornament;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
-        !rt->record_pools_valid || (room->raw_tile >> 5) != 5u)
+        !rt->record_pools_valid ||
+        !((room->raw_tile >> 5) == 5u ||
+          ((room->raw_tile >> 5) == 2u &&
+           room->first_record_link == DM2_THING_NULL_MARKER) ||
+          (room->source_tile_type >= 0x10u &&
+           room->source_tile_type <= 0x13u &&
+           room->first_record_link == DM2_THING_END_MARKER) ||
+          (room->raw_tile == 0x30u &&
+           room->source_tile_type == 1u)))
         return 0;
+    class1_ornament = room->raw_tile == 0x30u &&
+        room->source_tile_type == 1u;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
     memset(evidence, 0, sizeof(*evidence));
+    if (room->source_tile_type >= 0x10u &&
+        room->source_tile_type <= 0x13u) {
+        if (room->first_record_link != DM2_THING_END_MARKER) return 0;
+        /* c_light.cpp:310-435: empty class-3/4 summary chains cannot add a
+         * ground-record term, and an empty chain proves no creature F8 term. */
+        evidence->record_chain_known = 1u;
+        evidence->record_chain_known_no_darkness = 1u;
+        evidence->creature_query_known = 1u;
+        evidence->valid = 1u;
+        return 1;
+    }
     link = (int16_t)room->first_record_link;
+    if ((room->raw_tile >> 5) == 2u &&
+        room->first_record_link == DM2_THING_NULL_MARKER)
+        link = (int16_t)DM2_THING_END_MARKER;
     while (link != (int16_t)0xfffe) {
         unsigned type;
         int16_t next;
@@ -2254,10 +2281,30 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
             if (creature != (int16_t)0xffff) return 0;
             creature = link;
         }
-        if (type == 14u || type == 15u) return 0;
+        if (type == 14u || type == 15u) {
+            const DM2_V1_RecordPool *pool =
+                &rt->record_pools.pools[type];
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, link);
+            uint16_t word_2;
+            int16_t term;
+            if (!record || pool->record_size < (type == 14u ? 5 : 4))
+                return 0;
+            word_2 = rt->record_pools.source_words_big_endian
+                ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                : (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+            if (!dm2_v1_mode7_record_darkness_term(
+                    (uint8_t)type, word_2,
+                    type == 14u ? record[4] : 0u, &term)) return 0;
+            record_darkness += term;
+            if (record_darkness < INT16_MIN ||
+                record_darkness > INT16_MAX) return 0;
+        }
         link = next;
     }
-    evidence->record_chain_known_no_darkness = 1u;
+    evidence->record_chain_known = 1u;
+    evidence->record_darkness = (int16_t)record_darkness;
+    evidence->record_chain_known_no_darkness = record_darkness == 0;
     evidence->creature_query_known = 1u;
     if (creature != (int16_t)0xffff) {
         uint8_t cls1 = dm2_runtime_attack_cls1(rt, (uint16_t)creature);
@@ -2271,23 +2318,36 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
         evidence->creature_present = 1u;
         evidence->creature_f8_word = f8;
     }
-    memset(&detail, 0, sizeof(detail));
-    memset(&detail_receipt, 0, sizeof(detail_receipt));
-    if (dm2_v1_skproject_get_teleporter_detail_dungeon(
-            dungeon, &rt->record_pools, map, x, y,
-            &detail, &detail_receipt)) {
-        if (!detail_receipt.valid) return 0;
-        evidence->teleporter_present = 1u;
-    } else if (!detail_receipt.blocked_tile_not_teleporter) {
-        return 0;
+    if (!class1_ornament) {
+        memset(&detail, 0, sizeof(detail));
+        memset(&detail_receipt, 0, sizeof(detail_receipt));
+        if (dm2_v1_skproject_get_teleporter_detail_dungeon(
+                dungeon, &rt->record_pools, map, x, y,
+                &detail, &detail_receipt)) {
+            if (!detail_receipt.valid) return 0;
+            evidence->teleporter_present = 1u;
+        } else if (!detail_receipt.blocked_tile_not_teleporter) {
+            return 0;
+        }
+        evidence->teleporter_detail_known = 1u;
     }
-    evidence->teleporter_detail_known = 1u;
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
-        !dm2_v1_query_gdat_entry_data_index(loader, 10,
-            room->ceiling_ornament_word & 0xffu, 11, 0xf8,
-            &light_word)) return 0;
+    if ((room->ceiling_ornament_word & 0xffu) != 0xffu) {
+        /* SKULLWIN/c_light.cpp:252-264 queries type-11 F8 and 99 on the
+         * class-1 ornament; the latter independently selects weather light. */
+        if (!dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room->ceiling_ornament_word & 0xffu, 11, 0xf8,
+                &light_word)) return 0;
+        if (class1_ornament &&
+            !dm2_v1_query_gdat_entry_data_index(loader, 10,
+                room->ceiling_ornament_word & 0xffu, 11, 99,
+                &weather_word)) return 0;
+    }
     evidence->ceiling_gdat_known = 1u;
     evidence->ceiling_gdat_light_word = light_word;
+    if (class1_ornament) {
+        evidence->ceiling_weather_gdat_known = 1u;
+        evidence->ceiling_weather_gdat_word = weather_word;
+    }
     evidence->valid = 1u;
     return 1;
 }
@@ -2327,6 +2387,7 @@ static int dm2_runtime_mode7_on_node(
     node.cached_tile = walk->cache.tile;
     node.effective_flags = effective_flags;
     node.source_flags = (uint8_t)source_flags;
+    node.source_tile_type = 0u;
     node.distance = (uint8_t)score;
     if (!dm2_v1_mode7_tile_cache_action23_gate(&walk->cache)) {
         result = dm2_v1_mode7_on_node(&node,
@@ -2346,33 +2407,50 @@ static int dm2_runtime_mode7_on_node(
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (raw < 0 || first < -1) goto unknown;
-    if (source_flags == 3u && (raw >> 5) == 5) {
+    node.source_tile_type = (uint8_t)(raw >> 5);
+    if (source_flags == 3u && (raw >> 5) == 0) {
+        branch = 34u;
+    } else if (source_flags == 3u && (raw >> 5) == 5) {
         branch = 27u;
         if (!dm2_v1_dungeon_c_light_stone_room_receipt(
                 dungeon, loader, map, x, y,
                 (uint32_t)rt->tick_count, &room) &&
             !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
-        if (!dm2_runtime_mode7_flags3_class5_evidence(
+        if (!dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
-    } else if (source_flags == 3u && (raw >> 5) == 1) {
-        branch = 28u;
-        uint16_t ceiling_word = 0u;
-        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
-                dungeon, loader, map, x, y, &room)) goto unknown;
-        /* Source type-11 GDAT lookup returns zero for an absent F8 entry.
-         * A nonzero value needs the remaining class-1 prepass branches. */
-        if (dm2_v1_query_gdat_entry_data_index(loader, 10,
-                room.ceiling_ornament_index, 11, 0xf8,
-                &ceiling_word) && ceiling_word != 0u) goto unknown;
-        memset(&prepass, 0, sizeof(prepass));
-        prepass.valid = 1u;
-        prepass.ceiling_gdat_known = 1u;
-        prepass.ceiling_gdat_light_word = ceiling_word;
+    } else if (source_flags == 3u && (raw >> 5) == 2 && first == -1) {
+        branch = 33u;
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+                dungeon, loader, map, x, y,
+                (uint32_t)rt->tick_count, &room) ||
+            !dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
+    } else if (source_flags == 3u && raw == 0x30) {
+        branch = 28u;
+        if (!dm2_v1_dungeon_c_light_class1_floor_actuator_receipt(
+                dungeon, loader, map, x, y, &room)) goto unknown;
+        if (!dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
+        node.stone_room = &room;
+        node.prepass = &prepass;
+    } else if (source_flags == 3u &&
+               ((raw >> 5) == 3 || (raw >> 5) == 4)) {
+        branch = 35u;
+        /* skguivwp.cpp:2659-2707 summarizes class-3/4 as 0x10..0x13;
+         * this receipt admits only empty chains and the class-4 direction
+         * that does not redirect into an adjacent record owner. */
+        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+                dungeon, map, x, y, direction, &room) ||
+            !dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
+        node.stone_room = &room;
+        node.prepass = &prepass;
+        node.source_tile_type = room.source_tile_type;
     } else if (source_flags != 4u) {
         goto unknown;
     } else if ((raw >> 5) == 0) {
@@ -2396,6 +2474,12 @@ static int dm2_runtime_mode7_on_node(
                 dungeon, loader, map, x, y,
                 (uint32_t)rt->tick_count, &room)) goto unknown;
         node.stone_room = &room;
+    } else if ((raw >> 5) == 3 || (raw >> 5) == 4) {
+        branch = 36u;
+        if (!dm2_v1_dungeon_c_light_class34_empty_receipt(
+                dungeon, map, x, y, direction, &room)) goto unknown;
+        node.stone_room = &room;
+        node.source_tile_type = room.source_tile_type;
     } else goto unknown;
     result = dm2_v1_mode7_on_node(&node,
         &rt->c_light_visibility.v1e0974,
@@ -2430,11 +2514,12 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     rt->c_light_visibility.mode8_complete = 0u;
     rt->c_light_visibility.mode7_complete = 0u;
     rt->c_light_visibility.source_state_hash = 0u;
-    /* Only these original FM Towns starts have independently covered walk
-     * branches and a checked map-3/map-38 teleporter handoff. */
-    if (!((rt->dungeon_level == 3 && x == 13 && (y == 9 || y == 10)) ||
-          (rt->dungeon_level == 38 && x == 6 && (y == 5 || y == 6))) ||
-        !dm2_v1_runtime_light_source_identity(&identity) ||
+    /* skproject c_light.cpp::DM2_CHECK_RECOMPUTE_LIGHT (490-592) runs both
+     * walks for every dynamic-light map. Admit by authenticated live inputs
+     * and the complete source-walk receipts below, not by a short list of
+     * map and coordinate fixtures. Any unsupported tile/record branch still
+     * blocks the entire light transaction. */
+    if (!dm2_v1_runtime_light_source_identity(&identity) ||
         !identity.valid) return;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     raw_start = dm2_v1_dungeon_get_tile_raw(

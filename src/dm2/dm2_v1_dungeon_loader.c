@@ -6778,6 +6778,49 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_c_light_class34_empty_receipt(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    int direction, DM2_V1_CLightStoneRoomReceipt *out)
+{
+    int raw, first;
+    unsigned base;
+    unsigned source_side;
+    unsigned direction_side;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || direction < 0 || direction > 3) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || first != -1) return 0;
+    if (((unsigned)raw >> 5) == 3u) {
+        /* c_gui_vp.cpp:2659-2669: class 3 summarizes as 0x12/0x13. */
+        base = 0x12u;
+    } else if (((unsigned)raw >> 5) == 4u) {
+        /* c_gui_vp.cpp:2672-2707: class 4 summarizes as 0x10/0x11.
+         * A side mismatch follows an adjacent tile record chain; keep this
+         * receipt to the no-adjacent-route case until that owner is ported. */
+        source_side = ((unsigned)raw & 0x08u) >> 3;
+        direction_side = (unsigned)direction & 1u;
+        if (source_side != direction_side) return 0;
+        base = 0x10u;
+    } else {
+        return 0;
+    }
+    out->level = level;
+    out->x = x;
+    out->y = y;
+    out->raw_tile = (uint8_t)raw;
+    source_side = ((unsigned)raw & 0x08u) >> 3;
+    direction_side = (unsigned)direction & 1u;
+    out->source_tile_type = (uint8_t)(base +
+        (source_side != direction_side ? 1u : 0u));
+    out->first_record_link = DM2_THING_END_MARKER;
+    out->ceiling_ornament_word = 0x00ffu;
+    out->ceiling_ornament_index = 0xffu;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
@@ -6786,6 +6829,7 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     uint16_t first, sensor, creature, end, sensor_word;
     uint16_t graphics_word = 0u;
     int type, index, size, raw, graphicsset;
+    unsigned tail_length = 0u;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!d || !loader || !loader->loaded) return 0;
@@ -6806,15 +6850,28 @@ int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     db4 = dm2_v1_dungeon_get_thing_record(d, creature, &type, &index, &size);
     if (!db4 || type != 4 || size < 2) return 0;
     end = dm2_v1_dungeon_read_record_u16(d, db4);
-    if (end != DM2_THING_END_MARKER) return 0;
+    /* sklight.cpp:386-405 also consumes DBE/DBF links after the summarized
+     * DB0..DB3 prefix. Admit only those known light-record tail classes. */
+    while (end != DM2_THING_END_MARKER) {
+        const uint8_t *tail;
+        int tail_type, tail_index, tail_size;
+        if (++tail_length > 256u ||
+            (((end >> 10) & 0x0fu) != 14u &&
+             ((end >> 10) & 0x0fu) != 15u)) return 0;
+        tail = dm2_v1_dungeon_get_thing_record(
+            d, end, &tail_type, &tail_index, &tail_size);
+        if (!tail || tail_type != (int)((end >> 10) & 0x0fu) ||
+            tail_size < (tail_type == 14 ? 5 : 4)) return 0;
+        end = dm2_v1_dungeon_read_record_u16(d, tail);
+    }
     graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
     if (graphicsset < 0 || graphicsset > 15 ||
         dm2_v1_query_gdat_entry_data_index(loader, 8, graphicsset, 11,
                                             0x6b, &graphics_word)) return 0;
     /* skguivwp.cpp:2630-3077: b0 becomes summary type 1. With no GDAT
      * 0x6b and a DB3 0x27 for another map, word 5 stays initialized FF.
-     * DB4 ends the DB0..DB3 summary loop, then GET_CREATURE_AT handles it
-     * separately in sklight.cpp. */
+     * DB4 ends the DB0..DB3 summary loop; sklight.cpp then handles the
+     * creature separately and scans the admitted DBE/DBF tail for darkness. */
     out->level = level;
     out->x = x;
     out->y = y;

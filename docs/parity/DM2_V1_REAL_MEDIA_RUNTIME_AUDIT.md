@@ -64,6 +64,26 @@ assertion because no explicit DM2 corpus was selected for that standalone test.
 
 ## Remaining evidence work
 
+### Dynamic c_light platform coverage (2026-10-31)
+
+The supplied DOS `DUNGEON.DAT` descriptor scan reports dynamic-light maps 1–43; map 0 is static. `dm2_v1_runtime.c:dm2_runtime_try_light_mode8` now attempts the source mode-8/mode-7 walks at any position on an authenticated dynamic-light map. A commit still requires complete source-walk receipts; any unsupported tile or record branch blocks the transaction. Mode-7 flags-3 class-0 nodes now follow the source no-op branch at `c_light.cpp:233-243`, covered by a data-free regression. A new real-media regression targets FM Towns map 3 at `(8,4)`, outside the former four-position whitelist, but it could not be executed locally because `FIRESTAFF_DM2_FMTOWNS_ROOT` and local original-game media are absent. Existing original-media coverage remains limited to FM Towns maps 3/38 routes. DOS, Amiga, and Macintosh dynamic-runtime behavior is still unverified; the DOS New Game route reaches static-light map 0 at `(1,8)`. This remains a platform-coverage gap for skproject `SKULLWIN/c_light.cpp::DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and `DM2_CHECK_RECOMPUTE_LIGHT`.
+
+### DBE/DBF darkness terms in dynamic c_light (2026-10-31)
+
+The skproject `SKULLWIN/c_light.cpp:386-405, 470-481` scan contributes
+selector-qualified DBE/DBF record values to `v1e0978`, then applies the
+`table1d673d` distance loss with the source minimum of two. Firestaff now
+decodes DBE `FF80` byte-4 terms and DBF selector `2`/`30` high-byte terms,
+walks the live record chain with edition byte order and a 256-link bound, and
+feeds the result to the darkness accumulator independently of creature F8.
+The class-5 source receipt admits only DBE/DBF tails after the authenticated
+DB1/DB3/DB4 prefix. Unit regressions cover selector decoding and the separate
+distance accumulator; the existing FM Towns real-media M11 gameplay test and
+DOS descriptor receipt test pass. The FM Towns test proves its established
+map-3/map-38 runtime route, but does not claim that a retail cell with a
+nonzero DBE/DBF term was encountered. DOS, Amiga, and Macintosh dynamic
+runtime starts and DBE/DBF original-media encounters remain open.
+
 ### Original DOS capture intake (2026-08-31)
 
 The external DOSBox capture harness now accepts the supplied

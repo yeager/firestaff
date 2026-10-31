@@ -337,33 +337,55 @@ int dm2_v1_mode7_tile_cache_action23_gate(
     return dm2_v1_mode7_action23_samples_tile(cache->tile);
 }
 
-static int dm2_v1_mode7_flags3_class2_terms(
+static int dm2_v1_mode7_flags3_floor_terms(
     const DM2_V1_CLightStoneRoomReceipt *room,
     const DM2_V1_Mode7Flags3Evidence *evidence,
     uint8_t weather_index, uint8_t weather_delta,
-    int16_t *tile_light, int16_t *weather_light)
+    int16_t *tile_light, int16_t *weather_light,
+    int16_t *creature_light, int16_t *record_darkness)
 {
     static const int16_t weather_scale[6] = {99, 75, 50, 25, 1, 0};
     uint16_t light;
     unsigned index;
     if (!room || !room->valid ||
-        !(((room->raw_tile >> 5) == 2u &&
+        !(((room->raw_tile >> 5) == 1u && room->raw_tile == 0x30u &&
+            evidence && evidence->record_chain_known) ||
+          ((room->raw_tile >> 5) == 2u &&
            room->first_record_link == DM2_THING_NULL_MARKER) ||
           ((room->raw_tile >> 5) == 5u &&
            ((room->first_record_link >> 10) & 0x0fu) == 1u &&
-           evidence && evidence->record_chain_known_no_darkness)) ||
+           evidence && (evidence->record_chain_known ||
+                        evidence->record_chain_known_no_darkness))) ||
         (room->source_tile_type != 1u && room->source_tile_type != 2u) ||
         !evidence || !evidence->valid ||
-        !evidence->teleporter_detail_known ||
+        ((room->raw_tile >> 5) != 1u &&
+         !evidence->teleporter_detail_known) ||
         !evidence->creature_query_known || !evidence->ceiling_gdat_known ||
-        !tile_light || !weather_light) return 0;
+        !tile_light || !weather_light || !creature_light ||
+        !record_darkness) return 0;
     *tile_light = 0;
     *weather_light = 0;
-    /* sklight.cpp:292-350: flags 1 reads the class-1/2 ceiling ornament
-     * before flags 2 reads the live creature F8 term. The no-record room
-     * proves the DBE/DBF darkness chain empty for this narrow branch. */
-    if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
-        evidence->ceiling_gdat_light_word != 0u) {
+    *creature_light = 0;
+    *record_darkness = 0;
+    /* SKULLWIN/c_light.cpp:244-289 handles class-1 F8/99 before the later
+     * class-2/5 teleporter branch; class-1's F8 high bit can gate its light. */
+    if ((room->raw_tile >> 5) == 1u) {
+        if (!evidence->ceiling_weather_gdat_known) return 0;
+        if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+            evidence->ceiling_gdat_light_word != 0u) {
+            light = evidence->ceiling_gdat_light_word & 0x7fffu;
+            if (evidence->ceiling_weather_gdat_word != 0u) {
+                index = (unsigned)weather_index + (unsigned)weather_delta;
+                if (index > 5u) index = 5u;
+                *weather_light = (int16_t)((uint32_t)light *
+                    (uint32_t)weather_scale[index] / 100u);
+            } else if ((evidence->ceiling_gdat_light_word & 0x8000u) == 0u ||
+                       (room->ceiling_ornament_word & 0xff00u) != 0u) {
+                *tile_light = (int16_t)light;
+            }
+        }
+    } else if ((room->ceiling_ornament_word & 0xffu) != 0xffu &&
+               evidence->ceiling_gdat_light_word != 0u) {
         light = evidence->ceiling_gdat_light_word & 0x7fffu;
         if (evidence->teleporter_present) {
             index = (unsigned)weather_index + (unsigned)weather_delta;
@@ -376,8 +398,83 @@ static int dm2_v1_mode7_flags3_class2_terms(
         }
     }
     if (evidence->creature_present)
-        *tile_light = (int16_t)((uint16_t)*tile_light +
-            (evidence->creature_f8_word & 0x7fffu));
+        *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
+    if ((room->raw_tile >> 5) == 5u) {
+        if (evidence->record_chain_known)
+            *record_darkness = evidence->record_darkness;
+        else if (!evidence->record_chain_known_no_darkness)
+            return 0;
+    }
+    return 1;
+}
+
+static int dm2_v1_mode7_class34_empty_room(
+    const DM2_V1_CLightStoneRoomReceipt *room)
+{
+    unsigned raw_class;
+    if (!room || !room->valid ||
+        room->first_record_link != DM2_THING_END_MARKER) return 0;
+    raw_class = room->raw_tile >> 5;
+    if (raw_class == 3u)
+        return room->source_tile_type == 0x12u ||
+               room->source_tile_type == 0x13u;
+    if (raw_class == 4u)
+        return room->source_tile_type == 0x10u ||
+               room->source_tile_type == 0x11u;
+    return 0;
+}
+
+static int dm2_v1_mode7_class34_empty_noop(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    const DM2_V1_Mode7Flags3Evidence *evidence)
+{
+    if (!dm2_v1_mode7_class34_empty_room(room) ||
+        !evidence || !evidence->valid ||
+        !evidence->record_chain_known ||
+        !evidence->record_chain_known_no_darkness ||
+        !evidence->creature_query_known || evidence->creature_present)
+        return 0;
+    /* SKULLWIN/c_light.cpp:310-435: with an accepted summary type 0x10..13,
+     * flags 3/4 contribute through the ground-record and creature paths.
+     * Empty records and an absent creature leave both accumulators unchanged. */
+    return 1;
+}
+
+static int dm2_v1_mode7_flags4_class34_empty_terms(
+    const DM2_V1_CLightStoneRoomReceipt *room,
+    int16_t *out_tile_light, int16_t *out_darkness,
+    int16_t *out_weather_light)
+{
+    if (!dm2_v1_mode7_class34_empty_room(room) ||
+        !out_tile_light || !out_darkness || !out_weather_light)
+        return 0;
+    /* SKULLWIN/c_light.cpp:310-435: flags 4 skip the class-0 floor,
+     * ceiling and ground-record branches. An empty accepted class-3/4
+     * summary has no creature F8 term either. */
+    *out_tile_light = 0;
+    *out_darkness = 0;
+    *out_weather_light = 0;
+    return 1;
+}
+
+int dm2_v1_mode7_record_darkness_term(
+    uint8_t record_type, uint16_t word_2, uint8_t byte_4,
+    int16_t *out_term)
+{
+    int term = 0;
+    if (!out_term || (record_type != 14u && record_type != 15u)) return 0;
+    if (record_type == 14u) {
+        /* SKULLWIN/c_light.cpp:386-397: DBE needs selector FF80. */
+        if (word_2 == 0xff80u) term = (int)(byte_4 / 2u) - 45;
+    } else {
+        /* SKULLWIN/c_light.cpp:398-405 accepts a zero low-seven-bit selector
+         * as well as selectors 2 and 30. Each admitted DBF term contributes
+         * half of word_2's high byte; other nonzero selectors are ignored. */
+        uint16_t selector = word_2 & 0x007fu;
+        if (selector == 0u || selector == 2u || selector == 0x30u)
+            term = (int)((word_2 >> 8) / 2u);
+    }
+    *out_term = (int16_t)term;
     return 1;
 }
 
@@ -386,12 +483,22 @@ int dm2_v1_mode7_on_node(
     int16_t *v1e0974, int16_t *v1e0978)
 {
     int16_t tile_light = 0, darkness = 0, weather_light = 0;
+    int16_t creature_light = 0, record_darkness = 0;
     if (!node || !v1e0974 || !v1e0978) return -1;
     if (node->source_flags != 3u && node->source_flags != 4u) return -1;
     /* Both SK1C9A action-23 call sites test v1e08ae bit 0x10 before
      * entering ADD_BACKGROUND_LIGHT_FROM_TILE. */
     if (!dm2_v1_mode7_action23_samples_tile(node->cached_tile)) return 0;
     if (node->source_flags == 3u) {
+        if (node->source_tile_type >= 0x10u &&
+            node->source_tile_type <= 0x13u) {
+            if (!dm2_v1_mode7_class34_empty_noop(
+                    node->stone_room, node->prepass)) return -1;
+            return 1;
+        }
+        /* SKProject c_light.cpp:233-243: a summarized class-0 tile with
+         * mode-7 flags 3 exits to L_fin before any GDAT or record query. */
+        if (node->source_tile_type == 0u) return 1;
         /* sklight.cpp:316-323 exits before teleporter, record and creature
          * probes when the ceiling F8 query returns zero. */
         if (node->stone_room && node->stone_room->valid &&
@@ -401,18 +508,32 @@ int dm2_v1_mode7_on_node(
             node->prepass->ceiling_gdat_known &&
             node->prepass->ceiling_gdat_light_word == 0u)
             return 1;
-        if (node->distance > 8u || node->floor ||
-            !dm2_v1_mode7_flags3_class2_terms(
+        if (node->floor ||
+            !dm2_v1_mode7_flags3_floor_terms(
                 node->stone_room, node->prepass,
                 node->weather_index, node->weather_delta,
-                &tile_light, &weather_light)) return -1;
-        return dm2_v1_mode7_light_accumulate_tile(
-            node->distance, tile_light, 0, weather_light,
-            v1e0974, v1e0978) ? 1 : -1;
+                &tile_light, &weather_light, &creature_light,
+                &record_darkness)) return -1;
+        /* sklight.cpp:455-481: ceiling/teleporter light (vw_24) uses
+         * table1d672b and becomes zero past distance 8. Creature F8 light
+         * remains in RG6, uses table1d673d, and still contributes past 8. */
+        /* Keep the two source accumulators distinct: the first argument
+         * receives RG6, while the weather argument receives vw_24. */
+        {
+            int16_t ceiling_light = (int16_t)((uint16_t)tile_light +
+                                               (uint16_t)weather_light);
+            if (node->distance > 8u) ceiling_light = 0;
+            return dm2_v1_mode7_light_accumulate_tile(
+                node->distance, creature_light, record_darkness,
+                ceiling_light,
+                v1e0974, v1e0978) ? 1 : -1;
+        }
     }
     if ((node->effective_flags & 2u) == 0u) return 0;
-    if (node->distance > 8u ||
-        (!!node->floor == !!node->stone_room)) return -1;
+    /* sklight.cpp:455-481 only clears vw_24 above distance eight. RG6 and
+     * RG5 still use table1d673d at min(distance, 5), retaining the source
+     * minimum of two. Do not reject the whole flags-4 node here. */
+    if (!!node->floor == !!node->stone_room) return -1;
     if (node->floor) {
         if (!dm2_v1_mode7_flags4_floor_terms(
                 node->floor, node->weather_index, node->weather_delta,
@@ -424,6 +545,9 @@ int dm2_v1_mode7_on_node(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light) &&
                !dm2_v1_mode7_flags4_class5_terms(
+                   node->stone_room, &tile_light, &darkness,
+                   &weather_light) &&
+               !dm2_v1_mode7_flags4_class34_empty_terms(
                    node->stone_room, &tile_light, &darkness,
                    &weather_light)) return -1;
     if (!dm2_v1_mode7_light_accumulate_tile(

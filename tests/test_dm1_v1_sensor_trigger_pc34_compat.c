@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "memory_sensor_execution_pc34_compat.h"
 
 static int g_pass = 0, g_fail = 0;
 
@@ -916,13 +917,13 @@ static void test_floor_party_possession_runtime_uses_party_context(void) {
           "Runtime C008: context-free wrapper fails closed");
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 0,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 0,
           "Runtime C008: missing icon does not trigger TOGGLE");
 
     party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = carried;
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 1,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1,
           "Runtime C008: carried icon triggers remote effect");
     CHECK(effects.effects[0].textIndex == DM1_EFFECT_TOGGLE &&
               effects.effects[0].destMapX == 1 &&
@@ -933,12 +934,12 @@ static void test_floor_party_possession_runtime_uses_party_context(void) {
     sensors[0].effect = DM1_EFFECT_HOLD;
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
               effects.effects[0].textIndex == DM1_EFFECT_CLEAR,
           "Runtime C008: HOLD clears when icon is absent");
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, carried, &effects) == 1 && effects.count == 1 &&
+              0, &party, carried, &effects) == 1 && effects.count == 1 &&
               effects.effects[0].textIndex == DM1_EFFECT_SET,
           "Runtime C008: G4055 leader-hand icon resolves HOLD as SET");
 }
@@ -1122,6 +1123,7 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     struct DungeonSensor_Compat sensors[1];
     struct SensorEffectList_Compat effects;
     struct SensorTriggerResult_Compat dispatch;
+    struct PartyState_Compat party;
     int i;
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1129,6 +1131,7 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     memset(&tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
     memset(sensors, 0, sizeof(sensors));
+    memset(&party, 0, sizeof(party));
     for (i = 0; i < 4; ++i) {
         squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         squareFirstThings[i] = THING_ENDOFLIST;
@@ -1155,14 +1158,54 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     things.sensors = sensors;
     things.sensorCount = 1;
     things.loaded = 1;
+    party.championCount = 1;
+    party.direction = 0;
 
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
-                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &effects) == 1 && effects.count == 0,
+          "Runtime C003: context-free party passage cannot guess champion count");
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        0, &party, THING_NONE, &effects);
     CHECK(effects.count == 1, "Runtime C003: party plate emits one remote effect");
     CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
           "Runtime C003: party plate emits remote toggle");
     CHECK(effects.effects[0].destMapX == 1 && effects.effects[0].destMapY == 1,
           "Runtime C003: party plate targets door square (1,1)");
+
+    sensors[0].sensorData = 2u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        0, &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C003: direction-coded plate rejects the wrong party direction");
+    sensors[0].sensorData = 1u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        0, &party, THING_NONE, &effects);
+    CHECK(effects.count == 1,
+          "Runtime C003: direction-coded plate accepts ordinal party direction");
+
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+    sensors[0].sensorData = 0u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        0, &party, THING_NONE, &effects);
+    CHECK(effects.count == 1,
+          "Runtime C001: floor pad triggers on a fresh party entry");
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        1, &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C001: floor pad does not retrigger when party remains on square");
+
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        1, &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C002: partySquare suppresses floor party/creature sensor");
 
     memset(&dispatch, 0, sizeof(dispatch));
     F0724_SENSOR_ResolveEffectDispatch_Compat(&sensors[0], DM1_EFFECT_TOGGLE,
@@ -1177,6 +1220,77 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
           "Runtime C003 door gate: non-wall door target uses northwest cell");
     CHECK(dispatch.delayTicks == 4,
           "Runtime C003 door gate: door event delay comes from sensor value");
+}
+
+/* ReDMCSB MOVESENS.C F0276 -> F0272 -> F0270: a floor C10 local effect
+ * passes CM1_CELL_ANY, so it awards split 300 Steal XP. */
+static void test_floor_c10_local_steal_xp_effect(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct PartyState_Compat party;
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(&party, 0, sizeof(party));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    squares[2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY, 0, DM1_EFFECT_SET,
+                             0, 0, 0, 0, 1, 0, 0, 0);
+    sensors[0].localMultiple = DM1_EFFECT_ADD_300XP_STEAL_SKILL;
+    sensors[0].onceOnly = 1;
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.loaded = 1;
+    party.championCount = 2;
+
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1,
+          "Runtime C003 C10: party walk-on emits local XP effect");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_LOCAL_STEAL_XP &&
+              effects.effects[0].textIndex == DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
+              effects.effects[0].destCell == -1 &&
+              effects.effects[0].sourceSensorIndex == 0 &&
+              effects.effects[0].sourceOnceOnly == 1,
+          "Runtime C003 C10: preserves CELL_ANY and F0272 owner receipts");
+
+    sensors[0].localMultiple = DM1_EFFECT_CLEAR;
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].kind == SENSOR_EFFECT_LOCAL_DEFERRED &&
+              effects.effects[0].textIndex == DM1_EFFECT_CLEAR &&
+              effects.effects[0].destMapIndex == 0 &&
+              effects.effects[0].destMapX == 1 &&
+              effects.effects[0].destMapY == 0 &&
+              effects.effects[0].destCell == -1,
+          "Runtime C003 local rotation: keeps the source F0270/F0271 receipt");
 }
 
 /* ----------------------------------------------------------------
@@ -1952,7 +2066,7 @@ static void test_process_wall_click(void) {
 }
 
 /* ----------------------------------------------------------------
- *  Test F0726: wall sensor rotation is per-cell and deferred
+ *  Test F0726: wall click selects one cell and defers its rotation
  *  Source: MOVESENS.C:F0275 counts sensors per cell at 1368-1384,
  *  C011 schedules F0270 at 1429-1454, and F0271 applies the pending
  *  rotation after the full sensor scan at 1549.
@@ -1981,9 +2095,8 @@ static void test_process_wall_click_rotation_per_cell_deferred(void) {
     ctx.leaderIndex = 0;
 
     F0726_SENSOR_ProcessWallClick_Compat(sensors, 2, sensorData, 2, &ctx, &results);
-    CHECK(results.count == 2, "Wall rotate: unrelated later cell does not suppress C011 last-in-cell trigger");
+    CHECK(results.count == 1, "Wall rotate: only sensors on the clicked cell are evaluated");
     CHECK(results.results[0].sensorIndex == 0, "Wall rotate: C011 result remains first");
-    CHECK(results.results[1].sensorIndex == 1, "Wall rotate: later sensor still processes before deferred rotation");
     CHECK(results.rotationPending == 1, "Wall rotate: rotation pending");
     CHECK(results.rotationEffect == DM1_EFFECT_TOGGLE, "Wall rotate: deferred rotation effect is TOGGLE");
     CHECK(results.rotationMapX == 12, "Wall rotate: rotation source X preserved");
@@ -2000,6 +2113,8 @@ static void test_floor_version_checker(void) {
     struct DungeonSensor_Compat sensor;
     struct FloorSensorContext_Compat ctx;
     struct SensorTriggerResult_Compat result;
+    static const int limits[] = {14, 20, 21, 30, 31, 33, 34, 35, 36};
+    size_t i;
 
     /* data=20 -> version <= 20 -> triggers for DM1 V1 */
     sensor = make_sensor(9, 20, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 1, 1, 0);
@@ -2017,6 +2132,115 @@ static void test_floor_version_checker(void) {
     memset(&result, 0, sizeof(result));
     F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "Version checker: data=21 does NOT trigger for V1");
+
+    ctx.editionPolicyBound = 1;
+    ctx.floorC009Supported = 1;
+    for (i = 0; i < sizeof(limits) / sizeof(limits[0]); ++i) {
+        ctx.floorC009VersionLimit = limits[i];
+        sensor.sensorData = (unsigned short)limits[i];
+        F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+        CHECK(result.triggered == 1, "Version checker: admitted edition threshold triggers");
+        sensor.sensorData = (unsigned short)(limits[i] + 1);
+        F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+        CHECK(result.triggered == 0, "Version checker: above edition threshold is rejected");
+    }
+    ctx.floorC009Supported = 0;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Version checker: editions without MEDIA278 skip C009");
+}
+
+static void test_floor_sensor_edition_policy(void) {
+    struct Dm1SensorEditionPolicy_Compat policy;
+    struct DungeonSensor_Compat sensor;
+    struct FloorSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+    static const char* const admittedGraphics[] = {
+        "c10c512f63461ebe79b5ac365115b61b",
+        "edf47d7da5de8184604d6d80477ef01f",
+        "fa6b1aa29e191418713bf2cda93d962e",
+        "f934d97e43e1ba6e5159839acbcd0611",
+        "b3cfd84e44cdf07ce2eeba47e87f772b",
+        "7eee396993745e8af212f44d75ff6c1a",
+        "5095a13692702235d2e74f6b2b1367a9",
+        "9ce2eaf7a9e78620e3f17594437caffa",
+        "2bdc5f431f84c0ece738f54dbd787c3b",
+        "0d7af44dd14f383464288abdcec76afc",
+        "6a2f135b53c2220f0251fa103e2a6e7e",
+        "dd373954b3fb127db7387946131ea322",
+        "0679e39da9dcc2e855cb33c6c64ddcb5",
+        "b35931b55db649a1bd2d415b61b29801",
+        "7f9458e4a3972d06e649a6fa85a7f34b",
+        "491ca939f9abb33ceeb26619b841fe91",
+        "1045a36952e64eb2bc7b4c7b2965b112"
+    };
+    size_t editionIndex;
+
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "b3cfd84e44cdf07ce2eeba47e87f772b", &policy) == 1 &&
+              policy.floorC009Supported == 0 &&
+              policy.floorC005PartyTypeFix == 0,
+          "Edition policy: Atari ST 1.x excludes C009 and retains old C005 path");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "b35931b55db649a1bd2d415b61b29801", &policy) == 1 &&
+              policy.floorC009Supported == 1 &&
+              policy.floorC009VersionLimit == 21 &&
+              policy.floorC005PartyTypeFix == 0,
+          "Edition policy: Amiga 2.1 uses MEDIA342 limit and legacy C005");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "7f9458e4a3972d06e649a6fa85a7f34b", &policy) == 1 &&
+              policy.floorC009Supported == 1 &&
+              policy.floorC009VersionLimit == 36 &&
+              policy.floorC005PartyTypeFix == 1 &&
+              policy.f0268PriorityByEffect == 1,
+          "Edition policy: Amiga 3.6 uses MEDIA744 and MEDIA716 sensor rules");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "1045a36952e64eb2bc7b4c7b2965b112", &policy) == 1 &&
+              policy.floorC009VersionLimit == 34 &&
+              policy.floorC005PartyTypeFix == 1 &&
+              policy.f0268PriorityByEffect == 0,
+          "Edition policy: IIGS uses MEDIA707 limit and fixed C005");
+    {
+        int priority = -1;
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_SET, 1, &priority) == 1 && priority == 1,
+              "MEDIA716 F0268 SET receives priority 1");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_CLEAR, 1, &priority) == 1 && priority == 3,
+              "MEDIA716 F0268 CLEAR receives priority 3");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_TOGGLE, 1, &priority) == 1 && priority == 2,
+              "MEDIA716 F0268 TOGGLE receives priority 2");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_CLEAR, 0, &priority) == 1 && priority == 0,
+              "other editions keep F0268 priority zero");
+        CHECK(DM1_V1_F0268_EventPriority_Compat(
+                  DM1_EFFECT_HOLD, 1, &priority) == 0,
+              "unresolved F0268 HOLD cannot be assigned a priority");
+    }
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "not-an-admitted-edition", &policy) == 0,
+          "Edition policy: unknown graphics identity does not resolve");
+    for (editionIndex = 0;
+         editionIndex < sizeof(admittedGraphics) / sizeof(admittedGraphics[0]);
+         ++editionIndex) {
+        CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+                  admittedGraphics[editionIndex], &policy) == 1,
+              "Edition policy: every M12-supported DM1 graphics identity resolves");
+    }
+
+    sensor = make_sensor(DM1_SENSOR_FLOOR_PARTY_ON_STAIRS, 0,
+                         DM1_EFFECT_SET, 0, 0, 0, 0, 0, 1, 1, 0);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.thingType = DM1_TRIGGER_SOURCE_PARTY;
+    ctx.squareType = DM1_SQUARE_STAIRS;
+    ctx.isAddition = 1;
+    ctx.editionPolicyBound = 1;
+    ctx.floorC005PartyTypeFix = 0;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "C005: legacy wrong-variable edition does not trigger");
+    ctx.floorC005PartyTypeFix = 1;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "C005: corrected edition tests the party and stairs square");
 }
 
 /* ----------------------------------------------------------------
@@ -2057,6 +2281,71 @@ static void test_floor_group_generator_skipped(void) {
     CHECK(result.triggered == 0, "Group generator: skipped in floor processing");
 }
 
+/* ReDMCSB F0276 C004 fires when an object of the sensor's type is added to
+ * or removed from a floor square, provided no matching object was already
+ * there. The M11 caller owns the chain mutation; this tests the bounded
+ * PC34 effect adapter around that mutation. */
+static void test_object_floor_change_runtime(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char square = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                            DUNGEON_SQUARE_MASK_THING_LIST);
+    unsigned char weaponRaw[4] = { 0, 0, 2, 0x90u };
+    unsigned short sft[1] = { make_thing(THING_TYPE_SENSOR, 0, 0) };
+    unsigned short object = make_thing(THING_TYPE_WEAPON, 0, 0);
+    struct SensorEffectList_Compat effects;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(sensors, 0, sizeof(sensors));
+    map.width = map.height = 1;
+    tiles.squareData = &square;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = dungeon.tilesLoaded = 1;
+    things.loaded = 1;
+    things.squareFirstThings = sft;
+    things.squareFirstThingCount = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    weapons[0].next = THING_ENDOFLIST;
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_OBJECT, 2,
+                             DM1_EFFECT_TOGGLE, 0, 0, 1, 0,
+                             0, 0, 0, 0);
+    sensors[0].next = object;
+
+    CHECK(F0276_SENSOR_ProcessObjectFloorChange_Compat(
+              &dungeon, &things, 0, 0, 0, object, 1, &effects) == 1,
+          "F0276 C004 add: bounded floor object pass succeeds");
+    CHECK(effects.count == 1 &&
+          effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "F0276 C004 add: matching object sensor emits effect");
+    CHECK(effects.effects[0].sourceAudible == 1,
+          "F0276 C004 add: audible bit reaches the effect receipt");
+
+    /* After unlink, the sensor remains the square-chain head. */
+    sensors[0].next = THING_ENDOFLIST;
+    sensors[0].revertEffect = 1; /* Source F0276 XORs add/remove with revert. */
+    CHECK(F0276_SENSOR_ProcessObjectFloorChange_Compat(
+              &dungeon, &things, 0, 0, 0, object, 0, &effects) == 1,
+          "F0276 C004 remove: bounded floor object pass succeeds");
+    CHECK(effects.count == 1,
+          "F0276 C004 remove: matching object sensor emits effect");
+}
+
 /* ================================================================ */
 
 int main(void) {
@@ -2084,6 +2373,7 @@ int main(void) {
     test_floor_pressure_plate_runtime_party_object_weight_gate();
     test_floor_pressure_plate_runtime_multi_item_weight_gate();
     test_floor_party_plate_runtime_door_event_gate();
+    test_floor_c10_local_steal_xp_effect();
     test_pressure_plate_actuator_dispatch_per_square_type();
     test_wall_ornament_click();
     test_wall_click_specific_object();
@@ -2106,8 +2396,10 @@ int main(void) {
     test_process_wall_click();
     test_process_wall_click_rotation_per_cell_deferred();
     test_floor_version_checker();
+    test_floor_sensor_edition_policy();
     test_floor_disabled();
     test_floor_group_generator_skipped();
+    test_object_floor_change_runtime();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

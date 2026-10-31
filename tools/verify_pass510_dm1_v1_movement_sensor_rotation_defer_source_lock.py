@@ -190,21 +190,19 @@ def firestaff_audit() -> dict[str, str]:
         "outList->effects[outList->count++] = tmp.effects[j];",
     ], "party enter/leave sensor execution walks sensors in source order")
 
-    # 2026-07-20 round 15 re-anchor (same-drift-family; confirmed pre-existing
-    # on f549ca808): the successful-step position update moved into the
-    # DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat applier
-    # (party->mapIndex = plan->newMapIndex inside
-    # dm1_v1_apply_successful_step_plan), but the source order is unchanged:
-    # WALK_OFF sensors -> position apply -> WALK_ON sensors -> successful-step
-    # timing, with blocked steps returning before this path.
+    # The movement core now supplies the source P0591_B_PartySquare argument.
+    # Same-square turns pass true for both sensor calls; normal successful
+    # movement passes false around the position update. The event order stays
+    # WALK_OFF -> position apply -> WALK_ON -> successful-step timing.
     require_order(movement_core, [
-        "F0718_SENSOR_ProcessPartyEnterLeave_Compat(",
-        "SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);",
+        "SENSOR_EVENT_WALK_OFF, 1, party, THING_NONE, &outResult->leaveEffects);",
+        "SENSOR_EVENT_WALK_ON, 1, party, THING_NONE, &outResult->enterEffects);",
+        "SENSOR_EVENT_WALK_OFF, 0, party, THING_NONE, &outResult->leaveEffects);",
         "struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat stepPlan;",
         "dm1_v1_apply_successful_step_plan(party, &stepPlan, outResult);",
-        "SENSOR_EVENT_WALK_ON, &outResult->enterEffects);",
+        "SENSOR_EVENT_WALK_ON, 0, party, THING_NONE, &outResult->enterEffects);",
         "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat",
-    ], "movement core keeps sensor side effects on the success-only path before timing")
+    ], "movement core preserves party-square state and keeps sensor processing on the success-only path")
     require_order(movement_core, [
         "static void dm1_v1_apply_successful_step_plan(",
         "party->mapIndex = plan->newMapIndex;",
@@ -221,7 +219,7 @@ def firestaff_audit() -> dict[str, str]:
 
     return {
         "sensorTrigger": "F0725/F0726 expose deferred rotationPending metadata instead of mutating sensor lists in-place",
-        "movementCore": "successful steps call party leave/enter sensors before successful-step timing; blocked steps return before this path",
+        "movementCore": "same-square turns pass partyOnSquare=true; successful steps pass false before/after position change; blocked steps return before this sensor path",
         "focusedCTests": "dm1_v1_sensor_trigger_pc34_compat and dm1_v1_command_movement_sensor_timing_pc34_compat",
     }
 
@@ -234,7 +232,7 @@ def main() -> int:
         "status": "PASS510_DM1_V1_MOVEMENT_SENSOR_ROTATION_DEFER_SOURCE_LOCKED",
         "branch": git_out("branch", "--show-current"),
         "head": git_out("rev-parse", "HEAD"),
-        "redmcsbRoot": str(RED),
+        "redmcsbRoot": "operator-provided ReDMCSB Common/Source checkout",
         "redmcsbSha256": {
             "MOVESENS.C": sha256(RED / "MOVESENS.C"),
         },

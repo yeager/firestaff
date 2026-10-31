@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-30 ReDMCSB F0035 leader-hand name clear: M11's shared DM1/CSB V1
+leader-hand name renderer now invokes the source-mapped F0035 C017 black-fill
+adapter before the F0034 name draw. ReDMCSB `OBJECT.C:274-286` clears the same
+source-owned region; the focused adapter regression covers C017 and black
+dispatch, while original-asset capture and edition-specific rendering remain
+open. This is one narrow runtime integration, not proof of complete DM1 or
+CSB function/platform parity.
+
 2026-10-30 PC34 M12 startup route recheck: the authentic
 `m12_main_menu_dm1-pc_runtime_real_media` test passed. Selecting DM1 → PC from
 the no-game menu reached the PC34 first runtime, and the test confirmed that
@@ -2377,6 +2385,16 @@ parity.
   route passes after the changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
+  ReDMCSB MOVESENS.C F0270's floor C10 local effect now reaches M11 as a
+  typed local Steal-XP effect; the production WALK_ON consumer divides 300
+  across the source champion count and awards each living champion through
+  F0304. Its focused regression checks the CELL_ANY receipt. Cell-specific
+  leader-only C10 still needs the authenticated G0411 identity in the sensor
+  context; do not substitute the UI-selected champion. F0271's final
+  CLEAR/TOGGLE rotation now reaches the shared chain mutator after each
+  party F0276 batch. F0272 disables triggered OnceOnly sensors on the party
+  route and preserves raw Type_Data; other local effects, OnceOnly behavior
+  on other event paths and original-media sensor results remain open.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

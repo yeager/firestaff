@@ -1,5 +1,45 @@
 # Firestaff TODO — DM2
 
+2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:
+`dm2_runtime_try_light_mode8` now attempts authenticated dynamic-light maps
+without the former four-coordinate FM Towns gate; incomplete source walks still
+block the transaction. `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` flags 3 now resolves
+summarized class-0 nodes as no-op, matching `c_light.cpp:233-243`. Data-free
+mode-7 and visibility tests pass. The class-1 floor-actuator route now carries
+the source F8 and GDAT 99 weather terms through authenticated record/GDAT
+receipts; focused accumulator checks cover its light, weather and high-bit
+gates. A new HME-242 real-media regression for
+map 3 `(8,4)` compiles. That real-media test cannot run here because the
+original FM Towns archive is unavailable. Existing runtime proof remains
+FM Towns-only; DOS, Amiga, Macintosh and other-edition runtime coverage remains
+open, as do other record-derived light branches.
+
+Source comparison found concrete unresolved `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE`
+branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
+(:2497-3087) classifies raw class-3 tiles as summary types `0x12`/`0x13` and
+raw class-4 tiles as `0x10`/`0x11`, may redirect class-4 summaries to an
+adjacent tile according to the incoming direction, and carries the selected
+record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
+mode-7 class-3 summaries and direction-matched class-4 summaries when their
+record chain is empty. With authenticated absence of darkness and creatures,
+flags-3 contributes no term; flags-4 likewise leaves the accumulators unchanged.
+Focused direction, receipt, fail-closed evidence and accumulator regressions
+cover those cases. Record-bearing chains and class-4 direction mismatches that
+redirect to an adjacent record owner remain unresolved. Acceptance still
+requires source-owned record traversal and original-media dynamic-light evidence
+for every supported DM2 platform; the existing FM Towns-only runtime receipt
+does not close DOS, Amiga, or Macintosh behavior.
+
+2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
+The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record
+tails with source byte order and a 256-link limit. DBE selector `FF80` and DBF
+selectors `2`/`30` feed `v1e0978` using `table1d673d` and the source minimum of
+two, separately from creature F8. Focused term/accumulator checks, the DOS
+real-DUNGEON descriptor receipt, and the FM Towns M11 real-media gameplay test
+pass. The Towns test exercises its established map-3/map-38 lane but does not
+prove a retail nonzero DBE/DBF encounter. Other record-derived branches and
+dynamic-light starts on DOS, Amiga and Macintosh remain open.
+
 2026-10-30 Amiga HUD movement arrows: the authentic no-game Amiga runtime
 trace showed the source HUD plan had only the squad panel and party portraits;
 all six movement arrows were absent. SKProject

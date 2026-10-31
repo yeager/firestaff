@@ -79,6 +79,10 @@ int dm2_v1_record_pool_set_itemtype(DM2_V1_RecordPoolSet *set,
 int16_t dm2_v1_alloc_new_dbitem(DM2_V1_RecordPoolSet *set,
                                 uint16_t itemspec);
 
+/* Partial c_record.cpp:1167+ recycler. Relocates selected non-important
+ * DB5/6/8/10 records from other-map ground stacks or DB4 possessions, and
+ * applies the source DB7/DB9 direct-return clear-in-place path while
+ * preserving its owning link (DB9 also terminates its second link). */
 int16_t dm2_v1_alloc_new_dbitem_from_world(
     DM2_V1_RecordPoolSet *set, DM2_V1_DungeonData *dungeon,
     int current_map, uint16_t itemspec);

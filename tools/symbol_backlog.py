@@ -20,7 +20,14 @@ SKPROJECT_AUDIT = ROOT / "docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT
 SYMBOL_DISPOSITIONS = ROOT / "docs/reference/audits/SYMBOL_DISPOSITIONS.tsv"
 
 REDMCSB_OPEN = {"MISSING", "UNCERTAIN_NUMBERED_EVIDENCE"}
-SKPROJECT_OPEN = {"MISSING", "UNCERTAIN"}
+SKPROJECT_OPEN = {
+    "MISSING",
+    "UNCERTAIN",
+    "PARTIAL",
+    "STATIC_INPUT_ONLY",
+    "PARTIAL_SOURCE_OWNER",
+    "UNOWNED_SOURCE_MUTATION",
+}
 OPEN_DISPOSITIONS = {"", "OPEN", "NEEDS_IMPLEMENTATION", "NEEDS_VERIFICATION"}
 
 REDMCSB_RUNTIME_FAMILIES = {
@@ -116,8 +123,10 @@ def redmcsb_game(row: dict[str, str]) -> str:
 
 def priority(status: str, family: str, source: str) -> int:
     score = 0
-    if status in {"MISSING"}:
+    if status in {"MISSING", "UNOWNED_SOURCE_MUTATION"}:
         score += 100
+    if status in {"PARTIAL", "PARTIAL_SOURCE_OWNER", "STATIC_INPUT_ONLY"}:
+        score += 80
     if status in {"UNCERTAIN", "UNCERTAIN_NUMBERED_EVIDENCE"}:
         score += 60
     if family in REDMCSB_RUNTIME_FAMILIES:

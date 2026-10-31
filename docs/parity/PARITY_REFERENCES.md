@@ -168,8 +168,8 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 
 ### D4. DM2/Skullkeep source references
 - **skproject remote:** `https://github.com/gbsphenx/skproject`
-- **Locked master HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493e42aaf54c76157a7b062fb5b0526929e6`
-- **Locked tree:** `a095e458cfaaa0490b9c4d4d2adf88108a8ad92f`
+- **Locked master HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493`
+- **Locked tree:** `a09b748f8ce1a974a642965f3a48e925e202ef9f`
 - **Canonical N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
 - **Sphenx SKWin page:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 - **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`

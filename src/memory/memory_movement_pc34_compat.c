@@ -30,16 +30,49 @@ static unsigned short movement_first_square_thing(
     int mapX,
     int mapY)
 {
+    const struct DungeonMapDesc_Compat* map;
     int squareIndex;
+    int mapNumber;
+    int previousSquare;
+    int compactIndex = 0;
 
-    if (!dungeon || !things || !things->squareFirstThings) {
+    if (!dungeon || !things || !things->squareFirstThings ||
+        !dungeon->tilesLoaded || !dungeon->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) {
         return THING_NONE;
     }
-    squareIndex = movement_square_index(dungeon, mapIndex, mapX, mapY);
-    if (squareIndex < 0 || squareIndex >= things->squareFirstThingCount) {
+    map = &dungeon->maps[mapIndex];
+    if (!dungeon->tiles[mapIndex].squareData || mapX < 0 ||
+        mapX >= map->width || mapY < 0 || mapY >= map->height) {
         return THING_NONE;
     }
-    return things->squareFirstThings[squareIndex];
+    squareIndex = mapX * map->height + mapY;
+    if (!(dungeon->tiles[mapIndex].squareData[squareIndex] &
+          DUNGEON_SQUARE_MASK_THING_LIST)) {
+        return THING_NONE;
+    }
+
+    /* ReDMCSB F0160/F0161 index G0283 by the compact sequence of squares
+     * whose tile carries MASK0x0010_THING_LIST_PRESENT, not by raw tile
+     * ordinal. Count preceding flagged squares in all earlier maps and in
+     * this map before the requested square. */
+    for (mapNumber = 0; mapNumber < mapIndex; ++mapNumber) {
+        int i;
+        int count = dungeon->maps[mapNumber].width * dungeon->maps[mapNumber].height;
+        if (!dungeon->tiles[mapNumber].squareData) return THING_NONE;
+        for (i = 0; i < count; ++i) {
+            if (dungeon->tiles[mapNumber].squareData[i] &
+                DUNGEON_SQUARE_MASK_THING_LIST) ++compactIndex;
+        }
+    }
+    for (previousSquare = 0; previousSquare < squareIndex; ++previousSquare) {
+        if (dungeon->tiles[mapIndex].squareData[previousSquare] &
+            DUNGEON_SQUARE_MASK_THING_LIST) ++compactIndex;
+    }
+    if (compactIndex < 0 || compactIndex >= things->squareFirstThingCount) {
+        return THING_NONE;
+    }
+    return things->squareFirstThings[compactIndex];
 }
 
 static unsigned short movement_next_thing(

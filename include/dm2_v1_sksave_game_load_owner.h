@@ -275,7 +275,7 @@ int dm2_v1_sksave_game_load_owner_schedule_think_timer(
     uint8_t y,
     DM2_V1_CreatureScheduleReceipt *out_receipt);
 
-/* Read-only result from the DB0 direct-return portion of
+/* Read-only result from the direct-return portion of
  * DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  `found` names a record which the
  * original allocator would subsequently clear and return; this receipt does
  * neither.  The cursor is prospective until a complete ALLOC_NEW_RECORD
@@ -466,12 +466,12 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner,
     DM2_V1_SksaveDb0RecyclerCandidate *out_candidate);
 
-/* The source's non-mutating recycler candidate audit. DB0, DB2, DB3, DB7 and
- * DB9 may produce direct-return candidates; DB5/DB6/DB8/DB10 may produce a
- * source cut-only candidate after their byte guards. DB2/Text protected
- * records are never returned or mutated. DB4, creature-bearing DB14 tiles,
- * DB13, DB15 and malformed pools remain fail-closed until their source owners
- * are complete. */
+/* The source's non-mutating recycler candidate audit. Ordinary DB0/DB2/DB3/
+ * DB7/DB9 records may produce direct-return candidates; DB2 TextMode records
+ * stop the tile chain before candidate selection. DB5/DB6/DB8/DB10 may
+ * produce source cut/relocation candidates after their byte guards. DB4,
+ * creature-bearing DB14 tiles, DB13, DB15 and malformed pools remain
+ * fail-closed until their source owners are complete. */
 int dm2_v1_sksave_game_load_owner_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
     DM2_V1_SksaveRecyclerCandidate *out_candidate);
@@ -493,15 +493,24 @@ int dm2_v1_sksave_game_load_owner_missile_timer_candidate(
 int dm2_v1_sksave_game_load_owner_commit_db14_missile_delete(
     DM2_V1_SksaveGameLoadOwner *owner, uint16_t *out_record);
 
-/* Commit the source's DB0 direct-return path through a private owner.  This
+/* Commit the source's DB0 direct-return path through a private owner. This
  * clones the mutable record pools, applies ALLOC_NEW_RECORD's zero-and-mark
- * operation to the selected DB0 record, and advances ddat.v1e0426[0] only
- * after all steps succeed.  The owner remains inspection-only and the
- * operation never makes Resume or a runtime session playable.
+ * operation to the selected DB0 record in place (without cutting its map
+ * link), and advances ddat.v1e0426[0] only after all steps succeed. The owner
+ * remains inspection-only and the operation never makes Resume or a runtime
+ * session playable.
  *
  * Source: SKULLWIN/c_record.cpp:DB88-DBA5 and :1076-1139. */
 int dm2_v1_sksave_game_load_owner_commit_db0_recycler(
     DM2_V1_SksaveGameLoadOwner *owner, uint16_t *out_record);
+
+/* Commit the source ALLOC_NEW_RECORD clear-in-place transaction for the
+ * selected direct-return databases DB0/DB2/DB3/DB7/DB9. Candidate selection,
+ * cloned pool mutation, and the requested database's map cursor publish as
+ * one operation. DB9 retains its source-specific second OBJECT_END word. */
+int dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+    DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
+    uint16_t *out_record);
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner);
 

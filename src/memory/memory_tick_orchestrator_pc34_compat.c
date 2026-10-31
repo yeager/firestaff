@@ -5086,7 +5086,7 @@ static int orch_f0248_target_square_type_compat(
 /* ReDMCSB MOVESENS.C F0271: the last local rotation effect from a
  * processed sensor batch moves the first matching sensor behind the last
  * matching sensor in the contiguous sensor run. */
-static int orch_f0271_rotate_sensor_chain_compat(
+int F0271_SENSOR_ProcessRotation_Compat(
     struct GameWorld_Compat* world,
     int mapIndex,
     int mapX,
@@ -5155,14 +5155,41 @@ static int orch_f0271_rotate_sensor_chain_compat(
     return 1;
 }
 
+int F0272_SENSOR_DisableOnceOnly_Compat(
+    struct GameWorld_Compat* world,
+    int sensorIndex)
+{
+    struct DungeonThings_Compat* things;
+    struct DungeonSensor_Compat* sensor;
+    int stride;
+    if (!world || !world->things || sensorIndex < 0) return 0;
+    things = world->things;
+    if (!things->sensors || sensorIndex >= things->sensorCount) return 0;
+    sensor = &things->sensors[sensorIndex];
+    if (!sensor->onceOnly) return 0;
+
+    /* ReDMCSB MOVESENS.C:F0272 calls M044_SET_TYPE_DISABLED, which clears
+     * only M039_TYPE and preserves the sensor's nine data bits and flags. */
+    sensor->sensorType = DM1_SENSOR_DISABLED;
+    stride = s_orch_thing_data_byte_count[THING_TYPE_SENSOR];
+    if (things->rawThingData[THING_TYPE_SENSOR] && stride >= 4 &&
+        sensorIndex < things->thingCounts[THING_TYPE_SENSOR]) {
+        unsigned char* raw = things->rawThingData[THING_TYPE_SENSOR] +
+            sensorIndex * stride + 2;
+        raw[0] &= 0x80u;
+    }
+    return 1;
+}
+
 static int orch_f0248_schedule_remote_effect_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* source,
     const struct SensorTriggerResult_Compat* trigger)
 {
     struct TimelineEvent_Compat event;
+    int priority;
 
-    if (!world || !source || !trigger || !trigger->triggered ||
+    if (!world || !world->dungeon || !source || !trigger || !trigger->triggered ||
         trigger->isLocal ||
         (trigger->targetEventType != DM1_EVENT_WALL &&
          (trigger->targetEventType < DM1_EVENT_FAKEWALL ||
@@ -5181,6 +5208,11 @@ static int orch_f0248_schedule_remote_effect_compat(
     event.cell = trigger->targetCell;
     event.aux0 = trigger->targetEventType;
     event.aux1 = trigger->resolvedEffect;
+    if (!DM1_V1_F0268_EventPriority_Compat(
+            trigger->resolvedEffect,
+            world->dungeon->dm1SensorF0268PriorityByEffect,
+            &priority)) return 0;
+    event.aux4 = priority;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
@@ -5944,7 +5976,7 @@ static int orch_dispatch_wall_event_f0248_compat(
     }
 
     if (rotationEffect != DM1_EFFECT_NONE) {
-        applied |= orch_f0271_rotate_sensor_chain_compat(
+        applied |= F0271_SENSOR_ProcessRotation_Compat(
             world, ev->mapIndex, ev->mapX, ev->mapY, ev->cell,
             rotationEffect);
     }
@@ -9073,6 +9105,8 @@ static int orch_schedule_projectile_door_impact_followup_compat(
     struct GameWorld_Compat* world,
     const struct ProjectileTickResult_Compat* tickResult)
 {
+    struct TimelineEvent_Compat event;
+    int priority;
     if (!world || !tickResult) return 0;
     if (!tickResult->emittedDoorDestructionEvent &&
         !tickResult->emittedDoorToggleEvent) {
@@ -9082,8 +9116,17 @@ static int orch_schedule_projectile_door_impact_followup_compat(
         tickResult->outNextTick.kind == 0) {
         return 0;
     }
+    event = tickResult->outNextTick;
+    if (tickResult->emittedDoorToggleEvent) {
+        if (!world->dungeon ||
+            !DM1_V1_F0268_EventPriority_Compat(
+                event.aux1,
+                world->dungeon->dm1SensorF0268PriorityByEffect,
+                &priority)) return 0;
+        event.aux4 = priority;
+    }
     return F0721_TIMELINE_Schedule_Compat(
-        &world->timeline, &tickResult->outNextTick);
+        &world->timeline, &event);
 }
 
 static int orch_handle_projectile_move_event_compat(
@@ -10480,6 +10523,10 @@ static int orch_f0267_sensor_pass_count_compat(
         world->party.mapX == mapX && world->party.mapY == mapY);
     context.partyChampionCount = world->party.championCount;
     context.isAddition = isAddition ? 1 : 0;
+    context.editionPolicyBound = world->dungeon->dm1SensorEditionPolicyBound;
+    context.floorC005PartyTypeFix = world->dungeon->dm1SensorFloorC005PartyTypeFix;
+    context.floorC009Supported = world->dungeon->dm1SensorFloorC009Supported;
+    context.floorC009VersionLimit = world->dungeon->dm1SensorFloorC009VersionLimit;
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
     if (sensorCount <= 0) return 0;
@@ -10573,6 +10620,11 @@ static void orch_f0267_dispatch_sensor_results_compat(
             resolved.targetEventType == DM1_EVENT_PIT ||
             resolved.targetEventType == DM1_EVENT_DOOR) {
             struct TimelineEvent_Compat event;
+            int priority;
+            if (!DM1_V1_F0268_EventPriority_Compat(
+                    resolved.resolvedEffect,
+                    world->dungeon->dm1SensorF0268PriorityByEffect,
+                    &priority)) continue;
             memset(&event, 0, sizeof(event));
             event.kind = TIMELINE_EVENT_SQUARE_STATE;
             event.fireAtTick = world->gameTick +
@@ -10583,6 +10635,7 @@ static void orch_f0267_dispatch_sensor_results_compat(
             event.cell = resolved.targetCell;
             event.aux0 = resolved.targetEventType;
             event.aux1 = resolved.resolvedEffect;
+            event.aux4 = priority;
             if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &event)) {
                 moveResult->sensorDispatchOverflow = 1;
             }
@@ -10626,6 +10679,10 @@ static int orch_f0267_sensor_pass_dispatch_compat(
         world->party.mapX == mapX && world->party.mapY == mapY);
     context.partyChampionCount = world->party.championCount;
     context.isAddition = isAddition ? 1 : 0;
+    context.editionPolicyBound = world->dungeon->dm1SensorEditionPolicyBound;
+    context.floorC005PartyTypeFix = world->dungeon->dm1SensorFloorC005PartyTypeFix;
+    context.floorC009Supported = world->dungeon->dm1SensorFloorC009Supported;
+    context.floorC009VersionLimit = world->dungeon->dm1SensorFloorC009VersionLimit;
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
     if (sensorCount <= 0) return 0;
@@ -10640,7 +10697,7 @@ static int orch_f0267_sensor_pass_dispatch_compat(
     if (results.rotationPending &&
         (results.rotationEffect == DM1_EFFECT_CLEAR ||
          results.rotationEffect == DM1_EFFECT_TOGGLE) &&
-        orch_f0271_rotate_sensor_chain_compat(
+        F0271_SENSOR_ProcessRotation_Compat(
             world, mapIndex, results.rotationMapX, results.rotationMapY,
             results.rotationCell, results.rotationEffect)) {
         moveResult->localSensorRotations++;
@@ -14304,10 +14361,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     memset(&walkOff, 0, sizeof(walkOff));
                     memset(&walkOn, 0, sizeof(walkOn));
 
-                    (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                    (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                         world->dungeon, world->things,
                         oldMapIndex, oldMapX, oldMapY,
-                        SENSOR_EVENT_WALK_OFF, &walkOff);
+                        SENSOR_EVENT_WALK_OFF, 0, &world->party,
+                        THING_NONE, &walkOff);
                     for (s = 0; s < walkOff.count; ++s) {
                         const struct SensorEffect_Compat* ef = &walkOff.effects[s];
                         int32_t p3 = (ef->kind == SENSOR_EFFECT_TELEPORT)
@@ -14322,7 +14380,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         world->dungeon, world->things,
                         world->party.mapIndex,
                         world->party.mapX, world->party.mapY,
-                        SENSOR_EVENT_WALK_ON, &world->party,
+                        SENSOR_EVENT_WALK_ON, 0, &world->party,
                         THING_NONE, &walkOn);
                     for (s = 0; s < walkOn.count; ++s) {
                         const struct SensorEffect_Compat* ef = &walkOn.effects[s];

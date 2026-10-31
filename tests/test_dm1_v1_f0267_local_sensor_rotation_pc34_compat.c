@@ -112,6 +112,17 @@ int main(void)
           sensors[0].next == weaponThing &&
           rawSensors[8] == (unsigned char)(sensor0 & 0xffu),
           "F0271 rotates the complete loaded sensor run after F0276");
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_OBJECT;
+    sensors[0].sensorData = 7;
+    sensors[0].onceOnly = 1;
+    rawSensors[2] = 0x84u; /* type 4 + data bit 0 */
+    rawSensors[3] = 0x03u; /* remaining data bits */
+    rawSensors[4] = 0x04u; /* OnceOnly */
+    CHECK(F0272_SENSOR_DisableOnceOnly_Compat(&world, 0) == 1 &&
+              sensors[0].sensorType == DM1_SENSOR_DISABLED &&
+              sensors[0].sensorData == 7 && rawSensors[2] == 0x80u &&
+              rawSensors[3] == 0x03u && rawSensors[4] == 0x04u,
+          "F0272 disables only M039_TYPE and preserves sensor data and flags");
     puts("ok: F0267 consumes the source-owned F0270/F0271 floor rotation receipt");
     return 0;
 }

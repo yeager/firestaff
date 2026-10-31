@@ -139,7 +139,31 @@ struct FloorSensorContext_Compat {
     int partyChampionCount;
     int partyHasObjectType;
     int isAddition;
+    /* Bound only from an admitted original graphics identity. An unbound
+     * context retains the historical PC34 policy for isolated callers. */
+    int editionPolicyBound;
+    int floorC005PartyTypeFix;
+    int floorC009Supported;
+    int floorC009VersionLimit; /* -1 means source has no upper limit. */
 };
+
+struct Dm1SensorEditionPolicy_Compat {
+    int floorC005PartyTypeFix;
+    int floorC009Supported;
+    int floorC009VersionLimit;
+    int f0268PriorityByEffect;
+};
+
+/* Resolve ReDMCSB MEDIA guards for C005/C009 from M12's authenticated
+ * GRAPHICS.DAT MD5. Returns zero for an edition outside the registry. */
+int DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+    const char* graphicsMd5,
+    struct Dm1SensorEditionPolicy_Compat* outPolicy);
+
+/* ReDMCSB MEDIA716 maps A36M F0268 effects to native event priorities.
+ * Other admitted editions use priority zero. */
+int DM1_V1_F0268_EventPriority_Compat(
+    int effect, int priorityByEffect, int* outPriority);
 
 /* ================================================================
  *  Wall sensor context

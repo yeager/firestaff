@@ -32066,6 +32066,9 @@ endif()
     target_include_directories(test_m11_point_in_source_box_pc34 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_m11_point_in_source_box_pc34 PRIVATE
+        FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/"
+    )
     target_link_libraries(test_m11_point_in_source_box_pc34
         PRIVATE firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 firestaff_nexus firestaff_theron SDL3::SDL3 m)
     if(NOT MSVC)

@@ -432,13 +432,139 @@ int main(void)
             profile.runtime.party_state.LeaderHandThing = ven_potion;
             check(!csb_v1_runtime_consume_water_potion_from_leader_hand_pc34(
                       &profile.runtime, 0),
-                  "CSB mouth transaction fails closed for potion effects not yet source-owned");
+                  "CSB water-potion handler rejects non-water potion types");
             check(profile.runtime.party_state.LeaderHandThing == ven_potion &&
                       profile.runtime.party_state.Champions[0].Water == water &&
                       (unsigned short)(raw[14] |
                           ((unsigned short)raw[15] << 8)) == potion_word,
-                  "failed CSB mouth transaction leaves hand, vitals, and real record atomic");
+                  "rejected water-potion helper leaves hand, vitals, and record unchanged");
             profile.runtime.party_state.LeaderHandThing = THING_NONE;
+        }
+        {
+            CSB_V1_RuntimeProfile saved_runtime = profile.runtime;
+            unsigned short saved_potion_word =
+                (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
+            CSB_V1_Champion *champion =
+                &profile.runtime.party_state.Champions[0];
+            int events_before;
+
+            /* ReDMCSB PANEL.C F0349:1871-1910 source-locks potion effects;
+             * each case must commit through CSB's own runtime owner. */
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.leader_index = 0;
+            profile.runtime.csbwin_random_seed_valid = 1;
+            profile.runtime.csbwin_random_seed = 0x12345678u;
+            profile.runtime.party_state.ChampionCount = 1;
+            champion->CurrentHealth = 10;
+            champion->MaximumHealth = 100;
+            champion->CurrentStamina = 10;
+            champion->MaximumStamina = 100;
+            champion->CurrentMana = 10;
+            champion->MaximumMana = 100;
+            profile.runtime.party_state.Champions[0].Load = 3;
+
+            write_u16(raw + 14, (6u << 8) | 80u);
+            champion->Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] = 120;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] == 131,
+                  "CSB ROS potion applies F0348 dexterity gain");
+            check(raw[15] == 20u,
+                  "CSB ROS potion becomes an empty flask");
+
+            /* ReDMCSB PANEL.C F0348 uses strict >120 and >150 thresholds
+             * for CSB's S1.2+ family, then caps the current value at 170.
+             * Exercise both sides of each branch through the live mouth
+             * consumer rather than testing a detached formula. */
+            {
+                static const uint16_t starts[] = {121u, 150u, 151u, 169u, 170u};
+                static const uint16_t expected[] = {127u, 156u, 154u, 170u, 170u};
+                char label[96];
+                for (size_t boundary = 0;
+                     boundary < sizeof(starts) / sizeof(starts[0]);
+                     ++boundary) {
+                    profile.runtime.party_state.LeaderHandThing = ven_potion;
+                    profile.runtime.party_state.Champions[0].Load = 3;
+                    write_u16(raw + 14, (6u << 8) | 80u);
+                    champion->Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
+                        starts[boundary];
+                    (void)snprintf(label, sizeof(label),
+                        "CSB F0348 source threshold/cap case %u",
+                        (unsigned)starts[boundary]);
+                    check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                              &profile.runtime, 0) == 1 &&
+                          champion->Statistics[CSB_V1_STAT_DEX]
+                              [CSB_V1_STAT_CUR] == expected[boundary], label);
+                }
+            }
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (7u << 8) | 80u);
+            champion->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] = 40;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] == 47,
+                  "CSB KU potion applies F0348 strength gain");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (8u << 8) | 80u);
+            champion->Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] = 20;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] == 31,
+                  "CSB DANE potion applies F0348 wisdom gain");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (9u << 8) | 80u);
+            champion->Statistics[CSB_V1_STAT_VIT][CSB_V1_STAT_CUR] = 20;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->Statistics[CSB_V1_STAT_VIT][CSB_V1_STAT_CUR] == 31,
+                  "CSB NETA potion applies F0348 vitality gain");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (11u << 8) | 80u);
+            champion->CurrentStamina = 10;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->CurrentStamina == 30,
+                  "CSB MON potion restores stamina by F0349 counter");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (12u << 8) | 80u);
+            events_before = profile.runtime.timeline_queue.eventCount;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->ShieldStrength > 0 &&
+                  profile.runtime.timeline_queue.eventCount == events_before + 1,
+                  "CSB YA potion adds shield and source timer event");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (13u << 8) | 80u);
+            champion->CurrentMana = 10;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->CurrentMana == 24,
+                  "CSB EE potion applies F0349 mana formula");
+
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            profile.runtime.party_state.Champions[0].Load = 3;
+            write_u16(raw + 14, (14u << 8) | 80u);
+            champion->CurrentHealth = 10;
+            champion->Wounds = 0;
+            check(csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0) == 1 &&
+                  champion->CurrentHealth == 30,
+                  "CSB VI potion heals by F0349 counter");
+
+            profile.runtime = saved_runtime;
+            write_u16(raw + 14, saved_potion_word);
         }
         check(csb_v1_runtime_object_subtype_index(&profile.runtime, chest) == 0,
               "CSB runtime resolves chest subtype from CONTAINER.Type for overlays");
@@ -600,17 +726,13 @@ int main(void)
         M11_GameView_ClearActingChampion(&state);
 
         /* CSB shares ReDMCSB COMMAND.C G0447 C007..C015 with the PC34
-         * dungeon view.  These visible status boxes must remain live even
-         * though CSB owns a separate runtime profile. */
+         * dungeon view. A right-click on the status box owns the C007
+         * inventory toggle; left C012 champion selection is a separate path. */
         state.inventoryPanelActive = 0;
         check(M11_GameView_HandlePointerButton(
-                  &state, 10, 10, M11_DM1_MOUSE_MASK_LEFT) ==
-                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 1,
-              "CSB status-box click opens its runtime-backed champion inventory");
-        check(M11_GameView_HandlePointerButton(
                   &state, 10, 10, M11_DM1_MOUSE_MASK_RIGHT) ==
-                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 0,
-              "CSB right-click status-box toggle closes the same inventory");
+                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 1,
+              "CSB right-click C007 route opens runtime-backed inventory");
         state.inventoryPanelActive = 1;
 
         check(M11_GameView_GetObjectIconIndexForThing(&state, dagger) == 32,

@@ -23,12 +23,12 @@ does not claim DM2, Nexus, or Theron coverage.
 
 | Status | Count | Rule |
 | --- | ---: | --- |
-| `implemented-narrow` | 164 | Scoped PC34 compatibility adapters with focused behavioural evidence. |
+| `implemented-narrow` | 166 | Scoped PC34 compatibility adapters with focused behavioural evidence. |
 | `implemented-source-audited` | 7 | Source-owned platform gates with explicit fail-closed host contracts. |
 | `implemented` | 5 | Reviewed direct compatibility implementations. |
 | `implemented_narrow` | 6 | Legacy ledger spelling for scoped, focused adapters. |
 | `verified-source-mapping` | 9 | Reviewed source mappings with focused evidence. |
-| `referenced-not-verified` | 820 | A numbered identifier occurs under Firestaff code or tests, but lacks a reviewed contract-level claim. |
+| `referenced-not-verified` | 818 | A numbered identifier occurs under Firestaff code or tests, but lacks a reviewed contract-level claim. |
 | `source-nonapplicable` | 2 | Reviewed as non-applicable to a PC34 runtime route. |
 | `platform-only/non-applicable` | 2 | Explicit non-runtime platform/toolchain surface. |
 | `missing` | 1,122 | No exact Firestaff source/header/test reference was found by the inventory generator. This is an audit gap, not permission to synthesize behaviour. |

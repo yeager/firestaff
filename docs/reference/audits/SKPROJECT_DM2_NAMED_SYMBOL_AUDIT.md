@@ -1,64 +1,67 @@
-# Skproject DM2 Named Symbol Audit
+# skproject DM2 Named Symbol Audit
 
 ## Scope
 
-This is a line-addressable inventory of callable named definitions from the
-local skproject source authority at
-`<local-home>/Documents/skproject-codex-ref`. It covers the readable project
-owned `.cpp` sources under `SKWIN/` and `SKULLWIN/`, excluding bundled
-third-party SDK trees. The companion TSV has one row per extracted definition
-and is the authoritative machine-readable ledger.
+This line-addressable inventory covers callable definitions in the
+project-owned `.cpp` files under skproject `SKWIN/` and `SKULLWIN/`, excluding
+bundled third-party SDK trees, plus the selected `DM2_ARRANGE_DUNGEON` row in
+`SKWINSPX/src/v5/skmap.cpp`. Its source authority is the upstream revision
+locked by `docs/parity/DM2_V1_PHASE0_PROVENANCE_GATE.md`:
 
-The inventory is generated with the local `ctags -x` parser, then checked for
-literal identifier occurrences in Firestaff `src/dm2/` and `include/dm2*.h`.
-That is a discovery pass, not a behavioral equivalence pass.
+- Repository: <https://github.com/gbsphenx/skproject>
+- Locked commit: `2c59a2c5a7978923ff5c822c15c3479e4d448493`
 
-## Source Coverage
+The companion `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` is the machine-readable
+ledger, with one row per named definition. Each row records a Firestaff
+candidate, a disposition, and notes. An implementation disposition may cover
+a narrow function slice and does not by itself prove integration into a
+playable game route or parity on every supported platform.
 
-| Source set | Files | Result |
-| --- | ---: | --- |
-| `SKWIN/` and `SKULLWIN/` project-owned `.cpp` | 81 | Parsed into callable-definition rows |
-| `SKULLWIN/c_music_wav.cpp` | 1 | Locally unreadable within a 3-second read timeout; recorded as `UNCERTAIN` sentinel |
-| `SKULLWIN/c_rect.cpp` | 1 | Locally unreadable within a 3-second read timeout; recorded as `UNCERTAIN` sentinel |
+## Inventory
 
-The TSV deliberately excludes parser artefacts shorter than three characters
-and the C++ keyword `if`; neither is a named project callable. Header-only
-declarations are not duplicated because the ledger is anchored to source
-definitions and their executable behavior.
+| Source set | Definitions | Result |
+|---|---:|---|
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,751 | Callable-definition rows in the ledger |
 
-## Mapping Rules
-
-- `IMPLEMENTED` requires a separately verified, source-locked Firestaff
-  behavior and test. This discovery audit assigns no such status.
-- `UNCERTAIN` means the exact identifier occurs in DM2 Firestaff source or
-  headers. It is only a candidate mapping and does not claim equivalent
-  behavior, data layout, timing, or side effects.
-- `MISSING` means no exact identifier occurred in the scanned Firestaff DM2
-  source/header surface. It does not rule out a differently named port.
-- `NONAPPLICABLE` is limited to identified SKWIN desktop UI/debug/SDL/MIDI
-  variant files outside the Firestaff DM2 core; it makes no runtime-port claim.
-
-## Result
+## Dispositions
 
 | Status | Count |
-| --- | ---: |
-| VERIFIED_SOURCE_MAPPING | 108 |
-| UNCERTAIN | 131 |
-| MISSING | 1443 |
-| NONAPPLICABLE | 69 |
-| **Total** | **1751** |
+|---|---:|
+| `IMPLEMENTED_PARITY` | 1,111 |
+| `NOT_APPLICABLE_ARCH` | 560 |
+| `NONAPPLICABLE` | 73 |
+| `UNOWNED_SOURCE_MUTATION` | 0 |
+| `PARTIAL` | 4 |
+| `STATIC_INPUT_ONLY` | 0 |
+| `PARTIAL_SOURCE_OWNER` | 3 |
+| **Total** | **1,751** |
 
-The two unreadable-file sentinels are included in `UNCERTAIN`. Every mapping
-must be promoted only after a specific skproject call path, owned GDAT/save
-data, and focused Firestaff test demonstrate the same behavior. In particular,
-an `UNCERTAIN` title/menu token does not authorize a synthetic session or
-dungeon fallback.
+Open source-owned behavior includes the
+`DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
+`DM2_ALLOC_NEW_DBITEM_DEEPLY` chain: Firestaff has the pool scan and limited
+recycler routes, but not the complete source recycler across databases, map
+cursor, protected maps, timers and CAII ownership. `DM2_DEALLOC_RECORD` now
+uses the source primitive in bounded creature-delete and CAII delete-tail
+routes; other source call sites remain open. `DM2_ARRANGE_DUNGEON`
+has a bounded source-owned mutation path integrated into new-game loading, but
+still lacks source-by-source mutation and all-edition/platform parity proof.
+`DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and
+`DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` remain partial. See each TSV row's notes
+before treating a mapping as a parity result.
 
-Machine-check the ledger:
+`NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
+claims that a supported DM2 game feature is implemented. The inventory also
+does not establish that every relevant callable was covered on DOS, Amiga,
+FM Towns, and Macintosh. That requires platform-specific source-function
+rows and runtime evidence.
+
+## Machine check
 
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
-  END { print rows, count["VERIFIED_SOURCE_MAPPING"], count["UNCERTAIN"],
-              count["MISSING"], count["NONAPPLICABLE"] }' \
+  END { print rows, count["IMPLEMENTED_PARITY"], count["NOT_APPLICABLE_ARCH"],
+              count["NONAPPLICABLE"], count["UNOWNED_SOURCE_MUTATION"],
+              count["PARTIAL"], count["STATIC_INPUT_ONLY"],
+              count["PARTIAL_SOURCE_OWNER"] }' \
   docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv
 ```

@@ -88,15 +88,16 @@ static void reset_fixture(
 
     /* Destination (1,0) is the first thing-list square in scan order. */
     squares[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
-    sensors[0].sensorType = 0; /* teleport */
+    sensors[0].sensorType = 3; /* floor party sensor */
     sensors[0].localEffect = 0;
     sensors[0].targetMapX = 3;
     sensors[0].targetMapY = 2;
     sensors[0].targetCell = 1;
     sensors[0].next = thing_ref(THING_TYPE_SENSOR, 1);
-    sensors[1].sensorType = 13; /* text/message */
-    sensors[1].sensorData = 77;
-    sensors[1].localEffect = 1;
+    sensors[1].sensorType = 3; /* second floor party sensor */
+    sensors[1].targetMapX = 2;
+    sensors[1].targetMapY = 3;
+    sensors[1].targetCell = 0;
     sensors[1].next = THING_ENDOFLIST;
 
     squareFirstThings[0] = thing_ref(THING_TYPE_SENSOR, 0);
@@ -271,18 +272,19 @@ int main(void)
 
     party.mapX = moveResult.newMapX;
     party.mapY = moveResult.newMapY;
-    ok &= expect_int("source leave sensors empty after party coord update", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        &dungeon, &things, party.mapIndex, sourceX, sourceY, SENSOR_EVENT_WALK_OFF, &leaveEffects), 1);
+    ok &= expect_int("source leave sensors empty after party coord update", F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, party.mapIndex, sourceX, sourceY, SENSOR_EVENT_WALK_OFF, 0, &party, THING_NONE, &leaveEffects), 1);
     ok &= expect_int("source leave effect count", leaveEffects.count, 0);
 
-    ok &= expect_int("destination enter sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
+    ok &= expect_int("destination enter sensors processed", F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, 0, &party, THING_NONE, &enterEffects), 1);
     ok &= expect_int("destination enter effect count", enterEffects.count, 2);
-    ok &= expect_int("destination first effect teleport", enterEffects.effects[0].kind, SENSOR_EFFECT_TELEPORT);
-    ok &= expect_int("destination teleport x", enterEffects.effects[0].destMapX, 3);
-    ok &= expect_int("destination teleport y", enterEffects.effects[0].destMapY, 2);
-    ok &= expect_int("destination second effect text", enterEffects.effects[1].kind, SENSOR_EFFECT_SHOW_TEXT);
-    ok &= expect_int("destination text id", enterEffects.effects[1].textIndex, 77);
+    ok &= expect_int("destination first floor effect", enterEffects.effects[0].kind, SENSOR_EFFECT_TOGGLE_REMOTE);
+    ok &= expect_int("destination first effect x", enterEffects.effects[0].destMapX, 3);
+    ok &= expect_int("destination first effect y", enterEffects.effects[0].destMapY, 2);
+    ok &= expect_int("destination second floor effect", enterEffects.effects[1].kind, SENSOR_EFFECT_TOGGLE_REMOTE);
+    ok &= expect_int("destination second effect x", enterEffects.effects[1].destMapX, 2);
+    ok &= expect_int("destination second effect y", enterEffects.effects[1].destMapY, 3);
 
     timing = DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat(&party, 0, sourceX, sourceY, 1000ul, 990ul, footwear);
     ok &= expect_int("successful step cadence from slowest living champion", timing.disabledMovementTicks, 4);
@@ -485,15 +487,13 @@ int main(void)
     ok &= expect_int("turn current-square sensor dispatched", queueResult.dispatchedTurn, 1);
     sourceX = party.mapX;
     sourceY = party.mapY;
-    ok &= expect_int("turn current-square leave sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_OFF, &leaveEffects), 1);
+    ok &= expect_int("turn current-square leave sensors processed", F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_OFF, 1, &party, THING_NONE, &leaveEffects), 1);
     ok &= expect_int("turn current-square leave has no v1 effects", leaveEffects.count, 0);
     party.direction = F0700_MOVEMENT_TurnDirection_Compat(party.direction, 1);
-    ok &= expect_int("turn current-square enter sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
-    ok &= expect_int("turn current-square enter effect count", enterEffects.count, 1);
-    ok &= expect_int("turn current-square enter text effect", enterEffects.effects[0].kind, SENSOR_EFFECT_SHOW_TEXT);
-    ok &= expect_int("turn current-square enter text id", enterEffects.effects[0].textIndex, 77);
+    ok &= expect_int("turn current-square enter sensors processed", F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, 1, &party, THING_NONE, &enterEffects), 1);
+    ok &= expect_int("turn current-square suppresses already-present floor sensor", enterEffects.count, 0);
     ok &= expect_int("turn current-square leaves party x", party.mapX, sourceX);
     ok &= expect_int("turn current-square leaves party y", party.mapY, sourceY);
     ok &= expect_int("turn current-square updates direction only", party.direction, DIR_EAST);
@@ -517,8 +517,8 @@ int main(void)
         command_to_move_action(queueResult.command), &moveResult), 1);
     party.mapX = moveResult.newMapX;
     party.mapY = moveResult.newMapY;
-    ok &= expect_int("mouse movement destination sensors processed", F0718_SENSOR_ProcessPartyEnterLeave_Compat(
-        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, &enterEffects), 1);
+    ok &= expect_int("mouse movement destination sensors processed", F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, party.mapIndex, party.mapX, party.mapY, SENSOR_EVENT_WALK_ON, 0, &party, THING_NONE, &enterEffects), 1);
     ok &= expect_int("mouse movement destination effect count", enterEffects.count, 2);
 
 
@@ -538,8 +538,8 @@ int main(void)
         ok &= expect_int("core forward1 party x", party.mapX, 1);
         ok &= expect_int("core forward1 party y", party.mapY, 0);
         ok &= expect_int("core forward1 destination sensors", core.enterEffects.count, 2);
-        ok &= expect_int("core forward1 teleport sensor first", core.enterEffects.effects[0].kind, SENSOR_EFFECT_TELEPORT);
-        ok &= expect_int("core forward1 text sensor second", core.enterEffects.effects[1].kind, SENSOR_EFFECT_SHOW_TEXT);
+        ok &= expect_int("core forward1 first floor sensor", core.enterEffects.effects[0].kind, SENSOR_EFFECT_TOGGLE_REMOTE);
+        ok &= expect_int("core forward1 second floor sensor", core.enterEffects.effects[1].kind, SENSOR_EFFECT_TOGGLE_REMOTE);
         ok &= expect_int("core forward1 timing records scent", core.timing.scentRecorded, 1);
         ok &= expect_int("core forward1 stamina cost champion0", core.staminaCost[0], 2);
         ok &= expect_int("core forward1 stamina cost champion1", core.staminaCost[1], 4);
@@ -559,7 +559,7 @@ int main(void)
         ok &= expect_int("core turn keeps x", party.mapX, 1);
         ok &= expect_int("core turn keeps y", party.mapY, 0);
         ok &= expect_int("core turn updates direction", party.direction, DIR_EAST);
-        ok &= expect_int("core turn current-square enter sensors", core.enterEffects.count, 2);
+        ok &= expect_int("core turn suppresses already-present floor sensors", core.enterEffects.count, 0);
         ok &= expect_int("core turn leaves champion0 stamina", party.champions[0].stamina.current, 98);
         ok &= expect_int("core turn leaves champion1 stamina", party.champions[1].stamina.current, 96);
         ok &= expect_int("core turn requests viewport", core.viewportRedrawRequested, 1);

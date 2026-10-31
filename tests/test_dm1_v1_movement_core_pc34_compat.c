@@ -405,7 +405,7 @@ int main(void)
         dungeon.tiles = teleporterTiles;
         dungeon.loaded = 1;
         dungeon.tilesLoaded = 1;
-        teleporterFirstThings[1 * 3 + 1] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+        teleporterFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
         things.loaded = 1;
         things.squareFirstThings = teleporterFirstThings;
         things.squareFirstThingCount = 25;

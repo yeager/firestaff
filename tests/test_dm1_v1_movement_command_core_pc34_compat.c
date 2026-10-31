@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "dm1_v1_movement_command_core_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 static int expect_int(const char* label, int got, int want)
 {
@@ -99,8 +100,10 @@ static void setup_single_text_sensor(
     memset(sensors, 0, sizeof(*sensors));
     firstThings[0] = make_thing_ref(THING_TYPE_SENSOR, 0, 0);
     sensors[0].next = THING_ENDOFLIST;
-    sensors[0].sensorType = 13;
-    sensors[0].sensorData = (unsigned short)textIndex;
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_PARTY;
+    sensors[0].sensorData = 0;
+    sensors[0].localEffect = 1;
+    sensors[0].localMultiple = (unsigned short)textIndex;
     things->loaded = 1;
     things->squareFirstThings = firstThings;
     things->squareFirstThingCount = 1;
@@ -651,7 +654,7 @@ int main(void)
         ok &= expect_int("pass545 successful movement no discard requested", result.inputDiscardRequested, 0);
         ok &= expect_int("pass545 successful movement leaves source sensor effects empty", result.leaveEffects.count, 0);
         ok &= expect_int("pass545 successful movement destination sensor fires once", result.enterEffects.count, 1);
-        ok &= expect_int("pass545 successful movement destination sensor kind text", result.enterEffects.effects[0].kind, SENSOR_EFFECT_SHOW_TEXT);
+        ok &= expect_int("pass545 successful movement destination sensor kind text", result.enterEffects.effects[0].kind, SENSOR_EFFECT_LOCAL_DEFERRED);
         ok &= expect_int("pass545 successful movement destination sensor text index", result.enterEffects.effects[0].textIndex, 37);
         ok &= expect_int("pass545 successful movement sets cooldown after sensors", result.timing.disabledMovementTicks, 2);
     }

@@ -64,32 +64,9 @@ int F0710_SENSOR_Execute_Compat(
     }
 
     switch (sensor->sensorType) {
-    case 0: {
-        /* TELEPORT — destination from sensor's remote target fields. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_TELEPORT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = -1; /* Same-map teleport in v1 — caller keeps current mapIndex. */
-        e->destMapX = sensor->targetMapX;
-        e->destMapY = sensor->targetMapY;
-        e->destCell = sensor->targetCell;
-        e->textIndex = 0;
-        outList->count = 1;
+    case DM1_SENSOR_DISABLED:
+        /* C000 is disabled in the source sensor table; it has no action. */
         return 1;
-    }
-    case 13: {
-        /* TEXT / MESSAGE — sensor->sensorData carries the text index. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_SHOW_TEXT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = 0;
-        e->destMapX = 0;
-        e->destMapY = 0;
-        e->destCell = 0;
-        e->textIndex = (int)sensor->sensorData;
-        outList->count = 1;
-        return 1;
-    }
     case 1:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
     case 2:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE */
     case 3:  /* DM1_SENSOR_FLOOR_PARTY — pressure plates */
@@ -465,6 +442,172 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
     return (count > SENSOR_ENUM_CAPACITY) ? SENSOR_ENUM_CAPACITY : count;
 }
 
+static int sensor_floor_object_type(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingRef)
+{
+    int type;
+    int index;
+    if (!things) return -1;
+    type = THING_GET_TYPE(thingRef);
+    index = THING_GET_INDEX(thingRef);
+    switch (type) {
+    case THING_TYPE_WEAPON:
+        if (index >= 0 && index < things->weaponCount) {
+            if (things->rawThingData[THING_TYPE_WEAPON] &&
+                index < things->thingCounts[THING_TYPE_WEAPON]) {
+                const unsigned char* raw =
+                    things->rawThingData[THING_TYPE_WEAPON] + index * 4;
+                return (int)(raw[2] & 0x7fu);
+            }
+            return (int)things->weapons[index].type;
+        }
+        return -1;
+    case THING_TYPE_ARMOUR:
+        return index >= 0 && index < things->armourCount
+            ? (int)things->armours[index].type : -1;
+    case THING_TYPE_SCROLL:
+        return index >= 0 && index < things->scrollCount
+            ? (int)things->scrolls[index].textStringThingIndex : -1;
+    case THING_TYPE_POTION:
+        return index >= 0 && index < things->potionCount
+            ? (int)things->potions[index].type : -1;
+    case THING_TYPE_CONTAINER:
+        return index >= 0 && index < things->containerCount
+            ? (int)things->containers[index].type : -1;
+    case THING_TYPE_JUNK:
+        return index >= 0 && index < things->junkCount
+            ? (int)things->junks[index].type : -1;
+    default:
+        return -1;
+    }
+}
+
+static int sensor_floor_object_class(int thingType)
+{
+    return thingType >= THING_TYPE_WEAPON &&
+        thingType <= THING_TYPE_JUNK;
+}
+
+int F0276_SENSOR_ProcessObjectFloorChange_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY,
+    unsigned short changedThing,
+    int isAddition,
+    struct SensorEffectList_Compat* outList)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    int changedType;
+    int changedObjectType;
+    int sensorCount;
+    int existingObject = 0;
+    int existingGroup = 0;
+    int sameTypeObject = 0;
+    int sftIdx;
+    int safety = 0;
+    int i;
+
+    if (!outList) return 0;
+    memset(outList, 0, sizeof(*outList));
+    if (!dungeon || !things || !things->loaded ||
+        (isAddition != 0 && isAddition != 1)) return 0;
+    changedType = THING_GET_TYPE(changedThing);
+    changedObjectType = sensor_floor_object_type(things, changedThing);
+    if (changedType != THING_TYPE_GROUP &&
+        !sensor_floor_object_class(changedType)) return 1;
+
+    /* ReDMCSB MOVESENS.C F0276: the add path counts the old floor chain
+     * before linking the incoming object. M11 calls after its mutation, so
+     * exclude that exact record from the census to preserve the source view. */
+    sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
+    if (sftIdx >= 0 && sftIdx < things->squareFirstThingCount) {
+        unsigned short ref = things->squareFirstThings[sftIdx];
+        while (ref != THING_NONE && ref != THING_ENDOFLIST && safety < 64) {
+            int type;
+            int index;
+            unsigned short next = sensor_step_thing(things, ref, &type, &index);
+            if (type == THING_TYPE_GROUP) {
+                if (!(THING_GET_TYPE(changedThing) == type &&
+                      THING_GET_INDEX(changedThing) == index)) {
+                    existingGroup = 1;
+                }
+            } else if (sensor_floor_object_class(type)) {
+                int objectType = sensor_floor_object_type(things, ref);
+                if (!(THING_GET_TYPE(changedThing) == type &&
+                      THING_GET_INDEX(changedThing) == index)) {
+                    existingObject = 1;
+                    if (changedObjectType >= 0 &&
+                        objectType == changedObjectType) {
+                        sameTypeObject = 1;
+                    }
+                }
+            }
+            ref = next;
+            ++safety;
+        }
+        if (ref != THING_NONE && ref != THING_ENDOFLIST) return 1;
+    }
+
+    sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+        dungeon, things, mapIndex, mapX, mapY, sensors);
+    for (i = 0; i < sensorCount; ++i) {
+        const struct SensorOnSquare_Compat* onSquare = &sensors[i];
+        const struct DungeonSensor_Compat* source;
+        struct FloorSensorContext_Compat context;
+        struct SensorTriggerResult_Compat result;
+        int triggerType;
+        if (onSquare->sensorType != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+            onSquare->sensorType != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE &&
+            onSquare->sensorType != DM1_SENSOR_FLOOR_OBJECT &&
+            onSquare->sensorType != DM1_SENSOR_FLOOR_CREATURE) continue;
+        if (!things->sensors || onSquare->sensorIndex < 0 ||
+            onSquare->sensorIndex >= things->sensorCount) continue;
+        source = &things->sensors[onSquare->sensorIndex];
+        if (source->sensorType != onSquare->sensorType) continue;
+
+        if (changedType == THING_TYPE_GROUP) {
+            triggerType = DM1_TRIGGER_SOURCE_CREATURE;
+        } else if (changedType == THING_TYPE_PROJECTILE) {
+            triggerType = DM1_TRIGGER_SOURCE_PROJECTILE;
+        } else {
+            triggerType = DM1_TRIGGER_SOURCE_OBJECT;
+        }
+        memset(&context, 0, sizeof(context));
+        context.mapX = mapX;
+        context.mapY = mapY;
+        context.thingType = triggerType;
+        context.objectType = changedObjectType;
+        context.squareHasObject = existingObject;
+        context.squareHasGroup = existingGroup;
+        context.squareHasSameTypeObj = sameTypeObject;
+        context.isAddition = isAddition;
+        if (!F0722_SENSOR_EvaluateFloor_Compat(source, &context, &result) ||
+            !result.triggered) continue;
+        if (outList->count < SENSOR_EFFECT_LIST_MAX_COUNT) {
+            struct SensorEffect_Compat* effect =
+                &outList->effects[outList->count++];
+            effect->kind = source->localEffect
+                ? (source->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL
+                       ? SENSOR_EFFECT_LOCAL_STEAL_XP
+                       : SENSOR_EFFECT_LOCAL_DEFERRED)
+                : SENSOR_EFFECT_TOGGLE_REMOTE;
+            effect->sensorType = onSquare->sensorType;
+            effect->destMapIndex = source->localEffect ? mapIndex : -1;
+            effect->destMapX = onSquare->targetMapX;
+            effect->destMapY = onSquare->targetMapY;
+            effect->destCell = source->localEffect ? -1 : onSquare->targetCell;
+            effect->textIndex = source->localEffect
+                ? source->localMultiple : result.resolvedEffect;
+            effect->delayTicks = source->value;
+            effect->sourceSensorIndex = onSquare->sensorIndex;
+            effect->sourceOnceOnly = source->onceOnly ? 1 : 0;
+            effect->sourceAudible = source->audible;
+        }
+    }
+    return 1;
+}
+
 static int sensor_build_party_possession_context(
     const struct DungeonThings_Compat* things,
     const struct PartyState_Compat* party,
@@ -502,6 +645,7 @@ static int sensor_process_party_enter_leave(
     int mapX,
     int mapY,
     int triggerEvent,
+    int partyOnSquare,
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList)
@@ -526,10 +670,8 @@ static int sensor_process_party_enter_leave(
 
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         dungeon, things, mapIndex, mapX, mapY, sensors);
-    if (triggerEvent == SENSOR_EVENT_WALK_ON) {
-        squareHasExistingFloorWeight = sensor_square_has_existing_floor_weight(
-            dungeon, things, mapIndex, mapX, mapY);
-    }
+    squareHasExistingFloorWeight = sensor_square_has_existing_floor_weight(
+        dungeon, things, mapIndex, mapX, mapY);
 
     if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount) {
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
@@ -559,6 +701,75 @@ static int sensor_process_party_enter_leave(
         if (sensors[i].sensorType == 7) {
             continue;
         }
+        if (sensors[i].sensorType ==
+                DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY ||
+            sensors[i].sensorType == DM1_SENSOR_FLOOR_OBJECT) {
+            struct FloorSensorContext_Compat floorContext;
+            struct SensorTriggerResult_Compat triggerResult;
+            const struct DungeonSensor_Compat* sourceSensor;
+            if (!things->sensors || sensors[i].sensorIndex < 0 ||
+                sensors[i].sensorIndex >= things->sensorCount ||
+                (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY && !party)) {
+                continue;
+            }
+            sourceSensor = &things->sensors[sensors[i].sensorIndex];
+            memset(&floorContext, 0, sizeof(floorContext));
+            floorContext.mapX = mapX;
+            floorContext.mapY = mapY;
+            floorContext.thingType = DM1_TRIGGER_SOURCE_PARTY;
+            floorContext.partyOnSquare = partyOnSquare ? 1 : 0;
+            floorContext.objectType = -1;
+            floorContext.partyDirection = party ? party->direction : 0;
+            floorContext.partyChampionCount = party ? party->championCount : 1;
+            floorContext.editionPolicyBound =
+                dungeon->dm1SensorEditionPolicyBound;
+            floorContext.floorC005PartyTypeFix =
+                dungeon->dm1SensorFloorC005PartyTypeFix;
+            floorContext.floorC009Supported =
+                dungeon->dm1SensorFloorC009Supported;
+            floorContext.floorC009VersionLimit =
+                dungeon->dm1SensorFloorC009VersionLimit;
+            floorContext.squareHasGroup = sensor_square_has_existing_group(
+                dungeon, things, mapIndex, mapX, mapY);
+            floorContext.squareHasObject =
+                squareHasExistingFloorWeight && !floorContext.squareHasGroup;
+            floorContext.squareType = squareType;
+            floorContext.isAddition = (triggerEvent == SENSOR_EVENT_WALK_ON);
+            if (!F0722_SENSOR_EvaluateFloor_Compat(
+                    sourceSensor, &floorContext, &triggerResult) ||
+                !triggerResult.triggered) {
+                continue;
+            }
+            if (outList->count < SENSOR_EFFECT_LIST_MAX_COUNT) {
+                struct SensorEffect_Compat* effect =
+                    &outList->effects[outList->count++];
+                /* ReDMCSB MOVESENS.C:F0276 passes CELL_ANY to F0272 for
+                 * party floor sensors; preserve that receipt for local C10. */
+                effect->kind = sourceSensor->localEffect
+                    ? (sourceSensor->localMultiple ==
+                           DM1_EFFECT_ADD_300XP_STEAL_SKILL
+                           ? SENSOR_EFFECT_LOCAL_STEAL_XP
+                           : SENSOR_EFFECT_LOCAL_DEFERRED)
+                    : SENSOR_EFFECT_TOGGLE_REMOTE;
+                effect->sensorType = sensors[i].sensorType;
+                effect->destMapIndex = sourceSensor->localEffect
+                    ? mapIndex : -1;
+                effect->destMapX = sensors[i].targetMapX;
+                effect->destMapY = sensors[i].targetMapY;
+                effect->destCell = sourceSensor->localEffect
+                    ? -1 : sensors[i].targetCell;
+                effect->textIndex = sourceSensor->localEffect
+                    ? sourceSensor->localMultiple
+                    : triggerResult.resolvedEffect;
+                effect->delayTicks = sensors[i].value;
+                effect->sourceSensorIndex = sensors[i].sensorIndex;
+                effect->sourceOnceOnly = sourceSensor->onceOnly ? 1 : 0;
+                effect->sourceAudible = sourceSensor->audible ? 1 : 0;
+            }
+            continue;
+        }
         if (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
             struct FloorSensorContext_Compat floorContext;
             struct SensorTriggerResult_Compat triggerResult;
@@ -577,6 +788,7 @@ static int sensor_process_party_enter_leave(
             floorContext.mapX = mapX;
             floorContext.mapY = mapY;
             floorContext.thingType = DM1_TRIGGER_SOURCE_PARTY;
+            floorContext.partyOnSquare = partyOnSquare ? 1 : 0;
             floorContext.objectType = -1;
             floorContext.partyDirection = party->direction;
             floorContext.partyChampionCount = party->championCount;
@@ -628,7 +840,7 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     struct SensorEffectList_Compat* outList)
 {
     return sensor_process_party_enter_leave(
-        dungeon, things, mapIndex, mapX, mapY, triggerEvent, NULL,
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, 0, NULL,
         THING_NONE, outList);
 }
 
@@ -639,13 +851,14 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     int mapX,
     int mapY,
     int triggerEvent,
+    int partyOnSquare,
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList)
 {
     return sensor_process_party_enter_leave(
-        dungeon, things, mapIndex, mapX, mapY, triggerEvent, party,
-        leaderHandThing, outList);
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, partyOnSquare,
+        party, leaderHandThing, outList);
 }
 
 int F0720_SENSOR_CountAudiblePartyPass_Compat(

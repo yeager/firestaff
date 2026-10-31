@@ -10,7 +10,7 @@
 | Source | URL | Best for |
 |--------|-----|----------|
 | Community docs | `dmweb.free.fr/community/documentation/` | **Primary reference** for all DM/CSB game mechanics, graphics formats, creature data, actions, attacks, and dungeon formats |
-| Greatstone atlas | `greatstone.free.fr/dm/g_dm.html` | Dungeon maps, graphics atlas, PC 3.4 specific data |
+| Greatstone atlas | `greatstone.free.fr/dm/g_dm.html`, `greatstone.free.fr/dm/g_csb.html` | DM1 and CSB dungeon maps, graphics atlases, and edition-specific extracted data |
 | ReDMCSB source | `~/.firestaff/data/firestaff-redmcsb-source/` | **Primary source code** for DM1/CSB implementation |
 | skproject (DM2) | `github.com/gbsphenx/skproject` | **DM2/Skullkeep** source reference |
 | CSBWin source | `github.com/BeipDev/CSBWin` | CSB implementation reference, creature/resurrect routing |
@@ -78,9 +78,27 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 | URL | What it covers |
 |-----|----------------|
 | `/g_dm.html` | Master overview and provenance |
+| `/g_csb.html` | CSB overview and provenance |
 | `/db_data/dm_pc_34/dungeon.dat/dungeon.html` | **PC 3.4 dungeon maps** (plain, no graphics) |
 | `/db_data/dm_pc_34/graphics.dat/graphics.dat.html` | **PC 3.4 graphics atlas** — full GRAPHICS.DAT bitmap atlas |
 | `/db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html` | **PC 3.4 multilingual graphics atlas** — separate EN/FR/DE variants. **CRITICAL:** PC34_MULTI has different `dungeon.dat` files per language (`dungeon.dat` EN, `dungeonf.dat` FR, `dungeong.dat` DE). Do not conflate. |
+| `/db_data/` CSB edition entries linked from `/g_csb.html` | CSB map and asset extracts for specific editions/platforms. Select the exact edition before comparing graphics or dungeon data; Greatstone's extractor documentation also lists DM and CSB platform formats. |
+
+### Per-game use and limits
+
+| Game | DMWeb | Greatstone | Functional authority |
+|------|-------|------------|---------------------|
+| DM1 | Mechanics, data formats, creature/item references, maps and solutions | DM1 maps, graphics atlases and edition-specific extracted data | ReDMCSB |
+| CSB | Shared DM/CSB mechanics and format pages, CSB-specific maps/solutions where present | CSB maps and extracted assets for the matching edition/platform | ReDMCSB |
+| DM2 | Consult only a page that explicitly identifies Skullkeep and the matching edition; do not carry DM1/CSB-specific facts across | Greatstone's SCK documentation notes DM2 item-format support (IMG9, TXT3 and ENT1); use only explicitly identified DM2 extracts. Current Firestaff inventory has no edition-hash-locked Greatstone DM2 dataset | skproject |
+
+DMWeb and Greatstone are supporting references for all game audits, but their
+evidence is edition-specific. For DM2, Greatstone's format/extractor notes can
+inform asset inspection, while a missing edition-matched dataset is recorded
+as a reference gap. Neither DM1/CSB pages nor extraction-format support proves
+DM2 behavior. DM2 functional claims remain locked to skproject and DM2
+original media. Greatstone's DM2 format note is linked from the [SCK release
+discussion](https://www.dungeon-master.com/forum/viewtopic.php?t=28556).
 
 **MEMORY.md rule (2026-05-09):** All GRAPHICS.DAT/dungeon.dat comparisons must hash-lock the exact file variant before claiming parity. File name is NOT identity — SHA256 is.
 
@@ -111,7 +129,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 ### C2. skproject (for DM2/Skullkeep)
 
 **GitHub:** `https://github.com/gbsphenx/skproject`
-**Locked HEAD:** `585ef61aea1e9b33261cfd8a9712cadbb40604b9`
+**Locked HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493`
 **N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
 **Sphenx SKWin:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
@@ -208,7 +226,7 @@ See `docs/parity/PARITY_REFERENCES.md` for:
 
 1. **Hash-lock before claiming:** All original file comparisons require SHA256 proof of exact file variant. PC34 ≠ PC34_MULTI ≠ Amiga ≠ Atari ST.
 2. **ReDMCSB is primary for DM1/CSB V1:** All Firestaff DM1 V1 implementation decisions cite ReDMCSB source lines, not emulator observation.
-3. **Greatstone is secondary:** DM web atlas is useful for visual comparison but not authoritative for source-locking.
-4. **dmweb community docs are authoritative for game mechanics:** The action tables, creature descriptors, attack types, and file formats on dmweb.free.fr are community-verified and cite exact byte offsets. Use them as evidence for game-mechanic parity.
+3. **Greatstone is secondary:** DM1 and CSB atlases/maps are useful for edition-matched asset and map comparisons but not authoritative for source-locking.
+4. **DMWeb is supporting evidence:** The action tables, creature descriptors, attack types, and file formats on dmweb.free.fr document DM/CSB mechanics. Use only pages that identify the applicable game/edition; DM2 behavior remains source-locked to skproject.
 5. **skproject is primary for DM2:** After Phase 0 provenance gate, DM2 implementation uses skproject + SKULL.ASM as primary source.
 6. **CSBWin is secondary for CSB:** Use CSBWin for cross-checking CSB behavior only; ReDMCSB remains authoritative for shared DM1 mechanics.

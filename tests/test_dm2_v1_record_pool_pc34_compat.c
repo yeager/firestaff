@@ -208,6 +208,14 @@ static void test_private_db0_recycler_candidate(void)
     uint16_t ground_before[4];
 
     build_synthetic(&set);
+    set.pools[7].record_size = 4;
+    set.pools[7].record_count = 1;
+    set.pools[7].source_base = 68;
+    set.pools[7].bytes = calloc(1, 4);
+    set.pools[9].record_size = 8;
+    set.pools[9].record_count = 1;
+    set.pools[9].source_base = 72;
+    set.pools[9].bytes = calloc(1, 8);
     CHECK(ground != NULL && columns != NULL && tiles != NULL,
           "private recycler fixture allocates map-owner storage");
     if (!ground || !columns || !tiles) {
@@ -276,14 +284,75 @@ static void test_private_db0_recycler_candidate(void)
               !game_owner.source_game_load_session_ready,
           "private DB0 recycler candidate leaves c_map, cursor and session untouched");
 
-    /* c_record.cpp:DAF9-DB2A only applies DB2's TextMode barrier.  A DB2
-     * request then follows DACC to the next link; it must never be exposed
-     * as a direct-return candidate at DB88. */
+    /* c_record.cpp:DAF9-DB2A only applies DB2's TextMode barrier. A TextMode
+     * record stops the chain before DB88, while an ordinary DB2 record is a
+     * direct-return candidate there. */
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(game_owner.record_pools.pools[2].bytes,
+         (int16_t)DM2_V1_RECORD_HANDLE_END);
+    wr16(game_owner.record_pools.pools[2].bytes + 2u,
+         (int16_t)(0x0002u | (4u << 11)));
     memset(&candidate, 0, sizeof(candidate));
-    CHECK(!dm2_v1_sksave_game_load_owner_recycler_candidate(
-              &game_owner, 2u, &candidate) && !candidate.valid &&
-              !candidate.found,
-          "private recycler rejects DB2 because source never returns Text at DB88");
+    CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 2u, &candidate) && candidate.valid &&
+              !candidate.found && candidate.records_examined == 1u,
+          "private recycler preserves the TextMode barrier before DB88");
+    wr16(game_owner.record_pools.pools[2].bytes + 2u, 0u);
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 2u, &candidate) && candidate.valid &&
+              candidate.found && candidate.selected_link == (uint16_t)mk_handle(2, 0),
+          "private recycler directly returns an ordinary DB2 record");
+    game_owner.recycler_context.map_cursors[2] = 3u;
+    memset(&candidate, 0, sizeof(candidate));
+    uint16_t committed_db2 = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    CHECK(dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+              &game_owner, 2u, &committed_db2) &&
+              committed_db2 == (uint16_t)mk_handle(2, 0) &&
+              game_owner.record_pools.pools[2].bytes[0] == 0xfeu &&
+              game_owner.record_pools.pools[2].bytes[1] == 0xffu &&
+              game_owner.record_pools.pools[2].bytes[2] == 0u &&
+              game_owner.record_pools.pools[2].bytes[3] == 0u &&
+              game_owner.map_owner.ground_stack_links[0] ==
+                  (uint16_t)mk_handle(2, 0) &&
+              game_owner.recycler_context.map_cursors[2] == 0u &&
+              !game_owner.source_game_load_session_ready,
+          "private DB2 recycler clears the selected record in place and preserves the source tile link");
+    for (uint8_t direct_db_index = 0u; direct_db_index < 3u;
+         ++direct_db_index) {
+        const uint8_t direct_db = direct_db_index == 0u ? 3u :
+            (direct_db_index == 1u ? 7u : 9u);
+        const int16_t direct_handle = mk_handle(direct_db, 0);
+        uint16_t committed_direct = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+        ground[0] = (uint16_t)direct_handle;
+        memset(game_owner.record_pools.pools[direct_db].bytes, 0,
+               game_owner.record_pools.pools[direct_db].record_size);
+        wr16(game_owner.record_pools.pools[direct_db].bytes,
+             (int16_t)DM2_V1_RECORD_HANDLE_END);
+        if (direct_db == 9u)
+            wr16(game_owner.record_pools.pools[direct_db].bytes + 2u,
+                 (int16_t)DM2_V1_RECORD_HANDLE_END);
+        game_owner.recycler_context.map_cursors[direct_db] = 3u;
+        CHECK(dm2_v1_sksave_game_load_owner_commit_direct_recycler(
+                  &game_owner, direct_db, &committed_direct) &&
+                  committed_direct == (uint16_t)direct_handle &&
+                  game_owner.record_pools.pools[direct_db].bytes[0] == 0xfeu &&
+                  game_owner.record_pools.pools[direct_db].bytes[1] == 0xffu &&
+                  game_owner.map_owner.ground_stack_links[0] ==
+                      (uint16_t)direct_handle &&
+                  game_owner.recycler_context.map_cursors[direct_db] == 0u &&
+                  (direct_db != 9u ||
+                   (game_owner.record_pools.pools[direct_db].bytes[2] == 0xfeu &&
+                    game_owner.record_pools.pools[direct_db].bytes[3] == 0xffu)),
+              "private direct recycler commits DB3/DB7/DB9 with source-sized ALLOC_NEW_RECORD initialization");
+    }
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(game_owner.record_pools.pools[2].bytes, mk_handle(0, 1));
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 1),
+          "private recycler advances past ordinary DB2 records to a later DB0 candidate");
 
     /* DB3 table1d324c stops the tile chain before its following DB0 link. */
     ground[0] = (uint16_t)mk_handle(3, 0);
@@ -325,12 +394,12 @@ static void test_private_db0_recycler_candidate(void)
               candidate.static_possession_descents == 1u,
           "private DB0 recycler descends only retained static creature possessions");
 
-    /* DB0's source direct-return path is now committed only inside a cloned
-     * private owner: the selected record is cleared and the source cursor is
-     * advanced, while Resume remains blocked. */
-    /* Keep the selected DB0 behind a retained static DB4 predecessor. This
-     * is the case that catches publishing an uncut pool clone: the live
-     * c_map cut must be committed with the same pool graph. */
+    /* DB0's source direct-return path is committed only inside a cloned
+     * private owner: the selected record is cleared in place and the source
+     * cursor is advanced, while Resume remains blocked. */
+    /* Keep DB0 behind a retained static DB4 predecessor. The source direct
+     * return does not cut this link; after ALLOC_NEW_RECORD clears DB0, the
+     * predecessor still points to the reused DB0 slot. */
     ground[0] = (uint16_t)mk_handle(4, 0);
     ground[2] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
     wr16(game_owner.record_pools.pools[4].bytes, mk_handle(0, 0));
@@ -350,10 +419,10 @@ static void test_private_db0_recycler_candidate(void)
                   (uint16_t)mk_handle(4, 0) &&
               ((uint16_t)game_owner.record_pools.pools[4].bytes[0] |
                ((uint16_t)game_owner.record_pools.pools[4].bytes[1] << 8)) ==
-                  (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+                  (uint16_t)mk_handle(0, 0) &&
               game_owner.recycler_context.map_cursors[0] == 0u &&
               !game_owner.source_game_load_session_ready,
-          "private DB0 recycler commit unlinks and clears the selected source record atomically");
+          "private DB0 recycler commit clears the selected record in place and preserves its source chain link");
     ground = game_owner.map_owner.ground_stack_links;
 
     /* c_record.cpp:1427 DELETE_MISSILE_RECORD first queries the creature at
@@ -446,6 +515,34 @@ int main(void)
     int16_t next;
     int16_t head_a;
     int16_t head_b;
+
+    /* ── DM2_DEALLOC_RECORD (c_record.cpp:1205) ─────────────────── */
+    {
+        DM2_V1_RecordPoolSet dealloc_set;
+        uint8_t bytes[4] = {0x34u, 0x12u, 0xa5u, 0x5au};
+        uint8_t expected[4] = {0xffu, 0xffu, 0xa5u, 0x5au};
+        memset(&dealloc_set, 0, sizeof(dealloc_set));
+        dealloc_set.valid = 1;
+        dealloc_set.source_words_big_endian = 1;
+        dealloc_set.pools[0].bytes = bytes;
+        dealloc_set.pools[0].record_count = 1;
+        dealloc_set.pools[0].record_size = 4;
+        CHECK(dm2_v1_record_pool_dealloc_record(
+                  &dealloc_set, mk_handle(0, 0)),
+              "dealloc resolves and marks a valid source record");
+        CHECK(memcmp(bytes, expected, sizeof(bytes)) == 0,
+              "dealloc changes only the source record link word");
+        CHECK(dm2_v1_record_pool_next_link(
+                  &dealloc_set, mk_handle(0, 0), &next) &&
+                  next == DM2_V1_RECORD_HANDLE_NULL,
+              "dealloc is visible through the source-endian next-link reader");
+        CHECK(!dm2_v1_record_pool_dealloc_record(
+                   &dealloc_set, mk_handle(0, 1)) &&
+                  !dm2_v1_record_pool_dealloc_record(
+                      &dealloc_set, DM2_V1_RECORD_HANDLE_NULL) &&
+                  memcmp(bytes, expected, sizeof(bytes)) == 0,
+              "dealloc rejects out-of-range and null handles without mutation");
+    }
 
     /* ── table_recordsizes (c_record.cpp:28-31) ─────────────────── */
     {

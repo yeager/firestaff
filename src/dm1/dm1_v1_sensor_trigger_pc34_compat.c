@@ -16,6 +16,74 @@
 #include <string.h>
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 
+int DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+    const char* graphicsMd5,
+    struct Dm1SensorEditionPolicy_Compat* outPolicy)
+{
+    static const struct {
+        const char* md5;
+        int c005PartyTypeFix;
+        int c009Supported;
+        int c009VersionLimit;
+        int f0268PriorityByEffect;
+    } editions[] = {
+        /* DM1 PC 3.4 and multilanguage PC share the source's 2.0 checker. */
+        {"fa6b1aa29e191418713bf2cda93d962e", 1, 1, 20, 0},
+        {"f934d97e43e1ba6e5159839acbcd0611", 1, 1, 20, 0},
+        /* Atari ST 1.x predates MEDIA278's C009 case; MEDIA176 retains the
+         * original C005 wrong-variable condition. */
+        {"b3cfd84e44cdf07ce2eeba47e87f772b", 0, 0, 0, 0},
+        {"7eee396993745e8af212f44d75ff6c1a", 0, 0, 0, 0},
+        {"5095a13692702235d2e74f6b2b1367a9", 0, 0, 0, 0},
+        {"9ce2eaf7a9e78620e3f17594437caffa", 0, 0, 0, 0},
+        {"2bdc5f431f84c0ece738f54dbd787c3b", 0, 0, 0, 0},
+        {"0d7af44dd14f383464288abdcec76afc", 0, 0, 0, 0},
+        /* A20/A20ED and F20 profiles use MEDIA337's engine version 20. */
+        {"6a2f135b53c2220f0251fa103e2a6e7e", 0, 1, 20, 0},
+        {"dd373954b3fb127db7387946131ea322", 0, 1, 20, 0},
+        {"0679e39da9dcc2e855cb33c6c64ddcb5", 0, 1, 20, 0},
+        {"491ca939f9abb33ceeb26619b841fe91", 0, 1, 20, 0},
+        {"c10c512f63461ebe79b5ac365115b61b", 0, 1, 20, 0},
+        {"edf47d7da5de8184604d6d80477ef01f", 0, 1, 20, 0},
+        /* A21/A22 profiles use MEDIA342's engine version 21. */
+        {"b35931b55db649a1bd2d415b61b29801", 0, 1, 21, 0},
+        /* MEDIA707/744 set the IIGS 3.4 and Amiga 3.6 limits. */
+        {"7f9458e4a3972d06e649a6fa85a7f34b", 1, 1, 36, 1},
+        {"1045a36952e64eb2bc7b4c7b2965b112", 1, 1, 34, 0}
+    };
+    size_t i;
+
+    if (!graphicsMd5 || !outPolicy) return 0;
+    for (i = 0; i < sizeof(editions) / sizeof(editions[0]); ++i) {
+        if (strcmp(graphicsMd5, editions[i].md5) == 0) {
+            outPolicy->floorC005PartyTypeFix = editions[i].c005PartyTypeFix;
+            outPolicy->floorC009Supported = editions[i].c009Supported;
+            outPolicy->floorC009VersionLimit = editions[i].c009VersionLimit;
+            outPolicy->f0268PriorityByEffect = editions[i].f0268PriorityByEffect;
+            return 1;
+        }
+    }
+    memset(outPolicy, 0, sizeof(*outPolicy));
+    return 0;
+}
+
+int DM1_V1_F0268_EventPriority_Compat(
+    int effect, int priorityByEffect, int* outPriority)
+{
+    if (!outPriority || effect < DM1_EFFECT_SET ||
+        effect > DM1_EFFECT_TOGGLE) return 0;
+    if (!priorityByEffect) {
+        *outPriority = 0;
+        return 1;
+    }
+    switch (effect) {
+    case DM1_EFFECT_SET: *outPriority = 1; return 1;
+    case DM1_EFFECT_CLEAR: *outPriority = 3; return 1;
+    case DM1_EFFECT_TOGGLE: *outPriority = 2; return 1;
+    default: return 0;
+    }
+}
+
 /* ----------------------------------------------------------------
  *  G0059_auc_Graphic562_SquareTypeToEventType[7]
  *  Source: DATA.C line ~470
@@ -169,7 +237,9 @@ int F0722_SENSOR_EvaluateFloor_Compat(
         /* Source: F0276 case C005 (CHANGE8_05_FIX version)
          * if ((L0767_i_ThingType != CM1_THING_TYPE_PARTY) || (SQUARE_TYPE(square) != C03_ELEMENT_STAIRS))
          *     goto T0276079; */
-        if (ctx->thingType != DM1_TRIGGER_SOURCE_PARTY || ctx->squareType != DM1_SQUARE_STAIRS)
+        if ((ctx->editionPolicyBound && !ctx->floorC005PartyTypeFix) ||
+            ctx->thingType != DM1_TRIGGER_SOURCE_PARTY ||
+            ctx->squareType != DM1_SQUARE_STAIRS)
             return 1;
         break;
 
@@ -204,9 +274,17 @@ int F0722_SENSOR_EvaluateFloor_Compat(
          * if ((L0767_i_ThingType != CM1_THING_TYPE_PARTY) || !P0592_B_AddThing || P0591_B_PartySquare)
          *     goto T0276079;
          * L0768_B_TriggerSensor = (data <= 20); (DM1 version 2.0) */
-        if (ctx->thingType != DM1_TRIGGER_SOURCE_PARTY || !ctx->isAddition || ctx->partyOnSquare)
+        if ((ctx->editionPolicyBound && !ctx->floorC009Supported) ||
+            ctx->thingType != DM1_TRIGGER_SOURCE_PARTY ||
+            !ctx->isAddition || ctx->partyOnSquare)
             return 1;
-        triggerSensor = ((int)sensor->sensorData <= 20); /* DM1 V1 engine version */
+        if (ctx->editionPolicyBound && ctx->floorC009VersionLimit < 0) {
+            triggerSensor = 1;
+        } else {
+            int versionLimit = ctx->editionPolicyBound
+                ? ctx->floorC009VersionLimit : 20;
+            triggerSensor = ((int)sensor->sensorData <= versionLimit);
+        }
         break;
 
     default:
@@ -1092,6 +1170,10 @@ int F0726_SENSOR_ProcessWallClick_Compat(
             remainingByCell[localCtx.cell]--;
         }
         localCtx.sensorCountInCell = remainingByCell[localCtx.cell];
+
+        /* MOVESENS.C:F0275:1385-1386 counts every cell first, then only
+         * evaluates sensors on P0587 (the wall cell opposite the party). */
+        if (localCtx.cell != (ctx->cell & 3)) continue;
 
         memset(&result, 0, sizeof(result));
         if (!F0723_SENSOR_EvaluateWall_Compat(&sensorData[sIdx], &localCtx, &result))

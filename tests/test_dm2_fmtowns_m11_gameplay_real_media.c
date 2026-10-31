@@ -824,6 +824,46 @@ int main(void)
                   "FM Towns post-confirm M11 frame consumes the source squad panel and authentic champion portraits");
         }
     }
+    {
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)view.dm2BootProfile;
+        DM2_V1_GameState *game = profile
+            ? (DM2_V1_GameState *)profile->dm2_state : NULL;
+        DM2_V1_ViewportM11FrameReceipt light_frame;
+        DM2_V1_BootRuntimeRenderReceipt render;
+        DM2_V1_CLightMapDescriptorReceipt map_light;
+        int saved_level = game ? game->current_level : -1;
+        int saved_x = game ? game->party_x : -1;
+        int saved_y = game ? game->party_y : -1;
+        int saved_dir = game ? game->party_dir : -1;
+        const DM2_V1_DungeonData *dungeon = profile
+            ? (const DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+        int map_receipt;
+        int frame_ok = 0;
+        memset(&map_light, 0, sizeof(map_light));
+        memset(&light_frame, 0, sizeof(light_frame));
+        memset(&render, 0, sizeof(render));
+        map_receipt = dungeon &&
+            dm2_v1_dungeon_c_light_map_descriptor_receipt(
+                dungeon, 3, &map_light) && map_light.valid &&
+            map_light.dynamic_light;
+        if (map_receipt && profile && game) {
+            /* HME-242 map 3 (8,4) is a source-valid dynamic-light floor,
+             * outside the old four-coordinate FM Towns admission list. */
+            dm2_v1_runtime_set_position(3, 8, 4, 0);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            frame_ok = dm2_v1_boot_runtime_render_frame(
+                profile, framebuffer, M11_FB_WIDTH, M11_FB_WIDTH,
+                M11_FB_HEIGHT, NULL, NULL, &render) &&
+                render.v1_succeeded &&
+                dm2_v1_runtime_last_m11_frame_receipt(&light_frame) &&
+                light_frame.valid && light_frame.c_light_receipt_hash != 0u;
+            dm2_v1_runtime_set_position(saved_level, saved_x, saved_y,
+                                        saved_dir);
+        }
+        check(map_receipt && frame_ok,
+              "FM Towns computes complete source c_light on dynamic map 3 (8,4), outside the previous start-coordinate gate");
+    }
     check(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
               M11_GAME_INPUT_REDRAW &&
               M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==

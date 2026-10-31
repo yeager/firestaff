@@ -10,7 +10,7 @@
  *     F0373: grab object from floor (view cells 0-1 = party square,
  *            2-3 = square in front)
  *     F0374: throw/put object to floor
- *     F0375: attack creature in viewport
+ *     F0375: leader-hand throw-zone gate
  *   CLIKMENU.C:
  *     F0365: turn dispatch (party direction change)
  *     F0366: step dispatch (movement with collision check)
@@ -202,6 +202,16 @@ DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask)
 {
+    return DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+        mx, my, partyDir, partyX, partyY, hasLeader, leaderHandEmpty,
+        grabbableCellMask, 0, 0, 0);
+}
+
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask,
+    int throwZoneHit, uint8_t dropCellMask, int squareAheadIsWall)
+{
     DM1_V1_ViewportClickResultPc34 result;
     memset(&result, 0, sizeof(result));
     result.pileTopObjectId = DM1_VIEWPORT_NO_PILE_TOP_OBJECT;
@@ -250,9 +260,14 @@ DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34
             result.stopWaitingForInput = 1;
         }
     } else {
-        /* Hand has object — throw/place it (F0374) */
-        result.objectThrown = 1;
-        result.stopWaitingForInput = 1;
+        /* F0375 throws only on its source-defined side zones. F0374 drops
+         * only on a rendered pile zone in front of a wall. */
+        if (throwZoneHit ||
+            (squareAheadIsWall && result.viewCell <= DM1_VIEW_CELL_FRONT_RIGHT &&
+             (dropCellMask & DM1_VIEWPORT_GRABBABLE_CELL_MASK(result.viewCell)))) {
+            result.objectThrown = 1;
+            result.stopWaitingForInput = 1;
+        }
     }
 
     return result;
@@ -292,7 +307,8 @@ const char *DM1_V1_ViewportClick_SourceEvidencePc34Compat(void)
         "DUNVIEW.C:5113-5178: F0115 creates/extends grabbable object zones\n"
         "  while rendering visible object piles, then records pile-top object.\n"
         "CLIKVIEW.C F0374: throw/put object.\n"
-        "CLIKVIEW.C F0375: attack creature.\n"
+        "CLIKVIEW.C:191-279 F0375: held object is thrown only when the source side-zone hit succeeds.\n"
+        "CLIKVIEW.C:462-510 F0374: held-object floor drop requires a rendered object-pile zone, and the wall path is gated by the square-ahead element.\n"
         "CLIKMENU.C F0365/F0366: turn/step dispatch from movement arrows.\n"
         "Screen layout: viewport 0,0 224x136; spells 233,2 85x70; "
         "action 233,72 85x50; movement 234,124 86x76; "

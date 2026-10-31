@@ -140,10 +140,12 @@
 #include "dm1_v1_fountain_interaction_pc34_compat.h"
 #include "firestaff/dm1/v1/G0202_pc34_compat.h"
 #include "firestaff/dm1/v1/G0193_pc34_compat.h"
+#include "firestaff/dm1/v1/f0035_object_clear_leader_hand_object_name_isolated_c91f_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "memory_sensor_execution_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
@@ -1198,6 +1200,28 @@ static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int framebufferWidth,
                                             int framebufferHeight);
+typedef struct M11_DM1F0035ZoneFillContext {
+    unsigned char *framebuffer;
+    int framebuffer_width;
+    int framebuffer_height;
+} M11_DM1F0035ZoneFillContext;
+
+static void m11_dm1_f0035_fill_zone(void *context, int zone_index, int color)
+{
+    M11_DM1F0035ZoneFillContext *fill =
+        (M11_DM1F0035ZoneFillContext *)context;
+    DM1_V1_LayoutZoneRectPc34 rect;
+
+    if (!fill || zone_index != dm1_v1_leader_hand_object_name_zone_id_pc34() ||
+        color != DM1_V1_F0035_BLACK_ISOLATED_C91F_PC34) {
+        return;
+    }
+    rect = dm1_v1_leader_hand_object_name_rect_pc34();
+    m11_fill_rect(fill->framebuffer, fill->framebuffer_width,
+                  fill->framebuffer_height, rect.x, rect.y, rect.w, rect.h,
+                  (unsigned char)color);
+}
+
 static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int framebufferWidth,
@@ -10067,6 +10091,34 @@ static int m11_apply_dm1_startup_launch_path_receipt(
     return 1;
 }
 
+static void m11_bind_dm1_sensor_edition_policy(
+    M11_GameViewState* state,
+    const char* graphicsMd5) {
+    struct Dm1SensorEditionPolicy_Compat policy;
+    struct DungeonDatState_Compat* dungeon;
+
+    if (!state || !state->world.dungeon) return;
+    dungeon = state->world.dungeon;
+    memset(&policy, 0, sizeof(policy));
+    dungeon->dm1SensorEditionPolicyBound = 0;
+    dungeon->dm1SensorFloorC005PartyTypeFix = 0;
+    dungeon->dm1SensorFloorC009Supported = 0;
+    dungeon->dm1SensorFloorC009VersionLimit = 0;
+    dungeon->dm1SensorF0268PriorityByEffect = 0;
+    /* A live runtime with no matched source profile fails closed for these
+     * edition-sensitive floor sensors. Zero-bound policy is reserved for
+     * isolated legacy callers and explicit PC34 compatibility tests. */
+    dungeon->dm1SensorEditionPolicyBound = 1;
+    if (!DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+            graphicsMd5, &policy)) {
+        return;
+    }
+    dungeon->dm1SensorFloorC005PartyTypeFix = policy.floorC005PartyTypeFix;
+    dungeon->dm1SensorFloorC009Supported = policy.floorC009Supported;
+    dungeon->dm1SensorFloorC009VersionLimit = policy.floorC009VersionLimit;
+    dungeon->dm1SensorF0268PriorityByEffect = policy.f0268PriorityByEffect;
+}
+
 static int m11_apply_dm1_startup_runtime_start_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupRuntimeStartReceipt_PC34* receipt) {
@@ -10083,6 +10135,7 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
         state->assetLoader.graphicsDatPath[0]) {
         (void)asset_file_md5_hex(state->assetLoader.graphicsDatPath, skillEditionMd5);
     }
+    m11_bind_dm1_sensor_edition_policy(state, skillEditionMd5);
     state->active = receipt->active;
     state->startedFromLauncher = receipt->started_from_launcher;
     state->sourceKind = (M11_GameSourceKind)receipt->source_kind;
@@ -20354,11 +20407,25 @@ static int m11_apply_dm1_square_actuator(
 
 static void m11_apply_sensor_effects(M11_GameViewState* state,
                                      const struct SensorEffectList_Compat* effects) {
+    const struct SensorEffect_Compat* lastLocalEffect = NULL;
     int i;
     if (!state || !effects || effects->count <= 0) return;
 
     for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
         const struct SensorEffect_Compat* e = &effects->effects[i];
+
+        /* ReDMCSB MOVESENS.C F0272 disables a OnceOnly sensor before
+         * dispatching either its local effect or F0268 remote event. */
+        if (e->sourceOnceOnly && F0272_SENSOR_DisableOnceOnly_Compat(
+                &state->world, e->sourceSensorIndex)) {
+            m11_refresh_hash(state);
+        }
+
+        /* ReDMCSB MOVESENS.C F0276 requests C01_SOUND_SWITCH through F0064
+         * for each triggered sensor whose source record is audible. */
+        if (e->sourceAudible) {
+            m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+        }
 
         switch (e->kind) {
         case SENSOR_EFFECT_TELEPORT:
@@ -20406,6 +20473,13 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                     deferEv.cell = e->destCell;
                     deferEv.aux0 = eventType;
                     deferEv.aux1 = e->textIndex;
+                    if (!state->world.dungeon ||
+                        !DM1_V1_F0268_EventPriority_Compat(
+                            e->textIndex,
+                            state->world.dungeon->dm1SensorF0268PriorityByEffect,
+                            &deferEv.aux4)) {
+                        break;
+                    }
                     (void)F0721_TIMELINE_Schedule_Compat(
                         &state->world.timeline, &deferEv);
                 }
@@ -20503,9 +20577,70 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             /* Log but don't crash */
             break;
 
+        case SENSOR_EFFECT_LOCAL_STEAL_XP: {
+            /* ReDMCSB MOVESENS.C:F0269:1038-1075/F0270:1081-1097: C10
+             * awards 300 Steal XP.
+             * For CM1_CELL_ANY the source divides before iterating living
+             * champions; a cell-specific local C10 awards only G0411, whose
+             * identity is not yet present in this movement receipt. */
+            const int total = 300;
+            int championCount = state->world.party.championCount;
+            int champion;
+            int amount;
+            if (e->textIndex != 10 || e->destCell >= 0 || championCount <= 0 ||
+                championCount > CHAMPION_MAX_PARTY) {
+                break;
+            }
+            amount = total / championCount;
+            for (champion = 0; champion < championCount; ++champion) {
+                const struct ChampionState_Compat* member =
+                    &state->world.party.champions[champion];
+                if (!member->present || member->hp.current <= 0) continue;
+                m11_award_magic_xp(state, champion, LIFECYCLE_SKILL_STEAL,
+                                   amount);
+            }
+            m11_refresh_hash(state);
+            break;
+        }
+
+        case SENSOR_EFFECT_LOCAL_DEFERRED:
+            /* ReDMCSB F0270 stores the last non-C10 local effect in
+             * G0403-G0406; F0271 consumes it after the whole F0276 pass. */
+            lastLocalEffect = e;
+            break;
+
         default:
             break;
         }
+    }
+
+    if (lastLocalEffect &&
+        (lastLocalEffect->textIndex == DM1_EFFECT_CLEAR ||
+         lastLocalEffect->textIndex == DM1_EFFECT_TOGGLE) &&
+        F0271_SENSOR_ProcessRotation_Compat(
+            &state->world, lastLocalEffect->destMapIndex,
+            lastLocalEffect->destMapX, lastLocalEffect->destMapY,
+            lastLocalEffect->destCell, lastLocalEffect->textIndex)) {
+        m11_refresh_hash(state);
+    }
+}
+
+/* ReDMCSB MOVESENS.C F0276 runs the floor sensor pass for object
+ * admission/removal after a successful floor-chain mutation. This adapter is
+ * currently bounded to the DM1 PC34 path. */
+static void m11_process_dm1_object_floor_change(M11_GameViewState* state,
+                                                int mapIndex,
+                                                int mapX,
+                                                int mapY,
+                                                unsigned short thing,
+                                                int isAddition) {
+    struct SensorEffectList_Compat effects;
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        !state->world.dungeon || !state->world.things) return;
+    if (F0276_SENSOR_ProcessObjectFloorChange_Compat(
+            state->world.dungeon, state->world.things,
+            mapIndex, mapX, mapY, thing, isAddition, &effects)) {
+        m11_apply_sensor_effects(state, &effects);
     }
 }
 
@@ -22716,6 +22851,9 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
                        M11_DM1_PRESENTED("HAND ROUTE FAILED"));
         return 0;
     }
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, state->world.party.mapX,
+        state->world.party.mapY, item, 0);
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: HELD %s",
                   (unsigned int)state->world.gameTick, itemName);
@@ -22822,6 +22960,9 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         }
         m11_debug_trace_floor_drop(state, "mouse-hand", item,
                                    beforeHead, 1);
+        m11_process_dm1_object_floor_change(state,
+            state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY, item, 1);
         m11_get_source_item_name(state, state->world.things, item,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "DROP", "ITEM DROPPED");
@@ -22882,6 +23023,10 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         m11_debug_trace_floor_drop(state, "inventory", item,
                                    beforeHead, 1);
     }
+
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, state->world.party.mapX,
+        state->world.party.mapY, item, 1);
 
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -29865,6 +30010,11 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
             (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
             &state->world)) goto cleanup;
+    /* Both IIGS source revisions share the authenticated graphics bank. The
+     * source MEDIA278/346 policy is shared too: C009 has no later numeric
+     * override and C005 uses the corrected party-type operand. */
+    m11_bind_dm1_sensor_edition_policy(
+        state, "1045a36952e64eb2bc7b4c7b2965b112");
     state->active = 1;
     failureStage = "font-bind";
     if (!F0506_DUNGEON_ReserveFreshPc34Pools_Compat(state->world.dungeon,
@@ -35393,6 +35543,7 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
                 state->world.dungeon, state->world.things,
                 state->world.party.mapIndex, state->world.party.mapX,
                 state->world.party.mapY, SENSOR_EVENT_WALK_ON,
+                0,
                 &state->world.party,
                 state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
                 &possessionEffects)) {
@@ -46094,6 +46245,8 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
                                     targetMapX, targetMapY, item);
         return 0;
     }
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, targetMapX, targetMapY, item, 0);
 
     {
         char itemName[48];
@@ -46144,6 +46297,9 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
                                         target->thing);
             return 0;
         }
+        m11_process_dm1_object_floor_change(state,
+            target->mapIndex, target->mapX, target->mapY,
+            target->thing, 0);
         m11_get_source_item_name(state, state->world.things, target->thing,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "PICKUP", itemName);
@@ -46198,6 +46354,9 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
         DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
         return 0;
     }
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, targetMapX, targetMapY,
+        placedItem, 1);
 
     {
         char itemName[48];
@@ -46425,10 +46584,16 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             } else {
                 static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
                 /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
-                 * the empty-hand door-button route; a wrong item on the
-                 * keyhole/button box must not fall through into throw/drop. */
+                 * the empty-hand door-button route; occupied-hand clicks
+                 * outside F0375's throw lane must not fall through. */
                 if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    return M11_GAME_INPUT_IGNORED;
+                    /* F0377 sends occupied-hand door clicks to F0375. The
+                     * button box overlaps F0375's valid door throw lane at
+                     * screen x=160..163, y=77..85 (local y=44..52); only
+                     * the remainder is outside the source throw zone. */
+                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
                 }
             }
         }
@@ -46578,7 +46743,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                 memset(sensorsOnSq, 0, sizeof(sensorsOnSq));
                 while (sThing != THING_ENDOFLIST && sThing != THING_NONE &&
                        sSafety++ < 64 && sensCount < SENSOR_ENUM_CAPACITY) {
-                    if (THING_GET_TYPE(sThing) == THING_TYPE_SENSOR) {
+                    int thingType = THING_GET_TYPE(sThing);
+                    if (thingType == THING_TYPE_SENSOR) {
                         int si = THING_GET_INDEX(sThing);
                         if (si >= 0 && si < state->world.things->sensorCount) {
                             sensorsOnSq[sensCount].found = 1;
@@ -46591,12 +46757,21 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 (int)state->world.things->sensors[si].targetMapX;
                             sensorsOnSq[sensCount].targetMapY =
                                 (int)state->world.things->sensors[si].targetMapY;
+                            /* ReDMCSB MOVESENS.C:F0275 reads M011_CELL
+                             * from the packed Thing reference. targetCell is
+                             * the sensor's remote destination field and does
+                             * not identify the wall cell being clicked. */
                             sensorsOnSq[sensCount].cell =
-                                (int)(state->world.things->sensors[si].targetCell & 3);
+                                (int)THING_GET_CELL(sThing);
                             sensorsOnSq[sensCount].isLocal =
                                 state->world.things->sensors[si].localEffect;
                             sensCount++;
                         }
+                    } else if (thingType >= THING_TYPE_GROUP) {
+                        /* MOVESENS.C:F0275 stops both sensor passes at the
+                         * first group Thing; later links are outside the
+                         * wall-sensor run even if they encode a sensor. */
+                        break;
                     }
                     sThing = m11_raw_next_thing(state->world.things, sThing);
                 }
@@ -46606,7 +46781,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     memset(&ctx, 0, sizeof(ctx));
                     ctx.mapX = frontCell.mapX;
                     ctx.mapY = frontCell.mapY;
-                    ctx.cell = 0;
+                    /* CLIKVIEW.C calls F0275 with M018_OPPOSITE(direction),
+                     * the clicked face's packed Thing cell. */
+                    ctx.cell = (state->world.party.direction + 2) & 3;
                     ctx.leaderEmptyHanded =
                         (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) ? 1 : 0;
                     /* ReDMCSB F0275: sensor data is compared against
@@ -46659,6 +46836,10 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         int ri;
                         int anyAudible = 0;
                         int objectMutation = 0;
+                        int rotationPending = trigResults.rotationPending;
+                        int rotationMapX = trigResults.rotationMapX;
+                        int rotationMapY = trigResults.rotationMapY;
+                        int rotationCell = trigResults.rotationCell;
                         memset(&effects, 0, sizeof(effects));
                         for (ri = 0; ri < trigResults.count &&
                              effects.count < SENSOR_EFFECT_LIST_MAX_COUNT; ++ri) {
@@ -46735,6 +46916,17 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             }
                         }
                         m11_apply_sensor_effects(state, &effects);
+                        /* ReDMCSB F0275 defers the last local wall-sensor
+                         * rotation until every matching sensor has run. */
+                        if (rotationPending &&
+                            F0271_SENSOR_ProcessRotation_Compat(
+                                &state->world,
+                                state->world.party.mapIndex,
+                                rotationMapX, rotationMapY,
+                                rotationCell,
+                                trigResults.rotationEffect)) {
+                            m11_refresh_hash(state);
+                        }
                         if (objectMutation) {
                             m11_refresh_hash(state);
                         }
@@ -66167,7 +66359,7 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int framebufferWidth,
                                                 int framebufferHeight) {
-    int nameX, nameY, nameW, nameH;
+    int nameX, nameY;
     char objectName[16];
     DM1_V1_LayoutZoneRectPc34 nameRect;
     if (!state || !framebuffer || state->showDebugHUD ||
@@ -66189,10 +66381,17 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     nameRect = dm1_v1_leader_hand_object_name_rect_pc34();
     nameX = nameRect.x;
     nameY = nameRect.y;
-    nameW = nameRect.w;
-    nameH = nameRect.h;
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  nameX, nameY, nameW, nameH, M11_COLOR_BLACK);
+    {
+        M11_DM1F0035ZoneFillContext fill_context;
+        DM1_V1_F0035ZoneBackendIsolatedC91fPc34 backend;
+        fill_context.framebuffer = framebuffer;
+        fill_context.framebuffer_width = framebufferWidth;
+        fill_context.framebuffer_height = framebufferHeight;
+        backend.context = &fill_context;
+        backend.fill_zone_by_index = m11_dm1_f0035_fill_zone;
+        DM1_V1_F0035_OBJECT_ClearLeaderHandObjectNameIsolatedC91fPc34Compat(
+            &backend);
+    }
     /* OBJECT.C F0034 owns C017's cleared source field and its M653 text
      * geometry.  A generic host font changes the name's advance and makes
      * this narrow HUD lane overlap the action surface, so absent PC34 font
@@ -80765,6 +80964,7 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
         if (!F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                 world->dungeon, world->things, placedParty.mapIndex,
                 placedParty.mapX, placedParty.mapY, SENSOR_EVENT_WALK_ON,
+                0,
                 &placedParty,
                 state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
                 &enterEffects)) {
