@@ -15,7 +15,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LEGACY_AUDIT = ROOT / "docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv"
 DEFAULT_OUTPUT = ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv"
-SOURCE_TREES = ("SKWINSPX/src", "SKWINDOS/src")
+SOURCE_SPECS = (
+    # The unified engine variants.
+    ("SKWINSPX", "SKWINSPX/src", True),
+    ("SKWINDOS", "SKWINDOS/src", True),
+    # The legacy DOS implementation lives in top-level SKWINDOS/*.cpp files,
+    # outside the newer SKWINDOS/src tree. Keep it as a separate source row
+    # set so its platform-specific runtime definitions are not omitted.
+    ("SKWINDOS", "SKWINDOS", False),
+)
 LOCKED_SOURCE_COMMIT = "2c59a2c5a7978923ff5c822c15c3479e4d448493"
 
 
@@ -37,10 +45,20 @@ def main() -> int:
     legacy_rows = list(csv.DictReader(
         LEGACY_AUDIT.open(newline="", encoding="utf-8"), delimiter="\t"))
     legacy_counts = Counter(row["symbol"] for row in legacy_rows)
+    previous_rows = []
+    if args.output.exists():
+        with args.output.open(newline="", encoding="utf-8") as handle:
+            previous_rows = list(csv.DictReader(handle, delimiter="\t"))
+    previous_status = {
+        (row["source_tree"], row["source_file"], row["line"], row["symbol"]):
+            row.get("review_status", "UNREVIEWED")
+        for row in previous_rows
+    }
     discovered: list[dict[str, str]] = []
-    for source_tree in SOURCE_TREES:
-        tree_root = source_root / source_tree
-        files = sorted(p for p in tree_root.rglob("*")
+    for source_tree, source_path, recursive in SOURCE_SPECS:
+        tree_root = source_root / source_path
+        candidates = tree_root.rglob("*") if recursive else tree_root.glob("*")
+        files = sorted(p for p in candidates
                        if p.is_file() and p.suffix.lower() in {".c", ".cpp"})
         if not files:
             raise SystemExit(f"no C/C++ files found under {tree_root}")
@@ -56,14 +74,16 @@ def main() -> int:
                 if len(columns) != 4 or not columns[1].isdigit():
                     continue
                 symbol, line_number, _reported_path, signature = columns
+                relative_path = source_file.relative_to(source_root).as_posix()
+                key = (source_tree, relative_path, line_number, symbol)
                 discovered.append({
                     "symbol": symbol,
                     "source_tree": source_tree.split("/", 1)[0],
-                    "source_file": source_file.relative_to(source_root).as_posix(),
+                    "source_file": relative_path,
                     "line": line_number,
                     "signature": signature,
                     "legacy_audit_exact_symbol_rows": str(legacy_counts.get(symbol, 0)),
-                    "review_status": "UNREVIEWED",
+                    "review_status": previous_status.get(key, "UNREVIEWED"),
                 })
 
     discovered.sort(key=lambda row: (row["source_file"], int(row["line"]),
