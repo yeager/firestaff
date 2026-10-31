@@ -221,7 +221,8 @@ int16_t dm2_v1_alloc_new_dbitem_from_world(
     if (!set || !set->valid || !dungeon || current_map < 0 ||
         current_map >= dungeon->level_count ||
         (db != DM2_V1_DB_WEAPON && db != DM2_V1_DB_CLOTH &&
-         db != DM2_V1_DB_POTION && db != DM2_V1_DB_MISC))
+         db != DM2_V1_DB_POTION && db != DM2_V1_DB_MISC &&
+         db != DM2_V1_DB_SCROLL && db != DM2_V1_DB_CONTAINER))
         return DM2_V1_RECORD_HANDLE_NULL;
     for (int map = 0; map < dungeon->level_count; ++map) {
         if (map == current_map) continue;
@@ -256,6 +257,27 @@ int16_t dm2_v1_alloc_new_dbitem_from_world(
                             ((word2 >> 11) & 0x001fu) == 4u)
                             break;
                     }
+                    if ((db == DM2_V1_DB_SCROLL ||
+                         db == DM2_V1_DB_CONTAINER) &&
+                        dm2_v1_record_handle_pool(cursor) == db) {
+                        /* c_record.cpp:1076-1102 direct-return DB7/DB9
+                         * candidates remain linked to their owner. The
+                         * selected record is cleared in place; containers
+                         * also terminate their nested-content link. */
+                        memset(record, 0,
+                               (size_t)set->pools[db].record_size);
+                        dm2_v1_pool_wr16(set, record,
+                                          DM2_V1_RECORD_HANDLE_END);
+                        if (db == DM2_V1_DB_CONTAINER &&
+                            set->pools[db].record_size >= 4)
+                            dm2_v1_pool_wr16(set, record + 2,
+                                              DM2_V1_RECORD_HANDLE_END);
+                        (void)dm2_v1_record_pool_set_itemtype(
+                            set, cursor,
+                            (uint8_t)dm2_v1_get_itemtype_of_itemspec_actuator(
+                                itemspec));
+                        return cursor;
+                    }
                     if (dm2_v1_record_handle_pool(cursor) == db &&
                         (dm2_v1_pool_rd16(set, record + 2) & 0x0080u) == 0u) {
                         int16_t new_head = head;
@@ -282,11 +304,12 @@ int16_t dm2_v1_alloc_new_dbitem_from_world(
 
     /* c_record.cpp::RECYCLE_A_RECORD_FROM_THE_WORLD also reaches records
      * held by a creature before declaring a DB pool exhausted.  Generated
-     * creature drops commonly request DB10, while those records are not
-     * necessarily rooted in a ground stack.  Walk the authenticated DB4
-     * possession heads and recycle only a non-important candidate. */
+     * creature drops commonly request possessions. Walk authenticated DB4
+     * heads; DB5/6/8/10 are cut only when non-important, while the source
+     * DB7/9 direct-return path clears the record without unlinking it. */
     if (db == DM2_V1_DB_WEAPON || db == DM2_V1_DB_CLOTH ||
-        db == DM2_V1_DB_POTION || db == DM2_V1_DB_MISC) {
+        db == DM2_V1_DB_POTION || db == DM2_V1_DB_MISC ||
+        db == DM2_V1_DB_SCROLL || db == DM2_V1_DB_CONTAINER) {
         const DM2_V1_RecordPool *creatures = &set->pools[DM2_V1_DB_CREATURE];
         const int creature_count = creatures->record_count +
             creatures->extension_count;
@@ -307,6 +330,23 @@ int16_t dm2_v1_alloc_new_dbitem_from_world(
                 if (!candidate || !dm2_v1_record_pool_next_link(set, head,
                                                                   &next))
                     break;
+                if ((db == DM2_V1_DB_SCROLL ||
+                     db == DM2_V1_DB_CONTAINER) &&
+                    dm2_v1_record_handle_pool(head) == db) {
+                    memset(candidate, 0,
+                           (size_t)set->pools[db].record_size);
+                    dm2_v1_pool_wr16(set, candidate,
+                                      DM2_V1_RECORD_HANDLE_END);
+                    if (db == DM2_V1_DB_CONTAINER &&
+                        set->pools[db].record_size >= 4)
+                        dm2_v1_pool_wr16(set, candidate + 2,
+                                          DM2_V1_RECORD_HANDLE_END);
+                    (void)dm2_v1_record_pool_set_itemtype(
+                        set, head,
+                        (uint8_t)dm2_v1_get_itemtype_of_itemspec_actuator(
+                            itemspec));
+                    return head;
+                }
                 if (dm2_v1_record_handle_pool(head) == db &&
                     set->pools[db].record_size >= 4 &&
                     (dm2_v1_pool_rd16(set, candidate + 2) & 0x0080u) == 0u) {

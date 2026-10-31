@@ -232,6 +232,57 @@ int main(void)
         dm2_v1_record_pool_set_free(&set);
     }
 
+    /* ── DB7/DB9 direct-return recycler candidates ──────────────── */
+    {
+        DM2_V1_RecordPoolSet set;
+        DM2_V1_DungeonData dungeon;
+        uint8_t raw[8];
+        int16_t recycled;
+
+        memset(&set, 0, sizeof(set));
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(raw, 0, sizeof(raw));
+        add_pool(&set, 7, 4, 1, 0);
+        add_pool(&set, 9, 8, 1, 0);
+        set.valid = 1;
+        dungeon.level_count = 1;
+        dungeon.level_widths[0] = 1;
+        dungeon.level_heights[0] = 1;
+        dungeon.raw_data = raw;
+        dungeon.raw_size = (int)sizeof(raw);
+        /* A DB4 creature owns DB7; direct-return clears it in place and
+         * leaves the possession head pointing at that record. */
+        add_pool(&set, 4, 16, 1, 0);
+        wr16(set.pools[4].bytes + 2, mk_handle(7, 0));
+        wr16(set.pools[7].bytes + 0, DM2_V1_RECORD_HANDLE_END);
+        wr16(set.pools[7].bytes + 2, 0x0080);
+        recycled = dm2_v1_alloc_new_dbitem_from_world(
+            &set, &dungeon, 0, 0x01fcu);
+        CHECK(recycled == mk_handle(7, 0),
+              "direct-return recycler finds a DB7 possession");
+        CHECK(rd16(set.pools[4].bytes + 2) == mk_handle(7, 0),
+              "DB7 direct return preserves its creature owner link");
+        CHECK(rd16(set.pools[7].bytes) == DM2_V1_RECORD_HANDLE_END &&
+                  rd16(set.pools[7].bytes + 2) == 0,
+              "DB7 direct return clears record in place");
+
+        /* DB9 follows the same source owner semantics and initializes both
+         * link words after clearing the record. */
+        wr16(set.pools[4].bytes + 2, mk_handle(9, 0));
+        wr16(set.pools[9].bytes + 0, DM2_V1_RECORD_HANDLE_END);
+        wr16(set.pools[9].bytes + 2, mk_handle(5, 2));
+        recycled = dm2_v1_alloc_new_dbitem_from_world(
+            &set, &dungeon, 0, 0x01e5u);
+        CHECK(recycled == mk_handle(9, 0),
+              "direct-return recycler finds a DB9 possession");
+        CHECK(rd16(set.pools[4].bytes + 2) == mk_handle(9, 0),
+              "DB9 direct return preserves its creature owner link");
+        CHECK(rd16(set.pools[9].bytes) == DM2_V1_RECORD_HANDLE_END &&
+                  rd16(set.pools[9].bytes + 2) == DM2_V1_RECORD_HANDLE_END,
+              "DB9 direct return initializes both links");
+        dm2_v1_record_pool_set_free(&set);
+    }
+
     /* ── SET_ITEMTYPE (c_record.cpp:284-345) ─────────────────────── */
     {
         DM2_V1_RecordPoolSet set;
