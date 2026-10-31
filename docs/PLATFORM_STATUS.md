@@ -198,8 +198,12 @@ and start-menu routes. The FM Towns DM1 test was repeated after one sampled
 door-frame interval measured 61 ms against its 60 ms per-frame ceiling; the
 test now allows up to 65 ms of host scheduler jitter while retaining its
 45 ms minimum and 1,450–1,800 ms total-door-duration bounds. The repeated test
-passed. These bounded routes do not establish visual, audio or complete
-gameplay parity.
+passed. Authentic Amiga 2.0 German media also exposed a false F0906/F0907
+admission check: ReDMCSB's MEDIA441 compiles that check for A20E, A20F and A21E,
+not A20G/A22G. After correcting the edition gate, German A20 direct CLI, M12
+start-menu and first-Hall checks passed; neighboring A20 English/French, A21/
+A22 English, A22 German and Amiga 3.6 startup checks passed as well. These
+bounded routes do not establish visual, audio or complete gameplay parity.
 
 On 2026-10-28, `test_m12_main_menu_game_selection_real_media.sh` passed
 against the current working tree and the installed original-media root. It
