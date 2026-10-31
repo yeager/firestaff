@@ -8,6 +8,20 @@ material branches and early-return/teleporter conditions. Keep CSB D3L/D3R
 parity open until the source behavior is compared against every supported
 CSB platform and edition; shared PC3.4 tests are not proof of that coverage.
 
+2026-10-31 Atari C05 ornament hit-zone correction: the older 2026-10-29
+"live-renderer coverage gap" below overstates the missing Atari wall-ornament
+pass. Firestaff does render selected source-derived wall ornaments in
+`m11_csb_atari_st_draw_wall_ornament` using the G0194/G0205 tables. ReDMCSB
+F0107 copies each visible ornament's G0205 rectangle into
+`G0291[C05]` (`DUNVIEW.C:3724`, `4168`); F0377 then hit-tests that byte box
+with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff does not
+publish the rendered Atari ornament rectangle to its C05 input path, which
+still uses the generic PC wall-ornament box. Audit and implement the actual
+frame-owned C05 rectangle, including its overwrite order relative to door
+buttons, before claiming Atari wall-sensor click parity. This correction does
+not close the still-open Atari floor/door ornament, creature, projectile, or
+explosion rendering and hit behavior.
+
 2026-10-30 CSB Atari ST hard-disk startup coverage: the installed original
 Atari package contains a separate `st20-21-hd-en` installation. The new
 real-media test extracts only `HardDisk/2009-02-22 PP` into ignored build
