@@ -2,6 +2,7 @@
 set -eu
 
 firestaff_cli=${1:?Firestaff executable is required}
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 mac_diagnostics_source=$mac_archive
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
@@ -444,9 +445,10 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
         XDG_CONFIG_HOME="$quick_home/.config" \
         APPDATA="$quick_home/AppData" \
         FIRESTAFF_CONFIG_PATH="$quick_home/no-game-config.toml" \
+        FIRESTAFF_LOCALE_DIR="$script_dir/../po" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
+        --lang sv --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
         no_game_status=$?
     }
     set -e
@@ -500,17 +502,27 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
-    for game_id in nexus theron; do
-        expected_available=$nexus_expected
-        if [ "$game_id" = theron ]; then
-            expected_available=$theron_expected
-        fi
+    for game_id in dm1 csb dm2 nexus theron; do
+        case "$game_id" in
+            dm1|csb|dm2) expected_available=yes ;;
+            nexus) expected_available=$nexus_expected ;;
+            theron) expected_available=$theron_expected ;;
+        esac
         printf '%s\n' "$no_game_output" | \
             grep -Fq "firestaff: $game_id available=$expected_available" || {
             printf 'FAIL: no-game startup reported the wrong authentic %s availability\n%s\n' \
                 "$game_id" "$no_game_output" >&2
             exit 1
         }
+        if [ "$expected_available" = yes ]; then
+            printf '%s\n' "$no_game_output" | \
+                grep -F "game=$game_id " | \
+                grep -Fq 'task-label="MATCHAR SPELVERSIONER"' || {
+                printf 'FAIL: Swedish no-game startup did not localize %s edition scanning\n%s\n' \
+                    "$game_id" "$no_game_output" >&2
+                exit 1
+            }
+        fi
     done
     if [ "$nexus_source" = cue ]; then
         expected_nexus_scan_owner="$quick_data_root/nexus/$(basename "$nexus_cue")"
