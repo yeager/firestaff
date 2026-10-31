@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last status review: 2026-10-31, after v3.0.422.** This is the
+**Last status review: 2026-11-01.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.

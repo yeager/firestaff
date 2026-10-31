@@ -171,7 +171,7 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-31. The current status reflects the source and
+**Last reviewed:** 2026-11-01. The current status reflects the source and
 authenticated-media evidence recorded on the linked status and per-game
 work-log pages. The complete clean-source Mednafen 1.32.1 patch chain passed
 three loops, and the `$C852` instrumented PCE Fast binary built against real
@@ -190,3 +190,9 @@ controller polls, while its `$E009` dispatch remains unjoined to game-owned
 polling and runtime CD data; native support status is unchanged. Each receipt
 remains bounded to its cited edition, route and test; it does not imply
 complete parity.
+
+The 2026-11-01 ISO projection receipt also binds the same eight creature-pointer
+and five regular-spawn zone records from the authenticated US and JP full ISO
+projections as from their regional raw BINs. Native ISO dungeon startup admits
+these records as source metadata; spawn-category semantics, runtime consumers
+and RNG behavior remain open. See the [projection source lock](source-lock/theron-track02-spawn-record-iso-projection-20261101.md).

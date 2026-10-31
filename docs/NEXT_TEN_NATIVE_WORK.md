@@ -1,6 +1,6 @@
 # Next Ten Native Work Items
 
-Reviewed 2026-10-31. This is the current implementation queue after the
+Reviewed 2026-11-01. This is the current implementation queue after the
 archive/startup regression batch recorded in the per-game `DONE-*.md` files.
 It intentionally ranks source-owned work above synthetic presentation work.
 Theron runtime and capture status is summarized in
