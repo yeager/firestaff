@@ -66,7 +66,7 @@ source.
 
 | Resource | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images are verified. An authentic Japanese title capture binds the complete `TITLE.CG` member to its VDP2 upload and the MAPD palette to CRAM; the visible NBG0 bitmap's producer is also traced. The display consumer, MAPD order, layer placement and timing are still unbound. See [title source audit](nexus_title.md#japanese-retail-title-vdp2-receipt). |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and all five real retail images are verified. An authenticated Japanese trace binds their selection and exact word transfer to VDP2 VRAM in N,E,X,U,S order, and separately binds the complete `TITLE.CG` upload and MAPD palette to VDP2/CRAM. The final display consumer, layer placement, full composition and alignment to the cold-boot visual timeline remain unbound. See [title source audit](nexus_title.md#japanese-retail-title-vdp2-receipt). |
 | `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified. Neither occurs in the measured Japanese title-frame VDP2 memory/CRAM, so it is not admitted as the NBG0 source; no other display role is proven. |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
