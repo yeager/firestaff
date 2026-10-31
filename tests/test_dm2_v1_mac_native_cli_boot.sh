@@ -66,9 +66,14 @@ dos_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 if [ -f "$dos_archive" ]; then
     ln -s "$dos_archive" "$menu_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 fi
+towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
+towns_data_root=''
 cleanup_menu_data() {
     if [ -d "$menu_data_root" ]; then
         rm -rf "$menu_data_root"
+    fi
+    if [ -n "$towns_data_root" ] && [ -d "$towns_data_root" ]; then
+        rm -rf "$towns_data_root"
     fi
 }
 trap cleanup_menu_data EXIT
@@ -322,6 +327,58 @@ if actual_platform != 4:
         "DM2_PLATFORM_MAC_EN (4)")
 print("PASS: DM2 AUTO selected authenticated Macintosh platform (4)")
 PY
+
+# On macOS, AUTO must still prefer FM Towns when Towns, Macintosh, and DOS
+# originals are all installed. Keep this separate from the Macintosh-only
+# AUTO case above, which proves the Mac route when Towns media is absent.
+if [ -f "$towns_archive" ]; then
+    towns_data_root=$(mktemp -d "$test_scratch/firestaff-dm2-mac-auto.XXXXXX")
+    mkdir -p "$towns_data_root/dm2"
+    towns_archive_dir=$(cd "$(dirname "$towns_archive")" && pwd)
+    ln -s "$towns_archive_dir/${towns_archive##*/}" \
+        "$towns_data_root/dm2/${towns_archive##*/}"
+    ln -s "$archive_dir/$archive_name" \
+        "$towns_data_root/dm2/$archive_name"
+    if [ -f "$dos_archive" ]; then
+        ln -s "$dos_archive" \
+            "$towns_data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+    fi
+
+    towns_auto_output=$(FIRESTAFF_DATA="$towns_data_root" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --debug --boot-probe --boot-probe-frames 1 --duration 0 2>&1) || {
+        printf '%s\n' "$towns_auto_output" >&2
+        exit 1
+    }
+    case "$towns_auto_output" in
+        *'game=dm2 platform=FM Towns edition=fmtowns-ja'*'assetMd5=027ff3b8ddc2c4c4cdda7ada0b0bc46c'*) ;;
+        *)
+            printf '%s\n' 'FAIL: DM2 AUTO did not prefer authenticated FM Towns when Towns, Mac and DOS media were installed' \
+                "$towns_auto_output" >&2
+            exit 1
+            ;;
+    esac
+    echo 'PASS: macOS DM2 AUTO prefers authenticated FM Towns over Macintosh and DOS'
+
+    explicit_mac_output=$(FIRESTAFF_DATA="$towns_data_root" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --platform mac --debug --boot-probe \
+        --boot-probe-frames 1 --duration 0 2>&1) || {
+        printf '%s\n' "$explicit_mac_output" >&2
+        exit 1
+    }
+    case "$explicit_mac_output" in
+        *'game=dm2 platform=Macintosh'*'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*) ;;
+        *)
+            printf '%s\n' 'FAIL: explicit DM2 Macintosh selection failed with FM Towns also installed' \
+                "$explicit_mac_output" >&2
+            exit 1
+            ;;
+    esac
+    echo 'PASS: explicit DM2 Macintosh selection remains stable with FM Towns installed'
+else
+    echo 'SKIP: authentic DM2 FM Towns archive is not staged for the macOS AUTO cross-edition check'
+fi
 
 # A direct --game launch is one game session. Back from active Macintosh
 # gameplay must close Firestaff instead of opening the multi-game M12 menu.

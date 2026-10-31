@@ -1,6 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
 
+## 2026-10-31 — Authentic Japanese Theron fresh-campaign handoff
+
+Added an M11 integration check that starts an authentic Japanese Theron's
+Quest campaign from the title, selects Ak-Tu-Ba, admits the eight source roster
+names through the Soul Room, selects Theron, and reaches source-verified level
+0. The wrapper requires the installed `TQJP02.bin` size and MD5 and isolates
+save paths; the test asserts there is no Continue claim or fabricated quest
+progress. The new CTest built with warnings as errors and passed three
+consecutive runs against the original media. This verifies that JP startup
+route only; it does not establish full Theron gameplay or platform parity.
+
+
 ## 2026-10-30 — Keep RetroAchievements startup diagnostics behind `--debug`
 
 The CLI emitted RetroAchievements credential status whenever the feature was

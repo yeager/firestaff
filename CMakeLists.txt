@@ -4368,7 +4368,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_mac_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};FIRESTAFF_DM2_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}"
         TIMEOUT 240
     )
     add_test(
@@ -47723,6 +47723,26 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         set_tests_properties(theron_v1_m11_real_bram_continue PROPERTIES
             SKIP_RETURN_CODE 77
             LABELS "theron;real-media;save;backup-ram;no-synthetic")
+    endif()
+
+    add_executable(test_theron_v1_m11_jp_fresh_start
+        tests/test_theron_v1_m11_jp_fresh_start.c
+    )
+    target_link_libraries(test_theron_v1_m11_jp_fresh_start PRIVATE
+        firestaff_theron firestaff_m12 firestaff_m11 firestaff_m10)
+    target_include_directories(test_theron_v1_m11_jp_fresh_start PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_m11_jp_fresh_start PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    if(UNIX)
+        add_test(NAME theron_v1_m11_jp_fresh_start
+            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_m11_jp_fresh_start.sh
+                $<TARGET_FILE:test_theron_v1_m11_jp_fresh_start>)
+        set_tests_properties(theron_v1_m11_jp_fresh_start PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;startup;native;no-synthetic")
     endif()
 
     add_test(

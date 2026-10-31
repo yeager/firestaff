@@ -4,17 +4,23 @@
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Native input and runtime status (2026-10-24):** an authentic JP Rev 1
-Track 02 run through Firestaff's native C/SDL runtime advanced from stage
-select through the Soul Room into a loaded dungeon. One native interval
-reported 2.79 game ticks/s and 4.99 rendered/presented frames/s. The native
-presented capture was black, so visual playability remains open. The run used
-separate SDL key-down events and does not verify a continuous 3–5 second
-button hold. Firestaff gameplay runs natively; external emulator behavior is
-not used as a substitute for its runtime. See [Theron input notes](../theron/theron_input.md)
-and [capture readiness](../theron/THERON_CAPTURE_READINESS.md). DMWeb's original
-edition/manual references and Greatstone SCK's extraction corpus inform
-provenance and media handling.
+**Current native and reference boundary (2026-10-31):** authentic JP Track 02
+reaches a loaded dungeon in Firestaff's native C/SDL runtime; repeated Debug
+runs record nonzero ticks and presented frames, and the latest Firestaff
+snapshot is nonblack. It has not been paired with an original-emulator image,
+and original graphics, palette, and state-driven viewport binding remain open.
+A separate cold System Card RUN capture binds `$1800=$C8`, `$1801=$04`, and a
+`$2259=$04` callback followed by `$E166->$E176`, but observes no confirmed
+game-owned handoff. The reported 3–5 second title-menu action hold remains
+unverified. Firestaff gameplay runs natively; external emulator behavior is
+reference evidence only. See [Theron input notes](../theron/theron_input.md)
+and [capture readiness](../theron/THERON_CAPTURE_READINESS.md). DMWeb's
+original edition/manual references and Greatstone SCK's extraction corpus
+inform provenance and media handling.
+
+The black presented capture mentioned in older dated reports is historical;
+it is superseded by the current nonblack snapshot observation above. Neither
+result establishes visual parity.
 
 Theron's Quest is the PC Engine CD / TurboGrafx-CD "light" spin-off of Dungeon
 Master. Unlike DM1, CSB, and DM2, **there is no reconstructed reference

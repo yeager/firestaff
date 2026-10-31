@@ -1,5 +1,19 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — cold System Card RUN callback remains before game handoff
+
+The authentic Japanese cold `run@480:300` capture records one System Card
+`RUN` event and no `SELECT` event. Shared-sequence I/O and RAM observations
+bind `$1800=$C8`, `$1801=$04`, the resulting `$2259=$04` store, and the BIOS
+branch `$E166->$E176`. No `$E174`, `$E11D`, `$E130`, or `$E209` receipt or
+confirmed game-owned handoff appears. This identifies the callback byte and
+BIOS path only; it does not assign meaning to `$2259` or demonstrate title
+menu input or gameplay. See the [source-locked report](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary)
+and [100-instruction System Card listing](../source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm).
+
+The native Continue and fresh-campaign evidence below is independent of this
+reference-only System Card trace.
+
 ## 2026-10-31 — authentic BRAM Continue reaches native dungeon 2
 
 The native `theron_v1_m11_real_bram_continue` integration test passed three

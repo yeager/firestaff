@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-31 Theron JP fresh-campaign follow-up: the new native M11 integration
+test passes three repeated runs against the authenticated `TQJP02.bin`. It
+checks the source roster names and the handoff into source-verified Ak-Tu-Ba
+level 0, with no Continue claim or quest progress. This closes only that
+Japanese startup-path evidence gap. Full Theron parity remains open, including
+source-backed map transitions and stairs, all-level/runtime behavior,
+combat, item and quest consumers, save interoperability, and full keyboard,
+mouse, presentation, and audio parity. Do not infer stair or quest behavior
+from menu roster indices or fabricated states; extend coverage from original
+media and source-bound captures.
+
 2026-10-31 authentic-media launch audit: on base `d64d70d0`, the real-media
 CLI matrix passed DM1 PC-34, CSB Atari ST/Amiga/FM Towns, and DM2
 DOS/Amiga/FM Towns/extracted Macintosh; M12 platform selection and early-scan
