@@ -111,9 +111,10 @@ int dm1_v1_amiga_original_disk_check(const uint8_t* adf_bytes,
          ++cursor) {
         if (adf_bytes[cursor] !=
             (uint8_t)g_amiga_disk_boot_copyright[copyright_index]) return 0;
-        ++copyright_index;
         if (g_amiga_disk_boot_copyright[copyright_index] == '\0')
             copyright_index = 0u;
+        else
+            ++copyright_index;
     }
     return 1;
 }

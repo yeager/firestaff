@@ -439,6 +439,8 @@ static void test_real_amiga_v20_graphics_receipt(void) {
                                                real_graphics_visitor,
                                                &result) >= 0,
           "real_adf_visit");
+    CHECK(dm1_v1_amiga_original_disk_check(adf, adf_size, 1) == 1,
+          "real_amiga_f0906_f0907_original_disk_admission");
     free(adf);
     CHECK(result.found == 1, "real_graphics_found");
     CHECK(result.swshBytes != NULL, "real_amiga_swsh_found_in_selected_adf");

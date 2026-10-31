@@ -22,6 +22,8 @@ static void write_be32(uint8_t* p, uint32_t value) {
 
 static void test_sector_11_copyright(void) {
     static const char marker[] = "Copyright (C) 1988 Software Heaven, Inc.";
+    static const char marker_long[] =
+        "Copyright (C) 1988 Software Heaven, Inc.  All Rights Reserved.  NOT FOR DISTRIBUTION.";
     uint8_t* disk = (uint8_t*)calloc(kAdfBytes, 1u);
     assert(disk != NULL);
     memcpy(disk + (size_t)kSectorBytes * kSectorCount,
@@ -29,6 +31,10 @@ static void test_sector_11_copyright(void) {
     assert(dm1_v1_amiga_original_disk_check(disk, kAdfBytes, 0));
     assert(!dm1_v1_amiga_original_disk_check(
         disk, (size_t)kSectorBytes * kSectorCount, 1));
+    memset(disk + (size_t)kSectorBytes * kSectorCount, 0, kSectorBytes);
+    memcpy(disk + (size_t)kSectorBytes * kSectorCount,
+           marker_long, sizeof(marker_long) - 1u);
+    assert(dm1_v1_amiga_original_disk_check(disk, kAdfBytes, 0));
     free(disk);
 }
 
@@ -41,7 +47,7 @@ static void test_boot_sector_fallback(void) {
     write_be32(disk + 4u, UINT32_C(0xe3a6ec5b));
     for (size_t offset = 52u; offset < kBootBytes; ++offset) {
         disk[offset] = (uint8_t)copyright[source++];
-        if (copyright[source] == '\0') source = 0u;
+        if (copyright[source - 1u] == '\0') source = 0u;
     }
     assert(dm1_v1_amiga_original_disk_check(disk, kAdfBytes, 1));
     assert(!dm1_v1_amiga_original_disk_check(disk, kAdfBytes, 0));

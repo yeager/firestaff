@@ -3594,12 +3594,12 @@ still pending. SDL's dummy driver does not verify physical IIGS hardware,
 native audio output, first active Hall movement, or visual parity.
 # ReDMCSB F0906/F0907 — Amiga retail original-disk check
 
-The ReDMCSB A20 startup path checks sector 11 for the release copyright; the
+The ReDMCSB A20 startup path checks sector 11 for its release copyright;
 MEDIA441 A20E/A20F/A21E builds fall back to F0907, which checks the boot-sector
-checksum and the repeating copyright bytes. Firestaff now has a bounded
-validator for both source-defined checks, with a unit test covering valid and
-tampered records. The authentic A20E disk has a zero-filled sector 11 and uses
-the boot-sector fallback. Runtime integration remains open because current
-archive startup exposes extracted `GRAPHICS.DAT` provenance but does not yet
-hand the original raw ADF to the intro path; rejecting a launch on that basis
-would break the existing nested-archive boot route.
+checksum and compares copyright bytes including the embedded NUL. Firestaff
+reads the raw ADF from direct and ZIP-to-ZIP archive paths before the SWSH intro
+and validates these checks. The authentic A20E disk has a zero-filled sector
+11 and passes the F0907 fallback. Unit tests reject short, malformed, and
+tampered records; the real A20E graphics-media test and nested-archive CLI boot
+regression pass. This covers the identified Amiga startup lane, not other
+platforms' source-specific startup checks.
