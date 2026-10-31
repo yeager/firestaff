@@ -3,9 +3,9 @@
 ## 2026-10-31 — synchronize Theron status documentation with verified input evidence
 
 Updated the README, documentation index, project/platform status, capture
-readiness, reverse-engineering and technical-reference summaries, and Theron
-TODO/DONE records. Current status distinguishes the three authentic JP PCE
-Fast input-conditioned RAM updates from the cold US System Card BIOS polls.
+readiness, reverse-engineering index and technical-reference summaries, and
+Theron TODO/DONE records. Current status distinguishes the three authentic JP
+PCE Fast input-conditioned RAM updates from the cold US System Card BIOS polls.
 It also keeps the nonblack Firestaff snapshot separate from the unpaired
 original-reference image. No gameplay semantics or parity claim was added.
 
