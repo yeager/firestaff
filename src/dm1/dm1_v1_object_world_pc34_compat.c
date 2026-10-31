@@ -12,37 +12,67 @@ void DM1_V1_ObjectWorld_InitPc34Compat(DM1_V1_ObjectWorldStatePc34* state) {
     state->loaded = false;
 }
 
-/* F0031_OBJECT_LoadNames: reads null-terminated strings sequentially from
- * graphic #559 data buffer. Up to 199 object names. */
+/* ReDMCSB OBJECT.C F0031 loads the raw M564 object-name record (556 in
+ * legacy media, 694 in PC3.4 multilingual media). MEDIA060 terminates names
+ * with the high bit; MEDIA574 uses NUL terminators. This helper receives the
+ * already-expanded raw record, not GRAPHICS.DAT bitmap 559. */
 bool DM1_V1_ObjectWorld_LoadObjectNamesPc34Compat(DM1_V1_ObjectWorldStatePc34* state, const uint8_t* data, size_t size) {
-    if (!state || !data || size == 0) return false;
+    char* parsed[DM1_OBJ_NAME_COUNT] = { 0 };
+    size_t offset = 0u;
+    size_t nul_count = 0u;
+    size_t index;
+    int high_bit_terminated;
 
-    size_t offset = 0;
-    int name_idx = 0;
+    if (!state || !data || size == 0u) return false;
+    for (index = 0u; index < size; ++index) {
+        if (data[index] == 0u) ++nul_count;
+    }
+    /* Japanese MEDIA574 can contain high-bit CP932 bytes. MEDIA689 also
+     * carries NUL separators; F0031 changes the preceding byte-1 marker to
+     * NUL in place for its string consumers. */
+    high_bit_terminated = nul_count < DM1_OBJ_NAME_COUNT;
 
-    while (offset < size && name_idx < DM1_OBJ_NAME_COUNT) {
-        /* Find end of current null-terminated string */
+    for (index = 0u; index < DM1_OBJ_NAME_COUNT; ++index) {
         size_t start = offset;
-        while (offset < size && data[offset] != '\0') {
-            offset++;
+        size_t length;
+        size_t written;
+        int terminated = 0;
+
+        while (offset < size) {
+            uint8_t ch = data[offset++];
+            if ((!high_bit_terminated && ch == 0u) ||
+                (high_bit_terminated && (ch & 0x80u) != 0u)) {
+                terminated = 1;
+                break;
+            }
         }
-        if (offset >= size) break;
-
-        size_t len = offset - start;
-        char* name = (char*)malloc(len + 1);
-        if (!name) return false;
-        memcpy(name, data + start, len);
-        name[len] = '\0';
-
-        /* Free any previously allocated name */
-        free(state->obj_names[name_idx]);
-        state->obj_names[name_idx] = name;
-        name_idx++;
-        offset++; /* skip null terminator */
+        if (!terminated) goto fail;
+        length = offset - start - (high_bit_terminated ? 0u : 1u);
+        if (!high_bit_terminated && length > 0u && data[start + length - 1u] == 1u) {
+            --length; /* MEDIA689 F0031 overwrites its byte-1 end marker with NUL. */
+        }
+        parsed[index] = (char*)malloc(length + 1u);
+        if (!parsed[index]) goto fail;
+        written = 0u;
+        while (written < length) {
+            uint8_t ch = data[start + written];
+            if (high_bit_terminated && written + 1u == length) ch &= 0x7fu;
+            parsed[index][written] = (char)ch;
+            ++written;
+        }
+        parsed[index][written] = '\0';
     }
 
+    for (index = 0u; index < DM1_OBJ_NAME_COUNT; ++index) {
+        free(state->obj_names[index]);
+        state->obj_names[index] = parsed[index];
+    }
     state->loaded = true;
     return true;
+
+fail:
+    for (index = 0u; index < DM1_OBJ_NAME_COUNT; ++index) free(parsed[index]);
+    return false;
 }
 
 const char* DM1_V1_ObjectWorld_GetObjectNamePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx) {
