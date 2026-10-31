@@ -7,6 +7,15 @@ frame-one fallback. Big-endian DB2 ext-usage-2 regressions cover the animated
 frame and the absent-animation fallback. Full actuator animation variants and
 viewport integration remain open.
 
+2026-10-31 runtime integration for `DM2_query_0cee_1a46`: the DM2 door metadata
+path now consumes the ordered, GDAT-aware query with the current game tick,
+map wall-GFX list, and authenticated asset loader. This makes the supported
+static/animated DB2 and state-dependent DB3 result available to the viewport's
+door-button renderer instead of relying on the old static text/ordinal helpers.
+The executable builds and `dm2_v1_skproject_core` passes. Full wall-side
+decoration integration, source-case runtime captures, and all-platform
+actuator/text behavior remain open.
+
 2026-10-31 skproject `DM2_QUERY_ORNATE_ANIM_FRAME` missing-entry fallback:
 When GDAT field 0x0d has a zero word value, skproject falls through to dtText;
 when neither has animation data, it returns frame 1 (`c_querydb.cpp:471-517`).

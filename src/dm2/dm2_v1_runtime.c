@@ -1099,10 +1099,6 @@ static void dm2_runtime_apply_door_record_metadata(
     int size = 0;
     const uint8_t *record;
     uint16_t w2;
-    int wall_gfx_index = -1;
-    int wall_gfx_field = -1;
-    uint8_t animated_field = 0u;
-    uint32_t animated_receipt = 0u;
 
     if (!dd || !door) return;
     thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
@@ -1135,36 +1131,29 @@ static void dm2_runtime_apply_door_record_metadata(
         door->door_ornate_gfx_index =
             door_ornate_list[door->ornament_index - 1u];
     }
-    if (!door->door_button &&
-        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
-                                          view_dir, 2, 8,
-                                          &wall_gfx_index,
-                                          &wall_gfx_field) == 0) {
-        door->door_wall_button = 1;
-        door->door_wall_button_index = (uint8_t)wall_gfx_index;
-        door->door_wall_button_field = (uint8_t)wall_gfx_field;
-        door->door_wall_button_x = (int16_t)x;
-        door->door_wall_button_y = (int16_t)y;
-        door->door_wall_button_object_id = (uint16_t)thing;
-    } else if (!door->door_button &&
-               dm2_v1_dungeon_resolve_actuator_wall_gfx(
-                   dd, (uint16_t)thing, view_dir, 2, 8,
-                   wall_gfx_list, wall_gfx_count,
-                   &wall_gfx_index, &wall_gfx_field) == 0) {
-        door->door_wall_button = 1;
-        door->door_wall_button_index = (uint8_t)wall_gfx_index;
-        door->door_wall_button_field = (uint8_t)wall_gfx_field;
-        door->door_wall_button_x = (int16_t)x;
-        door->door_wall_button_y = (int16_t)y;
-        door->door_wall_button_object_id = (uint16_t)thing;
-    }
-    if (door->door_wall_button && boot &&
-        dm2_v1_boot_wall_gfx_ornate_animation_field(
-            boot, door->door_wall_button_index, tick, 0u,
-            &animated_field, &animated_receipt)) {
-        /* QUERY_ORNATE_ANIM_FRAME is the sole source of a non-static field.
-         * If its selected frame cannot later decode, M11 blocks the command. */
-        door->door_wall_button_field = animated_field;
+    if (!door->door_button && boot) {
+        DM2_V1_SkprojectQuery0cee1a46Receipt decoration;
+        int16_t wall_gfx_index = -1;
+        int16_t wall_gfx_field = -1;
+        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(boot);
+
+        /* SKProject c_querydb.cpp:3296 walks DB2 text and DB3 actuator
+         * records in source order. Use its GDAT-aware result here so the
+         * viewport observes actuator state and source-tick ornate frames. */
+        if (dm2_v1_skproject_query_0cee_1a46_ext(
+                dd, (uint16_t)thing, (int16_t)view_dir, 2,
+                tick, wall_gfx_list, wall_gfx_count, loader,
+                &wall_gfx_index, &wall_gfx_field, &decoration) == 1 &&
+            decoration.valid && wall_gfx_index >= 0 &&
+            wall_gfx_index <= UINT8_MAX && wall_gfx_field >= 0 &&
+            wall_gfx_field <= UINT8_MAX) {
+            door->door_wall_button = 1;
+            door->door_wall_button_index = (uint8_t)wall_gfx_index;
+            door->door_wall_button_field = (uint8_t)wall_gfx_field;
+            door->door_wall_button_x = (int16_t)x;
+            door->door_wall_button_y = (int16_t)y;
+            door->door_wall_button_object_id = (uint16_t)thing;
+        }
     }
 }
 
