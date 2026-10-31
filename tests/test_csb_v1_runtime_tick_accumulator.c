@@ -793,6 +793,24 @@ static int find_queued_event_type(const CSB_V1_RuntimeProfile *profile,
     return -1;
 }
 
+static int find_last_queued_event_type(const CSB_V1_RuntimeProfile *profile,
+                                       int event_type)
+{
+    int i;
+
+    if (!profile) return -1;
+    for (i = profile->timeline_queue.eventCount - 1; i >= 0; --i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        if (event_index >= 0 &&
+            event_index < DM1_EVENT_MAX_COUNT &&
+            profile->timeline_queue.events[event_index].type ==
+                (uint8_t)event_type) {
+            return event_index;
+        }
+    }
+    return -1;
+}
+
 static int count_queued_event_type(const CSB_V1_RuntimeProfile *profile,
                                    int event_type)
 {
@@ -5263,6 +5281,36 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
                   test_get_le16(raw, 100) == (uint16_t)(5u << 10) &&
                   test_get_le16(raw, 68) == (uint16_t)((3u << 10) | 4u),
               "C013 wall storage deposit links the object back into the wall cell");
+    }
+
+    make_real_format_c013_storage_rotation_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = 0xffffu;
+        int event_index;
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile, 0, 0, 0, &leader_hand) == 1,
+              "C013 HOLD pickup triggers the source remote action");
+        event_index = find_last_queued_event_type(&profile, DM1_EVENT_FAKEWALL);
+        CHECK(event_index >= 0 &&
+                  profile.timeline_queue.events[event_index].c_effect ==
+                      DM1_EFFECT_CLEAR,
+              "C013 HOLD pickup resolves to CLEAR after the hand becomes occupied");
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile, 0, 0, 0, &leader_hand) == 1,
+              "C013 HOLD deposit triggers the source remote action");
+        event_index = find_last_queued_event_type(&profile, DM1_EVENT_FAKEWALL);
+        CHECK(event_index >= 0 &&
+                  profile.timeline_queue.events[event_index].c_effect ==
+                      DM1_EFFECT_SET,
+              "C013 HOLD deposit resolves to SET after the hand becomes empty");
     }
 
     make_real_format_c013_storage_rotation_dungeon(

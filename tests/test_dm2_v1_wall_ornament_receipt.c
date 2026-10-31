@@ -47,9 +47,23 @@ static size_t append_u4_img3(uint8_t *raw, size_t cursor, uint8_t seed)
     return cursor + 27u;
 }
 
+static size_t append_u8_img3(uint8_t *raw, size_t cursor)
+{
+    raw[cursor] = 2u;
+    raw[cursor + 2u] = 1u;
+    raw[cursor + 3u] = 0x80u;
+    raw[cursor + 4u] = 8u;
+    raw[cursor + 10u] = 0x2au;
+    raw[cursor + 11u] = 0x80u;
+    for (int i = 0; i < 16; ++i) {
+        raw[cursor + 12u + (size_t)i] = (uint8_t)(0xf0u - (uint8_t)i);
+    }
+    return cursor + 28u;
+}
+
 int main(void)
 {
-    uint8_t raw[96];
+    uint8_t raw[128];
     uint32_t offsets[8];
     uint32_t sizes[8];
     DM2_V1_GdatEntry entries[8];
@@ -138,8 +152,38 @@ int main(void)
     check(dm2_v1_wall_ornament_receipt(&loader, 7u, &wall) &&
               wall.image_field == 1u,
           "legacy front ornate entry retains the source front image field");
+    put16le(raw + offsets[3], 0x0717u);
+    entries[3].data_index = 0x0717u;
+    check(dm2_v1_wall_ornament_material_receipt(&loader, 7u, 1u, &wall) &&
+              wall.position == 0x0717u,
+          "wall receipt preserves packed source position and alignment bytes");
+    put16le(raw + offsets[3], 13u);
+    entries[3].data_index = 13u;
     check(!dm2_v1_wall_ornament_material_receipt(&loader, 7u, 2u, &wall),
           "wall receipt fails closed instead of selecting another side image");
+
+    /* 8bpp images return no 16-color translation from
+     * QUERY_GDAT_IMAGE_LOCALPAL. SUMMARY_IMAGE leaves their pixels as
+     * direct global-palette indices. */
+    offsets[7] = (uint32_t)cursor;
+    cursor = append_u8_img3(raw, cursor);
+    sizes[7] = 28u;
+    loader.data_size = cursor;
+    check(dm2_v1_wall_ornament_material_receipt(&loader, 7u, 1u, &wall) &&
+              wall.image_metadata.bits_per_pixel == 8u &&
+              wall.decoded_format == DM2_IMG_FMT_U8 &&
+              wall.local_palette16[0] == 0u && wall.local_palette16[15] == 15u &&
+              wall.local_palette_hash != 0u && wall.material_hash != 0u,
+          "wall receipt admits 8bpp pixels with SUMMARY_IMAGE direct palette indices");
+
+    /* DRAW_WALL_ORNATE queries dtImageOffset FD only for a Cryocell front
+     * view. A normal ornament with no FD entry remains a valid material. */
+    for (i = 2; i <= 6; ++i) entries[i].cls3 = 0u;
+    check(dm2_v1_wall_ornament_material_receipt(&loader, 7u, 1u, &wall) &&
+              wall.colorkey == 0u && wall.position == 0u &&
+              wall.do_not_flip == 0u && wall.alcove_type == 0u &&
+              wall.item_inside_displacement == 0u,
+          "ordinary wall ornament preserves source zero defaults for absent fields");
 
     fprintf(stderr, "DM2 door/wall GDAT material receipt: %d failure(s)\n",
             failures);

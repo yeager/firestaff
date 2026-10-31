@@ -21,28 +21,46 @@ playable game route or parity on every supported platform.
 
 | Source set | Definitions | Result |
 |---|---:|---|
-| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,751 | Callable-definition rows in the ledger |
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the ledger |
 
 ## Dispositions
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,110 |
+| `IMPLEMENTED_PARITY` | 1,111 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 5 |
+| `PARTIAL` | 7 |
 | `STATIC_INPUT_ONLY` | 0 |
-| `PARTIAL_SOURCE_OWNER` | 3 |
-| **Total** | **1,751** |
+| `PARTIAL_SOURCE_OWNER` | 2 |
+| `MISSING` | 1 |
+| **Total** | **1,754** |
+
+The tail of the inventory includes `DRAW_ALCOVE_ITEMS` and
+`DRAW_WALL_ORNATE`, both still partial, plus the missing
+`_32cb_0f82_SHOP_GLASS`. In particular, the isolated
+`GET_WALL_TILE_ANYITEM_RECORD` helper is not an implementation of
+`DRAW_ALCOVE_ITEMS`: skproject reads each rendered wall cell's `id4` record
+handle, applies an early facing gate, renders DB5..DB10 items with wall-specific
+`DRAW_ITEM` geometry, handles two cloud types, and creates the clickable item
+zone only for front cell 3. Firestaff's source item material route currently
+starts from floor-tile roots and its static-object plans do not model this wall
+placement. The next required owner is the renderer-cell record bridge, followed
+by wall-specific item/cloud rendering and the front-wall click target. The
+shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
+creature item masks, merchandise WALL_GFX assets, and its name/price display;
+the runtime entry and panel builder currently fail closed.
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
 `DM2_ALLOC_NEW_DBITEM_DEEPLY` chain: Firestaff has the pool scan and limited
 recycler routes, but not the complete source recycler across databases, map
-cursor, protected maps, timers and CAII ownership. `DM2_DEALLOC_RECORD` now
-uses the source primitive in bounded creature-delete and CAII delete-tail
-routes; other source call sites remain open. `DM2_ARRANGE_DUNGEON`
+cursor, protected maps, timers and CAII ownership. `DM2_DEALLOC_RECORD` itself is implemented at source semantics: the bounded
+record-pool owner changes only the first word to `OBJECT_NULL` using source
+byte order, with a regression that checks the untouched payload bytes. Other
+game-level callers remain open where their list cuts, timers, CAII and owner
+transactions are incomplete. `DM2_ARRANGE_DUNGEON`
 has a bounded source-owned mutation path integrated into new-game loading, but
 still lacks source-by-source mutation and all-edition/platform parity proof.
 `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and

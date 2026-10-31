@@ -5645,9 +5645,9 @@ int dm2_v1_dungeon_get_map_floor_gfx_list(
     }
     map_desc = d->raw_data + DM2_DUNGEON_HEADER_SIZE +
                level * DM2_MAP_DESC_SIZE;
-    wall_gfx_count = (int)(RD16(map_desc + 10) & 0x0fu);
-    floor_gfx_count = (int)((RD16(map_desc + 10) >> 8) & 0x0fu);
-    creature_count = (int)((RD16(map_desc + 12) >> 4) & 0x0fu);
+    wall_gfx_count = (int)(dm2_v1_dungeon_rd16(d, map_desc + 10) & 0x0fu);
+    floor_gfx_count = (int)((dm2_v1_dungeon_rd16(d, map_desc + 10) >> 8) & 0x0fu);
+    creature_count = (int)((dm2_v1_dungeon_rd16(d, map_desc + 12) >> 4) & 0x0fu);
     if (floor_gfx_count <= 0) return 0;
     if (!out_floor_gfx_list || out_capacity < floor_gfx_count ||
         d->raw_map_data_base < 0 || d->level_widths[level] <= 0 ||
@@ -6709,9 +6709,9 @@ int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int leve
 int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;
     memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
 
-int dm2_v1_dungeon_c_light_stone_room_receipt(
+int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
-    int level, int x, int y, uint32_t tick,
+    int level, int x, int y, uint32_t tick, int direction,
     DM2_V1_CLightStoneRoomReceipt *out)
 {
     DM2_V1_QueryOrnateAnimFrameReceipt animation;
@@ -6719,43 +6719,200 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     int graphicsset;
     int raw;
     int first;
+    unsigned raw_class;
+    unsigned first_type = DM2_THING_TYPE_COUNT;
+    int accepted = 0;
+    int class2_ornament_found = 0;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!d || !loader || !loader->loaded) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    raw_class = raw < 0 ? DM2_THING_TYPE_COUNT : (unsigned)raw >> 5;
+    if (first >= 0) first_type = ((unsigned)first >> 10) & 0x0fu;
     /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
      * class-2 bit-08 roots whose first record is DB4+ pass the DB0..DB3
-     * ornament loop untouched; c_light.cpp then consumes that retained
-     * root for creature and DBE/DBF terms. DB0..DB3 prefixes stay closed
-     * until their class-2 ornament selection is represented. Class-2
-     * no-record tiles and class-5 DB1 roots retain their separate paths. */
-    if (raw < 0 || raw > 0xff ||
-        !((((unsigned)raw >> 5) == 2u &&
-           (first == -1 || first == (int)DM2_THING_END_MARKER ||
-            first == (int)DM2_THING_NULL_MARKER ||
-            (((unsigned)raw & 0x08u) != 0u && first >= 0 &&
-             first != (int)DM2_THING_END_MARKER &&
-             first != (int)DM2_THING_NULL_MARKER &&
-             (((unsigned)first >> 10) & 0x0fu) >= 4u))) ||
-          (((unsigned)raw >> 5) == 5u && (raw & 0x0c) != 0x0c &&
-           first >= 0 &&
-           (((unsigned)first >> 10) & 0x0fu) == 1u))) {
-        return 0;
+     * ornament loop untouched; DB0/DB1 prefixes are skipped to the next
+     * summary root below. DB2 C02 ornament selections and DB3 map-local
+     * floor-actuator ornaments have bounded paths. Class-2 no-record tiles
+     * and class-5 DB1 roots retain their separate paths. */
+    if (raw >= 0 && raw <= 0xff) {
+        if (raw_class == 2u) {
+            accepted = first == -1 ||
+                first == (int)DM2_THING_END_MARKER ||
+                first == (int)DM2_THING_NULL_MARKER;
+            if ((raw & 0x08) != 0 && first >= 0 &&
+                first != (int)DM2_THING_END_MARKER &&
+                first != (int)DM2_THING_NULL_MARKER) {
+                accepted = 1;
+            }
+        } else if (raw_class == 5u && (raw & 0x0c) != 0x0c &&
+                   first >= 0 && first_type == 1u) {
+            accepted = 1;
+        }
     }
-    if (((unsigned)raw >> 5) == 2u && (raw & 0x08) != 0) {
+    if (!accepted) return 0;
+    if (raw_class == 2u && (raw & 0x08) != 0) {
+        uint16_t summary_root = first < 0 ||
+            first == (int)DM2_THING_END_MARKER ||
+            first == (int)DM2_THING_NULL_MARKER
+            ? DM2_THING_END_MARKER : (uint16_t)first;
+        unsigned length = 0u;
+
+        /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
+         * records do not add ornament state. DB2 C02 records select the
+         * source's static, state-selected, or tick-animated ceiling frame.
+         * DB3 floor decorations resolve through the authenticated map-local
+         * floor list; subtype 0x27 consumes the source view direction.
+         * The source skips all DB0-DB3 links, then preserves the first DB4+
+         * root for c_light's creature and DBE/DBF scans. */
+        if (summary_root != DM2_THING_END_MARKER &&
+            (((summary_root >> 10) & 0x0fu) <= 3u)) {
+            uint16_t link = summary_root;
+            if (!dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
+            while (link != DM2_THING_END_MARKER) {
+                const uint8_t *record;
+                uint16_t next;
+                int type = (int)((link >> 10) & 0x0fu);
+                int size = 0;
+                if (type >= 4) break;
+                if (type > 3 || ++length > 256u) return 0;
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, link, &type, NULL, &size);
+                if (!record || type > 3 || size < 2) return 0;
+                if (type == 2) {
+                    uint16_t word2;
+                    if (size < 4) return 0;
+                    word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
+                    if ((word2 & 0x0006u) == 0x0002u) {
+                        unsigned ext_usage = (word2 >> 8) & 0x1fu;
+                        uint8_t ornament = (uint8_t)(word2 >> 3);
+                        uint16_t frame = 0u;
+                        uint32_t animation_hash = 0u;
+                        int set_ornament = 0;
+                        int animated = ext_usage == 2u ||
+                            (ext_usage == 5u && (word2 & 1u) != 0u);
+                        if (ext_usage == 0u || ext_usage == 10u ||
+                            ext_usage == 16u) {
+                            set_ornament = 1;
+                        } else if (ext_usage == 15u) {
+                            frame = 1u;
+                            set_ornament = 1;
+                        } else if (ext_usage == 17u) {
+                            frame = (raw & 0x08) != 0 ? 1u : 0u;
+                            set_ornament = 1;
+                        } else if (ext_usage == 5u && !animated) {
+                            set_ornament = 1;
+                        }
+                        if (animated) {
+                            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+                            memset(&animation, 0, sizeof(animation));
+                            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                    loader, 10, ornament, tick, 0u,
+                                    &animation) || !animation.accepted ||
+                                animation.receipt_hash == 0u) return 0;
+                            frame = animation.frame;
+                            animation_hash = animation.receipt_hash;
+                            set_ornament = 1;
+                        }
+                        if (set_ornament) {
+                            out->ceiling_ornament_index = ornament;
+                            out->ceiling_ornament_word =
+                                (uint16_t)(ornament |
+                                    (uint16_t)((uint32_t)frame * 10u << 8));
+                            out->ceiling_animation_frame = frame;
+                            out->ornament_source_hash = animation_hash;
+                            class2_ornament_found = 1;
+                        }
+                    }
+                } else if (type == 3) {
+                    uint16_t word4;
+                    uint16_t word2;
+                    uint16_t active_status;
+                    uint8_t floor_list[16];
+                    uint16_t frame = 0u;
+                    uint32_t animation_hash = 0u;
+                    unsigned ordinal;
+                    unsigned subtype;
+                    int floor_count;
+                    if (size < 6) return 0;
+                    word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
+                    word4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
+                    active_status = word4 & 1u;
+                    ordinal = word4 >> 12;
+                    if (ordinal != 0u) {
+                        DM2_V1_QueryOrnateAnimFrameReceipt animation;
+                        floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+                            d, level, floor_list, (int)sizeof(floor_list));
+                        if (floor_count < 0 || ordinal > (unsigned)floor_count)
+                            return 0;
+                        subtype = word2 & 0x7fu;
+                        if (subtype == 0x27u) {
+                            unsigned actuator_direction = word2 >> 7;
+                            if (direction < 0 || direction > 3) return 0;
+                            if (actuator_direction > 0u &&
+                                actuator_direction - 1u ==
+                                    (unsigned)direction) {
+                                if (active_status != 0u) {
+                                    memset(&animation, 0, sizeof(animation));
+                                    if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                            loader, 10,
+                                            floor_list[ordinal - 1u], tick, 0u,
+                                            &animation) ||
+                                        !animation.accepted ||
+                                        animation.receipt_hash == 0u) return 0;
+                                    frame = animation.frame;
+                                    animation_hash = animation.receipt_hash;
+                                }
+                            } else {
+                                goto next_class2_ornament;
+                            }
+                        } else if ((subtype == 0x2cu || subtype == 0x32u) &&
+                            active_status == 0u) {
+                            uint32_t delay = (word2 >> 7) & 0xffu;
+                            memset(&animation, 0, sizeof(animation));
+                            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                    loader, 10, floor_list[ordinal - 1u],
+                                    tick, delay, &animation) ||
+                                !animation.accepted ||
+                                animation.receipt_hash == 0u) return 0;
+                            frame = animation.frame;
+                            animation_hash = animation.receipt_hash;
+                        }
+                        out->ceiling_ornament_index =
+                            floor_list[ordinal - 1u];
+                        out->ceiling_ornament_word = (uint16_t)(
+                            out->ceiling_ornament_index |
+                            (uint16_t)((uint32_t)frame * 10u << 8));
+                        out->ceiling_animation_frame = frame;
+                        out->ornament_source_hash = animation_hash;
+                        class2_ornament_found = 1;
+                    }
+                }
+next_class2_ornament:
+                {
+                    int next_link = dm2_v1_dungeon_get_next_thing(d, link);
+                    if (next_link < 0 || next_link == (int)link) return 0;
+                    next = (uint16_t)next_link;
+                }
+                link = next;
+            }
+            summary_root = link;
+        }
         out->level = level;
         out->x = x;
         out->y = y;
         out->raw_tile = (uint8_t)raw;
         out->source_tile_type = 2u;
         out->first_record_link =
-            first < 0 || first == (int)DM2_THING_END_MARKER ||
+            summary_root == DM2_THING_END_MARKER ||
                 first == (int)DM2_THING_NULL_MARKER
-                ? DM2_THING_NULL_MARKER : (uint16_t)first;
-        out->ceiling_ornament_word = 0x00ffu;
-        out->ceiling_ornament_index = 0xffu;
+                ? DM2_THING_NULL_MARKER : summary_root;
+        if (!class2_ornament_found) {
+            out->ceiling_ornament_word = 0x00ffu;
+            out->ceiling_ornament_index = 0xffu;
+        }
         out->valid = 1;
         return 1;
     }
@@ -6789,6 +6946,15 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     out->ornament_source_hash = animation.receipt_hash;
     out->valid = 1;
     return 1;
+}
+
+int dm2_v1_dungeon_c_light_stone_room_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_CLightStoneRoomReceipt *out)
+{
+    return dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+        d, loader, level, x, y, tick, -1, out);
 }
 
 int dm2_v1_dungeon_c_light_class34_receipt(

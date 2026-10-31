@@ -5424,11 +5424,11 @@ int dm2_v1_skproject_is_creature_movable_there(
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator
-   record walk for side-indexed wall gfx.  The source walks the square's record
-   list, handling text records (type 2) and actuators (type 3) with ornate
-   animation frames.  The helper delegates the static text-record path to the
-   dungeon-loader wall-gfx walker and is receipted/fail-closed on the dynamic
-   actuator/animation paths. */
+   record walk for side-indexed wall gfx. The simple entry below delegates the
+   static text-record path to the dungeon-loader walker; the extended entry
+   handles ordered DB2/DB3 text and actuator state with GDAT animation receipts.
+   Its renderer-facing field is one-based (frame offset + 1), while the source
+   packed summary array keeps the frame offset in bits 10..15. */
 typedef struct {
     int valid;
     int blocked_missing_record_pool;
@@ -5448,6 +5448,11 @@ typedef struct {
     uint8_t text_ext_usage;
     uint8_t actuator_needs_anim;
     uint8_t blocked_text_animation_path;
+    uint8_t summary_word7_written;
+    int16_t summary_word7;
+    uint8_t text_summary_written;
+    int16_t text_summary_side;
+    int16_t text_summary_value;
 } DM2_V1_SkprojectQuery0cee1a46Receipt;
 
 int dm2_v1_skproject_query_0cee_1a46(
@@ -5468,6 +5473,23 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
     const uint8_t *wall_gfx_list,
     int wall_gfx_count,
     const void *asset_loader,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);
+
+/* Source-shaped variant retaining DM2_query_0cee_1a46's in-place writes to
+   s_8wordarray[3..7]. Existing callers that only need the selected wall
+   material may continue to use the wrapper above. */
+int dm2_v1_skproject_query_0cee_1a46_ext_summary(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader,
+    int16_t summary_words[8],
     int16_t *out_wall_gfx_index,
     int16_t *out_wall_gfx_field,
     DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);

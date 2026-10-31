@@ -37,7 +37,9 @@ int dm1_v1_object_icon_source_zone_pc34(
     int iconIndex,
     DM1_V1_ObjectIconSourceZonePc34* outZone) {
     int localIndex;
-    if (!outZone || iconIndex < 0) return 0;
+    /* ReDMCSB OBJECT.C F0036 owns seven 32-icon graphics, #42..#48.
+     * Reject indices beyond the source table rather than deriving #49+. */
+    if (!outZone || iconIndex < 0 || iconIndex >= 7 * 32) return 0;
     localIndex = iconIndex % 32;
     outZone->graphic_index = 42 + (iconIndex / 32);
     outZone->x = (localIndex & 0x0F) * 16;

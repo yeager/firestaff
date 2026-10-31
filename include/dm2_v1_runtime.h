@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V1_RUNTIME_H
 
 #include "dm2_v1_surface_snapshot.h"
+#include "dm2_v1_timeline.h"
 /*
  * dm2_v1_runtime.h — DM2 V1 Runtime Mechanics Parity API
  *
@@ -1307,6 +1308,9 @@ int dm2_v1_runtime_last_proceed_timers_receipt(
  * (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER) is
  * pending in the runtime source queue. */
 int dm2_v1_runtime_weather_source_timer_pending(void);
+/* True while an active source timer enables skproject ttySeeThruWalls. */
+int dm2_v1_runtime_see_thru_walls_active_for_queue(
+    const DM2_V1_SourceTimerQueue *queue);
 /* DM2-003 follow-up: the source 0x54 weather chain
  * (skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037 +
  * DM2_UPDATE_WEATHER(1)) is session-owned; 1 while the chain runs. */

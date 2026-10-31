@@ -8,6 +8,20 @@ the names are visible in the IIGS runtime; full-table and runtime evidence are
 still missing. This closes only the missing code path, not IIGS or DM1
 function/platform parity.
 
+2026-10-31 ReDMCSB `OBJECT.C:F0036` IIGS extraction: the IIGS draw path now
+selects one of seven authenticated 256x32 icon strips, extracts the selected
+16x16 row-major pixel block into a destination buffer, and blits it. This
+matches the bounded IIGS extraction behavior, but authentic icon-pixel
+comparison and equivalent callable behavior on the other supported editions
+and platforms remain unverified.
+
+2026-10-31 ReDMCSB `OBJECT.C:F0036` icon-range boundary: the PC34 icon-zone
+resolver and F0036 atlas gate now reject indices outside the seven source banks
+(0..223), including 224, rather than calculating a phantom graphic #49. The
+boundary regressions cover index 0, the last valid icon, the first invalid
+icon, and negative input. This hardens the PC34 mapping; authentic IIGS icon
+comparison and the other edition/platform extraction paths remain open.
+
 2026-10-31 ReDMCSB `BASE.C:F0023-F0030` helpers: the callable inventory
 maps signed absolute value, minimum, maximum, inclusive clamp, the F0027 LCG
 and its F0028/F0029 bit extracts, plus bounded F0030 scaled products to narrow

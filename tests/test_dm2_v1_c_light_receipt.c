@@ -1,6 +1,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_asset_loader.h"
+#include "firestaff_zip_extract.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -16,12 +17,30 @@ static int passed;
     else printf("FAIL: %s\n", label); \
 } while (0)
 
+static int query_animation(const char *label,
+                           const DM2_V1_AssetLoader *loader,
+                           uint8_t index, uint32_t tick, uint32_t delay,
+                           DM2_V1_QueryOrnateAnimFrameReceipt *out)
+{
+    int accepted;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    accepted = dm2_v1_query_ornate_anim_frame_receipt(
+        loader, DM2_GDAT_CATEGORY_FLOOR_GFX, index, tick, delay, out);
+    CHECK(label, accepted);
+    return accepted;
+}
+
 static void test_class2_db4plus_chain_receipt(void)
 {
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader loader;
     DM2_V1_CLightStoneRoomReceipt room;
-    uint8_t raw[8] = {0};
+    DM2_V1_GdatEntry animation_entries[3];
+    DM2_V1_QueryOrnateAnimFrameReceipt expected_animation;
+    uint8_t animation_data[1] = {0u};
+    uint8_t raw[160] = {0};
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&loader, 0, sizeof(loader));
@@ -35,11 +54,23 @@ static void test_class2_db4plus_chain_receipt(void)
     dungeon.square_first_thing_count = 1;
     dungeon.raw_data = raw;
     dungeon.raw_size = (int)sizeof(raw);
+    dungeon.record_graph_complete = 1;
+    dungeon.thing_data_bases[0] = 8;
+    dungeon.thing_type_counts[0] = 1;
+    dungeon.thing_data_bases[1] = 40;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[2] = 48;
+    dungeon.thing_type_counts[2] = 2;
+    dungeon.thing_data_bases[3] = 96;
+    dungeon.thing_type_counts[3] = 1;
+    dungeon.thing_data_bases[4] = 16;
+    dungeon.thing_type_counts[4] = 2;
     loader.loaded = 1;
     raw[0] = 0x58u; /* class 2, bit 0x08, and a square Thing list */
     raw[1] = 0u; raw[2] = 0u; /* first column entry = SFT ordinal zero */
     raw[3] = (uint8_t)((4u << 10) | 1u);
     raw[4] = (uint8_t)(((4u << 10) | 1u) >> 8);
+    raw[32] = 0xfeu; raw[33] = 0xffu; /* DB4 index 1 ends the list. */
 
     CHECK("class-2 bit-08 DB4+ root is retained past the ornament loop",
           dm2_v1_dungeon_c_light_stone_room_receipt(
@@ -48,6 +79,22 @@ static void test_class2_db4plus_chain_receipt(void)
               room.source_tile_type == 2u &&
               room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
               room.ceiling_ornament_word == 0x00ffu);
+
+    raw[3] = 0u; raw[4] = 0u; /* DB0 prefix, then the same DB4 root. */
+    raw[8] = 1u; raw[9] = 0x10u;
+    CHECK("class-2 DB0 prefix skips to the retained DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.source_tile_type == 2u &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u));
+
+    raw[3] = 0u; raw[4] = 4u; /* DB1 index 0. */
+    raw[40] = 1u; raw[41] = 0x10u;
+    CHECK("class-2 DB1 prefix skips to the retained DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.source_tile_type == 2u &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u));
 
     raw[3] = 0xffu;
     raw[4] = 0xffu;
@@ -58,9 +105,179 @@ static void test_class2_db4plus_chain_receipt(void)
 
     raw[3] = (uint8_t)((2u << 10) | 1u);
     raw[4] = (uint8_t)(((2u << 10) | 1u) >> 8);
-    CHECK("class-2 DB2 prefix stays closed without ornament evidence",
+    raw[52] = 1u; raw[53] = 0x10u; /* DB2 w0 links to DB4 index 1. */
+    raw[54] = 0x92u; raw[55] = 0u; /* C02, ext usage 0, ornament 0x12. */
+    CHECK("class-2 DB2 ext-0 keeps its static ornament and DB4 summary root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0x12u &&
+              room.ceiling_ornament_word == 0x0012u &&
+              room.ceiling_animation_frame == 0u);
+
+    animation_entries[0] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 0x52u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
+    animation_entries[1] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 0xb2u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
+    animation_entries[2] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 0x20u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x0du, 0u, 0u, 0x8003u};
+    loader.data = animation_data;
+    loader.data_size = sizeof(animation_data);
+    loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+    loader.entries = animation_entries;
+    loader.entry_count = 3u;
+    raw[54] = 0x92u; raw[55] = 2u; /* C02 ext usage 2, ornament 0x52. */
+    if (!query_animation("class-2 DB2 ext-2 animation query succeeds",
+                         &loader, 0x52u, 7u, 0u, &expected_animation))
+        return;
+    CHECK("class-2 DB2 ext-2 keeps tick-selected ornament animation",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0x52u &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ceiling_ornament_word == (uint16_t)(0x52u |
+                  (uint16_t)((uint32_t)expected_animation.frame * 10u << 8)) &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+
+    raw[55] = 0x0fu; /* ext usage 15 selects source frame one. */
+    CHECK("class-2 DB2 ext-15 selects the source static frame one",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0xf2u &&
+              room.ceiling_animation_frame == 1u &&
+              room.ceiling_ornament_word == 0x0af2u);
+
+    raw[55] = 0x11u; /* ext usage 17 selects tile bit 0x08 as the frame. */
+    CHECK("class-2 DB2 ext-17 follows the source tile-state frame bit",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0x32u &&
+              room.ceiling_animation_frame == 1u &&
+              room.ceiling_ornament_word == 0x0a32u);
+
+    raw[54] = 0x92u; raw[55] = 5u; /* ext usage 5, low flag clear. */
+    CHECK("class-2 DB2 ext-5 static branch keeps frame zero",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_ornament_index == 0xb2u &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x00b2u);
+
+    raw[54] = 0x93u; /* Same ext usage, low flag admits animation. */
+    if (!query_animation("class-2 DB2 ext-5 animation query succeeds",
+                         &loader, 0xb2u, 7u, 0u, &expected_animation))
+        return;
+    CHECK("class-2 DB2 ext-5 flag selects the animated source frame",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+
+    raw[55] = 3u; /* Source no-op ext usage leaves the summary ornament empty. */
+    CHECK("class-2 DB2 no-op ext usage preserves the root without ornament",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0xffu &&
+              room.ceiling_ornament_word == 0x00ffu);
+
+    raw[54] = 0u; raw[55] = 1u; /* one map-local floor graphic. */
+    raw[80] = 0x58u; /* class-2 map tile at its authenticated map base. */
+    raw[81] = 0x20u; /* floor decoration ordinal 1 resolves to 0x20. */
+    dungeon.raw_map_data_base = 80;
+    dungeon.thing_data_bases[3] = 96;
+    raw[3] = 0u; raw[4] = 0x0cu; /* DB3 actuator root. */
+    raw[96] = 1u; raw[97] = 0x10u; /* DB3 w0 links to DB4 index 1. */
+    raw[98] = 0x30u; raw[99] = 0u; /* subtype 0x30 clears a non-light field. */
+    raw[100] = 0u; raw[101] = 0x10u; /* floor-decoration ordinal 1. */
+    CHECK("class-2 DB3 actuator resolves its map-local floor ornament",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_ornament_word == 0x0020u);
+
+    raw[98] = 0x2cu; raw[99] = 1u; /* subtype 0x2c, delay value 2. */
+    if (!query_animation("class-2 DB3 subtype-2c animation query succeeds",
+                         &loader, 0x20u, 7u, 2u, &expected_animation))
+        return;
+    CHECK("class-2 DB3 subtype-2c queries the tick and source delay",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+
+    raw[100] = 1u; /* Actuator flag selects a static frame for subtype 0x2c. */
+    CHECK("class-2 DB3 subtype-2c flag keeps the static frame",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x0020u);
+
+    raw[100] = 0u;
+    raw[101] = 0x20u; /* Ordinal 2 is outside this map's floor list. */
+    CHECK("class-2 DB3 actuator rejects an out-of-range map-list ordinal",
           !dm2_v1_dungeon_c_light_stone_room_receipt(
-              &dungeon, &loader, 0, 0, 0, 0u, &room));
+              &dungeon, &loader, 0, 0, 0, 7u, &room));
+
+    raw[101] = 0x10u;
+    raw[98] = 0xa7u; raw[99] = 0u; /* subtype 0x27, source direction 0. */
+    raw[100] = 0u;
+    CHECK("class-2 DB3 subtype-27 skips when the source view direction is unavailable",
+          !dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room));
+    CHECK("class-2 DB3 subtype-27 keeps frame zero when matched and inactive",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_animation_frame == 0u);
+    raw[100] = 1u;
+    if (!query_animation("class-2 DB3 subtype-27 animation query succeeds",
+                         &loader, 0x20u, 7u, 0u, &expected_animation))
+        return;
+    CHECK("class-2 DB3 subtype-27 animates when matched and active",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+    CHECK("class-2 DB3 subtype-27 leaves mismatched direction unornamented",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 1, &room) &&
+              room.ceiling_ornament_index == 0xffu &&
+              room.ceiling_ornament_word == 0x00ffu);
+
+    /* Mac/Amiga Dungeon records store DB3 words big-endian. Preserve the
+     * logical active bit and direction while resolving the same floor list. */
+    dungeon.words_big_endian = 1;
+    raw[54] = 1u; raw[55] = 0u; /* one map-local floor graphic, big-endian. */
+    raw[3] = 0x0cu; raw[4] = 0u; /* first Thing handle 0x0c00. */
+    raw[32] = 0xffu; raw[33] = 0xfeu; /* DB4 end marker, big-endian. */
+    raw[96] = 0x10u; raw[97] = 1u; /* DB3 w0 -> DB4 handle 0x1001. */
+    raw[98] = 0u; raw[99] = 0xa7u; /* subtype 0x27, direction 0. */
+    raw[100] = 0x10u; raw[101] = 1u; /* ordinal 1 and active bit set. */
+    CHECK("class-2 DB3 subtype-27 uses big-endian active and direction fields",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+    raw[98] = 0u; raw[99] = 0x2cu; /* continuous animator, zero delay. */
+    raw[100] = 0x10u; raw[101] = 0u; /* inactive; source queries animation. */
+    CHECK("class-2 DB3 subtype-2c reads big-endian inactive state",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
+    raw[101] = 1u; /* Active state suppresses subtype-2c animation. */
+    CHECK("class-2 DB3 subtype-2c reads big-endian active state",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_animation_frame == 0u &&
+              room.ceiling_ornament_word == 0x0020u);
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
@@ -121,8 +338,11 @@ static int load_dungeon(uint8_t **out_data, size_t *out_size,
                         char *path, size_t path_size)
 {
     static const char *suffixes[] = {
+        "dm2/mac-en/Dungeon Master II/DMFiles/Dungeon.dat",
         "dm2/DUNGEON.DAT",
         "dm2/dungeon.dat",
+        "dm2/dos_extract/data/DUNGEON.DAT",
+        "dm2/dos_extract/data/dungeon.dat",
         "dm2/data/DUNGEON.DAT",
         "dm2/data/dungeon.dat"
     };
@@ -135,6 +355,134 @@ static int load_dungeon(uint8_t **out_data, size_t *out_size,
         }
     }
     return 0;
+}
+
+static int read_dm2_archive_member(const char *suffix, uint8_t **out_data,
+                                   size_t *out_size)
+{
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+
+    if (!archive || !archive[0] || !suffix || !out_data || !out_size)
+        return 0;
+    *out_data = NULL;
+    *out_size = 0u;
+    return firestaff_zip_extract_by_suffix(archive, suffix, out_data,
+                                           out_size) == 0 &&
+           *out_data && *out_size != 0u;
+}
+
+static int class2_prefix_chain_reaches_db4(
+    const DM2_V1_DungeonData *dungeon, int first)
+{
+    uint16_t link;
+    unsigned length = 0u;
+
+    if (!dungeon || first < 0 || first == (int)DM2_THING_END_MARKER ||
+        first == (int)DM2_THING_NULL_MARKER)
+        return 0;
+    link = (uint16_t)first;
+    while (link != DM2_THING_END_MARKER &&
+           link != DM2_THING_NULL_MARKER && ++length <= 256u) {
+        int type = -1;
+        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+            dungeon, link, &type, NULL, NULL);
+        int next;
+
+        if (!record || type < 0 || type > 15) return 0;
+        if (type >= 4) return 1;
+        next = dm2_v1_dungeon_get_next_thing(dungeon, link);
+        if (next < 0 || next == (int)link) return 0;
+        link = (uint16_t)next;
+    }
+    return 0;
+}
+
+static void test_real_class2_prefix_c_light_receipts(void)
+{
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon_bytes = NULL;
+    size_t graphics_size = 0u;
+    size_t dungeon_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_DungeonData dungeon;
+    int tiles_scanned = 0;
+    int prefixes_seen = 0;
+    int qualifying_chains = 0;
+    int matching_receipts = 0;
+
+    memset(&loader, 0, sizeof(loader));
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set for class-2 real-media scan");
+        return;
+    }
+    if (!read_dm2_archive_member("data/graphics.dat", &graphics,
+                                 &graphics_size) ||
+        !read_dm2_archive_member("data/dungeon.dat", &dungeon_bytes,
+                                 &dungeon_size)) {
+        free(graphics);
+        free(dungeon_bytes);
+        puts("SKIP: authentic DM2 DOS GRAPHICS.DAT/DUNGEON.DAT are unavailable");
+        return;
+    }
+    CHECK("authentic DM2 DOS GRAPHICS.DAT loads for class-2 summary scan",
+          dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0);
+    CHECK("authentic DM2 DOS DUNGEON.DAT loads for class-2 summary scan",
+          dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
+                              (int)dungeon_size) == 0);
+    if (!loader.loaded || !dungeon.raw_data || !dungeon.record_graph_complete) {
+        dm2_v1_asset_loader_free(&loader);
+        dm2_v1_dungeon_free(&dungeon);
+        free(graphics);
+        free(dungeon_bytes);
+        return;
+    }
+
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        for (int y = 0; y < dungeon.level_heights[level]; ++y) {
+            for (int x = 0; x < dungeon.level_widths[level]; ++x) {
+                DM2_V1_CLightStoneRoomReceipt receipt;
+                int raw = dm2_v1_dungeon_get_tile_raw(&dungeon, level, x, y);
+                int first = dm2_v1_dungeon_get_first_thing(
+                    &dungeon, level, x, y);
+                unsigned type;
+
+                ++tiles_scanned;
+                if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 2u ||
+                    (raw & 0x08) == 0 || first < 0 ||
+                    first == (int)DM2_THING_END_MARKER ||
+                    first == (int)DM2_THING_NULL_MARKER)
+                    continue;
+                type = ((unsigned)first >> 10) & 0x0fu;
+                if (type > 2u) continue;
+                ++prefixes_seen;
+                if (!class2_prefix_chain_reaches_db4(&dungeon, first))
+                    continue;
+                ++qualifying_chains;
+                if (dm2_v1_dungeon_c_light_stone_room_receipt(
+                        &dungeon, &loader, level, x, y, 0u, &receipt) &&
+                    receipt.valid && receipt.source_tile_type == 2u &&
+                    receipt.first_record_link != DM2_THING_END_MARKER &&
+                    receipt.first_record_link != DM2_THING_NULL_MARKER &&
+                    (((receipt.first_record_link >> 10) & 0x0fu) >= 4u))
+                    ++matching_receipts;
+            }
+        }
+    }
+    printf("INFO: authentic DM2 DOS class-2 scan tiles=%d prefixes=%d "
+           "db4plus_chains=%d matching_receipts=%d\n",
+           tiles_scanned, prefixes_seen, qualifying_chains, matching_receipts);
+    CHECK("authentic DM2 maps were fully scanned for class-2 roots",
+          tiles_scanned > 0);
+    CHECK("authentic class-2 DB0-DB2 to DB4+ path has a media-backed receipt "
+          "or no qualifying chain exists",
+          qualifying_chains == 0 || matching_receipts > 0);
+
+    dm2_v1_asset_loader_free(&loader);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics);
+    free(dungeon_bytes);
 }
 
 static void test_real_dungeon_c_light_receipts(
@@ -394,6 +742,7 @@ int main(void)
 
     test_class2_db4plus_chain_receipt();
     test_real_dungeon_c_light_receipts(&scene);
+    test_real_class2_prefix_c_light_receipts();
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;

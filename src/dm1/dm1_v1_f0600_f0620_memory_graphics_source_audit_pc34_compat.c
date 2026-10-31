@@ -20,7 +20,7 @@ static const DM1_V1_F0600F0620SourceAuditPc34 k_audit[] = {
     { 616u, "MEMORY.C:2722 F0616_CopyBitmap", "bitmap_copy_pc34_compat", 1, 1, 1 },
     { 617u, "MEMORY.C:2777 F0617_PrintMemoryUsage", "memory_cache_usage_pc34_compat", 1, 1, 1 },
     { 618u, "OBJECT.C:365 F0618_LoadZone", "dm1_v1_slot_boxes_pc34_compat", 1, 1, 1 },
-    { 619u, "OBJECT.C:378 F0619_GetSlotBoxBorderCoordinates", "dm1_v1_slot_boxes_pc34_compat", 1, 1, 1 },
+    { 619u, "OBJECT.C:378 F0619_GetSlotBoxBorderCoordinates", "missing: no F0635 zone-border resolver", 1, 1, 1 },
     { 620u, "MENU.C:543 F0620_LoadActionNames", "dm1_v1_action_list_pc34_compat", 1, 1, 1 }
 };
 

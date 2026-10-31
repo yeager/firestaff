@@ -77110,7 +77110,9 @@ static int m11_iigs_relative_wall(const M11_GameViewState* state, int depth, int
 static void m11_iigs_draw_thing_icon(M11_GameViewState* state, unsigned char* native,
     unsigned short thing, int x, int y)
 {
-    int icon, bank = 0, relative;
+    int icon, bank = 0, relative, row, col;
+    unsigned char iconPixels[16 * 16];
+    const M11_AssetSlot* strip;
     const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return;
     icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
@@ -77118,9 +77120,22 @@ static void m11_iigs_draw_thing_icon(M11_GameViewState* state, unsigned char* na
     while (bank < 6 && meta->icon_first[bank+1] <= icon) ++bank;
     relative = icon-meta->icon_first[bank];
     if (relative < 0 || relative >= 32) return;
-    /* OBJECT.C F0036:315-326, GS packed-pixel strips, no PC C696. */
-    m11_iigs_blit(state,native,42U+(unsigned)bank,x,y,16,16,
-        (relative&15)*16,relative&16,0,0);
+    strip = M11_AssetLoader_Load(&state->assetLoader, 42U + (unsigned)bank);
+    if (!strip || strip->width != 256 || strip->height != 32 ||
+        !dm1_v1_iigs_graphics_extract_icon(strip->pixels,
+            (size_t)strip->width * (size_t)strip->height,
+            (unsigned)relative, iconPixels, sizeof(iconPixels))) return;
+    /* ReDMCSB OBJECT.C F0036:315-326 extracts a 16x16 icon from one of
+     * seven GS packed-pixel strips before the destination blit. */
+    for (row = 0; row < 16; ++row) {
+        int dy = y + row;
+        if (dy < 0 || dy >= 200) continue;
+        for (col = 0; col < 16; ++col) {
+            int dx = x + col;
+            if (dx < 0 || dx >= 320) continue;
+            native[dy * 320 + dx] = iconPixels[row * 16 + col];
+        }
+    }
 }
 
 static void m11_iigs_draw_first_world(M11_GameViewState* state,
