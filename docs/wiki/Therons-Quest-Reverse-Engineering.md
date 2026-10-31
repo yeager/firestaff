@@ -4,19 +4,24 @@
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Current native and reference boundary (2026-10-31):** authentic JP Track 02
-reaches a loaded dungeon in Firestaff's native C/SDL runtime; repeated Debug
-runs record nonzero ticks and presented frames, and the latest Firestaff
-snapshot is nonblack. It has not been paired with an original-emulator image,
-and original graphics, palette, and state-driven viewport binding remain open.
-A separate cold System Card RUN capture binds `$1800=$C8`, `$1801=$04`, and a
-`$2259=$04` callback followed by `$E166->$E176`, but observes no confirmed
-game-owned handoff. The reported 3–5 second title-menu action hold remains
-unverified. Firestaff gameplay runs natively; external emulator behavior is
-reference evidence only. See [Theron input notes](../theron/theron_input.md)
-and [capture readiness](../theron/THERON_CAPTURE_READINESS.md). DMWeb's
-original edition/manual references and Greatstone SCK's extraction corpus
-inform provenance and media handling.
+**Current native and reference boundary (2026-10-31):** authentic Japanese
+Track 02 reaches a loaded dungeon through Firestaff's native C/SDL fresh-start
+route. Authentic US Track 02 plus a matching Ak-Tu-Ba-complete BRAM reaches
+dungeon 2 through Continue, with bounded native movement and item
+transactions. These are host/runtime and real-data receipts, not paired
+retail-parity results. The Firestaff viewport is not yet bound to an
+authenticated dynamic pose/map/VDC/VCE chain. The cold Japanese System Card
+RUN trace binds `$1800=$C8`, `$1801=$04`, `$2259=$04`, and `$E166->$E176`, but
+does not observe a confirmed game-owned handoff. A separate US save-state
+mouse replay proves guest reads and candidate command consumption only; it
+has no runtime CD provenance and establishes no semantic action or movement.
+The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
+runs natively; emulators are reference tools only. See [Theron input
+notes](../theron/theron_input.md), [capture
+readiness](../theron/THERON_CAPTURE_READINESS.md), and the
+[Theron TODO](../../TODO-theron.md). DMWeb's original edition/manual
+references and Greatstone SCK's extraction corpus inform provenance and media
+handling.
 
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
