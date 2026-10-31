@@ -17,16 +17,18 @@ int main(void)
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     struct DungeonWeapon_Compat weapon;
-    struct DungeonSensor_Compat sensors[2];
+    struct DungeonSensor_Compat sensors[3];
     unsigned char squareData[2];
     unsigned short firstThings[2];
     unsigned char rawWeapon[4];
-    unsigned char rawSensors[16];
+    unsigned char rawSensors[24];
     struct F0267ThingMoveRequestPc34Compat request;
     struct F0267ThingMoveResultPc34Compat result;
     unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
     unsigned short sensor0 = (unsigned short)(THING_TYPE_SENSOR << 10);
     unsigned short sensor1 = (unsigned short)((THING_TYPE_SENSOR << 10) | 1u);
+    unsigned short sensor2 = (unsigned short)((THING_TYPE_SENSOR << 10) | 2u);
+    unsigned short sensor1Cell1 = (unsigned short)(sensor1 | (1u << 14));
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -112,6 +114,37 @@ int main(void)
           sensors[0].next == weaponThing &&
           rawSensors[8] == (unsigned char)(sensor0 & 0xffu),
           "F0271 rotates the complete loaded sensor run after F0276");
+
+    /* ReDMCSB F0271 scans to the end of the contiguous sensor run even when
+     * another cell's sensor occurs between matching sensors. */
+    sensors[0].next = sensor1Cell1;
+    sensors[1].next = sensor2;
+    sensors[2].next = weaponThing;
+    rawSensors[0] = (unsigned char)(sensor1Cell1 & 0xffu);
+    rawSensors[1] = (unsigned char)(sensor1Cell1 >> 8);
+    rawSensors[8] = (unsigned char)(sensor2 & 0xffu);
+    rawSensors[9] = (unsigned char)(sensor2 >> 8);
+    rawSensors[16] = (unsigned char)(weaponThing & 0xffu);
+    rawSensors[17] = (unsigned char)(weaponThing >> 8);
+    rawWeapon[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawWeapon[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_OBJECT;
+    sensors[2].sensorType = DM1_SENSOR_FLOOR_OBJECT;
+    sensors[0].sensorData = 7;
+    sensors[2].sensorData = 7;
+    firstThings[1] = sensor0;
+    things.sensorCount = 3;
+    things.thingCounts[THING_TYPE_SENSOR] = 3;
+    CHECK(F0271_SENSOR_ProcessRotation_Compat(
+              &world, 0, 1, 0, 0, DM1_EFFECT_TOGGLE),
+          "F0271 rotates matching sensors across other-cell entries");
+    CHECK(firstThings[1] == sensor1Cell1 && sensors[1].next == sensor2 &&
+          sensors[2].next == sensor0 && sensors[0].next == weaponThing &&
+          rawSensors[8] == (unsigned char)(sensor2 & 0xffu) &&
+          rawSensors[9] == (unsigned char)(sensor2 >> 8) &&
+          rawSensors[16] == (unsigned char)(sensor0 & 0xffu) &&
+          rawSensors[17] == (unsigned char)(sensor0 >> 8),
+          "F0271 moves cell-0 head after the last match in the sensor run");
     sensors[0].sensorType = DM1_SENSOR_FLOOR_OBJECT;
     sensors[0].sensorData = 7;
     sensors[0].onceOnly = 1;
