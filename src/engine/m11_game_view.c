@@ -62,6 +62,7 @@
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_atari_f0115_click_bounds.h"
 #include "csb_v1_atari_f0113_fluxcage_plan.h"
 #include "csb_v1_atari_f0113_fluxcage_blit.h"
 #include "csb_v1_atari_f0133_indexed_blit.h"
@@ -1481,6 +1482,7 @@ static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_alcove_item_host_presentation_receipt;
+static CSB_V1_AtariF0115ClickBounds s_m11_csb_atari_floor_click_bounds[4];
 /* ReDMCSB DUNVIEW.C F0115 publishes a click rectangle and pile-top THING
  * from the actual rendered object. C080 consumes this frame-local host
  * equivalent instead of a broad, fixed viewport pane. */
@@ -5837,6 +5839,23 @@ static int m11_csb_atari_st_draw_objects_for_square(
                             ? state->csbAtariStObjectAspects[
                                 object_info.object_info_index]
                             : -1);
+                    if (result > 0 &&
+                        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                        state->assetLoader.csbAtariSt && view_cell < 4 &&
+                        s_m11_dm1_floor_item_host_presentation_receipt.valid &&
+                        s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane) {
+                        const M11_Dm1FloorItemHostPresentationReceipt *drawn =
+                            &s_m11_dm1_floor_item_host_presentation_receipt;
+                        /* ReDMCSB DUNVIEW.C F0115:5030-5160 builds Atari's
+                         * G0291 row from each native rendered object box. Its
+                         * origin includes the retained viewport at (48,33),
+                         * while C080 receives viewport-relative coordinates. */
+                        (void)csb_v1_atari_f0115_click_bounds_add(
+                            s_m11_csb_atari_floor_click_bounds, view_cell,
+                            drawn->destinationX - 48,
+                            drawn->destinationY - 33,
+                            drawn->destinationW, drawn->destinationH);
+                    }
                     if (state->debugMovementTraceEnabled) {
                         fprintf(stderr,
                                 "firestaff: viewport game=csb platform=atari "
@@ -7095,6 +7114,10 @@ static int m11_csb_present_atari_st_runtime_viewport(
     int wall_set;
     int y;
     size_t draw_index;
+
+    /* G0291 is cleared at the start of each source F0128 frame. */
+    csb_v1_atari_f0115_click_bounds_clear(
+        s_m11_csb_atari_floor_click_bounds);
 
     /* Hash the exact source-owned 224x136 indexed page after its complete
      * CSBWin/ANIM command sequence.  This is deliberately distinct from the
@@ -46392,8 +46415,18 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         int viewCell;
         for (viewCell = 0; viewCell < 4; ++viewCell) {
             unsigned short grabbed = THING_NONE;
-            if (m11_point_in_source_box(localX, localY,
-                                        g_objectPileBoxes[viewCell]) &&
+            const CSB_V1_BootProfile *profile =
+                (const CSB_V1_BootProfile *)state->csbBootProfile;
+            const int atariSt = profile &&
+                (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                 profile->variant_id == CSB_V1_VARIANT_ST21_EN);
+            const int hit = atariSt
+                ? csb_v1_atari_f0115_click_bounds_contains(
+                    s_m11_csb_atari_floor_click_bounds, viewCell,
+                    localX, localY)
+                : m11_point_in_source_box(localX, localY,
+                                           g_objectPileBoxes[viewCell]);
+            if (hit &&
                 csb_v1_boot_runtime_grab_floor_object_pc34(
                     (CSB_V1_BootProfile *)state->csbBootProfile,
                     viewCell, &grabbed)) {

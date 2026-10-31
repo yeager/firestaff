@@ -8001,6 +8001,7 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_f0115_creature_plan.c
     src/csb/csb_v1_atari_f0115_projectile_plan.c
     src/csb/csb_v1_atari_f0115_explosion_plan.c
+    src/csb/csb_v1_atari_f0115_click_bounds.c
     src/csb/csb_v1_atari_f0113_fluxcage_plan.c
     src/csb/csb_v1_atari_f0113_fluxcage_blit.c
     src/csb/csb_v1_atari_f0133_indexed_blit.c
@@ -8141,6 +8142,25 @@ if(DM2_SOURCES)
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
     # profile + runtime so --game dm2 reaches dm2_v1_boot_enter_game.
     target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
+endif()
+
+# Atari F0115 floor-item clickable bounds are the union of the native
+# rendered boxes accumulated for each view cell in ReDMCSB G0291.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_click_bounds.c")
+    add_executable(test_csb_v1_atari_f0115_click_bounds
+        tests/test_csb_v1_atari_f0115_click_bounds.c
+        src/csb/csb_v1_atari_f0115_click_bounds.c
+    )
+    target_include_directories(test_csb_v1_atari_f0115_click_bounds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0115_click_bounds PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0115_click_bounds
+        COMMAND test_csb_v1_atari_f0115_click_bounds)
+    set_tests_properties(csb_v1_atari_f0115_click_bounds PROPERTIES
+        LABELS "csb;atari;f0115;click;unit;skip-safe")
 endif()
 
 # ReDMCSB VIDEO.C F0133 bounded indexed-bitmap unit compositor.

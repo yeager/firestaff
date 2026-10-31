@@ -407,6 +407,20 @@ C080, and the Atari renderer currently omits those object/ornament passes.
 Implement those render receipts and use their bounds for hit testing before
 claiming pickup or wall-sensor parity; verify against original campaign media.
 
+2026-10-31 correction and implementation for Atari F0115 floor-object click
+bounds: ReDMCSB compiles Atari ST through MEDIA009. `DUNVIEW.C F0115`
+computes each rendered object's clipped box and unions it into
+`G0291_aauc_DungeonViewClickableBoxes[viewCell]` (`DUNVIEW.C:4915-5160`);
+`DUNVIEW.C:8348-8349` clears those boxes each frame. `CLIKVIEW.C F0377:410-440`
+hit-tests the byte boxes with screen Y adjusted by the 33-pixel viewport
+origin. The preceding 2026-10-29 note incorrectly assigned this Atari path to
+MEDIA720's `G2210`/`F0798` zones. Firestaff now unions native Atari F0115
+object draw receipts per view-cell and uses those bounds for Atari C080 floor
+pickup; no rendered receipt means no pickup hit. A focused union/boundary test
+passes. This does not close the C05 wall-ornament zone, door-button
+interaction, or original-media pickup behavior; verify those separately
+before claiming full Atari pointer parity.
+
 2026-10-29 Atari ST real-session campaign route: the native CLI regression now
 uses the original Atari campaign package and hard-disk `DUNGEON.DAT` with
 ordinary inputs only. Starting from the original `(9,0)` spawn, it recruits
