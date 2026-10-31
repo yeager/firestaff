@@ -38,6 +38,14 @@ remain unverified. See the linked capture-specific evidence notes in
 `docs/nexus_vdp1_coldboot_frame13162_composition.md`, and
 `docs/nexus_ymir_vdp_priority_composition.md`.
 
+An additional accepted-save gameplay capture at VDP1 frame 300 is now checked
+against Ymir's same-run 320×224 rendered frame. The priority compositor matches
+all 71,680 RGB pixels and accounts for every pixel across VDP1, NBG0, NBG1, and
+NBG2; the input VDP buffers and registers are SHA-256 pinned. As with the other
+captures, this establishes emulator-frame composition for one state, not
+independent hardware parity or full Nexus gameplay coverage. See
+[`nexus_vdp2_gameplay_frame300_composition.md`](../nexus_vdp2_gameplay_frame300_composition.md).
+
 The separate Ymir-stepper capture path now rasterizes all 124 mode-1 distorted
 sprites and 28 flat polygons in authentic frame-13162 trace rows 8–167. The
 other eight mode-5 draws are verified as fully transparent by the companion
