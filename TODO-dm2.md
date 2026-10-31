@@ -80,6 +80,20 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 skproject shop interaction is still missing: Firestaff rejects
+runtime shop entry and its panel builder returns no render plan. The source
+path begins at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
+`::_32cb_0f82_SHOP_GLASS`, which resolves the active wall actuator, a floor
+shop actuator (type `0x30`), DB14 item state, creature item masks, and
+`WALL_GFX` artwork. `_48ae_05ae_CREATURE` supplies source item prices;
+`SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE` and
+`::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the live
+record/GDAT chain, panel rendering, and buy/sell state transitions against
+those owners, then verify against source-owned DM2 data on each supported
+platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
+generic price formulas. The source ownership gate currently means this whole
+gameplay feature is absent, not at parity.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
 visible wall metadata now calls the source-shaped summary entry point and
 reads the selected side's packed `s_8wordarray[3..6]` word for the WALL_GFX
