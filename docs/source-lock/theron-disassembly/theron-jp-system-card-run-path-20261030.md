@@ -1102,3 +1102,33 @@ The callback-state SHA-256 is
 `e4250b259ff0254b4c842efeaf9704a21c24e5c7deed82e51b8c3895f53498d6`; the
 bootstrap-follow SHA-256 remains
 `e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`.
+
+## r5 RUN-only I/O-to-`$2259` join
+
+The separate 2026-10-31 r5 RUN-only capture joins the same byte through the
+System Card I/O observer, callback-state observer, and instruction-start
+trace. With one scripted event (`run@480:300`) and no SELECT event, BIOS
+instruction `$EA3B` read `$1800=$C8` at event 10510 and stored the status at
+`$227A` at event 10513. `$EA4D` then read `$1801=$04` at event 10517, and
+`$EA50 STA ($FA)` wrote `$04` to `$2259` at event 10519. The shared event
+sequence, address mappings, and BIOS opcode bytes match across those rows.
+The later callback read `$2259=$04` at event 10685; the bootstrap trace shows
+`$E166 BNE $E176` at event 10687 and `$E176` next at event 10688. This directly
+binds the observed branch byte to the preceding System Card port read for this
+execution. It does not establish the port's higher-level semantics or prove
+the BIOS launched the game.
+
+The same bounded capture has no `$E174`, `$E11D`, `$E130`, or `$E209`
+instruction-start receipt. It therefore strengthens the byte provenance while
+leaving the clear-carry launch, game-owned consumers, and native parity
+unproven. The exact run receipts remain in the ignored external-disk capture
+directory
+`/Volumes/Extern-disk/firestaff-pr221-capfix-20261031/.codex-scratch/theron-syscard-io-ram-cold-20261031/`.
+SHA-256: I/O/RAM
+`1b9fbf4238a23202bb75c64d9fdeda0e9ad7243cb563777b6b8bb2287e942c8f`,
+callback-state
+`ca2f4d79bb9bc1a20a4390cb90e9a494079f1712fe79edde919e7619496dc143`,
+bootstrap-follow
+`6e4938ff28a97ae564cbd1915a3fd5cdd324481f939ed83d5c77e38665965618`, and
+scripted-input consumption
+`39d4b61bb9297401284da45a6383459aa5cf4b8fb3bd1933dc24d310f931c1c9`.

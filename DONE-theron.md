@@ -180,6 +180,14 @@ SELECT-specific marker. No `$E174/$E11D` clear-carry launch was captured. The
 source-lock note records event sequences and exact trace hashes; this refines
 the BIOS branch evidence but does not establish gameplay or native parity.
 
+The expanded r5 RUN-only capture provides the source-ordered I/O join:
+`$1800=$C8` at `$EA3B`, `$1801=$04` at `$EA4D`, then `$2259=$04` at `$EA50`,
+followed by `$E166->$E176`. The three access events share the verified event
+sequence and authentic System Card opcode mapping. This binds `$2259`'s value
+to the preceding System Card port read in that execution, with no SELECT event
+scheduled. It still records no `$E174/$E11D` clear-carry launch. Detailed row
+numbers, limits, hashes, and the remaining gaps are in the source-lock note.
+
 ## 2026-10-30 — source-correlate `$4000` instruction-start snapshots
 
 The v16 authentic cold capture associates the first complete instruction-start

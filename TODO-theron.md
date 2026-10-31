@@ -177,6 +177,15 @@ evidence. The capture did not reach `$E174`, `$E11D`, `$E209`, or `$E130` before
 the row cap. The branch and value provenance are documented in the [JP System
 Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
+The r5 RUN-only trace now joins the branch byte to its preceding BIOS I/O:
+`$EA3B` read `$1800=$C8` (event 10510), `$EA4D` read `$1801=$04` (event
+10517), and `$EA50` copied `$04` to `$2259` (event 10519). `$E166` later
+branched to `$E176`; no `$E174/$E11D` clear-carry launch was observed. Keep
+following the authentic CD command/status path and carry checks until the BIOS
+handoff reaches a source-bound game-owned consumer and gameplay transition.
+Receipts and hashes are in the [JP System Card Run source-lock
+note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+
 The bounded `$1800-$1803` I/O and `$224C-$2255`, `$2273-$2280`, `$22A4`
 memory observer has now been used in the r5 capture. Its offline verifier
 requires the authenticated System Card image and checks each event's access
