@@ -16,12 +16,23 @@ snapshot, registers and `event_sequence` from the same shared counter used by
 the row-lifecycle trace. Correlate it with the existing main-RAM consumer-read
 trace, which identifies data reads by reader PC and physical mapping.
 `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters physical data-read
-addresses, not instruction PCs. The current generator
-receipt proves the row lifecycle and an earlier consumer in that event, while
-`$C852` is only statically tied to row offsets 6–8; no same-session join proves
-it consumes that row. Accept a result only when physical bank identity and
-event order bind both observations. Do not assign coordinate or direction
-meanings to the row bytes. This capture does not close the separate native
+addresses, not instruction PCs. The 2026-10-31 authentic US cold run reached
+the Drator generator route and recorded 139 `$C852` fetches at physical
+`$0DC852`, with the first at shared event sequence 1,590,068. However, the
+consumer-read observer sampled the broad `$1F0000` range and hit its 65,536
+sample limit before the Drator event. The trace therefore does not join those
+fetches to the generated row, and wrapper verification failed at the older
+524,288-row System Card callback cap. The cap was subsequently raised to
+4,194,304 rows in the capture tools, but this run used the older binary.
+Rebuild it and repeat with the consumer filter narrowed to physical
+`1F093B-1F093D`, plus a bounded sample limit large enough to include the
+Drator interval; collect writes to `1F0935-1F093E` if needed to bind row
+construction. The current generator receipt proves the row lifecycle and an
+earlier consumer in that event, while `$C852` is only statically tied to row
+offsets 6–8; no same-session join proves it consumes that row. Accept a result
+only when physical bank identity and event order bind both observations. Do
+not assign coordinate or direction meanings to the row bytes. This capture
+does not close the separate native
 viewport gap, which still requires a same-run map/pose-to-VDC/VCE/VRAM-to-frame
 join. See the
 [generator source-lock report](../source-lock/theron-generator-rng-state-2026-08-21.md)
@@ -31,12 +42,12 @@ The complete clean-source Mednafen 1.32.1 patch chain applied in three
 consecutive loops. A fresh instrumented PCE Fast build against real SDL2 2.33.0
 compiled and installed, and the isolated capture-wrapper runtime verifier
 passed for both compiled and running SDL versions. This clears the former
-`sdl2-compat` runtime gate. No Drator capture has been run with this binary
-yet, so the `$C852` same-event consumer join remains open. No Drator-positioned
-save or state artifact is checked into the repository. Use a separately
-verified authentic state or reproduce the original Drator route with
-hash-verified media in a new isolated profile and evidence directory; do not
-reuse an occupied capture profile.
+`sdl2-compat` runtime gate. The 2026-10-31 run has since reached Drator, but
+its `$C852` same-event consumer join remains open as described above. No
+Drator-positioned save or state artifact is checked into the repository. Use a
+separately verified authentic state or reproduce the original Drator route
+with hash-verified media in a new isolated profile and evidence directory; do
+not reuse an occupied capture profile.
 
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US

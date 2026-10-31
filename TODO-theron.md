@@ -14,20 +14,30 @@ opcode, physical PC, all MPRs, registers and the same shared event sequence as
 the row-lifecycle records. Correlate it with the existing main-RAM
 consumer-read trace, which records reader PC/MPR and row data reads. Its
 `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` option filters physical
-data-read addresses; it is not a code-PC filter. A logical-PC hit in another
-physical bank does not close the join. No Drator-positioned save or state
-artifact is checked into the repository. Obtain and verify an authentic state
-outside Git, or replay the documented original Drator route from authentic
-media in an isolated profile. Keep row bytes opaque; do not label
+data-read addresses; it is not a code-PC filter. A 2026-10-31 authentic US
+cold replay reached the Drator generator route and recorded 139 `$C852`
+fetches at physical `$0DC852`, beginning at shared event 1,590,068. Its main
+RAM consumer trace sampled the broad `$1F0000` range and hit the 65,536 sample
+cap before the Drator event, so the capture did not join the fetches to the
+generated row. Wrapper verification also failed at the old 524,288-row System
+Card callback cap; the tool cap is now 4,194,304 rows, and the reference binary
+must be rebuilt before another run. Repeat with consumer range
+`1F093B-1F093D`, a sufficient bounded sample limit, and optionally target
+writes `1F0935-1F093E`. A logical-PC hit in another physical bank does not
+close the join. No Drator-positioned save or state artifact is checked into
+the repository. Obtain and verify an authentic state outside Git, or replay
+the documented original Drator route from authentic media in an isolated
+profile. Keep row bytes opaque; do not label
 them as coordinates, direction or creature fields.
 The complete clean-source Mednafen 1.32.1 patch chain applies in three
 consecutive fresh-source loops. A fresh instrumented PCE Fast build against
 real SDL2 2.33.0 compiled, installed and passed the isolated capture-wrapper
-runtime check; the earlier `sdl2-compat` runtime block is cleared. No Drator
-capture has been run with this binary yet. Before capturing, bind the authentic
-state or cold-start route to its media identity in a new isolated profile and
-evidence directory; do not reuse an occupied capture profile. The same-event
-row-consumer join and native viewport gap remain open.
+runtime check; the earlier `sdl2-compat` runtime block is cleared. The first
+cold Drator route capture is now recorded, but its same-event row-consumer join
+and native viewport gap remain open. Rebuild the reference binary with the
+raised trace cap before another capture, and use a new isolated profile and
+evidence directory; do not reuse an occupied capture profile. The native
+viewport gap remains open.
 This reference capture is evidence-enabling work; the native viewport still
 requires a separate same-run map, pose, VDC/VCE/VRAM and rendered-frame join.
 Do not reuse an occupied capture profile or evidence directory; coordinate

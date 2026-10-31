@@ -30,16 +30,24 @@ contains only the next cross-game work items, not a complete Theron inventory.
    traces. The optional main-RAM range filters physical data addresses, not
    instruction PCs. This evidence capture does not replace the native
    viewport's required map/pose-to-VDC/VCE/VRAM-to-frame join.
-   The current receipt proves the row lifecycle, but no same-session capture
-   shows `$C852` consuming that exact row; a hit in another physical bank does
-   not close the join. Keep row fields opaque. Then continue the separate
+   The 2026-10-31 authentic US cold replay reached the Drator generator route
+   and recorded 139 `$C852` fetches at physical `$0DC852`, starting at shared
+   event 1,590,068. The same run's consumer observer sampled broad `$1F0000`
+   reads and hit its 65,536 sample cap before the Drator event, so this does
+   not show `$C852` consuming that row. Wrapper verification also hit the old
+   524,288-row callback cap; the cap is now 4,194,304, but the capture binary
+   must be rebuilt. Repeat with physical consumer range `1F093B-1F093D`, a
+   sufficient bounded sample limit, and optionally target writes
+   `1F0935-1F093E`. A hit in another physical bank does not close the join.
+   Keep row fields opaque. Then continue the separate
    `$C1FC` active-map and movement question: its matched input-conditioned
    transfers may be teleporter destination copying and do not yet prove
    movement, collision or visible effect. See the
    [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). The clean
    Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check have
-   already passed; the same-event `$C852` consumer capture is still
-   outstanding. No Drator-positioned save or state artifact is checked into
+   already passed. The initial Drator route capture is now recorded, but the
+   same-event `$C852` consumer capture is still outstanding. No
+   Drator-positioned save or state artifact is checked into
    the repository, so the capture must use a separately verified authentic
    state or reproduce the original Drator route with hash-verified media.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold

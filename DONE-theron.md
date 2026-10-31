@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — authentic US cold Drator route capture; `$C852` join remains open
+
+- Replayed the authentic US cold route on TRV2 with the source-signature-gated
+  Drator controller route and four-second System Card RUN hold. It reached the
+  generator `start`, `left-event`, and `reentered-event` diagnostics without
+  synthesizing a save or game record.
+- The bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
+  `$0DC852`; the first shared event was 1,590,068. The main-RAM consumer
+  observer sampled broad `$1F0000` reads and reached its 65,536-row cap before
+  Drator, so it did not join these fetches to the generated row.
+- Wrapper verification failed because this run's callback-state trace reached
+  the then-current 524,288-row cap. A later tool change raises that cap to
+  4,194,304 rows; the capture was not rerun with the updated reference binary.
+- Updated the readiness summary, Theron TODO, native work queue, platform and
+  project status pages. The source-locked report records exact evidence and
+  next filter bounds. Raw traces, game media, firmware, saves and emulator
+  builds remain outside Git. This is original-game reference evidence, not
+  native Firestaff gameplay or parity.
+
 ## 2026-10-31 — reconcile the remaining Theron documentation queue
 
 - Corrected the cross-game work queue to identify the `$C852` generated-row
@@ -28,8 +47,10 @@
   against the isolated real SDL2 2.33.0 prefix. The capture wrapper's runtime
   verifier passed and reported SDL 2.33.0 for both compiled headers and the
   running binary; it linked `@rpath/libSDL2-2.0.0.dylib`, not `sdl2-compat`.
-- ⏳ No Drator capture has been run with this binary yet. The `$C852` consumer
-  join still needs an authentic event capture in an isolated profile.
+- ⏳ At the time of this entry, no Drator capture had been run with this binary.
+  A later authentic cold replay reached Drator and recorded 139 `$C852`
+  fetches; see the current capture report above. Its consumer join remains
+  open.
 - Scope: this is reference instrumentation only. It does not establish a
   same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
   See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
@@ -52,8 +73,9 @@ reference build/capture chain. It records physical PC, all MPRs, registers and
 the shared event counter used by row-lifecycle traces. The capture wrapper
 requires `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; its main-RAM range
 setting still filters physical data addresses, not instruction PCs. Shell and
-Python syntax checks pass. The real Drator replay has not yet been captured, so
-the consumer-to-row join and native viewport evidence remain open.
+Python syntax checks pass. At the time of this entry, the real Drator replay
+had not yet been captured; see the newer capture report above. The
+consumer-to-row join and native viewport evidence remain open.
 
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 
@@ -10392,3 +10414,21 @@ native rendering, or Theron parity. The private evidence bundle is at
   There is still no game-owned poll or gameplay evidence. Follow
   `$EC05/$E900` through `$E209` and the carry decision at `$E11D`. See the
   source-lock report for disassembly provenance and private trace hashes.
+# 2026-10-31 — authentic US cold Drator route capture; `$C852` join remains open
+
+- Replayed the authentic US cold route on TRV2 with the source-signature-gated
+  Drator controller route and four-second System Card RUN hold. It reached the
+  generator `start`, `left-event`, and `reentered-event` diagnostics without
+  synthesizing a save or game record.
+- The bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
+  `$0DC852`; the first shared event was 1,590,068. The main-RAM consumer
+  observer sampled broad `$1F0000` reads and reached its 65,536-row cap before
+  Drator, so it did not join these fetches to the generated row.
+- Wrapper verification failed because this run's callback-state trace reached
+  the then-current 524,288-row cap. A later tool change raises that cap to
+  4,194,304 rows; the capture was not rerun with the updated reference binary.
+- Updated the readiness summary, Theron TODO, native work queue, platform and
+  project status pages. The source-locked report records exact evidence and
+  next filter bounds. Raw traces, game media, firmware, saves and emulator
+  builds remain outside Git. This is original-game reference evidence, not
+  native Firestaff gameplay or parity.
