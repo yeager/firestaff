@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — refresh current Theron documentation summaries
+
+Aligned the README, documentation index, project status, real-data inventory,
+reverse-engineering overview, technical reference and Track 02 internals page
+with the current verified native JP fresh-start and US Continue routes. The
+summaries distinguish authentic-data host receipts from retail parity, link
+to the canonical capture-readiness and TODO records, and retain the open
+game-owned handoff, dynamic viewport, progression and save gaps. Corrected a
+stale Track 02 reference link. Local Markdown links and whitespace checks
+passed. Gitleaks found no secret in the staged documentation changes; the
+repository-history scan reports pre-existing findings.
+
 ## 2026-10-31 — capture authentic US mouse-input dispatch boundary
 
 The preserved authentic US gameplay state (MD5
