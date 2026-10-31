@@ -2065,7 +2065,7 @@ static void test_process_wall_click(void) {
 }
 
 /* ----------------------------------------------------------------
- *  Test F0726: wall sensor rotation is per-cell and deferred
+ *  Test F0726: wall click selects one cell and defers its rotation
  *  Source: MOVESENS.C:F0275 counts sensors per cell at 1368-1384,
  *  C011 schedules F0270 at 1429-1454, and F0271 applies the pending
  *  rotation after the full sensor scan at 1549.
@@ -2094,9 +2094,8 @@ static void test_process_wall_click_rotation_per_cell_deferred(void) {
     ctx.leaderIndex = 0;
 
     F0726_SENSOR_ProcessWallClick_Compat(sensors, 2, sensorData, 2, &ctx, &results);
-    CHECK(results.count == 2, "Wall rotate: unrelated later cell does not suppress C011 last-in-cell trigger");
+    CHECK(results.count == 1, "Wall rotate: only sensors on the clicked cell are evaluated");
     CHECK(results.results[0].sensorIndex == 0, "Wall rotate: C011 result remains first");
-    CHECK(results.results[1].sensorIndex == 1, "Wall rotate: later sensor still processes before deferred rotation");
     CHECK(results.rotationPending == 1, "Wall rotate: rotation pending");
     CHECK(results.rotationEffect == DM1_EFFECT_TOGGLE, "Wall rotate: deferred rotation effect is TOGGLE");
     CHECK(results.rotationMapX == 12, "Wall rotate: rotation source X preserved");

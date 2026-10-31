@@ -1152,6 +1152,10 @@ int F0726_SENSOR_ProcessWallClick_Compat(
         }
         localCtx.sensorCountInCell = remainingByCell[localCtx.cell];
 
+        /* MOVESENS.C:F0275:1385-1386 counts every cell first, then only
+         * evaluates sensors on P0587 (the wall cell opposite the party). */
+        if (localCtx.cell != (ctx->cell & 3)) continue;
+
         memset(&result, 0, sizeof(result));
         if (!F0723_SENSOR_EvaluateWall_Compat(&sensorData[sIdx], &localCtx, &result))
             continue;

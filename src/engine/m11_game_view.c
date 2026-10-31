@@ -46697,8 +46697,12 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 (int)state->world.things->sensors[si].targetMapX;
                             sensorsOnSq[sensCount].targetMapY =
                                 (int)state->world.things->sensors[si].targetMapY;
+                            /* ReDMCSB MOVESENS.C:F0275 reads M011_CELL
+                             * from the packed Thing reference. targetCell is
+                             * the sensor's remote destination field and does
+                             * not identify the wall cell being clicked. */
                             sensorsOnSq[sensCount].cell =
-                                (int)(state->world.things->sensors[si].targetCell & 3);
+                                (int)THING_GET_CELL(sThing);
                             sensorsOnSq[sensCount].isLocal =
                                 state->world.things->sensors[si].localEffect;
                             sensCount++;
@@ -46712,7 +46716,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     memset(&ctx, 0, sizeof(ctx));
                     ctx.mapX = frontCell.mapX;
                     ctx.mapY = frontCell.mapY;
-                    ctx.cell = 0;
+                    /* CLIKVIEW.C calls F0275 with M018_OPPOSITE(direction),
+                     * the clicked face's packed Thing cell. */
+                    ctx.cell = (state->world.party.direction + 2) & 3;
                     ctx.leaderEmptyHanded =
                         (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) ? 1 : 0;
                     /* ReDMCSB F0275: sensor data is compared against
