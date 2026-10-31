@@ -60,6 +60,37 @@ static void test_default_resolver_does_not_pickup_without_rendered_state(void)
     check_int("default.no_rendered_state.no_stop", r.stopWaitingForInput, 0);
 }
 
+static void test_held_object_requires_source_throw_or_drop_zone(void)
+{
+    DM1_V1_ViewportClickResultPc34 r;
+    const uint8_t frontLeft = DM1_VIEWPORT_GRABBABLE_CELL_MASK(
+        DM1_VIEW_CELL_FRONT_LEFT);
+    const uint8_t backRight = DM1_VIEWPORT_GRABBABLE_CELL_MASK(
+        DM1_VIEW_CELL_BACK_RIGHT);
+
+    r = DM1_V1_Viewport_ResolveClickPc34Compat(
+        16, 96, 0, 10, 20, 1, 0);
+    check_int("held.no_zone.no_throw", r.objectThrown, 0);
+    check_int("held.no_zone.no_stop", r.stopWaitingForInput, 0);
+
+    r = DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+        16, 96, 0, 10, 20, 1, 0, 0, 1, 0, 0);
+    check_int("held.f0375_zone.throw", r.objectThrown, 1);
+    check_int("held.f0375_zone.stop", r.stopWaitingForInput, 1);
+
+    r = DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+        16, 96, 0, 10, 20, 1, 0, 0, 0, frontLeft, 1);
+    check_int("held.f0374_party_square_drop", r.objectThrown, 1);
+
+    r = DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+        200, 16, 0, 10, 20, 1, 0, 0, 0, backRight, 1);
+    check_int("held.f0374_front_square_not_drop_zone", r.objectThrown, 0);
+
+    r = DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+        16, 96, 0, 10, 20, 1, 0, 0, 0, frontLeft, 0);
+    check_int("held.f0374_nonwall_no_drop", r.objectThrown, 0);
+}
+
 static void test_grabbable_state_wires_pile_top_object(void)
 {
     DM1_V1_ViewportGrabbableStatePc34 state;
@@ -120,6 +151,7 @@ int main(void)
 {
     test_floor_pickup_requires_rendered_grabbable_cell();
     test_default_resolver_does_not_pickup_without_rendered_state();
+    test_held_object_requires_source_throw_or_drop_zone();
     test_grabbable_state_wires_pile_top_object();
     test_source_evidence_mentions_grabbable_zone_gate();
 

@@ -11,7 +11,7 @@
  *
  * Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
  *   CLIKVIEW.C: F0372 (click viewport — wall sensor), F0373 (grab object),
- *               F0374 (throw/put object), F0375 (attack creature)
+ *               F0374 (throw/put object), F0375 (leader-hand throw zone)
  *   CLIKMENU.C: F0365 (turn dispatch), F0366 (step dispatch),
  *               F0367 (champion panel click), F0368 (spell click),
  *               F0369 (action area click)
@@ -81,7 +81,7 @@ typedef struct {
     int objectGrabbed;              /* F0373: picked up an object */
     int pileTopObjectId;            /* G0292_aT_PileTopObject[viewCell] */
     int objectThrown;               /* F0374: threw/placed an object */
-    int creatureAttacked;           /* F0375: attack in viewport */
+    int creatureAttacked;           /* reserved: creature attack is separate */
     int targetMapX;                 /* world coords of click target */
     int targetMapY;
     int stopWaitingForInput;        /* G0321 flag set */
@@ -161,6 +161,16 @@ DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickPc34Compat(
 DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableMaskPc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
     int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask);
+
+/* Resolve a click with the dynamic evidence F0377 consumes from ReDMCSB.
+ * throwZoneHit is the result of the F0375 side-zone hit test. dropCellMask
+ * contains only rendered object-pile zones; those drops are accepted only
+ * when squareAheadIsWall is true, matching F0377's wall-gated F0374 path.
+ */
+DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithActionZonesPc34Compat(
+    int mx, int my, int partyDir, int partyX, int partyY,
+    int hasLeader, int leaderHandEmpty, uint8_t grabbableCellMask,
+    int throwZoneHit, uint8_t dropCellMask, int squareAheadIsWall);
 
 DM1_V1_ViewportClickResultPc34 DM1_V1_Viewport_ResolveClickWithGrabbableStatePc34Compat(
     int mx, int my, int partyDir, int partyX, int partyY,
