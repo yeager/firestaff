@@ -104,8 +104,10 @@ parity work.
 A separate Ymir run traced writes across the full VDP2 register range in frame
 891. Its complete receipt records 127 CPU writes, no DMA writes, and no dropped
 rows. The frame-wide register copy set `BGON=0x0002`, `CHCTLA=0x0013`,
-`MPABN1=MPCDN1=0x1717`, and zero NBG1 scroll/zoom words at offsets `0x80`–
-`0x8e`. All writes came from the SH-2 word-copy loop at PC `0x060856ec`.
+`MPABN1=MPCDN1=0x1717`, and zero NBG1 scroll inputs at offsets `0x80`–
+`0x86`. The NBG1 coordinate increments are `ZMXIN1=1`, `ZMXDN1=0`,
+`ZMYIN1=1`, and `ZMYDN1=0` at offsets `0x88`–`0x8e`. All writes came from
+the SH-2 word-copy loop at PC `0x060856ec`.
 
 This independently confirms the active NBG1 setup, but it does not resolve the
 upper-row transparency: the trace contains a frame-wide copy, not scanline
