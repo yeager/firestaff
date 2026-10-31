@@ -40,7 +40,7 @@ mkdir -p "$home"
 # to its authenticated multilingual edition, then choose English in the
 # original APPB language screen. The isolated root exposes only the original
 # Amiga software archive.
-navigation='wait-scan-complete,wait20,click:1190:262,wait20,click:934:405,wait20,click:1458:405,wait20,click:520:442,wait20,click:960:892,wait:1000,click:100:100,key:enter,up'
+navigation='wait-scan-complete,wait20,click:1190:262,wait20,click:934:405,wait20,click:1458:405,wait20,click:520:442,wait20,click:960:892,wait:1000,click:636:540,key:enter,up'
 env -u FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS \
     -u FIRESTAFF_ORIGINALS_DIR -u FIRESTAFF_EXIT_AFTER_LAUNCH \
     FIRESTAFF_DATA="$menu_data" \
@@ -57,9 +57,11 @@ if ! grep -Fq 'startup game=none mode=menu' "$log" ||
    ! grep -Fq 'scan complete' "$log" ||
    ! grep -Fq 'games=dm1:no,csb:yes,dm2:no,nexus:no,theron:no' "$log" ||
    ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga31-multi source=$expected_source" "$log" ||
-   ! grep -Fq 'CSB READY: gameId=csb' "$log"; then
-    echo 'FAIL: CSB Amiga multilingual no-game picker did not select its authentic edition' >&2
-    grep -E 'startup game=|scan complete|CSB READY|game-handoff|failed|error' "$log" | tail -n 100 >&2 || true
+   ! grep -Fq 'CSB READY: gameId=csb' "$log" ||
+   ! grep -Eq 'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio=' "$log" ||
+   ! grep -Eq 'phase=csb-amiga-a31-titl.*title-frame=[1-9][0-9]*/' "$log"; then
+    echo 'FAIL: CSB Amiga multilingual no-game picker missed its authentic SWSH/TITL intro or runtime' >&2
+    grep -E 'startup game=|scan complete|CSB READY|game-handoff|amiga-swsh-ftl|swsh-intro|csb-amiga-a31-titl|failed|error' "$log" | tail -n 100 >&2 || true
     exit 1
 fi
 
@@ -73,7 +75,7 @@ startup = probe["startup"]
 party = probe["party"]
 if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
         probe.get("sourceId") != "csb" or
-        probe.get("bootAssetMd5") != "21197b1d4994fd835c403d5a33dcac2b" or
+        probe.get("bootAssetMd5") != "61fbfd56887c94adc26888a9491c6611" or
         startup.get("receiptReady") != 1 or
         startup.get("phase") != "inactive" or
         startup.get("startupActive") != 0 or
