@@ -433,6 +433,10 @@ fi
 if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'theron_ram_provenance_copy sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMProvenanceRead' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'TheronPCECDProvenanceRegisterStoreMatches' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'TheronPCEVDCInstructionPC == TheronPCECDPendingRAMNextPC' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'TheronPCECDDataReadInstructionOpcode = TheronPCEVDCInstructionOpcode;' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'reader_opcode=%02x writer_opcode=%02x' "$ram_provenance_patch_file" ||
    ! awk '
        /^ [[:space:]]*uint8 INLINE RdOp\(unsigned int address\)/ { rdop = NR }
        /^\+[[:space:]]+const bool previous_fetch = TheronPCEVDCInstructionFetchInProgress;/ { saved = NR }
@@ -484,6 +488,17 @@ cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_
 cd_shared_event_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch
 pce_fast_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
+   ! awk '
+       /^theron_3879_trace_patch=/ { in_block = 1 }
+       in_block && index($0, "s/^ FIRESTAFF_PATCH_TAB_CONTEXT") { prefixed_marker = 1 }
+       in_block && index($0, "s/^FIRESTAFF_PATCH_TAB_CONTEXT") { plain_marker = 1 }
+       in_block && /--fuzz=0/ { strict_fuzz = 1 }
+       in_block && /< "\\$theron_3879_trace_rendered"/ {
+           if (prefixed_marker && plain_marker && strict_fuzz) found = 1
+           in_block = 0
+       }
+       END { if (!found) exit 1 }
+   ' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '/TheronTraceStage2MPR1\(GetRealPC/ {' "$build_script" ||
    ! grep -Fq 'pce_fast_3879_trace_rendered="$build_root/theron-pce-fast-3879-indirect-target.rendered.patch"' "$build_script" ||

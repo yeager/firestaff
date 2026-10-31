@@ -349,9 +349,12 @@ if ! awk '
 fi
 theron_3879_trace_patch="$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch"
 theron_3879_trace_rendered="$build_root/theron-3879-indirect-target-trace.rendered.patch"
-sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$theron_3879_trace_patch" \
+sed \
+    -e $'s/^ FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    "$theron_3879_trace_patch" \
     > "$theron_3879_trace_rendered"
-patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
+patch -d "$build_root/source" -p1 --batch --forward --fuzz=0 \
     < "$theron_3879_trace_rendered"
 
 python3 "$repo/scripts/instrument_mednafen_theron_mouse_trace.py" \
