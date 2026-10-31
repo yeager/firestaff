@@ -64869,7 +64869,11 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     if (!state || !state->inventoryPanelActive) return 0;
 
     thing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
-    if (state->dm1IigsActive) {
+    /* ReDMCSB PANEL.C F0349 handles an empty leader hand before inspecting
+     * any Thing. Keep that source path available on IIGS so the mouth click
+     * can open the food/water panel; the IIGS item whitelist applies only to
+     * an object that is actually held. */
+    if (thing != THING_NONE && state->dm1IigsActive) {
         if (!m11_iigs_mouth_item_supported(state, thing) ||
             !state->v1FoodVblankHzNumerator ||
             !state->v1FoodVblankHzDenominator) return 0;
