@@ -6829,6 +6829,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                 } else if (type == 3) {
                     uint16_t word4;
                     uint16_t word2;
+                    uint16_t active_status;
                     uint8_t floor_list[16];
                     uint16_t frame = 0u;
                     uint32_t animation_hash = 0u;
@@ -6838,6 +6839,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                     if (size < 6) return 0;
                     word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
                     word4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
+                    active_status = word4 & 1u;
                     ordinal = word4 >> 12;
                     if (ordinal != 0u) {
                         DM2_V1_QueryOrnateAnimFrameReceipt animation;
@@ -6852,7 +6854,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                             if (actuator_direction > 0u &&
                                 actuator_direction - 1u ==
                                     (unsigned)direction) {
-                                if ((record[4] & 1u) != 0u) {
+                                if (active_status != 0u) {
                                     memset(&animation, 0, sizeof(animation));
                                     if (!dm2_v1_query_ornate_anim_frame_receipt(
                                             loader, 10,
@@ -6867,7 +6869,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
                                 goto next_class2_ornament;
                             }
                         } else if ((subtype == 0x2cu || subtype == 0x32u) &&
-                            (record[4] & 1u) == 0u) {
+                            active_status == 0u) {
                             uint32_t delay = (word2 >> 7) & 0xffu;
                             memset(&animation, 0, sizeof(animation));
                             if (!dm2_v1_query_ornate_anim_frame_receipt(

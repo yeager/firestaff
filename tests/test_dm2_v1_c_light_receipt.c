@@ -234,6 +234,21 @@ static void test_class2_db4plus_chain_receipt(void)
               &dungeon, &loader, 0, 0, 0, 7u, 1, &room) &&
               room.ceiling_ornament_index == 0xffu &&
               room.ceiling_ornament_word == 0x00ffu);
+
+    /* Mac/Amiga Dungeon records store DB3 words big-endian. Preserve the
+     * logical active bit and direction while resolving the same floor list. */
+    dungeon.words_big_endian = 1;
+    raw[3] = 0x0cu; raw[4] = 0u; /* first Thing handle 0x0c00. */
+    raw[32] = 0xffu; raw[33] = 0xfeu; /* DB4 end marker, big-endian. */
+    raw[96] = 0x10u; raw[97] = 1u; /* DB3 w0 -> DB4 handle 0x1001. */
+    raw[98] = 0u; raw[99] = 0xa7u; /* subtype 0x27, direction 0. */
+    raw[100] = 0x10u; raw[101] = 1u; /* ordinal 1 and active bit set. */
+    CHECK("class-2 DB3 subtype-27 uses big-endian active and direction fields",
+          dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
+              &dungeon, &loader, 0, 0, 0, 7u, 0, &room) &&
+              room.ceiling_ornament_index == 0x20u &&
+              room.ceiling_animation_frame == expected_animation.frame &&
+              room.ornament_source_hash == expected_animation.receipt_hash);
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
