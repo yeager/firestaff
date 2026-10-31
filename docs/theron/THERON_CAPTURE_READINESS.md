@@ -6,14 +6,21 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-The next useful original-game capture is a Drator replay that watches the
-static position consumer at logical `$C852` and records its physical PC/MPR
-while the already authenticated generated-row publication/read/unlink event
-occurs. The current generator receipt proves the row lifecycle and an earlier
-consumer in that event, while `$C852` is only statically tied to row offsets
-6–8; no same-session join proves it consumes that row. Accept a result only
-when physical bank identity and event order bind both observations. Do not
-assign coordinate or direction meanings to the row bytes. See the
+The next useful original-game capture is a Drator replay that observes opcode
+fetches at logical `$C852` during the already authenticated generated-row
+publication/read/unlink event. The bounded fetch hook belongs after `RdAtPC()`
+and before instruction dispatch; record the fetched opcode, physical PC, MPR
+snapshot, registers and a monotonically increasing instruction ordinal. Use a
+shared event sequence only if the fetch and row-lifecycle records use the same
+counter; otherwise use that ordinal for ordering. Correlate it with the
+existing main-RAM consumer-read trace, which identifies data reads by reader PC
+and physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
+physical data-read addresses, not instruction PCs. The current generator
+receipt proves the row lifecycle and an earlier consumer in that event, while
+`$C852` is only statically tied to row offsets 6–8; no same-session join proves
+it consumes that row. Accept a result only when physical bank identity and
+event order bind both observations. Do not assign coordinate or direction
+meanings to the row bytes. See the
 [generator source-lock report](../source-lock/theron-generator-rng-state-2026-08-21.md)
 and [active TODO](../../TODO-theron.md).
 
@@ -529,7 +536,10 @@ their own limit, so early default-RAM reads cannot consume the selected range's
 budget. Records identify `sample_class`; each stream writes its own explicit
 truncation marker when a configured sample cap or the per-address cap drops a
 read. Reaching the total cap alone does not mark a stream truncated. A truncated
-stream is incomplete for absence or coverage claims.
+stream is incomplete for absence or coverage claims. This range selects
+physical data-read addresses only; it cannot select an instruction PC. To
+observe an instruction address, use a bounded opcode-fetch hook at the CPU
+fetch/dispatch boundary.
 
 ## 2026-10-29 — decoded-buffer read candidates
 

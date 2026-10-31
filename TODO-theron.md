@@ -6,11 +6,18 @@ The authenticated Drator event receipt follows a generated ten-byte row
 through construction, runtime-slot publication, first reads and unlink. Static
 US Track 02 code at raw offset `$A1612` / logical `$C852` copies row offsets
 6–8 into working fields, but the capture corpus has not shown that consumer
-reading this exact row in the same event. The next bounded capture should
-record `$C852`'s physical PC/MPR and execution order alongside the known row
-lifecycle, using authentic media and a private profile/output directory. A
-logical-PC hit in another physical bank does not close the join. Keep row
-bytes opaque; do not label them as coordinates, direction or creature fields.
+reading this exact row in the same event. The next bounded capture should add
+an opcode-fetch observer at logical `$C852`, after `RdAtPC()` and before
+instruction dispatch, recording the fetched opcode, physical PC, MPR snapshot,
+registers and a monotonically increasing instruction ordinal. Include a shared
+event sequence only if the fetch and row-lifecycle records use the same
+counter; otherwise use the instruction ordinal for ordering. Correlate it with
+the existing main-RAM consumer-read trace, which records reader PC/MPR and row
+data reads. Its
+`FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` option filters physical
+data-read addresses; it is not a code-PC filter. A logical-PC hit in another
+physical bank does not close the join. Keep row bytes opaque; do not label
+them as coordinates, direction or creature fields.
 Do not reuse an occupied capture profile or evidence directory; coordinate
 with its owner before using shared capture infrastructure. See the
 [source-bound generator/position report](docs/source-lock/theron-generator-rng-state-2026-08-21.md)

@@ -13,6 +13,12 @@ join: identify the physical `$C852` consumer in the same Drator generated-row
 event. Marked the August capture inventory as historical so it cannot override
 the current status summary.
 
+Corrected the capture instructions to distinguish opcode-fetch PC from the
+main-RAM consumer trace's physical data-address range filter. The `$C852` fetch
+must be observed at the CPU fetch/dispatch boundary and correlated with row
+reads using a comparable instruction ordinal or a verified shared event
+counter; the range option cannot select `$C852` as an instruction address.
+
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 
 The CUE media resolver now accepts a same-stem `.ogg` only when the CUE
