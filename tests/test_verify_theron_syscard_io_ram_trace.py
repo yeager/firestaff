@@ -41,10 +41,16 @@ def make_row(index: int, event: int, access: str, address: int, pc: int) -> str:
     return "io_ram " + " ".join(fields)
 
 
-def must_reject(lines: list[str], image: bytes, label: str) -> None:
+def must_reject(
+    lines: list[str], image: bytes, label: str, expected_message: str
+) -> None:
     try:
         verifier.verify_lines(lines, image)
-    except ValueError:
+    except ValueError as error:
+        if expected_message not in str(error):
+            raise AssertionError(
+                f"invalid I/O/RAM receipt rejected for the wrong reason ({label}): {error}"
+            ) from error
         return
     raise AssertionError(f"invalid I/O/RAM receipt accepted: {label}")
 
@@ -62,18 +68,52 @@ def main() -> None:
         "missing_addresses": len(verifier.ADDRESSES) - 3,
     }
     valid = make_row(0, 30, "write", 0x224C, 0xEC05)
-    must_reject([verifier.HEADER, valid.replace("logical_address=224c", "logical_address=224b")], image, "scope")
-    must_reject([verifier.HEADER, valid.replace("physical_address=1f024c", "physical_address=1f024d")], image, "data mapping")
-    must_reject([verifier.HEADER, valid.replace("logical_address=224c", "logical_address=1800")], image, "MPR mapping")
-    must_reject([verifier.HEADER, valid.replace("code_bytes=00000000", "code_bytes=ff000000")], image, "BIOS opcode")
-    must_reject([verifier.HEADER, valid.replace("code_valid_mask=f", "code_valid_mask=e")], image, "missing opcode")
+    must_reject(
+        [verifier.HEADER, valid.replace("logical_address=224c", "logical_address=224b")],
+        image, "scope", "out-of-scope logical address",
+    )
+    must_reject(
+        [verifier.HEADER, valid.replace("physical_address=1f024c", "physical_address=1f024d")],
+        image, "data mapping", "logical/physical data mapping mismatch",
+    )
+    must_reject(
+        [verifier.HEADER, valid.replace("logical_address=224c", "logical_address=1800")],
+        image, "MPR mapping", "data MPR disagrees with logical address",
+    )
+    must_reject(
+        [verifier.HEADER, valid.replace("code_bytes=00000000", "code_bytes=ff000000")],
+        image, "BIOS opcode", "instruction byte disagrees with authentic BIOS",
+    )
+    must_reject(
+        [verifier.HEADER, valid.replace("code_valid_mask=f", "code_valid_mask=e")],
+        image, "missing opcode", "opcode byte is not mapped",
+    )
     must_reject([
         verifier.HEADER,
         make_row(0, 30, "read", 0x1800, 0xE900),
         make_row(1, 37, "read", 0x22A4, 0xE95E).replace("event_sequence=37", "event_sequence=29"),
-    ], image, "event order")
-    must_reject([verifier.HEADER, valid, "io_ram_truncated cap=131072"], image, "truncation")
-    must_reject(["source=other", valid], image, "header")
+    ], image, "event order", "non-increasing shared event sequence")
+    must_reject(
+        [verifier.HEADER, valid, "io_ram_truncated cap=131072"],
+        image, "truncation", "truncation marker disagrees with row count",
+    )
+    original_cap = verifier.CAP
+    try:
+        verifier.CAP = 1
+        assert verifier.verify_lines([verifier.HEADER, valid], image)["rows"] == 1
+        must_reject(
+            [verifier.HEADER, valid, "io_ram_truncated cap=1"],
+            image, "reached cap", "reached its configured row cap",
+        )
+        must_reject(
+            [verifier.HEADER, valid, make_row(1, 31, "read", 0x1801, 0xE900)],
+            image, "exceeded cap", "exceeds its configured cap",
+        )
+    finally:
+        verifier.CAP = original_cap
+    must_reject(
+        ["source=other", valid], image, "header", "unexpected System Card I/O/RAM trace header"
+    )
     print("test_verify_theron_syscard_io_ram_trace: PASS")
 
 
