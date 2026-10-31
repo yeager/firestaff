@@ -1029,11 +1029,17 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)fwd_action, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
+        const int global_operation =
+            (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
+        if (!ctx->global_words || ctx->global_word_count <= 0 ||
+            global_operation < 0 || global_operation > 6 ||
+            !dm2_v1_skproject_update_glob_var(
+                dm2_actu_data(record), (uint16_t)global_operation, 0,
+                ctx->global_words, ctx->global_word_count, &gv_receipt) ||
+            !gv_receipt.valid) {
+            r->fail_closed++;
+            break;
         }
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
@@ -1045,17 +1051,22 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_TEST_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        int should_forward = 1;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            uint16_t gv_val = 0;
-            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record),
-                ctx->global_words, ctx->global_word_count,
-                &gv_val, &gv_receipt);
-            if (gv_val == 0)
-                should_forward = 0;
+        int should_forward;
+        uint16_t gv_val = 0;
+        DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+        const int revert = dm2_actu_revert_effect(record) != 0;
+        if (!ctx->global_words || ctx->global_word_count <= 0 ||
+            !dm2_v1_skproject_get_glob_var(
+                dm2_actu_data(record), ctx->global_words,
+                ctx->global_word_count, &gv_val, &gv_receipt) ||
+            !gv_receipt.valid) {
+            r->fail_closed++;
+            break;
         }
+        should_forward = ((revert != (gv_val != 0u)) &&
+                          (ctx->action_type == 0 || ctx->action_type == 2)) ||
+                         ((revert == (gv_val != 0u)) &&
+                          ctx->action_type == 1);
         if (should_forward) {
             dm2_v1_invoke_actuator(ctx->queue, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
@@ -1363,11 +1374,17 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)fwd_action, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
+        const int global_operation =
+            (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
+        if (!ctx->global_words || ctx->global_word_count <= 0 ||
+            global_operation < 0 || global_operation > 6 ||
+            !dm2_v1_skproject_update_glob_var(
+                dm2_actu_data(record), (uint16_t)global_operation, 0,
+                ctx->global_words, ctx->global_word_count, &gv_receipt) ||
+            !gv_receipt.valid) {
+            r->fail_closed++;
+            break;
         }
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
@@ -1379,17 +1396,22 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_TEST_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        int should_forward = 1;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            uint16_t gv_val = 0;
-            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record),
-                ctx->global_words, ctx->global_word_count,
-                &gv_val, &gv_receipt);
-            if (gv_val == 0)
-                should_forward = 0;
+        int should_forward;
+        uint16_t gv_val = 0;
+        DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+        const int revert = dm2_actu_revert_effect(record) != 0;
+        if (!ctx->global_words || ctx->global_word_count <= 0 ||
+            !dm2_v1_skproject_get_glob_var(
+                dm2_actu_data(record), ctx->global_words,
+                ctx->global_word_count, &gv_val, &gv_receipt) ||
+            !gv_receipt.valid) {
+            r->fail_closed++;
+            break;
         }
+        should_forward = ((revert != (gv_val != 0u)) &&
+                          (ctx->action_type == 0 || ctx->action_type == 2)) ||
+                         ((revert == (gv_val != 0u)) &&
+                          ctx->action_type == 1);
         if (should_forward) {
             dm2_v1_invoke_actuator(ctx->queue, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
