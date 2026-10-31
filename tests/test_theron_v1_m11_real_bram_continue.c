@@ -26,8 +26,8 @@ static int set_test_environment(const char *name, const char *value) {
 #endif
 }
 
-static int pick_up_nearest_authentic_item(M11_GameViewState *view,
-                                          Theron_V1_World *world) {
+static int exercise_nearest_authentic_item_cycle(M11_GameViewState *view,
+                                                 Theron_V1_World *world) {
     static const int movement_inputs[4] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_RIGHT,
         M12_MENU_INPUT_DOWN, M12_MENU_INPUT_STRAFE_LEFT
@@ -150,28 +150,66 @@ static int pick_up_nearest_authentic_item(M11_GameViewState *view,
           THERON_OBJ_F_PICKED_UP)) return 0;
     if (world->party.active_slot < 0 ||
         world->party.active_slot >= THERON_MAX_CHAMPIONS) return 0;
-    for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
-        const Theron_V1_InventorySourceRecord *carried =
-            &world->inventory_source[world->party.active_slot][slot];
-        if (carried->valid && carried->source_origin_valid &&
-            carried->source_ref ==
-                world->objects[target_object_index].source_ref &&
-            carried->source_index ==
-                world->objects[target_object_index].source_index &&
-            carried->category ==
-                world->objects[target_object_index].source_category &&
-            carried->property_valid &&
-            memcmp(carried->property,
-                   world->objects[target_object_index].source_property,
-                   sizeof(carried->property)) == 0 &&
-            carried->source_raw_size ==
-                world->objects[target_object_index].source_raw_size &&
-            memcmp(carried->source_raw,
-                   world->objects[target_object_index].source_raw,
-                   carried->source_raw_size) == 0)
-            return 1;
+    {
+        int inventory_slot = -1;
+        const int champion_slot = world->party.active_slot;
+        for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+            const Theron_V1_InventorySourceRecord *carried =
+                &world->inventory_source[champion_slot][slot];
+            if (carried->valid && carried->source_origin_valid &&
+                carried->source_ref ==
+                    world->objects[target_object_index].source_ref &&
+                carried->source_index ==
+                    world->objects[target_object_index].source_index &&
+                carried->category ==
+                    world->objects[target_object_index].source_category &&
+                carried->property_valid &&
+                memcmp(carried->property,
+                       world->objects[target_object_index].source_property,
+                       sizeof(carried->property)) == 0 &&
+                carried->source_raw_size ==
+                    world->objects[target_object_index].source_raw_size &&
+                memcmp(carried->source_raw,
+                       world->objects[target_object_index].source_raw,
+                       carried->source_raw_size) == 0) {
+                inventory_slot = slot;
+                break;
+            }
+        }
+        if (inventory_slot < 0) return 0;
+        {
+            const Theron_V1_InventorySourceRecord source =
+                world->inventory_source[champion_slot][inventory_slot];
+            int dropped_object_found = 0;
+            if (M11_GameView_HandleInput(view, M12_MENU_INPUT_DROP_ITEM) !=
+                M11_GAME_INPUT_REDRAW ||
+                world->inventory_source[champion_slot][inventory_slot].valid ||
+                world->party.champions[champion_slot].inventory[inventory_slot] !=
+                    THERON_ITEM_NONE) return 0;
+            for (int object_index = 0; object_index < world->object_count;
+                 ++object_index) {
+                const Theron_V1_Object *object = &world->objects[object_index];
+                if (object->dungeon_id == dungeon && object->level == level &&
+                    object->x == world->party.leader_x &&
+                    object->y == world->party.leader_y &&
+                    object->source_origin_valid &&
+                    !(object->flags & THERON_OBJ_F_PICKED_UP) &&
+                    object->source_ref == source.source_ref &&
+                    object->source_index == source.source_index &&
+                    object->source_category == source.category &&
+                    object->source_property_valid &&
+                    memcmp(object->source_property, source.property,
+                           sizeof(source.property)) == 0 &&
+                    object->source_raw_size == source.source_raw_size &&
+                    memcmp(object->source_raw, source.source_raw,
+                           source.source_raw_size) == 0) {
+                    dropped_object_found = 1;
+                    break;
+                }
+            }
+            return dropped_object_found;
+        }
     }
-    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -562,10 +600,10 @@ int main(int argc, char** argv) {
             } else {
                 const uint8_t quest_items_before =
                     world->progression.quest_items_collected;
-                if (!pick_up_nearest_authentic_item(&view, world)) {
+                if (!exercise_nearest_authentic_item_cycle(&view, world)) {
                     ++failures;
                     fprintf(stderr,
-                            "FAIL: native M11 pickup transfers an approachable authentic Track 02 object with exact inventory provenance\n");
+                            "FAIL: native M11 pickup/drop preserves an approachable authentic Track 02 object through inventory\n");
                 }
                 if (world->progression.quest_items_collected !=
                     quest_items_before) {

@@ -1,15 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — pick up an authentic Track 02 item through native M11 input
+## 2026-10-31 — round-trip a Track 02 item through native M11 input
 
 Extended `theron_v1_m11_real_bram_continue` to find a reachable,
 source-authenticated carryable object in the loaded US Track 02 map, route the
-party to it with native movement and turn inputs, and pick it up through
-`M12_MENU_INPUT_PICKUP_ITEM`. The assertion verifies the floor occurrence is
-marked picked up and that inventory retains the same source ref, category,
-source index, property bytes, and complete raw record. It also verifies quest
-progress stays unchanged because the original T900 quest-artifact consumer is
-not proven.
+party to it with native movement and turn inputs, and picks it up through
+`M12_MENU_INPUT_PICKUP_ITEM`. The test then drops it through the M11 input
+path. It verifies inventory retains the same source ref, category, source
+index, property bytes, and complete raw record; the same source record returns
+to the floor; and the inventory slot is freed. Quest progress stays unchanged
+because the original T900 quest-artifact consumer is not proven.
+
 Three TRV2 loops passed with authentic US Track 02 and the authentic
 Ak-Tu-Ba-complete BRAM. This proves the host's real-media M11 input and
 provenance path; it does not claim retail pickup parity or quest-item identity.
