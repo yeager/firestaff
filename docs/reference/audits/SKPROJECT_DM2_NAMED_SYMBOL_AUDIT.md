@@ -48,9 +48,18 @@ zone only for front cell 3. Firestaff now retains a bounded first DB4+ record
 root on each eligible projected wall square, following the `w4=id4` handoff
 from `SUMMARIZE_STONE_ROOM` before and independently of the `SeeThruWalls`
 front-cell ornament gate; it still has no wall-cell item material/placement
-pass, matching cloud route, or front-wall click target. The next work is to
-consume that root with the source facing gate and wall-specific geometry. The
-shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
+pass, matching cloud route, or front-wall click target. Its wall-item geometry
+cannot reuse the floor static-object plan: `DRAW_ITEM(tt=1)` starts from the
+drawn wall picture's `w28/w30` anchor and `rectNo`, adds the item's signed
+`dtImageOffset[0xFD]` and the slot delta from `_4976_41b0/_4976_41de`, then
+applies that slot delta again in the later `vv != -1` block, followed by the
+selected image's `dtImageOffset[0xFE]`. `QUERY_TEMP_PICST` scales with
+`_4976_418e[y_distance][1]` and clips through the wall ornament rectangle
+with reference point zero. Preserve the early facing mismatch return before
+the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
+then wrap to 2), and the cell-3-only clickable zone. The next work is to
+consume that root with the source facing gate, this wall-specific placement,
+and the corresponding clipping. The shop-glass routine also requires the live wall/floor actuator pair, DB14 stock,
 creature item masks, merchandise WALL_GFX assets, and its name/price display;
 the runtime entry and panel builder currently fail closed.
 
