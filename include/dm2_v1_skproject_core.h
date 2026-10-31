@@ -5424,11 +5424,11 @@ int dm2_v1_skproject_is_creature_movable_there(
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator
-   record walk for side-indexed wall gfx.  The source walks the square's record
-   list, handling text records (type 2) and actuators (type 3) with ornate
-   animation frames.  The helper delegates the static text-record path to the
-   dungeon-loader wall-gfx walker and is receipted/fail-closed on the dynamic
-   actuator/animation paths. */
+   record walk for side-indexed wall gfx. The simple entry below delegates the
+   static text-record path to the dungeon-loader walker; the extended entry
+   handles ordered DB2/DB3 text and actuator state with GDAT animation receipts.
+   Its renderer-facing field is one-based (frame offset + 1), while the source
+   packed summary array keeps the frame offset in bits 10..15. */
 typedef struct {
     int valid;
     int blocked_missing_record_pool;

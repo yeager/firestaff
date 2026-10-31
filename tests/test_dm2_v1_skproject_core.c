@@ -6139,25 +6139,25 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(result == 1 &&
                   q1a46.valid && q1a46.found_actuator &&
                   q1a46.actuator_type == 0x4au &&
-                  wall_idx == 0x22 && wall_field == 0,
+                  wall_idx == 0x22 && wall_field == 1,
               "DM2_query_0cee_1a46 decodes big-endian XOR state (0,0)");
         actuator_record_be[5] = 0x04u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  q1a46.actuator_type == 0x4au && wall_field == 1,
+                  q1a46.actuator_type == 0x4au && wall_field == 2,
               "DM2_query_0cee_1a46 XOR state (0,1)");
         actuator_record_be[5] = 0x01u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  wall_field == 1,
+                  wall_field == 2,
               "DM2_query_0cee_1a46 XOR state (1,0)");
         actuator_record_be[5] = 0x05u;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  wall_field == 0,
+                  wall_field == 1,
               "DM2_query_0cee_1a46 XOR state (1,1)");
         actuator_record_be[5] = 0u;
         CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
@@ -6171,7 +6171,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
                   q1a46.valid && q1a46.found_actuator &&
-                  q1a46.actuator_type == 0x7fu && wall_field == 0,
+                  q1a46.actuator_type == 0x7fu && wall_field == 1,
               "DM2_query_0cee_1a46 type 0x7f uses source default field");
         actuator_record_be[3] = 0x3fu;
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
@@ -6182,7 +6182,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   summary_words[7] == 0x0c00 &&
                   summary_words[5] == 0x22 && summary_words[3] == 14 &&
                   q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
-                  wall_idx == 0x22 && wall_field == 0,
+                  wall_idx == 0x22 && wall_field == 1,
               "DM2_query_0cee_1a46 type 0x3f preserves shop summary word 7 and wall ornament on side 2");
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
@@ -6190,7 +6190,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.summary_word7_written &&
                   q1a46.summary_word7 == -1 &&
                   q1a46.valid && q1a46.wall_gfx_index == 0x22u &&
-                  wall_idx == 0x22 && wall_field == 0,
+                  wall_idx == 0x22 && wall_field == 1,
               "DM2_query_0cee_1a46 type 0x3f preserves wall ornament off side 2");
         actuator_record_be[2] = 0x02u;
         actuator_record_be[3] = 0xfeu; /* type 0x7e, actuator datum 5. */
@@ -6209,7 +6209,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  q1a46.actuator_type == 0x18u && wall_field == 1,
+                  q1a46.actuator_type == 0x18u && wall_field == 2,
               "DM2_query_0cee_1a46 type 0x18 uses active XOR once-only");
         /* Type 0x46 selects the active bit (record word 4 bit 0). */
         actuator_record_be[3] = 0x46u;
@@ -6217,7 +6217,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   &wall_idx, &wall_field, &q1a46) == 1 &&
-                  q1a46.actuator_type == 0x46u && wall_field == 1,
+                  q1a46.actuator_type == 0x46u && wall_field == 2,
               "DM2_query_0cee_1a46 type 0x46 returns active state");
         /* c_querydb.cpp:3529-3533 assigns type 0x41's actuator data to RG2;
          * the common summary write stores it in the high frame bits. */
@@ -6227,7 +6227,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext_summary(
                   &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
                   summary_words, &wall_idx, &wall_field, &q1a46) == 1 &&
-                  q1a46.actuator_type == 0x41u && wall_field == 5 &&
+                  q1a46.actuator_type == 0x41u && wall_field == 6 &&
                   summary_words[3] == (int16_t)0x1422u &&
                   summary_words[4] == 0 && summary_words[7] == 0,
               "DM2_query_0cee_1a46 type 0x41 returns actuator data in packed summary frame bits");

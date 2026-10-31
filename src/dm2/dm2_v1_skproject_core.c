@@ -14081,9 +14081,13 @@ static int dm2_v1_skproject_query_0cee_1a46_ext_impl(
                     }
 
                     wall_gfx_index = (int16_t)decoration;
-                    wall_gfx_field = (int16_t)di;
+                    /* The source summary stores di in its upper six bits,
+                     * while DRAW_WALL_ORNATE adds the view base (front=1,
+                     * side=0) to that offset. The renderer-facing field is
+                     * therefore one-based so frame zero remains drawable. */
+                    wall_gfx_field = (int16_t)(di + 1);
                     receipt.wall_gfx_index = (uint16_t)decoration;
-                    receipt.wall_gfx_field = (uint16_t)di;
+                    receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
                     if (summary_words) {
                         summary_words[relative_side + 3] = (int16_t)(
                             (((uint16_t)di << 10) | decoration));

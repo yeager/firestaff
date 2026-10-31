@@ -15,9 +15,12 @@ usage-14 clear/record marker; actuator shop/resurrection branches write word 7.
 Actuator type `0x41` now returns its source actuator-data word in the packed
 frame bits rather than zero (`c_querydb.cpp:3529-3533`, `3703-3723`). Synthetic
 big-endian regression coverage checks the type-`0x41` value and packed array
-write, plus type-`0x3f` word-7 mutation. Runtime composition still uses its
-direct wall index/field output, and other actuator, source-capture, and
-all-platform cases remain open.
+write, plus type-`0x3f` word-7 mutation. The renderer-facing actuator field is
+normalized to the source image-entry base plus the packed frame offset, so an
+inactive actuator's packed offset zero still draws base entry 1 (front) or 0
+(side); active offsets and type `0x41` use the same rule. Runtime composition
+still uses direct wall index/field output, and other actuator, source-capture,
+and all-platform cases remain open.
 
 2026-10-31 runtime integration for `DM2_query_0cee_1a46`: the DM2 door metadata
 path now consumes the ordered, GDAT-aware query with the current game tick,
