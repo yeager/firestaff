@@ -23,6 +23,14 @@ leg separate temporary HOME, XDG_DATA_HOME, and APPDATA roots so an earlier
 Continue output cannot masquerade as a fresh start. This fresh-start route
 also passed the three TRV2 loops.
 
+Added a Japanese counterpart, `theron_v1_m11_jp_fresh_start`, using the
+authentic JP Track 02 BIN. It verifies the eight decoded source roster names,
+selects Theron through the Soul Room, and enters source-header-verified
+Ak-Tu-Ba level 0 with quest progress unchanged. The warning-as-error macOS
+build and three consecutive real-media CTest runs passed after rebasing onto
+the latest PR commits. The JP BIN and isolated test data stayed on the external
+disk; this is Firestaff startup-path evidence, not full retail parity.
+
 ## 2026-10-31 — write authentic BRAM from the between-stage save input
 
 Connected Theron's Save Game input to the existing source-bound original BRAM

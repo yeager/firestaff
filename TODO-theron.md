@@ -22,6 +22,13 @@ parallel quest-name type indices to quest bits: authentic US/JP tables contain
 repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
 and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
 
+The JP counterpart, `theron_v1_m11_jp_fresh_start`, now covers the authentic
+title-to-level-0 path independently. It compares all eight decoded roster
+names, confirms Theron is admitted, and requires a source-verified level header
+with zero quest progress. The warning-as-error build and three repeated CTest
+runs passed against the hash-locked original JP BIN. This does not prove JP
+Continue/save semantics, retail input parity, or full gameplay parity.
+
 2026-10-31 save-resume follow-up: the default Continue root now uses the same
 `FSP_GetUserDataDir()/saves/theron` directory as Save Game, including when
 `XDG_DATA_HOME` is set. A Continue-loaded Firestaff BRAM can be updated through
