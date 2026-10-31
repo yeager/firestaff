@@ -1,5 +1,6 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -14,6 +15,53 @@ static int passed;
     if (condition) ++passed; \
     else printf("FAIL: %s\n", label); \
 } while (0)
+
+static void test_class2_db4plus_chain_receipt(void)
+{
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_CLightStoneRoomReceipt room;
+    uint8_t raw[8] = {0};
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&loader, 0, sizeof(loader));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.square_bytes = 1;
+    dungeon.raw_map_data_base = 0;
+    dungeon.column_index_base = 1;
+    dungeon.square_first_thing_base = 3;
+    dungeon.square_first_thing_count = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    loader.loaded = 1;
+    raw[0] = 0x58u; /* class 2, bit 0x08, and a square Thing list */
+    raw[1] = 0u; raw[2] = 0u; /* first column entry = SFT ordinal zero */
+    raw[3] = (uint8_t)((4u << 10) | 1u);
+    raw[4] = (uint8_t)(((4u << 10) | 1u) >> 8);
+
+    CHECK("class-2 bit-08 DB4+ root is retained past the ornament loop",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.valid && room.raw_tile == 0x58u &&
+              room.source_tile_type == 2u &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_word == 0x00ffu);
+
+    raw[3] = 0xffu;
+    raw[4] = 0xffu;
+    CHECK("class-2 null Thing-list root is treated as empty",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room) &&
+              room.first_record_link == DM2_THING_NULL_MARKER);
+
+    raw[3] = (uint8_t)((2u << 10) | 1u);
+    raw[4] = (uint8_t)(((2u << 10) | 1u) >> 8);
+    CHECK("class-2 DB2 prefix stays closed without ornament evidence",
+          !dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 0u, &room));
+}
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
@@ -344,6 +392,7 @@ int main(void)
           !dm2_v1_c_light_m11_receipt_build_for_map(
               &scene, &map_receipt, &source, &receipt) && !receipt.valid);
 
+    test_class2_db4plus_chain_receipt();
     test_real_dungeon_c_light_receipts(&scene);
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);

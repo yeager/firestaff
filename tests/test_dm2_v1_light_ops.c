@@ -1168,6 +1168,44 @@ static void test_mode7_flags3_prepass_evidence(void)
     /* sklight.cpp flags 3 also admits a summarized class-2 no-record tile. */
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 94 && darkness == 0);
+    /* c_gui_vp.cpp:2644-2654 leaves a class-2 bit-08 DB4+ root at the
+     * summary boundary; c_light.cpp then consumes its F8 and DBE/DBF tail. */
+    room.raw_tile = 0x48u;
+    room.source_tile_type = 2u;
+    room.first_record_link = (uint16_t)((4u << 10) | 1u);
+    room.ceiling_ornament_word = 0x00ffu;
+    evidence.record_chain_known = 1u;
+    evidence.record_darkness = 50;
+    evidence.creature_present = 1u;
+    evidence.creature_f8_word = 80u;
+    node.source_tile_type = 2u;
+    ambient = 0;
+    darkness = 0;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 70 && darkness == 40);
+    node.source_flags = 4u;
+    node.effective_flags = 2u;
+    node.prepass = NULL;
+    ambient = 17;
+    darkness = 23;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 17 && darkness == 23);
+    node.source_flags = 3u;
+    node.effective_flags = 0u;
+    node.prepass = &evidence;
+    /* DB0-DB3 prefixes need their source ornament-selection summary first. */
+    room.first_record_link = (uint16_t)((2u << 10) | 1u);
+    evidence.creature_present = 0u;
+    evidence.creature_f8_word = 0u;
+    ambient = 7;
+    darkness = 9;
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == -1);
+    assert(ambient == 7 && darkness == 9);
+    room.raw_tile = 0x40u;
+    room.source_tile_type = 1u;
+    room.first_record_link = DM2_THING_NULL_MARKER;
+    node.source_tile_type = 1u;
+    evidence.record_darkness = 0;
     ambient = 0;
     darkness = 0;
     room.raw_tile = 0x30u;

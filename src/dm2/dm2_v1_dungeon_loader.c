@@ -6725,13 +6725,20 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     if (!d || !loader || !loader->loaded) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    /* SKProject skguivwp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
-     * class-2 no-record tiles and class-5 teleporter tiles with DB1 as the
-     * first record both reach the type-1 ceiling-ornament branch when bit
-     * 0x08 is clear. A DB1 is above the summarizer's DB0..DB3 loop and is
-     * not consumed as an ornament. Other record chains stay fail-closed. */
+    /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
+     * class-2 bit-08 roots whose first record is DB4+ pass the DB0..DB3
+     * ornament loop untouched; c_light.cpp then consumes that retained
+     * root for creature and DBE/DBF terms. DB0..DB3 prefixes stay closed
+     * until their class-2 ornament selection is represented. Class-2
+     * no-record tiles and class-5 DB1 roots retain their separate paths. */
     if (raw < 0 || raw > 0xff ||
-        !((((unsigned)raw >> 5) == 2u && first == -1) ||
+        !((((unsigned)raw >> 5) == 2u &&
+           (first == -1 || first == (int)DM2_THING_END_MARKER ||
+            first == (int)DM2_THING_NULL_MARKER ||
+            (((unsigned)raw & 0x08u) != 0u && first >= 0 &&
+             first != (int)DM2_THING_END_MARKER &&
+             first != (int)DM2_THING_NULL_MARKER &&
+             (((unsigned)first >> 10) & 0x0fu) >= 4u))) ||
           (((unsigned)raw >> 5) == 5u && (raw & 0x0c) != 0x0c &&
            first >= 0 &&
            (((unsigned)first >> 10) & 0x0fu) == 1u))) {
@@ -6743,7 +6750,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
         out->y = y;
         out->raw_tile = (uint8_t)raw;
         out->source_tile_type = 2u;
-        out->first_record_link = DM2_THING_NULL_MARKER;
+        out->first_record_link =
+            first < 0 || first == (int)DM2_THING_END_MARKER ||
+                first == (int)DM2_THING_NULL_MARKER
+                ? DM2_THING_NULL_MARKER : (uint16_t)first;
         out->ceiling_ornament_word = 0x00ffu;
         out->ceiling_ornament_index = 0xffu;
         out->valid = 1;

@@ -125,6 +125,13 @@ typedef struct {
     char text[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
 } CSB_V1_RuntimeTextMessageReceipt;
 
+/* Source C015 state after a party-arrival F0276 pass. */
+typedef struct {
+    int valid;
+    uint32_t source_game_time;
+    char rows[4][128];
+} CSB_V1_RuntimePartyTextRowsReceipt;
+
 /* CSBWin DSA.cpp STKOP_Sound delegates to PlayCustomSound after the complete
  * action is accepted. Keep the exact source request as a runtime receipt;
  * an unavailable original sound backend must not be replaced by host audio. */
@@ -766,6 +773,8 @@ typedef struct {
     uint8_t                 csbwin_poison_event_attack_valid[DM1_EVENT_MAX_COUNT];
     CSB_V1_RuntimeTextMessageReceipt
                             csbwin_text_message_receipt;
+    CSB_V1_RuntimePartyTextRowsReceipt
+                            csb_party_text_rows_receipt;
     CSB_V1_RuntimeDSASoundReceipt
                             csbwin_dsa_sound_receipt;
     uint16_t                active_group_state_count;
@@ -825,8 +834,8 @@ typedef struct {
     CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
 
-/* ReDMCSB TEXT.C F0046: Atari/Amiga/FM Towns C015 rows expire at the
- * source game time plus 70 ticks. */
+/* ReDMCSB TEXT.C F0046: supported Atari ST, Amiga A31/A35, and FM Towns
+ * C015 rows expire after 70 ticks. */
 int csb_v1_runtime_text_message_active_pc34(
     const CSB_V1_RuntimeProfile *profile);
 

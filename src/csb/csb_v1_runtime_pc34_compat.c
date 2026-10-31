@@ -4126,9 +4126,8 @@ int csb_v1_runtime_text_message_active_pc34(
     if (!profile) return 0;
     receipt = &profile->csbwin_text_message_receipt;
     if (!receipt->valid || !receipt->text[0]) return 0;
-    /* ReDMCSB TEXT.C F0046 assigns GameTime + 70 for all supported CSB
-     * Atari, Amiga and FM Towns media. Unsigned subtraction preserves the
-     * original timer behavior across the 32-bit game-time wrap. */
+    /* ReDMCSB TEXT.C F0046 assigns 70 game ticks to MEDIA099, which covers
+     * the supported Atari ST, Amiga A31/A35, and FM Towns variants. */
     age = profile->game_time - receipt->source_game_time;
     return age < 70u;
 }

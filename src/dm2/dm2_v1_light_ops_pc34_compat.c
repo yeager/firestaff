@@ -248,7 +248,10 @@ int dm2_v1_mode7_flags4_class2_terms(
 {
     if (!room || !room->valid ||
         (room->raw_tile >> 5) != 2u ||
-        room->first_record_link != DM2_THING_NULL_MARKER ||
+        !(room->first_record_link == DM2_THING_NULL_MARKER ||
+          ((room->raw_tile & 0x08u) != 0u &&
+           ((room->first_record_link >> 10) & 0x0fu) >= 4u &&
+           room->source_tile_type == 2u)) ||
         (((room->raw_tile >> 5) != 3u &&
           (room->raw_tile >> 5) != 4u) &&
          room->source_tile_type != 1u && room->source_tile_type != 2u) ||
@@ -358,7 +361,11 @@ static int dm2_v1_mode7_flags3_floor_terms(
         !(((room->raw_tile >> 5) == 1u && room->raw_tile == 0x30u &&
             evidence && evidence->record_chain_known) ||
           ((room->raw_tile >> 5) == 2u &&
-           room->first_record_link == DM2_THING_NULL_MARKER) ||
+           (room->first_record_link == DM2_THING_NULL_MARKER ||
+            ((room->raw_tile & 0x08u) != 0u &&
+             ((room->first_record_link >> 10) & 0x0fu) >= 4u &&
+             room->source_tile_type == 2u && evidence &&
+             evidence->record_chain_known))) ||
           ((room->raw_tile >> 5) == 3u &&
            room->source_tile_type >= 0x12u &&
            room->source_tile_type <= 0x13u &&
@@ -421,7 +428,8 @@ static int dm2_v1_mode7_flags3_floor_terms(
     }
     if (evidence->creature_present)
         *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
-    if ((room->raw_tile >> 5) == 3u ||
+    if ((room->raw_tile >> 5) == 2u ||
+        (room->raw_tile >> 5) == 3u ||
         (room->raw_tile >> 5) == 4u ||
         (room->raw_tile >> 5) == 5u) {
         if (evidence->record_chain_known)
