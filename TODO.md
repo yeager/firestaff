@@ -1,5 +1,25 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 all-game presentation-mode audit: ran the authentic-media CLI boot
+probe for V1, V2.1 and V2.2 across DM1, CSB, DM2, Theron's Quest and Nexus
+using the installed `.firestaff/data` collection. V1 reported a 320x200
+presentation target; V2.1 and V2.2 reported 640x400. In `--debug`, every V2.2
+request resolved to V2.1 with `fallback=1` (DM1 reports `resolved=2,
+admitted=0` through its game-specific real-art gate). Thus V2.1 currently
+upscales original graphics, while V2.2 has no visible effect without an
+admitted game-specific finished-real art pack. These headless receipts prove
+mode selection and target dimensions, not native display or pixel-level
+visual distinction. The DM1 modern-art directory exists, but its manifest
+identifies generated `pbr_hero` and `gpt-image-2` artwork; it is not
+source-derived original game media and is not counted as parity evidence.
+Fixed M12 launch readiness to require the same reviewed real-art admission as
+runtime: DM1 and CSB use their game-specific gates; DM2, Nexus and Theron's
+Quest remain unavailable for V2.2 until their own finished-real packs are
+supported. The all-five-game launcher contract regression passed after the
+change. Existing full-worktree Gitleaks scanning reports 94
+`generic-api-key` findings in already-present files; the staged change scan
+reports no leaks. See `m12_all_games_boot_readiness_contract_fixture`.
+
 2026-11-01 CSB mixed-platform menu retest at `84aa6410a`: the authentic-media
 `csb_v1_fmtowns_m12_auto_mixed_real_media` test passed in 499.74 seconds. With
 original FM Towns, Atari ST game/utility disks, and Amiga media present
