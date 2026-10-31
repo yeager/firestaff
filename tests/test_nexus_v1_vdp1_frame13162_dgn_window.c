@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_MSC_VER)
+#define strtok_r strtok_s
+#endif
+
 #define FRAME_INDEX 13162U
 #define FIRST_COMMAND 8U
 #define LAST_COMMAND 40U
@@ -500,6 +504,7 @@ int main(int argc, char **argv)
     char path[4096];
     const char *root;
     const char *expected_rgb_path;
+    const char *reconstructed_vram_path;
     Blob manifest = {0}, trace = {0}, vram = {0}, execution = {0}, dgn = {0};
     Blob composition_rgb = {0};
     unsigned int mode1_joined = 0U, mode5_joined = 0U;
@@ -515,6 +520,8 @@ int main(int argc, char **argv)
     }
     root = argv[1];
     expected_rgb_path = getenv("FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB");
+    reconstructed_vram_path =
+        getenv("FIRESTAFF_NEXUS_YMIR_VDP1_RECONSTRUCTED_VRAM");
 #define LOAD(var, relative) do { \
         make_capture_path(path, sizeof(path), root, relative); \
         var = read_blob(path); \
@@ -527,7 +534,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "frame-13162 trace fixture missing or hash mismatch\n");
         goto done;
     }
-    LOAD(vram, "vdp1-vram-command-trace-reconstructed-le.bin");
+    if (reconstructed_vram_path && *reconstructed_vram_path) {
+        vram = read_blob(reconstructed_vram_path);
+        if (!vram.data) {
+            fprintf(stderr, "SKIP: external reconstructed VDP1 VRAM is unavailable at %s\n",
+                    reconstructed_vram_path);
+            result = 77;
+            goto done;
+        }
+    } else {
+        LOAD(vram, "vdp1-vram-command-trace-reconstructed-le.bin");
+    }
     LOAD(execution, "vdp1-command-execution-frame13162.json");
     if (expected_rgb_path && *expected_rgb_path) {
         composition_rgb = read_blob(expected_rgb_path);

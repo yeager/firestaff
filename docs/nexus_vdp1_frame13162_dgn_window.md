@@ -104,9 +104,15 @@ The receipt remains capture-only with `renderer_permitted=false`; this is not
 a general title/menu or gameplay compositor.
 
 Run the extended C capture check with the local evidence files and authentic
-retail data:
+retail data. The reconstructed VDP1 VRAM file and expected RGB capture are
+external inputs; the C test verifies both against the committed SHA-256
+manifest and skips if either path is absent. Set the VDP1 VRAM path before
+running `nexus_v1_vdp1_frame13162_dgn_window` as well as the VDP2 compositor
+check:
 
 ```sh
+export FIRESTAFF_NEXUS_YMIR_VDP1_RECONSTRUCTED_VRAM="/path/to/external/vdp1-vram-command-trace-reconstructed-le.bin"
+export FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB="/path/to/external/vdp12-frame13162-command171.rgb"
 export FIRESTAFF_NEXUS_YMIR_FBS="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp1-fbs.bin"
 export FIRESTAFF_NEXUS_YMIR_VDP2_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp2-vram.bin"
 export FIRESTAFF_NEXUS_YMIR_CRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp2-cram.bin"
