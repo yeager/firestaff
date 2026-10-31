@@ -71,9 +71,12 @@ binding render metadata, so inconsistent or truncated summary data fails
 closed. `test_dm2_v1_skproject_core` and
 `test_dm2_v1_wall_ornament_material_gate` pass. The broader M11 startup gate
 now compares the boot profile with the selected version's matched owner
-(outer archive for archive members, parent directory for loose files). One
-failure remains: first source-owned frame consumption, also reproduced with
-the pre-change runtime source. Complete room-wide summary-array construction,
+(outer archive for archive members, parent directory for loose files). The
+source receipt now honors `SUMMARY_IMAGE` direct palette indices for decoded
+8bpp/IMG9 images, accepts absent ornament fields with the source's zero
+defaults, and permits packed position words whose low byte selects the
+rectangle. The authentic DOS startup gate now consumes its first source-owned
+M11 frame. Complete room-wide summary-array construction, Cryocell presentation,
 source-case render captures, and all-platform parity remain open.
 
 2026-10-31 external-disk original-media retest: local

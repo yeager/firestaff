@@ -7030,7 +7030,8 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                     sq->wall_ornate_gfx_index, ornament->image_field,
                     s->active_asset_palette16, &palette_hash) ||
                 palette_hash == 0u ||
-                (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+                (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+                 format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9)) {
                 dm2_v1_asset_free_pixels((uint8_t *)pixels);
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
