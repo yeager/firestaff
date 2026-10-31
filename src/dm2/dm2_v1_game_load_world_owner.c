@@ -4325,8 +4325,8 @@ static int dm2_v1_game_load_candidate_dispatch_door(
     door_record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
                                                   door_link);
     if (!door_record) return -1;
-    attributes_before = (uint16_t)door_record[2] |
-                        ((uint16_t)door_record[3] << 8);
+    attributes_before = dm2_v1_game_load_read_u16(
+        door_record + 2, candidate->dungeon.source_words_big_endian);
     receipt->door_record_attributes_before = attributes_before;
     if (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_DESTROYED) {
         receipt->door_actuator_source_noop_destroyed = 1;
@@ -4337,8 +4337,57 @@ static int dm2_v1_game_load_candidate_dispatch_door(
         receipt->source_noop = 1;
         return 1;
     }
-    direction = action == 0u ? 0 : action == 1u ? 1 :
-        (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_OPEN ? 1 : 0);
+    {
+        const int moving = (attributes_before & 0x0400u) != 0u;
+        const int state = dm2_door_get_state((uint16_t)raw_tile);
+        if (moving) {
+            int source_direction_open;
+            if (action == 0u) source_direction_open = 1;
+            else if (action == 2u)
+                source_direction_open = (attributes_before & 0x0200u) == 0u;
+            else source_direction_open = 0;
+            attributes_after = (uint16_t)((attributes_before & ~(uint16_t)0x0200u) |
+                (source_direction_open ? 0x0200u : 0u));
+            if (candidate->dungeon.source_words_big_endian) {
+                door_record[2] = (uint8_t)(attributes_after >> 8);
+                door_record[3] = (uint8_t)attributes_after;
+            } else {
+                door_record[2] = (uint8_t)attributes_after;
+                door_record[3] = (uint8_t)(attributes_after >> 8);
+            }
+            receipt->door_actuator_record = door_link;
+            receipt->door_actuator_direction = (uint8_t)(source_direction_open ? 0 : 1);
+            receipt->door_record_attributes_after = attributes_after;
+            receipt->door_record_state_mutated = attributes_after != attributes_before;
+            receipt->valid = 1;
+            receipt->consumed = 1;
+            return 1;
+        } else if (state == DM2_DOOR_STATE_OPEN) {
+            if (action == 0u) {
+                receipt->door_actuator_record = door_link;
+                receipt->door_actuator_direction = 0u;
+                receipt->door_record_attributes_after = attributes_before;
+                receipt->valid = 1;
+                receipt->consumed = 1;
+                receipt->source_noop = 1;
+                return 1;
+            }
+            direction = 1;
+        } else if (state == DM2_DOOR_STATE_CLOSED) {
+            if (action == 1u) {
+                receipt->door_actuator_record = door_link;
+                receipt->door_actuator_direction = 1u;
+                receipt->door_record_attributes_after = attributes_before;
+                receipt->valid = 1;
+                receipt->consumed = 1;
+                receipt->source_noop = 1;
+                return 1;
+            }
+            direction = 0;
+        } else {
+            direction = action == 0u ? 0 : 1;
+        }
+    }
     dm2_v1_timer_entry_init(&message);
     dm2_v1_timer_set_mticks(&message, (int16_t)map,
                              candidate->timer_queue.gametick);
@@ -4352,11 +4401,18 @@ static int dm2_v1_game_load_candidate_dispatch_door(
     /* DME.h::Door runtime bits and skevent.cpp::ACTUATE_DOOR: preserve the
      * static low nine bits, publish the requested animation direction, and
      * mark the private next-step timer as live. */
-    attributes_after = (uint16_t)((attributes_before & ~(uint16_t)0x1e00u) |
-                                   ((uint16_t)direction << 9) |
-                                   0x1400u);
-    door_record[2] = (uint8_t)attributes_after;
-    door_record[3] = (uint8_t)(attributes_after >> 8);
+    attributes_after = (uint16_t)(attributes_before &
+                                   (uint16_t)~(0x0200u | 0x0400u));
+    attributes_after |= 0x0400u;
+    if (direction == 0) attributes_after |= 0x0200u;
+    else attributes_after &= (uint16_t)~0x1000u;
+    if (candidate->dungeon.source_words_big_endian) {
+        door_record[2] = (uint8_t)(attributes_after >> 8);
+        door_record[3] = (uint8_t)attributes_after;
+    } else {
+        door_record[2] = (uint8_t)attributes_after;
+        door_record[3] = (uint8_t)(attributes_after >> 8);
+    }
     receipt->door_actuator_timer_queued = 1;
     receipt->door_actuator_record = door_link;
     receipt->door_actuator_direction = (uint8_t)direction;
@@ -5420,7 +5476,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
     if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
         x >= candidate->dungeon.level_widths[map] ||
         y >= candidate->dungeon.level_heights[map] ||
-        receipt.direction > 1u || link == DM2_V1_RECORD_HANDLE_NULL ||
+        link == DM2_V1_RECORD_HANDLE_NULL ||
         link == DM2_V1_RECORD_HANDLE_END ||
         dm2_v1_record_handle_pool(link) != 0 ||
         !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
@@ -5438,7 +5494,10 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
     }
     memcpy(door_record_backup, door_record, sizeof(door_record_backup));
     receipt.door_record_attributes_before =
-        (uint16_t)door_record[2] | ((uint16_t)door_record[3] << 8);
+        dm2_v1_game_load_read_u16(door_record + 2,
+                                  candidate->dungeon.source_words_big_endian);
+    receipt.direction = (receipt.door_record_attributes_before & 0x0200u)
+        ? 0u : 1u;
     for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
         const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
         if (pool->record_count < 0 || pool->extension_count < 0 ||
@@ -5478,6 +5537,19 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
     if (old_state == DM2_DOOR_STATE_DESTROYED) {
         receipt.state_after = (uint8_t)old_state;
         receipt.source_noop_destroyed = 1;
+    } else if ((receipt.door_record_attributes_before & 0x0400u) == 0u) {
+        receipt.state_after = (uint8_t)old_state;
+        receipt.source_noop = 1;
+        receipt.valid = 1;
+        receipt.consumed = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)timer_entry.l_00 ^ ((uint32_t)old_state << 8) ^
+            (uint32_t)(uint16_t)link);
+        free(index_backup);
+        free(timer_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
     } else {
         new_state = dm2_door_apply_toggle_step(old_state, receipt.direction);
         if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
@@ -5498,13 +5570,16 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
         receipt.door_state_mutated = new_state != old_state;
         {
             uint16_t attributes = receipt.door_record_attributes_before;
-            uint16_t next_attributes = (uint16_t)(
-                attributes & ~(uint16_t)0x1e00u);
-            next_attributes = (uint16_t)(next_attributes |
-                ((uint16_t)receipt.direction << 9));
-            if (queued) next_attributes = (uint16_t)(next_attributes | 0x1400u);
-            door_record[2] = (uint8_t)next_attributes;
-            door_record[3] = (uint8_t)(next_attributes >> 8);
+            uint16_t next_attributes = (uint16_t)(attributes &
+                (uint16_t)~0x0400u);
+            if (queued) next_attributes |= 0x1400u;
+            if (candidate->dungeon.source_words_big_endian) {
+                door_record[2] = (uint8_t)(next_attributes >> 8);
+                door_record[3] = (uint8_t)next_attributes;
+            } else {
+                door_record[2] = (uint8_t)next_attributes;
+                door_record[3] = (uint8_t)(next_attributes >> 8);
+            }
             receipt.door_record_attributes_after = next_attributes;
             receipt.door_record_state_mutated =
                 next_attributes != receipt.door_record_attributes_before;
@@ -13125,7 +13200,7 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     const int x = timer ? (int)(uint8_t)timer->xA : -1;
     const int y = timer ? (int)(uint8_t)timer->yA : -1;
     const int16_t link = timer ? timer->wvalueB : DM2_V1_RECORD_HANDLE_NULL;
-    const int direction = timer ? (int)timer->actor : -1;
+    int direction = timer ? (int)timer->actor : -1;
     const uint8_t *door;
     int raw_tile;
     int16_t chain_link;
@@ -13135,6 +13210,7 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     int old_state;
     int new_state;
     int16_t queued_slot = -1;
+    uint16_t door_attributes;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -13207,6 +13283,18 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
         if (out_receipt) *out_receipt = receipt;
         return receipt.valid;
     }
+    door_attributes = dm2_v1_game_load_read_u16(
+        door + 2, owner->dungeon.source_words_big_endian);
+    if ((door_attributes & 0x0400u) == 0u) {
+        receipt.state_after = (uint8_t)old_state;
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            0x44535450u, (uint16_t)link);
+        receipt.valid = receipt.private_animation_hash != 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.valid;
+    }
+    direction = (door_attributes & 0x0200u) != 0u ? 0 : 1;
+    receipt.direction = (uint8_t)direction;
     new_state = dm2_door_apply_toggle_step(old_state, direction);
     if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
         return 0;
@@ -13230,6 +13318,20 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
             dm2_door_set_state((uint16_t)raw_tile, new_state)) != 0) {
         if (queued_slot >= 0) dm2_v1_timer_delete(&owner->timer_queue, queued_slot);
         return 0;
+    }
+    {
+        uint8_t *mutable_door = dm2_v1_record_pool_address_mut(
+            &owner->record_pools, link);
+        if (!mutable_door) {
+            if (queued_slot >= 0) dm2_v1_timer_delete(&owner->timer_queue, queued_slot);
+            return 0;
+        }
+        door_attributes = (uint16_t)(door_attributes & (uint16_t)~0x0400u);
+        if ((direction == 0 && new_state != DM2_DOOR_STATE_OPEN) ||
+            (direction == 1 && new_state != DM2_DOOR_STATE_CLOSED))
+            door_attributes |= 0x1400u;
+        dm2_v1_game_load_owner_write_record_u16(owner, mutable_door + 2,
+                                                 door_attributes);
     }
     receipt.door_state_mutated = new_state != old_state;
     receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
