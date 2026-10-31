@@ -1095,6 +1095,11 @@ static void test_mode7_flags3_prepass_evidence(void)
     evidence.creature_query_known = 1u;
     evidence.ceiling_gdat_known = 1u;
     evidence.ceiling_gdat_light_word = 100u;
+    /* sklight.cpp flags 3 also admits a summarized class-2 no-record tile. */
+    assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
+    assert(ambient == 94 && darkness == 0);
+    ambient = 0;
+    darkness = 0;
     room.raw_tile = 0x30u;
     assert(dm2_v1_mode7_on_node(&node, &ambient, &darkness) == 1);
     assert(ambient == 94 && darkness == 0); /* 100 - table1d672b[1] (6). */

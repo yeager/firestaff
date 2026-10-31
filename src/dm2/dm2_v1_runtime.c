@@ -2222,7 +2222,7 @@ static int dm2_runtime_mode7_step(
 #undef DM2_LIGHT_EDGE_RETURN
 }
 
-static int dm2_runtime_mode7_flags3_class5_evidence(
+static int dm2_runtime_mode7_flags3_evidence(
     DM2_V1_RuntimeState *rt, int map, int x, int y,
     const DM2_V1_CLightStoneRoomReceipt *room,
     DM2_V1_Mode7Flags3Evidence *evidence)
@@ -2237,13 +2237,19 @@ static int dm2_runtime_mode7_flags3_class5_evidence(
     uint16_t light_word = 0u;
     int32_t record_darkness = 0;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
-        !rt->record_pools_valid || (room->raw_tile >> 5) != 5u)
+        !rt->record_pools_valid ||
+        !((room->raw_tile >> 5) == 5u ||
+          ((room->raw_tile >> 5) == 2u &&
+           room->first_record_link == DM2_THING_NULL_MARKER)))
         return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!dungeon || !loader) return 0;
     memset(evidence, 0, sizeof(*evidence));
     link = (int16_t)room->first_record_link;
+    if ((room->raw_tile >> 5) == 2u &&
+        room->first_record_link == DM2_THING_NULL_MARKER)
+        link = (int16_t)DM2_THING_END_MARKER;
     while (link != (int16_t)0xfffe) {
         unsigned type;
         int16_t next;
@@ -2374,7 +2380,16 @@ static int dm2_runtime_mode7_on_node(
                 (uint32_t)rt->tick_count, &room) &&
             !dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
                 dungeon, loader, map, x, y, &room)) goto unknown;
-        if (!dm2_runtime_mode7_flags3_class5_evidence(
+        if (!dm2_runtime_mode7_flags3_evidence(
+                rt, map, x, y, &room, &prepass)) goto unknown;
+        node.stone_room = &room;
+        node.prepass = &prepass;
+    } else if (source_flags == 3u && (raw >> 5) == 2 && first == -1) {
+        branch = 33u;
+        if (!dm2_v1_dungeon_c_light_stone_room_receipt(
+                dungeon, loader, map, x, y,
+                (uint32_t)rt->tick_count, &room) ||
+            !dm2_runtime_mode7_flags3_evidence(
                 rt, map, x, y, &room, &prepass)) goto unknown;
         node.stone_room = &room;
         node.prepass = &prepass;
