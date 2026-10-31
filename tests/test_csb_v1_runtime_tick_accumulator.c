@@ -1338,7 +1338,10 @@ static void make_real_format_c017_remove_sensor_dungeon(
     raw[real_format_square_offset(0, 0)] = 0x10u;
     raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
     test_put_le16(raw, 60, 0);
-    test_put_le16(raw, 66, (uint16_t)((3u << 10) | 1u));
+    /* The C001 peer is in cell 1; M011_CELL is bits 14-15, not the low
+     * object-index bits. The clicked C017 remains in cell 0. */
+    test_put_le16(raw, 66,
+                  (uint16_t)((3u << 10) | 1u | (1u << 14)));
     test_put_le16(raw, 76, (uint16_t)((3u << 10) | 4u));
     test_put_le16(raw, 78,
                   (uint16_t)((32u << 7) |
@@ -5342,6 +5345,26 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     CHECK(profile.party_state.LeaderHandThing == 0xffffu &&
               profile.csbwin_object_in_hand == 0xffffu,
           "C013 runtime-hand deposit clears the live CSB party hand");
+
+    /* F0275 selects C013 pickup/deposit using G0415's real empty-hand
+     * state. F0032 may return -1 for an unsupported item subtype, but that
+     * does not make a populated hand empty. */
+    make_real_format_c013_storage_rotation_dungeon(
+        &dungeon, raw, sizeof(raw));
+    dungeon.thing_type_counts[5] = 2;
+    test_put_le16(raw, 112, 0xfffeu);
+    test_put_le16(raw, 114, 100u); /* outside the bounded F0032 weapon range */
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = (uint16_t)((5u << 10) | 1u);
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0 &&
+              profile.party_state.LeaderHandThing ==
+                  (uint16_t)((5u << 10) | 1u) &&
+              count_queued_event_type(&profile, DM1_EVENT_FAKEWALL) == 0,
+          "C013 does not treat an unclassified held object as an empty hand");
 
     /* MOVESENS.C F0275 C004 consumes a matching hand object, but unlike
      * C011/C017 does not require that its C03 is the final same-cell sensor. */

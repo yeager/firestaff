@@ -12407,6 +12407,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     int guard;
     int triggered = 0;
     int rotation_pending = 0;
+    int leader_hand_empty = object_type_override < 0;
     uint16_t hand_thing = 0xFFFFu;
     int object_type = object_type_override;
 
@@ -12436,6 +12437,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     }
     if (leader_hand_thing) {
         hand_thing = *leader_hand_thing;
+        leader_hand_empty = hand_thing == 0xFFFEu || hand_thing == 0xFFFFu;
         if (hand_thing != 0xFFFEu && hand_thing != 0xFFFFu) {
             object_type = csb_v1_runtime_object_type_from_thing(
                 dungeon,
@@ -12515,15 +12517,15 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         case 2: /* C002_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT */
             /* ReDMCSB MOVESENS.C:1405 compares empty-hand with RevertEffect;
              * C002 does not use Sensor.Data or wall-cell occupancy. */
-            do_not_trigger = (object_type < 0) !=
+            do_not_trigger = leader_hand_empty !=
                 (int)((flags_word >> 5) & 0x01u);
             trigger = 1;
             break;
         case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
             /* MOVESENS.C:1412-1414 compares hand type with Sensor.Data and
-             * applies RevertEffect; F0032 returns -1 for an empty hand, so a
-             * reverted sensor triggers when that sentinel does not match
-             * Sensor.Data. Objects on the wall are ignored. */
+             * applies RevertEffect; F0032's no-type result is distinct from
+             * the source empty-hand flag used by C002/C013. Objects on the
+             * wall are ignored. */
             do_not_trigger = ((sensor_data == object_type) ==
                               (int)((flags_word >> 5) & 0x01u));
             trigger = 1;
@@ -12540,7 +12542,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             }
             do_not_trigger = ((sensor_data == object_type) ==
                               (int)((flags_word >> 5) & 0x01u));
-            if (object_type >= 0) storage_action = 3;
+            if (!leader_hand_empty && leader_hand_thing) storage_action = 3;
             if (!do_not_trigger) {
                 if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
                     rotate_after = 1;
@@ -12563,7 +12565,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             do_not_trigger = ((sensor_data == object_type) ==
                               (int)((flags_word >> 5) & 0x01u));
             trigger = 1;
-            if (object_type >= 0) storage_action = 3;
+            if (!leader_hand_empty && leader_hand_thing) storage_action = 3;
             break;
         case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
             if (!leader_hand_thing ||
@@ -12574,7 +12576,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = (object_type < 0) &&
+            trigger = leader_hand_empty &&
                 csb_v1_runtime_save_clock_is_current(profile);
             if (trigger) rotate_after = 1;
             storage_action = 4;
@@ -12584,7 +12586,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            if (object_type < 0) {
+            if (leader_hand_empty) {
                 if (!csb_v1_runtime_find_wall_cell_object_of_type(
                         dungeon,
                         first_thing,
@@ -12669,6 +12671,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 continue;
             }
             *leader_hand_thing = storage_thing;
+            leader_hand_empty = 0;
             object_type = sensor_data;
         } else if (storage_action == 2) {
             uint16_t stored_thing = csb_v1_runtime_thing_with_cell(
@@ -12686,6 +12689,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 continue;
             }
             *leader_hand_thing = 0xFFFFu;
+            leader_hand_empty = 1;
             object_type = -1;
         } else if (storage_action == 3) {
             uint8_t *hand_record = csb_v1_runtime_mutable_thing_record(
@@ -12700,6 +12704,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             }
             csb_v1_runtime_write_u16(hand_record, 0xFFFFu);
             *leader_hand_thing = 0xFFFFu;
+            leader_hand_empty = 1;
             object_type = -1;
         } else if (storage_action == 4) {
             generated_thing = csb_v1_runtime_allocate_new_object_launcher_thing(
@@ -12716,6 +12721,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 continue;
             }
             *leader_hand_thing = generated_thing;
+            leader_hand_empty = 0;
             object_type = csb_v1_runtime_object_type_from_thing(
                 dungeon,
                 generated_thing);
@@ -12752,6 +12758,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 continue;
             }
             *leader_hand_thing = square_thing;
+            leader_hand_empty = 0;
             object_type = csb_v1_runtime_object_type_from_thing(
                 dungeon,
                 square_thing);
@@ -12783,6 +12790,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             target_cell);
         if (leader_hand_thing) {
             hand_thing = *leader_hand_thing;
+            leader_hand_empty = hand_thing == 0xFFFEu || hand_thing == 0xFFFFu;
             object_type = (hand_thing == 0xFFFEu || hand_thing == 0xFFFFu)
                 ? -1
                 : csb_v1_runtime_object_type_from_thing(dungeon, hand_thing);
