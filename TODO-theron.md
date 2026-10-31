@@ -169,6 +169,14 @@ Neither the disassembly nor the independent `$4000` window proves a game
 launch or parity. Evidence and limits are in the [System Card command/status
 source-lock note](docs/source-lock/theron-disassembly/theron-system-card3-ec05-e209-20261031.asm).
 
+The v22 bootstrap rows also show the `$E14C` branch sequence: with `$2259=$00`,
+`$E166` falls through to the `$226A/$226B` counter comparison; later `$EA50`
+writes `$04` to `$2259`, and the next `$E166` takes `$E176`. The replay had no
+scheduled SELECT event, so `$2259=$04` alone must not be labeled as SELECT
+evidence. The capture did not reach `$E174`, `$E11D`, `$E209`, or `$E130` before
+the row cap. The branch and value provenance are documented in the [JP System
+Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+
 The bounded `$1800-$1803` I/O and `$224C-$2255`, `$2273-$2280`, `$22A4`
 memory observer has now been used in the r5 capture. Its offline verifier
 requires the authenticated System Card image and checks each event's access

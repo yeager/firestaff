@@ -171,6 +171,15 @@ private on TRV2; hashes, listings, and limits are in
 This closes the bounded BIOS-disassembly task only; native Theron gameplay
 support remains open in `TODO-theron.md`.
 
+Re-reading the v22 callback-state and bootstrap traces showed the live
+`$E14C` decisions: `$2259=$00` let `$E166` continue through the
+`$226A/$226B` comparison, then `$EA50` wrote `$04` to `$2259`; the following
+`$E166` branched to `$E176`. This cold replay scheduled RUN only, with no
+SELECT event. The observed byte therefore cannot be treated as a
+SELECT-specific marker. No `$E174/$E11D` clear-carry launch was captured. The
+source-lock note records event sequences and exact trace hashes; this refines
+the BIOS branch evidence but does not establish gameplay or native parity.
+
 ## 2026-10-30 — source-correlate `$4000` instruction-start snapshots
 
 The v16 authentic cold capture associates the first complete instruction-start
