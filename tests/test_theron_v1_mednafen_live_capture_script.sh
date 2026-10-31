@@ -1166,7 +1166,8 @@ if [[ ! -x "$runtime_verifier" ]] ||
     exit 1
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
-   ! grep -Fq 'CXXFLAGS="${CXXFLAGS:--O2}" ./configure' "$build_script" ||
+   ! grep -Fq 'mednafen_cxxflags=${CXXFLAGS:--O2}' "$build_script" ||
+   ! grep -Fq 'CXXFLAGS="$mednafen_cxxflags" ./configure' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" init --quiet' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" add --all --force' "$build_script" ||
    ! grep -Fq 'apply --recount --whitespace=nowarn' "$build_script" ||

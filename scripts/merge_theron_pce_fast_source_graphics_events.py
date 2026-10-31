@@ -34,6 +34,11 @@ TRACE_HEADERS = {
             "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
             "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read",
         ),
+        (
+            "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5",
+            "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
+            "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-controller-read-pc-raw-match",
+        ),
     ),
     "vce_write": (
         (
@@ -224,7 +229,10 @@ def main() -> int:
         )
         filtered_prefix_streams = []
         with inputs[2][1].open("r", encoding="ascii") as vram_trace:
-            if vram_trace.readline().rstrip("\n") == "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4":
+            if vram_trace.readline().rstrip("\n") in {
+                "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4",
+                "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5",
+            }:
                 filtered_prefix_streams.append("vram_commit")
         with args.output.open("x", encoding="ascii", newline="\n") as output:
             created_output = True

@@ -466,7 +466,11 @@ fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator
 # thread stack and faults in the stack probe on Apple Silicon. Keep an
 # explicit caller-provided CXXFLAGS, but make ordinary capture builds usable.
-CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
+mednafen_cxxflags=${CXXFLAGS:--O2}
+if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
+    mednafen_cxxflags="$mednafen_cxxflags -DFIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT"
+fi
+CXXFLAGS="$mednafen_cxxflags" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp \
     "${configure_pce_fast[@]}" \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \

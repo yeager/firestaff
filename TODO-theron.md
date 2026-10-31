@@ -1,20 +1,21 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-31 — input-gated PCE Fast VRAM trace is not yet verified
+## 2026-10-31 — input-gated PCE Fast VRAM trace callback corrected; recapture pending
 
-The current working-tree change adds a PCE Fast trace gate keyed to an exact
-guest controller-read PC and raw value, so emitted VRAM commits can be scoped
-to activity after a matching input read. Focused patch-application loops passed
-against the corresponding Mednafen source files. On TRV2, three clean rebuild
-loops compiled `pce_fast/vdc.o` and `pce_fast/input.o` with the trace-support
-macro, and each verified the callback definition/reference match. The complete
-instrumentation patch chain is still unverified: it stops at stale
-RAM-provenance contexts in `src/pce/pcecd.cpp`.
-No linked instrumented Mednafen binary, runtime capture, or new gameplay join
-has been produced. Keep the tooling provisional; next rebase that patch on the
-actual preceding instrumentation state, apply and build the full chain, then
-collect a source-locked authentic capture before documenting any trace result.
-This does not change native Theron support or parity status.
+The complete reference-only Mednafen instrumentation patch chain applied to
+an isolated source copy, and the corrected instrumented PCE Fast binary built
+and installed on TRV2. The authentic Japanese dungeon state records scripted
+UP at guest PC `$44C1` with port `raw=0010`, while the controller device value
+is `device_raw=0000`. The callback now passes `pce_jp_data[index]`, matching
+the guest port value, and the patch test passed three isolated application
+loops. The full build compiles the corrected input object.
+
+The prior state capture emitted no VRAM rows with the old callback. Its wrapper
+then failed the required System Card status-read check because state autoload
+bypasses that cold-boot path. A new capture with the corrected binary is still
+needed; do not infer gate success, input-to-VRAM causality, or rendering from
+the build alone. Native Theron support and parity status are unchanged. See
+the [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
 
 ## 2026-10-31 — next JP movement capture needs a reachable authentic pose
 

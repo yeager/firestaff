@@ -156,13 +156,17 @@ not causal or movement evidence. Continue with an authentic reachable pose
 before drawing world-tile or renderer conclusions; see the
 [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
-The previously completed reference-only Mednafen trace-tooling chain applied
-in three clean patch-only runs, and its instrumented PCE build/install plus
-focused parser/controller checks passed on TRV2. These results cover that
-earlier tooling revision. Three clean TRV2 rebuild loops compile the current
-input-gated VRAM trace's PCE Fast object files and confirm the callback symbol
-reference matches its definition. The complete patch chain and linked
-instrumented binary remain unverified.
+The reference-only Mednafen instrumentation chain, including the input-gated
+PCE Fast VRAM trace hook, applied to an isolated source tree and the
+instrumented PCE Fast binary built and installed on TRV2. An authentic JP save
+state loaded, and its guest input trace records scripted UP at `$44C1` with
+port `raw=0010`, while the controller device value is `device_raw=0000`. This
+exposed and fixed a callback mismatch: the gate now receives the guest port
+value. The corrected full build and three patch-verification loops pass, but
+the gate has not yet been recaptured. The prior capture emitted no VRAM rows;
+the wrapper then stopped at its cold System Card status-read check because
+save-state autoload bypasses that path. An input-to-VRAM join and successful
+end-to-end capture remain unverified.
 A follow-up cold US capture validates all three scripted inputs at System
 Card controller polls and records one `$E009` dispatch. It observes no
 game-owned poll or runtime CD source-read join, so the observation does not

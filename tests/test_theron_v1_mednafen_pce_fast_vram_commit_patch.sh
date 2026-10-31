@@ -6,12 +6,23 @@ build_script="$repo/scripts/build_mednafen_theron_irq2_trace.sh"
 capture_script="$repo/scripts/capture_theron_mednafen_live_trace.sh"
 patch_file="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
 shared_event_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch"
+input_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"
 event_merger="$repo/scripts/merge_theron_pce_fast_source_graphics_events.py"
 cmake_file="$repo/CMakeLists.txt"
 
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4' "$patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5' "$patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVWRTraceGateOpen' "$patch_file" ||
+   ! grep -Fq 'TheronTracePCEFastVWRControllerRead' "$patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_INPUT' "$patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_INPUT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_INPUT="$pce_fast_vram_commit_start_at_input"' "$capture_script" ||
+   ! grep -Fq 'TheronTracePCEFastVWRControllerRead' "$input_trace_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT' "$input_trace_patch" ||
+   ! grep -Fq 'TheronTracePCEFastVWRControllerRead(TheronTraceInstructionPC, pce_jp_data[index]);' "$input_trace_patch" ||
+   grep -Fq 'TheronTracePCEFastVWRControllerRead(TheronTraceInstructionPC, MDFN_de16lsb(data_ptr[index]))' "$input_trace_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT' "$build_script" ||
    ! grep -Fq 'source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window' "$patch_file" ||
    ! grep -Fq 'scope=cpu-port-vwr-commits-only;dma-writes-excluded' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1' "$patch_file" ||

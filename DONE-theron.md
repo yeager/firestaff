@@ -1,15 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — clarify current Mednafen tooling verification scope
+## 2026-10-31 — correct input-gated PCE Fast VRAM trace callback
 
-Updated the README to distinguish the previously verified Mednafen trace
-tooling revision from the newer, still-unverified input-gated VRAM trace work.
-Added the current build and capture blockers to the Theron TODO and capture
-readiness summaries. Three clean TRV2 rebuild loops compiled the changed PCE
-Fast object files and verified the callback symbol pair. The complete patch
-chain, linked tool, runtime capture, and
-input-to-render join remain unverified. Theron support status is unchanged.
-No runtime code or game data changed in this documentation update.
+Updated the PCE Fast input hook to pass the guest-visible controller port
+value (`pce_jp_data[index]`) into the VRAM trace gate, rather than the
+controller device's raw value. The complete reference instrumentation patch
+chain applied in three isolated test loops, and a corrected PCE Fast
+instrumented Mednafen build/install succeeded on TRV2. The regression now
+checks this exact callback argument. The prior authentic-state run exposed the
+mismatch but used the old binary; a corrected runtime recapture and
+input-to-VRAM join remain open. The capture wrapper's cold System Card
+closeout check is not satisfied by a save-state route. Firestaff support and
+parity status are unchanged; the trace tooling is reference-only.
 
 ## 2026-10-31 — document the authentic JP four-second title-action capture
 

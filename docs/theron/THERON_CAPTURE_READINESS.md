@@ -1,20 +1,23 @@
 # Theron Capture Readiness
 
-## 2026-10-31 — input-gated PCE Fast VRAM trace remains provisional
+## 2026-10-31 — input-gated PCE Fast VRAM trace callback corrected; recapture pending
 
-The working-tree change opens the PCE Fast VRAM-commit trace only after an
-exact guest controller-read PC/raw-value match. Focused patch-application
-loops passed for the affected Mednafen source files. Three clean TRV2 rebuild
-loops compiled the changed `pce_fast/vdc.o` and `pce_fast/input.o` with the
-trace-support macro and confirmed their callback definition/reference match.
-The complete instrumentation
-patch chain remains blocked by stale RAM-provenance contexts in
-`src/pce/pcecd.cpp`; there is no linked instrumented binary, runtime capture,
-or new input-to-render join. Treat this as pending capture infrastructure, not
-Theron gameplay evidence; native support and parity status are unchanged. The
-next step is to rebase that patch on the preceding instrumentation state, build
-the complete chain, and collect an authentic source-locked capture. See the
-[Theron TODO entry](../../TODO-theron.md).
+The complete reference-only Mednafen trace patch chain applied to an isolated
+source copy, and the corrected instrumented PCE Fast binary built and
+installed on TRV2. An authentic Japanese dungeon save state loaded. Its input
+sidecar records scripted UP on frame 61 at guest PC `$44C1`, with guest port
+`raw=0010`; the controller device value is `device_raw=0000`. The callback
+now passes `pce_jp_data[index]` to the gate, matching the guest-read value.
+Three isolated patch-application regression loops passed, and the full build
+compiled and linked the corrected hook.
+
+The prior state capture emitted no VRAM rows with the old callback. Its
+wrapper then exited during closeout because save-state autoload bypasses the
+cold System Card status-read path that the normal capture requires. A new
+capture with the corrected binary is still pending. The build verifies the
+instrumentation compiles; it does not verify gate behavior, an input-to-VRAM
+join, or gameplay/render semantics. Native support and parity status remain
+unchanged. See the [Theron TODO entry](../../TODO-theron.md).
 
 ## 2026-10-31 — JP title-menu four-second Button I hold visibly advances
 
