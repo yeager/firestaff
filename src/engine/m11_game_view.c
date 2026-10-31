@@ -20614,6 +20614,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
  * admission/removal after a successful floor-chain mutation. This adapter is
  * currently bounded to the DM1 PC34 path. */
 static void m11_process_dm1_object_floor_change(M11_GameViewState* state,
+                                                int mapIndex,
+                                                int mapX,
+                                                int mapY,
                                                 unsigned short thing,
                                                 int isAddition) {
     struct SensorEffectList_Compat effects;
@@ -20621,8 +20624,7 @@ static void m11_process_dm1_object_floor_change(M11_GameViewState* state,
         !state->world.dungeon || !state->world.things) return;
     if (F0276_SENSOR_ProcessObjectFloorChange_Compat(
             state->world.dungeon, state->world.things,
-            state->world.party.mapIndex, state->world.party.mapX,
-            state->world.party.mapY, thing, isAddition, &effects)) {
+            mapIndex, mapX, mapY, thing, isAddition, &effects)) {
         m11_apply_sensor_effects(state, &effects);
     }
 }
@@ -22834,7 +22836,9 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
                        M11_DM1_PRESENTED("HAND ROUTE FAILED"));
         return 0;
     }
-    m11_process_dm1_object_floor_change(state, item, 0);
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, state->world.party.mapX,
+        state->world.party.mapY, item, 0);
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: HELD %s",
                   (unsigned int)state->world.gameTick, itemName);
@@ -22941,7 +22945,9 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         }
         m11_debug_trace_floor_drop(state, "mouse-hand", item,
                                    beforeHead, 1);
-        m11_process_dm1_object_floor_change(state, item, 1);
+        m11_process_dm1_object_floor_change(state,
+            state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY, item, 1);
         m11_get_source_item_name(state, state->world.things, item,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "DROP", "ITEM DROPPED");
@@ -23003,7 +23009,9 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
                                    beforeHead, 1);
     }
 
-    m11_process_dm1_object_floor_change(state, item, 1);
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, state->world.party.mapX,
+        state->world.party.mapY, item, 1);
 
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -46222,6 +46230,8 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
                                     targetMapX, targetMapY, item);
         return 0;
     }
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, targetMapX, targetMapY, item, 0);
 
     {
         char itemName[48];
@@ -46272,6 +46282,9 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
                                         target->thing);
             return 0;
         }
+        m11_process_dm1_object_floor_change(state,
+            target->mapIndex, target->mapX, target->mapY,
+            target->thing, 0);
         m11_get_source_item_name(state, state->world.things, target->thing,
                                  itemName, sizeof(itemName));
         m11_set_status(state, "PICKUP", itemName);
@@ -46326,6 +46339,9 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
         DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
         return 0;
     }
+    m11_process_dm1_object_floor_change(state,
+        state->world.party.mapIndex, targetMapX, targetMapY,
+        placedItem, 1);
 
     {
         char itemName[48];
