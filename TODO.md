@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 current-main five-game launch retest at `bca19ec55`: the
+authentic-media `m12_main_menu_game_selection_real_media` test passed in
+519.94 seconds and `firestaff_cli_startup_diagnostics_real_media` passed in
+171.33 seconds. The menu route exercised DM1, CSB, DM2, Nexus and Theron
+through their authenticated menu handoffs; the CLI route checked game/media
+selection and startup diagnostics across the installed originals. Nexus is
+still asserted to stop at `title-vdp-owner-compositor-capture-required`, so
+this does not prove a playable Nexus start. These SDL dummy checks verify the
+named launch paths only, not native display/input or complete gameplay parity.
+
 2026-10-31 Theron native real-media routes: the macOS Debug build passed the
 authentic US `theron_v1_m11_real_bram_continue` and JP
 `theron_v1_m11_jp_fresh_start` CTest cases. JP fresh start reaches source-
