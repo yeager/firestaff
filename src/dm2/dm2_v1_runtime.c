@@ -3976,6 +3976,15 @@ cloud_cast_rollback:
     return 0;
 }
 
+static uint16_t dm2_runtime_record_rd16(const DM2_V1_RuntimeState *rt,
+                                        const uint8_t *p)
+{
+    if (rt && rt->record_pools.source_words_big_endian) {
+        return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+    }
+    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
 static void dm2_runtime_record_wr16(const DM2_V1_RuntimeState *rt,
                                     uint8_t *p, uint16_t value)
 {
@@ -8804,9 +8813,10 @@ static int dm2_runtime_update_weather_timer(void *user,
  * skproject/SKULLWIN/c_tim_proc.cpp:4041 dispatches timer type 0x01 to
  * DM2_STEP_DOOR.  The bounded Firestaff slice reads the door square from the
  * boot dungeon, applies one ReDMCSB TIMELINE.C state transition, writes the
- * new square back, and re-queues subsequent steps until OPEN/CLOSED.  Party
- * damage on close, door-record direction decoding, and sound dispatch remain
- * unbound (receipted fail-closed).
+ * new square back, and re-queues subsequent steps until OPEN/CLOSED. The live
+ * path reads source DoorBit09/10 with source byte order, so an actuator can
+ * reverse an active door. Party/creature damage and sound dispatch remain
+ * unbound (occupied-door paths fail closed).
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:127+   (DM2_STEP_DOOR)
@@ -8883,15 +8893,15 @@ static int dm2_runtime_door_step_timer(void *user,
         return 1;
     }
 
-    /* c_tim_proc::DM2_STEP_DOOR receives the original direction in actor;
-     * valueB is the direct DB0 door handle.  Keep both source fields
-     * separate: treating the handle's low bit as direction was a host-side
-     * shortcut. */
-    direction = (int)timer->actor;
-    if (direction > 1) {
-        if (receipt != NULL) receipt->handler_rejected_count++;
+    door_attributes = dm2_runtime_record_rd16(rt, door_record + 2);
+    /* SKWINSPX skevent.cpp::STEP_DOOR reads DoorBit10 as the moving gate
+     * and DoorBit09 as its current direction. ACTUATE_DOOR can reverse the
+     * direction while a step timer is already queued, so actor is stale. */
+    if ((door_attributes & 0x0400u) == 0u) {
         return 1;
     }
+    direction = (door_attributes & 0x0200u) != 0u
+        ? DM2_DOOR_TOGGLE_DIR_OPEN : DM2_DOOR_TOGGLE_DIR_CLOSE;
 
     new_state = dm2_door_apply_toggle_step(current_state, direction);
 
@@ -8909,14 +8919,12 @@ static int dm2_runtime_door_step_timer(void *user,
                       new_state == DM2_DOOR_STATE_OPEN) ||
                      (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
                       new_state == DM2_DOOR_STATE_CLOSED);
-    door_attributes = (uint16_t)door_record[2] |
-        ((uint16_t)door_record[3] << 8);
-    door_attributes = (uint16_t)(door_attributes & ~(uint16_t)0x1e00u);
-    door_attributes = (uint16_t)(door_attributes |
-        ((uint16_t)direction << 9));
-    if (!reached_target) door_attributes = (uint16_t)(door_attributes | 0x1400u);
-    door_record[2] = (uint8_t)door_attributes;
-    door_record[3] = (uint8_t)(door_attributes >> 8);
+    if (reached_target) {
+        door_attributes &= (uint16_t)~0x0400u;
+    } else {
+        door_attributes |= 0x1400u;
+    }
+    dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
     rt->door_step_mutations++;
 
     /* Re-queue the next step timer if we have not reached the target state.
@@ -9169,33 +9177,76 @@ static int dm2_runtime_actuate_door_mecha_timer(
         rt->actuator_tile_door_rejected++;
         return 1;
     }
-    attributes_before = (uint16_t)door_record[2] |
-                        ((uint16_t)door_record[3] << 8);
+    attributes_before = dm2_runtime_record_rd16(rt, door_record + 2);
     if (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_DESTROYED) {
         rt->actuator_tile_door++;
         return 1; /* source-consumed no-op */
     }
-    direction = action == 0 ? 0 : action == 1 ? 1 :
-        (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_OPEN ? 1 : 0);
-    memset(&next, 0, sizeof(next));
-    next.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
-                         (dm2_v1_source_timer_tick(timer) &
-                          DM2_V1_SOURCE_TIMER_TICK_MASK);
-    next.type = 0x01u;
-    next.actor = (uint8_t)direction;
-    next.value_a = (int16_t)((uint8_t)x | ((uint16_t)(uint8_t)y << 8));
-    next.value_b = door_link;
-    queue_before = rt->timer_queue;
-    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &next, source_index) !=
-        DM2_V1_SOURCE_TIMER_OK) {
-        rt->timer_queue = queue_before;
-        rt->actuator_tile_door_rejected++;
-        return 1;
+    {
+        const int current_state = dm2_door_get_state((uint16_t)raw_tile);
+        const int already_moving = (attributes_before & 0x0400u) != 0u;
+        int source_direction_open;
+        int start_timer = 0;
+
+        /* SKWINSPX skevent.cpp::ACTUATE_DOOR stores DoorBit09 as
+         * 1=open/0=close. If the door is already moving, an actuator changes
+         * that direction in place and leaves the existing step timer alone. */
+        if (already_moving) {
+            if (action == 0) {
+                source_direction_open = 1;
+            } else if (action == 2) {
+                source_direction_open =
+                    (attributes_before & 0x0200u) == 0u;
+            } else {
+                source_direction_open = 0;
+            }
+            attributes_after = (uint16_t)(attributes_before & ~0x0200u);
+            if (source_direction_open) attributes_after |= 0x0200u;
+        } else {
+            if (current_state == DM2_DOOR_STATE_OPEN) {
+                start_timer = action == 1 || action == 2;
+                source_direction_open = 0;
+            } else if (current_state == DM2_DOOR_STATE_CLOSED) {
+                start_timer = action == 0 || action == 2;
+                source_direction_open = 1;
+            } else {
+                start_timer = 1;
+                source_direction_open = action == 0;
+            }
+
+            if (!start_timer) {
+                rt->actuator_tile_door++;
+                return 1; /* source-consumed no-op */
+            }
+
+            /* The timer actor uses Firestaff's OPEN=0/CLOSE=1 enum; convert
+             * from the source DoorBit09 encoding at the boundary. */
+            direction = source_direction_open ? DM2_DOOR_TOGGLE_DIR_OPEN
+                                              : DM2_DOOR_TOGGLE_DIR_CLOSE;
+            next = *timer;
+            next.type = 0x01u;
+            next.actor = (uint8_t)direction;
+            next.value_b = door_link;
+            queue_before = rt->timer_queue;
+            if (dm2_v1_source_timer_enqueue(
+                    &rt->timer_queue, &next, source_index) !=
+                DM2_V1_SOURCE_TIMER_OK) {
+                rt->timer_queue = queue_before;
+                rt->actuator_tile_door_rejected++;
+                return 1;
+            }
+
+            attributes_after = (uint16_t)(attributes_before &
+                (uint16_t)~(0x0200u | 0x0400u));
+            attributes_after |= 0x0400u;
+            if (source_direction_open) {
+                attributes_after |= 0x0200u;
+            } else {
+                attributes_after &= (uint16_t)~0x1000u;
+            }
+        }
     }
-    attributes_after = (uint16_t)((attributes_before & ~(uint16_t)0x1e00u) |
-                                   ((uint16_t)direction << 9) | 0x1400u);
-    door_record[2] = (uint8_t)attributes_after;
-    door_record[3] = (uint8_t)(attributes_after >> 8);
+    dm2_runtime_record_wr16(rt, door_record + 2, attributes_after);
     rt->actuator_tile_door++;
     if (attributes_after != attributes_before) {
         rt->actuator_tile_door_mutations++;
