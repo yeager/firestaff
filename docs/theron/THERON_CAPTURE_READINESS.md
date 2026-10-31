@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-## 2026-10-31 — JP PCE Fast guest input receipt
+## 2026-10-31 — JP PCE Fast poll-to-RAM event ordering
 
 Three isolated emulator runs replayed `up@61:120` from an authentic JP
 Akutuba F5 dungeon state. The PCE Fast trace binds the scripted mask and
@@ -8,11 +8,12 @@ controller slot to the same-frame active-low guest read at `$44C1`
 (`raw=0010`, `value=3e`). A further three UP runs from the same exact state
 and three neutral controls compare the `$2912` main-RAM consumer: each UP run
 records `$D334` reading `00`, `$D349` writing `10`, then `$D334` reading `10`;
-the controls show no `$D334` or `$D349` access. The verifier rejects ambiguous
-module/slot/mask records and confirms the ordered RAM transaction. The input
-poll does not yet expose the same event counter as those RAM accesses, so the
-caller path and causal instruction-level join remain incomplete. `$2912`'s
-meaning, party movement, and screen effect are unproven. See the [guest-read
+the controls show no `$D334` or `$D349` access. The v2 verifier rejects
+ambiguous module/slot/mask records and validates the shared order: poll event
+2342, `$D334` read event 3000, `$D349` write event 3001, and later `$D334` read
+event 3023 in each UP run. This is an event-order join, but does not prove the
+poll caused the write. `$2912`'s meaning, party movement, and screen effect
+remain unproven. See the [guest-read
 receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
 and [same-state comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 

@@ -9,23 +9,24 @@ Fast input-conditioned RAM updates from the cold US System Card BIOS polls.
 It also keeps the nonblack Firestaff snapshot separate from the unpaired
 original-reference image. No gameplay semantics or parity claim was added.
 
-## 2026-10-31 — compare JP UP input with neutral PCE Fast RAM traces
+## 2026-10-31 — join JP PCE Fast UP poll and RAM traces by event sequence
 
 Three UP runs and three neutral controls used the same authentic JP Rev. 1
 media and Akutuba F5 state. Each UP run bound `up@61:120` on slot 0 to the
-active-low guest read at `$44C1` (`value=3e`). Under the shared RAM event
-sequence each UP run then read `$2912=00` at `$D334`, wrote `$10` at `$D349`,
-and read `$10` at `$D334`. The neutral runs had no `$D334` reads or `$D349`
-writes; they recorded only zero writes to `$2912` from `$D2F2`. The reusable
-comparison verifier passed three consecutive runs across all six authentic
-traces. Raw traces and logs are retained on the external disk; trace hashes are
+active-low guest read at `$44C1` (`value=3e`) and assigned it shared event 2342.
+The same counter records `$D334` reading `$2912=00` at event 3000, `$D349`
+writing `$10` at event 3001, then `$D334` reading `$10` at event 3023. Neutral
+controls had no `$D334` reads or `$D349` writes; they recorded 596–597 zero
+writes to `$2912` from `$D2F2`. The v2 verifier passed three consecutive loops
+across all six authentic trace bundles. Raw traces and logs are retained on
+the external disk; trace hashes are
 in the [source-locked comparison report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
-This associates UP with a repeatable game-RAM update in the authentic saved
-state. The poll/caller does not yet share the RAM trace's event sequence, and
-`$2912` semantics, movement, visible effect, and parity remain open. The input
-verifier still rejects ambiguous module/slot/mask records; its capture receipt
-is in [the guest-read report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
+This establishes repeatable event ordering from the poll to the RAM
+transaction, not causality. `$2912` semantics, movement, visible effect, and
+parity remain open. The verifier also rejects ambiguous module/slot/mask
+records; capture receipts are in [the guest-read report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
+and [the shared-sequence comparison](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
 ## 2026-10-31 — rerun authentic JP and US native startup/save routes on macOS Debug
 

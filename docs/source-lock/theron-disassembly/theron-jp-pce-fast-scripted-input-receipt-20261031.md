@@ -54,6 +54,8 @@ The active-low guest value `3e` agrees with the internal UP bit `0010` in the
 direction bank. A separate same-state comparison now records a repeatable
 `$2912` RAM update in three UP runs and no `$D334`/`$D349` consumer path in
 three neutral controls. See the [source-locked comparison report](theron-jp-pcefast-input-state-compare-20261031.md).
-The frame-61 poll does not yet share the RAM traces' event sequence, and the
-`$2912` field's gameplay meaning, movement effect, and visible response remain
-unverified.
+These original input-only receipts predate the shared-sequence rebuild. The
+follow-up [r2 comparison](theron-jp-pcefast-input-state-compare-20261031.md)
+orders the frame-61 poll with the `$2912` read/write transaction. The field's
+gameplay meaning, movement effect, visible response, and causal relationship
+remain unverified.

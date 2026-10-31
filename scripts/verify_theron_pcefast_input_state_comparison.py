@@ -12,12 +12,16 @@ from pathlib import Path
 from typing import Any
 
 
-EXPECTED_SOURCE = {
+EXPECTED_SOURCE_V1 = {
     "cue_md5": "85706e7c2f658bc2792511d618dfc7a5",
     "track02_md5": "b7afb338ad31be1025b53f9aff12d73a",
     "system_card_md5": "ff1a674273fe3540ccef576376407d1d",
     "state_sha256": "2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee",
     "mednafen_md5": "09e5cae2a37d7c0734d970d98dc07f40",
+}
+EXPECTED_SOURCE_V2 = {
+    **EXPECTED_SOURCE_V1,
+    "mednafen_md5": "4747aa0dc284ba72336f7ac9caab6c00",
 }
 EXPECTED_CUE_PATH = "/home/trv2/.firestaff/data/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
 EXPECTED_STATE_PATH = "/home/trv2/firestaff-theron-evidence/emulator-created-20261003/capture-space-run-20261003/theron-jp-akutuba-f5-state.mca"
@@ -54,14 +58,15 @@ def load_artifact(run: dict[str, Any], name: str, root: Path) -> Path:
     require(not relative.is_absolute() and ".." not in relative.parts,
             f"{run.get('capture_id')}: artifact path must stay under manifest directory")
     path = (root / relative).resolve()
-    require(path.parent == root.resolve(), f"{run.get('capture_id')}: artifact path escapes manifest directory")
+    require(root.resolve() in path.parents,
+            f"{run.get('capture_id')}: artifact path escapes manifest directory")
     actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
     require(actual_hash == expected_hash,
             f"{run.get('capture_id')}: {name} SHA-256 mismatch ({actual_hash})")
     return path
 
 
-def verify_up(run: dict[str, Any], root: Path) -> str:
+def verify_up(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
     capture_id = run["capture_id"]
     require(run.get("stimulus") == "up" and run.get("input_script") == "up@61:120",
             f"{capture_id}: manifest does not identify the UP replay")
@@ -76,13 +81,20 @@ def verify_up(run: dict[str, Any], root: Path) -> str:
     events = read_records(input_path, "scripted_pce_input_event")
     applies = read_records(input_path, "scripted_pce_input_apply")
     polls = read_records(input_path, "pce_input_read")
-    require("source=mednafen-pce-fast-instrumented-input" in input_path.read_text(errors="replace"),
+    input_text = input_path.read_text(errors="replace")
+    require("source=mednafen-pce-fast-instrumented-input" in input_text,
             f"{capture_id}: input trace is not from the expected PCE Fast instrumenter")
+    if shared_sequence:
+        require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
+                f"{capture_id}: input trace lacks the shared event-sequence header")
     matching_events = [r for r in events if r.get("frame") == "61" and r.get("key") == "up" and r.get("mask") == "0010" and r.get("port") == "0"]
     matching_applies = [r for r in applies if r.get("frame") == "61" and r.get("scripted") == "0010" and r.get("port") == "0"]
     matching_polls = [r for r in polls if r.get("frame") == "61" and r.get("cpu_pc") == "44c1" and r.get("physical_pc") == "000d04c1" and r.get("raw") == "0010" and r.get("sel") == "1" and r.get("value") == "3e" and r.get("module") == "pce_fast" and r.get("device_type") == "1" and r.get("scripted_port") == "0" and r.get("scripted_mask") == "0010"]
     require(len(matching_events) == len(matching_applies) == len(matching_polls) == 1,
             f"{capture_id}: expected one frame-61 UP event/apply/$44C1 read")
+    if shared_sequence:
+        require("event_sequence" in matching_polls[0],
+                f"{capture_id}: frame-61 UP poll has no shared event sequence")
 
     consumers = read_records(consumer_path, "main_ram_consumer_read")
     writes = read_records(write_path, "main_ram_target_write")
@@ -106,12 +118,18 @@ def verify_up(run: dict[str, Any], root: Path) -> str:
             break
     require(ordered is not None, f"{capture_id}: no ordered $00 read → $10 write → $10 read")
     writer, prior_read, later_read = ordered
+    if shared_sequence:
+        poll_sequence = int(matching_polls[0]["event_sequence"])
+        require(poll_sequence < seq(prior_read) < seq(writer) < seq(later_read),
+                f"{capture_id}: shared event order does not place the $44C1 poll before the $2912 transaction")
+        return (f"{capture_id}: $44C1 poll event {poll_sequence} → $D334 read $00 event {seq(prior_read)} → "
+                f"$D349 write $10 event {seq(writer)} → $D334 read $10 event {seq(later_read)}")
     return (f"{capture_id}: frame-61 UP read at $44C1; RAM sidecars show $2912 $00 read "
             f"event {seq(prior_read)} → $D349 write $10 event {seq(writer)} → "
             f"$D334 read $10 event {seq(later_read)}")
 
 
-def verify_neutral(run: dict[str, Any], root: Path) -> str:
+def verify_neutral(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
     capture_id = run["capture_id"]
     require(run.get("stimulus") == "neutral" and run.get("input_script") is None,
             f"{capture_id}: manifest does not identify a neutral run")
@@ -126,13 +144,20 @@ def verify_neutral(run: dict[str, Any], root: Path) -> str:
     require(not read_records(input_path, "scripted_pce_input_event") and not read_records(input_path, "scripted_pce_input_apply"),
             f"{capture_id}: neutral trace contains a scripted event or apply")
     polls = read_records(input_path, "pce_input_read")
-    require("source=mednafen-pce-fast-instrumented-input" in input_path.read_text(errors="replace"),
+    input_text = input_path.read_text(errors="replace")
+    require("source=mednafen-pce-fast-instrumented-input" in input_text,
             f"{capture_id}: input trace is not from the expected PCE Fast instrumenter")
+    if shared_sequence:
+        require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
+                f"{capture_id}: input trace lacks the shared event-sequence header")
     require(polls and all(r.get("raw") == "0000" and r.get("scripted_mask") == "0000" for r in polls),
             f"{capture_id}: neutral trace contains a nonzero physical or scripted input poll")
     neutral_polls = [r for r in polls if r.get("frame") == "61" and r.get("cpu_pc") == "44c1" and r.get("module") == "pce_fast"]
     require(neutral_polls and all(r.get("raw") == "0000" and r.get("value") == "3f" and r.get("scripted_mask") == "0000" for r in neutral_polls),
             f"{capture_id}: no frame-61 neutral $44C1 poll with zero input")
+    if shared_sequence:
+        require(all("event_sequence" in r for r in neutral_polls),
+                f"{capture_id}: a frame-61 neutral poll has no shared event sequence")
 
     consumers = read_records(consumer_path, "main_ram_consumer_read")
     writes = read_records(write_path, "main_ram_target_write")
@@ -154,9 +179,14 @@ def main() -> int:
     try:
         root = args.manifest.resolve().parent
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-        require(manifest.get("format") == "firestaff-theron-pcefast-input-state-comparison-v1",
+        manifest_format = manifest.get("format")
+        require(manifest_format in {
+                    "firestaff-theron-pcefast-input-state-comparison-v1",
+                    "firestaff-theron-pcefast-input-state-comparison-v2",
+                },
                 "unsupported capture manifest format")
-        require(manifest.get("source_identity") == EXPECTED_SOURCE,
+        expected_source = EXPECTED_SOURCE_V2 if manifest_format.endswith("-v2") else EXPECTED_SOURCE_V1
+        require(manifest.get("source_identity") == expected_source,
                 "manifest source-identity declarations do not match the expected values")
         require(manifest.get("capture_constraints") == EXPECTED_CAPTURE_CONSTRAINTS,
                 "manifest capture constraints do not match the expected PCE Fast setup")
@@ -168,10 +198,11 @@ def main() -> int:
         ups = [run for run in runs if run.get("stimulus") == "up"]
         neutral = [run for run in runs if run.get("stimulus") == "neutral"]
         require(len(ups) == len(neutral) == 3, "manifest must contain three UP and three neutral runs")
+        shared_sequence = manifest_format.endswith("-v2")
         for run in ups:
-            print(verify_up(run, root))
+            print(verify_up(run, root, shared_sequence=shared_sequence))
         for run in neutral:
-            print(verify_neutral(run, root))
+            print(verify_neutral(run, root, shared_sequence=shared_sequence))
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1

@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-31 — JP PCE Fast UP is associated with a repeatable RAM update
+## 2026-10-31 — JP PCE Fast poll and `$2912` transaction share event ordering
 
 Three independent replays from the authentic JP Akutuba F5 dungeon state
 applied `up@61:120` on controller slot 0. All three match the PCE Fast guest
@@ -8,17 +8,17 @@ read at `$44C1`: internal `raw=0010`, active-low `value=3e`, and the same-frame
 scripted mask and port. Three same-state neutral controls show no `$D334`
 consumer reads or `$D349` writes to `$2912`; the three UP runs each show
 `$D334` reading `$2912=00`, `$D349` writing `$10`, then `$D334` reading `$10`.
-The shared RAM event sequence verifies this ordered transaction. The input
-poll itself does not yet share that sequence, and its caller relationship is
-still open.
-Trace hashes and authentic media/state provenance are in the
+The current trace patch gives the `$44C1` guest poll the same
+`TheronTraceCDSharedEventSequence` counter as the RAM hooks. All three UP runs
+repeat poll event 2342 → `$D334` read event 3000 → `$D349` write event 3001 →
+`$D334` read event 3023. Three neutral controls have no `$D334`/`$D349` path.
+The event order advances the input-to-consumer join, but does not prove
+causality, identify `$2912`, or establish a movement/render effect. Trace
+hashes and authentic media/state provenance are in the
 [JP PCE Fast input receipt](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md).
-Use this exact state identity (SHA-256
-`2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) to add
-the controller poll and `$44C1` caller to the shared event stream. Then identify
-the `$2912` field and compare party pose/visible output under UP and neutral.
-The new evidence is limited to an input-conditioned RAM update; it does not
-prove movement, `$2912` semantics, or parity. See the [same-state comparison
+Next identify `$2912` from its readers/writers and join the instruction caller
+to party pose and visible output under UP and neutral. The evidence still does
+not prove movement or parity. See the [same-state comparison
 report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 
 ## 2026-10-31 — cold US scripted inputs reach BIOS polls; handoff remains unjoined

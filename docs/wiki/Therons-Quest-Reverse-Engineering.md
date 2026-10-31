@@ -16,10 +16,11 @@ does not observe a confirmed game-owned handoff. A separate US save-state
 mouse replay proves guest reads and candidate command consumption only; it
 has no runtime CD provenance and establishes no semantic action or movement.
 Three same-state PCE Fast UP runs and neutral controls also show a repeatable
-`$2912` main-RAM update under UP (`$D334` read `00`, `$D349` write `10`, later
-`$D334` read `10`) and no such consumer path in controls. This does not identify
-the byte's semantics, prove movement, or connect the poll to the RAM trace's
-event counter. See the [source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+shared event order from `$44C1` poll (2342) through `$D334` read `$00` (3000),
+`$D349` write `$10` (3001), and later `$D334` read `$10` (3023). No such
+consumer/writer path appears in controls. This does not establish causality,
+identify the byte's semantics, or prove movement. See the
+[source-locked comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
 The reported 3–5 second title-menu hold remains unverified. Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture
