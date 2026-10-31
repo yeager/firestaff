@@ -1796,7 +1796,7 @@ static int dm2_v1_sksave_recycler_scan_tile(
          * direct-return branches; DB5/DB6/DB8/DB10 use source cut-only
          * relocation. DB14 admits only the no-creature delete shape; DB4 and
          * creature-bearing DB14 tiles still require their full owners. */
-        if ((pool == 0 || pool == 3 || pool == 7 || pool == 9 ||
+        if ((pool == 0 || pool == 2 || pool == 3 || pool == 7 || pool == 9 ||
              (pool == 14 && dm2_v1_sksave_tile_has_creature(
                  owner, map, x, y) == 0) ||
              ((pool == 5 || pool == 6 || pool == 8 || pool == 10) &&
