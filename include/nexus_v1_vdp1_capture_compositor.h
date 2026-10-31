@@ -51,6 +51,11 @@ typedef struct {
     int system_clip_state_verified;
     int system_clip_x;
     int system_clip_y;
+    int user_clip_state_verified;
+    int user_clip_x0;
+    int user_clip_y0;
+    int user_clip_x1;
+    int user_clip_y1;
     int palette_slot_base;
 } Nexus_V1_Vdp1CaptureCompositeInput;
 
@@ -168,6 +173,57 @@ typedef struct {
     int system_clip_y;
 } Nexus_V1_Vdp1CaptureSequenceReceipt;
 
+/* RGBA capture surface for an ordered subset of source-bound VDP1 mode-1
+ * distorted sprites. Each command is decoded independently through the
+ * existing mode-1 compositor, then resolved through its joined palette.
+ * Uniform Gouraud tables are applied from authenticated captured VRAM;
+ * non-uniform tables are rejected. This remains capture-only. */
+typedef struct {
+    uint32_t rgba_buffer[NEXUS_FB_W * NEXUS_FB_H];
+} Nexus_V1_Vdp1RgbaCaptureFramebuffer;
+
+typedef struct {
+    const Nexus_V1_Vdp1CaptureCompositeInput *commands;
+    const uint8_t *vdp1_vram;
+    int vdp1_vram_size;
+    int vdp1_vram_hash_verified;
+    const uint32_t *command_trace_indices;
+    const int *command_origin_x;
+    const int *command_origin_y;
+    const uint8_t *command_origin_verified;
+    int command_count;
+    int trace_draw_command_count;
+    int trace_row_count;
+    int trace_complete_verified;
+    int command_order_verified;
+    int local_coordinate_state_verified;
+    int end_record_verified;
+    int system_clip_state_verified;
+    int system_clip_x;
+    int system_clip_y;
+} Nexus_V1_Vdp1RgbaCaptureSequenceInput;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int command_order_verified;
+    int trace_complete_verified;
+    int end_record_verified;
+    int local_coordinate_state_verified;
+    int system_clip_state_verified;
+    int command_count;
+    int source_joins_verified;
+    int palette_joins_verified;
+    int capture_gap_commands;
+    int written_pixels;
+    int transparent_pixels;
+    int clipped_pixels;
+    int user_clip_commands_verified;
+    int gouraud_commands_applied;
+    int gouraud_commands_unrendered;
+    int renderer_permitted;
+} Nexus_V1_Vdp1RgbaCaptureSequenceReceipt;
+
 /* Resolves one command's captured VDP1 source/CLUT spans to the canonical
  * DGN bytes that own them. Returning zero rejects the complete frame. */
 typedef int (*Nexus_V1_Vdp1CaptureSequenceMaterialResolver)(
@@ -240,6 +296,17 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp1CaptureSequenceInput *input,
     Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt);
+
+/* Replay an authenticated, ordered subset of mode-1 distorted-sprite draws
+ * into RGBA. Every command needs exact image/CLUT joins, verified VRAM for
+ * Gouraud data, a verified live local-coordinate origin, and captured
+ * system/user clipping state. Gouraud is supported only when all four
+ * captured corner values are identical. Missing source-bound draws remain
+ * counted as capture gaps; renderer permission is always false. */
+int nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+    Nexus_V1_Vdp1RgbaCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp1RgbaCaptureSequenceInput *input,
+    Nexus_V1_Vdp1RgbaCaptureSequenceReceipt *out_receipt);
 
 /* Parse and replay one complete authenticated VDP1 VRAM command sequence.
  * Every textured draw must be resolved by an exact DGN source/CLUT join. */

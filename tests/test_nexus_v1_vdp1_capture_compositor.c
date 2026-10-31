@@ -309,6 +309,20 @@ int main(void)
     Nexus_Viewport viewport;
     Nexus_V1_Vdp1CaptureCompositeInput input;
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
+    Nexus_V1_Vdp1CaptureCompositeInput rgba_commands[3];
+    Nexus_V1_Vdp1RgbaCaptureSequenceInput rgba_sequence_input;
+    Nexus_V1_Vdp1RgbaCaptureSequenceReceipt rgba_sequence_receipt;
+    Nexus_V1_Vdp1RgbaCaptureFramebuffer rgba_framebuffer;
+    uint8_t rgba_command_bytes[3][NEXUS_V1_VDP1_COMMAND_BYTES];
+    uint8_t rgba_palette_state[3][32];
+    uint8_t rgba_dgn_palette[3][32];
+    uint8_t rgba_zero_texture[32] = {0};
+    uint8_t rgba_zero_dgn_image[32] = {0};
+    uint8_t rgba_vdp1_vram[64] = {0};
+    uint32_t rgba_trace_indices[3] = {4U, 8U, 9U};
+    int rgba_origin_x[3] = {160, 160, 160};
+    int rgba_origin_y[3] = {112, 112, 112};
+    uint8_t rgba_origin_verified[3] = {1U, 1U, 1U};
     Nexus_V1_Vdp1DirectColorFramebuffer direct_framebuffer;
     Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
     Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
@@ -387,11 +401,161 @@ int main(void)
         fprintf(stderr, "FAIL: authenticated VDP1 capture composite\n");
         return 1;
     }
+    /* The RGBA lane resolves each command through its own authenticated
+     * palette before drawing the next command. Reusing palette slot zero
+     * must not recolor pixels from the earlier command. */
+    memcpy(rgba_command_bytes[0], command, sizeof(command));
+    memcpy(rgba_command_bytes[1], command, sizeof(command));
+    for (i = 0; i < 3; ++i) {
+        wl16(rgba_command_bytes[i] + 4,
+            (1U << 2) | (1U << 3));
+        wl16(rgba_command_bytes[i] + 28, 4U);
+        wl16(rgba_vdp1_vram + 32 + i * 2, 0x7fffU);
+    }
+    wl16(rgba_vdp1_vram + 38, 0x7fffU);
+    for (i = 0; i < 32; i += 2) {
+        wl16(rgba_palette_state[0] + i, i == 2 ? 0x8001U : 0x8000U);
+        wl16(rgba_palette_state[1] + i, i == 2 ? 0x801fU : 0x8000U);
+        rgba_dgn_palette[0][i] = rgba_palette_state[0][i + 1];
+        rgba_dgn_palette[0][i + 1] = rgba_palette_state[0][i];
+        rgba_dgn_palette[1][i] = rgba_palette_state[1][i + 1];
+        rgba_dgn_palette[1][i + 1] = rgba_palette_state[1][i];
+    }
+    for (i = 0; i < 2; ++i) {
+        rgba_commands[i] = input;
+        rgba_commands[i].command = rgba_command_bytes[i];
+        rgba_commands[i].palette_state = rgba_palette_state[i];
+        rgba_commands[i].palette_state_size = sizeof(rgba_palette_state[i]);
+        rgba_commands[i].dgn_palette = rgba_dgn_palette[i];
+        rgba_commands[i].dgn_palette_size = sizeof(rgba_dgn_palette[i]);
+        rgba_commands[i].system_clip_state_verified = 1;
+        rgba_commands[i].system_clip_x = 320;
+        rgba_commands[i].system_clip_y = 224;
+    }
+    memcpy(rgba_command_bytes[2], command, sizeof(command));
+    /* TPD disables transparent-texel handling, so source index zero must
+     * still write the CLUT's zero entry. */
+    wl16(rgba_command_bytes[2] + 4,
+        (1U << 2) | (1U << 3) | (1U << 6));
+    wl16(rgba_command_bytes[2] + 28, 4U);
+    memset(rgba_palette_state[2], 0, sizeof(rgba_palette_state[2]));
+    wl16(rgba_palette_state[2], 0xfc00U);
+    for (i = 0; i < 32; i += 2) {
+        rgba_dgn_palette[2][i] = rgba_palette_state[2][i + 1];
+        rgba_dgn_palette[2][i + 1] = rgba_palette_state[2][i];
+    }
+    rgba_commands[2] = input;
+    rgba_commands[2].command = rgba_command_bytes[2];
+    rgba_commands[2].texture_span = rgba_zero_texture;
+    rgba_commands[2].texture_span_size = sizeof(rgba_zero_texture);
+    /* The authentic DGN image is all zero nibbles for this synthetic quad. */
+    rgba_commands[2].dgn_image = rgba_zero_dgn_image;
+    rgba_commands[2].dgn_image_size = sizeof(rgba_zero_dgn_image);
+    rgba_commands[2].palette_state = rgba_palette_state[2];
+    rgba_commands[2].palette_state_size = sizeof(rgba_palette_state[2]);
+    rgba_commands[2].dgn_palette = rgba_dgn_palette[2];
+    rgba_commands[2].dgn_palette_size = sizeof(rgba_dgn_palette[2]);
+    rgba_commands[2].system_clip_state_verified = 1;
+    rgba_commands[2].system_clip_x = 320;
+    rgba_commands[2].system_clip_y = 224;
+    memset(&rgba_framebuffer, 0, sizeof(rgba_framebuffer));
+    memset(&rgba_sequence_input, 0, sizeof(rgba_sequence_input));
+    rgba_sequence_input.commands = rgba_commands;
+    rgba_sequence_input.vdp1_vram = rgba_vdp1_vram;
+    rgba_sequence_input.vdp1_vram_size = sizeof(rgba_vdp1_vram);
+    rgba_sequence_input.vdp1_vram_hash_verified = 1;
+    rgba_sequence_input.command_trace_indices = rgba_trace_indices;
+    rgba_sequence_input.command_origin_x = rgba_origin_x;
+    rgba_sequence_input.command_origin_y = rgba_origin_y;
+    rgba_sequence_input.command_origin_verified = rgba_origin_verified;
+    rgba_sequence_input.command_count = 3;
+    rgba_sequence_input.trace_draw_command_count = 4;
+    rgba_sequence_input.trace_row_count = 10;
+    rgba_sequence_input.trace_complete_verified = 1;
+    rgba_sequence_input.command_order_verified = 1;
+    rgba_sequence_input.local_coordinate_state_verified = 1;
+    rgba_sequence_input.end_record_verified = 1;
+    rgba_sequence_input.system_clip_state_verified = 1;
+    rgba_sequence_input.system_clip_x = 320;
+    rgba_sequence_input.system_clip_y = 224;
+    memset(&rgba_sequence_receipt, 0, sizeof(rgba_sequence_receipt));
+    if (!nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || !rgba_sequence_receipt.valid ||
+        !rgba_sequence_receipt.capture_only ||
+        !rgba_sequence_receipt.command_order_verified ||
+        !rgba_sequence_receipt.trace_complete_verified ||
+        !rgba_sequence_receipt.end_record_verified ||
+        rgba_sequence_receipt.source_joins_verified != 3 ||
+        rgba_sequence_receipt.palette_joins_verified != 3 ||
+        rgba_sequence_receipt.capture_gap_commands != 1 ||
+        rgba_sequence_receipt.gouraud_commands_applied != 3 ||
+        rgba_sequence_receipt.gouraud_commands_unrendered != 0 ||
+        rgba_sequence_receipt.renderer_permitted ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: per-command palette RGBA sequence (valid=%d source=%d palette=%d gaps=%d clip=%d written=%d rgba=%08x)\n",
+            rgba_sequence_receipt.valid, rgba_sequence_receipt.source_joins_verified,
+            rgba_sequence_receipt.palette_joins_verified,
+            rgba_sequence_receipt.capture_gap_commands,
+            rgba_sequence_receipt.user_clip_commands_verified,
+            rgba_sequence_receipt.written_pixels,
+            rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160]);
+        return 1;
+    }
+    if (rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 161] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: command-local palette preservation\n");
+        return 1;
+    }
+    wl16(rgba_vdp1_vram + 38, 0x7ffeU);
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: non-uniform Gouraud table must reject atomically\n");
+        return 1;
+    }
+    wl16(rgba_vdp1_vram + 38, 0x7fffU);
+    rgba_sequence_input.vdp1_vram_hash_verified = 0;
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: unauthenticated Gouraud VRAM must reject atomically\n");
+        return 1;
+    }
+    rgba_sequence_input.vdp1_vram_hash_verified = 1;
+    rgba_origin_verified[2] = 0U;
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_sequence_receipt.renderer_permitted ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: RGBA sequence must reject unverified local state atomically\n");
+        return 1;
+    }
+    rgba_origin_verified[1] = 1U;
+    /* User-clip mode bits are a coupled field: inside/outside mode without
+     * the enable bit has no captured rectangle semantics and must fail. */
+    wl16(rgba_command_bytes[0] + 4, (1U << 3) | 0x0200U);
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: unsupported VDP1 user-clip mode must reject atomically\n");
+        return 1;
+    }
+    wl16(rgba_command_bytes[0] + 4, 1U << 3);
     /* Mode 5 is a direct 16-bit RGB stream, not a CLUT texture.  Its
      * capture decoder must preserve the word semantics but remain capture-
      * only until a DGN owner/material receipt exists. */
     for (i = 0; i < (int)sizeof(direct_texture); i += 2)
-        wl16(direct_texture + i, (i < 32) ? 0x4000U : 0x001fU);
+        wl16(direct_texture + i, (i < 32) ? 0x000fU : 0x801fU);
     for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
         dgn_direct_image[i] = direct_texture[i + 1];
         dgn_direct_image[i + 1] = direct_texture[i];
@@ -415,6 +579,66 @@ int main(void)
         direct_receipt.transparent_pixels <= 0) {
         fprintf(stderr, "FAIL: authenticated direct-color capture decode\n");
         return 1;
+    }
+    /* In mode 5, bit 15 is the transparent flag. Exact word 7fff is the
+     * ECD marker only when ECD is enabled; TPD makes bit-15-clear pixels
+     * visible. Exercise all three controls independently. */
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x000fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    wl16(command + 4, (5U << 3U));
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        !direct_receipt.valid || direct_receipt.written_pixels != 0 ||
+        direct_receipt.transparent_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 bit-15 transparency\n");
+        return 1;
+    }
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x7fffU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels != 0) {
+        fprintf(stderr, "FAIL: mode-5 ECD marker\n");
+        return 1;
+    }
+    wl16(command + 4, (5U << 3U) | 0x00c0U);
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 ECD disable\n");
+        return 1;
+    }
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x000fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    wl16(command + 4, (5U << 3U) | 0x0040U);
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 TPD disable\n");
+        return 1;
+    }
+    wl16(command + 4, 5U << 3U);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, (i < 32) ? 0x000fU : 0x801fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
     }
     input.original_saturn_capture_verified = 0;
     if (nexus_v1_vdp1_capture_decode_direct_color(

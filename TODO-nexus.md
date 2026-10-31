@@ -4,21 +4,62 @@ Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-10-30 — NBG1 8bpp character stride
+
+The generic source-bound NBG1 compositor now follows Saturn's 32-byte PND
+character-number stride in 8bpp mode and wraps full 512 KiB VRAM reads. A
+hash-pinned Ymir gameplay capture at frame 239 checks the 320x200 NBG1 index
+plane's opaque/transparent counts and a known pixel using Ymir's 32-byte
+character-address rule. This fixes the byte fetch for that layer path; NBG1
+retail source ownership and whole-screen VDP2/HUD composition remain open. See
+[`docs/nexus_vdp2_nbg1_8bpp_stride.md`](docs/nexus_vdp2_nbg1_8bpp_stride.md).
+
+## 2026-10-30 — NBG2 capture plane
+
+A hash-pinned Ymir frame-239 test now decodes the authentic NBG2 8bpp map page
+at byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
+nonzero pixels; 9,258 CRAM colors match the native screenshot sample within
+eight levels. This remains a capture-only layer measurement; full VDP2 layer
+priority/color calculation and named retail source ownership are unresolved.
+See [`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
+
+The same frame also verifies the existing NBG0 8bpp bitmap lane at VRAM byte
+offset zero: 3,954 of 3,968 nontransparent CRAM samples match within eight
+levels. This remains capture-only and does not establish cross-layer ordering
+or color calculation. See
+[`docs/nexus_nbg0_capture_plane.md`](docs/nexus_nbg0_capture_plane.md).
+
+## 2026-10-30 — Ymir VDP1 stepper diagnostic
+
+A capture-only integer stepper now rasterizes the 124 indexed mode-1 distorted
+sprites in the authenticated frame-13162 Ymir command window. The focused real-
+data CTest pins the complete 168-row trace, captured VDP1 VRAM/FBS/registers,
+VDP2 registers, and frame receipt. It compares its 320x224 output with the first
+Ymir VDP1 draw buffer: 70,470 of 70,970 opaque pixels match exactly (99.295%),
+with 500 pixels still differing. A diagnostic comparison with FBS buffer 1
+found 69,507 exact pixels; the capture lacks a dedicated active-buffer receipt.
+The other 36 draw commands in the window,
+including direct-color and polygon draws, are not handled by this stepper. It
+claims no DGN ownership and always returns `renderer_permitted=false`; this is
+not production rendering or complete Nexus VDP1 parity. See
+[`docs/nexus_vdp1_frame13162_dgn_window.md`](docs/nexus_vdp1_frame13162_dgn_window.md).
+
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers
-that agree pixel-for-pixel with the same-run frontend screenshot after 2×
-downscaling. The image contains the retail title and three menu choices. This
-is emulator-internal capture validation, not hardware parity. The bounded
-capture-only replay accepts the observed `BGON=0x0001` state and the captured
-ratio register value at `0x100=0x1000`; against the authentic frame-8037 dump,
-it matches both same-run VDP2 pass buffers exactly across all 71,680 RGB
-pixels. This proves the captured composition only. The 2,990 VDP1
-palette/special pixels still lack a complete per-command CLUT/CRAM provenance
-join to retail source data. Keep the production title gate closed until
-retail source ownership and the live display consumer are verified. Evidence
-details are in
+that agree pixel-for-pixel with both Firestaff's capture-only replay and the
+same-run frontend screenshot after 2× downscaling. A hash-pinned real-data
+CTest verifies all 71,680 native RGB pixels in both passes. This is
+emulator-internal frame composition, not original-Saturn or production-renderer
+parity. The replay consumes the captured FBS, NBG0 bitmap, CRAM, and registers;
+pixel-to-retail-command/source ownership remains incomplete. The capture shows
+the retail title and three menu choices with `BGON=0x0001` and ratio register
+`0x100=0x1000`; 2,990 VDP1 palette/special pixels still lack complete
+per-command CLUT/CRAM provenance to retail source data. Keep the production
+title gate closed. Evidence details are in
 [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
+The test and its external-data reproduction instructions are in
+[`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
 
 The Japanese and English retail Configuration foregrounds now render from
 hash-verified `TITLE.BIN` files and share byte-identical UI text/palette spans.
@@ -582,6 +623,17 @@ capture-gated Nexus title; this change does not make the game playable.
   writer or either span to a retail resource.
   Keep both spans blocked until upload provenance or an exact transformed
   retail-surface join is captured.
+- The retained Ymir Japanese title-menu capture at frame 119 independently
+  binds five ordered VDP1 draws (two selection markers and three labels) to
+  exact `TITLE.BIN` texture/palette records and screenshot samples. The
+  capture-only Ymir menu input now supports a bounded ordered list of
+  source-joined command offsets, applies them in trace order, and reports the
+  aggregate draw count and pixel count. A hash-pinned frame-119 C integration
+  case now checks all five commands against retail `TITLE.BIN` texture spans
+  and compares the resulting 320x224 RGB plane with the retained Ymir output;
+  the focused test passes. The replay remains capture-only. Keep production
+  renderer admission blocked until runtime ownership, complete menu input,
+  and broader frame behavior are verified.
 - Implement native Saturn runtime semantics only after each dispatcher,
   material, event, save or audio consumer has a captured, hash-verified
   contract.

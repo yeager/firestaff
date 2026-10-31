@@ -1,5 +1,7 @@
 #include "nexus_v1_vdp2_capture_compositor.h"
+#include "nexus_v1_vdp1_capture_compositor.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static uint16_t read_be16(const uint8_t *p)
@@ -386,8 +388,11 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     uint16_t back_upper;
     uint16_t back_lower;
     uint32_t back_base;
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *working;
     unsigned int x;
     unsigned int y;
+    int command_overlay_requested;
+    size_t command_index;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.capture_only = 1;
@@ -409,6 +414,57 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
         return 0;
     }
     registers = input->vdp2_registers;
+    command_overlay_requested = input->vdp1_vram ||
+        input->vdp1_vram_size != 0U ||
+        input->vdp1_command_byte_offset != 0U ||
+        input->vdp1_command_source_join_verified ||
+        input->vdp1_command_count != 0U ||
+        input->vdp1_command_byte_offsets != NULL ||
+        input->vdp1_command_source_join_verified_flags != NULL;
+    if (command_overlay_requested &&
+        (!input->vdp1_vram ||
+         input->vdp1_vram_size != NEXUS_V1_SATURN_VDP1_VRAM_BYTES ||
+         input->vdp2_registers_size <
+             NEXUS_V1_SATURN_VDP2_REG_BYTES ||
+         ((input->vdp1_command_count == 0U &&
+           (input->vdp1_command_byte_offsets != NULL ||
+            input->vdp1_command_source_join_verified_flags != NULL)) ||
+          (input->vdp1_command_count > 0U &&
+           (!input->vdp1_command_byte_offsets ||
+            !input->vdp1_command_source_join_verified_flags ||
+            input->vdp1_command_count >
+                NEXUS_V1_VDP2_YMIR_MENU_MAX_VDP1_COMMANDS))))) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (command_overlay_requested) {
+        size_t count = input->vdp1_command_count ?
+            input->vdp1_command_count : 1U;
+        for (command_index = 0U; command_index < count; ++command_index) {
+            uint32_t offset = input->vdp1_command_count ?
+                input->vdp1_command_byte_offsets[command_index] :
+                input->vdp1_command_byte_offset;
+            int join_verified = input->vdp1_command_count ?
+                input->vdp1_command_source_join_verified_flags[command_index] != 0U :
+                input->vdp1_command_source_join_verified;
+            size_t prior;
+            if (offset % NEXUS_V1_VDP1_COMMAND_BYTES != 0U ||
+                offset > input->vdp1_vram_size -
+                    NEXUS_V1_VDP1_COMMAND_BYTES || !join_verified) {
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            for (prior = 0U; prior < command_index; ++prior) {
+                uint32_t previous = input->vdp1_command_count ?
+                    input->vdp1_command_byte_offsets[prior] :
+                    input->vdp1_command_byte_offset;
+                if (offset == previous) {
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+            }
+        }
+    }
 #define CAPTURE_REG(offset) read_register16_ordered( \
         registers, (offset), input->register_byte_order)
     bgon = CAPTURE_REG(0x20U);
@@ -445,6 +501,12 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
+    working = (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)
+        malloc(sizeof(*working));
+    if (!working) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
     receipt.registers_verified = 1;
     receipt.original_ymir_capture_verified = 1;
     receipt.command_trace_complete_verified = 1;
@@ -452,6 +514,7 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
     for (y = 0; y < NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++y) {
         uint16_t back = read_be16(input->vdp2_vram + back_base + y * 2U);
         if (back != 0U) {
+            free(working);
             if (out_receipt) *out_receipt = receipt;
             return 0;
         }
@@ -477,6 +540,7 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
                 uint16_t color;
                 if (priority != ((spctl >> 8U) & 7U) || ratio_index != 0U ||
                     nbg0 != 0U || (ccctl & 0x0040U) == 0U) {
+                    free(working);
                     if (out_receipt) *out_receipt = receipt;
                     return 0;
                 }
@@ -484,13 +548,14 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
                 ratio_reg = CAPTURE_REG(0x100U);
                 if (((priority_reg >> 8U) & 7U) != priority ||
                     ((ccctl & 0x0700U) != 0x0000U)) {
+                    free(working);
                     if (out_receipt) *out_receipt = receipt;
                     return 0;
                 }
                 ratio = 31U - (ratio_reg & 31U);
                 color = read_be16(input->vdp2_cram +
                     (size_t)(vdp1 & 0x03ffU) * 2U);
-                framebuffer->rgba_buffer[output_pixel] =
+                working->rgba_buffer[output_pixel] =
                     capture_blend_555(color, 0U, ratio);
                 ++receipt.vdp1_palette_pixels;
                 continue;
@@ -503,16 +568,89 @@ int nexus_v1_vdp2_capture_replay_ymir_title_menu(
                     (size_t)nbg0 * 2U);
                 unsigned int ratio = 31U -
                     (CAPTURE_REG(0x108U) & 31U);
-                framebuffer->rgba_buffer[output_pixel] =
+                working->rgba_buffer[output_pixel] =
                     capture_blend_555(color, lower, ratio);
                 ++receipt.nbg0_overlay_pixels;
             } else {
-                framebuffer->rgba_buffer[output_pixel] = lower;
+                working->rgba_buffer[output_pixel] = lower;
             }
         }
     }
+    if (command_overlay_requested) {
+        uint8_t cram_little_endian[NEXUS_V1_SATURN_VDP2_CRAM_BYTES];
+        uint8_t registers_little_endian[NEXUS_V1_SATURN_VDP2_REG_BYTES];
+        Nexus_V1_Vdp2ColourRamCapture colour_capture;
+        Nexus_V1_Vdp1DirectColorFramebuffer *vdp1_framebuffer;
+        size_t byte;
+        int total_written_pixels = 0;
+        vdp1_framebuffer = (Nexus_V1_Vdp1DirectColorFramebuffer *)
+            malloc(sizeof(*vdp1_framebuffer));
+        if (!vdp1_framebuffer) {
+            free(working);
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        for (byte = 0U; byte < sizeof(cram_little_endian); byte += 2U) {
+            cram_little_endian[byte] = input->vdp2_cram[byte + 1U];
+            cram_little_endian[byte + 1U] = input->vdp2_cram[byte];
+        }
+        for (byte = 0U; byte < sizeof(registers_little_endian); byte += 2U) {
+            if (input->register_byte_order ==
+                    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG) {
+                registers_little_endian[byte] = registers[byte + 1U];
+                registers_little_endian[byte + 1U] = registers[byte];
+            } else {
+                registers_little_endian[byte] = registers[byte];
+                registers_little_endian[byte + 1U] = registers[byte + 1U];
+            }
+        }
+        memset(&colour_capture, 0, sizeof(colour_capture));
+        colour_capture.colour_ram = cram_little_endian;
+        colour_capture.colour_ram_size = sizeof(cram_little_endian);
+        colour_capture.registers = registers_little_endian;
+        colour_capture.registers_size = sizeof(registers_little_endian);
+        colour_capture.original_saturn_capture_verified = 1;
+        memcpy(vdp1_framebuffer->rgba_buffer, working->rgba_buffer,
+               sizeof(vdp1_framebuffer->rgba_buffer));
+        {
+            size_t count = input->vdp1_command_count ?
+                input->vdp1_command_count : 1U;
+            for (command_index = 0U; command_index < count; ++command_index) {
+                uint32_t offset = input->vdp1_command_count ?
+                    input->vdp1_command_byte_offsets[command_index] :
+                    input->vdp1_command_byte_offset;
+                int written_pixels = 0;
+                if (!nexus_v1_vdp1_capture_blend_mode0_normal(
+                        vdp1_framebuffer,
+                        input->vdp1_vram + offset,
+                        (int)NEXUS_V1_VDP1_COMMAND_BYTES,
+                        input->vdp1_vram, (int)input->vdp1_vram_size,
+                        &colour_capture, 0, 0,
+                        (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH,
+                        (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT,
+                        &written_pixels) || written_pixels <= 0) {
+                    free(vdp1_framebuffer);
+                    free(working);
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+                total_written_pixels += written_pixels;
+            }
+        }
+        memcpy(working->rgba_buffer, vdp1_framebuffer->rgba_buffer,
+               sizeof(working->rgba_buffer));
+        free(vdp1_framebuffer);
+        receipt.vdp1_command_overlaid = 1;
+        receipt.vdp1_command_source_join_verified = 1;
+        receipt.vdp1_command_count = (int)(input->vdp1_command_count ?
+            input->vdp1_command_count : 1U);
+        receipt.vdp1_command_pixels = total_written_pixels;
+    }
     receipt.valid = 1;
     receipt.renderer_permitted = 0;
+    memcpy(framebuffer->rgba_buffer, working->rgba_buffer,
+           sizeof(framebuffer->rgba_buffer));
+    free(working);
     if (out_receipt) *out_receipt = receipt;
 #undef CAPTURE_REG
     return 1;

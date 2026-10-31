@@ -7649,6 +7649,9 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
 # lifecycle-safe no-op adapter; material probes add the fixture explicitly.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
+# This Ymir stepper port is an authenticated-capture comparison tool only.
+# Compile it into its dedicated real-data test, never the retail Nexus library.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_vdp1_ymir_stepper_capture\\.c$")
 # ITEM.IBS and TITLE.CG decoders retain source-format bytes, but their RGBA
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
@@ -41917,6 +41920,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_vdp2_capture_compositor
         tests/test_nexus_v1_vdp2_capture_compositor.c
         src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
     )
     target_include_directories(test_nexus_v1_vdp2_capture_compositor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -41934,9 +41939,57 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp2_capture_compositor
     )
 
+    add_executable(test_nexus_v1_vdp2_ymir_frame8037_real
+        tests/test_nexus_v1_vdp2_ymir_frame8037_real.c
+        src/nexus/nexus_v1_vdp2_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_ymir_frame8037_real PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_ymir_frame8037_real
+        COMMAND test_nexus_v1_vdp2_ymir_frame8037_real
+    )
+    set_tests_properties(nexus_v1_vdp2_ymir_frame8037_real PROPERTIES
+        LABELS "nexus;saturn;ymir;frame8037;real-data;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME nexus_v1_vdp1_frame8037_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_frame8037_source_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_frame8037_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;frame8037;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+        add_test(
+            NAME nexus_v1_vdp1_gameplay_frame300_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_gameplay_frame300_source_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_gameplay_frame300_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+    endif()
+
     add_executable(test_nexus_v1_vdp2_tilemap_capture_compositor
         tests/test_nexus_v1_vdp2_tilemap_capture_compositor.c
         src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
     )
     target_include_directories(test_nexus_v1_vdp2_tilemap_capture_compositor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -41956,6 +42009,8 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_nexus_v1_vdp2_runtime_tilemap
         tests/test_nexus_v1_vdp2_runtime_tilemap.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_x68k_media_receipt.c
         src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
     )
     target_include_directories(test_nexus_v1_vdp2_runtime_tilemap PRIVATE
@@ -45284,6 +45339,46 @@ add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
 set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_vdp1_frame13162_dgn_window
+    tests/test_nexus_v1_vdp1_frame13162_dgn_window.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
+target_include_directories(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_frame13162_dgn_window
+    COMMAND test_nexus_v1_vdp1_frame13162_dgn_window
+        ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030
+        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv)
+set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")
+
+add_executable(test_nexus_v1_vdp1_ymir_stepper_capture_real
+    tests/test_nexus_v1_vdp1_ymir_stepper_capture_real.c
+    src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c)
+target_include_directories(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_ymir_stepper_capture_real
+    COMMAND test_nexus_v1_vdp1_ymir_stepper_capture_real)
+set_tests_properties(nexus_v1_vdp1_ymir_stepper_capture_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;ymir;frame13162;real-data;capture-only;skip-safe")
+
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)
 target_sources(test_nexus_v1_title_mapd_tibg_admission PRIVATE

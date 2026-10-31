@@ -61,16 +61,22 @@ The bounded `MAPD/TIBG` receipt also requires the complete section: five
 the MAPD start). A shorter block is rejected before palette reads; this is
 format validation only and does not authorize Saturn presentation.
 
-### Native startup letter timing
+### Retail intro and native MAPD timing
 
-The native M11 startup renderer now converts boot-global frames to the
-title-local timeline after the 48-frame warning lead-in. This fixes the
-previous off-by-origin error that made the first visible MAPD letter `E` and
-skipped `N`. With the authentic title maps, boot-global frames 48, 88, 129,
-169, and 209 render `N`, `E`, `X`, `U`, and `S`, respectively. The retail-data
-test checks each full 320×224 plane at its transition frames. This verifies
-Firestaff's source-plane schedule; it does not prove the Saturn's final layer
-composition or placement.
+The authentic Ymir cold-boot capture shows a title card with the complete
+`NEXUS` word spread across the screen. After Start, the retained transition
+capture shows a zoomed, edge-cropped `Dungeon Master` logo over the 3D scene;
+it does not show the five MAPD letter planes. These are separate visual states
+and must not be conflated when checking whether Firestaff begins the MAPD
+sequence with `N`.
+
+The native M11 renderer converts its boot-global frame to a title-local frame
+after a 48-frame warning lead-in. Its real-data unit test confirms that its
+local MAPD selector produces `N`, `E`, `X`, `U`, and `S` at local frames 0,
+40, 81, 121, and 161, respectively (boot-global frames 48, 88, 129, 169,
+and 209). This verifies the renderer's source-plane schedule only. It does
+not prove that those local frames align with the retail intro or that the
+Saturn displays the decoded MAPD planes in that sequence on screen.
 
 ### Retail MAPD preservation observation
 
@@ -694,15 +700,27 @@ both buffers across all 71,680 pixels. The image shows the retail Nexus title
 and its three menu choices. This verifies Ymir's capture against its own
 frontend output; it is not a Firestaff or hardware parity result.
 
-Firestaff's bounded capture-only replay accepts this register state, including
-`BGON=0x0001` and the captured ratio register at `0x100=0x1000`. Against the
-authentic frame-8037 dump, its output matches both same-run Ymir VDP2 pass
-buffers exactly across all 71,680 RGB pixels. This is capture composition
-evidence, not hardware parity or retail source ownership. The VDP1 frame
-contains 99,410 direct-color pixels, 94,208 transparent pixels, and 2,990
+Firestaff's capture-only replay now accepts this exact register state and
+reconstructs the frame from hash-verified VDP1 display FBS, VDP2 VRAM, CRAM,
+and registers. Its real-data test matches all 71,680 RGB pixels against each
+of the two same-run Ymir VDP2 pass buffers with zero differences. The 640×448
+frontend screenshot also matches those buffers after 2× nearest-neighbor
+downscaling. This verifies Firestaff's bounded capture compositor against
+Ymir's output for this frame; it does not prove hardware parity, retail asset
+ownership for every displayed pixel, or production-renderer admission. The
+production title gate remains closed. The VDP1 frame contains direct-color,
+transparent, and palette/special pixels; the replay resolves the captured
+palette/special values through the exact frame's CRAM and layer registers, but
+does not join each value to its retail command or source asset. The capture
+uses `BGON=0x0001` and ratio register `0x100=0x1000`. The VDP1 frame contains
+99,410 direct-color pixels, 94,208 transparent pixels, and 2,990
 palette/special pixels. Those palette/special pixels still lack a complete
-per-command CLUT/CRAM provenance join to retail source data. Keep the
-production title gate closed until source ownership and the live display
-consumer are verified. The authentic capture and comparison evidence is
+per-command CLUT/CRAM provenance join to retail source data. The result is
+capture composition evidence, not hardware parity or full retail source
+ownership. Keep the production title gate closed until source ownership and the
+live display consumer are verified. The authentic capture and comparison
+evidence is
 retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
+The replay and real-data CTest are documented in
+[`nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).
