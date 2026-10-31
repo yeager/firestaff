@@ -489,6 +489,8 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
     uint16_t mapa;
     uint16_t mapb;
     uint16_t craofa;
+    uint16_t ramctl;
+    uint32_t cram_mode;
     uint32_t map_base;
     unsigned int y;
     unsigned int x;
@@ -513,8 +515,10 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
     mapa = NBG2_REG(0x48U) & 0x3fU;
     mapb = NBG2_REG(0x4aU) & 0x3fU;
     craofa = NBG2_REG(NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    ramctl = NBG2_REG(NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET);
+    cram_mode = (ramctl >> 12U) & 3U;
     if (NBG2_REG(0x00U) != 0x8000U || bgon != 0x0007U ||
-        chctlb != 0x0002U || pncnc != 0x0000U ||
+        chctlb != 0x0002U || pncnc != 0x0000U || cram_mode >= 2U ||
         (plsz & 0x0030U) != 0U || (mpofn & 0x0700U) != 0U ||
         mapa != 0x18U || mapb != 0x18U ||
         NBG2_REG(0x90U) != 0U || NBG2_REG(0x92U) != 0U ||
@@ -557,6 +561,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
             unsigned int px = x & 7U;
             unsigned int py = y & 7U;
             uint32_t pixel_offset;
+            uint32_t cram_index;
             uint8_t index;
             size_t destination = (size_t)y *
                 NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH + x;
@@ -568,8 +573,12 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
             if (index == 0U) {
                 ++receipt.transparent_pixels;
             } else {
+                /* Ymir's Palette256 path combines PND palette bits with the
+                 * dot index, then wraps by the active CRAM word mode. */
+                cram_index = (((uint32_t)(attr & 0x70U) << 4U) + index) &
+                    (cram_mode == 0U ? 0x3ffU : 0x7ffU);
                 plane->rgba_buffer[destination] = cram_to_rgba_ordered(
-                    vdp2_cram + (size_t)index * 2U, register_byte_order);
+                    vdp2_cram + (size_t)cram_index * 2U, register_byte_order);
                 ++receipt.written_pixels;
             }
         }
@@ -916,8 +925,7 @@ int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
                 ((sfprmd & 0x0030U) == 0x0010U ? ((nbg2_meta >> 13U) & 1U) : 0U));
             ymir_stack_consider(plane, pixel, priority, 2U,
                 NEXUS_V1_VDP2_STACK_LAYER_NBG2,
-                ymir_rgb555_shift(read_vram16_ordered(
-                    vdp2_cram + (size_t)i2 * 2U, register_byte_order)));
+                nbg2->rgba_buffer[pixel]);
         }
         if ((sprite & 0x8000U) != 0U) {
             ymir_stack_consider(plane, pixel,
