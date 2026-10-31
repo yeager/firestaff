@@ -12518,7 +12518,10 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 NULL);
             (void)scan_record;
             if (!scan_record) break;
-            if ((scan & 3) == (cell & 3) && scan_type > 4 && scan_type < 14) {
+            /* ReDMCSB DEFS.H:398 M011_CELL stores wall cells in bits 14-15. */
+            if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                    (uint16_t)scan) == (cell & 3) &&
+                scan_type > 4 && scan_type < 14) {
                 square_has_object = 1;
                 scan_object_type = csb_v1_runtime_object_type_from_thing(
                     dungeon,
