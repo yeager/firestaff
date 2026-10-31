@@ -330,6 +330,9 @@ typedef struct {
 typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
                                               const uint8_t *record,
                                               int is_wall);
+typedef void (*DM2_V1_QueueOrnateActivationSoundFn)(
+    void *ctx, int16_t actuator_handle, uint8_t *record,
+    int map, int x, int y, uint32_t game_tick, int is_wall);
 
 /* ── Wall/floor mecha dispatch ─────────────────────────────────────── */
 
@@ -353,6 +356,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
 /* Full ACTUATE_FLOOR_MECHA dispatch.
@@ -369,6 +374,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.

@@ -9017,144 +9017,109 @@ static int16_t dm2_runtime_get_ornate_anim_len(
     return 1;
 }
 
-/* ACTIVATE_ORNATE_ANIMATOR (SKWINSPX skevent.cpp:1240) queues the actuator's
- * optional activation sound only on the inactive-to-active transition. The
- * mecha transaction owns record mutation; compare its pre-dispatch pool copy
- * with the committed pool and then submit the exact GDAT 0x88 sound request. */
-static void dm2_runtime_queue_ornate_activation_sounds(
-    DM2_V1_RuntimeState *rt, const DM2_V1_RecordPoolSet *before,
-    int map, int x, int y, int is_wall)
+/* Queue ornate activation/continuous-noise work at the source actuator's
+ * dispatch point so timer and sound insertion order matches SKWINSPX. */
+static void dm2_runtime_queue_ornate_activation_sound(
+    void *context, int16_t handle, uint8_t *record,
+    int map, int x, int y, uint32_t game_tick, int is_wall)
 {
-    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
     const DM2_V1_AssetLoader *loader;
+    DM2_V1_DungeonData *dungeon;
     DM2_V1_SoundQueueEnv env;
-    int category = is_wall ? 0x09 : 0x0a;
-    int gfx_count;
-    int16_t link;
-    long budget = 1;
+    DM2_V1_SoundQueueReceipt sound;
+    uint8_t atype, decoration = 0xffu;
+    uint8_t gfx_index;
+    uint16_t sound_row = 0xffffu;
+    int category, gfx_count;
 
-    if (!rt || !before || !rt->record_pools_valid || !rt->boot ||
+    if (!rt || !record || !rt->boot ||
         !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
         !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
-        map < 0 || map >= dungeon->level_count ||
-        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
-        y >= dungeon->level_heights[map]) return;
+        map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map])
+        return;
 
+    atype = dm2_actu_type(record);
+    category = is_wall ? 0x09 : 0x0a;
     gfx_count = is_wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
     if (gfx_count <= 0 || gfx_count > 16) return;
-    for (int i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i)
-        budget += before->pools[i].record_count;
-    link = dm2_v1_tile_record_link(dungeon, map, x, y);
-    memset(&env, 0, sizeof(env));
-    env.current_map = (int16_t)map;
-    env.gate_map_a = rt->sound_env.gate_map_a;
-    env.gate_map_b = rt->sound_env.gate_map_b;
-    env.facing = (uint16_t)rt->view_dir;
-    env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
-    env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
-    env.gametick = (int32_t)rt->tick_count;
+    gfx_index = (uint8_t)((((uint16_t)record[4] |
+                            ((uint16_t)record[5] << 8)) >> 12) & 0x0fu);
+    if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
+        decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
+                             : rt->map_floor_gfx_list[gfx_index - 1u];
+    if (decoration == 0xffu) return;
 
-    while (link != DM2_V1_RECORD_HANDLE_END && budget-- > 0) {
-        const uint8_t *old_record = dm2_v1_record_pool_address(before, link);
-        const uint8_t *record = dm2_v1_record_pool_address(
-            &rt->record_pools, link);
-        int16_t next;
-        if (!old_record || !record || !dm2_v1_record_pool_next_link(
-                before, link, &next)) return;
-        if (dm2_v1_record_handle_pool(link) == 3 &&
-            dm2_actu_type(old_record) == DM2_ACTU_ORNATE_ANIMATOR_2 &&
-            dm2_actu_active_status(old_record) == 0 &&
-            dm2_actu_active_status(record) != 0 &&
-            dm2_actu_sound_effect(old_record)) {
-            uint16_t gfx_word = (uint16_t)record[4] |
-                ((uint16_t)record[5] << 8);
-            uint8_t gfx_index = (uint8_t)(gfx_word >> 12);
-            uint8_t decoration = 0xffu;
-            uint16_t sound_row = 0xffffu;
-            if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
-                decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
-                                     : rt->map_floor_gfx_list[gfx_index - 1u];
-            if (decoration != 0xffu && rt->sound_queue_ready) {
-                if (dm2_v1_query_gdat_entry_data_index(
-                        loader, (uint8_t)category, decoration,
-                        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row))
-                    ++sound_row;
-                DM2_V1_SoundQueueReceipt sound;
-                memset(&sound, 0, sizeof(sound));
-                (void)dm2_v1_sound_queue_noise_gen2(
-                    &rt->sound_queue, (int8_t)category, (int8_t)decoration,
-                    (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
-                    (int16_t)sound_row, (int16_t)0x8c,
-                    (int16_t)0x80, &env, &sound);
-            }
-        } else if (dm2_v1_record_handle_pool(link) == 3 &&
-                   dm2_actu_type(old_record) == DM2_ACTU_ORNATE_ANIMATOR &&
-                   dm2_actu_once_only(old_record) == 0 &&
-                   dm2_actu_once_only(record) == 1 &&
-                   dm2_actu_active_status(old_record) == 0 &&
-                   dm2_actu_active_status(record) != 0 &&
-                   dm2_actu_sound_effect(old_record) &&
-                   (dm2_actu_data(old_record) & 0x100u) == 0u) {
-            uint16_t gfx_word = (uint16_t)record[4] |
-                ((uint16_t)record[5] << 8);
-            uint8_t gfx_index = (uint8_t)(gfx_word >> 12);
-            uint8_t decoration = 0xffu;
-            uint16_t sound_row = 0xffffu;
-            int16_t anim_len = dm2_runtime_get_ornate_anim_len(
-                rt, record, is_wall);
-            if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
-                decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
-                                     : rt->map_floor_gfx_list[gfx_index - 1u];
-            if (anim_len < 1 || decoration == 0xffu) {
-                link = next;
-                continue;
-            }
-            if (dm2_v1_query_gdat_entry_data_index(
-                    loader, (uint8_t)category, decoration,
-                    DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row)) {
-                /* DM2_TRY_ORNATE_NOISE adds one to the source 0xffff-based
-                 * GDAT entry index when it calls QUERY_NOISE_GEN2. */
-            }
-            {
-                uint32_t phase_sum =
-                    (uint32_t)(dm2_actu_data(record) & 0xffu) +
-                    rt->tick_count + sound_row;
-                uint32_t phase = phase_sum % (uint32_t)anim_len;
-                uint32_t delay = (uint32_t)anim_len - phase;
-                DM2_V1_SourceTimer noise_timer;
-                memset(&noise_timer, 0, sizeof(noise_timer));
-                noise_timer.ticks_and_map =
-                    ((uint32_t)(map & 0xff) << 24) |
-                    ((rt->tick_count + delay) &
-                     DM2_V1_SOURCE_TIMER_TICK_MASK);
-                noise_timer.type = DM2_V1_TIMER_ORNATE_NOISE;
-                noise_timer.actor = 0;
-                noise_timer.value_a = (int16_t)((uint8_t)x |
-                    ((uint16_t)(uint8_t)y << 8));
-                noise_timer.value_b = link;
-                if (dm2_v1_source_timer_enqueue(
-                        &rt->timer_queue, &noise_timer, 0u) ==
-                    DM2_V1_SOURCE_TIMER_OK) {
-                    uint8_t *record_mut = dm2_v1_record_pool_address_mut(
-                        &rt->record_pools, link);
-                    if (record_mut) {
-                        dm2_actu_set_data(record_mut,
-                            (uint16_t)(dm2_actu_data(record_mut) | 0x100u));
-                        if (phase == 0u && rt->sound_queue_ready) {
-                            DM2_V1_SoundQueueReceipt sound;
-                            memset(&sound, 0, sizeof(sound));
-                            (void)dm2_v1_sound_queue_noise_gen2(
-                                &rt->sound_queue, (int8_t)category,
-                                (int8_t)decoration, (int8_t)0x88,
-                                (int8_t)0xfe, (int16_t)x, (int16_t)y,
-                                1, (int16_t)0x8c, (int16_t)0x80,
-                                &env, &sound);
-                        }
-                    }
-                }
-            }
+    if (atype == DM2_ACTU_ORNATE_ANIMATOR_2) {
+        if (!dm2_actu_sound_effect(record) || !rt->sound_queue_ready)
+            return;
+        if (dm2_v1_query_gdat_entry_data_index(
+                loader, (uint8_t)category, decoration,
+                DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row))
+            ++sound_row;
+        memset(&env, 0, sizeof(env));
+        env.current_map = (int16_t)map;
+        env.gate_map_a = rt->sound_env.gate_map_a;
+        env.gate_map_b = rt->sound_env.gate_map_b;
+        env.facing = (uint16_t)rt->view_dir;
+        env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+        env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+        env.gametick = (int32_t)game_tick;
+        memset(&sound, 0, sizeof(sound));
+        (void)dm2_v1_sound_queue_noise_gen2(
+            &rt->sound_queue, (int8_t)category, (int8_t)decoration,
+            (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+            (int16_t)sound_row, (int16_t)0x8c, (int16_t)0x80,
+            &env, &sound);
+        return;
+    }
+
+    if (atype != DM2_ACTU_ORNATE_ANIMATOR ||
+        !dm2_actu_sound_effect(record) ||
+        (dm2_actu_data(record) & 0x100u) != 0u)
+        return;
+
+    {
+        int16_t anim_len = dm2_runtime_get_ornate_anim_len(rt, record, is_wall);
+        uint32_t phase, delay;
+        DM2_V1_SourceTimer noise_timer;
+        if (anim_len < 1) return;
+        (void)dm2_v1_query_gdat_entry_data_index(
+            loader, (uint8_t)category, decoration,
+            DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x88u, &sound_row);
+        phase = ((uint32_t)(dm2_actu_data(record) & 0xffu) +
+                 game_tick + sound_row) % (uint32_t)anim_len;
+        delay = (uint32_t)anim_len - phase;
+        memset(&noise_timer, 0, sizeof(noise_timer));
+        noise_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            ((game_tick + delay) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        noise_timer.type = DM2_V1_TIMER_ORNATE_NOISE;
+        noise_timer.actor = 0;
+        noise_timer.value_a = (int16_t)((uint8_t)x |
+            ((uint16_t)(uint8_t)y << 8));
+        noise_timer.value_b = handle;
+        if (dm2_v1_source_timer_enqueue(
+                &rt->timer_queue, &noise_timer, 0u) !=
+            DM2_V1_SOURCE_TIMER_OK)
+            return;
+        dm2_actu_set_data(record,
+            (uint16_t)(dm2_actu_data(record) | 0x100u));
+        if (phase == 0u && rt->sound_queue_ready) {
+            memset(&env, 0, sizeof(env));
+            env.current_map = (int16_t)map;
+            env.gate_map_a = rt->sound_env.gate_map_a;
+            env.gate_map_b = rt->sound_env.gate_map_b;
+            env.facing = (uint16_t)rt->view_dir;
+            env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+            env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+            env.gametick = (int32_t)game_tick;
+            memset(&sound, 0, sizeof(sound));
+            (void)dm2_v1_sound_queue_noise_gen2(
+                &rt->sound_queue, (int8_t)category, (int8_t)decoration,
+                (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+                1, (int16_t)0x8c, (int16_t)0x80, &env, &sound);
         }
-        link = next;
     }
 }
 
@@ -9247,6 +9212,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_ActuatorEventReceipt event;
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SoundQueueState sound_queue_backup;
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
@@ -9301,6 +9267,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
+    sound_queue_backup = rt->sound_queue;
     if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
         caii_backup_size = (size_t)rt->caii.capacity *
             DM2_V1_CAII_SLOT_SIZE;
@@ -9327,6 +9294,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         game ? &global_state : NULL,
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
+        dm2_runtime_queue_ornate_activation_sound, rt,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -9340,8 +9308,6 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         memcpy(game->glob_vars.word_vars, global_state.word_vars,
                sizeof(global_state.word_vars));
     }
-    dm2_runtime_queue_ornate_activation_sounds(
-        rt, &pool_backup, map, x, y, 1);
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
     free(caii_backup);
@@ -9351,6 +9317,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
 wall_mecha_reject:
     if (backup_ready) {
         rt->timer_queue = queue_backup;
+        rt->sound_queue = sound_queue_backup;
         memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
                raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
         dm2_v1_record_pool_set_free(&rt->record_pools);
@@ -9374,6 +9341,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_ActuatorEventReceipt event;
     DM2_V1_RecordPoolSet pool_backup;
     DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SoundQueueState sound_queue_backup;
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
@@ -9428,6 +9396,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
     queue_backup = rt->timer_queue;
+    sound_queue_backup = rt->sound_queue;
     if (rt->caii_ready && rt->caii.slots && rt->caii.capacity > 0) {
         caii_backup_size = (size_t)rt->caii.capacity *
             DM2_V1_CAII_SLOT_SIZE;
@@ -9454,6 +9423,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         game ? &global_state : NULL,
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
+        dm2_runtime_queue_ornate_activation_sound, rt,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -9467,8 +9437,6 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         memcpy(game->glob_vars.word_vars, global_state.word_vars,
                sizeof(global_state.word_vars));
     }
-    dm2_runtime_queue_ornate_activation_sounds(
-        rt, &pool_backup, map, x, y, 0);
     dm2_v1_record_pool_set_free(&pool_backup);
     free(raw_backup);
     free(caii_backup);
@@ -9478,6 +9446,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
 floor_mecha_reject:
     if (backup_ready) {
         rt->timer_queue = queue_backup;
+        rt->sound_queue = sound_queue_backup;
         memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
                raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
         dm2_v1_record_pool_set_free(&rt->record_pools);

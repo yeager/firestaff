@@ -709,6 +709,8 @@ typedef struct {
     const DM2_V1_CreatureKillerCallbacks *creature_killer_cb;
     DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len;
     void *ornate_ctx;
+    DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound;
+    void *ornate_sound_ctx;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -923,6 +925,10 @@ static int wall_mecha_visitor(void *context,
                     handle, 1 /* isWall=1 */);
                 dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
             }
+            if (ctx->queue_ornate_sound)
+                ctx->queue_ornate_sound(ctx->ornate_sound_ctx, handle,
+                    record_mut, ctx->map, ctx->x, ctx->y,
+                    ctx->game_tick, 1);
         }
         if (dm2_actu_once_only(record)) {
             dm2_v1_activate_relay2(ctx->pool_set, ctx->dungeon, ctx->queue,
@@ -970,6 +976,10 @@ static int wall_mecha_visitor(void *context,
                          % (uint32_t)anim_len) & 0xFF);
                     dm2_actu_set_data(record_mut,
                         (actu_data & 0x100) | phase);
+                    if (ctx->queue_ornate_sound)
+                        ctx->queue_ornate_sound(ctx->ornate_sound_ctx,
+                            handle, record_mut, ctx->map, ctx->x, ctx->y,
+                            ctx->game_tick, 1);
                 }
             } else {
                 int16_t di = (int16_t)(((actu_data & 0xFF) + ctx->game_tick)
@@ -1159,6 +1169,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1187,6 +1199,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
+    ctx.queue_ornate_sound = queue_ornate_sound;
+    ctx.ornate_sound_ctx = ornate_sound_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1249,6 +1263,10 @@ static int floor_mecha_visitor(void *context,
                          % (uint32_t)anim_len) & 0xFF);
                     dm2_actu_set_data(record_mut,
                         (dm2_actu_data(record) & 0x100) | phase);
+                    if (ctx->queue_ornate_sound)
+                        ctx->queue_ornate_sound(ctx->ornate_sound_ctx,
+                            handle, record_mut, ctx->map, ctx->x, ctx->y,
+                            ctx->game_tick, 0);
                 }
             } else {
                 int16_t di = (int16_t)(((dm2_actu_data(record) & 0xFF)
@@ -1353,6 +1371,10 @@ static int floor_mecha_visitor(void *context,
                     handle, 0 /* isWall=0 */);
                 dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
             }
+            if (ctx->queue_ornate_sound)
+                ctx->queue_ornate_sound(ctx->ornate_sound_ctx, handle,
+                    record_mut, ctx->map, ctx->x, ctx->y,
+                    ctx->game_tick, 0);
         }
         if (dm2_actu_once_only(record)) {
             dm2_v1_activate_relay2(ctx->pool_set, ctx->dungeon, ctx->queue,
@@ -1497,6 +1519,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1525,6 +1549,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
+    ctx.queue_ornate_sound = queue_ornate_sound;
+    ctx.ornate_sound_ctx = ornate_sound_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
