@@ -1912,6 +1912,26 @@ rows, while 16 have none. Because material bytes are reused across levels and
 face rows, these are candidate owners rather than active-instance assignments.
 See the expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
 
+## English Configuration floor-map source join (2026-10-31)
+
+A hash-gated analyzer now joins the 16 unowned indexed floor quads in the
+complete English frame-119 Ymir trace to their authentic `LEV00.DGN`
+Structure1B floor-material IDs. Their four command-space Y bands carry the
+sequences `2,2,2`, `2,1,2`, `2,3,1,3,2`, and `1,1,1,5,4`. The exact same
+sequences occur together at one unique location in the retail 64×64 map:
+rows 26–29, spanning x=30–34. Each quad's Structure2 bytes and CLUT also match
+the retail file, and none of these five selectors has a raw Structure3 face
+owner.
+
+This binds the observed texture sequence to a unique source-side map pattern
+and strengthens the floor-cell hypothesis. It does not directly identify the
+active cell-selection routine, selected-cell projection, camera transform,
+culling, display origin, VDP2 composition, or Firestaff output. Reproduce it
+with `scripts/analyze_nexus_vdp1_structure1b_floor_map_join.py`; the
+[frame-119 floor-map receipt](../../parity-evidence/verification/nexus_english_configuration_floor_map_join_20261031/README.md)
+records the input hashes and output boundaries. Semantic admission remains
+blocked.
+
 ## Japanese Configuration scene trace prefix (2026-10-28)
 
 An authentic Japanese retail capture at frame 599 shows the Configuration page
