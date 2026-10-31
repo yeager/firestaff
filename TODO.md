@@ -11,13 +11,17 @@ and no-game M12 routes for DM1 Atari ST German 1.2 and CSB Atari ST French
 reached first runtime (2/2). No launch failure was reproduced in those
 checked routes. Full platform/gameplay parity remains open below.
 
-The optional DM2 archive hash-lock check did not match the installed DOS
-English and FM Towns container hashes. DOS English `DATA/GRAPHICS.DAT` did
-match the catalogued original PC English MD5, and the DOS French and Amiga
-archives matched their locked container identities. The FM Towns installation
-is a CloneCD wrapper containing the original `track01.iso`. Compare its
-authenticated inner-file identities with the locked corpus before treating
-the wrapper mismatch as a game-data failure or changing the hash-lock.
+2026-10-31 DM2 media identity follow-up: the installed DOS English ZIP has a
+different wrapper hash from the previously locked ZIP, while its
+`DATA/GRAPHICS.DAT` and `DATA/DUNGEON.DAT` match the authentic PC English
+catalog. The FM Towns ZIP is a CloneCD wrapper; its `track01.iso` contains the
+catalog-authenticated FM Towns `GRAPHICS.DAT`, `DUNGEON.DAT`, and `TWANIM.EXP`.
+The Macintosh source present here is the English StuffIt archive, with its
+extracted `Graphics.dat` matching the authentic Mac catalog. Updated
+`dm2_v1_real_media_hash_lock` to accept these exact reviewed local container
+identities while continuing to reject unknown hashes; the test passed against
+the installed originals. DOS French and Amiga container identities also
+passed. All archives were read in place and remain unchanged.
 
 2026-10-30 authentic-media no-game menu retest at `20fe91e3`: the full
 `test_m12_main_menu_game_selection_real_media.sh` run passed against the
