@@ -180,11 +180,12 @@ requirements above.
   frame-239/frame-300 stack comparisons have not been rerun against this
   revision. Arbitrary-frame composition, retail asset ownership, text/page
   mapping, placement, and production rendering remain unresolved.
-- **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
+- **VDP2 NBG2 tilemap:** a bounded frame-239 decoder measures the 40×28
   visible 8bpp capture plane and matches 9,258 of 11,232 nontransparent CRAM
-  samples to the Ymir screenshot within eight RGB levels. The exact frame-239
-  full-stack capture match resolves layer priority and color selection only
-  for this measured state; complete color calculation, retail source ownership
+  samples to the Ymir screenshot within eight RGB levels. The decoder and
+  priority-stack path now apply the NBG2 PND palette number and active RGB555
+  CRAM wrap. The authentic frame-239/full-stack comparison must be rerun
+  against this revision. Complete color calculation, retail source ownership
   and production rendering remain unresolved.
 - **VDP2 NBG0 bitmap:** frame 239's existing bounded 8bpp decoder matches
   3,954 of 3,968 nontransparent CRAM samples within eight levels. The exact
