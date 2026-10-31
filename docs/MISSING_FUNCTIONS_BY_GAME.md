@@ -173,6 +173,8 @@ requirements above.
   pixels). This verifies an isolated captured NBG1 layer, not final screen
   composition or retail source ownership. The separate frame-239 8bpp plane
   comparison and exact doubled-screenshot stack match remain frame-specific.
+  The frame-891 input hashes, receipt, and reproduction command are in
+  [the authentic MAPD 4bpp capture report](nexus_vdp2_nbg1_mapd_4bpp.md).
   Arbitrary-frame composition, retail asset ownership, text/page mapping,
   placement, and production rendering remain unresolved.
 - **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
