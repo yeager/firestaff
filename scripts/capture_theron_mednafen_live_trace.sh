@@ -26,7 +26,18 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+system_card_io_ram_pc_filter=${THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER:-none}
 state_trace_only=${THERON_CAPTURE_STATE_TRACE_ONLY:-0}
+if [[ "$system_card_io_ram_pc_filter" != none &&
+      "$system_card_io_ram_pc_filter" != run-path ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' >&2
+    exit 1
+fi
+if [[ "$system_card_io_ram_pc_filter" != none &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: the System Card I/O/RAM PC filter requires the PCE Fast module' >&2
+    exit 1
+fi
 if [[ "$state_trace_only" != 0 && "$state_trace_only" != 1 ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY must be 0 or 1' >&2
     exit 1
@@ -1369,6 +1380,11 @@ require_instrumented_mednafen_binary() {
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card I/O/RAM hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
+    if [[ "$system_card_io_ram_pc_filter" != none ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the source-scoped System Card I/O/RAM filter; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
     if [[ -n "$huc6280_23ad_trace" ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_HUC6280_23AD_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the HuC6280 $23AD hook; enable FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT when building it' >&2
@@ -1895,6 +1911,7 @@ launch=(
     FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE="$system_card_callback_state_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE="$system_card_decision_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE="$system_card_io_ram_trace" \
+    FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER="$system_card_io_ram_pc_filter" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \

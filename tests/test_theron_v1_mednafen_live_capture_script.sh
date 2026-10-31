@@ -15,6 +15,16 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST must be 0 or 1' <<<"$invalid_b
     printf '%s\n' 'FAIL: Mednafen build did not validate the PCE Fast enable option' >&2
     exit 1
 fi
+if invalid_syscard_filter_output=$(env THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=unknown \
+    "$repo/scripts/capture_theron_mednafen_live_trace.sh" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an unknown System Card I/O/RAM PC filter' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' \
+   <<<"$invalid_syscard_filter_output"; then
+    printf '%s\n' 'FAIL: live capture did not explain the invalid System Card I/O/RAM PC filter' >&2
+    exit 1
+fi
 huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
@@ -1915,10 +1925,14 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the source-scoped System Card I/O/RAM filter' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER="$system_card_io_ram_pc_filter"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' "$script" ||
    ! grep -Fq 'verify_theron_syscard_status_trace.py' "$script" ||
    ! grep -Fq 'verify_theron_syscard_decision_trace.py' "$script" ||
    ! grep -Fq 'verify_theron_syscard_io_ram_trace.py' "$script" ||
-   ! grep -Fq 'logical_ranges=1800-1803,224c-2255,2273-2280,22a4' "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" ||
+   ! grep -Fq 'logical_ranges=1800-1803,224c-2255,2259,2273-2280,22a4' "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_callback_state_trace.py' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE' "$script" ||
    ! grep -Fq 'verify_theron_syscard_callback_state_trace.py' "$script" ||

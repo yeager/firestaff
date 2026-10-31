@@ -73,6 +73,17 @@ def main() -> None:
         "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
         "missing_addresses": len(verifier.ADDRESSES) - 3,
     }
+    filtered_rows = [
+        verifier.FILTERED_HEADER,
+        make_row(0, 51, "read", 0x1801, 0xEA4D),
+        make_row(1, 55, "write", 0x2259, 0xEA50),
+        make_row(2, 60, "read", 0x2259, 0xE162),
+    ]
+    assert verifier.verify_lines(filtered_rows, image)["rows"] == 3
+    must_reject(
+        [verifier.FILTERED_HEADER, make_row(0, 51, "read", 0x1801, 0xE900)],
+        image, "source-locked PC filter", "outside the declared source-locked filter",
+    )
     valid = make_row(0, 30, "write", 0x224C, 0xEC05)
     must_reject(
         [verifier.HEADER, valid.replace("logical_address=224c", "logical_address=224b")],

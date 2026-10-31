@@ -22,6 +22,18 @@ main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.
 
+The reference capture wrapper now supports
+`THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path`. This source-scoped mode
+keeps only System Card data reads at `$EA4D`, callback writes at `$EA50`, and
+the callback-result read at `$E162`; the verifier checks each logical PC and
+the captured instruction bytes against the hash-verified System Card image.
+It also admits the observed callback target `$2259`. The default `none` mode
+retains the broader trace. The filtered receipt excludes repeated `$1800`
+status-poll instructions by design. It reduces trace volume but does not prove
+a completed BIOS handoff or gameplay, and no new original-game capture has yet
+used this mode. The remaining cold route must still pass the independent
+callback, input and transition verifiers.
+
 The isolated 2026-10-31 authentic US cold run reached Drator `start`,
 `left-event` and `reentered-event` at level `$03`, position `$02,$03`. The
 rebuilt reference binary recorded 132 `$C852` fetches at physical `$0DC852`.

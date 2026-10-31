@@ -13,13 +13,17 @@ CAP = 8388608
 SYSTEM_CARD_MD5 = "ff1a674273fe3540ccef576376407d1d"
 PCE_HEADER_BYTES = 512
 BIOS_LOGICAL_BASE = 0xC000
-RANGES = ((0x1800, 0x1803), (0x224C, 0x2255), (0x2273, 0x2280), (0x22A4, 0x22A4))
+RANGES = ((0x1800, 0x1803), (0x224C, 0x2255), (0x2259, 0x2259),
+          (0x2273, 0x2280), (0x22A4, 0x22A4))
 ADDRESSES = {address for start, end in RANGES for address in range(start, end + 1)}
-HEADER = (
-    "source=mednafen-pce-fast-system-card-io-ram-v1 "
+HEADER_PREFIX = (
+    "source=mednafen-pce-fast-system-card-io-ram-v2 "
     "event_sequence_source=TheronTraceCDSharedEventSequence limit=8388608 "
-    "logical_ranges=1800-1803,224c-2255,2273-2280,22a4"
 )
+HEADER_SUFFIX = " logical_ranges=1800-1803,224c-2255,2259,2273-2280,22a4"
+FILTERED_PCS = {0xEA4D, 0xEA50, 0xE162}
+HEADER = HEADER_PREFIX + "pc_filter=none" + HEADER_SUFFIX
+FILTERED_HEADER = HEADER_PREFIX + "pc_filter=run-path" + HEADER_SUFFIX
 FIELDS = (
     "access", "index", "event_sequence", "logical_address", "physical_address",
     "access_mpr", "value", "logical_pc", "physical_pc", "code_bytes",
@@ -45,7 +49,12 @@ def verify_lines(lines, system_card_image: bytes) -> dict[str, int]:
         header = next(iterator)
     except StopIteration:
         raise ValueError("unexpected System Card I/O/RAM trace header") from None
-    if header.rstrip("\r\n") != HEADER:
+    header = header.rstrip("\r\n")
+    if header == HEADER:
+        allowed_pcs = None
+    elif header == FILTERED_HEADER:
+        allowed_pcs = FILTERED_PCS
+    else:
         raise ValueError("unexpected System Card I/O/RAM trace header")
     if len(system_card_image) <= PCE_HEADER_BYTES:
         raise ValueError("System Card image is shorter than its PCE header")
@@ -100,6 +109,8 @@ def verify_lines(lines, system_card_image: bytes) -> dict[str, int]:
             raise ValueError(f"logical/physical data mapping mismatch at line {line_number}")
 
         pc = int(values["logical_pc"], 16)
+        if allowed_pcs is not None and pc not in allowed_pcs:
+            raise ValueError("logical PC is outside the declared source-locked filter")
         # System Card code can execute through either half of the HuC6280's
         # top 16 KiB window. In particular, callbacks at $C000-$DFFF are
         # backed by the physical bank selected in MPR6 (commonly bank $01),

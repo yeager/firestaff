@@ -32,6 +32,14 @@ completed but rejected the capped BIOS trace, so the capture package remains
 unaccepted. Use source-locked PC-specific BIOS traces or a strictly verified
 handoff scope to avoid repeated polling.
 
+The capture wrapper now offers the source-locked
+`THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path` scope. It retains data
+reads at `$EA4D`, callback writes at `$EA50` and callback-result reads at
+`$E162`, while verifying their instruction bytes against the authentic System
+Card image. Use it for the next cold replay to avoid logging the repeated
+`$1800` status-poll loop. This is an instrumentation option only; it does not
+change the existing incomplete-capture result or prove a game handoff.
+
 Raw traces and user media remain outside Git. No Drator-positioned save or
 state artifact is checked into the repository; reproduce the route from the
 hash-verified authentic media in a fresh isolated profile. See the

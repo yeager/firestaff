@@ -191,6 +191,12 @@ polling and runtime CD data; native support status is unchanged. Each receipt
 remains bounded to its cited edition, route and test; it does not imply
 complete parity.
 
+The reference capture wrapper now offers a BIOS run-path PC filter for the
+source-locked `$EA4D`, `$EA50` and `$E162` accesses. Its instrumenter and
+streaming verifier passed three loops; no new original-game capture has used
+the filter, so this tooling change does not alter the current Theron evidence
+or support status. See [capture readiness](theron/THERON_CAPTURE_READINESS.md).
+
 The 2026-11-01 ISO projection receipt also binds the same eight creature-pointer
 and five regular-spawn zone records from the authenticated US and JP full ISO
 projections as from their regional raw BINs. Native ISO dungeon startup admits

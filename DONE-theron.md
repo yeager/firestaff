@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — add source-scoped System Card I/O/RAM capture mode
+
+- Added the opt-in `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path`
+  mode to the reference-only Mednafen capture wrapper. It retains the
+  source-locked `$EA4D`, `$EA50` and `$E162` accesses plus callback target
+  `$2259`, avoiding the repeated `$1800` poll rows that filled the prior
+  8,388,608-row trace.
+- The receipt header names its filter; the streaming verifier rejects rows
+  from other PCs and verifies instruction bytes against the hash-locked
+  System Card image. The default `none` mode retains the broader trace.
+- Three loops passed the instrumenter, receipt-verifier and capture-script
+  regressions. This verifies instrumentation and validation only. No new
+  original-game run has used the filter, so the previous capture remains
+  truncated and native gameplay status is unchanged.
+
 ## 2026-10-31 — authentic US cold Drator row byte join and runtime source mapping
 
 - An isolated cold capture reached Drator `start`, `left-event`, and
