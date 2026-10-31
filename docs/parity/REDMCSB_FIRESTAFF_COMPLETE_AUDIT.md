@@ -145,8 +145,8 @@ lighting and nonzero retail DBE/DBF media cases remain unverified. The ordered
 0x3f shop-panel handle and once-only 0x7e actuator datum are receipted in
 summary word 7. DB2 TextMode-1 side-summary writes now preserve the packed ornament/frame
 word in source slots 3..6; ext-usage 5 selects animation only when visible.
-Ext-usage 14 clears side slot 5 and writes the record handle or visible-text
-absent marker to summary word 7. The full output-array contract,
+Ext-usage 14 clears the selected side slot 3..6 and writes the record handle or
+visible-text absent marker to summary word 7 only when that slot is 5. The full output-array contract,
 consumption of every summary slot in the viewport, and all-platform runtime
 behavior remain open. Do not treat
 these bounded receipts as full DM2 parity.

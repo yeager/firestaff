@@ -6313,6 +6313,14 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.summary_word7_written &&
                   q1a46.summary_word7 == 0x0800,
               "DB2 ext usage 14 clears side slot 5 and writes record handle");
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0800u, 0, 0, 4u, NULL, 0,
+                  &animation_loader, &wall_idx, &wall_field, &q1a46) == 0 &&
+                  q1a46.text_summary_written &&
+                  q1a46.text_summary_side == 3 &&
+                  q1a46.text_summary_value == 0 &&
+                  !q1a46.summary_word7_written,
+              "DB2 ext usage 14 clears other side slots without writing word 7");
         animated_text_record_be[3] = 0x2bu; /* visible -> absent marker */
         CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
                   &dungeon, 0x0800u, 2, 2, 4u, NULL, 0,

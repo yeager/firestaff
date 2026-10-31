@@ -13889,8 +13889,11 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     receipt.text_summary_side =
                         (int16_t)(relative_side + 3);
                     receipt.text_summary_value = 0;
-                    receipt.summary_word7_written = 1u;
-                    receipt.summary_word7 = text_visible ? -1 : (int16_t)thing;
+                    if (relative_side + 3 == 5) {
+                        receipt.summary_word7_written = 1u;
+                        receipt.summary_word7 = text_visible
+                            ? -1 : (int16_t)thing;
+                    }
                     goto next_thing;
                 }
                 if (text_mode == 1 && relative_side == side_index) {
