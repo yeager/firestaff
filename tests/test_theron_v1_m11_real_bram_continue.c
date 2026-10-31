@@ -129,7 +129,9 @@ static int exercise_nearest_authentic_item_cycle(M11_GameViewState *view,
     }
     while (path_length > 0) {
         const int direction = path_directions[--path_length];
-        const int relative = (direction - facing + THERON_DIR_COUNT) & 3;
+        const int relative =
+            (direction - (world->party.leader_dir & 3) +
+             THERON_DIR_COUNT) & 3;
         const int next_x = world->party.leader_x + g_theron_dir_dx[direction];
         const int next_y = world->party.leader_y + g_theron_dir_dy[direction];
         if (M11_GameView_HandleInput(view, movement_inputs[relative]) !=
@@ -137,7 +139,7 @@ static int exercise_nearest_authentic_item_cycle(M11_GameViewState *view,
             world->party.leader_y != next_y ||
             world->current_dungeon != dungeon || world->current_level != level)
             return 0;
-        facing = direction;
+        facing = world->party.leader_dir & 3;
     }
     while (facing != target_direction) {
         if (M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) !=
@@ -579,7 +581,9 @@ int main(int argc, char** argv) {
             }
             for (i = path_length - 1; i >= 0; --i) {
                 int direction = path_directions[i];
-                int relative = (direction - facing + THERON_DIR_COUNT) & 3;
+                int relative =
+                    (direction - (world->party.leader_dir & 3) +
+                     THERON_DIR_COUNT) & 3;
                 int next_x = world->party.leader_x +
                     g_theron_dir_dx[direction];
                 int next_y = world->party.leader_y +
@@ -593,6 +597,7 @@ int main(int argc, char** argv) {
                     world->party.leader_y != next_y) {
                     break;
                 }
+                facing = world->party.leader_dir & 3;
                 ++moved_steps;
             }
             if (moved_steps < 3) {
