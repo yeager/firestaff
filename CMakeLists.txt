@@ -45518,6 +45518,29 @@ set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")
 
+add_executable(test_nexus_v1_vdp1_frame13162_dgn113_replay
+    tests/test_nexus_v1_vdp1_frame13162_dgn113_replay.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
+target_include_directories(test_nexus_v1_vdp1_frame13162_dgn113_replay PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_frame13162_dgn113_replay PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_frame13162_dgn113_replay PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_frame13162_dgn113_replay
+    COMMAND test_nexus_v1_vdp1_frame13162_dgn113_replay
+        ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030
+        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv
+        ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp1-command-execution-frame13162.json
+        ${CMAKE_CURRENT_BINARY_DIR}/nexus-vdp1-frame13162-dgn113.rgba)
+set_tests_properties(nexus_v1_vdp1_frame13162_dgn113_replay PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;capture-only")
+
 add_executable(test_nexus_v1_vdp1_ymir_stepper_capture_real
     tests/test_nexus_v1_vdp1_ymir_stepper_capture_real.c
     src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c

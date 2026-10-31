@@ -8,6 +8,27 @@ of the eight direct-colour textures to exact retail `LEV00.DGN` Structure2
 sources. Rows 8 and 9 have captured bytes but ambiguous retail-fill ownership;
 the test does not claim a source join for those rows.
 
+A second capture-only regression scans the complete 174-row frame trace and
+resolves 113 executed type-2 mode-1 draws to unique `LEV00.DGN` image and CLUT
+sources. It submits those commands in trace order to Firestaff's RGBA sequence
+compositor and records 145,171 written pixels. The other 49 of the frame's 162
+draw commands remain explicit capture gaps. This proves command/source/CLUT
+composition for the joined subset; the isolated output is not compared to the
+Ymir screenshot or framebuffer, and it does not close the gaps or enable the
+production renderer. The receipt retains `capture_only=true` and
+`renderer_permitted=false`.
+
+Run this regression with the complete private Ymir capture bundle available at
+the configured capture path and the user's retail data:
+
+```sh
+cmake --build build --target test_nexus_v1_vdp1_frame13162_dgn113_replay
+ctest --test-dir build -R '^nexus_v1_vdp1_frame13162_dgn113_replay$' --output-on-failure
+```
+
+The capture bundle is not committed. When it is absent from the checkout, the
+CTest is skip-safe; a skip is not evidence that the 113-command replay ran.
+
 The execution receipt also includes rows 6 and 7, and the test checks those
 commands against the reconstructed command bytes. Row 6 sets the inclusive
 user-clip rectangle to `(0,0)..(320,224)`; row 7 sets local coordinates to
