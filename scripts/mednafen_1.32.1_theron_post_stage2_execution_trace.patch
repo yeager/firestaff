@@ -1,10 +1,12 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -23,1 +23,3 @@
+@@ -22,3 +22,5 @@
+ #include "main.h"
  #include <mednafen/FileStream.h>
 +#include <stdio.h>
 +#include <stdlib.h>
+FIRESTAFF_PATCH_BLANK_CONTEXT
 @@ -170,2 +170,10 @@
  static bool TheronIrq2TraceLaterE009PostReturnStepPending;
 +static bool TheronIrq2TracePostStage2ExecutionActive;

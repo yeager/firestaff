@@ -1,16 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-31 — bounded `$C852` fetch hook is instrumented; clean build remains open
+## 2026-10-31 — clean `$C852` patch chain and PCE Fast build verified
 
 - ✅ Added the opt-in `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` reference
   hook. It records the fetched opcode, physical PC, MPRs, registers and shared
   event sequence after `RdAtPC()` and before instruction dispatch, capped at
   4,096 rows. Manual source inspection confirmed the insertion point in
   Mednafen 1.32.1.
-- ⏳ A clean-source end-to-end patch-chain application and instrumented build
-  are not verified. The patch-only loop exposed context mismatches in the
-  PCE Fast and VDC instruction-PC patch stages; fix and repeat that loop before
-  using the hook for an evidence capture.
+- ✅ The complete Mednafen 1.32.1 patch chain now applies in three consecutive
+  fresh-source loops. The instrumented PCE Fast binary compiles and installs.
+  Short-context hunks were replaced by idempotent source-anchor instrumenters,
+  and the indirect-jump-follow declaration is kept at file scope.
+- ⏳ The capture wrapper's runtime verification remains blocked in this
+  environment: the installed binary links Homebrew `sdl2-compat`, while the
+  capture gate requires real SDL2 for authentic Quartz/SDL capture. No capture
+  was run with this build.
 - Scope: this is reference instrumentation only. It does not establish a
   same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
   See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).

@@ -22,9 +22,10 @@ It confirms trace-gate operation and event ordering only: the run reports
 media handoff, or Firestaff parity. See the [source-locked capture report](source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
 The opt-in `$C852` fetch hook is documented for a future Drator consumer join.
-Its placement was manually checked against Mednafen 1.32.1, but the complete
-clean-source instrumentation patch chain and build remain unverified because
-instruction-PC patch contexts still fail. It is not yet capture-ready; see
+Its complete clean-source patch chain passed three loops and the PCE Fast
+instrumented binary compiled and installed. Runtime verification remains
+blocked because this environment links `sdl2-compat`, while the capture gate
+requires real SDL2. It is not yet capture-ready; see
 [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
 
 The latest local M12 real-media sweep separately exercised keyboard and mouse

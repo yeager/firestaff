@@ -27,11 +27,12 @@ join. See the
 [generator source-lock report](../source-lock/theron-generator-rng-state-2026-08-21.md)
 and [active TODO](../../TODO-theron.md).
 
-The hook was manually checked against the Mednafen 1.32.1 fetched-opcode
-location. A full clean-source application of the capture patch chain and an
-instrumented build are still unverified; a patch-only run found context
-mismatches in the PCE Fast instruction-PC and VDC instruction-PC stages. Do
-not schedule a capture using this hook until that patch-application loop passes.
+The complete clean-source Mednafen 1.32.1 patch chain applied in three
+consecutive loops, and the instrumented PCE Fast binary compiled and installed.
+The capture wrapper then blocked runtime verification because this environment
+links Homebrew `sdl2-compat`; the capture gate requires real SDL2 for authentic
+Quartz/SDL capture. No capture was run with this binary. Keep the hook
+capture-blocked until runtime verification passes with real SDL2.
 
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US

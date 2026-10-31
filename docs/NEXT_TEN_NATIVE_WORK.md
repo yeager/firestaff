@@ -37,10 +37,10 @@ contains only the next cross-game work items, not a complete Theron inventory.
    transfers may be teleporter destination copying and do not yet prove
    movement, collision or visible effect. See the
    [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). Before
-   capture, the full Mednafen 1.32.1 clean-source patch chain and instrumented
-   build must pass; the new fetch hook has only been manually checked at its
-   source insertion point, while the patch-only loop still finds context
-   mismatches in instruction-PC instrumentation.
+   capture, satisfy the runtime gate: the complete clean-source patch chain
+   passed three loops and the PCE Fast binary compiled and installed, but
+   capture verification is blocked until a real SDL2 runtime is available;
+   the current binary links `sdl2-compat`.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
    Track 02 transition through its game-owned consumer, then bind bitmap,
    palette, text and audio state to the native presentation path. Save-state
