@@ -23,23 +23,23 @@ contains only the next cross-game work items, not a complete Theron inventory.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron US (Drator) generated-row consumer join.** Replay the authenticated Drator
-   event with the bounded `$C852` opcode-fetch hook, enabled by
-   `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`. Its physical PC/MPR and shared
-   event sequence can be correlated with the row-lifecycle and main-RAM reader
-   traces. The optional main-RAM range filters physical data addresses, not
-   instruction PCs. This evidence capture does not replace the native
-   viewport's required map/pose-to-VDC/VCE/VRAM-to-frame join.
-   The 2026-10-31 authentic US cold replay reached the Drator generator route
-   and recorded 139 `$C852` fetches at physical `$0DC852`, starting at shared
-   event 1,590,068. The same run's consumer observer sampled broad `$1F0000`
-   reads and hit its 65,536 sample cap before the Drator event, so this does
-   not show `$C852` consuming that row. Wrapper verification also hit the old
-   524,288-row callback cap; the cap is now 4,194,304, but the capture binary
-   must be rebuilt. Repeat with physical consumer range `1F093B-1F093D`, a
-   sufficient bounded sample limit, and optionally target writes
-   `1F0935-1F093E`. A hit in another physical bank does not close the join.
-   Keep row fields opaque. Then continue the separate
+5. **Theron US (Drator) generated-row consumer join.** First resolve the two
+   runtime `$C852` fetch windows at physical `$0DC852` against the authentic
+   ROM bank; their `a5ba85a9a5b885a8...` bytes differ from the prior static
+   attribution. Make the System Card I/O/RAM verifier stream its 8,388,608-row
+   trace within bounded memory. Then capture the filtered main-RAM reads in an
+   event-aware window: the 1,048,576-row sample limit was reached before
+   `reentered-event`. Callback-state verification passed at 403,975 rows, but
+   the wrapper did not finish. This reference capture does not replace the
+   native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join.
+   A rebuilt cold replay reached Drator `left-event` and captured two runtime
+   `$C852` windows at physical `$0DC852`; their bytes differ from the prior
+   static attribution. The filtered consumer observer hit its 1,048,576-row
+   cap before reentry, callback-state verification passed, and the
+   8,388,608-row System Card I/O/RAM verifier exhausted whole-file memory.
+   Source-map the runtime code, implement streaming verification, and capture
+   an event-aware consumer window. A hit in another physical bank does not
+   close the join. Keep row fields opaque. Then continue the separate
    `$C1FC` active-map and movement question: its matched input-conditioned
    transfers may be teleporter destination copying and do not yet prove
    movement, collision or visible effect. See the

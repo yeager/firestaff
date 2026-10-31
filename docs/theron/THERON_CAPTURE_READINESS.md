@@ -6,33 +6,40 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-The next useful original-game capture is a Drator replay that observes opcode
-fetches at logical `$C852` during the already authenticated generated-row
+The remaining useful original-game capture is a Drator replay that observes
+opcode fetches at logical `$C852` during the already authenticated generated-row
 publication/read/unlink event. Enable the bounded fetch hook with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; it runs after `RdAtPC()` and
 before instruction dispatch, and writes `${THERON_LIVE_TRACE_OUTPUT}.c852-fetch`
-with at most 4,096 hits. Each row records the fetched opcode, physical PC, MPR
-snapshot, registers and `event_sequence` from the same shared counter used by
-the row-lifecycle trace. Correlate it with the existing main-RAM consumer-read
-trace, which identifies data reads by reader PC and physical mapping.
-`FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters physical data-read
-addresses, not instruction PCs. The 2026-10-31 authentic US cold run reached
-the Drator generator route and recorded 139 `$C852` fetches at physical
-`$0DC852`, with the first at shared event sequence 1,590,068. However, the
-consumer-read observer sampled the broad `$1F0000` range and hit its 65,536
-sample limit before the Drator event. The trace therefore does not join those
-fetches to the generated row, and wrapper verification failed at the older
-524,288-row System Card callback cap. The cap was subsequently raised to
-4,194,304 rows in the capture tools, but this run used the older binary.
-Rebuild it and repeat with the consumer filter narrowed to physical
-`1F093B-1F093D`, plus a bounded sample limit large enough to include the
-Drator interval; collect writes to `1F0935-1F093E` if needed to bind row
-construction. The current generator receipt proves the row lifecycle and an
-earlier consumer in that event, while `$C852` is only statically tied to row
-offsets 6–8; no same-session join proves it consumes that row. Accept a result
-only when physical bank identity and event order bind both observations. Do
-not assign coordinate or direction meanings to the row bytes. This capture
-does not close the separate native
+with at most 4,096 hits. Each row records the fetched opcode, a 27-byte runtime
+code window, physical PC, MPR snapshot, registers and `event_sequence` from the
+same shared counter used by the row-lifecycle trace. Correlate it with the
+main-RAM consumer-read trace, which identifies data reads by reader PC and
+physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
+physical data-read addresses, not instruction PCs.
+
+The 2026-10-31 authentic US cold run reached both Drator `start` and
+`left-event`. The rebuilt reference binary captured two `$C852` fetches at
+physical `$0DC852`, with event sequences 10,644,900 and 10,648,164. Both runtime
+windows begin `a5ba85a9a5b885a8...`; this differs from the static raw `$A1612`
+window previously attributed to logical `$C852`. The runtime fetch is
+therefore not yet source-bound to that static row-copy code. The filtered
+consumer trace sampled `$1F093B-$1F093D` but filled its 1,048,576-row sample
+limit before route reentry; no consumer read at the two fetch events is
+established. The target-write trace retained 139 rows. Callback-state
+verification passed with 403,975 rows (87 reads and 403,888 writes), but the
+System Card I/O/RAM trace reached its 8,388,608-row cap. Its verifier started
+loading all 8.4 million rows into a list and reached about 3.2 GB RSS before it
+was stopped; wrapper verification consequently did not finish. The cap and
+the in-memory verifier are not adequate for this capture volume.
+
+The generator receipt still proves the row lifecycle and a prior consumer in
+that event, while this capture establishes neither `$C852`'s same-event row
+consumption nor the runtime code's static source identity. Keep row bytes
+opaque. Continue by resolving the runtime bank/code window, filtering the
+consumer range with event-aware sampling or a higher bounded limit, and making
+the I/O/RAM verifier stream rows with bounded memory. This capture does not
+close the separate native
 viewport gap, which still requires a same-run map/pose-to-VDC/VCE/VRAM-to-frame
 join. See the
 [generator source-lock report](../source-lock/theron-generator-rng-state-2026-08-21.md)

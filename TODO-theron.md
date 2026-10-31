@@ -10,21 +10,24 @@ reading this exact row in the same event. The reference capture wrapper now
 supports a bounded opcode-fetch trace at logical `$C852`; enable it with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`. It writes
 `${THERON_LIVE_TRACE_OUTPUT}.c852-fetch`, capped at 4,096 hits, with the fetched
-opcode, physical PC, all MPRs, registers and the same shared event sequence as
+opcode, a 27-byte runtime code window, physical PC, all MPRs, registers and the same shared event sequence as
 the row-lifecycle records. Correlate it with the existing main-RAM
 consumer-read trace, which records reader PC/MPR and row data reads. Its
 `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` option filters physical
 data-read addresses; it is not a code-PC filter. A 2026-10-31 authentic US
-cold replay reached the Drator generator route and recorded 139 `$C852`
-fetches at physical `$0DC852`, beginning at shared event 1,590,068. Its main
-RAM consumer trace sampled the broad `$1F0000` range and hit the 65,536 sample
-cap before the Drator event, so the capture did not join the fetches to the
-generated row. Wrapper verification also failed at the old 524,288-row System
-Card callback cap; the tool cap is now 4,194,304 rows, and the reference binary
-must be rebuilt before another run. Repeat with consumer range
-`1F093B-1F093D`, a sufficient bounded sample limit, and optionally target
-writes `1F0935-1F093E`. A logical-PC hit in another physical bank does not
-close the join. No Drator-positioned save or state artifact is checked into
+The initial cold replay reached the Drator generator route and recorded 139
+`$C852` fetches at physical `$0DC852`, beginning at shared event 1,590,068. A rebuilt
+follow-up captured two fetches at event sequences 10,644,900 and 10,648,164;
+their runtime code windows begin `a5ba85a9a5b885a8`, differing from the static
+window previously attributed to `$C852`. The filtered `1F093B-1F093D` main-RAM
+consumer trace hit its 1,048,576-row cap before route reentry, so no same-event
+generated-row read is established. Callback-state verification passed at
+403,975 rows. The 8,388,608-row System Card I/O/RAM trace reached its cap, and
+the whole-file verifier grew to about 3.2 GB RSS before it was stopped; wrapper
+verification remains incomplete. Make that verifier stream rows with bounded
+memory, resolve the runtime `$0DC852` code/bank mapping, then repeat with an
+event-aware consumer window or sufficient bounded sample limit. A logical-PC
+hit in another physical bank does not close the join. No Drator-positioned save or state artifact is checked into
 the repository. Obtain and verify an authentic state outside Git, or replay
 the documented original Drator route from authentic media in an isolated
 profile. Keep row bytes opaque; do not label
@@ -34,8 +37,8 @@ consecutive fresh-source loops. A fresh instrumented PCE Fast build against
 real SDL2 2.33.0 compiled, installed and passed the isolated capture-wrapper
 runtime check; the earlier `sdl2-compat` runtime block is cleared. The first
 cold Drator route capture is now recorded, but its same-event row-consumer join
-and native viewport gap remain open. Rebuild the reference binary with the
-raised trace cap before another capture, and use a new isolated profile and
+and native viewport gap remain open. The newer capture exposed the need for a
+streaming I/O/RAM verifier and source-mapped runtime code window. Use a new isolated profile and
 evidence directory; do not reuse an occupied capture profile. The native
 viewport gap remains open.
 This reference capture is evidence-enabling work; the native viewport still

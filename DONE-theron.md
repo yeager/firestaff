@@ -2,11 +2,33 @@
 
 ## 2026-10-31 — authentic US cold Drator route capture; `$C852` join remains open
 
+- Follow-up with a rebuilt PCE Fast binary reached Drator `start` and
+  `left-event`, then captured two runtime `$C852` fetches at physical
+  `$0DC852` (shared events 10,644,900 and 10,648,164). Their 27-byte windows
+  begin `a5ba85a9a5b885a8`, differing from the previous static source
+  attribution. The runtime bank/source mapping remains unresolved.
+- The filtered `$1F093B-$1F093D` observer reached its 1,048,576-row limit
+  before route reentry. Callback-state verification passed for 403,975 rows
+  (87 reads, 403,888 writes). The 8,388,608-row System Card I/O/RAM trace
+  reached its cap; whole-file verification used about 3.2 GB RSS and was
+  stopped, so wrapper verification did not finish.
+- Updated the documentation to retain these limits. Next capture work needs a
+  streaming I/O/RAM verifier, source-mapped runtime `$C852` code, and an
+  event-aware row-consumer observation. This does not establish native
+  gameplay or renderer parity.
+- Rebuilt clean-source Mednafen 1.32.1 after increasing the System Card I/O/RAM
+  trace cap to 8,388,608 rows and callback-state cap to 524,288 rows. Added the
+  bounded 27-byte runtime code window to `$C852` fetch rows; three-loop focused
+  instrumentation/verifier regressions passed, and the clean PCE Fast build
+  completed on TRV2. The authentic follow-up produced the limits recorded
+  above. The I/O/RAM verifier must be converted to streaming before it can
+  validate a trace at this volume.
+
 - Replayed the authentic US cold route on TRV2 with the source-signature-gated
   Drator controller route and four-second System Card RUN hold. It reached the
   generator `start`, `left-event`, and `reentered-event` diagnostics without
   synthesizing a save or game record.
-- The bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
+- The initial bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
   `$0DC852`; the first shared event was 1,590,068. The main-RAM consumer
   observer sampled broad `$1F0000` reads and reached its 65,536-row cap before
   Drator, so it did not join these fetches to the generated row.
@@ -35,7 +57,7 @@
 ## 2026-10-31 — clean `$C852` patch chain and PCE Fast build verified
 
 - ✅ Added the opt-in `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` reference
-  hook. It records the fetched opcode, physical PC, MPRs, registers and shared
+  hook. It records the fetched opcode, 27-byte runtime code window, physical PC, MPRs, registers and shared
   event sequence after `RdAtPC()` and before instruction dispatch, capped at
   4,096 rows. Manual source inspection confirmed the insertion point in
   Mednafen 1.32.1.
@@ -47,10 +69,10 @@
   against the isolated real SDL2 2.33.0 prefix. The capture wrapper's runtime
   verifier passed and reported SDL 2.33.0 for both compiled headers and the
   running binary; it linked `@rpath/libSDL2-2.0.0.dylib`, not `sdl2-compat`.
-- ⏳ At the time of this entry, no Drator capture had been run with this binary.
-  A later authentic cold replay reached Drator and recorded 139 `$C852`
-  fetches; see the current capture report above. Its consumer join remains
-  open.
+- ✅ A later rebuilt authentic cold replay reached Drator `left-event` and
+  recorded two fetches with runtime bytes differing from the static source
+  attribution; see the current capture report above. Source mapping and the
+  consumer join remain open.
 - Scope: this is reference instrumentation only. It does not establish a
   same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
   See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
@@ -10420,7 +10442,7 @@ native rendering, or Theron parity. The private evidence bundle is at
   Drator controller route and four-second System Card RUN hold. It reached the
   generator `start`, `left-event`, and `reentered-event` diagnostics without
   synthesizing a save or game record.
-- The bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
+- The initial bounded PCE Fast hook recorded 139 `$C852` opcode fetches at physical
   `$0DC852`; the first shared event was 1,590,068. The main-RAM consumer
   observer sampled broad `$1F0000` reads and reached its 65,536-row cap before
   Drator, so it did not join these fetches to the generated row.

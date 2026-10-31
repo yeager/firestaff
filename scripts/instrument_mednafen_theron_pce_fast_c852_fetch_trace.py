@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add an opt-in bounded opcode-fetch trace for logical PC $C852."""
+"""Add an opt-in bounded opcode and code-window trace for logical PC $C852."""
 
 from pathlib import Path
 import sys
@@ -39,9 +39,17 @@ TRACE_BLOCK = r'''  {
     {
      extern uint32 TheronTraceCDSharedEventSequence;
      const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
-     fprintf(trace, "c852_fetch sequence=%u event_sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
+     char code_bytes[55] = "unavailable";
+     if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FE5)
+     {
+      const uint8 *code = (const uint8 *)(HuCPU.FastPageR[
+       TheronTraceInstructionPC >> 13] + TheronTraceInstructionPC);
+      for(unsigned i = 0; i < 27; i++)
+       snprintf(code_bytes + i * 2, 3, "%02x", code[i]);
+     }
+     fprintf(trace, "c852_fetch sequence=%u event_sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x code_bytes=%s mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
              count++, event_sequence, TheronTraceInstructionPC,
-             TheronTraceInstructionPhysicalPC, b1,
+             TheronTraceInstructionPhysicalPC, b1, code_bytes,
              HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
              HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],
              HuCPU.A, X_local, Y_local, HuCPU.S, P_local);
