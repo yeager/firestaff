@@ -82,9 +82,25 @@ int dm2_v1_wall_ornament_query_blit_rect(
     int big_endian, int alignment_override, int image_width, int image_height,
     DM2_V1_WallOrnamentBlitRect *out);
 
+/* Resolve QUERY_BLIT_RECT when ExtendedPicture::w28/w30 are nonzero. The
+ * offsets are the final picture-space values passed through yourcx/yourcy
+ * after DRAW_PICST sets rectNo's high bit. Source: SkWinCore.cpp:12667-12720
+ * and SKWINSPX/src/v4/skbltgfx.cpp:842-1197. */
+int dm2_v1_wall_ornament_query_blit_rect_with_offset(
+    const uint8_t *raw_rects, size_t raw_length, uint16_t rect_number,
+    int big_endian, int alignment_override, int image_width, int image_height,
+    int picture_offset_x, int picture_offset_y,
+    DM2_V1_WallOrnamentBlitRect *out);
+
 int dm2_v1_wall_ornament_query_loaded_blit_rect(
     const DM2_V1_AssetLoader *loader, uint16_t rect_number,
     int alignment_override, int image_width, int image_height,
+    DM2_V1_WallOrnamentBlitRect *out);
+
+int dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
+    const DM2_V1_AssetLoader *loader, uint16_t rect_number,
+    int alignment_override, int image_width, int image_height,
+    int picture_offset_x, int picture_offset_y,
     DM2_V1_WallOrnamentBlitRect *out);
 
 int dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(

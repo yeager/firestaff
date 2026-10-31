@@ -1926,6 +1926,39 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+/* PC 3.4 English and the French/German multilingual pack share a platform but
+ * have different authenticated graphics/world ownership. When the launcher's
+ * effective game language is French or German, use the matching original
+ * multilingual package if it was found. This keeps AUTO platform priority
+ * intact while preventing the first English PC row from masking the selected
+ * DM1 world language. */
+static int m12_dm1_language_preferred_version_index(
+    const M12_StartupMenuState* state, int architecture) {
+    const char* versionId = NULL;
+    const M12_AssetVersionStatus* version;
+    int languageIndex;
+    int versionIndex;
+    if (!state) return -1;
+    languageIndex = m12_resolved_locale_index(
+        state->gameOptions[0].languageIndex);
+    if (languageIndex != 2 && languageIndex != 3) return -1;
+    if (architecture == M12_ARCH_PC) {
+        versionId = "pc34-multi";
+    } else if (architecture == M12_ARCH_AMIGA) {
+        versionId = "amiga36-multi";
+    }
+    if (!versionId) return -1;
+    versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
+    if (versionIndex < 0 ||
+        M12_AssetStatus_GetVersionArchitecture("dm1",
+                                                (size_t)versionIndex) != architecture) {
+        return -1;
+    }
+    version = M12_AssetStatus_GetVersion(&state->assetStatus, "dm1",
+                                         (size_t)versionIndex);
+    return version && version->matched ? versionIndex : -1;
+}
+
 /* The version row is a persisted index, whereas AUTO is a source-platform
  * policy. Refresh AUTO after each real-data scan so an old PC index cannot
  * mask a newly found FM Towns corpus. Explicit platform choices are left
@@ -1945,6 +1978,13 @@ static void m12_apply_auto_platform_versions(M12_StartupMenuState* state) {
         versionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &state->assetStatus, gameIds[gameIndex], M12_ARCH_AUTO);
         if (versionIndex >= 0) {
+            if (gameIndex == 0) {
+                int architecture = M12_AssetStatus_GetVersionArchitecture(
+                    gameIds[gameIndex], (size_t)versionIndex);
+                int preferred = m12_dm1_language_preferred_version_index(
+                    state, architecture);
+                if (preferred >= 0) versionIndex = preferred;
+            }
             state->gameOptions[gameIndex].versionIndex = versionIndex;
         }
     }
@@ -2085,6 +2125,7 @@ static const char* m12_scan_task_for_locale(int localeIndex,
     if (strcmp(task, "matching editions") == 0 ||
         strcmp(task, "matching game versions") == 0 ||
         strcmp(task, "authenticating ZIP candidate") == 0 ||
+        strcmp(task, "authenticating Atari ZIP") == 0 ||
         strcmp(task, "authenticating CSB FM Towns image") == 0 ||
         strcmp(task, "reusing verified FM Towns media receipt") == 0)
         return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
@@ -6581,6 +6622,11 @@ static void m12_cycle_game_architecture(M12_StartupMenuState* state,
             &state->assetStatus, gameIds[gameIndex], current);
         size_t versionCount = M12_AssetStatus_GetVersionCount(gameIds[gameIndex]);
         size_t version;
+        if (gameIndex == 0) {
+            int preferred = m12_dm1_language_preferred_version_index(state,
+                                                                      current);
+            if (preferred >= 0) versionIndex = preferred;
+        }
         if (versionIndex >= 0 &&
             m12_version_architecture_launchable(gameIds[gameIndex],
                                                  (size_t)versionIndex)) {
@@ -6687,7 +6733,12 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
         int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &state->assetStatus, gameIds[gameIndex], M12_ARCH_AUTO);
         if (autoVersion >= 0) {
-            versionIndex = autoVersion;
+            int architecture = M12_AssetStatus_GetVersionArchitecture(
+                gameIds[gameIndex], (size_t)autoVersion);
+            int preferred = gameIndex == 0
+                ? m12_dm1_language_preferred_version_index(state, architecture)
+                : -1;
+            versionIndex = preferred >= 0 ? preferred : autoVersion;
         } else if (!m12_version_architecture_launchable(gameIds[gameIndex],
                                                         (size_t)versionIndex)) {
             int i;

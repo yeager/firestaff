@@ -53,6 +53,9 @@ typedef enum {
  * dataDir is the Theron game data directory (e.g. ~/.firestaff/data/theron).
  * Walks up two levels to ~/.firestaff then appends assets/theron/modern/. */
 void theron_v22_set_manifest_path(const char* dataDir);
+/* Return the path installed by theron_v22_set_manifest_path(), or an empty
+ * string when no Theron data root has been bound. */
+const char* theron_v22_get_manifest_path(void);
 
 /* theron_v22_validate_manifest — validates the JSON manifest.
  * Returns: 1=complete, 0=partial, -1=invalid/missing */

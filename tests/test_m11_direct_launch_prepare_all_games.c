@@ -757,24 +757,39 @@ static void run_real_data_handoff_if_available(void) {
         menu.quickResumeLaunchRequested = 0;
         menu.view = M12_MENU_VIEW_MAIN;
         menu.selectedIndex = menuEntryIndex;
+        menu.activatedIndex = menuEntryIndex;
+        menu.deferredScanPending = 0;
+        menu.deferredScanActive = 0;
+        menu.deferredScanCompletedGameMask = (1U << 5) - 1U;
+        menu.quickResumeAvailable = 0;
+        menu.quickResumeLaunchRequested = 0;
         menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
         menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
         menu.gameOptions[kCases[i].slot].presentationModeIndex =
             M12_PRESENTATION_V1_ORIGINAL;
         menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
         M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
-        expect_true(menu.view == M12_MENU_VIEW_GAME_OPTIONS &&
-                        menu.gameCardFlowStage == 0,
-                    "real-data menu launch opens platform cards");
-        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
-        expect_true(menu.gameCardFlowStage == 1,
-                    "real-data menu launch accepts a verified platform card");
-        menu.gameCardSelected = 2;
-        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
-        expect_true(menu.gameCardFlowStage == 2,
-                    "real-data menu launch enters detailed custom options");
-        menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
-        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        if (strcmp(kCases[i].gameId, "theron") == 0) {
+            /* Theron has exactly one native platform and enters the common
+             * launch gate directly. It intentionally has no platform or
+             * presentation cards. */
+            expect_true(menu.gameCardFlowStage == 2 &&
+                            menu.launchRequested == 1,
+                        "Theron menu launch enters its native launch gate directly");
+        } else {
+            expect_true(menu.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                            menu.gameCardFlowStage == 0,
+                        "real-data menu launch opens platform cards");
+            M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+            expect_true(menu.gameCardFlowStage == 1,
+                        "real-data menu launch accepts a verified platform card");
+            menu.gameCardSelected = 2;
+            M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+            expect_true(menu.gameCardFlowStage == 2,
+                        "real-data menu launch enters detailed custom options");
+            menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+            M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        }
         expect_true(menu.launchRequested == 1,
                     "real-data menu Launch action admits the selected game");
         {
@@ -930,7 +945,7 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectParty = 0;
                 opts.bootProbeExpectChampions = 0;
                 opts.bootProbeExpectMap = 0;
-                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMin = -1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 opts.bootProbeExpectStartupActive = 1;
@@ -1033,7 +1048,7 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectTitleFrameMin = 1;
                 opts.bootProbeExpectTitleFrameBoundary = 102;
                 opts.bootProbeExpectTitleReady = 0;
-                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves Nexus title startup remains fail-closed before runtime");
@@ -1045,6 +1060,14 @@ static void run_real_data_handoff_if_available(void) {
                 opts.gameId = "theron";
                 opts.dataDir = case_data_dir;
                 opts.durationMs = 0;
+                test_setenv("FIRESTAFF_CONFIG_PATH",
+                            "firestaff_theron_menu_probe_config.toml");
+                {
+                    M12_Config isolatedConfig;
+                    M12_Config_SetDefaults(&isolatedConfig);
+                    isolatedConfig.quickResumeEnabled = 0;
+                    (void)M12_Config_Save(&isolatedConfig);
+                }
                 opts.bootProbeExpectPhase = "theron-startup-0";
                 opts.bootProbeExpectStartupActive = 1;
                 opts.bootProbeExpectStartupAnimation = "theron-title";
@@ -1056,6 +1079,8 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves Theron title startup has not materialized runtime level");
+                test_setenv("FIRESTAFF_CONFIG_PATH", NULL);
+                (void)remove("firestaff_theron_menu_probe_config.toml");
             }
         }
     }

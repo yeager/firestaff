@@ -1288,6 +1288,7 @@ static void check_scan_progress_uses_display_names(void) {
         {"matching editions", "MATCHING GAME VERSIONS"},
         {"matching game versions", "MATCHING GAME VERSIONS"},
         {"authenticating ZIP candidate", "MATCHING GAME VERSIONS"},
+        {"authenticating Atari ZIP", "MATCHING GAME VERSIONS"},
         {"authenticating CSB FM Towns image", "MATCHING GAME VERSIONS"},
         {"reusing verified FM Towns media receipt", "MATCHING GAME VERSIONS"},
         {"matching required files", "MATCHING REQUIRED FILES"},

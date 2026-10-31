@@ -6,10 +6,9 @@
  */
 #include "theron_v2_presentation_mode_pc34.h"
 #include "theron_v2_texture_upscale_pc34.h"
+#include "theron_v22_modern_assets_pc34.h"
 #include "theron_v22_shapes.h"
 #include <string.h>
-
-extern int m11_v22_modern_assets_available(void);
 
 static Theron_V2_PresentationModeState g_theron_pm_state;
 static int g_theron_pm_pack_override_valid = 0;
@@ -17,7 +16,7 @@ static int g_theron_pm_pack_override_value = 0;
 
 static int theron_pm_modern_pack_detected(void) {
     if (g_theron_pm_pack_override_valid) return g_theron_pm_pack_override_value;
-    return m11_v22_modern_assets_available();
+    return theron_v22_modern_assets_available();
 }
 
 static void theron_pm_recompute(Theron_V2_PresentationModeKind resolved) {

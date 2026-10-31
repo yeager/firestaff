@@ -212,6 +212,13 @@ typedef struct {
     uint8_t floor_ceiling_material_consumed_mask;
     int floor_ceiling_materials_complete;
     int blocked_material_draws;
+    uint32_t blocked_material_mask;
+    uint16_t wall_ornament_material_required_mask;
+    uint16_t wall_ornament_material_consumed_mask;
+    uint8_t wall_ornament_plan_status_code;
+    int8_t wall_ornament_plan_status_square;
+    uint8_t wall_ornament_plan_status_gdat_index;
+    uint8_t wall_ornament_plan_status_image_field;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
     int viewport_raw_gdat_asset_count;

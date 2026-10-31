@@ -62,10 +62,16 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 
 | Mode | Resolution | Description |
 |------|-----------|-------------|
-| V1 Original | 320×200 | Pixel-perfect original |
-| V2.0 Filtered | 320×200 + post | CRT scanlines, palette correction |
-| V2.1 Upscaled | 3200×2000 | 10× AI upscale |
-| V2.2 Modern | 1920×1080 | New 3D-rendered 2D art |
+| V1 Original | Native game framebuffer | Original game assets and source rendering |
+| V2.0 Filtered | Game-specific | Filter path; effects vary by game and are not uniformly connected |
+| V2.1 Upscaled | Game-specific | Current shared M11 path uses 2× EPX presentation; this is not the planned 10× AI upscale |
+| V2.2 Modern | Game-specific | Only admitted when a game's real-material gate and renderer support it; several routes fall back to V2.1 |
+
+These names describe requested presentation tiers, not guaranteed visual
+differences across games. In particular, DM2 currently resolves a V2.2 request
+to V2.1, while DM1 and CSB require their respective finished real-material
+gates before V2.2 is admitted. Check the runtime receipt for the resolved mode;
+do not infer that a requested mode was activated from the CLI argument alone.
 
 ### Asset Discovery and Launch Gating
 

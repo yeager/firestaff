@@ -1203,10 +1203,14 @@ mkdir -p "$hoc_capture_root"
 hoc_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040.XXXXXX")
 hoc_inventory_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c007.XXXXXX")
 hoc_modern_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040-modern.XXXXXX")
+hoc_v21_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-v21-resolved.XXXXXX")
+hoc_v22_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-v22-fallback.XXXXXX")
 cleanup_hoc_capture() {
     find "$hoc_capture_dir" -depth -delete
     find "$hoc_inventory_capture_dir" -depth -delete
     find "$hoc_modern_capture_dir" -depth -delete
+    find "$hoc_v21_capture_dir" -depth -delete
+    find "$hoc_v22_capture_dir" -depth -delete
 }
 trap cleanup_hoc_capture EXIT HUP INT TERM
 hoc_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
@@ -1313,6 +1317,56 @@ if ! grep -Fq 'window=1920x1080' <<<"$hoc_modern_output" ||
     printf '%s\n' 'FAIL: Modern scaled authentic PC-34 Hall portrait click missed C040' >&2
     exit 1
 fi
+
+# A V2.2 CLI request must not escape DM1's post-load real-material gate. The
+# startup receipt used to restore the request after V2.2 was correctly
+# downgraded, which admitted the generated local art cache despite authentic
+# PC 3.4 graphics being available. Run both modes against the same original
+# media and require matching V2.1 output plus an explicit debug fallback.
+for mode in v21 v22; do
+    if [[ "$mode" == v21 ]]; then
+        mode_capture_dir=$hoc_v21_capture_dir
+    else
+        mode_capture_dir=$hoc_v22_capture_dir
+    fi
+    mode_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+        APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+        FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$mode_capture_dir" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --debug --presentation-mode "$mode" --width 960 --height 540 --scale-mode 4 \
+        --game dm1 --platform pc --data-dir "$archive" \
+        --boot-probe --boot-probe-frames 720 --duration 0 2>&1) || {
+        printf '%s\n' "$mode_output" >&2
+        exit 1
+    }
+    if ! grep -Fq "presentation phase=game-handoff game=dm1 requested=$mode resolved=v21 framebuffer=640x400" <<<"$mode_output" ||
+       ! grep -Fq 'presentationMode=2 presentation=640x400' <<<"$mode_output"; then
+        printf '%s\n' "$mode_output" >&2
+        printf 'FAIL: authentic DM1 %s request did not resolve to the expected V2.1 renderer\n' "$mode" >&2
+        exit 1
+    fi
+    if [[ "$mode" == v22 ]] &&
+       ! grep -Fq 'requested=v22 resolved=v21 framebuffer=640x400 fallback=1' <<<"$mode_output"; then
+        printf '%s\n' "$mode_output" >&2
+        printf '%s\n' 'FAIL: DM1 V2.2 fallback was not reported by --debug' >&2
+        exit 1
+    fi
+done
+python3 - "$hoc_v21_capture_dir" "$hoc_v22_capture_dir" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+captures = []
+for arg in sys.argv[1:]:
+    files = list(pathlib.Path(arg).glob("*.bmp"))
+    if len(files) != 1:
+        raise SystemExit(f"FAIL: expected one authentic presentation capture in {arg}")
+    captures.append(hashlib.sha256(files[0].read_bytes()).hexdigest())
+if captures[0] != captures[1]:
+    raise SystemExit("FAIL: rejected DM1 V2.2 request changed the V2.1 presented frame")
+print("PASS: rejected DM1 V2.2 request matches authentic V2.1 output")
+PY
 
 # Modern may change the target resolution but must not accidentally retain a
 # state-only C040 modal while omitting its source-backed pixels.  This is the

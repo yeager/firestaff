@@ -1005,7 +1005,8 @@ static void m11_debug_trace_csb_atari_present(
 static void m11_debug_log_launch_selection(
     const M12_StartupMenuState* menuState,
     const M11_GameViewState* gameView,
-    const char* launchMode) {
+    const char* launchMode,
+    int cliPresentationModeOverride) {
     int slot;
     int versionIndex;
     const M12_AssetVersionStatus* version;
@@ -1029,6 +1030,29 @@ static void m11_debug_log_launch_selection(
             version && version->versionId ? version->versionId : "unknown",
             version && version->matchedPath[0]
                 ? version->matchedPath : "unknown");
+    {
+        static const char* const modeNames[M12_PRESENTATION_MODE_COUNT] = {
+            "v1", "v20", "v21", "v22"
+        };
+        const int resolved = gameView->presentationMode;
+        const char* requested = "menu-or-saved-setting";
+        if (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+            cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
+            requested = modeNames[cliPresentationModeOverride];
+        }
+        fprintf(stderr,
+                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s\n",
+                gameId,
+                requested,
+                resolved >= M12_PRESENTATION_V1_ORIGINAL &&
+                        resolved < M12_PRESENTATION_MODE_COUNT
+                    ? modeNames[resolved] : "unknown",
+                gameView->presentationWidth,
+                gameView->presentationHeight,
+                (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+                 cliPresentationModeOverride != resolved)
+                    ? " fallback=1" : "");
+    }
 }
 
 static int g_m11_debug_startup_detail = 0;
@@ -10715,7 +10739,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
-            "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"fallbackDraws\": %d},\n"
+            "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"blockedMaterialMask\": %u, \"wallOrnamentRequiredMask\": %u, \"wallOrnamentConsumedMask\": %u, \"wallOrnamentPlanStatusCode\": %u, \"wallOrnamentPlanStatusSquare\": %d, \"wallOrnamentPlanStatusGdatIndex\": %u, \"wallOrnamentPlanStatusImageField\": %u, \"fallbackDraws\": %d},\n"
             "  \"dm2M11Frame\": {\"valid\": %d, \"floorCeilingComplete\": %d, \"mapLoadToken\": %u, \"sceneControlHash\": %u, \"sceneLightHash\": %u, \"floorMaterialHash\": %u, \"ceilingMaterialHash\": %u, \"wallPlanHash\": %u, \"presentationStateHash\": %u},\n"
             "  \"dm2LiveMissileDrawSchedule\": {\"valid\": %d, \"partial\": %d, \"calls\": %d},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
@@ -10760,6 +10784,13 @@ static void m11_write_autotest_runtime_probe(const char* path,
             dm2FrameOwnership.hud_gdat_blits,
             dm2FrameOwnership.gdat_scene_control_consumed,
             dm2FrameOwnership.blocked_material_draws,
+            (unsigned int)dm2FrameOwnership.blocked_material_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_material_required_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_material_consumed_mask,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_code,
+            (int)dm2FrameOwnership.wall_ornament_plan_status_square,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_gdat_index,
+            (unsigned int)dm2FrameOwnership.wall_ornament_plan_status_image_field,
             dm2FrameOwnership.total_runtime_fallback_draws,
             dm2M11FrameReceipt.valid,
             dm2M11FrameReceipt.floor_ceiling_materials_complete,
@@ -14609,7 +14640,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (o->debug) {
             m11_debug_log_launch_selection(
                 &menuState, &gameView,
-                o->directLaunch ? "direct" : "menu");
+                o->directLaunch ? "direct" : "menu",
+                o->presentationModeOverride);
             m11_debug_trace_startup_frame(&debugStartupTrace, &gameView,
                                           o->gameId);
         }
@@ -15177,7 +15209,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 launchedEver = 1;
                 if (o->debug) {
                     m11_debug_log_launch_selection(
-                        &menuState, &gameView, "menu");
+                        &menuState, &gameView, "menu",
+                        o->presentationModeOverride);
                     m11_debug_trace_startup_frame(
                         &debugStartupTrace, &gameView, o->gameId);
                     m11_debug_game_events(&gameView);
@@ -15427,7 +15460,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         launchedEver = 1;
                         if (o->debug) {
                             m11_debug_log_launch_selection(
-                                &menuState, &gameView, "menu");
+                                &menuState, &gameView, "menu",
+                                o->presentationModeOverride);
                             m11_debug_trace_startup_frame(
                                 &debugStartupTrace, &gameView, o->gameId);
                             m11_debug_game_events(&gameView);

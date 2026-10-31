@@ -2,6 +2,7 @@
 set -eu
 
 firestaff_cli=${1:?Firestaff executable is required}
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 mac_diagnostics_source=$mac_archive
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
@@ -119,6 +120,37 @@ if [ -f "$nexus_cue" ]; then
     echo 'PASS: authentic Nexus CUE startup keeps debug and RetroAchievements diagnostics quiet without --debug'
 else
     echo 'SKIP: Nexus quiet-startup diagnostic check (authentic Japanese CUE unavailable)'
+fi
+
+# Nexus does not yet have an admitted V2.2 compositor. The CLI must report
+# that explicitly and use the implemented V2.1 EPX path, rather than retaining
+# V2.2 while the renderer silently presents the ordinary V2.0 framebuffer.
+nexus_presentation_source=
+if [ -f "$nexus_iso" ]; then
+    nexus_presentation_source=$nexus_iso
+elif [ -f "$nexus_cue" ]; then
+    nexus_presentation_source=$nexus_cue
+fi
+if [ -n "$nexus_presentation_source" ]; then
+    nexus_v22_output=$(FIRESTAFF_CONFIG_PATH="$combined_root/nexus-v22.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game nexus --platform saturn --data-dir "$nexus_presentation_source" \
+        --presentation-mode v22 --debug --boot-probe \
+        --boot-probe-frames 0 --duration 0 2>&1) || {
+        printf '%s\n' "$nexus_v22_output" >&2
+        exit 1
+    }
+    case "$nexus_v22_output" in
+        *'presentation phase=game-handoff game=nexus requested=v22 resolved=v21 framebuffer='*' fallback=1'*) ;;
+        *)
+            printf '%s\n' "$nexus_v22_output" >&2
+            echo 'FAIL: Nexus V2.2 request did not report its V2.1 renderer fallback' >&2
+            exit 1
+            ;;
+    esac
+    echo 'PASS: authentic Nexus V2.2 CLI request reports its V2.1 rendering fallback'
+else
+    echo 'SKIP: Nexus presentation fallback check (authentic ISO/CUE unavailable)'
 fi
 
 # A cached physical-file hash must not survive replacing an authentic game
@@ -413,9 +445,10 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
         XDG_CONFIG_HOME="$quick_home/.config" \
         APPDATA="$quick_home/AppData" \
         FIRESTAFF_CONFIG_PATH="$quick_home/no-game-config.toml" \
+        FIRESTAFF_LOCALE_DIR="$script_dir/../po" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
+        --lang sv --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
         no_game_status=$?
     }
     set -e
@@ -469,17 +502,27 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
-    for game_id in nexus theron; do
-        expected_available=$nexus_expected
-        if [ "$game_id" = theron ]; then
-            expected_available=$theron_expected
-        fi
+    for game_id in dm1 csb dm2 nexus theron; do
+        case "$game_id" in
+            dm1|csb|dm2) expected_available=yes ;;
+            nexus) expected_available=$nexus_expected ;;
+            theron) expected_available=$theron_expected ;;
+        esac
         printf '%s\n' "$no_game_output" | \
             grep -Fq "firestaff: $game_id available=$expected_available" || {
             printf 'FAIL: no-game startup reported the wrong authentic %s availability\n%s\n' \
                 "$game_id" "$no_game_output" >&2
             exit 1
         }
+        if [ "$expected_available" = yes ]; then
+            printf '%s\n' "$no_game_output" | \
+                grep -F "game=$game_id " | \
+                grep -Fq 'task-label="MATCHAR SPELVERSIONER"' || {
+                printf 'FAIL: Swedish no-game startup did not localize %s edition scanning\n%s\n' \
+                    "$game_id" "$no_game_output" >&2
+                exit 1
+            }
+        fi
     done
     if [ "$nexus_source" = cue ]; then
         expected_nexus_scan_owner="$quick_data_root/nexus/$(basename "$nexus_cue")"
@@ -616,8 +659,29 @@ for game_id in dm1 csb dm2 nexus theron; do
             printf 'FAIL: bare --game nexus reported playable runtime without a loaded level or admitted menu\n' >&2
             exit 1
         fi
+        v22_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+            XDG_CONFIG_HOME="$quick_home/.config" \
+            APPDATA="$quick_home/AppData" \
+            FIRESTAFF_CONFIG_PATH="$quick_home/v22-$game_id.toml" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game "$game_id" --presentation-mode v22 --verbose --debug \
+            --boot-probe --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$v22_output" >&2
+            exit 1
+        }
+        if ! printf '%s\n' "$v22_output" | \
+                grep -Fq "presentation phase=game-handoff game=$game_id requested=v22 resolved=v21 framebuffer=" ||
+           ! printf '%s\n' "$v22_output" | \
+                grep -Fq ' fallback=1'; then
+            printf '%s\n' "$v22_output" >&2
+            printf 'FAIL: authentic %s V2.2 request did not report its V2.1 renderer fallback\n' \
+                "$game_id" >&2
+            exit 1
+        fi
         printf 'PASS: bare --game %s resolves original %s media and reports its source-bound startup trace from ~/.firestaff/data/%s\n' \
             "$game_id" "$expected_platform" "$game_id"
+        printf 'PASS: authentic %s V2.2 request reports the implemented V2.1 renderer fallback\n' \
+            "$game_id"
     fi
 done
 
