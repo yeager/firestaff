@@ -22,16 +22,17 @@ adjacent tile according to the incoming direction, and carries the selected
 record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
 mode-7 class-3 summaries, direction-matched class-4 summaries with their
 source record link, and class-4 mismatches whose source-selected adjacent
-square has no records. Flags-3 walks up to 256 authenticated links, accumulates
-DBE/DBF terms and the creature F8 term, and passes focused accumulator
-regressions. Flags-4 is a no-op for any accepted class-3/4 record-chain root,
-because the source flag mask disables its record and creature terms.
+root is empty or has a decoded record class above 3. Flags-3 walks up to 256
+authenticated links, accumulates DBE/DBF terms and creature F8, and passes
+focused accumulator regressions. Flags-4 is a no-op for any accepted
+class-3/4 record-chain root, because the source flag mask disables its record
+and creature terms.
 Class-4 direction mismatches now follow the source's direction-plus-one
-adjacent-square route when that square has no records. Populated adjacent
-roots still require the exact `query_0cee_1a46` orientation/type filters and
-remain unresolved. Original-media dynamic-light evidence is still needed for
-every supported DM2 platform; the existing FM Towns-only runtime receipt does
-close DOS, Amiga, or Macintosh behavior.
+adjacent-square route. Empty roots and decoded record classes above 3 match
+the source query's early-return behavior; classes 0-3 still need the exact
+`query_0cee_1a46` orientation/type filters. Original-media dynamic-light
+evidence is still needed for every supported DM2 platform; the existing
+FM Towns-only runtime receipt does not close DOS, Amiga, or Macintosh behavior.
 
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
 The bounded class-5 mode-7 prepass now walks authenticated live DBE/DBF record

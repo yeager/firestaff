@@ -1319,8 +1319,8 @@ static void test_mode7_class34_receipts(void)
                room.first_record_link == DM2_THING_END_MARKER);
     }
 
-    /* A non-empty source-selected adjacent root remains fail-closed until
-     * the source query's per-record orientation/type filtering is ported. */
+    /* c_querydb.cpp:3296-3337 returns roots with decoded record classes >3
+     * immediately, before its class-0..3 orientation/type query filters. */
     adjacent_record_tiles[2] = 0u; /* column's first-square index */
     adjacent_record_tiles[3] = 0u;
     adjacent_record_tiles[8] = 0x3cu; /* big-endian record link 0x3c00 */
@@ -1334,6 +1334,19 @@ static void test_mode7_class34_receipts(void)
     dungeon.square_first_thing_base = 8;
     dungeon.square_first_thing_count = 1;
     dungeon.words_big_endian = 1;
+    assert(dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 1, 1, 1, &room));
+    assert(room.source_tile_type == 0x11u &&
+           room.first_record_link == 0x3c00u);
+
+    adjacent_record_tiles[8] = 0xffu;
+    adjacent_record_tiles[9] = 0xffu;
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 1, 1, 1, &room));
+
+    /* A class-3 adjacent root enters the source's record filters and remains
+     * closed until those filters are implemented. */
+    adjacent_record_tiles[8] = 0x0cu; /* big-endian record link 0x0c00 */
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 1, 1, 1, &room));
 }

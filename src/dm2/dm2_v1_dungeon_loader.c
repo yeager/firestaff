@@ -6800,9 +6800,9 @@ int dm2_v1_dungeon_c_light_class34_receipt(
         /* c_gui_vp.cpp:2672-2707: class 4 summarizes as 0x10/0x11.
          * On a side mismatch, the source advances direction once, selects
          * that adjacent square's record root, then runs query_0cee_1a46.
-         * This receipt can safely cover the empty-root case; selecting a
-         * record from a populated adjacent chain still needs that query's
-         * orientation/type filters. */
+         * The query returns the current link immediately for decoded record
+         * classes above 3; classes 0..3 continue through orientation/type
+         * filters that this receipt does not implement. */
         source_side = ((unsigned)raw & 0x08u) >> 3;
         direction_side = (unsigned)direction & 1u;
         if (source_side != direction_side) {
@@ -6817,8 +6817,16 @@ int dm2_v1_dungeon_c_light_class34_receipt(
             if (adjacent_raw < 0 || adjacent_raw > 0xff) return 0;
             adjacent_first = dm2_v1_dungeon_get_first_thing(
                 d, level, adjacent_x, adjacent_y);
+            if (adjacent_first == DM2_THING_NULL_MARKER) return 0;
             if (adjacent_first != -1 &&
-                adjacent_first != DM2_THING_END_MARKER) return 0;
+                adjacent_first != DM2_THING_END_MARKER) {
+                unsigned adjacent_record_class =
+                    (((unsigned)adjacent_first >> 8) & 0x3cu) >> 2;
+                /* c_querydb.cpp:3296-3337 returns the current record link
+                 * before applying orientation/type filters when class > 3. */
+                if (adjacent_record_class <= 3u) return 0;
+            }
+            first = adjacent_first;
             base = 0x11u;
         } else {
             base = 0x10u;
@@ -6835,9 +6843,8 @@ int dm2_v1_dungeon_c_light_class34_receipt(
     out->source_tile_type = (uint8_t)(base +
         (((unsigned)raw >> 5) == 3u && source_side != direction_side ?
              1u : 0u));
-    out->first_record_link = ((unsigned)raw >> 5) == 4u &&
-        source_side != direction_side ? DM2_THING_END_MARKER :
-        (first == -1 ? DM2_THING_END_MARKER : (uint16_t)first);
+    out->first_record_link = first == -1 ? DM2_THING_END_MARKER :
+        (uint16_t)first;
     out->ceiling_ornament_word = 0x00ffu;
     out->ceiling_ornament_index = 0xffu;
     out->valid = 1;
