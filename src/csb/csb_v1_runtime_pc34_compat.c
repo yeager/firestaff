@@ -12542,7 +12542,9 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         sensor_data = (int)(type_data >> 7);
         switch (sensor_type) {
         case 1: /* C001_SENSOR_WALL_ORNAMENT_CLICK */
-            trigger = (object_type < 0 && !square_has_object) ? 1 : 0;
+            /* ReDMCSB MOVESENS.C:1399-1404 triggers C001 on click without
+             * testing hand occupancy or objects on the wall cell. */
+            trigger = 1;
             break;
         case 2: /* C002_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT */
             trigger = (object_type >= 0 &&
