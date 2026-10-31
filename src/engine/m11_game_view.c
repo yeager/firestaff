@@ -1525,6 +1525,41 @@ typedef struct M11_Dm1RenderedPileTarget {
 static M11_Dm1RenderedPileTarget
     s_m11_dm1_rendered_pile_targets[M11_DM1_RENDERED_PILE_TARGET_MAX];
 static int s_m11_dm1_rendered_pile_target_count;
+/* ReDMCSB F0115 publishes the C2500/F0635 destination box for each floor
+ * object.  The CSB click route consumes the final successfully drawn box,
+ * paired with its source view-cell, instead of a viewport-wide estimate. */
+typedef struct M11_CSBRenderedFloorTarget {
+    int valid;
+    int viewCell;
+    int x;
+    int y;
+    int w;
+    int h;
+} M11_CSBRenderedFloorTarget;
+
+#define M11_CSB_RENDERED_FLOOR_TARGET_MAX 80
+static M11_CSBRenderedFloorTarget
+    s_m11_csb_rendered_floor_targets[M11_CSB_RENDERED_FLOOR_TARGET_MAX];
+static int s_m11_csb_rendered_floor_target_count;
+static M11_CSBRenderedFloorTarget s_m11_csb_last_object_sprite_receipt;
+
+static int m11_csb_rendered_floor_target_at(int local_x, int local_y)
+{
+    int i;
+
+    /* F0115 draws objects in source order. The last matching rectangle is
+     * therefore the visible pile top when two source zones overlap. */
+    for (i = s_m11_csb_rendered_floor_target_count - 1; i >= 0; --i) {
+        const M11_CSBRenderedFloorTarget *target =
+            &s_m11_csb_rendered_floor_targets[i];
+        if (target->valid && local_x >= target->x &&
+            local_x < target->x + target->w && local_y >= target->y &&
+            local_y < target->y + target->h) {
+            return target->viewCell;
+        }
+    }
+    return -1;
+}
 enum {
     M11_F0115_PRESENTATION_NONE = 0,
     M11_F0115_PRESENTATION_FLOOR = 1,
@@ -4187,12 +4222,13 @@ static int m11_csb_viewport_object_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    int drawn;
 
     if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    return m11_draw_item_sprite_material(ctx->state,
+    drawn = m11_draw_item_sprite_material(ctx->state,
                                          screen_pixels,
                                          screen_stride,
                                          ctx->framebuffer_height,
@@ -4210,6 +4246,20 @@ static int m11_csb_viewport_object_sprite_drawer(
                                          blit->transparent_color,
                                          blit->uses_f0791_blit,
                                          0);
+    if (drawn && s_m11_csb_last_object_sprite_receipt.valid &&
+        blit->relative_cell >= 0 && blit->relative_cell < 4 &&
+        s_m11_csb_rendered_floor_target_count <
+            M11_CSB_RENDERED_FLOOR_TARGET_MAX) {
+        M11_CSBRenderedFloorTarget *target =
+            &s_m11_csb_rendered_floor_targets[
+                s_m11_csb_rendered_floor_target_count++];
+        *target = s_m11_csb_last_object_sprite_receipt;
+        target->valid = 1;
+        target->viewCell = blit->relative_cell;
+        target->x -= blit->viewport_x;
+        target->y -= blit->viewport_y;
+    }
+    return drawn;
 }
 
 static int m11_csb_viewport_object_icon_drawer(
@@ -46653,6 +46703,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     int queued;
     unsigned short leaderHand;
     int mirrorOrdinal = -1;
+    int renderedViewCell = -1;
     const CSB_V1_BootProfile *profile = state
         ? (const CSB_V1_BootProfile *)state->csbBootProfile : NULL;
     const int atariSt = profile &&
@@ -46668,6 +46719,9 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
         return M11_GAME_INPUT_REDRAW;
     }
+    if (!atariSt) {
+        renderedViewCell = m11_csb_rendered_floor_target_at(localX, localY);
+    }
     /* ReDMCSB CLIKVIEW.C F0377 consumes the frame-owned C05 box. Atari
      * F0107/F0110 writes its actual G0205/G0208 rectangle; the admitted PC34
      * adapter retains its separately authenticated button box. Do not
@@ -46681,8 +46735,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
                 ? csb_v1_atari_f0115_click_bounds_contains(
                     s_m11_csb_atari_floor_click_bounds, viewCell,
                     localX, localY)
-                : m11_point_in_source_box(localX, localY,
-                                           g_objectPileBoxes[viewCell]);
+                : renderedViewCell == viewCell;
             if (hit &&
                 csb_v1_boot_runtime_grab_floor_object_pc34(
                     (CSB_V1_BootProfile *)state->csbBootProfile,
@@ -54541,6 +54594,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     int effectiveTransparentColor;
     int csb_native_graphic = -1;
 
+    memset(&s_m11_csb_last_object_sprite_receipt, 0,
+           sizeof(s_m11_csb_last_object_sprite_receipt));
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     /* MEDIA009 floor/alcove callers use their original F0132 coordinate
      * route above; a PC C2500 rectangle is not a native fallback. */
@@ -54604,10 +54659,18 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         /* CSB F0115's G0209 -> M612 object route is source-owned. Do not
          * substitute DM1 object art when its mapping is present; unsupported
          * CSB aspects still fail closed at the native mapping boundary. */
-        return m11_csb_blit_verified_native_object_slot(
+        const int drawn = m11_csb_blit_verified_native_object_slot(
             slot, csb_native_graphic, framebuffer, fbW, fbH,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
             plan.use_mirror ? 1 : 0) > 0;
+        if (drawn) {
+            s_m11_csb_last_object_sprite_receipt.valid = 1;
+            s_m11_csb_last_object_sprite_receipt.x = plan.draw_x;
+            s_m11_csb_last_object_sprite_receipt.y = plan.draw_y;
+            s_m11_csb_last_object_sprite_receipt.w = plan.draw_w;
+            s_m11_csb_last_object_sprite_receipt.h = plan.draw_h;
+        }
+        return drawn;
     }
     if (publishFloorItemHostReceipt) {
         presentation =
@@ -54706,6 +54769,13 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             presentation->destinationAfterFNV1a != 0u &&
             presentation->destinationBeforeFNV1a !=
                 presentation->destinationAfterFNV1a;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        s_m11_csb_last_object_sprite_receipt.valid = 1;
+        s_m11_csb_last_object_sprite_receipt.x = plan.draw_x;
+        s_m11_csb_last_object_sprite_receipt.y = plan.draw_y;
+        s_m11_csb_last_object_sprite_receipt.w = plan.draw_w;
+        s_m11_csb_last_object_sprite_receipt.h = plan.draw_h;
     }
     return 1;
 }
@@ -77429,6 +77499,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         memset(s_m11_dm1_rendered_pile_targets, 0,
                sizeof(s_m11_dm1_rendered_pile_targets));
         s_m11_dm1_rendered_pile_target_count = 0;
+        memset(s_m11_csb_rendered_floor_targets, 0,
+               sizeof(s_m11_csb_rendered_floor_targets));
+        s_m11_csb_rendered_floor_target_count = 0;
         memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
                sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
         memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
@@ -77468,6 +77541,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
     memset(s_m11_dm1_rendered_pile_targets, 0,
            sizeof(s_m11_dm1_rendered_pile_targets));
     s_m11_dm1_rendered_pile_target_count = 0;
+    memset(s_m11_csb_rendered_floor_targets, 0,
+           sizeof(s_m11_csb_rendered_floor_targets));
+    s_m11_csb_rendered_floor_target_count = 0;
     memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_alcove_item_host_presentation_receipt));
     memset(&s_m11_dm1_creature_host_presentation_receipt, 0,
