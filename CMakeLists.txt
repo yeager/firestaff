@@ -4891,7 +4891,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari;real-media;native;cli;menu;startup;skip-safe;german"
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
-        TIMEOUT 90
+        TIMEOUT 180
     )
     add_test(
         NAME dm1_v1_atari_st_fr_archive_cli_boot

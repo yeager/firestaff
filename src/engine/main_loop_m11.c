@@ -5947,6 +5947,12 @@ static int m11_play_dm1_amiga_swsh_if_available(
     int skipSwoosh) {
     int versionIndex;
     const M12_AssetVersionStatus* version;
+    uint8_t* graphics = NULL;
+    size_t graphicsBytes = 0U;
+    uint8_t* dungeonData = NULL;
+    size_t dungeonBytes = 0U;
+    uint8_t* dm = NULL;
+    size_t dmBytes = 0U;
     char swooshPath[FSP_PATH_MAX];
     uint8_t* executable = NULL;
     size_t executableBytes = 0U;
@@ -5984,11 +5990,33 @@ static int m11_play_dm1_amiga_swsh_if_available(
                                           (size_t)versionIndex);
     if (!version || strstr(version->matchedPath, "[HD]") != NULL) return -1;
     if (skipSwoosh) return 1;
+    if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
+        !asset_read_path_alloc(version->matchedPath, &graphics,
+                               &graphicsBytes) ||
+        !asset_read_path_alloc(swooshPath, &executable,
+                               &executableBytes)) {
+        goto cleanup;
+    }
     if (strcmp(version->versionId, "amiga20-en") == 0 ||
         strcmp(version->versionId, "amiga20-fr") == 0 ||
         strcmp(version->versionId, "amiga20-de") == 0 ||
         strcmp(version->versionId, "amiga21-en") == 0) {
-        {
+        int authenticatedA22g = 0;
+        if (m11_dm1_amiga_read_startup_companions(
+                version, &dungeonData, &dungeonBytes, &dm, &dmBytes)) {
+            const DM1_V1_AmigaStartupMedia media = {
+                graphics, graphicsBytes, dungeonData, dungeonBytes,
+                dm, dmBytes, executable, executableBytes};
+            authenticatedA22g = dm1_v1_amiga_startup_media_is_a22g(&media);
+        }
+        if (authenticatedA22g) {
+            /* ReDMCSB SWSH.C F0906 is compiled for A20ED/A20E/A20F/A21E,
+             * not A22G. A22G shares graphics and SWSH with A20G, so identify
+             * its exact four-file tuple before applying the A20 disk gate. */
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr, "firestaff: startup-media-check-skipped game=dm1 edition=amiga22-de check=F0906-F0907 reason=source-path-not-compiled-for-A22G\n");
+            }
+        } else {
             int read_ok = m11_dm1_amiga_read_original_disk(
                 version, &originalDisk, &originalDiskBytes);
             int valid = read_ok && dm1_v1_amiga_original_disk_check(
@@ -5998,16 +6026,13 @@ static int m11_play_dm1_amiga_swsh_if_available(
                     fprintf(stderr, "firestaff: startup-media-rejected game=dm1 platform=amiga phase=original-disk reason=F0906-F0907 read=%d bytes=%zu\n",
                             read_ok, originalDiskBytes);
                 }
-                free(originalDisk);
-                return 0;
+                goto cleanup;
             }
+            free(originalDisk);
+            originalDisk = NULL;
         }
-        free(originalDisk);
     }
-    if (!m11_dm1_amiga_swsh_path(version, swooshPath, sizeof(swooshPath)) ||
-        !asset_read_path_alloc(swooshPath, &executable,
-                                       &executableBytes) ||
-        !executable ||
+    if (!executable ||
         !dm1_v1_amiga_swsh_parse(executable, executableBytes, &assets)) {
         goto cleanup;
     }
@@ -6142,7 +6167,11 @@ static int m11_play_dm1_amiga_swsh_if_available(
 cleanup:
     g_m11_intro_local_audio = NULL;
     if (audioInitialized) M11_Audio_Shutdown(&audio);
+    free(graphics);
+    free(dungeonData);
+    free(dm);
     free(executable);
+    free(originalDisk);
     free(indexed);
     free(rgba);
     return completed;
