@@ -84,7 +84,7 @@ remain at the top of `docs/`.
 - [Theron authentic empty JP BRAM M11 regression](../tests/test_theron_v1_m11_jp_empty_bram.c) — native UI rejection of the captured empty JP slot; positive JP progress restoration remains unverified
 - [Theron JP PCE Fast input receipt](source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md) — three authentic-state runs bind a scripted direction mask to its same-frame PCE Fast guest read
 - [Theron JP PCE Fast input-gated VRAM trace](source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md) — corrected PC/raw gate admits 4,096 bounded VRAM commits after an authentic-state guest read; event ordering does not prove causality or parity
-- [Theron `$C852` fetch-trace hook](../scripts/instrument_mednafen_theron_pce_fast_c852_fetch_trace.py) — bounded opt-in reference instrumentation; clean-source patch chain and PCE Fast build pass, while runtime capture verification remains blocked on a real SDL2 runtime
+- [Theron `$C852` fetch-trace hook](../scripts/instrument_mednafen_theron_pce_fast_c852_fetch_trace.py) — bounded opt-in reference instrumentation; clean-source patch chain and PCE Fast build pass against real SDL2 2.33.0, and the isolated runtime verifier passes; no Drator event capture has yet closed the consumer join
 - [Theron JP PCE Fast state comparison](source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md) — three UP/control pairs share an event sequence from the `$44C1` guest poll through the `$D334`/`$D349` `$2912` transaction; ordering is repeatable, while causality and gameplay semantics remain unproven
 - [Theron JP blocked-wall movement probe](source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md) — UP, neutral and DOWN leave the authentic F5 wall image unchanged; bounded position hooks record no movement, so this is not movement or renderer evidence
 - [Theron JP state-only input/position comparison](../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md) — three Button II+UP runs repeat candidate-position TII transfers while matched Button II-only controls retain the prior bytes; map identity, field meaning, collision behavior and visual response remain unresolved
@@ -171,11 +171,10 @@ emulator saves, private capture logs or generated placeholder art.
 **Last reviewed:** 2026-10-31. The current status reflects the source and
 authenticated-media evidence recorded on the linked status and per-game
 work-log pages. The complete clean-source Mednafen 1.32.1 patch chain passed
-three loops, and the `$C852` instrumented PCE Fast binary compiled and
-installed. The capture wrapper blocks runtime verification here because the
-binary links Homebrew `sdl2-compat`; the capture gate requires real SDL2. Do
-not use this build for a capture until that runtime gate passes. A corrected
-PCE Fast state capture validates the input-gated VRAM trace
+three loops, and the `$C852` instrumented PCE Fast binary built against real
+SDL2 2.33.0 and passed isolated runtime verification. The Drator event capture
+remains outstanding. A corrected PCE Fast state capture validates the
+input-gated VRAM trace
 after the authentic guest read; its bounded 4,096-row receipt does not establish
 causality or a renderer join. A cold US follow-up validates three scripted inputs at System Card
 controller polls, while its `$E009` dispatch remains unjoined to game-owned

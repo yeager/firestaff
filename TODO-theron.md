@@ -17,12 +17,14 @@ consumer-read trace, which records reader PC/MPR and row data reads. Its
 data-read addresses; it is not a code-PC filter. A logical-PC hit in another
 physical bank does not close the join. Keep row bytes opaque; do not label
 them as coordinates, direction or creature fields.
-The complete clean-source Mednafen 1.32.1 patch chain now applies in three
-consecutive fresh-source loops, and the instrumented PCE Fast binary compiles
-and installs. The capture wrapper still blocks runtime verification here
-because the binary links Homebrew `sdl2-compat`, not the real SDL2 runtime
-required by the capture gate. Do not use this build for a capture until that
-runtime requirement is met.
+The complete clean-source Mednafen 1.32.1 patch chain applies in three
+consecutive fresh-source loops. A fresh instrumented PCE Fast build against
+real SDL2 2.33.0 compiled, installed and passed the isolated capture-wrapper
+runtime check; the earlier `sdl2-compat` runtime block is cleared. No Drator
+capture has been run with this binary yet. Before capturing, use an authentic
+Drator-positioned state and media identity in a new isolated profile and
+evidence directory; do not reuse an occupied capture profile. The same-event
+row-consumer join and native viewport gap remain open.
 This reference capture is evidence-enabling work; the native viewport still
 requires a separate same-run map, pose, VDC/VCE/VRAM and rendered-frame join.
 Do not reuse an occupied capture profile or evidence directory; coordinate

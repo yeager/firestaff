@@ -11,10 +11,12 @@
   fresh-source loops. The instrumented PCE Fast binary compiles and installs.
   Short-context hunks were replaced by idempotent source-anchor instrumenters,
   and the indirect-jump-follow declaration is kept at file scope.
-- ⏳ The capture wrapper's runtime verification remains blocked in this
-  environment: the installed binary links Homebrew `sdl2-compat`, while the
-  capture gate requires real SDL2 for authentic Quartz/SDL capture. No capture
-  was run with this build.
+- ✅ Rebuilt the complete instrumented PCE Fast binary from Mednafen 1.32.1
+  against the isolated real SDL2 2.33.0 prefix. The capture wrapper's runtime
+  verifier passed and reported SDL 2.33.0 for both compiled headers and the
+  running binary; it linked `@rpath/libSDL2-2.0.0.dylib`, not `sdl2-compat`.
+- ⏳ No Drator capture has been run with this binary yet. The `$C852` consumer
+  join still needs an authentic event capture in an isolated profile.
 - Scope: this is reference instrumentation only. It does not establish a
   same-event `$C852` consumer join, native Theron behavior, or gameplay parity.
   See [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).

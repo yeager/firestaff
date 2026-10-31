@@ -28,11 +28,13 @@ join. See the
 and [active TODO](../../TODO-theron.md).
 
 The complete clean-source Mednafen 1.32.1 patch chain applied in three
-consecutive loops, and the instrumented PCE Fast binary compiled and installed.
-The capture wrapper then blocked runtime verification because this environment
-links Homebrew `sdl2-compat`; the capture gate requires real SDL2 for authentic
-Quartz/SDL capture. No capture was run with this binary. Keep the hook
-capture-blocked until runtime verification passes with real SDL2.
+consecutive loops. A fresh instrumented PCE Fast build against real SDL2 2.33.0
+compiled and installed, and the isolated capture-wrapper runtime verifier
+passed for both compiled and running SDL versions. This clears the former
+`sdl2-compat` runtime gate. No Drator capture has been run with this binary
+yet, so the `$C852` same-event consumer join remains open. Use an authentic
+Drator-positioned state with hash-verified media in a new isolated profile and
+evidence directory; do not reuse an occupied capture profile.
 
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US
