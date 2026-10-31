@@ -2785,50 +2785,64 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                     if (first_thing >= 0 &&
                         first_thing != DM2_THING_END_MARKER) {
                         DM2_V1_SkprojectQuery0cee1a46Receipt decoration;
+                        int16_t ornament_summary[8] = { 0 };
                         int16_t ornament_index = -1;
                         int16_t ornament_field = -1;
                         const DM2_V1_AssetLoader *loader =
                             dm2_v1_boot_asset_loader(rt->boot);
-                        if (dm2_v1_skproject_query_0cee_1a46_ext(
+                        if (dm2_v1_skproject_query_0cee_1a46_ext_summary(
                                 dd, (uint16_t)first_thing, (int16_t)dir,
                                 (int16_t)side_index,
                                 (uint32_t)rt->tick_count,
                                 rt->map_wall_gfx_list,
                                 rt->map_wall_gfx_count, loader,
+                                ornament_summary,
                                 &ornament_index, &ornament_field,
                                 &decoration) == 1 && decoration.valid &&
                             ornament_index > 0 && ornament_index <= UINT8_MAX &&
                             ornament_field > 0 && ornament_field <= UINT8_MAX) {
+                            uint16_t packed_side =
+                                (uint16_t)ornament_summary[side_index + 3];
+                            int summary_index = packed_side & 0x00ffu;
+                            int summary_field =
+                                (int)((packed_side >> 10) & 0x003fu) + 1;
                             uint16_t ornament_position = 0u;
                             uint16_t rect_number = 0u;
                             uint16_t position_value = 0u;
                             unsigned position = 12u;
                             uint8_t ref_point = 0u;
-                            if (dm2_v1_asset_load_word_value(
-                                    loader, DM2_GDAT_CATEGORY_WALL_GFX,
-                                    (uint8_t)ornament_index,
-                                    DM2_V1_WALL_ORNATE_POSITION_FIELD,
-                                    &ornament_position) &&
-                                ornament_position != 0u) {
-                                ref_point = (uint8_t)(ornament_position >> 8);
-                                position_value = ornament_position & 0xffu;
-                                if (position_value < 1u || position_value > 25u)
-                                    position = 25u;
-                                else
-                                    position = position_value - 1u;
+                            /* c_querydb.cpp mutates s_8wordarray[3..6];
+                             * DRAW_WALL_ORNATE consumes that packed side
+                             * summary. Keep the helper outputs as a
+                             * consistency guard, but source the render fields
+                             * from the same packed word. */
+                            if (summary_index == ornament_index &&
+                                summary_field == ornament_field) {
+                                if (dm2_v1_asset_load_word_value(
+                                        loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                                        (uint8_t)summary_index,
+                                        DM2_V1_WALL_ORNATE_POSITION_FIELD,
+                                        &ornament_position) &&
+                                    ornament_position != 0u) {
+                                    ref_point = (uint8_t)(ornament_position >> 8);
+                                    position_value = ornament_position & 0xffu;
+                                    if (position_value < 1u || position_value > 25u)
+                                        position = 25u;
+                                    else
+                                        position = position_value - 1u;
+                                }
+                                if (dm2_v1_wall_ornament_rect_number(
+                                        visible_cells[i].source_cell,
+                                        visible_cells[i].lateral,
+                                        position, &rect_number)) {
+                                    surface->wall_ornate_rect_number = rect_number;
+                                    surface->wall_ornate_ref_point = ref_point;
+                                }
+                                surface->wall_ornate_gfx_index =
+                                    (uint8_t)summary_index;
+                                surface->wall_ornate_gfx_field =
+                                    (uint8_t)summary_field;
                             }
-                            if (
-                                dm2_v1_wall_ornament_rect_number(
-                                    visible_cells[i].source_cell,
-                                    visible_cells[i].lateral,
-                                    position, &rect_number)) {
-                                surface->wall_ornate_rect_number = rect_number;
-                                surface->wall_ornate_ref_point = ref_point;
-                            }
-                            surface->wall_ornate_gfx_index =
-                                (uint8_t)ornament_index;
-                            surface->wall_ornate_gfx_field =
-                                (uint8_t)ornament_field;
                         }
                     }
                 }

@@ -63,6 +63,18 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
+visible wall metadata now calls the source-shaped summary entry point and
+reads the selected side's packed `s_8wordarray[3..6]` word for the WALL_GFX
+index and frame offset. It cross-checks the helper's direct outputs before
+binding render metadata, so inconsistent or truncated summary data fails
+closed. `test_dm2_v1_skproject_core` and
+`test_dm2_v1_wall_ornament_material_gate` pass. The broader M11 startup gate
+still has two failures (`M11 resolves the exact M12-selected DM2 asset owner`
+and first source-owned frame); both also reproduce with the pre-change runtime
+source. Complete room-wide summary-array construction, source-case render
+captures, and all-platform parity remain open.
+
 2026-10-31 external-disk original-media retest: local
 `dm2_fmtowns_m11_gameplay_real_media` and
 `dm2_v1_fmtowns_debug_source_frame_trace_real_media` passed against the HME-242
