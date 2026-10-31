@@ -490,19 +490,29 @@ int dm2_v1_wall_ornament_material_receipt(const DM2_V1_AssetLoader *loader,
     /* skproject SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE reads dtWordValue
      * 04/05/07/0A for ordinary ornaments. dtImageOffset FD is queried only
      * by the Cryocell front-view branch, so it cannot gate normal materials. */
-    if (!loader ||
-        !dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(loader, index, &alcove_receipt) ||
-        !dm2_v1_asset_load_image_metadata(loader, DM2_GDAT_CATEGORY_WALL_GFX,
+    if (!loader) { out->failure_stage = 1; return 0; }
+    if (!dm2_v1_GET_WALL_ORNATE_ALCOVE_TYPE(loader, index, &alcove_receipt)) {
+        out->failure_stage = 2; return 0;
+    }
+    if (!dm2_v1_asset_load_image_metadata(loader, DM2_GDAT_CATEGORY_WALL_GFX,
                                           index, image_field,
-                                          &out->image_metadata) ||
-        (out->image_metadata.bits_per_pixel != 4u &&
-         out->image_metadata.bits_per_pixel != 8u) ||
-        !dm2_v1_asset_load_image_local_palette(loader,
+                                          &out->image_metadata)) {
+        out->failure_stage = 3; return 0;
+    }
+    if (out->image_metadata.bits_per_pixel != 4u &&
+        out->image_metadata.bits_per_pixel != 8u) {
+        out->failure_stage = 4; return 0;
+    }
+    if (!dm2_v1_asset_load_image_local_palette(loader,
                                                DM2_GDAT_CATEGORY_WALL_GFX,
                                                index, image_field,
                                                out->local_palette16,
-                                               &out->local_palette_hash) ||
-                                               out->local_palette_hash == 0u) return 0;
+                                               &out->local_palette_hash)) {
+        out->failure_stage = 5; return 0;
+    }
+    if (out->local_palette_hash == 0u) {
+        out->failure_stage = 6; return 0;
+    }
     /* The source data query returns zero when any of these fields are absent.
      * Its draw routine then uses the scene colorkey and centered placement. */
     (void)dm2_v1_asset_load_word_value(
@@ -523,29 +533,50 @@ int dm2_v1_wall_ornament_material_receipt(const DM2_V1_AssetLoader *loader,
     if ((position != 0u &&
          ((position & 0xffu) == 0u || (position & 0xffu) > 25u)) ||
         alcove > DM2_V1_WALL_ORNATE_ALCOVE_TYPE_LIMIT) {
+        out->failure_stage = 7;
         return 0;
     }
     pixels = dm2_v1_asset_load_image_field(loader, DM2_GDAT_CATEGORY_WALL_GFX,
                                             index, image_field,
                                             &width, &height, &format);
-    if (!pixels || width <= 0 || height <= 0 ||
-        width != (int)out->image_metadata.width ||
-        height != (int)out->image_metadata.height ||
-        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
-         format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9)) {
+    if (!pixels) {
         dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage =
+            8100 + dm2_v1_asset_last_image_decode_failure_stage();
+        return 0;
+    }
+    if (width <= 0 || height <= 0) {
+        dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage = 821;
+        return 0;
+    }
+    if (width != (int)out->image_metadata.width) {
+        dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage = width < (int)out->image_metadata.width ? 822 : 823;
+        return 0;
+    }
+    if (height != (int)out->image_metadata.height) {
+        dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage = height < (int)out->image_metadata.height ? 824 : 825;
+        return 0;
+    }
+    if (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+        format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9) {
+        dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage = 83;
         return 0;
     }
     pixel_count = (size_t)width * (size_t)height;
     if (pixel_count == 0u || pixel_count > UINT32_MAX) {
         dm2_v1_asset_free_pixels(pixels);
+        out->failure_stage = 9;
         return 0;
     }
     for (size_t i = 0u; i < pixel_count; ++i) {
         hash = dm2_wall_ornament_hash_step(hash, pixels[i]);
     }
     dm2_v1_asset_free_pixels(pixels);
-    if (hash == 0u) return 0;
+    if (hash == 0u) { out->failure_stage = 10; return 0; }
     out->valid = 1; out->wall_gfx_index = index; out->colorkey = colorkey;
     out->position = position; out->do_not_flip = no_flip; out->alcove_type = alcove;
     out->item_inside_displacement = displacement;
@@ -566,6 +597,7 @@ int dm2_v1_wall_ornament_material_receipt(const DM2_V1_AssetLoader *loader,
     hash = dm2_wall_ornament_hash_step(hash, alcove_receipt.source_hash);
     if (hash == 0u) {
         memset(out, 0, sizeof(*out));
+        out->failure_stage = 11;
         return 0;
     }
     out->material_hash = hash;

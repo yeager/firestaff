@@ -38900,9 +38900,9 @@ static void m11_graphics_popup_apply_v2(const M11_GameViewState* state,
 }
 
 static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
-    /* Keep V2.2 visibility bound to the selected game's authenticated pack.
-     * The old config bit was shared across titles, so a DM1 pack could expose
-     * V2.2 in Theron even though Theron's own Track 02 material was absent. */
+    /* Keep the runtime mode selector limited to modes supported by the
+     * active renderer. The launcher may still retain and diagnose a V2.2
+     * request before source-specific handoff is complete. */
     if (!state || state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
         state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -38920,12 +38920,17 @@ static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
         return modeState && modeState->modernPackAvailable
             ? M12_PRESENTATION_MODE_COUNT : M12_PRESENTATION_V22_MODERN;
     }
-    return M12_PRESENTATION_V22_MODERN;
+    return M12_PRESENTATION_MODE_COUNT;
 }
 
 static const char* m11_graphics_popup_mode_name(int mode) {
-    return mode == M12_PRESENTATION_V1_ORIGINAL ? "ORIGINAL (V1)"
-                                                  : "MODERN (V2.X)";
+    switch (mode) {
+        case M12_PRESENTATION_V20_FILTERED: return "FILTERED (V2.0)";
+        case M12_PRESENTATION_V21_UPSCALED: return "UPSCALED (V2.1)";
+        case M12_PRESENTATION_V22_MODERN: return "MODERN ART (V2.2)";
+        case M12_PRESENTATION_V1_ORIGINAL:
+        default: return "ORIGINAL (V1)";
+    }
 }
 
 /* Game options use ORIGINAL as a request for the decoded frame's native
@@ -38986,9 +38991,7 @@ static int m11_graphics_popup_apply_mode(M11_GameViewState* state, int mode) {
 }
 
 static int m11_graphics_popup_toggle_user_mode(int presentationMode) {
-    return presentationMode == M12_PRESENTATION_V1_ORIGINAL
-        ? M12_PRESENTATION_V21_UPSCALED
-        : M12_PRESENTATION_V1_ORIGINAL;
+    return (presentationMode + 1) % M12_PRESENTATION_MODE_COUNT;
 }
 
 static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
@@ -66983,11 +66986,14 @@ static void m11_debug_trace_dm2_runtime_frame(
     DM2_V1_ViewportItemMaterialTrace item_trace;
     DM2_V1_RuntimeHudMaterialTrace hud_trace;
     DM2_V1_HudPartyState hud_party;
+    DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_handoff;
     int item_trace_count;
     int item_trace_index;
     int hud_trace_count;
     int hud_trace_index;
     int hud_party_valid;
+    int g1_scene_handoff_valid;
+    int render_failure_stage;
     unsigned int hud_occupied_mask = 0u;
     unsigned int hud_portrait_bound_mask = 0u;
     uint32_t signature = 2166136261u;
@@ -67002,6 +67008,10 @@ static void m11_debug_trace_dm2_runtime_frame(
     platform = profile ? (int)profile->platform : -1;
     item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
     hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
+    memset(&g1_scene_handoff, 0, sizeof(g1_scene_handoff));
+    g1_scene_handoff_valid = dm2_v1_runtime_g1_scene_handoff_receipt(
+        &g1_scene_handoff);
+    render_failure_stage = dm2_v1_runtime_last_render_failure_stage();
     hud_party_valid = dm2_v1_runtime_last_hud_party_state(&hud_party);
     if (hud_party_valid) {
         int slot;
@@ -67020,6 +67030,11 @@ static void m11_debug_trace_dm2_runtime_frame(
     (signature = m11_dm2_debug_mix_u32(signature, (uint32_t)(value)))
     M11_DM2_DEBUG_MIX(render_result);
     M11_DM2_DEBUG_MIX(frame_accepted);
+    M11_DM2_DEBUG_MIX(render_failure_stage);
+    M11_DM2_DEBUG_MIX(render->v1_attempted);
+    M11_DM2_DEBUG_MIX(render->v1_succeeded);
+    M11_DM2_DEBUG_MIX(render->runtime.runtime_ready);
+    M11_DM2_DEBUG_MIX(render->startup_title_ready);
     M11_DM2_DEBUG_MIX(platform);
     M11_DM2_DEBUG_MIX(state->dm2State.party_x);
     M11_DM2_DEBUG_MIX(state->dm2State.party_y);
@@ -67027,6 +67042,12 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_render_real_asset_ready);
     M11_DM2_DEBUG_MIX(render->runtime_render_no_core_fallbacks);
     M11_DM2_DEBUG_MIX(render->runtime_render_blocked_material_draw_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_blocked_material_mask);
+    M11_DM2_DEBUG_MIX(render->runtime_render_wall_ornament_status_code);
+    M11_DM2_DEBUG_MIX(render->runtime_render_wall_ornament_status_square);
+    M11_DM2_DEBUG_MIX(render->runtime_render_wall_ornament_gdat_index);
+    M11_DM2_DEBUG_MIX(render->runtime_render_wall_ornament_image_field);
+    M11_DM2_DEBUG_MIX(render->runtime_render_wall_ornament_failure_stage);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_floor_ceiling_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_wall_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_panel_count);
@@ -67035,6 +67056,25 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_button_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_creature_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_item_count);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff_valid);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.blocked);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.committed);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.incomplete_world);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.level);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.x);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.y);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.raw_tile);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.tile_class);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.root_class);
+    M11_DM2_DEBUG_MIX(g1_scene_handoff.scene.chain.node_count);
+    if (g1_scene_handoff.scene.chain.node_count > 0) {
+        M11_DM2_DEBUG_MIX(
+            g1_scene_handoff.scene.chain.nodes[0].type);
+        M11_DM2_DEBUG_MIX(
+            g1_scene_handoff.scene.chain.nodes[0].record_offset);
+        M11_DM2_DEBUG_MIX(
+            g1_scene_handoff.scene.chain.nodes[0].record_size);
+    }
     signature = m11_dm2_debug_mix_text(
         signature, state->sourceId[0] ? state->sourceId : "dm2");
     M11_DM2_DEBUG_MIX(item_trace_count);
@@ -67139,7 +67179,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     if (previous_state == state && previous_signature == signature) return;
 
     fprintf(stderr,
-        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d render-failure-stage=%d v1={attempted:%d succeeded:%d runtime-ready:%d title-ready:%d} real-assets=%d no-core-fallbacks=%d blocked-materials=%d blocked-mask=%08x wall-ornament={status:%d square:%d gdat:%d field:%d detail:%d} map-token=%u g1-scene={valid:%d blocked:%d committed:%d incomplete-world:%d tile:%d root:%d level:%d pos:%d,%d raw:%02x nodes:%d first-record:%d/%d} scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
         state->sourceId[0] ? state->sourceId : "dm2",
         m11_dm2_debug_platform_label(platform),
         state->dm2State.party_x,
@@ -67147,10 +67187,36 @@ static void m11_debug_trace_dm2_runtime_frame(
         state->dm2State.party_dir,
         render_result,
         frame_accepted,
+        render_failure_stage,
+        render->v1_attempted,
+        render->v1_succeeded,
+        render->runtime.runtime_ready,
+        render->startup_title_ready,
         render->runtime_render_real_asset_ready,
         render->runtime_render_no_core_fallbacks,
         render->runtime_render_blocked_material_draw_count,
+        render->runtime_render_blocked_material_mask,
+        render->runtime_render_wall_ornament_status_code,
+        render->runtime_render_wall_ornament_status_square,
+        render->runtime_render_wall_ornament_gdat_index,
+        render->runtime_render_wall_ornament_image_field,
+        render->runtime_render_wall_ornament_failure_stage,
         render->runtime_m11_frame_map_load_token,
+        g1_scene_handoff_valid,
+        g1_scene_handoff.blocked,
+        g1_scene_handoff.scene.committed,
+        g1_scene_handoff.scene.incomplete_world,
+        g1_scene_handoff.scene.tile_class,
+        g1_scene_handoff.scene.root_class,
+        g1_scene_handoff.scene.level,
+        g1_scene_handoff.scene.x,
+        g1_scene_handoff.scene.y,
+        g1_scene_handoff.scene.raw_tile,
+        g1_scene_handoff.scene.chain.node_count,
+        g1_scene_handoff.scene.chain.node_count > 0
+            ? g1_scene_handoff.scene.chain.nodes[0].type : -1,
+        g1_scene_handoff.scene.chain.node_count > 0
+            ? g1_scene_handoff.scene.chain.nodes[0].record_size : 0,
         render->runtime_m11_frame_scene_control_hash,
         render->runtime_m11_frame_scene_light_hash,
         render->runtime_m11_frame_scene_ambient_light,
