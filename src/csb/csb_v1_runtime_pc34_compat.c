@@ -12180,7 +12180,9 @@ static int csb_v1_runtime_find_wall_cell_object_of_type(
             NULL,
             NULL);
         if (!record) break;
-        if ((thing & 3) == (cell & 3) && thing_type > 4 && thing_type < 14 &&
+        if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                (uint16_t)thing) == (cell & 3) &&
+            thing_type > 4 && thing_type < 14 &&
             csb_v1_runtime_object_type_from_thing(
                 dungeon,
                 (uint16_t)thing) == object_type) {
@@ -12242,7 +12244,9 @@ static int csb_v1_runtime_has_later_wall_cell_sensor(
             NULL,
             NULL);
         if (!record || thing_type >= 4) break;
-        if (thing_type == 3 && ((thing & 3) == (uint16_t)(cell & 3))) {
+        if (thing_type == 3 &&
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+                (uint16_t)(cell & 3)) {
             return 1;
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, thing);
@@ -12407,6 +12411,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     int previous_thing;
     int guard;
     int queued = 0;
+    int rotation_pending = 0;
     uint16_t hand_thing = 0xFFFFu;
     int object_type = object_type_override;
 
@@ -12472,6 +12477,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         uint16_t storage_thing = 0xFFFFu;
         uint16_t square_thing = 0xFFFFu;
         uint16_t generated_thing = 0xFFFFu;
+        int next_thing;
         int storage_action = 0;
         int do_not_trigger = 0;
         int rotate_after = 0;
@@ -12489,7 +12495,9 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
-        sensor_cell = thing & 3;
+        next_thing = (int)csb_v1_runtime_read_u16(record);
+        sensor_cell = csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+            (uint16_t)thing);
         if (sensor_cell != (cell & 3)) {
             previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
@@ -12760,14 +12768,8 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 dungeon,
                 square_thing);
         }
-        if (storage_action == 1 || storage_action == 2 || rotate_after) {
-            (void)csb_v1_runtime_rotate_wall_cell_sensors(
-                dungeon,
-                profile->current_level,
-                map_x,
-                map_y,
-                cell);
-        }
+        if (storage_action == 1 || storage_action == 2 || rotate_after)
+            rotation_pending = 1;
         if (remove_current_sensor) {
             (void)csb_v1_runtime_remove_wall_sensor_after_previous(
                 dungeon,
@@ -12787,7 +12789,16 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             target_x,
             target_y,
             target_cell);
-        break;
+        /* MOVESENS.C F0275 advances through the complete sensor run and calls
+         * F0271 once at the list boundary. Preserve the pre-mutation next
+         * link so C017 removal cannot terminate this source-ordered pass. */
+        if (!remove_current_sensor) previous_thing = thing;
+        thing = next_thing;
+    }
+
+    if (rotation_pending) {
+        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+            dungeon, profile->current_level, map_x, map_y, cell);
     }
 
     return queued;

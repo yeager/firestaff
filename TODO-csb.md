@@ -1,5 +1,15 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB F0275 wall-click list traversal: the runtime previously
+read a Thing's cell from its low index bits and stopped after the first
+successful wall sensor. ReDMCSB `DEFS.H:398` defines `M011_CELL` as bits 14–15,
+and `MOVESENS.C:1390-1550` walks the complete sensor list in source order
+before F0271. The bounded CSB PC34 path now uses the source cell bits, queues
+multiple matching events in order, and defers local sensor rotation until the
+list boundary. A focused two-C001 test verifies both targets and event order.
+Other F0275 sensor types, editions, platforms, and original-media outcomes
+remain open.
+
 2026-10-31 CSB Atari ST authentic campaign regression: the local
 `csb_v1_atari_stx_native_cli_boot` CTest passed (199.49 s) using the installed
 original Atari ST STX and shared CSB media root. It verified the native title

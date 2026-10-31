@@ -166,10 +166,59 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
           "C011 mismatch leaves the hand, raw chain, and timeline unchanged");
 }
 
+static void test_f0275_processes_all_matching_sensors_in_source_order(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    const uint16_t sensor0 = (uint16_t)(3u << 10);
+    const uint16_t sensor1 = (uint16_t)((3u << 10) | 1u);
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 2;
+    raw[square_offset(0, 0)] = 0x10u; /* Wall with the two C001 records. */
+    raw[square_offset(1, 0)] = (unsigned char)(6u << 5);
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, sensor0);
+    put_le16(raw, 68, sensor1);
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(1, 0, 0));
+    put_le16(raw, 76, 0xfffeu);
+    put_le16(raw, 78, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 80, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 82, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    {
+        int result = csb_v1_runtime_trigger_wall_ornament_click(
+            &profile, 0, 0, 0, -1);
+        CHECK(result == 2,
+          "F0275 walks both matching C001 sensors and queues both effects");
+    }
+    CHECK(profile.timeline_queue.eventCount == 2 &&
+              profile.timeline_queue.events[0].b_mapX == 1 &&
+              profile.timeline_queue.events[1].b_mapX == 2,
+          "F0275 preserves Thing-list order for both remote events");
+}
+
 int main(void)
 {
     test_c011_runtime_hand_roundtrips_save();
     test_c011_wrong_object_type_rejects_without_mutation();
+    test_f0275_processes_all_matching_sensors_in_source_order();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
 }
