@@ -17,7 +17,7 @@ Firestaff currently supports. The current documented runtime lanes are:
 
 | Game | Supported platform lanes in Firestaff |
 |---|---|
-| DM1 | PC DOS, Atari ST, Amiga, FM Towns |
+| DM1 | PC DOS, Atari ST, Amiga, FM Towns, Apple IIGS |
 | CSB | Atari ST, Amiga, FM Towns |
 | DM2 | DOS, Amiga, FM Towns, Macintosh |
 
@@ -40,6 +40,7 @@ source functions are mapped to Firestaff behavior and platform-specific gates.
 | DM1 | Atari ST | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
 | DM1 | Amiga | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
 | DM1 | FM Towns | `README.md` platform summary; `docs/parity/REDMCSB_DM1_CSB_AUDIT.md` | PARTIAL |
+| DM1 | Apple IIGS | `docs/PLATFORM_STATUS.md` Apple IIGS 2.0/2.1 row; `test_firestaff_iigs_cli_real_media.sh` verifies bounded startup only. ReDMCSB's locked source inventory has no IIGS toolchain, so full source-function equivalence is unproven. | PARTIAL |
 | CSB | Atari ST | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |
 | CSB | Amiga | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |
 | CSB | FM Towns | `docs/parity/PARITY_MATRIX_CSB_V1.md`, original-media route table | PARTIAL |

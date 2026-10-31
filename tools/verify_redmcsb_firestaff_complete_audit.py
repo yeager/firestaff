@@ -17,6 +17,7 @@ REQUIRED_DOC_TOKENS = [
     "BLOCKED",
     "src/memory/memory_creature_ai_pc34_compat.c",
     "original_overlay_regression",
+    "| DM1 | Apple IIGS |",
 ]
 
 REQUIRED_REDMCSB_FILES = [

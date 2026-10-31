@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from pathlib import Path
 
 from redmcsb_source import source_root
@@ -48,7 +49,25 @@ def main() -> int:
     if row["status"] != "IMPLEMENTED_NARROW" or "PC34" not in row["notes"] or "other edition/platform runtime parity remain open" not in row["notes"]:
         raise SystemExit("FAIL F0039 disposition overstates its PC34 scope")
 
-    print("PASS F0039 ReDMCSB source mapping (PC34 scope)")
+    # Keep the adjacent F0619 inventory row honest: the slot-table accessor
+    # does not resolve a source zone rectangle or apply edition margins.
+    f0619 = "\n".join(lines[364:393])
+    for marker in (
+        "void F0618_LoadZone(",
+        "void F0619_GetSlotBoxBorderCoordinates(",
+        "F0618_LoadZone(P2055_i_ZoneIndex, P2056_pi_XYZ);",
+        "F0628_AddZoneMargin(P2056_pi_XYZ",
+    ):
+        if marker not in f0619:
+            raise SystemExit(f"FAIL ReDMCSB F0619 source behavior changed: {marker}")
+    declaration = re.compile(r"\bvoid\s+F0619_GetSlotBoxBorderCoordinates\s*\(")
+    if declaration.search(IMPLEMENTATION.read_text()) or declaration.search(SLOT_BOXES.read_text()):
+        raise SystemExit("FAIL Firestaff F0619 gap must be re-audited after implementation")
+    missing_rows = [row for row in rows if row["symbol"] == "F0619_GetSlotBoxBorderCoordinates"]
+    if len(missing_rows) != 1 or missing_rows[0]["status"] != "MISSING" or "F0635" not in missing_rows[0]["notes"]:
+        raise SystemExit("FAIL F0619 source-backed missing-function disposition changed")
+
+    print("PASS F0039 ReDMCSB source mapping (PC34 scope); F0619 missing gap confirmed")
     return 0
 
 

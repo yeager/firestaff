@@ -3681,3 +3681,11 @@ PC34 `G0030` slot-box table. The focused regression checks all 46 entries,
 adapter delegation, and invalid-index handling. This establishes only the
 bounded PC34 function mapping; Atari ST, Amiga, FM Towns, and other edition
 runtime integration and parity remain open.
+
+# ReDMCSB F0619 — slot-box border rectangle
+
+`OBJECT.C:378-389` resolves the slot's ZoneIndex through F0618/F0635 and adds
+the configured text margin on MEDIA508/MEDIA720. Firestaff currently has the
+PC34 G0030 table and ZoneIndex accessor, but no equivalent zone rectangle
+resolver. Implement and gate the behavior against each applicable edition;
+the slot table alone does not provide F0619 parity.
