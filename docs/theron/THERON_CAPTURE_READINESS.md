@@ -34,6 +34,16 @@ poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
+A separate US saved-state PCE Fast run loaded its existing state and recorded
+scripted input-apply events. Its shared input trace contains 1,354
+short-format rows at `$44CA/$44DB`, all reporting `raw=0000`; because standard
+PCE and PCE Fast instrumentation share a path and row label, these are not a
+verified PCE Fast read receipt. RAM, VRAM, and SAT differ from the control
+snapshot, while VCE and VDC state match; those changes are not joined to a
+received input, party pose, map cell, or display consumer. This proves neither
+action semantics nor game ownership and cannot supply a tile mapping. See the
+[saved-state input boundary report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
 of Firestaff's shipped runtime. A successful emulator build or input-delivery
 receipt does not by itself establish original-game behavior or native parity.
@@ -45,10 +55,14 @@ work order and detailed evidence.
 
 ## 2026-10-31 — authentic US PCE mouse-input capture boundary
 
-The preserved authentic US gameplay state (MD5
-`f17f377df210b4a3ae904a13fb85a7f0`) loads in the standard PCE module; PCE Fast
-rejects this state's serialization format. The successful standard-PCE replay
-used authentic US Track 02 MODE1/2352 media (MD5
+The preserved US gameplay state (MD5 `f17f377df210b4a3ae904a13fb85a7f0`)
+loaded in standard PCE in the earlier capture build; PCE Fast rejected its
+serialization format in that build. A later instrumented PCE Fast binary
+(MD5 `cdef1c8ebe6ec3248ea19559cdd13fe3`) reports a successful load of the same
+state. Its scripted-input trace is still inconclusive because every guest
+input-read record reports `raw=0000`; see the [saved-state input boundary
+report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+The earlier successful standard-PCE replay used authentic US Track 02 MODE1/2352 media (MD5
 `f23601102138f87c33025877767ebf76`) and the verified System Card. The state
 already contains dungeon-bank bytes `$20DA=01`, `$20DB=00`.
 
@@ -100,9 +114,10 @@ the corresponding opt-in trace flag is enabled; the complete patch-only
 pipeline passed three isolated loops, and a PCE Fast instrumentation build
 passed the real SDL 2.32.10 runtime check.
 
-The PCE Fast module rejects the preserved authentic US state's serialization
-schema; the standard PCE module accepts it, as documented above. No game media,
-save state or raw capture was committed.
+The earlier PCE Fast build rejected the preserved US state's serialization
+schema, while a later instrumented PCE Fast binary reported successful loading
+of the same state. The shared input trace remains ambiguous as described above.
+No game media, save state or raw capture was committed.
 
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 
