@@ -99,8 +99,9 @@ static void seed_door_view(M11_GameViewState* state,
     things->doorCount = 1;
     things->weapons = weapons;
     things->weaponCount = 1;
-    weapons[0].type = 2; /* Dagger-like object icon, but not a key. */
+    weapons[0].type = 8; /* Source throwable dagger; not a key. */
     weapons[0].next = THING_ENDOFLIST;
+    things->thingCounts[THING_TYPE_WEAPON] = 1;
 }
 
 int main(void)
@@ -114,9 +115,11 @@ int main(void)
     struct DungeonDoor_Compat doors[1];
     unsigned short squareFirstThings[9];
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short wrongThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     const int clickX = 168;
     const int clickY = 81;
+    const int overlappingThrowX = 161;
     const int localClickX = clickX;
     const int localClickY = clickY - 33;
     int baselineMessageCount;
@@ -151,6 +154,12 @@ int main(void)
            "DUNVIEW.C:4210-4212 D1C door-button/keyhole click box\n");
     seed_door_view(&state, &dungeon, &map, &tiles, squares, &things, doors,
                    squareFirstThings, weapons);
+    memset(rawWeapon, 0, sizeof(rawWeapon));
+    rawWeapon[2] = 8;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
 
     ok &= expect_int("leader hand setup accepted",
                      M11_GameView_SetV1LeaderHandObject(&state, wrongThing), 1);
@@ -194,9 +203,9 @@ int main(void)
     /* ReDMCSB CLIKVIEW.C F0377 lines 356-401: a door-button/keyhole
      * click schedules EVENT_DOOR only from the empty leader-hand branch
      * (lines 365-389); the occupied leader-hand branch goes to F0375
-     * throw handling instead (lines 396-400). Firestaff's D1C keyhole
-     * guard claims this source box so the click produces no open, no
-     * consume, no throw, and no invented wrong-item message/status. */
+     * throw handling instead (lines 396-400). This point is outside F0375's
+     * door lane (x>163), so it must produce no open, no consume, no throw,
+     * and no invented wrong-item message/status. */
     ok &= expect_int("wrong-item door-keyhole click is ignored",
                      M11_GameView_HandlePointerButton(&state, clickX, clickY,
                                                      M11_DM1_MOUSE_MASK_LEFT),
@@ -306,7 +315,21 @@ int main(void)
                      strcmp(state.inspectTitle, secondBaselineInspectTitle) == 0 &&
                      strcmp(state.inspectDetail, secondBaselineInspectDetail) == 0, 1);
 
+    /* The inclusive door-button box overlaps F0375's valid door throw lane
+     * at screen x=160..163, y=77..85. F0377 reaches F0375 for an occupied
+     * hand, so this point must throw rather than be swallowed by the guard. */
+    baselineProjectileCount = state.world.projectiles.count;
+    ok &= expect_int("overlap click enters F0375 throw lane",
+                     M11_GameView_HandlePointerButton(
+                         &state, overlappingThrowX, clickY,
+                         M11_DM1_MOUSE_MASK_LEFT),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("overlap throw consumes leader hand",
+                     M11_GameView_GetV1LeaderHandThing(&state), THING_NONE);
+    ok &= expect_int("overlap throw records F0375 action",
+                     strcmp(state.lastAction, "THROW") == 0, 1);
+
     if (!ok) return 1;
-    printf("ok: DM1 V1 door keyhole wrong-item click is ignored without consume, open, or message\n");
+    printf("ok: DM1 V1 door-button boundary preserves outside-zone rejection and F0375 overlap throws\n");
     return 0;
 }

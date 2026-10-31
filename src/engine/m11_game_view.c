@@ -46531,10 +46531,16 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             } else {
                 static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
                 /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
-                 * the empty-hand door-button route; a wrong item on the
-                 * keyhole/button box must not fall through into throw/drop. */
+                 * the empty-hand door-button route; occupied-hand clicks
+                 * outside F0375's throw lane must not fall through. */
                 if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    return M11_GAME_INPUT_IGNORED;
+                    /* F0377 sends occupied-hand door clicks to F0375. The
+                     * button box overlaps F0375's valid door throw lane at
+                     * screen x=160..163, y=77..85 (local y=44..52); only
+                     * the remainder is outside the source throw zone. */
+                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
                 }
             }
         }
