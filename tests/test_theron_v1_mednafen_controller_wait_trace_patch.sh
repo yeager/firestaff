@@ -433,6 +433,17 @@ fi
 if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'theron_ram_provenance_copy sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMProvenanceRead' "$ram_provenance_patch_file" ||
+   ! awk '
+       /^\+[[:space:]]+if\(!TheronPCEVDCInstructionFetchInProgress\)$/ { guard = NR }
+       /^\+[[:space:]]+TheronPCECDTraceMainRAMProvenanceRead/ { provenance = NR }
+       /^\+[[:space:]]+TheronPCECDTraceRecordWatchRead/ { record_watch = NR }
+       record_watch && !guard_end && /^\+[[:space:]]+}/ { guard_end = NR }
+       /^FIRESTAFF_PATCH_TAB_CONTEXT if\(!TheronPCEVDCInstructionFetchInProgress &&/ { filtered_consumer = NR }
+       END {
+           if (!(guard && provenance > guard && record_watch > provenance &&
+                 guard_end > record_watch && filtered_consumer > guard_end)) exit 1
+       }
+   ' "$ram_provenance_patch_file" ||
    ! grep -Fq 'ram_provenance_trace="${trace}.ram-provenance"' "$capture_script" ||
    ! grep -Fq 'ram_provenance_trace.patch' "$build_script"; then
     printf '%s\n' 'FAIL: RAM provenance chain capture is missing or not wired into the live trace' >&2

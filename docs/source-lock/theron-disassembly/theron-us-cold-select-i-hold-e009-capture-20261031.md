@@ -13,8 +13,9 @@ The capture validator returned `transition=missing`. It also rejected the
 scripted-input receipt because no controller-port read exposed the requested
 mask before the next scripted frame. The plan contained three events:
 `run@480:300`, `select@600:1`, and `i@1200:300`. The input trace reached its
-1,048,576-row cap; therefore this run cannot validate delivery for any of the
-three events. The transition receipt records zero source-bound and zero
+1,048,576-row cap. The validator rejection is recorded as a missing
+controller-port read before the next scripted frame. The transition receipt
+records zero source-bound and zero
 source-unbound CD data-port reads, so the E009 dispatch is not joined to a
 runtime Track 02 source read or CD-to-RAM transfer. It must not be labeled a
 source-authenticated game handoff.

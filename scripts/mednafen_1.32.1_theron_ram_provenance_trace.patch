@@ -24,7 +24,7 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 +                                      uint32 physical_address, uint8 value,
 +                                      uint16 writer_pc, uint32 writer_physical_pc);
  class alignas(128) HuC6280
-@@ -420,11 +428,15 @@
+@@ -420,11 +428,19 @@
  	 const uint8 wmpr = MPR[address >> 13];
  	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
 FIRESTAFF_PATCH_TAB_CONTEXT const uint16 reader_pc = GetRegister(GSREG_PC);
@@ -32,10 +32,13 @@ FIRESTAFF_PATCH_TAB_CONTEXT const uint16 reader_pc = GetRegister(GSREG_PC);
  FIRESTAFF_PATCH_TAB_CONTEXT const uint32 instruction_physical_pc = TheronPCEVDCInstructionPhysicalPC;
  FIRESTAFF_PATCH_TAB_CONTEXT const uint8 instruction_opcode = TheronPCEVDCInstructionOpcode;
 +	 const uint8 reader_mpr = MPR[reader_pc >> 13];
++	 if(!TheronPCEVDCInstructionFetchInProgress)
++	 {
 +	 TheronPCECDTraceMainRAMProvenanceRead(physical_address, ret, reader_pc,
 +	                                      (reader_mpr << 13) | (reader_pc & 0x1FFF));
 +	 TheronPCECDTraceRecordWatchRead(address, physical_address, ret, reader_pc,
 +	                                 (reader_mpr << 13) | (reader_pc & 0x1FFF));
++	 }
 FIRESTAFF_PATCH_TAB_CONTEXT if(!TheronPCEVDCInstructionFetchInProgress &&
 FIRESTAFF_PATCH_TAB_CONTEXT    ((physical_address >= 0x1f0000 && physical_address < 0x1f8000) ||
 FIRESTAFF_PATCH_TAB_CONTEXT    (reader_pc >= 0xc600 && reader_pc <= 0xcd13))
