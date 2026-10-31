@@ -5,6 +5,14 @@ evidence joins, see the [capture-readiness summary](THERON_CAPTURE_READINESS.md)
 and [Theron TODO](../../TODO-theron.md). This inventory records authenticated
 media identity and data admission; it does not imply full gameplay parity.
 
+Capture evidence must pair authentic media with isolated emulator profiles and
+keep all firmware, saves, captures and trace outputs outside the repository.
+Save-state replays cannot provide provenance for the CD-to-RAM transfer that
+populated data already present in the saved state. Assess any later observed
+transfer separately. See the concise
+[reference-capture runbook](THERON_MAC_SDL_MEDNAFEN_LOCAL.md) for current
+evidence constraints; older machine-specific paths are no longer maintained.
+
 This page records the local media identities used by Firestaff’s Theron
 bring-up. It separates the PC Engine CD data track from the related Track 19
 ISO files so a valid-looking image cannot be attached to the wrong loader.

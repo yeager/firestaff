@@ -126,6 +126,42 @@ be reconstructed from `TITLE.CG`/MAPD alone. The receipt therefore proves
 source upload and palette residence, not the NBG0 bitmap source, NBG1 tilemap
 transform, layer placement, timing, or final title composition.
 
+### Ymir retail MAPD write replay (2026-10-31)
+
+A separate authentic Japanese retail run used Ymir's debug VDP2 memory-write
+trace. Replaying all 690,480 trace rows with Ymir's VRAM address mapping and
+big-endian write semantics reproduces the complete 512 KiB final VRAM dump
+byte for byte. The same replay exposes all five hash-pinned retail MAPD planes
+at VDP2 VRAM `0x5c000..0x5dbff`, in order: N at Ymir trace frame 891, E at 930,
+X at 959, U at 998, and S at 1036. Each transfer frame contains 3,584 writes
+into the MAPD region. The trace receipt reports zero dropped rows.
+
+Reproduce with:
+
+```sh
+python3 scripts/verify_nexus_ymir_retail_mapd_sequence.py \
+  --cue "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue" \
+  --capture /Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_relative_trace_20261031
+```
+
+The CUE SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. It reads
+`TITLE.BIN` from the authenticated Japanese retail CUE and referenced tracks.
+The `TITLE.BIN` SHA-256 is
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`. The
+external capture files are under
+`firestaff-evidence/nexus/nexus_mapd_ymir_relative_trace_20261031`. The verifier
+pins the capture receipt SHA-256 to
+`06630a3b392c34a2d7b201f85a0ed875413352ede58016b9f6e307eab02e7ce7`, the write
+trace to
+`4fb39691d70b83e28ced99c70fbd1ecdf8bb7c3cbb4c53d5c80b005c16408f19`, and the
+final VRAM dump to
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`. It also
+checks receipt bounds, ordered plane equality, and exact replay against Ymir's
+final VRAM dump. Its frame indices are local to this Ymir run. This proves
+producer-side MAPD bytes only; it does not establish Firestaff rendering,
+layer consumption, title pixel parity, or menu behavior.
+
 The same in-memory CUE audit rejects the other known startup bitmap as the
 NBG0 source: neither the 320×224 `LOGOBG.DG2` PP pixel payload nor its
 256-word BGR555 palette occurs in the captured VDP2 VRAM/CRAM. `LOGOBG.DG2`
@@ -724,3 +760,37 @@ retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
 The replay and real-data CTest are documented in
 [`nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).
+
+### 2026-10-31 — Retail MAPD transfers joined to Ymir render passes
+
+An authentic Japanese retail capture used CUE SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`,
+`TITLE.BIN` SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`,
+and initial Ymir state SHA-256
+`79b53c785456ddc8d4d19a5a510ecc008cc14bf08c0464ecfebb0d5849a40a52`.
+The deterministic run held Control Pad 1 Start from frame 0 for 60 frames and
+used `--debug`. Ymir recorded 690,480 VDP2 writes; replay found retail planes
+`N@891,E@930,X@959,U@998,S@1036`, and the replayed 512 KiB VRAM matched the
+same-run dump (SHA-256
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`).
+
+Pass-indexed raw VDP1/VDP2 snapshots join exactly to all 163 same-run rendered
+passes by `(VDP1 frame, VDP2 serial)`. At frame 891 / serial 1280, NBG1 is
+enabled (`BGON=0x0002`) and the map region equals retail plane N. Plane E is
+uploaded at frame 930; its bytes and NBG1 enable are present on frame 931 /
+serial 1320. Planes X and U match VRAM at frames 959 and 998 while NBG1 is
+disabled (`BGON=0x0001`). Plane S matches both passes at frame 1036 while
+NBG1 is enabled. MAP1A/B remains `0x1717`, PLSZ and MPOFN remain zero. The
+external evidence package is
+`firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/`.
+
+The capture-only NBG1 decoder currently requires `BGON=0x0007` and
+`CHCTLA=0x1013`; these authentic frames use `BGON=0x0001` or `0x0002` and
+`CHCTLA=0x0013`, so the decoder rejects them. The next consumer step is to
+decode these register states and compare Firestaff's NBG1/VPD1 composition
+against the corresponding same-pass RGBX buffers. The producer-side map match
+does not grant renderer permission or establish Firestaff pixel parity. The
+render-state receipt marks its legacy frame-row status incomplete because
+several VDP1 frame labels contain multiple VDP2 passes; all 163 per-pass
+buffers and snapshot pairs are present.

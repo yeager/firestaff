@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""Verify a hash-bound PCE Fast UP/neutral trace comparison manifest."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+
+EXPECTED_SOURCE_V1 = {
+    "cue_md5": "85706e7c2f658bc2792511d618dfc7a5",
+    "track02_md5": "b7afb338ad31be1025b53f9aff12d73a",
+    "system_card_md5": "ff1a674273fe3540ccef576376407d1d",
+    "state_sha256": "2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee",
+    "mednafen_md5": "09e5cae2a37d7c0734d970d98dc07f40",
+}
+EXPECTED_SOURCE_V2 = {
+    **EXPECTED_SOURCE_V1,
+    "mednafen_md5": "4747aa0dc284ba72336f7ac9caab6c00",
+}
+EXPECTED_CUE_PATH = "/home/trv2/.firestaff/data/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
+EXPECTED_STATE_PATH = "/home/trv2/firestaff-theron-evidence/emulator-created-20261003/capture-space-run-20261003/theron-jp-akutuba-f5-state.mca"
+EXPECTED_CAPTURE_CONSTRAINTS = {
+    "module": "pce_fast",
+    "timeout_seconds": 10,
+    "timeout_exit_status": 124,
+    "controller_port": 0,
+    "target_logical_address": "2912",
+    "target_physical_address": "1f0912",
+}
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
+def read_records(path: Path, prefix: str) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith(prefix + " "):
+            records.append(dict(re.findall(r"([A-Za-z0-9_]+)=([^ ]+)", line)))
+    return records
+
+
+def load_artifact(run: dict[str, Any], name: str, root: Path) -> Path:
+    try:
+        item = run["artifacts"][name]
+        relative = Path(item["path"])
+        expected_hash = item["sha256"]
+    except (KeyError, TypeError) as exc:
+        raise ValueError(f"{run.get('capture_id')}: missing {name} artifact metadata") from exc
+    require(not relative.is_absolute() and ".." not in relative.parts,
+            f"{run.get('capture_id')}: artifact path must stay under manifest directory")
+    path = (root / relative).resolve()
+    require(root.resolve() in path.parents,
+            f"{run.get('capture_id')}: artifact path escapes manifest directory")
+    actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    require(actual_hash == expected_hash,
+            f"{run.get('capture_id')}: {name} SHA-256 mismatch ({actual_hash})")
+    return path
+
+
+def verify_up(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
+    capture_id = run["capture_id"]
+    require(run.get("stimulus") == "up" and run.get("input_script") == "up@61:120",
+            f"{capture_id}: manifest does not identify the UP replay")
+    input_path = load_artifact(run, "input", root)
+    consumer_path = load_artifact(run, "consumer", root)
+    write_path = load_artifact(run, "write", root)
+    log_path = load_artifact(run, "log", root)
+    log = log_path.read_text(encoding="utf-8", errors="replace")
+    require(f'Loading "{EXPECTED_CUE_PATH}"' in log and f"Theron autoload state loaded: {EXPECTED_STATE_PATH}" in log,
+            f"{capture_id}: log does not bind the expected authentic CUE and saved state")
+    require("Signal has been caught and dealt with: SIGTERM" in log,
+            f"{capture_id}: log does not show the expected timed capture termination")
+
+    events = read_records(input_path, "scripted_pce_input_event")
+    applies = read_records(input_path, "scripted_pce_input_apply")
+    plans = read_records(input_path, "scripted_pce_input_plan")
+    polls = read_records(input_path, "pce_input_read")
+    input_text = input_path.read_text(errors="replace")
+    require("source=mednafen-pce-fast-instrumented-input" in input_text,
+            f"{capture_id}: input trace is not from the expected PCE Fast instrumenter")
+    if shared_sequence:
+        require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
+                f"{capture_id}: input trace lacks the shared event-sequence header")
+    require(len(plans) == 1 and plans[0].get("valid") == "1" and
+            plans[0].get("events") == "1" and plans[0].get("port") == "0",
+            f"{capture_id}: input plan is not exactly one valid slot-0 event")
+    require(len(events) == 1 and events[0].get("frame") == "61" and
+            events[0].get("key") == "up" and events[0].get("mask") == "0010" and
+            events[0].get("hold") == "120" and events[0].get("port") == "0",
+            f"{capture_id}: expected exactly one frame-61 UP event held for 120 frames")
+    apply_frames = sorted(int(r["frame"]) for r in applies
+                          if r.get("scripted") == "0010" and r.get("port") == "0")
+    require(len(applies) == 120 and apply_frames == list(range(61, 181)),
+            f"{capture_id}: UP apply trace does not cover exactly frames 61 through 180")
+    matching_polls = [r for r in polls if r.get("frame") == "61" and
+                      r.get("cpu_pc") == "44c1" and r.get("physical_pc") == "000d04c1" and
+                      r.get("raw") == "0010" and r.get("sel") == "1" and
+                      r.get("value") == "3e" and r.get("module") == "pce_fast" and
+                      r.get("device_type") == "1" and r.get("index") == "0" and
+                      r.get("device_raw") == "0000" and r.get("scripted_port") == "0" and
+                      r.get("scripted_mask") == "0010"]
+    require(len(matching_polls) == 1,
+            f"{capture_id}: expected one slot-0 frame-61 UP poll with neutral physical input")
+    if shared_sequence:
+        require("event_sequence" in matching_polls[0],
+                f"{capture_id}: frame-61 UP poll has no shared event sequence")
+
+    consumers = read_records(consumer_path, "main_ram_consumer_read")
+    writes = read_records(write_path, "main_ram_target_write")
+    selected_reads = [r for r in consumers if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
+    selected_writes = [r for r in writes if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
+    require("TheronTraceCDSharedEventSequence" in consumer_path.read_text(errors="replace") and "TheronTraceCDSharedEventSequence" in write_path.read_text(errors="replace"),
+            f"{capture_id}: RAM sidecars lack the shared event-counter header")
+    before = [r for r in selected_reads if r.get("reader_pc") == "d334" and r.get("value") == "00"]
+    up_writes = [r for r in selected_writes if r.get("writer_pc") == "d349" and r.get("value") == "10" and r.get("writer_code_bytes") == "8d1229730d290f29"]
+    require(before and up_writes, f"{capture_id}: missing the $D334 pre-state or $D349 write of $10")
+
+    def seq(record: dict[str, str]) -> int:
+        return int(record["event_sequence"])
+
+    poll_sequence = int(matching_polls[0]["event_sequence"]) if shared_sequence else -1
+    ordered = None
+    for writer in up_writes:
+        prior = [r for r in before if seq(r) < seq(writer) and
+                 (not shared_sequence or seq(r) > poll_sequence)]
+        later = [r for r in selected_reads if r.get("reader_pc") == "d334" and r.get("reader_code_bytes") == "cd1229d00dee2029" and r.get("value") == "10" and seq(r) > seq(writer)]
+        if prior and later and (not shared_sequence or seq(writer) > poll_sequence):
+            ordered = (writer, prior[-1], later[0])
+            break
+    require(ordered is not None, f"{capture_id}: no ordered $00 read → $10 write → $10 read")
+    writer, prior_read, later_read = ordered
+    if shared_sequence:
+        require(poll_sequence < seq(prior_read) < seq(writer) < seq(later_read),
+                f"{capture_id}: shared event order does not place the $44C1 poll before the $2912 transaction")
+        return (f"{capture_id}: $44C1 poll event {poll_sequence} → $D334 read $00 event {seq(prior_read)} → "
+                f"$D349 write $10 event {seq(writer)} → $D334 read $10 event {seq(later_read)}")
+    return (f"{capture_id}: frame-61 UP read at $44C1; RAM sidecars show $2912 $00 read "
+            f"event {seq(prior_read)} → $D349 write $10 event {seq(writer)} → "
+            f"$D334 read $10 event {seq(later_read)}")
+
+
+def verify_neutral(run: dict[str, Any], root: Path, *, shared_sequence: bool) -> str:
+    capture_id = run["capture_id"]
+    require(run.get("stimulus") == "neutral" and run.get("input_script") is None,
+            f"{capture_id}: manifest does not identify a neutral run")
+    input_path = load_artifact(run, "input", root)
+    consumer_path = load_artifact(run, "consumer", root)
+    write_path = load_artifact(run, "write", root)
+    log_path = load_artifact(run, "log", root)
+    log = log_path.read_text(encoding="utf-8", errors="replace")
+    require(f'Loading "{EXPECTED_CUE_PATH}"' in log and f"Theron autoload state loaded: {EXPECTED_STATE_PATH}" in log,
+            f"{capture_id}: log does not bind the expected authentic CUE and saved state")
+
+    require(not read_records(input_path, "scripted_pce_input_event") and not read_records(input_path, "scripted_pce_input_apply"),
+            f"{capture_id}: neutral trace contains a scripted event or apply")
+    polls = read_records(input_path, "pce_input_read")
+    input_text = input_path.read_text(errors="replace")
+    require("source=mednafen-pce-fast-instrumented-input" in input_text,
+            f"{capture_id}: input trace is not from the expected PCE Fast instrumenter")
+    if shared_sequence:
+        require("event_sequence_source=TheronTraceCDSharedEventSequence" in input_text,
+                f"{capture_id}: input trace lacks the shared event-sequence header")
+    require(polls and all(r.get("raw") == "0000" and r.get("scripted_mask") == "0000" and
+                          r.get("device_raw") == "0000" for r in polls),
+            f"{capture_id}: neutral trace contains a nonzero physical or scripted input poll")
+    neutral_polls = [r for r in polls if r.get("frame") == "61" and
+                     r.get("cpu_pc") == "44c1" and r.get("module") == "pce_fast" and
+                     r.get("device_type") == "1" and r.get("index") == "0"]
+    require(neutral_polls and all(r.get("raw") == "0000" and r.get("value") == "3f" and
+                                  r.get("scripted_mask") == "0000" and
+                                  r.get("device_raw") == "0000" for r in neutral_polls),
+            f"{capture_id}: no slot-0 frame-61 neutral $44C1 poll with zero input")
+    if shared_sequence:
+        require(all("event_sequence" in r for r in neutral_polls),
+                f"{capture_id}: a frame-61 neutral poll has no shared event sequence")
+
+    consumers = read_records(consumer_path, "main_ram_consumer_read")
+    writes = read_records(write_path, "main_ram_target_write")
+    consumer_text = consumer_path.read_text(errors="replace")
+    write_text = write_path.read_text(errors="replace")
+    truncations = [line.lower() for line in consumer_text.splitlines()
+                   if line.startswith("main_ram_consumer_truncated=")]
+    target_truncated = any(
+        "target_range_sample_limit" in line or
+        ("main_ram_sample_limit" in line and
+         "reason=per_offset_sample_limit" not in line) or
+        re.search(r"reason=per_offset_sample_limit offset=(?:0x)?0*2912(?:\s|$)", line)
+        for line in truncations
+    )
+    require(not target_truncated,
+            f"{capture_id}: neutral consumer trace was truncated for $2912 before capture termination")
+    require("main_ram_target_write_truncated=" not in write_text,
+            f"{capture_id}: neutral target-write trace was truncated before capture termination")
+    require("Signal has been caught and dealt with: SIGTERM" in log,
+            f"{capture_id}: neutral log does not show the expected timed capture termination")
+    selected_reads = [r for r in consumers if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
+    selected_writes = [r for r in writes if r.get("logical_address") == "2912" and r.get("physical_address") == "1f0912"]
+    require(not [r for r in selected_reads if r.get("reader_pc") == "d334"],
+            f"{capture_id}: neutral trace unexpectedly entered the $D334 consumer")
+    require(not [r for r in selected_writes if r.get("writer_pc") == "d349"],
+            f"{capture_id}: neutral trace unexpectedly entered the $D349 writer")
+    # The capture constraint is a ten-second PCE Fast run. Require at least
+    # 50 target writes per second (below the source's ~60 Hz cadence) so a
+    # short or late-starting trace cannot masquerade as a full neutral control.
+    require(len(selected_writes) >= 500,
+            f"{capture_id}: neutral $2912 trace covers only {len(selected_writes)} writes; "
+            "expected at least 500 across the bounded ten-second capture")
+    require(selected_writes and all(r.get("writer_pc") == "d2f2" and r.get("writer_code_bytes") == "9c12299c202960ad" and r.get("value") == "00" for r in selected_writes),
+            f"{capture_id}: neutral $D2F2 zero writes were missing or mismatched")
+    return f"{capture_id}: frame-61 neutral $44C1 poll; no $D334/$D349 path; {len(selected_writes)} zero writes at $D2F2"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("manifest", type=Path, help="JSON bundle manifest with per-run artifact hashes")
+    args = parser.parse_args()
+    try:
+        root = args.manifest.resolve().parent
+        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+        manifest_format = manifest.get("format")
+        require(manifest_format in {
+                    "firestaff-theron-pcefast-input-state-comparison-v1",
+                    "firestaff-theron-pcefast-input-state-comparison-v2",
+                },
+                "unsupported capture manifest format")
+        expected_source = EXPECTED_SOURCE_V2 if manifest_format.endswith("-v2") else EXPECTED_SOURCE_V1
+        require(manifest.get("source_identity") == expected_source,
+                "manifest source-identity declarations do not match the expected values")
+        require(manifest.get("capture_constraints") == EXPECTED_CAPTURE_CONSTRAINTS,
+                "manifest capture constraints do not match the expected PCE Fast setup")
+        runs = manifest["runs"]
+        ids = [run["capture_id"] for run in runs]
+        require(len(ids) == len(set(ids)), "capture IDs must be unique")
+        artifact_paths = [item["path"] for run in runs for item in run["artifacts"].values()]
+        require(len(artifact_paths) == len(set(artifact_paths)), "each run must use distinct artifact paths")
+        ups = [run for run in runs if run.get("stimulus") == "up"]
+        neutral = [run for run in runs if run.get("stimulus") == "neutral"]
+        require(len(ups) == len(neutral) == 3, "manifest must contain three UP and three neutral runs")
+        shared_sequence = manifest_format.endswith("-v2")
+        for run in ups:
+            print(verify_up(run, root, shared_sequence=shared_sequence))
+        for run in neutral:
+            print(verify_neutral(run, root, shared_sequence=shared_sequence))
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    print("PASS: 3 hash-bound UP and 3 hash-bound neutral trace bundles")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -47756,6 +47756,26 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
             LABELS "theron;real-media;startup;native;no-synthetic")
     endif()
 
+    add_executable(test_theron_v1_m11_jp_empty_bram
+        tests/test_theron_v1_m11_jp_empty_bram.c
+    )
+    target_link_libraries(test_theron_v1_m11_jp_empty_bram PRIVATE
+        firestaff_theron firestaff_m12 firestaff_m11 firestaff_m10)
+    target_include_directories(test_theron_v1_m11_jp_empty_bram PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_m11_jp_empty_bram PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    if(UNIX)
+        add_test(NAME theron_v1_m11_jp_empty_bram
+            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_m11_jp_empty_bram.sh
+                $<TARGET_FILE:test_theron_v1_m11_jp_empty_bram>)
+        set_tests_properties(theron_v1_m11_jp_empty_bram PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;backup-ram;native;no-synthetic")
+    endif()
+
     add_test(
         NAME theron_v1_raw_cue_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_raw_cue_runtime_boot.sh

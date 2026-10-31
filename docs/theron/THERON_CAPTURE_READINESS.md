@@ -1,5 +1,72 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — native Debug direct launch bypasses Firestaff's Run menu
+
+An isolated macOS Debug build launched the native Theron title/startup path
+directly from authentic US Track 02 data without showing Firestaff's Run menu
+or booting a PC Engine System Card. The `--boot-probe` receipt remained in the
+startup phase with `levelLoaded=0`; this is a launch-boundary check, not a
+loaded-dungeon or gameplay result. The existing JP fresh-start and US Continue
+tests remain the evidence for reaching native dungeons. See the
+[source-locked launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+
+## 2026-10-31 — authentic JP empty BRAM at native startup
+
+The native M11 startup integration pairs authentic Japanese Rev. 1 Track 02
+with the captured empty JP SRAM (BRAM). The file has a valid container and
+body layout but a zero campaign byte, so M11 correctly withholds Continue and
+keeps the new Akutuba route unchanged. The integration passed three TRV2
+Debug loops and verifies that neither source file changes. This is a negative
+empty-slot boundary only: no authentic progressed JP BRAM is available, so
+positive JP Continue/save round-trip and retail JP save compatibility remain
+unverified. See the [source-locked save-body report](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
+and [`DONE-theron.md`](../../DONE-theron.md).
+
+## 2026-10-31 — cold JP emulator route reaches Akutuba but saves no progress
+
+An isolated Mednafen 1.32.1 PCE Fast profile booted the authentic Japanese
+Rev. 1 disc from cold media, held RUN for four seconds at the System Card
+prompt, selected New Game and the first file, advanced the Akutuba story
+screens, and reached the first-person dungeon. The profile was kept separate
+from Firestaff data. Its only 2,048-byte `.sav` output has SHA-256
+`de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa` and
+MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`, exactly matching the already
+verified empty JP BRAM. No stage-clear or progressed BRAM was produced. The
+screenshots and emulator state remain private under
+`/home/trv2/firestaff-theron-evidence/emulator-created-20261031/jp-progress-attempt1/`;
+they are reference artifacts, not Firestaff output or parity evidence. The
+cold route confirms the long RUN hold and New Game navigation, but not a
+game-owned input trace, stage completion, positive save/Continue, or native
+rendering parity. Continue by completing the original Akutuba stage and
+validating any resulting BRAM before using it as positive-save evidence.
+
+## 2026-10-31 — JP PCE Fast poll-to-RAM event ordering
+
+Three isolated emulator runs replayed `up@61:120` from an authentic JP
+Akutuba F5 dungeon state. The PCE Fast trace binds the scripted mask and
+controller slot to the same-frame active-low guest read at `$44C1`
+(`raw=0010`, `value=3e`). A further three UP runs from the same exact state
+and three neutral controls compare the `$2912` main-RAM consumer: each UP run
+records `$D334` reading `00`, `$D349` writing `10`, then `$D334` reading `10`;
+the controls show no `$D334` or `$D349` access. The v2 verifier rejects
+ambiguous module/slot/mask records and validates the shared order: poll event
+2342, `$D334` read event 3000, `$D349` write event 3001, and later `$D334` read
+event 3023 in each UP run. This is an event-order join, but does not prove the
+poll caused the write. `$2912`'s meaning, party movement, and screen effect
+remain unproven. See the [guest-read
+receipt](../source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
+and [same-state comparison](../source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+
+A follow-up single UP/neutral pair reproduces the `$D334` read → `$D349` write
+→ `$D334` read sequence. The authenticated F5 pose faces a wall: separate UP,
+neutral, and DOWN screenshots retain the same front wall, and the bounded
+observer records no `$C1FC` TII or `$2040/$2041` position write. This is a
+blocked-wall observation, not a gameplay or renderer result. The next movement
+capture needs an authentic reachable position and a same-session input,
+position, and screen join. See the [blocked-wall
+probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md)
+for source hashes, event IDs, and trace hashes.
+
 ## 2026-10-31 — authentic JP and US native routes pass a macOS Debug build
 
 A fresh isolated macOS Debug configuration built the native Firestaff target
@@ -34,6 +101,16 @@ poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
+A separate US saved-state PCE Fast run loaded its existing state and recorded
+scripted input-apply events. Its shared input trace contains 1,354
+short-format rows at `$44CA/$44DB`, all reporting `raw=0000`; because standard
+PCE and PCE Fast instrumentation share a path and row label, these are not a
+verified PCE Fast read receipt. RAM, VRAM, and SAT differ from the control
+snapshot, while VCE and VDC state match; those changes are not joined to a
+received input, party pose, map cell, or display consumer. This proves neither
+action semantics nor game ownership and cannot supply a tile mapping. See the
+[saved-state input boundary report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+
 Instrumented Mednafen builds are diagnostic reference tools only; none are part
 of Firestaff's shipped runtime. A successful emulator build or input-delivery
 receipt does not by itself establish original-game behavior or native parity.
@@ -45,10 +122,14 @@ work order and detailed evidence.
 
 ## 2026-10-31 — authentic US PCE mouse-input capture boundary
 
-The preserved authentic US gameplay state (MD5
-`f17f377df210b4a3ae904a13fb85a7f0`) loads in the standard PCE module; PCE Fast
-rejects this state's serialization format. The successful standard-PCE replay
-used authentic US Track 02 MODE1/2352 media (MD5
+The preserved US gameplay state (MD5 `f17f377df210b4a3ae904a13fb85a7f0`)
+loaded in standard PCE in the earlier capture build; PCE Fast rejected its
+serialization format in that build. A later instrumented PCE Fast binary
+(MD5 `cdef1c8ebe6ec3248ea19559cdd13fe3`) reports a successful load of the same
+state. Its scripted-input trace is still inconclusive because every guest
+input-read record reports `raw=0000`; see the [saved-state input boundary
+report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+The earlier successful standard-PCE replay used authentic US Track 02 MODE1/2352 media (MD5
 `f23601102138f87c33025877767ebf76`) and the verified System Card. The state
 already contains dungeon-bank bytes `$20DA=01`, `$20DB=00`.
 
@@ -100,9 +181,10 @@ the corresponding opt-in trace flag is enabled; the complete patch-only
 pipeline passed three isolated loops, and a PCE Fast instrumentation build
 passed the real SDL 2.32.10 runtime check.
 
-The PCE Fast module rejects the preserved authentic US state's serialization
-schema; the standard PCE module accepts it, as documented above. No game media,
-save state or raw capture was committed.
+The earlier PCE Fast build rejected the preserved US state's serialization
+schema, while a later instrumented PCE Fast binary reported successful loading
+of the same state. The shared input trace remains ambiguous as described above.
+No game media, save state or raw capture was committed.
 
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 

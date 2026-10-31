@@ -1,5 +1,68 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — synchronize current Theron evidence summaries
+
+Updated the project status and documentation index, the Japanese platform
+row, the technical reference, and the local emulator runbook notice. The
+summaries now state the new F5 blocked-wall result alongside the existing
+UP-to-`$2912` event ordering, without claiming causality, movement or a
+renderer effect. Replaced 573 lines of a mixed, stale machine-specific
+runbook with current Theron-only capture constraints, and identified retired
+paths as unsupported. Updated its regression's documentation assertion to
+check the documented four-second System Card hold instead of an old shell
+example. No runtime code, game media, emulator artifact or save was added.
+The capture-script documentation regression and `git diff --check` passed.
+
+## 2026-10-31 — document native direct launch without the Run menu
+
+Recorded that a macOS Debug direct launch with authentic US Track 02 enters
+Theron's title/startup path without Firestaff's Run menu or a System Card. The
+boot probe remained in startup with `levelLoaded=0`, so this adds no dungeon
+or gameplay claim. Updated the README, project status, capture-readiness
+summary, and documentation index to link to the same source-locked note.
+Loaded-dungeon support remains established by the separate JP fresh-start and
+US Continue routes.
+
+## 2026-10-31 — verify the authentic empty JP BRAM at native M11 startup
+
+Added `theron_v1_m11_jp_empty_bram`, a bounded native startup integration
+using authentic JP Rev. 1 Track 02 (MD5
+`b7afb338ad31be1025b53f9aff12d73a`) and the captured empty JP Mednafen SRAM
+(MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). The test verifies its valid BRAM
+layout and zero campaign byte, then confirms M11 does not advertise Continue,
+does not change the fresh Akutuba selection or campaign state, and leaves both
+original inputs unchanged. A TRV2 Debug build and three CTest loops passed.
+This covers the native UI's empty-slot rejection only; no authentic progressed
+JP BRAM is available, so positive JP Continue/save semantics remain open.
+
+## 2026-10-31 — synchronize Theron status documentation with verified input evidence
+
+Updated the README, documentation index, project/platform status, capture
+readiness, reverse-engineering index and technical-reference summaries, and
+Theron TODO/DONE records. Current status distinguishes the three authentic JP
+PCE Fast input-conditioned RAM updates from the cold US System Card BIOS polls.
+It also keeps the nonblack Firestaff snapshot separate from the unpaired
+original-reference image. No gameplay semantics or parity claim was added.
+
+## 2026-10-31 — join JP PCE Fast UP poll and RAM traces by event sequence
+
+Three UP runs and three neutral controls used the same authentic JP Rev. 1
+media and Akutuba F5 state. Each UP run bound `up@61:120` on slot 0 to the
+active-low guest read at `$44C1` (`value=3e`) and assigned it shared event 2342.
+The same counter records `$D334` reading `$2912=00` at event 3000, `$D349`
+writing `$10` at event 3001, then `$D334` reading `$10` at event 3023. Neutral
+controls had no `$D334` reads or `$D349` writes; they recorded 596–597 zero
+writes to `$2912` from `$D2F2`. The v2 verifier passed three consecutive loops
+across all six authentic trace bundles. Raw traces and logs are retained on
+the external disk; trace hashes are
+in the [source-locked comparison report](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+
+This establishes repeatable event ordering from the poll to the RAM
+transaction, not causality. `$2912` semantics, movement, visible effect, and
+parity remain open. The verifier also rejects ambiguous module/slot/mask
+records; capture receipts are in [the guest-read report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md)
+and [the shared-sequence comparison](docs/source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md).
+
 ## 2026-10-31 — rerun authentic JP and US native startup/save routes on macOS Debug
 
 Configured a separate external-disk Debug build with the installed SDL3 and
@@ -81,8 +144,14 @@ repository-history scan reports pre-existing findings.
 ## 2026-10-31 — capture authentic US mouse-input dispatch boundary
 
 The preserved authentic US gameplay state (MD5
-`f17f377df210b4a3ae904a13fb85a7f0`) loads in standard PCE, while PCE Fast
-rejects its serialization schema. With authentic US Track 02 MODE1/2352 media
+`f17f377df210b4a3ae904a13fb85a7f0`) loaded in standard PCE in the capture
+build used here, while that build's PCE Fast module rejected its serialization
+schema. A later PCE Fast instrumented binary (MD5
+`cdef1c8ebe6ec3248ea19559cdd13fe3`) reports a successful load of the same
+state; its input trace remains inconclusive because standard-PCE and PCE Fast
+instrumentation share an output path and row label. See the [later PCE Fast
+capture boundary](docs/source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+With authentic US Track 02 MODE1/2352 media
 (MD5 `f23601102138f87c33025877767ebf76`) and the verified System Card, one
 neutral and three same-state captures held raw mouse-button mask `0x01` for 60
 updates. Each held-input run records 60 guest device reads; all three agree on
@@ -880,7 +949,8 @@ changes; state-driven visual rendering and direct viewport clicks remain open.
 
 The authentic USA SDL event test now selects `--lang en` because its item
 trace assertions compare localized action labels. On a Swedish host the
-three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
+three actions succeeded but emitted a localized object label instead of the
+expected English `ITEM`
 assertion. All seven event routes passed on the Linux build host with the
 USA Track 02 after fixing the language selection, including the added side
 steps, left turn, champion selection and wait actions. This verifies input

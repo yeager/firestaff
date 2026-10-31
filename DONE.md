@@ -1,6 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
 
+## 2026-10-31 — Native Theron US Continue and JP fresh-start revalidated
+
+An isolated macOS Debug build ran the authentic US Continue route with
+Ak-Tu-Ba-complete Backup RAM and the Japanese fresh-start route with each
+region's hash-verified Track 02. Both focused CTest cases passed; their
+wrappers use isolated user-data roots and verify that source media stays
+unchanged. The tests cover bounded startup, US Continue/save routing and
+native input transactions, not retail-frame parity or complete Theron
+gameplay. See the [Theron work log](DONE-theron.md) and
+[capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md).
+
+
 ## 2026-10-31 — Authentic Japanese Theron fresh-campaign handoff
 
 Added an M11 integration check that starts an authentic Japanese Theron's

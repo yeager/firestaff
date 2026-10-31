@@ -181,6 +181,14 @@ and Theron-body restore reject it without mutating the world. The regression
 checks the authentic file's hash before making a temporary `.bram` symlink;
 the save and emulator media remain local and unmodified.
 
+The native M11 integration `tests/test_theron_v1_m11_jp_empty_bram` extends
+this negative boundary through the title and stage-select UI with authenticated
+JP Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`). It confirms the
+empty slot leaves the fresh Akutuba selection and campaign fields unchanged;
+the test passed three TRV2 Debug loops and rechecks both input hashes after
+startup. No authentic progressed JP BRAM is available, so positive JP Continue
+and regional progress-restore semantics remain unverified.
+
 ## Authenticated completion values outside the restore range
 
 The original completion dispatcher capture separately records `$267C` values
