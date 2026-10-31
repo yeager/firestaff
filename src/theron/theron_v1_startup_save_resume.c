@@ -41,6 +41,7 @@
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(_WIN32) || defined(_WIN64)
@@ -999,10 +1000,145 @@ static int theron_v1_startup_bram_atomic_replace(
 #endif
 }
 
-int theron_v1_startup_write_pce_bram_theron_record(
+static int theron_v1_startup_managed_marker_path(
+    const char *save_path,
+    char *out_path,
+    size_t out_capacity) {
+    int length;
+    if (!save_path || !save_path[0] || !out_path || out_capacity == 0u) {
+        return 0;
+    }
+    length = snprintf(out_path, out_capacity, "%s.firestaff-managed",
+                      save_path);
+    return length > 0 && (size_t)length < out_capacity;
+}
+
+static uint64_t theron_v1_startup_bram_fnv1a64(
+    const uint8_t bytes[THERON_V1_PCE_BRAM_BYTES]) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i;
+    for (i = 0u; i < THERON_V1_PCE_BRAM_BYTES; ++i) {
+        hash ^= bytes[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static uint64_t theron_v1_startup_path_fnv1a64(const char *path) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    const unsigned char *cursor = (const unsigned char *)path;
+    while (cursor && *cursor) {
+        hash ^= *cursor++;
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static int theron_v1_startup_managed_marker_matches_bytes(
+    const char *save_path,
+    const uint8_t bytes[THERON_V1_PCE_BRAM_BYTES]) {
+    char marker_path[THERON_V1_SRM_PATH_MAX + 32u];
+    char expected[64];
+    char actual[64];
+    FILE *file;
+    int length;
+    int valid;
+
+    if (!bytes || !theron_v1_startup_managed_marker_path(
+                      save_path, marker_path, sizeof(marker_path))) {
+        return 0;
+    }
+    length = snprintf(expected, sizeof(expected),
+                      "FIRESTAFF-THERON-BRAM-V1 %016llx %016llx\n",
+                      (unsigned long long)
+                          theron_v1_startup_bram_fnv1a64(bytes),
+                      (unsigned long long)
+                          theron_v1_startup_path_fnv1a64(save_path));
+    if (length <= 0 || (size_t)length >= sizeof(expected)) return 0;
+
+    file = fopen(marker_path, "rb");
+    if (!file) return 0;
+    valid = fgets(actual, sizeof(actual), file) != NULL &&
+            fgetc(file) == EOF && !ferror(file);
+    if (fclose(file) != 0) valid = 0;
+    return valid && strcmp(actual, expected) == 0;
+}
+
+int theron_v1_startup_is_pce_bram_managed_save(const char *save_path) {
+    uint8_t bytes[THERON_V1_PCE_BRAM_BYTES];
+    Theron_V1PceBramReceipt receipt;
+
+    if (!theron_v1_startup_bram_read_exact(save_path, bytes) ||
+        theron_v1_pce_bram_classify(bytes, sizeof(bytes), &receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !receipt.save_body_layout_proven ||
+        !receipt.save_body_campaign_valid ||
+        !receipt.save_slot_tail_unconsumed_padding) {
+        return 0;
+    }
+    return theron_v1_startup_managed_marker_matches_bytes(save_path, bytes);
+}
+
+static int theron_v1_startup_write_managed_marker(const char *save_path) {
+    uint8_t bytes[THERON_V1_PCE_BRAM_BYTES];
+    Theron_V1PceBramReceipt receipt;
+    char marker_path[THERON_V1_SRM_PATH_MAX + 32u];
+    char temporary_path[THERON_V1_SRM_PATH_MAX + 48u];
+    FILE *file = NULL;
+    int length;
+    int ok = 0;
+
+    if (!theron_v1_startup_bram_read_exact(save_path, bytes) ||
+        theron_v1_pce_bram_classify(bytes, sizeof(bytes), &receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !receipt.save_body_layout_proven ||
+        !receipt.save_body_campaign_valid ||
+        !receipt.save_slot_tail_unconsumed_padding ||
+        !theron_v1_startup_managed_marker_path(
+            save_path, marker_path, sizeof(marker_path))) {
+        return 0;
+    }
+    length = snprintf(temporary_path, sizeof(temporary_path),
+                      "%s.tmp.XXXXXX", marker_path);
+    if (length <= 0 || (size_t)length >= sizeof(temporary_path) ||
+        !theron_v1_startup_bram_open_unique_temp(
+            temporary_path, sizeof(temporary_path), marker_path, &file)) {
+        return 0;
+    }
+    if (fprintf(file, "FIRESTAFF-THERON-BRAM-V1 %016llx %016llx\n",
+                (unsigned long long)
+                    theron_v1_startup_bram_fnv1a64(bytes),
+                (unsigned long long)
+                    theron_v1_startup_path_fnv1a64(save_path)) < 0 ||
+        fflush(file) != 0) {
+        goto cleanup;
+    }
+#if defined(_WIN32) || defined(_WIN64)
+    if (_commit(_fileno(file)) != 0) goto cleanup;
+#else
+    if (fsync(fileno(file)) != 0) goto cleanup;
+#endif
+    if (fclose(file) != 0) {
+        file = NULL;
+        goto cleanup;
+    }
+    file = NULL;
+    if (!theron_v1_startup_bram_atomic_replace(temporary_path, marker_path)) {
+        goto cleanup;
+    }
+    ok = 1;
+
+cleanup:
+    if (file) fclose(file);
+    if (!ok) remove(temporary_path);
+    return ok;
+}
+
+static int theron_v1_startup_write_pce_bram_theron_record_impl(
     const Theron_V1_World *world,
     const char *template_path,
-    const char *destination_path) {
+    const char *destination_path,
+    int allow_same_managed_save) {
     uint8_t template_data[THERON_V1_PCE_BRAM_BYTES];
     uint8_t encoded_data[THERON_V1_PCE_BRAM_BYTES];
     uint8_t verify_data[THERON_V1_PCE_BRAM_BYTES];
@@ -1017,11 +1153,15 @@ int theron_v1_startup_write_pce_bram_theron_record(
         !destination_path || !destination_path[0] ||
         strlen(template_path) >= sizeof(template_physical) ||
         strlen(destination_path) >= sizeof(destination_physical) ||
-        strcmp(template_path, destination_path) == 0 ||
+        (strcmp(template_path, destination_path) == 0 &&
+         !allow_same_managed_save) ||
         !theron_v1_startup_bram_read_exact(template_path, template_data) ||
         theron_v1_pce_bram_classify(
             template_data, sizeof(template_data), &receipt) !=
             THERON_V1_PCE_BRAM_READY ||
+        (allow_same_managed_save &&
+         !theron_v1_startup_managed_marker_matches_bytes(
+             template_path, template_data)) ||
         !theron_v1_startup_encode_pce_bram_theron_record(
             world, template_data, sizeof(template_data), encoded_data,
             sizeof(encoded_data))) {
@@ -1034,7 +1174,9 @@ int theron_v1_startup_write_pce_bram_theron_record(
         FSP_ResolvePhysicalPath(destination_physical,
                                 sizeof(destination_physical),
                                 destination_path) &&
-        strcmp(template_physical, destination_physical) == 0) {
+        strcmp(template_physical, destination_physical) == 0 &&
+        (!allow_same_managed_save ||
+         strcmp(template_path, destination_path) != 0)) {
         return 0;
     }
 
@@ -1075,6 +1217,31 @@ cleanup:
     if (file) fclose(file);
     if (!ok) remove(temporary_path);
     return ok;
+}
+
+int theron_v1_startup_write_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const char *template_path,
+    const char *destination_path) {
+    if (!theron_v1_startup_write_pce_bram_theron_record_impl(
+            world, template_path, destination_path, 0)) {
+        return 0;
+    }
+    return theron_v1_startup_write_managed_marker(destination_path);
+}
+
+int theron_v1_startup_update_pce_bram_theron_save(
+    const Theron_V1_World *world,
+    const char *save_path) {
+    /* This entry point is only for the app-managed save path after Continue.
+     * The writer still stages, verifies, fsyncs and atomically replaces the
+     * file; imported/original BRAMs use the non-aliasing API above. */
+    if (!theron_v1_startup_is_pce_bram_managed_save(save_path) ||
+        !theron_v1_startup_write_pce_bram_theron_record_impl(
+            world, save_path, save_path, 1)) {
+        return 0;
+    }
+    return theron_v1_startup_write_managed_marker(save_path);
 }
 
 static void theron_v1_startup_continue_reset_world_runtime(

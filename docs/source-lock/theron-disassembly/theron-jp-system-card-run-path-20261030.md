@@ -54,6 +54,21 @@ callbacks, zero authenticated CD-to-RAM receipts, zero game `$E009` dispatches,
 and no game-owned controller poll. Do not claim game launch or parity from
 this BIOS/code-loader trace.
 
+## 2026-10-31 r5 callback and transfer boundary
+
+A later authentic cold capture recorded one scripted `RUN` event
+(`run@480:300`) and no `SELECT` event. Shared-sequence System Card I/O and RAM
+observations bind `$1800=$C8`, then `$1801=$04`, and the resulting `$2259=$04`
+store. The BIOS subsequently reads `$2259` and follows `$E166->$E176`. The
+instruction listing and bounded capture are recorded in
+[`theron-system-card3-ea3b-20261031.asm`](theron-system-card3-ea3b-20261031.asm).
+
+This adds a source-bound callback-byte and BIOS-branch observation. It does
+not establish the meaning of `$2259`, a title-menu action, or game ownership:
+the capture has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt and no
+confirmed gameplay handoff. The game-owned transition remains open; see the
+current [capture readiness](../../theron/THERON_CAPTURE_READINESS.md).
+
 ## Private trace hashes
 
 - Controller and BIOS path trace SHA-256:
@@ -1071,3 +1086,67 @@ PC context. Keep the independent `$4000` observation separate from the BIOS
 branch and from game-owned consumers/native parity claims.
 
 The raw media and traces are not included in Git.
+
+## v22 run-only `$E14C` branch detail
+
+Re-reading the hash-locked v22 cold RUN-only capture resolves the first
+`$E14C` decision without extending its trace claims. At event 9136, `$E162`
+read `$2259=$00`; `$E166 BNE $E176` was not taken. `$E168` compared `$A=$01`
+with `$226B=$19`, and `$E16B BCS $E174` was not taken, so the code incremented
+the local counter and repeated the `$E14F` callback path. The callback-state
+sidecar records `$EA50` writing `$04` to `$2259` at event 9626. The next
+`$E162` read observed `$04` at event 9762. The instruction-start trace records
+`$E166 BNE $E176` at event 9764 and `$E176` as the next instruction at event
+9765. The run plan contained one RUN event and no SELECT event. Thus
+`$2259=$04` is not, by itself, evidence that a
+SELECT event occurred; this trace does not establish what higher-level action
+the byte represents or why `$EA50` wrote it.
+
+The capture still records no `$E174`, `$E11D`, `$E209`, or `$E130` instruction
+start before the 8,192-row bootstrap cap. The BIOS proceeds through the
+`$E176` arm and later remains in the `$E95E/$E966` status path. The independent
+`$4000` window, System Card controller poll, and scripted RUN receipt do not
+prove the clear-carry launch, a game-owned consumer, or gameplay parity.
+
+This is a reanalysis of the existing v22 capture, not a new run. Raw files
+remain on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-callback-v22-run-only-20261030/`
+and the reviewed copy is on the external disk at
+`/Volumes/Extern-disk/Firestaff-theron-captures/theron-jp-clear-carry-cold-20261031/`.
+The callback-state SHA-256 is
+`e4250b259ff0254b4c842efeaf9704a21c24e5c7deed82e51b8c3895f53498d6`; the
+bootstrap-follow SHA-256 remains
+`e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`.
+
+## r5 RUN-only I/O-to-`$2259` join
+
+The separate 2026-10-31 r5 RUN-only capture joins the same byte through the
+System Card I/O observer, callback-state observer, and instruction-start
+trace. With one scripted event (`run@480:300`) and no SELECT event, BIOS
+instruction `$EA3B` read `$1800=$C8` at event 10510 and stored the status at
+`$227A` at event 10513. `$EA4D` then read `$1801=$04` at event 10517, and
+`$EA50 STA ($FA)` wrote `$04` to `$2259` at event 10519. The shared event
+sequence, address mappings, and BIOS opcode bytes match across those rows.
+The later callback read `$2259=$04` at event 10685; the bootstrap trace shows
+`$E166 BNE $E176` at event 10687 and `$E176` next at event 10688. This directly
+binds the observed branch byte to the preceding System Card port read for this
+execution. It does not establish the port's higher-level semantics or prove
+the BIOS launched the game.
+
+The same bounded capture has no `$E174`, `$E11D`, `$E130`, or `$E209`
+instruction-start receipt. It therefore strengthens the byte provenance while
+leaving the clear-carry launch, game-owned consumers, and native parity
+unproven. The exact run receipts remain in the ignored external-disk capture
+directory
+`/Volumes/Extern-disk/firestaff-pr221-capfix-20261031/.codex-scratch/theron-syscard-io-ram-cold-20261031/`.
+The matching 100-instruction authentic BIOS listing is preserved in
+[`theron-system-card3-ea3b-20261031.asm`](theron-system-card3-ea3b-20261031.asm);
+its repeated listing hash is recorded in that file.
+SHA-256: I/O/RAM
+`1b9fbf4238a23202bb75c64d9fdeda0e9ad7243cb563777b6b8bb2287e942c8f`,
+callback-state
+`ca2f4d79bb9bc1a20a4390cb90e9a494079f1712fe79edde919e7619496dc143`,
+bootstrap-follow
+`6e4938ff28a97ae564cbd1915a3fd5cdd324481f939ed83d5c77e38665965618`, and
+scripted-input consumption
+`39d4b61bb9297401284da45a6383459aa5cf4b8fb3bd1933dc24d310f931c1c9`.

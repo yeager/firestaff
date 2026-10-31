@@ -42,6 +42,9 @@ No reference source code exists. Parity is established through:
 | Stage-2 entry prologue (SEI→JSR $8000) | PROVEN | 41 bytes at $4000, MPR page map verified |
 | Stage-2 main path (post-seed→retry) | PROVEN | 82 bytes contiguous, TII clear/copy chains |
 | Stage-2 contiguous entry path | PROVEN | 0xB5 bytes ($4000-$40B4) fully bound |
+| System Card status callback byte | PROVEN | Authentic JP cold trace: `$1800=$C8`, `$1801=$04`, callback writes `$2259=$04`; [source-locked r5 trace](../docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) |
+| BIOS continuation after callback | PROVEN | `$E162` reads `$2259=$04`; `$E166->$E176` |
+| RUN reaches game-owned code | OPEN | No `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff in this capture |
 
 ### 2. Command Dispatcher
 

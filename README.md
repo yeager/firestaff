@@ -21,7 +21,7 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed on 2026-10-30 for the v3.0.421 candidate. The
+The status pages were reviewed on 2026-10-31 for the v3.0.421 candidate. The
 latest full five-card authentic-media selection check verified keyboard and
 mouse selection plus default-root handoff for DM1, CSB, DM2, Nexus and Theron.
 Separate real-media runtime checks reached Firestaff gameplay for DM1, CSB,
@@ -132,6 +132,12 @@ and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
+The latest cold Japanese System Card reference trace separately binds the
+`$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
+`$E166->$E176`; no game-owned handoff was observed. This reference trace does
+not change Firestaff's native runtime or prove original title-menu input.
+See the [source-locked trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
+
 README screenshots are Firestaff-rendered only; original-emulator captures
 are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and
