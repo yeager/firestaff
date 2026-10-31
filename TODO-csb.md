@@ -3,10 +3,13 @@
 2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
 stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand
 occupied and resolves to CLEAR, while deposit empties it and resolves to SET.
-The CSB PC34 runtime now computes that predicate for the post-transfer hand
-state. A two-direction regression checks the exact queued fakewall effects.
-The other C013 edition/platform runtime owners and original-media HOLD outcome
-remain unverified.
+The shared CSB runtime now computes that predicate for the post-transfer hand
+state; the supported Atari ST, Amiga, and FM Towns variants all enter this
+runtime through `csb_v1_runtime_init` and have no separate F0275 C013 owner.
+A two-direction regression checks the exact queued fakewall effects. The
+source-level behavior is therefore shared across those platform lanes, while
+original-media HOLD outcomes and complete F0275 platform parity remain
+unverified.
 
 2026-10-31 ReDMCSB F0046 message expiry: `TEXT.C:1663-1666` assigns 70 game
 ticks to MEDIA099, which covers Firestaff's supported A31/A35 Amiga variants,
