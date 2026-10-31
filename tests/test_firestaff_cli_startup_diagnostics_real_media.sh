@@ -647,8 +647,29 @@ for game_id in dm1 csb dm2 nexus theron; do
             printf 'FAIL: bare --game nexus reported playable runtime without a loaded level or admitted menu\n' >&2
             exit 1
         fi
+        v22_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+            XDG_CONFIG_HOME="$quick_home/.config" \
+            APPDATA="$quick_home/AppData" \
+            FIRESTAFF_CONFIG_PATH="$quick_home/v22-$game_id.toml" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game "$game_id" --presentation-mode v22 --verbose --debug \
+            --boot-probe --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$v22_output" >&2
+            exit 1
+        }
+        if ! printf '%s\n' "$v22_output" | \
+                grep -Fq "presentation phase=game-handoff game=$game_id requested=v22 resolved=v21 framebuffer=" ||
+           ! printf '%s\n' "$v22_output" | \
+                grep -Fq ' fallback=1'; then
+            printf '%s\n' "$v22_output" >&2
+            printf 'FAIL: authentic %s V2.2 request did not report its V2.1 renderer fallback\n' \
+                "$game_id" >&2
+            exit 1
+        fi
         printf 'PASS: bare --game %s resolves original %s media and reports its source-bound startup trace from ~/.firestaff/data/%s\n' \
             "$game_id" "$expected_platform" "$game_id"
+        printf 'PASS: authentic %s V2.2 request reports the implemented V2.1 renderer fallback\n' \
+            "$game_id"
     fi
 done
 
