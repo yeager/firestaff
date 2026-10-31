@@ -172,7 +172,7 @@ support is to add any one of these data files:
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
 | Hard | DM SNES / Super Famicom SMC ROM set | four cartridge versions, per-tile palettes, SPC music, console input, and SNES-specific bug gates |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
-| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence for DMWeb's between-dungeon save model beyond the current launch/readiness gates; 2026-06-25 adds the bounded `theron_v1_srm_classifier` (probe + unit test, 5-slot Save Disk manifest, gzip-deflate detection) that recognizes a real `.srm` when one is staged under `$HOME/.firestaff/data/theron/save/` or `$FIRESTAFF_THERON_SRM_DIR` and reports an honest `ABSENT` manifest on hosts without one. Real `.srm` payload decoding and cross-slot import to `Theron_DungeonProgression`/champion blocks remain the unblocked step. |
+| Hard | Authentic Theron progress/save corpus | Native US Continue already restores the verified Ak-Tu-Ba-complete BRAM route to dungeon 2; an authentic empty JP BRAM is correctly rejected. Remaining evidence is positive JP progress save/Continue, broader original BRAM round-trips, and retail parity. The separate community `.srm` Save Disk body remains opaque and is not interchangeable with in-game BRAM or Firestaff `.tqsv` saves. |
 | Very hard | Nexus Saturn full Track 1 / fan-translation matrix | original JP Track 1 is present, but full-disc runtime handoff, CD audio tracks 02-09, demo classification, and EN/FR fan-translation hashes still need proof |
 
 ## Adding a new version to Firestaff

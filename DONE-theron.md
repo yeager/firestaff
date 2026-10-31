@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — reconcile Theron documentation with verified evidence
+
+Updated the active status and acquisition pages to distinguish the authentic
+JP Track 02 BIN from the zero-filled `TQJP02End.iso` placeholder, and corrected
+save-gap summaries to reflect the verified US BRAM Continue route and the
+empty-JP rejection while keeping positive JP progress and `.srm` body import
+open. Clarified that the PCE key table documents Mednafen reference bindings.
+Corrected the `$C852` row transform arithmetic: `(8 + 2) & 3` is `2`, with no
+coordinate or direction semantics inferred. Added the next bounded capture
+join: identify the physical `$C852` consumer in the same Drator generated-row
+event. Marked the August capture inventory as historical so it cannot override
+the current status summary.
+
 ## 2026-10-31 — restrict OGG aliases to declared CD-DA tracks
 
 The CUE media resolver now accepts a same-stem `.ogg` only when the CUE

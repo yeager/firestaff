@@ -312,11 +312,12 @@ ad3b2985b5ad3c2985b6ad3d2985b4a5b4186902290385bb20f851
 
 The routine copies working-row offsets 6 and 7 from `$293b/$293c` to `$b5/$b6`
 and ends by calling `JSR $51f8`. It copies offset 8 from `$293d` to `$b4`,
-adds two, masks with `$03` and stores the result in `$bb`. The bytes therefore
-prove those copies and the low-two-bit transform, but this span alone does not
-prove that `$b5/$b6` are map-local X/Y or that `$bb` is direction. In the
-captured row the retained values are byte 6 = 17, byte 7 = 3, byte 8 = 8 and
-the transformed low-two-bit value = 0.
+adds two, masks with `$03` and stores the result in `$bb`. For the captured
+row, byte 8 is `8`, so this sequence computes `(8 + 2) & 3 = 2`. The bytes
+therefore prove those copies and the low-two-bit transform, but this span alone
+does not prove that `$b5/$b6` are map-local X/Y or that `$bb` is direction. In
+the captured row the retained values are byte 6 = 17, byte 7 = 3, byte 8 = 8
+and the transformed value = 2.
 
 The materialization receipt requires the exact logical address, raw offset and
 source bytes as provenance, but keeps the row bytes opaque. A changed source

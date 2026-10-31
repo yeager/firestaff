@@ -31,7 +31,11 @@ game-owned input/CD-loader receipt. See the
 [source-locked route](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [capture readiness](THERON_CAPTURE_READINESS.md).
 
-## PC Engine button mapping
+## Reference PCE pad bindings
+
+This table describes the Mednafen reference profile used for captures. It is
+not Firestaff's native keyboard layout; native in-dungeon controls are listed
+below.
 
 | Theron action | Keyboard (primary) | Keyboard (alt) |
 |---------------|-------------------|----------------|

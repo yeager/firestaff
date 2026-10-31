@@ -234,8 +234,11 @@ an instrumentation path and label.
 
 ### Missing Original Data or Verification
 
-- **Save body layout:** SRM/save correlation and the complete body layout are
-  not sufficiently source-locked.
+- **Save body layout:** authentic US BRAM Continue and its bounded campaign and
+  champion fields are verified, and the authentic empty JP BRAM is rejected.
+  Positive JP progress restoration and the complete cross-region BRAM layout
+  are not sufficiently source-locked. The separate community `.srm` Save Disk
+  body remains opaque and must not be conflated with in-game BRAM or `.tqsv`.
 - **Original/Firestaff paired capture:** the shared v2 comparator now requires
   hash-bound authentic-media and `--debug` build receipts per checkpoint, but
   a same-state original-versus-Firestaff image pair and reviewed receipt

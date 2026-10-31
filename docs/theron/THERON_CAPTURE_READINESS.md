@@ -6,6 +6,17 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+The next useful original-game capture is a Drator replay that watches the
+static position consumer at logical `$C852` and records its physical PC/MPR
+while the already authenticated generated-row publication/read/unlink event
+occurs. The current generator receipt proves the row lifecycle and an earlier
+consumer in that event, while `$C852` is only statically tied to row offsets
+6–8; no same-session join proves it consumes that row. Accept a result only
+when physical bank identity and event order bind both observations. Do not
+assign coordinate or direction meanings to the row bytes. See the
+[generator source-lock report](../source-lock/theron-generator-rng-state-2026-08-21.md)
+and [active TODO](../../TODO-theron.md).
+
 Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
 menu and System Card on direct launch. Authentic JP fresh-start and US
 Continue routes reach loaded dungeons. The native input panel has bounded
@@ -726,6 +737,8 @@ valid `$B0E5` category; the RNG sidecar is not a `$5D64/$5D6A` source join.
 The replay therefore remains transport/provenance evidence only.
 The raw output remains outside GitHub in private operator storage.
 
+### Historical runtime/status checkpoint (2026-08-13)
+
 The external-`TMPDIR` Theron regression is green: 253 selected CTest cases
 passed (247 executed, six expected capture skips). With the local authenticated
 fixtures, the VRAM/VCE readiness, Main-RAM consumer, and CD-state sidecar tests
@@ -746,8 +759,8 @@ between objects.
 
 README-eligible screenshots must be rendered by Firestaff itself.
 
-The Firestaff runtime still has no `README_ELIGIBLE` Theron row. The current
-public status should stay clear:
+At the 2026-08-13 checkpoint, the Firestaff runtime had no
+`README_ELIGIBLE` Theron row. The status at that time was:
 Firestaff can hash-verify JP/US Track 02 data, lock
 raw bank-anchor offsets, read the authenticated US 53-entry descriptor table
 from its real MODE1 user-data offset, and reach

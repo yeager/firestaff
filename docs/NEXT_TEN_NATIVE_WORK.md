@@ -23,12 +23,16 @@ contains only the next cross-game work items, not a complete Theron inventory.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron JP active-map and movement source join.** Bind the repeated
-   `$C1FC` TII source/destination fields to the active Track 02 map and the
-   caller's gameplay role. The matched input-conditioned transfers may also
-   be teleporter destination copying; they do not yet prove movement, collision
-   or visible effect. Continue from an authenticated, reachable pose and join
-   the state change to reference output.
+5. **Theron JP generated-row consumer join.** Replay the authenticated Drator
+   event and record the physical PC/MPR and event order at the static `$C852`
+   consumer alongside the generated row's publication/read/unlink lifecycle.
+   The current receipt proves the row lifecycle, but no same-session capture
+   shows `$C852` consuming that exact row; a hit in another physical bank does
+   not close the join. Keep row fields opaque. Then continue the separate
+   `$C1FC` active-map and movement question: its matched input-conditioned
+   transfers may be teleporter destination copying and do not yet prove
+   movement, collision or visible effect. See the
+   [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
    Track 02 transition through its game-owned consumer, then bind bitmap,
    palette, text and audio state to the native presentation path. Save-state
