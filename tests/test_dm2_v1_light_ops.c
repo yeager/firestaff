@@ -1254,6 +1254,8 @@ static void test_mode7_class34_receipts(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_CLightStoneRoomReceipt room;
     uint8_t linked_tile[5] = {0x70u, 0u, 0u, 0u, 0x3cu};
+    uint8_t adjacent_empty_tiles[9] = {0u};
+    uint8_t adjacent_record_tiles[40] = {0u};
     uint8_t tile = 0x60u;
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.level_count = 1;
@@ -1296,6 +1298,44 @@ static void test_mode7_class34_receipts(void)
         &dungeon, 0, 0, 0, 0, &room));
     assert(!dm2_v1_dungeon_c_light_class34_receipt(
         &dungeon, 0, 0, 0, 4, &room));
+
+    /* c_gui_vp.cpp:2684-2707 advances direction once and queries that
+     * adjacent record root for a class-4 side mismatch. Empty roots return
+     * the end marker; a populated root still needs query_0cee_1a46 filters. */
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.raw_data = adjacent_empty_tiles;
+    dungeon.raw_size = sizeof(adjacent_empty_tiles);
+    dungeon.column_index_base = 0;
+    dungeon.square_first_thing_base = 0;
+    dungeon.square_first_thing_count = 0;
+    for (int direction = 0; direction < 4; ++direction) {
+        adjacent_empty_tiles[4] = (uint8_t)(0x80u |
+            ((direction & 1) == 0 ? 0x08u : 0u));
+        assert(dm2_v1_dungeon_c_light_class34_receipt(
+            &dungeon, 0, 1, 1, direction, &room));
+        assert(room.raw_tile == adjacent_empty_tiles[4] &&
+               room.x == 1 && room.y == 1 && room.source_tile_type == 0x11u &&
+               room.first_record_link == DM2_THING_END_MARKER);
+    }
+
+    /* A non-empty source-selected adjacent root remains fail-closed until
+     * the source query's per-record orientation/type filtering is ported. */
+    adjacent_record_tiles[2] = 0u; /* column's first-square index */
+    adjacent_record_tiles[3] = 0u;
+    adjacent_record_tiles[8] = 0x3cu; /* big-endian record link 0x3c00 */
+    adjacent_record_tiles[9] = 0u;
+    adjacent_record_tiles[36] = 0x80u; /* center: class 4, side 0 */
+    adjacent_record_tiles[37] = 0x10u; /* south neighbor: item root */
+    dungeon.raw_data = adjacent_record_tiles;
+    dungeon.raw_size = sizeof(adjacent_record_tiles);
+    dungeon.raw_map_data_base = 32;
+    dungeon.column_index_base = 0;
+    dungeon.square_first_thing_base = 8;
+    dungeon.square_first_thing_count = 1;
+    dungeon.words_big_endian = 1;
+    assert(!dm2_v1_dungeon_c_light_class34_receipt(
+        &dungeon, 0, 1, 1, 1, &room));
 }
 
 static void test_check_recompute_clean(void)

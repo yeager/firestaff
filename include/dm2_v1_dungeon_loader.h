@@ -1762,8 +1762,9 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     int level, int x, int y, uint32_t tick,
     DM2_V1_CLightStoneRoomReceipt *out);
 /* skproject SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2659-2707:
- * class-3 and bit-2 class-4 tiles summarize as types 0x10..0x13. Class-4
- * direction mismatches redirect to an adjacent tile and are rejected here. */
+ * class-3 and bit-2 class-4 tiles summarize as types 0x10..0x13. The
+ * class-4 side-mismatch route accepts an adjacent square only when its
+ * record root is empty; populated roots still require source query filtering. */
 int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out);

@@ -20,14 +20,17 @@ branches: skproject `SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM`
 raw class-4 tiles as `0x10`/`0x11`, may redirect class-4 summaries to an
 adjacent tile according to the incoming direction, and carries the selected
 record link into `SKULLWIN/c_light.cpp` (:231-435). Firestaff now admits bounded
-mode-7 class-3 summaries and direction-matched class-4 summaries with their
-source record link. Flags-3 walks up to 256 authenticated links, accumulates
+mode-7 class-3 summaries, direction-matched class-4 summaries with their
+source record link, and class-4 mismatches whose source-selected adjacent
+square has no records. Flags-3 walks up to 256 authenticated links, accumulates
 DBE/DBF terms and the creature F8 term, and passes focused accumulator
 regressions. Flags-4 is a no-op for any accepted class-3/4 record-chain root,
 because the source flag mask disables its record and creature terms.
-Class-4 direction mismatches that redirect to an adjacent record owner remain
-unresolved. Original-media dynamic-light evidence is still needed for every
-supported DM2 platform; the existing FM Towns-only runtime receipt does not
+Class-4 direction mismatches now follow the source's direction-plus-one
+adjacent-square route when that square has no records. Populated adjacent
+roots still require the exact `query_0cee_1a46` orientation/type filters and
+remain unresolved. Original-media dynamic-light evidence is still needed for
+every supported DM2 platform; the existing FM Towns-only runtime receipt does
 close DOS, Amiga, or Macintosh behavior.
 
 2026-10-31 skproject `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` DBE/DBF terms:
