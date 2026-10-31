@@ -13270,14 +13270,14 @@ static int dm2_runtime_shop_glass_actuator_pair_at(
     return 1;
 }
 
-/* QUERY_TEMP_PICST in SHOP_GLASS uses the same RAW4 rectangle and view scale
- * as the shop glass, but the merchandise image's own SUMMARY_IMAGE offsets
- * plus WALL_GFX/dtImageOffset/0xfd. */
-static int dm2_runtime_bind_shop_item_render(
+/* QUERY_TEMP_PICST in SHOP_GLASS uses the same RAW4 rectangle and view scale.
+ * Merchandise adds WALL_GFX/dtImageOffset/0xfd; the navigation image uses
+ * the wall entry directly with zero explicit offsets. */
+static int dm2_runtime_bind_shop_image_render(
     const DM2_V1_AssetLoader *loader, uint8_t wall_gfx_index,
-    uint16_t rect_number, uint8_t ref_point, uint16_t item,
+    uint16_t rect_number, uint8_t ref_point, uint16_t item, int navigation,
     int stretch_x, int stretch_y, int mirror_flip,
-    DM2_V1_WallOrnamentRender *entry)
+    uint16_t colorkey, DM2_V1_ShopImageRender *render)
 {
     DM2_V1_SkprojectItemdbOfItemspecReceipt itemdb_receipt;
     DM2_V1_SkprojectItemtypeOfItemspecReceipt itemtype_receipt;
@@ -13292,21 +13292,29 @@ static int dm2_runtime_bind_shop_item_render(
     int scaled_height;
     int source_x0, source_y0, source_x1, source_y1;
 
-    if (!loader || !entry || !rect_number || stretch_x <= 0 ||
-        stretch_y <= 0 ||
-        !dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
-            item, &itemdb, &itemdb_receipt) || !itemdb_receipt.valid ||
-        itemdb == 0xffffu ||
-        !dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
-            item, &itemtype, &itemtype_receipt) ||
-        !itemtype_receipt.valid || itemtype > 0xffu ||
-        !dm2_v1_query_gdat_summary_image_receipt(
-            loader, itemdb, itemtype, 0, &summary) || !summary.accepted ||
-        summary.metadata.width == 0u || summary.metadata.height == 0u)
+    if (!loader || !render || !rect_number || stretch_x <= 0 ||
+        stretch_y <= 0) return 0;
+    if (navigation) {
+        itemdb = DM2_GDAT_CATEGORY_WALL_GFX;
+        itemtype = wall_gfx_index;
+    } else if (!dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+                   item, &itemdb, &itemdb_receipt) || !itemdb_receipt.valid ||
+               itemdb == 0xffffu ||
+               !dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+                   item, &itemtype, &itemtype_receipt) ||
+               !itemtype_receipt.valid || itemtype > 0xffu) {
         return 0;
-    (void)dm2_v1_asset_load_image_offset(
-        loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0xfdu,
-        &wall_offset_word);
+    }
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, itemdb, itemtype, navigation ? 0x0fu : 0u, &summary) ||
+        !summary.accepted || summary.metadata.width == 0u ||
+        summary.metadata.height == 0u)
+        return 0;
+    if (!navigation) {
+        (void)dm2_v1_asset_load_image_offset(
+            loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0xfdu,
+            &wall_offset_word);
+    }
     combined_x = summary.metadata.query_offset_x + (int8_t)(wall_offset_word >> 8);
     combined_y = summary.metadata.query_offset_y + (int8_t)wall_offset_word;
     scaled_width = ((int)summary.metadata.width * stretch_x +
@@ -13338,20 +13346,20 @@ static int dm2_runtime_bind_shop_item_render(
         source_x0 = mirrored_x0;
         source_x1 = mirrored_x1;
     }
-    entry->shop_item_render_valid = 1u;
-    entry->shop_item_category = (uint8_t)itemdb;
-    entry->shop_item_index = (uint8_t)itemtype;
-    entry->shop_item_field = 0u;
-    entry->shop_item_mirror_flip = (uint8_t)mirror_flip;
-    entry->shop_item_colorkey = 0u;
-    entry->shop_item_width = summary.metadata.width;
-    entry->shop_item_height = summary.metadata.height;
-    entry->shop_item_summary_hash = summary.receipt_hash;
-    entry->shop_item_palette_hash = summary.palette_hash;
-    entry->shop_item_dst_rect = (DM2_V1_ViewportRect){
+    render->valid = 1u;
+    render->category = (uint8_t)itemdb;
+    render->index = (uint8_t)itemtype;
+    render->field = navigation ? 0x0fu : 0u;
+    render->mirror_flip = (uint8_t)mirror_flip;
+    render->colorkey = colorkey;
+    render->width = summary.metadata.width;
+    render->height = summary.metadata.height;
+    render->summary_hash = summary.receipt_hash;
+    render->palette_hash = summary.palette_hash;
+    render->dst_rect = (DM2_V1_ViewportRect){
         blit.destination_x, blit.destination_y,
         blit.destination_width, blit.destination_height };
-    entry->shop_item_src_rect = (DM2_V1_ViewportRect){
+    render->src_rect = (DM2_V1_ViewportRect){
         source_x0, source_y0, source_x1 - source_x0,
         source_y1 - source_y0 };
     return 1;
@@ -13576,22 +13584,32 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->shop_current_item = pair.current_item;
                 entry->shop_glass_pair_valid = 1u;
                 entry->shop_glass_render_pending = 1u;
-                entry->shop_item_colorkey = receipt.colorkey;
-                if (!dm2_runtime_bind_shop_item_render(
+                if (!dm2_runtime_bind_shop_image_render(
                         loader, surface->wall_ornate_gfx_index,
                         surface->wall_ornate_rect_number,
                         surface->wall_ornate_ref_point, pair.current_item,
-                        stretch_x, stretch_y, 0, entry)) {
+                        0, stretch_x, stretch_y, 0, receipt.colorkey,
+                        &entry->shop_item) ||
+                    !dm2_runtime_bind_shop_image_render(
+                        loader, surface->wall_ornate_gfx_index,
+                        surface->wall_ornate_rect_number,
+                        surface->wall_ornate_ref_point, 0u, 1,
+                        stretch_x, stretch_y, 0, receipt.colorkey,
+                        &entry->shop_navigation)) {
                     viewport->wall_ornament_plan_status_code = 14u;
                     viewport->wall_ornament_plan_status_square =
                         (int8_t)square;
                     continue;
                 }
                 plan_hash ^= pair.identity_hash;
-                plan_hash ^= entry->shop_item_summary_hash;
                 plan_hash *= 16777619u;
-                plan_hash ^= entry->shop_item_palette_hash;
+                plan_hash ^= entry->shop_item.summary_hash;
                 plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_item.palette_hash;
+                plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_navigation.summary_hash;
+                plan_hash *= 16777619u;
+                plan_hash ^= entry->shop_navigation.palette_hash;
                 plan_hash *= 16777619u;
             }
         }

@@ -506,6 +506,21 @@ typedef struct DM2_V1_DoorRenderPlan {
 #define DM2_V1_WALL_ORNAMENT_RENDER_MAX DM2_SQ_COUNT
 
 typedef struct {
+    uint8_t valid;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t mirror_flip;
+    uint16_t colorkey;
+    uint16_t width;
+    uint16_t height;
+    uint32_t summary_hash;
+    uint32_t palette_hash;
+    DM2_V1_ViewportRect dst_rect;
+    DM2_V1_ViewportRect src_rect;
+} DM2_V1_ShopImageRender;
+
+typedef struct {
     int view_square;
     int gdat_index;
     uint8_t image_field;
@@ -527,19 +542,9 @@ typedef struct {
     uint16_t shop_current_item;
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
-    /* Source QUERY_TEMP_PICST item artwork for SHOP_GLASS. */
-    uint8_t shop_item_render_valid;
-    uint8_t shop_item_category;
-    uint8_t shop_item_index;
-    uint8_t shop_item_field;
-    uint8_t shop_item_mirror_flip;
-    uint16_t shop_item_colorkey;
-    uint16_t shop_item_width;
-    uint16_t shop_item_height;
-    uint32_t shop_item_summary_hash;
-    uint32_t shop_item_palette_hash;
-    DM2_V1_ViewportRect shop_item_dst_rect;
-    DM2_V1_ViewportRect shop_item_src_rect;
+    /* Source QUERY_TEMP_PICST merchandise and navigation artwork. */
+    DM2_V1_ShopImageRender shop_item;
+    DM2_V1_ShopImageRender shop_navigation;
 } DM2_V1_WallOrnamentRender;
 
 typedef struct DM2_V1_WallOrnamentRenderPlan {

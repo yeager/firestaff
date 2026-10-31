@@ -93,10 +93,11 @@ retains the live DB3 wall-panel/floor-shop actuator pair and current floor
 item from the visible source tile, including source byte order on
 Macintosh/Amiga records. A validated pair routes the shop alcove away from
 the generic ornament material requirement, matching `DRAW_WALL_ORNATE`'s
-dispatch to `_32cb_0f82_SHOP_GLASS`. The selected item's GDAT image, palette,
-source offsets and clipped destination are now resolved and drawn through the
-source rectangle. The nav board, sold-out icon, item name, prices, high-bit
-DB14 allocation and buy/sell transitions remain incomplete. Party ownership
+dispatch to `_32cb_0f82_SHOP_GLASS`. The selected item's GDAT image and the
+shop navigation board are resolved with their own palettes, source offsets
+and clipped destinations, then drawn in source order. The sold-out icon, item
+name, prices, high-bit DB14 allocation and buy/sell transitions remain
+incomplete. Party ownership
 still cannot resolve the eight hand containers because the separate
 `ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
 candidate fails closed. No DM2 platform has full shop parity.
@@ -137,16 +138,16 @@ and mutates authenticated session record pools in source byte order. Party
 ownership still cannot resolve the eight hand containers because the separate
 `ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
 candidate fails closed.
-The same source call draws the item image (now implemented with the selected
-item GDAT image, palette, offsets and clipped rectangle), sold-out icon when
-applicable, nav board, item name and buy/sell prices for cell 3, and may spawn a deeply
+The same source call draws the item image and nav board (now implemented with
+their GDAT images, palettes, offsets and clipped rectangles), sold-out icon
+when applicable, item name and buy/sell prices for cell 3, and may spawn a deeply
 allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
 supplies source item prices; `SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE`
 and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
 live record/GDAT chain, panel rendering, and buy/sell state transitions against
 those owners, then verify against source-owned DM2 data on each supported
 platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
-generic price formulas. The click-direction global, merchandise/panel draw,
+generic price formulas. The click-direction global, sold-out artwork, names,
 prices, high-bit DB14 allocation, hand-container mode, and buy/sell transitions
 remain missing; the feature is not at parity.
 
