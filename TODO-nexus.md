@@ -14,6 +14,28 @@ same-frame producer-to-VRAM evidence and verify row-state coverage across
 animation frames. See
 [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
 
+## 2026-10-31 — Authentic VDP2 register order and composition rerun
+
+The VDP2 color-calculation analyzer now detects register word byte order from
+the Saturn display-enable value `TVMD=0x8000`, with a score-based fallback and
+an explicit `--byte-order` override. This matters because an authentic baseline
+capture has `BGON=0x0200`; relying on BGON alone had selected the wrong order.
+The corrected analyzer identified big-endian order and decoded `TVMD=0x8000`
+in 92 authentic Ymir register captures. It reports the expected `CCCTL` and
+`SFCCMD` values for the hash-pinned gameplay frame 2173 and title frame 8037.
+
+The Debug build at PR commit `c376f0c` re-ran the authenticated composition
+matrix: gameplay frames 239, 397, and four-champion Continue frame 2173 match
+all 286,720 doubled screenshot samples exactly; frame 300 matches all 71,680
+pixels in its same-run Ymir RGB reference. Separate authentic frame-7486
+NBG0 live-row/color-calculation and frame-8037 title-menu composition tests
+also pass against their retained Ymir outputs. The NBG1 active per-character
+color-calculation path remains unverified because the available eligible BKR
+captures contain no visible NBG1 PND with CCE set. These capture-only results
+do not enable production rendering or establish arbitrary-frame parity.
+Outputs are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c376f0c4-validation/`.
+
 ## 2026-10-31 — Frame-59 title-prompt composition
 
 The exact Japanese Ymir title-prompt frame now has a hash-pinned, capture-only
