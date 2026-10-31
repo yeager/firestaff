@@ -192,6 +192,15 @@ passed for this commit. These checks establish bounded CLI and menu startup
 routes only. They do not establish full gameplay or native display/audio
 parity, and Nexus remains gated before playable runtime.
 
+After PR #233 merged, the updated `main` commit `a1f7901f5` passed a fresh
+priority-game M12 selection test in 188.82 seconds. The menu pointer routes
+for DM1, CSB and DM2 passed in 30.48 seconds, and the corresponding
+scan-in-progress selection routes passed in 27.08 seconds. All cases used the
+installed original-media collection and verified bounded game handoffs. They
+do not establish full gameplay or visual parity. GitHub Actions run
+[`41216993783`](https://github.com/yeager/firestaff/actions/runs/41216993783)
+is the cross-platform verification for the merged revision.
+
 On 2026-10-31, `firestaff_cli_startup_diagnostics_real_media` passed in
 171.94 seconds against the installed original-media root. The test checked
 CLI startup diagnostics for DM1, CSB, DM2, Nexus and Theron. The separate
