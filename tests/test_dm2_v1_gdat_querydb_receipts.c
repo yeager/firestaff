@@ -949,8 +949,10 @@ static void test_querydb_word_and_ornate_receipts(void)
               dm2_v1_query_door_strength_receipt(&loader, 4, &strength) &&
               strength.used_resistance_fallback && strength.strength == 1u,
           "DM2_QUERY_DOOR_STRENGTH applies its field 0x10 fallback");
-    CHECK(!dm2_v1_query_door_strength_receipt(&loader, 5, &strength),
-          "DM2_QUERY_DOOR_STRENGTH rejects a missing source strength field");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 5, &strength) &&
+              strength.accepted && strength.used_resistance_fallback &&
+              strength.resistance_field_value == 0u && strength.strength == 6u,
+          "DM2_QUERY_DOOR_STRENGTH uses source-zero defaults for absent words");
     CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 6, &word) &&
               word.accepted && word.field == 0x0du && word.value == 0x0007u,
           "DM2_GET_GRAPHICS_FOR_DOOR binds DOORS dtWordValue field 0x0d");
@@ -960,8 +962,9 @@ static void test_querydb_word_and_ornate_receipts(void)
     CHECK(dm2_v1_query_0cee_3275_receipt(&loader, 6, &word) &&
               word.accepted && word.field == 0x10u && word.value == 0x0009u,
           "DM2_query_0cee_3275 binds DOORS field 0x10");
-    CHECK(!dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word),
-          "DM2_GET_GRAPHICS_FOR_DOOR rejects absent door rows without fallback");
+    CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word) &&
+              word.accepted && word.value == 0u,
+          "DM2_GET_GRAPHICS_FOR_DOOR preserves source-zero defaults for absent words");
     CHECK(dm2_v1_query_gdat_item_name_receipt(
               &loader, DM2_GDAT_CATEGORY_WEAPONS, 1, &name) &&
               name.accepted && name.field == 0x18u &&
