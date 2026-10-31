@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — document native direct launch without the Run menu
+
+Recorded that a macOS Debug direct launch with authentic US Track 02 enters
+Theron's title/startup path without Firestaff's Run menu or a System Card. The
+boot probe remained in startup with `levelLoaded=0`, so this adds no dungeon
+or gameplay claim. Updated the README, project status, capture-readiness
+summary, and documentation index to link to the same source-locked note.
+Loaded-dungeon support remains established by the separate JP fresh-start and
+US Continue routes.
+
 ## 2026-10-31 — verify the authentic empty JP BRAM at native M11 startup
 
 Added `theron_v1_m11_jp_empty_bram`, a bounded native startup integration

@@ -77,6 +77,7 @@ remain at the top of `docs/`.
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 - [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins; includes the cold JP emulator route and its byte-identical empty BRAM result
+- [Theron native Debug direct launch](source-lock/theron-native-debug-direct-launch-20261031.md) — confirms the Firestaff Run menu is bypassed; the startup probe did not load a dungeon
 - [Theron authentic empty JP BRAM M11 regression](../tests/test_theron_v1_m11_jp_empty_bram.c) — native UI rejection of the captured empty JP slot; positive JP progress restoration remains unverified
 - [Theron JP PCE Fast input receipt](source-lock/theron-disassembly/theron-jp-pce-fast-scripted-input-receipt-20261031.md) — three authentic-state runs bind a scripted direction mask to its same-frame PCE Fast guest read
 - [Theron JP PCE Fast state comparison](source-lock/theron-disassembly/theron-jp-pcefast-input-state-compare-20261031.md) — three UP/control pairs share an event sequence from the `$44C1` guest poll through the `$D334`/`$D349` `$2912` transaction; ordering is repeatable, while causality and gameplay semantics remain unproven

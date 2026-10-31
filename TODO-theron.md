@@ -1,5 +1,15 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — direct launch bypasses Firestaff's Run menu; dungeon proof remains separate
+
+A native macOS Debug launch with authentic US Track 02 enters Theron's
+title/startup path without showing Firestaff's Run menu or booting a System
+Card. Its direct-launch boot probe reports `levelLoaded=0`, so direct entry to
+a loaded dungeon is not established by this check. The independently verified
+JP fresh-start and US Continue routes remain the loaded-dungeon evidence. Do
+not add a synthetic starting party or pose to shorten this path. See the
+[source-locked launch note](docs/source-lock/theron-native-debug-direct-launch-20261031.md).
+
 ## 2026-10-31 — US saved-state scripted-input trace remains inconclusive
 
 An existing US state file loaded successfully in an instrumented PCE Fast

@@ -11,6 +11,11 @@ current evidence boundary and next joins are summarized in
 [`THERON_CAPTURE_READINESS.md`](../theron/THERON_CAPTURE_READINESS.md) and
 [`TODO-theron.md`](../../TODO-theron.md).
 
+Native direct launch enters the Theron title/startup path without Firestaff's
+Run menu or a System Card. The Debug boot-probe receipt remained at
+`levelLoaded=0`; it does not establish Track 02 dungeon loading or gameplay.
+See the [direct-launch evidence note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+
 Firestaff verifies the US CUE/Track 02 and System Card boundaries, then records
 the original media reads required for startup. This proves the startup/media
 transport only; it does not promote the Track 02 payload to semantic level,

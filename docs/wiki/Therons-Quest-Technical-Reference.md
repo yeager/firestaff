@@ -32,6 +32,11 @@
 > `$E166->$E176`; no confirmed game-owned handoff was observed. See the
 > [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+> **Native direct launch (2026-10-31):** Firestaff enters Theron's native
+> title/startup path without its Run menu or a System Card. The US Debug
+> boot-probe receipt remains at `levelLoaded=0`; this does not add a dungeon
+> or gameplay claim. See the [direct-launch evidence note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. The explicit
