@@ -8974,6 +8974,48 @@ static int dm2_runtime_tile_class_at(void *user, int map, int x, int y) {
  * ActionType into ACTUATE_*_MECHA. The complete source walkers own the
  * record-chain admission and mutations; this adapter only supplies the live
  * session owners and decodes the timer fields. */
+/* Resolve the source wall/floor decoration and its animation length for the
+ * live ACTUATE_*_MECHA path. The generic dispatcher deliberately owns no
+ * map/GDAT policy; bind it to the already admitted runtime asset and map
+ * graphics tables here. skcore.cpp::GET_ORNATE_ANIM_LEN returns one when
+ * the decoration or both length/sequence entries are absent. */
+static int16_t dm2_runtime_get_ornate_anim_len(
+    void *context, const uint8_t *record, int is_wall)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_GetOrnateAnimLenReceipt anim;
+    int category;
+    int gfx_count;
+    uint8_t gfx_index;
+    uint8_t decoration = 0xffu;
+
+    if (!rt || !record || !rt->boot ||
+        !(loader = dm2_v1_boot_asset_loader(rt->boot)))
+        return 0;
+
+    category = is_wall ? 0x09 : 0x0a;
+    gfx_count = is_wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
+    gfx_index = (uint8_t)(((uint16_t)record[4] |
+                           ((uint16_t)record[5] << 8)) >> 12);
+    if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count) {
+        decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
+                             : rt->map_floor_gfx_list[gfx_index - 1u];
+    }
+    if (decoration == 0xffu)
+        return 1;
+
+    memset(&anim, 0, sizeof(anim));
+    if (dm2_v1_get_ornate_anim_len_receipt(
+            loader, category, decoration, 0, &anim) &&
+        anim.accepted && anim.length > 0u)
+        return (int16_t)anim.length;
+
+    /* GET_ORNATE_ANIM_LEN falls back to one if neither the word length nor
+     * the base36 text sequence is present. */
+    return 1;
+}
+
 static int dm2_runtime_actuate_wall_mecha_timer(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
@@ -9025,7 +9067,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        game ? &global_state : NULL, NULL, NULL, &event);
+        game ? &global_state : NULL, dm2_runtime_get_ornate_anim_len, rt,
+        &event);
     if (!event.valid || event.fail_closed != 0) {
         goto wall_mecha_reject;
     }
@@ -9107,7 +9150,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
         map, x, y, action, direction, rt->tick_count,
-        game ? &global_state : NULL, NULL, NULL, &event);
+        game ? &global_state : NULL, dm2_runtime_get_ornate_anim_len, rt,
+        &event);
     if (!event.valid || event.fail_closed != 0) {
         goto floor_mecha_reject;
     }
