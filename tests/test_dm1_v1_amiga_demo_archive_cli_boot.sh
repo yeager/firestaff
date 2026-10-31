@@ -166,5 +166,70 @@ if [[ "$archive_hash_before" != "$archive_hash_after" ]]; then
     exit 1
 fi
 
+# Exercise the regular no-game picker using an isolated per-user data root.
+# This must reach the same source-owned SWSH/title/Entrance handoff as the
+# explicitly selected M12 route above, then present the first Hall frame.
+picker_home="$scratch/picker-home"
+picker_data="$picker_home/.firestaff/data/dm1"
+mkdir -p "$picker_data"
+ln -s "$archive" "$picker_data/$(basename "$archive")"
+picker_log="$scratch/picker-runtime.log"
+picker_probe="$scratch/picker-runtime.json"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR FIRESTAFF_EXIT_AFTER_LAUNCH
+    FIRESTAFF_CONFIG_PATH="$picker_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$picker_probe" \
+    HOME="$picker_home" XDG_CONFIG_HOME="$picker_home" APPDATA="$picker_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug \
+        --script 'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-game-runtime' \
+        --duration 20000
+) >"$picker_log" 2>&1 || {
+    cat "$picker_log" >&2
+    exit 1
+}
+expected_picker_source="$picker_data/$(basename "$archive")::graphics.dat"
+if ! grep -Fq 'startup game=none mode=menu' "$picker_log" ||
+   ! grep -Fq 'games=dm1:yes,csb:no,dm2:no,nexus:no,theron:no original-candidate=yes' "$picker_log" ||
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=Amiga edition=amiga-demo-en source=$expected_picker_source" "$picker_log";
+then
+    echo 'FAIL: no-game M12 picker did not retain the authentic DM1 Amiga demo media owner' >&2
+    grep -E 'startup game=|scan complete|startup-source|DM1 READY|game-handoff|error|failed' "$picker_log" >&2 || true
+    exit 1
+fi
+python3 - "$picker_probe" "$expected_graphics_md5" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm1" or
+        probe.get("bootAssetMd5") != sys.argv[2] or
+        startup.get("receiptReady") != 1 or
+        startup.get("phase") != "dm1-runtime" or
+        startup.get("active") != 1 or startup.get("startupActive") != 0 or
+        startup.get("levelLoaded") != 1 or
+        startup.get("dm1StartupHandoffExecuted") != 1 or
+        startup.get("dm1StartupSwshConsumed") != 1 or
+        startup.get("dm1StartupTitleConsumed") != 1 or
+        startup.get("dm1StartupEntranceConsumed") != 1 or
+        startup.get("dm1StartupFullGraphicsConsumed") != 1 or
+        startup.get("dm1StartupHoCFirstFrameReady") != 1 or
+        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+         party.get("direction"), party.get("championCount")) != (0, 7, 1, 2, 0)):
+    raise SystemExit(f"FAIL: DM1 Amiga demo no-game picker missed its first Hall frame: {probe}")
+print("PASS: DM1 Amiga demo no-game picker reached its first Hall frame")
+PY
+
+archive_hash_final=$(firestaff_sha256_file "$archive")
+if [[ "$archive_hash_before" != "$archive_hash_final" ]]; then
+    printf '%s\n' 'FAIL: Firestaff modified the original DM1 Amiga demo archive during no-game startup' >&2
+    exit 1
+fi
+
 printf 'PASS: authentic DM1 Amiga demo starts from archive and loose files via CLI and M12; graphics=%s dungeon=%s originals=read-only\n' \
     "$expected_graphics_md5" "$expected_dungeon_md5"
