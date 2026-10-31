@@ -6734,9 +6734,9 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
     /* SKProject c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2497-3100:
      * class-2 bit-08 roots whose first record is DB4+ pass the DB0..DB3
      * ornament loop untouched; DB0/DB1 prefixes are skipped to the next
-     * summary root below. DB2/DB3 prefixes stay closed until their
-     * ornament/animation selection is represented. Class-2 no-record tiles
-     * and class-5 DB1 roots retain their separate paths. */
+     * summary root below. DB2 C02 ornament selections and DB3 actuator
+     * no-decoration roots have bounded paths. Class-2 no-record tiles and
+     * class-5 DB1 roots retain their separate paths. */
     if (raw >= 0 && raw <= 0xff) {
         if (raw_class == 2u) {
             accepted = first == -1 ||
@@ -6745,7 +6745,7 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
             if ((raw & 0x08) != 0 && first >= 0 &&
                 first != (int)DM2_THING_END_MARKER &&
                 first != (int)DM2_THING_NULL_MARKER &&
-                (first_type <= 2u || first_type >= 4u)) {
+                (first_type <= 3u || first_type >= 4u)) {
                 accepted = 1;
             }
         } else if (raw_class == 5u && (raw & 0x0c) != 0x0c &&
@@ -6764,11 +6764,12 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
         /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
          * records do not add ornament state. DB2 C02 records select the
          * source's static, state-selected, or tick-animated ceiling frame.
-         * DB3 actuator branches remain closed. The source skips all DB0-DB3
-         * links, then preserves the first DB4+ root for c_light's creature
-         * and DBE/DBF scans. */
+         * A DB3 actuator with floor index zero returns no decoration;
+         * nonzero map-list selectors remain closed. The source skips all
+         * DB0-DB3 links, then preserves the first DB4+ root for c_light's
+         * creature and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
-            (((summary_root >> 10) & 0x0fu) <= 2u)) {
+            (((summary_root >> 10) & 0x0fu) <= 3u)) {
             uint16_t link = summary_root;
             if (!dm2_v1_dungeon_record_list_traversal_allowed(d)) return 0;
             while (link != DM2_THING_END_MARKER) {
@@ -6777,10 +6778,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                 int type = (int)((link >> 10) & 0x0fu);
                 int size = 0;
                 if (type >= 4) break;
-                if (type > 2 || ++length > 256u) return 0;
+                if (type > 3 || ++length > 256u) return 0;
                 record = dm2_v1_dungeon_get_thing_record(
                     d, link, &type, NULL, &size);
-                if (!record || type > 2 || size < 2) return 0;
+                if (!record || type > 3 || size < 2) return 0;
                 if (type == 2) {
                     uint16_t word2;
                     if (size < 4) return 0;
@@ -6826,14 +6827,19 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                             class2_ornament_found = 1;
                         }
                     }
+                } else if (type == 3) {
+                    uint16_t word4;
+                    if (size < 6) return 0;
+                    word4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
+                    /* skproject c_record.cpp:1288-1311 returns 0xFF when
+                     * the actuator floor-decoration index is zero. */
+                    if ((word4 >> 12) != 0u) return 0;
                 }
                 {
                     int next_link = dm2_v1_dungeon_get_next_thing(d, link);
                     if (next_link < 0 || next_link == (int)link) return 0;
                     next = (uint16_t)next_link;
                 }
-                if (next != DM2_THING_END_MARKER &&
-                    ((next >> 10) & 0x0fu) == 3u) return 0;
                 link = next;
             }
             summary_root = link;

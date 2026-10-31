@@ -25,7 +25,7 @@ static void test_class2_db4plus_chain_receipt(void)
     DM2_V1_GdatEntry animation_entries[2];
     DM2_V1_QueryOrnateAnimFrameReceipt expected_animation;
     uint8_t animation_data[1] = {0u};
-    uint8_t raw[80] = {0};
+    uint8_t raw[96] = {0};
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&loader, 0, sizeof(loader));
@@ -46,6 +46,8 @@ static void test_class2_db4plus_chain_receipt(void)
     dungeon.thing_type_counts[1] = 1;
     dungeon.thing_data_bases[2] = 48;
     dungeon.thing_type_counts[2] = 2;
+    dungeon.thing_data_bases[3] = 64;
+    dungeon.thing_type_counts[3] = 1;
     dungeon.thing_data_bases[4] = 16;
     dungeon.thing_type_counts[4] = 2;
     loader.loaded = 1;
@@ -164,6 +166,22 @@ static void test_class2_db4plus_chain_receipt(void)
               room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
               room.ceiling_ornament_index == 0xffu &&
               room.ceiling_ornament_word == 0x00ffu);
+
+    raw[3] = 0u; raw[4] = 0x0cu; /* DB3 actuator with no floor index. */
+    raw[64] = 1u; raw[65] = 0x10u; /* DB3 w0 links to DB4 index 1. */
+    raw[66] = 0x30u; raw[67] = 0u; /* subtype 0x30 clears a non-light field. */
+    raw[68] = 0u; raw[69] = 0u; /* floor-decoration index zero -> 0xFF. */
+    CHECK("class-2 DB3 no-decoration actuator skips to the DB4 root",
+          dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room) &&
+              room.first_record_link == (uint16_t)((4u << 10) | 1u) &&
+              room.ceiling_ornament_index == 0xffu &&
+              room.ceiling_ornament_word == 0x00ffu);
+
+    raw[68] = 0u; raw[69] = 0x10u; /* Nonzero floor index needs map-list data. */
+    CHECK("class-2 DB3 decorated actuator stays closed without map-list evidence",
+          !dm2_v1_dungeon_c_light_stone_room_receipt(
+              &dungeon, &loader, 0, 0, 0, 7u, &room));
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
