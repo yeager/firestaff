@@ -60609,6 +60609,18 @@ target_include_directories(test_redmcsb_f0698_invert_box_pc34_compat PRIVATE ${C
 target_link_libraries(test_redmcsb_f0698_invert_box_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME redmcsb_f0698_invert_box_pc34_compat COMMAND test_redmcsb_f0698_invert_box_pc34_compat)
 
+add_executable(test_redmcsb_f1131_invert_box_amiga_compat
+    tests/test_redmcsb_f1131_invert_box_amiga_compat.c
+    src/shared/redmcsb_f1131_invert_box_amiga_pc34_compat.c)
+target_include_directories(test_redmcsb_f1131_invert_box_amiga_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_redmcsb_f1131_invert_box_amiga_compat PRIVATE
+        -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME redmcsb_f1131_invert_box_amiga_compat
+    COMMAND test_redmcsb_f1131_invert_box_amiga_compat)
+
 add_executable(test_redmcsb_f0699_video_interrupt_pc34_compat tests/test_redmcsb_f0699_video_interrupt_pc34_compat.c)
 target_include_directories(test_redmcsb_f0699_video_interrupt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_redmcsb_f0699_video_interrupt_pc34_compat PRIVATE firestaff_m10)
