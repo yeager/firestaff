@@ -93,27 +93,28 @@ retains the live DB3 wall-panel/floor-shop actuator pair and current floor
 item from the visible source tile, including source byte order on
 Macintosh/Amiga records. A validated pair routes the shop alcove away from
 the generic ornament material requirement, matching `DRAW_WALL_ORNATE`'s
-dispatch to `_32cb_0f82_SHOP_GLASS`; missing or malformed ownership remains
-visible as a blocked-plan status. This does not render merchandise or the
-shop panel and does not select/advance stock, resolve prices, or implement
-buy/sell transitions. Those source functions remain missing, and no DM2
-platform has full shop parity.
+dispatch to `_32cb_0f82_SHOP_GLASS`. The selected item's GDAT image, palette,
+source offsets and clipped destination are now resolved and drawn through the
+source rectangle. The nav board, sold-out icon, item name, prices, high-bit
+DB14 allocation and buy/sell transitions remain incomplete. Party ownership
+still cannot resolve the eight hand containers because the separate
+`ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
+candidate fails closed. No DM2 platform has full shop parity.
 
 2026-10-31 skproject `DRAW_WALL_ORNATE` generic overlay: the runtime render
 plan now resolves optional `WALL_GFX` image field `0x0f` for non-shop alcoves,
 uses the source rectangle, scale, flip, and local palette, and draws it after
 the base ornament. Shop-glass alcove type `2` is kept out of this generic path
-because source calls `_32cb_0f82_SHOP_GLASS` there; shop interaction remains
-missing as described below. The material-gate regression verifies that an
+because source calls `_32cb_0f82_SHOP_GLASS` there; its selected merchandise
+image now has a separate source-bound draw path. The material-gate regression verifies that an
 overlay plan cannot draw without authenticated GDAT data. Original-media
 visual confirmation, alcove-item rendering when no overlay exists, and shop
 glass dynamics remain open. The refetched `SKWIN/data_dm2_dm/graphics.dat`
 contains no loadable generic overlay for a pixel comparison, so the optional
 real-media render case skips for that asset set.
 
-2026-10-31 skproject shop interaction is still missing: Firestaff rejects
-runtime shop entry and its panel builder returns no render plan. The source
-path begins at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
+2026-10-31 skproject shop interaction remains partial. The source path begins
+at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
 `::_32cb_0f82_SHOP_GLASS`, which resolves the active wall actuator, a floor
 shop actuator (type `0x30`), DB14 item state, creature item masks, and
 `WALL_GFX` artwork. Preserve the complete source order from
@@ -136,8 +137,9 @@ and mutates authenticated session record pools in source byte order. Party
 ownership still cannot resolve the eight hand containers because the separate
 `ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
 candidate fails closed.
-The same render call draws the item image, sold-out icon when applicable, nav
-board, item name and buy/sell prices for cell 3, and may spawn a deeply
+The same source call draws the item image (now implemented with the selected
+item GDAT image, palette, offsets and clipped rectangle), sold-out icon when
+applicable, nav board, item name and buy/sell prices for cell 3, and may spawn a deeply
 allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
 supplies source item prices; `SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE`
 and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
