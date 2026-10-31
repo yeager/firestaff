@@ -3362,6 +3362,7 @@ static int csb_v1_boot_startup_launch_alloc_internal_pc34(
           (effective_variant == CSB_V1_VARIANT_ST20_EN ||
            effective_variant == CSB_V1_VARIANT_ST21_EN ||
            effective_variant == CSB_V1_VARIANT_AMIGA31_EN ||
+           effective_variant == CSB_V1_VARIANT_AMIGA31_MULTI ||
            effective_variant == CSB_V1_VARIANT_AMIGA35_EN))
              ? !csb_v1_boot_scan_selected_graphics_pc34(
                    out_launch->profile, data_dir, verified_graphics_path,
@@ -9854,12 +9855,22 @@ static int csb_v1_boot_scan_selected_graphics_pc34(
          g_csb_boot_graphics_variants[graphics_index] !=
              CSB_V1_VARIANT_ST21_EN &&
          g_csb_boot_graphics_variants[graphics_index] != CSB_V1_VARIANT_AMIGA31_EN &&
+         g_csb_boot_graphics_variants[graphics_index] != CSB_V1_VARIANT_AMIGA31_MULTI &&
          g_csb_boot_graphics_variants[graphics_index] != CSB_V1_VARIANT_AMIGA35_EN) ||
         !asset_file_matches_md5(graphics_path, graphics_md5)) return 0;
     variant = csb_v1_runtime_get_variant_info(
         g_csb_boot_graphics_variants[graphics_index]);
     if (!variant || !variant->md5_dungeon) return 0;
-    if (variant->id == CSB_V1_VARIANT_AMIGA31_EN ||
+    if (variant->id == CSB_V1_VARIANT_AMIGA31_MULTI) {
+        char title_path[ASSET_PATH_MAX];
+        if (!csb_v1_boot_selected_amiga31_title_path(
+                graphics_path, title_path, sizeof(title_path)) ||
+            !asset_file_matches_md5(
+                title_path, "5b590ea3a6f5eed513b5678b01468ee4") ||
+            !csb_v1_amiga_selected_companion(
+                graphics_path, "Dungeon.DAT", dungeon_path,
+                sizeof(dungeon_path))) return 0;
+    } else if (variant->id == CSB_V1_VARIANT_AMIGA31_EN ||
         variant->id == CSB_V1_VARIANT_AMIGA35_EN) {
         const char *id = variant->id == CSB_V1_VARIANT_AMIGA31_EN
             ? "amiga31-en" : "amiga35-en";
@@ -9898,6 +9909,7 @@ static int csb_v1_boot_scan_selected_graphics_pc34(
         return 0;
     }
     if (variant->id == CSB_V1_VARIANT_AMIGA31_EN ||
+        variant->id == CSB_V1_VARIANT_AMIGA31_MULTI ||
         variant->id == CSB_V1_VARIANT_AMIGA35_EN) {
         /* Keep the optional startup consumers from ordinary boot admission. */
         (void)csb_v1_boot_load_swoosh_source_pc34(profile);

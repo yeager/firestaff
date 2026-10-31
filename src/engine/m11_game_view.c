@@ -479,6 +479,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
+#include "theron_v22_modern_assets_pc34.h"
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "dm1_v1_creature_behavior_bootstrap_pc34_compat.h"
@@ -28363,6 +28364,53 @@ static void m11_apply_launcher_options_handoff(
     (void)M11_Audio_SetVolumes(&state->audioState, master, sfx, music, sfx);
 }
 
+/* Resolve DM1's requested presentation against the selected media and the
+ * finished real-art gate. The normal DM1 path reinitializes GameView after it
+ * has decoded the selected dungeon, so apply this after that reset as well as
+ * at the initial handoff. */
+static void m11_apply_dm1_presentation_mode_resolution(
+    M11_GameViewState* state,
+    const M11_GameLaunchSpec* spec,
+    const char* phase) {
+    DM1_V2_BootStartupReceipt_PC34 receipt;
+    if (!state || !spec || !spec->gameId ||
+        strcmp(spec->gameId, "dm1") != 0 ||
+        !dm1_v2_boot_startup_prepare_pc34(spec->gameId,
+                                          spec->dataDir,
+                                          spec->presentationMode,
+                                          &receipt)) {
+        return;
+    }
+    if (spec->debugStartup) {
+        const DM1_V22_RealArtRuntimeGate_PC34* gate =
+            &receipt.v22_real_art_runtime_gate;
+        fprintf(stderr,
+                "firestaff: dm1-presentation-gate phase=%s requested=%d resolved=%d admitted=%d root-match=%d source-material=%d review-receipt=%d manifest=%s\n",
+                phase ? phase : "unknown",
+                receipt.requested_presentation_mode,
+                (int)receipt.resolved_mode,
+                gate->admitted,
+                gate->asset_root_matches_receipt,
+                gate->material_finished_real,
+                gate->receipt_promoted,
+                gate->manifest_path[0] ? gate->manifest_path : "(missing)");
+    }
+    switch (receipt.resolved_mode) {
+        case DM1_V2_PM_V20_FILTERED:
+            state->presentationMode = M12_PRESENTATION_V20_FILTERED;
+            break;
+        case DM1_V2_PM_V21_UPSCALED:
+            state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+            break;
+        case DM1_V2_PM_V22_MODERN:
+            state->presentationMode = M12_PRESENTATION_V22_MODERN;
+            break;
+        default:
+            state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+            break;
+    }
+}
+
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     int dm1_dungeon_path_hash_resolved = 0;
@@ -28407,29 +28455,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * M12_PRESENTATION_* enum into the per-game V2 presentation
      * runtime. DM1 V2 boot owns the V22 asset-root and cache setup. */
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-        DM1_V2_BootStartupReceipt_PC34 receipt;
-        if (dm1_v2_boot_startup_prepare_pc34(spec->gameId,
-                                             spec->dataDir,
-                                             spec->presentationMode,
-                                             &receipt)) {
-            /* The V2.2 material gate may resolve a requested modern mode to
-             * V2.1. M11 must consume that decision rather than later drawing
-             * a placeholder overlay for the requested mode. */
-            switch (receipt.resolved_mode) {
-                case DM1_V2_PM_V20_FILTERED:
-                    state->presentationMode = M12_PRESENTATION_V20_FILTERED;
-                    break;
-                case DM1_V2_PM_V21_UPSCALED:
-                    state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
-                    break;
-                case DM1_V2_PM_V22_MODERN:
-                    state->presentationMode = M12_PRESENTATION_V22_MODERN;
-                    break;
-                default:
-                    state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
-                    break;
-            }
-        }
+        m11_apply_dm1_presentation_mode_resolution(state, spec, "initial");
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         char selected_manifest[FSP_PATH_MAX];
         int selected_artpack_ready = 0;
@@ -28455,6 +28481,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
         }
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
+        /* Resolve V2.2 only against Theron's authenticated Track 02 material.
+         * The manifest root is game-specific; a DM1 pack must never unlock
+         * Theron's modern renderer. */
+        theron_v22_set_manifest_path(spec->dataDir);
         theron_v2_presentation_mode_set_m12(spec->presentationMode);
         theron_v2_hud_launch_mode_apply_m11_startup(
             spec->presentationMode == M12_PRESENTATION_V1_ORIGINAL,
@@ -28564,6 +28594,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 state->presentationMode = spec->presentationMode;
                 state->presentationWidth = spec->presentationWidth;
                 state->presentationHeight = spec->presentationHeight;
+                if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+                    /* Nexus's menu marks V2.2 capture-locked, and the Saturn
+                     * title/game renderer has no admitted V2.2 consumer yet.
+                     * Keep the game launchable through the implemented EPX
+                     * path instead of leaving V2.2 selected while presenting
+                     * the ordinary filtered framebuffer. */
+                    state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+                }
             }
             return ok;
         }
@@ -28635,12 +28673,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 "21197b1d4994fd835c403d5a33dcac2b") == 0)
             requestedCsbVariant = CSB_V1_VARIANT_AMIGA31_EN;
         else if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
+                "61fbfd56887c94adc26888a9491c6611") == 0)
+            requestedCsbVariant = CSB_V1_VARIANT_AMIGA31_MULTI;
+        else if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
                 "291e1bc6803e3dc4b974c60117ca5d68") == 0)
             requestedCsbVariant = CSB_V1_VARIANT_AMIGA35_EN;
         if (!(spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
               (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
                requestedCsbVariant == CSB_V1_VARIANT_ST21_EN ||
                requestedCsbVariant == CSB_V1_VARIANT_AMIGA31_EN ||
+               requestedCsbVariant == CSB_V1_VARIANT_AMIGA31_MULTI ||
                requestedCsbVariant == CSB_V1_VARIANT_AMIGA35_EN)
                   ? csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
                         dd, utility_search_dir, spec->savePath,
@@ -29208,6 +29250,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         /* Jobb F2: re-apply the launcher-options runtime handoff after
          * the Shutdown/Init re-init above. */
         m11_apply_launcher_options_handoff(state, spec);
+        /* The reset above restores the requested mode and discards any V2.2
+         * draw cache. Re-run DM1's authenticated resolver after the reset so
+         * blocked/generated material cannot reactivate V2.2 here. */
+        m11_apply_dm1_presentation_mode_resolution(state, spec, "post-reinit");
         if (spec->dm1Fmtowns && spec->dataDir &&
             !FSP_DirExists(spec->dataDir)) {
             if (!m11_dm1_fmtowns_read_archive_member(
@@ -29412,7 +29458,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         facts.runtime_start.verified_asset_md5 = spec->verifiedAssetMd5;
         facts.runtime_start.dungeon_path = dungeonPath;
         facts.runtime_start.source_kind = (int)spec->sourceKind;
-        facts.runtime_start.presentation_mode = spec->presentationMode;
+        /* The startup receipt must preserve the mode already resolved by
+         * DM1's real-material gate. Reusing the original request here would
+         * silently re-enable V2.2 after the gate had downgraded it to V2.1. */
+        facts.runtime_start.presentation_mode = state->presentationMode;
         facts.runtime_start.presentation_width = spec->presentationWidth;
         facts.runtime_start.presentation_height = spec->presentationHeight;
         facts.runtime_start.font_scale = spec->fontScale;
@@ -38781,28 +38830,27 @@ static void m11_graphics_popup_apply_v2(const M11_GameViewState* state,
 }
 
 static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
-    M12_Config config;
-    /* V2.2 is offered only to runtimes that have a real art-material gate.
-     * DM2/Nexus keep their currently admitted V1/V2.0/V2.1 routes; a fake
-     * V2.2 choice would be worse than not offering it. */
+    /* Keep V2.2 visibility bound to the selected game's authenticated pack.
+     * The old config bit was shared across titles, so a DM1 pack could expose
+     * V2.2 in Theron even though Theron's own Track 02 material was absent. */
     if (!state || state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
-        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         return M12_PRESENTATION_V22_MODERN;
     }
-    /* M12's installed bit is cross-game launcher state. CSB V2.2 has no
-     * original-material decoder yet, so a finished DM1 or generated CSB pack
-     * must not expose it in the live graphics menu. */
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        return M12_PRESENTATION_V22_MODERN;
+    if (state->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG) {
+        const DM1_V2_PresentationModeState* modeState =
+            dm1_v2_presentation_mode_state();
+        return modeState && modeState->modernPackAvailable
+            ? M12_PRESENTATION_MODE_COUNT : M12_PRESENTATION_V22_MODERN;
     }
-    M12_Config_Load(&config, NULL);
-    /* A selected archive is not installed material. In particular it may
-     * belong to another game, so exposing V2.2 from its path would let CSB
-     * enter a presentation mode without a complete CSB manifest/cache. */
-    if (!config.v22_modern_assets_installed) {
-        return M12_PRESENTATION_V22_MODERN;
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        const Theron_V2_PresentationModeState* modeState =
+            theron_v2_presentation_mode_state();
+        return modeState && modeState->modernPackAvailable
+            ? M12_PRESENTATION_MODE_COUNT : M12_PRESENTATION_V22_MODERN;
     }
-    return M12_PRESENTATION_MODE_COUNT;
+    return M12_PRESENTATION_V22_MODERN;
 }
 
 static const char* m11_graphics_popup_mode_name(int mode) {

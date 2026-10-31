@@ -121,6 +121,37 @@ else
     echo 'SKIP: Nexus quiet-startup diagnostic check (authentic Japanese CUE unavailable)'
 fi
 
+# Nexus does not yet have an admitted V2.2 compositor. The CLI must report
+# that explicitly and use the implemented V2.1 EPX path, rather than retaining
+# V2.2 while the renderer silently presents the ordinary V2.0 framebuffer.
+nexus_presentation_source=
+if [ -f "$nexus_iso" ]; then
+    nexus_presentation_source=$nexus_iso
+elif [ -f "$nexus_cue" ]; then
+    nexus_presentation_source=$nexus_cue
+fi
+if [ -n "$nexus_presentation_source" ]; then
+    nexus_v22_output=$(FIRESTAFF_CONFIG_PATH="$combined_root/nexus-v22.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game nexus --platform saturn --data-dir "$nexus_presentation_source" \
+        --presentation-mode v22 --debug --boot-probe \
+        --boot-probe-frames 0 --duration 0 2>&1) || {
+        printf '%s\n' "$nexus_v22_output" >&2
+        exit 1
+    }
+    case "$nexus_v22_output" in
+        *'presentation phase=game-handoff game=nexus requested=v22 resolved=v21 framebuffer='*' fallback=1'*) ;;
+        *)
+            printf '%s\n' "$nexus_v22_output" >&2
+            echo 'FAIL: Nexus V2.2 request did not report its V2.1 renderer fallback' >&2
+            exit 1
+            ;;
+    esac
+    echo 'PASS: authentic Nexus V2.2 CLI request reports its V2.1 rendering fallback'
+else
+    echo 'SKIP: Nexus presentation fallback check (authentic ISO/CUE unavailable)'
+fi
+
 # A cached physical-file hash must not survive replacing an authentic game
 # file with another original edition of the same size while preserving its
 # modification timestamp. CSB's Towns and Amiga 3.3 DUNGEON.DAT files are both
@@ -616,8 +647,29 @@ for game_id in dm1 csb dm2 nexus theron; do
             printf 'FAIL: bare --game nexus reported playable runtime without a loaded level or admitted menu\n' >&2
             exit 1
         fi
+        v22_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+            XDG_CONFIG_HOME="$quick_home/.config" \
+            APPDATA="$quick_home/AppData" \
+            FIRESTAFF_CONFIG_PATH="$quick_home/v22-$game_id.toml" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game "$game_id" --presentation-mode v22 --verbose --debug \
+            --boot-probe --boot-probe-frames 0 2>&1) || {
+            printf '%s\n' "$v22_output" >&2
+            exit 1
+        }
+        if ! printf '%s\n' "$v22_output" | \
+                grep -Fq "presentation phase=game-handoff game=$game_id requested=v22 resolved=v21 framebuffer=" ||
+           ! printf '%s\n' "$v22_output" | \
+                grep -Fq ' fallback=1'; then
+            printf '%s\n' "$v22_output" >&2
+            printf 'FAIL: authentic %s V2.2 request did not report its V2.1 renderer fallback\n' \
+                "$game_id" >&2
+            exit 1
+        fi
         printf 'PASS: bare --game %s resolves original %s media and reports its source-bound startup trace from ~/.firestaff/data/%s\n' \
             "$game_id" "$expected_platform" "$game_id"
+        printf 'PASS: authentic %s V2.2 request reports the implemented V2.1 renderer fallback\n' \
+            "$game_id"
     fi
 done
 

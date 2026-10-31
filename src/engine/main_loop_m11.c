@@ -1005,7 +1005,8 @@ static void m11_debug_trace_csb_atari_present(
 static void m11_debug_log_launch_selection(
     const M12_StartupMenuState* menuState,
     const M11_GameViewState* gameView,
-    const char* launchMode) {
+    const char* launchMode,
+    int cliPresentationModeOverride) {
     int slot;
     int versionIndex;
     const M12_AssetVersionStatus* version;
@@ -1029,6 +1030,29 @@ static void m11_debug_log_launch_selection(
             version && version->versionId ? version->versionId : "unknown",
             version && version->matchedPath[0]
                 ? version->matchedPath : "unknown");
+    {
+        static const char* const modeNames[M12_PRESENTATION_MODE_COUNT] = {
+            "v1", "v20", "v21", "v22"
+        };
+        const int resolved = gameView->presentationMode;
+        const char* requested = "menu-or-saved-setting";
+        if (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+            cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
+            requested = modeNames[cliPresentationModeOverride];
+        }
+        fprintf(stderr,
+                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s\n",
+                gameId,
+                requested,
+                resolved >= M12_PRESENTATION_V1_ORIGINAL &&
+                        resolved < M12_PRESENTATION_MODE_COUNT
+                    ? modeNames[resolved] : "unknown",
+                gameView->presentationWidth,
+                gameView->presentationHeight,
+                (cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+                 cliPresentationModeOverride != resolved)
+                    ? " fallback=1" : "");
+    }
 }
 
 static int g_m11_debug_startup_detail = 0;
@@ -14616,7 +14640,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (o->debug) {
             m11_debug_log_launch_selection(
                 &menuState, &gameView,
-                o->directLaunch ? "direct" : "menu");
+                o->directLaunch ? "direct" : "menu",
+                o->presentationModeOverride);
             m11_debug_trace_startup_frame(&debugStartupTrace, &gameView,
                                           o->gameId);
         }
@@ -15184,7 +15209,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 launchedEver = 1;
                 if (o->debug) {
                     m11_debug_log_launch_selection(
-                        &menuState, &gameView, "menu");
+                        &menuState, &gameView, "menu",
+                        o->presentationModeOverride);
                     m11_debug_trace_startup_frame(
                         &debugStartupTrace, &gameView, o->gameId);
                     m11_debug_game_events(&gameView);
@@ -15434,7 +15460,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         launchedEver = 1;
                         if (o->debug) {
                             m11_debug_log_launch_selection(
-                                &menuState, &gameView, "menu");
+                                &menuState, &gameView, "menu",
+                                o->presentationModeOverride);
                             m11_debug_trace_startup_frame(
                                 &debugStartupTrace, &gameView, o->gameId);
                             m11_debug_game_events(&gameView);

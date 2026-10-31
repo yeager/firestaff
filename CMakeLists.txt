@@ -276,6 +276,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_CSB_M12_COMPANION_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for Amiga version 3.3 English, French, German.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;fmtowns;mixed-platform;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME m12_main_menu_csb_fmtowns_default_with_atari_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_csb_fmtowns_default_with_atari_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 300
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_CSB_M12_COMPANION_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;csb;atari;fmtowns;mixed-platform;main-menu;game-selection;runtime;real-media;skip-safe")
+
     add_test(NAME m12_main_menu_csb_renamed_fmtowns_zip_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_renamed_fmtowns_zip_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
@@ -7846,7 +7854,6 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$"
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_viewport\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 # Linked through firestaff_theron_world_support below so standalone archive
