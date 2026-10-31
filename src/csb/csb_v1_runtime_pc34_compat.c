@@ -50,7 +50,6 @@
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
-#include "dm1_v1_text_message_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -4103,10 +4102,11 @@ static int csb_v1_runtime_stage_openroom_text_message(
     decoded = F0508_DUNGEON_DecodeTextStringThing_Compat(
         &things, 0, DUNGEON_TEXT_TYPE_MESSAGE, out_receipt->text,
         (int)sizeof(out_receipt->text));
-    /* F0168 prepends the source message separator. The F0047 text state
-     * owns wrapping and subsequent C015 rows. */
+    /* F0168 prepends the source message separator.  C015 owns a single
+     * QuePrintLines row here, so reject multi-line/empty output rather than
+     * approximating the unavailable queue and wrapping behavior. */
     if (decoded <= 1 || out_receipt->text[0] != '\n' ||
-        !out_receipt->text[1]) {
+        strchr(out_receipt->text + 1, '\n') != NULL) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -11635,23 +11635,14 @@ static int csb_v1_runtime_object_type_from_thing(
     const CSB_V1_DungeonData *dungeon,
     uint16_t thing)
 {
-    const uint8_t *record;
-    int thing_type;
-    int thing_size;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
 
-    record = csb_v1_dungeon_get_thing_record(
-        dungeon,
-        thing,
-        &thing_type,
-        NULL,
-        &thing_size);
-    if (!record || thing_type <= 4 || thing_type >= 14 || thing_size < 4) {
+    if (!csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, thing, &object_info)) {
         return -1;
     }
-    /* F0032 maps the record subtype through G0237 ObjectInfo.Type; it does
-     * not return the low-seven-bit subtype stored in the raw Thing word. */
-    return dm1_v1_dungeon_get_object_type_from_record_pc34(
-        thing_type, record, thing_size);
+    return dm1_v1_dungeon_get_object_type_for_info_index_pc34(
+        object_info.object_info_index);
 }
 
 static void csb_v1_runtime_process_group_creature_floor_sensors_at(
@@ -12418,7 +12409,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     int thing;
     int previous_thing;
     int guard;
-    int queued = 0;
+    int triggered = 0;
     int rotation_pending = 0;
     uint16_t hand_thing = 0xFFFFu;
     int object_type = object_type_override;
@@ -12528,14 +12519,18 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         case 2: /* C002_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT */
             /* ReDMCSB MOVESENS.C:1405 compares empty-hand with RevertEffect;
              * C002 does not use Sensor.Data or wall-cell occupancy. */
-            trigger = ((object_type < 0) == ((flags_word >> 5) & 0x01u));
+            do_not_trigger = (object_type < 0) !=
+                (int)((flags_word >> 5) & 0x01u);
+            trigger = 1;
             break;
         case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
             /* MOVESENS.C:1412-1414 compares hand type with Sensor.Data and
-             * applies RevertEffect; an empty hand maps to -1, so a reverted
-             * mismatch triggers. Objects already on the wall are ignored. */
-            trigger = ((sensor_data == object_type) !=
-                       (int)((flags_word >> 5) & 0x01u));
+             * applies RevertEffect; F0032 returns -1 for an empty hand, so a
+             * reverted sensor triggers when that sentinel does not match
+             * Sensor.Data. Objects on the wall are ignored. */
+            do_not_trigger = ((sensor_data == object_type) ==
+                              (int)((flags_word >> 5) & 0x01u));
+            trigger = 1;
             break;
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE:
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR:
@@ -12547,26 +12542,31 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = ((sensor_data == object_type) !=
-                       (int)((flags_word >> 5) & 0x01u));
+            do_not_trigger = ((sensor_data == object_type) ==
+                              (int)((flags_word >> 5) & 0x01u));
             if (object_type >= 0) storage_action = 3;
-            if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
-                rotate_after = 1;
-            } else if (sensor_type ==
-                       DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
-                /* MOVESENS.C:1415-1427 cannot cut a C017 at the Thing head. */
-                remove_current_sensor = previous_thing != (uint16_t)thing;
+            if (!do_not_trigger) {
+                if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
+                    rotate_after = 1;
+                } else if (sensor_type ==
+                           DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
+                    /* MOVESENS.C:1415-1427 cannot cut a C017 at the Thing head. */
+                    remove_current_sensor = previous_thing != (uint16_t)thing;
+                }
             }
+            trigger = 1;
             break;
         case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
-            /* MOVESENS.C F0275 C004 consumes a matching hand object.
-             * C011/C017 alone require the final same-cell sensor. */
+            /* MOVESENS.C F0275 C004/C011/C017 consume a present hand Thing
+             * after HOLD resolves and clears DoNotTrigger; C011/C017 also
+             * require the final same-cell sensor before local mutation. */
             if (object_type >= 0 && !leader_hand_thing) {
                 trigger = 0;
                 break;
             }
-            trigger = ((sensor_data == object_type) !=
-                       (int)((flags_word >> 5) & 0x01u));
+            do_not_trigger = ((sensor_data == object_type) ==
+                              (int)((flags_word >> 5) & 0x01u));
+            trigger = 1;
             if (object_type >= 0) storage_action = 3;
             break;
         case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
@@ -12643,17 +12643,19 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
 
         sensor_effect = (int)((flags_word >> 3) & 0x03u);
         if (sensor_effect == DM1_EFFECT_HOLD) {
-            /* C002 derives HOLD from its predicate; false means CLEAR and is
-             * still dispatched. Storage's explicit do_not_trigger signal
-             * also resolves a HOLD effect to CLEAR. */
-            sensor_effect = (trigger && !do_not_trigger)
-                ? DM1_EFFECT_SET
-                : DM1_EFFECT_CLEAR;
+            sensor_effect = do_not_trigger ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
+            do_not_trigger = 0;
         } else if (!trigger || do_not_trigger) {
             previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
+        if (!trigger) {
+            previous_thing = thing;
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
         if (storage_action == 1) {
             if (!csb_v1_runtime_unlink_thing_from_square(
                     dungeon,
@@ -12765,10 +12767,14 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 (uint16_t)thing);
         }
 
+        /* ReDMCSB MOVESENS.C F0275 returns the boolean
+         * L0759_B_AtLeastOneSensorWasTriggered. Several sensors may queue
+         * events during one click, but the public result remains 0 or 1. */
+        triggered = 1;
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
-        queued += csb_v1_runtime_queue_remote_square_event(
+        (void)csb_v1_runtime_queue_remote_square_event(
             profile,
             sensor_effect,
             target_x,
@@ -12792,7 +12798,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             dungeon, profile->current_level, map_x, map_y, cell);
     }
 
-    return queued;
+    return triggered;
 }
 
 int csb_v1_runtime_trigger_wall_ornament_click(
@@ -18066,8 +18072,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int square_contains_object = 0;
     int square_contains_group = 0;
     int pending_local_effect = DM1_EFFECT_NONE;
-    DM1_V1_TextMessageState party_text_rows;
-    int collect_party_text_rows = 0;
 
     if (!profile || !result) return;
     dungeon = (profile->dungeon_handle)
@@ -18083,15 +18087,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         map_x,
         map_y);
     if (first_thing < 0 || first_thing == 0xFFFE) return;
-
-    collect_party_text_rows = add_party && !party_square &&
-                              dungeon->square_bytes == 1;
-    if (collect_party_text_rows) {
-        dm1_v1_text_init(&party_text_rows);
-        party_text_rows.gameTime = profile->game_time;
-        memset(&profile->csb_party_text_rows_receipt, 0,
-               sizeof(profile->csb_party_text_rows_receipt));
-    }
 
     /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
      * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
@@ -18153,23 +18148,35 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         if (!record) break;
         if (thing_type >= 4) break;
         if (thing_type == 2) {
-            /* ReDMCSB MOVESENS.C F0276:1630-1633 calls F0168/F0047 for
-             * each visible C02 in source Thing-chain order on party arrival. */
-            if (collect_party_text_rows && thing_size >= 4) {
+            /* ReDMCSB MOVESENS.C F0276:1630-1633 decodes a TextString when
+             * the party enters its square.  Firestaff owns only one C015
+             * receipt, so admit one visible original C02 record and reject a
+             * multi-text list rather than inventing QuePrintLines behavior. */
+            if (add_party && !party_square && dungeon->square_bytes == 1 &&
+                thing_size >= 4) {
+                int scan = first_thing;
+                int scan_guard;
+                int text_count = 0;
                 CSB_V1_RuntimeTextMessageReceipt message_receipt;
-                if (csb_v1_runtime_stage_openroom_text_message(
-                        profile, (uint16_t)thing,
-                        csb_v1_runtime_read_u16(record + 2),
-                        &message_receipt)) {
-                    char source_message[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
-                    size_t length = strlen(message_receipt.text);
-                    if (length + 2u <= sizeof(source_message)) {
-                        source_message[0] = '\n';
-                        memcpy(source_message + 1, message_receipt.text,
-                               length + 1u);
-                        dm1_v1_text_print_message(&party_text_rows,
-                                                  DM1_V1_COLOR_WHITE,
-                                                  source_message);
+
+                for (scan_guard = 0;
+                     scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
+                     ++scan_guard) {
+                    int scan_type;
+                    if (!csb_v1_dungeon_get_thing_record(
+                            dungeon, (uint16_t)scan, &scan_type, NULL, NULL)) {
+                        break;
+                    }
+                    if (scan_type == 2) ++text_count;
+                    scan = csb_v1_runtime_sensor_next_thing(
+                        dungeon, (uint16_t)scan);
+                }
+                if (text_count == 1) {
+                    memset(&message_receipt, 0, sizeof(message_receipt));
+                    if (csb_v1_runtime_stage_openroom_text_message(
+                            profile, (uint16_t)thing,
+                            csb_v1_runtime_read_u16(record + 2),
+                            &message_receipt)) {
                         profile->csbwin_text_message_receipt = message_receipt;
                     }
                 }
@@ -18319,21 +18326,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         }
 
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-    }
-
-    if (collect_party_text_rows) {
-        int row;
-        for (row = 0; row < DM1_V1_MESSAGE_AREA_ROW_COUNT; ++row) {
-            if (!party_text_rows.rows[row].text[0]) continue;
-            profile->csb_party_text_rows_receipt.valid = 1;
-            memcpy(profile->csb_party_text_rows_receipt.rows[row],
-                   party_text_rows.rows[row].text,
-                   sizeof(profile->csb_party_text_rows_receipt.rows[row]));
-        }
-        if (profile->csb_party_text_rows_receipt.valid) {
-            profile->csb_party_text_rows_receipt.source_game_time =
-                profile->game_time;
-        }
     }
     if (pending_local_effect == DM1_EFFECT_CLEAR ||
         pending_local_effect == DM1_EFFECT_TOGGLE) {

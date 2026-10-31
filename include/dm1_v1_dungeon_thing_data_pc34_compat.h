@@ -25,6 +25,9 @@ int dm1_v1_dungeon_get_object_info_index_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing);
 
+/* ReDMCSB OBJECT.C F0032 after DUNGEON.C F0141 selects a G0237 row. */
+int dm1_v1_dungeon_get_object_type_for_info_index_pc34(int objectInfoIndex);
+
 int dm1_v1_dungeon_get_object_type_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing);

@@ -1,5 +1,23 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB F0032 object type and F0275 result semantics: F0032 maps
+the loaded Thing through F0141 and returns `G0237.Type`; weapon subtype 8 maps
+to Type 32 and subtype 27 to Type 51. The CSB wall-click and moving-object
+sensor paths now use this mapping rather than the raw subtype. F0275 now
+returns the source boolean “at least one sensor triggered”, while still
+processing every matching sensor and preserving event order. C002 HOLD maps
+the hand-empty/RevertEffect predicate to SET or CLEAR. Focused regressions and
+DM1, CSB, and DM2 FM Towns no-game menu launches pass on original media; full
+CSB sensor, edition, and platform parity remains open.
+
+2026-10-31 Atari ST original-media startup regression: the local
+`csb_v1_atari_stx_native_cli_boot` test passed in 203.38 seconds against the
+installed original English v2.1 STX image. It exercises CLI and no-game menu
+starts, title/runtime handoff, source-derived input outcomes, champion
+recruitment, HUD structure, door activation, stairs, and monster movement.
+This is headless startup/gameplay evidence, not physical Atari input, combat
+damage, or visual parity.
+
 2026-10-31 ReDMCSB F0275 wall-click list traversal: the runtime previously
 read a Thing's cell from its low index bits and stopped after the first
 successful wall sensor. ReDMCSB `DEFS.H:398` defines `M011_CELL` as bits 14–15,

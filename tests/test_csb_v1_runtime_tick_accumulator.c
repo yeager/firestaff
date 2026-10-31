@@ -17,6 +17,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 
@@ -1166,13 +1167,15 @@ static void make_real_format_c013_storage_rotation_dungeon(
     test_put_le16(raw, 66, (uint16_t)(3u << 10)); /* C013 sensor 0 */
     test_put_le16(raw, 68, (uint16_t)((3u << 10) | 4u));
     test_put_le16(raw, 70,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
     test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
     test_put_le16(raw, 100, (uint16_t)(5u << 10)); /* C013 sensor 1 -> object */
+    /* The rotated companion listens for Type 51, so a Type 32 pickup does
+     * not deposit the hand object again during the same source-ordered pass. */
     test_put_le16(raw, 102,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((51u << 7) |
                              DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
     test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
@@ -1207,13 +1210,13 @@ static void make_real_format_c011_rotation_dungeon(
     test_put_le16(raw, 66, (uint16_t)(3u << 10));
     test_put_le16(raw, 68, (uint16_t)((3u << 10) | 4u));
     test_put_le16(raw, 70,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              0u));
     test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
     test_put_le16(raw, 100, 0xfffeu);
     test_put_le16(raw, 102,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE));
     test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
@@ -1283,7 +1286,7 @@ static void make_real_format_c016_exchange_dungeon(
     test_put_le16(raw, 66, (uint16_t)(3u << 10));
     test_put_le16(raw, 68, (uint16_t)(5u << 10));
     test_put_le16(raw, 70,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              DM1_SENSOR_WALL_OBJECT_EXCHANGER));
     test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
@@ -1320,13 +1323,13 @@ static void make_real_format_c017_remove_sensor_dungeon(
     test_put_le16(raw, 66, (uint16_t)((3u << 10) | 1u));
     test_put_le16(raw, 76, (uint16_t)((3u << 10) | 4u));
     test_put_le16(raw, 78,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              DM1_SENSOR_WALL_ORNAMENT_CLICK));
     test_put_le16(raw, 80, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 82, make_sensor_target(2, 0, 0));
     test_put_le16(raw, 100, 0xfffeu);
     test_put_le16(raw, 102,
-                  (uint16_t)((8u << 7) |
+                  (uint16_t)((32u << 7) |
                              DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR));
     test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
     test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
@@ -5213,6 +5216,15 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
         &dungeon,
         raw,
         sizeof(raw));
+    {
+        CSB_V1_F0141G0209ObjectInfoReceiptPc34 info;
+        int receipt_ok = csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            &dungeon, (uint16_t)(5u << 10), &info);
+        CHECK(receipt_ok && info.object_info_index == 31 &&
+                  dm1_v1_dungeon_get_object_type_for_info_index_pc34(
+                      info.object_info_index) == 32,
+              "C013 real-format object maps subtype 8 through F0141/G0237 to type 32");
+    }
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -5287,7 +5299,7 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
      * C011/C017 does not require that its C03 is the final same-cell sensor. */
     make_real_format_sensor_dungeon(
         &dungeon, raw, sizeof(raw), 0, 0, 0,
-        (uint16_t)((8u << 7) |
+        (uint16_t)((32u << 7) |
                    DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED),
         (uint16_t)(DM1_EFFECT_SET << 3), make_sensor_target(2, 0, 0));
     raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
@@ -5543,7 +5555,7 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
         1,
         0,
         (uint8_t)(1u << 5),
-        (uint16_t)((27u << 7) | DM1_SENSOR_FLOOR_OBJECT),
+        (uint16_t)((51u << 7) | DM1_SENSOR_FLOOR_OBJECT),
         (uint16_t)(DM1_EFFECT_SET << 3),
         make_sensor_target(2, 0, 0));
     raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
@@ -6058,7 +6070,7 @@ static void test_input_forward_c008_party_possession_sensor(void)
         0,
         1,
         (uint8_t)(1u << 5),
-        (uint16_t)((8u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
+        (uint16_t)((32u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
         (uint16_t)(DM1_EFFECT_SET << 3),
         make_sensor_target(2, 0, 0));
     raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
@@ -6103,7 +6115,7 @@ static void test_input_forward_c008_party_possession_sensor(void)
           "C008 fixture applies one southward movement step");
     CHECK(result.sensor_trigger_count == 1 &&
               result.sensor_last_type == DM1_SENSOR_FLOOR_PARTY_POSSESSION &&
-              result.sensor_last_data == 8,
+              result.sensor_last_data == 32,
           "C008 party-possession sensor triggers on matching champion slot object");
     CHECK(result.sensor_event_count == 1 &&
               result.sensor_last_event_type == DM1_EVENT_FAKEWALL &&
@@ -6123,7 +6135,7 @@ static void test_input_forward_c008_party_possession_sensor(void)
         0,
         1,
         (uint8_t)(1u << 5),
-        (uint16_t)((8u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
+        (uint16_t)((32u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
         (uint16_t)(DM1_EFFECT_SET << 3),
         make_sensor_target(2, 0, 0));
     raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);

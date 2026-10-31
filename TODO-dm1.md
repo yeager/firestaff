@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-31 HoC PC34 real-media viewport material smoke check:
+`m11_dm1_hoc_real_mirror_viewport_material` passed against the installed
+original DOS 3.4 archive. It verifies a bounded real-game mirror/viewport
+material route; it does not establish complete HoC wall-material, movement,
+or platform parity.
+
 2026-10-31 ReDMCSB F0275 reverted empty-hand wall objects: `OBJECT.C:F0032`
 returns `C0xFFFF_ICON_NONE` (`-1`) for `THING_NONE`, and `MOVESENS.C:1412-1414`
 compares that type with `Sensor.Data` before applying `RevertEffect`. DM1's

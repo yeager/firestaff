@@ -834,8 +834,8 @@ typedef struct {
     CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
 
-/* ReDMCSB TEXT.C F0046: Atari/Amiga/FM Towns C015 rows expire at the
- * source game time plus 70 ticks. */
+/* ReDMCSB TEXT.C F0046: Atari ST/FM Towns C015 rows expire after 70 ticks;
+ * Amiga A31/A35 rows expire after 200 ticks. */
 int csb_v1_runtime_text_message_active_pc34(
     const CSB_V1_RuntimeProfile *profile);
 

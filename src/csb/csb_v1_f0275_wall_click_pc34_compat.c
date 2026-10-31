@@ -1,4 +1,5 @@
 #include "csb_v1_f0275_wall_click_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #include <string.h>
 
@@ -6,11 +7,13 @@ static uint16_t read_u16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)
 
 static int object_type(const CSB_V1_DungeonData *d, uint16_t thing)
 {
-    const uint8_t *r;
-    int t, size;
-    r = csb_v1_dungeon_get_thing_record(d, thing, &t, NULL, &size);
-    if (!r || t <= CSB_V1_THING_TYPE_GROUP || t >= 14 || size < 4) return -1;
-    return (int)(read_u16(r + 2) & 0x7fu);
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 info;
+
+    if (!csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(d, thing, &info)) {
+        return -1;
+    }
+    return dm1_v1_dungeon_get_object_type_for_info_index_pc34(
+        info.object_info_index);
 }
 
 int csb_v1_f0275_wall_click_receipt_pc34(
