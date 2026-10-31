@@ -1,5 +1,25 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — repair PCE Fast trace build and empty-BRAM capture arguments
+
+The Mednafen reference-build pipeline now applies the PCE Fast TIA zero-page
+trace patch only when its opt-in TIA trace feature is enabled. That patch
+otherwise collided with earlier direct-main-RAM instrumentation even when the
+trace was disabled. The capture runner now inserts `-filesys.fname_sav` only
+for a verified BRAM path, avoiding macOS Bash's `set -u` failure when an array
+is declared but empty.
+
+Verification: the complete instrumented PCE Fast patch-only pipeline passed
+three isolated loops. The rebuilt instrumented core passed the SDL 2.32.10
+runtime-link verifier. The capture wrapper then launched and produced bounded
+diagnostic snapshots from the authentic US disc. An existing authentic save
+state was rejected because its serialized state schema does not match this
+instrumented core; capture validation correctly rejected the resulting BIOS
+trace for lacking the expected game-state witnesses. This closes the tooling
+faults only. No movement, command, original screen or native parity result is
+claimed. The next capture requires a save state created by the exact core or a
+verified cold game route. Raw diagnostic captures were kept outside the repo.
+
 ## 2026-10-31 — require provenance before in-place BRAM updates
 
 Same-path Save Game updates now require a Firestaff-managed sidecar whose

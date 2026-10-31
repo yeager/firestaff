@@ -26,6 +26,25 @@ states for these missing real-data joins. See the [Theron TODO](../../TODO-thero
 [native platform status](../PLATFORM_STATUS.md#therons-quest) for the current
 work order and detailed evidence.
 
+## 2026-10-31 — PCE Fast capture tooling repaired; save-state replay still blocked
+
+The isolated reference-capture wrapper previously failed under macOS Bash
+`nounset` when its optional authentic-BRAM argument list was empty. The wrapper
+now adds that Mednafen option only when a verified BRAM filename exists. The
+PCE Fast build also applies its expensive zero-page TIA tracing patch only when
+the corresponding opt-in trace flag is enabled; the complete patch-only
+pipeline passed three isolated loops, and a PCE Fast instrumentation build
+passed the real SDL 2.32.10 runtime check.
+
+An existing authentic US gameplay save state was rejected by this freshly
+built reference core's serialized-state schema. The capture wrapper reached
+Mednafen and retained diagnostics, but validation reported no observed System
+Card `$1800` reads because the requested state did not load. This is a tooling
+compatibility failure, not gameplay evidence. The next reference capture needs
+a save state emitted by the exact instrumented core or a separately verified
+cold route into the dungeon. No game media, save state or raw capture was
+committed.
+
 ## 2026-10-31 — cold System Card RUN callback remains before game handoff
 
 The authentic Japanese cold `run@480:300` capture records one System Card
