@@ -204,7 +204,11 @@ evidence.
 Firestaff has bounded native real-media routes for both admitted regions: JP
 fresh start reaches source-verified Ak-Tu-Ba level 0; US Track 02 with matching
 Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises
-movement and item transactions. Source-only loaders cover all seven dungeons
+movement, champion selection, wait, and US item pickup/reselect/drop through
+the native SDL input loop. USE is dispatched as a command, but authentic door
+and object effects remain fail-closed until the T900 consumer is source-bound.
+Native M11 rejects the authentic empty JP BRAM; positive JP progress
+restoration remains unverified. Source-only loaders cover all seven dungeons
 per region. These results are recorded in the
 [capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); they do not
 establish complete retail gameplay or visual parity.

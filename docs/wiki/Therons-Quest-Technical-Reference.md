@@ -68,10 +68,12 @@
 
 ## Door movement boundary
 
-Movement does not implicitly open a closed or locked door. The explicit
-door-use route performs the state transition and key validation; this keeps
-source-bound Track 02 object state transactional and fail-closed. A stair
-query likewise returns `STAIRS` only when the destination level is resident.
+Movement does not implicitly open a closed or locked door. Firestaff accepts
+a USE command for a facing door, but authentic Track 02 door effects remain
+fail-closed because the original T900 button/actuator consumer is not yet
+bound. Host-fixture state transitions and key validation do not establish
+retail behavior. A stair query likewise returns `STAIRS` only when the
+destination level is resident.
 
 ## Turn input receipt boundary
 

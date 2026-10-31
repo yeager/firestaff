@@ -1,5 +1,14 @@
 # Theron Capture Readiness
 
+Firestaff runs Theron in its native C/SDL runtime and skips the Firestaff Run
+menu and System Card on direct launch. Authentic JP fresh-start and US
+Continue routes reach loaded dungeons. The native input panel has bounded
+keyboard and mouse regressions for movement, champion selection, wait, and
+US pickup/reselect/drop; USE command effects remain unverified. Native JP M11
+rejects the authentic empty BRAM, while positive JP progress restoration remains
+untested. Current claims are bounded routes, not complete gameplay or visual
+parity.
+
 ## 2026-10-31 — matched JP state-only comparison records candidate transfers
 
 Three PCE Fast replays from the authentic Akutuba F5 state recorded the same
@@ -83,9 +92,9 @@ from Firestaff data. Its only 2,048-byte `.sav` output has SHA-256
 `de8e415730226a1f0e39666b1ea291b6abec07bcaeb7223dc33ea01a71f89eaa` and
 MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`, exactly matching the already
 verified empty JP BRAM. No stage-clear or progressed BRAM was produced. The
-screenshots and emulator state remain private under
-`/home/trv2/firestaff-theron-evidence/emulator-created-20261031/jp-progress-attempt1/`;
-they are reference artifacts, not Firestaff output or parity evidence. The
+screenshots and emulator state remain in the private TRV2 Theron evidence
+store and outside Git. They are reference artifacts, not Firestaff output or
+parity evidence. The
 cold route confirms the long RUN hold and New Game navigation, but not a
 game-owned input trace, stage completion, positive save/Continue, or native
 rendering parity. Continue by completing the original Akutuba stage and
@@ -293,10 +302,9 @@ proves the guest coordinates or click behavior. Mednafen reported the SBI
 sidecar missing, and the full headered System Card image was unavailable. The
 retail manual documents D-pad cursor movement and Button I actions; it does not
 document physical mouse input. These captures do not prove the transition's
-source provenance, gameplay behavior, or Firestaff parity. Private screenshots,
-log and hash manifest
-are at
-`/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+source provenance, gameplay behavior, or Firestaff parity. The private
+screenshots, log and hash manifest remain outside Git in the TRV2 Theron
+evidence store.
 
 The separate [cold mouse-mode Run trace](../source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md)
 records Run and Button I at the original System Card poll, but the game
@@ -313,8 +321,7 @@ press. The active-low Button I poll value `$3E` is present in the controller
 trace. This proves one visible story-page transition after controller input.
 It does not show hero selection or a dungeon, and it does not establish native
 parity. The full headered card image was unavailable. Private evidence,
-including hashes, is retained at
-`/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+including hashes, remains outside Git in the TRV2 Theron evidence store.
 
 ## 2026-10-26 — PCE Fast captures default to a close-time snapshot signal
 
@@ -645,10 +652,8 @@ flow, DMA writes, tile use, or world-cell mapping. A cold Japanese Rev. 1
 boot/title-menu capture now provides an authentic VCE write stream with 11,592
 ordered records over all 512 palette addresses. The Firestaff event-merger
 parser accepts every row. A paired real runtime screenshot still shows
-`NEW GAME` selected after a four-second Run hold. The private TRV2 evidence
-bundle is
-`/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
-This capture used the hash-verified canonical headerless System Card 3.0 ROM
+`NEW GAME` selected after a four-second Run hold. The private TRV2 evidence bundle remains outside Git in the Theron evidence
+store. This capture used the hash-verified canonical headerless System Card 3.0 ROM
 body (`38179df8f4ac870017db21ebcbf53114`) and authentic Japanese Rev. 1 Track
 02 (`b7afb338ad31be1025b53f9aff12d73a`), without an autoload state. The full
 headered System Card image was unavailable and the optional SBI file was

@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — align current Theron documentation and control claims
+
+Refreshed the README, documentation index, project status, completion matrix,
+missing-functions summary, capture-readiness page, input guide, local Mac
+workflow, and Theron technical reference. Current summaries distinguish native
+input-command dispatch from unverified authentic USE effects, record the
+bounded US pickup/reselect/drop and JP empty-BRAM rejection evidence, and omit
+private machine paths from the current capture ledger. Dated source-lock and
+historical evidence records remain unchanged. No runtime code, game data, or
+capture artifact changed. `git diff --check` passed.
+
 ## 2026-10-31 — capture matched JP directional state-transfer evidence
 
 Created a review-format evidence bundle for three authentic-state PCE Fast

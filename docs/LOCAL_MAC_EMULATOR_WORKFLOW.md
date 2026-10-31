@@ -5,21 +5,24 @@ reference, not a requirement to check in any emulator or game media.
 
 ## Firestaff and SDL3
 
-SDL3 is available through Homebrew on this Mac. Build from the external worktree:
+SDL3 is available through Homebrew on this Mac. Run the following commands
+from the root of the external worktree:
 
 ```sh
 brew install sdl3
-cmake -S /Volumes/Extern-disk/firestaff-theron-active2.mEOJKp \
-  -B /Volumes/Extern-disk/firestaff-theron-active2-build \
-  -DCMAKE_BUILD_TYPE=Debug
-cmake --build /Volumes/Extern-disk/firestaff-theron-active2-build --parallel
+repo="$PWD"
+build_dir="/Volumes/Extern-disk/firestaff-theron-debug-build"
+cmake -S "$repo" -B "$build_dir" -DCMAKE_BUILD_TYPE=Debug
+cmake --build "$build_dir" --parallel 1
 ```
 
-Use SDL's dummy video driver for headless verification:
+Launch the native Theron Debug runtime with authentic JP data:
 
 ```sh
-SDL_VIDEODRIVER=dummy \
-  /Volumes/Extern-disk/firestaff-theron-active2-build/firestaff_m11_phase_a_probe
+build_dir="/Volumes/Extern-disk/firestaff-theron-debug-build"
+"$build_dir/firestaff" \
+  --game theron --theron-native jp --debug \
+  --data-dir "$HOME/.firestaff/data/theron"
 ```
 
 Theron runs in Firestaff's native C/SDL runtime. During dungeon play, Up/W
@@ -37,11 +40,12 @@ runtime or claim original PC Engine mouse support.
 
 Mednafen is a terminal application. The local installation is normally at
 `/opt/homebrew/bin/mednafen`. Start a verified PC Engine CD image by passing
-the CUE file as its argument:
+the CUE file as its argument. Replace the filename with the authenticated
+regional CUE listed in the real-data inventory:
 
 ```sh
 /opt/homebrew/bin/mednafen \
-  "/Volumes/Extern-disk/theron-mednafen-us/Dungeon Master - Theron's Quest (USA).cue"
+  "$HOME/.firestaff/data/theron/<verified-region-cue>.cue"
 ```
 
 Place the System Card in the Mednafen profile outside the repository, for

@@ -106,13 +106,15 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Pick up facing item | G                            |
 | Select next source item | I                         |
 | Drop last picked source item | P                    |
-| Use facing object | U                               |
+| Use (command only; effect unverified) | U |
 
 The native dungeon view also shows a twelve-button Firestaff mouse panel in
 its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 **TURN R**, **STEP L**, **BACK**, and **STEP R**. The remaining buttons are
 **NEXT** champion, **PICKUP**, select the next source-backed **ITEM**, **DROP**
-the selected source item, **USE** the object ahead, and **WAIT** one tick.
+the selected source item, send the **USE** command for the object ahead, and
+**WAIT** one tick. The effect of USE on authentic doors and other objects is
+not yet verified because the original T900 consumer remains unbound.
 These buttons send the same native Theron input tokens as the corresponding
 keyboard actions. Their captions use the active Theron translation catalog.
 The panel is hit-tested in the native 320x200 game framebuffer after SDL
@@ -136,11 +138,12 @@ the highlighted control changes.
   dungeon keyboard layout while preserving Theron's native command tokens.
 - SDL keyboard input routes the same supported loaded-dungeon commands as the
   native mouse panel: Tab cycles champion, G picks up, I selects the next
-  source-backed item, P drops it, U uses the facing object, and Space/Return
-  or the PC Engine Button I binding Z waits. These keys enter the Theron input
-  facade directly; they do not rely on the boot-probe-only key mapper.
+  source-backed item, P drops it, U sends the USE command for the facing
+  object, and Space/Return or the PC Engine Button I binding Z waits. These
+  keys enter the Theron input facade directly; they do not rely on the
+  boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
-  implemented champion, item, use and wait actions. The retail manual's
+  implemented champion, item, USE-command and wait inputs. The retail manual's
   Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
   it turns instead of side-stepping. A standalone right click does not advance
   a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
