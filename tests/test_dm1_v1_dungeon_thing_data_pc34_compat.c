@@ -41,6 +41,14 @@ static void test_get_object_type_null(void)
     assert(t == -1);
 }
 
+static void test_get_object_type_for_info_index(void)
+{
+    assert(dm1_v1_dungeon_get_object_type_for_info_index_pc34(31) == 32);
+    assert(dm1_v1_dungeon_get_object_type_for_info_index_pc34(23) == 16);
+    assert(dm1_v1_dungeon_get_object_type_for_info_index_pc34(-1) == -1);
+    assert(dm1_v1_dungeon_get_object_type_for_info_index_pc34(180) == -1);
+}
+
 static void test_get_object_allowed_slots_null(void)
 {
     unsigned int slots = dm1_v1_dungeon_get_object_allowed_slots_pc34(NULL, 0);
@@ -143,6 +151,7 @@ int main(void)
     test_get_object_subtype_null();
     test_get_object_info_index_null();
     test_get_object_type_null();
+    test_get_object_type_for_info_index();
     test_get_object_allowed_slots_null();
     test_get_object_icon_index_null();
     test_f7017_null();

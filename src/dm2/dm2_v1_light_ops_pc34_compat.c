@@ -716,8 +716,9 @@ void dm2_v1_proceed_light(
         return;
     }
 
-    if (light_type != 0x06) {
-        /* Non-darkness: halve and decrement */
+    /* c_light.cpp:625-646 sets skip00710 for torch after its quarter-step
+     * adjustment; darkness and bright light take the half-step/decrement. */
+    if (light_type != 0x26u) {
         step = (int16_t)(step >> 1);
         step--;
     }

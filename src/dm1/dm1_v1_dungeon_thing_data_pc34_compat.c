@@ -511,7 +511,13 @@ int dm1_v1_dungeon_get_object_type_pc34(
     unsigned short thing)
 {
     int objectInfoIndex = dm1_v1_dungeon_get_object_info_index_pc34(things, thing);
-    return objectInfoIndex >= 0 ? s_object_info_type[objectInfoIndex] : -1;
+    return dm1_v1_dungeon_get_object_type_for_info_index_pc34(objectInfoIndex);
+}
+
+int dm1_v1_dungeon_get_object_type_for_info_index_pc34(int objectInfoIndex)
+{
+    if (objectInfoIndex < 0 || objectInfoIndex >= kObjectInfoCount) return -1;
+    return (int)s_object_info_type[objectInfoIndex];
 }
 
 unsigned int dm1_v1_dungeon_get_object_allowed_slots_pc34(

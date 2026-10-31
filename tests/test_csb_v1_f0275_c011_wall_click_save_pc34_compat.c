@@ -14,7 +14,7 @@ static int failed;
 } while (0)
 
 static const char *const kSavePath =
-    "/tmp/firestaff_csb_f0275_c011_wall_click_save.fsav";
+    "firestaff_csb_f0275_c011_wall_click_save.fsav";
 
 static void put_le16(unsigned char *bytes, int offset, unsigned short value)
 {
@@ -57,6 +57,22 @@ static int count_queued_fakewall_events(const CSB_V1_RuntimeProfile *profile)
     return count;
 }
 
+static int queued_fakewall_effect(const CSB_V1_RuntimeProfile *profile)
+{
+    int index;
+
+    for (index = 0;
+         profile && index < profile->timeline_queue.eventCount;
+         ++index) {
+        int slot = profile->timeline_queue.timeline[index];
+        if (slot >= 0 && slot < DM1_EVENT_MAX_COUNT &&
+            profile->timeline_queue.events[slot].type == DM1_EVENT_FAKEWALL) {
+            return profile->timeline_queue.events[slot].c_effect;
+        }
+    }
+    return -1;
+}
+
 static void make_fixture(CSB_V1_RuntimeProfile *profile,
                          CSB_V1_DungeonData *dungeon,
                          unsigned char raw[128],
@@ -77,8 +93,8 @@ static void make_fixture(CSB_V1_RuntimeProfile *profile,
     dungeon->thing_data_bases[5] = 108;
     dungeon->thing_type_counts[5] = 1;
 
-    /* A wall at (0,0) owns a C011 in cell zero. The preceding C000 keeps
-     * rotation observable, while the C011 consumes the live type-8 hand. */
+    /* A wall at (0,0) owns a C011 in cell zero. The hand record is a C05
+     * weapon subtype 8; ReDMCSB F0032 maps it through G0237 to type 32. */
     raw[square_offset(0, 0)] = 0x10u;
     raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
     put_le16(raw, 60, 0u);
@@ -93,7 +109,7 @@ static void make_fixture(CSB_V1_RuntimeProfile *profile,
     put_le16(raw, 104, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 106, sensor_target(2, 0, 0));
     put_le16(raw, 108, 0xfffeu);
-    put_le16(raw, 110, 8u); /* Loaded C05 object's source type. */
+    put_le16(raw, 110, 8u); /* C05 subtype 8: Dagger, G0237.Type 32. */
 
     csb_v1_runtime_init(profile, NULL);
     profile->chaos_magic.magic_initialized = 1;
@@ -116,7 +132,7 @@ static void test_c011_runtime_hand_roundtrips_save(void)
     unsigned char raw[128];
 
     remove(kSavePath);
-    make_fixture(&profile, &dungeon, raw, 8);
+    make_fixture(&profile, &dungeon, raw, 32);
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 1,
           "C011 consumes the matching source-owned runtime hand");
@@ -154,7 +170,7 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
     unsigned char raw[128];
     unsigned char before[128];
 
-    make_fixture(&profile, &dungeon, raw, 7);
+    make_fixture(&profile, &dungeon, raw, 31);
     memcpy(before, raw, sizeof(before));
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 0,
@@ -166,10 +182,478 @@ static void test_c011_wrong_object_type_rejects_without_mutation(void)
           "C011 mismatch leaves the hand, raw chain, and timeline unchanged");
 }
 
+static void test_c017_preserves_head_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    int queued;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    dungeon.thing_data_bases[5] = 108;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (unsigned short)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, (unsigned short)((32u << 7) |
+        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR));
+    put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 108, 0xfffeu);
+    put_le16(raw, 110, 8u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = (unsigned short)(5u << 10);
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = profile.party_state.LeaderHandThing;
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+        &profile, 0, 0, 0);
+    CHECK(queued == 1 &&
+              read_le16(raw, 66) == (unsigned short)(3u << 10) &&
+              read_le16(raw, 68) == 0xfffeu &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.timeline_queue.eventCount == 1,
+          "source C017 head case retains its Thing while consuming hand and triggering");
+}
+
+static void test_later_c004_uses_hand_filled_by_storage_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    const uint16_t sensor0 = (uint16_t)(3u << 10);
+    const uint16_t sensor1 = (uint16_t)((3u << 10) | 1u);
+    const uint16_t object = (uint16_t)(5u << 10);
+    int queued;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 2;
+    dungeon.thing_data_bases[5] = 108;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, sensor0);
+    put_le16(raw, 68, sensor1);
+    put_le16(raw, 70, (unsigned short)((32u << 7) |
+        DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
+    put_le16(raw, 72, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 76, object);
+    put_le16(raw, 78, (unsigned short)((32u << 7) |
+        DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED));
+    put_le16(raw, 80, (unsigned short)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 82, sensor_target(2, 0, 0));
+    put_le16(raw, 108, 0xfffeu);
+    put_le16(raw, 110, 8u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = 0xffffu;
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+        &profile, 0, 0, 0);
+    CHECK(queued == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xffffu,
+          "later C004 consumes the object placed in hand by an earlier storage sensor");
+}
+
+static void test_c002_uses_hand_occupancy_and_revert_only(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, (uint16_t)((7u << 7) | 2u)); /* C002 data is irrelevant. */
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, 8) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "C002 triggers for a held object based on occupancy/revert, not Sensor.Data");
+}
+
+static void test_c002_hold_selects_set_or_clear_from_hand_and_revert(void)
+{
+    int empty_hand;
+    int revert_effect;
+
+    for (empty_hand = 0; empty_hand <= 1; ++empty_hand) {
+        for (revert_effect = 0; revert_effect <= 1; ++revert_effect) {
+            CSB_V1_RuntimeProfile profile;
+            CSB_V1_DungeonData dungeon;
+            unsigned char raw[128];
+            int do_not_trigger = empty_hand != revert_effect;
+            int expected_effect = do_not_trigger
+                ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
+
+            make_fixture(&profile, &dungeon, raw, 7);
+            put_le16(raw, 102, (uint16_t)((99u << 7) | 2u));
+            put_le16(raw, 104, (uint16_t)((DM1_EFFECT_HOLD << 3) |
+                                          (revert_effect << 5)));
+            if (empty_hand) {
+                profile.party_state.LeaderHandThing = 0xffffu;
+                profile.csbwin_object_in_hand = 0xffffu;
+            }
+            CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+                      &profile, 0, 0, 0) == 1 &&
+                      count_queued_fakewall_events(&profile) == 1 &&
+                      queued_fakewall_effect(&profile) == expected_effect,
+                  "C002 HOLD emits the ReDMCSB SET/CLEAR result for hand and RevertEffect");
+        }
+    }
+}
+
+static void test_c004_removes_matching_hand_object(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 4u));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xffffu &&
+              profile.timeline_queue.eventCount == 1,
+          "C004 removes the matching hand object and queues its remote effect");
+}
+
+static void test_c003_matches_hand_type_and_revert(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "C003 matches Dagger G0237.Type 32, not raw weapon subtype 8");
+
+    make_fixture(&profile, &dungeon, raw, 32);
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "C003 suppresses a matching hand type when RevertEffect is set");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "C003 does not confuse raw weapon subtype 8 with G0237.Type 32");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    put_le16(raw, 102, (uint16_t)((8u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              queued_fakewall_effect(&profile) == DM1_EFFECT_CLEAR,
+          "C003 HOLD emits CLEAR when F0032 type does not match Sensor.Data");
+}
+
+static void test_reverted_object_sensors_match_empty_hand_sentinel(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "non-reverted C003 stays inactive for the empty-hand sentinel");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 3u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "RevertEffect C003 triggers for the source empty-hand type sentinel");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 4u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu &&
+              read_le16(raw, 108) == 0xfffeu &&
+              profile.timeline_queue.eventCount == 1,
+          "RevertEffect C004 triggers empty-handed without removing an object");
+}
+
+static void test_reverted_c011_and_c017_work_without_hand_object(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1 &&
+              profile.party_state.LeaderHandThing == 0xffffu,
+          "RevertEffect C011 triggers for an empty hand without consuming one");
+
+    make_fixture(&profile, &dungeon, raw, 8);
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_object_in_hand = 0xffffu;
+    put_le16(raw, 102, (uint16_t)((32u << 7) | 17u));
+    put_le16(raw, 104, (uint16_t)((DM1_EFFECT_SET << 3) | (1u << 5)));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1 &&
+              profile.timeline_queue.eventCount == 1 &&
+              read_le16(raw, 66) == (uint16_t)(3u << 10) &&
+              read_le16(raw, 68) == 0xfffeu &&
+              read_le16(raw, 100) == 0xffffu &&
+              read_le16(raw, 108) == 0xfffeu,
+          "RevertEffect C017 removes its sensor and triggers without a hand object");
+}
+
+static void test_c001_hold_does_not_trigger(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, 0xfffeu);
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_HOLD << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, -1) == 0 &&
+              profile.timeline_queue.eventCount == 0,
+          "ReDMCSB C001 skips a wall click whose remote effect is HOLD");
+}
+
+static void test_c001_ignores_objects_in_other_wall_cells(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    const uint16_t object_other_cell = (uint16_t)((1u << 14) | (5u << 10));
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    dungeon.thing_data_bases[5] = 76;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, object_other_cell);
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 76, 0xfffeu);
+    put_le16(raw, 78, 8u); /* The only object occupies cell one. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, -1) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "C001 sees the clicked cell as empty when an object is in another cell");
+}
+
+static void test_c001_triggers_even_with_object_on_clicked_cell(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 1;
+    dungeon.thing_data_bases[5] = 76;
+    dungeon.thing_type_counts[5] = 1;
+    raw[square_offset(0, 0)] = 0x10u;
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, (uint16_t)(3u << 10));
+    put_le16(raw, 68, (uint16_t)(5u << 10));
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(2, 0, 0));
+    put_le16(raw, 76, 0xfffeu);
+    put_le16(raw, 78, 8u); /* The object and C001 share wall cell zero. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile, 0, 0, 0, -1) == 1 &&
+              profile.timeline_queue.eventCount == 1,
+          "ReDMCSB C001 triggers on click regardless of wall-cell objects");
+}
+
+static void test_f0275_processes_all_matching_sensors_in_source_order(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    const uint16_t sensor0 = (uint16_t)(3u << 10);
+    const uint16_t sensor1 = (uint16_t)((3u << 10) | 1u);
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 3;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[3] = 68;
+    dungeon.thing_type_counts[3] = 2;
+    raw[square_offset(0, 0)] = 0x10u; /* Wall with the two C001 records. */
+    raw[square_offset(1, 0)] = (unsigned char)(6u << 5);
+    raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
+    put_le16(raw, 60, 0u);
+    put_le16(raw, 66, sensor0);
+    put_le16(raw, 68, sensor1);
+    put_le16(raw, 70, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 74, sensor_target(1, 0, 0));
+    put_le16(raw, 76, 0xfffeu);
+    put_le16(raw, 78, DM1_SENSOR_WALL_ORNAMENT_CLICK);
+    put_le16(raw, 80, (uint16_t)(DM1_EFFECT_SET << 3));
+    put_le16(raw, 82, sensor_target(2, 0, 0));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    {
+        int result = csb_v1_runtime_trigger_wall_ornament_click(
+            &profile, 0, 0, 0, -1);
+        CHECK(result == 1,
+          "F0275 reports a boolean when multiple C001 sensors queue effects");
+    }
+    CHECK(profile.timeline_queue.eventCount == 2 &&
+              profile.timeline_queue.events[0].b_mapX == 1 &&
+              profile.timeline_queue.events[1].b_mapX == 2,
+          "F0275 preserves Thing-list order for both remote events");
+}
+
 int main(void)
 {
     test_c011_runtime_hand_roundtrips_save();
     test_c011_wrong_object_type_rejects_without_mutation();
+    test_c017_preserves_head_sensor();
+    test_later_c004_uses_hand_filled_by_storage_sensor();
+    test_f0275_processes_all_matching_sensors_in_source_order();
+    test_c002_uses_hand_occupancy_and_revert_only();
+    test_c002_hold_selects_set_or_clear_from_hand_and_revert();
+    test_c001_hold_does_not_trigger();
+    test_c003_matches_hand_type_and_revert();
+    test_reverted_object_sensors_match_empty_hand_sentinel();
+    test_reverted_c011_and_c017_work_without_hand_object();
+    test_c004_removes_matching_hand_object();
+    test_c001_ignores_objects_in_other_wall_cells();
+    test_c001_triggers_even_with_object_on_clicked_cell();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
 }

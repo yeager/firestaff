@@ -1,5 +1,20 @@
 # Firestaff TODO — DM1
 
+2026-10-31 HoC PC34 real-media viewport material smoke check:
+`m11_dm1_hoc_real_mirror_viewport_material` passed against the installed
+original DOS 3.4 archive. It verifies a bounded real-game mirror/viewport
+material route; it does not establish complete HoC wall-material, movement,
+or platform parity.
+
+2026-10-31 ReDMCSB F0271 interleaved sensor cells: `MOVESENS.C:1100-1148`
+continues through the contiguous sensor Thing run while selecting the last
+sensor matching the requested cell. Source comparison confirmed the existing
+adapter follows this rule. A direct F0271 regression now covers cell order
+0,1,0 followed by an object and checks decoded and raw `Next` links; this is
+test coverage of existing behavior, not a production fix, and the F0267
+interleaved runtime path remains unverified. Other event paths,
+editions/platforms, and original-media sensor outcomes remain open.
+
 2026-10-31 PC34 player-damage regression: on TRV2, the isolated `main`
 build's `m11_dm1_pc34_first_monster_combat_real` passed against the installed
 original PC 3.4 archive (4.28 s). The test follows the original HoC route to

@@ -1,5 +1,49 @@
 # Firestaff TODO — CSB
 
+2026-10-31 ReDMCSB F0032 object type and F0275 result semantics: F0032 maps
+the loaded Thing through F0141 and returns `G0237.Type`; weapon subtype 8 maps
+to Type 32 and subtype 27 to Type 51. The CSB wall-click and moving-object
+sensor paths now use this mapping rather than the raw subtype. F0275 now
+returns the source boolean “at least one sensor triggered”, while still
+processing every matching sensor and preserving event order. C002 HOLD maps
+the hand-empty/RevertEffect predicate to SET or CLEAR. Focused regressions and
+DM1, CSB, and DM2 FM Towns no-game menu launches pass on original media; full
+CSB sensor, edition, and platform parity remains open.
+
+2026-10-31 Atari ST original-media startup regression: the local
+`csb_v1_atari_stx_native_cli_boot` test passed in 203.38 seconds against the
+installed original English v2.1 STX image. It exercises CLI and no-game menu
+starts, title/runtime handoff, source-derived input outcomes, champion
+recruitment, HUD structure, door activation, stairs, and monster movement.
+This is headless startup/gameplay evidence, not physical Atari input, combat
+damage, or visual parity.
+
+2026-10-31 ReDMCSB F0275 wall-click list traversal: the runtime previously
+read a Thing's cell from its low index bits and stopped after the first
+successful wall sensor. ReDMCSB `DEFS.H:398` defines `M011_CELL` as bits 14–15,
+and `MOVESENS.C:1390-1550` walks the complete sensor list in source order
+before F0271. The bounded CSB PC34 path now uses the source cell bits, queues
+multiple matching events in order, and defers local sensor rotation until the
+list boundary. C001 triggers on click without checking hand or wall-cell
+occupancy (but skips Effect=HOLD); C002 uses hand-empty/RevertEffect only; C003/C004/C011/C017 compare
+the hand object's type with Sensor.Data and apply RevertEffect as in
+MOVESENS.C:1399-1420. The runtime no longer applies a blanket revert inversion
+to every sensor type. Focused regressions verify ordered dispatch, C001 and
+C002 semantics, and the Thing cell bit layout. Other F0275 sensor types,
+editions, platforms, and original-media outcomes remain open.
+
+2026-10-31 ReDMCSB F0275 reverted object sensors with an empty hand:
+`OBJECT.C:F0032` returns `C0xFFFF_ICON_NONE` (`-1`) for the empty-hand Thing,
+and `MOVESENS.C:1412-1414` compares that value with Sensor.Data before applying
+RevertEffect. Therefore reverted C003/C004/C011/C017 sensors can trigger while
+the leader's hand is empty. Firestaff now preserves that predicate, avoids
+removing an absent hand object, and applies C017's source unlink when a previous
+Thing exists; ReDMCSB skips the unlink when C017 is the list's first Thing
+(`MOVESENS.C:1415-1427`). The focused CSB F0275 regression checks both cases.
+The 24 assertions pass. This is PC34 runtime
+coverage; Atari ST, Amiga, FM Towns, other editions, and original-media sensor
+outcomes remain open.
+
 2026-10-31 CSB Atari ST authentic campaign regression: the local
 `csb_v1_atari_stx_native_cli_boot` CTest passed (199.49 s) using the installed
 original Atari ST STX and shared CSB media root. It verified the native title

@@ -1,6 +1,7 @@
 #include "csb_v1_f0276_sensor_pc34_compat.h"
 
 #include "csb_v1_f0272_f0274_sensor_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #include <string.h>
 
@@ -19,14 +20,14 @@ static int is_object_thing(int thing_type)
 
 static int object_type(const CSB_V1_DungeonData *dungeon, uint16_t thing)
 {
-    const uint8_t *record;
-    int thing_type;
-    int record_size;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 info;
 
-    record = csb_v1_dungeon_get_thing_record(dungeon, thing, &thing_type,
-                                              NULL, &record_size);
-    if (!record || !is_object_thing(thing_type) || record_size < 4) return -1;
-    return (int)(read_u16(record + 2) & 0x007fu);
+    if (!csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, thing, &info)) {
+        return -1;
+    }
+    return dm1_v1_dungeon_get_object_type_for_info_index_pc34(
+        info.object_info_index);
 }
 
 static int possession_matches(const CSB_V1_RuntimeProfile *profile,

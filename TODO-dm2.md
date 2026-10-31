@@ -48,6 +48,22 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 external-disk original-media retest: local
+`dm2_fmtowns_m11_gameplay_real_media` and
+`dm2_v1_fmtowns_debug_source_frame_trace_real_media` passed against the HME-242
+FM Towns archive. The gameplay test reached dynamic map 3 `(8,4)` and consumed
+the complete source light receipt; the debug test verified the original title
+frame trace. Macintosh/Retina and DOS, Amiga runtime parity remain open.
+
+2026-10-31 skproject `DM2_PROCEED_LIGHT` darkness-step parity: the source at
+`SKULLWIN/c_light.cpp:625-646` sets `skip00710` for torch type `0x26` after its
+quarter-step adjustment, while darkness type `0x06` and bright light type
+`0x27` halve and decrement their steps. Firestaff now preserves this distinction
+for timer values and `table1d6702` deltas. Focused regressions assert exact
+darkness, torch, and bright-light ticks and global-light deltas. This checks the
+shared algorithm; original-media runtime timing and DOS, Amiga, FM Towns, and
+Macintosh lane behavior remain open.
+
 2026-10-31 current-main real-media retest: built commit `23c52ea70` on TRV2
 and passed `dm2_fmtowns_m11_gameplay_real_media` against the original HME-242
 FM Towns archive. The regression reaches dynamic map 3 `(8,4)` and consumes a
