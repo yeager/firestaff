@@ -4789,6 +4789,28 @@ if(BUILD_TESTING)
         TIMEOUT 180
     )
     add_test(
+        NAME dm1_v1_dos_fr_no_game_menu_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_no_game_menu_cli_boot.sh
+            $<TARGET_FILE:firestaff> ${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}
+    )
+    set_tests_properties(dm1_v1_dos_fr_no_game_menu_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;dos;french;real-media;native;cli;menu;startup;default-data-root;no-game;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_EUDATA.zip;FIRESTAFF_DM1_PC34_EN_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 180
+    )
+    add_test(
+        NAME dm1_v1_dos_de_no_game_menu_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_no_game_menu_cli_boot.sh
+            $<TARGET_FILE:firestaff> ${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}
+    )
+    set_tests_properties(dm1_v1_dos_de_no_game_menu_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;dos;german;real-media;native;cli;menu;startup;default-data-root;no-game;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_GAME_LANGUAGE=de;FIRESTAFF_DM1_DOS_FR_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_EUDATA.zip;FIRESTAFF_DM1_PC34_EN_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 180
+    )
+    add_test(
         NAME dm1_v1_dos_fr_original_save_cli_resume
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_original_save_cli_resume.sh
             $<TARGET_FILE:firestaff>
