@@ -28,8 +28,8 @@ parity. See the [source-locked empty-BRAM boundary](../source-lock/theron-origin
 - Use an isolated emulator profile and output directory. Never point captures
   at Firestaff's save directory or modify source media.
 - Record whether the run is cold or loaded from a save state. State loading
-  bypasses the original CD-to-RAM transfer and cannot provide that runtime
-  provenance.
+  bypasses the CD-to-RAM transfer that populated data already present in the
+  saved state. Assess any later observed transfer separately.
 - Keep input scripts, guest reads, RAM/VRAM/VDC/VCE observations and presented
   frames in one session when making an action or renderer claim. Label an
   unjoined observation as a boundary, not parity evidence.

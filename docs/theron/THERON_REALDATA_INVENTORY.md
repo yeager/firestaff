@@ -7,7 +7,9 @@ media identity and data admission; it does not imply full gameplay parity.
 
 Capture evidence must pair authentic media with isolated emulator profiles and
 keep all firmware, saves, captures and trace outputs outside the repository.
-Save-state replays bypass the original CD-to-RAM transfer. See the concise
+Save-state replays cannot provide provenance for the CD-to-RAM transfer that
+populated data already present in the saved state. Assess any later observed
+transfer separately. See the concise
 [reference-capture runbook](THERON_MAC_SDL_MEDNAFEN_LOCAL.md) for current
 evidence constraints; older machine-specific paths are no longer maintained.
 
