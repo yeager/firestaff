@@ -13952,6 +13952,10 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     case 0x46: /* sealable push button */
                         di = (int)active_status;
                         break;
+                    case 0x4a: /* status/once-only XOR wall decoration */
+                        /* skproject c_querydb.cpp:3553-3565 */
+                        di = (int)(active_status ^ once_only);
+                        break;
                     }
 
                     if (si != 0 && asset_loader) {
