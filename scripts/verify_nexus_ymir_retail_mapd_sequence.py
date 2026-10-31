@@ -11,7 +11,13 @@ import csv
 import hashlib
 from pathlib import Path
 
+from analyze_nexus_vdp2_bitmap_source import read_assets
+
 TITLE_SHA256 = "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
+JAPANESE_CUE_SHA256 = "878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699"
+CAPTURE_RECEIPT_SHA256 = "06630a3b392c34a2d7b201f85a0ed875413352ede58016b9f6e307eab02e7ce7"
+CAPTURE_TRACE_SHA256 = "4fb39691d70b83e28ced99c70fbd1ecdf8bb7c3cbb4c53d5c80b005c16408f19"
+CAPTURE_VRAM_SHA256 = "de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c"
 MAPD_OFFSET = 0xE278
 MAP_HEADER_BYTES = 0x40
 MAP_STRIDE = 0x1C04
@@ -30,6 +36,18 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def verify_file_sha256(path: Path, expected_sha256: str, label: str) -> None:
+    hasher = hashlib.sha256()
+    try:
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                hasher.update(chunk)
+    except OSError as error:
+        raise VerificationError(f"cannot read {label}: {error}") from error
+    if hasher.hexdigest() != expected_sha256:
+        raise VerificationError(f"{label} does not match its pinned SHA-256")
+
+
 def read_receipt(path: Path) -> dict[str, str]:
     try:
         return dict(line.split("=", 1) for line in path.read_text(encoding="ascii").splitlines()
@@ -38,11 +56,13 @@ def read_receipt(path: Path) -> dict[str, str]:
         raise VerificationError(f"invalid VDP2 write receipt: {error}") from error
 
 
-def read_planes(title_path: Path) -> tuple[bytes, list[bytes]]:
+def read_planes(cue_path: Path) -> tuple[bytes, list[bytes]]:
     try:
-        title = title_path.read_bytes()
+        if digest(cue_path.read_bytes()) != JAPANESE_CUE_SHA256:
+            raise VerificationError("CUE is not the hash-pinned Japanese retail image")
+        title = read_assets(None, cue_path, {"TITLE.BIN"})["TITLE.BIN"]
     except OSError as error:
-        raise VerificationError(f"cannot read TITLE.BIN: {error}") from error
+        raise VerificationError(f"cannot read Japanese retail CUE/TITLE.BIN: {error}") from error
     if digest(title) != TITLE_SHA256:
         raise VerificationError("TITLE.BIN is not the hash-pinned Japanese retail file")
     section = title[MAPD_OFFSET:]
@@ -117,6 +137,10 @@ def replay_and_find_sequence(trace_path: Path, receipt: dict[str, str],
                 raise VerificationError("unsupported VDP2 write trace header")
             for row in reader:
                 rows_seen += 1
+                if None in row or any(value is None for value in row.values()):
+                    raise VerificationError(
+                        f"malformed VDP2 trace row {rows_seen}"
+                    )
                 if row["vdp1_frame"] == "unknown":
                     raise VerificationError("VDP2 write trace contains an unbound frame")
                 frame = int(row["vdp1_frame"])
@@ -166,18 +190,27 @@ def replay_and_find_sequence(trace_path: Path, receipt: dict[str, str],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--title-bin", required=True, type=Path,
-                        help="authentic Japanese retail TITLE.BIN")
+    parser.add_argument("--cue", required=True, type=Path,
+                        help="authentic Japanese retail CUE and referenced tracks")
     parser.add_argument("--capture", required=True, type=Path,
                         help="Ymir capture root or its dumps directory")
     args = parser.parse_args()
     dumps = args.capture / "dumps" if (args.capture / "dumps").is_dir() else args.capture
     try:
-        title, planes = read_planes(args.title_bin)
-        receipt = read_receipt(dumps / "vdp2-memory-write-bundle.txt")
+        title, planes = read_planes(args.cue)
+        receipt_path = dumps / "vdp2-memory-write-bundle.txt"
+        trace_path = dumps / "vdp2-memory-write-trace.csv"
+        vram_path = dumps / "vdp2-vram.bin"
+        verify_file_sha256(receipt_path, CAPTURE_RECEIPT_SHA256,
+                           "Ymir VDP2 write receipt")
+        verify_file_sha256(trace_path, CAPTURE_TRACE_SHA256,
+                           "Ymir VDP2 write trace")
+        verify_file_sha256(vram_path, CAPTURE_VRAM_SHA256,
+                           "Ymir final VDP2 VRAM dump")
+        receipt = read_receipt(receipt_path)
         replay, transfers, rows = replay_and_find_sequence(
-            dumps / "vdp2-memory-write-trace.csv", receipt, planes)
-        final_snapshot = (dumps / "vdp2-vram.bin").read_bytes()
+            trace_path, receipt, planes)
+        final_snapshot = vram_path.read_bytes()
         if len(final_snapshot) != VRAM_BYTES:
             raise VerificationError("final Ymir VDP2 VRAM snapshot has an invalid size")
         if replay != final_snapshot:

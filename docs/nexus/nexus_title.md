@@ -136,11 +136,21 @@ at VDP2 VRAM `0x5c000..0x5dbff`, in order: N at Ymir trace frame 891, E at 930,
 X at 959, U at 998, and S at 1036. Each transfer frame contains 3,584 writes
 into the MAPD region. The trace receipt reports zero dropped rows.
 
-Reproduce with `scripts/verify_nexus_ymir_retail_mapd_sequence.py`, using the
-Japanese retail `TITLE.BIN` with SHA-256
-`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3` and the
-external capture bundle under
+Reproduce with `scripts/verify_nexus_ymir_retail_mapd_sequence.py --cue
+"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"`, whose CUE
+SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. It reads
+`TITLE.BIN` from the authenticated Japanese retail CUE and referenced tracks.
+The `TITLE.BIN` SHA-256 is
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`. The
+external capture files are under
 `firestaff-evidence/nexus/nexus_mapd_ymir_relative_trace_20261031`. The verifier
+pins the capture receipt SHA-256 to
+`06630a3b392c34a2d7b201f85a0ed875413352ede58016b9f6e307eab02e7ce7`, the write
+trace to
+`4fb39691d70b83e28ced99c70fbd1ecdf8bb7c3cbb4c53d5c80b005c16408f19`, and the
+final VRAM dump to
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`. It also
 checks receipt bounds, ordered plane equality, and exact replay against Ymir's
 final VRAM dump. Its frame indices are local to this Ymir run. This proves
 producer-side MAPD bytes only; it does not establish Firestaff rendering,
