@@ -1,15 +1,15 @@
 # Firestaff TODO — active cross-game work
 
-2026-10-31 latest-main launch audit: direct `--game dm1`, `--game csb`, and
-`--game dm2` with no `--platform` and the installed mixed original-media root
-selected FM Towns for all three. The authentic no-game M12 routes for DM1
-Atari ST German 1.2 and CSB Atari ST French both reached their first runtime
-(`m12_main_menu_dm1-atari-st-12-de_runtime_real_media` and
-`m12_main_menu_csb-atari-st-france_runtime_real_media`, 2/2). The broader
-real-media CLI matrix passed DM1 PC-34, CSB Atari ST/Amiga/FM Towns, and DM2
-DOS/Amiga/FM Towns/extracted Macintosh; menu selection and early-scan input
-checks also passed for DM1/CSB/DM2. No launch failure was reproduced in those
-routes. Full platform/gameplay parity remains open below.
+2026-10-31 authentic-media launch audit: on base `d64d70d0`, the real-media
+CLI matrix passed DM1 PC-34, CSB Atari ST/Amiga/FM Towns, and DM2
+DOS/Amiga/FM Towns/extracted Macintosh; M12 platform selection and early-scan
+input checks passed for DM1/CSB/DM2. After main advanced to `9cb30b20`, the
+app was rebuilt and the following were rerun: direct `--game dm1`, `--game
+csb`, and `--game dm2` with no `--platform` selected FM Towns from the
+installed mixed original-media root; invalid-platform CLI handling passed;
+and no-game M12 routes for DM1 Atari ST German 1.2 and CSB Atari ST French
+reached first runtime (2/2). No launch failure was reproduced in those
+checked routes. Full platform/gameplay parity remains open below.
 
 The optional DM2 archive hash-lock check did not match the installed DOS
 English and FM Towns container hashes. DOS English `DATA/GRAPHICS.DAT` did
