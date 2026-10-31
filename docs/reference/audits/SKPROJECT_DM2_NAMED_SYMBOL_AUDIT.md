@@ -21,7 +21,7 @@ playable game route or parity on every supported platform.
 
 | Source set | Definitions | Result |
 |---|---:|---|
-| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,751 | Callable-definition rows in the ledger |
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the ledger |
 
 ## Dispositions
 
@@ -31,10 +31,11 @@ playable game route or parity on every supported platform.
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 5 |
+| `PARTIAL` | 7 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
-| **Total** | **1,751** |
+| `MISSING` | 1 |
+| **Total** | **1,754** |
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
