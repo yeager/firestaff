@@ -1,5 +1,17 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-31 — cold System Card RUN still has no game-owned handoff
+
+The authentic Japanese `run@480:300` reference capture binds `$1800=$C8`,
+`$1801=$04`, the callback store `$2259=$04`, and BIOS continuation
+`$E166->$E176`. It records no `SELECT` event and no `$E174`, `$E11D`,
+`$E130`, or `$E209` receipt. Do not infer `$2259` semantics, a title-menu
+action, or game launch from this firmware path. Continue tracing until a
+source-authenticated transfer reaches game-owned code and input polling; then
+compare that path against native Firestaff. Evidence and bounded disassembly:
+[`System Card RUN trace`](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary),
+[`$EA3B` listing](docs/source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm).
+
 ## Remaining end-to-end work, ordered by dependency
 
 The dated entries below retain current capture results and limits. This short

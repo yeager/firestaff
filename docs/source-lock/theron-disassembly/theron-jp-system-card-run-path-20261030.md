@@ -54,6 +54,21 @@ callbacks, zero authenticated CD-to-RAM receipts, zero game `$E009` dispatches,
 and no game-owned controller poll. Do not claim game launch or parity from
 this BIOS/code-loader trace.
 
+## 2026-10-31 r5 callback and transfer boundary
+
+A later authentic cold capture recorded one scripted `RUN` event
+(`run@480:300`) and no `SELECT` event. Shared-sequence System Card I/O and RAM
+observations bind `$1800=$C8`, then `$1801=$04`, and the resulting `$2259=$04`
+store. The BIOS subsequently reads `$2259` and follows `$E166->$E176`. The
+instruction listing and bounded capture are recorded in
+[`theron-system-card3-ea3b-20261031.asm`](theron-system-card3-ea3b-20261031.asm).
+
+This adds a source-bound callback-byte and BIOS-branch observation. It does
+not establish the meaning of `$2259`, a title-menu action, or game ownership:
+the capture has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt and no
+confirmed gameplay handoff. The game-owned transition remains open; see the
+current [capture readiness](../../theron/THERON_CAPTURE_READINESS.md).
+
 ## Private trace hashes
 
 - Controller and BIOS path trace SHA-256:
