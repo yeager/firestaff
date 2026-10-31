@@ -13773,7 +13773,7 @@ int dm2_v1_skproject_query_0cee_1a46(
     ok = dm2_v1_dungeon_find_text_wall_gfx(
         d, first_thing, view_dir, side_index, 32,
         &wall_gfx_index, &wall_gfx_field);
-    if (ok == 0) {
+    if (ok != 0) {
         /* No static text record matched.  The source continues into actuator
            (type 3) ornate-animation handling, which is not yet modeled; fail
            closed rather than invent a frame. */
@@ -13847,7 +13847,7 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
         wall_gfx_index = (int16_t)text_idx;
         wall_gfx_field = (int16_t)text_field;
     }
-    if (ok != 0) {
+    if (ok == 0) {
         receipt.found_static_text = 1u;
         receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
         receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
@@ -13882,8 +13882,12 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
             if (type > 3) break;
 
             if (type == 3 && size >= 8) {
-                uint16_t w2 = (uint16_t)(record[2] | (record[3] << 8));
-                uint16_t w4 = (uint16_t)(record[4] | (record[5] << 8));
+                /* Mac and Amiga Dungeon records store words big-endian.
+                 * Use the dungeon accessor here just as the text and link
+                 * walkers do, instead of interpreting actuator state as PC
+                 * little-endian bytes. */
+                uint16_t w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
+                uint16_t w4 = dm2_v1_dungeon_read_record_u16(d, record + 4);
                 uint16_t graphic_number = (w4 >> 12) & 0x0fu;
                 uint16_t actuator_type = w2 & 0x7fu;
                 uint16_t active_status = w4 & 0x01u;

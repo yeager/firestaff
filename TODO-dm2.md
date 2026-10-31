@@ -1,3 +1,13 @@
+2026-10-31 skproject `DM2_query_0cee_1a46` query result and endian handling:
+The actuator side-decoration query now uses the Dungeon record-word accessor for
+DB3 words, so Mac/Amiga big-endian actuator type, status, and animation fields
+are decoded in source byte order. The wrapper now interprets
+`dm2_v1_dungeon_find_text_wall_gfx` correctly: its return value is zero for a
+static text match and negative when the walk finds no match or cannot traverse.
+A synthetic big-endian DB3 wall switch regression verifies it reaches the
+actuator branch and returns its wall-GFX index/field. Full query integration into
+the viewport renderer and the complete actuator animation cases remain open.
+
 # Firestaff TODO — DM2
 
 2026-10-31 skproject dynamic c_light admission and flags-3 class-0 branch:

@@ -5189,7 +5189,7 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
         if (type > 3) return -1;
 
         if (type == 2 && size >= 4) {
-            w2 = RD16(record + 2);
+            w2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
             text_mode = (int)((w2 >> 1) & 3u);
             text_index = (int)((w2 >> 3) & 0x1fffu);
             ext_usage = (text_index >> 8) & 0x1f;
@@ -5270,7 +5270,8 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
         if (type > 3) return -1;
 
         if (type == 3 && size >= 8) {
-            int ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
+            int ordinal = (int)((dm2_v1_dungeon_read_record_u16(
+                d, record + 4) >> 12) & 0x0fu);
             object_dir = (int)((thing >> 14) & 3u);
             relative_side = ((object_dir - (view_dir & 3)) & 3);
             /* skproject SKWINSPX/src/v4/skdungn.cpp

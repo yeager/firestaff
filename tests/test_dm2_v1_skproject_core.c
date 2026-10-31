@@ -5961,6 +5961,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     DM2_V1_SkprojectCreatureAISpec ai_spec;
     DM2_V1_SkprojectTeleporterDetail detail;
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_DungeonData dungeon;
     uint8_t pool3_bytes[64];
     uint8_t gdat_blob[16];
     uint8_t creature_rec[8];
@@ -6114,6 +6115,55 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               NULL, 0u, 0, 0, &wall_idx, &wall_field, &q1a46) &&
               q1a46.blocked_missing_dungeon,
           "DM2_query_0cee_1a46 fails closed without dungeon data");
+    {
+        /* Mac/Amiga DB3 words are big-endian. Actuator type 0x17 with
+         * graphic 1 and once-only clear selects field zero without needing
+         * an animation GDAT query. */
+        uint8_t actuator_record_be[8] = {
+            0xffu, 0xfeu, 0x00u, 0x17u, 0x10u, 0x00u, 0x00u, 0x00u
+        };
+        uint8_t wall_graphics[1] = { 0x22u };
+        int ordinal = -1;
+        memset(&dungeon, 0, sizeof(dungeon));
+        dungeon.raw_data = actuator_record_be;
+        dungeon.raw_size = (int)sizeof(actuator_record_be);
+        dungeon.square_bytes = 1;
+        dungeon.words_big_endian = 1;
+        dungeon.record_graph_complete = 1;
+        dungeon.thing_type_counts[3] = 1;
+        dungeon.thing_data_bases[3] = 0;
+        int result = dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46);
+        CHECK(result == 1 &&
+                  q1a46.valid && q1a46.found_actuator &&
+                  q1a46.actuator_type == 0x17u &&
+                  wall_idx == 0x22 && wall_field == 0,
+              "DM2_query_0cee_1a46 decodes big-endian actuator state");
+        CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+                  &dungeon, 0x0c00u, 0, 0, 32, &ordinal) == 0 &&
+                  ordinal == 1,
+              "actuator wall-GFX ordinal reads big-endian GraphicNumber");
+    }
+    {
+        /* TextMode 1 with ext-usage zero is a static wall ornament. */
+        uint8_t text_record_be[4] = { 0xffu, 0xfeu, 0x00u, 0x2au };
+        int text_idx = -1, text_field = -1;
+        memset(&dungeon, 0, sizeof(dungeon));
+        dungeon.raw_data = text_record_be;
+        dungeon.raw_size = (int)sizeof(text_record_be);
+        dungeon.square_bytes = 1;
+        dungeon.words_big_endian = 1;
+        dungeon.record_graph_complete = 1;
+        dungeon.thing_type_counts[2] = 1;
+        dungeon.thing_data_bases[2] = 0;
+        int text_result = dm2_v1_dungeon_find_text_wall_gfx(
+                  &dungeon, 0x0800u, 0, 0, 32,
+                  &text_idx, &text_field);
+        CHECK(text_result == 0 &&
+                  text_idx == 5 && text_field == 1,
+              "static text wall-GFX query reads big-endian TextMode");
+    }
 
     /* DM2_query_48ae_011a */
     memset(pool3_bytes, 0, sizeof(pool3_bytes));
