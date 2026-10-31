@@ -61,16 +61,22 @@ The bounded `MAPD/TIBG` receipt also requires the complete section: five
 the MAPD start). A shorter block is rejected before palette reads; this is
 format validation only and does not authorize Saturn presentation.
 
-### Native startup letter timing
+### Retail intro and native MAPD timing
 
-The native M11 startup renderer now converts boot-global frames to the
-title-local timeline after the 48-frame warning lead-in. This fixes the
-previous off-by-origin error that made the first visible MAPD letter `E` and
-skipped `N`. With the authentic title maps, boot-global frames 48, 88, 129,
-169, and 209 render `N`, `E`, `X`, `U`, and `S`, respectively. The retail-data
-test checks each full 320×224 plane at its transition frames. This verifies
-Firestaff's source-plane schedule; it does not prove the Saturn's final layer
-composition or placement.
+The authentic Ymir cold-boot capture shows a title card with the complete
+`NEXUS` word spread across the screen. After Start, the retained transition
+capture shows a zoomed, edge-cropped `Dungeon Master` logo over the 3D scene;
+it does not show the five MAPD letter planes. These are separate visual states
+and must not be conflated when checking whether Firestaff begins the MAPD
+sequence with `N`.
+
+The native M11 renderer converts its boot-global frame to a title-local frame
+after a 48-frame warning lead-in. Its real-data unit test confirms that its
+local MAPD selector produces `N`, `E`, `X`, `U`, and `S` at local frames 0,
+40, 81, 121, and 161, respectively (boot-global frames 48, 88, 129, 169,
+and 209). This verifies the renderer's source-plane schedule only. It does
+not prove that those local frames align with the retail intro or that the
+Saturn displays the decoded MAPD planes in that sequence on screen.
 
 ### Retail MAPD preservation observation
 
