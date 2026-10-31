@@ -15,13 +15,13 @@ pass. Firestaff does render selected source-derived wall ornaments in
 F0107 copies each visible ornament's G0205 rectangle into
 `G0291[C05]` (`DUNVIEW.C:3724`, `4168`); F0377 then hit-tests that byte box
 with the viewport Y origin removed (`CLIKVIEW.C:409`). Firestaff now records
-the latest rendered G0205 ornament or door-switch projection each Atari
-F0128 frame and routes Atari C080 through that inclusive box; PC keeps its
-separate box. The switch projection's equivalence to Atari's media-backed
-G0208 rectangle still needs original `GRAPHICS.DAT` verification. The bounds
-regression covers C05 overwrite versus F0115 floor-box union, and the updated
-M11 translation unit compiles. A matching original-media sensor or
-door-button click has not run locally because the Atari package is absent.
+the latest rendered G0205 ornament or ReDMCSB G0208 door-switch rectangle
+each Atari F0128 frame and routes Atari C080 through that inclusive box; PC
+keeps its separate box. G0208's D3R/D3C/D2C/D1C rows come directly from
+`DUNVIEW.C:1210-1216`. The bounds regression covers C05 overwrite versus
+F0115 floor-box union, and the updated M11 translation unit compiles. A
+matching original-media sensor or door-button click has not run locally
+because the Atari package is absent.
 This correction does not close the still-open Atari floor/door ornament,
 creature, projectile, or explosion rendering and hit behavior.
 

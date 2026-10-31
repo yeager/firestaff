@@ -15,6 +15,7 @@
 #include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "firestaff/dm1/v1/G0208_pc34_compat.h"
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
@@ -7435,13 +7436,14 @@ static int m11_csb_present_atari_st_runtime_viewport(
                          * later MEDIA720 layout. */
                         state, 315u, 0, switch_projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
-                /* ReDMCSB DUNVIEW.C F0110 copies G0208 into G0291[C05].
-                 * Record the currently rendered switch projection here;
-                 * its equivalence to Atari's media-backed G0208 still needs
-                 * an original GRAPHICS.DAT comparison. */
+                /* ReDMCSB DUNVIEW.C F0110 copies G0208[0][view] into
+                 * G0291[C05]. Use the source table rather than assuming the
+                 * CSBWin layout's switch projection has identical bounds. */
                 m11_csb_atari_c05_set_zone(
-                    switch_projection->x1, switch_projection->x2,
-                    switch_projection->y1, switch_projection->y2);
+                    dm1_v1_g0208_get_pc34(switch_lane, 0),
+                    dm1_v1_g0208_get_pc34(switch_lane, 1),
+                    dm1_v1_g0208_get_pc34(switch_lane, 2),
+                    dm1_v1_g0208_get_pc34(switch_lane, 3));
             }
             if (source_function && m11_csb_atari_st_draw_scheduled_cell(
                     state, dungeon, &profile->runtime, viewport,
