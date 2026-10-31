@@ -21604,6 +21604,13 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
             free(fileBytes);
             return 0;
         }
+        /* ReDMCSB OBJECT.C F0031:56-72 MEDIA689 (F31J/X31J/P31J) overwrites
+         * the trailing byte-1 name marker with NUL before presenting it.
+         * Its raw record still uses NUL separators, so do not expose marker 1. */
+        if (!highBitTerminated && written > 0u &&
+            (unsigned char)state->dm1ObjectNames[nameIndex][written - 1u] == 1u) {
+            state->dm1ObjectNames[nameIndex][--written] = '\0';
+        }
         if (japaneseNames) {
             char utf8[sizeof(state->dm1ObjectNames[nameIndex])];
             if (firestaff_cp932_to_utf8(state->dm1ObjectNames[nameIndex],
