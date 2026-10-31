@@ -28635,12 +28635,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 "21197b1d4994fd835c403d5a33dcac2b") == 0)
             requestedCsbVariant = CSB_V1_VARIANT_AMIGA31_EN;
         else if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
+                "61fbfd56887c94adc26888a9491c6611") == 0)
+            requestedCsbVariant = CSB_V1_VARIANT_AMIGA31_MULTI;
+        else if (spec->verifiedAssetMd5 && strcmp(spec->verifiedAssetMd5,
                 "291e1bc6803e3dc4b974c60117ca5d68") == 0)
             requestedCsbVariant = CSB_V1_VARIANT_AMIGA35_EN;
         if (!(spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
               (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
                requestedCsbVariant == CSB_V1_VARIANT_ST21_EN ||
                requestedCsbVariant == CSB_V1_VARIANT_AMIGA31_EN ||
+               requestedCsbVariant == CSB_V1_VARIANT_AMIGA31_MULTI ||
                requestedCsbVariant == CSB_V1_VARIANT_AMIGA35_EN)
                   ? csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
                         dd, utility_search_dir, spec->savePath,
