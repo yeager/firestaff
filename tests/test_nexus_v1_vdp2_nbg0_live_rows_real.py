@@ -13,14 +13,15 @@ def main() -> int:
     if len(sys.argv) != 3:
         raise SystemExit("usage: test_nexus_v1_vdp2_nbg0_live_rows_real.py EXECUTABLE OUTPUT")
     root_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR")
-    if not root_value:
-        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR")
+    baseline_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY")
+    if not root_value or not baseline_value:
+        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR and FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY")
         return 77
     from PIL import Image
 
     root = Path(root_value)
     screenshot = root / "screenshots" / "DUNGEON MASTER NEXUS [T-9111G]-20261029T151400.554.png"
-    old_replay = Path("/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_ymir_replay_20261029/firestaff-replay.rgb")
+    old_replay = Path(baseline_value)
     output = Path(sys.argv[2])
     expected_screenshot_hash = "f9f2175b5f75616cbd7c942a7d65f5fcdb20012186b5069aebe77be4e4a85c94"
     if hashlib.sha256(screenshot.read_bytes()).hexdigest() != expected_screenshot_hash:

@@ -37,7 +37,9 @@ Run the authentic regression:
 
 ```sh
 capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_cram_capture_20261029
+baseline=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_ymir_replay_20261029/firestaff-replay.rgb
 FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR="$capture" \
+FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY="$baseline" \
   ctest --test-dir /path/to/firestaff-build --output-on-failure \
   -R '^nexus_v1_vdp2_nbg0_live_rows_real$'
 ```

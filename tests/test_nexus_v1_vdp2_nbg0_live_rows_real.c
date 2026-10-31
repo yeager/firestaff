@@ -39,6 +39,7 @@ int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR");
     const char *replay_path = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_REPLAY_RGB");
+    const char *baseline_path = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY");
     Blob fbs = {0}, vram = {0}, cram = {0}, regs = {0}, replay = {0}, screenshot = {0};
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *fb = NULL;
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput input;
@@ -47,13 +48,16 @@ int main(void)
         {4U, 113U, 0x1f79U, 0x0bcdU, 0x00cdU, 0x00cdU}
     };
     FILE *out = NULL; size_t p; int rc = 1;
-    if (!root || !*root) { puts("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR"); return 77; }
+    if (!root || !*root || !baseline_path || !*baseline_path) {
+        puts("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR and FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY");
+        return 77;
+    }
     fbs = read_capture_file(root, "dumps/vdp1-fbs.bin");
     vram = read_capture_file(root, "dumps/vdp2-vram.bin");
     cram = read_capture_file(root, "dumps/vdp2-cram.bin");
     regs = read_capture_file(root, "dumps/vdp2-registers.bin");
     screenshot = read_capture_file(root, "screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261029T151400.554.png");
-    replay = read_file("/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_ymir_replay_20261029/firestaff-replay.rgb");
+    replay = read_file(baseline_path);
     fb = (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)malloc(sizeof(*fb));
     if (!fbs.data || fbs.size != 524288U || !vram.data || vram.size != 524288U || !cram.data || cram.size != 4096U || !regs.data || regs.size != 512U || !replay.data || replay.size != 320U*224U*3U || !screenshot.data || !fb ||
         !hash_is(&fbs, "0570c79b067adde55161ba2e16c09a628dcdf99b7b49f168d803c948b4479420") ||
