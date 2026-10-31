@@ -60,6 +60,8 @@ typedef struct {
     int pixels_written;
     int transparent_texels;
     int end_code_stops;
+    /* Major-axis prefix steps skipped by the Ymir system-clip stepper. */
+    int system_clip_prefix_steps_skipped;
     int system_or_host_clipped_pixels;
     int user_clipped_pixels;
 } Nexus_V1_Vdp1YmirCaptureReceipt;

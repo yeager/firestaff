@@ -405,6 +405,7 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
             texture_setup(&us,(uint32_t)((abs32(right.x-left.x)>abs32(right.y-left.y)?abs32(right.x-left.x):abs32(right.y-left.y))+1),ustart,uend,use_hss,in->even_odd_coord_select);
             line_setup(&line,left,right,1);
             line_clip=line_system_clip(&line,in->sys_clip_h,in->sys_clip_v);
+            rec.system_clip_prefix_steps_skipped += (int)line_clip;
             us.accum += us.num * (int32_t)line_clip;
             if(gouraud) {
                 int32_t lr,lg,lb,rr,rg,rb;
@@ -535,7 +536,7 @@ int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
         int aa = 0;
         line_setup(&line, left, right, 1);
         clipped = line_system_clip(&line, in->sys_clip_h, in->sys_clip_v);
-        if (clipped) rec.system_or_host_clipped_pixels += (int)clipped;
+        rec.system_clip_prefix_steps_skipped += (int)clipped;
         for ((void)line_step(&line); line_can_step(&line); aa = line_step(&line)) {
             uint32_t rgba = to_rgba(color);
             if ((color & 0x8000U) == 0U) rgba &= UINT32_C(0x00ffffff);
