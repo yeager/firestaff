@@ -88,7 +88,7 @@ if ! FIRESTAFF_CONFIG_PATH="$scratch/config.toml" \
     echo 'FAIL: DM2 Macintosh files from the French-named SIT did not start' >&2
     exit 1
 fi
-python3 - "$scratch/runtime.json" <<'PY'
+python3 - "$scratch/runtime.json" "$scratch/startup.log" <<'PY'
 import json
 import sys
 
@@ -97,7 +97,6 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 startup = probe.get("startup", {})
 movie = probe.get("dm2Startup", {})
 party = probe.get("party", {})
-frame = probe.get("dm2RuntimeFrame", {})
 script = probe.get("script", {})
 if (
     probe.get("sourceId") != "dm2"
@@ -106,13 +105,27 @@ if (
     or startup.get("startupActive") != 0
     or startup.get("levelLoaded") != 1
     or party.get("championCount") != 1
-    or frame != {"accepted": 1, "realAssets": 1,
-                 "noCoreFallbacks": 1, "fallbackDraws": 0}
     or script.get("waitFramesRemaining") != 0
     or script.get("pending") != 0
 ):
     raise SystemExit(f"FAIL: authentic Mac data did not reach runtime: {probe}")
-print("PASS: French-named SIT reaches runtime as Macintosh English; this is not French-edition evidence")
+
+with open(sys.argv[2], encoding="utf-8", errors="replace") as stream:
+    render_lines = [line for line in stream if
+                    "dm2-render-debug game=dm2 platform=mac-en " in line]
+accepted_frame = any(
+    all(marker in line for marker in (
+        "accepted=1", "real-assets=1", "no-core-fallbacks=1",
+        "blocked-materials=0", "hud={required:1", "complete:1",
+    ))
+    for line in render_lines
+)
+if not accepted_frame:
+    raise SystemExit(
+        "FAIL: no accepted original-asset Macintosh viewport/HUD frame "
+        "was logged before returning to the launcher"
+    )
+print("PASS: French-named SIT reaches Macintosh English runtime with an accepted original-asset viewport/HUD frame; this is not French-edition evidence")
 PY
 
 [ "$graphics_before" = "$(firestaff_sha256_file "$dmfiles/Graphics.dat")" ]
