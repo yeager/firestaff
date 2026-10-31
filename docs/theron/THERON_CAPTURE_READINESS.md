@@ -1,5 +1,20 @@
 # Theron Capture Readiness
 
+## 2026-10-31 — JP title-menu four-second Button I hold visibly advances
+
+An isolated cold Mednafen 1.32.1 PCE Fast run used hash-verified JP Rev. 1
+Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`). On the title menu, a four-second Button I
+hold with NEW GAME selected opened file selection; a second four-second hold
+with FILE 1 selected entered the Akutuba story screens. Twelve one-second
+Button I presses with release intervals reached the first-person dungeon.
+This visibly confirms the reported long hold for the JP retail title route.
+A Mednafen `.mc0` save state was created in the isolated profile; it is an
+emulator snapshot, not in-game BRAM. The screenshots and state remain outside
+Git. The capture does not provide a joined game-owned input/CD-loader receipt,
+completed stage, positive BRAM, native timing, or Firestaff parity. See the
+[source-locked route and artifact hashes](../source-lock/theron-jp-four-second-title-action-capture-20261031.md).
+
 ## 2026-10-31 — native Debug direct launch bypasses Firestaff's Run menu
 
 An isolated macOS Debug build launched the native Theron title/startup path
@@ -409,7 +424,8 @@ capture remained black (SHA-256
 `160ee7a7f88cd678205f9aceced67995f35203c647f6fc71ec104f556bdcd733`). This
 verifies native startup, input, dungeon admission, and tick/render loop
 activity, but not visible playability. The scripted inputs were discrete
-key-down events and do not verify a continuous 3–5 second button hold. No
+key-down events and did not verify a continuous four-second hold in the
+native runtime. No
 emulator was used to run Theron. The next parity work is to bind authentic
 graphics, palette, and tile mapping into the production native renderer.
 The US/JP Stage-2 `$46B8` palette callers and their regional VCE routines are
@@ -536,12 +552,13 @@ pit query/caller to its physical bank and authentic Track 02 record. Keep game
 media and private emulator artifacts on the operator's machine. Continue
 implementing and validating gameplay in Firestaff's native runtime.
 
-## 2026-10-24 — selected title-menu action hold remains unverified
+## Historical 2026-10-24 — selected title-menu action not yet tested
 
-The user reports that starting from the original game's menu requires holding
-the selected action for several seconds. Treat this as capture procedure to
-verify, not as established retail timing: DMWeb's manual identifies Button I
-as the selector but does not specify a multi-second hold. Existing JP
+At that date, the user reported that starting from the original game's menu
+required holding the selected action for several seconds. The later 2026-10-31
+capture above confirms four-second Button I holds on NEW GAME and FILE 1 for
+the Japanese route. DMWeb's manual identifies Button I as the selector but
+does not specify a multi-second hold. Existing JP
 `pce_fast` captures reached the title menu after a four-second RUN hold and
 advanced through New Game/File 1 with ordinary Space/Button I. The latest US
 interactive session used the normal `pce` module and remained at the authentic

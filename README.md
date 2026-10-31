@@ -134,9 +134,14 @@ admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
 The latest cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
-`$E166->$E176`; no game-owned handoff was observed. This reference trace does
-not change Firestaff's native runtime or prove original title-menu input.
-See the [source-locked trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
+`$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese
+run confirms that holding Button I for four seconds on NEW GAME opens file
+selection, and holding it for four seconds on FILE 1 enters the Akutuba story;
+shorter repeated presses advance to the dungeon. This confirms the Japanese
+title-action timing in the original game, but does not join guest input to an
+authenticated CD-to-RAM transition or establish native timing/parity. See the
+[source-locked title route](docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md)
+and [System Card trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
 The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
 current summary of native runtime and original-reference evidence, including

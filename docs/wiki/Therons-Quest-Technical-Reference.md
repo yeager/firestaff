@@ -9,9 +9,11 @@
 > semantics. Native M11 rejects the authentic empty JP BRAM as Continue;
 > positive JP progress restoration remains unverified because no authentic
 > progressed JP BRAM is available. A cold Japanese emulator route visibly
-> reaches the Akutuba dungeon after a four-second System Card RUN hold and short
-> Button I menu/story presses; the reported 3–5 second hold on the selected
-> title-menu action itself remains untested. A separate US save-state replay
+> reaches the Akutuba dungeon after a four-second System Card RUN hold. A
+> separate authentic JP capture confirms that four-second Button I holds on
+> NEW GAME and FILE 1 advance into the story. Its `.mc0` snapshot is an
+> emulator state rather than BRAM; the capture does not join input to an
+> authenticated CD-to-RAM transition or establish native parity. A separate US save-state replay
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save
@@ -222,19 +224,19 @@ receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
 ## Scope
 
-**Current capture boundary (reviewed 2026-10-31):** Original-emulator menu
-input remains an evidence gap. Earlier JP `pce_fast` captures advanced with
-ordinary Space/Button I after a four-second RUN hold; the operator reports
-that the selected menu action itself must be held for 3–5 seconds. The latest
-authentic JP cold RUN capture is still System Card-only: it records the device
-callback byte and BIOS branch `$E166->$E176`, but no confirmed game-owned
-handoff. It used `run@480:300` and does not test the stated multi-second hold
-on the selected title-menu action. See the current
-[capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
-[input notes](../theron/theron_input.md). DMWeb provides retail edition and manual
-references. Greatstone's Theron material covers a CSBWin custom-dungeon
-conversion, not retail PC Engine data. Neither reference establishes this
-input timing.
+**Current capture boundary (reviewed 2026-10-31):** An isolated authentic JP
+cold capture confirms that a four-second Button I hold on NEW GAME opens file
+selection and a second four-second hold on FILE 1 enters the Akutuba story.
+The later dungeon `.mc0` is an emulator snapshot, not BRAM. This visible result
+does not join guest input to a game-owned CD loader or establish native
+Firestaff timing/parity. The separate cold System Card RUN trace remains
+System Card-only: it records the device callback byte and BIOS branch
+`$E166->$E176`, but no confirmed game-owned handoff. See the
+[source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
+[capture readiness](../theron/THERON_CAPTURE_READINESS.md), and
+[input notes](../theron/theron_input.md). DMWeb provides retail edition and
+manual references. Greatstone's Theron material covers a CSBWin
+custom-dungeon conversion, not retail PC Engine data.
 
 Theron's Quest is a PC Engine CD target. Firestaff accepts original Track 02
 media through a strict CUE/BIN handoff and verifies known media identities. It

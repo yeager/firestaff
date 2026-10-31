@@ -13,12 +13,15 @@ before dungeon loading (`levelLoaded=0`); loaded-dungeon evidence comes from
 the separate JP fresh-start and US Continue routes. See the
 [direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
 The original System Card's cold RUN callback has been traced separately. A
-cold Japanese emulator route now visibly reaches the Akutuba dungeon after a
-four-second RUN hold at the System Card prompt and ordinary short Button I
-menu/story presses. The reported 3–5 second hold on the selected title-menu
-action itself remains untested, and the trace still lacks a confirmed
-game-owned input/loader join. See the
-[capture readiness record](THERON_CAPTURE_READINESS.md).
+cold Japanese emulator route visibly reaches the Akutuba dungeon after a
+four-second RUN hold at the System Card prompt. A separate isolated cold run
+confirmed that a four-second Button I hold on NEW GAME opens file selection,
+and another four-second hold on FILE 1 enters the Akutuba story; twelve
+one-second presses then reach the dungeon. This verifies that JP title-action
+hold in the original game. It does not establish native timing or a joined
+game-owned input/CD-loader receipt. See the
+[source-locked route](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
+and [capture readiness](THERON_CAPTURE_READINESS.md).
 
 ## PC Engine button mapping
 
@@ -61,13 +64,15 @@ respectively.
 
 These are Firestaff's native-runtime bindings, not a PC Engine timing model.
 On 2026-10-24, separate SDL key-down events advanced authentic JP media from
-title through stage select and Soul Room into a loaded dungeon. A continuous
-3–5 second hold has not been verified in Firestaff. The cold reference route
-confirms a four-second RUN hold to leave the System Card, not a long hold on
-the selected game-menu action. The retail manual
-documents Button I as the menu selection control but gives no multi-second
-timing rule. See [DMWeb and Greatstone references](../DMWEB_REFERENCE.md) and
-the dated evidence in [TODO-theron.md](../../TODO-theron.md).
+title through stage select and Soul Room into a loaded dungeon. The original
+Japanese title-menu action was subsequently confirmed to advance after a
+four-second Button I hold. That does not prove Firestaff requires or
+reproduces the same hold duration; its native route remains driven by separate
+SDL input events. The retail manual documents Button I as menu confirmation
+but gives no multi-second timing rule. See
+[DMWeb and Greatstone references](../DMWEB_REFERENCE.md), the
+[capture report](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
+and [TODO-theron.md](../../TODO-theron.md).
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|

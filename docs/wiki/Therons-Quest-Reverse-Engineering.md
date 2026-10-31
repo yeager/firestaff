@@ -29,9 +29,10 @@ bounded movement hooks. It does not prove movement or renderer parity; see the
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
-after a four-second System Card RUN hold and short Button I menu/story presses;
-its resulting BRAM is byte-identical to the known empty JP slot. The reported
-3–5 second hold on the selected title-menu action itself remains untested. See
+after a four-second System Card RUN hold. A separate authentic JP capture
+confirms that four-second Button I holds on NEW GAME and FILE 1 advance into
+the story. Its `.mc0` snapshot is an emulator state, not in-game BRAM, and does
+not prove a game-owned input/CD-loader join or native parity. See
 the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
 and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
 Native Debug direct launch with authentic US Track 02 enters Theron's

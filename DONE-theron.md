@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — document the authentic JP four-second title-action capture
+
+Recorded a cold Japanese Rev. 1 reference route using hash-verified Track 02
+and System Card 3.0 media. Four-second Button I holds on NEW GAME and FILE 1
+visibly advanced into the Akutuba story; subsequent one-second presses reached
+the first-person dungeon. The private `.mc0` file is a Mednafen device snapshot,
+not in-game BRAM, and all emulator artifacts remain outside Git. Updated the
+README, project/platform status, documentation index, input guide, capture
+readiness, DMWeb reference notes, Theron technical/reverse-engineering pages,
+and local capture runbook. The record explicitly leaves US title timing,
+Firestaff native hold parity, game-owned input/CD-loader joins, positive JP
+progress saving, and full gameplay open. No runtime code or game media changed.
+
 ## 2026-10-31 — synchronize current Theron evidence summaries
 
 Updated the project status and documentation index, the Japanese platform

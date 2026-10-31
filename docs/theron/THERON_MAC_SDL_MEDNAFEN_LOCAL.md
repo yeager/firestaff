@@ -16,10 +16,13 @@ current native/runtime boundary and source-locked capture evidence. The
 mouse controls.
 
 The cold JP reference route needed a four-second RUN hold at the System Card
-prompt, followed by ordinary short menu/story presses. The captured 2 KiB
-BRAM matched the known empty JP slot. This does not verify a long hold on the
-selected title-menu action, positive JP progress saving, or native gameplay
-parity. See the [source-locked empty-BRAM boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
+prompt. A separate authentic capture confirms four-second Button I holds on
+NEW GAME and FILE 1 enter the Akutuba story. Its `.mc0` snapshot is not in-game
+BRAM; the captured 2 KiB BRAM remains identical to the known empty JP slot.
+Native Firestaff hold timing, US title-action timing, and positive JP progress
+saving remain unverified. See the
+[source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
+and [empty-BRAM boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
 
 ## Capture requirements
 
