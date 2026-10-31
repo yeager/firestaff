@@ -6763,10 +6763,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
 
         /* skproject c_gui_vp.cpp:2876-2903 and 2971-3086: DB0/DB1
          * records do not add ornament state. DB2 ext-usage zero sets a
-         * static ceiling ornament; other DB2 animation/state selectors and
-         * DB3 actuator branches remain closed. The source skips all DB0-DB3
-         * links, then preserves the first DB4+ root for c_light's creature
-         * and DBE/DBF scans. */
+         * static ceiling ornament and ext-usage two queries its animated
+         * frame; other DB2 state selectors and DB3 actuator branches remain
+         * closed. The source skips all DB0-DB3 links, then preserves the
+         * first DB4+ root for c_light's creature and DBE/DBF scans. */
         if (summary_root != DM2_THING_END_MARKER &&
             (((summary_root >> 10) & 0x0fu) <= 2u)) {
             uint16_t link = summary_root;
@@ -6787,12 +6787,27 @@ int dm2_v1_dungeon_c_light_stone_room_receipt(
                     word2 = dm2_v1_dungeon_read_record_u16(d, record + 2);
                     if ((word2 & 0x0006u) == 0x0002u) {
                         unsigned ext_usage = (word2 >> 8) & 0x1fu;
-                        if (ext_usage != 0u) return 0;
-                        out->ceiling_ornament_index =
-                            (uint8_t)(word2 >> 3);
+                        uint8_t ornament = (uint8_t)(word2 >> 3);
+                        uint16_t frame = 0u;
+                        uint32_t animation_hash = 0u;
+                        if (ext_usage == 2u) {
+                            DM2_V1_QueryOrnateAnimFrameReceipt animation;
+                            memset(&animation, 0, sizeof(animation));
+                            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                                    loader, 10, ornament, tick, 0u,
+                                    &animation) || !animation.accepted ||
+                                animation.receipt_hash == 0u) return 0;
+                            frame = animation.frame;
+                            animation_hash = animation.receipt_hash;
+                        } else if (ext_usage != 0u) {
+                            return 0;
+                        }
+                        out->ceiling_ornament_index = ornament;
                         out->ceiling_ornament_word =
-                            out->ceiling_ornament_index;
-                        out->ceiling_animation_frame = 0u;
+                            (uint16_t)(ornament |
+                                (uint16_t)((uint32_t)frame * 10u << 8));
+                        out->ceiling_animation_frame = frame;
+                        out->ornament_source_hash = animation_hash;
                         class2_ornament_found = 1;
                     }
                 }
