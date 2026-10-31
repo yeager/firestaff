@@ -11,11 +11,14 @@ was `650105f56a9a1739489effdf766b1564`. The state hash was MD5
 `f23601102138f87c33025877767ebf76`, and the System Card hash was MD5
 `ff1a674273fe3540ccef576376407d1d`.
 
-The state fails to load under the `pce_fast` module. The same binary accepts
-it under the standard `pce` module, logging `Theron autoload state loaded`
-despite save-state variable mismatch warnings. This is a module-specific
-compatibility result, not evidence that the loaded RAM was sourced from the
-current CD session.
+In the binary used for this capture, the state failed to load under the
+`pce_fast` module. The same binary accepted it under standard `pce`, logging
+`Theron autoload state loaded` despite save-state variable mismatch warnings.
+This is a build-specific module compatibility result, not evidence that the
+loaded RAM was sourced from the current CD session. A later instrumented PCE
+Fast binary logged successful loading of the same state; its input records
+still did not confirm scripted values. See the [2026-10-31 PCE Fast input
+boundary report](theron-us-state-scripted-input-boundary-20261031.md).
 
 Four separate standard-PCE probes injected horizontal mouse deltas 4, 16, 32
 and 64 followed by a brief Button I sample. Each loaded the save state; the

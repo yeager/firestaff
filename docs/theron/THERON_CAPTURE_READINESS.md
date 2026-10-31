@@ -53,10 +53,14 @@ work order and detailed evidence.
 
 ## 2026-10-31 — authentic US PCE mouse-input capture boundary
 
-The preserved authentic US gameplay state (MD5
-`f17f377df210b4a3ae904a13fb85a7f0`) loads in the standard PCE module; PCE Fast
-rejects this state's serialization format. The successful standard-PCE replay
-used authentic US Track 02 MODE1/2352 media (MD5
+The preserved US gameplay state (MD5 `f17f377df210b4a3ae904a13fb85a7f0`)
+loaded in standard PCE in the earlier capture build; PCE Fast rejected its
+serialization format in that build. A later instrumented PCE Fast binary
+(MD5 `cdef1c8ebe6ec3248ea19559cdd13fe3`) reports a successful load of the same
+state. Its scripted-input trace is still inconclusive because every guest
+input-read record reports `raw=0000`; see the [saved-state input boundary
+report](../source-lock/theron-disassembly/theron-us-state-scripted-input-boundary-20261031.md).
+The earlier successful standard-PCE replay used authentic US Track 02 MODE1/2352 media (MD5
 `f23601102138f87c33025877767ebf76`) and the verified System Card. The state
 already contains dungeon-bank bytes `$20DA=01`, `$20DB=00`.
 
