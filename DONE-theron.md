@@ -15,6 +15,12 @@ Three TRV2 loops passed with authentic US Track 02 and the authentic
 Ak-Tu-Ba-complete BRAM. This proves the host's real-media M11 input and
 provenance path; it does not claim retail pickup parity or quest-item identity.
 
+The same probe removes the authenticated BRAM override and starts a fresh
+native campaign from the authentic US Track 02 title. It selects Ak-Tu-Ba,
+admits the real roster through the Soul Room, and enters source-verified level 0
+without a Continue claim or fabricated quest progress. This fresh-start route
+also passed the three TRV2 loops.
+
 ## 2026-10-31 — write authentic BRAM from the between-stage save input
 
 Connected Theron's Save Game input to the existing source-bound original BRAM

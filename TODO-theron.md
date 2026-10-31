@@ -9,18 +9,18 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
-2026-10-31 native item lifecycle loop: `theron_v1_m11_real_bram_continue`
-routes through authentic Continue and dungeon 2, finds a reachable
-source-authenticated carryable object, and exercises movement, turning, pickup,
-and drop through the M11 input API. Three TRV2 loops verify the complete source
-record and property bytes reach inventory, then return to the floor with the
-inventory slot freed; the quest mask remains unchanged. This covers a
-real-data native input path, not retail action parity. Quest artifact identity,
-retrieval messaging, dungeon exit, and campaign completion still require the
-original T900 consumer. Do not map the parallel quest-name type indices to
-quest bits: authentic US/JP tables contain repeated matching types. See
-`tests/test_theron_v1_track02_quest_item_names.c` and
-`docs/source-lock/theron_t900_proof_2026-08-08.md`.
+2026-10-31 native startup and item lifecycle loop:
+`theron_v1_m11_real_bram_continue` now verifies a fresh US campaign through
+Ak-Tu-Ba, the authentic roster/Soul Room, and source-verified level 0. Its
+Continue branch separately routes to dungeon 2 and exercises movement, turning,
+pickup, and drop through the M11 input API. Three TRV2 loops verify complete
+source-record/property preservation and release of the inventory slot; quest
+progress remains unchanged. This proves real-data native host paths, not retail
+parity. Quest artifact identity, retrieval messaging, dungeon exit, and
+campaign completion still require the original T900 consumer. Do not map the
+parallel quest-name type indices to quest bits: authentic US/JP tables contain
+repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
+and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
 
 2026-10-30 v11 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
 System Card 3.0 produced 40 dispatch windows and 10,030 runtime fetch rows at
