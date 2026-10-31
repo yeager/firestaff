@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-31 ReDMCSB `BASE.C:F0023-F0026` arithmetic helpers: the callable
+inventory now maps the signed absolute-value, minimum, maximum, and inclusive
+clamp implementations to Firestaff's narrow PC34 helpers and source lines.
+Their shared arithmetic matches the C/68k behavior for signed 16-bit inputs;
+the callable-function counterparts and runtime-owner use still need mapping
+for every other supported DM1 edition/platform. This does not close the
+all-platform source-function requirement.
+
 2026-10-31 HoC PC34 real-media viewport material smoke check:
 `m11_dm1_hoc_real_mirror_viewport_material` passed against the installed
 original DOS 3.4 archive. It verifies a bounded real-game mirror/viewport
