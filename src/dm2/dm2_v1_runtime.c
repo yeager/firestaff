@@ -84,6 +84,12 @@ static int dm2_runtime_projectile_query_word(
 static int dm2_runtime_projectile_query_weight(
     int record_link, void *userdata);
 static int dm2_runtime_projectile_rand_mask(int mask, void *userdata);
+static int16_t dm2_runtime_cloud_rand16(void *ctx, int16_t n);
+static int16_t dm2_runtime_cloud_wound_party(
+    void *ctx, int hero_idx, int16_t damage, int body_parts,
+    int damage_type);
+static int16_t dm2_runtime_cloud_max16_ctx(
+    void *ctx, int16_t a, int16_t b);
 
 typedef struct {
     int (*get_creature_at)(void *ctx, int16_t x, int16_t y);
@@ -8842,6 +8848,7 @@ static int dm2_runtime_door_step_timer(void *user,
     int link_size = 0;
     uint8_t *door_record;
     uint16_t door_attributes;
+    int party_collision;
 
     rt->door_step_timers++;
 
@@ -8880,10 +8887,7 @@ static int dm2_runtime_door_step_timer(void *user,
         dm2_v1_dungeon_get_first_thing(dungeon, map, x, y) !=
             (int)(uint16_t)timer->value_b ||
         dm2_v1_dungeon_find_thing_of_type(
-            dungeon, (uint16_t)timer->value_b, 4, 64) >= 0 ||
-        (map == rt->dungeon_level &&
-         x == dm2_v1_runtime_get_party_x() &&
-         y == dm2_v1_runtime_get_party_y())) {
+            dungeon, (uint16_t)timer->value_b, 4, 64) >= 0) {
         if (receipt != NULL) receipt->handler_rejected_count++;
         return 1;
     }
@@ -8903,6 +8907,178 @@ static int dm2_runtime_door_step_timer(void *user,
     }
     direction = (door_attributes & 0x0200u) != 0u
         ? DM2_DOOR_TOGGLE_DIR_OPEN : DM2_DOOR_TOGGLE_DIR_CLOSE;
+
+    /* SKWINSPX skevent.cpp::STEP_DOOR first handles a closing door over the
+     * party. It opens the tile for that step, applies QUERY_DOOR_STRENGTH
+     * through ATTACK_PARTY, queues champion bump sounds for wounded heroes,
+     * and delays the next step by one additional tick. Resolve the door's
+     * map-header graphic slot before any mutation; a missing source slot or
+     * GDAT strength keeps the timer fail-closed. */
+    party_collision = direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+        current_state != DM2_DOOR_STATE_OPEN &&
+        map == rt->dungeon_level &&
+        x == dm2_v1_runtime_get_party_x() &&
+        y == dm2_v1_runtime_get_party_y();
+    if (party_collision) {
+        const DM2_V1_AssetLoader *loader;
+        DM2_V1_HeroAttackPartyCallbacks party_cb;
+        DM2_V1_SoundQueueEnv sound_env;
+        DM2_V1_DropRng rng_before;
+        DM2_V1_Party party_before;
+        DM2_V1_SoundQueueState sound_before;
+        DM2_V1_SoundSsoundEntry *sound_entries_before = NULL;
+        size_t sound_entries_before_size = 0u;
+        DM2_V1_SourceTimerQueue queue_before;
+        DM2_V1_SourceTimer next;
+        uint16_t door_strength = 0u;
+        int door_type = (int)(door_attributes & 1u);
+        int hit_mask;
+        int i;
+        uint16_t raw_before = raw;
+        uint16_t attributes_before = door_attributes;
+
+        if (!rt->source_party_valid ||
+            rt->source_party.heros_in_party <= 0 ||
+            rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+            door_type < 0 || door_type >= 2 ||
+            !rt->map_door_gfx_active[door_type] ||
+            !rt->sound_queue_ready ||
+            !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
+            !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_DOORS,
+                rt->map_door_gfx_list[door_type], 0x0fu,
+                &door_strength)) {
+            if (receipt != NULL) receipt->handler_rejected_count++;
+            return -1;
+        }
+
+        party_before = rt->source_party;
+        rng_before = rt->session_rng;
+        sound_before = rt->sound_queue;
+        queue_before = rt->timer_queue;
+        if (rt->sound_queue.ssound_entries &&
+            rt->sound_queue.ssound_entries_capacity > 0u) {
+            sound_entries_before_size =
+                (size_t)rt->sound_queue.ssound_entries_capacity *
+                sizeof(*rt->sound_queue.ssound_entries);
+            sound_entries_before = (DM2_V1_SoundSsoundEntry *)malloc(
+                sound_entries_before_size);
+            if (!sound_entries_before) {
+                if (receipt != NULL) receipt->handler_rejected_count++;
+                return -1;
+            }
+            memcpy(sound_entries_before, rt->sound_queue.ssound_entries,
+                   sound_entries_before_size);
+        }
+
+        memset(&party_cb, 0, sizeof(party_cb));
+        party_cb.hero_count = rt->source_party.heros_in_party;
+        party_cb.wound_player = dm2_runtime_cloud_wound_party;
+        party_cb.rand16 = dm2_runtime_cloud_rand16;
+        party_cb.max16 = dm2_runtime_cloud_max16_ctx;
+
+        raw = dm2_door_set_state(raw, DM2_DOOR_STATE_OPEN);
+        if (dm2_v1_dungeon_set_tile_raw(
+                dungeon, map, x, y, raw) != 0) {
+            free(sound_entries_before);
+            if (receipt != NULL) receipt->handler_rejected_count++;
+            return -1;
+        }
+        hit_mask = dm2_v1_hero_attack_party(
+            (int16_t)door_strength, 4, 2, &party_cb, rt);
+
+        memset(&sound_env, 0, sizeof(sound_env));
+        sound_env.current_map = (int16_t)map;
+        sound_env.gate_map_a = rt->sound_env.gate_map_a;
+        sound_env.gate_map_b = rt->sound_env.gate_map_b;
+        sound_env.facing = (uint16_t)rt->view_dir;
+        sound_env.party_x = (int16_t)x;
+        sound_env.party_y = (int16_t)y;
+        sound_env.gametick = (int32_t)(receipt
+            ? receipt->game_tick : rt->tick_count);
+        for (i = 0; i < rt->source_party.heros_in_party; ++i) {
+            DM2_V1_SoundQueueReceipt sound_receipt;
+            const int hero_type = rt->source_party.hero[i].herotype;
+            if ((hit_mask & (1 << i)) == 0) continue;
+            memset(&sound_receipt, 0, sizeof(sound_receipt));
+            if (!dm2_v1_sound_queue_noise_gen2(
+                    &rt->sound_queue, 0x16, (int8_t)hero_type,
+                    DM2_SOUND_CHAMPION_BUMP, 0xFE,
+                    (int16_t)x, (int16_t)y, 1, 0x64, 0xC8,
+                    &sound_env, &sound_receipt) || !sound_receipt.valid) {
+                rt->source_party = party_before;
+                rt->session_rng = rng_before;
+                rt->sound_queue = sound_before;
+                if (sound_entries_before && sound_before.ssound_entries)
+                    memcpy(sound_before.ssound_entries, sound_entries_before,
+                           sound_entries_before_size);
+                rt->timer_queue = queue_before;
+                (void)dm2_v1_dungeon_set_tile_raw(
+                    dungeon, map, x, y, raw_before);
+                free(sound_entries_before);
+                if (receipt != NULL) receipt->handler_rejected_count++;
+                return -1;
+            }
+            if (sound_receipt.timer_queue_pending) {
+                DM2_V1_SourceTimer sound_timer;
+                memset(&sound_timer, 0, sizeof(sound_timer));
+                sound_timer.ticks_and_map =
+                    ((uint32_t)(map & 0xff) << 24) |
+                    ((uint32_t)sound_receipt.timer_mticks &
+                     DM2_V1_SOURCE_TIMER_TICK_MASK);
+                sound_timer.type = sound_receipt.timer_type;
+                sound_timer.actor = sound_receipt.timer_actor;
+                sound_timer.value_a = (uint16_t)sound_receipt.timer_a;
+                if (dm2_v1_source_timer_enqueue(
+                        &rt->timer_queue, &sound_timer, source_index) !=
+                    DM2_V1_SOURCE_TIMER_OK) {
+                    rt->source_party = party_before;
+                    rt->session_rng = rng_before;
+                    rt->sound_queue = sound_before;
+                    if (sound_entries_before && sound_before.ssound_entries)
+                        memcpy(sound_before.ssound_entries,
+                               sound_entries_before,
+                               sound_entries_before_size);
+                    rt->timer_queue = queue_before;
+                    (void)dm2_v1_dungeon_set_tile_raw(
+                        dungeon, map, x, y, raw_before);
+                    free(sound_entries_before);
+                    if (receipt != NULL)
+                        receipt->handler_rejected_count++;
+                    return -1;
+                }
+            }
+        }
+
+        /* bp1a forces one additional source tick before STEP_DOOR resumes;
+         * queue insertion is part of the same rollback boundary as wounds,
+         * RNG, sound and tile state. */
+        next = *timer;
+        next.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            (((timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) + 2u) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
+        door_attributes |= 0x1000u;
+        dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
+        if (dm2_v1_runtime_enqueue_source_timer(&next, source_index) != 0) {
+            rt->source_party = party_before;
+            rt->session_rng = rng_before;
+            rt->sound_queue = sound_before;
+            if (sound_entries_before && sound_before.ssound_entries)
+                memcpy(sound_before.ssound_entries, sound_entries_before,
+                       sound_entries_before_size);
+            rt->timer_queue = queue_before;
+            dm2_runtime_record_wr16(rt, door_record + 2, attributes_before);
+            (void)dm2_v1_dungeon_set_tile_raw(
+                dungeon, map, x, y, raw_before);
+            free(sound_entries_before);
+            if (receipt != NULL) receipt->handler_rejected_count++;
+            return -1;
+        }
+        free(sound_entries_before);
+        rt->door_step_mutations++;
+        rt->door_step_requeues++;
+        return 1;
+    }
 
     new_state = dm2_door_apply_toggle_step(current_state, direction);
 
@@ -8937,7 +9113,8 @@ static int dm2_runtime_door_step_timer(void *user,
         next = *timer;
         next.ticks_and_map =
             ((uint32_t)(map & 0xff) << 24) |
-            ((receipt->game_tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+            (((timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) + 1u) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
         rt->door_step_requeues++;
         (void)dm2_v1_runtime_enqueue_source_timer(&next, source_index);
     }
