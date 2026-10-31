@@ -61,6 +61,7 @@ struct SensorEffect_Compat {
     int delayTicks;          /* F0268: sensor->value delay before event fires */
     int sourceSensorIndex;   /* Transient F0272 owner; not serialized */
     int sourceOnceOnly;      /* Transient F0272 mutation receipt; not serialized */
+    int sourceAudible;       /* Transient F0276 switch-sound receipt; not serialized */
 };
 
 struct SensorEffectList_Compat {

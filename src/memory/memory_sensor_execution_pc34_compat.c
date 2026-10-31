@@ -92,6 +92,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         e->delayTicks = sensor->value;
+        e->sourceAudible = sensor->audible;
         outList->count = 1;
         return 1;
     }
@@ -107,6 +108,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         e->delayTicks = sensor->value;
+        e->sourceAudible = sensor->audible;
         outList->count = 1;
         return 1;
     }
@@ -129,6 +131,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         e->delayTicks = sensor->value;
+        e->sourceAudible = sensor->audible;
         outList->count = 1;
         return 1;
     }
@@ -192,6 +195,7 @@ int F0712_SENSOR_EffectDeserialize_Compat(
     effect->delayTicks   = 0;
     effect->sourceSensorIndex = -1;
     effect->sourceOnceOnly = 0;
+    effect->sourceAudible = 0;
     return 1;
 }
 
@@ -408,6 +412,7 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
                 out->isLocal = sensor->localEffect;
                 out->cell = THING_GET_CELL(thingRef);
                 out->value = sensor->value;
+                out->audible = sensor->audible;
                 if (!sensor->localEffect) {
                     out->targetMapX = sensor->targetMapX;
                     out->targetMapY = sensor->targetMapY;
@@ -589,6 +594,7 @@ static int sensor_process_party_enter_leave(
                 effect->delayTicks = sensors[i].value;
                 effect->sourceSensorIndex = sensors[i].sensorIndex;
                 effect->sourceOnceOnly = sourceSensor->onceOnly ? 1 : 0;
+                effect->sourceAudible = sourceSensor->audible ? 1 : 0;
             }
             continue;
         }
@@ -758,6 +764,7 @@ int F0276_SENSOR_ProcessObjectFloorChange_Compat(
         effect->delayTicks = result.delayTicks;
         effect->sourceSensorIndex = sensorIndex;
         effect->sourceOnceOnly = result.sensorDisabled;
+        effect->sourceAudible = sensor->audible ? 1 : 0;
         if (sensor->localEffect) {
             effect->kind = sensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL
                 ? SENSOR_EFFECT_LOCAL_STEAL_XP

@@ -126,6 +126,7 @@ struct SensorOnSquare_Compat {
     int cell;                    /* Thing cell from M011_CELL(sensor thing) */
     int totalSensorsOnSquare;    /* How many sensors chained on this square */
     int value;                   /* Sensor value field (delay ticks for F0268) */
+    int audible;                 /* Sensor->Audible, used by F0272 sound routing */
 };
 
 /*

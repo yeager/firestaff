@@ -2303,7 +2303,7 @@ static void test_object_floor_change_runtime(void) {
     things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
     weapons[0].next = THING_ENDOFLIST;
     sensors[0] = make_sensor(DM1_SENSOR_FLOOR_OBJECT, 4,
-                             DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                             DM1_EFFECT_TOGGLE, 0, 0, 1, 0,
                              0, 0, 0, 0);
     sensors[0].next = object;
 
@@ -2313,6 +2313,8 @@ static void test_object_floor_change_runtime(void) {
     CHECK(effects.count == 1 &&
           effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
           "F0276 C004 add: matching object sensor emits effect");
+    CHECK(effects.effects[0].sourceAudible == 1,
+          "F0276 C004 add: audible bit reaches the effect receipt");
 
     /* After unlink, the sensor remains the square-chain head. */
     sensors[0].next = THING_ENDOFLIST;

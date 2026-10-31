@@ -20419,6 +20419,12 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             m11_refresh_hash(state);
         }
 
+        /* ReDMCSB MOVESENS.C F0276 requests C01_SOUND_SWITCH through F0064
+         * for each triggered sensor whose source record is audible. */
+        if (e->sourceAudible) {
+            m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+        }
+
         switch (e->kind) {
         case SENSOR_EFFECT_TELEPORT:
             /* Teleport party to destination */
