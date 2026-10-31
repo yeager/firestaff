@@ -575,9 +575,17 @@ native in-memory readiness receipt from the original Atari R1 media.
 2026-10-27 authentic cross-platform CLI startup matrix: the current-source
 real-media cases passed for Atari STX, original Atari, nested Atari ZIP,
 native Atari Utility Disk 7z/Hint Oracle, Amiga A31E/A33M/A35E/CTRaw, and FM
-Towns English/Japanese. The Atari French preservation case remains unverified
-because its original archive is absent. SDL dummy verifies the source startup
-and handoff routes, not native display or physical input parity.
+Towns English/Japanese. The French preservation archive was absent from that
+run. It is now present as `chaos_strikes_back_ftl_france.zip`; its France-labeled
+STX resolves to the catalogued `st20-21-en` graphics identity, so it is not
+evidence of a distinct French-language game edition. The direct CLI test passed
+title, runtime, first movement, and selected-game menu checks on the available
+2026-10-28 local build, including when a conflicting generic Atari archive
+override was set. The current-source no-game M12 route is registered as
+`m12_main_menu_csb-atari-st-france_runtime_real_media`, but has not yet been
+rerun against the refreshed media on a binary containing the 2026-10-31 scan
+fix. SDL dummy verifies source startup and handoff, not native display or
+physical input parity.
 
 2026-10-27 authentic CSB Amiga A31E archive and mixed-picker retest: the
 installed `Chaos Strikes Back (FTL).zip` is a 901,330-byte ZIP wrapper around
