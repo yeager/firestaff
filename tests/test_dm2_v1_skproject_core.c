@@ -6171,6 +6171,23 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   q1a46.valid && q1a46.found_actuator &&
                   q1a46.actuator_type == 0x7fu && wall_field == 0,
               "DM2_query_0cee_1a46 type 0x7f uses source default field");
+        /* c_querydb.cpp:3418-3426 computes type 0x18 from the XOR of
+         * active and once-only, without asking GDAT for an animation. */
+        actuator_record_be[3] = 0x18u;
+        actuator_record_be[5] = 0x04u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x18u && wall_field == 1,
+              "DM2_query_0cee_1a46 type 0x18 uses active XOR once-only");
+        /* Type 0x46 selects the active bit (record word 4 bit 0). */
+        actuator_record_be[3] = 0x46u;
+        actuator_record_be[5] = 0x01u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x46u && wall_field == 1,
+              "DM2_query_0cee_1a46 type 0x46 returns active state");
     }
     {
         /* TextMode 1 with ext-usage zero is a static wall ornament. */

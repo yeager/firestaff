@@ -13954,8 +13954,11 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                     receipt.actuator_type = (uint8_t)actuator_type;
 
                     switch (actuator_type) {
-                    case 0x3f: /* shop panel */
-                        break;
+                    case 0x3f: /* shop panel: source writes summary word 7 */
+                        /* This scalar result cannot represent the source's
+                         * separate summary word 7; keep it out of the wall
+                         * ornament result until that output is modeled. */
+                        goto next_thing;
                     case 0x7e: /* resuscitation */
                         if (once_only != 0) si = 1;
                         break;
@@ -13964,11 +13967,13 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         if (di != 0) si = 1;
                         break;
                     case 0x18: /* push button wall switch */
-                        di = (int)(active_status ^ once_only);
+                        /* Source sets skip00150 and later computes
+                         * status XOR once-only. */
+                        si = 2;
                         break;
                     case 0x1a: /* key hole */
-                        di = (int)once_only;
-                        if (di != 0) si = 1;
+                        /* Source skip00149 tests once-only bit 2. */
+                        si = (int)once_only;
                         break;
                     case 0x1b:
                         di = (int)active_status;
@@ -13987,7 +13992,8 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         }
                         break;
                     case 0x41: /* ornate step animator */
-                        di = (int)actuator_data;
+                        /* The original sets only the animation probe word;
+                         * without a proven sequence our frame stays zero. */
                         break;
                     case 0x46: /* sealable push button */
                         di = (int)active_status;
@@ -13998,14 +14004,19 @@ int dm2_v1_skproject_query_0cee_1a46_ext(
                         break;
                     }
 
-                    if (si != 0 && asset_loader) {
+                    if (si == 2) {
+                        di = (int)(active_status ^ once_only);
+                    } else if (si != 0 && asset_loader) {
                         DM2_V1_QueryOrnateAnimFrameReceipt anim_receipt;
-                        if (dm2_v1_query_ornate_anim_frame_receipt(
+                        if (!dm2_v1_query_ornate_anim_frame_receipt(
                                 asset_loader, 0x09, (int)decoration,
-                                bp0c, bp10, &anim_receipt) &&
-                            anim_receipt.accepted) {
-                            di = (int)anim_receipt.frame;
+                                bp0c, bp10, &anim_receipt) ||
+                            !anim_receipt.accepted) {
+                            receipt.blocked_actuator_animation_path = 1u;
+                            if (out_receipt) *out_receipt = receipt;
+                            return 0;
                         }
+                        di = (int)anim_receipt.frame;
                         receipt.actuator_needs_anim = 1;
                     } else if (si != 0) {
                         receipt.blocked_actuator_animation_path = 1;

@@ -140,7 +140,11 @@ source-by-source mutation equivalence across editions and platforms.
 `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` has bounded light/darkness branches and
 FM Towns map-3/map-38 runtime evidence only; DOS, Amiga, and Macintosh dynamic
 lighting and nonzero retail DBE/DBF media cases remain unverified. The ordered
-`DM2_query_0cee_1a46` door-decoration path is also incomplete. Do not treat
+`DM2_query_0cee_1a46` door-decoration path is also incomplete: actuator
+0x18 XOR and 0x46 active-state fields now have focused source checks, while
+source summary word 7 (including the 0x3f shop-panel handle), the full output
+array contract, viewport integration, and all-platform runtime behavior remain
+open. Do not treat
 these bounded receipts as full DM2 parity.
 
 ## Gate
