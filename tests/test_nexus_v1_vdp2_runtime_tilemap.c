@@ -259,6 +259,55 @@ static int run_external_ymir_priority_stack(void)
     return ran;
 }
 
+static int run_external_ymir_mapd_nbg1_pass(void)
+{
+    const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS");
+    const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT");
+    uint8_t *vram = NULL, *cram = NULL, *registers = NULL;
+    Nexus_V1_Vdp2CapturePlane *plane = NULL;
+    Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
+    int ok = 0;
+
+    if (!vram_path && !cram_path && !registers_path) return 1;
+    vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_bytes(registers_path, 512U);
+    plane = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*plane));
+    if (!vram || !cram || !registers || !plane ||
+        !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
+        !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
+        !bytes_have_sha256(registers, 512U,
+            "774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1"))
+        goto cleanup;
+    if (!nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            1, &receipt) || !receipt.valid || !receipt.capture_only ||
+        receipt.renderer_permitted || !receipt.registers_verified ||
+        !receipt.original_ymir_capture_verified || !receipt.nbg1_enabled ||
+        !receipt.nbg1_tilemap_mode || !receipt.pnd_size_two_words ||
+        receipt.colour_code_256 || receipt.bits_per_pixel != 4 ||
+        receipt.name_table_vram_offset != 0x5c000 ||
+        receipt.map_page_columns != 64 || receipt.map_page_rows != 64 ||
+        receipt.visible_columns != 40 || receipt.visible_rows != 28 ||
+        receipt.tiles_decoded != 1120 || receipt.written_pixels != 71680 ||
+        receipt.transparent_pixels != 0 ||
+        !write_capture_plane(output_path, plane))
+        goto cleanup;
+    ok = 1;
+cleanup:
+    free(plane);
+    free(registers);
+    free(cram);
+    free(vram);
+    return ok;
+}
+
 static int run_external_ymir_capture_planes(void)
 {
     const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM");
@@ -649,6 +698,13 @@ int main(void)
          getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS")) &&
         !run_external_ymir_capture_planes()) {
         fprintf(stderr, "FAIL: authentic Ymir NBG0/NBG2 capture decode\n");
+        return 1;
+    }
+    if ((getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS")) &&
+        !run_external_ymir_mapd_nbg1_pass()) {
+        fprintf(stderr, "FAIL: authentic Ymir MAPD NBG1 4bpp plane decode\n");
         return 1;
     }
     if ((getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") ||
