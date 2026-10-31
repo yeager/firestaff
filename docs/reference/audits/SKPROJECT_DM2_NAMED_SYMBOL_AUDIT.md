@@ -17,22 +17,25 @@ candidate, a disposition, and notes. An implementation disposition may cover
 a narrow function slice and does not by itself prove integration into a
 playable game route or parity on every supported platform.
 
-This is not yet a complete inventory of callable skproject source. The
+This is not yet a complete functional audit of callable skproject source. The
 repository README identifies `SKWINSPX` as its newer unified Windows/Linux/DOS
-engine, while the current ledger includes only one selected SPX definition and
-otherwise inventories the older `SKWIN`/`SKULLWIN` trees. `SKWINDOS` is also
-outside the ledger. At the locked source checkout, `SKWINSPX/src` contains 131
-`.cpp`/`.c` files (case-insensitive extension) and `SKWINDOS/src` contains 26. Their definitions must be
-inventoried and compared with the older source where they overlap before the
-DM2 function audit can claim full source coverage. Editor and asset-tool trees
-(`DM2GDED`, `DMDC2`, and `Utils`) are excluded because they do not implement
-the game runtime.
+engine; the disposition ledger below covers only the older `SKWIN`/`SKULLWIN`
+trees, with one selected SPX definition. `SKWINDOS` is also outside that
+ledger. The supplemental
+`SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists the `ctags -x` definitions
+from `SKWINSPX/src` and `SKWINDOS/src` at the locked checkout: 2,945 definition
+rows, 2,848 distinct names, and 97 repeated-name definitions. All 2,945 rows
+are `UNREVIEWED`; exact name overlap with the older ledger is only a search
+hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
+`DMDC2`, and `Utils`) are excluded because they do not implement the game
+runtime.
 
 ## Inventory
 
 | Source set | Definitions | Result |
 |---|---:|---|
-| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the ledger |
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
+| `SKWINSPX/src` and `SKWINDOS/src` | 2,945 | Supplemental callable-definition rows; all `UNREVIEWED` |
 
 ## Dispositions
 
@@ -109,13 +112,25 @@ still lacks source-by-source mutation and all-edition/platform parity proof.
 before treating a mapping as a parity result.
 
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
-claims that a supported DM2 game feature is implemented. The current 1,754
-rows are a scoped subset, not the total of skproject functions relevant to
-Firestaff: most `SKWINSPX` and all `SKWINDOS` definitions are not inventoried.
-Completing that source inventory and attaching per-platform runtime evidence
-remain required for DOS, Amiga, FM Towns, and Macintosh.
+claims that a supported DM2 game feature is implemented. The 1,754 disposition
+rows cover only the older `SKWIN`/`SKULLWIN` source sets; the supplemental
+2,945 `SKWINSPX`/`SKWINDOS` definitions are listed but not behaviorally
+reviewed. Per-function comparison and runtime evidence remain required for
+DOS, Amiga, FM Towns, and Macintosh.
 
 ## Machine check
+
+Regenerate the supplemental source discovery list from the locked skproject
+checkout with `ctags` installed:
+
+```sh
+python3 tools/generate_skproject_active_source_inventory.py \
+  --source-root /path/to/skproject
+```
+
+The generator rejects a checkout whose `HEAD` differs from the locked commit.
+The resulting names and locations are still discovery evidence; review each
+row's behavior and Firestaff caller before changing its disposition.
 
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
