@@ -408,23 +408,23 @@
         ],
         "launch_smoke": [
           7,
-          "Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, dynamic payload. Disassembly chain test exercises 17 verify functions."
+          "Original IPL/stage-2 disassembly chain is statically bound. Separate native integration tests verify bounded JP fresh-start and authentic US BRAM Continue routes; the original cold reference still lacks a confirmed game-owned handoff. This score does not claim retail cold-boot parity."
         ],
         "core_input_movement": [
           13,
-          "Joypad button-to-action mapping proven: all 5 groups (I=$01, II=$02, Select=$04, Run=$08, D-pad=$F0) found via AND #mask + BEQ/BNE patterns. 64 action sites with combined mask $FF. Command VM 10 handlers classified. Joypad read routine + timer + IRQ proven."
+          "Static disassembly classifies all five controller button groups and the bounded command handlers. Native Firestaff integration tests verify bounded input transactions on authentic US/JP data; original-game action semantics and a game-owned cold poll remain unproven."
         ],
         "viewport_ui_render": [
           16,
-          "All 32 VDC registers proven accessed via st0 #reg. MWR (BAT size), CR (sprite/BG enable), SATB DMA, horizontal timing (HSR/HDR), vertical timing (VPR/VDW/VCR) all proven. VCE palette 438 accesses, VRAM clear/tile transfer proven. Rendering pipeline 5 tiers, 2310 bound bytes."
+          "Static disassembly binds VDC/VCE accesses and 2,310 original stage-2 bytes. This does not prove Firestaff dynamic viewport behavior, retail graphics mapping, or paired pixel parity."
         ],
         "gameplay_systems": [
           14,
-          "Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered."
+          "Authentic US BRAM Continue restores a bounded campaign slice; host-level progression/save and Track 02 parser tests cover additional slices. Original retail save mutation, item/quest semantics, combat and broader campaign consumers remain open."
         ],
         "audio_timing": [
           7,
-          "CD_PLAY track parameter fully mapped: 2 code-region sites both load track $0E via LDA #$0E \u2192 STA $FF. 4 data false positives filtered. System card catalog: 279 JSR sites to 17 BIOS vectors."
+          "CD_PLAY track parameter fully mapped: 2 code-region sites both load track $0E via LDA #$0E → STA $FF. 4 data false positives filtered. System card catalog: 279 JSR sites to 17 BIOS vectors."
         ],
         "original_overlay_regression": [
           0,
@@ -433,7 +433,7 @@
       },
       "status": "hw_config_cd_play_vdc_joypad_proven",
       "primaryBlockers": [
-        "Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed."
+        "Native JP fresh-start and US BRAM-Continue routes are verified. Original-versus-Firestaff frame regression (0/10), dynamic source-bound viewport, broader gameplay and original save/audio semantics remain open."
       ],
       "completionPercent": 72,
       "points": 72,
