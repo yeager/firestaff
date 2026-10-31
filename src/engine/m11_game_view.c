@@ -1525,9 +1525,10 @@ typedef struct M11_Dm1RenderedPileTarget {
 static M11_Dm1RenderedPileTarget
     s_m11_dm1_rendered_pile_targets[M11_DM1_RENDERED_PILE_TARGET_MAX];
 static int s_m11_dm1_rendered_pile_target_count;
-/* ReDMCSB F0115 publishes the C2500/F0635 destination box for each floor
- * object.  The CSB click route consumes the final successfully drawn box,
- * paired with its source view-cell, instead of a viewport-wide estimate. */
+/* ReDMCSB DUNVIEW.C F0115:4923-5109 resolves each C2500/F0635 object box;
+ * CLIKVIEW.C F0377:410-415 hit-tests the frame-owned view-cell zone. The
+ * CSB click route consumes the final successfully drawn box, paired with
+ * its source view-cell, instead of a viewport-wide estimate. */
 typedef struct M11_CSBRenderedFloorTarget {
     int valid;
     int viewCell;
@@ -4250,14 +4251,33 @@ static int m11_csb_viewport_object_sprite_drawer(
         blit->relative_cell >= 0 && blit->relative_cell < 4 &&
         s_m11_csb_rendered_floor_target_count <
             M11_CSB_RENDERED_FLOOR_TARGET_MAX) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)ctx->state->csbBootProfile;
+        int viewport_origin_x = 0;
+        int viewport_origin_y = 0;
+        int input_origin_x = DM1_VIEWPORT_SCREEN_X;
+        int input_origin_y = DM1_VIEWPORT_SCREEN_Y;
         M11_CSBRenderedFloorTarget *target =
             &s_m11_csb_rendered_floor_targets[
                 s_m11_csb_rendered_floor_target_count++];
+
+        csb_v1_boot_viewport_origin_pc34(profile,
+                                         &viewport_origin_x,
+                                         &viewport_origin_y);
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            /* m11_process_csb_v1_c080_click subtracts the Towns viewport
+             * origin before testing local F0635 coordinates. */
+            input_origin_x = viewport_origin_x;
+            input_origin_y = viewport_origin_y;
+        }
         *target = s_m11_csb_last_object_sprite_receipt;
         target->valid = 1;
         target->viewCell = blit->relative_cell;
-        target->x -= blit->viewport_x;
-        target->y -= blit->viewport_y;
+        /* viewport_pixels points at the selected source viewport origin;
+         * convert the final page rectangle into the same local coordinate
+         * space consumed by C080 for this platform. */
+        target->x += viewport_origin_x - input_origin_x;
+        target->y += viewport_origin_y - input_origin_y;
     }
     return drawn;
 }
