@@ -46684,7 +46684,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                 memset(sensorsOnSq, 0, sizeof(sensorsOnSq));
                 while (sThing != THING_ENDOFLIST && sThing != THING_NONE &&
                        sSafety++ < 64 && sensCount < SENSOR_ENUM_CAPACITY) {
-                    if (THING_GET_TYPE(sThing) == THING_TYPE_SENSOR) {
+                    int thingType = THING_GET_TYPE(sThing);
+                    if (thingType == THING_TYPE_SENSOR) {
                         int si = THING_GET_INDEX(sThing);
                         if (si >= 0 && si < state->world.things->sensorCount) {
                             sensorsOnSq[sensCount].found = 1;
@@ -46707,6 +46708,11 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 state->world.things->sensors[si].localEffect;
                             sensCount++;
                         }
+                    } else if (thingType >= THING_TYPE_GROUP) {
+                        /* MOVESENS.C:F0275 stops both sensor passes at the
+                         * first group Thing; later links are outside the
+                         * wall-sensor run even if they encode a sensor. */
+                        break;
                     }
                     sThing = m11_raw_next_thing(state->world.things, sThing);
                 }
