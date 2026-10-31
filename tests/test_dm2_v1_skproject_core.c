@@ -6116,11 +6116,10 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               q1a46.blocked_missing_dungeon,
           "DM2_query_0cee_1a46 fails closed without dungeon data");
     {
-        /* Mac/Amiga DB3 words are big-endian. Actuator type 0x17 with
-         * graphic 1 and once-only clear selects field zero without needing
-         * an animation GDAT query. */
+        /* Mac/Amiga DB3 words are big-endian. Actuator type 0x4a with
+         * graphic 1 selects active XOR once-only without animation GDAT. */
         uint8_t actuator_record_be[8] = {
-            0xffu, 0xfeu, 0x00u, 0x17u, 0x10u, 0x00u, 0x00u, 0x00u
+            0xffu, 0xfeu, 0x00u, 0x4au, 0x10u, 0x00u, 0x00u, 0x00u
         };
         uint8_t wall_graphics[1] = { 0x22u };
         int ordinal = -1;
@@ -6137,9 +6136,28 @@ static void test_skwin_core_symbol_batch_cycle13(void)
                   &wall_idx, &wall_field, &q1a46);
         CHECK(result == 1 &&
                   q1a46.valid && q1a46.found_actuator &&
-                  q1a46.actuator_type == 0x17u &&
+                  q1a46.actuator_type == 0x4au &&
                   wall_idx == 0x22 && wall_field == 0,
-              "DM2_query_0cee_1a46 decodes big-endian actuator state");
+              "DM2_query_0cee_1a46 decodes big-endian XOR state (0,0)");
+        actuator_record_be[5] = 0x04u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  q1a46.actuator_type == 0x4au && wall_field == 1,
+              "DM2_query_0cee_1a46 XOR state (0,1)");
+        actuator_record_be[5] = 0x01u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  wall_field == 1,
+              "DM2_query_0cee_1a46 XOR state (1,0)");
+        actuator_record_be[5] = 0x05u;
+        CHECK(dm2_v1_skproject_query_0cee_1a46_ext(
+                  &dungeon, 0x0c00u, 0, 0, 0u, wall_graphics, 1, NULL,
+                  &wall_idx, &wall_field, &q1a46) == 1 &&
+                  wall_field == 0,
+              "DM2_query_0cee_1a46 XOR state (1,1)");
+        actuator_record_be[5] = 0u;
         CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
                   &dungeon, 0x0c00u, 0, 0, 32, &ordinal) == 0 &&
                   ordinal == 1,

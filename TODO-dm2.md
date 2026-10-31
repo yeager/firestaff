@@ -1,3 +1,9 @@
+2026-10-31 skproject `DM2_query_0cee_1a46` actuator type 0x4a:
+The side-decoration query now implements the source's actuator 0x4a field as
+`active_status ^ once_only` (c_querydb.cpp:3553-3565). Big-endian regression
+cases cover all four status-bit combinations. The remaining actuator categories,
+ornate-animation behavior, and viewport integration remain open.
+
 2026-10-31 skproject `DM2_query_0cee_1a46` query result and endian handling:
 The actuator side-decoration query now uses the Dungeon record-word accessor for
 DB3 words, so Mac/Amiga big-endian actuator type, status, and animation fields
