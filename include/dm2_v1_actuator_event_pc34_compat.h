@@ -309,7 +309,7 @@ typedef struct {
     int items_counted;    /* source items passing direction and type filters */
     int items_moved;      /* items successfully moved to destination */
     int creatures_checked;/* creature possession chains walked */
-    int recycler_permissive_mask; /* 1 = used full-accept mask (no GDAT) */
+    int recycler_mask_missing; /* 1 = GDAT mask unavailable; source zero-mask no-op */
     int item_type_lookup_failed;
     int fail_closed;
 } DM2_V1_ItemTeleportReceipt;

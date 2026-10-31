@@ -652,8 +652,10 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                 asset_loader, creature_index, text_field_base, 0,
                 &mask_receipt) || !mask_receipt.accepted) {
             /* c_querydb.cpp zeroes the destination mask before asking GDAT.
-             * The source caller ignores a missing-text result, so this
-             * transaction continues with no recycler item types accepted. */
+             * The source caller ignores a missing-text result; if Firestaff
+             * cannot produce an authenticated mask, fail closed to that
+             * empty-mask no-op instead of accepting every item. */
+            receipt->recycler_mask_missing = 1;
             memset(ctx.item_mask, 0, sizeof(ctx.item_mask));
         } else {
             memcpy(ctx.item_mask, mask_receipt.mask, sizeof(ctx.item_mask));
