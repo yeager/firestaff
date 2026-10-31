@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 CSB mixed-platform menu retest at `84aa6410a`: the authentic-media
+`csb_v1_fmtowns_m12_auto_mixed_real_media` test passed in 499.74 seconds. With
+original FM Towns, Atari ST game/utility disks, and Amiga media present
+together, M12 AUTO selected FM Towns and reached its original MINI.DAT party;
+manual menu selection reached the authentic Atari C200 runtime and the
+Amiga-specific route; direct CLI platform requests were also checked. The
+test verifies that original archives remain unchanged. This covers those
+routes only, not every CSB edition or native input/display parity.
+
 2026-11-01 current-main five-game launch retest at `bca19ec55`: the
 authentic-media `m12_main_menu_game_selection_real_media` test passed in
 519.94 seconds and `firestaff_cli_startup_diagnostics_real_media` passed in
