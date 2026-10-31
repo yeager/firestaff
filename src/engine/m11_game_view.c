@@ -28594,6 +28594,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 state->presentationMode = spec->presentationMode;
                 state->presentationWidth = spec->presentationWidth;
                 state->presentationHeight = spec->presentationHeight;
+                if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+                    /* Nexus's menu marks V2.2 capture-locked, and the Saturn
+                     * title/game renderer has no admitted V2.2 consumer yet.
+                     * Keep the game launchable through the implemented EPX
+                     * path instead of leaving V2.2 selected while presenting
+                     * the ordinary filtered framebuffer. */
+                    state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+                }
             }
             return ok;
         }
