@@ -12,6 +12,18 @@ compare that path against native Firestaff. Evidence and bounded disassembly:
 [`System Card RUN trace`](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary),
 [`$EA3B` listing](docs/source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm).
 
+## 2026-10-31 — reference trace build passes; original-game capture remains open
+
+The hook is now anchored to the unique instruction-opcode provenance callback,
+and the RAM read provenance hunk matches the opcode-fetch guard. Three fresh
+TRV2 patch-only runs applied the full Mednafen 1.32.1 trace sequence; the full
+instrumented PCE build and install succeeded. The controller-patch dry-run and
+compiled mouse parser regression each passed three loops. No new authentic
+gameplay capture has been collected. Next capture a bounded cold/reference run
+that reaches game-owned input and state consumers, then join those observations
+to native behavior. Do not infer launch, action semantics, or parity from a
+successful instrumented build alone.
+
 ## Remaining end-to-end work, ordered by dependency
 
 The dated entries below retain current capture results and limits. This short

@@ -1,22 +1,31 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -38,1 +38,5 @@
+@@ -38,1 +38,7 @@
 +/* HuC6280::RunSub dispatches from PC before PC++ (src/pce/huc6280.cpp,
 + * lines 680-689 in Mednafen 1.32.1). */
 +MDFN_HIDE extern uint16 TheronPCEVDCInstructionPC;
 +MDFN_HIDE extern uint32 TheronPCEVDCInstructionPhysicalPC;
++MDFN_HIDE extern uint8 TheronPCEVDCInstructionOpcode;
++MDFN_HIDE extern bool TheronPCEVDCInstructionFetchInProgress;
  class alignas(128) HuC6280
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -44,1 +44,4 @@
+@@ -44,1 +44,6 @@
 +uint16 TheronPCEVDCInstructionPC;
 +uint32 TheronPCEVDCInstructionPhysicalPC;
++uint8 TheronPCEVDCInstructionOpcode;
++bool TheronPCEVDCInstructionFetchInProgress;
 +
  static FILE *TheronMainRAMLoaderTrace;
-@@ -1248,3 +1248,6 @@
-	 lastop = RdOp(PC);
-	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
+@@ -1248,2 +1248,8 @@
+-	 lastop = RdOp(PC);
+-	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 TheronPCEVDCInstructionPC = PC;
++	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 TheronPCEVDCInstructionPhysicalPC = physical_pc;
++	 TheronPCEVDCInstructionFetchInProgress = true;
++	 lastop = RdOp(PC);
++	 TheronPCEVDCInstructionFetchInProgress = false;
++	 TheronPCEVDCInstructionOpcode = lastop;
 +	 TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop);
 FIRESTAFF_PATCH_TAB_CONTEXT if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)

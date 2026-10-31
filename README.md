@@ -144,6 +144,11 @@ the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
 renderer behavior.
 
+The latest reference-only Mednafen trace tooling applied in three clean
+patch-only runs, and its instrumented PCE build/install plus focused
+parser/controller checks passed on TRV2. No new original-game capture was made; this tooling work
+does not change the native support boundary.
+
 README screenshots are Firestaff-rendered only; original-emulator captures
 are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and

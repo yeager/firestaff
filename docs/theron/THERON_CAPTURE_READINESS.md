@@ -63,6 +63,14 @@ patch-only pipeline passed three loops, and the instrumented PCE Fast build
 passed the SDL 2.32.10 runtime check. Mednafen remains a diagnostic reference
 tool and is not part of Firestaff's native C/SDL runtime.
 
+Three fresh TRV2 patch-only runs applied the normal-PCE instruction-start
+consumer trace sequence through selected-record and guest-input instrumenters.
+The instruction PC and physical mapping are captured before opcode fetch, and
+the fetched opcode is latched afterward. The instrumented Mednafen 1.32.1 PCE
+build and install succeeded. Controller-patch dry-run and compiled mouse parser
+checks each passed three loops. No new authentic gameplay capture followed;
+native runtime evidence and the gaps below are unchanged.
+
 ## 2026-10-31 — PCE Fast capture tooling repaired
 
 The isolated reference-capture wrapper previously failed under macOS Bash

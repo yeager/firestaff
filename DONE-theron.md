@@ -1,5 +1,33 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-31 — build and verify instruction-start reference trace chain
+
+Anchored the 3879 observer to the unique instruction-opcode provenance hook,
+corrected patch hunk counts and aligned the RAM-provenance read hook with the
+instruction-fetch guard. The trace now latches logical and physical instruction
+PC before opcode fetch, then records the fetched opcode. Updated the controller
+trace regression's ordering assertion to match this sequence. Three fresh
+TRV2 patch-only runs applied the full Theron Mednafen instrumentation chain;
+the instrumented Mednafen 1.32.1 PCE build and install then succeeded. The
+controller patch dry-run and compiled mouse parser regression each passed three
+loops. No original-game capture was made, so this validates reference tooling
+only and establishes no game behavior or native parity.
+
+## 2026-10-31 — reference trace patch applicability; instrumented build still blocked
+
+Updated the reference-only Mednafen 1.32.1 instrumentation so consumer reads
+can retain instruction-start logical/physical PC and opcode alongside the
+runtime reader PC. Repaired patch rendering and write-hook ordering for RAM
+provenance, loader writes and selected-record consumers. The mouse guest-read
+instrumenter now anchors to the current reader-MPR line rather than an obsolete
+pair of adjacent declarations. Three fresh TRV2 patch-only runs applied the then-current
+patch snapshot, and three loops of the controller-trace dry-run and compiled
+mouse parser regression passed. A subsequent full instrumented-core build
+failed compiling `pce/huc6280.cpp`: a later trace hook landed inside an existing
+`fprintf` call. Therefore the patch-only result is not build validation and the
+reference instrumentation repair is not complete. No new original-game capture
+was performed. This work establishes no gameplay behavior or parity.
+
 ## 2026-10-31 — refresh current Theron documentation summaries
 
 Aligned the README, documentation index, project status, real-data inventory,

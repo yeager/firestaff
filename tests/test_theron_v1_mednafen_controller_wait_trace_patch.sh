@@ -23,6 +23,7 @@ main_ram_e009_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e0
 main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch
 main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
+main_ram_consumer_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_write_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 ram_provenance_guard_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch
@@ -441,8 +442,13 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
    ! grep -Fq 'command_consumer_read sequence=%u' "$main_ram_consumer_patch_file" ||
    ! grep -Fq 'command_consumer_boundary sequence=%u' "$main_ram_consumer_patch_file" ||
    ! grep -Fq 'logical_address >= 0x2000 && logical_address < 0x4000' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'instruction_pc = TheronPCEVDCInstructionPC' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'instruction_physical_pc = TheronPCEVDCInstructionPhysicalPC' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'instruction_opcode = TheronPCEVDCInstructionOpcode' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'instruction_physical_pc=%06x instruction_opcode=%02x' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'TheronPCEVDCInstructionOpcode = lastop' "$vdc_instruction_pc_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace"' "$capture_script"; then
-    printf '%s\n' 'FAIL: atomic command consumer read window is missing or unwired' >&2
+    printf '%s\n' 'FAIL: atomic command consumer trace lacks accurate instruction-start provenance or is unwired' >&2
     exit 1
 fi
 indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_3879_indirect_target_trace.patch
@@ -611,7 +617,10 @@ fi
 if ! grep -Fq 'mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch' "$build_script" ||
    ! grep -Fq 'TheronPCEVDCInstructionPC = PC' "$vdc_instruction_pc_patch_file" ||
    ! grep -Fq 'TheronPCEVDCInstructionPhysicalPC = physical_pc' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'TheronPCEVDCInstructionFetchInProgress = true' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'TheronPCEVDCInstructionFetchInProgress = false' "$vdc_instruction_pc_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop)' "$vdc_instruction_pc_patch_file" ||
+   ! grep -Fq 'if(!TheronPCEVDCInstructionFetchInProgress &&' "$main_ram_consumer_patch_file" ||
    ! grep -Fq 'theron_opcode_provenance_fetch sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
    ! grep -Fq 'else if(!direct_origin_seeded)' "$ram_provenance_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_ram_provenance_guard.patch' "$build_script" ||
@@ -628,9 +637,16 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch' "$build_scri
        /physical_pc = \(MPR\[PC >> 13\]/ { physical = NR }
        /TheronPCEVDCInstructionPC = PC/ { logical = NR }
        /TheronPCEVDCInstructionPhysicalPC = physical_pc/ { mapped = NR }
+       /TheronPCEVDCInstructionFetchInProgress = true/ { fetch_begin = NR }
+       /lastop = RdOp\(PC\)/ { opcode_fetch = NR }
+       /TheronPCEVDCInstructionFetchInProgress = false/ { fetch_end = NR }
+       /TheronPCEVDCInstructionOpcode = lastop/ { opcode_latch = NR }
+       /TheronPCECDTraceOpcodeProvenance\(PC, physical_pc, lastop\)/ { trace = NR }
        /if\(physical_pc >= 0x1f0000/ { following = NR }
-       END { if (!(physical && logical > physical &&
-                   mapped > logical && following > mapped)) exit 1 }
+       END { if (!(logical && physical > logical && mapped > physical &&
+                   fetch_begin > mapped && opcode_fetch > fetch_begin &&
+                   fetch_end > opcode_fetch && opcode_latch > fetch_end &&
+                   trace > opcode_latch && following > trace)) exit 1 }
    ' "$vdc_instruction_pc_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch' "$build_script" ||
    ! grep -Fq 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$build_script" ||
@@ -657,6 +673,15 @@ if ! grep -Fq 'mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch' "$build_scri
    ! grep -Fq '(unsigned)current->BXR' "$fast_vdc_snapshot_patch_file" ||
    ! grep -Fq 'VDC_TotalChips != 1' "$fast_vdc_snapshot_patch_file"; then
     printf '%s\n' 'FAIL: PCE Fast snapshots must retain bounded raw VDC/VCE data and identify their terminal capture boundary' >&2
+    exit 1
+fi
+
+if ! grep -Fq "s/^ FIRESTAFF_PATCH_BLANK_CONTEXT\$/ /" "$build_script" ||
+   ! grep -Fq "s/^ FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/" "$build_script" ||
+   ! grep -Fq "s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/" "$build_script" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMLoaderWrite(' "$main_ram_consumer_write_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite(' "$main_ram_consumer_write_patch_file"; then
+    printf 'FAIL: consumer trace hooks must apply with the provenance patch context\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT' "$build_script" ||

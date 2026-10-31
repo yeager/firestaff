@@ -76,7 +76,7 @@ remain at the top of `docs/`.
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
-- [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins
+- [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins; latest reference trace build and capture boundary is recorded there
 - [Theron US PCE mouse-held capture](source-lock/theron-disassembly/theron-us-pce-mouse-held-command-capture-20261031.md) — repeated guest mouse-read and candidate command-consumer receipts; save-state replay has no runtime CD provenance
 - [Theron System Card RUN trace](source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) and [bounded `$EA3B` disassembly](source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm) — callback byte and BIOS branch evidence; game handoff remains unobserved
 
@@ -152,7 +152,9 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-27 (main `88ef19df`). The current status reflects
-the source and authenticated-media evidence recorded on the linked status and
-per-game work-log pages. Each receipt remains bounded to its cited edition,
-route and test; it does not imply complete parity.
+**Last reviewed:** 2026-10-31. The current status reflects the source and
+authenticated-media evidence recorded on the linked status and per-game
+work-log pages. Theron's reference-only Mednafen trace tooling now passes
+patch-only application and instrumented PCE build checks; no new gameplay
+capture was made, and native support status is unchanged. Each receipt remains
+bounded to its cited edition, route and test; it does not imply complete parity.
