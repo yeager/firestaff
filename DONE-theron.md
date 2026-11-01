@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — disassemble US Drator row-reader source candidates
+
+- Verified the authentic US `TQUS02.bin` identity, then searched for the exact
+  instruction windows retained by the Drator row-consumer trace.
+- Found 14 static `$CBC9`-compatible load-loop occurrences. The candidate
+  `LDA $2935,Y` begins at `$CBC6`, which is consistent with the trace's PC
+  value after the operand read and with logical `$293B` when `Y=6`.
+- Found seven static `$45C3` occurrences of `TII $2935,$2400,$000A`, whose
+  source range includes the captured workspace bytes at offsets 6–8.
+- Added the source-candidate report and synchronized current summaries. The
+  live fetched instruction bytes are not joined to a unique Track 02 LBA/raw
+  occurrence. Runtime code ownership, row semantics, and native spawn
+  authorization remain unproven.
+
 ## 2026-11-01 — document authenticated pointer-to-zone source joins
 
 - Recorded the hash-verified US/JP relationship between the first five

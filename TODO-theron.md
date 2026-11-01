@@ -6,7 +6,7 @@ records, while 5–7 have zero offsets. The remaining task is to establish the
 original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-## Next original-game analysis — source-map the Drator row consumers
+## Next original-game analysis — join Drator reader PCs to fetched source bytes
 
 An authentic US cold replay proves a same-session write/read match for row
 bytes 6–8. At events 10,644,901, 10,644,902 and 10,644,910, the original
@@ -14,7 +14,15 @@ wrote physical `$1F093B-$1F093D` as `$02,$03,$00`; at events 10,644,912–14,
 reader PC `$CBC9` read the same addresses and values. Later, PC `$45C3` executed
 `TII $2935,$2400,$000A` and read the same offsets into a work buffer at events
 10,647,071–73. These observations establish byte-level row consumption, not
-field meanings or complete native creature behavior.
+field meanings or complete native creature behavior. Static source searches
+now find US Track 02 candidates for both PCs: `$CBC9` is consistent with a
+`LDA $2935,Y` load at `$CBC6`, and `$45C3` matches `TII $2935,$2400,$000A`.
+The first has 14 source occurrences and the second has seven. The current
+capture does not join fetched opcodes to a particular source LBA/raw offset, so
+runtime code ownership and row semantics remain open. Continue with a bounded
+same-session instruction-byte/source receipt; do not infer creature fields or
+authorize native spawning from the static matches. See the
+[source-candidate report](docs/source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
 The isolated cold run recorded 132 runtime `$C852` fetches at physical
 `$0DC852`; the first five 512-byte windows exactly match the authenticated US Track 02 source

@@ -25,7 +25,9 @@ The opt-in `$C852` fetch hook has now been used in an authentic US cold replay
 that reached Drator start, left-event and reentry. Its first five 512-byte
 runtime windows exactly match US Track 02 raw offset `$A3AD2`. The same-session
 trace proves a write/read match for generated-row offsets 6–8 and a later
-ten-byte TII copy to a work buffer. The 8,388,608-row BIOS trace is explicitly
+ten-byte TII copy to a work buffer. Static US source search finds 14 `$CBC9`
+load-loop candidates and seven `$45C3` TII candidates; the live source
+occurrence remains unjoined. The 8,388,608-row BIOS trace is explicitly
 truncated; its streaming verifier rejects the cap marker. Generated-row
 semantics remain open; the wrapper completed but rejected the capped BIOS trace. See
 [capture readiness](theron/THERON_CAPTURE_READINESS.md) and the
