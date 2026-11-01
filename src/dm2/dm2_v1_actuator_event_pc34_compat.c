@@ -2001,7 +2001,9 @@ static int floor_mecha_visitor(void *context,
     }
 
     /* ── CREATURE_DIRECTION (0x42) skevent.cpp:2234-2236 ─────── */
-    /* Source: _3a15_0d5c is a TODO/no-op in skproject. */
+    /* SPX v4 skevent.cpp leaves _3a15_0d5c as a TODO/no-op. DOS and SPX v5
+     * implement creature rotation in their timer dispatchers; this v4 event
+     * adapter has no source-version owner wired for those routes. */
     case DM2_ACTU_CREATURE_DIRECTION:
         r->creature_direction_invoked++;
         break;

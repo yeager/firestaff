@@ -211,7 +211,7 @@ SKW_3a15_0381	SKWINDOS	SKWINDOS/dm2bya.cpp	4135	bool SKW_3a15_0381(c_tim* eaxpti
 SKW_DELETE_TIMER	SKWINDOS	SKWINDOS/dm2bya.cpp	4145	void SKW_DELETE_TIMER(x16 eaxw)	0	PARTIAL
 SKW_QUEUE_TIMER	SKWINDOS	SKWINDOS/dm2bya.cpp	4171	x16 SKW_QUEUE_TIMER(c_tim* eaxptim)	0	PARTIAL
 SKW_ACTUATE_TRICKWALL	SKWINDOS	SKWINDOS/dm2bya.cpp	4192	void SKW_ACTUATE_TRICKWALL(c_tim* eaxptim)	0	PARTIAL
-SKW_3a15_0d5c	SKWINDOS	SKWINDOS/dm2bya.cpp	4228	void SKW_3a15_0d5c(c_tim* eaxptim, c_record* edxprec)	1	UNREVIEWED
+SKW_3a15_0d5c	SKWINDOS	SKWINDOS/dm2bya.cpp	4228	void SKW_3a15_0d5c(c_tim* eaxptim, c_record* edxprec)	1	PARTIAL
 SKW_TRY_ORNATE_NOISE	SKWINDOS	SKWINDOS/dm2bya.cpp	4239	void SKW_TRY_ORNATE_NOISE(c_record* eaxprec, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, bool argbool1)	0	UNREVIEWED
 SKW_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINDOS	SKWINDOS/dm2bya.cpp	4296	void SKW_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(x16 eaxw, c_record* ebxprec, bool ecxbool, c_tim* edxptim)	0	UNREVIEWED
 SKW_ACTIVATE_ORNATE_ANIMATOR	SKWINDOS	SKWINDOS/dm2bya.cpp	4363	void SKW_ACTIVATE_ORNATE_ANIMATOR(c_tim* eaxptim, x16 ebxw, x32 ecxl, c_record* edxprec)	0	UNREVIEWED
@@ -2065,7 +2065,7 @@ PROCESS_CLOUD	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1051	void SkWinCore::PROCESS_
 PROCESS_TIMER_DESTROY_DOOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1137	void SkWinCore::PROCESS_TIMER_DESTROY_DOOR(Timer *ref)	0	UNREVIEWED
 ACTIVATE_RELAY1	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1154	void SkWinCore::ACTIVATE_RELAY1(Timer *ref, Actuator *pr4, X16 delayAsMult) 	0	UNREVIEWED
 ACTIVATE_RELAY2	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1185	void SkWinCore::ACTIVATE_RELAY2(Timer *ref, Actuator *pr4, X16 xx)	0	UNREVIEWED
-_3a15_0d5c	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1234	void SkWinCore::_3a15_0d5c(Timer *ref, Actuator *pr4) { // TODO: Unr	0	UNREVIEWED
+_3a15_0d5c	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1234	void SkWinCore::_3a15_0d5c(Timer *ref, Actuator *pr4) { // TODO: Unr	0	IMPLEMENTED_PARITY
 ACTIVATE_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1240	void SkWinCore::ACTIVATE_ORNATE_ANIMATOR(Timer *ref, Actuator *pr4, ObjectID rl, X16 isWall)	0	PARTIAL
 ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1290	void SkWinCore::ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(ObjectID rl, Timer *ref, Actuator *pr4, X16 isWall)	0	PARTIAL
 ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1346	void SkWinCore::ACTIVATE_ITEM_TELEPORT(Timer *ref, Actuator *pr4, ObjectID rl, X16 isFloor, X16 recycler, ObjectID *prl, X16 capture, X16 onlyFirstItem)	0	PARTIAL
@@ -3641,7 +3641,7 @@ DM2_timproc_3a15_1da8	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1489	static i32 DM2_
 DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1504	static void DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(i32 eaxl, c_tim* edxtimp, unk* xebxp, i32 ecxl)	1	UNREVIEWED
 DM2_ACTIVATE_SHOOTER	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1611	static void DM2_ACTIVATE_SHOOTER(unk* xeaxp, c_tim* edxtimp)	1	UNREVIEWED
 DM2_ACTIVATE_TICK_GENERATOR	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1818	static void DM2_ACTIVATE_TICK_GENERATOR(unk* xeaxp, i32 edxl)	1	UNREVIEWED
-SKW_3a15_0d5c	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1889	void SKW_3a15_0d5c(c_tim* eaxtimp, unk* xedxp)	1	UNREVIEWED
+SKW_3a15_0d5c	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1889	void SKW_3a15_0d5c(c_tim* eaxtimp, unk* xedxp)	1	PARTIAL
 DM2_ACTUATE_WALL_MECHA	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	1924	static i32 DM2_ACTUATE_WALL_MECHA(c_tim* eaxtimp)	1	UNREVIEWED
 DM2_ANIMATE_CREATURE	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	2860	static void DM2_ANIMATE_CREATURE(i32 eaxl, i32 edxl, i32 ebxl)	1	PARTIAL
 DM2_ACTIVATE_CREATURE_KILLER	SKWINSPX	SKWINSPX/src/v5/sktimprc.cpp	2908	void DM2_ACTIVATE_CREATURE_KILLER(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1, i16 argw2, i16 argw3)	1	UNREVIEWED
