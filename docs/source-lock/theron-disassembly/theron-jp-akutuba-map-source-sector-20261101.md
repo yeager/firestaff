@@ -122,6 +122,11 @@ and SAT SHA-256
 `46f243e653e59d5558b831051ed9ff4dd9cf70498115b1a5ab02eaa1847b1fb4`. The
 snapshot is suitable for later state-bound capture analysis, but it does not
 identify the active map, party pose, tile read, or Firestaff's production
-renderer input. The next reference trace must observe the game after state
-load, including any remapping or copy, active selector, and pose-bound tile
-consumer, before changing native rendering.
+renderer input. A separate state-only trace observes a `$50D2` code path
+reading bytes from a candidate pointer-like structure at the tail of
+`thing_list`; this does not identify the active selector or establish a
+map-array consumer. See the
+[candidate reader disassembly](theron-jp-akutuba-map-index-reader-20261101.md).
+The next reference trace must observe the game after state load, including any
+remapping or copy, active selector, and pose-bound tile consumer, before
+changing native rendering.

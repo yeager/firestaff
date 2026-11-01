@@ -54,6 +54,12 @@ controller events but recorded no `$B0E5` spawn entry, spawn-register sample,
 RNG sample, or dungeon transition. This is evidence about that bounded
 state-only route only; it establishes neither movement nor runtime spawning.
 See the [spawn-consumer capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+A static disassembly comparison maps the unique 256-byte `$50D2` reader
+window from the authentic JP state to one raw Track 02 offset. A bounded trace
+observes reads from a candidate four-list structure at the end of the
+unclassified `thing_list` region, but its role, active-map relationship and
+tile consumer remain unproven. No dynamic map-array read or renderer join has
+been captured. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 The latest matched JP state-only pair verified a guest read of `up@61:120` at
 `$44C1`, then retained 256 identical, authentic-source-matched data reads in
 both the UP and neutral runs. These addresses precede the map arrays, no
