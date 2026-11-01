@@ -247,9 +247,11 @@ def verify(repo: Path) -> list[str]:
         errors.append(f"missing {runtime_path}")
         return errors
     runtime = runtime_path.read_text(encoding="utf-8")
+    # The class-2 PITFALL path now has a bounded source-owned close handler.
+    # Opening still fails closed until ADVANCE_TILES_TIME has its live
+    # party/creature owner, so keep that limit explicit below.
     for forbidden in (
             "dm2_runtime_process_3d_timer",
-            "dm2_runtime_actuate_pitfall",
             "dm2_runtime_invoke_message",
             "dm2_runtime_invoke_actuator",
             "dm2_runtime_actuate_teleporter",
@@ -259,6 +261,29 @@ def verify(repo: Path) -> list[str]:
     ):
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
+
+    pitfall = re.search(
+        r"static int dm2_runtime_actuate_pitfall_timer\s*\([^;]*?\)\s*\{.*?\n\}",
+        runtime,
+        re.DOTALL,
+    )
+    if not pitfall:
+        errors.append("DM2 source-owned class-2 PITFALL handler is missing")
+    else:
+        pitfall_body = pitfall.group(0)
+        required_pitfall_guards = (
+            "((unsigned int)raw >> 5) != 2u",
+            "if (action == 2)",
+            "action = (raw & 0x08) != 0 ? 1 : 0;",
+            "if (action == 0)",
+            "dm2_runtime_actuate_floor_mecha_timer(",
+            "dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y, raw)",
+        )
+        for guard in required_pitfall_guards:
+            if guard not in pitfall_body:
+                errors.append(f"DM2 PITFALL source guard missing: {guard}")
+        if "dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;" not in runtime:
+            errors.append("DM2 source-owned class-2 PITFALL handler is not dispatched")
 
     # DELETE_CREATURE_RECORD is now consumed by the source-owned runtime
     # recycler through the M10 compatibility archive.  It must be present in
