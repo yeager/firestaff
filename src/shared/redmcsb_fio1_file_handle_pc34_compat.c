@@ -245,6 +245,23 @@ int F1336_FIO1_14_WritePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                : REDMCSB_FIO1_RESULT_WRITE_FAILED_PC34;
 }
 
+int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
+                                 const RedmcsbFio1FileHandlePc34Compat *file,
+                                 int32_t *out_size)
+{
+    int32_t byte_count;
+
+    if (!host || !host->lockAndGetSize || !valid_file(file) || !out_size)
+        return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    /* ReDMCSB FIO1.C F1337 obtains a read lock, calls Info, returns the
+     * volume-reported byte size, then releases the lock. The host callback
+     * owns those platform calls and must unlock on success and failure. */
+    if (!host->lockAndGetSize(host->context, file->fileName, &byte_count))
+        return REDMCSB_FIO1_RESULT_QUERY_FAILED_PC34;
+    *out_size = byte_count;
+    return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
+}
+
 int F1338_FIO1_12_DeletePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                    const RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -282,7 +299,8 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1336/F1338-F1339/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1339/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
-           "Floppy, format, drive lock, and disk-change routes are excluded.";
+           "F1337 host callback abstracts the Amiga Lock/Info/UnLock route. "
+           "Floppy, format, and disk-change routes are excluded.";
 }

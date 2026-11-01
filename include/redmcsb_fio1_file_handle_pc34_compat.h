@@ -43,6 +43,11 @@ typedef int (*redmcsb_fio1_delete_result_pc34_compat)(
     void *context, const char *file_name);
 typedef int (*redmcsb_fio1_rename_result_pc34_compat)(
     void *context, const char *source_file_name, const char *destination_file_name);
+/* Amiga FIO1 F1337 Lock/Info: the host owns lock lifetime and returns the
+ * source file's byte size. It writes out_size only on success and must release
+ * its lock on every path. */
+typedef int (*redmcsb_fio1_lock_and_get_size_compat)(
+    void *context, const char *file_name, int32_t *out_size);
 
 typedef struct RedmcsbFio1HostPc34Compat {
     void *context;
@@ -57,6 +62,7 @@ typedef struct RedmcsbFio1HostPc34Compat {
     redmcsb_fio1_delete_result_pc34_compat deleteFile;
     redmcsb_fio1_rename_result_pc34_compat renameFile;
     redmcsb_fio1_enumerate_matches_pc34_compat enumerateMatches;
+    redmcsb_fio1_lock_and_get_size_compat lockAndGetSize;
 } RedmcsbFio1HostPc34Compat;
 
 void RedmcsbFio1FileHandleInitPc34Compat(
@@ -96,6 +102,9 @@ int F1336_FIO1_14_WritePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                   const RedmcsbFio1FileHandlePc34Compat *file,
                                   unsigned long byte_count,
                                   const unsigned char *buffer);
+int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
+                                 const RedmcsbFio1FileHandlePc34Compat *file,
+                                 int32_t *out_size);
 int F1338_FIO1_12_DeletePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                    const RedmcsbFio1FileHandlePc34Compat *file);
 int F1339_FIO1_11_RenamePc34Compat(const RedmcsbFio1HostPc34Compat *host,
