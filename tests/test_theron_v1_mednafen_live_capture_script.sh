@@ -271,6 +271,39 @@ if [[ "$cd_filter_valid_output" != *'SKIP:'* ]]; then
     printf '%s\n' 'FAIL: valid CD data-read settings did not reach the missing-media gate' >&2
     exit 1
 fi
+exact_lba_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=4294967296 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: out-of-range exact source LBA was accepted' >&2
+    exit 1
+}
+if [[ "$exact_lba_invalid_output" != *'THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295'* ]]; then
+    printf '%s\n' 'FAIL: invalid exact source LBA lacked a precise diagnostic' >&2
+    exit 1
+fi
+exact_lba_module_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: exact source-LBA filtering accepted the standard PCE module' >&2
+    exit 1
+}
+if [[ "$exact_lba_module_output" != *'exact source-LBA filtering requires the PCE Fast module'* ]]; then
+    printf '%s\n' 'FAIL: exact source-LBA module gate lacked a precise diagnostic' >&2
+    exit 1
+fi
+exact_lba_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=0003674 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid exact source-LBA filter was rejected' >&2
+    exit 1
+}
+if [[ "$exact_lba_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid exact source-LBA filter did not reach the missing-media gate' >&2
+    exit 1
+fi
 cd_ram_write_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=0 \
     "$script" 2>&1) && {

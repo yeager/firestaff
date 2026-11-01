@@ -1,5 +1,25 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — add an exact-LBA Akutuba capture filter
+
+- Added `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA` with decimal `uint32`
+  validation, a PCE Fast module gate, and an `exact_source_lba_filter` capture
+  summary field. LBA 3674 now gates CD data-port rows and FIFO-origin RAM
+  receipts before their trace quotas. The FIFO origin queue remains
+  unfiltered, preserving source attribution for intervening reads.
+- The capture-wrapper regression and the complete Mednafen patch-application
+  regression each passed three consecutive loops. The complete patched
+  Mednafen 1.32.1 build compiled on TRV2 with `-j1`; an isolated dummy-SDL
+  `-help` startup reported matching compiled and runtime SDL 2.32.70 versions.
+  The SDL linkage verifier reports its documented Linux skip because the
+  direct-link check is macOS-only.
+- Updated the capture-readiness page, Theron TODO, README, documentation index,
+  source-sector report, and Theron technical wiki pages. See the
+  [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+- No accepted authentic capture has used this filter. It provides no retail
+  byte authentication, active-map or pose-bound consumer join, or rendering
+  evidence; those parity requirements remain open in `TODO-theron.md`.
+
 ## 2026-11-01 — document the pending native spawn-source debug receipt
 
 - Documented the planned bounded `--debug` receipt for authenticated Track 02

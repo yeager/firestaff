@@ -90,6 +90,14 @@ consumer reads at `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3` for physical row bytes
 identify row fields or semantics. Three focused tooling loops passed, but no
 authentic replay has used this filter; the truncated capture remains rejected.
 
+The source-sector planner maps JP Akutuba's descriptor and maps to disc LBA
+3674. The reference capture wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` and gates CD data-port rows and
+FIFO-origin RAM receipts before their quotas. It leaves the full FIFO origin
+sequence intact. This is an instrumentation filter, not a source-to-consumer
+proof; no accepted authentic capture has exercised it yet. See the
+[exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 **Current reference boundary (2026-10-31):** a separate authentic Japanese
 cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`
 callback through BIOS branch `$E166->$E176`. It does not observe a confirmed

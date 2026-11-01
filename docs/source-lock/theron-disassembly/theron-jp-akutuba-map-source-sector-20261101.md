@@ -41,15 +41,20 @@ been observed in the same run.
 
 ## Capture use and limits
 
-Use disc LBA 3674 (or the equivalent Track 02 file-sector/user-byte range) as
-the narrow source-read filter for a cold JP capture. Preserve a shared event
-sequence from the read through its System Card or game-owned RAM destination,
-the active-map selection, and a tile read at the captured pose; pair it with
-atomic VDC/VCE/VRAM and an accepted-input/no-input control. A static media
-location does not show that the original reads, selects, copies, or consumes
-these bytes. It does not identify a runtime map, player coordinate, visual
-meaning, or renderer behavior. Current cold JP RUN captures stop in the System
-Card and report `transition=missing`, so no such game-owned join is claimed.
+The reference wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` for this target. It gates the
+CD data-port and FIFO-origin RAM receipt sidecars before their quotas while
+retaining FIFO origin tracking for all sectors. See the
+[implementation note](../theron-jp-akutuba-exact-lba-capture-tool-20261101.md)
+for its validation and limits. Preserve a shared event sequence from the
+filtered read through its System Card or game-owned RAM destination, the
+active-map selection, and a tile read at the captured pose; pair it with atomic
+VDC/VCE/VRAM and an accepted-input/no-input control. The exact-LBA filter alone
+does not show that the original selects or consumes these bytes. It does not
+identify a runtime map, player coordinate, visual meaning, or renderer
+behavior. No accepted authentic capture has exercised the new filter, and
+current cold JP RUN captures stop in the System Card and report
+`transition=missing`, so no game-owned join is claimed.
 
 Recompute the authentic-media target with:
 

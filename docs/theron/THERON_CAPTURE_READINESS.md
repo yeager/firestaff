@@ -23,6 +23,14 @@ has not been linked and no authentic runtime log has been captured, so this
 adds no gameplay evidence. Its planned fields and remaining acceptance checks
 are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
+The PCE Fast reference wrapper now supports the exact source-sector filter
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It gates CD data-port rows and
+FIFO-origin RAM receipts before their trace quotas; CD FIFO origin tracking
+continues across all sectors to preserve byte attribution. This is capture
+tooling only. No accepted authentic capture has exercised the filter, and
+LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
+See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries

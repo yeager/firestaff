@@ -101,6 +101,15 @@
 > report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 
+> **Exact source-sector capture filter:** set
+> `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` to gate the PCE Fast
+> CD-data-port and FIFO-origin RAM receipt sidecars before their row quotas.
+> The FIFO origin queue continues tracking all bytes, preserving attribution
+> across unrelated sectors. The capture summary records the selected LBA.
+> This reduces diagnostic volume but does not prove a retail-byte match, map
+> selection, a pose-bound consumer, or a rendered response. See the
+> [implementation note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 > **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
 > record the same 128-instruction path into `$C1FC`, including `$C1D6`
 > call/return and conditional fall-through. Since `$C1FC` is also associated

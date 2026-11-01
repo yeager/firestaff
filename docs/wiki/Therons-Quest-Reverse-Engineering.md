@@ -110,6 +110,14 @@ arrays are present, this does not identify the active map or its consumer. See
 the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 
+The PCE Fast capture wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` to reduce the CD data-port and
+FIFO-origin RAM receipt sidecars before their quotas. FIFO provenance remains
+tracked for all sectors, so intervening reads retain their source offsets. No
+accepted authentic run has used this filter; the same-session active-map and
+pose-bound tile-consumer joins remain open. See the
+[capture-tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
 result establishes visual parity.

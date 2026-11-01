@@ -107,6 +107,14 @@ physical PCs, fetched instruction bytes, MPRs, disc LBA and user-data offset,
 RAM destinations, and an atomic VDC/VCE/VRAM snapshot so each source-to-consumer
 step can be checked independently.
 
+The bounded PCE Fast capture wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It filters CD data-port rows
+and FIFO-origin RAM receipts before their trace quotas, while retaining the
+full CD FIFO origin sequence so intervening sector bytes cannot shift source
+attribution. This reduces unrelated trace volume; it does not prove that the
+original game read or selected the map. No accepted authentic capture has yet
+used this filter. See the [exact-LBA capture tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
 use them only after the runtime pose, selected map, and tile consumer are bound.
 Pair an accepted input with a no-input control. Do not change movement or
