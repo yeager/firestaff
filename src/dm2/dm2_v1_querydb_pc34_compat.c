@@ -10,6 +10,7 @@
 
 #include "dm2_v1_querydb_pc34_compat.h"
 #include "dm2_v1_party.h"
+#include "dm2_v1_skill_query_pc34_compat.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -815,10 +816,39 @@ int32_t dm2_v1_querydb_item_name(int32_t record, char *buf, int32_t buf_len,
 /* ── Section 7: Player queries ────────────────────────────────────── */
 
 int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
+                                       int32_t include_bonus,
                                        const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    (void)player_idx; (void)skill; (void)cb; (void)ctx;
-    return 0;
+    DM2_V1_HeroSkills hero_skills;
+    int16_t hero_count;
+    int override_mode = 0;
+
+    if (!cb || !cb->get_heros_in_party || !cb->get_hero_skill ||
+        (include_bonus && !cb->get_hero_sbonus) ||
+        !cb->is_player_skill_query_overridden || player_idx < 0 ||
+        player_idx >= DM2_MAX_HEROES || skill < 0 || skill >= 20) {
+        return 0;
+    }
+    hero_count = cb->get_heros_in_party(ctx);
+    if (hero_count <= 0 || hero_count > DM2_MAX_HEROES ||
+        player_idx >= hero_count) {
+        return 0;
+    }
+
+    memset(&hero_skills, 0, sizeof(hero_skills));
+    for (int index = 0; index < DM2_V1_SKILL_ARRAY_SIZE; ++index) {
+        int major = index / 4;
+        int minor = index % 4;
+        hero_skills.skill[index] = cb->get_hero_skill(
+            ctx, player_idx, major, minor);
+        if (include_bonus) {
+            hero_skills.sbonus[index] = cb->get_hero_sbonus(
+                ctx, player_idx, major, minor);
+        }
+    }
+    override_mode = cb->is_player_skill_query_overridden(ctx) != 0;
+    return dm2_v1_query_player_skill_lv(
+        &hero_skills, (int16_t)skill, include_bonus != 0, override_mode);
 }
 
 int32_t dm2_v1_querydb_get_player_at_position(int32_t pos,

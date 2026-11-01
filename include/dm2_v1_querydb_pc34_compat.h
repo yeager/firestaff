@@ -90,6 +90,8 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int32_t (*dm_locate_other_level)(void *ctx, int32_t level, int32_t dir,
                                      int16_t *xp, int16_t *yp, void *extra);
     int32_t (*is_creature_allowed_on_level_cb)(void *ctx, int32_t creature, int32_t level);
+    /* Source state: DOS/SPX query override or v4 sleeping gate. */
+    int32_t (*is_player_skill_query_overridden)(void *ctx);
 
 } DM2_V1_QueryDbCallbacks;
 
@@ -380,6 +382,10 @@ int32_t dm2_v1_query_gdat_potion_behaviour_from_record(int32_t record,
 /* -------------------------------------------------------------------------- */
 /* Player / hero queries (10)                                                 */
 /* -------------------------------------------------------------------------- */
+
+int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
+                                       int32_t include_bonus,
+                                       const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int16_t dm2_v1_query_player_skill_lv(int16_t hero, int16_t skill, int32_t include_bonus,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
