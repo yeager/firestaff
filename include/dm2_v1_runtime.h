@@ -1680,6 +1680,9 @@ int dm2_v1_runtime_recompute_player_pos(void);
 /* Select the living DM2 champion that owns an M11 rune-cast request without
  * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
 int dm2_v1_runtime_select_spell_champion(int hero_index);
+/* SPX/DOS SET_SPELLING_CHAMPION publishes spell mode while preserving the
+ * physical active hand used by CAST_SPELL_PLAYER. */
+int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);

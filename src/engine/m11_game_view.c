@@ -23598,7 +23598,8 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
         int rune_count = 0;
         uint8_t runes[4] = {0, 0, 0, 0};
         if (caster < 0 || caster >= DM2_MAX_HEROES ||
-            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_enter_spell_mode(
+                caster, dm2_v1_runtime_get_active_hand()) ||
             !dm2_v1_runtime_get_spell_runes(
                 caster, runes, (int)sizeof(runes), &rune_count)) return 0;
         memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));

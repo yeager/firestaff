@@ -20870,6 +20870,34 @@ int dm2_v1_runtime_select_spell_champion(int hero_index) {
     return 1;
 }
 
+int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    if (spell_hand < 0 || spell_hand > 1 || hero_index < 0 ||
+        hero_index >= DM2_MAX_HEROES || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        hero_index >= rt->source_party.heros_in_party)
+        return 0;
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP == 0) return 0;
+    /* DOS/SPX SET_SPELLING_CHAMPION sets both selected-hand globals to the
+     * spell sentinel (2), publishes champion+1, clears magical-map flags,
+     * and recomputes a pending formation drag.  Firestaff keeps the physical
+     * hand in party.curactmode for the live cast owner and tracks spell mode
+     * separately, while matching the remaining state transitions. */
+    rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_party.curacthero = rt->source_curacthero;
+    rt->source_v1e0b62 = 0;
+    rt->source_v1e0b4e = 0;
+    if (rt->source_drag_in_progress)
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    rt->source_curactmode = (int16_t)spell_hand;
+    rt->source_party.curactmode = (int16_t)spell_hand;
+    return 1;
+}
+
 int dm2_v1_runtime_get_active_champion_index(void) {
     const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     if (!rt->source_party_valid || !rt->session_snapshot_valid ||
