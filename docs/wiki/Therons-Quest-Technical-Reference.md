@@ -1,5 +1,16 @@
 # Theron's Quest Technical Reference
 
+> **Current renderer/audio boundary (2026-11-01):** presenting an authenticated
+> captured screen is not a state-driven dungeon renderer. Authentic square or
+> material records are not yet joined to retail tile selection, active map,
+> party pose, BAT/VRAM, VCE/VDC state, and a paired retail frame. Do not infer
+> or synthesize the missing tile mapping. Production CDDA currently covers
+> title Track 01; although authentic JP tracks 03–18 can be decoded by bounded
+> tests, gameplay events are not joined to the original track-selection
+> commands. Static `$E03F` candidates do not prove that route. See the maintained
+> [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
+> [Theron TODO](../../TODO-theron.md).
+
 > Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.

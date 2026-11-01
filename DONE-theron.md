@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — synchronize current Theron parity documentation
+
+- Audited the maintained Theron status, planning, reference, and documentation
+  index pages against current native code and available authenticated capture
+  evidence. Clarified that captured-screen presentation does not provide a
+  state-driven dungeon renderer, and that the retail tile mapping and
+  active-map/pose-to-video-state join remain unverified.
+- Recorded that production CDDA only routes title Track 01; authentic tracks
+  03–18 have bounded decoding coverage but no verified gameplay event-to-track
+  route. Static `$E03F` candidates are not treated as semantics.
+- Added these gaps to the current Theron TODO and linked it from the
+  documentation index and technical reference. No gameplay behavior or parity
+  claim was added.
+
+
 ## 2026-11-01 — verify native JP/US spawn-source debug receipts
 
 - Built the native macOS Debug `firestaff` target in an isolated build outside

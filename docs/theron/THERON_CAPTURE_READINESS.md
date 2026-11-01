@@ -1,12 +1,16 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01 (updated after native spawn-receipt verification).** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (updated after documentation audit).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
 Static disassembly maps the `$50D2` window and four observed map-array reader windows uniquely to authenticated JP Track 02. It shows the local checks, indirect-indexed reads, bit `$10` branches, and indexed table writes without assigning data semantics. The previous state-only captures did not record contemporaneous registers or opcodes. The v4 reference hook now records that context and has passed a PCE Fast object compilation, but has not yet produced a gameplay trace. The candidate pointer-list role, active-map relation, pose-bound tile consumer, and rendered result remain unverified. See the [reader and opcode report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [three-run capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
+
+**Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
+
+**Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.
 
 The Mednafen movement-context instrumenter emits a separate
 `map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three

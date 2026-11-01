@@ -144,7 +144,12 @@ more per region from authenticated split MODE1/2048 ISO files; all twelve
 loaded-level receipts match all eight pointer and five zone records to source
 bytes. This verifies source diagnostics only, not original runtime spawn
 selection or behavior. Native movement, transitions, combat, audio, presentation
-and save parity remain open. See the [receipt report](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+and save parity remain open. Production CDDA currently plays title Track 01;
+no verified gameplay event-to-track route exists for authentic tracks 03–18.
+Static `$E03F` candidates and test-only track decoding do not establish that
+route. The renderer also lacks a verified retail square/material-to-tile
+mapping and same-run active-map/pose-to-BAT/VRAM/VCE/VDC/frame join. Do not
+substitute inferred or synthetic tile data. See the [receipt report](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md), [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md), and [Theron TODO](TODO-theron.md).
 A cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
 `$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese

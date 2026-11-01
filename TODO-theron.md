@@ -1,5 +1,22 @@
 # Firestaff TODO — Theron's Quest
 
+## Current parity blockers confirmed by documentation audit (2026-11-01)
+
+- **Native dungeon renderer:** establish the authentic square/material-to-tile
+  mapping and join the active map and party pose to tile consumption, BAT/VRAM,
+  VCE/VDC state, and a paired retail frame in one capture. Existing captured-
+  screen presentation does not establish a state-driven dungeon renderer.
+  Keep tile semantics opaque until the source-to-render chain is verified.
+- **Gameplay CDDA:** trace accepted original-game CD commands and bind a
+  specific gameplay event to its selected CDDA track and start/stop transition.
+  Production currently plays Track 01 for the title; static `$E03F` candidates
+  and test-only decoding of authentic tracks 03–18 do not establish gameplay
+  routing. Do not assign tracks to events from static candidates alone.
+- Continue the JP active-map source-to-consumer chain and the US generated-row
+  source/consumer analysis below. Movement, spawn selection, combat, save
+  progression, native presentation, gameplay audio, and complete parity remain
+  evidence-gated.
+
 ## 2026-11-01 — reach a verified JP game handoff before source-LBA capture
 
 The r4 Mednafen 1.32.1 binary builds against standalone SDL 2.32.10. The
