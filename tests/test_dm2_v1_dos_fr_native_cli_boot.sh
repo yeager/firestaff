@@ -105,14 +105,17 @@ PY
 # DOS dungeon bytes with the English release but must retain the PC French
 # GAME_LOAD owner all the way through the first input, rather than borrowing
 # an English startup path.
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+output=$(FIRESTAFF_CONFIG_PATH="$picker_home/config.toml" \
+    FIRESTAFF_DATA="$picker_data_root" \
+    HOME="$picker_home" XDG_CONFIG_HOME="$picker_home" APPDATA="$picker_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --debug --game dm2 --data-dir "$picker_data_root" --boot-probe \
     --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
 case "$output" in
-    *'assetMd5=b4d733576ea60c41737f79f212faf528'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+    *'dm2-render-debug game=dm2 platform=pc-fr'*'assetMd5=b4d733576ea60c41737f79f212faf528'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
 after_hash=$(firestaff_sha256_file "$archive")
@@ -120,4 +123,4 @@ if [ "$after_hash" != "$archive_hash" ]; then
     echo 'FAIL: original DM2 French DOS archive changed during its startup tests' >&2
     exit 1
 fi
-echo 'PASS: native DM2 French DOS ZIP start menu reaches runtime and moves in memory'
+echo 'PASS: native DM2 French DOS ZIP start menu and bare --game dm2 CLI reach runtime and move in memory'

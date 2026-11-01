@@ -31,7 +31,9 @@ int main(void)
     int initial_audio_bytes = 0;
     unsigned int hash;
     int nonzero_samples = 0;
+    int64_t centered_sum = 0;
     int ok = 1;
+    int8_t *signed_pcm = NULL;
     int require_native_audio = getenv("FIRESTAFF_REQUIRE_NATIVE_AUDIO") != NULL;
 
     {
@@ -44,28 +46,61 @@ int main(void)
     }
     memset(&media, 0, sizeof(media));
     memset(&audio, 0, sizeof(audio));
-    if (dm2_v1_mac_media_read_zip(zip, &media) != 0 ||
-        dm2_v1_mac_sound_find(media.sound_resource_fork[DM2_V1_MAC_SOUND_GENERAL],
-                               media.sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL],
-                               10001, &sample) != 0 || !sample.valid ||
+    if (dm2_v1_mac_media_read_zip(zip, &media) != 0) {
+        fprintf(stderr, "authentic Mac media parse failed\n");
+        return 1;
+    }
+    if (dm2_v1_mac_sound_find(
+            media.sound_resource_fork[DM2_V1_MAC_SOUND_GENERAL],
+            media.sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL],
+            10001, &sample) != 0 &&
+        dm2_v1_mac_sound_find(media.application_resource,
+                              media.application_resource_size,
+                              6000, &sample) != 0) {
+        fprintf(stderr, "authentic Mac sound transport source not found\n");
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
+    if (!sample.valid || sample.encode != 0u ||
         sample.sample_data_size == 0u || sample.sample_rate_fixed == 0u ||
         sample.sample_data_size > 120000u) {
         fprintf(stderr, "authentic Mac sound transport source not found\n");
         dm2_v1_mac_media_free(&media);
         return 1;
     }
+    signed_pcm = (int8_t *)malloc(sample.sample_data_size);
+    if (!signed_pcm) {
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
+    /* A nil samplePtr means the standard Macintosh sample area stores
+     * unsigned 8-bit values with 0x80 as silence.  SDL's source queue accepts
+     * signed 8-bit PCM, so center each authentic sample before transport. */
+    for (size_t i = 0; i < sample.sample_data_size; ++i) {
+        signed_pcm[i] = (int8_t)((int)sample.sample_data[i] - 128);
+        centered_sum += signed_pcm[i];
+    }
+    if (sample.format == 2u && sample.resource_id == 6000 &&
+        (centered_sum < -(int64_t)sample.sample_data_size ||
+         centered_sum > (int64_t)sample.sample_data_size)) {
+        fprintf(stderr, "Mac format-2 sample was not centered around silence\n");
+        free(signed_pcm);
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
     source_rate = (int)((sample.sample_rate_fixed + 0x8000u) >> 16);
-    hash = fnv1a(sample.sample_data, sample.sample_data_size);
+    hash = fnv1a((const unsigned char *)signed_pcm, sample.sample_data_size);
     ok &= M11_Audio_Init(&audio);
     if (require_native_audio &&
         (audio.backend != M11_AUDIO_BACKEND_SDL3 || !audio.sdlStream)) {
         puts("SKIP: native Mac audio output is unavailable");
         M11_Audio_Shutdown(&audio);
+        free(signed_pcm);
         dm2_v1_mac_media_free(&media);
         return 77;
     }
     ok &= M11_Audio_PlayDm2MacSndPcm(&audio,
-                                     (const int8_t *)sample.sample_data,
+                                     signed_pcm,
                                      (int)sample.sample_data_size,
                                      source_rate, sample.resource_id, hash);
     ok &= audio.dm2MacSndAccepted &&
@@ -124,9 +159,11 @@ int main(void)
                 audio.dm2MacSndPcm.sampleCount, nonzero_samples);
     }
     M11_Audio_Shutdown(&audio);
+    free(signed_pcm);
     dm2_v1_mac_media_free(&media);
     if (!ok) return 1;
-    printf("PASS: authentic Mac snd PCM transported: id=%d bytes=%zu rate=%d\n",
-           sample.resource_id, sample.sample_data_size, source_rate);
+    printf("PASS: authentic Mac snd PCM transported: format=%u id=%d bytes=%zu rate=%d\n",
+           sample.format, sample.resource_id, sample.sample_data_size,
+           source_rate);
     return 0;
 }

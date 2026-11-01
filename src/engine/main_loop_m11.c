@@ -6470,10 +6470,11 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     if (g_m11_debug_startup_detail && gameId &&
         strcmp(gameId, "csb") == 0) {
         fprintf(stderr,
-            "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl entry-data=%s menu-state=%d skip=%d\n",
+            "firestaff: startup-source-check game=csb candidate=amiga-swsh-ftl entry-data=%s menu-state=%d skip=%d\n",
             dataDir && dataDir[0] ? dataDir : "(none)",
             menuState != NULL, skipSwoosh);
     }
+
     if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
@@ -6520,17 +6521,6 @@ static int m11_play_ftl_swoosh_for_game_if_available(
 
         memset(&amigaAssets, 0, sizeof(amigaAssets));
         memset(&amigaAudio, 0, sizeof(amigaAudio));
-        if (g_m11_debug_startup_detail) {
-            fprintf(stderr,
-                "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl index=%d matched=%d platform=%s edition=%s graphics-md5=%s\n",
-                versionIndex,
-                selectedVersion ? selectedVersion->matched : 0,
-                selectedIsAmiga ? "Amiga" : "non-amiga",
-                selectedVersion && selectedVersion->versionId
-                    ? selectedVersion->versionId : "unknown",
-                selectedVersion && selectedVersion->matchedMd5[0] != '\0'
-                    ? selectedVersion->matchedMd5 : "unknown");
-        }
         /* The Amiga SWSH prelude is owned by the selected Amiga game disk.
          * Greatstone's g_csb.html lists SWSH.FTL on the original A31E, A31M,
          * A33M, and A35 disks; asset_status_m12.c pins the accepted SWSH bytes
@@ -6557,6 +6547,13 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             amigaProfile = 1;
         }
         if (amigaProfile) {
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                    "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl index=%d matched=%d platform=Amiga edition=%s graphics-md5=%s\n",
+                    versionIndex, selectedVersion->matched,
+                    selectedVersion->versionId,
+                    selectedVersion->matchedMd5);
+            }
             /* ReDMCSB APPA.C calls FTL_SWSH before FTL_ANIM and ignores a
              * missing prelude. Bind only to the selected Amiga disk member;
              * the PC SWOOSH finder must not substitute another edition. */
@@ -6673,6 +6670,9 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             if (amigaAudioInitialized) M11_Audio_Shutdown(&amigaAudio);
             free(amigaBytes);
             return g_m11_startup_intro_quit_requested ? 0 : 1;
+        } else if (g_m11_debug_startup_detail && selectedVersion &&
+                   selectedVersion->matched && !selectedIsAmiga) {
+            fprintf(stderr, "firestaff: startup-source-skip game=csb candidate=amiga-swsh-ftl reason=selected-edition-not-amiga\n");
         }
     }
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {

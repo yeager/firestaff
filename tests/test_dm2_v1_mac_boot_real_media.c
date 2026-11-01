@@ -1,8 +1,24 @@
 #include "dm2_v1_boot.h"
+#include "dm2_v1_mac_sound.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int mac_sound_source_is_complete(const DM2_V1_BootProfile *profile)
+{
+    DM2_V1_MacSoundSample sample;
+    if (!profile) return 0;
+    if (profile->mac_sound_resource_fork_present_mask == 0x7u) return 1;
+    return dm2_v1_mac_sound_count(profile->mac_application_resource,
+                                  profile->mac_application_resource_size) ==
+               139u &&
+           dm2_v1_mac_sound_find(profile->mac_application_resource,
+                                 profile->mac_application_resource_size,
+                                 6000, &sample) == 0 &&
+           sample.valid && sample.format == 2u &&
+           sample.sample_length == 20886u;
+}
 
 int main(void) {
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
@@ -45,7 +61,7 @@ int main(void) {
                    profile.mac_movie_moov_present_mask != 0x1du ||
                    profile.mac_movie_moov_size[DM2_V1_MAC_MOVIE_TITLE] !=
                        3286u) ||
-        profile.mac_sound_resource_fork_present_mask != 0x7u ||
+        !mac_sound_source_is_complete(&profile) ||
         dm2_v1_boot_enter_game(&profile) != 0) {
         fprintf(stderr,
                 "DM2 Mac boot failed: platform=%d version=%s verified=%d g=%zu d=%zu\n",
