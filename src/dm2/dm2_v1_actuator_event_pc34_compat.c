@@ -706,6 +706,8 @@ typedef struct {
     void *ornate_ctx;
     DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound;
     void *ornate_sound_ctx;
+    DM2_V1_QueueShooterNoiseFn queue_shooter_noise;
+    void *shooter_sound_ctx;
     DM2_V1_DropRng *rng;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
@@ -725,13 +727,14 @@ static void shooter_wr16(const DM2_V1_RecordPoolSet *pools,
 /* Source: SKWINSPX/src/v4/skevent.cpp:1536-1631 and skgame.cpp:440-501;
  * SKWINSPX/src/v5/sktimprc.cpp:1611-1812 and bitem.cpp:1043-1138;
  * SKWINDOS/dm2byg.cpp:2765-2841 and dm2byc.cpp:359-424. The runtime wall
- * owner supplies its transaction snapshot and session RNG. Throw-noise
- * admission and the DOS DB14-exhaustion MOVE_RECORD_TO fallback are still
- * separate source gaps and keep the audit status partial. */
+ * owner supplies its transaction snapshot, session RNG and source noise
+ * callback. The DOS DB14-exhaustion MOVE_RECORD_TO fallback remains missing. */
 static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
                                  DM2_V1_DungeonData *dungeon,
                                  DM2_V1_SourceTimerQueue *queue,
                                  DM2_V1_DropRng *rng,
+                                 DM2_V1_QueueShooterNoiseFn queue_noise,
+                                 void *shooter_sound_ctx,
                                  const uint8_t *actuator,
                                  int timer_x, int timer_y, int timer_dir,
                                  int map, uint32_t game_tick,
@@ -743,6 +746,7 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
     int budget = 0;
     int16_t cursor;
     if (!pools || !pools->valid || !dungeon || !queue || !rng ||
+        !queue_noise ||
         !actuator || !receipt || map < 0 || map >= dungeon->level_count ||
         timer_x < 0 || timer_y < 0 ||
         timer_x >= dungeon->level_widths[map] ||
@@ -848,6 +852,12 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
         DM2_V1_SourceTimer follow;
         if (db14 < 0 || !missile || pools->pools[14].record_size < 8)
             return 0;
+        /* c_item.cpp:1097-1100 — DM2_SHOOT_ITEM queues GEN2 noise for the
+         * selected object after DB14 allocation and before publishing the
+         * missile record/timer. The caller owns rollback for both queues. */
+        if (!queue_noise(shooter_sound_ctx, (uint16_t)objects[i], map,
+                         launch_x, launch_y, game_tick)) return 0;
+        receipt->sound_queued++;
         shooter_wr16(pools, missile, 0xfffeu);
         shooter_wr16(pools, missile + 2, (uint16_t)objects[i]);
         missile[4] = (uint8_t)low;
@@ -1059,7 +1069,8 @@ static int wall_mecha_visitor(void *context,
         memset(&sh_receipt, 0, sizeof(sh_receipt));
         if (ctx->rng) {
             shooter_ok = activate_shooter_live(
-                ctx->pool_set, ctx->dungeon, ctx->queue, ctx->rng, record,
+                ctx->pool_set, ctx->dungeon, ctx->queue, ctx->rng,
+                ctx->queue_shooter_noise, ctx->shooter_sound_ctx, record,
                 (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
                 ctx->direction, ctx->map, ctx->game_tick, &sh_receipt);
         } else {
@@ -1354,6 +1365,8 @@ int dm2_v1_actuate_wall_mecha_with_rng(
                               void *ornate_ctx,
                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                               void *ornate_sound_ctx,
+                              DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
+                              void *shooter_sound_ctx,
                               DM2_V1_DropRng *rng,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
@@ -1385,6 +1398,8 @@ int dm2_v1_actuate_wall_mecha_with_rng(
     ctx.ornate_ctx  = ornate_ctx;
     ctx.queue_ornate_sound = queue_ornate_sound;
     ctx.ornate_sound_ctx = ornate_sound_ctx;
+    ctx.queue_shooter_noise = queue_shooter_noise;
+    ctx.shooter_sound_ctx = shooter_sound_ctx;
     ctx.rng = rng;
     ctx.receipt     = receipt;
 
@@ -1416,7 +1431,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
         pool_set, dungeon, caii, asset_loader, queue, map, x, y,
         action_type, direction, game_tick, global_state, creature_killer_cb,
         get_ornate_anim_len, ornate_ctx, queue_ornate_sound, ornate_sound_ctx,
-        NULL, receipt);
+        NULL, NULL, NULL, receipt);
 }
 
 /* ── Floor mecha visitor ───────────────────────────────────────────── */

@@ -8951,6 +8951,32 @@ static int dm2_runtime_queue_door_collision_noise(
     return 1;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    uint16_t source_index;
+} DM2_RuntimeShooterNoiseContext;
+
+/* skproject c_item.cpp:1097-1100 DM2_SHOOT_ITEM queries the selected
+ * object's cls1/cls2 and queues GEN2(0x86, 0xfe, x, y, 1, 0x6e, 0x80)
+ * before appending the DB14 missile and its continuation timer. */
+static int dm2_runtime_queue_shooter_noise(
+    void *context, uint16_t item, int map, int x, int y, uint32_t game_tick)
+{
+    DM2_RuntimeShooterNoiseContext *noise =
+        (DM2_RuntimeShooterNoiseContext *)context;
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    uint8_t cls1 = 0xffu;
+    uint8_t cls2 = (uint8_t)(item & 0x03ffu);
+    if (!noise || !noise->runtime || !noise->runtime->sound_queue_ready ||
+        !dm2_v1_skproject_query_cls1_from_record_ex(
+            item, &noise->runtime->record_pools, &cls1, &cls1_receipt) ||
+        !cls1_receipt.valid)
+        return 0;
+    return dm2_runtime_queue_door_collision_noise(
+        noise->runtime, map, x, y, cls1, cls2, 0x86, 0xfe, 0x6e, 0x80,
+        game_tick, noise->source_index);
+}
+
 /*
  * dm2_runtime_door_step_timer — DM2-owned 0x01 handler for the source-order
  * timer dispatcher (DM2-003 follow-up, round 24).
@@ -9750,6 +9776,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_RuntimeShooterNoiseContext shooter_noise_ctx;
     DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
@@ -9758,7 +9785,6 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     int backup_ready = 0;
     int map, x, y, action, direction;
 
-    (void)source_index;
     (void)receipt;
     if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
         !rt->record_pools_valid) {
@@ -9770,6 +9796,8 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     direction = (int)(uint8_t)(timer->value_b & 0xff);
     action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
     game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    shooter_noise_ctx.runtime = rt;
+    shooter_noise_ctx.source_index = source_index;
     rng_backup = rt->session_rng;
     memset(&creature_killer_cb, 0, sizeof(creature_killer_cb));
     memset(&creature_killer_ctx, 0, sizeof(creature_killer_ctx));
@@ -9840,6 +9868,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
         dm2_runtime_queue_ornate_activation_sound, rt,
+        dm2_runtime_queue_shooter_noise, &shooter_noise_ctx,
         &rt->session_rng,
         &event);
     if (!event.valid || event.fail_closed != 0 ||

@@ -338,6 +338,8 @@ typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
 typedef void (*DM2_V1_QueueOrnateActivationSoundFn)(
     void *ctx, int16_t actuator_handle, uint8_t *record,
     int map, int x, int y, uint32_t game_tick, int is_wall);
+typedef int (*DM2_V1_QueueShooterNoiseFn)(
+    void *ctx, uint16_t item, int map, int x, int y, uint32_t game_tick);
 
 /* ── Wall/floor mecha dispatch ─────────────────────────────────────── */
 
@@ -383,6 +385,8 @@ int dm2_v1_actuate_wall_mecha_with_rng(
                               void *ornate_ctx,
                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                               void *ornate_sound_ctx,
+                              DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
+                              void *shooter_sound_ctx,
                               DM2_V1_DropRng *rng,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
