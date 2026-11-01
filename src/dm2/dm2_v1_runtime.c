@@ -8830,12 +8830,17 @@ static int dm2_runtime_process_moverec_timer(
     sound_env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
     sound_env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
     sound_env.gametick = rt->tick_count;
-    if (!dm2_v1_sound_queue_noise_gen1(
-            &rt->sound_queue, 3, 0, (int8_t)0x89, 0x61, 0x80,
-            (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt) &&
-        !sound_receipt.rejected_map_gate) {
-        moverec_failure_stage = 9;
-        goto moverec_rollback;
+    /* SKPROJECT's PROCESS_TIMER_3D queues teleport noise when the move
+     * succeeds and the timer is 0x3D.  This runtime admits only successful
+     * MOVE_RECORD_TO receipts, so accepted 0x3C timers stay silent. */
+    if (timer->type == 0x3du) {
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &rt->sound_queue, 3, 0, (int8_t)0x89, 0x61, 0x80,
+                (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt) &&
+            !sound_receipt.rejected_map_gate) {
+            moverec_failure_stage = 9;
+            goto moverec_rollback;
+        }
     }
 
     dm2_v1_record_pool_set_free(&pool_backup);
