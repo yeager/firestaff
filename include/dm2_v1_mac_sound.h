@@ -20,8 +20,9 @@ typedef struct {
     size_t sample_data_size;
 } DM2_V1_MacSoundSample;
 
-/* Inspect authentic Classic Mac Sound Manager resources in a borrowed
- * Resource Manager fork. No bytes are copied or converted. */
+/* Inspect authentic Classic Mac Sound Manager format-1/format-2 resources in
+ * a borrowed Resource Manager fork. Sample data remains borrowed and encoded
+ * as stored; callers choose the source's PCM conversion before playback. */
 size_t dm2_v1_mac_sound_count(const uint8_t *fork, size_t fork_size);
 int dm2_v1_mac_sound_find(const uint8_t *fork, size_t fork_size,
                           int16_t resource_id,

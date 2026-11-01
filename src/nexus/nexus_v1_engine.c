@@ -3547,6 +3547,7 @@ int nexus_v1_init_with_debug(Nexus_V1_Engine *engine, const char *data_dir,
             memset(&engine->champions, 0, sizeof(engine->champions));
             engine->champions.leader_index = -1;
         }
+        engine->champions.debug_enabled = engine->debug_enabled;
         engine->rlowfix_data = rlowfix;
         engine->rlowfix_size = (size_t)rlowfix_size;
     }

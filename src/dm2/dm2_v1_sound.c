@@ -1726,16 +1726,45 @@ int dm2_v1_sound_queue_music(int track, int loop,
 int dm2_v1_sound_queue_mac_midi(const uint8_t *resource_fork,
                                 size_t resource_fork_size, int resource_id,
                                 int loop, DM2_V1_MusicQueueReceipt *out_receipt) {
+    static const char *const midi_resource_types[] = {"cmid", "Midi", "MIDI"};
+    const uint8_t *song_data = NULL;
     const uint8_t *data = NULL;
+    size_t song_size = 0u;
     size_t size = 0u;
+    size_t type_index;
+    int midi_resource_id;
+    const char *resolved_type = NULL;
     DM2_V1_MusicStreamReceipt stream;
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (dm2_v1_mac_resource_find(resource_fork, resource_fork_size, "Midi",
-                                 (int16_t)resource_id, &data, &size, NULL) != 0)
+    if (resource_id < INT16_MIN || resource_id > INT16_MAX ||
+        dm2_v1_mac_resource_find(resource_fork, resource_fork_size, "SONG",
+                                 (int16_t)resource_id, &song_data, &song_size,
+                                 NULL) != 0 ||
+        !song_data || song_size < 2u)
         return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+
+    /* Retail Macintosh DM2 CODE(22), offsets $1a28-$1a72 and $1b3a-$1b84,
+     * resolves SONG(track), reads its big-endian MIDI resource ID, then tries
+     * 'cmid', 'Midi' and 'MIDI' in that order. Do not infer the MIDI ID from
+     * the track number: the authentic SONG resource owns that mapping. */
+    midi_resource_id = ((int)song_data[0] << 8) | (int)song_data[1];
+    for (type_index = 0u;
+         type_index < sizeof(midi_resource_types) /
+                          sizeof(midi_resource_types[0]);
+         ++type_index) {
+        if (dm2_v1_mac_resource_find(
+                resource_fork, resource_fork_size,
+                midi_resource_types[type_index], (int16_t)midi_resource_id,
+                &data, &size, NULL) == 0) {
+            resolved_type = midi_resource_types[type_index];
+            break;
+        }
+    }
+    if (!resolved_type) return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
     if (out_receipt) {
         snprintf(out_receipt->asset_path, sizeof(out_receipt->asset_path),
-                 "Dungeon Master II::Midi(%d)", resource_id);
+                 "Dungeon Master II::SONG(%d)->%.4s(%d)", resource_id,
+                 resolved_type, midi_resource_id);
         out_receipt->asset_resolved = 1;
     }
     if (dm2_v1_sound_inspect_music_data(data, size, &stream) !=
