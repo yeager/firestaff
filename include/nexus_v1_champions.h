@@ -92,6 +92,8 @@ typedef struct {
     int party[NEXUS_MAX_PARTY];
     int party_count;
     int leader_index;
+    /* Runtime-only diagnostic policy; excluded from champion-pool saves. */
+    int debug_enabled;
     /* Host-only compatibility marker.  It is never serialized and is set
      * only by the isolated fixture translation unit.  Retail PLRD/save
      * bytes must not acquire host labels from populated name_ascii fields. */

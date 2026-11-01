@@ -707,9 +707,10 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     cram_mode = (ramctl >> 12U) & 3U;
     bpp = ((chctla >> 12U) & 3U) == 0U ? 4 :
         (((chctla >> 12U) & 3U) == 1U ? 8 : 0);
+    /* NBG1 SCRCTL bits 8..11 enable unimplemented scroll/zoom modes. */
     if (NBG1_REG(0x00U) != 0x8000U || (bgon & 0x0002U) == 0U ||
         (bgon & 0x0200U) != 0U || (bgon & ~0x1f3fU) != 0U || (chctla & 0x0200U) != 0U ||
-        (bgon & 0x0030U) == 0x0030U || (scrctl & 0x0600U) != 0U ||
+        (bgon & 0x0030U) == 0x0030U || (scrctl & 0x0f00U) != 0U ||
         (chctla & 0x0100U) != 0U || bpp == 0 || cram_mode >= 2 ||
         pncn1 != 0U || (plsz & 0x000cU) != 0U ||
         ((mpofn >> 4U) & 7U) != 0U || mapa != 0x17U || mapb != 0x17U ||

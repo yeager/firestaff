@@ -4788,10 +4788,10 @@ int dm2_v1_asset_last_image_decode_failure_stage(void) {
     return g_dm2_last_image_decode_failure_stage;
 }
 
-uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
-                                      uint16_t raw_index,
-                                      int *out_width, int *out_height,
-                                      DM2_ImageFormat *out_format) {
+static uint8_t *dm2_v1_asset_load_raw_image_inner(
+    const DM2_V1_AssetLoader *loader, uint16_t raw_index,
+    int *out_width, int *out_height, DM2_ImageFormat *out_format,
+    unsigned int recursion_depth) {
     const uint8_t *raw;
     size_t raw_size = 0u;
     uint16_t cx;
@@ -4803,7 +4803,10 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     int offset_y;
     uint8_t *pixels;
 
-    g_dm2_last_image_decode_failure_stage = 0;
+    if (recursion_depth > 32u) {
+        g_dm2_last_image_decode_failure_stage = 12;
+        return NULL;
+    }
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
     if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
@@ -4872,10 +4875,11 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
         size_t underlay_raw_size = 0u;
         uint16_t underlay_cx;
         uint16_t underlay_cy;
-        uint16_t underlay_bpp;
         int underlay_width;
         int underlay_height;
-        int underlay_offset_y;
+        int decoded_underlay_width = 0;
+        int decoded_underlay_height = 0;
+        DM2_ImageFormat decoded_underlay_format = DM2_IMG_FMT_UNKNOWN;
         uint8_t *underlay_pixels = NULL;
 
         underlay_raw = dm2_v1_load_gdat_raw_data(
@@ -4888,35 +4892,29 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
         underlay_cy = img_rd16(underlay_raw + 2u, loader->big_endian);
         underlay_width = (int)(underlay_cx & 0x03ffu);
         underlay_height = (int)(underlay_cy & 0x03ffu);
-        underlay_offset_y = dm2_img3_signed_offset(underlay_cy);
         if (underlay_width < width || underlay_height < height ||
-            !dm2_img3_raw_bits_per_pixel(
-                underlay_raw, underlay_raw_size, &underlay_bpp,
-                loader->big_endian)) {
+            underlay_width <= 0 || underlay_height <= 0) {
             g_dm2_last_image_decode_failure_stage = 6;
             return NULL;
         }
-        if (underlay_offset_y == -32) {
-            underlay_pixels = dm2_decode_uncompressed_image(
-                underlay_raw, underlay_raw_size, underlay_width,
-                underlay_height, (int)underlay_bpp, NULL);
-            if (!underlay_pixels &&
-                g_dm2_last_image_decode_failure_stage == 0)
-                g_dm2_last_image_decode_failure_stage = 71;
-        } else if (underlay_offset_y == 31) {
-            underlay_pixels = dm2_decode_img9_c8(
-                underlay_raw, underlay_raw_size, underlay_width,
-                underlay_height, NULL);
-            if (!underlay_pixels &&
-                g_dm2_last_image_decode_failure_stage == 0)
-                g_dm2_last_image_decode_failure_stage = 72;
-        } else {
-            underlay_pixels = dm2_decode_img3_c4(
-                underlay_raw, underlay_raw_size, underlay_width,
-                underlay_height, NULL);
-            if (!underlay_pixels &&
-                g_dm2_last_image_decode_failure_stage == 0)
-                g_dm2_last_image_decode_failure_stage = 73;
+        /* The Amiga dtRaw8 table can point an overlay at another overlay.
+         * Resolve that complete chain before applying this record. Decoding
+         * the immediate companion as a standalone IMG3 truncates authentic
+         * chained records such as WALL_GFX/91 field 1. */
+        underlay_pixels = dm2_v1_asset_load_raw_image_inner(
+            loader, underlay_raw_index, &decoded_underlay_width,
+            &decoded_underlay_height, &decoded_underlay_format,
+            recursion_depth + 1u);
+        if (underlay_pixels &&
+            (decoded_underlay_width != underlay_width ||
+             decoded_underlay_height != underlay_height ||
+             (decoded_underlay_format != DM2_IMG_FMT_IMG3 &&
+              decoded_underlay_format != DM2_IMG_FMT_U4 &&
+              decoded_underlay_format != DM2_IMG_FMT_U8 &&
+              decoded_underlay_format != DM2_IMG_FMT_IMG9))) {
+            free(underlay_pixels);
+            underlay_pixels = NULL;
+            g_dm2_last_image_decode_failure_stage = 13;
         }
         if (!underlay_pixels) {
             if (g_dm2_last_image_decode_failure_stage == 0)
@@ -4985,6 +4983,18 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     if (out_width) *out_width = width;
     if (out_height) *out_height = height;
     return pixels;
+}
+
+uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
+                                      uint16_t raw_index,
+                                      int *out_width, int *out_height,
+                                      DM2_ImageFormat *out_format) {
+    g_dm2_last_image_decode_failure_stage = 0;
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
+    return dm2_v1_asset_load_raw_image_inner(
+        loader, raw_index, out_width, out_height, out_format, 0u);
 }
 
 int dm2_v1_asset_category_entry_count(const DM2_V1_AssetLoader *loader,

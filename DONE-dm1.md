@@ -4464,3 +4464,13 @@ not used as its final verification.
   The focused version-gate test covers threshold and inverted-trigger cases.
   C009 is not used by the original dungeon, so this verifies source logic and
   its compatibility interface rather than an original-media campaign route.
+
+- 2026-11-01: Extended the authentic Apple IIGS 2.0/2.1 M11 real-media test
+  with a source-owned KU potion transaction. It finds the original type-seven,
+  power-128 KU potion in the HoC Thing lists, picks it up through M11 input and
+  uses the inventory mouth hit target. Strength increases by the ReDMCSB
+  `PANEL.C:F0349:1863-1865` amount (+8), the source potion becomes an empty
+  flask, and the unique hand owner and empty-flask icon remain. Both original
+  IIGS editions passed twice. The test controls party location to isolate the
+  original item-use transaction; it does not verify the campaign route or
+  complete IIGS gameplay parity.

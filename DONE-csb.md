@@ -1,3 +1,13 @@
+- 2026-11-01: Verified CSB Atari player melee through M11's production pointer
+  input path. The authentic campaign test opened the C127 champion's source
+  G0489 actions and selected PUNCH from the menu; original map-1 C04 `0x1003`
+  fell from 411 to 401 HP. Existing monster-to-champion C38/C39 damage and
+  MINI.DAT projectile checks still pass. This closes the M11-to-runtime
+  dispatch evidence gap for the tested Atari route only. The party pose is a
+  controlled setup on original records; campaign navigation, physical mouse
+  input, other CSB editions/platforms, full combat and visual parity remain
+  open in `TODO-csb.md`.
+
 - 2026-11-01: Fixed the CSB Amiga A31M no-game launch selecting the wrong
   sibling disk for its SWSH prelude. The launcher now reads `SWSH.FTL` beside
   the authenticated graphics member selected by the menu. A Debug build and

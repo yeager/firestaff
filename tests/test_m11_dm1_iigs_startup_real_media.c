@@ -523,6 +523,106 @@ cleanup:
 /* Route from the authentic IIGS stair arrival to the closest active map-one
  * creature. BFS uses the production movement planner for collision rules;
  * replay uses ordinary M11 inputs and never writes party coordinates. */
+static unsigned check_iigs_group_health(const M11_GameViewState *view,
+                                        int group_index) {
+    unsigned total=0u;
+    if (!view || !view->world.things || group_index<0 ||
+        group_index>=view->world.things->groupCount) return 0u;
+    for (unsigned i=0u;i<4u;++i)
+        total+=view->world.things->groups[group_index].health[i];
+    return total;
+}
+
+static int iigs_group_is_in_front(const M11_GameViewState *view,
+                                  int group_index) {
+    static const int dx[4]={0,1,0,-1};
+    static const int dy[4]={-1,0,1,0};
+    const struct DungeonThings_Compat *things;
+    int x,y;
+    unsigned short thing;
+    if (!view || !view->world.dungeon || !view->world.things ||
+        view->world.party.direction<0 || view->world.party.direction>3)
+        return 0;
+    things=view->world.things;
+    x=view->world.party.mapX+dx[view->world.party.direction];
+    y=view->world.party.mapY+dy[view->world.party.direction];
+    thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+        view->world.dungeon,things,view->world.party.mapIndex,x,y);
+    for (unsigned guard=0u;thing!=THING_ENDOFLIST && thing!=THING_NONE &&
+        guard<128u;++guard) {
+        if (THING_GET_TYPE(thing)==THING_TYPE_GROUP &&
+            THING_GET_INDEX(thing)==(unsigned)group_index) return 1;
+        thing=F0512_DUNGEON_GetThingNext_Compat(things,thing);
+    }
+    return 0;
+}
+
+static int check_iigs_player_attack(M11_GameViewState *view, int group_index) {
+    unsigned hp_before,attacks=0u;
+    if (!view || !view->world.things || group_index<0 ||
+        group_index>=view->world.things->groupCount) return 0;
+    hp_before=check_iigs_group_health(view,group_index);
+
+    /* The encounter was reached through ordinary M11 movement. Wait or
+     * turn using ordinary inputs until the authentic C04 occupies the front
+     * square; never send ACTION while a mirror or another object is there. */
+    for (unsigned step=0u;step<512u && attacks<24u;++step) {
+        const struct CreatureAIState_Compat *active=NULL;
+        int dx,dy,desired;
+        if (iigs_group_is_in_front(view,group_index)) {
+            uint32_t tick_before=view->world.gameTick;
+            M11_GameInputResult action_result=M11_GameView_HandleInput(
+                view,M12_MENU_INPUT_ACTION);
+            if (action_result==M11_GAME_INPUT_IGNORED ||
+                view->world.gameTick==tick_before) {
+                (void)M11_GameView_HandleInput(view,
+                    M12_MENU_INPUT_CYCLE_CHAMPION);
+                for (unsigned tick=0u;tick<8u;++tick)
+                    (void)M11_GameView_AdvanceIdleTick(view);
+                continue;
+            }
+            ++attacks;
+            if (check_iigs_group_health(view,group_index)<hp_before) {
+                printf("PASS: authentic IIGS ACTION reduced C04 %d health %u -> %u\n",
+                    group_index,hp_before,
+                    check_iigs_group_health(view,group_index));
+                return 1;
+            }
+            for (unsigned tick=0u;tick<8u;++tick)
+                (void)M11_GameView_AdvanceIdleTick(view);
+            (void)M11_GameView_HandleInput(view,
+                M12_MENU_INPUT_CYCLE_CHAMPION);
+            continue;
+        }
+        for (int i=0;i<view->world.creatureAICount;++i) {
+            const struct CreatureAIState_Compat *candidate=
+                &view->world.creatureAI[i];
+            if (candidate->reserved0==group_index &&
+                candidate->groupMapIndex==view->world.party.mapIndex) {
+                active=candidate;
+                break;
+            }
+        }
+        if (!active) return 0;
+        dx=active->groupMapX-view->world.party.mapX;
+        dy=active->groupMapY-view->world.party.mapY;
+        if (abs(dx)+abs(dy)==1) {
+            desired=dy<0 ? 0 : dx>0 ? 1 : dy>0 ? 2 : 3;
+            if (view->world.party.direction!=desired) {
+                if (M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT)==
+                    M11_GAME_INPUT_IGNORED) return 0;
+                for (unsigned tick=0u;tick<8u;++tick)
+                    (void)M11_GameView_AdvanceIdleTick(view);
+                continue;
+            }
+        }
+        (void)M11_GameView_AdvanceIdleTick(view);
+    }
+    fprintf(stderr,"FAIL: authentic IIGS ACTION caused no C04 %d health loss after %u attacks\n",
+        group_index,attacks);
+    return 0;
+}
+
 static int check_iigs_creature_combat(M11_GameViewState *view) {
     enum { MAX_NODES=32*32*4, MAX_ROUTE=MAX_NODES };
     static const int moves[6]={MOVE_FORWARD,MOVE_RIGHT,MOVE_BACKWARD,
@@ -672,6 +772,7 @@ static int check_iigs_creature_combat(M11_GameViewState *view) {
          * recurrence probe measures the original group timeline instead of
          * ending early through champion death. */
         view->world.magic.partyShieldDefense=100u;
+        if (!check_iigs_player_attack(view,targetGroup)) return 0;
         attackAfterFirst=view->world.lifecycle.lastCreatureAttackTime;
         for (unsigned tick=0u;tick<1500u;++tick) {
             (void)M11_GameView_AdvanceIdleTick(view);
@@ -1251,6 +1352,91 @@ cleanup:
     free(frame); free(view); return result;
 }
 
+/* ReDMCSB PANEL.C F0349:1850-1888 applies the original potion effect and
+ * changes the potion Thing to C20 empty flask; 1918-1919 is the separate
+ * food path. This controlled session finds the original KU potion (type 7,
+ * power 128) as the first object on its HoC square, then uses normal M11
+ * pickup, champion-inventory and mouth-pointer routes. It verifies the consumption
+ * transaction from untouched original map/item bytes, not the campaign path
+ * needed to reach that square. */
+static int check_original_potion(const char *root, int version) {
+    M11_GameViewState *view=calloc(1,sizeof(*view));
+    uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
+    unsigned short thing=THING_NONE;
+    struct DungeonPotion_Compat *potion;
+    struct ChampionState_Compat *champion;
+    unsigned short statistic_before; unsigned statistic_attribute=0u, statistic_delta=0u;
+    unsigned source_potion_type, source_potion_power;
+    int map_index=-1, map_x=-1, map_y=-1;
+    int result=0;
+    REQUIRE(view && frame,"bounded original native potion session"); M11_GameView_Init(view);
+    REQUIRE(M11_GameView_StartIigs(view,root,version) && check_recruitment(view,frame) &&
+        view->world.dungeon->header.mapCount>4 && view->world.things->potionCount>20,
+        "fresh original IIGS campaign and recruited champion load before the authentic potion scenario");
+    for (int map=0; map<view->world.dungeon->header.mapCount && thing==THING_NONE; ++map) {
+        const struct DungeonMapDesc_Compat *desc=&view->world.dungeon->maps[map];
+        for (int x=0; x<desc->width && thing==THING_NONE; ++x) {
+            for (int y=0; y<desc->height && thing==THING_NONE; ++y) {
+                unsigned short candidate=F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    view->world.dungeon,view->world.things,map,x,y);
+                unsigned short first_object=F0513_DUNGEON_GetSquareFirstObject_Compat(
+                    view->world.dungeon,view->world.things,map,x,y);
+                for (unsigned guard=0; candidate!=THING_ENDOFLIST && candidate!=THING_NONE && guard<128u; ++guard) {
+                    unsigned index=THING_GET_INDEX(candidate);
+                    if (THING_GET_TYPE(candidate)==THING_TYPE_POTION && candidate==first_object &&
+                        index<(unsigned)view->world.things->potionCount &&
+                        view->world.things->potions[index].type==7u &&
+                        view->world.things->potions[index].power==128u) {
+                        thing=candidate; map_index=map; map_x=x; map_y=y; break;
+                    }
+                    candidate=F0512_DUNGEON_GetThingNext_Compat(view->world.things,candidate);
+                }
+            }
+        }
+    }
+    REQUIRE(thing!=THING_NONE && map_index>=0 && map_x>=0 && map_y>=0,
+        "original IIGS campaign contains the authentic KU type-seven power-128 potion as a square's first object");
+    potion=&view->world.things->potions[THING_GET_INDEX(thing)];
+    source_potion_type=potion->type;
+    source_potion_power=potion->power;
+    REQUIRE(potion->type==7u && potion->power==128u,
+        "authentic KU potency selects the original strength-potion branch");
+    statistic_attribute=CHAMPION_ATTR_STRENGTH;
+    statistic_delta=(potion->power/35u)+5u;
+    REQUIRE(view->world.things->rawThingData[THING_TYPE_POTION][THING_GET_INDEX(thing)*4u+2u]==potion->power &&
+        (view->world.things->rawThingData[THING_TYPE_POTION][THING_GET_INDEX(thing)*4u+3u]&0x7fu)==potion->type,
+        "potion type and power match the untouched original packed source record");
+    /* Enter the real original square as controlled test setup. The actual
+     * Thing is still picked up through normal runtime input from its map list. */
+    view->world.party.mapIndex=map_index;
+    view->world.party.mapX=map_x;
+    view->world.party.mapY=map_y;
+    view->world.party.direction=0;
+    REQUIRE(M11_GameView_HandleInput(view,M12_MENU_INPUT_PICKUP_ITEM)==M11_GAME_INPUT_REDRAW &&
+        view->leaderHandObjectPresent && view->leaderHandThing==thing &&
+        original_thing_owners(view,thing)==1,
+        "normal IIGS pickup moves the authentic potion from its original square to the leader hand");
+    (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+    REQUIRE(view->inventoryPanelActive && view->dm1InventoryChampionOrdinal==1,
+        "native champion panel selects the potion recipient");
+    champion=&view->world.party.champions[0];
+    statistic_before=champion->attributes[statistic_attribute];
+    REQUIRE(M11_GameView_HandlePointerButton(view,64,54,DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_REDRAW &&
+        champion->attributes[statistic_attribute]==statistic_before+statistic_delta &&
+        potion->type==20u &&
+        view->leaderHandObjectPresent && view->leaderHandThing==thing &&
+        original_thing_owners(view,thing)==1,
+        "M11 mouth pointer applies the original stat potion effect and retains it as its source empty flask");
+    REQUIRE(M11_GameView_GetObjectIconIndexForThing(view,thing)==195,
+        "consumed original potion presents the source empty-flask icon");
+    printf("PASS: authentic IIGS %d potion type=%u power=%u at map=%d (%d,%d) applies +%u to stat %u and remains as empty flask\n",
+        version,source_potion_type,source_potion_power,map_index,map_x,map_y,statistic_delta,statistic_attribute);
+    result=1;
+cleanup:
+    if (view) M11_GameView_Shutdown(view);
+    free(frame); free(view); return result;
+}
+
 static int check_native_wall_bump(M11_GameViewState *view) {
     DM1_V1_IigsDocSnapshot audio_before,audio_after;
     struct GameWorld_Compat *staged=calloc(1,sizeof(*staged));
@@ -1448,6 +1634,7 @@ int main(int argc, char **argv) {
         if (!check_linflas_capacity(argv[1+i],version)) return 1;
         if (!check_original_food(argv[1+i],version)) return 1;
         if (!check_original_water(argv[1+i],version)) return 1;
+        if (!check_original_potion(argv[1+i],version)) return 1;
         if (snprintf(owner,sizeof(owner),"%s::Dungeon Master for Apple IIGS 2.%d (English) Original (Not working).po",argv[3],i)>=(int)sizeof(owner) ||
             !check_session(argv[3],version,owner)) return 1;
     }

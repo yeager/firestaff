@@ -1,3 +1,30 @@
+2026-11-01 authentic Macintosh music-resource ownership: retail `CODE(22)` at
+offsets `$1a28-$1a72` and `$1b3a-$1b84` resolves `SONG(track)`, reads its
+big-endian MIDI resource ID, then looks up `cmid`, `Midi`, or `MIDI`. Firestaff
+now follows this indirection and checks every original `SONG(1000..1027)` with
+the authentic application resource fork; all 28 mapped MIDI streams pass the
+SMF scheduler test. The original resource fork also contains 136 `INST` and
+139 `snd ` resources, and `CODE(14)` at `$09d6-$09fe` probes `snd `. Firestaff
+still sends MIDI events to the host MIDI backend and does not yet consume the
+original instrument/sample bank. Native Mac output and original timbre parity
+remain unverified; trace the `INST`/`snd ` lookup and SoundMusicSys playback
+path before choosing how to bind that bank.
+
+After the lookup change, `dm2_v1_mac_midi_real`,
+`dm2_v1_mac_m11_movie_runtime_real`, and `dm2_v1_mac_native_cli_boot` passed
+against installed original Macintosh media. The latter reached the first
+runtime from direct CLI and M12 menu paths and verified movement; its SDL dummy
+audio route does not establish audible Mac output.
+
+2026-11-01 authentic Macintosh embedded SND resource coverage: the original
+English application Resource Manager fork contains 139 non-contiguous format-2
+`snd ` resources in the 6000–6540 ID range. The real-media sound test now
+resolves every source ID in that range and verifies its format, embedded PCM
+bounds, sample rate, and uncompressed encoding against the original ZIP.
+`dm2_v1_mac_sound_real` passes using the installed original game data. This
+proves resource parsing only: gameplay sound-event-to-resource mapping and
+native output from those gameplay events remain open.
+
 2026-11-01 skproject source inventory and legacy DOS shooter review:
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
@@ -2066,6 +2093,50 @@ exact panel-refresh sequencing, DOS UI integration, assets and supported-
 platform runtime evidence remain open; the multiplier uncertainty is resolved
 for the SPX v5 variant.
 
+2026-11-01 authentic DM2 platform debug follow-up on TRV2 at main
+`1865e8ac`: the Amiga startup/render/input test passes with the installed
+retail archive (SHA-256
+`fb3bdcb19039f449389c5872aedcf08e53a1765ebd57fd72e60a1e50dbe74768`). Its
+accepted first runtime frame reports 11 walls, 8 items, 10 complete HUD
+commands, zero blocked materials and no fallbacks; the captured 320x200
+surface passes the viewport, floor, status pane, squad and six movement-arrow
+pixel gates, and the observed input matrix passes. The initial failure was a
+test timing gap: scripted `wait:2000` began after the blocking 225-frame Amiga
+intro and could not finish before the 90-second limit. The test now waits for
+the source intro-completion signal before sending the menu click. `--debug` now labels this shared
+title stream as `dm2-platform-intro` with owner `amiga-en` instead of calling it
+FM Towns. This is SDL dummy-video evidence, not a native Mac Retina check.
+
+The former FM Towns direct-CLI failure was a test-script timing error: a fixed
+`wait:10` elapsed while the title owned the startup loop, so both clicks were
+consumed before the New Game menu could receive them. The scripts now use the
+existing `wait-dm2-title` condition. On the local macOS host, the complete
+authentic FM Towns test passed AUTO selection, saved-preference override,
+start-menu discovery, mixed-edition selection with authentic DOS/Amiga/Mac/
+Towns archives, direct CLI and M12 launch, first-champion runtime, and the
+320x200 viewport/HUD screenshot gates. The presented menu matches the
+independently decoded original TITLE/0/4 RGB digest
+`367b54aa92b46d6e`. The expanded `--debug` test records every one of the 224
+nonterminal TWANIM frames and frame-225 completion in 26,205 ms on that host.
+The 26,205 ms trace and SDL dummy-video captures verify source timing and
+software composition; they do not verify native display cadence or Retina
+presentation.
+
+The authentic Amiga test also passed after switching to `wait-dm2-title`:
+start-menu selection, the first accepted runtime frame, viewport/floor/status/
+squad/panel pixel gates, the complete observed input matrix, ten complete HUD
+commands and the source-owned status-pane asset. Its SDL dummy-video capture
+is not a native Amiga or physical-display comparison. The startup trace
+records frame 225 complete at 31,147 ms on this local macOS host; the earlier
+TRV2 run independently passed before the wait-token change. The authentic
+French DOS test also passed its no-game M12 picker, first runtime frame and
+direct-CLI first movement. Finally, the extracted original Macintosh English
+test passed direct CLI, selected-game M12, and no-game M12 routes using the
+original `Graphics.dat`, `Dungeon.dat`, and `Title.MooV` files. These captures
+exercise DOS English/French, Macintosh English, FM Towns Japanese, and Amiga
+English with original media. They do not establish physical input/display
+parity or full campaign parity for any edition.
+
 
 2026-11-01 skproject `ADD_ITEM_CHARGE` DOS and SPX v4/v5 variants: all three
 active definitions use the same DB5 weapon (bits 10..13, max 15), DB6 cloth
@@ -2074,3 +2145,21 @@ fields, clamp `charge + delta`, preserve unrelated bits, and return the updated
 charge. The existing shared Firestaff helper and item-charge boundary
 regression implement this mutation. All source rows remain partial pending
 supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
+
+2026-11-01 Amiga V1 chained-overlay follow-up: expanded `--debug` receipts on
+the authentic Amiga English archive exposed a repeated first-frame rejection
+at the entrance. `WALL_GFX/91` image field 1 resolves to raw 2590, whose
+`dtRaw8/0/0/0` underlay is raw 2592; raw 2592 itself overlays raw 2591. The
+previous decoder treated the immediate companion as a standalone C4 image and
+failed at IMG3 command-read stage 735. The V5 decoder now resolves and
+composes the complete underlay chain with a recursion bound. A real-media
+Amiga regression pins the archive graphics MD5, image dimensions and complete
+wall-material receipt, then decodes all 1,010 raw images linked by the Amiga
+underlay table; the longest chain has three links and none fail. The same
+table has no links in the supplied DOS English/French, Macintosh English or
+FM Towns Japanese originals, so those editions do not take this Amiga overlay
+path. The regression passes, as does the normal Amiga CLI/start-menu test; all
+293 observed runtime render receipts are accepted with zero blocked materials
+or fallback draws. The captured 320x200 image passes the existing
+viewport/HUD region checks, but there is still no same-pose original Amiga
+capture for pixel-parity review, so the reported visual mismatch remains open.

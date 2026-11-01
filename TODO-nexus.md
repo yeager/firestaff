@@ -1,8 +1,19 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-29. The items below track open work and include completed
+Reviewed 2026-11-02. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
+
+## 2026-11-02 — gate champion diagnostic output
+
+Champion recruitment and automatic leader-promotion messages now follow the
+Nexus engine's `--debug` setting. The flag is copied into the runtime-only
+champion-pool state after retail roster initialization and when an initialized
+launcher receives an updated debug setting; it is not part of save data. The
+Vi Altar model helper has no runtime diagnostic context, so its unconditional
+stdout message was removed. The champion, engine and launcher translation
+units compile with AppleClang. This is source/compile evidence only; authentic
+runtime output for recruitment and leader promotion remains unverified.
 
 ## 2026-10-31 — NBG0 live-row replay
 
@@ -54,9 +65,11 @@ pattern palette selection, rejects N1TPON and unsupported two-word CRAM color
 modes, and records the decoded layer color for later composition. The NBG1
 priority-stack path now consumes that palette-resolved RGBA color instead of
 treating the raw dot index as a CRAM address. The opt-in authentic MAPD layer
-test and VDP priority-stack comparisons for frames 239, 397, 300, and 8037
-passed against PR code commit `c1d2664`. A new hash-pinned regression for the
-four-champion Continue frame 2173 was added and passed against commit `8bfbdd9`.
+test also rejects each unsupported NBG1 line-state flag in SCRCTL bits 8–11
+individually. The authentic capture has `SCRCTL=0`. The VDP priority-stack
+comparisons for frames 239, 397, 300, and 8037 passed against PR code commit
+`c1d2664`. A new hash-pinned regression for the four-champion Continue frame
+2173 was added and passed against commit `8bfbdd9`.
 Frames 239, 397, and 2173 each match all 286,720 doubled screenshot RGB samples
 with zero channel error; frame 300 matches Ymir's same-run RGB reference, and
 frame 8037 matches both Ymir pass buffers. These results verify only the

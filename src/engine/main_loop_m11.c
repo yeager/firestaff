@@ -834,10 +834,21 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
     int cpuAvailable;
     int memoryAvailable;
     Uint64 perfNow;
+    const char* dm2IntroPlatform = "unknown";
     if (!trace || !gameView || !tracedGameId || !gameView->active ||
         !m11_is_supported_game_id(tracedGameId) ||
         !M11_GameView_GetStartupTraceReceipt(gameView, &current)) {
         return;
+    }
+    if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2BootProfile) {
+        const DM2_V1_BootProfile* profile =
+            (const DM2_V1_BootProfile*)gameView->dm2BootProfile;
+        dm2IntroPlatform = profile->version_id[0]
+            ? profile->version_id : "unknown";
+        if (profile->platform == DM2_PLATFORM_MAC_EN) {
+            dm2IntroPlatform = "mac-en";
+        }
     }
     changed = !trace->valid ||
         strcmp(current.sourceId, trace->previous.sourceId) != 0 ||
@@ -912,7 +923,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
         (unsigned long long)virtualBytes);
     else fprintf(stderr, "unavailable");
     fprintf(stderr,
-            " source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-fmtowns-title={bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
+            " source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-platform-intro={platform:%s bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
             current.sourceId[0] ? current.sourceId : "unknown",
             current.startupPhase[0] ? current.startupPhase : "unknown",
             current.startupActive,
@@ -926,6 +937,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
             current.dm1StartupTitleConsumed,
             current.dm1StartupEntranceConsumed,
             current.dm1StartupFullGraphicsConsumed,
+            dm2IntroPlatform,
             gameView->dm2FmtownsTitleBound,
             gameView->dm2FmtownsTitleFinished,
             gameView->dm2FmtownsTitleRejected,
@@ -6470,10 +6482,11 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     if (g_m11_debug_startup_detail && gameId &&
         strcmp(gameId, "csb") == 0) {
         fprintf(stderr,
-            "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl entry-data=%s menu-state=%d skip=%d\n",
+            "firestaff: startup-source-check game=csb candidate=amiga-swsh-ftl entry-data=%s menu-state=%d skip=%d\n",
             dataDir && dataDir[0] ? dataDir : "(none)",
             menuState != NULL, skipSwoosh);
     }
+
     if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
@@ -6520,17 +6533,6 @@ static int m11_play_ftl_swoosh_for_game_if_available(
 
         memset(&amigaAssets, 0, sizeof(amigaAssets));
         memset(&amigaAudio, 0, sizeof(amigaAudio));
-        if (g_m11_debug_startup_detail) {
-            fprintf(stderr,
-                "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl index=%d matched=%d platform=%s edition=%s graphics-md5=%s\n",
-                versionIndex,
-                selectedVersion ? selectedVersion->matched : 0,
-                selectedIsAmiga ? "Amiga" : "non-amiga",
-                selectedVersion && selectedVersion->versionId
-                    ? selectedVersion->versionId : "unknown",
-                selectedVersion && selectedVersion->matchedMd5[0] != '\0'
-                    ? selectedVersion->matchedMd5 : "unknown");
-        }
         /* The Amiga SWSH prelude is owned by the selected Amiga game disk.
          * Greatstone's g_csb.html lists SWSH.FTL on the original A31E, A31M,
          * A33M, and A35 disks; asset_status_m12.c pins the accepted SWSH bytes
@@ -6557,6 +6559,13 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             amigaProfile = 1;
         }
         if (amigaProfile) {
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                    "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl index=%d matched=%d platform=Amiga edition=%s graphics-md5=%s\n",
+                    versionIndex, selectedVersion->matched,
+                    selectedVersion->versionId,
+                    selectedVersion->matchedMd5);
+            }
             /* ReDMCSB APPA.C calls FTL_SWSH before FTL_ANIM and ignores a
              * missing prelude. Bind only to the selected Amiga disk member;
              * the PC SWOOSH finder must not substitute another edition. */
@@ -6673,6 +6682,9 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             if (amigaAudioInitialized) M11_Audio_Shutdown(&amigaAudio);
             free(amigaBytes);
             return g_m11_startup_intro_quit_requested ? 0 : 1;
+        } else if (g_m11_debug_startup_detail && selectedVersion &&
+                   selectedVersion->matched && !selectedIsAmiga) {
+            fprintf(stderr, "firestaff: startup-source-skip game=csb candidate=amiga-swsh-ftl reason=selected-edition-not-amiga\n");
         }
     }
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {

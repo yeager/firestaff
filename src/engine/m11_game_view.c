@@ -20157,6 +20157,7 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 
 static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
+static int m11_dm1_iigs_front_cell_has_group(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
 static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
@@ -39510,11 +39511,43 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY && input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY)
             return m11_toggle_champion_inventory(state,input-M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+        if (input == M12_MENU_INPUT_CYCLE_CHAMPION)
+            return m11_cycle_active_champion(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_INVENTORY_TOGGLE || input == M12_MENU_INPUT_LEADER_INVENTORY)
             return m11_toggle_champion_inventory(state,state->world.party.activeChampionIndex);
         if (input == M12_MENU_INPUT_BACK && state->inventoryPanelActive)
             return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
         if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
+        /* Keep the host ACTION control useful in the native IIGS world:
+         * like the other DM1 editions, it attacks a creature in the front
+         * cell before falling back to the IIGS mirror-selection action.
+         * Use the first available melee action through F0391/F0407; a bare
+         * CMD_ATTACK has no live action index and cannot resolve a strike. */
+        if (input == M12_MENU_INPUT_ACTION &&
+            m11_dm1_iigs_front_cell_has_group(state)) {
+            unsigned char actions[3];
+            int championIndex=state->world.party.activeChampionIndex;
+            if (championIndex<0 || championIndex>=state->world.party.championCount)
+                championIndex=0;
+            if (!M11_GameView_SetActingChampion(state,championIndex) ||
+                !M11_GameView_GetActingActionIndices(state,actions)) {
+                M11_GameView_ClearActingChampion(state);
+                return M11_GAME_INPUT_IGNORED;
+            }
+            for (int row=0;row<3;++row) {
+                if (actions[row]!=0xFFu &&
+                    dm1_v1_action_is_melee_contact_f0407_pc34(actions[row])) {
+                    /* A source-valid PUNCH can miss and still consume the
+                     * action/cooldown. That is accepted input, not an
+                     * ignored host command. */
+                    (void)M11_GameView_TriggerActionRow(state,row);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+            M11_GameView_ClearActingChampion(state);
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_ACCEPT)
             return M11_GameView_SelectFrontMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_USE_STAIRS) {
@@ -47865,6 +47898,22 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
         return 0;
     }
     return frontCell.summary.groups > 0;
+}
+
+static int m11_dm1_iigs_front_cell_has_group(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    unsigned short thing;
+    if (!state || !state->dm1IigsActive || !state->world.things ||
+        !m11_get_front_cell(state,&frontCell)) return 0;
+    thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon,state->world.things,state->world.party.mapIndex,
+        frontCell.mapX,frontCell.mapY);
+    for (unsigned guard=0u;thing!=THING_ENDOFLIST && thing!=THING_NONE &&
+        guard<128u;++guard) {
+        if (THING_GET_TYPE(thing)==THING_TYPE_GROUP) return 1;
+        thing=F0512_DUNGEON_GetThingNext_Compat(state->world.things,thing);
+    }
+    return 0;
 }
 
 static int m11_front_cell_is_door(const M11_GameViewState* state) {

@@ -1,5 +1,21 @@
 # Nexus: verified completion status
 
+## Authentic Ymir gameplay pass-0 VDP composition — 2026-11-01
+
+The capture-only Firestaff VDP priority compositor now matches the complete
+320×224 RGB framebuffer from an authentic Japanese retail Nexus gameplay
+save-state replay in Ymir: 71,680 pixels and zero RGB mismatches. The matching
+capture records 64,804 VDP1 pixels, 3,297 NBG0 pixels, 74 NBG1 pixels and 3,505
+NBG2 pixels, with no empty pixels or unsupported color-calculation/shadow
+cases. The NBG1 8bpp pixel-fetch trace contains 71,680 valid samples and every
+traced dot value matches the same-pass raw VRAM snapshot. The regression pins
+the VDP1 FBS, VDP2 VRAM/CRAM/register and final RGBX hashes in
+`tests/test_nexus_v1_vdp2_runtime_tilemap.c`; raw captures remain outside Git.
+This proves the selected Ymir state only. The compositor remains capture-only;
+it does not enable the production renderer or establish general gameplay
+parity. See
+[`nexus_vdp2_gameplay_pass0_composition.md`](../nexus_vdp2_gameplay_pass0_composition.md).
+
 ## NBG1 capture-only tile-fetch address correction — 2026-10-24
 
 Merged PR #19 corrects Saturn's NBG1 capture decoder to calculate the name-table

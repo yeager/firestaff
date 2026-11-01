@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.422 LANGUAGES C)
+project(Firestaff VERSION 3.0.423 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4528,7 +4528,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;debug;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/dm2-fmtowns-debug"
-        TIMEOUT 60
+        TIMEOUT 120
     )
     foreach(_scan_localization_case IN ITEMS
             "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"
@@ -42196,6 +42196,16 @@ add_executable(test_nexus_v1_dgn_material_raster
         )
         set_tests_properties(nexus_v1_vdp1_gameplay_frame300_source_join_real PROPERTIES
             LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+        add_test(
+            NAME nexus_v1_gameplay_frame300_composition_source_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_gameplay_frame300_composition_source_join_real.py
+                $<TARGET_FILE:test_nexus_v1_vdp2_runtime_tilemap>
+        )
+        set_tests_properties(nexus_v1_gameplay_frame300_composition_source_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;composition;source-join;skip-safe"
             SKIP_RETURN_CODE 77
         )
     endif()

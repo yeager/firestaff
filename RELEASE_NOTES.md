@@ -1,15 +1,40 @@
-# Unreleased
+# Firestaff v3.0.423
 
 ## User-facing changes
 
-- `DM1 PC34 saved combat`: restore active monster ATTACK, APPROACH and FLEE
-  behavior from the original group records when loading a save.
-- `Theron's Quest input`: add keypad 1/3 Button II turn chords. The native SDL
-  event route passed three times with hash-verified US Track 02; other platform
-  and full retail input parity remain unverified.
-- `CSB Amiga startup`: use the selected authentic A31M disk for its SWSH
-  intro, preventing a sibling edition in the data directory from suppressing
-  the animation.
+- `DM1 PC34 saved combat`: restore source-owned ATTACK, APPROACH and FLEE
+  behavior after loading a party save, and preserve separate map-cache rules
+  for same-map and changed-map transitions.
+- `DM1 input and media`: correct supported-edition F0348 behavior, guard key
+  ring access, select localized PC34 dungeon media, and retain source music
+  selection after map handoff. Apple IIGS icon and input routes gain
+  authenticated asset handling; other unverified routes remain open.
+- `CSB Amiga startup`: load the SWSH animation from the selected authenticated
+  Amiga edition and keep its title handoff with that disk. The A31M/A33M CLI
+  route is covered; platform-wide visual parity is not established.
+- `CSB interactions`: correct rendered floor-object hit zones, wall-sensor
+  held-item state and wound streams, preserve valid no-effect potion use, and
+  retain the selected Amiga multilingual edition when other media is present.
+- `DM2 movement and combat`: apply source stamina costs, bind creature jump,
+  shooting and attack callbacks to live state, and handle door collisions and
+  endpoint exits using source records. Failed missile or projectile
+  allocation preserves the item and rejects incomplete owners safely.
+- `DM2 lighting and decorations`: update light after relevant timers, door,
+  trickwall and ornate transitions; retain source random state; and render
+  wall ornaments from authenticated rectangles, formats and actuator states.
+- `DM2 shops and items`: add actuator-selected shop stock, merchandise glass,
+  sold-out states and shop navigation; align DOS/SPX wallet and teleport item
+  handling with source variants.
+- `DM2 spells and sound`: add source-ordered mana charging as runes are
+  entered, queue creature and ornate sounds in source order, and match door
+  collision, step and attack sound arguments to source state.
+- `Theron's Quest input`: add the keypad 1/3 Button II turn chord. The native
+  SDL route passed against authenticated US Track 02; this does not establish
+  complete input parity on every platform.
+- `Launcher presentation`: change V2.2 to fall back when authentic art is
+  unavailable, block launches without real-art admission, bind external-volume
+  asset roots correctly, and replace the unsupported scan hint with
+  `--scan-data`.
 
 # Firestaff v3.0.422
 
@@ -30,30 +55,42 @@
 
 ## Developer changes
 
-- `V2.2 asset discovery`: resolve per-game modern-art, material and review
-  receipt paths from the Firestaff profile when the originals directory is
-  symlinked to an external volume; retain custom-root mappings and add a
-  five-game regression check.
-- `DM1 and CSB source parity`: expand ReDMCSB source mappings and bounded utility contracts, with updated evidence for unresolved platform and edition gaps.
-- `DM1 startup coverage`: add authentic Atari, Amiga, French/German and Apple IIGS menu-to-runtime checks; enforce Amiga original-disk checks.
-- `DM2 startup coverage`: add authentic archive and FM Towns light-path checks, including malformed light-root rejection and media selection cases.
-- `CSB runtime coverage`: add checks for Amiga message expiry, Atari campaign, wall-sensor predicates, rendered hitboxes and party-entry text using authentic source behavior.
-- `DM2 runtime internals`: add source-backed light processing and a shared record deallocation boundary.
-- `Theron evidence`: update authentic fresh-start, native pickup, save/continue and System Card source tracing; claims remain bounded to tested routes.
-- `Nexus evidence`: update BKR trace-order and consumer-read validation, and add VDP1/VDP2 composition checks against authentic captures.
-- `CLI diagnostics`: change achievement and startup logging to emit details only when `--debug` is enabled where applicable.
-- `DM1 diagnostics`: report source-owned world/creature state transitions and
-  champion HUD presentation failures only when `--debug` is enabled.
-- `Localization`: regenerate startup-menu references after catalog changes.
-- `Release metadata`: update the project version and reproducible SPDX source SBOM.
+- `Authentic startup coverage`: add CLI and menu checks across DM1, CSB and
+  DM2 editions, including Amiga startup ownership, unsupported media rejection,
+  external data roots and selected-edition isolation.
+- `DM1 and CSB source adapters`: add bounded FIO1 disk-operation boundaries,
+  Amiga invert-box and PRIM seek adapters, and extend ReDMCSB ownership maps
+  while keeping incomplete source lanes explicit.
+- `DM2 source integration`: add source-backed actuator, creature-mecha,
+  collision, shop, wall-decoration and light-processing paths with regression
+  coverage for authentic record layouts and platform byte order.
+- `Theron capture tooling`: add authenticated PCE Fast input, spawn and
+  runtime-page tracing, and join captured writes to selected source receipts.
+  These diagnostics do not claim a complete game-owned map or campaign handoff.
+- `Nexus capture tooling`: add authentic Ymir VDP1/VDP2 replay, layer
+  composition and palette checks. The evidence remains separate from a
+  playable Saturn title or dungeon route.
+- `Parity inventories`: update DM1, DM2 and ReDMCSB ledgers against generated
+  source backlogs, preserve duplicate source definitions, and verify that
+  active-review notes override inventory summaries consistently.
+- `Localization and regressions`: update menu catalogs and add authentic-media,
+  runtime and source-bound checks across the five games. Platform status
+  distinguishes verified routes from capture or parity gaps.
+- `Release metadata`: update the project version and reproducible SPDX source
+  SBOM.
 
 ## Known limitations
 
-- `Nexus`: Saturn title/menu composition and the playable game route remain gated; capture and media admission evidence does not establish a playable viewport or HUD.
-- `Theron's Quest`: authentic startup, save and selected input/capture paths do not establish complete campaign or presentation parity.
-- `DM1, CSB and DM2`: viewport, HUD, audio and physical-display parity remain incomplete outside individually verified game, edition and platform routes.
-- `DM1 X68000 and SNES`: source/media readers and asset checks do not add playable platform routes.
-- `DM2 Macintosh French`: the French-named SIT remains unverified as a distinct French edition.
+- `Nexus`: Saturn title/menu and gameplay remain gated; Ymir capture and
+  composition checks do not establish a playable viewport or HUD.
+- `Theron's Quest`: verified startup, save, input and capture paths do not
+  establish full campaign, active-map or presentation parity.
+- `DM1, CSB and DM2`: viewport, HUD, audio and physical-display parity remain
+  incomplete outside individually tested editions and platforms.
+- `DM1 X68000 and SNES`: media readers and source checks do not add playable
+  routes.
+- `DM2 Macintosh French`: the French-named SIT is not verified as a distinct
+  French edition.
 - Original game media, saves and firmware are not included in release packages.
 
 # Firestaff v3.0.421

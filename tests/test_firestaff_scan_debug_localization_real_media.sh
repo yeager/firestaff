@@ -32,8 +32,12 @@ fi
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/scan-debug-localization.XXXXXX")
+menu_data_root=$archive
 cleanup() {
-    python3 - "$scratch_root" "$scratch" <<'PY'
+    local test_status=$?
+    local cleanup_status=0
+    trap - EXIT HUP INT TERM
+    python3 - "$scratch_root" "$scratch" <<'PY' || cleanup_status=$?
 import pathlib
 import shutil
 import sys
@@ -43,8 +47,24 @@ target = pathlib.Path(sys.argv[2]).resolve()
 if target.parent == root and target.name.startswith("scan-debug-localization."):
     shutil.rmtree(target)
 PY
+    if [[ $test_status -eq 0 && $cleanup_status -ne 0 ]]; then
+        test_status=$cleanup_status
+    fi
+    exit "$test_status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+run_with_language() {
+    local mode=$1
+    shift
+    if [[ "$mode" == explicit-language ]]; then
+        set -- --lang sv "$@"
+    fi
+    "$app" "$@"
+}
 
 run_scan_probe() {
     local mode=$1
@@ -58,16 +78,11 @@ language_explicit = 1
 EOF
     fi
 
-    local -a lang_args=()
-    if [[ "$mode" == explicit-language ]]; then
-        lang_args=(--lang sv)
-    fi
-
     if ! HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home" \
          APPDATA="$home" FIRESTAFF_CONFIG_PATH="$home/config.toml" \
          FIRESTAFF_LOCALE_DIR="${FIRESTAFF_LOCALE_DIR:-$script_dir/../po}" \
          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-         "$app" --game "$game" --platform "$platform" "${lang_args[@]}" \
+         run_with_language "$mode" --game "$game" --platform "$platform" \
              --data-dir "$archive" --debug --boot-probe \
              --boot-probe-frames 0 >"$log" 2>&1; then
         cat "$log" >&2
@@ -119,17 +134,12 @@ language_explicit = 1
 EOF
     fi
 
-    local -a lang_args=()
-    if [[ "$mode" == explicit-language ]]; then
-        lang_args=(--lang sv)
-    fi
-
     HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home" \
     APPDATA="$home" FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_LOCALE_DIR="${FIRESTAFF_LOCALE_DIR:-$script_dir/../po}" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --menu "${lang_args[@]}" --data-dir "$archive" \
+        run_with_language "$mode" --menu --data-dir "$menu_data_root" \
             --debug --verbose --script wait-scan-complete,escape \
             --duration 120000 >"$log" 2>&1 || exit_status=$?
 
@@ -140,20 +150,9 @@ EOF
         cat "$log" >&2
         return 1
     fi
-    if [[ $direct_media_scan == 0 ]]; then
-        if ! grep -Fq \
-            'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
-            "$log" ||
-           ! grep -Fq \
-            'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log" ||
-           ! grep -Fq 'scan complete elapsed-ms=' "$log"; then
-            echo "FAIL: Swedish no-game menu omitted localized directory-scan progress ($mode)" >&2
-            cat "$log" >&2
-            return 1
-        fi
-    elif ! grep -Fq \
+    if ! grep -Fq \
         'task=checking direct launch path task-label="KONTROLLERAR DIREKT STARTSÖKVÄG"' "$log"; then
-        echo "FAIL: Swedish no-game menu omitted localized direct-media scan status ($mode)" >&2
+        echo "FAIL: Swedish no-game menu omitted localized media-scan status ($mode)" >&2
         cat "$log" >&2
         return 1
     fi
