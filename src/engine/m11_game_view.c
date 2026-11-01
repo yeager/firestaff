@@ -43982,9 +43982,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                         (input_receipt.event_index - 116u) % 2u))
                     return M11_GAME_INPUT_REDRAW;
                 return M11_GAME_INPUT_IGNORED;
-            case 125: case 126: case 127: case 128: case 129:
+            case 125: case 126: case 127: case 128:
                 if (dm2_v1_runtime_change_player_pos(
                         (int)(input_receipt.event_index - 125u))) {
+                    m11_sync_dm2_state_from_runtime(state);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            case 129:
+                if (dm2_v1_runtime_recompute_player_pos()) {
                     m11_sync_dm2_state_from_runtime(state);
                     return M11_GAME_INPUT_REDRAW;
                 }

@@ -1,9 +1,12 @@
-2026-11-02 DM2 DOS PC formation pointer route: the live M11 path now admits
-source events 125–129 into the authenticated GAME_LOAD party. The first click
+2026-11-02 DM2 DOS PC formation pointer route: the live M11 path admits
+source events 125–128 into the authenticated GAME_LOAD party. The first click
 records an occupied source slot; the next click moves its champion into an
-empty slot or swaps the two party positions, using current party facing. The
-authentic DOS archive test verifies the retail hitboxes, the non-mutating
-pickup, and the committed empty-slot drop. Amiga, FM Towns, and Macintosh
+empty slot or swaps the two party positions, using current party facing.
+Source event 129 is a separate `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` path:
+it clears an active drag at its original slot and suppresses the facing update.
+The runtime now handles it separately from movement events. The authentic DOS
+archive test verifies retail hitboxes, non-mutating pickup, event-129
+recompute, and the committed empty-slot drop. Amiga, FM Towns, and Macintosh
 formation hit-testing and original-media runtime evidence remain open.
 
 2026-11-01 authentic Macintosh music-resource ownership: retail `CODE(22)` at

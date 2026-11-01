@@ -93,6 +93,7 @@ typedef struct {
     char name1[8];
     char name2[20];
     int8_t party_position;
+    int8_t absolute_direction;
     int8_t hero_type;
     /* Read-only c_hero spell-admission inputs.  These expose the original
      * SKSAVE state to presentation/tests without giving callers a way to
@@ -1658,6 +1659,9 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * the party's current facing. Returns 0 until an authenticated GAME_LOAD
  * party is available or when the source slot is invalid. */
 int dm2_v1_runtime_change_player_pos(int relative_position);
+/* Source DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION (event 129): complete the
+ * current formation drag at its original slot without changing facing. */
+int dm2_v1_runtime_recompute_player_pos(void);
 /* Source UI event 116..123 selects a live champion's action hand.  The
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */

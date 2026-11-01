@@ -20025,6 +20025,26 @@ int dm2_v1_runtime_change_player_pos(int relative_position)
     return 1;
 }
 
+int dm2_v1_runtime_recompute_player_pos(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
+        return 0;
+    }
+
+    /* c_input.cpp dispatches event 129 to
+     * DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION, which calls
+     * DM2_CHANGE_PLAYER_POS(v1e00b0 | 0x8000) only while a drag is active.
+     * That packed call clears the pending drag without changing the party
+     * formation or the dragged hero's facing. */
+    rt->source_formation_drag_active = 0;
+    rt->source_formation_drag_position = 0;
+    return 1;
+}
+
 typedef struct {
     DM2_V1_RuntimeState *rt;
     int hero_index;
@@ -20581,6 +20601,7 @@ int dm2_v1_runtime_get_source_hero_state(
     memcpy(out_state->name1, hero->name1, sizeof(out_state->name1));
     memcpy(out_state->name2, hero->name2, sizeof(out_state->name2));
     out_state->party_position = hero->partypos;
+    out_state->absolute_direction = hero->absdir;
     out_state->hero_type = hero->herotype;
     out_state->cur_mp = hero->curMP;
     out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];

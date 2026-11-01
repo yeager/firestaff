@@ -173,6 +173,35 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
+        if (!dm2_v1_runtime_recompute_player_pos() ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position ||
+            hero_after.absolute_direction != hero_before.absolute_direction ||
+            M11_GameView_HandlePointerButton(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: DM2 recompute event moved or reoriented the pending champion\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[source_relative],
+                formation_y[source_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: formation drag did not restart after source recompute\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
         if (M11_GameView_HandlePointerButton(
                 &view, formation_x[target_relative],
                 formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
@@ -185,7 +214,7 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
-        puts("PASS: DM2 DOS retail formation hitboxes move a champion into an empty slot");
+        puts("PASS: DM2 DOS formation pickup, recompute, and empty-slot drop use retail hitboxes");
     }
     memset(&runtime, 0, sizeof(runtime));
     if (!dm2_v1_runtime_weather_chain_started() ||

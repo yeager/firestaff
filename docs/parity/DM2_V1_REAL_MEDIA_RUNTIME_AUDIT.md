@@ -52,15 +52,17 @@ continuing to read the archive in memory and leaving its hash unchanged.
 
 ### DOS PC formation pointer actions (2026-11-02)
 
-The live DOS pointer route now dispatches SKProject's source formation events
-125–129 to the authenticated `GAME_LOAD` party owner. A first click on an
-occupied slot records the pending source row; a second click moves its
-champion into an empty slot or swaps with the occupied champion. Relative rows
-are resolved using the current party facing, and the party snapshot is updated
-with the source party. The DM2 DOS real-media New Game test exercises the
-retail GDAT hitboxes and verifies that pickup leaves the party unchanged before
-the drop commits the new position. This evidence covers the DOS PC route only;
-Amiga, FM Towns, and Macintosh formation pointer routes remain open.
+The live DOS pointer route dispatches SKProject's source formation events
+125–128 to the authenticated `GAME_LOAD` party. A first click on an occupied
+slot records the pending source row; a second click moves its champion into an
+empty slot or swaps with the occupied champion. Relative rows are resolved
+using the current party facing, and the party snapshot is updated with the
+source party. Source event 129 follows
+`DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION`: it clears a pending drag at its
+original slot and suppresses a facing update. The DM2 DOS real-media New Game
+test exercises retail GDAT hitboxes, pickup, event-129 recompute, and an
+empty-slot drop. This evidence covers the DOS PC route only; Amiga, FM Towns,
+and Macintosh formation pointer routes remain open.
 
 ## Interpretation boundary
 
