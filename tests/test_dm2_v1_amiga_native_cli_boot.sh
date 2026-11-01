@@ -203,6 +203,10 @@ for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
                  strafe-left:1,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
+# DRAW_ARROW_PANEL binds the visible forward arrow to RECT_042 (the third
+# arrow, source point 274,140). At 2x window scale this is host point
+# 548,280. A pointer click must use the same movement route as key:up.
+probe_input 'click:548:280' '1,7,0'
 if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     echo 'FAIL: DM2 Amiga archive changed during native launch' >&2
     exit 1
