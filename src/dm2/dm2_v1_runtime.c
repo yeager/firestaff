@@ -10204,6 +10204,26 @@ static void dm2_runtime_queue_ornate_activation_sound(
         dm2_actu_set_data(record,
             (uint16_t)(dm2_actu_data(record) | 0x100u));
         if (phase == 0u && rt->sound_queue_ready) {
+            int16_t noise_x = (int16_t)x;
+            int16_t noise_y = (int16_t)y;
+            /* SKWINDOS/dm2bya.cpp::SKW_TRY_ORNATE_NOISE and
+             * SKWINSPX/src/v5/sktimprc.cpp::DM2_TRY_ORNATE_NOISE move a
+             * wall's phase-zero sound one tile along the actuator's record
+             * direction when the party is elsewhere. The timer keeps the
+             * original actuator tile; only the immediate sound origin moves. */
+            if (is_wall) {
+                const unsigned direction = ((uint16_t)handle >> 14) & 3u;
+                const int16_t adjacent_x = (int16_t)(x +
+                    dm2_v1_ccm_dir_dx[direction]);
+                const int16_t adjacent_y = (int16_t)(y +
+                    dm2_v1_ccm_dir_dy[direction]);
+                if (map != rt->dungeon_level ||
+                    adjacent_x != dm2_v1_runtime_get_party_x() ||
+                    adjacent_y != dm2_v1_runtime_get_party_y()) {
+                    noise_x = adjacent_x;
+                    noise_y = adjacent_y;
+                }
+            }
             memset(&env, 0, sizeof(env));
             env.current_map = (int16_t)map;
             env.gate_map_a = rt->sound_env.gate_map_a;
@@ -10215,7 +10235,7 @@ static void dm2_runtime_queue_ornate_activation_sound(
             memset(&sound, 0, sizeof(sound));
             (void)dm2_v1_sound_queue_noise_gen2(
                 &rt->sound_queue, (int8_t)category, (int8_t)decoration,
-                (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+                (int8_t)0x88, (int8_t)0xfe, noise_x, noise_y,
                 1, (int16_t)0x8c, (int16_t)0x80, &env, &sound);
         }
     }
