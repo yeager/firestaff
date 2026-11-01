@@ -149,6 +149,13 @@
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
+> **Planned native spawn-source debug receipt (2026-11-01):** a bounded
+> `--debug` report is planned for the already-authenticated pointer and zone
+> records, including source identity, offsets, raw fields, and static links.
+> It has not been compiled or observed in a native run. It does not establish
+> runtime selection or spawning. See the
+> [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier
 > accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified
 > US retail BIN and reports four and three matching raw offsets, respectively.
