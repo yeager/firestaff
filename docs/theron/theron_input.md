@@ -160,10 +160,11 @@ the highlighted control changes.
   keypad 1/3; each equivalent binding turns instead of side-stepping. A
   standalone right click does not advance a dungeon tick. In a loaded dungeon
   it is consumed only as the modifier, while Escape remains the desktop Back
-  command. An SDL event-loop regression
-  verifies that Button II plus Right turns, keypad 1 and 3 turn in their
-  corresponding directions, then that Right after release side-steps, using
-  the authentic US runtime. A native SDL mouse sequence through the visible
+  command. The SDL event-loop regression now includes keypad 1/3 chord routes
+  with source-backed expected poses; those new routes have not yet been run
+  against a freshly built Firestaff runtime. Existing arrow-chord and
+  mouse-panel routes use authentic US runtime evidence. A native SDL mouse
+  sequence through the visible
   host panel also turns twice and advances across a source-backed tile, using
   authenticated USA Track 02. Existing US and Japanese
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement

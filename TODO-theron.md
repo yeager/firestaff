@@ -1,9 +1,12 @@
 # Firestaff TODO — Theron's Quest
 
-The native keyboard Button II chord now maps keypad 1/3 to turns as well as
-the existing arrow and A/D bindings. Keep authentic US/JP runtime input routes
-and the original PCE interaction semantics as the parity gates; this host
-mapping is not a claim of broader retail input parity.
+The native keyboard Button II chord maps keypad 1/3 to turns alongside the
+existing arrow and A/D bindings. Focused mapping assertions are added, and the
+authentic US SDL event-loop regression now includes keypad routes; run them
+against a fresh Firestaff build before treating those new routes as verified.
+Keep authentic US/JP runtime input routes and original PCE interaction
+semantics as the parity gates; this host mapping is not a claim of broader
+retail input parity.
 
 The authenticated pointer-to-zone source relationship is now documented for
 both regions: pointer records 0–4 resolve to the five regular-spawn zone

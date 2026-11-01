@@ -92,9 +92,9 @@ run_event_route "$held_probe" "$held_output" \
 run_event_route "$released_probe" "$released_output" \
     'down,rightdown:40:40,rightup:40:40,key:right,wait:8'
 run_event_route "$keypad_left_probe" "$keypad_left_output" \
-    'rightdown:40:40,key:kp1,wait:8'
+    'key:down,rightdown:40:40,key:kp1,wait:8'
 run_event_route "$keypad_right_probe" "$keypad_right_output" \
-    'rightdown:40:40,key:kp3,wait:8'
+    'key:down,rightdown:40:40,key:kp3,wait:8'
 run_event_route "$panel_probe" "$panel_output" \
     'click:292:144,click:292:144,click:248:144,wait:8'
 # Walk to the authentic level-0 sandals, then use the visible mouse controls
