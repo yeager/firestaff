@@ -11,8 +11,6 @@ import sys
 
 FRAME = 7486
 SERIAL = 8199
-FIRST_ROW = 4
-LAST_ROW = 116
 WIDTH = 320
 VRAM_BITMAP_BYTES = 512 * 256
 FRAMEBUFFER_NAME = "vdp1-7486-vdp2-8199-320x224.rgbx8888le"
@@ -97,9 +95,16 @@ def main() -> int:
             if row in rows:
                 raise ValueError(f"duplicate NBG0 row state {row}")
             rows[row] = item
-    expected_rows = set(range(FIRST_ROW, LAST_ROW + 1))
+    if not rows:
+        raise ValueError("row-state trace is empty")
+    expected_rows = set(range(min(rows), max(rows) + 1))
     if set(rows) != expected_rows:
-        raise ValueError(f"row-state coverage mismatch: {len(rows)} rows")
+        raise ValueError(f"row-state coverage has gaps: {len(rows)} rows")
+    if len(rows) != int(render_receipt["expected_main_samples"]):
+        raise ValueError("row-state coverage does not match its receipt")
+    row_range = render_receipt["row_vcnt_range_half_open"]
+    if row_range != f"{min(rows)}:{max(rows) + 1}":
+        raise ValueError("row-state range does not match its receipt")
 
     records, layer_bytes = read_records(dumps / "nexus-vdp2-layer-outputs.bin")
     expected_keys = {(FRAME, SERIAL, row, layer) for row in expected_rows for layer in range(7)}
@@ -228,14 +233,17 @@ def main() -> int:
             if rgb != actual_rgb:
                 raise ValueError(f"composition mismatch at row {row}, x={x}: expected {rgb:06x}, got {actual_rgb:06x}")
 
-    if source_matches != 36_160 or priority_matches != 36_160 or composed_matches != 36_160:
+    expected_pixel_count = len(expected_rows) * WIDTH
+    if (source_matches != expected_pixel_count or priority_matches != expected_pixel_count or
+            composed_matches != expected_pixel_count):
         raise ValueError("unexpected partial pixel verification")
 
-    print(f"capture=frame-{FRAME}/vdp2-{SERIAL} rows={len(expected_rows)} layer_records={len(records)} bytes={layer_bytes}")
+    complete_frame = len(expected_rows) == 224 and min(expected_rows) == 0 and max(expected_rows) == 223
+    print(f"capture=frame-{FRAME}/vdp2-{SERIAL} rows={len(expected_rows)} pixels={expected_pixel_count} layer_records={len(records)} bytes={layer_bytes}")
     print(f"same_pass_nbg0_vram_cram_writes=0 snapshot_frame={snapshot_frame} traced_write_rows={write_rows}")
     print(f"nbg0_source_to_layer_color={source_matches}/{source_total} priority={priority_matches}/{source_total} active={active} transparent={transparent} special_calc={special_active}")
     print(f"two_layer_composition_rgb={composed_matches}/{composed_total} underlays={dict(underlays)}")
-    print("claim_scope=authentic captured rows only; no full-frame, NBG1, arbitrary-state, or retail-hardware claim")
+    print(f"claim_scope={'full captured RGB frame' if complete_frame else 'captured rows only'}; no NBG1, arbitrary-state, or retail-hardware claim")
     return 0
 
 
