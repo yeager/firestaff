@@ -68,3 +68,23 @@ export FIRESTAFF_NEXUS_YMIR_GAMEPLAY_FRAME300_CAPTURE_DIR="$capture/dumps"
 export FIRESTAFF_NEXUS_DATA_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_vdp1_frame8037_retail_japan
 ctest --test-dir build -R '^nexus_v1_vdp1_gameplay_frame300_source_join_real$' --output-on-failure
 ```
+
+## Combined frame-300 check
+
+`nexus_v1_gameplay_frame300_composition_source_join_real` runs both bounded
+checks against this same frame-300 evidence package: the C priority compositor
+must match Ymir's complete rendered frame, and the VDP1 command trace must
+match the hash-pinned Japanese `LEV01.DGN` materials. Set the evidence root and
+retail data directory before running it:
+
+```sh
+export FIRESTAFF_NEXUS_FRAME300_EVIDENCE_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_face_vdp2_hud_join_20261030
+export FIRESTAFF_NEXUS_DATA_DIR=/path/to/authentic/Japanese/Nexus/data
+ctest --test-dir build -R '^nexus_v1_gameplay_frame300_composition_source_join_real$' --output-on-failure
+```
+
+The paired check confirms that both verifiers consume one captured gameplay
+state. It does not join each composed pixel to a retail DGN source: only 66 of
+68 textured commands have material matches, active face selection remains
+unknown, and transform/culling are not verified. Renderer admission remains
+blocked.
