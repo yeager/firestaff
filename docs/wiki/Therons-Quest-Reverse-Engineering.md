@@ -76,8 +76,9 @@ or Track 19. This bounded negative result does not rule out decoded,
 relocated, mixed-source, or runtime-written code. A separate authentic
 `$23AD` output matched 0/102 windows in a cross-capture comparison. The
 reference wrapper already has an all-writer hook for physical `$0D0000–$0D1FFF`,
-and the C852 reference patch now adds its shared event sequence. A fresh
-same-session capture is still needed to join writes and fetches. See the [runtime-page source scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
+and the C852 reference trace now uses schema v3 with a per-run capture ID.
+The wrapper receipt binds both sidecars by hash and confirms the full page
+range and completeness; a fresh authentic capture is still needed. See the [runtime-page source scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
 A separate authentic JP state-only `$3879` trace also reached its 8,192-row cap before `$C852`; it recorded JP `$C85E` as opcode `$A6` at physical `$0D285E` and no `$5039` execution. This does not establish the US caller path. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
 Firestaff gameplay

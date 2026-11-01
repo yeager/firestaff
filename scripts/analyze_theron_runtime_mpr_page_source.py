@@ -16,6 +16,10 @@ TRACE_HEADER_V2 = (
     "source=mednafen-pce-fast-theron-c852-runtime-window-v2 "
     "event_sequence_source=TheronTraceCDSharedEventSequence"
 )
+TRACE_HEADER_V3_PREFIX = (
+    "source=mednafen-pce-fast-theron-c852-runtime-window-v3 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence capture_id="
+)
 ROW_PREFIX = "theron_c852_instruction "
 END_PREFIX = "theron_c852_window_end "
 FIELD_RE = re.compile(r"([a-z0-9_]+)=([^ ]+)")
@@ -42,11 +46,20 @@ def fields_from(line: str) -> dict[str, str]:
 def read_dispatches(path: Path) -> tuple[list[dict[str, int]], dict[int, set[bytes]]]:
     text = path.read_text(encoding="ascii")
     lines = text.splitlines()
-    if not lines or lines[0] not in (TRACE_HEADER_V1, TRACE_HEADER_V2):
+    if not lines or not (
+        lines[0] in (TRACE_HEADER_V1, TRACE_HEADER_V2)
+        or lines[0].startswith(TRACE_HEADER_V3_PREFIX)
+    ):
         raise ValueError("unrecognized PCE Fast runtime-window trace header")
-    if sum(line in (TRACE_HEADER_V1, TRACE_HEADER_V2) for line in lines) != 1:
+    if sum(
+        line in (TRACE_HEADER_V1, TRACE_HEADER_V2)
+        or line.startswith(TRACE_HEADER_V3_PREFIX)
+        for line in lines
+    ) != 1:
         raise ValueError("trace must contain exactly one provenance header")
-    shared_sequence_trace = lines[0] == TRACE_HEADER_V2
+    shared_sequence_trace = (
+        lines[0] == TRACE_HEADER_V2 or lines[0].startswith(TRACE_HEADER_V3_PREFIX)
+    )
 
     dispatches: list[dict[str, int]] = []
     page_samples: dict[int, set[bytes]] = {}

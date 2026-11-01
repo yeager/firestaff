@@ -5,21 +5,30 @@ from __future__ import annotations
 
 import argparse
 import bisect
+import hashlib
 import re
 import sys
 from collections import Counter
 from pathlib import Path
 
 from analyze_theron_runtime_mpr_page_source import (
-    TRACE_HEADER_V2,
     read_dispatches,
 )
 
 
-WRITER_HEADER = (
-    "source=mednafen-pce-fast-main-ram-target-write "
-    "event_sequence_source=TheronTraceCDSharedEventSequence"
+CAPTURE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+RUNTIME_HEADER_RE = re.compile(
+    r"^source=mednafen-pce-fast-theron-c852-runtime-window-v3 "
+    r"event_sequence_source=TheronTraceCDSharedEventSequence "
+    r"capture_id=([0-9a-f]{32})$"
 )
+WRITER_HEADER_RE = re.compile(
+    r"^source=mednafen-pce-fast-main-ram-target-write-v2 "
+    r"event_sequence_source=TheronTraceCDSharedEventSequence "
+    r"capture_id=([0-9a-f]{32}) range=([0-9a-f]{6}-[0-9a-f]{6}) "
+    r"sample_limit=([0-9]+)$"
+)
+EXPECTED_RANGE = "0d0000-0d1fff"
 WRITE_RE = re.compile(
     r"^main_ram_target_write sequence=(\d+) event_sequence=(\d+) "
     r"logical_address=([0-9a-f]{4}) physical_address=([0-9a-f]{6}) "
@@ -51,11 +60,88 @@ def fetch_slots(dispatches: list[dict[str, int]]) -> dict[int, list[tuple[int, i
     return slots
 
 
-def verify(runtime_path: Path, writer_path: Path) -> tuple[dict[str, int], Counter[int]]:
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def read_receipt(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for line_number, line in enumerate(path.read_text(encoding="ascii").splitlines(), 1):
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in values:
+            raise ValueError(f"duplicate transition receipt field {key!r} on line {line_number}")
+        values[key] = value
+    return values
+
+
+def require_capture_binding(runtime_path: Path, writer_path: Path,
+                            receipt_path: Path) -> tuple[int, int, str]:
+    with runtime_path.open(encoding="ascii") as runtime_stream:
+        runtime_header = runtime_stream.readline().rstrip("\n")
+    runtime_match = RUNTIME_HEADER_RE.fullmatch(runtime_header)
+    if not runtime_match:
+        raise ValueError("runtime checkpoint trace must use capture-bound schema v3")
+    runtime_capture_id = runtime_match.group(1)
+
+    with writer_path.open(encoding="ascii") as writer_stream:
+        writer_header = writer_stream.readline().rstrip("\n")
+    writer_match = WRITER_HEADER_RE.fullmatch(writer_header)
+    if not writer_match:
+        raise ValueError("all-writer RAM trace must use capture-bound schema v2")
+    writer_capture_id, writer_range, writer_limit_text = writer_match.groups()
+    if runtime_capture_id != writer_capture_id:
+        raise ValueError("runtime and all-writer traces have different capture IDs")
+    if writer_range != EXPECTED_RANGE:
+        raise ValueError("all-writer trace does not cover the complete MPR2 $68 physical page")
+    writer_limit = int(writer_limit_text)
+    if not 4096 <= writer_limit <= 1048576:
+        raise ValueError("all-writer trace has an invalid sample limit")
+
+    receipt = read_receipt(receipt_path)
+    if receipt.get("source") != "authentic-mednafen-transition-receipt":
+        raise ValueError("unrecognized wrapper transition receipt")
+    if not CAPTURE_ID_RE.fullmatch(receipt.get("capture_id", "")):
+        raise ValueError("wrapper receipt lacks a valid capture ID")
+    if receipt["capture_id"] != runtime_capture_id:
+        raise ValueError("wrapper receipt and trace sidecars have different capture IDs")
+    if receipt.get("pce_fast_main_ram_target_write_range") != EXPECTED_RANGE:
+        raise ValueError("wrapper receipt does not record the complete target-write range")
+    try:
+        receipt_limit = int(receipt["pce_fast_main_ram_target_write_sample_limit"])
+        receipt_rows = int(receipt["pce_fast_main_ram_target_write_rows"])
+        runtime_rows = int(receipt["c852_runtime_window_rows"])
+        runtime_complete = int(receipt["c852_runtime_window_complete"])
+    except (KeyError, ValueError) as exc:
+        raise ValueError("wrapper receipt lacks numeric trace counts") from exc
+    if receipt_limit != writer_limit:
+        raise ValueError("writer header and wrapper receipt sample limits differ")
+    if receipt.get("pce_fast_main_ram_target_write_truncated") != "0":
+        raise ValueError("wrapper receipt does not certify an uncapped writer trace")
+    if receipt.get("c852_runtime_window_status") != "complete" or runtime_complete != 1:
+        raise ValueError("wrapper receipt does not certify a complete C852 trace")
+    if receipt.get("pce_fast_main_ram_target_write_sha256") != file_sha256(writer_path):
+        raise ValueError("all-writer trace hash does not match the wrapper receipt")
+    if receipt.get("c852_runtime_window_sha256") != file_sha256(runtime_path):
+        raise ValueError("C852 trace hash does not match the wrapper receipt")
+    return receipt_rows, runtime_rows, runtime_capture_id
+
+
+def verify(runtime_path: Path, writer_path: Path, receipt_path: Path) -> tuple[dict[str, int], Counter[int]]:
+    expected_writer_rows, expected_runtime_rows, _capture_id = require_capture_binding(
+        runtime_path, writer_path, receipt_path
+    )
     runtime_lines = runtime_path.read_text(encoding="ascii").splitlines()
-    if not runtime_lines or runtime_lines[0] != TRACE_HEADER_V2:
-        raise ValueError("runtime checkpoint trace must use shared-sequence schema v2")
+    if not runtime_lines or not RUNTIME_HEADER_RE.fullmatch(runtime_lines[0]):
+        raise ValueError("runtime checkpoint trace must use capture-bound schema v3")
     dispatches, _ = read_dispatches(runtime_path)
+    if len(dispatches) != expected_runtime_rows:
+        raise ValueError("wrapper receipt C852 row count does not match the sidecar")
     slots = fetch_slots(dispatches)
     if not slots:
         raise ValueError("runtime trace contains no instruction bytes in physical $0D0000-$0D1FFF")
@@ -64,8 +150,7 @@ def verify(runtime_path: Path, writer_path: Path) -> tuple[dict[str, int], Count
     previous_row_sequence = -1
     previous_event_sequence = -1
     with writer_path.open(encoding="ascii") as writer_stream:
-        if writer_stream.readline().rstrip("\n") != WRITER_HEADER:
-            raise ValueError("unexpected all-writer RAM trace header")
+        writer_stream.readline()
         for line_number, raw_line in enumerate(writer_stream, 2):
             line = raw_line.rstrip("\n")
             if line.startswith("main_ram_target_write_truncated="):
@@ -93,6 +178,8 @@ def verify(runtime_path: Path, writer_path: Path) -> tuple[dict[str, int], Count
                 writes.setdefault(physical, []).append((event_sequence, value, writer_pc))
     if previous_row_sequence < 0:
         raise ValueError("all-writer RAM trace contains no page writes")
+    if previous_row_sequence + 1 != expected_writer_rows:
+        raise ValueError("wrapper receipt writer-row count does not match the sidecar")
 
     stats = {"matched_latest_prior_write": 0, "mismatched_latest_prior_write": 0,
              "fetch_without_prior_write": 0}
@@ -121,9 +208,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("runtime_window", type=Path)
     parser.add_argument("all_writer_trace", type=Path)
+    parser.add_argument("transition_receipt", type=Path)
     args = parser.parse_args()
     try:
-        stats, writer_pcs = verify(args.runtime_window, args.all_writer_trace)
+        stats, writer_pcs = verify(
+            args.runtime_window, args.all_writer_trace, args.transition_receipt
+        )
     except (OSError, UnicodeError, ValueError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1

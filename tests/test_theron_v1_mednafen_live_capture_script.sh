@@ -191,6 +191,7 @@ python3 "$repo/tests/test_verify_theron_syscard_decision_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_decision_trace.py"
 python3 "$repo/tests/test_verify_theron_syscard_io_ram_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_io_ram_trace.py"
+python3 "$repo/tests/test_verify_theron_runtime_page_write_join.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -1754,7 +1755,7 @@ if ! grep -Fq 'capture_split_iso_cache=' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'MODE1/2048' "$script" ||
-   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da' "$script" ||
+   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|62a39bbf43415c9739c41c2481080a49|ceb02343868f80cec899e9b239aff2da' "$script" ||
    ! grep -Fq 'MODE1\/(2352|2048)' "$script" ||
    ! grep -Fq 'track02_mode=%s' "$script"; then
     printf 'FAIL: live capture must admit the authenticated MODE1/2048 ISO route separately from raw BIN\n' >&2
@@ -2086,7 +2087,7 @@ if [[ ! -f "$main_ram_target_write_patch" ]] ||
    grep -Fq 'HuCPU.Y' "$main_ram_target_write_patch" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch' "$build_script" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$script" ||
-   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range_receipt"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR' "$script" ||
    ! grep -Fq 'pce_fast_main_ram_target_writes=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded PCE Fast target-write tracing must retain MPRs, code bytes and the shared event sequence' >&2

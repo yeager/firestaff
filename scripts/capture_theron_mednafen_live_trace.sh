@@ -391,6 +391,7 @@ if (( target_write_sample_limit < 4096 || target_write_sample_limit > 1048576 ))
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
+pce_fast_main_ram_target_write_sample_limit=$target_write_sample_limit
 if [[ ! "$pce_fast_tia_trace_limit" =~ ^[0-9]+$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
@@ -454,6 +455,10 @@ if [[ -n "$pce_fast_main_ram_target_write_range" ]]; then
         printf '%s\n' 'FAIL: PCE Fast target-write range must be ordered and end at or below 1fffff' >&2
         exit 1
     fi
+    pce_fast_main_ram_target_write_range_receipt=$(printf '%06x-%06x' \
+        "$target_write_first" "$target_write_last")
+else
+    pce_fast_main_ram_target_write_range_receipt=none
 fi
 if [[ ! "$movement_data_read_sample_limit" =~ ^[0-9]+$ ]] ||
    (( movement_data_read_sample_limit < 1 || movement_data_read_sample_limit > 256 )); then
@@ -1522,6 +1527,14 @@ APPLESCRIPT
 }
 
 trace_dir=$(dirname -- "$trace")
+capture_id=$(python3 -c 'import uuid; print(uuid.uuid4().hex)') || {
+    printf '%s\n' 'FAIL: could not generate a unique capture identifier' >&2
+    exit 1
+}
+if [[ ! "$capture_id" =~ ^[[:xdigit:]]{32}$ ]]; then
+    printf '%s\n' 'FAIL: generated capture identifier has an unexpected format' >&2
+    exit 1
+fi
 capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -1936,6 +1949,7 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
     FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace" \
+    FIRESTAFF_THERON_CAPTURE_ID="$capture_id" \
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT="$cd_ram_target_write_trace_limit" \
@@ -1957,7 +1971,7 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER="$spawn_consumer_pc_filter" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
-    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range" \
+    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range_receipt" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT="$pce_fast_main_ram_target_write_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE="$pce_fast_main_ram_target_write_trace" \
     FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace" \
@@ -2339,8 +2353,19 @@ if [[ -n "$pce_fast_main_ram_target_write_trace" ]]; then
         exit 1
     fi
     if [[ ! -s "$pce_fast_main_ram_target_write_trace" ]] ||
-       ! grep -Fqx 'source=mednafen-pce-fast-main-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence' \
-           "$pce_fast_main_ram_target_write_trace"; then
+       ! awk -v capture_id="$capture_id" \
+           -v expected_range="$pce_fast_main_ram_target_write_range_receipt" \
+           -v expected_limit="$pce_fast_main_ram_target_write_sample_limit" '
+        NR == 1 {
+            if (NF != 5 || $1 != "source=mednafen-pce-fast-main-ram-target-write-v2" ||
+                $2 != "event_sequence_source=TheronTraceCDSharedEventSequence" ||
+                $3 != ("capture_id=" capture_id) || $4 != ("range=" expected_range) ||
+                $5 != ("sample_limit=" expected_limit)) exit 1
+            found = 1
+            exit
+        }
+        END { if (!found) exit 1 }
+    ' "$pce_fast_main_ram_target_write_trace"; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast main-RAM target-write trace' >&2
         exit 1
     fi
@@ -2509,8 +2534,13 @@ if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace"
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
-if [[ -s "$c852_runtime_window_trace" ]] && ! awk '
-    NR == 1 { if ($0 != "source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence") exit 1; next }
+if [[ -s "$c852_runtime_window_trace" ]] && ! awk -v capture_id="$capture_id" '
+    NR == 1 {
+        if (NF != 3 || $1 != "source=mednafen-pce-fast-theron-c852-runtime-window-v3" ||
+            $2 != "event_sequence_source=TheronTraceCDSharedEventSequence" ||
+            $3 != ("capture_id=" capture_id)) exit 1
+        next
+    }
     /^theron_c852_instruction / {
         if (NF != 22) exit 1
         if ($2 != "window=0" || $3 != ("step=" count)) exit 1
@@ -3072,6 +3102,22 @@ if [[ -s "$c852_runtime_window_trace" ]]; then
     transition_c852_runtime_window_rows=$(trace_count '^theron_c852_instruction ' "$c852_runtime_window_trace")
     transition_c852_runtime_window_complete=$(trace_count '^theron_c852_window_end .*status=complete$' "$c852_runtime_window_trace")
 fi
+transition_main_ram_target_write_rows=0
+transition_main_ram_target_write_sha256=unavailable
+if [[ -n "$pce_fast_main_ram_target_write_trace" && -s "$pce_fast_main_ram_target_write_trace" ]]; then
+    transition_main_ram_target_write_rows=$(trace_count '^main_ram_target_write ' "$pce_fast_main_ram_target_write_trace")
+    transition_main_ram_target_write_sha256=$(sha256_file "$pce_fast_main_ram_target_write_trace") || {
+        printf '%s\n' 'FAIL: could not hash the all-writer RAM trace' >&2
+        exit 1
+    }
+fi
+transition_c852_runtime_window_sha256=unavailable
+if [[ -s "$c852_runtime_window_trace" ]]; then
+    transition_c852_runtime_window_sha256=$(sha256_file "$c852_runtime_window_trace") || {
+        printf '%s\n' 'FAIL: could not hash the C852 runtime-window trace' >&2
+        exit 1
+    }
+fi
 transition_c852_runtime_window_status=not_observed
 if [[ "$transition_c852_runtime_window_complete" -gt 0 ]]; then
     transition_c852_runtime_window_status=complete
@@ -3101,6 +3147,7 @@ if [[ -f "$transition_ram_snapshot" ]] &&
 fi
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'capture_id=%s\n' "$capture_id"
     printf 'mednafen_module=%s\n' "$capture_mednafen_module"
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
     printf 'track02_mode=%s\n' "$track02_mode"
@@ -3126,6 +3173,11 @@ fi
     printf 'c852_runtime_window_rows=%s\n' "$transition_c852_runtime_window_rows"
     printf 'c852_runtime_window_complete=%s\n' "$transition_c852_runtime_window_complete"
     printf 'c852_runtime_window_status=%s\n' "$transition_c852_runtime_window_status"
+    printf 'c852_runtime_window_sha256=%s\n' "$transition_c852_runtime_window_sha256"
+    printf 'pce_fast_main_ram_target_write_rows=%s\n' \
+        "$transition_main_ram_target_write_rows"
+    printf 'pce_fast_main_ram_target_write_sha256=%s\n' \
+        "$transition_main_ram_target_write_sha256"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"
@@ -3185,7 +3237,7 @@ fi
     printf 'pce_fast_code_ram_write_trace_enabled=%s\n' "$pce_fast_code_ram_write_trace_enabled"
     printf 'pce_fast_main_ram_target_writes=%s\n' "$transition_pce_fast_main_ram_target_write_count"
     printf 'pce_fast_main_ram_target_write_truncated=%s\n' "$transition_pce_fast_main_ram_target_write_truncated_count"
-    printf 'pce_fast_main_ram_target_write_range=%s\n' "$pce_fast_main_ram_target_write_range"
+    printf 'pce_fast_main_ram_target_write_range=%s\n' "$pce_fast_main_ram_target_write_range_receipt"
     printf 'pce_fast_main_ram_target_write_sample_limit=%s\n' "$pce_fast_main_ram_target_write_sample_limit"
     printf 'pce_fast_tia_trace_enabled=%s\n' "$pce_fast_tia_trace_enabled"
     printf 'pce_fast_tia_trace_rows=%s\n' "$transition_tia_byte_count"

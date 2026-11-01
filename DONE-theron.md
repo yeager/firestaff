@@ -1,17 +1,34 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — bind runtime page joins to one capture
+
+- Added a per-run capture ID to C852 schema v3 and the all-writer page-write
+  header. The wrapper records the requested target range, sample limit, row
+  and truncation counts, plus SHA-256 hashes for both sidecars.
+- Hardened the join verifier to require matching capture IDs, the complete
+  `$0D0000–$0D1FFF` range, an uncapped writer trace, complete C852 rows and
+  receipt-matched sidecar hashes before comparing fetched bytes with the latest
+  preceding writes.
+- Added nine bounded fixture cases for successful joins, cross-capture IDs,
+  partial ranges, receipt tampering, truncation, non-increasing sequences,
+  missing writes and a later mismatching overwrite. These fixtures validate
+  the tooling contract; they are not emulator evidence.
+- The patch and wrapper have not yet been built/run against Mednafen or a new
+  authentic cold capture, so runtime behavior and source ownership remain open.
+
 ## 2026-11-01 — add shared sequencing to C852 reference checkpoints
 
 - Added a monotonically increasing `event_sequence` from
-  `TheronTraceCDSharedEventSequence` to every C852 dispatch row and versioned
-  the sidecar header as v2.
+  `TheronTraceCDSharedEventSequence` to every C852 dispatch row and initially
+  versioned the sidecar header as v2; the later entry above supersedes it with
+  schema v3 and per-run capture binding.
 - Updated the wrapper to validate the v2 schema, numeric sequence field,
   strictly increasing order, exact row count and completion marker. Updated
   the MPR2 analyzer to reject missing or non-increasing sequence values.
-- Added `verify_theron_runtime_page_write_join.py`. It requires a v2 C852
-  trace and an uncapped all-PC writer trace, checks address mappings and event
-  order, then compares each fetched byte with its latest preceding write.
-  This does not bind writer code to CD source data or assign semantics.
+- Added the initial `verify_theron_runtime_page_write_join.py`, which required
+  a v2 C852 trace and an uncapped all-PC writer trace. Its original per-file
+  sequence checks were later hardened with per-run capture IDs and receipt-bound
+  hashes; see the current entry above. Neither version assigns CD-source ownership.
 - Replayed the existing analyzer against its authentic v1 trace and matching
   raw US Track 02; it reproduced the 129-dispatch, 102-PC and no-page-match
   result while marking the historical shared sequence absent.
@@ -10265,10 +10282,10 @@ T900/original inventory semantics. No synthetic media was used.
 - Updated the wrapper to validate the v2 schema, numeric sequence field,
   strictly increasing order, exact row count and completion marker. Updated
   the MPR2 analyzer to reject missing or non-increasing sequence values.
-- Added `verify_theron_runtime_page_write_join.py`. It requires a v2 C852
-  trace and an uncapped all-PC writer trace, checks address mappings and event
-  order, then compares each fetched byte with its latest preceding write.
-  This does not bind writer code to CD source data or assign semantics.
+- Added the initial `verify_theron_runtime_page_write_join.py`, which required
+  a v2 C852 trace and an uncapped all-PC writer trace. Its original per-file
+  sequence checks were later hardened with per-run capture IDs and receipt-bound
+  hashes; see the current entry above. Neither version assigns CD-source ownership.
 - Replayed the existing analyzer against its authentic v1 trace and matching
   raw US Track 02; it reproduced the 129-dispatch, 102-PC and no-page-match
   result while marking the historical shared sequence absent.

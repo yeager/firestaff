@@ -12,6 +12,7 @@
 +static unsigned Theron44D2FastFollowCount;
 +static FILE *TheronC852FastWindowTrace;
 +static const char *TheronC852FastWindowTracePath;
++static const char *TheronC852FastCaptureId;
 +static unsigned TheronC852FastWindowStarted;
 +static unsigned TheronC852FastWindowStepsRemaining;
 +static unsigned TheronC852FastWindowSequence;
@@ -50,13 +51,16 @@
 +     TheronC852FastWindowStepsRemaining)
    {
 +   TheronC852FastWindowTracePath = getenv("FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE");
++   TheronC852FastCaptureId = getenv("FIRESTAFF_THERON_CAPTURE_ID");
 +   if(TheronC852FastWindowTracePath && *TheronC852FastWindowTracePath)
 +   {
 +    if(!TheronC852FastWindowTrace)
 +    {
 +     TheronC852FastWindowTrace = fopen(TheronC852FastWindowTracePath, "w");
 +     if(TheronC852FastWindowTrace)
-+      fputs("source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronC852FastWindowTrace);
++      fprintf(TheronC852FastWindowTrace,
++          "source=mednafen-pce-fast-theron-c852-runtime-window-v3 event_sequence_source=TheronTraceCDSharedEventSequence capture_id=%s\n",
++          TheronC852FastCaptureId ? TheronC852FastCaptureId : "missing");
 +    }
 +    if(TheronC852FastWindowTrace &&
 +       (TheronC852FastWindowStepsRemaining ||

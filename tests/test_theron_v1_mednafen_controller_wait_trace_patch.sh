@@ -543,13 +543,19 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'const uint32 event_sequence = TheronTraceCDSharedEventSequence++;' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'source=mednafen-pce-fast-theron-c852-runtime-window-v3 event_sequence_source=TheronTraceCDSharedEventSequence capture_id=%s' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_c852_instruction window=%u step=%u event_sequence=%u logical_pc=%04x physical_pc=%06x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'NF != 22' "$capture_script" ||
    ! grep -Fq 'event_sequence <= previous_event_sequence' "$capture_script" ||
    ! grep -Fq 'theron_c852_window_end window=%u rows=%u status=complete' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'TheronC852FastWindowStepsRemaining)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace"' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_CAPTURE_ID="$capture_id"' "$capture_script" ||
+   ! grep -Fq 'capture_id=%s range=%06x-%06x sample_limit=%u' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-main-ram-target-write-v2' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch" ||
+   ! grep -Fq 'pce_fast_main_ram_target_write_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'c852_runtime_window_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'pce_fast_main_ram_target_write_range=%s' "$capture_script" ||
    ! grep -Fq 'c852_runtime_window_complete=%s' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT' "$capture_script" ||

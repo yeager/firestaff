@@ -49081,6 +49081,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
     )
     add_test(
+        NAME theron_v1_runtime_page_write_join
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_runtime_page_write_join.py
+    )
+    set_tests_properties(theron_v1_runtime_page_write_join PROPERTIES
+        LABELS "theron;instrumentation;source-lock"
+    )
+    add_test(
         NAME theron_jp_syscard_bootstrap_follow_verifier
         COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_syscard_bootstrap_follow.py

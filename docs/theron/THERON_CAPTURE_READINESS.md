@@ -89,10 +89,12 @@ authentic US run; this is not a same-session provenance join. The existing code-
 and `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`; build with the `$23AD`
 hook enabled and set `THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT` to retain its
 ordered output. The target-write sidecar includes a shared `event_sequence`
-and an explicit truncation marker. The C852 reference patch now adds the same counter
-to each dispatch checkpoint under schema v2; the full patch chain applied in
-three loops, but no compiled binary or new cold capture has validated it yet.
-Join the streams only after checking the target-write truncation marker. Run
+and an explicit truncation marker. The C852 patch now emits the same counter
+under schema v3 and a per-run capture ID; the all-writer trace carries that ID,
+configured range and sample limit. The wrapper receipt binds both sidecar hashes
+and completeness counts, and the verifier requires that receipt before joining
+events. Nine bounded fixtures exercise success and rejection paths; no compiled
+binary or authentic cold capture has validated runtime output yet. Run
 [`verify_theron_runtime_page_write_join.py`](../../scripts/verify_theron_runtime_page_write_join.py)
 to compare captured fetch bytes with the latest prior physical writes; this
 still leaves source-read ownership open. The exact procedure and interpretation
