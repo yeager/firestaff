@@ -46997,234 +46997,13 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     return M11_GAME_INPUT_REDRAW;
 }
 
-static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
-                                                       int x,
-                                                       int y) {
+static M11_GameInputResult m11_c080_process_front_wall_sensor_click(
+    M11_GameViewState* state, const M11_ViewportCell* frontCellPtr) {
     M11_ViewportCell frontCell;
-    int localX;
-    int localY;
-    int facingAlcove;
-    int facingViAltar;
-    int facingWall;
-    int alcoveItemHit;
-
-    if (!state || !state->active) {
+    if (!state || !frontCellPtr || !frontCellPtr->valid) {
         return M11_GAME_INPUT_IGNORED;
     }
-
-    localX = x - M11_VIEWPORT_X;
-    localY = y - M11_VIEWPORT_Y;
-
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        const CSB_V1_BootProfile *profile =
-            (const CSB_V1_BootProfile *)state->csbBootProfile;
-        if (m11_csb_is_fmtowns_profile(profile)) {
-            int viewport_x, viewport_y;
-            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
-            localX = x - viewport_x;
-            localY = y - viewport_y;
-        } else if (profile &&
-                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-                    profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
-            int viewport_x, viewport_y;
-            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
-            localX = x - viewport_x;
-            localY = y - viewport_y;
-        }
-        return m11_process_csb_v1_c080_click(state, localX, localY);
-    }
-
-    /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
-     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
-    memset(&frontCell, 0, sizeof(frontCell));
-    (void)m11_get_front_cell(state, &frontCell);
-
-    /* The source's G0286_B_FacingAlcove is the render-time F0149 result
-     * (DUNVIEW.C:3726); classifying here through the same F0174-wired
-     * current-map alcove list keeps the click route in agreement. */
-    m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);
-    facingAlcove = frontCell.valid &&
-                   frontCell.elementType == DUNGEON_ELEMENT_WALL &&
-                   frontCell.wallOrnamentOrdinal >= 0 &&
-                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
-                       frontCell.wallOrnamentOrdinal);
-    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
-    facingWall = frontCell.valid &&
-                 frontCell.elementType == DUNGEON_ELEMENT_WALL;
-    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(state, x, y);
-
-    /* ── Door button (CLIKVIEW.C:356-390) ── */
-    if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
-        frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
-        int doorIdx = THING_GET_INDEX(frontCell.firstThing);
-        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
-            state->world.things->doors[doorIdx].button) {
-            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
-                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
-                /* ReDMCSB DUNVIEW.C lines 4207-4212 copies the rendered
-                 * D1C door-button zone (C1950 + C3_VIEW_DOOR_BUTTON_D1C)
-                 * into G2210[C05], then CLIKVIEW.C lines 356-390 tests
-                 * C080 clicks against that zone before scheduling C10
-                 * EVENT_DOOR.  The D1C bitmap zone is 160..175,44..52;
-                 * the wall-ornament box is only for front-wall ornaments. */
-                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
-                    if (!m11_toggle_front_door(state)) {
-                        return M11_GAME_INPUT_IGNORED;
-                    }
-                    return M11_GAME_INPUT_REDRAW;
-                }
-            } else {
-                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
-                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
-                 * the empty-hand door-button route; occupied-hand clicks
-                 * outside F0375's throw lane must not fall through. */
-                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    /* F0377 sends occupied-hand door clicks to F0375. The
-                     * button box overlaps F0375's valid door throw lane at
-                     * screen x=160..163, y=77..85 (local y=44..52); only
-                     * the remainder is outside the source throw zone. */
-                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
-                        return M11_GAME_INPUT_IGNORED;
-                    }
-                }
-            }
-        }
-    }
-
-    /* C127/D1C mirror clicks use the current C026 receipt's actual
-     * destination. A generic HoC rectangle cannot select a placeholder. */
-    {
-        int mirrorOrdinal = -1;
-        if (m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
-            m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-    }
-
-    /* ═══ ReDMCSB CLIKVIEW.C F0375 — throw object ═══
-     * If leader hand holds an item and click is in the upper viewport
-     * (y < 102 in source coords), attempt to throw left or right based
-     * on x position relative to center.  F0329_CHAMPION_IsLeaderHandObjectThrown
-     * in the original places the thrown object as a projectile. */
-    if (!facingWall &&
-        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
-        y >= 47 && y <= 102 &&
-        ((frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
-          x >= 64 && x <= 163) ||
-         (frontCell.elementType != DUNGEON_ELEMENT_DOOR &&
-          x >= 32 && x <= 191))) {
-        /* CLIKVIEW.C F0375 receives C080's screen coordinates before
-         * F0377 subtracts the viewport origin for clickable boxes.  The
-         * PC34 throw lane is therefore screen y=47..102. Its
-         * horizontal admission narrows for a door ahead (64..163) and is
-         * otherwise 32..191. Crucially, F0377 reaches F0375 only when the
-         * front square is not a wall; treating every upper click as a throw
-         * stole held objects from alcove/sensor drops. */
-        int throwSide = (x <= 111) ? 0 : 1; /* 0=left, 1=right */
-        unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
-        int championIndex = state->world.party.activeChampionIndex;
-        struct ChampionState_Compat* champ;
-        unsigned short actionHandThing;
-        int spawned;
-        DM1_LeaderHandThrowAdmissionInputF0329Pc34 throwAdmission;
-        DM1_LeaderHandThrowAdmissionReceiptF0329Pc34 throwReceipt;
-
-        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
-            championIndex >= state->world.party.championCount ||
-            !state->world.party.champions[championIndex].present) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-
-        champ = &state->world.party.champions[championIndex];
-        memset(&throwAdmission, 0, sizeof(throwAdmission));
-        memset(&throwReceipt, 0, sizeof(throwReceipt));
-        throwAdmission.things = state->world.things;
-        throwAdmission.party = &state->world.party;
-        throwAdmission.leaderIndex = championIndex;
-        throwAdmission.leaderHandThing = throwThing;
-        throwAdmission.throwSide = throwSide;
-        if (!dm1_v1_leader_hand_throw_admit_f0329_pc34(
-                &throwAdmission, &throwReceipt) || !throwReceipt.valid) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
-        /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
-         * 2196-2208: a leader-hand throw temporarily places the leader
-         * object in the champion action hand for F0312 strength, then
-         * restores the original action hand before F0212 creates the
-         * projectile.  Firestaff clears the leader hand only after F0328
-         * accepts the throw, preserving inventory on pre-F0328 failure;
-         * PJE-05 full-list overflow is an accepted throw with no new slot. */
-        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
-        spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
-                                                   champ, throwThing,
-                                                   throwSide);
-        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionHandThing;
-        if (!spawned) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-
-        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-        m11_set_status(state, "THROW",
-                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
-        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285 (PC34 CHANGE8_11_FIX)
-         * sets G0321_B_StopWaitingForPlayerInput after an accepted
-         * F0329/F0328 leader-hand throw.  Mirror that by consuming a real
-         * source tick immediately; this advances the first C48/C49
-         * projectile move and ages the F0328 cooldowns just like other
-         * meaningful player actions. */
-        (void)m11_apply_tick(state, CMD_NONE, "THROW");
-        m11_set_status(state, "THROW",
-                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
-        m11_refresh_hash(state);
-        return M11_GAME_INPUT_REDRAW;
-    }
-
-    /* ═══ ReDMCSB CLIKVIEW.C F0377 — item interaction ═══ */
-
-    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
-        /* ── Empty hand: grab floor items or touch wall sensor ──
-         * F0377 iterates view cells 0..5 and grabs from the first
-         * matching pile box.  Cell 5 = wall ornament/door button
-         * (alcove or wall sensor). */
-        if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (facingWall &&
-            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
-            m11_dm1_apply_fountain_click(state, &frontCell)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        /* DM1 production has real F0115 rectangles above. Retain the
-         * historical fixed boxes only for non-source diagnostic sessions;
-         * otherwise an unavailable/occluded bitmap could still be picked. */
-        if (!m11_is_dm1_source_kind(state->sourceKind)) {
-            int vc;
-            for (vc = 0; vc < 4; ++vc) {
-                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
-                    if (m11_c080_grab_leader_hand(state, vc)) {
-                        return M11_GAME_INPUT_REDRAW;
-                    }
-                    break; /* No item to grab at this cell */
-                }
-            }
-        }
-        /* Wall ornament zone: alcove grab or wall sensor trigger */
-        if (alcoveItemHit ||
-            m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-            if (facingAlcove) {
-                /* Grab from alcove (front cell, view cell 2 = back-right
-                 * for front square in DM1's cell numbering) */
-                if (m11_c080_grab_leader_hand(state, 2)) {
-                    return M11_GAME_INPUT_REDRAW;
-                }
-            }
-            /* Wall sensor trigger (F0372: TouchFrontWallSensor).
-             * ReDMCSB F0275: walk the sensor thing list on the front
-             * wall square, check sensorType for wall click types (1-18),
-             * and fire the matching sensor.  We call the sensor pipeline
-             * directly with a wall-click context. */
+    frontCell = *frontCellPtr;
             if (frontCell.valid && frontCell.summary.sensors > 0 &&
                 state->world.things && state->world.things->sensors) {
                 /* ReDMCSB F0275/F0726: enumerate sensors on the front
@@ -47461,10 +47240,246 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             m11_audio_emit_source_sound(state, 1,
                                                       M11_AUDIO_MARKER_DOOR);
                         }
+                        m11_set_status(state, "WALL", "SENSOR ACTIVATED");
+                        return M11_GAME_INPUT_REDRAW;
                     }
-                    m11_set_status(state, "WALL", "SENSOR ACTIVATED");
+                }
+            }
+    return M11_GAME_INPUT_IGNORED;
+}
+
+static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
+                                                       int x,
+                                                       int y) {
+    M11_ViewportCell frontCell;
+    int localX;
+    int localY;
+    int facingAlcove;
+    int facingViAltar;
+    int facingWall;
+    int alcoveItemHit;
+
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    localX = x - M11_VIEWPORT_X;
+    localY = y - M11_VIEWPORT_Y;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        } else if (profile &&
+                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        }
+        return m11_process_csb_v1_c080_click(state, localX, localY);
+    }
+
+    /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
+     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
+    memset(&frontCell, 0, sizeof(frontCell));
+    (void)m11_get_front_cell(state, &frontCell);
+
+    /* The source's G0286_B_FacingAlcove is the render-time F0149 result
+     * (DUNVIEW.C:3726); classifying here through the same F0174-wired
+     * current-map alcove list keeps the click route in agreement. */
+    m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);
+    facingAlcove = frontCell.valid &&
+                   frontCell.elementType == DUNGEON_ELEMENT_WALL &&
+                   frontCell.wallOrnamentOrdinal >= 0 &&
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
+                       frontCell.wallOrnamentOrdinal);
+    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
+    facingWall = frontCell.valid &&
+                 frontCell.elementType == DUNGEON_ELEMENT_WALL;
+    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(state, x, y);
+
+    /* ── Door button (CLIKVIEW.C:356-390) ── */
+    if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+        frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
+        int doorIdx = THING_GET_INDEX(frontCell.firstThing);
+        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
+            state->world.things->doors[doorIdx].button) {
+            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB DUNVIEW.C lines 4207-4212 copies the rendered
+                 * D1C door-button zone (C1950 + C3_VIEW_DOOR_BUTTON_D1C)
+                 * into G2210[C05], then CLIKVIEW.C lines 356-390 tests
+                 * C080 clicks against that zone before scheduling C10
+                 * EVENT_DOOR.  The D1C bitmap zone is 160..175,44..52;
+                 * the wall-ornament box is only for front-wall ornaments. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+                    if (!m11_toggle_front_door(state)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
                     return M11_GAME_INPUT_REDRAW;
                 }
+            } else {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
+                 * the empty-hand door-button route; occupied-hand clicks
+                 * outside F0375's throw lane must not fall through. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    /* F0377 sends occupied-hand door clicks to F0375. The
+                     * button box overlaps F0375's valid door throw lane at
+                     * screen x=160..163, y=77..85 (local y=44..52); only
+                     * the remainder is outside the source throw zone. */
+                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
+                }
+            }
+        }
+    }
+
+    /* C127/D1C mirror clicks use the current C026 receipt's actual
+     * destination. A generic HoC rectangle cannot select a placeholder. */
+    {
+        int mirrorOrdinal = -1;
+        if (m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
+            m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
+
+    /* ═══ ReDMCSB CLIKVIEW.C F0375 — throw object ═══
+     * If leader hand holds an item and click is in the upper viewport
+     * (y < 102 in source coords), attempt to throw left or right based
+     * on x position relative to center.  F0329_CHAMPION_IsLeaderHandObjectThrown
+     * in the original places the thrown object as a projectile. */
+    if (!facingWall &&
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
+        y >= 47 && y <= 102 &&
+        ((frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+          x >= 64 && x <= 163) ||
+         (frontCell.elementType != DUNGEON_ELEMENT_DOOR &&
+          x >= 32 && x <= 191))) {
+        /* CLIKVIEW.C F0375 receives C080's screen coordinates before
+         * F0377 subtracts the viewport origin for clickable boxes.  The
+         * PC34 throw lane is therefore screen y=47..102. Its
+         * horizontal admission narrows for a door ahead (64..163) and is
+         * otherwise 32..191. Crucially, F0377 reaches F0375 only when the
+         * front square is not a wall; treating every upper click as a throw
+         * stole held objects from alcove/sensor drops. */
+        int throwSide = (x <= 111) ? 0 : 1; /* 0=left, 1=right */
+        unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+        int championIndex = state->world.party.activeChampionIndex;
+        struct ChampionState_Compat* champ;
+        unsigned short actionHandThing;
+        int spawned;
+        DM1_LeaderHandThrowAdmissionInputF0329Pc34 throwAdmission;
+        DM1_LeaderHandThrowAdmissionReceiptF0329Pc34 throwReceipt;
+
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+            championIndex >= state->world.party.championCount ||
+            !state->world.party.champions[championIndex].present) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        champ = &state->world.party.champions[championIndex];
+        memset(&throwAdmission, 0, sizeof(throwAdmission));
+        memset(&throwReceipt, 0, sizeof(throwReceipt));
+        throwAdmission.things = state->world.things;
+        throwAdmission.party = &state->world.party;
+        throwAdmission.leaderIndex = championIndex;
+        throwAdmission.leaderHandThing = throwThing;
+        throwAdmission.throwSide = throwSide;
+        if (!dm1_v1_leader_hand_throw_admit_f0329_pc34(
+                &throwAdmission, &throwReceipt) || !throwReceipt.valid) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+        /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
+         * 2196-2208: a leader-hand throw temporarily places the leader
+         * object in the champion action hand for F0312 strength, then
+         * restores the original action hand before F0212 creates the
+         * projectile.  Firestaff clears the leader hand only after F0328
+         * accepts the throw, preserving inventory on pre-F0328 failure;
+         * PJE-05 full-list overflow is an accepted throw with no new slot. */
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
+        spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
+                                                   champ, throwThing,
+                                                   throwSide);
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionHandThing;
+        if (!spawned) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+        m11_set_status(state, "THROW",
+                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285 (PC34 CHANGE8_11_FIX)
+         * sets G0321_B_StopWaitingForPlayerInput after an accepted
+         * F0329/F0328 leader-hand throw.  Mirror that by consuming a real
+         * source tick immediately; this advances the first C48/C49
+         * projectile move and ages the F0328 cooldowns just like other
+         * meaningful player actions. */
+        (void)m11_apply_tick(state, CMD_NONE, "THROW");
+        m11_set_status(state, "THROW",
+                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        m11_refresh_hash(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* ═══ ReDMCSB CLIKVIEW.C F0377 — item interaction ═══ */
+
+    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
+        /* ── Empty hand: grab floor items or touch wall sensor ──
+         * F0377 iterates view cells 0..5 and grabs from the first
+         * matching pile box.  Cell 5 = wall ornament/door button
+         * (alcove or wall sensor). */
+        if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (facingWall &&
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
+            m11_dm1_apply_fountain_click(state, &frontCell)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        /* DM1 production has real F0115 rectangles above. Retain the
+         * historical fixed boxes only for non-source diagnostic sessions;
+         * otherwise an unavailable/occluded bitmap could still be picked. */
+        if (!m11_is_dm1_source_kind(state->sourceKind)) {
+            int vc;
+            for (vc = 0; vc < 4; ++vc) {
+                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                    if (m11_c080_grab_leader_hand(state, vc)) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    break; /* No item to grab at this cell */
+                }
+            }
+        }
+        /* Wall ornament zone: alcove grab or wall sensor trigger */
+        if (alcoveItemHit ||
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+            if (facingAlcove) {
+                /* Grab from alcove (front cell, view cell 2 = back-right
+                 * for front square in DM1's cell numbering) */
+                if (m11_c080_grab_leader_hand(state, 2)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+            /* Wall sensor trigger (F0372: TouchFrontWallSensor).
+             * ReDMCSB F0275: walk the sensor thing list on the front
+             * wall square, check sensorType for wall click types (1-18),
+             * and fire the matching sensor.  We call the sensor pipeline
+             * directly with a wall-click context. */
+            if (!facingAlcove) {
+                M11_GameInputResult sensorResult =
+                    m11_c080_process_front_wall_sensor_click(state, &frontCell);
+                if (sensorResult != M11_GAME_INPUT_IGNORED) return sensorResult;
             }
         }
     } else {
@@ -47492,7 +47507,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             /* Wall ornament zone → wall sensor touch */
             if (alcoveItemHit ||
                 m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-                /* Sensor click pass-through handled by existing system */
+                M11_GameInputResult sensorResult =
+                    m11_c080_process_front_wall_sensor_click(state, &frontCell);
+                if (sensorResult != M11_GAME_INPUT_IGNORED) return sensorResult;
             }
         } else if (facingWall && frontCell.wallOrnamentOrdinal >= 0 &&
                    !facingAlcove) {
