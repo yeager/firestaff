@@ -7093,6 +7093,13 @@ static int16_t dm2_runtime_ccm_rand16(void *context, int16_t max)
                                         (uint16_t)max);
 }
 
+static int dm2_runtime_ccm_rand_raw(void *context)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    return goal && goal->runtime
+        ? (int)dm2_v1_drops_rand24(&goal->runtime->session_rng) : 0;
+}
+
 static int16_t dm2_runtime_ccm_randdir(void *context)
 {
     DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
@@ -7347,10 +7354,31 @@ static int32_t dm2_runtime_ccm_proceed_walking(
         return 0;
     if (command == 0x08u || command == 0x26u)
         return dm2_runtime_ccm_attack_party(goal, command, creature_type);
-    (void)slot;
+    rt = goal->runtime;
+    if (command == 0x06u || command == 0x07u) {
+        DM2_V1_CreatureCCM06Callbacks callbacks;
+        uint8_t *creature_record;
+        uint16_t facing_word;
+        uint8_t new_facing;
+        if (!slot ||
+            dm2_v1_record_handle_pool(goal->record_handle) != 4 ||
+            dm2_v1_record_pool_record_size(4) < 16 ||
+            !(creature_record = dm2_v1_record_pool_address_mut(
+                  &rt->record_pools, (int16_t)goal->record_handle)))
+            return 0;
+        facing_word = dm2_runtime_record_rd16(rt, creature_record + 0x0e);
+        memset(&callbacks, 0, sizeof(callbacks));
+        callbacks.creature_facing = (uint8_t)(slot[0x1d] & 3u);
+        callbacks.target_dir = (uint8_t)((facing_word >> 14) & 3u);
+        callbacks.rand_fn = dm2_runtime_ccm_rand_raw;
+        new_facing = dm2_v1_creature_ccm06(&callbacks, goal);
+        facing_word = (uint16_t)((facing_word & 0x3fffu) |
+                                 ((uint16_t)(new_facing & 3u) << 14));
+        dm2_runtime_record_wr16(rt, creature_record + 0x0e, facing_word);
+        return 0; /* source CCM06 handler is void */
+    }
     if (command != 0x01u && command != 0x02u && command != 0x09u)
         return 0;
-    rt = goal->runtime;
     dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
     if (!dungeon || !dungeon->record_graph_complete ||
         goal->map < 0 || goal->map >= dungeon->level_count ||
