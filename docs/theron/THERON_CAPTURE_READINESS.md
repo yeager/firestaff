@@ -33,11 +33,18 @@ PCE Fast save-state-only run exercised the `$3879` trace patch after the
 wrapper accepted the JP MODE1/2048 Track 02 identity. The shared trace still
 reached 8,192 rows before recording `$C852`; it recorded JP `$C85E` as opcode
 `$A6` at physical `$0D285E`, with no `$5039` execution. Disabling the optional
-`$44D2` detail did not prevent the shared cap. The wrapper accepts the JP
-MODE1/2048 ISO identity `62a39bbf43415c9739c41c2481080a49`. Set
+`$44D2` detail did not prevent the broad shared cap. The new independent
+`<trace>.c852-runtime-window` sidecar remained at zero rows and the receipt
+reported `not_observed`, which is the expected result when no `$C852` hit
+occurs. It records the first `$C852` plus 128 following instruction dispatches
+with PC/opcode/operands/register/MPR state, independent of the broad quota. The
+wrapper accepts the JP MODE1/2048 ISO identity `62a39bbf43415c9739c41c2481080a49`. Set
 `FIRESTAFF_THERON_DISABLE_44D2_TRACE=1` to omit that optional detail when
 reproducing the capture. This state-only result does not prove cold handoff,
-the US call path, or gameplay semantics.
+the US call path, or gameplay semantics. A local US cold-capture attempt was
+not run to completion: the staged US Track 02 and Track 19 files lack the
+intervening authentic audio track set, and Mednafen rejected a sparse CUE at
+missing Track 03. Use complete regional media for the US Drator route.
 
 The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
@@ -72,7 +79,11 @@ consecutive isolated regression loops; a separate patch-only pass with PCE
 Fast enabled also passed. The instrumented PCE Fast emulator was built against
 SDL2 2.32.10 and passed the isolated startup/runtime version check. An
 authentic JP state-only run exercised the patch but hit the shared 8,192-row
-cap without `$C852`; no `$5039` execution was recorded. Therefore the ordered
+cap without `$C852`; the sidecar remained header-only and the receipt reported
+`not_observed`. A clean rebuild after the sidecar's independent dispatch gate
+change passed isolated SDL2 2.32.10 startup validation, and a second authentic
+JP state-only run again reported zero rows and `not_observed`; no `$5039`
+execution was recorded. Therefore the ordered
 US runtime `$C852`→`$C85E`→`$5039` path, target execution and caller data
 semantics remain unproven.
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)

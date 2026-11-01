@@ -1,5 +1,29 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — isolate authentic `$C852` instruction windows from shared trace cap
+
+- Added a dedicated PCE Fast sidecar, `<trace>.c852-runtime-window`, that
+  opens on the first observed logical `$C852` instruction and records exactly
+  that instruction plus the next 128 dispatches, with physical PC, opcode,
+  operands, registers and all MPRs. Its own completion marker and counters do
+  not consume or depend on the broad `$3879` trace's 8,192-row limit.
+- Wired the sidecar into the capture wrapper's line-delimited checks and
+  transition receipt (`rows`, completion count and status). The focused patch
+  regression passed in three loops. After correcting the sidecar dispatch
+  gate, a fresh instrumented PCE Fast build against SDL2 2.32.10 passed
+  isolated startup/runtime validation.
+- Ran the rebuilt binary on authentic JP Track 02 with the authentic JP
+  save-state. The wrapper verified the state load and JP ISO identity; the
+  sidecar contains its provenance header but zero `$C852` rows and zero
+  complete windows, correctly reporting `not_observed`. The broad trace
+  reached 8,192 rows. This JP
+  state-only result does not prove the US call path or gameplay behavior.
+- A local attempt to cold-run US media used only the staged, hash-verified US
+  Track 02 and Track 19 files; Mednafen rejected the incomplete CUE because
+  Track 03 was absent. No JP audio or invented tracks were substituted. The
+  next source capture still requires a complete authentic US disc set and the
+  US Drator route, followed by source matching the new sidecar window.
+
 ## 2026-11-01 — document authentic JP state-only `$3879` trace and intake fix
 
 - Added the authentic JP MODE1/2048 Track 02 ISO identity
@@ -18,9 +42,10 @@
   This JP state-only run is not a cold-start or CD-handoff capture and does not
   validate the US `JSR $5039` candidate or establish gameplay semantics.
 - Keep the remaining acceptance test explicit: reduce or source-scope the
-  shared trace volume, then capture an authentic US Drator route with ordered
-  `$C852`→`$C85E`→`$5039` evidence, MPR/register state and source mapping. No
-  native gameplay or parity claim changes.
+  authentic US Drator route with the independent sidecar, ordered
+  `$C852`→`$C85E`→`$5039` evidence, MPR/register state and source mapping. The
+  sidecar removes dependence on the shared trace quota; it does not replace
+  complete authentic US disc media. No native gameplay or parity claim changes.
 
 ## 2026-11-01 — `$C852` trace-window patch applied
 

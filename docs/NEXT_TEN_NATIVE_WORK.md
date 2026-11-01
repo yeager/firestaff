@@ -45,9 +45,11 @@ contains only the next cross-game work items, not a complete Theron inventory.
    passed. The newer `$3879` window extension applies in three patch-only
    loops, with a separate PCE Fast-enabled pass. Its instrumented PCE Fast
    emulator also built against SDL2 2.32.10 and passed the isolated
-   startup/runtime version check. An authentic JP state-only run exercised the
-   patch but reached its shared 8,192-row cap without `$C852` or `$5039`; the
-   ordered US `$C852`→`$C85E`→`$5039` path remains to be captured. See [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+   startup/runtime version check. An authentic JP state-only run exercised the patch but reached its shared
+   8,192-row cap without `$C852` or `$5039`. A separate `<trace>.c852-runtime-window`
+   sidecar records a bounded first-hit window without consuming that cap; the
+   JP run reports `not_observed`. The ordered US
+   `$C852`→`$C85E`→`$5039` path still needs a complete authentic US disc capture. See [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
    No Drator-positioned save or state artifact is checked into the repository,
    so reproduce the route from hash-verified media in a fresh profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold

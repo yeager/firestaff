@@ -540,6 +540,12 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'theron_c852_instruction window=%u step=%u logical_pc=%04x physical_pc=%06x' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'theron_c852_window_end window=%u rows=%u status=complete' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'TheronC852FastWindowStepsRemaining)' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace"' "$capture_script" ||
+   ! grep -Fq 'c852_runtime_window_complete=%s' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit"' "$capture_script"; then

@@ -1531,6 +1531,7 @@ input_trace="${trace}.input"
 mouse_trace="${trace}.mouse"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
+c852_runtime_window_trace="${trace}.c852-runtime-window"
 cd_ram_target_write_trace="${trace}.cd-ram-target-write"
 cd_ram_writer_pc_trace="${trace}.cd-ram-writer-pc"
 cd_data_port_read_trace="${trace}.cd-data-port-read"
@@ -1662,7 +1663,7 @@ for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
     fi
 done
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
-    "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
+    "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$c852_runtime_window_trace" \
     "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
@@ -1934,6 +1935,7 @@ launch=(
     FIRESTAFF_THERON_MENU_ROUTE="$menu_route" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
+    FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace" \
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT="$cd_ram_target_write_trace_limit" \
@@ -2503,8 +2505,29 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$c852_runtime_window_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
+    exit 1
+fi
+if [[ -s "$c852_runtime_window_trace" ]] && ! awk '
+    NR == 1 { if ($0 != "source=mednafen-pce-fast-theron-c852-runtime-window-v1") exit 1; next }
+    /^theron_c852_instruction / {
+        if (NF != 20) exit 1
+        if ($2 != "window=0" || $3 != ("step=" count)) exit 1
+        if ($4 !~ /^logical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ ||
+            $5 !~ /^physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+        count++
+        next
+    }
+    /^theron_c852_window_end / {
+        if (NF != 4 || $2 != "window=0" || $3 != "rows=129" || $4 != "status=complete" || count != 129 || ended) exit 1
+        ended = 1
+        next
+    }
+    { exit 1 }
+    END { if (NR < 1) exit 1 }
+' "$c852_runtime_window_trace"; then
+    printf '%s\n' 'FAIL: PCE Fast $C852 runtime instruction window is malformed or incomplete' >&2
     exit 1
 fi
 if [[ -n "$huc6280_23ad_trace" ]]; then
@@ -3038,6 +3061,18 @@ transition_ram_2031=unavailable
 transition_ram_203f=unavailable
 transition_ram_2040=unavailable
 transition_ram_2041=unavailable
+transition_c852_runtime_window_rows=0
+transition_c852_runtime_window_complete=0
+if [[ -s "$c852_runtime_window_trace" ]]; then
+    transition_c852_runtime_window_rows=$(trace_count '^theron_c852_instruction ' "$c852_runtime_window_trace")
+    transition_c852_runtime_window_complete=$(trace_count '^theron_c852_window_end .*status=complete$' "$c852_runtime_window_trace")
+fi
+transition_c852_runtime_window_status=not_observed
+if [[ "$transition_c852_runtime_window_complete" -gt 0 ]]; then
+    transition_c852_runtime_window_status=complete
+elif [[ "$transition_c852_runtime_window_rows" -gt 0 ]]; then
+    transition_c852_runtime_window_status=incomplete
+fi
 transition_ram_snapshot=$main_ram_snapshot
 if [[ "$capture_mednafen_module" == pce_fast ]]; then
     transition_ram_snapshot=$pce_fast_main_ram_snapshot
@@ -3082,6 +3117,10 @@ fi
     else
         printf 'pce_fast_code_fetch_source_verification=not_requested\n'
     fi
+    printf 'c852_runtime_window_trace=%s\n' "$c852_runtime_window_trace"
+    printf 'c852_runtime_window_rows=%s\n' "$transition_c852_runtime_window_rows"
+    printf 'c852_runtime_window_complete=%s\n' "$transition_c852_runtime_window_complete"
+    printf 'c852_runtime_window_status=%s\n' "$transition_c852_runtime_window_status"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"

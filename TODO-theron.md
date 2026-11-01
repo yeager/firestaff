@@ -37,8 +37,12 @@ emulator was built against SDL2 2.32.10 and passed the isolated startup/runtime
 version check. An authentic JP save-state-only trace exercised the patch but hit
 the shared 8,192-row cap before `$C852`; JP `$C85E` was opcode `$A6` at
 physical `$0D285E`, and `$5039` was not observed. Disabling optional `$44D2`
-detail did not prevent the cap. Next, reduce or source-scope the shared trace,
-then run the instrumented emulator with authentic US media and capture ordered
+detail did not prevent the broad cap. A new independent `<trace>.c852-runtime-window`
+sidecar records the first `$C852` hit plus 128 following instructions without
+using that shared budget; its authentic JP run correctly reported
+`not_observed`. The local cold-US attempt was rejected because the staged media
+lacks Track 03, and no regional audio was substituted. Next, use a complete
+authentic US disc set and the instrumented emulator to capture ordered
 `$C852`→`$C85E`→`$5039` events, all MPRs/registers, the `($4f),Y` read, and
 `$3879` entry. See the [source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 

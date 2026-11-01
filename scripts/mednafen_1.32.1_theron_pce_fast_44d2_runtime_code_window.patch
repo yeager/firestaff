@@ -10,6 +10,12 @@
 +static unsigned Theron44D2FastFollowStepsRemaining;
 +static unsigned Theron44D2FastFollowStarted;
 +static unsigned Theron44D2FastFollowCount;
++static FILE *TheronC852FastWindowTrace;
++static const char *TheronC852FastWindowTracePath;
++static unsigned TheronC852FastWindowStarted;
++static unsigned TheronC852FastWindowStepsRemaining;
++static unsigned TheronC852FastWindowSequence;
++static unsigned TheronC852FastWindowRows;
 +static bool Theron44D2FastTraceEnabled(void)
 +{
 + return !getenv("FIRESTAFF_THERON_DISABLE_44D2_TRACE");
@@ -39,8 +45,52 @@
 -     (TheronTraceInstructionPC >= 0x39c0 && TheronTraceInstructionPC <= 0x3a0f))
 +     (TheronTraceInstructionPC >= 0x39c0 && TheronTraceInstructionPC <= 0x3a0f) ||
 +     (Theron44D2FastTraceEnabled() && TheronTraceInstructionPC == 0x44d2) ||
-+     (Theron44D2FastTraceEnabled() && Theron44D2FastFollowStepsRemaining))
++     (Theron44D2FastTraceEnabled() && Theron44D2FastFollowStepsRemaining) ||
++     TheronC852FastWindowStepsRemaining)
    {
++   TheronC852FastWindowTracePath = getenv("FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE");
++   if(TheronC852FastWindowTracePath && *TheronC852FastWindowTracePath)
++   {
++    if(!TheronC852FastWindowTrace)
++    {
++     TheronC852FastWindowTrace = fopen(TheronC852FastWindowTracePath, "w");
++     if(TheronC852FastWindowTrace)
++      fputs("source=mednafen-pce-fast-theron-c852-runtime-window-v1\n", TheronC852FastWindowTrace);
++    }
++    if(TheronC852FastWindowTrace &&
++       (TheronC852FastWindowStepsRemaining ||
++        (!TheronC852FastWindowStarted && TheronTraceInstructionPC == 0xc852)))
++    {
++     const unsigned logical = TheronTraceInstructionPC;
++     const unsigned physical = (HuCPU.MPR[logical >> 13] << 13) | (logical & 0x1fff);
++     const unsigned opcode = HuCPU.PCERead[HuCPU.MPR[logical >> 13]](physical);
++     const unsigned operand1 = HuCPU.PCERead[HuCPU.MPR[(logical + 1) >> 13]](
++         (HuCPU.MPR[(logical + 1) >> 13] << 13) | ((logical + 1) & 0x1fff));
++     const unsigned operand2 = HuCPU.PCERead[HuCPU.MPR[(logical + 2) >> 13]](
++         (HuCPU.MPR[(logical + 2) >> 13] << 13) | ((logical + 2) & 0x1fff));
++     fprintf(TheronC852FastWindowTrace,
++         "theron_c852_instruction window=%u step=%u logical_pc=%04x physical_pc=%06x opcode=%02x operand1=%02x operand2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++         TheronC852FastWindowSequence, TheronC852FastWindowRows,
++         logical, physical, opcode, operand1, operand2, HU_A, HU_X, HU_Y, HU_P,
++         HU_S, HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++     fflush(TheronC852FastWindowTrace);
++     TheronC852FastWindowRows++;
++     if(!TheronC852FastWindowStarted)
++     {
++      TheronC852FastWindowStarted = 1;
++      TheronC852FastWindowStepsRemaining = 128;
++     }
++     else if(TheronC852FastWindowStepsRemaining && --TheronC852FastWindowStepsRemaining == 0)
++     {
++      fprintf(TheronC852FastWindowTrace,
++          "theron_c852_window_end window=%u rows=%u status=complete\n",
++          TheronC852FastWindowSequence, TheronC852FastWindowRows);
++      fflush(TheronC852FastWindowTrace);
++      TheronC852FastWindowSequence++;
++     }
++    }
++   }
     Theron3879FastTracePath = getenv("FIRESTAFF_THERON_3879_TRACE");
     if(Theron3879FastTracePath && *Theron3879FastTracePath && Theron3879FastTraceCount < 8192)
     {
