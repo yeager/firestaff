@@ -78,7 +78,7 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int16_t (*get_hero_curHP)(void *ctx, int hero);
     uint8_t (*get_hero_partypos)(void *ctx, int hero);
     int16_t (*get_heros_in_party)(void *ctx);
-    int16_t (*get_hero_skill)(void *ctx, int hero, int skill_major, int skill_minor);
+    int32_t (*get_hero_skill)(void *ctx, int hero, int skill_major, int skill_minor);
     int16_t (*get_hero_sbonus)(void *ctx, int hero, int major, int minor);
     int16_t (*get_hero_max_load)(void *ctx, int hero);
     int16_t (*get_player_weight)(void *ctx, int hero);

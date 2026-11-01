@@ -30,7 +30,7 @@ extern "C" {
 #define DM2_V1_SBONUS_ARRAY_SIZE 20
 
 typedef struct {
-    int16_t skill[DM2_V1_SKILL_ARRAY_SIZE];
+    int32_t skill[DM2_V1_SKILL_ARRAY_SIZE];
     int16_t sbonus[DM2_V1_SBONUS_ARRAY_SIZE];
 } DM2_V1_HeroSkills;
 
