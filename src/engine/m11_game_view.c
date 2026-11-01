@@ -45886,11 +45886,34 @@ static int m11_dm1_front_wall_is_vi_altar(
 /* Apply the source-locked CLIKVIEW.C fountain path to the actual loaded
  * Thing record.  This deliberately does not infer a fountain from a graphic
  * id or a generic ornament fallback. */
+static int m11_dm1_apply_fountain_weight_delta(
+    M11_GameViewState* state, unsigned short handThing, int weightBefore) {
+    int leaderIndex;
+    int weightAfter;
+
+    if (!state || !state->world.things) return 0;
+    leaderIndex = state->world.party.activeChampionIndex;
+    if (leaderIndex < 0 || leaderIndex >= CHAMPION_MAX_PARTY ||
+        leaderIndex >= state->world.party.championCount ||
+        !state->world.party.champions[leaderIndex].present ||
+        !dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            state->world.things, handThing, &weightAfter)) {
+        return 0;
+    }
+    /* CLIKVIEW.C F0377 captures F0140 before filling, then adds the new
+     * F0140 weight minus the old weight to the leader's Load. */
+    state->world.party.champions[leaderIndex].load = (unsigned short)(
+        state->world.party.champions[leaderIndex].load +
+        (weightAfter - weightBefore));
+    return 1;
+}
+
 static int m11_dm1_apply_fountain_click(
     M11_GameViewState* state,
     const M11_ViewportCell* frontCell) {
     unsigned short handThing;
     int icon;
+    int weightBefore;
 
     if (!state || !frontCell || !m11_dm1_front_wall_is_fountain(state, frontCell) ||
         !state->world.things) {
@@ -45915,16 +45938,27 @@ static int m11_dm1_apply_fountain_click(
 
     icon = m11_object_icon_index_for_thing(state, state->world.things,
                                            handThing);
+    if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            state->world.things, handThing, &weightBefore)) {
+        return 0;
+    }
     if (THING_GET_TYPE(handThing) == THING_TYPE_JUNK &&
         icon >= DM1_V1_ICON_JUNK_WATER &&
         icon <= DM1_V1_ICON_JUNK_WATERSKIN) {
         int index = THING_GET_INDEX(handThing);
+        unsigned char previousCharges;
         if (!state->world.things->junks || index < 0 ||
             index >= state->world.things->junkCount) {
             return 0;
         }
+        previousCharges = state->world.things->junks[index].chargeCount;
         state->world.things->junks[index].chargeCount =
             DM1_V1_FOUNTAIN_FULL_CHARGES;
+        if (!m11_dm1_apply_fountain_weight_delta(state, handThing,
+                                                  weightBefore)) {
+            state->world.things->junks[index].chargeCount = previousCharges;
+            return 0;
+        }
         m11_set_status(state, M11_DM1_PRESENTED("FOUNTAIN"),
                        M11_DM1_PRESENTED("CONTAINER FILLED"));
         m11_refresh_hash(state);
@@ -45933,11 +45967,18 @@ static int m11_dm1_apply_fountain_click(
     if (THING_GET_TYPE(handThing) == THING_TYPE_POTION && icon ==
         DM1_V1_ICON_POTION_EMPTY_FLASK) {
         int index = THING_GET_INDEX(handThing);
+        unsigned char previousType;
         if (!state->world.things->potions || index < 0 ||
             index >= state->world.things->potionCount) {
             return 0;
         }
+        previousType = state->world.things->potions[index].type;
         state->world.things->potions[index].type = 15;
+        if (!m11_dm1_apply_fountain_weight_delta(state, handThing,
+                                                  weightBefore)) {
+            state->world.things->potions[index].type = previousType;
+            return 0;
+        }
         m11_set_status(state, M11_DM1_PRESENTED("FOUNTAIN"),
                        M11_DM1_PRESENTED("FLASK FILLED WITH WATER"));
         m11_refresh_hash(state);
