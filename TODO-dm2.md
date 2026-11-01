@@ -1,3 +1,13 @@
+2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS keyboard driver review:
+`driver_keyboardint_T1`, `driver_kbdqueue_pop`, `driver_forceint2d`, and
+`driver_requestkeycode` (840-882) were compared with Firestaff's bounded
+SPX-v4 keyboard helper. Queue capacity and shifted/Ctrl table selection have
+nearby helpers, but Firestaff translates a different input stream, lacks the
+timer-1/interrupt-2D state gate, and returns safely on an empty queue where DOS
+decrements its raw counter. It also misses the source 0x1000 forced-zero
+request flag. All four DOS definitions are now `PARTIAL`; no DOS keyboard
+driver owner binds those semantics into the live SDL/M11 input path.
+
 2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS mouse path review:
 `driver_restoremousebackground`, `sub_min`/`sub_max`, `driver_drawmouse`,
 `driver_mouseblit`, `driver_drawmouse_clipped`, `driver_force_restoremousebkg`,
