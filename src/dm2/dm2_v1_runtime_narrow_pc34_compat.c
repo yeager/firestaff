@@ -739,6 +739,7 @@ int32_t dm2_v1_hero_2c1d_1de2(
     uint8_t projectile_attack;
     uint8_t projectile_step;
     uint16_t kinetic_word;
+    int16_t rand16_limit;
 
     if (!cb || !cb->compute_throw_strength || !cb->queue_launch_noise ||
         !cb->query_item_weight || !cb->adjust_stamina ||
@@ -806,8 +807,9 @@ int32_t dm2_v1_hero_2c1d_1de2(
     skill_level = cb->query_throw_skill_level(ctx, hero_idx);
     if (skill_level < 0)
         skill_level = 0;
-    kinetic_word = (uint16_t)(kinetic_word + (uint16_t)cb->rand16(
-        ctx, (int16_t)(((uint32_t)kinetic_word >> 2) + 8u)));
+    rand16_limit = (int16_t)(((int16_t)kinetic_word >> 2) + 8);
+    kinetic_word = (uint16_t)(kinetic_word +
+                              (uint16_t)cb->rand16(ctx, rand16_limit));
     kinetic_word = (uint16_t)(kinetic_word + (uint16_t)skill_level);
     {
         int16_t signed_kinetic = (int16_t)kinetic_word;
