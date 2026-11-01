@@ -39,6 +39,8 @@ def main() -> int:
                 str(root),
                 "--prefix",
                 "capture",
+                "--path",
+                str(trace),
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
