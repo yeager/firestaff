@@ -4286,6 +4286,32 @@ int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
     return 1;
 }
 
+static void dm2_runtime_apply_spell_cooldown(
+    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks)
+{
+    DM2_V1_HeroCooldownState cooldown;
+
+    if (!rt || !hero || !rt->source_aura_of_speed_valid ||
+        cooldown_ticks <= 0 || cooldown_ticks > INT16_MAX)
+        return;
+
+    /* SKWINDOS dm2bye.cpp:4093 and SKWINSPX skevents.cpp:2669 route
+     * CAST_SPELL_PLAYER's nonzero delay through ADJUST_HAND_COOLDOWN on
+     * hand slot 2. That owner blends it with the existing spell cooldown and
+     * applies the authenticated savegames1.b_04 scale. */
+    for (int i = 0; i < DM2_V1_MAX_HANDS; ++i)
+        cooldown.hand_cooldown[i] = (uint8_t)hero->handcooldown[i];
+    dm2_v1_adjust_hand_cooldown(
+        &cooldown, (int16_t)cooldown_ticks, 2,
+        rt->source_aura_of_speed);
+    for (int i = 0; i < DM2_V1_MAX_HANDS; ++i) {
+        uint8_t bits = cooldown.hand_cooldown[i];
+        int16_t signed_value = bits <= INT8_MAX
+            ? (int16_t)bits : (int16_t)bits - 256;
+        hero->handcooldown[i] = (int8_t)signed_value;
+    }
+}
+
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt)
@@ -4315,6 +4341,7 @@ int dm2_v1_runtime_cast_spell_player(
 
     if (!rt->boot || !rt->source_party_valid ||
         !rt->boot->source_game_load_session_ready ||
+        !rt->source_aura_of_speed_valid ||
         rt->source_party.heros_in_party <= 0 ||
         rt->source_party.heros_in_party > DM2_MAX_HEROES ||
         hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
@@ -4357,7 +4384,7 @@ int dm2_v1_runtime_cast_spell_player(
             return 1;
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4382,7 +4409,7 @@ int dm2_v1_runtime_cast_spell_player(
             return 1;
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4438,8 +4465,7 @@ int dm2_v1_runtime_cast_spell_player(
         rt->source_hero_ench_countdown = rt->source_attack_counter;
         rt->source_savegames1[2] = rt->source_attack_counter;
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] =
-            (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4468,7 +4494,7 @@ int dm2_v1_runtime_cast_spell_player(
             if (next > 0xff) next = 0xff;
             rt->source_aura_of_speed = (uint8_t)next;
             hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-            hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+            dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
             memset(hero->rune, 0, sizeof(hero->rune));
             hero->nrunes = 0;
             receipt.aura_of_speed_after = rt->source_aura_of_speed;
@@ -4568,7 +4594,7 @@ int dm2_v1_runtime_cast_spell_player(
             }
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4610,7 +4636,7 @@ int dm2_v1_runtime_cast_spell_player(
     }
 
     hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-    hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+    dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
     memset(hero->rune, 0, sizeof(hero->rune));
     hero->nrunes = 0;
     receipt.source_owner_available = 1;

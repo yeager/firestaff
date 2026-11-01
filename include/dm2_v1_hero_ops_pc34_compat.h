@@ -542,7 +542,9 @@ int dm2_v1_get_party_special_force(
     const DM2_V1_SpecialForceCallbacks *cb, void *ctx);
 
 /* ---- DM2_ADJUST_HAND_COOLDOWN (c_hero.cpp:2432) ----
- * Set hand cooldown timers after an action. */
+ * Add a source delay to one hand cooldown, or slots 0..2 when hand_idx is
+ * -1. A nonzero source_savegames1.b_04 quarters the base+25% delay before
+ * the +2 tick floor; blend against the prior unsigned byte and cap at 0xff. */
 #define DM2_V1_MAX_HANDS 4
 
 typedef struct {
@@ -552,7 +554,7 @@ typedef struct {
 void dm2_v1_adjust_hand_cooldown(
     DM2_V1_HeroCooldownState *hero,
     int16_t cooldown_ticks, int hand_idx,
-    int easy_mode);
+    int source_savegames1_b04);
 
 /* SPX v4 variant (SKWINSPX/src/v4/skchamp.cpp:1064). Its delay is already
  * supplied by the caller and Aura of Speed quarters it; it does not apply

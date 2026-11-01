@@ -876,13 +876,19 @@ int dm2_v1_get_party_special_force(
 void dm2_v1_adjust_hand_cooldown(
     DM2_V1_HeroCooldownState *hero,
     int16_t cooldown_ticks, int hand_idx,
-    int easy_mode)
+    int source_savegames1_b04)
 {
-    if (!hero)
-        return;
-    /* cooldown_ticks + cooldown_ticks/4 */
-    int16_t cd = (int16_t)(cooldown_ticks + cooldown_ticks / 4);
+    uint16_t adjusted;
     int start, count;
+
+    if (!hero || hand_idx < -1 || hand_idx >= DM2_V1_MAX_HANDS)
+        return;
+    adjusted = (uint16_t)cooldown_ticks;
+    adjusted = (uint16_t)(adjusted + adjusted / 4u);
+    if (source_savegames1_b04)
+        adjusted >>= 2;
+    adjusted = (uint16_t)(adjusted + 2u);
+
     if (hand_idx != -1) {
         start = hand_idx;
         count = 1;
@@ -890,22 +896,15 @@ void dm2_v1_adjust_hand_cooldown(
         start = 0;
         count = 3;
     }
-    if (easy_mode)
-        cd = (int16_t)((uint16_t)cd >> 2);
-    cd = (int16_t)(cd + 2);
-    for (int i = start; i < start + count && i < DM2_V1_MAX_HANDS; i++) {
-        int16_t cur = (int16_t)hero->hand_cooldown[i];
-        int16_t half_new, half_old;
-        if ((uint16_t)cd <= (uint16_t)cur) {
-            half_new = (int16_t)((uint16_t)cd / 2);
-            half_old = cur;
-        } else {
-            half_new = cd;
-            half_old = (int16_t)(cur / 2);
-        }
-        int16_t result = (int16_t)(half_old + half_new);
-        if ((uint16_t)result > 0xFF)
-            result = 0xFF;
+    for (int i = start; i < start + count; ++i) {
+        uint16_t current = hero->hand_cooldown[i];
+        uint16_t result;
+        if (adjusted <= current)
+            result = current + adjusted / 2u;
+        else
+            result = adjusted + current / 2u;
+        if (result > 0xffu)
+            result = 0xffu;
         hero->hand_cooldown[i] = (uint8_t)result;
     }
 }
