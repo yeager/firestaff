@@ -6,6 +6,14 @@
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
 
+2026-11-01 ReDMCSB `DUNVIEW.C:F0113` teleporter field rendering: downgraded the
+callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
+projection-mask assets and fails closed when either is absent, but ReDMCSB
+calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw while
+Firestaff uses deterministic `animTick` phase inputs. The pixel-mask sampling
+also does not reproduce F0133's source unit and temporary-bitmap path. Dynamic
+field-pattern and source RNG parity remain open.
+
 2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0112/F0118-F0123/F0125` viewport dispatch: the ledger now marks the bounded PC34 ceiling-pit, CSB D3C/D2/D1, and DM1 D0/D1/D2 wall routes `PARTIAL`; full element ordering, cross-edition caller paths, and platform pixel/zone behavior remain open.
