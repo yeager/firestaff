@@ -54,9 +54,10 @@ authentic reference trace. A hash-gated scan of 102 unique MPR2 `$68` windows
 found no contiguous 8 KiB match in raw US Track 02 or Track 19. A separate
 authentic `$23AD` decoder capture matched 0/102 runtime instruction windows;
 this cross-capture result does not rule out another decode or runtime write.
-The full
-package is rejected and target source ownership remains open. See [the page
-source scan](source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
+The existing all-writer `$0D0000–$0D1FFF` hook is ready for a same-session
+capture; C852 rows need shared event-sequence instrumentation before causal
+write-to-fetch attribution. The full package is rejected and target source
+ownership remains open. See [the page source scan](source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
    No Drator-positioned save or state artifact is checked into the repository,
    so reproduce the route from hash-verified media in a fresh profile.

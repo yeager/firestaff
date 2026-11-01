@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document the same-session runtime-page capture path
+
+- Recorded the existing PCE Fast `WrMem()` all-writer hook for physical
+  `$0D0000–$0D1FFF`, including its wrapper flags, shared event sequence,
+  address/value/writer/MPR fields and explicit truncation marker.
+- Documented that the C852 runtime-window sidecar still records only its local
+  dispatch `step`. A shared-sequence field must be added and validated before
+  write-to-fetch causality can be established in a same-session capture.
+- Updated the MPR2 page scan, capture readiness and Theron TODO with the
+  reproducible capture configuration. No new capture or source ownership was
+  claimed by this documentation change.
+
 ## 2026-11-01 — compare the live MPR2 page with authentic `$23AD` output
 
 - Compared all 102 unique instruction windows from the complete authentic US

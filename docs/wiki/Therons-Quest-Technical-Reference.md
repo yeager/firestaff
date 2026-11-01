@@ -38,8 +38,9 @@
 > contiguous 8 KiB page in raw US Track 02 or Track 19 matching the 102 unique
 > MPR2 `$68` instruction windows. Decoded, relocated, mixed-source, or
 > runtime-written code remains possible. A separate authentic `$23AD` output
-> matched 0/102 windows in a cross-capture comparison. Capture all page writes
-> and instruction fetches in one session before assigning ownership. See the [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
+> matched 0/102 windows in a cross-capture comparison. The reference wrapper
+> already has an all-writer hook for physical `$0D0000–$0D1FFF`; C852 rows need
+> a shared event-sequence field before causal attribution. See the [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
 > and the
 > [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all

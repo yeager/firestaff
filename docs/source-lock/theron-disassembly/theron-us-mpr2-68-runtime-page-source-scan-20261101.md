@@ -53,12 +53,34 @@ session or identify the later page's owner.
 
 ## Next source join
 
-Capture all CPU writes to physical `$0D0000–$0D1FFF`, the `$23AD` decoder
-output, and the bounded instruction-fetch window in one cold US session. Join
-writes and reads by shared event order, source read/LBA, destination span, and
-MPR mapping. The existing code-RAM trace filters writers to `$1F1C00–$1F1DFF`,
-so it cannot establish whether another routine populated the live page. Keep
-row bytes opaque until the runtime page source is accounted for. The full
-Drator capture package remains rejected because live `$45C3` windows fail
-retail-source verification and other traces hit their caps; see the
-[ordered call-window report](theron-us-c852-runtime-call-capture-20261101.md).
+The reference wrapper already has an all-writer main-RAM hook at `WrMem()`.
+For the next cold US session, build the instrumented PCE Fast reference core
+with the `$23AD` hook enabled, then set these wrapper variables:
+
+```sh
+THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE=0d0000-0d1fff
+THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT=1048576
+THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1
+THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT=<capture-path>
+```
+
+The wrapper emits `${trace}.pce-fast-main-ram-target-write`; the `$23AD`
+output destination is supplied separately. The all-writer rows include the
+shared `event_sequence`, physical and logical addresses, value, writer PC and
+instruction bytes, and MPRs. The 129-dispatch C852 runtime-window sidecar is
+also captured by the wrapper. Check for
+`main_ram_target_write_truncated=sample_limit` before treating the write stream
+as complete; the configured cap is the hook's maximum, not a completeness
+receipt.
+
+One instrumentation gap remains before making a causal write-to-fetch join:
+the C852 rows currently have a sidecar-local `step` but no field from
+`TheronTraceCDSharedEventSequence`. Add and verify a non-perturbing shared
+sequence observation at each dispatch, then join writes, `$23AD` output, CD
+source reads and instruction fetches in that same cold session by sequence,
+source read/LBA, destination span and MPR mapping. The older code-RAM trace
+still filters writers to `$1F1C00–$1F1DFF`, so it cannot stand in for this
+all-PC target trace. Keep row bytes opaque until the runtime page source is
+accounted for. The full Drator package remains rejected because live `$45C3`
+windows fail retail-source verification and other traces hit their caps; see
+the [ordered call-window report](theron-us-c852-runtime-call-capture-20261101.md).

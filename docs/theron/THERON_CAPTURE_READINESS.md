@@ -81,10 +81,18 @@ US Track 02 and Track 19 and found no contiguous 8 KiB source-page match. This
 bounded scan does not rule out decoded, relocated, mixed-source or runtime-
 written code. A cross-capture comparison found that none of the 102 observed
 instruction windows matches the 5,064-byte `$23AD` output from a separate
-authentic US run; this is not a same-session provenance join. The existing
-code-RAM write trace filters writer PCs to `$1F1C00–$1F1DFF`. Capture all writes
-to `$0D0000–$0D1FFF` alongside `$23AD`, CD source reads, and instruction
-fetches before assigning ownership. See the [runtime page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
+authentic US run; this is not a same-session provenance join. The existing code-RAM write trace filters writer PCs to
+`$1F1C00–$1F1DFF`; the reference wrapper also provides an all-writer
+`WrMem()` hook for physical `$0D0000–$0D1FFF`. Set
+`THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE=0d0000-0d1fff`,
+`THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT=1048576`,
+and `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`; build with the `$23AD`
+hook enabled and set `THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT` to retain its
+ordered output. The target-write sidecar includes a shared `event_sequence`
+and an explicit truncation marker. The C852 window still lacks a shared
+sequence field, so add and validate that instrumentation before claiming a
+causal write-to-instruction fetch join. The exact procedure and interpretation
+are in the [runtime page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and the
 [static candidate report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 The PCE and PCE Fast `$3879` trace-hook extension starts a bounded
