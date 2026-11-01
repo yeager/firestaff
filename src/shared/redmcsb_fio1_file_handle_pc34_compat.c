@@ -285,6 +285,20 @@ int F1339_FIO1_11_RenamePc34Compat(const RedmcsbFio1HostPc34Compat *host,
     return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
 }
 
+int16_t F1340_FIO1_09_CountOpenTrackdiskDevicesHostCompat(
+    const RedmcsbFio1HostPc34Compat *host)
+{
+    int16_t drive_index;
+    int16_t open_count = 0;
+
+    if (!host || !host->trackdiskIsOpen) return 0;
+    /* ReDMCSB FIO1.C F1340 checks the four source Trackdisk indices. */
+    for (drive_index = 0; drive_index < 4; ++drive_index) {
+        if (host->trackdiskIsOpen(host->context, drive_index)) ++open_count;
+    }
+    return open_count;
+}
+
 int F1341_FIO1_10_IsClosedPc34Compat(
     const RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -299,8 +313,9 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1339/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1340/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
-           "F1337 host callback abstracts the Amiga Lock/Info/UnLock route. "
+           "Host callbacks abstract Amiga F1337 Lock/Info/UnLock and F1340 "
+           "Trackdisk open-state routes. "
            "Floppy, format, and disk-change routes are excluded.";
 }

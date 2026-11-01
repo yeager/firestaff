@@ -48,6 +48,8 @@ typedef int (*redmcsb_fio1_rename_result_pc34_compat)(
  * its lock on every path. */
 typedef int (*redmcsb_fio1_lock_and_get_size_compat)(
     void *context, const char *file_name, int32_t *out_size);
+typedef int (*redmcsb_fio1_trackdisk_is_open_compat)(
+    void *context, int16_t drive_index);
 
 typedef struct RedmcsbFio1HostPc34Compat {
     void *context;
@@ -63,6 +65,7 @@ typedef struct RedmcsbFio1HostPc34Compat {
     redmcsb_fio1_rename_result_pc34_compat renameFile;
     redmcsb_fio1_enumerate_matches_pc34_compat enumerateMatches;
     redmcsb_fio1_lock_and_get_size_compat lockAndGetSize;
+    redmcsb_fio1_trackdisk_is_open_compat trackdiskIsOpen;
 } RedmcsbFio1HostPc34Compat;
 
 void RedmcsbFio1FileHandleInitPc34Compat(
@@ -105,6 +108,8 @@ int F1336_FIO1_14_WritePc34Compat(const RedmcsbFio1HostPc34Compat *host,
 int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
                                  const RedmcsbFio1FileHandlePc34Compat *file,
                                  int32_t *out_size);
+int16_t F1340_FIO1_09_CountOpenTrackdiskDevicesHostCompat(
+    const RedmcsbFio1HostPc34Compat *host);
 int F1338_FIO1_12_DeletePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                    const RedmcsbFio1FileHandlePc34Compat *file);
 int F1339_FIO1_11_RenamePc34Compat(const RedmcsbFio1HostPc34Compat *host,
