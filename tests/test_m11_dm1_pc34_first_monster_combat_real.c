@@ -6,6 +6,8 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "menu_input_m12.h"
 #include "render_sdl_m11.h"
 
@@ -31,6 +33,50 @@ static int expected_ai_state_for_group_behavior(unsigned char behavior)
         case DM1_BEHAVIOR_WANDER:
         default: return AI_STATE_WANDER;
     }
+}
+
+static int verify_saved_champion_hud_icons(M11_GameViewState *state)
+{
+    unsigned char framebuffer[320 * 200];
+    int slot;
+    if (!state || state->world.party.championCount != CHAMPION_MAX_PARTY)
+        return 0;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        const struct ChampionState_Compat *champion =
+            &state->world.party.champions[slot];
+        DM1_V1_LayoutZoneRectPc34 rect;
+        DM1_ChampionPanel_IconBitmapModel model;
+        unsigned int iconPixels = 0;
+        int x, y;
+        if (!champion->present || champion->hp.current == 0 ||
+            !dm1_v1_champion_icon_rect_pc34(slot, &rect) ||
+            !DM1_ChampionPanel_BuildIconBitmapModel(
+                slot, (int)champion->direction & 3,
+                state->world.party.direction & 3,
+                (int)state->world.magic.event71CountInvisibility, &model)) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 saved champion %d is not eligible for HUD icon rendering\n",
+                    slot);
+            return 0;
+        }
+        for (y = rect.y; y < rect.y + rect.h; ++y) {
+            for (x = rect.x; x < rect.x + rect.w; ++x) {
+                if (framebuffer[y * 320 + x] != (unsigned char)model.fillColor)
+                    ++iconPixels;
+            }
+        }
+        if (iconPixels == 0) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 saved champion %d has no rendered HUD icon pixels in %d,%d %dx%d\n",
+                    slot, rect.x, rect.y, rect.w, rect.h);
+            return 0;
+        }
+        printf("PASS: authentic PC34 saved champion %d HUD icon rendered %u pixels\n",
+               slot, iconPixels);
+    }
+    return 1;
 }
 
 typedef struct {
@@ -361,6 +407,10 @@ int main(void)
             fprintf(stderr,
                     "FAIL: authentic PC34 save restored incomplete formation mask 0x%x\n",
                     formationCells);
+            M11_GameView_Shutdown(&resumed);
+            return 1;
+        }
+        if (!verify_saved_champion_hud_icons(&resumed)) {
             M11_GameView_Shutdown(&resumed);
             return 1;
         }

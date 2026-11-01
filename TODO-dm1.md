@@ -32,11 +32,14 @@ prevented saved attackers from following source behavior. The focused bundle
 test and authentic original-save combat/shield regression now pass, including
 all 15 active groups and group 169 attacking. The shared importer is also
 called by the Amiga save handoff, but this report has only been exercised with
-the PC34 save. The separate report that champions disappear from the PC HUD
-was not reproduced: the same authentic save presents all four champion slots.
-Expanded `--debug` HUD receipts now identify top-row presentation or the exact
-rejection stage; native-user captures and other editions still need checking
-if the HUD symptom recurs.
+the PC34 save. The authentic four-champion PC34 save now also passes a
+rendered-frame check: each of its four icon rectangles contains 197 pixels
+different from the source fill color after `M11_GameView_Draw`. This did not
+reproduce the reported missing champions under SDL's dummy video driver; the
+user's exact save and physical display still need a capture if it recurs. The
+Amiga path shares the importer but has no authentic Amiga save render check.
+Expanded `--debug` HUD receipts identify top-row presentation or the exact
+rejection stage.
 
 2026-11-01 latest-release check for the reported PC combat/HUD symptoms: the
 published v3.0.422 tag points to `995d524e`, before the PC34 save-AI fix in

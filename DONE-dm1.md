@@ -4,11 +4,13 @@
   DOSBox-X save combat/shield regression passed; all 15 active groups restore
   source behavior and group 169 attacks. The shared import routine is used by
   the Amiga save loader as well, but this regression was verified only with
-  the PC34 save. The accompanying report of missing PC HUD champions was not
-  reproduced: all four champion slots rendered from that save. `--debug` now
+  the PC34 save. A new real-save framebuffer assertion now draws that same
+  authentic four-champion PC34 save and confirms each HUD icon contributes 197
+  pixels beyond its source fill. The report was not reproduced in this SDL
+  dummy-driver run; it does not establish native-display HUD parity. `--debug`
   reports DM1 world/AI changes and PC34 top-row HUD success or rejection stage
   only when the diagnostic snapshot changes. This does not establish full
-  combat parity or native-display HUD parity.
+  combat parity.
 
 - 2026-10-30: `dm1_v1_fmtowns_archive_cli_boot` passed on the current M4
   build in 202.56 seconds against the installed authentic Japanese/English
