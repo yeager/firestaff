@@ -4556,7 +4556,7 @@ static void dm2_runtime_apply_spell_cooldown(
  * skevents.cpp POTION branch: hand 1 is inspected before hand 0; DB8/cls2
  * 0x14 is removed, changed to the produced potion type, assigned its
  * randomized power in record word 1, and equipped back into that hand. */
-static uint8_t dm2_runtime_spell_query_cls2(void *ctx, uint16_t item)
+static uint8_t dm2_runtime_spell_query_cls2(uint16_t item, void *ctx)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
     uint8_t cls2 = 0xffu;
