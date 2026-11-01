@@ -37,9 +37,9 @@ the applicable source code and original data before claiming parity.
 
 | Game | Greatstone reference | DMWeb reference collection |
 |---|---|---|
-| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
-| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
-| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): DM2 data-file notes and Nexus |
+| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): Dungeon Master/CSB and file formats |
+| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): Dungeon Master/CSB and file formats |
+| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): DM2 data-file notes and Nexus |
 
 The Greatstone game pages report different catalogued variant counts (26 DM1,
 19 CSB, and 15 DM2 when checked on 2026-10-31). These counts describe the
