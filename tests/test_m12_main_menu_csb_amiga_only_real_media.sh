@@ -31,7 +31,7 @@ ln -s "$archive" "$menu_csb_root/$(basename "$archive")"
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     HOME="$menu_home" XDG_CONFIG_HOME="$menu_home" APPDATA="$menu_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --debug --width 1920 --height 1080 \
+        "$app" --debug --verbose --width 1920 --height 1080 \
         --script 'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         --duration 90000
 ) >"$menu_log" 2>&1
@@ -77,6 +77,11 @@ if [[ $(grep -Fc 'launch phase=game-handoff' "$runtime_log") != 1 ]] ||
    ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga31-en source=$expected_menu_source" "$runtime_log"; then
     printf '%s\n' 'FAIL: CSB Amiga no-game menu runtime route did not make exactly one authentic handoff' >&2
     grep -E 'startup game=|scan complete|CSB READY|game-handoff|failed|error' "$runtime_log" >&2 || true
+    exit 1
+fi
+if ! grep -Eq 'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio=' "$runtime_log"; then
+    printf '%s\n' 'FAIL: CSB Amiga 3.1 English did not play its authenticated SWSH intro' >&2
+    grep -E 'startup-source-select|amiga-swsh-ftl|swsh-intro|game-handoff|failed|error' "$runtime_log" >&2 || true
     exit 1
 fi
 

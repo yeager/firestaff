@@ -117,6 +117,11 @@ for required in \
         exit 1
     fi
 done
+if ! grep -Eq 'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio=' "$log"; then
+    echo "FAIL: original CSB Amiga 3.5 $mode package missed its authenticated SWSH intro" >&2
+    grep -E 'amiga-swsh-ftl|swsh-intro|failed|error' "$log" >&2 || true
+    exit 1
+fi
 if [[ "$mode" != multi ]] && ! grep -Fq 'phase=csb-entrance-0' "$log"; then
     echo 'FAIL: English CTRaw M12 did not reach its native entrance' >&2
     exit 1

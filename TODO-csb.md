@@ -1,5 +1,16 @@
 # Firestaff TODO — CSB
 
+2026-11-01 follow-up to the missing Amiga intro report: the A31E English
+no-game-menu launch also skipped SWSH because M11 incorrectly required the
+generic `dataDir` argument even though this menu route supplies the matched
+edition through its launch intent. The Amiga prelude now resolves the
+authenticated adjacent `SWSH.FTL` from that selected graphics member, with
+exact hashes for supported A31E/A31M/A35E/A35M media. Real-data menu/runtime
+checks pass for A31E, A31M, A33 multilingual, A35E and A35M CTRaw. They confirm
+17 decoded animation frames and 30 source VBlanks on the host's SDL dummy
+drivers; native display/audio playback and other platforms' independent intro
+paths are not covered. Published v3.0.422 predates this correction.
+
 2026-11-01 CSB Amiga intro missing in v3.0.422: the no-game picker can select
 the authentic A31M multilingual disk, but the FTL prelude previously rescanned
 the whole CSB data directory and could bind an A31E sibling instead. The
