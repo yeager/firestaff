@@ -240,6 +240,134 @@ int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path) {
 #endif
 }
 
+static int fsp_path_within(const char* path, const char* root) {
+    size_t root_len;
+    size_t i;
+    if (!path || !root || !path[0] || !root[0]) return 0;
+    root_len = strlen(root);
+    while (root_len > 1U && fsp_is_separator(root[root_len - 1U])) {
+        --root_len;
+    }
+    if (strlen(path) < root_len) return 0;
+    for (i = 0; i < root_len; ++i) {
+        unsigned char a = (unsigned char)path[i];
+        unsigned char b = (unsigned char)root[i];
+#if defined(_WIN32)
+        if (a >= 'A' && a <= 'Z') a = (unsigned char)(a + ('a' - 'A'));
+        if (b >= 'A' && b <= 'Z') b = (unsigned char)(b + ('a' - 'A'));
+#endif
+        if (a != b) return 0;
+    }
+    return path[root_len] == '\0' || fsp_is_separator(path[root_len]);
+}
+
+static int fsp_game_id_is_safe_component(const char* gameId) {
+    const unsigned char* p = (const unsigned char*)gameId;
+    if (!p || !p[0]) return 0;
+    while (*p) {
+        if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+              (*p >= '0' && *p <= '9') || *p == '-' || *p == '_')) {
+            return 0;
+        }
+        ++p;
+    }
+    return 1;
+}
+
+static int fsp_modern_dir_from_data_root(char* out, size_t outSize,
+                                         const char* dataRoot,
+                                         const char* gameId) {
+    char assetsRoot[FSP_PATH_MAX];
+    char gameRoot[FSP_PATH_MAX];
+    if (!dataRoot || !dataRoot[0] ||
+        !FSP_ParentDir(assetsRoot, sizeof(assetsRoot), dataRoot) ||
+        !FSP_JoinPath(assetsRoot, sizeof(assetsRoot), assetsRoot, "assets") ||
+        !FSP_JoinPath(gameRoot, sizeof(gameRoot), assetsRoot, gameId) ||
+        !FSP_JoinPath(out, outSize, gameRoot, "modern")) {
+        return 0;
+    }
+    return 1;
+}
+
+static int fsp_modern_dir_from_data_path(char* out, size_t outSize,
+                                         const char* dataDir,
+                                         const char* gameId) {
+    char parent1[FSP_PATH_MAX];
+    char parent2[FSP_PATH_MAX];
+    char assetsRoot[FSP_PATH_MAX];
+    char gameRoot[FSP_PATH_MAX];
+    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
+        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
+        if (!FSP_JoinPath(assetsRoot, sizeof(assetsRoot), dataDir, "assets"))
+            return 0;
+    } else if (!FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2,
+                             "assets")) {
+        return 0;
+    }
+    return FSP_JoinPath(gameRoot, sizeof(gameRoot), assetsRoot, gameId) &&
+           FSP_JoinPath(out, outSize, gameRoot, "modern");
+}
+
+int FSP_ResolveGameModernAssetDir(char* out, size_t outSize,
+                                  const char* dataDir,
+                                  const char* gameId) {
+    char configuredDataRoot[FSP_PATH_MAX];
+    char physicalDataRoot[FSP_PATH_MAX];
+    char physicalDataDir[FSP_PATH_MAX];
+    char logicalModernDir[FSP_PATH_MAX];
+    char physicalModernDir[FSP_PATH_MAX];
+    char manifest[FSP_PATH_MAX];
+    if (!out || outSize == 0U || !dataDir || !dataDir[0] ||
+        !fsp_game_id_is_safe_component(gameId)) {
+        return 0;
+    }
+    out[0] = '\0';
+
+    /* A catalog may hand the runtime a realpath below a symlinked default
+     * ~/.firestaff/data root. Map that physical child back to the configured
+     * logical profile before falling back to dataDir-relative custom roots. */
+    if (FSP_GetDefaultOriginalsDir(configuredDataRoot,
+                                   sizeof(configuredDataRoot)) &&
+        FSP_ResolvePhysicalPath(physicalDataRoot, sizeof(physicalDataRoot),
+                                configuredDataRoot) &&
+        FSP_ResolvePhysicalPath(physicalDataDir, sizeof(physicalDataDir),
+                                dataDir) &&
+        fsp_path_within(physicalDataDir, physicalDataRoot) &&
+        fsp_modern_dir_from_data_root(logicalModernDir,
+                                      sizeof(logicalModernDir),
+                                      configuredDataRoot, gameId)) {
+        snprintf(out, outSize, "%s", logicalModernDir);
+        return strlen(logicalModernDir) < outSize;
+    }
+
+    /* Keep custom/scratch root behavior, including the prior CSB preference
+     * for an existing logical manifest over a physical sibling manifest. */
+    if (!fsp_modern_dir_from_data_path(logicalModernDir,
+                                       sizeof(logicalModernDir), dataDir,
+                                       gameId)) {
+        return 0;
+    }
+    if (FSP_JoinPath(manifest, sizeof(manifest), logicalModernDir,
+                     "modern_asset_manifest.json") &&
+        FSP_FileExists(manifest)) {
+        snprintf(out, outSize, "%s", logicalModernDir);
+        return strlen(logicalModernDir) < outSize;
+    }
+    if (FSP_ResolvePhysicalPath(physicalDataDir, sizeof(physicalDataDir),
+                                dataDir) &&
+        fsp_modern_dir_from_data_path(physicalModernDir,
+                                      sizeof(physicalModernDir),
+                                      physicalDataDir, gameId) &&
+        FSP_JoinPath(manifest, sizeof(manifest), physicalModernDir,
+                     "modern_asset_manifest.json") &&
+        FSP_FileExists(manifest)) {
+        snprintf(out, outSize, "%s", physicalModernDir);
+        return strlen(physicalModernDir) < outSize;
+    }
+    snprintf(out, outSize, "%s", logicalModernDir);
+    return strlen(logicalModernDir) < outSize;
+}
+
 /* ── Filesystem queries ─────────────────────────────────────────────── */
 
 int FSP_PathExists(const char* path) {

@@ -25302,6 +25302,23 @@ endif()
         COMMAND test_dm2_v22_modern_assets_pc34
     )
 
+    add_executable(test_fs_game_modern_asset_dir
+        tests/test_fs_game_modern_asset_dir.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_fs_game_modern_asset_dir PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_fs_game_modern_asset_dir PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME fs_game_modern_asset_dir
+        COMMAND test_fs_game_modern_asset_dir
+    )
+
     # DM2 V2.2 finished-art material gate. CI-runnable synthetic
     # placeholder-vs-real classifier for the same T560/T600 asset ids
     # exposed by dm2_v22_viewport_swap_pc34.c.

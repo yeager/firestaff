@@ -27,6 +27,10 @@
 
 ## Developer changes
 
+- `V2.2 asset discovery`: resolve per-game modern-art, material and review
+  receipt paths from the Firestaff profile when the originals directory is
+  symlinked to an external volume; retain custom-root mappings and add a
+  five-game regression check.
 - `DM1 and CSB source parity`: expand ReDMCSB source mappings and bounded utility contracts, with updated evidence for unresolved platform and edition gaps.
 - `DM1 startup coverage`: add authentic Atari, Amiga, French/German and Apple IIGS menu-to-runtime checks; enforce Amiga original-disk checks.
 - `DM2 startup coverage`: add authentic archive and FM Towns light-path checks, including malformed light-root rejection and media selection cases.

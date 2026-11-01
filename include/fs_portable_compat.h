@@ -48,6 +48,15 @@ char* FSP_NormalizeSeparators(char* path);
  * success, 0 when the path cannot be resolved. */
 int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path);
 
+/* Resolve the per-game V2.2 asset directory that belongs beside the
+ * Firestaff user profile. When the selected game data is below the configured
+ * originals root, preserve that root's logical path even if it is a symlink
+ * to another volume. For unrelated custom/test roots, retain the established
+ * sibling-root mapping derived from dataDir. */
+int FSP_ResolveGameModernAssetDir(char* out, size_t outSize,
+                                  const char* dataDir,
+                                  const char* gameId);
+
 /* ── Filesystem queries ─────────────────────────────────────────────── */
 
 /*

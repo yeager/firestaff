@@ -203,22 +203,13 @@ void dm2_v22_set_manifest_path(const char* dataDir) {
     /* Build: ~/.firestaff/assets/dm2/modern/modern_asset_manifest.json
      * Walk up two levels from dataDir (e.g. data/dm2 -> data -> ~/.firestaff)
      * then append assets/dm2/modern/. */
-    char parent1[FSP_PATH_MAX];
-    char parent2[FSP_PATH_MAX];
-    char assetsRoot[FSP_PATH_MAX];
     char modernDir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
-        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-        /* Fallback: try treating dataDir as already being ~/.firestaff
-         * (single-component dataDir from a custom setup). */
-        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), dataDir, "assets");
-    } else {
-        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2, "assets");
+    if (!FSP_ResolveGameModernAssetDir(modernDir, sizeof(modernDir),
+                                       dataDir, "dm2") ||
+        !FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
+                      modernDir, "modern_asset_manifest.json")) {
+        g_v22_manifest_path[0] = '\0';
     }
-    FSP_JoinPath(modernDir, sizeof(modernDir), assetsRoot, "dm2");
-    FSP_JoinPath(modernDir, sizeof(modernDir), modernDir, "modern");
-    FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
-                 modernDir, "modern_asset_manifest.json");
 }
 
 /* dm2_v22_validate_manifest — validates the JSON manifest.

@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-11-01 — Resolve modern-art paths with external game-data storage
+
+Added a shared resolver for per-game V2.2 modern-art manifests, material
+gates and the DM1 reviewed-pack receipt. It maps canonical media paths back
+to the logical Firestaff profile when `~/.firestaff/data` is a symlink to an
+external volume, and preserves sibling mappings for custom roots. The focused
+`fs_game_modern_asset_dir` CTest passed for all five game IDs and the custom
+root case; changed C files passed syntax checks. Runtime admission retesting
+is still pending. The resolver does not loosen the finished-real material
+gates.
+
 
 ## 2026-10-31 — Native Theron US Continue and JP fresh-start revalidated
 
