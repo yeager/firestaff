@@ -1725,7 +1725,7 @@ else
     # complete canonical ISO identities admitted by the runtime intake; they
     # are not interchangeable with the raw BIN identities above.
     case "$track02_md5" in
-        397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da) ;;
+        397039af02d50d15c70b74088eb8a1cb|62a39bbf43415c9739c41c2481080a49|ceb02343868f80cec899e9b239aff2da) ;;
         *)
             printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US ISO' >&2
             exit 1

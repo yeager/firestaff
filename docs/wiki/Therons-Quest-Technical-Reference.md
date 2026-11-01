@@ -27,7 +27,7 @@
 > `$C852` windows exactly match US Track 02 raw offset `$A3AD2`. The runtime
 > source is mapped, while direct generated-row consumer attribution and
 > downstream row semantics remain open; the associated BIOS trace was
-> explicitly truncated and fails closed. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> explicitly truncated and fails closed. A subsequent authentic JP state-only `$3879` trace reached its 8,192-row cap before `$C852`, recorded JP `$C85E` opcode `$A6` at physical `$0D285E`, and did not observe `$5039`; this does not validate the US call candidate. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
 > physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all

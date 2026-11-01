@@ -28,7 +28,16 @@ SDL route includes mouse-panel and touch input, movement, wait, champion
 selection, and the US item interaction sequence. These tests establish those
 bounded routes only; they do not close the gameplay-parity gaps below. No
 authentic Drator replay has yet exercised the newly added reader-code fetch
-windows, so their source join remains pending.
+windows, so their source join remains pending. A separate authentic JP
+PCE Fast save-state-only run exercised the `$3879` trace patch after the
+wrapper accepted the JP MODE1/2048 Track 02 identity. The shared trace still
+reached 8,192 rows before recording `$C852`; it recorded JP `$C85E` as opcode
+`$A6` at physical `$0D285E`, with no `$5039` execution. Disabling the optional
+`$44D2` detail did not prevent the shared cap. The wrapper accepts the JP
+MODE1/2048 ISO identity `62a39bbf43415c9739c41c2481080a49`. Set
+`FIRESTAFF_THERON_DISABLE_44D2_TRACE=1` to omit that optional detail when
+reproducing the capture. This state-only result does not prove cold handoff,
+the US call path, or gameplay semantics.
 
 The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
@@ -61,10 +70,11 @@ the caller range, MPRs and CPU registers through later instructions that may
 reach `$5039`. The complete Mednafen 1.32.1 patch-only chain applied in three
 consecutive isolated regression loops; a separate patch-only pass with PCE
 Fast enabled also passed. The instrumented PCE Fast emulator was built against
-SDL2 2.32.10 and passed the isolated startup/runtime version check. No
-authentic game run was captured, so the ordered runtime
-`$C852`→`$C85E`→`$5039` path, target execution and caller data semantics remain
-unproven.
+SDL2 2.32.10 and passed the isolated startup/runtime version check. An
+authentic JP state-only run exercised the patch but hit the shared 8,192-row
+cap without `$C852`; no `$5039` execution was recorded. Therefore the ordered
+US runtime `$C852`→`$C85E`→`$5039` path, target execution and caller data
+semantics remain unproven.
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
 to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
 relationship and all matching raw offsets. A complete verification requires

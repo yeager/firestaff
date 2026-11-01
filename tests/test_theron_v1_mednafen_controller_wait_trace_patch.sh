@@ -526,6 +526,7 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '+static char Theron3879FastRuntimeCodeWindow[27];' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch' "$build_script" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0x44d2' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_DISABLE_44D2_TRACE' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron44D2FastCodeWindowCount < 64' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'parsed >= 1 && parsed <= 2048' "$runtime_code_window_patch_file" ||

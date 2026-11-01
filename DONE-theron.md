@@ -1,19 +1,38 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-11-01 — `$C852` trace-window patch applied; authentic replay pending
+## 2026-11-01 — document authentic JP state-only `$3879` trace and intake fix
 
-- Drafted Mednafen PCE and PCE Fast `$3879` trace-hook changes to start a
-  bounded 128-instruction window at the first runtime `$C852` hit. The intended
-  window retains the `$C852..$C85E` caller bytes, CPU registers and MPRs, to
-  investigate the static `$C85E` `JSR $5039` candidate.
-- The complete Mednafen 1.32.1 patch-only chain now applies to isolated copies
-  in three consecutive regression loops. A separate patch-only pass with PCE
-  Fast explicitly enabled also passed. The instrumented PCE Fast emulator was
-  then built against SDL2 2.32.10 and passed the isolated startup/runtime
-  version check. Neither check captured an authentic game run, so no new trace,
-  target execution, or gameplay semantics are claimed. Keep the runtime capture
-  open until an authentic run records ordered `$C852`→`$C85E`→`$5039` events
-  and their MPR/register state.
+- Added the authentic JP MODE1/2048 Track 02 ISO identity
+  (`62a39bbf43415c9739c41c2481080a49`) to the live reference-capture wrapper's
+  accepted identities. The matching CUE had previously been rejected despite
+  its media being present in the runtime's authenticated intake set.
+- Added `FIRESTAFF_THERON_DISABLE_44D2_TRACE` to the PCE Fast reference patch
+  so a focused `$C852` investigation can omit the frequent `$44D2` code-window
+  and follow records. The variable was present in the rebuilt instrumented
+  binary and the authentic capture wrapper completed its bounded state-only
+  run with save-state load receipt.
+- The follow-up authentic JP state trace still reached the shared 8,192-row
+  `$3879` trace cap before any `$C852` instruction window was retained. It
+  recorded repeated `$C85E` fetches at physical `$0D285E`, whose opcode and
+  operands were `A6 9A 03`; no `$C852` window or `$5039` execution was captured.
+  This JP state-only run is not a cold-start or CD-handoff capture and does not
+  validate the US `JSR $5039` candidate or establish gameplay semantics.
+- Keep the remaining acceptance test explicit: reduce or source-scope the
+  shared trace volume, then capture an authentic US Drator route with ordered
+  `$C852`→`$C85E`→`$5039` evidence, MPR/register state and source mapping. No
+  native gameplay or parity claim changes.
+
+## 2026-11-01 — `$C852` trace-window patch applied
+
+- Added Mednafen PCE and PCE Fast `$3879` trace hooks that start a bounded
+  128-instruction window at the first runtime `$C852` hit and retain caller
+  bytes, CPU registers and MPRs for the static `$C85E` `JSR $5039` candidate.
+- The complete Mednafen 1.32.1 patch-only chain applied to isolated copies in
+  three consecutive regression loops. A separate PCE Fast-enabled patch-only
+  pass also passed. The instrumented PCE Fast emulator built against SDL2
+  2.32.10 and passed its isolated startup/runtime version check.
+- These patch and build checks do not prove the runtime target path; see the
+  state-only capture result above and the remaining US Drator acceptance test.
 
 ## 2026-11-01 — source-lock the US Drator `$C852` call target
 
