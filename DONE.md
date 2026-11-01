@@ -7,9 +7,15 @@ gates and the DM1 reviewed-pack receipt. It maps canonical media paths back
 to the logical Firestaff profile when `~/.firestaff/data` is a symlink to an
 external volume, and preserves sibling mappings for custom roots. The focused
 `fs_game_modern_asset_dir` CTest passed for all five game IDs and the custom
-root case; changed C files passed syntax checks. Runtime admission retesting
-is still pending. The resolver does not loosen the finished-real material
-gates.
+root case; changed C files passed syntax checks and the incremental Firestaff
+build linked successfully. The authentic-media `--presentation-mode v22`
+matrix then confirmed that every game still resolves to v21. DM1 now reports
+its manifest at the profile's actual `assets/dm1/modern` path, but its
+source-material and review-receipt gates correctly remain closed for its
+generated PBR pack. CSB's source pack remains partial with unbound viewport
+projections; DM2, Nexus and Theron remain fail-closed. GitHub Actions run
+41269568862 passed on macOS, Linux and Windows. This closes only external-root
+discovery; it does not claim a visible V2.2 effect or relax material gates.
 
 
 ## 2026-10-31 — Native Theron US Continue and JP fresh-start revalidated
