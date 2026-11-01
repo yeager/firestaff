@@ -3927,6 +3927,16 @@ int dm2_v1_skproject_calc_player_weight(
     uint16_t player,
     const DM2_V1_SkprojectPlayerWeightRequest *request,
     DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_calc_player_weight_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_calc_player_weight_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
 int dm2_v1_skproject_equip_item_to_inventory(
     DM2_V1_SkprojectPlayerWeightRequest *request,
     uint16_t player,

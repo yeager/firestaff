@@ -8151,10 +8151,11 @@ int32_t dm2_v1_skproject_query_item_weight_spx_v5(
         world, object_id, 1u, out_receipt);
 }
 
-int dm2_v1_skproject_calc_player_weight(
+static int dm2_v1_skproject_calc_player_weight_mode(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t player,
     const DM2_V1_SkprojectPlayerWeightRequest *request,
+    int value_mode,
     DM2_V1_SkprojectPlayerWeightReceipt *out_receipt)
 {
     DM2_V1_SkprojectPlayerWeightReceipt receipt;
@@ -8169,9 +8170,10 @@ int dm2_v1_skproject_calc_player_weight(
         return 0;
     }
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS; ++i) {
-        receipt.inventory_weight +=
-            (uint32_t)dm2_v1_skproject_query_item_weight(
-                world, request->inventory[i], 0);
+        int32_t item_weight = dm2_v1_skproject_query_item_value_depth(
+            world, request->inventory[i], 1u, 0u, value_mode, 0);
+        receipt.inventory_weight = (uint16_t)(
+            receipt.inventory_weight + (uint16_t)item_weight);
     }
     if (request->selected_player_plus_one != (uint16_t)(player + 1u)) {
         receipt.blocked_player_not_selected = 1;
@@ -8187,15 +8189,48 @@ int dm2_v1_skproject_calc_player_weight(
         for (uint16_t i = 0;
              i < DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS;
              ++i) {
-            receipt.open_chest_weight +=
-                (uint32_t)dm2_v1_skproject_query_item_weight(
-                    world, request->current_container_items[i], 0);
+            int32_t item_weight = dm2_v1_skproject_query_item_value_depth(
+                world, request->current_container_items[i], 1u, 0u,
+                value_mode, 0);
+            receipt.open_chest_weight = (uint16_t)(
+                receipt.open_chest_weight + (uint16_t)item_weight);
         }
     }
-    receipt.final_weight = receipt.inventory_weight + receipt.open_chest_weight;
+    receipt.final_weight = (uint16_t)(receipt.inventory_weight +
+                                      receipt.open_chest_weight);
     receipt.valid = 1;
     *out_receipt = receipt;
     return 1;
+}
+
+int dm2_v1_skproject_calc_player_weight(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt)
+{
+    return dm2_v1_skproject_calc_player_weight_mode(
+        world, player, request, 0, out_receipt);
+}
+
+int dm2_v1_skproject_calc_player_weight_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt)
+{
+    return dm2_v1_skproject_calc_player_weight_mode(
+        world, player, request, 2, out_receipt);
+}
+
+int dm2_v1_skproject_calc_player_weight_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt)
+{
+    return dm2_v1_skproject_calc_player_weight_mode(
+        world, player, request, 1, out_receipt);
 }
 
 int dm2_v1_skproject_equip_item_to_inventory(
