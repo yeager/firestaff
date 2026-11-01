@@ -107,6 +107,86 @@ int main(void)
         printf("PASS: DM2 DOS source hero receipt has identity and HP %d/%d\n",
                hero.cur_hp, hero.max_hp);
     }
+    {
+        static const int formation_x[4] = { 263, 285, 285, 263 };
+        static const int formation_y[4] = {  72,  72,  94,  94 };
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_after;
+        int facing = dm2_v1_runtime_get_party_dir();
+        int hero_count = dm2_v1_runtime_get_champion_count();
+        int source_relative;
+        int target_relative = -1;
+        int hero_index = -1;
+        int slot;
+
+        for (int i = 0; i < hero_count && i < DM2_MAX_HEROES; ++i) {
+            DM2_V1_RuntimeSourceHeroStateReceipt candidate;
+            if (dm2_v1_runtime_get_source_hero_state((uint8_t)i,
+                                                       &candidate) &&
+                candidate.cur_hp > 0) {
+                hero_index = i;
+                hero_before = candidate;
+                break;
+            }
+        }
+        if (hero_index < 0 || facing < 0 || facing > 3) {
+            fputs("FAIL: DM2 DOS formation has no live source champion/facing\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        source_relative = (hero_before.party_position - facing) & 3;
+        for (slot = 1; slot <= 4; ++slot) {
+            int candidate_relative = (source_relative + slot) & 3;
+            int candidate_absolute = (candidate_relative + facing) & 3;
+            int occupied = 0;
+            for (int i = 0; i < hero_count && i < DM2_MAX_HEROES; ++i) {
+                DM2_V1_RuntimeSourceHeroStateReceipt candidate;
+                if (dm2_v1_runtime_get_source_hero_state((uint8_t)i,
+                                                           &candidate) &&
+                    candidate.cur_hp > 0 &&
+                    candidate.party_position == candidate_absolute) {
+                    occupied = 1;
+                    break;
+                }
+            }
+            if (!occupied) {
+                target_relative = candidate_relative;
+                break;
+            }
+        }
+        if (target_relative < 0) {
+            fputs("FAIL: DM2 DOS formation has no empty destination slot\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[source_relative],
+                formation_y[source_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: first retail formation click changed the party position\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != ((target_relative + facing) & 3)) {
+            fputs("FAIL: retail DM2 formation clicks did not move the source champion\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        puts("PASS: DM2 DOS retail formation hitboxes move a champion into an empty slot");
+    }
     memset(&runtime, 0, sizeof(runtime));
     if (!dm2_v1_runtime_weather_chain_started() ||
         !dm2_v1_boot_runtime_capture(

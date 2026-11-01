@@ -174,6 +174,10 @@ struct DM2_V1_RuntimeState {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
+    /* c_hero.cpp::DM2_CHANGE_PLAYER_POS drag globals. The position is the
+     * raw source row, before applying party facing. */
+    int source_formation_drag_active;
+    int16_t source_formation_drag_position;
     int16_t source_event_hero_index;
     /* c_move globals restored by GAME_LOAD.  Their delayed-pose consumers
      * are not all bound yet, but a resume must retain the source values
@@ -3665,6 +3669,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_formation_drag_active = 0;
+    g_dm2_runtime.source_formation_drag_position = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
@@ -4892,6 +4898,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->session_snapshot.original_champion_records_valid = 1u;
     rt->source_curacthero = candidate->party.curacthero;
     rt->source_curactmode = candidate->party.curactmode;
+    rt->source_formation_drag_active = 0;
+    rt->source_formation_drag_position = 0;
     rt->source_event_hero_index = candidate->source_event_hero_index;
     rt->source_movement = candidate->movement;
     rt->source_movement_valid = candidate->movement.valid;
@@ -19932,6 +19940,91 @@ int dm2_v1_runtime_cycle_action_champion(void) {
     return 0;
 }
 
+static int dm2_runtime_formation_hero_at_position(
+    const DM2_V1_RuntimeState *rt, int absolute_position)
+{
+    int i;
+    if (!rt || !rt->source_party_valid || absolute_position < 0 ||
+        absolute_position > 3 || rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
+        return -1;
+    }
+    for (i = 0; i < rt->source_party.heros_in_party; ++i) {
+        if (rt->source_party.hero[i].partypos == absolute_position) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int dm2_v1_runtime_change_player_pos(int relative_position)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int facing;
+    int source_relative_position;
+    int source_position;
+    int target_position;
+    int source_hero;
+    int target_hero;
+
+    if (relative_position < 0 || relative_position > 4 ||
+        !rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
+        return 0;
+    }
+    facing = rt->source_party.absdir;
+    if (facing < 0 || facing > 3) return 0;
+    target_position = (relative_position + facing) & 3;
+    target_hero = dm2_runtime_formation_hero_at_position(rt, target_position);
+
+    if (!rt->source_formation_drag_active) {
+        /* The first source click only picks up the occupied portrait. */
+        if (target_hero >= 0) {
+            rt->source_formation_drag_position = (int16_t)relative_position;
+            rt->source_formation_drag_active = 1;
+        }
+        return 1;
+    }
+
+    source_relative_position = rt->source_formation_drag_position;
+    source_position = (source_relative_position + facing) & 3;
+    source_hero = dm2_runtime_formation_hero_at_position(rt, source_position);
+    /* The source clears v1e00b8 before it mutates the formation. */
+    rt->source_formation_drag_active = 0;
+    rt->source_formation_drag_position = 0;
+    if (source_hero < 0) return 1;
+
+    /* DM2_CHANGE_PLAYER_POS updates the dragged champion's absolute facing
+     * to the party direction for a normal drop. The packed 0x8000 path used
+     * by CHAMPION_SQUAD_RECOMPUTE_POSITION deliberately skips that update. */
+    rt->source_party.hero[source_hero].absdir = (int8_t)facing;
+    if (rt->session_snapshot_valid) {
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, source_hero,
+            &rt->source_party.hero[source_hero]);
+    }
+
+    if (source_relative_position != relative_position) {
+        int8_t old_position = (int8_t)source_position;
+        if (target_hero >= 0 && target_hero != source_hero) {
+            rt->source_party.hero[target_hero].partypos = old_position;
+            if (rt->session_snapshot_valid) {
+                dm2_runtime_copy_source_hero_to_snapshot(
+                    &rt->session_snapshot, target_hero,
+                    &rt->source_party.hero[target_hero]);
+            }
+        }
+        rt->source_party.hero[source_hero].partypos = (int8_t)target_position;
+        if (rt->session_snapshot_valid) {
+            dm2_runtime_copy_source_hero_to_snapshot(
+                &rt->session_snapshot, source_hero,
+                &rt->source_party.hero[source_hero]);
+        }
+    }
+    return 1;
+}
+
 typedef struct {
     DM2_V1_RuntimeState *rt;
     int hero_index;
@@ -20361,6 +20454,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_formation_drag_active = 0;
+    g_dm2_runtime.source_formation_drag_position = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     memset(&g_dm2_runtime.source_movement, 0,
            sizeof(g_dm2_runtime.source_movement));

@@ -1653,6 +1653,11 @@ void dm2_v1_runtime_set_sleeping(int sleeping);
  * heroes retained by GAME_LOAD; an incomplete or empty source formation is a
  * no-op rather than a host-created champion selection. */
 int dm2_v1_runtime_cycle_action_champion(void);
+/* Source c_hero.cpp::DM2_CHANGE_PLAYER_POS. Consecutive source formation
+ * clicks pick up and move a live champion; relative slots are transformed by
+ * the party's current facing. Returns 0 until an authenticated GAME_LOAD
+ * party is available or when the source slot is invalid. */
+int dm2_v1_runtime_change_player_pos(int relative_position);
 /* Source UI event 116..123 selects a live champion's action hand.  The
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */

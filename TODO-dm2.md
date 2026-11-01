@@ -1,3 +1,11 @@
+2026-11-02 DM2 DOS PC formation pointer route: the live M11 path now admits
+source events 125–129 into the authenticated GAME_LOAD party. The first click
+records an occupied source slot; the next click moves its champion into an
+empty slot or swaps the two party positions, using current party facing. The
+authentic DOS archive test verifies the retail hitboxes, the non-mutating
+pickup, and the committed empty-slot drop. Amiga, FM Towns, and Macintosh
+formation hit-testing and original-media runtime evidence remain open.
+
 2026-11-01 authentic Macintosh music-resource ownership: retail `CODE(22)` at
 offsets `$1a28-$1a72` and `$1b3a-$1b84` resolves `SONG(track)`, reads its
 big-endian MIDI resource ID, then looks up `cmid`, `Midi`, or `MIDI`. Firestaff
