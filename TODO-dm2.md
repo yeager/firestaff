@@ -2034,8 +2034,18 @@ editions and supported platform lanes remain partial.
 action 2 from tile bit 2, sets the open bit, and closes only when the party is
 elsewhere and any creature on the cell has AI flag `0x20`. A blocked close
 requeues the source timer one tick later. Missing creature-AI evidence fails
-closed. The source light-check state and SPX-v4/DOS open/close sound effects
-remain unbound, as do complete per-edition runtime lanes.
+closed. The cross-variant source comparison shows an additional deferred light
+transaction: SKULLWIN `c_tim_proc.cpp:3946`, SPX v5 `sktimprc.cpp:3947`, and
+DOS `dm2bya.cpp:4225` set `v1e0390.l_00` to 3 when the processed map is the
+player map; SPX v4 `skevent.cpp:2563-2564` requests its player-map light check
+after the action. The game loop consumes that request in `startend.cpp:880`
+and runs `CHECK_RECOMPUTE_LIGHT` before the viewport draw. Firestaff has no
+live trickwall-to-light-check handoff: its mode-8/mode-7 light walk and dynamic
+light recompute are currently called by map-context refresh, and dynamic
+recompute is admitted only for the verified FMT-JA lane. SPX v4 additionally
+queues open/close sounds only when the tile actually changes on the player map
+(`skevent.cpp:2553-2560`); that effect is also unbound. Keep all source rows
+partial until these effects have live owners and platform-specific evidence.
 
 2026-11-01 skproject `ADD_RUNE_TO_TAIL` variants: the rune cost tables and
 mutation logic match the Firestaff runtime's indexed costs, mana deduction,
