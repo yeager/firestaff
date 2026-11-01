@@ -327,9 +327,11 @@ M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
         switch ((SDL_Scancode)scancode) {
             case SDL_SCANCODE_LEFT:
             case SDL_SCANCODE_A:
+            case SDL_SCANCODE_KP_1:
                 return M12_MENU_INPUT_TURN_LEFT;
             case SDL_SCANCODE_RIGHT:
             case SDL_SCANCODE_D:
+            case SDL_SCANCODE_KP_3:
                 return M12_MENU_INPUT_TURN_RIGHT;
             default:
                 break;
@@ -445,6 +447,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycodeWithButtonII(
     if (buttonIIHeld) {
         switch ((SDL_Keycode)keycode) {
             case SDLK_LEFT:
+            case SDLK_KP_1:
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             case SDLK_A:
 #else
@@ -452,6 +455,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycodeWithButtonII(
 #endif
                 return M12_MENU_INPUT_TURN_LEFT;
             case SDLK_RIGHT:
+            case SDLK_KP_3:
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             case SDLK_D:
 #else

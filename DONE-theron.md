@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — keep Button II turns consistent across keypad bindings
+
+- Added keypad 1/3 to the Button II plus left/right chord in both scancode and
+  keycode paths, matching their existing sidestep aliases without changing
+  unmodified movement.
+- Added focused regression assertions for both event paths. The focused target
+  built successfully; no real-media gameplay semantics were inferred or
+  changed.
+
 ## 2026-11-01 — enumerate authentic T900 ground-item index candidates
 
 - Extended the existing US/JP real-media quest-name regression to list every

@@ -116,6 +116,10 @@ int main(void)
     CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
               SDL_SCANCODE_D, 1) == M12_MENU_INPUT_TURN_RIGHT);
     CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_KP_1, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_KP_3, 1) == M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
               SDL_SCANCODE_UP, 1) == M12_MENU_INPUT_UP);
 
     CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
@@ -124,6 +128,10 @@ int main(void)
               SDLK_LEFT, 1) == M12_MENU_INPUT_TURN_LEFT);
     CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
               SDLK_RIGHT, 1) == M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_KP_1, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_KP_3, 1) == M12_MENU_INPUT_TURN_RIGHT);
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
               SDLK_A, 1) == M12_MENU_INPUT_TURN_LEFT);

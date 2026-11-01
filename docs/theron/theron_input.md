@@ -156,10 +156,11 @@ the highlighted control changes.
   boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
   implemented champion, item, USE-command and wait inputs. The retail manual's
-  Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
-  it turns instead of side-stepping. A standalone right click does not advance
-  a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
-  while Escape remains the desktop Back command. An SDL event-loop regression
+  Button II chord is available as right-mouse plus Left/Right Arrow, A/D, or
+  keypad 1/3; each equivalent binding turns instead of side-stepping. A
+  standalone right click does not advance a dungeon tick. In a loaded dungeon
+  it is consumed only as the modifier, while Escape remains the desktop Back
+  command. An SDL event-loop regression
   verifies that Button II plus Right turns, then that Right after release
   side-steps. A native SDL mouse sequence through the visible host panel also
   turns twice and advances across a source-backed tile, using authenticated
