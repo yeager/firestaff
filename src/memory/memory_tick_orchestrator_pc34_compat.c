@@ -15157,7 +15157,12 @@ cmd_attack_legacy_marker:
     case CMD_EAT:
     case CMD_DRINK:
     case CMD_THROW_ITEM: {
-        /* These unimplemented commands have no source sound receipt. */
+        /* These generic tick tags have no standalone F0884 transaction.
+         * ReDMCSB routes inventory mouth actions and throws through their
+         * UI owners; in particular CLIKVIEW.C:F0375 dispatches leader-hand
+         * throws through CHAMPION.C:F0329/F0328. That live M11 path owns
+         * the sound and state changes, so this fallback must not invent a
+         * second command-level effect or sound receipt. */
         return 1;
     }
     case CMD_REST_TOGGLE:

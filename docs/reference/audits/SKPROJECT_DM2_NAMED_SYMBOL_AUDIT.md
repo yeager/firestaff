@@ -35,7 +35,7 @@ runtime.
 
 | Source set | Definitions | Result |
 |---|---:|---|
-| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,757 | Callable-definition rows in the disposition ledger |
+| Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,758 | Callable-definition rows in the disposition ledger |
 | `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,787 `UNREVIEWED`; 137 `PARTIAL`; 8 `IMPLEMENTED_PARITY` |
 
 The active-source definitions are tracked per location and source variant,
@@ -48,15 +48,15 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,078 |
+| `IMPLEMENTED_PARITY` | 1,077 |
 | `NOT_APPLICABLE_ARCH` | 559 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 47 |
+| `PARTIAL` | 49 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
-| **Total** | **1,759** |
+| **Total** | **1,760** |
 
 The supplemental inventory covers 17 SPX v5 and 15 DOS `c_alloc.cpp`
 definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS source. Reviewed entries are recorded in the companion source-review ledger with source mappings and variant-specific evidence. The supplemental review now covers wall/floor/pitfall/teleporter/trickwall actuator timer variants in legacy DOS and SKWINSPX v4/v5. Wall/floor mecha have live runtime owners; GAME_LOAD is narrower. Pitfall, teleporter and trickwall timer classes remain fail-closed in the active runtime dispatcher, and their standalone parity helpers do not implement the full source effects. The DOS
@@ -137,7 +137,7 @@ still lacks source-by-source mutation and all-edition/platform parity proof.
 before treating a mapping as a parity result.
 
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
-claims that a supported DM2 game feature is implemented. The 1,757 disposition
+claims that a supported DM2 game feature is implemented. The 1,758 disposition
 rows cover the older `SKWIN`/`SKULLWIN` source sets; the expanded supplemental
 inventory contains 3,932 `SKWINSPX`/`SKWINDOS` definitions, with 3,787
 `UNREVIEWED`, 137 `PARTIAL`, and 8 `IMPLEMENTED_PARITY` definitions after
@@ -165,8 +165,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,973 open rows: 3,787 unreviewed active-source
-definitions, 184 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,974 open rows: 3,787 unreviewed active-source
+definitions, 185 partial source or older-ledger rows, and 2 partial source-owner
 rows. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live

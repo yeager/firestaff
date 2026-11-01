@@ -313,14 +313,14 @@ int16_t dm2_v1_hero_use_dexterity_attribute_raw(
 
 /* skproject DM2_2c1d_0e23 (c_hero.cpp:3879)
  * Stamina cost from item weight. Standalone arithmetic. */
-int16_t dm2_v1_hero_2c1d_0e23(int16_t weight) {
-    int16_t half = (int16_t)(weight / 2);
-    int16_t clamped = dm2_between_value(1, 10, half);
+int16_t dm2_v1_hero_2c1d_0e23(uint16_t weight) {
+    uint16_t half = (uint16_t)(weight / 2u);
+    int16_t clamped = dm2_between_value(1, 10, (int16_t)half);
     int16_t result = clamped;
     for (;;) {
-        half = (int16_t)(half - 10);
-        if (half <= 0)
+        half = (uint16_t)(half - 10u);
+        if ((int16_t)half <= 0)
             return result;
-        result = (int16_t)(result + half / 2);
+        result = (int16_t)(result + (int16_t)half / 2);
     }
 }

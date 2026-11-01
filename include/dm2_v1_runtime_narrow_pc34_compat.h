@@ -440,8 +440,8 @@ void dm2_v1_change_player_pos(
  * DOS/dm2byh.cpp:423) ----
  * Throw an item held by a hero. A mouse-hand item is placed in inventory
  * slot 1 only while throw strength is computed, then the prior slot value
- * is restored. Source item-weight stamina cost and hand cooldown are applied
- * after launch noise when the matching callbacks are supplied. */
+ * is restored. The callbacks provide the source GDAT, skill, RNG, projectile
+ * and throw-state owners so the source transaction can be reproduced. */
 typedef struct {
     int16_t (*remove_from_hand)(void *ctx);
     int16_t (*remove_possession)(void *ctx, int hero_idx, int slot);
@@ -450,12 +450,23 @@ typedef struct {
     int (*hand_throw_allowed)(void *ctx);
     int16_t (*compute_throw_strength)(void *ctx, int hero_idx, int slot);
     void (*queue_launch_noise)(void *ctx, uint16_t item, int16_t x, int16_t y);
-    int16_t (*query_item_weight)(void *ctx, uint16_t item);
+    uint16_t (*query_item_weight)(void *ctx, uint16_t item);
     void (*adjust_stamina)(void *ctx, int hero_idx, int16_t amount);
     void (*adjust_hand_cooldown)(void *ctx, int hero_idx,
                                  int16_t cooldown_ticks, int hand_idx);
+    uint16_t (*query_throw_power)(void *ctx, uint16_t item);
+    void (*adjust_throw_skill)(void *ctx, int hero_idx, int16_t amount);
+    int16_t (*query_throw_skill_level)(void *ctx, int hero_idx);
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int32_t (*rand_raw)(void *ctx);
+    uint16_t (*query_projectile_range)(void *ctx, uint16_t item);
+    int (*get_party_facing)(void *ctx);
     void (*shoot_item)(void *ctx, uint16_t item, int16_t x, int16_t y,
-                       int direction, int16_t strength);
+                       int launch_direction, int party_facing,
+                       uint8_t kinetic_energy, uint8_t attack,
+                       uint8_t step_energy);
+    void (*set_throw_state)(void *ctx, int16_t disabled_movement_ticks,
+                            int party_facing);
 } DM2_V1_ThrowItemCallbacks;
 
 int32_t dm2_v1_hero_2c1d_1de2(

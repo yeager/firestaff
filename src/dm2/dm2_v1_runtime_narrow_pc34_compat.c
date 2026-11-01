@@ -727,58 +727,118 @@ int32_t dm2_v1_hero_2c1d_1de2(
     int hero_idx, int slot, int16_t x, int16_t y, int direction,
     const DM2_V1_ThrowItemCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    int hand_throw;
+    int party_facing;
+    int16_t previous_slot1 = -1;
+    int16_t throw_strength;
+    int16_t skill_level;
+    int16_t skill_adjustment = 8;
+    uint16_t item;
+    uint16_t throw_power;
+    uint16_t projectile_range;
+    uint8_t projectile_attack;
+    uint8_t projectile_step;
+    uint16_t kinetic_word;
+
+    if (!cb || !cb->compute_throw_strength || !cb->queue_launch_noise ||
+        !cb->query_item_weight || !cb->adjust_stamina ||
+        !cb->adjust_hand_cooldown || !cb->query_throw_power ||
+        !cb->adjust_throw_skill || !cb->query_throw_skill_level ||
+        !cb->rand16 || !cb->rand_raw || !cb->query_projectile_range ||
+        !cb->get_party_facing || !cb->shoot_item || !cb->set_throw_state)
         return 0;
 
-    int16_t item;
-    int16_t previous_slot1 = -1;
-    int hand_throw = slot < 0;
+    hand_throw = slot < 0;
 
-    if (hand_throw && cb->hand_throw_allowed &&
-        !cb->hand_throw_allowed(ctx))
+    if (hand_throw && (!cb->hand_throw_allowed ||
+                       !cb->hand_throw_allowed(ctx) ||
+                       !cb->get_hand_slot1 || !cb->set_hand_slot1 ||
+                       !cb->remove_from_hand))
+        return 0;
+    if (!hand_throw && !cb->remove_possession)
+        return 0;
+    party_facing = cb->get_party_facing(ctx);
+    if (party_facing < 0 || party_facing > 3)
         return 0;
 
     if (slot < 0) {
         /* Source temporarily stages the held item in inventory slot 1 so
          * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH sees it, then restores the
          * previous slot before continuing the throw transaction. */
-        if (!cb->get_hand_slot1 || !cb->set_hand_slot1)
-            return 0;
         previous_slot1 = cb->get_hand_slot1(ctx, hero_idx);
-        item = cb->remove_from_hand ? cb->remove_from_hand(ctx) : -1;
-        if (item == -1)
+        int16_t held_item = cb->remove_from_hand(ctx);
+        if (held_item == -1)
             return 0;
-        cb->set_hand_slot1(ctx, hero_idx, item);
+        item = (uint16_t)held_item;
+        cb->set_hand_slot1(ctx, hero_idx, held_item);
         slot = 1;
     }
 
-    int16_t strength = cb->compute_throw_strength
-        ? cb->compute_throw_strength(ctx, hero_idx, slot) : 0;
+    throw_strength = cb->compute_throw_strength(ctx, hero_idx, slot);
 
     if (hand_throw) {
         cb->set_hand_slot1(ctx, hero_idx, previous_slot1);
     } else {
         /* Source computes strength while the item is still in its original
          * possession slot, and only then removes that possession. */
-        item = cb->remove_possession
-            ? cb->remove_possession(ctx, hero_idx, slot) : -1;
-        if (item == -1)
+        int16_t removed_item = cb->remove_possession(ctx, hero_idx, slot);
+        if (removed_item == -1)
             return 0;
+        item = (uint16_t)removed_item;
     }
 
-    if (cb->queue_launch_noise)
-        cb->queue_launch_noise(ctx, (uint16_t)item, x, y);
-    if (cb->query_item_weight && cb->adjust_stamina) {
-        int16_t weight = cb->query_item_weight(ctx, (uint16_t)item);
-        if (weight >= 0) {
-            cb->adjust_stamina(
-                ctx, hero_idx, dm2_v1_hero_2c1d_0e23(weight));
-        }
+    cb->queue_launch_noise(ctx, item, x, y);
+    cb->adjust_stamina(
+        ctx, hero_idx,
+        dm2_v1_hero_2c1d_0e23(cb->query_item_weight(ctx, item)));
+    cb->adjust_hand_cooldown(ctx, hero_idx, 4, slot);
+
+    /* skproject SKULLWIN/c_hero.cpp:3980-4017: item DB-spec 9 changes
+     * throw-skill experience; the adjusted strength is then randomized,
+     * clamped, and passed to SHOOT_ITEM with DB-spec 12 range. */
+    throw_power = cb->query_throw_power(ctx, item);
+    if (throw_power != 0u) {
+        skill_adjustment = (int16_t)(throw_power / 4u + 12u);
     }
-    if (cb->adjust_hand_cooldown)
-        cb->adjust_hand_cooldown(ctx, hero_idx, 4, slot);
-    if (cb->shoot_item)
-        cb->shoot_item(ctx, (uint16_t)item, x, y, direction, strength);
+    cb->adjust_throw_skill(ctx, hero_idx, skill_adjustment);
+    kinetic_word = (uint16_t)((uint16_t)throw_strength +
+                              (throw_power != 0u ? throw_power : 1u));
+    skill_level = cb->query_throw_skill_level(ctx, hero_idx);
+    if (skill_level < 0)
+        skill_level = 0;
+    kinetic_word = (uint16_t)(kinetic_word + (uint16_t)cb->rand16(
+        ctx, (int16_t)(((uint32_t)kinetic_word >> 2) + 8u)));
+    kinetic_word = (uint16_t)(kinetic_word + (uint16_t)skill_level);
+    {
+        int16_t signed_kinetic = (int16_t)kinetic_word;
+        if (signed_kinetic > 255)
+            kinetic_word = 255u;
+    }
+
+    {
+        uint32_t random_attack = (uint32_t)cb->rand_raw(ctx) & 0x1fu;
+        int attack = (int)(random_attack + (uint32_t)skill_level * 8u);
+        if (attack < 40)
+            attack = 40;
+        if (attack > 200)
+            attack = 200;
+        projectile_attack = (uint8_t)attack;
+    }
+
+    projectile_range = cb->query_projectile_range(ctx, item);
+    if (projectile_range == 0u) {
+        int range = 11 - skill_level;
+        if (range < 5)
+            range = 5;
+        projectile_step = (uint8_t)range;
+    } else {
+        projectile_step = (uint8_t)projectile_range;
+    }
+
+    cb->shoot_item(ctx, item, x, y, (party_facing + direction) & 3,
+                   party_facing, (uint8_t)kinetic_word,
+                   projectile_attack, projectile_step);
+    cb->set_throw_state(ctx, 4, party_facing);
     return 1;
 }
 
