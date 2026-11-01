@@ -144,7 +144,7 @@ more per region from authenticated split MODE1/2048 ISO files; all twelve
 loaded-level receipts match all eight pointer and five zone records to source
 bytes. This verifies source diagnostics only, not original runtime spawn
 selection or behavior. Native movement, transitions, combat, audio, presentation
-and save parity remain open. Production CDDA currently plays title Track 01;
+and save parity remain open. The current isolated PCE Fast reference instrumenter has been rebuilt, but its latest capture is not yet accepted. Production CDDA currently plays title Track 01;
 no verified gameplay event-to-track route exists for authentic tracks 03–18.
 Static `$E03F` candidates and test-only track decoding do not establish that
 route. The renderer also lacks a verified retail square/material-to-tile

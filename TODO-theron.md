@@ -204,13 +204,14 @@ span at LBA 3674. Its format-only fixtures are not game-data evidence. This
 does not prove that the original game read or selected the map; no accepted
 authentic capture has yet used this filter. See the [exact-LBA capture tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
-The follow-up Mednafen build for this capture path is not yet capture-ready.
-One instrumented build linked against `sdl2-compat` and was rejected by the
-runtime verifier; another linked but predates the latest indirect-jump fetch
-hook call. Re-run the patch-application regression against the current patch,
-build against a standalone SDL2 runtime, and pass the linkage/startup verifier
-before using a new capture binary. This is tooling readiness only; it does not
-change native game support or the active-map evidence boundary.
+The current Theron patch set has now been applied to a clean Mednafen 1.32.1
+source baseline and the PCE Fast instrumented binary has been rebuilt against
+standalone SDL 2.32.10. Its embedded trace-limit/schema markers and CDDA hook
+are present. The build is ready for an isolated capture attempt; the capture
+wrapper and acceptance checks have not yet confirmed a usable result. Earlier
+`sdl2-compat` and stale-hook builds remain rejected and must not be reused.
+This is tooling readiness only; it does not change native game support or the
+active-map evidence boundary.
 
 The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
 use them only after the runtime pose, selected map, and tile consumer are bound.

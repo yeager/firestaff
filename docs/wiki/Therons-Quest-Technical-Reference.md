@@ -1,6 +1,8 @@
 # Theron's Quest Technical Reference
 
-> **Current renderer/audio boundary (2026-11-01):** presenting an authenticated
+> **Current renderer/audio boundary (2026-11-01):** the current isolated PCE
+> Fast reference instrumenter has been rebuilt from a clean Mednafen baseline,
+> but its latest capture is not yet accepted. Presenting an authenticated
 > captured screen is not a state-driven dungeon renderer. Authentic square or
 > material records are not yet joined to retail tile selection, active map,
 > party pose, BAT/VRAM, VCE/VDC state, and a paired retail frame. Do not infer

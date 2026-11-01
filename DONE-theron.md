@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — rebuild current isolated PCE Fast reference instrumenter
+
+- Applied the current Theron Mednafen patch set to a clean 1.32.1 source
+  baseline and built the instrumented PCE Fast binary against standalone SDL
+  2.32.10 on TRV2.
+- Confirmed the binary embeds the current callback-state trace limit/schema
+  and CDDA-command hook. This resolves the stale-binary build blocker for the
+  next isolated reference capture; it does not verify wrapper acceptance,
+  gameplay handoff, CDDA routing, or native parity.
+- The capture result is pending confirmation. No game data, BIOS, save state,
+  or private trace payload was added to the repository.
+
 ## 2026-11-01 — record rejected authentic JP CDDA-route capture
 
 - Ran an isolated cold Mednafen PCE Fast session using the authentic JP CUE,

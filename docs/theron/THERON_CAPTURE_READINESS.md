@@ -14,6 +14,13 @@ Static disassembly maps the `$50D2` window and four observed map-array reader wi
 
 A new isolated JP cold attempt using the CDDA-command hook was rejected: the scripted-input trace reached its 1,048,576-row cap, the callback-state trace truncated at the older binary limit of 131,072 rows, and no CDDA command sidecar was produced. The attempt does not establish a game handoff or track selection. Its private raw traces were removed. Rebuild against the current hook/verifier contract and bound the pre-game traces before another route capture; see the [current TODO](../../TODO-theron.md#2026-11-01--cdda-route-capture-rejected-before-gameplay-evidence).
 
+The instrumented Mednafen 1.32.1 PCE Fast binary has since been rebuilt from a
+clean source baseline with the current patch set and standalone SDL 2.32.10.
+The binary contains the current 524,288-row callback-state limit and CDDA
+command hook. This advances reference-tool readiness only; an isolated
+state-only run was started, but its wrapper acceptance result has not been
+confirmed. No new game handoff or gameplay audio evidence is claimed.
+
 The Mednafen movement-context instrumenter emits a separate
 `map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
 state-only captures do not include pre-instruction registers, fetched opcodes,
