@@ -205,6 +205,38 @@ M12_MenuInput M11_TheronGameplayInputFromKeycodeWithButtonII(
 M12_MenuInput M11_TheronMouseButtonToInput(int button);
 M12_MenuInput M11_TheronTouchButtonInput(int longPress);
 
+typedef enum {
+    M11_THERON_START_HOLD_NONE = 0,
+    M11_THERON_START_HOLD_KEYBOARD = 1,
+    M11_THERON_START_HOLD_MOUSE = 2,
+    M11_THERON_START_HOLD_GAMEPAD = 3
+} M11_TheronStartHoldSource;
+
+typedef struct {
+    uint32_t started_ms;
+    uint32_t device_id;
+    M11_TheronStartHoldSource source;
+    int code;
+    int pointer_x;
+    int pointer_y;
+    M12_MenuInput input;
+} M11_TheronStartHoldState;
+
+void M11_TheronStartHoldReset(M11_TheronStartHoldState* state);
+void M11_TheronStartHoldBegin(M11_TheronStartHoldState* state,
+                              M11_TheronStartHoldSource source,
+                              uint32_t device_id,
+                              int code,
+                              M12_MenuInput input,
+                              uint32_t now_ms,
+                              int pointer_x,
+                              int pointer_y);
+M12_MenuInput M11_TheronStartHoldEnd(M11_TheronStartHoldState* state,
+                                     M11_TheronStartHoldSource source,
+                                     uint32_t device_id,
+                                     int code,
+                                     uint32_t now_ms);
+
 /* Apply the launcher's 0..128 host volumes to a temporary intro owner
  * before it queues source audio. NULL menu leaves the audio defaults intact. */
 int M11_ApplyIntroAudioPreferences(M11_AudioState* audio,

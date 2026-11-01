@@ -64,8 +64,10 @@ confirmed. The PCE Fast module's mouse port is documented by
 reference result does not identify absolute cursor coordinates, establish
 click-to-command behavior, or prove native Firestaff parity.
 
-Firestaff adds desktop mouse controls as a host-side convenience. During
-startup, left-click selects and right-click goes back. During dungeon play,
+Firestaff adds desktop mouse controls as a host-side convenience. On the title
+screen, a left-click accept requires a three-second hold and commits on
+release. On later startup screens, left-click selects and right-click goes
+back. During dungeon play,
 left-click activates one of the twelve visible control-panel actions. Holding
 right mouse while pressing a direction key applies the manual's Button II
 simplified-movement modifier; a right click by itself does not advance a tick.
@@ -80,19 +82,22 @@ respectively.
 
 These are Firestaff's native-runtime bindings, not a PC Engine timing model.
 On 2026-10-24, separate SDL key-down events advanced authentic JP media from
-title through stage select and Soul Room into a loaded dungeon. The original
-Japanese title-menu action was subsequently confirmed to advance after a
-four-second Button I hold. That does not prove Firestaff requires or
-reproduces the same hold duration; its native route remains driven by separate
-SDL input events. The retail manual documents Button I as menu confirmation
-but gives no multi-second timing rule. See
+title through stage select and Soul Room into a loaded dungeon. Firestaff's
+native title accepts require a three-second minimum hold, measured until key,
+mouse button or gamepad button release. This is a host-side startup policy;
+it does not claim to reproduce the original game's exact timing. The original
+Japanese title-menu action was confirmed to advance after a four-second
+Button I hold. The retail manual documents Button I as menu confirmation but
+gives no multi-second timing rule. See
 [DMWeb and Greatstone references](../DMWEB_REFERENCE.md), the
 [capture report](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
-and [TODO-theron.md](../../TODO-theron.md).
+and [TODO-theron.md](../../TODO-theron.md). A focused regression covers the
+duration boundary but still needs execution; this host policy is not a retail
+parity claim.
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
-| Advance from title  | Z, Return, Space            |
+| Advance from title  | Z, Return, Space (hold 3 s) |
 | Navigate menu       | Up/Down Arrow, W/S          |
 | Select stage        | Z, Return, Space            |
 | Select/deselect hero| Z, Return, Space            |

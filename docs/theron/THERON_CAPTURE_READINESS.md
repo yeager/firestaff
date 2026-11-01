@@ -8,6 +8,15 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 
 Static disassembly maps the `$50D2` window and four observed map-array reader windows uniquely to authenticated JP Track 02. It shows the local checks, indirect-indexed reads, bit `$10` branches, and indexed table writes without assigning data semantics. The v4 hook has an accepted state-only UP/control pair with 946 map-array reads and same-event instruction context. The guest consumed UP at `$44C1`; one observed byte at `$0E8B14` differs from the authenticated BIN. The original target-write allowlist omitted this address, so its zero-row result was inconclusive; the rebuilt instrumenter includes it. A subsequent cold attempt did not observe the `$E11D` game handoff, any LBA 3674 data reads, or a write to `$0E8B14`. It recorded map-reader instruction contexts but no `map_array_read`; the corrected PCE Fast input verifier remains blocked on at least one event interval without a matching controller read. See the [state-only context capture](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md), [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md), and [cold capture report](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md). No cold loader provenance, active-map selection, pose-bound tile consumer, or rendered result is established.
 
+**Native title input:** Theron title accept/action inputs from keyboard, left
+mouse, and mapped gamepad are gated until the input has remained held for at
+least 3,000 ms; the action is committed on release. This is a Firestaff host
+policy, independent of the original game's four-second JP title-action
+capture. A focused unit regression covers short-hold rejection, the threshold,
+and millisecond-counter wrap, but has not yet been executed. This does not
+establish title-timing parity with retail. See the
+[native input guide](theron_input.md).
+
 The follow-up manual host-key cold run confirms that active-low RUN and Button
 I reached the System Card `$E4C5` poll (46 Button I reads across 33 frames), but
 still records no `$E11D` carry branch. Those are BIOS reads, not a game-owned

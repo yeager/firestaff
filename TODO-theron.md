@@ -1,5 +1,18 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — native title hold gate needs regression execution
+
+The native Theron title now waits for a keyboard, left-mouse or mapped
+gamepad accept/action input to remain held for at least 3,000 ms and commits it
+on release. The focused boundary regression covers a short hold, the exact
+threshold and wraparound of SDL's millisecond counter. This is Firestaff host
+input policy, not proof that retail uses the same threshold; the separate JP
+reference capture records four-second Button I holds. The changed M11 source
+files compile in the macOS SDL3 configuration, but the focused test has not
+run. Execute it in a test-enabled build before marking this change verified.
+See the [native input guide](docs/theron/theron_input.md) and
+[capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## 2026-11-01 — manual JP host-key route still lacks a verified BIOS handoff
 
 An isolated authentic JP cold PCE Fast capture delivered RUN and Button I

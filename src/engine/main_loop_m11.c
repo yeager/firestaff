@@ -12673,6 +12673,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          const M12_GamepadMap* gamepadMap,
                                          M12_GamepadStatus* gamepadStatus,
                                          int useModernLauncher,
+                                         M11_TheronStartHoldState* theronStartHold,
                                          M11_GameInputResult* gameViewResult,
                                          int* quitRequested,
                                          int* menuPointerChanged) {
@@ -12686,6 +12687,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
     }
     if (menuPointerChanged) {
         *menuPointerChanged = 0;
+    }
+    if (!m11_game_view_is_theron(gameView) ||
+        gameView->theronState.startup_phase != THERON_STARTUP_PHASE_TITLE) {
+        M11_TheronStartHoldReset(theronStartHold);
     }
     g_m11_debug_polled_event_counter = 0;
     g_m11_debug_polled_at_counter = 0;
@@ -12724,6 +12729,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             ev.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             if (ev.type == SDL_EVENT_WINDOW_FOCUS_LOST && gameView) {
                 gameView->theronButtonIIHeld = 0;
+                M11_TheronStartHoldReset(theronStartHold);
             }
             m11_sync_focus_pause(gameView, menuState,
                                 ev.type == SDL_EVENT_WINDOW_FOCUS_GAINED);
@@ -12740,12 +12746,34 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         /* Device topology still changes while gameplay is suspended. */
         if (gameView &&
             (gameView->pauseReasons & M11_GAME_PAUSE_REASON_FOCUS)) continue;
+        if (ev.type == SDL_EVENT_GAMEPAD_BUTTON_UP && theronStartHold &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            theronStartHold->source == M11_THERON_START_HOLD_GAMEPAD) {
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_GAMEPAD,
+                (uint32_t)ev.gbutton.which, (int)ev.gbutton.button,
+                (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE) return heldInput;
+            continue;
+        }
         if (ev.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
             M12_MenuInput gpadInput =
                 m11_gamepad_button_input(gamepadMap,
                                          (SDL_GamepadButton)ev.gbutton.button,
                                          gameView && gameView->active);
             if (gpadInput != M12_MENU_INPUT_NONE) {
+                if (m11_game_view_is_theron(gameView) &&
+                    gameView->theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_TITLE &&
+                    (gpadInput == M12_MENU_INPUT_ACCEPT ||
+                     gpadInput == M12_MENU_INPUT_ACTION)) {
+                    M11_TheronStartHoldBegin(
+                        theronStartHold, M11_THERON_START_HOLD_GAMEPAD,
+                        (uint32_t)ev.gbutton.which, (int)ev.gbutton.button,
+                        gpadInput, (uint32_t)SDL_GetTicks(), 0, 0);
+                    continue;
+                }
                 return gpadInput;
             }
             continue;
@@ -12885,6 +12913,37 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                            useModernLauncher, &lx, &ly)) {
                 m11_handle_launcher_pointer(menuState, useModernLauncher,
                                             lx, ly, 0);
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP && gameView &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            ev.button.button == SDL_BUTTON_LEFT && theronStartHold &&
+            theronStartHold->source == M11_THERON_START_HOLD_MOUSE) {
+            const int heldX = theronStartHold->pointer_x;
+            const int heldY = theronStartHold->pointer_y;
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_MOUSE, 0,
+                SDL_BUTTON_LEFT, (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE && gameViewResult) {
+                *gameViewResult = M11_GameView_HandlePointerButton(
+                    gameView, heldX, heldY, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                return M12_MENU_INPUT_NONE;
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN && gameView &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            ev.button.button == SDL_BUTTON_LEFT && theronStartHold) {
+            if (m11_map_window_pointer_to_game_source(
+                    gameView, (int)ev.button.x, (int)ev.button.y,
+                    &mappedX, &mappedY)) {
+                M11_TheronStartHoldBegin(
+                    theronStartHold, M11_THERON_START_HOLD_MOUSE, 0,
+                    SDL_BUTTON_LEFT, M12_MENU_INPUT_ACCEPT,
+                    (uint32_t)SDL_GetTicks(), mappedX, mappedY);
             }
             continue;
         }
@@ -13085,7 +13144,41 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                         gameViewResult)) {
             return M12_MENU_INPUT_NONE;
         }
+        if (ev.type == SDL_EVENT_KEY_UP && theronStartHold &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            theronStartHold->source == M11_THERON_START_HOLD_KEYBOARD) {
+            const int titleCode = ev.key.scancode != SDL_SCANCODE_UNKNOWN
+                ? (int)ev.key.scancode : (int)ev.key.key;
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_KEYBOARD, 0,
+                titleCode, (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE) return heldInput;
+            continue;
+        }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
+            if (m11_game_view_is_theron(gameView) &&
+                gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+                theronStartHold) {
+                M12_MenuInput titleInput = M11_TheronNavigationInputFromScancode(
+                    (int)ev.key.scancode);
+                int titleCode = ev.key.scancode != SDL_SCANCODE_UNKNOWN
+                    ? (int)ev.key.scancode : (int)ev.key.key;
+                if (titleInput == M12_MENU_INPUT_NONE) {
+                    titleInput = M11_TheronNavigationInputFromKeycode(
+                        (int)ev.key.key);
+                }
+                if (titleInput == M12_MENU_INPUT_ACCEPT ||
+                    titleInput == M12_MENU_INPUT_ACTION) {
+                    if (!ev.key.repeat) {
+                        M11_TheronStartHoldBegin(
+                            theronStartHold, M11_THERON_START_HOLD_KEYBOARD,
+                            0, titleCode, titleInput,
+                            (uint32_t)SDL_GetTicks(), 0, 0);
+                    }
+                    continue;
+                }
+            }
             if (menuState && useModernLauncher &&
                 (!gameView || !gameView->active) &&
                 M12_StartupMenu_TextEditActive(menuState)) {
@@ -13498,9 +13591,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_KEYUP && theronStartHold &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            theronStartHold->source == M11_THERON_START_HOLD_KEYBOARD) {
+            const int titleCode = ev.key.keysym.scancode != SDL_SCANCODE_UNKNOWN
+                ? (int)ev.key.keysym.scancode
+                : (int)ev.key.keysym.sym;
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_KEYBOARD, 0,
+                titleCode, (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE) return heldInput;
+            continue;
+        }
         if (ev.type == SDL_WINDOWEVENT &&
             ev.window.event == SDL_WINDOWEVENT_FOCUS_LOST && gameView) {
             gameView->theronButtonIIHeld = 0;
+            M11_TheronStartHoldReset(theronStartHold);
             continue;
         }
         if (ev.type == SDL_CONTROLLERDEVICEADDED ||
@@ -13510,12 +13617,34 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_CONTROLLERBUTTONUP && theronStartHold &&
+            m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            theronStartHold->source == M11_THERON_START_HOLD_GAMEPAD) {
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_GAMEPAD,
+                (uint32_t)ev.cbutton.which, (int)ev.cbutton.button,
+                (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE) return heldInput;
+            continue;
+        }
         if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
             M12_MenuInput gpadInput =
                 m11_gamepad_button_input(gamepadMap,
                                          (SDL_GamepadButton)ev.cbutton.button,
                                          gameView && gameView->active);
             if (gpadInput != M12_MENU_INPUT_NONE) {
+                if (m11_game_view_is_theron(gameView) &&
+                    gameView->theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_TITLE &&
+                    (gpadInput == M12_MENU_INPUT_ACCEPT ||
+                     gpadInput == M12_MENU_INPUT_ACTION)) {
+                    M11_TheronStartHoldBegin(
+                        theronStartHold, M11_THERON_START_HOLD_GAMEPAD,
+                        (uint32_t)ev.cbutton.which, (int)ev.cbutton.button,
+                        gpadInput, (uint32_t)SDL_GetTicks(), 0, 0);
+                    continue;
+                }
                 return gpadInput;
             }
             continue;
@@ -13640,6 +13769,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 continue;
             }
             if (m11_game_view_is_theron(gameView)) {
+                if (gameView->theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_TITLE &&
+                    ev.button.button == SDL_BUTTON_LEFT && theronStartHold) {
+                    if (m11_map_window_pointer_to_game_source(
+                            gameView, ev.button.x, ev.button.y,
+                            &mappedX, &mappedY)) {
+                        M11_TheronStartHoldBegin(
+                            theronStartHold, M11_THERON_START_HOLD_MOUSE, 0,
+                            SDL_BUTTON_LEFT, M12_MENU_INPUT_ACCEPT,
+                            (uint32_t)SDL_GetTicks(), mappedX, mappedY);
+                    }
+                    continue;
+                }
                 if (ev.button.button == SDL_BUTTON_RIGHT &&
                     !gameView->graphicsPopupActive) {
                     gameView->theronButtonIIHeld =
@@ -13722,6 +13864,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_MOUSEBUTTONUP &&
+            gameView && m11_game_view_is_theron(gameView) &&
+            gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+            ev.button.button == SDL_BUTTON_LEFT && theronStartHold &&
+            theronStartHold->source == M11_THERON_START_HOLD_MOUSE) {
+            const int heldX = theronStartHold->pointer_x;
+            const int heldY = theronStartHold->pointer_y;
+            M12_MenuInput heldInput = M11_TheronStartHoldEnd(
+                theronStartHold, M11_THERON_START_HOLD_MOUSE, 0,
+                SDL_BUTTON_LEFT, (uint32_t)SDL_GetTicks());
+            if (heldInput != M12_MENU_INPUT_NONE && gameViewResult) {
+                *gameViewResult = M11_GameView_HandlePointerButton(
+                    gameView, heldX, heldY, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                return M12_MENU_INPUT_NONE;
+            }
+            continue;
+        }
+        if (ev.type == SDL_MOUSEBUTTONUP &&
             gameView && gameView->active &&
             ev.button.button == SDL_BUTTON_LEFT) {
             if (gameViewResult &&
@@ -13777,6 +13936,29 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             return M12_MENU_INPUT_NONE;
         }
         if (ev.type == SDL_KEYDOWN) {
+            if (m11_game_view_is_theron(gameView) &&
+                gameView->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+                theronStartHold) {
+                M12_MenuInput titleInput = M11_TheronNavigationInputFromScancode(
+                    (int)ev.key.keysym.scancode);
+                int titleCode = ev.key.keysym.scancode != SDL_SCANCODE_UNKNOWN
+                    ? (int)ev.key.keysym.scancode
+                    : (int)ev.key.keysym.sym;
+                if (titleInput == M12_MENU_INPUT_NONE) {
+                    titleInput = M11_TheronNavigationInputFromKeycode(
+                        (int)ev.key.keysym.sym);
+                }
+                if (titleInput == M12_MENU_INPUT_ACCEPT ||
+                    titleInput == M12_MENU_INPUT_ACTION) {
+                    if (!ev.key.repeat) {
+                        M11_TheronStartHoldBegin(
+                            theronStartHold, M11_THERON_START_HOLD_KEYBOARD,
+                            0, titleCode, titleInput,
+                            (uint32_t)SDL_GetTicks(), 0, 0);
+                    }
+                    continue;
+                }
+            }
             if (menuState && useModernLauncher &&
                 (!gameView || !gameView->active) &&
                 M12_StartupMenu_TextEditActive(menuState)) {
@@ -14239,6 +14421,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
+    M11_TheronStartHoldState theronStartHold = {0};
     const char* scriptCursor = o->script;
     int scriptWaitFramesRemaining = 0;
     int scriptWaitForRuntime = 0;
@@ -15487,6 +15670,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &gamepadMap,
                                         &gamepadStatus,
                                         useModern,
+                                        &theronStartHold,
                                         &pointerResult,
                                         &quitRequested,
                                         &menuPointerChanged);

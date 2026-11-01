@@ -102,7 +102,10 @@ Q/E turn. Home/End and keypad 4/6 are alternate turn keys; keypad 1/3 step,
 the Soul Room party; G picks up a source-verified item in the facing cell; P
 drops the selected source item on the party square; and U sends a USE command
 for the facing object. Its effect on authentic doors and other objects remains
-unverified.
+unverified. On the native Theron title screen, keyboard, left-mouse and mapped
+gamepad accept/action inputs require a three-second minimum hold and activate
+on release. This is a Firestaff host policy; it does not claim exact timing
+parity with the original game.
 
 The native dungeon view also provides a visible 4x3 Firestaff mouse panel.
 Its first two rows click to turn, move and sidestep; the remaining rows select
@@ -159,7 +162,9 @@ run confirms that holding Button I for four seconds on NEW GAME opens file
 selection, and holding it for four seconds on FILE 1 enters the Akutuba story;
 shorter repeated presses advance to the dungeon. This confirms the Japanese
 title-action timing in the original game, but does not join guest input to an
-authenticated CD-to-RAM transition or establish native timing/parity. See the
+authenticated CD-to-RAM transition or establish native timing/parity.
+Firestaff's separate native title gate requires a three-second minimum
+accept/action hold, committed on release. See the
 [source-locked title route](docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [System Card trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
