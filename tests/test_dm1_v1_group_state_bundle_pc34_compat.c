@@ -33,8 +33,10 @@ int main(void)
     memset(rows, 0, sizeof(rows));
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = 6;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
     groups[1].next = THING_ENDOFLIST;
     groups[1].creatureType = 12;
+    groups[1].behavior = DM1_BEHAVIOR_APPROACH;
     things.loaded = 1;
     things.groups = groups;
     things.groupCount = 2;
@@ -83,6 +85,9 @@ int main(void)
               world.pc34ActiveGroupHomeMapY[0] == 5u &&
               world.creatureAI[1].reserved0 == 1,
           "F0435 retains cells, packed directions, owner, and home coordinates");
+    CHECK(world.creatureAI[0].stateKind == AI_STATE_ATTACK &&
+              world.creatureAI[1].stateKind == AI_STATE_APPROACH,
+          "F0435 rebuilds attack and approach state from each original C04 behavior");
 
     {
         struct DM1ActiveGroup_Compat history = {0};
@@ -121,6 +126,13 @@ int main(void)
     CHECK(world.creatureAI[0].reserved0 == 0 &&
               world.creatureAI[1].reserved0 == 1,
           "raw PC34 active-group indexes resolve against the real GROUP table");
+    groups[0].behavior = DM1_BEHAVIOR_FLEE;
+    groups[1].behavior = DM1_BEHAVIOR_USELESS4;
+    CHECK(dm1_v1_group_state_apply_save_handoff_pc34(
+              &world, rows, 2, 4, &receipt) &&
+              world.creatureAI[0].stateKind == AI_STATE_FLEE &&
+              world.creatureAI[1].stateKind == AI_STATE_WANDER,
+          "F0435 restores flee and normalizes non-source behavior values");
     {
         struct DM1ActiveGroup_Compat history = {0};
         CHECK(F0209_DM1_GROUP_ReadHistory_Compat(&world, 0, &history) &&

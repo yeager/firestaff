@@ -12,6 +12,14 @@ confirms the headless A31M route only; other Amiga editions and native display
 playback remain unverified. Source inspection found separate PC, Atari ST and
 FM Towns intro paths, which this change does not alter.
 
+On 2026-11-01, after rebuilding current `main` at `93c644549`, the authentic
+`m12_main_menu_csb_amiga_multi_runtime_real_media` test passed (46.71 s). The
+no-game M12 path selected the A31M package from the original archive, verified
+the `amiga-swsh-ftl` source-VBlank receipt and title animation, then reached
+the authentic first runtime. The test confirmed that the source archive stayed
+unchanged. This does not establish native-window playback or other Amiga
+editions.
+
 2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
 stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand
 occupied and resolves to CLEAR, while deposit empties it and resolves to SET.

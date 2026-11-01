@@ -29,6 +29,7 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
+#include "dm1_v22_real_art_runtime_gate_pc34.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -10900,16 +10901,24 @@ int M12_StartupMenu_GetLaunchGate(
                             M12_PRESENTATION_MODE_COUNT);
     gate.presentationReady = 1;
     if (pmode == M12_PRESENTATION_V22_MODERN) {
-        if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+            const char* runtime_data_dir = M12_AssetStatus_GetRuntimeDataDir(
+                &state->assetStatus, "dm1");
+            DM1_V22_RealArtRuntimeGate_PC34 real_art_gate;
+            gate.presentationReady = runtime_data_dir &&
+                dm1_v22_real_art_runtime_gate_refresh_pc34(
+                    runtime_data_dir, &real_art_gate);
+        } else if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
             const char* runtime_data_dir = M12_AssetStatus_GetRuntimeDataDir(
                 &state->assetStatus, "csb");
             csb_v22_set_manifest_path(runtime_data_dir);
             csb_v22_famg_set_manifest_path(runtime_data_dir);
             gate.presentationReady = csb_v22_modern_assets_available() &&
                 csb_v22_famg_is_finished_real();
-        } else if (!entry->gameId ||
-                   (strcmp(entry->gameId, "dm1") != 0 &&
-                    strcmp(entry->gameId, "nexus") != 0)) {
+        } else {
+            /* DM2, Nexus and Theron's current V2.2 paths have no admitted
+             * game-owned finished-real art pack. Keep their menu launch gate
+             * consistent with the runtime's V2.2 -> V2.1 fallback. */
             gate.presentationReady = 0;
         }
     }

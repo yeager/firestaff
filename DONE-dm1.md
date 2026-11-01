@@ -1,3 +1,15 @@
+- 2026-11-01: Fixed PC 3.4 save restoration so source C04 ATTACK, APPROACH and
+  FLEE behavior rebuilds the active-group AI state instead of defaulting every
+  restored monster to WANDER. The focused group-state test and the authentic
+  DOSBox-X save combat/shield regression passed; all 15 active groups restore
+  source behavior and group 169 attacks. The shared import routine is used by
+  the Amiga save loader as well, but this regression was verified only with
+  the PC34 save. The accompanying report of missing PC HUD champions was not
+  reproduced: all four champion slots rendered from that save. `--debug` now
+  reports DM1 world/AI changes and PC34 top-row HUD success or rejection stage
+  only when the diagnostic snapshot changes. This does not establish full
+  combat parity or native-display HUD parity.
+
 - 2026-10-30: `dm1_v1_fmtowns_archive_cli_boot` passed on the current M4
   build in 202.56 seconds against the installed authentic Japanese/English
   FM Towns archive. This covers the tested menu and CLI startup routes only;
