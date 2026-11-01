@@ -2,6 +2,29 @@
 set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+require_capture_helpers() {
+    local label=$1
+    shift
+    local helper
+    local missing=()
+    for helper in "$@"; do
+        if [[ ! -r "$script_dir/$helper" ]]; then
+            missing+=("$helper")
+        elif [[ "$helper" == *.sh && "$helper" != theron_x11_keymap.sh &&
+                ! -x "$script_dir/$helper" ]]; then
+            missing+=("$helper (not executable)")
+        fi
+    done
+    if (( ${#missing[@]} > 0 )); then
+        printf 'FAIL: %s is missing required helper(s):\n' "$label" >&2
+        printf '  %s\n' "${missing[@]}" >&2
+        return 1
+    fi
+}
+require_capture_helpers 'capture startup' \
+    theron_x11_keymap.sh \
+    prepare_theron_authentic_bram.sh \
+    verify_theron_stage2_system_card_call_trace.sh || exit 1
 source "$script_dir/theron_x11_keymap.sh"
 source "$script_dir/prepare_theron_authentic_bram.sh"
 scripted_input_consumption_verifier="$script_dir/verify_theron_scripted_input_consumption.sh"
@@ -26,6 +49,10 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+if [[ "$capture_pointer_c1df_trace" == 1 &&
+      -z ${THERON_CAPTURE_MEDNAFEN_MODULE:-} ]]; then
+    capture_mednafen_module=pce_fast
+fi
 system_card_io_ram_pc_filter=${THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER:-none}
 state_trace_only=${THERON_CAPTURE_STATE_TRACE_ONLY:-0}
 if [[ "$system_card_io_ram_pc_filter" != none &&
@@ -46,11 +73,41 @@ if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE' >&2
     exit 1
 fi
-if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 &&
-      -n "$mednafen_bin" && -n "$cue" && -n "$system_card" && -n "$trace" &&
-      ! -r "$script_dir/verify_theron_jp_code_follow_trace.py" ]]; then
-    printf '%s\n' 'FAIL: PCE Fast cold capture requires verify_theron_jp_code_follow_trace.py beside the capture script; refusing to start an unreceiptable capture' >&2
-    exit 1
+if [[ "$capture_mednafen_module" == pce_fast &&
+      -n "$mednafen_bin" && -n "$cue" && -n "$system_card" && -n "$trace" ]]; then
+    pce_fast_capture_helpers=()
+    if [[ "$state_trace_only" != 1 ]]; then
+        pce_fast_capture_helpers+=(
+            verify_theron_jp_code_follow_trace.py
+            verify_theron_syscard_status_trace.py
+            verify_theron_syscard_callback_state_trace.py
+            verify_theron_syscard_io_ram_trace.py
+            verify_theron_syscard_decision_trace.py
+            verify_theron_jp_syscard_bootstrap_follow.py
+        )
+    fi
+    if [[ -n ${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-} ]]; then
+        pce_fast_capture_helpers+=(verify_theron_scripted_input_consumption.sh)
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_INDIRECT_JUMP_TRACE:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(
+            verify_theron_indirect_jump_trace.py
+            verify_theron_jp_indirect_jump_follow_trace.py
+        )
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(verify_theron_pce_fast_code_fetch_source.py)
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(merge_theron_pce_fast_source_graphics_events.py)
+    fi
+    if [[ "$state_trace_only" == 1 ]]; then
+        require_capture_helpers 'PCE Fast state capture' \
+            "${pce_fast_capture_helpers[@]}" || exit 1
+    else
+        require_capture_helpers 'PCE Fast cold capture' \
+            "${pce_fast_capture_helpers[@]}" || exit 1
+    fi
 fi
 huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then

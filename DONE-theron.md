@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — preflight isolated PCE Fast capture helpers
+
+- The live-trace wrapper now checks the required helper set for the selected
+  PCE Fast capture before emulator setup. Optional source-fetch,
+  indirect-jump, replay-input, and VRAM-merge helpers are checked when their
+  capture modes are selected. Pointer-trace mode also selects PCE Fast before
+  the dependency gate.
+- Added a staged-script regression that intentionally omits the code-follow
+  verifier and confirms both explicit PCE Fast and pointer-trace cold routes
+  stop with a missing-helper diagnostic before Mednafen starts. A state-only
+  case verifies optional source-fetch helpers are checked without requiring
+  cold-boot verifiers. The focused wrapper regression passed three consecutive
+  loops; shell syntax and whitespace checks passed.
+- This prevents incomplete trace packaging; it does not resolve the missing
+  `$E11D` game handoff, prove LBA 3674 reads, or add gameplay evidence.
+
 ## 2026-11-01 — gate native title actions on a three-second hold
 
 - Native Theron TITLE accept/action inputs from keyboard, left mouse and

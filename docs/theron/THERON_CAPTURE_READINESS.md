@@ -30,6 +30,14 @@ handoff report](../source-lock/theron-disassembly/theron-jp-hostkey-cold-system-
 The wrapper now preflights that verifier before a cold PCE Fast run; the
 historical run remains rejected and still provides no game handoff.
 
+The capture wrapper now checks all required helpers for the selected PCE Fast
+mode before launching Mednafen, including optional verifiers when their
+capture flags are enabled. A staged-directory regression confirms that cold
+captures reject missing code-follow verification and state-only captures check
+their selected source-fetch verifier without requiring cold-boot helpers. This
+prevents late packaging failures; it does not establish a BIOS handoff or change
+the rejected capture's evidence.
+
 **Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
 
 **Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.

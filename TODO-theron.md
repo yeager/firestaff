@@ -1,5 +1,20 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — cold-capture helper preflight is now enforced
+
+The live PCE Fast capture wrapper now preflights required verifier and helper
+files for the selected capture mode before starting Mednafen. The
+regression intentionally removes the code-follow verifier from a staged
+capture directory and confirms the wrapper reports the missing dependency for
+both explicit PCE Fast and pointer-trace routes. State-only coverage verifies
+that selected optional helpers are required without requiring cold-boot
+verifiers. Input, code-fetch, indirect-jump and VRAM-merge helpers are checked
+when their modes are selected. Three consecutive focused regression loops pass.
+The earlier capture that
+failed after its isolated directory lacked the verifier remains rejected and
+provides no game-handoff evidence. Continue by capturing a verified `$E11D`
+launch branch and game-owned execution before repeating the LBA 3674 join.
+
 ## 2026-11-01 — manual JP host-key route still lacks a verified BIOS handoff
 
 An isolated authentic JP cold PCE Fast capture delivered RUN and Button I
@@ -11,8 +26,9 @@ and decision records. The BIOS trace reaches
 launch branch. A separate `$4000` window is capped at 128 instructions but is
 not joined to that branch; LBA 3674 has zero data-port reads. The wrapper could
 not produce its final receipt because its isolated script directory lacked
-`verify_theron_jp_code_follow_trace.py`; this is documented separately from
-the trace evidence. See the [host-key capture report](docs/source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
+`verify_theron_jp_code_follow_trace.py`; this historical failure is documented
+separately from the trace evidence. The current wrapper preflights required
+helpers before a cold capture. See the [host-key capture report](docs/source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
 
 Next, record the System Card carry decision and a continuous source-authenticated
 transfer into game-owned code with a wrapper-accepted cold capture. Keep BIOS
