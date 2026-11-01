@@ -9,7 +9,10 @@
   and CDDA-command hook. This resolves the stale-binary build blocker for the
   next isolated reference capture; it does not verify wrapper acceptance,
   gameplay handoff, CDDA routing, or native parity.
-- The capture result is pending confirmation. No game data, BIOS, save state,
+- The attempted autoload was rejected because the existing authentic
+  post-Akutuba state is incompatible with this Mednafen build's save-state
+  schema. The wrapper stopped before gameplay and emitted no CDDA command
+  sidecar; this is not a successful capture. No game data, BIOS, save state,
   or private trace payload was added to the repository.
 
 ## 2026-11-01 — record rejected authentic JP CDDA-route capture

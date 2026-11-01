@@ -207,11 +207,14 @@ authentic capture has yet used this filter. See the [exact-LBA capture tool note
 The current Theron patch set has now been applied to a clean Mednafen 1.32.1
 source baseline and the PCE Fast instrumented binary has been rebuilt against
 standalone SDL 2.32.10. Its embedded trace-limit/schema markers and CDDA hook
-are present. The build is ready for an isolated capture attempt; the capture
-wrapper and acceptance checks have not yet confirmed a usable result. Earlier
-`sdl2-compat` and stale-hook builds remain rejected and must not be reused.
-This is tooling readiness only; it does not change native game support or the
-active-map evidence boundary.
+are present. The first isolated retry did not reach the capture route: the authentic
+post-Akutuba state was rejected because its save-state sections and variables
+do not match the rebuilt Mednafen version. The wrapper stopped before gameplay
+or CDDA evidence; no command sidecar was produced. Recreate a compatible state
+with the rebuilt emulator or use a bounded cold-start route before retrying.
+Earlier `sdl2-compat` and stale-hook builds remain rejected and must not be
+reused. This is tooling readiness only; it does not change native game support
+or the active-map evidence boundary.
 
 The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
 use them only after the runtime pose, selected map, and tile consumer are bound.

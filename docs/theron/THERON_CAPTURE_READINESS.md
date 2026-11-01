@@ -17,9 +17,12 @@ A new isolated JP cold attempt using the CDDA-command hook was rejected: the scr
 The instrumented Mednafen 1.32.1 PCE Fast binary has since been rebuilt from a
 clean source baseline with the current patch set and standalone SDL 2.32.10.
 The binary contains the current 524,288-row callback-state limit and CDDA
-command hook. This advances reference-tool readiness only; an isolated
-state-only run was started, but its wrapper acceptance result has not been
-confirmed. No new game handoff or gameplay audio evidence is claimed.
+command hook. The first isolated retry was rejected before gameplay because
+the existing authentic post-Akutuba state uses save-state sections and
+variables incompatible with this rebuilt Mednafen version. The wrapper stopped
+without a CDDA command sidecar, so this run adds no handoff or gameplay-audio
+evidence. Recreate a compatible state with this emulator or use a bounded cold
+route.
 
 The Mednafen movement-context instrumenter emits a separate
 `map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
