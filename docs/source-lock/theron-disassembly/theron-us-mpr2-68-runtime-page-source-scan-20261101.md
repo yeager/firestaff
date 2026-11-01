@@ -73,14 +73,21 @@ also captured by the wrapper. Check for
 as complete; the configured cap is the hook's maximum, not a completeness
 receipt.
 
-One instrumentation gap remains before making a causal write-to-fetch join:
-the C852 rows currently have a sidecar-local `step` but no field from
-`TheronTraceCDSharedEventSequence`. Add and verify a non-perturbing shared
-sequence observation at each dispatch, then join writes, `$23AD` output, CD
-source reads and instruction fetches in that same cold session by sequence,
-source read/LBA, destination span and MPR mapping. The older code-RAM trace
-still filters writers to `$1F1C00–$1F1DFF`, so it cannot stand in for this
-all-PC target trace. Keep row bytes opaque until the runtime page source is
-accounted for. The full Drator package remains rejected because live `$45C3`
+The C852 runtime-window patch now emits a shared `event_sequence` for each
+instruction checkpoint and identifies the v2 trace schema. The counter advances
+once per emitted dispatch, before instruction execution, so writes caused by
+that instruction receive later sequence values. The complete Mednafen patch
+chain applied to an isolated source copy in three consecutive loops; this is
+patch-application evidence only, not a compiled-binary or runtime-capture
+result. A fresh cold US session must still join all-PC writes, `$23AD` output,
+CD source reads and C852 instruction checkpoints by sequence, source read/LBA,
+destination span and MPR mapping. The new
+[`verify_theron_runtime_page_write_join.py`](../../../scripts/verify_theron_runtime_page_write_join.py)
+will compare each fetched byte with its latest preceding write and list the
+recorded writer PCs. A match does not bind that writer to CD source bytes or
+establish what the code does. The older code-RAM trace still filters
+writers to `$1F1C00–$1F1DFF`, so it cannot stand in for the all-PC target trace.
+Reject any target-write sidecar with its explicit truncation marker. Keep row
+bytes opaque until the runtime page source is accounted for. The updated analyzer was rerun against the original v1 authentic trace and raw US Track 02: it reproduced the 129-dispatch/102-PC receipt and no-page-match result, reporting the shared sequence as absent for that historical capture. The full Drator package remains rejected because live `$45C3`
 windows fail retail-source verification and other traces hit their caps; see
 the [ordered call-window report](theron-us-c852-runtime-call-capture-20261101.md).

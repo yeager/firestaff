@@ -11,7 +11,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-TRACE_HEADER = "source=mednafen-pce-fast-theron-c852-runtime-window-v1"
+TRACE_HEADER_V1 = "source=mednafen-pce-fast-theron-c852-runtime-window-v1"
+TRACE_HEADER_V2 = (
+    "source=mednafen-pce-fast-theron-c852-runtime-window-v2 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence"
+)
 ROW_PREFIX = "theron_c852_instruction "
 END_PREFIX = "theron_c852_window_end "
 FIELD_RE = re.compile(r"([a-z0-9_]+)=([^ ]+)")
@@ -38,14 +42,16 @@ def fields_from(line: str) -> dict[str, str]:
 def read_dispatches(path: Path) -> tuple[list[dict[str, int]], dict[int, set[bytes]]]:
     text = path.read_text(encoding="ascii")
     lines = text.splitlines()
-    if not lines or lines[0] != TRACE_HEADER:
+    if not lines or lines[0] not in (TRACE_HEADER_V1, TRACE_HEADER_V2):
         raise ValueError("unrecognized PCE Fast runtime-window trace header")
-    if len([line for line in lines if line == TRACE_HEADER]) != 1:
+    if sum(line in (TRACE_HEADER_V1, TRACE_HEADER_V2) for line in lines) != 1:
         raise ValueError("trace must contain exactly one provenance header")
+    shared_sequence_trace = lines[0] == TRACE_HEADER_V2
 
     dispatches: list[dict[str, int]] = []
     page_samples: dict[int, set[bytes]] = {}
     end_records: list[dict[str, str]] = []
+    previous_event_sequence = -1
     for line_number, line in enumerate(lines[1:], 2):
         if line.startswith(END_PREFIX):
             end_records.append(fields_from(line[len(END_PREFIX):]))
@@ -73,6 +79,19 @@ def read_dispatches(path: Path) -> tuple[list[dict[str, int]], dict[int, set[byt
             }
         except (KeyError, ValueError) as exc:
             raise ValueError(f"malformed instruction row on line {line_number}: {exc}") from exc
+
+        if shared_sequence_trace:
+            try:
+                row["event_sequence"] = int(values["event_sequence"], 10)
+            except (KeyError, ValueError) as exc:
+                raise ValueError(
+                    f"malformed shared event sequence on line {line_number}: {exc}"
+                ) from exc
+            if row["event_sequence"] <= previous_event_sequence:
+                raise ValueError(
+                    f"non-increasing shared event sequence on line {line_number}"
+                )
+            previous_event_sequence = row["event_sequence"]
 
         pc = row["logical_pc"]
         mpr = row[f"mpr{pc >> 13}"]
@@ -174,7 +193,8 @@ def main() -> int:
 
     print(
         f"trace=complete dispatches={len(dispatches)} "
-        f"mpr2=$68_unique_logical_pcs={len(samples)}"
+        f"mpr2=$68_unique_logical_pcs={len(samples)} "
+        f"shared_event_sequence={'verified' if 'event_sequence' in dispatches[0] else 'absent'}"
     )
     if 0x1039 in samples:
         for value in sorted(samples[0x1039]):

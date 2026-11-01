@@ -1,13 +1,34 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — add shared sequencing to C852 reference checkpoints
+
+- Added a monotonically increasing `event_sequence` from
+  `TheronTraceCDSharedEventSequence` to every C852 dispatch row and versioned
+  the sidecar header as v2.
+- Updated the wrapper to validate the v2 schema, numeric sequence field,
+  strictly increasing order, exact row count and completion marker. Updated
+  the MPR2 analyzer to reject missing or non-increasing sequence values.
+- Added `verify_theron_runtime_page_write_join.py`. It requires a v2 C852
+  trace and an uncapped all-PC writer trace, checks address mappings and event
+  order, then compares each fetched byte with its latest preceding write.
+  This does not bind writer code to CD source data or assign semantics.
+- Replayed the existing analyzer against its authentic v1 trace and matching
+  raw US Track 02; it reproduced the 129-dispatch, 102-PC and no-page-match
+  result while marking the historical shared sequence absent.
+- The complete Mednafen patch-only chain applied successfully in three
+  consecutive isolated loops. The new byte-join verifier accepted a bounded
+  schema fixture and rejected its truncation marker. No Mednafen binary build
+  or new authentic cold capture has verified runtime output yet.
+
 ## 2026-11-01 — document the same-session runtime-page capture path
 
 - Recorded the existing PCE Fast `WrMem()` all-writer hook for physical
   `$0D0000–$0D1FFF`, including its wrapper flags, shared event sequence,
   address/value/writer/MPR fields and explicit truncation marker.
-- Documented that the C852 runtime-window sidecar still records only its local
-  dispatch `step`. A shared-sequence field must be added and validated before
-  write-to-fetch causality can be established in a same-session capture.
+- At the time of this documentation change, the C852 runtime-window sidecar
+  recorded only its local dispatch `step`; the later entry above supersedes
+  that state with schema v2 shared sequencing. A same-session capture is still
+  needed before write-to-fetch causality is established from authentic output.
 - Updated the MPR2 page scan, capture readiness and Theron TODO with the
   reproducible capture configuration. No new capture or source ownership was
   claimed by this documentation change.
@@ -10235,6 +10256,26 @@ improvement only: it does not implement an inventory screen or establish
 T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
+
+## 2026-11-01 — add shared sequencing to C852 reference checkpoints
+
+- Added a monotonically increasing `event_sequence` from
+  `TheronTraceCDSharedEventSequence` to every C852 dispatch row and versioned
+  the sidecar header as v2.
+- Updated the wrapper to validate the v2 schema, numeric sequence field,
+  strictly increasing order, exact row count and completion marker. Updated
+  the MPR2 analyzer to reject missing or non-increasing sequence values.
+- Added `verify_theron_runtime_page_write_join.py`. It requires a v2 C852
+  trace and an uncapped all-PC writer trace, checks address mappings and event
+  order, then compares each fetched byte with its latest preceding write.
+  This does not bind writer code to CD source data or assign semantics.
+- Replayed the existing analyzer against its authentic v1 trace and matching
+  raw US Track 02; it reproduced the 129-dispatch, 102-PC and no-page-match
+  result while marking the historical shared sequence absent.
+- The complete Mednafen patch-only chain applied successfully in three
+  consecutive isolated loops. The new byte-join verifier accepted a bounded
+  schema fixture and rejected its truncation marker. No Mednafen binary build
+  or new authentic cold capture has verified runtime output yet.
 
 ## 2026-10-10 — source-lock the JP/US ID `$4E` callee at `$4CE1`
 

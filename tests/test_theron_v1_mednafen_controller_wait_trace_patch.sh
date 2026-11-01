@@ -541,7 +541,12 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'theron_c852_instruction window=%u step=%u logical_pc=%04x physical_pc=%06x' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'const uint32 event_sequence = TheronTraceCDSharedEventSequence++;' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'theron_c852_instruction window=%u step=%u event_sequence=%u logical_pc=%04x physical_pc=%06x' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'NF != 22' "$capture_script" ||
+   ! grep -Fq 'event_sequence <= previous_event_sequence' "$capture_script" ||
    ! grep -Fq 'theron_c852_window_end window=%u rows=%u status=complete' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'TheronC852FastWindowStepsRemaining)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace"' "$capture_script" ||

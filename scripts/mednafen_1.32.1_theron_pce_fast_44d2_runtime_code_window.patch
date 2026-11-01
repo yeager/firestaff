@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -40,10 +40,25 @@
+@@ -40,7 +40,33 @@
  static unsigned Theron3879FastC852WindowStarted;
  static unsigned Theron3879FastTracePhysical;
  static unsigned Theron3879FastTraceMappedOpcode;
@@ -16,6 +16,7 @@
 +static unsigned TheronC852FastWindowStepsRemaining;
 +static unsigned TheronC852FastWindowSequence;
 +static unsigned TheronC852FastWindowRows;
++extern uint32 TheronTraceCDSharedEventSequence;
 +static bool Theron44D2FastTraceEnabled(void)
 +{
 + return !getenv("FIRESTAFF_THERON_DISABLE_44D2_TRACE");
@@ -36,7 +37,7 @@
 
  static void TheronTraceStage2MPR1(const uint16 stage2_probe_pc,
                                    const uint8 stage2_probe_x,
-@@ -1025,11 +1040,13 @@
+@@ -1025,11 +1041,14 @@
 
    if(Theron3879FastTargetStepsRemaining ||
       (TheronTraceInstructionPC >= 0x4ef4 && TheronTraceInstructionPC <= 0x4ef6) ||
@@ -55,12 +56,13 @@
 +    {
 +     TheronC852FastWindowTrace = fopen(TheronC852FastWindowTracePath, "w");
 +     if(TheronC852FastWindowTrace)
-+      fputs("source=mednafen-pce-fast-theron-c852-runtime-window-v1\n", TheronC852FastWindowTrace);
++      fputs("source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronC852FastWindowTrace);
 +    }
 +    if(TheronC852FastWindowTrace &&
 +       (TheronC852FastWindowStepsRemaining ||
 +        (!TheronC852FastWindowStarted && TheronTraceInstructionPC == 0xc852)))
 +    {
++     const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +     const unsigned logical = TheronTraceInstructionPC;
 +     const unsigned physical = (HuCPU.MPR[logical >> 13] << 13) | (logical & 0x1fff);
 +     const unsigned opcode = HuCPU.PCERead[HuCPU.MPR[logical >> 13]](physical);
@@ -69,9 +71,9 @@
 +     const unsigned operand2 = HuCPU.PCERead[HuCPU.MPR[(logical + 2) >> 13]](
 +         (HuCPU.MPR[(logical + 2) >> 13] << 13) | ((logical + 2) & 0x1fff));
 +     fprintf(TheronC852FastWindowTrace,
-+         "theron_c852_instruction window=%u step=%u logical_pc=%04x physical_pc=%06x opcode=%02x operand1=%02x operand2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++         "theron_c852_instruction window=%u step=%u event_sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x operand1=%02x operand2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
 +         TheronC852FastWindowSequence, TheronC852FastWindowRows,
-+         logical, physical, opcode, operand1, operand2, HU_A, HU_X, HU_Y, HU_P,
++         event_sequence, logical, physical, opcode, operand1, operand2, HU_A, HU_X, HU_Y, HU_P,
 +         HU_S, HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
 +         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
 +     fflush(TheronC852FastWindowTrace);

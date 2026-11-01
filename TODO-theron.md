@@ -41,11 +41,15 @@ all-writer `WrMem()` hook for `$0D0000–$0D1FFF`; use
 `THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT=1048576`, and
 `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`. Build with the `$23AD` hook
 and set `THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT` for its output. Check the
-explicit target-write truncation marker. Its rows share an event sequence with
-other instrumented events, but C852 dispatch rows currently have only their
-local `step`. Add a validated shared-sequence field there before joining all
-writes, CD source reads, `$23AD` output and instruction fetches causally within
-one cold session. The older code-RAM writer trace still filters to
+explicit target-write truncation marker. The C852 reference patch now adds a shared
+`event_sequence` to schema v2, and the complete patch-only chain applied in
+three loops. It has not yet been compiled or exercised in a new authentic cold
+capture. Join all-PC writes, CD source reads, `$23AD` output and C852
+instruction checkpoints by shared sequence, source occurrence and MPR mapping.
+Run [`verify_theron_runtime_page_write_join.py`](scripts/verify_theron_runtime_page_write_join.py)
+against the new sidecars to reconcile fetched bytes with their latest preceding
+writes. This establishes writer values only; trace the writer's source reads
+before assigning ownership. The older code-RAM writer trace still filters to
 `$1F1C00–$1F1DFF`. The same package was rejected because live
 `$45C3` did not match retail Track 02 and other traces reached their caps. The instrumented PCE Fast sidecar and complete
 patch-only chain passed their focused checks. An authentic JP state-only run

@@ -89,9 +89,13 @@ authentic US run; this is not a same-session provenance join. The existing code-
 and `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`; build with the `$23AD`
 hook enabled and set `THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT` to retain its
 ordered output. The target-write sidecar includes a shared `event_sequence`
-and an explicit truncation marker. The C852 window still lacks a shared
-sequence field, so add and validate that instrumentation before claiming a
-causal write-to-instruction fetch join. The exact procedure and interpretation
+and an explicit truncation marker. The C852 reference patch now adds the same counter
+to each dispatch checkpoint under schema v2; the full patch chain applied in
+three loops, but no compiled binary or new cold capture has validated it yet.
+Join the streams only after checking the target-write truncation marker. Run
+[`verify_theron_runtime_page_write_join.py`](../../scripts/verify_theron_runtime_page_write_join.py)
+to compare captured fetch bytes with the latest prior physical writes; this
+still leaves source-read ownership open. The exact procedure and interpretation
 are in the [runtime page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and the
 [static candidate report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).

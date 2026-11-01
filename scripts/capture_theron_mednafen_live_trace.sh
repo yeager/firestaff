@@ -2510,12 +2510,17 @@ if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace"
     exit 1
 fi
 if [[ -s "$c852_runtime_window_trace" ]] && ! awk '
-    NR == 1 { if ($0 != "source=mednafen-pce-fast-theron-c852-runtime-window-v1") exit 1; next }
+    NR == 1 { if ($0 != "source=mednafen-pce-fast-theron-c852-runtime-window-v2 event_sequence_source=TheronTraceCDSharedEventSequence") exit 1; next }
     /^theron_c852_instruction / {
-        if (NF != 20) exit 1
+        if (NF != 22) exit 1
         if ($2 != "window=0" || $3 != ("step=" count)) exit 1
-        if ($4 !~ /^logical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ ||
-            $5 !~ /^physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+        if ($4 !~ /^event_sequence=[0-9]+$/ ||
+            $5 !~ /^logical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ ||
+            $6 !~ /^physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+        event_sequence = substr($4, 16) + 0
+        if (have_event_sequence && event_sequence <= previous_event_sequence) exit 1
+        previous_event_sequence = event_sequence
+        have_event_sequence = 1
         count++
         next
     }
