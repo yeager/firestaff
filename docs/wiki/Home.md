@@ -1,6 +1,6 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-11-01.** Firestaff has five active game targets.
+> **Status reviewed 2026-11-02.** Firestaff has five active game targets.
 > Each game's verified routes and open parity boundaries are listed in the
 > [current platform status](../PLATFORM_STATUS.md). Theron's Quest runs in
 > Firestaff's native C/SDL runtime: authentic JP fresh start and US Continue

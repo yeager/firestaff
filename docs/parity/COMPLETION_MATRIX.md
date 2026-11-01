@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-11-01
+Last reviewed: 2026-11-02 (evidence scores unchanged)
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 

@@ -21,7 +21,7 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed on 2026-11-01. The
+The status pages were reviewed on 2026-11-02. The
 latest full five-card authentic-media selection check verified keyboard and
 mouse selection plus default-root handoff for DM1, CSB, DM2, Nexus and Theron.
 Separate real-media runtime checks reached Firestaff gameplay for DM1, CSB,

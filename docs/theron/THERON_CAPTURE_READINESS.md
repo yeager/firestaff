@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01 (updated after documentation audit).** This is the maintained evidence overview for
+**Current summary: 2026-11-02 (reviewed; no new gameplay evidence).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
