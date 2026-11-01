@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: corrected the Atari ST alias and callable row to `MISSING`. The source function computes DOS/Amiga copy-protection code checksums; Firestaff has no equivalent checksum route.
+
 2026-11-01 ReDMCSB `IO.C:F0074-F0078` pointer drawing and visibility: the ledger now maps the host SDL cursor/event route rather than unrelated numeric hits. Firestaff relies on window-system cursor composition; source bitmap save/restore, Atari ST interrupt callbacks, and the paired redraw visibility protocol remain open.
 
 2026-11-01 ReDMCSB `MOUSESET.C:F0066-F0071/F0073`: the callable ledger now maps host-pointer initialization, bounded arrow/hand/object state, champion-icon formation pickup/drop, and the PC34 screen-area suppression receipt. Source cursor bitmap rendering, Atari ST driver callbacks, platform-specific pointer save/restore, and exact pixel/caller behavior remain open.
