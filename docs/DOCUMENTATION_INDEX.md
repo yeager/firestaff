@@ -75,7 +75,8 @@ remain at the top of `docs/`.
 - [Latest versioned release summary](releases/RELEASE_3.0.390.md) — older summaries are grouped in the same directory; see the [current changelog](https://github.com/yeager/firestaff/blob/main/RELEASE_NOTES.md)
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
-- [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
+- [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities, admitted source bindings, capture-provenance contract and placeholder boundaries
+- [Theron V1 parity definition matrix](../parity-evidence/theron_v1_parity_definition_matrix.md) — acceptance criteria and evidence gates; use capture readiness for current route status
 - [Theron ISO spawn-record projection](source-lock/theron-track02-spawn-record-iso-projection-20261101.md) — hash-verified US/JP ISO offsets and raw-BIN parity; pointer records 0–4 statically resolve to the five zone records, without inferring runtime spawn semantics
 - [Theron System Card run-path trace filter](../scripts/instrument_mednafen_theron_syscard_io_ram_trace.py) — optional `run-path` capture retains authenticated `$EA4D`, `$EA50`, `$E162` and callback `$2259` rows; three-loop tooling checks pass and the filter was used in the later authentic US cold capture, whose package remained rejected at trace caps
 - [Theron Drator row-consumer capture filter](../scripts/capture_theron_mednafen_live_trace.sh) — opt-in PCE Fast `drator-row` mode retains observed US reads at `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3` for `$1F093B-$1F093D`; the v2 parser checks address provenance only, three tooling loops pass, and the later authentic run's package remained rejected

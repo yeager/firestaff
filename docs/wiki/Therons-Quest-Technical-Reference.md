@@ -39,9 +39,14 @@
 > MPR2 `$68` instruction windows. Decoded, relocated, mixed-source, or
 > runtime-written code remains possible. A separate authentic `$23AD` output
 > matched 0/102 windows in a cross-capture comparison. The reference wrapper
-> already has an all-writer hook for physical `$0D0000–$0D1FFF`; the C852 patch
-> adds the shared event sequence. A new same-session capture remains necessary
-> for causal attribution. See the [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
+> already has an all-writer hook for physical `$0D0000–$0D1FFF`. C852 schema
+> v3 and the writer trace share a wrapper-generated capture ID; the wrapper
+> receipt binds both sidecar hashes, the full address range, and completeness
+> counts. The verifier checks each fetched byte against its latest preceding
+> write, but has only fixture coverage: no authentic same-session capture has
+> exercised it, and it does not identify the writer's source data. A new
+> accepted capture remains necessary for causal/source attribution. See the
+> [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
 > and the
 > [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
