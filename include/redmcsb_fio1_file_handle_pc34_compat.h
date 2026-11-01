@@ -47,7 +47,7 @@ typedef int (*redmcsb_fio1_rename_result_pc34_compat)(
  * source file's byte size. It writes out_size only on success and must release
  * its lock on every path. */
 typedef int (*redmcsb_fio1_lock_and_get_size_compat)(
-    void *context, const char *file_name, int32_t *out_size);
+    void *context, const char *device_name, int32_t *out_size);
 typedef int (*redmcsb_fio1_trackdisk_is_open_compat)(
     void *context, int16_t drive_index);
 typedef const char *(*redmcsb_fio1_default_floppy_device_name_compat)(
@@ -110,6 +110,7 @@ int F1336_FIO1_14_WritePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                   const unsigned char *buffer);
 int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
                                  const RedmcsbFio1FileHandlePc34Compat *file,
+                                 const char *device_name,
                                  int32_t *out_size);
 int16_t F1340_FIO1_09_CountOpenTrackdiskDevicesHostCompat(
     const RedmcsbFio1HostPc34Compat *host);

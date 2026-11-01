@@ -247,16 +247,19 @@ int F1336_FIO1_14_WritePc34Compat(const RedmcsbFio1HostPc34Compat *host,
 
 int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
                                  const RedmcsbFio1FileHandlePc34Compat *file,
+                                 const char *device_name,
                                  int32_t *out_size)
 {
     int32_t byte_count;
 
-    if (!host || !host->lockAndGetSize || !valid_file(file) || !out_size)
+    if (!host || !host->lockAndGetSize || !valid_file(file) ||
+        !device_name || !device_name[0] || !out_size)
         return REDMCSB_FIO1_RESULT_INVALID_PC34;
     /* ReDMCSB FIO1.C F1337 obtains a read lock, calls Info, returns the
-     * volume-reported byte size, then releases the lock. The host callback
+     * volume-reported byte size, then releases the lock. It locks the source
+     * FIO1_FILE device-name field, not its file-name field. The host callback
      * owns those platform calls and must unlock on success and failure. */
-    if (!host->lockAndGetSize(host->context, file->fileName, &byte_count))
+    if (!host->lockAndGetSize(host->context, device_name, &byte_count))
         return REDMCSB_FIO1_RESULT_QUERY_FAILED_PC34;
     *out_size = byte_count;
     return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
