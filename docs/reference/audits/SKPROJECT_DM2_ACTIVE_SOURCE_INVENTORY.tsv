@@ -595,7 +595,7 @@ SKW_32cb_2d8c	SKWINDOS	SKWINDOS/dm2byf.cpp	3297	void SKW_32cb_2d8c(x16 eaxw, x32
 SKW_QUERY_CREATURE_PICST	SKWINDOS	SKWINDOS/dm2byf.cpp	3433	void SKW_QUERY_CREATURE_PICST(x16 eaxw, c_record* ebxprec, s_d556* ecxpd5, x16 edxw, x16 argw0)	0	UNREVIEWED
 SKW_CHANCE_TABLE_OPERATION	SKWINDOS	SKWINDOS/dm2byf.cpp	3590	void SKW_CHANCE_TABLE_OPERATION(void)	0	UNREVIEWED
 SKW_32cb_15b8	SKWINDOS	SKWINDOS/dm2byf.cpp	3671	x16 SKW_32cb_15b8(x16 eaxw, bool ebxbool, x16 edxw)	0	UNREVIEWED
-SKW_32cb_0f82	SKWINDOS	SKWINDOS/dm2byf.cpp	3965	void SKW_32cb_0f82(c_record* eaxprec, x16 ebxw, x16 ecxw, x8 edxb, x16 argw0, x16 argw1, x16 argw2, x16 argw3, x16 argw4)	0	UNREVIEWED
+SKW_32cb_0f82	SKWINDOS	SKWINDOS/dm2byf.cpp	3965	void SKW_32cb_0f82(c_record* eaxprec, x16 ebxw, x16 ecxw, x8 edxb, x16 argw0, x16 argw1, x16 argw2, x16 argw3, x16 argw4)	0	PARTIAL
 SKW_32cb_03a6	SKWINDOS	SKWINDOS/dm2byf.cpp	4149	x16 SKW_32cb_03a6(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, x16 argw1, x16 argw2, bool argbool3)	0	UNREVIEWED
 SKW_2fcf_0b8b	SKWINDOS	SKWINDOS/dm2byf.cpp	4286	void SKW_2fcf_0b8b(x16 eaxw, x16 ebxw, x16 edxw)	0	UNREVIEWED
 SKW_REVIVE_PLAYER	SKWINDOS	SKWINDOS/dm2byf.cpp	4332	void SKW_REVIVE_PLAYER(x8 eaxb, x8 ebxb)	0	UNREVIEWED
@@ -2240,7 +2240,7 @@ UPDATE_GENERAL_CHAMPIONS_STAT_DISP	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3361	vo
 DRAW_SHADOWED_HAND_CURSOR	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3383	void SkWinCore::DRAW_SHADOWED_HAND_CURSOR(U8 *buffSrc, U8 *buffDst, U8 *localpal)	0	UNREVIEWED
 CHANGE_CURSOR_HAND_ITEM	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3401	void SkWinCore::CHANGE_CURSOR_HAND_ITEM()	0	UNREVIEWED
 DRAW_TRANSPARENT_STATIC_PIC	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3421	void SkWinCore::DRAW_TRANSPARENT_STATIC_PIC(U8 cls1, U8 cls2, U8 cls4, U16 rectno, U16 colorkey)	0	UNREVIEWED
-_32cb_0f82_SHOP_GLASS	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3440	void SkWinCore::_32cb_0f82_SHOP_GLASS(Actuator *ref, U8 cls4, i16 bb, i16 cellPos, U16 horzStretch, U16 vertStretch, U16 rectno, U16 gg, U16 colorkey1)	1	UNREVIEWED
+_32cb_0f82_SHOP_GLASS	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3440	void SkWinCore::_32cb_0f82_SHOP_GLASS(Actuator *ref, U8 cls4, i16 bb, i16 cellPos, U16 horzStretch, U16 vertStretch, U16 rectno, U16 gg, U16 colorkey1)	1	PARTIAL
 DRAW_ALCOVE_ITEMS	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3570	void SkWinCore::DRAW_ALCOVE_ITEMS(U16 xx)	1	UNREVIEWED
 DRAW_WALL_ORNATE	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3611	i16 SkWinCore::DRAW_WALL_ORNATE(i16 cellPos, i16 yy, i16 zz)	1	UNREVIEWED
 _0b36_1446_BLIT_PICTURE	SKWINSPX	SKWINSPX/src/v4/skguidrw.cpp	3953	i16 SkWinCore::_0b36_1446_BLIT_PICTURE(Picture* ref, i16 xx, i16 yy, U16 colorkey)	0	UNREVIEWED
@@ -3375,7 +3375,7 @@ DM2_guivp_32cb_3edd	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5106	static i32 DM2_gu
 DM2_DRAW_DOOR_TILE	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5125	static void DM2_DRAW_DOOR_TILE(i32 eaxl)	1	UNREVIEWED
 DM2_DRAW_PLAYER_TILE	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5288	static i32 DM2_DRAW_PLAYER_TILE(void)	1	UNREVIEWED
 DM2_guivp_32cb_3f0d	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5430	static void DM2_guivp_32cb_3f0d(i32 eaxl)	1	UNREVIEWED
-DM2_guivp_32cb_0f82	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5537	static void DM2_guivp_32cb_0f82(unk* xeaxp, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i16 argw1, i16 argw2, i16 argw3, i16 argw4)	1	UNREVIEWED
+DM2_guivp_32cb_0f82	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	5537	static void DM2_guivp_32cb_0f82(unk* xeaxp, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0, i16 argw1, i16 argw2, i16 argw3, i16 argw4)	1	PARTIAL
 DM2_guivp_32cb_15b8	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	6043	i32 DM2_guivp_32cb_15b8(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
 DM2_DRAW_WALL_TILE	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	6703	static void DM2_DRAW_WALL_TILE(i32 eaxl)	1	UNREVIEWED
 DM2_ENVIRONMENT_SET_DISTANT_ELEMENT	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	6746	static i32 DM2_ENVIRONMENT_SET_DISTANT_ELEMENT(unk* xeaxp, t_text* edxtp, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED

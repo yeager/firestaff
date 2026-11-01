@@ -26,8 +26,8 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
-repeated-name definitions. The active review ledger currently maps 3,824 as
-`UNREVIEWED`, 103 as `PARTIAL`, and 5 as
+repeated-name definitions. With active-source review overrides applied, the
+inventory currently maps 3,816 as `UNREVIEWED`, 111 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -38,7 +38,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,824 `UNREVIEWED`; 103 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,816 `UNREVIEWED`; 111 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 ## Dispositions
 
@@ -154,8 +154,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,962 open rows: 3,824 unreviewed active-source
-definitions, 136 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,962 open rows: 3,816 unreviewed active-source
+definitions, 144 partial source or older-ledger rows, and 2 partial source-owner
 rows. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
 DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy
