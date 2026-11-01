@@ -9,8 +9,12 @@
   contexts without map-context truncation.
 - Twenty-three of 24 observed addresses match authenticated JP Track 02 bytes.
   The autoloaded state reads `$BC` at `$0E8B14` (source `$B4`); no write to that
-  address was recorded during the capture window. UP/control prefixes match,
-  but this does not establish movement, an active map, or rendering.
+  address appeared in the original filtered trace. A later audit found that
+  the writer allowlist omitted this address, so that zero-row result is not
+  evidence that no write occurred. An isolated rebuilt instrumenter now
+  includes the target, but has not yet captured a cold loader route. UP/control
+  prefixes match, but this does not establish movement, an active map, or
+  rendering. See the [writer-trace audit](docs/source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md).
 - Both receipts are state-only, with no cold handoff, CD IRQ, CDDA command, or
   dungeon transition. Raw state and trace data remain on TRV2. See the [capture
   report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).

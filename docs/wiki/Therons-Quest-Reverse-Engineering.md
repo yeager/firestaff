@@ -64,7 +64,10 @@ source-matched windows decode the observed PCs `$50FE`, `$4FFC`, and `$4FD4`
 as `LDA ($14),Y`, and `$AE66` as `ADC $6DF6,X`. The earlier state-only
 captures did not preserve contemporaneous registers or fetched opcode bytes.
 The compiled v4 hook now records opcode/register context, page-1 operands and
-MPRs, but has not yet produced a gameplay trace. The instructions do not
+MPRs in accepted state-only captures. A separate audit found that the original
+target-write allowlist omitted `$0E8B14`, so its zero-row result cannot rule out
+a write. An isolated instrumenter now includes that address, but no cold loader
+capture has used it yet. See the [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md). The instructions do not
 identify the active map or establish a renderer join. See
 the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md)
 and [map-array capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).

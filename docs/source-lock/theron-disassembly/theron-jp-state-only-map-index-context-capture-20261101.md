@@ -38,10 +38,12 @@ established source projection
 for 23 of the 24 observed addresses. The remaining address,
 `$0E8B14` (raw offset `$B10E4`), is read as `$BC` 50 times; the authenticated
 BIN contains `$B4` there. The same address/value discrepancy is present in the
-no-input control. The isolated target-write trace recorded no write to this
-address during the replay window. Because the state was autoloaded, the capture
-does not show how this byte acquired its saved value or establish loader
-provenance. Keep the byte and its meaning unresolved.
+no-input control. The original isolated target-write trace recorded no row for
+this address, but a later audit found that its address allowlist omitted bank
+`$74`, offset `$0B14` (`$0E8B14`). That zero-row result cannot establish that
+no write occurred. The autoloaded state still provides no cold loader
+provenance; keep the byte's origin and meaning unresolved. See the
+[writer-trace audit](theron-jp-map-byte-writer-trace-audit-20261101.md).
 
 The first 946 normalized map-array address/value/PC/MPR tuples in the UP
 replay match the no-input control exactly. Their captured frame ranges differ

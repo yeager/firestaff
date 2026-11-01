@@ -1,8 +1,9 @@
 # Theron's Quest Technical Reference
 
-> **Current renderer/audio boundary (2026-11-01):** the current isolated PCE
-> Fast reference instrumenter has been rebuilt from a clean Mednafen baseline,
-> but its latest capture is not yet accepted. Presenting an authenticated
+> **Current renderer/audio boundary (2026-11-01):** the accepted latest PCE
+> Fast reference capture is a bounded JP state-only UP/control replay. A
+> rebuilt isolated instrumenter now includes the `$0E8B14` target-write
+> address, but no cold loader capture has yet exercised it. Presenting an authenticated
 > captured screen is not a state-driven dungeon renderer. Authentic square or
 > material records are not yet joined to retail tile selection, active map,
 > party pose, BAT/VRAM, VCE/VDC state, and a paired retail frame. Do not infer
@@ -16,6 +17,10 @@
 > Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 > The latest v4 map-reader evidence is a state-only UP/control replay, not a
 > cold load: [capture details](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).
+> The capture reports `$BC` at `$0E8B14` against source `$B4`; an audit found
+> the original writer allowlist excluded that address, making its zero-row
+> result inconclusive. A rebuilt isolated instrumenter includes the target,
+> with no cold loader capture yet: [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md).
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.
 
