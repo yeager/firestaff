@@ -1,9 +1,10 @@
 2026-11-01 skproject source inventory and legacy DOS shooter review:
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
-The locked checkout yields 3,929 active definitions (2,724 SPX and 1,205 DOS);
-3,831 remain unreviewed, 93 are partial, and 5 have mapped parity entries.
-The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,957 rows (3,831 unreviewed, 124 partial and 2 partial owners). The legacy DOS and SPX shooter
+The locked checkout yields 3,932 active definitions (2,725 SPX, 1,205 DOS and
+2 SKULLWIN); 3,821 remain unreviewed, 139 are partial, and 5 have mapped
+parity entries, with 2 additional partial source-owner rows.
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,962 rows (3,821 unreviewed, 139 partial and 2 partial owners). The legacy DOS and SPX shooter
 source rows are now marked partial: Firestaff still lacks a live owner for the
 source DB14 allocation, projectile record initialization/tile append, and
 C1D/C1E follow-up timer transaction. Review and implement the remaining rows
@@ -2034,3 +2035,12 @@ unreconciled at the address level. Keep DOS and SPX v4/v5 rows partial because
 exact panel-refresh sequencing, DOS UI integration, assets and supported-
 platform runtime evidence remain open; the multiplier uncertainty is resolved
 for the SPX v5 variant.
+
+
+2026-11-01 skproject `ADD_ITEM_CHARGE` DOS and SPX v4/v5 variants: all three
+active definitions use the same DB5 weapon (bits 10..13, max 15), DB6 cloth
+(bits 9..12, max 15) and DB10 miscellaneous-item (bits 14..15, max 3) charge
+fields, clamp `charge + delta`, preserve unrelated bits, and return the updated
+charge. The existing shared Firestaff helper and item-charge boundary
+regression implement this mutation. All source rows remain partial pending
+supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
