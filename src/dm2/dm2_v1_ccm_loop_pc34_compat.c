@@ -572,6 +572,11 @@ int dm2_v1_ccm_message_loop(
         int32_t delta = 0;
         DM2_V1_CaiiCcmEndRequeueReceipt erc;
 
+        if (suppress_requeue != 0) {
+            /* c_ai.cpp:5609-5613 sets v1e0562's type before the v1e0570
+             * early return. Keep this mutation in the mutable timer owner. */
+            timer->type = (uint8_t)(receipt->loop_result != 1 ? 0x22u : 0x21u);
+        }
         if (suppress_requeue == 0) {
             /* The suppression return (c_ai.cpp:5612-5613) precedes the
              * delta computation in the source — the bound 1c9a_0a48
