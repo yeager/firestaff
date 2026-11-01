@@ -558,8 +558,12 @@ static uint8_t dm2_v1_sksave_item_bonus_query_cls2(void *ctx,
     return cls2;
 }
 
+static void dm2_v1_new_game_apply_item_bonus_receipt(DM2_V1_Hero *hero,
+    const DM2_V1_ProcessItemBonusReceipt *bonus);
+
 static int dm2_v1_sksave_process_one_item_bonus_root(
-    DM2_V1_SksaveItemBonusContext *context, uint16_t *root,
+    DM2_V1_SksaveItemBonusContext *context, DM2_V1_Hero *hero,
+    uint16_t *root,
     int16_t hero_index, int16_t slot, DM2_V1_SksaveItemBonusReceipt *receipt,
     int leader_hand)
 {
@@ -588,6 +592,10 @@ static int dm2_v1_sksave_process_one_item_bonus_root(
     input.mode = 0;
     dm2_v1_PROCESS_ITEM_BONUS(&input, &callbacks, &bonus);
     if (context->invalid || !bonus.valid || bonus.blocked) return 0;
+    /* DM2_READ_SKSAVE_DUNGEON invokes PROCESS_ITEM_BONUS in mode 0 after
+     * restoring each hero item.  This mode rebuilds skill and walk-speed
+     * bonuses from source records; its MP/ability deltas are zero. */
+    dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
     if (leader_hand) ++receipt->processed_leader_hand;
     else ++receipt->processed_item_roots;
     return 1;
@@ -829,7 +837,8 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
             receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
                 receipt.source_hash, (uint16_t)heroes[hero_index].item[slot]);
             if (!dm2_v1_sksave_process_one_item_bonus_root(
-                    &context, (uint16_t *)&heroes[hero_index].item[slot],
+                    &context, &heroes[hero_index],
+                    (uint16_t *)&heroes[hero_index].item[slot],
                     (int16_t)hero_index, (int16_t)slot, &receipt, 0)) {
                 receipt.blocked = 1;
                 receipt.failed_hero_index = (int16_t)hero_index;
@@ -844,7 +853,8 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
     receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
         receipt.source_hash, *leader_hand_root);
     if (!dm2_v1_sksave_process_one_item_bonus_root(
-            &context, leader_hand_root, leader_hero_index, -1, &receipt, 1)) {
+            &context, &heroes[leader_hero_index], leader_hand_root,
+            leader_hero_index, -1, &receipt, 1)) {
         receipt.blocked = 1;
         receipt.failed_hero_index = leader_hero_index;
         receipt.failed_item_slot = -1;
