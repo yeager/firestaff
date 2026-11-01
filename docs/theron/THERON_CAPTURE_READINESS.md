@@ -23,6 +23,10 @@ and `event_sequence` from the same shared counter used by the row-lifecycle
 trace. These code-fetch receipts can be searched against the authenticated
 Track 02 BIN to narrow repeated static occurrences; they do not prove source
 ownership until the bytes match and the physical mapping is accounted for.
+Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
+to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
+relationship and all matching raw offsets. Multiple matching offsets remain
+explicit rather than being collapsed to one source occurrence.
 Correlate them with the
 main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters

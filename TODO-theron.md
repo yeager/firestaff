@@ -74,9 +74,11 @@ The bounded `$C852` fetch trace now also records fetched instruction windows
 at `$CBC6` and `$45C3`, the static code candidates corresponding to reader PCs
 `$CBC9` and `$45C3`. Use it in the next isolated Drator replay alongside the
 `drator-row` data-read filter and System Card `run-path` scope. Match each
-captured 512-byte code window against the hash-verified US Track 02 source and
-record every matching raw offset; retain multiple matches when the retail
-image contains duplicate code. This improves the runtime-to-source join but
+captured 512-byte code window with
+`scripts/verify_theron_pce_fast_code_fetch_source.py`; it checks the exact US
+Track 02 identity and MPR-to-physical-PC mapping, then records every matching
+raw offset. Retain multiple matches when the retail image contains duplicate
+code. This improves the runtime-to-source join but
 does not assign row-field or spawn semantics. The new fetch sites have tooling
 coverage only; no authentic run has used them.
 

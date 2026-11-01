@@ -9,6 +9,12 @@
 - Each record carries the physical PC, MPR registers, fetched opcode and the
   shared event sequence so it can be joined to same-session row-byte reads.
   The per-site cap is 4,096 rows and emits an explicit truncation marker.
+- Added a fail-closed verifier for exact US Track 02 MD5, 512-byte instruction
+  matches, opcode/window agreement and MPR-to-physical-PC consistency. It
+  reports all matching offsets instead of selecting among duplicate retail
+  code copies. Its source-window contract passed three loops using windows
+  derived from the authentic local US image; these are tooling fixtures, not
+  emulator-captured runtime evidence.
 - Updated the capture-readiness guide and active TODO. This adds capture
   capability only: no authentic replay has used the new reader-code windows,
   and runtime source ownership and row semantics remain unverified.
