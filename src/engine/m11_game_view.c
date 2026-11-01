@@ -1525,6 +1525,42 @@ typedef struct M11_Dm1RenderedPileTarget {
 static M11_Dm1RenderedPileTarget
     s_m11_dm1_rendered_pile_targets[M11_DM1_RENDERED_PILE_TARGET_MAX];
 static int s_m11_dm1_rendered_pile_target_count;
+/* ReDMCSB DUNVIEW.C F0115:4923-5109 resolves each C2500/F0635 object box;
+ * CLIKVIEW.C F0377:410-415 hit-tests the frame-owned view-cell zone. Firestaff
+ * pairs its current successfully drawn box with that source view-cell so input
+ * matches its own rendering. Platform-live C696/F0635 placement is still open. */
+typedef struct M11_CSBRenderedFloorTarget {
+    int valid;
+    int viewCell;
+    int x;
+    int y;
+    int w;
+    int h;
+} M11_CSBRenderedFloorTarget;
+
+#define M11_CSB_RENDERED_FLOOR_TARGET_MAX 80
+static M11_CSBRenderedFloorTarget
+    s_m11_csb_rendered_floor_targets[M11_CSB_RENDERED_FLOOR_TARGET_MAX];
+static int s_m11_csb_rendered_floor_target_count;
+static M11_CSBRenderedFloorTarget s_m11_csb_last_object_sprite_receipt;
+
+static int m11_csb_rendered_floor_target_at(int local_x, int local_y)
+{
+    int i;
+
+    /* F0115 draws objects in source order. The last matching rectangle is
+     * therefore the visible pile top when two source zones overlap. */
+    for (i = s_m11_csb_rendered_floor_target_count - 1; i >= 0; --i) {
+        const M11_CSBRenderedFloorTarget *target =
+            &s_m11_csb_rendered_floor_targets[i];
+        if (target->valid && local_x >= target->x &&
+            local_x < target->x + target->w && local_y >= target->y &&
+            local_y < target->y + target->h) {
+            return target->viewCell;
+        }
+    }
+    return -1;
+}
 enum {
     M11_F0115_PRESENTATION_NONE = 0,
     M11_F0115_PRESENTATION_FLOOR = 1,
@@ -4187,12 +4223,13 @@ static int m11_csb_viewport_object_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    int drawn;
 
     if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    return m11_draw_item_sprite_material(ctx->state,
+    drawn = m11_draw_item_sprite_material(ctx->state,
                                          screen_pixels,
                                          screen_stride,
                                          ctx->framebuffer_height,
@@ -4210,6 +4247,39 @@ static int m11_csb_viewport_object_sprite_drawer(
                                          blit->transparent_color,
                                          blit->uses_f0791_blit,
                                          0);
+    if (drawn && s_m11_csb_last_object_sprite_receipt.valid &&
+        blit->relative_cell >= 0 && blit->relative_cell < 4 &&
+        s_m11_csb_rendered_floor_target_count <
+            M11_CSB_RENDERED_FLOOR_TARGET_MAX) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)ctx->state->csbBootProfile;
+        int viewport_origin_x = 0;
+        int viewport_origin_y = 0;
+        int input_origin_x = DM1_VIEWPORT_SCREEN_X;
+        int input_origin_y = DM1_VIEWPORT_SCREEN_Y;
+        M11_CSBRenderedFloorTarget *target =
+            &s_m11_csb_rendered_floor_targets[
+                s_m11_csb_rendered_floor_target_count++];
+
+        csb_v1_boot_viewport_origin_pc34(profile,
+                                         &viewport_origin_x,
+                                         &viewport_origin_y);
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            /* m11_process_csb_v1_c080_click subtracts the Towns viewport
+             * origin before testing local F0635 coordinates. */
+            input_origin_x = viewport_origin_x;
+            input_origin_y = viewport_origin_y;
+        }
+        *target = s_m11_csb_last_object_sprite_receipt;
+        target->valid = 1;
+        target->viewCell = blit->relative_cell;
+        /* viewport_pixels points at the selected source viewport origin;
+         * convert the final page rectangle into the same local coordinate
+         * space consumed by C080 for this platform. */
+        target->x += viewport_origin_x - input_origin_x;
+        target->y += viewport_origin_y - input_origin_y;
+    }
+    return drawn;
 }
 
 static int m11_csb_viewport_object_icon_drawer(
@@ -23442,6 +23512,23 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_open_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        int rune_count = 0;
+        uint8_t runes[4] = {0, 0, 0, 0};
+        if (caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_get_spell_runes(
+                caster, runes, (int)sizeof(runes), &rune_count)) return 0;
+        memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+        for (int i = 0; i < rune_count; ++i)
+            state->spellBuffer.runes[i] = runes[i];
+        state->spellBuffer.runeCount = rune_count;
+        state->spellRuneRow = rune_count;
+        state->dm1SpellCasting.magicCasterIndex = caster;
+        state->spellPanelOpen = 1;
+        return 1;
+    }
     if (m11_source_is_csb(state)) {
         CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)state->csbBootProfile;
         int caster;
@@ -23638,6 +23725,21 @@ static int m11_csb_consume_source_rune_cost(
     return 1;
 }
 
+static void m11_dm2_sync_spell_mana_to_view(M11_GameViewState *state,
+                                            int caster)
+{
+    DM2_V1_RuntimeSourceHeroStateReceipt hero_state;
+    struct ChampionState_Compat *champion;
+    if (!state || caster < 0 || caster >= DM2_MAX_HEROES ||
+        caster >= state->world.party.championCount ||
+        !dm2_v1_runtime_get_source_hero_state((uint8_t)caster, &hero_state)) {
+        return;
+    }
+    champion = &state->world.party.champions[caster];
+    champion->mana.current = (unsigned short)hero_state.cur_mp;
+    champion->mana.shifted = (unsigned short)(champion->mana.current << 1);
+}
+
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     if (state && m11_is_dm1_source_kind(state->sourceKind)) {
         DM1_V1_G0485SymbolManaCostPc34 cost;
@@ -23662,6 +23764,24 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
         state->spellBuffer.runeCount = step + 1;
         state->spellRuneRow = (step + 1) & 3;
         m11_dm1_spell_sync_legacy_to_caster(state);
+        return 1;
+    }
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        int rune_count = state->spellBuffer.runeCount;
+        if (!state->active || state->partyDead ||
+            state->candidateMirrorPanelActive || !state->spellPanelOpen ||
+            symbolIndex < 0 || symbolIndex >= 6 || rune_count < 0 ||
+            rune_count >= 4 || caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_add_spell_rune(caster, symbolIndex)) {
+            return 0;
+        }
+        state->spellBuffer.runes[rune_count] =
+            (unsigned char)(0x60 + rune_count * 6 + symbolIndex);
+        state->spellBuffer.runeCount = rune_count + 1;
+        state->spellRuneRow = state->spellBuffer.runeCount;
+        m11_dm2_sync_spell_mana_to_view(state, caster);
         return 1;
     }
     DM1_V1_SpellPanelStatePc34 panel =
@@ -23695,6 +23815,11 @@ int M11_GameView_ClearSpell(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_clear_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        if (caster >= 0 && caster < DM2_MAX_HEROES)
+            (void)dm2_v1_runtime_clear_spell_runes(caster);
+    }
     m11_apply_dm1_spell_panel_receipt(state, &receipt);
     if (state->spellPanelOpen) {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL CLEARED",
@@ -23715,6 +23840,11 @@ static int m11_dm1_spell_panel_recant_last_rune(M11_GameViewState* state)
     if (!dm1_v1_spell_panel_command_allowed_pc34(&panel) ||
         !panel.panel_open || panel.rune_count <= 0) {
         return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        if (caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_remove_spell_rune(caster)) return 0;
     }
     removedIndex = panel.rune_count - 1;
     state->spellBuffer.runes[removedIndex] = 0;
@@ -24212,7 +24342,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
             dm2_v1_runtime_get_source_hero_state(
                 (uint8_t)dm2_ui_caster, &dm2_ui_hero) &&
             dm2_ui_hero.cur_hp > 0 && dm2_hand >= 0 &&
-            dm2_v1_runtime_activate_action_hand(dm2_ui_caster, dm2_hand)) {
+            dm2_v1_runtime_select_spell_champion(dm2_ui_caster)) {
             dm2_caster = dm2_v1_runtime_get_active_champion_index();
         }
         if (dm2_caster < 0)
@@ -24234,6 +24364,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
             m11_set_status(state, "CAST", "DM2 CAST OWNER UNAVAILABLE");
             return 0;
         }
+        m11_dm2_sync_spell_mana_to_view(state, dm2_caster);
         if (!dm2_receipt.applied) {
             /* DM2_TRY_CAST_SPELL consumes a rejected cast.  It clears the
              * source rune tail for every failure except class 0x30 (the
@@ -46656,6 +46787,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     int queued;
     unsigned short leaderHand;
     int mirrorOrdinal = -1;
+    int renderedViewCell = -1;
     const CSB_V1_BootProfile *profile = state
         ? (const CSB_V1_BootProfile *)state->csbBootProfile : NULL;
     const int atariSt = profile &&
@@ -46671,6 +46803,9 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
         return M11_GAME_INPUT_REDRAW;
     }
+    if (!atariSt) {
+        renderedViewCell = m11_csb_rendered_floor_target_at(localX, localY);
+    }
     /* ReDMCSB CLIKVIEW.C F0377 consumes the frame-owned C05 box. Atari
      * F0107/F0110 writes its actual G0205/G0208 rectangle; the admitted PC34
      * adapter retains its separately authenticated button box. Do not
@@ -46684,8 +46819,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
                 ? csb_v1_atari_f0115_click_bounds_contains(
                     s_m11_csb_atari_floor_click_bounds, viewCell,
                     localX, localY)
-                : m11_point_in_source_box(localX, localY,
-                                           g_objectPileBoxes[viewCell]);
+                : renderedViewCell == viewCell;
             if (hit &&
                 csb_v1_boot_runtime_grab_floor_object_pc34(
                     (CSB_V1_BootProfile *)state->csbBootProfile,
@@ -54544,6 +54678,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     int effectiveTransparentColor;
     int csb_native_graphic = -1;
 
+    memset(&s_m11_csb_last_object_sprite_receipt, 0,
+           sizeof(s_m11_csb_last_object_sprite_receipt));
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     /* MEDIA009 floor/alcove callers use their original F0132 coordinate
      * route above; a PC C2500 rectangle is not a native fallback. */
@@ -54607,10 +54743,18 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         /* CSB F0115's G0209 -> M612 object route is source-owned. Do not
          * substitute DM1 object art when its mapping is present; unsupported
          * CSB aspects still fail closed at the native mapping boundary. */
-        return m11_csb_blit_verified_native_object_slot(
+        const int drawn = m11_csb_blit_verified_native_object_slot(
             slot, csb_native_graphic, framebuffer, fbW, fbH,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
             plan.use_mirror ? 1 : 0) > 0;
+        if (drawn) {
+            s_m11_csb_last_object_sprite_receipt.valid = 1;
+            s_m11_csb_last_object_sprite_receipt.x = plan.draw_x;
+            s_m11_csb_last_object_sprite_receipt.y = plan.draw_y;
+            s_m11_csb_last_object_sprite_receipt.w = plan.draw_w;
+            s_m11_csb_last_object_sprite_receipt.h = plan.draw_h;
+        }
+        return drawn;
     }
     if (publishFloorItemHostReceipt) {
         presentation =
@@ -54709,6 +54853,13 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             presentation->destinationAfterFNV1a != 0u &&
             presentation->destinationBeforeFNV1a !=
                 presentation->destinationAfterFNV1a;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        s_m11_csb_last_object_sprite_receipt.valid = 1;
+        s_m11_csb_last_object_sprite_receipt.x = plan.draw_x;
+        s_m11_csb_last_object_sprite_receipt.y = plan.draw_y;
+        s_m11_csb_last_object_sprite_receipt.w = plan.draw_w;
+        s_m11_csb_last_object_sprite_receipt.h = plan.draw_h;
     }
     return 1;
 }
@@ -64920,7 +65071,11 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     if (!state || !state->inventoryPanelActive) return 0;
 
     thing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
-    if (state->dm1IigsActive) {
+    /* ReDMCSB PANEL.C F0349 handles an empty leader hand before inspecting
+     * any Thing. Keep that source path available on IIGS so the mouth click
+     * can open the food/water panel; the IIGS item whitelist applies only to
+     * an object that is actually held. */
+    if (thing != THING_NONE && state->dm1IigsActive) {
         if (!m11_iigs_mouth_item_supported(state, thing) ||
             !state->v1FoodVblankHzNumerator ||
             !state->v1FoodVblankHzDenominator) return 0;
@@ -77641,6 +77796,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         memset(s_m11_dm1_rendered_pile_targets, 0,
                sizeof(s_m11_dm1_rendered_pile_targets));
         s_m11_dm1_rendered_pile_target_count = 0;
+        memset(s_m11_csb_rendered_floor_targets, 0,
+               sizeof(s_m11_csb_rendered_floor_targets));
+        s_m11_csb_rendered_floor_target_count = 0;
         memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
                sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
         memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
@@ -77680,6 +77838,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
     memset(s_m11_dm1_rendered_pile_targets, 0,
            sizeof(s_m11_dm1_rendered_pile_targets));
     s_m11_dm1_rendered_pile_target_count = 0;
+    memset(s_m11_csb_rendered_floor_targets, 0,
+           sizeof(s_m11_csb_rendered_floor_targets));
+    s_m11_csb_rendered_floor_target_count = 0;
     memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_alcove_item_host_presentation_receipt));
     memset(&s_m11_dm1_creature_host_presentation_receipt, 0,

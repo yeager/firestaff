@@ -17,6 +17,7 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_glob_var_state_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
 #ifdef __cplusplus
@@ -194,7 +195,7 @@ static inline void dm2_door_set_bit13(uint8_t *r, uint8_t v) {
 /* DB type constants for item/creature filtering */
 #define DM2_DB_DOOR      0
 #define DM2_DB_WEAPON    5
-#define DM2_DB_MISC_ITEM 9
+#define DM2_DB_MISC_ITEM 10
 
 /* Shooter sub-types: single (bp0a=1) vs dual projectile */
 #define DM2_SHOOTER_SINGLE_TYPES(t) \
@@ -305,10 +306,11 @@ typedef struct {
 
 typedef struct {
     int valid;
-    int items_counted;    /* matching items found on source tile */
+    int items_counted;    /* source items passing direction and type filters */
     int items_moved;      /* items successfully moved to destination */
     int creatures_checked;/* creature possession chains walked */
-    int recycler_permissive_mask; /* 1 = used full-accept mask (no GDAT) */
+    int recycler_mask_missing; /* 1 = GDAT mask unavailable; source zero-mask no-op */
+    int item_type_lookup_failed;
     int fail_closed;
 } DM2_V1_ItemTeleportReceipt;
 
@@ -328,6 +330,9 @@ typedef struct {
 typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
                                               const uint8_t *record,
                                               int is_wall);
+typedef void (*DM2_V1_QueueOrnateActivationSoundFn)(
+    void *ctx, int16_t actuator_handle, uint8_t *record,
+    int map, int x, int y, uint32_t game_tick, int is_wall);
 
 /* ── Wall/floor mecha dispatch ─────────────────────────────────────── */
 
@@ -342,14 +347,17 @@ typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
                               DM2_V1_SourceTimerQueue *queue,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
-                              uint16_t *global_words,
-                              uint16_t global_word_count,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
 /* Full ACTUATE_FLOOR_MECHA dispatch.
@@ -357,14 +365,17 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
                                DM2_V1_CaiiArray *caii,
+                               const DM2_V1_AssetLoader *asset_loader,
                                DM2_V1_SourceTimerQueue *queue,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
-                               uint16_t *global_words,
-                               uint16_t global_word_count,
+                               DM2_V1_GlobVarState *global_state,
+                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.
@@ -416,6 +427,7 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
  * Source: skevent.cpp:1346-1500 */
 int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   DM2_V1_DungeonData *dungeon,
+                                  const DM2_V1_AssetLoader *asset_loader,
                                   DM2_V1_SourceTimerQueue *queue,
                                   const uint8_t *actu_record,
                                   int timer_x, int timer_y,

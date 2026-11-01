@@ -14,6 +14,28 @@ same-frame producer-to-VRAM evidence and verify row-state coverage across
 animation frames. See
 [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
 
+## 2026-10-31 — Authentic VDP2 register order and composition rerun
+
+The VDP2 color-calculation analyzer now detects register word byte order from
+the Saturn display-enable value `TVMD=0x8000`, with a score-based fallback and
+an explicit `--byte-order` override. This matters because an authentic baseline
+capture has `BGON=0x0200`; relying on BGON alone had selected the wrong order.
+The corrected analyzer identified big-endian order and decoded `TVMD=0x8000`
+in 92 authentic Ymir register captures. It reports the expected `CCCTL` and
+`SFCCMD` values for the hash-pinned gameplay frame 2173 and title frame 8037.
+
+The Debug build at PR commit `c376f0c` re-ran the authenticated composition
+matrix: gameplay frames 239, 397, and four-champion Continue frame 2173 match
+all 286,720 doubled screenshot samples exactly; frame 300 matches all 71,680
+pixels in its same-run Ymir RGB reference. Separate authentic frame-7486
+NBG0 live-row/color-calculation and frame-8037 title-menu composition tests
+also pass against their retained Ymir outputs. The NBG1 active per-character
+color-calculation path remains unverified because the available eligible BKR
+captures contain no visible NBG1 PND with CCE set. These capture-only results
+do not enable production rendering or establish arbitrary-frame parity.
+Outputs are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c376f0c4-validation/`.
+
 ## 2026-10-31 — Frame-59 title-prompt composition
 
 The exact Japanese Ymir title-prompt frame now has a hash-pinned, capture-only
@@ -23,6 +45,25 @@ NBG0 source transform and source owner remain unresolved. This lane does not
 cover the later title menu, configuration/Load panels, arbitrary display
 register profiles, or production rendering. See
 [`docs/nexus_vdp2_title_frame59_composition.md`](docs/nexus_vdp2_title_frame59_composition.md).
+
+## 2026-10-31 — NBG1 4bpp MAPD startup plane
+
+The authentic Japanese MAPD startup pass (VDP1 frame 891 / VDP2 serial
+1280) now has a hash-pinned capture-only NBG1 4bpp decoder. It applies Saturn
+pattern palette selection, rejects N1TPON and unsupported two-word CRAM color
+modes, and records the decoded layer color for later composition. The NBG1
+priority-stack path now consumes that palette-resolved RGBA color instead of
+treating the raw dot index as a CRAM address. The opt-in authentic MAPD layer
+test and VDP priority-stack comparisons for frames 239, 397, 300, and 8037
+passed against PR code commit `c1d2664`. A new hash-pinned regression for the
+four-champion Continue frame 2173 was added and passed against commit `8bfbdd9`.
+Frames 239, 397, and 2173 each match all 286,720 doubled screenshot RGB samples
+with zero channel error; frame 300 matches Ymir's same-run RGB reference, and
+frame 8037 matches both Ymir pass buffers. These results verify only the
+captured states and do not enable production rendering. The later full CI run
+also found unrelated stale localization catalogs and a Theron source-boundary
+failure in the merged PR check. See
+[the MAPD 4bpp capture report](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
 ## 2026-10-30 — NBG1 8bpp character stride
 
@@ -34,14 +75,17 @@ character-address rule. This fixes the byte fetch for that layer path; NBG1
 retail source ownership and whole-screen VDP2/HUD composition remain open. See
 [`docs/nexus_vdp2_nbg1_8bpp_stride.md`](docs/nexus_vdp2_nbg1_8bpp_stride.md).
 
-## 2026-10-30 — NBG2 capture plane
+## 2026-10-30 — NBG2 capture plane and palette handoff
 
-A hash-pinned Ymir frame-239 test now decodes the authentic NBG2 8bpp map page
-at byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
+A hash-pinned Ymir frame-239 test decodes the authentic NBG2 8bpp map page at
+byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
 nonzero pixels; 9,258 CRAM colors match the native screenshot sample within
-eight levels. This remains a capture-only layer measurement; full VDP2 layer
-priority/color calculation and named retail source ownership are unresolved.
-See [`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
+eight levels. The decoder and priority stack now apply the NBG2 PND palette
+number and RGB555 CRAM wrap. Rerun the authentic frame-239 plane and full-stack
+comparisons against this revision before treating the palette handoff as
+verified. This remains a capture-only measurement; full VDP2 color calculation
+and named retail source ownership are unresolved. See
+[`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
 
 The same frame also verifies the existing NBG0 8bpp bitmap lane at VRAM byte
 offset zero: 3,954 of 3,968 nontransparent CRAM samples match within eight

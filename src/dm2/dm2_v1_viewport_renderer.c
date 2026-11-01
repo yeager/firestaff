@@ -6946,6 +6946,57 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     }
 }
 
+static int dm2_v1_draw_shop_image(
+    DM2_V1_ViewportState *s, const DM2_V1_ShopImageRender *image)
+{
+    const uint8_t *pixels = NULL;
+    uint8_t palette[16];
+    uint32_t palette_hash = 0u;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    int width = 0, height = 0;
+    const DM2_V1_ViewportRect *dst;
+    const DM2_V1_ViewportRect *src;
+
+    if (!s || !image || !image->valid || !s->asset_loader) return 0;
+    dst = &image->dst_rect;
+    src = &image->src_rect;
+    pixels = dm2_v1_asset_load_image_field(
+        s->asset_loader, image->category, image->index, image->field,
+        &width, &height, &format);
+    if (!pixels || width != image->width || height != image->height ||
+        !dm2_v1_asset_load_image_local_palette(
+            s->asset_loader, image->category, image->index, image->field,
+            palette, &palette_hash) ||
+        palette_hash == 0u || palette_hash != image->palette_hash ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+         format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9) ||
+        dst->w <= 0 || dst->h <= 0 || dst->x < 0 || dst->y < 0 ||
+        (unsigned)dst->x + (unsigned)dst->w >
+            (unsigned)dm2_v1_viewport_draw_width(s) ||
+        (unsigned)dst->y + (unsigned)dst->h >
+            (unsigned)dm2_v1_viewport_draw_height(s) ||
+        src->x < 0 || src->y < 0 || src->w <= 0 || src->h <= 0 ||
+        src->x + src->w > width || src->y + src->h > height) {
+        dm2_v1_asset_free_pixels((uint8_t *)pixels);
+        return 0;
+    }
+    memcpy(s->active_asset_palette16, palette,
+           sizeof(s->active_asset_palette16));
+    s->active_asset_palette_hash = palette_hash;
+    s->active_asset_palette_ready = 1;
+    dm2_v1_blit_scaled_material_bitmap_region_ex(
+        s, s->framebuffer, s->fb_stride,
+        dst->x, dst->y, dst->w, dst->h,
+        pixels, src->x, src->y, src->w, src->h, width,
+        image->colorkey ? (int)image->colorkey :
+            (s->gdat_scene_control_ready
+                ? (int)s->gdat_scene_colorkey : DM2_COLOR_TRANSPARENT),
+        image->mirror_flip,
+        &s->gdat_material_palette_wall_consumed_count);
+    dm2_v1_asset_free_pixels((uint8_t *)pixels);
+    return 1;
+}
+
 /* ── Wall ornaments ─────────────────────────────────────────────────
  * skproject/SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE (^32CB:15B8) selects a
  * WALL_GFX image from tblCellTilesRoom and materializes it through
@@ -6986,6 +7037,42 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
             sq->wall_ornate_gfx_index == 0u ||
             sq->wall_ornate_source_image_absent) {
             continue;
+        }
+
+        /* SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE dispatches alcove type 2 to
+         * _32cb_0f82_SHOP_GLASS instead of drawing the generic ornament. Its
+         * merchandise image has its own item DB image and local palette. */
+        if (s->source_materials_required && s->gdat_wall_ornament_material_plan &&
+            s->gdat_wall_ornament_material_plan->valid) {
+            const DM2_V1_WallOrnamentRender *shop_item = NULL;
+            for (int j = 0;
+                 j < s->gdat_wall_ornament_material_plan->ornament_count; ++j) {
+                const DM2_V1_WallOrnamentRender *candidate =
+                    &s->gdat_wall_ornament_material_plan->ornaments[j];
+                if (candidate->view_square == i &&
+                    candidate->shop_glass_pair_valid &&
+                    candidate->shop_glass_render_pending) {
+                    shop_item = candidate;
+                    break;
+                }
+            }
+            if (shop_item) {
+                s->last_wall_ornament_material_required_mask |=
+                    (uint16_t)(1u << (unsigned)i);
+                if (!dm2_v1_draw_shop_image(s, &shop_item->shop_item) ||
+                    (shop_item->shop_soldout_icon_required &&
+                     !dm2_v1_draw_shop_image(
+                         s, &shop_item->shop_soldout)) ||
+                    !dm2_v1_draw_shop_image(s, &shop_item->shop_navigation)) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                    continue;
+                }
+                ++s->asset_wall_ornament_drawn_count;
+                s->last_wall_ornament_material_consumed_mask |=
+                    (uint16_t)(1u << (unsigned)i);
+                continue;
+            }
         }
 
         s->last_wall_ornament_material_required_mask |=

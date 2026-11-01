@@ -6,7 +6,13 @@ Firestaff comment is useful traceability, but it is not proof that the same
 original behaviour is implemented or tested.
 
 The generated companion file, `numbered_source_symbol_inventory.tsv`, lists every
-unique numbered source symbol.  Its status column has this strict meaning:
+unique numbered source symbol.  Its status column has this strict meaning.
+
+For current callable-symbol counts and dispositions, use the newer
+[`REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.md`](audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.md)
+and its TSV. This older inventory is a broader numbered-token snapshot and
+includes aliases and identifiers that are not rows in that callable ledger;
+its historical totals must not be used as the current function denominator.
 
 | Status | Meaning |
 | --- | --- |
@@ -22,7 +28,7 @@ unique numbered source symbol.  Its status column has this strict meaning:
 | `Axxx` | 4 | Auxiliary numbered labels. | Not independently callable.  No audited mapping yet. |
 | `Cxxx` | 866 | Numbered constants, not functions. | Some semantics are represented by Firestaff enums, tables, and compatibility constants, but no complete `Cxxx`-to-semantic manifest exists.  Correctness is not proven globally. |
 | `Exxx` | 6 | Exception handlers. | Callable family.  Exact references are indexed, but all six need explicit behavioural and platform-boundary review. |
-| `Fxxxx` | 2,104 | ReDMCSB functions. | Callable family.  Firestaff has source-locked implementations and tests for selected routines, for example DM1 `DUNVIEW.C` `F0119`/`F0120`, but there is no evidence-backed one-to-one completion claim for all 2,104 functions. |
+| `Fxxxx` | 2,104 | ReDMCSB functions in this inventory snapshot. | Historical inventory count only. The current full callable audit inventories 2,100 `F` symbols; Firestaff has source-locked implementations and tests for selected routines, for example DM1 `DUNVIEW.C` `F0119`/`F0120`, but there is no evidence-backed one-to-one completion claim for all current callable rows. |
 | `Gxxxx` | 2,074 | Globals. | Storage labels, not functions.  Firestaff may intentionally use different ownership and names; a complete semantic ownership map is still missing. |
 | `Lxxxx` | 4,616 | Locals. | Compiler/decompiler local labels.  They have no standalone cross-language implementation target.  Audit is only meaningful through their enclosing function. |
 | `Mxxx` | 397 | Module or macro labels. | Non-callable source organisation labels.  No direct one-to-one implementation claim is appropriate. |
@@ -30,15 +36,18 @@ unique numbered source symbol.  Its status column has this strict meaning:
 | `Rxxx` | 8 | TOS/system routines. | Callable system boundary.  Firestaff substitutes portable SDL/host services where appropriate, but each mapping needs an explicit equivalence or non-applicability decision. |
 | `Sxxx` | 19 | Assembly or special routines. | Callable special boundary.  Each needs an explicit compatibility decision; a source-name match is insufficient. |
 
-The four callable families contain **2,137** routines: `F` 2,104, `E` 6,
-`R` 8, and `S` 19.  `G`, `L`, and `P` are globals, locals, and parameters;
-`M` is module/macro labelling.  They must not be counted as functions.
+The historical inventory's four callable-looking families total **2,137**
+tokens: `F` 2,104, `E` 6, `R` 8, and `S` 19. The current full callable audit
+contains **2,133** rows: `F` 2,100, `E` 6, `R` 8, and `S` 19. Use that full
+audit as the function-by-function review denominator. `G`, `L`, and `P` are
+globals, locals, and parameters; `M` is module/macro labelling. They must not
+be counted as functions.
 
-At the 2026-07-14 inventory snapshot, Firestaff source/header/test files
-contain exact numeric references for 938 of the 2,104 `Fxxx` identifiers and
-none of the `Exxx`, `Rxxx`, or `Sxxx` identifiers.  These are traceability
-counts only, not correctness counts; all 2,137 callable rows remain outside a
-complete verified one-to-one implementation claim.
+At the 2026-07-14 historical inventory snapshot, Firestaff source/header/test
+files contained exact numeric references for 938 of the 2,104 `Fxxx`
+identifiers and none of the `Exxx`, `Rxxx`, or `Sxxx` identifiers. These are
+traceability counts only, not correctness counts, and they do not describe the
+current full callable audit or prove implementation parity.
 
 ## How to use the inventory
 

@@ -1,6 +1,6 @@
 # Parity Reference Sources
 
-Last updated: 2026-05-20
+Last updated: 2026-10-31
 
 This file inventories all known local reference sources and artifacts available for 1:1 parity verification work.
 
@@ -9,12 +9,38 @@ This file inventories all known local reference sources and artifacts available 
 ## Product contract
 
 **Version 1** targets 1:1 original-faithful parity with **all three original games**:
-- **DM1** — Dungeon Master (PC DOS, VGA, English)
-- **CSB** — Chaos Strikes Back
-- **DM2** — Dungeon Master II: The Legend of Skullkeep
+- **DM1** — PC 3.4 English and Multilanguage.
+- **CSB** — Atari ST 2.0/2.1, Amiga 3.1/3.5, and FM Towns English/Japanese.
+- **DM2** — PC English, French, and German/English JewelCase editions.
+
+This edition list follows the current [project guide](../PROJECT_GUIDE.md).
+Parity review must cover each supported edition and platform path, not only the
+edition used for a focused source or media check.
 
 V2 (modern graphics/resolution) and V3 (modern 3D) are separate product tracks.
 Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementation.
+
+## Cross-check references for all three games
+
+Use DMWeb and Greatstone as cross-check references for DM1, CSB, and DM2.
+They supplement the game-specific source of behavior below; they do not replace
+ReDMCSB for DM1/CSB or skproject for DM2. DMWeb is especially useful for
+documented platform variants, file formats, and known data-file structure.
+Greatstone's Swoosh Construction Kit pages provide extracted map/data views and
+catalogues that can help check file parsing and platform-specific content.
+Treat those extracted views as secondary evidence, and verify behavior against
+the applicable source code and original data before claiming parity.
+
+| Game | Greatstone reference | DMWeb reference collection |
+|---|---|---|
+| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
+| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
+| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): DM2 data-file notes and Nexus |
+
+The Greatstone game pages report different catalogued variant counts (26 DM1,
+19 CSB, and 15 DM2 when checked on 2026-10-31). These counts describe the
+extractor's available entries, not Firestaff's supported-edition matrix. For
+DM2, retain the more detailed [PC English Greatstone cross-check](../reference/audits/DM2_PC10_EN_GREATSTONE_CROSSCHECK.md).
 
 ---
 
@@ -33,9 +59,9 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 - **Copyright handling:** Not vendored into repo. Referenced for local verification only.
 - **Good for:** Ground-truth data file formats, original asset presence, original executable behavior.
 
-### A2. ReDMCSB WIP archive (dm7z-extract)
-- **Local path:** `dm7z-extract/`
-- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes)
+### A2. ReDMCSB WIP archive (fresh task-local refetch)
+- **Current local path:** `work/redmcsb-refetched-latest/extracted/` (untracked reference material; do not commit or redistribute the upstream archive)
+- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes; SHA-256 `58de16a34476a1ac2349ca01a4768cdecbadc9929fed0b69e8b9698f996159d1`). The 2026-10-31 refetch matches this checksum.
 - **Key contents:**
   - `Reference/Original/I34E/` — DM PC 3.4 English executables (11 LZEXE-compressed DOS files): `DM.EXE`, `FIRES` (94,779 bytes, main game), `VGA`, `ANIM`, `SWOOSH`, `SELECTOR`, etc.
   - `Reference/Original/G14ED/` — Amiga 1.4 English Demo: `DUNGEON.MASTER` (233,777 bytes), `START`
@@ -149,7 +175,7 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 ## D. Source code references
 
 ### D1. ReDMCSB reconstructed source
-- **Local path:** `dm7z-extract/Toolchains/Common/Source/`
+- **Current local path:** `work/redmcsb-refetched-latest/extracted/Toolchains/Common/Source/` (same untracked task-local refetch as A2)
 - **Files:** `VIDEODRV.C`, `DUNGEON.C`, `DEFS.H`
 - **Good for:** Authoritative structural reference for UI composition, component model, panel ownership, graphics slot use, event naming, gameplay mechanics, memory/cache behavior.
 
@@ -170,7 +196,8 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 - **skproject remote:** `https://github.com/gbsphenx/skproject`
 - **Locked master HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493`
 - **Locked tree:** `a09b748f8ce1a974a642965f3a48e925e202ef9f`
-- **Canonical N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
+- **Current local checkout:** `work/skproject/` (task-local and untracked; do not commit or redistribute source files)
+- **Revision check:** `2c59a2c5a7978923ff5c822c15c3479e4d448493` (matches the locked master HEAD above)
 - **Sphenx SKWin page:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 - **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
 - **Good for:** DM2-specific source/provenance research after the Phase 0 gate passes.

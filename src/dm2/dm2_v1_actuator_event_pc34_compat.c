@@ -487,19 +487,23 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
 /* Source: skevent.cpp:1346-1500.
  * Moves items from source tile to destination tile based on actuator's
  * data filter.  capture=1 reverses source/dest.  recycler uses an
- * item bitmask.  Items are filtered by DB type (weapon..misc_item)
+ * item bitmask.  Items are filtered by DB type (weapon..miscellaneous)
  * and by direction (wall) or all directions (floor). */
 
 typedef struct {
     DM2_V1_RecordPoolSet *pool_set;
     DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_SourceTimerQueue *queue;
     const uint8_t *actu_record;
     int src_x, src_y, src_dir;
     int dst_x, dst_y, dst_dir;
     int is_floor;
+    int recycler;
     int only_first_item;
     uint16_t filter_data;
+    uint8_t item_mask[64];
+    int item_mask_valid;
     int map;
     uint32_t game_tick;
     DM2_V1_ItemTeleportReceipt *receipt;
@@ -514,7 +518,7 @@ static int item_teleport_visitor(void *context,
     int item_dir = (int)(handle & 3u);
     (void)record_unused;
 
-    /* Only items (dbWeapon=5 through dbMiscellaneous_item=9) */
+    /* Source item range: dbWeapon=5 through dbMiscellaneous_item=10. */
     if (db_type < DM2_DB_WEAPON || db_type > DM2_DB_MISC_ITEM) {
         /* Check creature possessions */
         if (db_type == DM2_DB_CREATURE) {
@@ -527,28 +531,59 @@ static int item_teleport_visitor(void *context,
     if (ctx->is_floor == 0 && item_dir != ctx->src_dir) {
         return 0;
     }
+    if (ctx->recycler && !ctx->item_mask_valid) return 0;
+
+    /* skevent.cpp:1400-1420 / SKW_ACTIVATE_ITEM_TELEPORT: compare
+     * GET_DISTINCTIVE_ITEMTYPE with ActuatorData; 0x1ff accepts every
+     * item. Recycler instead indexes QUERY_CREATURES_ITEM_MASK by the
+     * distinctive type. */
+    if (ctx->recycler || ctx->filter_data != 0x1ffu) {
+        uint8_t cls2 = 0xffu;
+        uint16_t distinctive = 0xffffu;
+        DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+        DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+        memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+        memset(&type_receipt, 0, sizeof(type_receipt));
+        if (!dm2_v1_skproject_query_cls2_from_record(
+                (uint16_t)handle, ctx->pool_set, &cls2, &cls2_receipt) ||
+            !cls2_receipt.valid || cls2 == 0xffu ||
+            !dm2_v1_skproject_get_distinctive_itemtype(
+                (uint16_t)handle, cls2, &distinctive, &type_receipt) ||
+            !type_receipt.valid) {
+            ctx->receipt->item_type_lookup_failed++;
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+        if (ctx->recycler) {
+            if (distinctive >= 512u ||
+                (ctx->item_mask[distinctive >> 3] &
+                 (uint8_t)(1u << (distinctive & 7u))) == 0u) return 0;
+        } else if (distinctive != ctx->filter_data) {
+            return 0;
+        }
+    }
 
     ctx->receipt->items_counted++;
-
-    /* Filter by actuator data (itemspec).  0x1FF = match all. */
-    if (ctx->filter_data != 0x1FF) {
-        /* Without GET_DISTINCTIVE_ITEMTYPE, use raw data compare */
-        /* This is a simplified filter; full version needs itemtype lookup */
-    }
 
     /* Move the item via MOVE_RECORD_TO */
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
         memset(&move_receipt, 0, sizeof(move_receipt));
-        if (dm2_v1_move_record_to(ctx->pool_set, ctx->dungeon, ctx->queue,
-                                   handle,
-                                   (int16_t)ctx->src_x, (int16_t)ctx->src_y,
-                                   (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
-                                   (int16_t)ctx->dst_dir,
-                                   ctx->map, ctx->game_tick,
-                                   &move_receipt) == 1) {
-            ctx->receipt->items_moved++;
+        int moved = dm2_v1_move_record_to(
+            ctx->pool_set, ctx->dungeon, ctx->queue, handle,
+            (int16_t)ctx->src_x, (int16_t)ctx->src_y,
+            (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
+            (int16_t)ctx->dst_dir, ctx->map, ctx->game_tick,
+            &move_receipt);
+        if (!moved || move_receipt.fail_closed) {
+            /* MOVE_RECORD_TO may return 1 with a fail-closed receipt after
+             * a source cut fails. Never present that partial chain state as
+             * a successful teleport; the owning mecha transaction rolls it
+             * back before publishing any changes. */
+            ctx->receipt->fail_closed = 1;
+            return 1;
         }
+        ctx->receipt->items_moved++;
     }
 
     if (ctx->only_first_item && ctx->receipt->items_moved > 0) {
@@ -559,6 +594,7 @@ static int item_teleport_visitor(void *context,
 
 int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   DM2_V1_DungeonData *dungeon,
+                                  const DM2_V1_AssetLoader *asset_loader,
                                   DM2_V1_SourceTimerQueue *queue,
                                   const uint8_t *actu_record,
                                   int timer_x, int timer_y,
@@ -574,7 +610,12 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_TileRecordWalkReceipt walk_receipt;
 
     memset(&local, 0, sizeof(local));
-    if (receipt == NULL) receipt = &local;
+    if (receipt == NULL) {
+        receipt = &local;
+    } else {
+        memset(receipt, 0, sizeof(*receipt));
+    }
+    memset(&ctx, 0, sizeof(ctx));
 
     if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
         receipt->fail_closed = 1;
@@ -606,21 +647,35 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
         ctx.dst_dir = (int)dm2_actu_direction(actu_record);
     }
 
-    /* Recycler path: QUERY_CREATURES_ITEM_MASK builds a bitmask of item
-     * types a creature accepts.  Without GDAT text queries, use a
-     * permissive mask (all item types pass).  Source: c_querydb.cpp:1045. */
+    /* skevent.cpp:1413 and c_querydb.cpp:1045: obtain the exact GDAT
+     * item-type mask from the actuator's creature index and Delay field. */
     if (recycler != 0) {
-        uint8_t item_mask[64];
-        memset(item_mask, 0xFF, sizeof(item_mask));
-        ctx.filter_data = 0x1FFU;
-        receipt->recycler_permissive_mask = 1;
+        DM2_V1_CreaturesItemMaskReceipt mask_receipt;
+        int creature_index = (int)(dm2_actu_data(actu_record) & 0xffu);
+        int text_field_base = (int)dm2_actu_delay(actu_record) * 3 + 0x10;
+        memset(&mask_receipt, 0, sizeof(mask_receipt));
+        if (!dm2_v1_query_creatures_item_mask_receipt(
+                asset_loader, creature_index, text_field_base, 0,
+                &mask_receipt) || !mask_receipt.accepted) {
+            /* c_querydb.cpp zeroes the destination mask before asking GDAT.
+             * The source caller ignores a missing-text result; if Firestaff
+             * cannot produce an authenticated mask, fail closed to that
+             * empty-mask no-op instead of accepting every item. */
+            receipt->recycler_mask_missing = 1;
+            memset(ctx.item_mask, 0, sizeof(ctx.item_mask));
+        } else {
+            memcpy(ctx.item_mask, mask_receipt.mask, sizeof(ctx.item_mask));
+            ctx.item_mask_valid = 1;
+        }
     }
 
     ctx.pool_set = pool_set;
     ctx.dungeon = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.queue = queue;
     ctx.actu_record = actu_record;
     ctx.is_floor = is_floor;
+    ctx.recycler = recycler != 0;
     ctx.only_first_item = only_first_item;
     ctx.filter_data = dm2_actu_data(actu_record);
     ctx.map = map;
@@ -631,6 +686,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     dm2_v1_tile_record_walk(pool_set, dungeon, map, ctx.src_x, ctx.src_y,
                             item_teleport_visitor, &ctx, &walk_receipt);
 
+    if (receipt->fail_closed) return 0;
     receipt->valid = 1;
     return 1;
 }
@@ -641,6 +697,7 @@ typedef struct {
     DM2_V1_RecordPoolSet *pool_set;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_CaiiArray *caii;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_SourceTimerQueue *queue;
     int map;
     int x;             /* timer X coordinate (tile walk origin) */
@@ -648,11 +705,12 @@ typedef struct {
     int action_type;   /* timer ActionType (from value_b high byte) */
     int direction;     /* timer Value2 (from value_b low byte) */
     uint32_t game_tick;
-    uint16_t *global_words;
-    uint16_t global_word_count;
+    DM2_V1_GlobVarState *global_state;
     const DM2_V1_CreatureKillerCallbacks *creature_killer_cb;
     DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len;
     void *ornate_ctx;
+    DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound;
+    void *ornate_sound_ctx;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -867,6 +925,10 @@ static int wall_mecha_visitor(void *context,
                     handle, 1 /* isWall=1 */);
                 dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
             }
+            if (ctx->queue_ornate_sound)
+                ctx->queue_ornate_sound(ctx->ornate_sound_ctx, handle,
+                    record_mut, ctx->map, ctx->x, ctx->y,
+                    ctx->game_tick, 1);
         }
         if (dm2_actu_once_only(record)) {
             dm2_v1_activate_relay2(ctx->pool_set, ctx->dungeon, ctx->queue,
@@ -914,6 +976,10 @@ static int wall_mecha_visitor(void *context,
                          % (uint32_t)anim_len) & 0xFF);
                     dm2_actu_set_data(record_mut,
                         (actu_data & 0x100) | phase);
+                    if (ctx->queue_ornate_sound)
+                        ctx->queue_ornate_sound(ctx->ornate_sound_ctx,
+                            handle, record_mut, ctx->map, ctx->x, ctx->y,
+                            ctx->game_tick, 1);
                 }
             } else {
                 int16_t di = (int16_t)(((actu_data & 0xFF) + ctx->game_tick)
@@ -952,7 +1018,8 @@ static int wall_mecha_visitor(void *context,
         int16_t si = dm2_v1_tile_record_link(ctx->dungeon, ctx->map,
             (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record));
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -966,7 +1033,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -979,7 +1047,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -992,7 +1061,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1005,7 +1075,8 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             0, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1029,12 +1100,15 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)fwd_action, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        const int global_operation =
+            (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
+        if (!ctx->global_state) {
+            r->fail_closed++;
+            break;
         }
+        (void)dm2_v1_update_glob_var_direct(
+            ctx->global_state, (int16_t)dm2_actu_data(record),
+            (int16_t)global_operation, 1);
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
@@ -1045,17 +1119,19 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_TEST_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        int should_forward = 1;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            uint16_t gv_val = 0;
-            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record),
-                ctx->global_words, ctx->global_word_count,
-                &gv_val, &gv_receipt);
-            if (gv_val == 0)
-                should_forward = 0;
+        int should_forward;
+        int32_t gv_val;
+        const int revert = dm2_actu_revert_effect(record) != 0;
+        if (!ctx->global_state) {
+            r->fail_closed++;
+            break;
         }
+        gv_val = dm2_v1_get_glob_var(
+            ctx->global_state, dm2_actu_data(record));
+        should_forward = ((revert != (gv_val != 0u)) &&
+                          (ctx->action_type == 0 || ctx->action_type == 2)) ||
+                         ((revert == (gv_val != 0u)) &&
+                          ctx->action_type == 1);
         if (should_forward) {
             dm2_v1_invoke_actuator(ctx->queue, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
@@ -1084,14 +1160,17 @@ static int wall_mecha_visitor(void *context,
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
                               DM2_V1_SourceTimerQueue *queue,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
-                              uint16_t *global_words,
-                              uint16_t global_word_count,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                               void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1107,6 +1186,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;
@@ -1115,11 +1195,12 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
-    ctx.global_words      = global_words;
-    ctx.global_word_count = global_word_count;
-    ctx.creature_killer_cb = NULL;
+    ctx.global_state      = global_state;
+    ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
+    ctx.queue_ornate_sound = queue_ornate_sound;
+    ctx.ornate_sound_ctx = ornate_sound_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1182,6 +1263,10 @@ static int floor_mecha_visitor(void *context,
                          % (uint32_t)anim_len) & 0xFF);
                     dm2_actu_set_data(record_mut,
                         (dm2_actu_data(record) & 0x100) | phase);
+                    if (ctx->queue_ornate_sound)
+                        ctx->queue_ornate_sound(ctx->ornate_sound_ctx,
+                            handle, record_mut, ctx->map, ctx->x, ctx->y,
+                            ctx->game_tick, 0);
                 }
             } else {
                 int16_t di = (int16_t)(((dm2_actu_data(record) & 0xFF)
@@ -1286,6 +1371,10 @@ static int floor_mecha_visitor(void *context,
                     handle, 0 /* isWall=0 */);
                 dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
             }
+            if (ctx->queue_ornate_sound)
+                ctx->queue_ornate_sound(ctx->ornate_sound_ctx, handle,
+                    record_mut, ctx->map, ctx->x, ctx->y,
+                    ctx->game_tick, 0);
         }
         if (dm2_actu_once_only(record)) {
             dm2_v1_activate_relay2(ctx->pool_set, ctx->dungeon, ctx->queue,
@@ -1298,7 +1387,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_PLACED_ITEM_TELEPORTER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1311,7 +1401,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1324,7 +1415,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
@@ -1337,7 +1429,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1350,7 +1443,8 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+            ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
             1, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
@@ -1363,12 +1457,15 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_INVERSE_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_update_glob_var(
-                dm2_actu_data(record), (uint16_t)fwd_action, 0,
-                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        const int global_operation =
+            (dm2_actu_revert_effect(record) ? 3 : 0) + ctx->action_type;
+        if (!ctx->global_state) {
+            r->fail_closed++;
+            break;
         }
+        (void)dm2_v1_update_glob_var_direct(
+            ctx->global_state, (int16_t)dm2_actu_data(record),
+            (int16_t)global_operation, 1);
         dm2_v1_invoke_actuator(ctx->queue, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
@@ -1379,17 +1476,19 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_TEST_FLAG: {
         int fwd_action = dm2_actu_once_only(record)
             ? (int)dm2_actu_action_type(record) : ctx->action_type;
-        int should_forward = 1;
-        if (ctx->global_words && ctx->global_word_count > 0) {
-            uint16_t gv_val = 0;
-            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
-            dm2_v1_skproject_get_glob_var(
-                dm2_actu_data(record),
-                ctx->global_words, ctx->global_word_count,
-                &gv_val, &gv_receipt);
-            if (gv_val == 0)
-                should_forward = 0;
+        int should_forward;
+        int32_t gv_val;
+        const int revert = dm2_actu_revert_effect(record) != 0;
+        if (!ctx->global_state) {
+            r->fail_closed++;
+            break;
         }
+        gv_val = dm2_v1_get_glob_var(
+            ctx->global_state, dm2_actu_data(record));
+        should_forward = ((revert != (gv_val != 0u)) &&
+                          (ctx->action_type == 0 || ctx->action_type == 2)) ||
+                         ((revert == (gv_val != 0u)) &&
+                          ctx->action_type == 1);
         if (should_forward) {
             dm2_v1_invoke_actuator(ctx->queue, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
@@ -1411,14 +1510,17 @@ static int floor_mecha_visitor(void *context,
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
                                DM2_V1_CaiiArray *caii,
+                               const DM2_V1_AssetLoader *asset_loader,
                                DM2_V1_SourceTimerQueue *queue,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
-                               uint16_t *global_words,
-                               uint16_t global_word_count,
+                               DM2_V1_GlobVarState *global_state,
+                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
                                DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
                                void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1434,6 +1536,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.asset_loader = asset_loader;
     ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;
@@ -1442,11 +1545,12 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
-    ctx.global_words      = global_words;
-    ctx.global_word_count = global_word_count;
-    ctx.creature_killer_cb = NULL;
+    ctx.global_state      = global_state;
+    ctx.creature_killer_cb = creature_killer_cb;
     ctx.get_ornate_anim_len = get_ornate_anim_len;
     ctx.ornate_ctx  = ornate_ctx;
+    ctx.queue_ornate_sound = queue_ornate_sound;
+    ctx.ornate_sound_ctx = ornate_sound_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1466,24 +1570,29 @@ int dm2_v1_activate_creature_killer(
     int16_t actu_type, int16_t action_type,
     DM2_V1_CreatureKillerReceipt *receipt)
 {
-    int16_t dx_abs, dy_abs, origin_x, origin_y, span_x, span_y;
-    int16_t ix, iy;
+    int dx_abs, dy_abs, origin_x, origin_y, span_x, span_y;
+    int ix, iy;
 
     if (!receipt) return 0;
     memset(receipt, 0, sizeof(*receipt));
     if (!cb || !cb->get_creature_at || !cb->creature_type_matches) return 0;
 
-    dx_abs = (int16_t)((actu_x - timer_x) < 0 ? -(actu_x - timer_x) : (actu_x - timer_x));
-    dy_abs = (int16_t)((actu_y - timer_y) < 0 ? -(actu_y - timer_y) : (actu_y - timer_y));
-    origin_x = (int16_t)(actu_x - dx_abs);
-    origin_y = (int16_t)(actu_y - dy_abs);
-    span_x = (int16_t)(2 * dx_abs + 1);
-    span_y = (int16_t)(2 * dy_abs + 1);
+    /* c_tim_proc.cpp:2925-2934 truncates the differences to signed 16-bit
+     * before taking their absolute values. Keep the accumulator wide so
+     * the -32768 case becomes +32768 instead of overflowing. */
+    dx_abs = (int)(int16_t)(actu_x - timer_x);
+    dy_abs = (int)(int16_t)(actu_y - timer_y);
+    if (dx_abs < 0) dx_abs = -dx_abs;
+    if (dy_abs < 0) dy_abs = -dy_abs;
+    origin_x = (int)actu_x - dx_abs;
+    origin_y = (int)actu_y - dy_abs;
+    span_x = 2 * dx_abs + 1;
+    span_y = 2 * dy_abs + 1;
 
     for (iy = span_y - 1; iy >= 0; iy--) {
         for (ix = span_x - 1; ix >= 0; ix--) {
-            int16_t cx = (int16_t)(origin_x + ix);
-            int16_t cy = (int16_t)(origin_y + iy);
+            int cx = origin_x + ix;
+            int cy = origin_y + iy;
             uint16_t creature_rec;
 
             if (cx < 0 || cx >= cb->map_width) continue;

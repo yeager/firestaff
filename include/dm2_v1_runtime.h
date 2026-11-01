@@ -360,6 +360,13 @@ int dm2_v1_runtime_live_missile_selector_context(
  * M11 owns the panel buffer; DM2 owns the cast transaction. */
 int dm2_v1_runtime_set_spell_runes(int hero_index,
                                    const uint8_t *runes, int rune_count);
+/* DM2 charges each symbol when it is entered, and recanting removes only the
+ * last symbol without refunding that mana. */
+int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index);
+int dm2_v1_runtime_remove_spell_rune(int hero_index);
+int dm2_v1_runtime_clear_spell_runes(int hero_index);
+int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
+                                   int capacity, int *out_rune_count);
 
 /* Transfer an already retained, source-complete private candidate from the
  * boot profile to the bound runtime. On failure the profile keeps ownership.
@@ -1574,13 +1581,14 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
  * and subdispatches 0..6.  This receipt aggregates the bounded handlers:
  *   class 0 wall mecha  — consumed, CCM tail unbound (fail-closed counter)
  *   class 1 floor mecha — CAII animate activation (round 23)
- *   class 2 pitfall     — fail-closed until the floor-mecha/advance owner
- *                         is complete
+ *   class 2 pitfall     — close path dispatches FLOOR_MECHA; open remains
+ *                         fail-closed until ADVANCE_TILES_TIME is owned
  *   class 3             — source no-op
  *   class 4 door        — bounded one-step door toggle
- *   class 5 teleporter  — fail-closed until the floor-mecha/teleport owner
- *                         is complete
- *   class 6 trickwall   — consumed, CCM tail unbound (fail-closed counter)
+ *   class 5 teleporter  — DB1-disabled and close paths dispatch FLOOR_MECHA;
+ *                         enabled opening remains fail-closed
+ *   class 6 trickwall   — opens/closes bit 2 and defers blocked closes;
+ *                         sound/light-check presentation remains partial
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230 (0x04 class dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:1923   (DM2_ACTUATE_WALL_MECHA)
@@ -1595,13 +1603,17 @@ typedef struct {
     int timers;               /* total 0x04 timers consumed */
     int wall_mecha;           /* class 0 consumed */
     int floor_mecha;          /* class 1 consumed / CAII activations */
-    int pitfall;              /* class 2 consumed when a future owner binds */
+    int pitfall;              /* class 2 close path dispatched to FLOOR_MECHA */
     int door;                 /* class 4 consumed / door mutations */
-    int teleporter;           /* class 5 consumed when a future owner binds */
+    int teleporter;           /* class 5 close/disabled path dispatched */
     int trickwall;            /* class 6 consumed */
-    int unbound_fail_closed;  /* classes 0/5/6 + unavailable state */
+    int trickwall_mutations;  /* class 6 tile bit writes */
+    int trickwall_requeues;   /* class 6 blocked-close retries */
+    int trickwall_rejected;   /* class 6 invalid/unowned state */
+    int unbound_fail_closed;  /* unbound actuator classes */
     int pitfall_rejected;     /* class 2 toggle rejected */
     int door_rejected;        /* class 4 toggle rejected */
+    int teleporter_rejected;  /* class 5 path rejected */
 } DM2_V1_RuntimeActuatorTileReceipt;
 /* Copies the session actuator-tile receipt.  Always returns 1 when `out`
  * is non-NULL; counters are zero until the first 0x04 timer is dispatched.
@@ -1645,6 +1657,9 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Select the living DM2 champion that owns an M11 rune-cast request without
+ * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
+int dm2_v1_runtime_select_spell_champion(int hero_index);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);

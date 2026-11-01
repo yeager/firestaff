@@ -1,10 +1,16 @@
 # ReDMCSB Callable Symbol Audit: Partition 1
 
+> Historical ledger. Its 2,137-row denominator and status vocabulary predate
+> the full source audit. Use [`REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.md`](REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.md)
+> and `REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv` as the current callable-symbol
+> inventory and review backlog.
+
 ## Scope
 
-This is partition 1 of the ReDMCSB callable-symbol audit. It covers the full
-`E`/`F`/`R`/`S` population from the repository's authoritative numbered-symbol
-inventory: 2,137 callable symbols in total.
+This is the original callable-symbol triage snapshot. It covers the
+`E`/`F`/`R`/`S` population identified by the earlier numbered-symbol
+inventory: 2,137 rows in total. The later full audit defines the current
+callable set and resolves the different source scope and aliases.
 
 | Family | Meaning in ReDMCSB | Symbols |
 | --- | --- | ---: |

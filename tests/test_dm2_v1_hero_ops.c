@@ -300,6 +300,22 @@ static void test_coin_wallet(void)
     taken = dm2_v1_take_coin_from_wallet(container, 99, &cb, NULL);
     assert(taken == DM2_V1_OBJECT_NULL);
 
+    /* The legacy DOS source returns DBType != 0 when a non-coin item
+     * interrupts the wallet list; SPX/SKULLWIN returns 0 immediately. */
+    reset_wallet_mock();
+    const uint16_t non_coin = 7, incoming_coin = 8;
+    g_container_head[container] = non_coin;
+    g_item_db_type[non_coin] = 3;
+    g_item_next[non_coin] = DM2_V1_OBJECT_END;
+    g_item_db_type[incoming_coin] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+    g_item_denom[incoming_coin] = 10;
+    assert(dm2_v1_add_coin_to_wallet(
+               container, incoming_coin, &cb, NULL) == 1);
+    assert(dm2_v1_add_coin_to_wallet_spx(
+               container, incoming_coin, &cb, NULL) == 0);
+    assert(g_container_head[container] == non_coin);
+    assert(g_dealloc_calls == 0);
+
     printf("  PASS: coin_wallet\n");
 }
 

@@ -6,6 +6,7 @@
 #define DM2_V1_RUNTIME_PARITY_PC34_COMPAT_H
 
 #include <stdint.h>
+#include "dm2_v1_glob_var_state_pc34_compat.h"
 
 /* =====================================================================
  * util.cpp — DM2_ROTATE_5x5_POS
@@ -17,21 +18,6 @@ int16_t dm2_v1_rotate_5x5_pos(int16_t pos, int16_t rotation);
  * dm2global.cpp — DM2_UPDATE_GLOB_VAR / DM2_GET_GLOB_VAR
  * Three-tier storage: bits (0x00-0x3F), bytes (0x40-0x7F), words (0x80-0xBF)
  * ===================================================================== */
-
-typedef struct {
-    uint8_t bit_vars[8];     /* ddat.v1e0104 — 64 bit flags */
-    uint8_t byte_vars[64];   /* ddat.globalb — byte vars 0x40..0x7F */
-    int16_t word_vars[192];  /* ddat.v1e000c — word vars 0x00..0xBF */
-} DM2_V1_GlobVarState;
-
-void dm2_v1_glob_var_init(DM2_V1_GlobVarState *state);
-
-int32_t dm2_v1_get_glob_var(
-    const DM2_V1_GlobVarState *state, uint16_t index);
-
-int32_t dm2_v1_update_glob_var_direct(
-    DM2_V1_GlobVarState *state,
-    int16_t var_idx, int16_t mode, int16_t value);
 
 /* Legacy callback interface (retained for existing callers) */
 typedef struct {

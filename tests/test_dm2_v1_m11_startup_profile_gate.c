@@ -6235,7 +6235,10 @@ int main(void) {
                                     int16_t door_head = door_link;
                                     door_cloud_bytes[0] = (uint8_t)(DM2_V1_RECORD_HANDLE_END & 0xff);
                                     door_cloud_bytes[1] = (uint8_t)((DM2_V1_RECORD_HANDLE_END >> 8) & 0xff);
-                                    door_cloud_bytes[2] = 0x01u;
+                                    /* SKWINSPX/v5 skcloud.cpp calls
+                                     * DM2_ATTACK_DOOR with spell mode, which
+                                     * gates on record byte 2 bit 7. */
+                                    door_cloud_bytes[2] = 0x80u;
                                     door_cloud_bytes[3] = 0xffu;
                                     expect_true(dm2_v1_record_pool_append_to_list(
                                         &resurrection_candidate.record_pools,
@@ -6266,7 +6269,7 @@ int main(void) {
                                             &resurrection_candidate.dungeon, door_map,
                                             door_x, door_y) & 7) == DM2_DOOR_STATE_DESTROYED &&
                                         door_state_before != DM2_DOOR_STATE_DESTROYED,
-                                        "DM2 candidate applies ordinary cloud damage to a door owner");
+                                        "DM2 candidate applies source-gated spell cloud damage to a door owner");
                                 }
                             }
                         }

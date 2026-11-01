@@ -90,6 +90,17 @@ int DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(
         return 0;
     }
 
+    /* ReDMCSB F0173 returns without refreshing current-map caches when the
+     * requested map is already selected. */
+    if (dd->currentMapIndex == mapIndex) {
+        receipt.accepted = 1;
+        receipt.currentMapIndex = dd->currentMapIndex;
+        receipt.currentMapWidth = dd->currentMapWidth;
+        receipt.currentMapHeight = dd->currentMapHeight;
+        if (outReceipt) *outReceipt = receipt;
+        return 1;
+    }
+
     dd->currentMapIndex  = mapIndex;
     dd->currentMapWidth  = dd->dungeon.header.levels[mapIndex].width;
     dd->currentMapHeight = dd->dungeon.header.levels[mapIndex].height;

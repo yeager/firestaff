@@ -118,10 +118,13 @@ int dm2_v1_process_poison(
  * packed charge/quantity count (0..0x3F) rather than one record per
  * coin.
  *
- * add_coin: container_ref must be a moneybox (is_container_moneybox)
- * and coin_item_ref must be a currency item (is_item_currency). Walks
- * the container's item list; if it hits a non-currency item, returns
- * whether that slot is occupied. If an existing coin record of the
+ * add_coin (DOS): container_ref must be a moneybox
+ * (is_container_moneybox) and coin_item_ref must be a currency item
+ * (is_item_currency). Walks the container's item list; if it hits a
+ * non-currency item, returns whether that slot is occupied, matching
+ * SKWINDOS/dm2byh.cpp. The SPX/SKULLWIN variant returns 0 on any
+ * non-currency item, as in skgame.cpp/skhero.cpp/c_hero.cpp.
+ * If an existing coin record of the
  * same denomination is found with charge < 0x3F, increments its charge
  * and deallocates the incoming record. Otherwise appends the incoming
  * record to the end of the list. Returns 1 on success, 0 if the
@@ -163,6 +166,9 @@ typedef struct {
 
 int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
                                const DM2_V1_WalletCallbacks *cb, void *ctx);
+int dm2_v1_add_coin_to_wallet_spx(uint16_t container_ref,
+                                  uint16_t coin_item_ref,
+                                  const DM2_V1_WalletCallbacks *cb, void *ctx);
 uint16_t dm2_v1_take_coin_from_wallet(uint16_t container_ref,
                                       int16_t coin_type_index,
                                       const DM2_V1_WalletCallbacks *cb,

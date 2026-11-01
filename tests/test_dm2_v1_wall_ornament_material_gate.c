@@ -305,6 +305,22 @@ int main(void)
                     return 1;
                 }
             }
+            {
+                DM2_V1_WallOrnamentBlitRect legacy_anchor;
+                DM2_V1_WallOrnamentBlitRect explicit_offset_anchor;
+                if (!dm2_v1_wall_ornament_query_blit_rect(
+                        anchor_table, sizeof(anchor_table), 0x9000u,
+                        0, -1, 4, 6, &legacy_anchor) ||
+                    !dm2_v1_wall_ornament_query_blit_rect_with_offset(
+                        anchor_table, sizeof(anchor_table), 0x9000u,
+                        0, -1, 4, 6, 4, 6, &explicit_offset_anchor) ||
+                    memcmp(&legacy_anchor, &explicit_offset_anchor,
+                           sizeof(legacy_anchor)) != 0) {
+                    fputs("FAIL: legacy QUERY_BLIT_RECT high-bit anchor offset\n",
+                          stderr);
+                    return 1;
+                }
+            }
         }
         {
             /* A deferred containment chain using anchor 6 inherits the

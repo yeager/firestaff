@@ -83,3 +83,11 @@ original-Saturn parity, complete retail source ownership, interactive menu
 behavior, later startup transitions, or dungeon/HUD rendering. The result is
 capture-only and `renderer_permitted=false`; the production renderer gate
 remains closed.
+
+## PR #239 rerun
+
+The authentic replay was rebuilt and rerun from the Debug configuration at PR
+code commit `c1d2664` on 2026-10-31. The test passed against the retained
+external dump and both hash-pinned Ymir pass buffers, matching all 71,680 RGB
+pixels in each pass with zero channel differences. The capture and pass files
+remain external; the result is still limited to this captured display state.

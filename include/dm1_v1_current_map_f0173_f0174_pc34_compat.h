@@ -18,10 +18,14 @@ typedef struct {
     size_t columnCount;
     const uint16_t *doorInfo;
     size_t doorInfoCount;
+    const uint8_t *allowedCreatureTypes;
+    size_t allowedCreatureTypeCount;
     const uint8_t *wallOrnamentIndices;
     size_t wallOrnamentCount;
     const uint8_t *floorOrnamentIndices;
     size_t floorOrnamentCount;
+    const uint8_t *doorOrnamentIndices;
+    size_t doorOrnamentCount;
     const uint8_t *alcoveOrnamentIndices;
     size_t alcoveOrnamentCount;
 } DM1_V1_MapDescriptorF0173F0174Pc34;
@@ -37,10 +41,15 @@ typedef struct {
     size_t currentMapColumnCount;
     const uint16_t *currentMapDoorInfo;
     size_t currentMapDoorInfoCount;
+    const uint8_t *currentMapAllowedCreatureTypes;
+    size_t currentMapAllowedCreatureTypeCount;
     const uint8_t *currentMapWallOrnamentIndices;
     size_t currentMapWallOrnamentCount;
+    size_t currentMapInscriptionWallOrnamentIndex;
     const uint8_t *currentMapFloorOrnamentIndices;
     size_t currentMapFloorOrnamentCount;
+    const uint8_t *currentMapDoorOrnamentIndices;
+    size_t currentMapDoorOrnamentCount;
     const uint8_t *currentMapAlcoveOrnamentIndices;
     size_t currentMapAlcoveOrnamentCount;
 

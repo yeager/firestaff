@@ -506,6 +506,21 @@ typedef struct DM2_V1_DoorRenderPlan {
 #define DM2_V1_WALL_ORNAMENT_RENDER_MAX DM2_SQ_COUNT
 
 typedef struct {
+    uint8_t valid;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t mirror_flip;
+    uint16_t colorkey;
+    uint16_t width;
+    uint16_t height;
+    uint32_t summary_hash;
+    uint32_t palette_hash;
+    DM2_V1_ViewportRect dst_rect;
+    DM2_V1_ViewportRect src_rect;
+} DM2_V1_ShopImageRender;
+
+typedef struct {
     int view_square;
     int gdat_index;
     uint8_t image_field;
@@ -521,6 +536,17 @@ typedef struct {
     DM2_V1_ViewportRect overlay_src_rect;
     uint8_t overlay_mirror_flip;
     uint32_t overlay_material_hash;
+    /* Source-owned shop-glass actuator pair for the live tile. */
+    uint16_t shop_wall_actuator;
+    uint16_t shop_floor_actuator;
+    uint16_t shop_current_item;
+    uint8_t shop_glass_pair_valid;
+    uint8_t shop_glass_render_pending;
+    uint8_t shop_soldout_icon_required;
+    /* Source QUERY_TEMP_PICST merchandise, sold-out, and nav artwork. */
+    DM2_V1_ShopImageRender shop_item;
+    DM2_V1_ShopImageRender shop_soldout;
+    DM2_V1_ShopImageRender shop_navigation;
 } DM2_V1_WallOrnamentRender;
 
 typedef struct DM2_V1_WallOrnamentRenderPlan {
@@ -1269,6 +1295,8 @@ typedef struct {
     uint8_t  wall_ornate_source_image_absent; /* SUMMARY_IMAGE width is zero */
     uint16_t wall_rendered_record_root; /* SUMMARIZE_STONE_ROOM xsrd.id4 */
     uint8_t  wall_rendered_record_root_valid;
+    int16_t  source_map_x; /* source tile coordinate used to build this view square */
+    int16_t  source_map_y;
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
     uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */

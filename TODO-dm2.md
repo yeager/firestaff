@@ -1,3 +1,53 @@
+2026-11-01 skproject source inventory and legacy DOS shooter review:
+The active-source inventory generator now includes all C/C++ definitions in
+legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
+The locked checkout yields 3,932 active definitions (2,725 SPX, 1,205 DOS and
+2 SKULLWIN); 3,821 remain unreviewed, 139 are partial, and 5 have mapped
+parity entries, with 2 additional partial source-owner rows.
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,962 rows (3,821 unreviewed, 139 partial and 2 partial owners). The legacy DOS and SPX shooter
+source rows are now marked partial: Firestaff still lacks a live owner for the
+source DB14 allocation, projectile record initialization/tile append, and
+C1D/C1E follow-up timer transaction. Review and implement the remaining rows
+against skproject for each supported DOS, Amiga, FM Towns, and Macintosh lane.
+
+2026-10-31 skproject `STEP_DOOR` timer direction source:
+The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
+door direction or rejects values outside 0/1. Both GAME_LOAD owners derive
+movement from the door record DoorBit09, matching SKWINDOS `SKW_STEP_DOOR`
+and SPX `STEP_DOOR`. This closes that timer-field mismatch only; the direct
+world-owner and transactional candidate now follow the source's
+destroyed/inactive and reached-endpoint exits before collision handling. The
+direct owner does not incorrectly block opening steps for occupied cells.
+Closing steps that would damage the party or a creature remain blocked in the
+structural owner; the live runtime and transactional candidate own those
+collision effects.
+Supported-platform source mapping remains open.
+
+2026-11-01 authenticated live door-record regression in the source 0x01 step:
+the door actuator updates DoorBit09/10 in the runtime record pool, while the
+timer had read and written the separate parsed DUNGEON.DAT record copy. The
+step owner now validates the source record chain, then reads, mutates and rolls
+back those bits through the live record-pool entry. Before the fix, the
+authentic pit/stairs/door/creature runtime probe failed at the door step on DOS
+EN, Amiga EN, FM Towns JA and Macintosh English; it passed on all four after
+the fix. Optional CTest entries now run the same probe for each installed
+original edition. Macintosh uses the existing authentic extracted `DMFiles`
+from the original `.sit`, since its canonical ZIP is not staged. The separate
+M11 Mac wall census still exits earlier at its CHARSHEET slot-selection check;
+that UI path is not covered by this direct door-runtime probe.
+
+2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:
+Both live and GAME_LOAD candidate door-step paths now queue source sound 0x8f
+only when the resulting door state is 4; every other state queues 0x8e before
+scheduling the continuation. The dungeon loader retains map descriptor bytes
+2/3 and word E, and both owners
+resolve the source altar selector through
+`dm2_v1_skproject_is_rebirth_altar`. Sound lookup failure does not block a door
+step; failed live and candidate enqueues restore their sound/timer state. The
+party and creature collision calls now pass GEN2 fields in source order:
+category, sound id, 0xfe, and alternate class. Exact platform-specific source
+resource edges and supported-edition mapping remain open.
+
 2026-11-01 DM2 PC reported viewport/HUD and intro-palette issue: Rechecked
 with the authentic DOS EN ZIP. `test_dm2_v1_dos_native_cli_boot.sh` passed the
 first presented INTRO frame's source RGB digest
@@ -116,31 +166,85 @@ the viewport renderer and the complete actuator animation cases remain open.
 
 # Firestaff TODO — DM2
 
+2026-10-31 SKProject `STEP_DOOR` GAME_LOAD collision follow-up: the runtime
+session candidate now resolves the active map's G1 door graphic and handles
+party-first closing-door damage/noise plus threshold-admitted non-immune DB4
+attacks, state changes, delayed sound timers, and the source extra door tick.
+Candidate timer, sound, party/RNG, record-pool, CAII, tile, and door-record
+mutations roll back together on rejected effects. Source-variant review found
+a material difference: SKULLWIN/c_tim_proc.cpp halves the door-strength HP
+delta and clamps it to at least one when AIDef w24 bit 12 is set, while
+SKWINSPX/skevent.cpp and SKWIN/SkWinCore.cpp set the delta to zero. The live
+and candidate paths now follow the SKWINDOS branch. Map this behavior to
+every supported DM2 edition before claiming platform parity. The direct
+world-owner receipt is still structural, live runtime cannot resolve active
+G1 mapping for off-current maps, and exact audio edge behavior remains
+unverified.
+
+2026-10-31 shop-glass viewport routing: the wall-ornament source plan now
+retains the live DB3 wall-panel/floor-shop actuator pair and current floor
+item from the visible source tile, including source byte order on
+Macintosh/Amiga records. A validated pair routes the shop alcove away from
+the generic ornament material requirement, matching `DRAW_WALL_ORNATE`'s
+dispatch to `_32cb_0f82_SHOP_GLASS`. The selected item's GDAT image and the
+shop navigation board are resolved with their own palettes, source offsets
+and clipped destinations. When the whitelist is absent and the selected item
+is not already on the shop tile or in a creature's possession there, the
+source sold-out icon is drawn between the merchandise and navigation images.
+Item name, prices, high-bit DB14 allocation and buy/sell transitions remain
+incomplete. Party ownership
+still cannot resolve the eight hand containers because the separate
+`ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
+candidate fails closed. No DM2 platform has full shop parity.
+
 2026-10-31 skproject `DRAW_WALL_ORNATE` generic overlay: the runtime render
 plan now resolves optional `WALL_GFX` image field `0x0f` for non-shop alcoves,
 uses the source rectangle, scale, flip, and local palette, and draws it after
 the base ornament. Shop-glass alcove type `2` is kept out of this generic path
-because source calls `_32cb_0f82_SHOP_GLASS` there; shop interaction remains
-missing as described below. The material-gate regression verifies that an
+because source calls `_32cb_0f82_SHOP_GLASS` there; its selected merchandise
+image now has a separate source-bound draw path. The material-gate regression verifies that an
 overlay plan cannot draw without authenticated GDAT data. Original-media
 visual confirmation, alcove-item rendering when no overlay exists, and shop
 glass dynamics remain open. The refetched `SKWIN/data_dm2_dm/graphics.dat`
 contains no loadable generic overlay for a pixel comparison, so the optional
 real-media render case skips for that asset set.
 
-2026-10-31 skproject shop interaction is still missing: Firestaff rejects
-runtime shop entry and its panel builder returns no render plan. The source
-path begins at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
+2026-10-31 skproject shop interaction remains partial. The source path begins
+at `SKWIN/SkWinCore.cpp::DRAW_WALL_ORNATE` and
 `::_32cb_0f82_SHOP_GLASS`, which resolves the active wall actuator, a floor
 shop actuator (type `0x30`), DB14 item state, creature item masks, and
-`WALL_GFX` artwork. `_48ae_05ae_CREATURE` supplies source item prices;
-`SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE` and
-`::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the live
-record/GDAT chain, panel rendering, and buy/sell state transitions against
+`WALL_GFX` artwork. Preserve the complete source order from
+`SkWinCore.cpp:22703-22874`: resolve the first same-tile floor actuator `0x30`
+and wall-panel actuator `0x3f`; when the wall actuator is inactive or
+once-only, load its CREATURES item mask from index `ActuatorData` and text
+field `(Delay * 3) + 0x10`; cycle candidates in the `WALL_GFX/dt08/0x13`
+whitelist order (or modulo 512 when that list is absent); filter the mask,
+shop subtype word bit `0x1000`, wall/floor stock presence, and current party
+inventory/containers/hands via `_2fcf_16ff`/`_2fcf_164e`; then clear once-only,
+activate both actuators, and write the selected item to the floor actuator.
+`dm2_v1_shop_select_masked_stock` now implements the bounded list-order or
+modulo-512 mask scan, decodes source-endian `WALL_GFX/dt08/0x13` words, and
+preserves the raw whitelist word, including its high-bit allocation flag. An
+eligibility callback provides the remaining source subtype/ownership filter
+seam. Its focused compatibility test covers endian order, forward/backward
+cycling, mask and callback skips, missing-list cycling, and exhaustion. The
+runtime now begins this transition from the shop-glass render route and reads
+and mutates authenticated session record pools in source byte order. Party
+ownership still cannot resolve the eight hand containers because the separate
+`ddat.v1d67bc` owner is not connected; an otherwise-unmatched subtype-filtered
+candidate fails closed.
+The same source call draws the item image, sold-out icon when applicable, and
+nav board (now implemented with their GDAT images, palettes, offsets and
+clipped rectangles), item name and buy/sell prices for cell 3, and may spawn a deeply
+allocated DB item when the whitelist item has bit `0x8000`. `_48ae_05ae_CREATURE`
+supplies source item prices; `SKWINSPX/src/v4/skcrture.cpp::PLACE_MERCHANDISE`
+and `::TAKE_MERCHANDISE` cover creature merchandise handling. Implement the
+live record/GDAT chain, panel rendering, and buy/sell state transitions against
 those owners, then verify against source-owned DM2 data on each supported
 platform. Do not restore the retired fixed catalog, fabricated NPC dialog, or
-generic price formulas. The source ownership gate currently means this whole
-gameplay feature is absent, not at parity.
+generic price formulas. The click-direction global, names, prices, high-bit
+DB14 allocation, hand-container mode, and buy/sell transitions remain missing;
+the feature is not at parity.
 
 2026-10-31 skproject `DM2_query_0cee_1a46` packed side-summary consumption:
 visible wall metadata now calls the source-shaped summary entry point and
@@ -1867,3 +1971,76 @@ placement/frame selection and ordinary flying-item materials to their proven
 destination transforms before drawing.
 
 2026-10-31 skproject class-4 light roots: Rechecked `c_gui_vp.cpp:2672-2707`, `c_querydb.cpp:3296-3700`, and `c_light.cpp:231-435`. The side-mismatch route invokes `query_0cee_1a46`, whose side-decoration writes do not change the three summary fields consumed by the light calculation. Firestaff now admits class-0..3 adjacent roots only after a complete bounded record-list walk validates every record and end marker; higher classes preserve the query's source early return. The focused `dm2_v1_light_ops` test passes for a valid DB3 root and rejects an unresolved root. This closes the class-0..3 light-input admission gap only; full side-decoration query behavior, actuator animation, and platform/runtime coverage remain open.
+
+2026-10-31 skproject `ACTIVATE_ACTION_HAND`: the live DM2 click bridge now calls
+`dm2_v1_IS_ITEM_HAND_ACTIVABLE` against the selected champion's source hand
+record, source-endian DB9/DB14 chains, the boot GDAT loader, and the mounted
+CMDSTR entries. Its minion-map action filter uses the existing
+`dm2_v1_skproject_2759_01fe_command_valid` source model. M11 rune-cast
+selection has a separate champion-only bridge so it does not incorrectly
+require an item action in the casting hand. The source global panel/map flags,
+pending-position recompute, exact stat/right-panel refresh sequence, and
+full source-media behavior across every supported DM2 edition/platform still
+need implementation or direct source validation; this function remains
+partial.
+
+2026-11-01 skproject `SET_SPELLING_CHAMPION` variants: DOS and SPX v4/v5 all
+select a live champion, enter source spell mode, clear the magical-map flags,
+recompute any pending squad position, and refresh the right panel. Firestaff's
+`M11_GameView_OpenSpellPanel` instead selects the DM2 runtime champion and
+restores its rune buffer into the separate M11 spell panel while preserving
+`party.curactmode` as the active physical hand required by the cast owner.
+This is the architectural spell-mode equivalent; the source pending-position
+callback and magical-map transient clearing have no separate M11 owner, and
+source UI behavior is not validated across all DM2 editions/platforms. Keep
+the DOS, SPX v4, and SPX v5 source rows partial.
+
+2026-11-01 skproject `ACTUATE_PITFALL`: the live class-2 timer owner now
+resolves ActionType 2 from tile bit 3, applies source close semantics by
+clearing bit 3, and always dispatches the original timer through the
+transactional `FLOOR_MECHA` owner. It restores the original tile if that
+downstream owner rejects. Opening now proceeds only when `ADVANCE_TILES_TIME` is proven a no-op for
+the cell: the party marker and active creature are elsewhere, and there are no
+DB5+ tile items whose positions or timer bytes must move. Cells requiring
+those source effects remain fail-closed. GAME_LOAD remains limited to its
+admitted DB2-only floor chain. The source-matched SPX v4, SPX v5 and DOS rows
+remain partial; other edition/platform coverage and full open behavior are
+still required.
+
+2026-11-01 skproject `ACTUATE_TELEPORTER`: the live class-5 timer owner now
+validates the source DB1 tile root and its endian-aware flags before acting.
+The DB1 disabled value (bits 1..2 both set) skips the tile mutation but still
+dispatches `FLOOR_MECHA`; enabled action-1 and action-2-to-close clear tile bit
+3 and transactionally dispatch the same floor owner. Opening proceeds only when `ADVANCE_TILES_TIME` is proven a no-op for the
+cell: the party marker and active creature are elsewhere, and there are no
+DB5+ tile items whose positions or timer bytes must move. Other open cases
+remain fail-closed pending the complete source movement owner. The GAME_LOAD
+candidate covers only its already admitted DB2 floor subset; other source
+editions and supported platform lanes remain partial.
+
+2026-11-01 skproject `ACTUATE_TRICKWALL`: the live class-6 owner now resolves
+action 2 from tile bit 2, sets the open bit, and closes only when the party is
+elsewhere and any creature on the cell has AI flag `0x20`. A blocked close
+requeues the source timer one tick later. Missing creature-AI evidence fails
+closed. The source light-check state and SPX-v4/DOS open/close sound effects
+remain unbound, as do complete per-edition runtime lanes.
+
+2026-11-01 skproject `ADD_RUNE_TO_TAIL` variants: the rune cost tables and
+mutation logic match the Firestaff runtime's indexed costs, mana deduction,
+0x0800 hero flag, encoded rune append and terminator. SPX v5's
+`table1d6797[encodedRune + 1]` address lands in row 4 of `table1d67e0`, whose
+values are 8, 12, 16, 20, 24 and 28, matching SPX v4's explicit
+`RunePowerMultiplicator`. The analogous DOS pointer expression remains
+unreconciled at the address level. Keep DOS and SPX v4/v5 rows partial because
+exact panel-refresh sequencing, DOS UI integration, assets and supported-
+platform runtime evidence remain open; the multiplier uncertainty is resolved
+for the SPX v5 variant.
+
+
+2026-11-01 skproject `ADD_ITEM_CHARGE` DOS and SPX v4/v5 variants: all three
+active definitions use the same DB5 weapon (bits 10..13, max 15), DB6 cloth
+(bits 9..12, max 15) and DB10 miscellaneous-item (bits 14..15, max 3) charge
+fields, clamp `charge + delta`, preserve unrelated bits, and return the updated
+charge. The existing shared Firestaff helper and item-charge boundary
+regression implement this mutation. All source rows remain partial pending
+supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
