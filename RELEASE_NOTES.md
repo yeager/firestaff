@@ -4,7 +4,8 @@
 
 - `DM1 PC34 saved combat`: restore active monster ATTACK, APPROACH and FLEE
   behavior from the original group records when loading a save.
-- `Theron's Quest input`: keypad 1/3 turn when held with the Button II chord.
+- `Theron's Quest input`: add keypad 1/3 mappings for the Button II chord;
+  native runtime verification remains open.
 - `CSB Amiga startup`: use the selected authentic A31M disk for its SWSH
   intro, preventing a sibling edition in the data directory from suppressing
   the animation.

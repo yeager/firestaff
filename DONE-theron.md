@@ -11,10 +11,11 @@
 - Extended the existing authentic US SDL runtime route with right-mouse plus
   keypad 1/3 cases and source-backed expected poses. `bash -n` passes. A fresh
   TRV2 native build against hash-verified US Track 02 observed Button II plus
-  keypad 1 turn in place to `(1, 0, 3)`. The route first sends `key:down`, so
-  the old `(1, 1, 3)` assertion was incorrect. The expected pose is corrected
-  locally; rerun the full native route before closing the remaining keypad
-  verification item in [`TODO-theron.md`](TODO-theron.md).
+  keypad 1 turn to `(1, 0, 3)` before the `key:down` action crossed Theron's
+  200 ms input cadence. The test now waits 16 loop frames before turning and
+  retains the source-backed post-move expectation `(1, 1, 3)`. Rerun the full
+  native route before closing the keypad verification item in
+  [`TODO-theron.md`](TODO-theron.md).
 
 ## 2026-11-01 — enumerate authentic T900 ground-item index candidates
 

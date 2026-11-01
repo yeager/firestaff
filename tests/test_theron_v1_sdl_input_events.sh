@@ -92,9 +92,9 @@ run_event_route "$held_probe" "$held_output" \
 run_event_route "$released_probe" "$released_output" \
     'down,rightdown:40:40,rightup:40:40,key:right,wait:8'
 run_event_route "$keypad_left_probe" "$keypad_left_output" \
-    'key:down,rightdown:40:40,key:kp1,wait:8'
+    'key:down,wait:16,rightdown:40:40,key:kp1,wait:8'
 run_event_route "$keypad_right_probe" "$keypad_right_output" \
-    'key:down,rightdown:40:40,key:kp3,wait:8'
+    'key:down,wait:16,rightdown:40:40,key:kp3,wait:8'
 run_event_route "$panel_probe" "$panel_output" \
     'click:292:144,click:292:144,click:248:144,wait:8'
 # Walk to the authentic level-0 sandals, then use the visible mouse controls
@@ -193,9 +193,9 @@ for label, probe, expected_direction in (("keypad 1", keypad_left, 3),
                                          ("keypad 3", keypad_right, 1)):
     party = probe["party"]
     actual = (party["mapX"], party["mapY"], party["direction"])
-    # The preceding key:down route leaves the party at the source-backed
-    # (1, 0) tile. Button II plus keypad 1/3 must turn in place there.
-    expected = (1, 0, expected_direction)
+    # Wait 16 loop frames after key:down so Theron's 200 ms input cadence can
+    # apply the move before Button II plus keypad 1/3 turns in place.
+    expected = (1, 1, expected_direction)
     if actual != expected:
         raise SystemExit(f"FAIL: Button II + {label} pose {actual} != {expected}")
 if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 1, 2):
