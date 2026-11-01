@@ -387,9 +387,6 @@ int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
                                        int32_t include_bonus,
                                        const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
-int16_t dm2_v1_query_player_skill_lv(int16_t hero, int16_t skill, int32_t include_bonus,
-    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
-
 int32_t dm2_v1_query_player_load(int32_t player_idx,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
