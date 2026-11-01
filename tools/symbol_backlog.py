@@ -199,17 +199,24 @@ def skproject_backlog(
     items: list[dict[str, object]] = []
     for row in rows:
         source_variant = "source_tree" in row
-        review_key = (row.get("source_tree", ""), row.get("source_file", ""),
-                      row.get("line", ""), row.get("symbol", ""))
-        source_review = (active_reviews or {}).get(review_key, {}) if source_variant else {}
-        status = (source_review.get("review_status", row.get("review_status", "UNREVIEWED"))
-                  if source_variant else row.get("status", ""))
+        review_key = (row.get("source_tree", row.get("family", "")),
+                      row.get("source_file", ""), row.get("line", ""),
+                      row.get("symbol", ""))
+        source_review = (active_reviews or {}).get(review_key, {})
+        status = source_review.get(
+            "review_status",
+            row.get("review_status", "UNREVIEWED") if source_variant
+            else row.get("status", ""))
         if status not in SKPROJECT_OPEN:
             continue
         symbol = row.get("symbol", "")
         # A legacy disposition applies to its reviewed definition and callers.
         # Do not close a separately listed SPX/DOS definition by name alone.
-        disposition = {} if source_variant else disposition_for(dispositions, "skproject", symbol)
+        # A source review tied to this exact definition outranks an older
+        # name-only disposition; another variant with the same symbol stays
+        # governed by its own source row.
+        disposition = ({} if source_variant or source_review else
+                      disposition_for(dispositions, "skproject", symbol))
         disposition_name = disposition.get("disposition", "")
         if not include_disposed and not is_open_disposition(disposition_name):
             continue
@@ -331,11 +338,26 @@ def main() -> int:
         (row["source_tree"], row["source_file"], row["line"], row["symbol"])
         for row in skproject_source_rows
     }
-    stale_reviews = set(active_reviews) - active_source_keys
-    if stale_reviews:
+    # Some explicit SKULLWIN cross-variant rows are already present in the
+    # older named-symbol ledger, while the supplemental active inventory only
+    # includes two selected SKULLWIN definitions. Accept those exact source
+    # keys so their behavior reviews can override their named-ledger status.
+    named_source_keys = {
+        (row.get("family", ""), row.get("source_file", ""),
+         row.get("line", ""), row.get("symbol", ""))
+        for row in skproject_rows
+    }
+    stale_reviews = set(active_reviews) - active_source_keys - named_source_keys
+    key_audits_available = (
+        SKPROJECT_ACTIVE_SOURCE_INVENTORY.exists() and
+        SKPROJECT_ACTIVE_SOURCE_REVIEW.exists() and
+        SKPROJECT_AUDIT.exists()
+    )
+    if stale_reviews and (not args.allow_missing_audits or key_audits_available):
         raise SystemExit(f"SKPROJECT active-source review does not match inventory: {next(iter(stale_reviews))}")
     items = redmcsb_backlog(redmcsb_rows, dispositions, args.include_disposed)
-    items.extend(skproject_backlog(skproject_rows, dispositions, args.include_disposed))
+    items.extend(skproject_backlog(skproject_rows, dispositions,
+                                   args.include_disposed, active_reviews))
     items.extend(skproject_backlog(skproject_source_rows, dispositions,
                                    args.include_disposed, active_reviews))
     if args.game:
