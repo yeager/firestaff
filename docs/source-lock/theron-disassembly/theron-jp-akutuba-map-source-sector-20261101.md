@@ -60,4 +60,7 @@ python3 tools/plan_theron_jp_akutuba_map_trace.py \
 
 The tool checks the complete retail identity, parses dimensions from the
 source descriptor, derives raw-sector and disc-LBA ranges, and prints source
-tile values without modifying the media.
+tile values without modifying the media. Its optional `--dump-grids` mode
+prints every Akutuba map byte with rows indexed by `y` and columns by `x`, while
+reading the authentic column-major arrays. The bytes stay opaque: this dump
+does not select the runtime map, decode tile meaning, or authorize rendering.

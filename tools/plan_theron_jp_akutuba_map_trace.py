@@ -73,6 +73,11 @@ def main() -> int:
     parser.add_argument("track02", type=Path, help="authentic JP Rev. 1 TQJP02.bin")
     parser.add_argument("--x", type=int, default=2, help="tile column (default: 2)")
     parser.add_argument("--y", type=int, default=3, help="tile row (default: 3)")
+    parser.add_argument(
+        "--dump-grids",
+        action="store_true",
+        help="print each authenticated map's raw tile bytes by row (y) and column (x)",
+    )
     args = parser.parse_args()
 
     raw = args.track02.read_bytes()
@@ -132,6 +137,12 @@ def main() -> int:
             f"tile({args.x},{args.y})={tile} "
             f"tile_user_offset=0x{tile_user_offset:x}"
         )
+        if args.dump_grids:
+            grid_bytes = read_user_range(raw, tile_cursor, tile_count)
+            print(f"map[{map_index}].raw_tile_bytes rows=y columns=x:")
+            for y in range(height):
+                row = [grid_bytes[x * height + y] for x in range(width)]
+                print(f"  y={y:02d}: " + " ".join(f"{value:02x}" for value in row))
         describe_span(f"map[{map_index}]", tile_cursor, tile_count)
         if tile != "out-of-bounds":
             describe_span(f"map[{map_index}].tile({args.x},{args.y})",

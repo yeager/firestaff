@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — print authenticated JP Akutuba map grids for source analysis
+
+- Added an opt-in `--dump-grids` mode to the identity-gated JP Akutuba source
+  planner. It prints all four maps as raw tile bytes with `y` rows and `x`
+  columns, reading the authentic column-major arrays from the verified retail
+  BIN.
+- Ran the mode three times against the local hash-verified `TQJP02.bin`; all
+  output was byte-identical. Python compilation and `git diff --check` passed.
+- The dump assigns no tile meaning and does not identify the active runtime
+  map or authorize viewport rendering.
+
 ## 2026-11-01 — derive authenticated JP Akutuba map trace addresses
 
 - Added an identity-gated planner for the authentic JP Rev. 1 Track 02 BIN.

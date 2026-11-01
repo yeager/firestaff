@@ -69,6 +69,9 @@ establish that the original read or selected it. The repeatable source mapping
 is reported in the [JP Akutuba sector trace plan](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and can be recomputed with the
 [`identity-checked planner`](../../tools/plan_theron_jp_akutuba_map_trace.py).
+For a source-only view of all four map arrays, pass `--dump-grids`; it prints
+raw bytes in `y` rows and `x` columns without assigning tile semantics or
+choosing the runtime map.
 The next cold JP capture must preserve one shared event sequence from
 hash-verified Track 02 descriptor/map source reads, through System Card
 transfer and any `$23AD` decode, to the game-owned active selector and a tile
