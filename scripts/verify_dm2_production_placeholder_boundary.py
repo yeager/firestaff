@@ -248,8 +248,9 @@ def verify(repo: Path) -> list[str]:
         return errors
     runtime = runtime_path.read_text(encoding="utf-8")
     # The class-2 PITFALL path now has a bounded source-owned close handler.
-    # Opening still fails closed until ADVANCE_TILES_TIME has its live
-    # party/creature owner, so keep that limit explicit below.
+    # Opening is admitted only for cells where ADVANCE_TILES_TIME is proven
+    # to be a no-op; cells with party/creature movement or DB5+ tile items
+    # still fail closed until the complete source owner exists.
     for forbidden in (
             "dm2_runtime_process_3d_timer",
             "dm2_runtime_invoke_message",
@@ -275,8 +276,9 @@ def verify(repo: Path) -> list[str]:
             "((unsigned int)raw >> 5) != 2u",
             "if (action == 2)",
             "action = (raw & 0x08) != 0 ? 1 : 0;",
-            "if (action == 0)",
+            "if (action == 0 && !dm2_runtime_advance_tiles_time_is_noop(",
             "dm2_runtime_actuate_floor_mecha_timer(",
+            "dm2_runtime_advance_tiles_time_is_noop(",
             "dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y, raw)",
         )
         for guard in required_pitfall_guards:

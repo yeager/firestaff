@@ -10074,7 +10074,7 @@ static int dm2_runtime_advance_tiles_time_is_noop(
 
 /* The source PITFALL owner calls ADVANCE_TILES_TIME before FLOOR_MECHA on
  * open. Admit that only when the source advance is proven to be a no-op. */
-static int dm2_runtime_pitfall_tile_timer_owner(
+static int dm2_runtime_actuate_pitfall_timer(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
 {
@@ -12930,7 +12930,7 @@ void dm2_v1_runtime_tick(void) {
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
         dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
-        dispatcher.actuator_tile[2] = dm2_runtime_pitfall_tile_timer_owner;
+        dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;
         dispatcher.actuator_tile[4] = dm2_runtime_actuate_door_mecha_timer;
         dispatcher.actuator_tile[5] = dm2_runtime_teleporter_tile_timer_owner;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
