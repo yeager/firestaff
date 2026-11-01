@@ -536,7 +536,8 @@ int dm2_v1_add_item_to_player(
     const DM2_V1_AddItemCallbacks *cb, void *ctx)
 {
     (void)item_db_type;
-    if (!cb || !hero_items || !groups)
+    if (!cb || !cb->is_item_fit || !cb->equip_item ||
+        !hero_items || !groups || item_count <= 0 || group_count <= 0)
         return 0;
     for (int g = 0; g < group_count; g++) {
         for (uint16_t s = groups[g].slot_start; s <= groups[g].slot_end && s < (uint16_t)item_count; s++) {
