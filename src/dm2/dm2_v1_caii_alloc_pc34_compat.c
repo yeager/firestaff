@@ -1479,6 +1479,9 @@ int dm2_v1_caii_ccm_end_requeue(
 
   /* c_ai.cpp:5612-5613: s350.v1e0570 suppresses the whole requeue. */
   if (suppress_requeue != 0) {
+    /* c_ai.cpp:5609-5613 sets v1e0562's type before the v1e0570 early
+     * return. Preserve that source mutation even though no timer is queued. */
+    timer->type = (uint8_t)receipt->timer_type;
     receipt->suppressed = 1;
     return 0;
   }

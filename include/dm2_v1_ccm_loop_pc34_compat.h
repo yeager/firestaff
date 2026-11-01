@@ -80,8 +80,9 @@
  * `timer` is v1e0562 (in/out — payload adddata(4) and the 0x32..0x34
  * setmticks mutate it), `adj` the v1e055e pair (in/out), `anim_row_io`
  * v1e055a (in/out), `v1e0584_io` s350.v1e0584 (in/out, -1 unset),
- * `mticks_map` v1e0571, `suppress_requeue` v1e0570 (CCM-handler owned,
- * normally 0), `savegame_b03` ddat.savegames1.b_03, `map_current`
+ * `mticks_map` v1e0571, `suppress_requeue` v1e0570 (normally 0; a bound
+ * proceed callback can set it with the internal sentinel), `savegame_b03`
+ * ddat.savegames1.b_03, `map_current`
  * ddat.v1d3248, `map_home` ddat.v1e08d6, `v1e0238` the ddat global, and
  * `game_tick` timdat.gametick.  The CAII slot resolves through record
  * byte@5 exactly like the source's s350.creatures.
@@ -136,6 +137,7 @@ typedef struct {
   int ccm_handler_unbound;   /* fail-closed: PROCEED_CCM body host-owned */
   int ccm_handler_dispatched;/* callback dispatched the handler */
   int ccm_handler_result;    /* callback return value (RG3L) */
+  int ccm_handler_requeue_suppressed; /* source v1e0570 set by bound handler */
   int walk_50cb_calls;       /* bound DM2_50CB invocations */
   int walk_50cb_last;        /* last 50CB return (-1 when never called) */
   int loop_result;           /* RG4W at m_15785 */
@@ -167,12 +169,19 @@ typedef int (*DM2_V1_CcmSevenCallback)(
 /* Callback for DM2_PROCEED_CCM dispatch.  Called with the command byte
  * (slot[0x1a]), creature_type (GDAT word@1 & 0x1f), and the CAII slot
  * pointer.  Returns the RG3L handler result: 0 = no effect (command
- * unhandled or void handler), non-zero = the handler's return value.
+ * unhandled or void handler), non-zero = the handler's return value. The
+ * internal suppress-requeue sentinel maps a handler-owned v1e0570 action
+ * flag to the loop end-tail; its source-visible result is normalized to 0.
  * When NULL, the loop fails closed at the handler boundary. */
 typedef int32_t (*DM2_V1_CcmProceedCallback)(
     void *ctx, uint8_t command, uint16_t creature_type,
     uint8_t *slot, uint16_t adj0, uint16_t adj1,
     unsigned long game_tick);
+
+/* Internal callback result used only to carry s350.v1e0570 through the
+ * bounded CCM loop. The loop normalizes it to the source handler's zero
+ * result before updating slot byte@0x21, then suppresses the end requeue. */
+#define DM2_V1_CCM_PROCEED_SUPPRESS_REQUEUE INT32_MIN
 
 int dm2_v1_ccm_message_loop(
     DM2_V1_RecordPoolSet *pool_set,

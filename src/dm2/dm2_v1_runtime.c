@@ -75,6 +75,7 @@
 #include "dm2_v1_creature_ai_prepare_pc34_compat.h"
 #include "dm2_v1_combat_damage_pc34_compat.h"
 #include "dm2_v1_ccm_loop_pc34_compat.h"
+#include "dm2_v1_ccm_advanced_pc34_compat.h"
 #include "dm2_v1_creature_ai_loop_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include <limits.h>
@@ -6869,6 +6870,7 @@ static void dm2_runtime_populate_creature_possession_items(
  */
 typedef struct {
     DM2_V1_RuntimeState *runtime;
+    DM2_V1_SourceTimer *timer;
     int16_t record_handle;
     int map;
     int x;
@@ -7396,6 +7398,67 @@ static int32_t dm2_runtime_ccm_proceed_walking(
         slot[0x1f] = (uint8_t)(phase + 1u);
         return result;
     }
+    if (command == 0x05u) {
+        uint8_t phase;
+        if (!slot) return 0;
+        phase = slot[0x1f];
+        if (phase == 0u) {
+            uint16_t pos;
+            uint8_t facing = (uint8_t)(slot[0x1b] & 3u);
+            int32_t result;
+            slot[0x1f] = 1u;
+            /* SKULLWIN/c_creature.cpp:1644-1660: WALK_NOW runs before
+             * the packed 5-bit sub-tile x/y are rotated by facing. */
+            result = dm2_runtime_ccm_proceed_walking(
+                goal, 0x01u, creature_type, slot, 0u, 0u, game_tick);
+            pos = (uint16_t)(slot[0x18] |
+                             ((uint16_t)slot[0x19] << 8));
+            pos = (uint16_t)((pos & 0xfc00u) |
+                ((((pos >> 5) & 0x1fu) +
+                   dm2_v1_ccm_dir_dy[facing]) & 0x1fu) << 5 |
+                (((pos & 0x1fu) +
+                   dm2_v1_ccm_dir_dx[facing]) & 0x1fu));
+            slot[0x18] = (uint8_t)(pos & 0xffu);
+            slot[0x19] = (uint8_t)(pos >> 8);
+            return result;
+        }
+        if (phase == 1u) {
+            int32_t result = dm2_runtime_ccm_proceed_walking(
+                goal, 0x01u, creature_type, slot, 0u, 0u, game_tick);
+            slot[0x1f] = result != 0 ? 2u : 3u;
+            return result;
+        }
+        if (phase == 2u) {
+            DM2_V1_MoveRecordToReceipt move;
+            memset(&move, 0, sizeof(move));
+            slot[0x1f] = 3u;
+            dungeon = rt->boot
+                ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
+            if (!dungeon || !rt->record_pools_valid ||
+                dm2_v1_record_handle_pool(goal->record_handle) != 4 ||
+                !dm2_v1_move_record_to(
+                    &rt->record_pools, dungeon, &rt->timer_queue,
+                    goal->record_handle, (int16_t)goal->x,
+                    (int16_t)goal->y, (int16_t)goal->x,
+                    (int16_t)goal->y, 0, goal->map,
+                    (uint32_t)game_tick, &move) || !move.valid ||
+                move.fail_closed)
+                return 0;
+            /* The source call is on the current creature tile/map. Its
+             * 1c9a_0648 poke is consequently the same-map early return;
+             * publish the source's action flag as loop control. */
+            if (goal->timer) {
+                goal->timer->value_a = (uint16_t)(
+                    ((uint16_t)goal->y & 0xffu) << 8 |
+                    ((uint16_t)goal->x & 0xffu));
+                goal->timer->ticks_and_map =
+                    (goal->timer->ticks_and_map & 0x00ffffffu) |
+                    (((uint32_t)goal->map & 0xffu) << 24);
+            }
+            return DM2_V1_CCM_PROCEED_SUPPRESS_REQUEUE;
+        }
+        return 0;
+    }
     if (command != 0x01u && command != 0x02u && command != 0x09u)
         return 0;
     dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
@@ -7662,6 +7725,7 @@ static int dm2_runtime_think_body(
             (int)rec[5] < rt->caii.capacity) {
             memset(&goal_context, 0, sizeof(goal_context));
             goal_context.runtime = rt;
+            goal_context.timer = &timer_copy;
             goal_context.record_handle = creature_record;
             goal_context.map = map;
             goal_context.x = x;
