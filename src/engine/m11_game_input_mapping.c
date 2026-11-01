@@ -2,6 +2,58 @@
 
 #include <string.h>
 
+enum { M11_THERON_START_HOLD_MIN_MS = 3000 };
+
+void M11_TheronStartHoldReset(M11_TheronStartHoldState* state)
+{
+    if (state) {
+        memset(state, 0, sizeof(*state));
+    }
+}
+
+void M11_TheronStartHoldBegin(M11_TheronStartHoldState* state,
+                              M11_TheronStartHoldSource source,
+                              uint32_t device_id,
+                              int code,
+                              M12_MenuInput input,
+                              uint32_t now_ms,
+                              int pointer_x,
+                              int pointer_y)
+{
+    if (!state ||
+        (input != M12_MENU_INPUT_ACCEPT &&
+         input != M12_MENU_INPUT_ACTION)) {
+        return;
+    }
+    state->started_ms = now_ms;
+    state->device_id = device_id;
+    state->source = source;
+    state->code = code;
+    state->pointer_x = pointer_x;
+    state->pointer_y = pointer_y;
+    state->input = input;
+}
+
+M12_MenuInput M11_TheronStartHoldEnd(M11_TheronStartHoldState* state,
+                                     M11_TheronStartHoldSource source,
+                                     uint32_t device_id,
+                                     int code,
+                                     uint32_t now_ms)
+{
+    M12_MenuInput input;
+    uint32_t elapsed_ms;
+
+    if (!state || state->source != source ||
+        state->device_id != device_id || state->code != code) {
+        return M12_MENU_INPUT_NONE;
+    }
+    elapsed_ms = now_ms - state->started_ms;
+    input = elapsed_ms >= M11_THERON_START_HOLD_MIN_MS
+        ? state->input : M12_MENU_INPUT_NONE;
+    M11_TheronStartHoldReset(state);
+    return input;
+}
+
 enum {
     M11_SOURCE_FB_WIDTH = 320,
     M11_SOURCE_FB_HEIGHT = 200
