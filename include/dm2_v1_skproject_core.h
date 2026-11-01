@@ -3728,6 +3728,8 @@ uint16_t dm2_v1_skproject_alloc_temp_cache_index(
 #if defined(FIRESTAFF_DM2_SKPROJECT_CORE_TESTING)
 int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len);
 #endif
+/* SPX v4 skmemcch.cpp:298 AJ32 debug-only 32-bit mement size adjustment. */
+int dm2_v1_skproject_aj32(int size_val);
 int dm2_v1_skproject_recycle_mementi(
     DM2_V1_SkprojectCacheState *state,
     uint16_t mementi,

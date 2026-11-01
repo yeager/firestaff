@@ -6527,6 +6527,17 @@ int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len)
 }
 #endif
 
+/* SPX v4 skmemcch.cpp:298 AJ32. This adjusts only the diagnostic value
+ * printed while comparing 32-bit and 64-bit MEMENT buffers. */
+int dm2_v1_skproject_aj32(int size_val)
+{
+#ifdef __LINUX__
+    return size_val - 8;
+#else
+    return size_val;
+#endif
+}
+
 int dm2_v1_skproject_recycle_mementi(
     DM2_V1_SkprojectCacheState *state,
     uint16_t mementi,
