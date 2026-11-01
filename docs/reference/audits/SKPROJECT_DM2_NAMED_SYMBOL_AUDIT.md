@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, and the legacy DOS files at
 the top level of `SKWINDOS/` in the locked checkout: 3,929 definition rows,
 3,629 distinct names, and 300 repeated-name definitions. The active review
-ledger currently maps 3,831 as `UNREVIEWED`, 93 as `PARTIAL`, and 5 as
+ledger currently maps 3,828 as `UNREVIEWED`, 96 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -37,7 +37,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,831 `UNREVIEWED`; 93 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,828 `UNREVIEWED`; 96 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 ## Dispositions
 
@@ -153,9 +153,11 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,957 open rows: 3,831 unreviewed active-source
-definitions, 124 partial source or older-ledger rows, and 2 partial source-owner
-rows. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
+At this revision it reports 3,962 open rows: 3,827 unreviewed active-source
+definitions, 133 partial source or older-ledger rows, and 2 partial source-owner
+rows. `ACTIVATE_ACTION_HAND` is source-compared for DOS, SPX v4, and SPX v5; each
+variant remains partial because the Firestaff bridge does not map the legacy
+pending-position and transient UI state owners. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
 rows because their add non-currency return behavior differs; take-wallet
 variants also map to Firestaff's shared helper. Runtime platform selection
 remains open. The active inventory

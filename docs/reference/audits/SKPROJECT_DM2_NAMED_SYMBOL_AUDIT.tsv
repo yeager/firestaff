@@ -330,7 +330,7 @@ DM2_FIND_SPELL_BY_RUNES	SKULLWIN	SKULLWIN/c_events.cpp	2211	dm2_v1_spell_cast_pl
 DM2_CAST_SPELL_PLAYER	SKULLWIN	SKULLWIN/c_events.cpp	2268	dm2_v1_spell_cast_player.c:250	IMPLEMENTED_PARITY	-
 DM2_PROCEED_SPELL_FAILURE	SKULLWIN	SKULLWIN/c_events.cpp	2687	dm2_v1_spell_cast_player.c:454	IMPLEMENTED_PARITY	-
 DM2_TRY_CAST_SPELL	SKULLWIN	SKULLWIN/c_events.cpp	2738	dm2_v1_spell_cast_player.c:454	IMPLEMENTED_PARITY	-
-DM2_ACTIVATE_ACTION_HAND	SKULLWIN	SKULLWIN/c_events.cpp	2784		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_ACTIVATE_ACTION_HAND	SKULLWIN	SKULLWIN/c_events.cpp	2784	src/dm2/dm2_v1_runtime.c:dm2_v1_runtime_activate_action_hand; src/engine/m11_game_view.c:DM2 input events 116-123	PARTIAL	The hand-action predicate is source-mapped and Firestaff publishes the selected champion/hand to live party state after an accepted click. M11 returns a full redraw. Remaining: source pending-position recompute, distinct panel/map transient flags and exact per-platform stat/right-panel behavior are not mapped; see the SKWINSPX v4/v5 and SKWINDOS inventory rows.
 DM2_PROCEED_COMMAND_SLOT	SKULLWIN	SKULLWIN/c_events.cpp	2818		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_events_30DEA	SKULLWIN	SKULLWIN/c_events.cpp	2903		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_events_3C1E5	SKULLWIN	SKULLWIN/c_events.cpp	2949		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
