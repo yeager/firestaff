@@ -44,13 +44,13 @@ compiler/linker BSS initialization rather than a callable symbol.
 
 | Status | Count |
 |---|---:|
-| `MISSING` | 775 |
-| `UNCERTAIN_NUMBERED_EVIDENCE` | 507 |
+| `MISSING` | 773 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 505 |
 | `IMPLEMENTED_NARROW` | 538 |
 | `VERIFIED_SOURCE_MAPPING` | 95 |
 | `SOURCE_NONAPPLICABLE` | 70 |
 | `PC34_SOURCE_IMPLEMENTED` | 5 |
-| `PARTIAL` | 143 |
+| `PARTIAL` | 147 |
 | **Total** | **2,133** |
 
 The open rows include platform service routines, ABI aliases, unreferenced
