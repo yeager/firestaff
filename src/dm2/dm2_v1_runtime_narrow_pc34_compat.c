@@ -757,7 +757,10 @@ void dm2_v1_change_player_pos(
     target_slot = packed_pos & 0x7fff;
     if ((packed_pos & (int16_t)0x8000) != 0)
         target_slot &= 3;
-    if (target_slot < 0 || target_slot > 3)
+    /* Source UI events 125..129 encode slots 0..4. Slot 4 wraps to
+     * formation position 0 for lookup but remains distinct in the pending
+     * slot comparison performed by CHANGE_PLAYER_POS. */
+    if (target_slot < 0 || target_slot > 4)
         return;
 
     target_position = (target_slot + facing) & 3;
@@ -772,7 +775,7 @@ void dm2_v1_change_player_pos(
     }
 
     source_slot = state->drag_source_position;
-    if (source_slot < 0 || source_slot > 3)
+    if (source_slot < 0 || source_slot > 4)
         return;
     if (!cb->clear_drag || !cb->set_position ||
         (((packed_pos & (int16_t)0x8000) == 0) && !cb->set_direction))

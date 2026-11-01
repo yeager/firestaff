@@ -19,6 +19,7 @@
  */
 
 #include <stdint.h>
+#include "dm2_v1_change_player_pos_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -419,31 +420,6 @@ typedef struct {
 int dm2_v1_player_consume_object(
     int hero_idx, uint16_t item,
     const DM2_V1_PlayerConsumeObjectCallbacks *cb, void *ctx);
-
-/* ---- DM2_CHANGE_PLAYER_POS (c_hero.cpp:4037) ----
- * Reorder party formation: the low byte packs a source slot, the high
- * bit suppresses the dragged hero's absdir update. With no drag pending,
- * the source starts an icon drag and records the source slot; it does not
- * change formation. With a drag pending, the next slot click commits the
- * position exchange (or moves into an empty slot) and clears the pending
- * drag. Cursor animation remains a caller-owned UI effect. */
-typedef struct {
-    int drag_in_progress;      /* ddat.v1e00b8 != 0 */
-    int drag_source_position;  /* ddat.v1e00b8 - 1, before rotation */
-} DM2_V1_ChangePlayerPosState;
-
-typedef struct {
-    int (*get_player_at_position)(void *ctx, int position);
-    void (*begin_drag)(void *ctx, int source_position);
-    void (*clear_drag)(void *ctx);
-    void (*set_position)(void *ctx, int hero_idx, int8_t position);
-    void (*set_direction)(void *ctx, int hero_idx, int8_t direction);
-    int8_t (*get_party_facing)(void *ctx);
-} DM2_V1_ChangePlayerPosCallbacks;
-
-void dm2_v1_change_player_pos(
-    int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
-    const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx);
 
 /* ---- DM2_hero_2c1d_1de2 (SKULLWIN/c_hero.cpp:3903;
  * SPX v5/skhero.cpp:3905; SPX v4/skchamp.cpp:1234;

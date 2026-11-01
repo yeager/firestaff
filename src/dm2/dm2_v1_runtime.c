@@ -29,6 +29,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_change_player_pos_pc34_compat.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
@@ -174,6 +175,8 @@ struct DM2_V1_RuntimeState {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
+    int source_drag_in_progress;
+    int16_t source_drag_position;
     int16_t source_event_hero_index;
     /* c_move globals restored by GAME_LOAD.  Their delayed-pose consumers
      * are not all bound yet, but a resume must retain the source values
@@ -3773,6 +3776,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_drag_in_progress = 0;
+    g_dm2_runtime.source_drag_position = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
@@ -5037,6 +5042,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->session_snapshot.original_champion_records_valid = 1u;
     rt->source_curacthero = candidate->party.curacthero;
     rt->source_curactmode = candidate->party.curactmode;
+    rt->source_drag_in_progress = 0;
+    rt->source_drag_position = 0;
     rt->source_event_hero_index = candidate->source_event_hero_index;
     rt->source_movement = candidate->movement;
     rt->source_movement_valid = candidate->movement.valid;
@@ -20453,6 +20460,104 @@ static int16_t dm2_runtime_hand_skill_level(void *context,
         &skills, skill, 1, query->rt->source_sleeping != 0);
 }
 
+static int dm2_runtime_formation_get_player_at_position(
+    void *context, int position)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || position < 0 || position > 3 ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return -1;
+    for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+        if (rt->source_party.hero[i].partypos == position) return i;
+    }
+    return -1;
+}
+
+static void dm2_runtime_formation_begin_drag(void *context, int source_slot)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || source_slot < 0 || source_slot > 4) return;
+    rt->source_drag_position = (int16_t)source_slot;
+    rt->source_drag_in_progress = 1;
+}
+
+static void dm2_runtime_formation_clear_drag(void *context)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt) return;
+    rt->source_drag_position = 0;
+    rt->source_drag_in_progress = 0;
+}
+
+static void dm2_runtime_formation_set_position(
+    void *context, int hero_index, int8_t position)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || position < 0 || position > 3)
+        return;
+    rt->source_party.hero[hero_index].partypos = position;
+    if (rt->session_snapshot_valid)
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index,
+            &rt->source_party.hero[hero_index]);
+}
+
+static void dm2_runtime_formation_set_direction(
+    void *context, int hero_index, int8_t direction)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || direction < 0 || direction > 3)
+        return;
+    rt->source_party.hero[hero_index].absdir = direction;
+    if (rt->session_snapshot_valid)
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index,
+            &rt->source_party.hero[hero_index]);
+}
+
+static int8_t dm2_runtime_formation_get_facing(void *context)
+{
+    const DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || rt->source_party.absdir < 0 ||
+        rt->source_party.absdir > 3) return -1;
+    return (int8_t)rt->source_party.absdir;
+}
+
+static void dm2_runtime_apply_change_player_pos(
+    DM2_V1_RuntimeState *rt, int16_t packed_pos)
+{
+    DM2_V1_ChangePlayerPosState state;
+    DM2_V1_ChangePlayerPosCallbacks callbacks;
+    if (!rt || !rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return;
+    memset(&state, 0, sizeof(state));
+    memset(&callbacks, 0, sizeof(callbacks));
+    state.drag_in_progress = rt->source_drag_in_progress;
+    state.drag_source_position = rt->source_drag_position;
+    callbacks.get_player_at_position =
+        dm2_runtime_formation_get_player_at_position;
+    callbacks.begin_drag = dm2_runtime_formation_begin_drag;
+    callbacks.clear_drag = dm2_runtime_formation_clear_drag;
+    callbacks.set_position = dm2_runtime_formation_set_position;
+    callbacks.set_direction = dm2_runtime_formation_set_direction;
+    callbacks.get_party_facing = dm2_runtime_formation_get_facing;
+    dm2_v1_change_player_pos(packed_pos, &state, &callbacks, rt);
+}
+
+int dm2_v1_runtime_change_player_pos(int slot)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (slot < 0 || slot > 4 || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid) return 0;
+    dm2_runtime_apply_change_player_pos(rt, (int16_t)slot);
+    return 1;
+}
+
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
@@ -20499,6 +20604,13 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     rt->source_curactmode = (int16_t)hand;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
+    /* ACTIVATE_ACTION_HAND calls CHAMPION_SQUAD_RECOMPUTE_POSITION after
+     * publishing its selection. That source helper feeds the pending slot
+     * back through CHANGE_PLAYER_POS with the direction-update bit clear. */
+    if (rt->source_drag_in_progress) {
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    }
     return 1;
 }
 

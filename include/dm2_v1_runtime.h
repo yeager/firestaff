@@ -1657,6 +1657,9 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Source UI event 125..129 changes party formation or starts/commits a drag.
+ * Returns nonzero when the authenticated runtime accepted the event. */
+int dm2_v1_runtime_change_player_pos(int slot);
 /* Select the living DM2 champion that owns an M11 rune-cast request without
  * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
 int dm2_v1_runtime_select_spell_champion(int hero_index);

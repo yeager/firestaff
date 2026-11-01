@@ -2167,18 +2167,18 @@ destination transforms before drawing.
 
 2026-10-31 skproject class-4 light roots: Rechecked `c_gui_vp.cpp:2672-2707`, `c_querydb.cpp:3296-3700`, and `c_light.cpp:231-435`. The side-mismatch route invokes `query_0cee_1a46`, whose side-decoration writes do not change the three summary fields consumed by the light calculation. Firestaff now admits class-0..3 adjacent roots only after a complete bounded record-list walk validates every record and end marker; higher classes preserve the query's source early return. The focused `dm2_v1_light_ops` test passes for a valid DB3 root and rejects an unresolved root. This closes the class-0..3 light-input admission gap only; full side-decoration query behavior, actuator animation, and platform/runtime coverage remain open.
 
-2026-10-31 skproject `ACTIVATE_ACTION_HAND`: the live DM2 click bridge routes
-source events 116-123 and calls `dm2_v1_IS_ITEM_HAND_ACTIVABLE` against the
-selected champion's source hand record, source-endian DB9/DB14 chains, boot
-GDAT loader, and mounted CMDSTR entries. Its minion-map filter uses the
-existing `dm2_v1_skproject_2759_01fe_command_valid` source model. Accepted
-selection publishes curacthero/curactmode and redraws the M11 hand HUD. M11
-does not route source formation events 125-129 into the existing narrow
-`dm2_v1_change_player_pos` helper or own its pending-drag state, so the source
-conditional `CHAMPION_SQUAD_RECOMPUTE_POSITION` effect is still missing.
-Source transient panel/map globals and full edition/platform behavior also
-remain open. Rune-cast selection has a separate champion-only bridge. Keep
-`ACTIVATE_ACTION_HAND` partial.
+2026-10-31/2026-11-01 skproject `ACTIVATE_ACTION_HAND` and
+`CHANGE_PLAYER_POS`: the live DM2 click bridge routes source hand events
+116-123 and calls `dm2_v1_IS_ITEM_HAND_ACTIVABLE` against the selected
+champion's source hand record, source-endian DB9/DB14 chains, boot GDAT loader,
+and mounted CMDSTR entries. M11 now also routes formation events 125-129 to
+the runtime-owned two-stage formation model. It retains source pending slots
+0..4, performs rotated occupied-slot swaps or empty-slot moves, preserves the
+high-bit direction rule, and synchronizes party/snapshot state. Successful
+hand activation invokes the source conditional high-bit recompute path. The
+original platform cursor-icon painting/feedback, transient UI consumers, and
+non-M11 platform/edition routes remain open, so both function families stay
+partial. Rune-cast selection has a separate champion-only bridge.
 
 2026-11-01 skproject `SET_SPELLING_CHAMPION` variants: DOS and SPX v4/v5 all
 select a live champion, enter source spell mode, clear the magical-map flags,
