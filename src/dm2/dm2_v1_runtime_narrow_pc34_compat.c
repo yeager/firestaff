@@ -1357,7 +1357,9 @@ void dm2_v1_shoot_item(
     int8_t damage, int8_t speed, int8_t power,
     const DM2_V1_ShootItemCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    /* An absent spawn owner is a failed compatibility binding.  Do not
+     * dereference it or manufacture a projectile without its runtime owner. */
+    if (!cb || !cb->spawn_missile)
         return;
     cb->spawn_missile(ctx, item, x, y, direction, damage, speed, power);
 }
