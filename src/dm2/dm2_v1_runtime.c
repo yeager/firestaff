@@ -20709,7 +20709,8 @@ static int dm2_runtime_formation_get_player_at_position(
         rt->source_party.heros_in_party < 0 ||
         rt->source_party.heros_in_party > DM2_MAX_HEROES) return -1;
     for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
-        if (rt->source_party.hero[i].partypos == position) return i;
+        const DM2_V1_Hero *hero = &rt->source_party.hero[i];
+        if (hero->partypos == position && hero->curHP != 0) return i;
     }
     return -1;
 }
