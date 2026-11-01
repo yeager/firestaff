@@ -27,11 +27,11 @@ definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
 repeated-name definitions. With active-source review overrides applied, the
-inventory currently maps 3,808 as `UNREVIEWED`, 119 as `PARTIAL`, and 5 as
+inventory currently maps 3,805 as `UNREVIEWED`, 122 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`. The source-specific rows split into 1,116 SPX v4
-definitions (1,080 unreviewed, 31 partial, 5 implemented), 1,347 SPX v5
-definitions (1,302 unreviewed, 45 partial), 262 shared SKWINSPX definitions
-(all unreviewed), 832 legacy DOS definitions (807 unreviewed, 25 partial),
+definitions (1,079 unreviewed, 32 partial, 5 implemented), 1,347 SPX v5
+definitions (1,301 unreviewed, 46 partial), 262 shared SKWINSPX definitions
+(all unreviewed), 832 legacy DOS definitions (805 unreviewed, 27 partial),
 373 SKWINDOS/src definitions (358 unreviewed, 15 partial), and 2 SKULLWIN
 cross-variant definitions (both partial). Exact name overlap with the older
 ledger is only a search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
@@ -43,7 +43,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,757 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,808 `UNREVIEWED`; 119 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,805 `UNREVIEWED`; 122 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -55,11 +55,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,083 |
+| `IMPLEMENTED_PARITY` | 1,082 |
 | `NOT_APPLICABLE_ARCH` | 559 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 40 |
+| `PARTIAL` | 41 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -71,7 +71,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-The active-source inventory currently has 3,808 `UNREVIEWED`, 119 `PARTIAL`, and 5 `IMPLEMENTED_PARITY` definitions; it is not yet a feature-by-platform audit. The per-variant counts above show that SPX v4, SPX v5 and DOS still have large independently open definition sets. Reviewed actuator/projectile paths still have their specific gaps in the supplemental review. The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are recorded as partial; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is source-compared to the callback helper. SPX v4 and v5 door-query variants are now separately reviewed. DOS/v5 strength reads field 0x11 with the field-0x10 fallback; SPX v4 reads field 0x0f directly. SPX v4 resistance reads field 0x0e and gets graphics from map-header flags/door types, while DOS/v5 use GDAT fields 0x0f/0x0d. Firestaff's map-door metadata path already selects parsed door sets behind header enable flags and door-record type; exact 0xff no-door consumer behavior and complete caller coverage remain open. Four Firestaff query receipts were corrected to match the locked skproject field indices; per-platform asset and runtime verification remain open. DOS/SPX v5 door attacks share a narrow Firestaff gate receipt that has no live caller; SPX v4 additionally supports weak-door override and compares damage against map-selected door resistance, which Firestaff does not yet model in an integrated owner.
+The active-source inventory currently has 3,805 `UNREVIEWED`, 122 `PARTIAL`, and 5 `IMPLEMENTED_PARITY` definitions; it is not yet a feature-by-platform audit. The per-variant counts above show that SPX v4, SPX v5 and DOS still have large independently open definition sets. Reviewed actuator/projectile paths still have their specific gaps in the supplemental review. The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are recorded as partial; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is source-compared to the callback helper. SPX v4 and v5 door-query variants are now separately reviewed. DOS/v5 strength reads field 0x11 with the field-0x10 fallback; SPX v4 reads field 0x0f directly. SPX v4 resistance reads field 0x0e and gets graphics from map-header flags/door types, while DOS/v5 use GDAT fields 0x0f/0x0d. Firestaff's map-door metadata path already selects parsed door sets behind header enable flags and door-record type; exact 0xff no-door consumer behavior and complete caller coverage remain open. Four Firestaff query receipts were corrected to match the locked skproject field indices; per-platform asset and runtime verification remain open. DOS/SPX v5 door attacks share a narrow Firestaff gate receipt that has no live caller; SPX v4 additionally supports weak-door override and compares damage against map-selected door resistance, which Firestaff does not yet model in an integrated owner.
 
 The SKULLWIN, SPX v4 and SPX v5 general `FIND_WALK_PATH` implementations remain
 partial. Firestaff's receipt initializer is empty, its live callback owner uses
@@ -146,7 +146,7 @@ before treating a mapping as a parity result.
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The 1,757 disposition
 rows cover the older `SKWIN`/`SKULLWIN` source sets; the expanded supplemental
-inventory contains 3,929 `SKWINSPX`/`SKWINDOS` definitions, with 3,870 still
+inventory contains 3,931 `SKWINSPX`/`SKWINDOS` definitions, with 3,803 still
 unreviewed and individual partial or parity dispositions recorded separately. Per-function comparison and runtime evidence remain required for
 DOS, Amiga, FM Towns, and Macintosh.
 
@@ -171,12 +171,12 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,968 open rows: 3,808 unreviewed active-source
-definitions, 158 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,969 open rows: 3,805 unreviewed active-source
+definitions, 162 partial source or older-ledger rows, and 2 partial source-owner
 rows. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live
-AI mask/record owner and possession/projectile lifecycle are not integrated. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
+AI mask/record owner and possession/projectile lifecycle are not integrated. DOS, SPX v4, and SPX v5 stamina-adjustment definitions also remain partial: Firestaff matches the helper arithmetic, but has no live production caller and movement only stages its costs. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
 DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy
 pending-position and transient UI state owners. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
