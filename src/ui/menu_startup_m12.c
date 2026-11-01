@@ -8192,11 +8192,9 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                             launchGate.autoSelectedVersionIndex;
                         m12_save_config(state);
                     }
-                    /* Launch row. GetLaunchGate is authoritative for V2.2:
-                     * unsupported game profiles or missing required modern
-                     * assets are reported before creating a launch intent.
-                     * Runtime presentation fallback applies only after a mode
-                     * has passed this launcher gate. */
+                    /* Launch row. GetLaunchGate resolves unavailable V2.2
+                     * requests to the supported V2.1 renderer so optional
+                     * modern artwork cannot block otherwise valid game data. */
                     /* Missing source data is the first-order failure. Report
                      * the actionable Nexus ISO/BIN/CUE recovery path before
                      * renderer or Saturn-capture readiness; otherwise a
@@ -10899,13 +10897,16 @@ int M12_StartupMenu_GetLaunchGate(
         state->settings.rendererBackendIndex);
     pmode = m12_clamp_index(state->gameOptions[gameIndex].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
+    gate.requestedPresentationMode = pmode;
+    gate.resolvedPresentationMode = pmode;
     gate.presentationReady = 1;
     if (pmode == M12_PRESENTATION_V22_MODERN) {
+        int modernArtAdmitted = 0;
         if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
             const char* runtime_data_dir = M12_AssetStatus_GetRuntimeDataDir(
                 &state->assetStatus, "dm1");
             DM1_V22_RealArtRuntimeGate_PC34 real_art_gate;
-            gate.presentationReady = runtime_data_dir &&
+            modernArtAdmitted = runtime_data_dir &&
                 dm1_v22_real_art_runtime_gate_refresh_pc34(
                     runtime_data_dir, &real_art_gate);
         } else if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
@@ -10913,14 +10914,21 @@ int M12_StartupMenu_GetLaunchGate(
                 &state->assetStatus, "csb");
             csb_v22_set_manifest_path(runtime_data_dir);
             csb_v22_famg_set_manifest_path(runtime_data_dir);
-            gate.presentationReady = csb_v22_modern_assets_available() &&
+            modernArtAdmitted = csb_v22_modern_assets_available() &&
                 csb_v22_famg_is_finished_real();
         } else {
             /* DM2, Nexus and Theron's current V2.2 paths have no admitted
-             * game-owned finished-real art pack. Keep their menu launch gate
-             * consistent with the runtime's V2.2 -> V2.1 fallback. */
-            gate.presentationReady = 0;
+             * game-owned finished-real art pack. */
+            modernArtAdmitted = 0;
         }
+        if (!modernArtAdmitted) {
+            /* V2.2 is a presentation preference, not a reason to block an
+             * otherwise valid game start. Match the direct CLI and runtime
+             * fallback chain until this game's reviewed art pack is admitted. */
+            gate.resolvedPresentationMode = M12_PRESENTATION_V21_UPSCALED;
+            gate.presentationFallback = 1;
+        }
+        gate.presentationReady = modernArtAdmitted || gate.presentationFallback;
     }
     gate.dataReady = gate.boot.dataReady;
     if ((state->deferredScanPending || state->deferredScanActive) &&
@@ -13891,10 +13899,14 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     {
         const char* modeLabel = g_presentationModes[pmode];
         char modeBadge[64];
+        M12_StartupLaunchGate presentationGate;
+        memset(&presentationGate, 0, sizeof(presentationGate));
         if (pmode == M12_PRESENTATION_V22_MODERN &&
-            !M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus)) {
-            snprintf(modeBadge, sizeof(modeBadge), "%s (not installed)",
-                     m12_tr(state, modeLabel));
+            M12_StartupMenu_GetLaunchGate(state, state->activatedIndex,
+                                          &presentationGate) &&
+            presentationGate.presentationFallback) {
+            snprintf(modeBadge, sizeof(modeBadge), "%s",
+                     m12_tr(state, "V2.1 UPSCALED"));
             modeLabel = modeBadge;
         }
         m12_draw_text(framebuffer,
@@ -15622,6 +15634,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     if (!hasGate || !gate.handled || !gate.presentationReady) {
         return intent;
     }
+    pmode = gate.resolvedPresentationMode;
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
     version = selectedVersionIndex >= 0
         ? M12_AssetStatus_GetVersion(&state->assetStatus,

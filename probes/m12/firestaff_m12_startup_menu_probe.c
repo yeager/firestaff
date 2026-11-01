@@ -1103,25 +1103,22 @@ int main(void) {
                          intent.options.resolution == M12_RES_640x400,
                      "V2 launch intent carries the selected version and enhanced resolution options");
 
-        /* V3 launch intent is invalid (coming soon) */
+        /* V2.2 without admitted source-backed artwork resolves to V2.1. */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V22_MODERN;
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V22_MODERN;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
-        /* V2.2 modern launch intent is valid for DM1/Nexus: the M12->M11
-         * V2.2 handoff gate shipped, and the launch row proceeds with the
-         * runtime fallback chain (V2.2 -> V2.1 -> V2.0 -> V1) when modern
-         * assets are absent.  The gate stays closed only for games without
-         * a V2.2 path (checked for CSB below). */
+        /* Keep the requested setting in menu state, but pass the resolved
+         * V2.1 mode through the launch intent until reviewed V2.2 art exists. */
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
         probe_record(&tally,
                      "INV_M12_21",
                      intent.valid == 1 &&
-                         intent.presentationMode == M12_PRESENTATION_V22_MODERN &&
+                         intent.presentationMode == M12_PRESENTATION_V21_UPSCALED &&
                          strcmp(intent.gameId, "dm1") == 0,
-                     "V2.2 modern launch intent is valid for DM1 (M11 handoff gate shipped; runtime fallback chain covers missing modern assets)");
+                     "V2.2 request launches DM1 using the supported V2.1 fallback");
 
         /* V2.2 launch attempt requests launch (no COMING SOON block). */
         modeState.assetStatus.v22_modern_assets_installed = 1;

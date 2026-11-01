@@ -2321,7 +2321,7 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
                       modern_tr(state, "NO SUPPORTED NATIVE PLATFORM"), &sub);
         }
     } else {
-        static const char* const labels[] = {"ORIGINAL", "MODERN", "CUSTOM"};
+        static const char* const labels[] = {"ORIGINAL", "V2.1 UPSCALED", "CUSTOM"};
         static const char* const line1[] = {"V1 PRESERVATION", "V2.X IMPROVEMENTS", "FINE-TUNE SETTINGS"};
         static const char* const line2[] = {"START WITH ORIGINAL RULES", "START WITH MODERN PRESET", "OPEN DETAILED OPTIONS"};
         cardW = 480;
@@ -2358,9 +2358,12 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;
     int isV1 = (mode == M12_PRESENTATION_V1_ORIGINAL);
     int isCustom = !isV1;
-    int nexusV22CaptureLocked = entry->gameId &&
-                           strcmp(entry->gameId, "nexus") == 0 &&
-                           mode == M12_PRESENTATION_V22_MODERN;
+    M12_StartupLaunchGate presentationGate = {0};
+    int hasPresentationGate = M12_StartupMenu_GetLaunchGate(
+        state, state->selectedIndex, &presentationGate);
+    int v22Fallback = mode == M12_PRESENTATION_V22_MODERN &&
+                      hasPresentationGate &&
+                      presentationGate.presentationFallback;
 
     /* Dim background so options panel is clearly on top */
     for (int y = 0; y < c->h; y++) {
@@ -2540,14 +2543,13 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",
                        state->settings.audioMuted ? "MUTED" : "ON", 0, 0);
         draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "STATUS",
-                       nexusV22CaptureLocked
-                           ? "CAPTURE LOCKED"
+                       v22Fallback
+                           ? "V2.1 UPSCALED"
                            : (mode == M12_PRESENTATION_V22_MODERN
-                                  ? "COMING SOON"
+                                  ? "MODERN ACTIVE"
                                   : "READY"),
                        0,
-                       nexusV22CaptureLocked ||
-                           mode == M12_PRESENTATION_V22_MODERN);
+                       0);
     }
 
     /* Launch button: centered horizontally, positioned below last visible row */

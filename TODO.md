@@ -1,5 +1,35 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 launcher preset clarification: the hierarchical game-card flow's
+"MODERN" preset selected V2.1 upscaling, not V2.2 modern artwork. Renamed the
+choice to "V2.1 UPSCALED" so the five-game launcher describes the mode it
+actually selects. The separate V2.2 mode continues to fall back to V2.1 for
+all five games until each has an admitted finished-real art pack; no synthetic
+art is used to create a visible difference.
+
+2026-11-01 DM1 PC-34 original-media regression: CTest
+`dm1_v1_pc34_native_cli_boot` passed in 542.11 seconds with the installed
+retail archive. The regression covers M12 launch, clean host quit during SWSH
+and I34E, loose-file GRAPHICS.DAT/DUNGEON.DAT pairing, missing optional SWSH
+fallback, the authentic startup/HoC route, keyboard and mouse movement,
+portrait/champion interaction, V1/V2 mode receipts and full-redraw telemetry.
+This confirms the bounded PC-34 source/runtime interactions in the test; it
+does not establish pixel parity with a reference capture or physical Retina
+input and display behavior.
+
+2026-11-01 current-build original-media menu retest: CTest
+`m12_main_menu_game_selection_real_media` passed in 535.22 seconds with the
+installed collection, exercising the no-game picker and game/platform/custom
+selection paths for DM1, CSB, DM2, Nexus and Theron's Quest. The test is an
+SDL dummy-driver interaction check, not native display or physical-input
+evidence; Nexus still does not reach a playable dungeon runtime. The separate
+`m12_main_menu_runtime_real_media` test passed in 725.27 seconds for the
+source-owned DM1, CSB, DM2 and Theron runtime routes, including DM1 Amiga 3.6
+and DM2 Amiga. Nexus is not part of that runtime test because its title/menu
+consumer remains capture-gated. The unsupported game/platform CLI rejection
+test also passed. These results verify the current startup routes while
+leaving the documented Nexus and native-display/input gaps open.
+
 2026-11-01 V2.2 asset-root follow-up: all five authentic-media CLI probes
 reported that v22 resolved to v21. The profile stores modern packs in
 `~/.firestaff/assets/<game>/modern`, while the default `~/.firestaff/data`
@@ -35,8 +65,12 @@ source-derived original game media and is not counted as parity evidence.
 Fixed M12 launch readiness to require the same reviewed real-art admission as
 runtime: DM1 and CSB use their game-specific gates; DM2, Nexus and Theron's
 Quest remain unavailable for V2.2 until their own finished-real packs are
-supported. The all-five-game launcher contract regression passed after the
-change. Existing full-worktree Gitleaks scanning reports 94
+supported. A follow-up found that this policy incorrectly blocked menu
+launches even though the CLI and runtime resolved missing V2.2 art to V2.1.
+The menu gate now preserves the requested mode, records the resolved V2.1
+fallback, and allows the original game data to launch. Existing full-worktree Gitleaks scanning reports 94
+fallback, and allows the original game data to launch. Existing full-worktree
+Gitleaks scanning reports 94
 `generic-api-key` findings in already-present files; the staged change scan
 reports no leaks. See `m12_all_games_boot_readiness_contract_fixture`.
 

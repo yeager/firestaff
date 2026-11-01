@@ -501,20 +501,33 @@ int main(void) {
     if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "FILES FOUND") == 0,
                 "scan feedback should not call data-only games ready when launch gate blocks")) return 1;
 
-    /* A V2.2 choice must not claim launch readiness when no reviewed,
-     * game-owned finished-real art pack is installed. The runtime falls
-     * back to V2.1 in that case, so the menu must report the same limitation
-     * for every game rather than presenting V2.2 as active. */
+    /* A V2.2 choice without a reviewed, game-owned finished-real art pack
+     * must use the same V2.1 fallback as direct CLI launches. */
     state.settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         M12_StartupLaunchGate gate;
         mark_game_ready(&state, i, expected[i].gameId);
         state.gameOptions[i].presentationModeIndex =
             M12_PRESENTATION_V22_MODERN;
+        state.activatedIndex = i;
+        if (strcmp(expected[i].gameId, "theron") == 0) {
+            snprintf(state.assetStatus.versions[i][0].matchedPath,
+                     sizeof(state.assetStatus.versions[i][0].matchedPath),
+                     "test-media.zip::TRACK02.IMG");
+        }
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
                     "V2.2 launch gate should build for every game")) return 1;
-        if (!expect(gate.presentationReady == 0 && gate.canLaunch == 0,
-                    "V2.2 without a reviewed real-art pack must be blocked for every game")) return 1;
+        if (!expect(gate.presentationReady == 1 && gate.canLaunch == 1 &&
+                        gate.requestedPresentationMode == M12_PRESENTATION_V22_MODERN &&
+                        gate.resolvedPresentationMode == M12_PRESENTATION_V21_UPSCALED &&
+                        gate.presentationFallback == 1,
+                    "V2.2 without reviewed real art must keep every game launchable through V2.1")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 1 &&
+                        intent.presentationMode == M12_PRESENTATION_V21_UPSCALED &&
+                        intent.options.presentationModeIndex ==
+                            M12_PRESENTATION_V21_UPSCALED,
+                    "every game launch intent must carry the resolved V2.1 fallback")) return 1;
     }
 
     puts("ok: all game launcher boot-readiness receipts expose full-start progress and labels");
