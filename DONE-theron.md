@@ -12,7 +12,8 @@
 - Updated the README, project/platform status, capture readiness, real-data
   inventory, documentation index and Theron wiki links. The active map,
   source-consumer join, gameplay semantics and rendering remain unresolved.
-- Documentation link and diff checks passed; no tests were run.
+- Documentation link and diff checks passed. No additional local tests were
+  run; the PR's Linux, macOS and Windows CI checks completed successfully.
 
 ## 2026-11-01 — inspect authentic JP Mednafen state structure and source mapping
 
