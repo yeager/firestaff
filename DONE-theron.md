@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — repeat regional source and native-load checks
+
+- The authentic US and JP creature-pointer/zone-source CTest cases passed
+  three loops against the local retail media. The JP later-dungeon runtime
+  regression also passed three loops.
+- The production archive source-boundary check passed three loops, confirming
+  fixture-only compatibility combat is excluded from the shipped Theron
+  archive.
+- A broader local CTest selection could not run five startup/input cases
+  because the existing build directory lacks their executables, including the
+  Firestaff binary. Those cases provide no new pass or fail evidence here.
+  The available test executables are a selected build, not a full runtime
+  build.
+
 ## 2026-11-01 — capture Drator row-reader instruction windows
 
 - Extended the opt-in PCE Fast opcode-fetch trace to retain 512-byte code
