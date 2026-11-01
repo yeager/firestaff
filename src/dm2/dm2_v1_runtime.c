@@ -2373,7 +2373,7 @@ static int dm2_runtime_mode7_flags3_evidence(
     unsigned length = 0u;
     uint16_t light_word = 0u;
     uint16_t weather_word = 0u;
-    int32_t record_darkness = 0;
+    uint16_t record_darkness = 0u;
     int class1_ornament;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
         !rt->record_pools_valid ||
@@ -2425,14 +2425,16 @@ static int dm2_runtime_mode7_flags3_evidence(
             if (!dm2_v1_mode7_record_darkness_term(
                     (uint8_t)type, word_2,
                     type == 14u ? record[4] : 0u, &term)) return 0;
-            record_darkness += term;
-            if (record_darkness < INT16_MIN ||
-                record_darkness > INT16_MAX) return 0;
+            /* skgame.cpp::ADD_BACKGROUND_LIGHT_FROM_TILE keeps bp14 as an
+             * i16 and wraps each cloud/fireball contribution at 16 bits. */
+            record_darkness = (uint16_t)(record_darkness + (uint16_t)term);
         }
         link = next;
     }
     evidence->record_chain_known = 1u;
-    evidence->record_darkness = (int16_t)record_darkness;
+    evidence->record_darkness = record_darkness <= (uint16_t)INT16_MAX
+        ? (int16_t)record_darkness
+        : (int16_t)(-1 - (int32_t)(0xffffu - record_darkness));
     evidence->record_chain_known_no_darkness = record_darkness == 0;
     evidence->creature_query_known = 1u;
     if (creature != (int16_t)0xffff) {
