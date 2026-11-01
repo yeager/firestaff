@@ -12,6 +12,8 @@ Static disassembly maps the `$50D2` window and four observed map-array reader wi
 
 **Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.
 
+A new isolated JP cold attempt using the CDDA-command hook was rejected: the scripted-input trace reached its 1,048,576-row cap, the callback-state trace truncated at the older binary limit of 131,072 rows, and no CDDA command sidecar was produced. The attempt does not establish a game handoff or track selection. Its private raw traces were removed. Rebuild against the current hook/verifier contract and bound the pre-game traces before another route capture; see the [current TODO](../../TODO-theron.md#2026-11-01--cdda-route-capture-rejected-before-gameplay-evidence).
+
 The Mednafen movement-context instrumenter emits a separate
 `map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
 state-only captures do not include pre-instruction registers, fetched opcodes,

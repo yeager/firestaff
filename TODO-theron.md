@@ -1,5 +1,20 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — CDDA route capture rejected before gameplay evidence
+
+An isolated authentic JP cold replay used the reference wrapper with the
+CDDA-command instrumentation and the planned 15-event RUN/Button I input
+sequence. The PCE Fast input trace reached its 1,048,576-row cap before the
+scripted-input verifier could establish guest consumption. The System Card
+callback-state trace also truncated at its older 131,072-row binary limit,
+while the current verifier expects 524,288; the wrapper rejected the package.
+No CDDA command sidecar was produced, so this run establishes neither game
+handoff nor gameplay track selection. Its private traces were removed after
+recording the failure. Rebuild the reference binary from the current patch set,
+reduce or source-scope the pre-game trace volume, then repeat the same authentic
+JP route and require an uncapped verifier-accepted input/CDDA trace before
+assigning a gameplay event or track.
+
 ## Current parity blockers confirmed by documentation audit (2026-11-01)
 
 - **Native dungeon renderer:** establish the authentic square/material-to-tile

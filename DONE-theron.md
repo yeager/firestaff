@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — record rejected authentic JP CDDA-route capture
+
+- Ran an isolated cold Mednafen PCE Fast session using the authentic JP CUE,
+  System Card, and the existing bounded CDDA-command instrumentation. Fifteen
+  scripted RUN/Button I events were applied, but the 1,048,576-row input trace
+  cap prevented the verifier from proving guest consumption.
+- The callback-state trace truncated at the binary's older 131,072-row limit,
+  which does not match the current verifier's 524,288-row schema. The wrapper
+  rejected the package, and no CDDA command trace or gameplay handoff was
+  observed. No track-selection or gameplay behavior is inferred.
+- Removed the 505 MB private trace folder created for this attempt from TRV2;
+  no media, emulator state, or trace payload entered Git. The next attempt must
+  use a current instrumented binary and bounded pre-game traces.
+
+
 ## 2026-11-01 — synchronize current Theron parity documentation
 
 - Audited the maintained Theron status, planning, reference, and documentation
