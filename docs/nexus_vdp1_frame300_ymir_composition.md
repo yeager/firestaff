@@ -3,8 +3,10 @@
 This capture-only verifier replays the authenticated VDP1 commands for Ymir
 frame 300 and compares the result with the same run's VDP1 framebuffer. It
 uses Ymir's integer quad, line, texture, clipping, and Gouraud stepping rules.
-The viewport matches all 71,680 RGB pixels and all 71,680 framebuffer MSB
-bits. The result was reproduced in three consecutive runs.
+The viewport matched all 71,680 RGB pixels and all 71,680 framebuffer MSB
+bits in three consecutive runs at an earlier revision. Those capture-level
+runs predate the latest Ymir shadow/MSB pixel-write corrections, so this
+result has not yet been revalidated on the current PR head.
 
 ## Source evidence
 
@@ -40,7 +42,11 @@ ctest --test-dir build -R '^nexus_v1_vdp1_frame300_dgn_stepper_real$' --output-o
 ```
 
 The verifier skips when external capture or game data is unavailable and
-fails if a pinned source file changes.
+fails if a pinned source file changes. A skipped run does not execute the
+parity check; CTest may report `Not Run` while returning success. Treat this
+replay as passed only when CTest reports `Passed`. Re-run the authentic
+capture after the latest Ymir shadow/MSB pixel-write corrections before
+treating the earlier framebuffer match as current-head evidence.
 
 The implementation follows Ymir's VDP1 software renderer for the 8-bit,
 256-colour bank mode and MSB behavior:
