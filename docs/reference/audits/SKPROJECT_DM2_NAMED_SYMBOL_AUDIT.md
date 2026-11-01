@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, and the legacy DOS files at
 the top level of `SKWINDOS/` in the locked checkout: 3,929 definition rows,
 3,629 distinct names, and 300 repeated-name definitions. The active review
-ledger currently maps 3,851 as `UNREVIEWED`, 73 as `PARTIAL`, and 5 as
+ledger currently maps 3,831 as `UNREVIEWED`, 93 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -37,24 +37,24 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,851 `UNREVIEWED`; 73 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,831 `UNREVIEWED`; 93 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 ## Dispositions
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,091 |
+| `IMPLEMENTED_PARITY` | 1,087 |
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 28 |
+| `PARTIAL` | 32 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
 | **Total** | **1,754** |
 
 The supplemental inventory covers 17 SPX v5 and 15 DOS `c_alloc.cpp`
-definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS source. Reviewed entries are recorded in the companion source-review ledger with source mappings and variant-specific evidence. The DOS
+definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS source. Reviewed entries are recorded in the companion source-review ledger with source mappings and variant-specific evidence. The supplemental review now covers wall/floor/pitfall/teleporter/trickwall actuator timer variants in legacy DOS and SKWINSPX v4/v5. Wall/floor mecha have live runtime owners; GAME_LOAD is narrower. Pitfall, teleporter and trickwall timer classes remain fail-closed in the active runtime dispatcher, and their standalone parity helpers do not implement the full source effects. The DOS
 `DM2_ALLOC_MEMORY_RAM` body also ignores the clean flag and always clears
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
@@ -153,8 +153,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,953 open rows: 3,851 unreviewed active-source
-definitions, 100 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,957 open rows: 3,831 unreviewed active-source
+definitions, 124 partial source or older-ledger rows, and 2 partial source-owner
 rows. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
 rows because their add non-currency return behavior differs; take-wallet
 variants also map to Firestaff's shared helper. Runtime platform selection
