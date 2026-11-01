@@ -11643,6 +11643,23 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         ev.type = SDL_EVENT_KEY_DOWN;
         ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(keyName);
         ev.key.scancode = SDL_GetScancodeFromKey(ev.key.key, NULL);
+        /* SDL3's keycode-to-scancode conversion has no mapping for keypad
+         * digits. Scripted SDL-loop probes name those physical keys
+         * explicitly so they exercise the same scancode route as live input. */
+        if (strcmp(keyName, "kp1") == 0 || strcmp(keyName, "kp-1") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_1;
+        else if (strcmp(keyName, "kp3") == 0 || strcmp(keyName, "kp-3") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_3;
+        else if (strcmp(keyName, "kp2") == 0 || strcmp(keyName, "kp-2") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_2;
+        else if (strcmp(keyName, "kp4") == 0 || strcmp(keyName, "kp-4") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_4;
+        else if (strcmp(keyName, "kp5") == 0 || strcmp(keyName, "kp-5") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_5;
+        else if (strcmp(keyName, "kp6") == 0 || strcmp(keyName, "kp-6") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_6;
+        else if (strcmp(keyName, "kp8") == 0 || strcmp(keyName, "kp-8") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_8;
         if (commandModifier) ev.key.mod = SDL_KMOD_GUI;
 #else
         ev.type = SDL_KEYDOWN;

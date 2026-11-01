@@ -3,13 +3,13 @@
 The native keyboard Button II chord maps keypad 1/3 to turns alongside the
 existing arrow and A/D bindings. Focused mapping assertions and authentic US
 SDL event-loop routes cover the keypad bindings. A fresh native build on TRV2
-with hash-verified US Track 02 still fails the event-loop regression: Button II
-+ keypad 1 produced pose `(1, 0, 3)` instead of the expected `(1, 1, 3)`. The
-test harness now supplies explicit keypad scancodes, but that did not resolve
-the failure. Trace the normal SDL event path and correct the runtime before
-claiming the chord works in native gameplay. Keep authentic US/JP runtime
-input routes and original PCE interaction semantics as the parity gates; this
-host mapping is not a claim of broader retail input parity.
+with hash-verified US Track 02 observed Button II + keypad 1 turn in place to
+`(1, 0, 3)`. The route first sends `key:down`; the former `(1, 1, 3)` assertion
+used the wrong position. The local expected pose is corrected. Rerun the
+complete native route before treating keypad 1/3 and the full chord matrix as
+verified. Keep authentic US/JP runtime input routes and original PCE
+interaction semantics as the parity gates; this host mapping is not a claim of
+broader retail input parity.
 
 The authenticated pointer-to-zone source relationship is now documented for
 both regions: pointer records 0–4 resolve to the five regular-spawn zone

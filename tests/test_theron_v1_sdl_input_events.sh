@@ -193,7 +193,9 @@ for label, probe, expected_direction in (("keypad 1", keypad_left, 3),
                                          ("keypad 3", keypad_right, 1)):
     party = probe["party"]
     actual = (party["mapX"], party["mapY"], party["direction"])
-    expected = (1, 1, expected_direction)
+    # The preceding key:down route leaves the party at the source-backed
+    # (1, 0) tile. Button II plus keypad 1/3 must turn in place there.
+    expected = (1, 0, expected_direction)
     if actual != expected:
         raise SystemExit(f"FAIL: Button II + {label} pose {actual} != {expected}")
 if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 1, 2):

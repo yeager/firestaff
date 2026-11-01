@@ -157,10 +157,12 @@ the highlighted control changes.
 - The native mouse panel provides all six Theron movement actions and the
   implemented champion, item, USE-command and wait inputs. The retail manual's
   Button II chord is mapped as right-mouse plus Left/Right Arrow, A/D, or
-  keypad 1/3; the keypad 1/3 native SDL regression currently fails on
-  hash-verified US Track 02 (Button II + keypad 1 produced `(1, 0, 3)` instead
-  of `(1, 1, 3)`). Do not treat the keypad chord as verified until the runtime
-  failure is fixed. A standalone right click does not advance a dungeon tick.
+  keypad 1/3. A native SDL run on hash-verified US Track 02 observed Button II
+  plus keypad 1 turn in place to `(1, 0, 3)`. The regression's expected pose
+  incorrectly used `(1, 1, 3)` even though its route first sends `key:down`;
+  the local assertion now checks the observed position. Re-run the corrected
+  route on a fresh native build before treating keypad 3 and the full chord
+  matrix as verified. A standalone right click does not advance a dungeon tick.
   In a loaded dungeon it is consumed only as the modifier, while Escape remains
   the desktop Back command. Existing arrow-chord and mouse-panel routes use
   authentic US runtime evidence. A native SDL mouse sequence through the visible
