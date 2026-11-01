@@ -1,5 +1,13 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 single-game CLI exit retest: the authentic-media
+`return_to_menu_rescans_dm1_csb_dm2_real_media` direct-exit matrix passed for
+DM1, CSB, DM2, Nexus, and Theron. After choosing Return to Menu from each
+`--game` session, Firestaff exited without opening M12 or starting a
+collection rescan. This verifies the single-game process contract for the
+tested routes; it does not establish complete gameplay or native-device
+parity.
+
 2026-11-01 startup scan localization coverage now includes all five games.
 The Swedish real-media scan tests pass for DM1 PC, CSB FM Towns, DM2 FM Towns,
 Nexus Saturn, and Theron PC Engine. Nexus and Theron use a source-bound
