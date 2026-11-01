@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `BLITFILL.C:F0136` screen hatch: the ledger marks Firestaff’s bounded PC34 checkerboard hatch `PARTIAL`; color/pattern and platform-specific box/backend behavior remain open. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
+
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
