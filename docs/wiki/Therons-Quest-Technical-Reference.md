@@ -149,14 +149,14 @@
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-> **Planned native spawn-source debug receipt (2026-11-01):** a bounded
-> `--debug` report is planned for the already-authenticated pointer and zone
-> records, including source identity, offsets, raw fields, and static links.
-> Its engine and decoder translation units compiled in an isolated TRV2 Debug
-> configuration; the full application has not been linked and no native
-> output has been observed. It does not establish runtime selection or
-> spawning. See the
-> [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+> **Native spawn-source debug receipt (2026-11-01):** Firestaff's bounded
+> `--debug` output includes authenticated Track 02 pointer and zone source
+> records. The engine and decoder translation units compiled in an isolated
+> TRV2 Debug configuration, and the full application linked in the successful
+> Linux, macOS, and Windows CI builds for PR #243. An authentic runtime log
+> containing this receipt has not yet been inspected, so its source values
+> remain unverified. It does not establish runtime selection or spawning. See
+> the [receipt contract and verification state](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier
 > accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified

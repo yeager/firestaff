@@ -10,17 +10,20 @@
   no runtime-spawn or gameplay claim was added.
 - Documentation-only change; no tests or build were run.
 
-## 2026-11-01 — compile the spawn-source debug receipt translation units
+## 2026-11-01 — build the spawn-source debug receipt across CI platforms
 
 - Compiled `main_loop_m11.c` and both configured compile entries for
   `theron_v1_track02_creature_spawn_source.c` from the current working-tree
   sources in an isolated TRV2 Debug configuration. No compiler diagnostics
   were emitted for these translation units.
-- The full application was not linked, and no native `--debug` launch was
-  performed. The existing user-owned JP Mednafen session remains untouched;
-  runtime output and source-receipt values therefore remain unobserved.
-- Updated the Theron TODO, capture-readiness summary, technical source note,
-  and wiki pages to reflect this compile result and its limits. Refreshed the
+- PR #243 CI then linked the full application in Linux, macOS, and Windows
+  CMake builds; localization, warning, repository-policy, and deterministic
+  cross-platform checks passed. No authentic native `--debug` receipt log has
+  been inspected, so runtime source values remain unverified. The existing
+  user-owned JP Mednafen session was left untouched.
+- Updated the Theron TODO, capture-readiness summary, documentation index,
+  technical source note, wiki pages, and receipt note to reflect CI evidence
+  and its limits. Refreshed the
   generated startup-menu POT/PO source references after the `main_loop_m11.c`
   insertion; `po/update.sh --check` passes and translation strings are
   unchanged. No tests were run.
