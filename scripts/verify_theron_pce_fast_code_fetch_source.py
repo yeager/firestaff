@@ -61,6 +61,8 @@ def main() -> int:
 
     truncated_sites: set[int] = set()
     matches: dict[int, set[int]] = {pc: set() for pc in TARGETS}
+    last_sequence_by_pc: dict[int, int] = {}
+    last_event_sequence = 0
     rows = 0
     for line_number, line in enumerate(trace_text.splitlines(), 1):
         if line.startswith("row_reader_fetch_truncated "):
@@ -78,6 +80,7 @@ def main() -> int:
             pc = int(fields["logical_pc"], 16)
             physical_pc = int(fields["physical_pc"], 16)
             opcode = int(fields["opcode"], 16)
+            sequence = int(fields["sequence"], 10)
             event_sequence = int(fields["event_sequence"], 10)
             mprs = [int(fields[f"mpr{index}"], 16) for index in range(8)]
             window = bytes.fromhex(fields["code_bytes"])
@@ -85,6 +88,9 @@ def main() -> int:
             return fail(f"malformed instruction row on line {line_number}")
         if pc not in TARGETS:
             return fail(f"unexpected reader code PC ${pc:04X} on line {line_number}")
+        expected_sequence = last_sequence_by_pc.get(pc, -1) + 1
+        if sequence != expected_sequence:
+            return fail(f"non-contiguous reader sequence on line {line_number}")
         if len(window) != WINDOW_BYTES:
             return fail(f"instruction window is not {WINDOW_BYTES} bytes on line {line_number}")
         if window[0] != opcode:
@@ -94,13 +100,23 @@ def main() -> int:
             return fail(f"invalid MPR value on line {line_number}")
         if physical_pc != expected_physical_pc:
             return fail(f"logical/physical PC disagrees with MPRs on line {line_number}")
-        if event_sequence <= 0 or physical_pc > 0xFFFFFF:
+        if event_sequence <= last_event_sequence or physical_pc > 0xFFFFFF:
             return fail(f"invalid execution provenance on line {line_number}")
+        last_sequence_by_pc[pc] = expected_sequence
+        last_event_sequence = event_sequence
         rows += 1
         matches[pc].update(source_offsets(source, window))
 
     if rows == 0:
         return fail("no Drator row-reader instruction windows were recorded")
+    if truncated_sites:
+        rendered = ",".join(f"${pc:04X}" for pc in sorted(truncated_sites))
+        return fail(f"incomplete trace: instruction windows were truncated at {rendered}")
+    for pc in sorted(TARGETS):
+        if pc not in last_sequence_by_pc:
+            return fail(f"missing instruction fetches for required PC ${pc:04X}")
+        if not matches[pc]:
+            return fail(f"no instruction window at PC ${pc:04X} matches authentic Track 02")
 
     print(f"PASS: rows={rows} source=US-Track-02 md5={actual_md5}")
     for pc in sorted(TARGETS):

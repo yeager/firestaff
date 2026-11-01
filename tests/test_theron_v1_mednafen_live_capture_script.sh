@@ -2518,4 +2518,6 @@ if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_
     exit 1
 fi
 
+python3 "$repo/tests/test_verify_theron_pce_fast_code_fetch_source.py"
+
 printf 'PASS: live capture script requires explicit authentic inputs\n'

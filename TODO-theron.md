@@ -15,6 +15,13 @@ join before they can inform row semantics or native spawning. See the
 [completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions)
 and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
+The fetched-code verifier now rejects missing `$CBC6`/`$45C3` matches,
+non-increasing event sequences, per-PC sequence gaps and explicit truncation.
+Its regression passed three loops. The next step remains an isolated
+authentic replay that yields complete windows at both PCs and follows the
+copied work buffer to its downstream reader; the verifier fixtures are not
+gameplay evidence.
+
 ## Next original-game analysis — join Drator reader PCs to fetched source bytes
 
 An authentic US cold replay proves a same-session write/read match for row

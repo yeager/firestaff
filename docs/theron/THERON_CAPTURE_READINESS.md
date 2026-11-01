@@ -35,8 +35,13 @@ Track 02 BIN to narrow repeated static occurrences; they do not prove source
 ownership until the bytes match and the physical mapping is accounted for.
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
 to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
-relationship and all matching raw offsets. Multiple matching offsets remain
-explicit rather than being collapsed to one source occurrence.
+relationship and all matching raw offsets. A complete verification requires
+both `$CBC6` and `$45C3` to appear and match the retail image; per-PC row
+sequences must be contiguous, shared event sequences must increase, and any
+truncation marker rejects the report. Multiple matching offsets remain
+explicit rather than being collapsed to one source occurrence. The verifier's
+regression passed three loops, but no authentic capture has exercised these
+reader windows yet.
 Correlate them with the
 main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters

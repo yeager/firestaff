@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — require complete Drator reader-source receipts
+
+- Hardened the fetched-code verifier so a successful report requires both
+  observed reader PCs (`$CBC6` and `$45C3`) and at least one exact 512-byte
+  match for each PC in the authenticated US Track 02 image. Duplicate retail
+  offsets remain visible rather than being selected implicitly.
+- The verifier now rejects per-PC row-sequence gaps, non-increasing shared
+  event sequences, and any explicit truncation marker. A partial capture can
+  no longer produce a successful source-join report.
+- Added a focused regression test covering complete source matches, a missing
+  reader PC, unmatched retail code, sequence errors, and truncation. It passed
+  three consecutive loops; Python syntax compilation and `git diff --check`
+  passed. The test uses constructed bytes only as verifier input; it is not
+  game data or runtime evidence.
+- No authentic capture has used the new reader-code windows yet. This closes a
+  verifier acceptance gap, not the live code ownership or spawn-semantics gap.
+
 ## 2026-11-01 — repeat native regional gameplay regressions
 
 - Built the native Firestaff executable and the two previously missing startup
