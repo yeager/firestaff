@@ -93,6 +93,7 @@ typedef struct {
     char name1[8];
     char name2[20];
     int8_t party_position;
+    int8_t absolute_direction;
     int8_t hero_type;
     /* Read-only c_hero spell-admission inputs.  These expose the original
      * SKSAVE state to presentation/tests without giving callers a way to
@@ -1669,9 +1670,11 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
-/* Source UI event 125..129 changes party formation or starts/commits a drag.
- * Returns nonzero when the authenticated runtime accepted the event. */
+/* Source UI events 125..128 start/commit a formation drag; event 129
+ * recomputes at the pending source slot without updating facing. Both use
+ * the source CHANGE_PLAYER_POS owner and authenticated GAME_LOAD party. */
 int dm2_v1_runtime_change_player_pos(int slot);
+int dm2_v1_runtime_recompute_player_pos(void);
 /* Select the living DM2 champion that owns an M11 rune-cast request without
  * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
 int dm2_v1_runtime_select_spell_champion(int hero_index);

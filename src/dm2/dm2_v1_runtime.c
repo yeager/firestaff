@@ -20666,6 +20666,21 @@ int dm2_v1_runtime_change_player_pos(int slot)
     return 1;
 }
 
+int dm2_v1_runtime_recompute_player_pos(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        !rt->record_pools_valid || rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return 0;
+    /* CHAMPION_SQUAD_RECOMPUTE_POSITION feeds the pending source slot to
+     * CHANGE_PLAYER_POS with bit 15 set, which clears the drag without the
+     * normal drop's direction writeback. */
+    if (rt->source_drag_in_progress)
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    return 1;
+}
+
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
@@ -20969,6 +20984,7 @@ int dm2_v1_runtime_get_source_hero_state(
     memcpy(out_state->name1, hero->name1, sizeof(out_state->name1));
     memcpy(out_state->name2, hero->name2, sizeof(out_state->name2));
     out_state->party_position = hero->partypos;
+    out_state->absolute_direction = hero->absdir;
     out_state->hero_type = hero->herotype;
     out_state->cur_mp = hero->curMP;
     out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];

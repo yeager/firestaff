@@ -117,6 +117,16 @@ attack-type cases; SPX v5 follows the SKULLWIN-style cases. Firestaff's
 preserve these source-specific branches, RNG order, or all pending-injury and
 wake state. The named-symbol and active-source audits mark the reviewed rows
 `PARTIAL`; platform-specific player-wound parity remains open.
+2026-11-02 DM2 DOS PC formation pointer route: the live M11 path admits
+source events 125–128 into the authenticated GAME_LOAD party. The first click
+records an occupied source slot; the next click moves its champion into an
+empty slot or swaps the two party positions, using current party facing.
+Source event 129 is a separate `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` path:
+it clears an active drag at its original slot and suppresses the facing update.
+The runtime now handles it separately from movement events. The authentic DOS
+archive test verifies retail hitboxes, non-mutating pickup, event-129
+recompute, and the committed empty-slot drop. Amiga, FM Towns, and Macintosh
+formation hit-testing and original-media runtime evidence remain open.
 
 2026-11-01 authentic Macintosh music-resource ownership: retail `CODE(22)` at
 offsets `$1a28-$1a72` and `$1b3a-$1b84` resolves `SONG(track)`, reads its
