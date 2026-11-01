@@ -7932,9 +7932,10 @@ static int dm2_runtime_release_door_button_timer(
     uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_GameState *game;
     uint16_t record_id;
     uint8_t *record;
-    int type, size;
+    int map, type, size;
     (void)source_index;
     (void)receipt;
 
@@ -7980,6 +7981,11 @@ static int dm2_runtime_process_timer_59(
     if (record[4] & 0x04u)
         return 1;
 
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    game = rt && rt->boot
+        ? (DM2_V1_GameState *)rt->boot->dm2_state : NULL;
+    if (game && map == game->current_level)
+        rt->light_check_pending = 1;
     record[4] &= (uint8_t)~0x01u;
     return 1;
 }
