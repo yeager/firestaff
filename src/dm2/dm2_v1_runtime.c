@@ -9136,6 +9136,7 @@ static int dm2_runtime_door_step_timer(void *user,
                                        DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
     int map;
     int x;
     int y;
@@ -9164,6 +9165,7 @@ static int dm2_runtime_door_step_timer(void *user,
         return 1;
     }
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
 
     /* c_timer.h:64-66 — map is the high byte of ticks_and_map; x/y are the
      * valueA lo/hi bytes (c_timer.h:80-81 getxA/getyA). */
@@ -9207,6 +9209,11 @@ static int dm2_runtime_door_step_timer(void *user,
     if (current_state == DM2_DOOR_STATE_DESTROYED) {
         return 1;
     }
+    /* SPX v4 STEP_DOOR sets glbDoLightCheck on the player map before
+     * checking DoorBit10. Keep the request even when the door is already
+     * inactive, then consume it after the source timer batch. */
+    if (game && map == game->current_level)
+        rt->light_check_pending = 1;
 
     door_attributes = dm2_runtime_record_rd16(rt, live_door_record + 2);
     /* SKWINSPX skevent.cpp::STEP_DOOR reads DoorBit10 as the moving gate
