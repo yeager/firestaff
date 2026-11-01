@@ -20,15 +20,18 @@ Queue dispatch at `$D3B0..$D3CB` sends command types `$03..$06` to
 from `$40/$41`, calculates the destination cell and passes the approved move's
 destination `$03/$03` through `$45/$46`.
 
-The persistent position commit occurs at `$C1FA`:
+The persistent position-copy opcode begins at `$C1FC`:
 
 ```asm
 tii $20B4,$2040,$0002
 ```
 
-The write trace records both destination changes at logical PC `$C203` and
-physical PC `$0DC203`. The starting position is `$40/$41 = $02/$03`; after
-the commit it is `$03/$03`. The RAM image before the command has MD5
+The original capture's write observer reports the post-operand PC `$C203`
+at the byte commits; that is not the opcode-start PC. The later source-locked
+PCE Fast observer retains the issuing opcode PC across the yielded TII and
+confirms `$C1FC`. `$C1FA` is the preceding conditional branch, not this TII.
+The starting position is `$40/$41 = $02/$03`; after the commit it is
+`$03/$03`. The RAM image before the command has MD5
 `86f7cec0a943402daae0ec0acdf7a372`, and the image after the queue is cleared
 by `$2905=$00` has MD5 `eae73a9991630a6fe2bcc48c2c99861c`.
 
@@ -43,7 +46,7 @@ panel's four movement commands:
 
 The original routine calculates movement direction as
 `(command type - 3 + $3F) & 3`, where `$3F` is the facing direction. `$05`
-commits position `$02/$03 → $01/$03` through the same `$C1FA` path; the
+commits position `$02/$03 → $01/$03` through the same `$C1FC` TII; the
 command trace MD5 is
 `0488166dec2eaec19b8874b01f7f1fba`.
 

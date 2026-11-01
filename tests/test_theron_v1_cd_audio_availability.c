@@ -120,6 +120,47 @@ int main(void) {
         failed = 1;
     }
 
+    /* The OGG alias is valid for a CUE-declared WAV CD-DA track. */
+    if (!failed) {
+        char *extension;
+        snprintf(track_path, sizeof(track_path), "%s/track01.wav", directory);
+        if (remove(track_path) != 0) {
+            failed = 1;
+        }
+        snprintf(track_path, sizeof(track_path), "%s/track01.ogg", directory);
+        if (!failed && !write_file(track_path, "ogg", 3u)) failed = 1;
+        if (!failed) {
+            receipt = theron_v1_cd_audio_availability(cue_path, directory);
+            extension = strrchr(receipt.track_paths[1], '.');
+            if (receipt.availability != THERON_V1_CD_AUDIO_READY ||
+                !receipt.playback_allowed || !receipt.track_present[1] ||
+                !extension || strcmp(extension, ".ogg") != 0) {
+                failed = 1;
+            }
+        }
+        remove(track_path);
+        snprintf(track_path, sizeof(track_path), "%s/track01.wav", directory);
+        if (!failed && !write_file(track_path, "wav", 3u)) failed = 1;
+    }
+
+    /* An OGG with the same stem must not satisfy missing Track 02 data. */
+    if (!failed) {
+        snprintf(track_path, sizeof(track_path), "%s/track02.iso", directory);
+        if (remove(track_path) != 0) failed = 1;
+        snprintf(track_path, sizeof(track_path), "%s/track02.ogg", directory);
+        if (!failed && !write_file(track_path, "ogg", 3u)) failed = 1;
+        if (!failed) {
+            receipt = theron_v1_cd_audio_availability(cue_path, directory);
+            if (receipt.availability != THERON_V1_CD_AUDIO_TRACK_FILE_MISSING ||
+                receipt.playback_allowed || receipt.track_present[2]) {
+                failed = 1;
+            }
+        }
+        remove(track_path);
+        snprintf(track_path, sizeof(track_path), "%s/track02.iso", directory);
+        if (!failed && !write_file(track_path, "iso", 3u)) failed = 1;
+    }
+
     /* An empty extent is not a present game-media track. */
     if (!failed) {
         snprintf(track_path, sizeof(track_path), "%s/track19.iso", directory);
@@ -256,6 +297,10 @@ int main(void) {
                  directory, i);
         remove(track_path);
     }
+    snprintf(track_path, sizeof(track_path), "%s/track01.ogg", directory);
+    remove(track_path);
+    snprintf(track_path, sizeof(track_path), "%s/track02.ogg", directory);
+    remove(track_path);
     snprintf(track_path, sizeof(track_path), "%s/track02.iso", directory);
     remove(track_path);
     snprintf(track_path, sizeof(track_path), "%s/track19.iso", directory);

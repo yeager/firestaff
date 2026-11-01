@@ -1,5 +1,7 @@
 #include "asset_status_m12.h"
+#include "theron_v1_dungeon_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_track02_raw_media_intake.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_world.h"
 
@@ -197,13 +199,20 @@ static int verify_jp_cue_iso(const char *path) {
     unsigned char *track02;
     size_t track02_size;
     char md5[33];
+    Theron_V1Track02RawMediaIntakeReceipt intake;
     if (!path || !path[0]) {
         puts("SKIP: authentic Theron JP CUE Track 02 ISO is not staged");
         return 77;
     }
-    track02 = read_file(path, &track02_size);
+    if (!theron_v1_track02_raw_media_intake_discover(path, &intake) ||
+        intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        strcmp(intake.track02_md5, THERON_TRACK02_MD5_JP_ISO) != 0) {
+        fprintf(stderr, "FAIL: authentic JP split ISO intake failed\n");
+        return 1;
+    }
+    track02 = read_file(intake.payload_path, &track02_size);
     if (!track02) return 1;
-    if (!m12_file_md5_hex(path, md5) ||
+    if (!m12_file_md5_hex(intake.payload_path, md5) ||
         strcmp(md5, THERON_TRACK02_MD5_JP_ISO) != 0) {
         fprintf(stderr, "FAIL: JP CUE Track 02 ISO identity is not authentic\n");
         free(track02);
@@ -222,6 +231,9 @@ static int verify_jp_cue_iso(const char *path) {
                 &world, track02, track02_size, md5, dungeon,
                 receipt, sizeof(receipt)) ||
             world.current_dungeon != (int)dungeon ||
+            !world.track02_spawn_source.authenticated ||
+            world.track02_spawn_source.variant !=
+                THERON_V1_TRACK02_VARIANT_JP_BIN ||
             world.source_object_count == 0u ||
             !strstr(receipt, "ISO user-data")) {
             fprintf(stderr, "FAIL: authentic JP CUE ISO handoff: %s\n", receipt);

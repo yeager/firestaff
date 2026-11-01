@@ -2,6 +2,11 @@
 
 Status: `SKIP`
 
+This host-local generated receipt has no current launch artifacts. Its SKIP
+status does not mean that Firestaff has never presented a nonblack native
+frame; a separate nonblack observation exists, but has no paired retail frame
+and is not eligible for public parity claims.
+
 This gate runs real Firestaff Theron launches when hash-verified Track 02
 data is present. It records runtime probe fields plus BMP geometry and
 hash receipts only; it does not add screenshots to public docs.

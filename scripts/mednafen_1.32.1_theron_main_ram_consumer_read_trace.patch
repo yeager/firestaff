@@ -60,7 +60,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  	}
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -108,5 +108,26 @@
+@@ -108,5 +108,31 @@
  static uint16 TheronPCECDMainRAME009ReturnPC;
  static unsigned TheronPCECDMainRAME009Sequence;
  static unsigned TheronPCECDCriticalTraceCount;
@@ -74,6 +74,11 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +static bool TheronPCECDCommandConsumerTypeSeen;
 +static FILE *TheronPCECDSpawnConsumerTrace;
 +static unsigned TheronPCECDSpawnConsumerTraceCount;
++static const char *TheronPCECDSpawnConsumerPCFilter(void)
++{
++ const char *text = getenv("FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER");
++ return text && *text ? text : "none";
++}
 +static unsigned TheronPCECDMainRAMConsumerTraceLimit(void)
 +{
 + static unsigned limit;
@@ -87,7 +92,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +}
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
-@@ -140,2 +141,237 @@
+@@ -140,2 +141,244 @@
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc,
@@ -97,10 +102,15 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +                                         uint8 reader_a, uint8 reader_x, uint8 reader_y,
 +                                         uint8 reader_sp, uint8 reader_p)
 +{
-+ bool spawn_consumer_probe =
-+  logical_address == 0x5d64 || logical_address == 0x5d6a ||
-+  (reader_pc >= 0xc96b && reader_pc <= 0xca69) ||
-+  (reader_pc >= 0xcc4c && reader_pc <= 0xcd13);
++ const bool drator_row_filter =
++  !strcmp(TheronPCECDSpawnConsumerPCFilter(), "drator-row");
++ bool spawn_consumer_probe = drator_row_filter
++  ? (physical_address >= 0x1f093b && physical_address <= 0x1f093d &&
++     ((reader_pc == 0xcbc9 && reader_physical_pc == 0x0dabc9) ||
++      (reader_pc == 0x45c3 && reader_physical_pc == 0x0d05c3)))
++  : (logical_address == 0x5d64 || logical_address == 0x5d6a ||
++     (reader_pc >= 0xc96b && reader_pc <= 0xca69) ||
++     (reader_pc >= 0xcc4c && reader_pc <= 0xcd13));
 + if(spawn_consumer_probe && TheronPCECDSpawnConsumerTraceCount < 4096)
 + {
 +  if(!TheronPCECDSpawnConsumerTrace)
@@ -110,8 +120,10 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   {
 +    TheronPCECDSpawnConsumerTrace = fopen(path, "w");
 +    if(TheronPCECDSpawnConsumerTrace)
-+     fputs("source=mednafen-pce-instrumented-spawn-consumer\n",
-+           TheronPCECDSpawnConsumerTrace);
++     fprintf(TheronPCECDSpawnConsumerTrace,
++             "source=mednafen-pce-instrumented-spawn-consumer-v2\n"
++             "spawn_consumer_pc_filter=%s\n",
++             TheronPCECDSpawnConsumerPCFilter());
 +   }
 +  }
 +  if(TheronPCECDSpawnConsumerTrace)

@@ -38,12 +38,12 @@ static void TheronTraceSystemCardCallbackState(const char *access,
    trace = fopen(path, "w");
    if(trace)
    {
-    fputs("source=mednafen-pce-fast-system-card-callback-state-v1 event_sequence_source=TheronTraceCDSharedEventSequence limit=131072 logical_ranges=f8-fb,2256-226b\n", trace);
+    fputs("source=mednafen-pce-fast-system-card-callback-state-v1 event_sequence_source=TheronTraceCDSharedEventSequence limit=524288 logical_ranges=f8-fb,2256-226b\n", trace);
     fflush(trace);
    }
   }
  }
- if(!trace || truncated || rows >= 131072 ||
+ if(!trace || truncated || rows >= 524288 ||
     !((logical >= 0x00F8 && logical <= 0x00FB) ||
       (logical >= 0x2256 && logical <= 0x226B)))
   return;
@@ -54,9 +54,9 @@ static void TheronTraceSystemCardCallbackState(const char *access,
          HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
          HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
  fflush(trace);
- if(rows == 131072)
+ if(rows == 524288)
  {
-  fputs("callback_state_truncated cap=131072\n", trace);
+  fputs("callback_state_truncated cap=524288\n", trace);
   fflush(trace);
   truncated = true;
  }

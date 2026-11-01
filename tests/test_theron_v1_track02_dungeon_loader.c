@@ -979,9 +979,10 @@ static const char *find_jp_track02(void) {
     return path;
 }
 
-/* The old JP Rev. 1 ISO file remains a zero-filled stub. Keep its negative
- * contract separate from the full CUE projection recovered from Track 02. */
-static void test_jp_rev1_iso_stub_dungeon_boundary(void) {
+/* TQJP02End.iso is the authentic empty 149-sector suffix of the full JP raw
+ * Track 02. Keep its non-launchable suffix contract separate from the full
+ * CUE projection recovered from Track 02. */
+static void test_jp_rev1_iso_empty_suffix_dungeon_boundary(void) {
     const char *path = getenv("FIRESTAFF_THERON_JP_STUB_ISO");
     uint8_t *iso;
     size_t iso_size = 0u;
@@ -999,7 +1000,7 @@ static void test_jp_rev1_iso_stub_dungeon_boundary(void) {
         if (stat(path, &st) != 0 || st.st_size != 305152) path = NULL;
     }
     if (!path || !(iso = load_raw_bytes(path, &iso_size))) {
-        puts("  SKIP: legacy JP Rev. 1 zero ISO stub unavailable");
+        puts("  SKIP: authentic JP Rev. 1 empty ISO suffix unavailable");
         return;
     }
     assert(iso_size == 305152u);
@@ -1022,7 +1023,7 @@ static void test_jp_rev1_iso_stub_dungeon_boundary(void) {
         &result) == -1);
     free(world);
     free(iso);
-    puts("  legacy JP Rev. 1 zero ISO stub is rejected for dungeon maps and thing tables");
+    puts("  authentic JP Rev. 1 empty ISO suffix is rejected as a complete dungeon source");
 }
 
 static void test_jp_cue_iso_map_source(void) {
@@ -6962,7 +6963,7 @@ int main(void) {
     test_generator_binding_rejects_non_source_records();
     test_world_load_rejects_invalid_directory_envelope();
     test_object_binding_rejects_unverified_locations();
-    test_jp_rev1_iso_stub_dungeon_boundary();
+    test_jp_rev1_iso_empty_suffix_dungeon_boundary();
     test_jp_cue_iso_map_source();
 
     const char *jp_path = find_jp_track02();

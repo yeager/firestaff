@@ -69,7 +69,9 @@
 +   fflush(stderr);
 +   return;
 +  }
-+  if(fputs("source=mednafen-pce-fast-main-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence\n", trace) < 0 || fflush(trace) != 0)
++  const char *capture_id = getenv("FIRESTAFF_THERON_CAPTURE_ID");
++  if(fprintf(trace, "source=mednafen-pce-fast-main-ram-target-write-v2 event_sequence_source=TheronTraceCDSharedEventSequence capture_id=%s range=%06x-%06x sample_limit=%u\n",
++      capture_id ? capture_id : "missing", range_first, range_last, sample_limit) < 0 || fflush(trace) != 0)
 +  {
 +   trace_failed = true;
 +   fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=header\n", stderr);

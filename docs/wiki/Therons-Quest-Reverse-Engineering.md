@@ -1,10 +1,14 @@
 # Theron's Quest (PC Engine CD) — Reverse Engineering Wiki
 
+> Current summary and task order: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md)
+> and [Theron TODO](../../TODO-theron.md). Older dated sections below record
+> evidence as it was available and must not be read as current support claims.
+
 **Startup update (2026-08-08):** authenticated US Track 02 media proves the
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Current native and reference boundary (2026-10-31):** authentic Japanese
+**Current native and reference boundary (reviewed 2026-11-01):** authentic Japanese
 Track 02 reaches a loaded dungeon through Firestaff's native C/SDL fresh-start
 route. Authentic US Track 02 plus a matching Ak-Tu-Ba-complete BRAM reaches
 dungeon 2 through Continue, with bounded native movement and item
@@ -26,18 +30,57 @@ faces a wall: UP, neutral, and DOWN reference screenshots retain the same
 front wall, with no `$C1FC` TII or `$2040/$2041` position write observed by the
 bounded movement hooks. It does not prove movement or renderer parity; see the
 [blocked-wall probe](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+In a later matched three-run state-only comparison, Button II+UP guest reads
+are followed by repeatable TII transfers to candidate `$2040/$2041` bytes;
+Button II-only controls retain their previous values. This is input-conditioned
+state transfer, not yet mapped movement: active-map identity, field semantics,
+collision outcome and rendered response remain open. The same `$C1FC` TII is
+also associated in the source-locked analysis with copying teleporter
+destination coordinates. A follow-up three-run trace records the identical
+128-instruction path into `$C1FC`, including a `$C1D6` call/return and
+conditional fall-through. The code history does not source-bind the tested
+fields, establish gameplay purpose, or identify the active-map object, so it
+still cannot distinguish player movement from teleporter resolution. See the
+[comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+An isolated JP PCE Fast state-only run also verified the corrected input gate:
+the scripted guest read at `$44C1` (`raw=0010`, event 58758) precedes the first
+of 4,096 bounded VRAM commit rows (event 58761). The capture reports
+`transition=missing`; this checks instrumentation and event ordering only. It
+does not establish causality, VRAM meaning, a visible response, a cold media
+handoff, or Firestaff parity. See the [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
-after a four-second System Card RUN hold and short Button I menu/story presses;
-its resulting BRAM is byte-identical to the known empty JP slot. The reported
-3–5 second hold on the selected title-menu action itself remains untested. See
+after a four-second System Card RUN hold. A separate authentic JP capture
+confirms that four-second Button I holds on NEW GAME and FILE 1 advance into
+the story. Its `.mc0` snapshot is an emulator state, not in-game BRAM, and does
+not prove a game-owned input/CD-loader join or native parity. See
 the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
 and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
+
+**US saved-state map update (2026-11-01):** a source comparison binds all
+four authentic Akutuba arrays to `HuC.SysCardRAM` in the USA standard-PCE
+state, with MPR3 selecting physical page `$74`. The same page arithmetic makes
+two old collision-trace reads consistent with map-0 byte offsets, but no MPR
+was retained at those reads. This does not identify the active map or prove a
+live source consumer. See the [state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
 Native Debug direct launch with authentic US Track 02 enters Theron's
 title/startup path without Firestaff's Run menu or a System Card. Its boot
 probe stops before dungeon loading (`levelLoaded=0`); this confirms launch
 selection only. See the [source-locked direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+The authentic US Drator cold replay maps the captured `$C852` runtime code window to the matching 512-byte Track 02 source window at raw offset `$A3AD2`. Its same-session trace joins generated-row writes and reads at offsets 6–8 and a later ten-byte TII copy to a work buffer. Constructed strict-verifier windows at `$CBC6` and `$45C3` match four and three raw offsets respectively. A later authentic run emitted live windows: `$CBC6` matches retail candidates, but `$45C3` does not match the retail image, so the strict wrapper rejected the source report. The same run records `$C852` → `$C85E` `JSR $5039` → `$5039` dispatch; the live target bytes differ from the static candidate. The `drator-row` filter was used, but consumer and BIOS traces reached their caps. Downstream buffer semantics remain unresolved. The complete 129-dispatch
+sidecar contains 102 unique instruction windows under MPR2 `$68`; three
+identity-checked searches found no contiguous 8 KiB match in raw US Track 02
+or Track 19. This bounded negative result does not rule out decoded,
+relocated, mixed-source, or runtime-written code. A separate authentic
+`$23AD` output matched 0/102 windows in a cross-capture comparison. The
+reference wrapper already has an all-writer hook for physical `$0D0000–$0D1FFF`,
+and the C852 reference trace now uses schema v3 with a per-run capture ID.
+The wrapper receipt binds both sidecars by hash and confirms the full page
+range and completeness; a fresh authentic capture is still needed. See the [runtime-page source scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
+A separate authentic JP state-only `$3879` trace also reached its 8,192-row cap before `$C852`; it recorded JP `$C85E` as opcode `$A6` at physical `$0D285E` and no `$5039` execution. This does not establish the US caller path. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
+
 Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture
@@ -45,6 +88,19 @@ readiness](../theron/THERON_CAPTURE_READINESS.md), and the
 [Theron TODO](../../TODO-theron.md). DMWeb's original edition/manual
 references and Greatstone SCK's extraction corpus inform provenance and media
 handling.
+
+**JP Akutuba source-map analysis (2026-11-01):** the authentic JP Rev. 1
+Track 02 descriptor and four raw tile arrays occupy file sector 308. The
+identity-gated planner can dump the four arrays as raw grids and report
+descriptor values, but deliberately does not assign meaning to the two
+unknown fields or tile values, choose the runtime map, or infer renderer
+behavior. An offline scan also found the complete descriptor-and-map source
+span in an authentic JP `.mc0` state at inflated offset `0x6633b`. The
+source-locked Mednafen 1.32.1 inspector maps it to HuC CD-RAM page `$74`
+(physical `$0E891D`); the saved MPRs do not select that page. Because all four
+arrays are present, this does not identify the active map or its consumer. See
+the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
@@ -161,7 +217,13 @@ The full Theron CTest selection is now green on an external temporary volume:
 with the local authenticated VRAM/VCE, Main-RAM, and CD-state fixtures. Six
 tests remain expected skips when those local fixtures are absent. This closes
 the test-environment blocker, not the semantic one: no game-owned dungeon
-handoff, spawn consumer, or RNG window is admitted yet.
+handoff, runtime spawn consumer, or RNG window is admitted yet. Authenticated
+US/JP raw BINs and complete ISO projections now admit the same source spawn
+records. In each region, the first five pointer records resolve through their
+source-relative offsets to the five regular-spawn zone records in order; the
+last three pointers have zero offsets. This static link does not establish
+runtime pointer selection, category behavior, or creature spawning. Details
+are in the [projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ---
 
@@ -169,10 +231,13 @@ handoff, spawn consumer, or RNG window is admitted yet.
 
 Theron's Quest's disc has **no ISO-9660 filesystem** on the data track that
 the game itself reads at runtime — the boot chain is a record-based System
-Card access pattern, not a mounted filesystem walk. (Some redumps additionally
-carry an ISO-9660 wrapper used only by external tooling; Firestaff treats
-that as a separate media variant, `THERON_TRACK02_VARIANT_*_ISO`, distinct
-from the raw BIN.)
+Card access pattern, not a mounted filesystem walk. Some supplied files are
+MODE1/2048 ISO projections used by external tools; they are not the PC Engine
+runtime disc layout. Firestaff admits them only through separate full-image
+hash checks. The authenticated US and JP projections preserve the spawn
+pointer and zone records at pregap-normalized offsets, and those records are
+checked against their regional raw BINs. See the
+[spawn-record projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ### Boot chain (from `theron_v1_track02.h`, `theron_v1_stage2_runtime_handoff.h`, `theron_v1_stage3_irq2_dispatch.h`)
 

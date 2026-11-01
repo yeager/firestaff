@@ -1,6 +1,8 @@
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -196,6 +196,30 @@
+@@ -202,10 +202,34 @@
+                                          uint32 instruction_physical_pc,
+                                          uint8 instruction_opcode,
                                           uint8 reader_a, uint8 reader_x, uint8 reader_y,
                                           uint8 reader_sp, uint8 reader_p)
  {
@@ -28,6 +30,8 @@
 +   fflush(TheronPCECDE009DestinationConsumerTrace);
 +  }
 + }
-  bool spawn_consumer_probe =
-   logical_address == 0x5d64 || logical_address == 0x5d6a ||
-   (reader_pc >= 0xc96b && reader_pc <= 0xca69) ||
+  const bool drator_row_filter =
+   !strcmp(TheronPCECDSpawnConsumerPCFilter(), "drator-row");
+  bool spawn_consumer_probe = drator_row_filter
+   ? (physical_address >= 0x1f093b && physical_address <= 0x1f093d &&
+      ((reader_pc == 0xcbc9 && reader_physical_pc == 0x0dabc9) ||

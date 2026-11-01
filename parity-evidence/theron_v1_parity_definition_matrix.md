@@ -1,5 +1,9 @@
 # Theron's Quest V1 Parity Definition Matrix
 
+> Current implementation status and evidence are summarized in
+> [`docs/theron/THERON_CAPTURE_READINESS.md`](../docs/theron/THERON_CAPTURE_READINESS.md).
+> This matrix defines acceptance criteria; it is not a current-route report.
+
 ## Target
 
 Theron's Quest (PC Engine CD-ROM², 1992) — US and JP releases.
@@ -44,7 +48,7 @@ No reference source code exists. Parity is established through:
 | Stage-2 contiguous entry path | PROVEN | 0xB5 bytes ($4000-$40B4) fully bound |
 | System Card status callback byte | PROVEN | Authentic JP cold trace: `$1800=$C8`, `$1801=$04`, callback writes `$2259=$04`; [source-locked r5 trace](../docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) |
 | BIOS continuation after callback | PROVEN | `$E162` reads `$2259=$04`; `$E166->$E176` |
-| RUN reaches game-owned code | OPEN | No `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff in this capture |
+| Original cold RUN reaches game-owned code | OPEN | The cited JP System Card capture follows `$E166->$E176`, but has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff. This original-emulator gate is separate from Firestaff's native JP fresh-start and US Continue routes, which reach loaded dungeons. |
 
 ### 2. Command Dispatcher
 
@@ -114,7 +118,7 @@ No reference source code exists. Parity is established through:
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Track 01 CDDA handoff | PROVEN | `theron_v1_track01_cdda_handoff_from_verified_media` |
-| CD audio availability check | PROVEN | 19-track layout verified, OGG fallback |
+| CUE audio-source admission | PROVEN | 19-track layout and CUE-declared same-stem WAV-to-OGG substitutions are verified; OGG cannot replace missing Track 02 data. This is media admission, not CD-DA or ADPCM playback parity. |
 | ADPCM bank anchors (3) | PROVEN | US/JP offset pairs in Track 02 BIN |
 | Audio trigger mapping | PARTIAL | Static System Card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY. This proves call-site classification only, not a runtime event-to-sample owner. |
 | CD_PLAY track map | PROVEN | 2 code-region CD_PLAY sites (sectors 1224, 3095), both load track $0E via LDA #$0E → STA $FF; 4 data false positives filtered |
@@ -140,7 +144,7 @@ same rules; those retail consumers are listed separately.
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Original controller poll and state-latch update | PARTIAL | JP runtime trace follows `$44D2` through `$D32F` and observes UP storing `$10` to `$2912`; seven identical Track 02 source candidates per edition remain unjoined to the running bank |
-| Accepted directional action and party-position update | OPEN | The bounded authentic replay proves controller polling and a RAM latch change only; no accepted movement, coordinate write, visible action, or transition is verified |
+| Accepted directional action and party-position update | OPEN | Matched state-only PCE Fast runs show repeatable Button II+UP-conditioned TII transfers into candidate `$2040/$2041` bytes and a repeated instruction path into `$C1FC`; source analysis also associates that TII with teleporter destination copying. The active map, tested-field meaning, caller role, accepted movement, collision result, visible action, cold handoff, and transition remain unverified |
 | Firestaff host progression API determinism | PROVEN | `theron_v1_dungeon_progression`; host state-machine contract only |
 | Retail campaign progression, relic collection and between-dungeon transition semantics | PARTIAL | Six campaign bits and ordinal transport have bounded source evidence; original pickup/T900, stairs, exits and arrival semantics remain open |
 | Firestaff fixture/compatibility combat model | PROVEN | Host mechanics tests and fail-closed production gates; not original-game combat parity |

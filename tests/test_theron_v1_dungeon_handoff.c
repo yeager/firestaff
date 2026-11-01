@@ -15,7 +15,7 @@ static int failures;
 
 enum {
     RAW_SECTOR_BYTES = THERON_V1_TRACK02_RAW_SECTOR_BYTES,
-    JP_ZERO_STUB_BYTES = 149u * THERON_V1_TRACK02_MODE1_USER_DATA_BYTES,
+    JP_EMPTY_TAIL_BYTES = 149u * THERON_V1_TRACK02_MODE1_USER_DATA_BYTES,
     US_CANDIDATE_OFFSET = 0x7015b4u,
     US_DESCRIPTOR_OFFSET = 0x710904u,
     RAW_BYTES = ((US_DESCRIPTOR_OFFSET + 18u + RAW_SECTOR_BYTES - 1u) /
@@ -240,19 +240,6 @@ int main(void) {
     facts.track02_md5 = "00000000000000000000000000000000";
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
 
-    /* This exact zero-filled 149-sector span models the known legacy stub
-     * only as a negative control; it is never positive gameplay input. */
-    CHECK(theron_v1_track02_raw_bytes_match_md5(
-        raw, JP_ZERO_STUB_BYTES, "397039af02d50d15c70b74088eb8a1cb"));
-    memset(&iso_facts, 0, sizeof(iso_facts));
-    iso_facts.jp_cue_iso_track02 = raw;
-    iso_facts.jp_cue_iso_track02_bytes = JP_ZERO_STUB_BYTES;
-    iso_facts.track02_md5 = "397039af02d50d15c70b74088eb8a1cb";
-    CHECK(!theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
-        &iso_facts, &receipt));
-    CHECK(!receipt.selected && !receipt.iso_track02_md5_verified &&
-          !receipt.raw_track02_md5_verified);
-
     /* The existing raw-BIN route remains independent from the ISO projection. */
     real_track02_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     real_track02 = read_raw_track02(real_track02_path, &real_track02_bytes);
@@ -315,6 +302,23 @@ int main(void) {
                 &projection_bytes, &invalid_jp_source);
         if (projection) {
             unsigned char *tampered = malloc(projection_bytes);
+            const unsigned char *authentic_empty_tail = NULL;
+            CHECK(projection_bytes >= JP_EMPTY_TAIL_BYTES);
+            if (projection_bytes >= JP_EMPTY_TAIL_BYTES) {
+                authentic_empty_tail = projection +
+                    projection_bytes - JP_EMPTY_TAIL_BYTES;
+                CHECK(theron_v1_track02_raw_bytes_match_md5(
+                    authentic_empty_tail, JP_EMPTY_TAIL_BYTES,
+                    "397039af02d50d15c70b74088eb8a1cb"));
+                memset(&iso_facts, 0, sizeof(iso_facts));
+                iso_facts.jp_cue_iso_track02 = authentic_empty_tail;
+                iso_facts.jp_cue_iso_track02_bytes = JP_EMPTY_TAIL_BYTES;
+                iso_facts.track02_md5 = "397039af02d50d15c70b74088eb8a1cb";
+                CHECK(!theron_v1_dungeon_handoff_select_initial_level_jp_cue_iso(
+                    &iso_facts, &receipt));
+                CHECK(!receipt.selected && !receipt.iso_track02_md5_verified &&
+                      !receipt.raw_track02_md5_verified);
+            }
             iso_facts.jp_cue_iso_track02 = projection;
             iso_facts.jp_cue_iso_track02_bytes = projection_bytes;
             iso_facts.track02_md5 = "ceb02343868f80cec899e9b239aff2da";

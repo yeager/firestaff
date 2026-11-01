@@ -269,18 +269,19 @@ coverage**, not registry correctness.
 
 | Variant | Track02 ISO/BIN | OGG audio | Notes |
 |---|---|---|---|
-| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons; retail page lists bar code `4 988002 247950`, ¥8200 price, 142x125x10 mm package, booklet/back-card/spine-card/CD scans; edition page lists JP redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and JP tracks 01/03-18 with Track 17 static noise from 1:04 |
+| JP Track 02 (`TQJP19.iso` + `TQJP02End.iso`) | ✅ authentic 6,596,608-byte ISO projection, MD5 `62a39bbf43415c9739c41c2481080a49` | ✅ 19 tracks | The 6,291,456-byte prefix and authentic 305,152-byte empty suffix concatenate byte-for-byte to the MODE1/2048 projection of hash-verified `TQJP02.bin`; native intake verifies both component hashes and the complete-image hash. The suffix alone is incomplete and rejected. DMWeb identifies the release as 1992-09-18 and the game as seven small dungeons; its edition page lists JP redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and JP tracks 01/03-18 with Track 17 static noise from 1:04. |
 | US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version; retail page lists bar code `0 92218 00178 8`, 142x125x10 mm package, box hook-back, booklet/back-card/CD scans; edition page lists USA redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and the fixed shorter Track 17 |
 
 ### Theron acquisition gaps
 
-1. **Savegame imports** — Theron's 7 dungeons each have a separate
-   save. We have no cross-slot import/export test data, and there
-   is no fan-curated cross-slot save pack for PC Engine Theron.
-   This blocks Tier 1 #6 "Save/import cross-slot." DMWeb's overview
-   reinforces the boundary: the game saves only between dungeons,
-   Theron's companions lose skills/items after each dungeon, and
-   Theron keeps skills/statistics but loses items.
+1. **Authentic save corpus** — native US Continue is verified against
+   authentic Track 02 and matching Ak-Tu-Ba-complete BRAM, and the authentic
+   empty JP BRAM is rejected. Positive JP progress save/Continue and broader
+   original BRAM round-trips remain unverified. A community `.srm` Save Disk
+   image would help investigate that separate format, but it is not a
+   substitute for in-game BRAM or Firestaff `.tqsv` data. DMWeb's overview
+   describes between-dungeon saves and the game's different companion/item
+   persistence rules.
 2. **US Track 02 cue sheet + subtrack offsets** — the OGGs are
    extracted but we lack the cue sheet / subtrack index for
    in-game music routing. Manual authoring from the redump PCE

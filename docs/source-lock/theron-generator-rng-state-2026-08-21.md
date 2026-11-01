@@ -312,21 +312,29 @@ ad3b2985b5ad3c2985b6ad3d2985b4a5b4186902290385bb20f851
 
 The routine copies working-row offsets 6 and 7 from `$293b/$293c` to `$b5/$b6`
 and ends by calling `JSR $51f8`. It copies offset 8 from `$293d` to `$b4`,
-adds two, masks with `$03` and stores the result in `$bb`. The bytes therefore
-prove those copies and the low-two-bit transform, but this span alone does not
-prove that `$b5/$b6` are map-local X/Y or that `$bb` is direction. In the
-captured row the retained values are byte 6 = 17, byte 7 = 3, byte 8 = 8 and
-the transformed low-two-bit value = 0.
+adds two, masks with `$03` and stores the result in `$bb`. For the captured
+row, byte 8 is `8`, so this sequence computes `(8 + 2) & 3 = 2`. The bytes
+therefore prove those copies and the low-two-bit transform, but this span alone
+does not prove that `$b5/$b6` are map-local X/Y or that `$bb` is direction. In
+the captured row the retained values are byte 6 = 17, byte 7 = 3, byte 8 = 8
+and the transformed value = 2.
 
 The materialization receipt requires the exact logical address, raw offset and
 source bytes as provenance, but keeps the row bytes opaque. A changed source
 byte or file offset closes the gate. This is a static source join against the
-same authenticated retail BIN. The research probe in
+same authenticated retail BIN. A later same-session capture proves that the
+generated row's physical bytes at `$1f093b-$1f093d` are written and read by PC
+`$cbc9`, and that PC `$45c3` later copies ten bytes into a work buffer. However,
+the observed runtime `$c852` code-window source is mapped by the later
+512-byte follow-up to raw offset `$a3ad2`, distinct from this static span. The
+newer trace does not prove that runtime `$c852` is the consumer described here
+or consumes this generated row. The research probe in
 `work/theron-drator-generated-working-consumers-v7/` did not observe `$c852`
-consume this exact generated row during the captured session. Accordingly the
+consume this exact generated row during its captured session. The static
 receipt proves a byte-copy transform only; it does not publish coordinates or
 direction. The row's type, HP and timer ownership remain unproven and are not
-materialized.
+materialized. See the [2026-10-31 cold follow-up](theron-us-drator-c852-cold-capture-20261031.md)
+for the dynamic observations and source-candidate boundary.
 
 ## Post-event bank-dispatch trace
 
@@ -353,8 +361,10 @@ lookup and bank-dispatch work before the later row-publication boundary; the
 limit expires before publication. It also observes logical `$c852` at
 physical `$0dc852` early in the transaction. That is a different bank from
 the source occurrence at raw `$a1612` used for the static position-field
-receipt. Logical address equality alone is therefore explicitly insufficient
-for a same-session consumer claim. The next probe must arm nearer the later
+receipt. Logical address equality alone is insufficient for source attribution.
+The 2026-10-31 512-byte follow-up maps this runtime code window to raw `$a3ad2`.
+A separate byte-level row write/read join is established, but this does not
+prove that `$c852` consumes that row. The next probe must arm nearer the later
 `$47b7` object-key write and retain physical PC/MPR identity.
 
 The focused follow-up arms at the generated object-key write `$47b7`

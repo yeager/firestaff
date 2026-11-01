@@ -9,6 +9,7 @@
 
 #include "theron_v1_track02_raw_media_intake.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_dungeon_handoff.h"
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 
@@ -33,6 +34,150 @@ static const char *find_standard_us_bin(void) {
     if (!file) return NULL;
     fclose(file);
     return path;
+}
+
+static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+
+    if (out_size) *out_size = 0u;
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) < 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)length ? (size_t)length : 1u);
+    if (!bytes) {
+        fclose(file);
+        return NULL;
+    }
+    if ((size_t)length != 0u &&
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    if (fclose(file) != 0) {
+        free(bytes);
+        return NULL;
+    }
+    *out_size = (size_t)length;
+    return bytes;
+}
+
+static void test_authentic_jp_split_track02_projection(void) {
+    const char *home = getenv("HOME");
+    const char *raw_override = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+    const char *tail_override = getenv("FIRESTAFF_THERON_JP_STUB_ISO");
+    char raw_path[1024];
+    char prefix_path[1024];
+    char tail_path[1024];
+    size_t raw_size = 0u;
+    size_t prefix_size = 0u;
+    size_t tail_size = 0u;
+    uint8_t *raw = NULL;
+    uint8_t *prefix = NULL;
+    uint8_t *tail = NULL;
+    uint8_t *projection = NULL;
+    const size_t raw_sector_size = 2352u;
+    const size_t user_data_size = 2048u;
+    const size_t raw_sector_count = 3445u;
+    const size_t cue_index01_sector = 224u;
+    const size_t prefix_sector_count = 3072u;
+    const size_t tail_sector_count = 149u;
+    const size_t projection_sector_count = raw_sector_count - cue_index01_sector;
+    const size_t projection_size = projection_sector_count * user_data_size;
+
+    if (raw_override && raw_override[0]) {
+        if (snprintf(raw_path, sizeof(raw_path), "%s", raw_override) >=
+            (int)sizeof(raw_path)) {
+            CHECK(0);
+            return;
+        }
+    } else if (!home || !home[0] ||
+               snprintf(raw_path, sizeof(raw_path),
+                        "%s/.firestaff/data/theron/TQJP02.bin", home) >=
+                   (int)sizeof(raw_path)) {
+        puts("SKIP: authentic JP Track 02 raw source path unavailable");
+        return;
+    }
+
+    if (!home || !home[0] ||
+        snprintf(prefix_path, sizeof(prefix_path),
+                 "%s/.firestaff/data/theron/TQJP19.iso", home) >=
+            (int)sizeof(prefix_path)) {
+        puts("SKIP: JP Track 02 prefix projection path unavailable");
+        return;
+    }
+
+    if (tail_override && tail_override[0]) {
+        if (snprintf(tail_path, sizeof(tail_path), "%s", tail_override) >=
+            (int)sizeof(tail_path)) {
+            CHECK(0);
+            return;
+        }
+    } else if (!home || !home[0] ||
+               snprintf(tail_path, sizeof(tail_path),
+                        "%s/.firestaff/data/theron/TQJP02End.iso", home) >=
+                   (int)sizeof(tail_path)) {
+        puts("SKIP: JP 149-sector suffix projection path unavailable");
+        return;
+    }
+
+    raw = read_file_bytes(raw_path, &raw_size);
+    prefix = read_file_bytes(prefix_path, &prefix_size);
+    tail = read_file_bytes(tail_path, &tail_size);
+    if (!raw || !prefix || !tail) {
+        puts("SKIP: authentic JP raw track or split projection unavailable");
+        goto done;
+    }
+
+    CHECK(raw_size == raw_sector_count * raw_sector_size);
+    CHECK(prefix_size == prefix_sector_count * user_data_size);
+    CHECK(tail_size == tail_sector_count * user_data_size);
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        raw, raw_size, THERON_TRACK02_MD5_JP_BIN));
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        prefix, prefix_size, "f9f069a5e489b91207f3156059b756f1"));
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        tail, tail_size, THERON_TRACK02_MD5_JP_REV1_ISO));
+    if (raw_size != raw_sector_count * raw_sector_size ||
+        prefix_size != prefix_sector_count * user_data_size ||
+        tail_size != tail_sector_count * user_data_size) goto done;
+
+    projection = (uint8_t *)malloc(projection_size);
+    CHECK(projection != NULL);
+    if (!projection) goto done;
+    for (size_t i = 0u; i < projection_sector_count; ++i) {
+        const uint8_t *sector = raw +
+            (cue_index01_sector + i) * raw_sector_size;
+        CHECK(sector[0] == 0u && sector[11] == 0u && sector[15] == 1u);
+        for (size_t sync = 1u; sync <= 10u; ++sync)
+            CHECK(sector[sync] == 0xffu);
+        memcpy(projection + i * user_data_size,
+               sector + 16u, user_data_size);
+    }
+    CHECK(projection_size == prefix_size + tail_size);
+    CHECK(memcmp(projection, prefix, prefix_size) == 0);
+    CHECK(memcmp(projection + prefix_size, tail, tail_size) == 0);
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        projection, projection_size, THERON_V1_TRACK02_MD5_JP_CUE_ISO));
+    if (memcmp(projection, prefix, prefix_size) == 0 &&
+        memcmp(projection + prefix_size, tail, tail_size) == 0) {
+        printf("verified authentic JP Track 02 projection: TQJP19.iso "
+               "matches the first %zu sectors and TQJP02End.iso matches "
+               "the empty %zu-sector suffix of TQJP02.bin; full MD5=%s\n",
+               prefix_sector_count, tail_sector_count,
+               THERON_V1_TRACK02_MD5_JP_CUE_ISO);
+    }
+
+done:
+    free(projection);
+    free(tail);
+    free(prefix);
+    free(raw);
 }
 
 static const char *find_real_us_cue(void) {
@@ -150,18 +295,15 @@ static void test_real_jp_cue_path(void) {
         CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_BIN));
         CHECK(strstr(receipt.payload_path, "(Track 02).bin") != NULL);
     } else {
-        CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
-              strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0);
-        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
-        CHECK(receipt.failure_reason ==
-              THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
+        CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
         CHECK(receipt.cue_consumed && receipt.mode1_2048 && !receipt.mode1_2352);
-        CHECK(receipt.payload_bytes == 305152u);
-        CHECK(receipt.sector_count == 149u);
-        CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO));
-        CHECK(strstr(receipt.payload_path, "TQJP02End.iso") != NULL);
-        /* This is an older zero-filled edition, not the separate full JP
-         * Track 02 ISO recovered from a different CUE/archive source. */
+        CHECK(receipt.payload_bytes == 6596608u);
+        CHECK(receipt.sector_count == 3221u);
+        CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_ISO));
+        CHECK(strstr(receipt.payload_path, "TQJP02-") != NULL);
+        /* The authentic empty suffix is launchable as part of the exact
+         * hash-verified prefix+tail projection. */
     }
 #endif
 }
@@ -469,19 +611,17 @@ int main(void) {
                 fclose(jp);
                 CHECK(theron_v1_track02_raw_media_intake_discover(
                     jp_iso, &receipt));
-                CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
-                CHECK(receipt.failure_reason ==
-                      THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
+                CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
                 CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
-                CHECK(!strcmp(receipt.track02_md5,
-                              THERON_TRACK02_MD5_JP_REV1_ISO));
-                CHECK(receipt.payload_bytes == 305152u);
+                CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_ISO));
+                CHECK(receipt.payload_bytes == 6596608u);
             }
         }
     }
     test_real_us_cue_path();
     test_real_split_us_cue_path();
     test_real_jp_cue_path();
+    test_authentic_jp_split_track02_projection();
     test_authentic_rar_virtual_iso();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }

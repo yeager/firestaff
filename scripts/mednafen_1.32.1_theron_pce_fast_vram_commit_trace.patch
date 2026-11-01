@@ -9,7 +9,7 @@
  #include "huc.h"
  #include "pcecd.h"
  #include <mednafen/cputest/cputest.h>
-@@ -54,0 +57,172 @@
+@@ -54,0 +57,215 @@
 +/* Optional PCE Fast capture-only trace.  The hook observes committed CPU
 + * VWR words in Mednafen 1.32.1 src/pce_fast/vdc.cpp::VDC_Write(), after
 + * VRAM[MAWR] is assigned and before MAWR advances (upstream line 572).  It
@@ -20,6 +20,10 @@
 +static bool TheronPCEFastVRAMCommitInitialized;
 +static bool TheronPCEFastVRAMCommitDisabled;
 +static bool TheronPCEFastVRAMCommitStartAtTrack02;
++static bool TheronPCEFastVRAMCommitStartAtInput;
++static uint16 TheronPCEFastVRAMCommitInputPC;
++static uint16 TheronPCEFastVRAMCommitInputRaw;
++static bool TheronPCEFastVRAMCommitInputModeInitialized;
 +extern uint32 TheronTraceCDSharedEventSequence;
 +extern bool TheronTracePCEFastVWRTraceGateOpen;
 +
@@ -38,6 +42,28 @@
 + }
 +}
 +
++static void TheronPCEFastVRAMCommitInputModeInit(void)
++{
++ if(TheronPCEFastVRAMCommitInputModeInitialized)
++  return;
++ TheronPCEFastVRAMCommitInputModeInitialized = true;
++ const char *input_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_INPUT");
++ if(input_mode && *input_mode)
++ {
++  char *separator = NULL;
++  const unsigned long input_pc = strtoul(input_mode, &separator, 16);
++  char *raw_end = NULL;
++  const unsigned long input_raw = separator && *separator == ':' ? strtoul(separator + 1, &raw_end, 16) : 0x10000;
++  if(separator && separator != input_mode && separator == input_mode + 4 &&
++     raw_end && raw_end != separator + 1 && !*raw_end && input_pc <= 0xFFFF && input_raw <= 0xFFFF)
++  {
++   TheronPCEFastVRAMCommitStartAtInput = true;
++   TheronPCEFastVRAMCommitInputPC = (uint16)input_pc;
++   TheronPCEFastVRAMCommitInputRaw = (uint16)input_raw;
++  }
++ }
++}
++
 +static void TheronTracePCEFastVRAMCommit(int chip, uint32 display_counter,
 +                                         uint16 address, uint16 value)
 +{
@@ -51,6 +77,7 @@
 +  const char *start_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02");
 +  TheronPCEFastVRAMCommitInitialized = true;
 +  TheronPCEFastVRAMCommitStartAtTrack02 = start_mode && start_mode[0] == '1' && !start_mode[1];
++  TheronPCEFastVRAMCommitInputModeInit();
 +  if(limit_text && *limit_text)
 +  {
 +   char *end = NULL;
@@ -69,7 +96,11 @@
 +   TheronPCEFastVRAMCommitDisabled = true;
 +   return;
 +  }
-+  fputs(TheronPCEFastVRAMCommitStartAtTrack02 ?
++  fputs(TheronPCEFastVRAMCommitStartAtInput ?
++        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
++        "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-controller-read-pc-raw-match\n" :
++        TheronPCEFastVRAMCommitStartAtTrack02 ?
 +        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4\n"
 +        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
 +        "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read\n" :
@@ -83,6 +114,9 @@
 + const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 + if(TheronPCEFastVRAMCommitStartAtTrack02 &&
++    !TheronTracePCEFastVWRTraceGateOpen)
++  return;
++ if(TheronPCEFastVRAMCommitStartAtInput &&
 +    !TheronTracePCEFastVWRTraceGateOpen)
 +  return;
 + uint8 code_bytes[8];
@@ -114,6 +148,15 @@
 +  return;
 + }
 + TheronPCEFastVRAMCommitCount++;
++}
++
++void TheronTracePCEFastVWRControllerRead(uint16 logical_pc, uint16 raw_value)
++{
++ TheronPCEFastVRAMCommitInputModeInit();
++ if(!TheronPCEFastVRAMCommitDisabled && TheronPCEFastVRAMCommitStartAtInput &&
++    logical_pc == TheronPCEFastVRAMCommitInputPC &&
++    raw_value == TheronPCEFastVRAMCommitInputRaw)
++  TheronTracePCEFastVWRTraceGateOpen = true;
 +}
 +
 +/* Capture HuC6260 color-table data writes with the same shared ordering as

@@ -69,6 +69,21 @@ def main() -> None:
         "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
         "missing_addresses": len(verifier.ADDRESSES) - 3,
     }
+    assert verifier.verify_lines(iter(rows), image) == {
+        "rows": 4, "reads": 2, "writes": 2, "addresses": 3,
+        "missing_addresses": len(verifier.ADDRESSES) - 3,
+    }
+    filtered_rows = [
+        verifier.FILTERED_HEADER,
+        make_row(0, 51, "read", 0x1801, 0xEA4D),
+        make_row(1, 55, "write", 0x2259, 0xEA50),
+        make_row(2, 60, "read", 0x2259, 0xE162),
+    ]
+    assert verifier.verify_lines(filtered_rows, image)["rows"] == 3
+    must_reject(
+        [verifier.FILTERED_HEADER, make_row(0, 51, "read", 0x1801, 0xE900)],
+        image, "source-locked PC filter", "outside the declared source-locked filter",
+    )
     valid = make_row(0, 30, "write", 0x224C, 0xEC05)
     must_reject(
         [verifier.HEADER, valid.replace("logical_address=224c", "logical_address=224b")],
@@ -96,7 +111,7 @@ def main() -> None:
         make_row(1, 37, "read", 0x22A4, 0xE95E).replace("event_sequence=37", "event_sequence=29"),
     ], image, "event order", "non-increasing shared event sequence")
     must_reject(
-        [verifier.HEADER, valid, "io_ram_truncated cap=524288"],
+        [verifier.HEADER, valid, "io_ram_truncated cap=8388608"],
         image, "truncation", "truncation marker disagrees with row count",
     )
     original_cap = verifier.CAP

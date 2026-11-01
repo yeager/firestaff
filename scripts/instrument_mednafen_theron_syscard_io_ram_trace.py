@@ -15,7 +15,9 @@ if text.count(read_marker) != 1 or text.count(write_marker) != 1:
 if "FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE" in text:
     raise SystemExit("FAIL: System Card I/O/RAM trace is already instrumented")
 
-helper = r'''extern uint32 TheronTraceCDSharedEventSequence;
+helper = r'''#include <string.h>
+
+extern uint32 TheronTraceCDSharedEventSequence;
 extern uint16 TheronTraceInstructionPC;
 extern uint32 TheronTraceInstructionPhysicalPC;
 
@@ -29,33 +31,42 @@ static void TheronTraceSystemCardIoRam(const char *access,
  static bool attempted = false;
  static bool truncated = false;
  static unsigned int rows = 0;
+ static bool filter_enabled = false;
+ static bool run_path_filter = false;
  if(!attempted)
  {
   const char *path = getenv("FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE");
+  const char *pc_filter = getenv("FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER");
+  filter_enabled = pc_filter && *pc_filter && strcmp(pc_filter, "none");
+  run_path_filter = filter_enabled && !strcmp(pc_filter, "run-path");
   attempted = true;
   if(path && *path)
   {
    trace = fopen(path, "w");
    if(trace)
    {
-    fputs("source=mednafen-pce-fast-system-card-io-ram-v1 event_sequence_source=TheronTraceCDSharedEventSequence limit=524288 logical_ranges=1800-1803,224c-2255,2273-2280,22a4\n", trace);
+    fprintf(trace, "source=mednafen-pce-fast-system-card-io-ram-v2 event_sequence_source=TheronTraceCDSharedEventSequence limit=8388608 pc_filter=%s logical_ranges=1800-1803,224c-2255,2259,2273-2280,22a4\n",
+            !filter_enabled ? "none" : run_path_filter ? "run-path" : "invalid");
     fflush(trace);
    }
   }
  }
  if(!trace || truncated ||
     !((logical >= 0x1800 && logical <= 0x1803) ||
-      (logical >= 0x224C && logical <= 0x2255) ||
+      (logical >= 0x224C && logical <= 0x2255) || logical == 0x2259 ||
       (logical >= 0x2273 && logical <= 0x2280) || logical == 0x22A4))
   return;
- if(rows >= 524288)
+ const uint16 pc = TheronTraceInstructionPC;
+ if(filter_enabled &&
+    (!run_path_filter || (pc != 0xEA4D && pc != 0xEA50 && pc != 0xE162)))
+  return;
+ if(rows >= 8388608)
  {
-  fputs("io_ram_truncated cap=524288\n", trace);
+  fputs("io_ram_truncated cap=8388608\n", trace);
   fflush(trace);
   truncated = true;
   return;
  }
- const unsigned int pc = TheronTraceInstructionPC;
  const unsigned int pc_slot = (pc >> 13) & 7;
  uint8 code_bytes[4] = {0, 0, 0, 0};
  uint32 code_physical_bytes[4] = {0, 0, 0, 0};
@@ -109,7 +120,7 @@ read_call = read_match.group(0)
 read_log = (
     read_call
     + f'\n{read_indent}if((A >= 0x1800 && A <= 0x1803) || '
-      '(A >= 0x224C && A <= 0x2255) || '
+      '(A >= 0x224C && A <= 0x2255) || A == 0x2259 || '
       '(A >= 0x2273 && A <= 0x2280) || A == 0x22A4)\n'
     + f'{read_indent} TheronTraceSystemCardIoRam("read", A & 0xFFFF, wmpr, '
       f'{read_physical.strip()}, {read_value});'
@@ -131,7 +142,7 @@ write_call = write_match.group(0)
 write_log = (
     write_call
     + f'\n{write_indent}if((A >= 0x1800 && A <= 0x1803) || '
-      '(A >= 0x224C && A <= 0x2255) || '
+      '(A >= 0x224C && A <= 0x2255) || A == 0x2259 || '
       '(A >= 0x2273 && A <= 0x2280) || A == 0x22A4)\n'
     + f'{write_indent} TheronTraceSystemCardIoRam("write", A & 0xFFFF, wmpr, '
       f'{write_physical.strip()}, V);'

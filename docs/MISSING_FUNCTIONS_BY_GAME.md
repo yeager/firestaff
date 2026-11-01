@@ -1,7 +1,11 @@
 # Missing Functions and Verification by Game
 
-Status: 2026-08-27. This is a summary of Firestaff's remaining gaps, not a
+Status: 2026-11-01. This is a summary of Firestaff's remaining gaps, not a
 list of every historical TODO or symbol name.
+
+For Theron, the current evidence summary is
+[`THERON_CAPTURE_READINESS.md`](theron/THERON_CAPTURE_READINESS.md); dated
+source-lock reports are supporting records, not parallel status pages.
 
 Each item is classified as follows:
 
@@ -216,15 +220,40 @@ evidence.
 Firestaff has bounded native real-media routes for both admitted regions: JP
 fresh start reaches source-verified Ak-Tu-Ba level 0; US Track 02 with matching
 Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises
-movement and item transactions. Source-only loaders cover all seven dungeons
-per region. These results are recorded in the
+movement, champion selection, wait, and US item pickup/reselect/drop through
+the native SDL input loop. USE is dispatched as a command, but authentic door
+and object effects remain fail-closed until the T900 consumer is source-bound.
+Native M11 rejects the authentic empty JP BRAM; positive JP progress
+restoration remains unverified. Source-only loaders cover all seven dungeons
+per region. Authenticated US and JP pointer records 0–4 resolve by their
+source-relative offsets to the five regular-spawn zone records in order;
+pointer records 5–7 have zero offsets. This static source join does not prove
+runtime pointer selection or spawning. These results are recorded in the
 [capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); they do not
 establish complete retail gameplay or visual parity.
 
+A matched three-run JP PCE Fast state-only comparison records Button II+UP
+guest reads followed by repeatable `$C1FC` transfers from `$20B4` to candidate
+bytes `$2040/$2041`; three Button II-only controls retain the prior bytes.
+Source-locked analysis also associates `$C1FC` with copying teleporter
+destination coordinates. A follow-up three-run capture records the same
+128-instruction path through `$C1D6` and into `$C1FC`, but does not source-bind
+the tested fields, establish gameplay purpose, or identify an active-map
+object. It therefore cannot establish that the transfer is player movement.
+Map identity, byte semantics, collision outcome, visible response, cold CD
+handoff and native parity remain open. See the [dynamic instruction-context
+capture](source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+The separate short-format US
+`$44CA/$44DB` trace is still ambiguous because standard-PCE and PCE Fast share
+an instrumentation path and label.
+
 ### Missing Original Data or Verification
 
-- **Save body layout:** SRM/save correlation and the complete body layout are
-  not sufficiently source-locked.
+- **Save body layout:** authentic US BRAM Continue and its bounded campaign and
+  champion fields are verified, and the authentic empty JP BRAM is rejected.
+  Positive JP progress restoration and the complete cross-region BRAM layout
+  are not sufficiently source-locked. The separate community `.srm` Save Disk
+  body remains opaque and must not be conflated with in-game BRAM or `.tqsv`.
 - **Original/Firestaff paired capture:** the shared v2 comparator now requires
   hash-bound authentic-media and `--debug` build receipts per checkpoint, but
   a same-state original-versus-Firestaff image pair and reviewed receipt

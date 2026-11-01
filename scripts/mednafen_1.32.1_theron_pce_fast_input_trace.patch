@@ -7,13 +7,16 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 FIRESTAFF_PATCH_BLANK_CONTEXT
-@@ -40,4 +42,53 @@ static uint8 mouse_index[5];
+@@ -40,4 +42,60 @@ static uint8 mouse_index[5];
  static uint8 sel;
  static uint8 read_index = 0;
 FIRESTAFF_PATCH_BLANK_CONTEXT
 +extern uint16 TheronTraceInstructionPC;
 +extern uint32 TheronTraceInstructionPhysicalPC;
 +extern uint32 TheronTraceCDSharedEventSequence;
++#ifdef FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT
++extern void TheronTracePCEFastVWRControllerRead(uint16 logical_pc, uint16 raw_value);
++#endif
 +extern unsigned TheronPCEFastScriptFrame;
 +extern unsigned TheronPCEFastScriptPort;
 +extern uint16 TheronPCEFastScriptMask;
@@ -51,6 +54,10 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +static void TheronPCEFastInputTraceRead(unsigned int address, uint8 value, int index)
 +{
 + TheronPCEFastInputTraceInit();
++#ifdef FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT
++ if(index >= 0)
++  TheronTracePCEFastVWRControllerRead(TheronTraceInstructionPC, pce_jp_data[index]);
++#endif
 + if(TheronPCEFastInputTrace && TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame && TheronPCEFastInputTraceCount < TheronPCEFastInputTraceLimit)
 + {
 +  const uint32 event_sequence = TheronTraceCDSharedEventSequence++;

@@ -125,11 +125,14 @@ transition receipt SHA-256:
 
 Movement-context v3 rows read and increment
 `TheronTraceCDSharedEventSequence`, a counter shared with the PCE Fast CD and
-memory trace hooks in the instrumented Mednafen build. The PCE Fast
-`pce_input_read` and `scripted_pce_input_apply` records do not include
-`event_sequence` and cannot be ordered against movement-context rows by this
-counter. The selected `input_latch_write` rows emitted by this movement-context
-observer do carry the shared sequence. The
+memory trace hooks in the instrumented Mednafen build. The earlier capture's
+input sidecar lacked `event_sequence`, so those guest reads could not be
+ordered against movement-context rows. The corrected 2026-10-31 PCE Fast hook
+records `event_sequence` on `pce_input_read`; scripted input-apply rows still
+lack it. The new JP comparison therefore orders guest reads against TII
+transfers using the guest-read and movement-context rows. Selected
+`input_latch_write` rows emitted by this observer also carry the shared
+sequence. The
 `build_mednafen_theron_irq2_trace.sh` build pipeline applies
 `mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch` before this
 instrumenter. Source audit points to `src/pce_fast/huc6280.cpp`, `WrMem`
@@ -140,6 +143,37 @@ yield/resume. The counter orders observed hook rows only; disabled hooks,
 untraced instructions, DMA, and other uninstrumented events do not receive
 sequence values. Two hook rows may describe one store and consume adjacent
 values.
+
+## Dynamic instruction context — 2026-10-31
+
+The capture-only observer now retains a 128-record PCE Fast instruction
+window ending at the `$C1FC` target opcode (127 earlier instructions plus the
+target) and flushes it when the candidate TII transfer is observed.
+Three state-only replays from the same authentic JP Akutuba F5 state produced
+identical instruction-context hashes. They show the same bounded control-flow
+path through `$C1D6` (`JSR $C14E`), return to `$C1D9`, and the conditional
+sequence at `$C1E9`–`$C1FA` falling through to `$C1FC`. The dynamic history
+therefore improves on the earlier missing-instruction-context limitation; it
+does not provide a source-level meaning for the checked RAM fields or identify
+the active map/object. See the [control-flow capture](theron-pce-fast-tii-control-flow-20261031.md)
+for exact hashes, instruction rows, and provenance.
+
+This still does not disambiguate the player-movement hypothesis from the
+source-locked Track 02 teleporter-destination path. The capture remains
+state-only, without authenticated cold CD handoff, active-map identity,
+collision/passability evidence, a paired rendered response, or native
+Firestaff parity.
+
+## Follow-up comparison — 2026-10-31
+
+Three authentic-state action replays and three matched controls repeat the
+input-conditioned TII transfers from `$20B4` to candidate `$2040/$2041` after
+Button II+UP guest reads; Button II-only controls preserve the prior bytes.
+This supports a repeatable state-transfer observation, not confirmed
+coordinates, collision outcome, visible movement, or native parity. All six
+captures are state-only and lack authenticated CD-to-RAM provenance. See the
+[review-format comparison bundle](../../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+for per-run hashes and limits.
 
 ## Remaining proof
 

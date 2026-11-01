@@ -21,7 +21,7 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed on 2026-10-31 for the v3.0.421 candidate. The
+The status pages were reviewed on 2026-11-01. The
 latest full five-card authentic-media selection check verified keyboard and
 mouse selection plus default-root handoff for DM1, CSB, DM2, Nexus and Theron.
 Separate real-media runtime checks reached Firestaff gameplay for DM1, CSB,
@@ -49,7 +49,7 @@ The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
 | Chaos Strikes Back | Atari ST, Amiga and FM Towns have bounded real-media runtime routes. FM Towns uses its authenticated entrance palette and MINI.DAT bootstrap state. Amiga F0107 wall ornaments now use source MEDIA720 scales and authentic C696 anchors; matched-frame, palette/light, inscription readability, floor trapdoor, and native-window intro/audio presentation remain open. Campaign and save coverage are also incomplete. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and source-bound MAPD decoding support a bounded render of the five authentic title planes. Firestaff does not yet reproduce the complete native Saturn title or menu. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Full title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Direct native launch bypasses Firestaff's Run menu and System Card; the US Debug probe stops before dungeon loading. Authentic Japanese Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue and exercises bounded movement and item transactions. Source-only loaders verify all seven dungeons in both regions. Cold US reference traces remain without a joined game-owned handoff or runtime CD source read. A separate saved-state run contains 1,354 short-format rows at `$44CA/$44DB` with `raw=0000`, but standard-PCE and PCE Fast instrumentation share a trace path and label, so these are not verified PCE Fast read receipts. Script delivery, action effects, and snapshot changes remain unjoined. The Firestaff-presented capture is nonblack but has no paired retail frame; dynamic viewport binding, broader campaign/save behavior, combat, audio and full parity remain open. |
+| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Direct launch bypasses Firestaff's Run menu and System Card. Authentic JP Track 02 reaches a loaded dungeon through fresh start; authentic US Track 02 plus matching Ak-Tu-Ba-complete BRAM reaches dungeon 2 through Continue. Source-only loaders verify all seven dungeons in both regions. Native SDL regressions cover bounded keyboard and mouse-panel movement, champion selection, wait, and US pickup/reselect/drop. Hash-verified US/JP ISO projections admit the same eight creature-pointer and five regular-spawn zone records as their raw BINs; pointer records 0–4 resolve in order to the five zones, while records 5–7 have zero offsets. This is static source metadata only; runtime pointer selection, JP category semantics, and spawning/RNG remain unverified. An authentic US Drator trace joins writes and reads of generated-row offsets 6–8 and a later ten-byte work-buffer copy. A strict verifier matches constructed 512-byte `$CBC6` and `$45C3` windows against authentic US Track 02 bytes and finds four and three possible raw offsets, respectively; this tooling fixture does not establish a runtime fetch or unique LBA/source occurrence. The `$C852` runtime window is separately source-mapped at raw offset `$A3AD2`. The bounded consumer trace hit its cap after the row reads; route reentry was recorded separately. The BIOS trace was explicitly truncated and the wrapper rejected the capture package. A later authentic JP state-only `$3879` trace hit its 8,192-row cap before `$C852`; an independent first-hit sidecar reported zero `$C852` rows, as expected, and JP `$C85E` was opcode `$A6` at physical `$0D285E` with no `$5039` execution. A later authentic US cold trace records ordered `$C852` → `$C85E` `JSR $5039` → `$5039` dispatch; the live target bytes differ from the static candidate. The wrapper rejected that package because live `$45C3` bytes did not match retail Track 02 and other traces hit their caps. An identity-checked scan found no contiguous 8 KiB page in raw US Track 02 or Track 19 matching the 102 unique MPR2 `$68` instruction windows; a separate authentic `$23AD` output also matched 0/102 windows. The next source join uses the existing all-writer `$0D0000–$0D1FFF` hook. C852 schema v3 and the all-writer trace now carry a per-run capture ID; the wrapper receipt binds their hashes, full-page range and completeness counts. The [runtime-page write verifier](scripts/verify_theron_runtime_page_write_join.py) has nine bounded fixture cases, but no authentic same-session capture has exercised it. It compares each fetched byte with its latest preceding write and does not identify the writer's source data. See the [ordered call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [runtime-page source scan](docs/source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md). The later cold capture used the source-scoped BIOS and Drator-row filters, but still reached trace caps and failed the live `$45C3` source check. Generated-row semantics remain open. The JP Akutuba descriptor and all four source maps are located in raw Track 02 sector 308, and an offline scan found that complete 1,260-byte source span in an authentic JP `.mc0` state at inflated offset `0x6633b` (state SHA-256 `b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`). All four arrays are present, so this does not identify the active map. The source-locked Mednafen 1.32.1 state inspector maps the bytes to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs do not select that page. The state embeds a preview and named VCE/VDC0/VRAM/SAT snapshot data, but no pose-bound consumer is joined. The JP active-map capture requires a same-run join from authenticated Track 02 reads through map selection and a pose-bound tile consumer to atomic VDC/VCE/VRAM state. USE command effects, positive JP save restoration, later campaign play, combat, audio and visual parity remain open. See [Theron capture readiness](docs/theron/THERON_CAPTURE_READINESS.md), the [source-state report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01), and the [active-map capture chain](TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain). |
 
 ### Dungeon Master II: Skullkeep
 
@@ -100,19 +100,26 @@ Up/W moves forward, Down/S moves backward, Left/Right/A/D step sideways, and
 Q/E turn. Home/End and keypad 4/6 are alternate turn keys; keypad 1/3 step,
 8/5 move forward and 2 moves backward. Tab selects the next living member of
 the Soul Room party; G picks up a source-verified item in the facing cell; P
-drops the selected source item on the party square; and U uses a door ahead.
+drops the selected source item on the party square; and U sends a USE command
+for the facing object. Its effect on authentic doors and other objects remains
+unverified.
 
 The native dungeon view also provides a visible 4x3 Firestaff mouse panel.
 Its first two rows click to turn, move and sidestep; the remaining rows select
-the next champion, pick up or select an item, drop or use it, and wait. These
-host controls dispatch the same native Theron actions as the keyboard. They are
-not claimed as original PCE mouse hitboxes: the retail game is controller
+the next champion, pick up or select an item, drop an item or send the USE
+command, and wait. These host controls dispatch the same native Theron input
+commands as the keyboard. They are not claimed as original PCE mouse
+hitboxes: the retail game is controller
 based, so clicks outside the panel are ignored until screen-space target
 semantics are authenticated. Mouse motion only moves the pointer. Mouse button
 2 remains Button II for cancel/back and does not advance a dungeon tick by
 itself. On touch screens, a short touch is Button I and a long touch is Button
 II. The native dungeon presentation still needs a state-driven renderer, so
-working input dispatch alone does not establish visual gameplay parity.
+working input dispatch alone does not establish visual gameplay parity. The
+matched JP PCE Fast `$C1FC` TII trace is input-conditioned state transfer; the
+same instruction is associated with teleporter destination copying, so it
+does not prove player movement. Active-map identity, field meaning, collision
+and visible response remain open. See [Theron capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
 ### Theron's Quest runtime status
 
@@ -124,39 +131,71 @@ Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
 5 rendered/presented frames/s in one interval. A follow-up native Linux Debug
 run on trv2 used Xvfb only as the SDL display and authentic JP Rev. 1 Track 02;
 it reached `theron-runtime`, loaded map 0 and advanced 73 game ticks in 18
-seconds. No emulator ran the game. The latest Firestaff-presented capture is
-nonblack, but has not been paired with an original-emulator capture; original
-graphics-bank binding, palette and dungeon tile mapping are not yet connected
-to a validated renderer. These runs confirm native startup, input
+seconds. No emulator was used for this Firestaff run. The latest
+Firestaff-presented capture is nonblack, but has not been paired with an
+original-emulator capture. The original graphics-bank binding, palette and
+dungeon tile mapping are not yet connected to a validated renderer. These
+runs confirm native startup, input
 and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
 The latest cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
-`$E166->$E176`; no game-owned handoff was observed. This reference trace does
-not change Firestaff's native runtime or prove original title-menu input.
-See the [source-locked trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
+`$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese
+run confirms that holding Button I for four seconds on NEW GAME opens file
+selection, and holding it for four seconds on FILE 1 enters the Akutuba story;
+shorter repeated presses advance to the dungeon. This confirms the Japanese
+title-action timing in the original game, but does not join guest input to an
+authenticated CD-to-RAM transition or establish native timing/parity. See the
+[source-locked title route](docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md)
+and [System Card trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
 The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
 current summary of native runtime and original-reference evidence, including
 the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
-renderer behavior.
+renderer behavior. A separate read-only comparison maps all four US
+Akutuba source arrays into the saved standard-PCE `HuC.SysCardRAM` page
+selected by MPR3. The arrays remain simultaneously resident, so this does not
+identify the active map or prove the older trace's map reads without a
+contemporaneous MPR record. See the [US state map binding report](docs/source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
 
-A newer same-state Japanese movement probe used an Akutuba F5 save facing a
-wall. UP, neutral and DOWN captures kept the same front wall, and the bounded
-position observer recorded no movement. The repeated `$2912` event ordering is
-not causal or movement evidence. Continue with an authentic reachable pose
-before drawing world-tile or renderer conclusions; see the
-[blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
+The Japanese F5 blocked-wall probe (autoload-state SHA-256
+`2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) found
+no candidate position writes for UP, neutral or DOWN. A separate matched
+three-run comparison used the authentic JP Akutuba F5 emulator state with
+SHA-256
+`b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`; it found
+repeatable `$20B4->$2040` TII transfers after Button II+UP reads, while three
+Button II-only controls retained the candidate bytes. A follow-up three-run
+control-flow trace used the first state and records the same 128-instruction
+path into `$C1FC`, including a `$C1D6` call/return and conditional fall-through.
+Source-locked analysis
+also associates the TII with teleporter destination copying; the dynamic path
+does not establish the routine's gameplay purpose or identify the active-map
+object. This is input-conditioned state-transfer evidence, not proof of
+mapped movement, collision semantics, a visible response, or parity. The
+active map and position meaning remain unknown, and the state-only runs lack a
+cold CD handoff. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md)
+and the historical [blocked-wall report](docs/source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
-The latest reference-only Mednafen trace tooling applied in three clean
-patch-only runs, and its instrumented PCE build/install plus focused
-parser/controller checks passed on TRV2. A follow-up cold US capture validates
-all three scripted inputs at System Card controller polls and records one
-`$E009` dispatch. It observes no game-owned poll or runtime CD source-read
-join, so the observation does not change native support status. See the
+The reference-only Mednafen instrumentation chain, including the input-gated
+PCE Fast VRAM trace hook, applied to an isolated source tree and the
+instrumented PCE Fast binary built and installed on TRV2. An authentic JP save
+state loaded, and its guest input trace records scripted UP at `$44C1` with
+port `raw=0010`, while the controller device value is `device_raw=0000`. This
+exposed and fixed a callback mismatch: the gate now receives the guest port
+value. A corrected bounded state capture now validates 4,096 gated VRAM
+commits after that authentic guest read in shared event order. State-only
+mode skips cold System Card checks and reports `transition=missing`. This
+verifies the trace gate and bounded event ordering only; causality, VRAM
+semantics, a visible response, a cold handoff, and renderer parity remain
+open. See the [source-locked trace report](docs/source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+A follow-up cold US capture validates all three scripted inputs at System
+Card controller polls and records one `$E009` dispatch. It observes no
+game-owned poll or runtime CD source-read join, so the observation does not
+change native support status. See the
 [returned-mask capture report](docs/source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
 A separate PCE Fast replay loaded an existing US state and reached input-read
@@ -278,7 +317,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 | CSB | — | Atari ST, Amiga and FM Towns bounded runtime routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn disc/resource parsing and bounded rendering of authentic MAPD title planes | Saturn demo/fan translations | — |
-| Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated | — |
+| Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement-command dispatch; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
 the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for
@@ -414,10 +453,11 @@ Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
 Firestaff's native input path maps Enter to title, stage and Soul Room
 selection actions. These controls have not yet been shown on a rendered
-Theron frame. The mapping does not establish the original game's multi-second
-button-hold timing. For original-menu capture guidance and the current
-unverified hold, see
-[Theron input notes](docs/theron/theron_input.md). The Japanese Rev 1 CUE then
+Theron frame. An authentic Japanese reference capture confirms that four-second
+Button I holds on NEW GAME and FILE 1 advance into the Akutuba story; native
+Firestaff hold-duration parity remains unverified. For the input mapping and
+capture evidence, see [Theron input notes](docs/theron/theron_input.md). The
+Japanese Rev 1 CUE then
 reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 

@@ -32,9 +32,9 @@
  *      - US Track 02 ISO descriptor bytes at 0x1584 (when present).
  *      - All three US raw Track 02 BIN descriptor anchors (when present).
  *      - All three JP raw Track 02 BIN descriptor anchors (when present).
- *      - JP Rev 1 ISO is a zero-filled image; bank-signal returns
- *        INSUFFICIENT_ZERO_IMAGE, so the descriptor-table round-trip is
- *        not asserted.
+ *      - The standalone JP Rev 1 ISO is an authentic empty suffix;
+ *        bank-signal returns INSUFFICIENT_ZERO_IMAGE, so the descriptor-table
+ *        round-trip is not asserted for that incomplete file.
  */
 
 #include "asset_status_m12.h"

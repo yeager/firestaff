@@ -504,12 +504,13 @@ static const M12_NexusExtractedRegionSpec g_nexusExtractedRegions[] = {
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
  * Phase 0 gate PASSED (2026-05-27): CD-ROM Track 02 hashes confirmed from cdromance.org.
  * Data track is Track 02 from CUE/BIN or CUE/ISO disc images. The full JP
- * CUE INDEX 01 projection is tracked separately from the legacy zero stub.
+ * CUE INDEX 01 projection is tracked separately from its authentic 149-sector
+ * empty suffix.
  * JP: MD5 b7afb338ad31be1025b53f9aff12d73a (Track 02 .bin)
  * US: MD5 f23601102138f87c33025877767ebf76 (Track 02 .bin)
  * MyAbandonware TG-CD English/Japanese Rev 1 downloads (page checked 2026-06-03):
  * JP CUE Track 02 ISO:  62a39bbf43415c9739c41c2481080a49
- * JP Rev 1 zero stub:   397039af02d50d15c70b74088eb8a1cb
+ * JP Rev 1 empty suffix: 397039af02d50d15c70b74088eb8a1cb
  * US Track 02 ISO:       ceb02343868f80cec899e9b239aff2da
  * OneDrive: 1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8 (DMFiles/Games folder)
  * Subdir candidates: theron/jp/, theron/us/, theron/ */
@@ -6694,9 +6695,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         if (!md5 || md5[0] == '\0') {
             continue;
         }
-        /* This one specific JP Rev. 1 digest identifies a zero-filled
-         * 149-sector stub, not usable dungeon media. Other JP representations
-         * are independently admitted by their own hashes. */
+        /* This digest identifies only the authentic 149-sector empty suffix,
+         * not a complete launch image. Native intake can combine it with the
+         * exact verified prefix before campaign admission. */
         if (strcmp(gameSpec->gameId, "theron") == 0 &&
             strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
             continue;

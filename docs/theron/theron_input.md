@@ -1,5 +1,13 @@
 # Theron's Quest — Keyboard and Mouse Controls
 
+**Status reviewed 2026-11-01.** These controls describe Firestaff's native
+desktop mapping. SDL regression coverage verifies command dispatch and
+bounded US pickup/reselect/drop; it does not establish full retail input
+semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
+the authentic US and Japanese Rev. 1 input suites. This still does not verify
+world-space clicks or visual parity. See the
+[capture-readiness summary](THERON_CAPTURE_READINESS.md).
+
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts
 both SDL scancodes and keycodes, so W/A/S/D also work on macOS layouts or
@@ -13,14 +21,21 @@ before dungeon loading (`levelLoaded=0`); loaded-dungeon evidence comes from
 the separate JP fresh-start and US Continue routes. See the
 [direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
 The original System Card's cold RUN callback has been traced separately. A
-cold Japanese emulator route now visibly reaches the Akutuba dungeon after a
-four-second RUN hold at the System Card prompt and ordinary short Button I
-menu/story presses. The reported 3–5 second hold on the selected title-menu
-action itself remains untested, and the trace still lacks a confirmed
-game-owned input/loader join. See the
-[capture readiness record](THERON_CAPTURE_READINESS.md).
+cold Japanese emulator route visibly reaches the Akutuba dungeon after a
+four-second RUN hold at the System Card prompt. A separate isolated cold run
+confirmed that a four-second Button I hold on NEW GAME opens file selection,
+and another four-second hold on FILE 1 enters the Akutuba story; twelve
+one-second presses then reach the dungeon. This verifies that JP title-action
+hold in the original game. It does not establish native timing or a joined
+game-owned input/CD-loader receipt. See the
+[source-locked route](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
+and [capture readiness](THERON_CAPTURE_READINESS.md).
 
-## PC Engine button mapping
+## Reference PCE pad bindings
+
+This table describes the Mednafen reference profile used for captures. It is
+not Firestaff's native keyboard layout; native in-dungeon controls are listed
+below.
 
 | Theron action | Keyboard (primary) | Keyboard (alt) |
 |---------------|-------------------|----------------|
@@ -61,13 +76,15 @@ respectively.
 
 These are Firestaff's native-runtime bindings, not a PC Engine timing model.
 On 2026-10-24, separate SDL key-down events advanced authentic JP media from
-title through stage select and Soul Room into a loaded dungeon. A continuous
-3–5 second hold has not been verified in Firestaff. The cold reference route
-confirms a four-second RUN hold to leave the System Card, not a long hold on
-the selected game-menu action. The retail manual
-documents Button I as the menu selection control but gives no multi-second
-timing rule. See [DMWeb and Greatstone references](../DMWEB_REFERENCE.md) and
-the dated evidence in [TODO-theron.md](../../TODO-theron.md).
+title through stage select and Soul Room into a loaded dungeon. The original
+Japanese title-menu action was subsequently confirmed to advance after a
+four-second Button I hold. That does not prove Firestaff requires or
+reproduces the same hold duration; its native route remains driven by separate
+SDL input events. The retail manual documents Button I as menu confirmation
+but gives no multi-second timing rule. See
+[DMWeb and Greatstone references](../DMWEB_REFERENCE.md), the
+[capture report](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
+and [TODO-theron.md](../../TODO-theron.md).
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
@@ -101,13 +118,15 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Pick up facing item | G                            |
 | Select next source item | I                         |
 | Drop last picked source item | P                    |
-| Use facing object | U                               |
+| Send USE command (effect unverified) | U |
 
 The native dungeon view also shows a twelve-button Firestaff mouse panel in
 its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 **TURN R**, **STEP L**, **BACK**, and **STEP R**. The remaining buttons are
 **NEXT** champion, **PICKUP**, select the next source-backed **ITEM**, **DROP**
-the selected source item, **USE** the object ahead, and **WAIT** one tick.
+the selected source item, send the **USE** command for the facing object, and
+**WAIT** one tick. The effect of USE on authentic doors and other objects is
+not yet verified because the original T900 consumer remains unbound.
 These buttons send the same native Theron input tokens as the corresponding
 keyboard actions. Their captions use the active Theron translation catalog.
 The panel is hit-tested in the native 320x200 game framebuffer after SDL
@@ -131,11 +150,12 @@ the highlighted control changes.
   dungeon keyboard layout while preserving Theron's native command tokens.
 - SDL keyboard input routes the same supported loaded-dungeon commands as the
   native mouse panel: Tab cycles champion, G picks up, I selects the next
-  source-backed item, P drops it, U uses the facing object, and Space/Return
-  or the PC Engine Button I binding Z waits. These keys enter the Theron input
-  facade directly; they do not rely on the boot-probe-only key mapper.
+  source-backed item, P drops it, U sends the USE command for the facing
+  object, and Space/Return or the PC Engine Button I binding Z waits. These
+  keys enter the Theron input facade directly; they do not rely on the
+  boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
-  implemented champion, item, use and wait actions. The retail manual's
+  implemented champion, item, USE-command and wait inputs. The retail manual's
   Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
   it turns instead of side-stepping. A standalone right click does not advance
   a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
