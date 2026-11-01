@@ -123,7 +123,7 @@ and visible response remain open. See [Theron capture readiness](docs/theron/THE
 
 ### Theron's Quest runtime status
 
-The latest authentic cold JP map-byte capture was rejected: it did not observe the `$E11D` game handoff, an exact-LBA 3674 read, or a matching controller read for every scripted event. The corrected input verifier removes a false serial-index/controller-slot rejection but still blocks the capture. No loader provenance or gameplay-input claim follows from this attempt; see the [cold JP map-byte capture](docs/source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
+The latest authentic cold JP map-byte capture was rejected: it did not observe the `$E11D` game handoff, an exact-LBA 3674 read, or a matching controller read for every scripted event. The corrected input verifier removes a false serial-index/controller-slot rejection but still blocks the capture. A later manual host-key run confirms RUN and Button I reached BIOS poll `$E4C5`, but it still has no `$E11D`-joined handoff or game-owned poll; see the [host-key capture report](docs/source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md). Neither run establishes loader provenance or gameplay-input parity; see also the [cold JP map-byte capture](docs/source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
 
 Firestaff runs Theron's Quest through its native C/SDL runtime and admits
 hash-verified US or Japanese Track 02 data with `--theron-native us` or

@@ -21,8 +21,11 @@ one second.
 The input trace contains one non-repeat RUN key-down and key-up and 14
 non-repeat Button I key-down and key-up pairs. System Card controller reads at
 `$E4C5` returned active-low RUN (`raw=$0008`, `value=$37`) during frames
-155–192. Thus the host-key route reached a real BIOS controller poll; event
-records alone are not being used as guest-consumption evidence.
+155–192. The same poll returned active-low Button I (`raw=$0001`, `value=$3E`)
+in 46 reads across 33 distinct frames from 266 through 729. Thus the host-key
+route reached real BIOS controller polls for both buttons; event records alone
+are not being used as guest-consumption evidence. These reads remain
+System-Card-owned and do not prove that game code consumed either button.
 
 ## BIOS and loader observations
 
