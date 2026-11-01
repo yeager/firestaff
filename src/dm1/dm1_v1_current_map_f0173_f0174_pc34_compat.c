@@ -9,9 +9,10 @@ const char *DM1_V1_F0173_F0174_SourceEvidencePc34(void)
         "G0271_i_CurrentMapIndex and current map metadata\n"
         "DUNGEON.C:2728-2740 refreshes current map width, height, raw map "
         "pointer, column cumulative SquareFirstThing counts, door info, and "
-        "ornament tables\n"
+        "does not refresh the F0174-owned metadata arrays\n"
         "DUNGEON.C:2742 F0174_DUNGEON_SetCurrentMapAndPartyMap calls F0173 "
-        "then updates G0309_i_PartyMapIndex and party-map cached map data\n"
+        "then updates G0309_i_PartyMapIndex, allowed creature types, and "
+        "wall/floor/door ornament arrays\n"
         "MOVESENS.C F0267 uses F0173 for level-change target inspection and "
         "GAMELOOP.C processes deferred party-map changes through F0174";
 }
@@ -82,10 +83,21 @@ static void publish_current_map(
     runtime->currentMapColumnCount = map->columnCount;
     runtime->currentMapDoorInfo = map->doorInfo;
     runtime->currentMapDoorInfoCount = map->doorInfoCount;
+}
+
+static void publish_current_map_metadata(
+    DM1_V1_CurrentMapRuntimeF0173F0174Pc34 *runtime,
+    const DM1_V1_MapDescriptorF0173F0174Pc34 *map)
+{
+    runtime->currentMapAllowedCreatureTypes = map->allowedCreatureTypes;
+    runtime->currentMapAllowedCreatureTypeCount = map->allowedCreatureTypeCount;
     runtime->currentMapWallOrnamentIndices = map->wallOrnamentIndices;
     runtime->currentMapWallOrnamentCount = map->wallOrnamentCount;
+    runtime->currentMapInscriptionWallOrnamentIndex = map->wallOrnamentCount;
     runtime->currentMapFloorOrnamentIndices = map->floorOrnamentIndices;
     runtime->currentMapFloorOrnamentCount = map->floorOrnamentCount;
+    runtime->currentMapDoorOrnamentIndices = map->doorOrnamentIndices;
+    runtime->currentMapDoorOrnamentCount = map->doorOrnamentCount;
     runtime->currentMapAlcoveOrnamentIndices = map->alcoveOrnamentIndices;
     runtime->currentMapAlcoveOrnamentCount = map->alcoveOrnamentCount;
 }
@@ -169,6 +181,7 @@ int F0174_DUNGEON_SetCurrentMapAndPartyMap(
     }
 
     map = find_map(maps, mapCount, mapIndex);
+    publish_current_map_metadata(runtime, map);
     publish_party_map(runtime, map);
     runtime->f0174CallCount += 1;
     if (out) {

@@ -6,6 +6,15 @@ selected. Both Firestaff adapters now preserve that no-op; the metadata-aware
 adapter still lets F0174 refresh party-map caches. Raw map/thing-column and
 ornament caches in the simpler dungeon-data adapter, plus live transition
 ownership and platform parity, remain open.
+2026-11-01 Follow-up to ReDMCSB `DUNGEON.C:F0173/F0174`: source inspection
+showed F0173 refreshes only the core map pointers, dimensions, door info and
+cumulative thing-column counts; F0174 owns allowed-creature and wall/floor/door
+ornament metadata. The descriptor adapter now leaves those metadata pointers
+untouched on F0173 and publishes them from F0174, including the inscription
+ornament ordinal. The simpler dungeon-data adapter still lacks these caches,
+and neither adapter owns a live transition caller, so both symbols remain
+partial across supported editions/platforms. Existing focused assertions were
+updated; CI is the verification path.
 2026-11-01 DM1 Amiga 3.6 no-game M12 runtime retest at `93c644549`: the
 local `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm1-amiga` (90.52 s) against the installed original
