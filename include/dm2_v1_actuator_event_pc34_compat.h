@@ -19,6 +19,7 @@
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_glob_var_state_pc34_compat.h"
 #include "dm2_v1_timeline.h"
+#include "dm2_v1_drops.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,9 +104,9 @@ static inline int16_t dm2_actu_next_link(const uint8_t *r) {
 static inline int dm2_handle_db_type(int16_t handle) {
     return (int)((handle >> 10) & 0xFu);
 }
-/* Direction from a record handle: bits 0-1 */
+/* Direction from an ObjectID: bits 14-15 (skproject c_record.cpp). */
 static inline int dm2_handle_dir(int16_t handle) {
-    return (int)(handle & 3u);
+    return (int)(((uint16_t)handle >> 14) & 3u);
 }
 
 /* DB type constants (skproject dme.h) */
@@ -300,6 +301,10 @@ typedef struct {
     int payload_high;
     int projectile_energy;
     int launch_direction_randomized;
+    int projectiles_created;
+    int source_items_cut;
+    int continuation_timers_queued;
+    int sound_queued;
 } DM2_V1_ShooterReceipt;
 
 /* ── Item teleport receipt ────────────────────────────────────────── */
@@ -360,6 +365,27 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               void *ornate_sound_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
+/* Runtime-owned variant. `rng` is the live session RNG used by source RAND01.
+ * The legacy adapter above remains fail-closed for callers without runtime
+ * ownership context. */
+int dm2_v1_actuate_wall_mecha_with_rng(
+                              DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
+                              DM2_V1_SourceTimerQueue *queue,
+                              int map, int x, int y,
+                              int action_type, int direction,
+                              uint32_t game_tick,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
+                              DM2_V1_DropRng *rng,
+                              DM2_V1_ActuatorEventReceipt *receipt);
+
 /* Full ACTUATE_FLOOR_MECHA dispatch.
  * Source: skevent.cpp:2072-2232 ACTUATE_FLOOR_MECHA */
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
@@ -412,7 +438,8 @@ int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
                            int action_type, int delay_add,
                            int map, uint32_t game_tick);
 
-/* ACTIVATE_SHOOTER — create projectile(s) and queue SHOOT_ITEM timer(s).
+/* ACTIVATE_SHOOTER fact adapter for callers without runtime ownership.
+ * The live wall-mecha transaction is bound by the with_rng owner below.
  * Source: skevent.cpp:1536-1631 */
 int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
                             DM2_V1_DungeonData *dungeon,

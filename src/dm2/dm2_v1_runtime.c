@@ -9831,7 +9831,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
     backup_ready = 1;
     memset(&event, 0, sizeof(event));
-    (void)dm2_v1_actuate_wall_mecha(
+    (void)dm2_v1_actuate_wall_mecha_with_rng(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
         dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
@@ -9840,6 +9840,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
         dm2_runtime_queue_ornate_activation_sound, rt,
+        &rt->session_rng,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
