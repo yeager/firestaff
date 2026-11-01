@@ -15,6 +15,9 @@
   code copies. Its source-window contract passed three loops using windows
   derived from the authentic local US image; these are tooling fixtures, not
   emulator-captured runtime evidence.
+- Compiled the injected C++ hook in an isolated C++11 harness with
+  `-Wall -Wextra -Werror`; the instrumenter regression also passed three
+  loops.
 - Updated the capture-readiness guide and active TODO. This adds capture
   capability only: no authentic replay has used the new reader-code windows,
   and runtime source ownership and row semantics remain unverified.
