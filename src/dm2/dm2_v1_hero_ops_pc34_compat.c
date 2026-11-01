@@ -901,6 +901,41 @@ void dm2_v1_adjust_hand_cooldown(
     }
 }
 
+/* ---- SPX v4 ADJUST_HAND_COOLDOWN (skchamp.cpp:1064) ---- */
+void dm2_v1_adjust_hand_cooldown_spx_v4(
+    DM2_V1_HeroCooldownState *hero,
+    uint16_t delay, int hand_idx,
+    int aura_of_speed)
+{
+    int start;
+    int count;
+
+    if (!hero || hand_idx < -1 || hand_idx >= DM2_V1_MAX_HANDS)
+        return;
+    if (hand_idx == -1) {
+        start = 0;
+        count = 3;
+    } else {
+        start = hand_idx;
+        count = 1;
+    }
+    if (aura_of_speed)
+        delay >>= 2;
+    delay = (uint16_t)(delay + 2u);
+
+    for (int i = start; i < start + count; ++i) {
+        uint16_t current = hero->hand_cooldown[i];
+        uint16_t result;
+        if (current < delay)
+            result = (uint16_t)((current >> 1) + delay);
+        else
+            result = (uint16_t)(current + (delay >> 1));
+        if (result > 0xffu)
+            result = 0xffu;
+        hero->hand_cooldown[i] = (uint8_t)result;
+    }
+}
+
 /* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ---- */
 int dm2_v1_hero_attack_party(
     int16_t total_damage, int body_parts, int damage_type,

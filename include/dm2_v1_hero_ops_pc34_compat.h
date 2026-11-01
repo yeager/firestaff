@@ -552,6 +552,14 @@ void dm2_v1_adjust_hand_cooldown(
     int16_t cooldown_ticks, int hand_idx,
     int easy_mode);
 
+/* SPX v4 variant (SKWINSPX/src/v4/skchamp.cpp:1064). Its delay is already
+ * supplied by the caller and Aura of Speed quarters it; it does not apply
+ * the DOS/SPX-v5 +25% adjustment or savegames1.b_04 gate. */
+void dm2_v1_adjust_hand_cooldown_spx_v4(
+    DM2_V1_HeroCooldownState *hero,
+    uint16_t delay, int hand_idx,
+    int aura_of_speed);
+
 /* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ----
  * Creature attacks all party members. Returns bitmask of wounded heroes. */
 typedef struct {
