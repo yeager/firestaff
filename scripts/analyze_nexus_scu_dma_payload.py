@@ -51,6 +51,24 @@ def main() -> int:
     target_descriptors.sort(key=lambda row: int(row["transfer"]))
     require(len(target_descriptors) == 4, f"expected 4 DMA descriptors for interval, got {len(target_descriptors)}")
 
+    registers = (root / "vdp2-registers.bin").read_bytes()
+    def reg16(offset: int) -> int:
+        return int.from_bytes(registers[offset : offset + 2], "big")
+
+    require(reg16(0x028) == 0x0013, "unexpected CHCTLA in final VDP2 register snapshot")
+    require(reg16(0x032) == 0x0000, "unexpected PNCN1 in final VDP2 register snapshot")
+    require(reg16(0x03A) == 0x0000, "unexpected PLSZ in final VDP2 register snapshot")
+    require(reg16(0x03C) == 0x0000, "unexpected MPOFN in final VDP2 register snapshot")
+    require(reg16(0x044) == 0x1717 and reg16(0x046) == 0x1717,
+            "unexpected NBG1 map indices in final VDP2 register snapshot")
+    # Ymir CalcPageBaseAddress: 1x1 cells, two-word PNDs, PLSZ=0.
+    map_base = (0x17 & 0x3F) << 14
+    require(map_base == 0x5C000, "unexpected NBG1 Plane A/B map base")
+    require(target_begin - 0x05E00000 == map_base,
+            "SCU destination does not begin at captured NBG1 Plane A/B map base")
+    print(f"final_register_snapshot_nbg1_plane_a_b_base=0x{map_base:05x} "
+          "(register snapshot frame 7663; SCU descriptors have no frame IDs)")
+
     wram = (root / "wram-hi.bin").read_bytes()
     vram = (root / "vdp2-vram.bin").read_bytes()
     vram_bus_base = 0x05E00000
