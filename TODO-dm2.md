@@ -6,6 +6,27 @@ The locked checkout yields 3,932 active definitions (2,725 SPX, 1,205 DOS and
 unreviewed, 209 partial, and 2 partial source-owner rows). Five definitions
 have mapped parity entries.
 
+2026-11-01 skproject combat skill-XP source trace:
+`SKULLWIN/c_hero.cpp::DM2_CALC_PLAYER_ATTACK_DAMAGE` awards skill XP only on
+the successful positive-damage path, using damage after poison-resistance
+adjustment. The
+gain uses the attacker's AI-spec word `w22` at offset `0x16`, taking its
+high byte's low nibble, multiplying by final damage, shifting right four,
+then adding three; it calls
+`DM2_ADJUST_SKILLS` for the wielding hero and selected skill. Firestaff now
+reads the source `w22` factor in its receipt, but it still only records a
+poison-applied flag instead of the source resistance adjustment, and the
+runtime does not apply the receipt through `dm2_v1_adjust_skills`.
+Skproject's `ddat.v1d26a4` starts at `0xffffff38`, is restored from save field
+`l_16`, and is advanced by creature AI paths; its combat-window halving and
+doubling affect skill IDs 4-11. Firestaff has no authoritative live owner for
+that field, XP scale, skill mutation, or level-up RNG/UI effects. Therefore
+combat skill XP and level-up effects remain an open parity gap; do not treat
+the existing helper or receipt as production coverage. Source anchors:
+`SKULLWIN/c_hero.cpp:232-430,1166-1360`,
+`SKULLWIN/dm2data.cpp:1105`, `SKULLWIN/c_creature.cpp:1088,1880`, and
+`SKULLWIN/c_savegame.cpp:1494`.
+
 2026-11-01 skproject `DM2_ENGAGE_COMMAND` hand-action epilogue:
 The M11 hand-action route consumes CMDSTR field 4 plus the source RANDBIT,
 spends that stamina through `DM2_ADJUST_STAMINA`, and applies CMDSTR field 3

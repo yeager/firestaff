@@ -16,7 +16,7 @@
  *    - Strength: COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH
  *    - Damage: strength * power / 32 - creature_armor - rand(32)
  *    - Bonus: skill level check, weapon poison
- *    - Skill exp: ADJUST_SKILLS by (creature_armor_mult * damage >> 4) + 3
+ *    - Skill exp: ADJUST_SKILLS by ((AI-spec w22 high byte & 0xf) * damage >> 4) + 3
  *
  * 2. WOUND_PLAYER — apply damage to hero:
  *    - Guard: hero alive, valid index, wound > 0
@@ -155,8 +155,8 @@ int dm2_v1_calc_player_attack_damage_receipt(
             receipt->final_damage = (int16_t)(damage > 32767 ? 32767 : damage);
 
             {
-                int16_t exp = (int16_t)(((int32_t)request->creature_armor_mult *
-                                         damage) >> 4) + 3;
+                int16_t exp = (int16_t)((((int32_t)(request->creature_skill_exp_factor & 0x0fu) *
+                                           damage) >> 4) + 3);
                 receipt->skill_exp_awarded = exp;
             }
         }
