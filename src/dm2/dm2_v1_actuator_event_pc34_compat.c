@@ -487,7 +487,7 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
 /* Source: skevent.cpp:1346-1500.
  * Moves items from source tile to destination tile based on actuator's
  * data filter.  capture=1 reverses source/dest.  recycler uses an
- * item bitmask.  Items are filtered by DB type (weapon..misc_item)
+ * item bitmask.  Items are filtered by DB type (weapon..miscellaneous)
  * and by direction (wall) or all directions (floor). */
 
 typedef struct {
@@ -518,7 +518,7 @@ static int item_teleport_visitor(void *context,
     int item_dir = (int)(handle & 3u);
     (void)record_unused;
 
-    /* Only items (dbWeapon=5 through dbMiscellaneous_item=9) */
+    /* Source item range: dbWeapon=5 through dbMiscellaneous_item=10. */
     if (db_type < DM2_DB_WEAPON || db_type > DM2_DB_MISC_ITEM) {
         /* Check creature possessions */
         if (db_type == DM2_DB_CREATURE) {

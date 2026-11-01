@@ -195,7 +195,7 @@ static inline void dm2_door_set_bit13(uint8_t *r, uint8_t v) {
 /* DB type constants for item/creature filtering */
 #define DM2_DB_DOOR      0
 #define DM2_DB_WEAPON    5
-#define DM2_DB_MISC_ITEM 9
+#define DM2_DB_MISC_ITEM 10
 
 /* Shooter sub-types: single (bp0a=1) vs dual projectile */
 #define DM2_SHOOTER_SINGLE_TYPES(t) \

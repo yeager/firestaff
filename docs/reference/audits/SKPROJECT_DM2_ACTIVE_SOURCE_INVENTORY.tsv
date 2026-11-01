@@ -683,7 +683,7 @@ SKW_GET_ITEM_ORDER_IN_CONTAINER	SKWINDOS	SKWINDOS/dm2byg.cpp	3019	x16 SKW_GET_IT
 SKW_075f_0182	SKWINDOS	SKWINDOS/dm2byg.cpp	3091	x16 SKW_075f_0182(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw)	0	UNREVIEWED
 SKW_32cb_54ce	SKWINDOS	SKWINDOS/dm2byg.cpp	3149	ui16 SKW_32cb_54ce(x16 eaxw, x16* ebxpw, x16 ecxw, x16* edxpw, x16 argw0)	0	UNREVIEWED
 SKW_3a15_38b6	SKWINDOS	SKWINDOS/dm2byg.cpp	3201	void SKW_3a15_38b6(bool eaxbool)	0	UNREVIEWED
-SKW_ACTIVATE_ITEM_TELEPORT	SKWINDOS	SKWINDOS/dm2byg.cpp	3299	void SKW_ACTIVATE_ITEM_TELEPORT(c_tim* eaxptim, x16 ebxw, bool ecxbool, c_record* edxprec, bool argbool0, x16* argp1, bool argbool2, bool argbool3)	0	UNREVIEWED
+SKW_ACTIVATE_ITEM_TELEPORT	SKWINDOS	SKWINDOS/dm2byg.cpp	3299	void SKW_ACTIVATE_ITEM_TELEPORT(c_tim* eaxptim, x16 ebxw, bool ecxbool, c_record* edxprec, bool argbool0, x16* argp1, bool argbool2, bool argbool3)	0	PARTIAL
 SKW_MOVE_ITEM_TO	SKWINDOS	SKWINDOS/dm2byg.cpp	3413	void SKW_MOVE_ITEM_TO(x16 eaxw, x16 ebxw, x16 ecxw, c_record* edxprec, x16 argw0, x16 argw1, x16 argw2, bool argbool3, x16 argw4)	0	UNREVIEWED
 SKW_ACTIVATE_CREATURE_KILLER	SKWINDOS	SKWINDOS/dm2byg.cpp	3441	void SKW_ACTIVATE_CREATURE_KILLER(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, x16 argw1, x16 argw2, x16 argw3)	0	UNREVIEWED
 R_B073	SKWINDOS	SKWINDOS/dm2byg.cpp	3512	t_gfxdata* R_B073(t_gfxdata* eaxpg, x16 ebxw, x16 ecxw, x8 edxb, x16* argpw0)	0	UNREVIEWED
@@ -2062,7 +2062,7 @@ ACTIVATE_RELAY2	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1185	void SkWinCore::ACTIVA
 _3a15_0d5c	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1234	void SkWinCore::_3a15_0d5c(Timer *ref, Actuator *pr4) { // TODO: Unr	0	UNREVIEWED
 ACTIVATE_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1240	void SkWinCore::ACTIVATE_ORNATE_ANIMATOR(Timer *ref, Actuator *pr4, ObjectID rl, X16 isWall)	0	PARTIAL
 ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1290	void SkWinCore::ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR(ObjectID rl, Timer *ref, Actuator *pr4, X16 isWall)	0	PARTIAL
-ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1346	void SkWinCore::ACTIVATE_ITEM_TELEPORT(Timer *ref, Actuator *pr4, ObjectID rl, X16 isFloor, X16 recycler, ObjectID *prl, X16 capture, X16 onlyFirstItem)	0	UNREVIEWED
+ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1346	void SkWinCore::ACTIVATE_ITEM_TELEPORT(Timer *ref, Actuator *pr4, ObjectID rl, X16 isFloor, X16 recycler, ObjectID *prl, X16 capture, X16 onlyFirstItem)	0	PARTIAL
 ACTIVATE_INVERSE_FLAG	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1504	void SkWinCore::ACTIVATE_INVERSE_FLAG(Timer *ref, Actuator *pr4) 	0	UNREVIEWED
 ACTIVATE_TEST_FLAG	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1516	void SkWinCore::ACTIVATE_TEST_FLAG(Timer *ref, Actuator *pr4)	0	UNREVIEWED
 ACTIVATE_SHOOTER	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	1536	void SkWinCore::ACTIVATE_SHOOTER(Actuator *pr4, Timer *ref)	0	UNREVIEWED
@@ -2630,7 +2630,7 @@ DM2_QUERY_ITEM_WEIGHT	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	496	i16 DM2_QUERY_ITEM_
 DM2_GET_ITEM_NAME	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	502	t_text* DM2_GET_ITEM_NAME(i16 eaxw)	1	UNREVIEWED
 DM2_IS_MISCITEM_DRINK_WATER	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	528	i32 DM2_IS_MISCITEM_DRINK_WATER(i32 eaxl)	1	UNREVIEWED
 DM2_MOVE_ITEM_TO	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	554	void DM2_MOVE_ITEM_TO(i32 eaxl, unk* xedxp, i32 ebxl, i32 ecxl, i16 argw0, i16 argw1, i32 argl2, i32 argl3, i32 argl4)	1	UNREVIEWED
-DM2_ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	651	void DM2_ACTIVATE_ITEM_TELEPORT(c_tim* eaxtimp, unk* xedxp, i32 ebxl, i32 ecxl, i32 argl0, unk* xargp1, i32 argl2, i32 argl3)	1	UNREVIEWED
+DM2_ACTIVATE_ITEM_TELEPORT	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	651	void DM2_ACTIVATE_ITEM_TELEPORT(c_tim* eaxtimp, unk* xedxp, i32 ebxl, i32 ecxl, i32 argl0, unk* xargp1, i32 argl2, i32 argl3)	1	PARTIAL
 DM2__CHECK_ROOM_FOR_CONTAINER	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	975	void DM2__CHECK_ROOM_FOR_CONTAINER(i32 eaxl, unk* xedxp)	1	UNREVIEWED
 DM2_F958	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1034	i16 DM2_F958(i32 eaxl)	1	UNREVIEWED
 DM2_SHOOT_ITEM	SKWINSPX	SKWINSPX/src/v5/bitem.cpp	1043	void DM2_SHOOT_ITEM(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i8 argb1, i8 argb2, i8 argb3)	1	UNREVIEWED
