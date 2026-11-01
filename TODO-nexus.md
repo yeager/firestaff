@@ -15,6 +15,20 @@ stdout message was removed. The champion, engine and launcher translation
 units compile with AppleClang. This is source/compile evidence only; authentic
 runtime output for recruitment and leader promotion remains unverified.
 
+## 2026-11-02 — reject frame 1800 as a CCMD parity vector
+
+The authentic frame-1800 registers enable additive CCMD and the NBG1/sprite
+calculation gates, but the paired Ymir per-pixel trace shows no eligible top
+pixels: all 148 top NBG1 samples have the per-character PND calculation bit
+clear, and all 60,375 top sprite samples use priorities 2, 6, or 7 while
+`SPCTL` requires priority 5. The final trace color equals the top candidate
+for all 71,680 pixels. Treat this as a register/configuration observation,
+not as an exercised or verified additive-color calculation path. Use
+`scripts/analyze_nexus_vdp2_frame1800_ccmd_eligibility.py` to reproduce the
+hash-pinned audit. Capture a state with an actually eligible visible pixel
+before implementing or claiming this CCMD branch. See
+[`docs/nexus_vdp2_ccmd_frame1800_eligibility.md`](docs/nexus_vdp2_ccmd_frame1800_eligibility.md).
+
 ## 2026-11-01 — Frame-300 VDP pixel-to-command ownership
 
 The authentic Japanese gameplay frame-300 VDP2 composition now links each of
