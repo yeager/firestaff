@@ -64,3 +64,16 @@ no-input control and a reproducible inventory/equip/use/drop transaction.
 Do not introduce a synthetic save or change native quest/inventory semantics
 from this static list. No T900 caller PC or quest-state relation is established
 by this report.
+
+## Related runtime record-table evidence
+
+The repository also contains a separate authentic US source-to-runtime join:
+Track 02 CD reads are joined to writes of ten-byte records at `$611D`, with an
+executing `$C3A0` caller window. The capture did not classify those records as
+items, and a separate interactive attempt produced zero valid `$B0E5`
+categories. Use the [runtime record-table report](theron-disassembly/theron-runtime-record-table-consumer-20260814.md)
+and its [US caller disassembly](theron-disassembly/theron-us-c3a0-record-consumer.asm)
+as a source-led disassembly starting point only; neither binds these five
+ground candidates to that table or proves T900 behavior. A same-session join
+from a candidate ground reference through the executing record consumer and
+an observed pickup/state transaction is still required.
