@@ -10988,8 +10988,12 @@ static void m11_write_autotest_runtime_probe(const char* path,
     }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         gameView->csbBootProfile) {
-        csbAmigaLanguageIndex = (int)((const CSB_V1_BootProfile *)
-            gameView->csbBootProfile)->amiga_language_index;
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+        if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+            profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+            csbAmigaLanguageIndex = (int)profile->amiga_language_index;
+        }
     }
     if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
         dm1_v1_fmtowns_startup_receipt_is_native(
