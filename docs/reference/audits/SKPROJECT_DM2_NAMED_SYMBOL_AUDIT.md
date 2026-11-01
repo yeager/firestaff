@@ -52,7 +52,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,936 (2,729 SPX, 1,205 DOS, 2 SKULLWIN) | 2,978 `UNREVIEWED`; 877 `PARTIAL`; 0 `MISSING`; 71 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,936 (2,729 SPX, 1,205 DOS, 2 SKULLWIN) | 2,972 `UNREVIEWED`; 882 `PARTIAL`; 0 `MISSING`; 72 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -64,11 +64,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,053 |
+| `IMPLEMENTED_PARITY` | 1,049 |
 | `NOT_APPLICABLE_ARCH` | 558 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 76 |
+| `PARTIAL` | 80 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -80,7 +80,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,936-row inventory currently has 2,972 `UNREVIEWED`, 882 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 73 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,930. DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff has a live common callback, but DOS/v5 phase-zero wall sound lacks the facing-relative tile offset and the chance-based helper previously attributed to this named symbol is unrelated.
+With active-source review overrides, the 3,936-row inventory currently has 2,972 `UNREVIEWED`, 882 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 74 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,930. DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff has a live common callback, but DOS/v5 phase-zero wall sound lacks the facing-relative tile offset and the chance-based helper previously attributed to this named symbol is unrelated.
 
 DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
