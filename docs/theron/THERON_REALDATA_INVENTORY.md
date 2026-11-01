@@ -89,6 +89,15 @@ the same component and complete-image hash checks used for the US split pair.
   (`LE16(+2)-5`) and exact user-data end offset in addition to the block and
   payload hashes. The payload remains opaque until the HuC6280 consumer is
   bound.
+- The US MPR2 `$68` runtime-page join has a capture-provenance contract: C852
+  schema v3 and the all-writer trace must share a per-run capture ID, and the
+  wrapper receipt must bind both sidecar hashes, the full physical
+  `$0D0000–$0D1FFF` range, and completeness counts. The verifier compares
+  fetched bytes with their latest preceding writes; it does not identify the
+  writer's source data. Its fixtures pass, but no authentic same-session
+  capture has yet exercised the contract. See the
+  [runtime-page write join verifier](../../scripts/verify_theron_runtime_page_write_join.py)
+  and [capture-readiness summary](THERON_CAPTURE_READINESS.md).
 
 ## Known placeholder boundaries
 
