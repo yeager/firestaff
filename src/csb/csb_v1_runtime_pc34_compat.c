@@ -17,6 +17,8 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "dm1_v1_early_runtime_f0019_f0028_pc34_compat.h"
+#include "dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.h"
 #include "csb_v1_inscription_presentation.h"
 #include "csb_v1_f0145_f0148_effective_group_owner_pc34_compat.h"
 #include "csb_v1_f0247_launcher_materialization_pc34_compat.h"
@@ -5951,6 +5953,26 @@ int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
         return -1;
     }
     return (int)(csb_v1_runtime_main_random16(profile) & (uint16_t)mask);
+}
+
+/* ReDMCSB BASE.C:1619-1684. The common source declaration and both the
+ * MEDIA201 C and MEDIA247 68k implementations use signed int16_t ordering.
+ * Keep these pure helpers free of platform/runtime state. */
+int csb_v1_f0024_main_get_minimum_value(int16_t value1, int16_t value2)
+{
+    return dm1_v1_main_get_minimum_value_f0024_pc34(value1, value2);
+}
+
+int16_t csb_v1_f0025_main_get_maximum_value(int16_t value1, int16_t value2)
+{
+    return dm1_v1_f0025_get_maximum_value_pc34(value1, value2);
+}
+
+int csb_v1_f0026_main_get_bounded_value(
+    int16_t minimum, int16_t value, int16_t maximum)
+{
+    return (int16_t)dm1_v1_main_get_bounded_value_f0026_pc34(
+        minimum, value, maximum);
 }
 
 static void csb_v1_runtime_delete_group_events_at_square(

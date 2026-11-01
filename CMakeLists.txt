@@ -11373,6 +11373,8 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
     src/csb/csb_hidden_code_skip_table.c
     src/csb/csb_v1_cmp_import_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
+    src/dm1/dm1_v1_early_runtime_f0019_f0028_pc34_compat.c
+    src/dm1/dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.c
     src/csb/csb_v1_boot.c
     # F31 direct-resume is compiled by csb_v1_boot.c even in this PC probe.
     src/csb/csb_v1_fmtowns_game.c
