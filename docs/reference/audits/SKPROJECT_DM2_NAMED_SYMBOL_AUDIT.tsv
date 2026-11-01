@@ -453,7 +453,7 @@ conv	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	19	src/dm2/dm2_v2_touch_runtime.c:110	NOT_A
 init	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	75	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH	-
 driver_setcolors	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	89		NOT_APPLICABLE_ARCH	-
 DM2_CONVERT_DRIVERPALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	117	src/dm2/dm2_v1_skproject_core.c:313	IMPLEMENTED_PARITY	-
-DM2_SELECT_PALETTE_SET	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	146	src/dm2/dm2_v1_skproject_core.c:344	IMPLEMENTED_PARITY	-
+DM2_SELECT_PALETTE_SET	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	146	src/dm2/dm2_v1_gfx_pal_pc34_compat.c:dm2_v1_select_palette_set	PARTIAL	Source modes 0 and 1 fade or restore palette; other modes only clear immediate-colors. Firestaff now matches the 1000-step fade, two vsync waits, and mode dispatch, but no active palette-screen owner routes the source behavior.
 DM2_UPDATE_BLIT_PALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	175	src/dm2/dm2_v1_skproject_core.c:369	IMPLEMENTED_PARITY	-
 DM2_xlat_palette	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	181	src/dm2/dm2_v1_skproject_core.c:380	IMPLEMENTED_PARITY	-
 ui8_to_pixel	SKULLWIN	SKULLWIN/c_gfx_pixel.cpp	8		NOT_APPLICABLE_ARCH	-
