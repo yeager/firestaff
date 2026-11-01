@@ -3487,7 +3487,22 @@ int dm2_v1_skproject_fill_halftone_rectv(
     uint16_t stride,
     const DM2_V1_SkprojectRect *rect,
     DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+/* SKULLWIN/SKWINSPX v5 and DOS driver_showscreenrectdisabled stop before
+ * the final row and column; SKWIN's IBMIO helper uses the full rectangle. */
+int dm2_v1_skproject_fill_halftone_rectv_exclusive(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
 int dm2_v1_skproject_fill_halftone_recti(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+int dm2_v1_skproject_fill_halftone_recti_exclusive(
     uint8_t *pixels,
     uint16_t pixel_capacity,
     uint16_t stride,

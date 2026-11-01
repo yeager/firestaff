@@ -439,8 +439,8 @@ DM2_FILL_BACKBUFF_RECT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	153		NOT_APPLICABLE_ARCH
 DM2_FILL_SCREEN_RECT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	159		NOT_APPLICABLE_ARCH	-
 DM2_FILL_FULLSCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	168		NOT_APPLICABLE_ARCH	-
 DM2_FILL_ENTIRE_PICT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	173		NOT_APPLICABLE_ARCH	-
-DM2_FILL_HALFTONE_RECTV	SKULLWIN	SKULLWIN/c_gfx_main.cpp	192	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_PARITY	DM2 v1 skproject core maps the SKULLWIN halftone rect screen checkerboard fill over caller-owned pixels.
-DM2_FILL_HALFTONE_RECTI	SKULLWIN	SKULLWIN/c_gfx_main.cpp	204	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_PARITY	DM2 v1 skproject core maps the SKULLWIN rect-index halftone wrapper through expanded rect delegation.
+DM2_FILL_HALFTONE_RECTV	SKULLWIN	SKULLWIN/c_gfx_main.cpp	192	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_halftone_rectv_exclusive; include/dm2_v1_skproject_core.h	IMPLEMENTED_PARITY	The source leaves the final row and column untouched; the source-specific Firestaff helper preserves the XOR checkerboard and exclusive terminal bounds.
+DM2_FILL_HALFTONE_RECTI	SKULLWIN	SKULLWIN/c_gfx_main.cpp	204	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_halftone_recti_exclusive; include/dm2_v1_skproject_core.h	IMPLEMENTED_PARITY	The source queries the expanded rectangle then delegates to the exclusive-bounds SKULLWIN halftone helper.
 DM2_FADE_SCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	212		NOT_APPLICABLE_ARCH	-
 blit_toscreen	SKULLWIN	SKULLWIN/c_gfx_main.cpp	224		NOT_APPLICABLE_ARCH	-
 _specialblit	SKULLWIN	SKULLWIN/c_gfx_main.cpp	254		NOT_APPLICABLE_ARCH	-

@@ -4921,12 +4921,13 @@ int dm2_v1_skproject_fill_str(
     return 1;
 }
 
-int dm2_v1_skproject_fill_halftone_rectv(
+static int dm2_v1_skproject_fill_halftone_rectv_impl(
     uint8_t *pixels,
     uint16_t pixel_capacity,
     uint16_t stride,
     const DM2_V1_SkprojectRect *rect,
-    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt,
+    int exclude_final_row_and_column)
 {
     DM2_V1_SkprojectHalftoneRectReceipt receipt;
 
@@ -4940,17 +4941,25 @@ int dm2_v1_skproject_fill_halftone_rectv(
     receipt.rect = *rect;
     receipt.stride = stride;
     if (!pixels || stride == 0u || rect->w <= 0 || rect->h <= 0 ||
-        rect->x < 0 || rect->y < 0 ||
-        (uint32_t)(rect->y + rect->h - 1) * stride +
-                (uint16_t)(rect->x + rect->w - 1) >=
-            pixel_capacity) {
+        rect->x < 0 || rect->y < 0) {
         receipt.blocked_missing_pixels = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
 
-    for (int16_t y = rect->y; y < (int16_t)(rect->y + rect->h); ++y) {
-        for (int16_t x = rect->x; x < (int16_t)(rect->x + rect->w); ++x) {
+    int32_t end_y = (int32_t)rect->y + rect->h -
+                    (exclude_final_row_and_column ? 1 : 0);
+    int32_t end_x = (int32_t)rect->x + rect->w -
+                    (exclude_final_row_and_column ? 1 : 0);
+    if (end_x > rect->x && end_y > rect->y &&
+        (uint32_t)(end_y - 1) * stride + (uint32_t)(end_x - 1) >=
+            pixel_capacity) {
+        receipt.blocked_missing_pixels = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (int32_t y = rect->y; y < end_y; ++y) {
+        for (int32_t x = rect->x; x < end_x; ++x) {
             uint32_t index = (uint32_t)y * stride + (uint16_t)x;
             receipt.visited_pixels++;
             if (((x ^ y) & 1) == 0) {
@@ -4965,6 +4974,28 @@ int dm2_v1_skproject_fill_halftone_rectv(
     return 1;
 }
 
+int dm2_v1_skproject_fill_halftone_rectv(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+{
+    return dm2_v1_skproject_fill_halftone_rectv_impl(
+        pixels, pixel_capacity, stride, rect, out_receipt, 0);
+}
+
+int dm2_v1_skproject_fill_halftone_rectv_exclusive(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+{
+    return dm2_v1_skproject_fill_halftone_rectv_impl(
+        pixels, pixel_capacity, stride, rect, out_receipt, 1);
+}
+
 int dm2_v1_skproject_fill_halftone_recti(
     uint8_t *pixels,
     uint16_t pixel_capacity,
@@ -4974,6 +5005,23 @@ int dm2_v1_skproject_fill_halftone_recti(
     DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
 {
     int ok = dm2_v1_skproject_fill_halftone_rectv(
+        pixels, pixel_capacity, stride, expanded_rect, out_receipt);
+    if (out_receipt) {
+        out_receipt->rectno = rectno;
+        out_receipt->used_query_expanded_rect = 1;
+    }
+    return ok;
+}
+
+int dm2_v1_skproject_fill_halftone_recti_exclusive(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+{
+    int ok = dm2_v1_skproject_fill_halftone_rectv_exclusive(
         pixels, pixel_capacity, stride, expanded_rect, out_receipt);
     if (out_receipt) {
         out_receipt->rectno = rectno;

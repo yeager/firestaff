@@ -7,7 +7,7 @@ driver_blit_hline	SKWINDOS	SKWINDOS/dm2D.cpp	400	void driver_blit_hline(ui16 sof
 driver_blit_hline_masked	SKWINDOS	SKWINDOS/dm2D.cpp	411	void driver_blit_hline_masked(ui16 sofs, ui16 dofs, ui16 pixel, ui8 mask)	0	PARTIAL
 driver_blit	SKWINDOS	SKWINDOS/dm2D.cpp	428	void driver_blit(i8* srcmap, i8* destmap, c_rect* rect, i16 sx, i16 sy, i16 sw, i16 dw, i8 masked, i8 mask)	0	PARTIAL
 driver_vsync	SKWINDOS	SKWINDOS/dm2D.cpp	459	void driver_vsync(void)	0	PARTIAL
-driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscreenrectdisabled(c_rect* r)	0	UNREVIEWED
+driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscreenrectdisabled(c_rect* r)	0	PARTIAL
 driver_setcolors	SKWINDOS	SKWINDOS/dm2D.cpp	481	void driver_setcolors(void)	1	UNREVIEWED
 driver_convertalphapalette	SKWINDOS	SKWINDOS/dm2D.cpp	508	void driver_convertalphapalette(i8* p)	0	UNREVIEWED
 driver_setpalette	SKWINDOS	SKWINDOS/dm2D.cpp	534	void driver_setpalette(i8 mode)	0	UNREVIEWED
@@ -2791,7 +2791,7 @@ DM2_FILL_BACKBUFF_RECT	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	160	void DM2_FILL_BA
 DM2_FILL_SCREEN_RECT	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	166	void DM2_FILL_SCREEN_RECT(i16 query, c_pixel pixel)	1	UNREVIEWED
 DM2_FILL_FULLSCREEN	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	175	void DM2_FILL_FULLSCREEN(c_rect* blitrect, c_pixel pixel)	1	UNREVIEWED
 DM2_FILL_ENTIRE_PICT	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	180	void DM2_FILL_ENTIRE_PICT(t_bmp* bmp, c_pixel pix)	1	UNREVIEWED
-DM2_FILL_HALFTONE_RECTV	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	199	static void DM2_FILL_HALFTONE_RECTV(c_rect* r)	1	UNREVIEWED
+DM2_FILL_HALFTONE_RECTV	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	199	static void DM2_FILL_HALFTONE_RECTV(c_rect* r)	1	IMPLEMENTED_PARITY
 DM2_FILL_HALFTONE_RECTI	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	211	void DM2_FILL_HALFTONE_RECTI(i16 query)	1	UNREVIEWED
 DM2_FADE_SCREEN	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	219	void DM2_FADE_SCREEN(i16 mode)	1	UNREVIEWED
 blit_toscreen	SKWINSPX	SKWINSPX/src/v5/gfxmain.cpp	235	void blit_toscreen(c_pixel* srcgfx, c_rect* blitrect, i16 srcx, i16 srcy, ui16 srcw, t_alphamask alphamask, e_blitmode blitmode, t_resolution sbpp, t_resolution dbpp, t_palette* palette)	1	UNREVIEWED
