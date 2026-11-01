@@ -12440,10 +12440,10 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         int w = 0;
         int h = 0;
         char event[64];
-        if (!M11_GameView_GetDm2FmtownsNewGameHitRect(
+        if (!M11_GameView_GetDm2StartupMenuNewGameHitRect(
                 gameView, &x, &y, &w, &h)) {
             /* Keep this command at the head of the script until the original
-             * TITLE -> SKULL menu and its GDAT hit rectangle are ready. */
+             * platform title/menu handoff and GDAT hit rectangle are ready. */
             *cursor = start;
             if (outWaitForDm2Menu) *outWaitForDm2Menu = 1;
             return M12_MENU_INPUT_NONE;
@@ -15508,7 +15508,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (scriptWaitForDm2Menu) {
             int x = 0, y = 0, w = 0, h = 0;
-            if (M11_GameView_GetDm2FmtownsNewGameHitRect(
+            if (M11_GameView_GetDm2StartupMenuNewGameHitRect(
                     &gameView, &x, &y, &w, &h)) {
                 scriptWaitForDm2Menu = 0;
                 if (o->debug) {

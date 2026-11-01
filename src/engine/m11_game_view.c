@@ -2798,7 +2798,46 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
            menu_raw_hash != 0u && menu_raw_byte_count != 0u;
 }
 
-int M11_GameView_GetDm2FmtownsNewGameHitRect(
+static int m11_dm2_amiga_startup_menu_ready(const M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    const uint8_t *palette;
+    size_t palette_size = 0u;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    int color;
+
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_amiga_profile(profile) ||
+        !profile->amiga_animation_media_verified ||
+        !(loader = dm2_v1_boot_asset_loader((DM2_V1_BootProfile *)profile))) {
+        return 0;
+    }
+    memset(&image, 0, sizeof(image));
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 4, &image) ||
+        !image.accepted || image.metadata.width != 320u ||
+        image.metadata.height != 200u || image.metadata.bits_per_pixel != 4u ||
+        image.colors != 16u || image.palette_hash == 0u ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            (DM2_V1_BootProfile *)profile, DM2_GDAT_CATEGORY_TITLE, 0, 4,
+            0x414d4d45u, &raw_hash, &raw_byte_count) ||
+        raw_hash == 0u || raw_byte_count == 0u) {
+        return 0;
+    }
+    palette = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_TITLE, 0, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+        4, &palette_size);
+    if (!palette || palette_size != 16u * 4u) return 0;
+    for (color = 0; color < 16; ++color) {
+        if (palette[(size_t)color * 4u] != (uint8_t)color) return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_GetDm2StartupMenuNewGameHitRect(
     const M11_GameViewState* state,
     int* outX, int* outY, int* outW, int* outH)
 {
@@ -2812,9 +2851,11 @@ int M11_GameView_GetDm2FmtownsNewGameHitRect(
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
         !state->dm2FmtownsTitleFinished ||
         !state->dm2State.startup_menu_active ||
-        !m11_dm2_fmtowns_skull_menu_ready(state) ||
         !(profile = (const DM2_V1_BootProfile*)state->dm2BootProfile) ||
-        profile->platform != DM2_PLATFORM_FMTOWNS_JA) {
+        (!(m11_dm2_is_fmtowns_profile(profile) &&
+           m11_dm2_fmtowns_skull_menu_ready(state)) &&
+         !(m11_dm2_is_amiga_profile(profile) &&
+           m11_dm2_amiga_startup_menu_ready(state)))) {
         return 0;
     }
     memset(&layout, 0, sizeof(layout));
