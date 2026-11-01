@@ -2046,6 +2046,14 @@ recompute is admitted only for the verified FMT-JA lane. SPX v4 additionally
 queues open/close sounds only when the tile actually changes on the player map
 (`skevent.cpp:2553-2560`); that effect is also unbound. Keep all source rows
 partial until these effects have live owners and platform-specific evidence.
+The light-walk LFSR itself now carries source `v1d62ec` between accepted passes:
+source initializes it to 1 (`SKULLWIN/dm2data.cpp:1392`) and advances it in
+`c_1c9a.cpp:9521-9540`; Firestaff had restarted each pass at 1. The runtime now
+walks on a local copy of its persistent `light_walk_rng` and publishes the new
+state only after the complete mode-8/mode-7 terminal receipt commits. This
+closes RNG continuity for admitted passes, but it does not supply the missing
+trickwall trigger, frame-order owner, full light recalculation, or platform
+coverage; source feature parity remains partial.
 
 2026-11-01 skproject `ADD_RUNE_TO_TAIL` variants: the rune cost tables and
 mutation logic match the Firestaff runtime's indexed costs, mana deduction,

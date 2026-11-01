@@ -2505,7 +2505,7 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     DM2_V1_LightWalkTerminalProof mode8_proof, mode7_proof;
     DM2_V1_LightTerminalSourceInputs inputs;
     DM2_V1_LightSourceIdentity identity;
-    uint16_t uncommitted_rng = 1u;
+    uint16_t uncommitted_rng;
     uint16_t source_radius = 0u;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SkprojectTeleporterDetail detail;
@@ -2517,6 +2517,10 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
         !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light)
         return;
+    /* skproject keeps v1d62ec across CHECK_RECOMPUTE_LIGHT calls. Walk on a
+     * local copy so incomplete or unauthenticated passes cannot advance the
+     * runtime stream. */
+    uncommitted_rng = rt->light_walk_rng;
     rt->c_light_visibility.mode8_complete = 0u;
     rt->c_light_visibility.mode7_complete = 0u;
     rt->c_light_visibility.source_state_hash = 0u;
@@ -2623,8 +2627,9 @@ static void dm2_runtime_try_light_mode8(DM2_V1_RuntimeState *rt, int x, int y)
     inputs.party_inventory_hash = dm2_v1_light_source_identity_fold(
         identity.party_light);
     inputs.weather_hash = dm2_v1_light_source_identity_fold(identity.weather);
-    (void)dm2_v1_light_terminal_receipt_commit(&rt->c_light_visibility,
-        &mode8_proof, &mode7_proof, &inputs);
+    if (dm2_v1_light_terminal_receipt_commit(&rt->c_light_visibility,
+            &mode8_proof, &mode7_proof, &inputs))
+        rt->light_walk_rng = uncommitted_rng;
 }
 
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
