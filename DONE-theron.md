@@ -12,12 +12,14 @@
 - Added a fail-closed verifier for exact US Track 02 MD5, 512-byte instruction
   matches, opcode/window agreement and MPR-to-physical-PC consistency. It
   reports all matching offsets instead of selecting among duplicate retail
-  code copies. Its source-window contract passed three loops using windows
-  derived from the authentic local US image; these are tooling fixtures, not
-  emulator-captured runtime evidence.
+  code copies. Its source-window contract passed three end-to-end loops with
+  windows derived from the authentic local US image. A C++11 harness emitted
+  bounded instruction rows and the verifier resolved their source offsets;
+  these are tooling fixtures, not emulator-captured runtime evidence.
 - Compiled the injected C++ hook in an isolated C++11 harness with
   `-Wall -Wextra -Werror`; the instrumenter regression also passed three
-  loops.
+  loops. The full live-capture wrapper contract suite passed three loops
+  without starting Mednafen.
 - Updated the capture-readiness guide and active TODO. This adds capture
   capability only: no authentic replay has used the new reader-code windows,
   and runtime source ownership and row semantics remain unverified.
