@@ -182,8 +182,11 @@ int32_t dm2_v1_timproc_3a15_1da8(int32_t a, int32_t b) {
 /* skproject DM2_hero_2c1d_0300 (c_hero.cpp:652)
  * Adjusts hero ability[idx][CUR] toward MAX by delta with diminishing curve. */
 void dm2_v1_hero_2c1d_0300(DM2_V1_Hero *hero, int16_t ability_idx, int16_t delta) {
-    int16_t diff = (int16_t)(hero->ability[ability_idx][DM2_CUR]
-                           - hero->ability[ability_idx][DM2_MAX] + delta);
+    /* skproject SKWINDOS/dm2bya.cpp:2744-2765 and SKULLWIN/c_hero.cpp:652-675
+     * read both stored ability bytes as unsigned before this calculation. */
+    uint8_t current = (uint8_t)hero->ability[ability_idx][DM2_CUR];
+    uint8_t maximum = (uint8_t)hero->ability[ability_idx][DM2_MAX];
+    int16_t diff = (int16_t)((int16_t)current - (int16_t)maximum + delta);
     int16_t sign_diff = diff < 0;
     int16_t sign_delta = delta < 0;
     if (sign_diff == sign_delta) {
@@ -196,7 +199,7 @@ void dm2_v1_hero_2c1d_0300(DM2_V1_Hero *hero, int16_t ability_idx, int16_t delta
             abs_diff = (int16_t)(abs_diff - 0x14);
         }
     }
-    int16_t result = (int16_t)((uint8_t)hero->ability[ability_idx][DM2_CUR] + delta);
+    int16_t result = (int16_t)((int16_t)current + delta);
     hero->ability[ability_idx][DM2_CUR] =
         (int8_t)dm2_between_value(10, 0xdc, result);
 }
