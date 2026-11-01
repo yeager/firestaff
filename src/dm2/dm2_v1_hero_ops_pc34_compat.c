@@ -6,20 +6,29 @@
 
 static int16_t dm2_abs16(int16_t v)
 {
+    if (v == INT16_MIN) return INT16_MIN;
     return v < 0 ? (int16_t)-v : v;
+}
+
+static int16_t dm2_wrap_int16(int32_t value)
+{
+    uint16_t bits = (uint16_t)value;
+    int32_t signed_value = bits <= INT16_MAX
+        ? (int32_t)bits : (int32_t)bits - 65536;
+    return (int16_t)signed_value;
 }
 
 int16_t dm2_v1_adjust_stamina(
     int hero_idx, int16_t stamina_cost,
     const DM2_V1_StaminaCallbacks *cb, void *ctx)
 {
-    if (!cb || hero_idx == -1)
+    if (!cb || !cb->get_hero || !cb->wound_player || hero_idx == -1)
         return -1;
     DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
     if (!hero)
         return -1;
-    int16_t cur = hero->cur_stamina;
-    cur = (int16_t)(cur - stamina_cost);
+    int16_t cur = dm2_wrap_int16(
+        (int32_t)hero->cur_stamina - (int32_t)stamina_cost);
     if (cur > 0) {
         if (cur > hero->max_stamina)
             cur = hero->max_stamina;
@@ -30,7 +39,7 @@ int16_t dm2_v1_adjust_stamina(
         cb->wound_player(ctx, hero_idx, wound, 0, 0);
     }
     int16_t abs_cost = dm2_abs16(stamina_cost);
-    if (abs_cost >= 10)
+    if (stamina_cost == INT16_MIN || abs_cost >= 10)
         hero->hero_flag |= DM2_V1_HERO_FLAG_0800;
     return abs_cost;
 }

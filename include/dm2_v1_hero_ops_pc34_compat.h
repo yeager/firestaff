@@ -53,9 +53,11 @@ typedef struct {
 
 /* ---- DM2_ADJUST_STAMINA (c_hero.cpp:1722) ----
  * Subtract stamina_cost from hero's current stamina.
- * If stamina drops below 0, wounds the hero for half the deficit.
- * If abs(stamina_cost) >= 10, sets HERO_FLAG_0800.
- * Returns abs(stamina_cost). -1 if hero_idx == -1. */
+ * The current-stamina subtraction wraps to the source's signed 16-bit width.
+ * If the wrapped value is <= 0, stamina becomes zero and the hero is wounded
+ * for half the deficit. If the source-width absolute cost is at least 10,
+ * sets HERO_FLAG_0800. Missing state/wound callbacks fail without mutation.
+ * Returns the source-width absolute cost. -1 if the request cannot run. */
 typedef struct {
     DM2_V1_HeroState *(*get_hero)(void *ctx, int hero_idx);
     void (*wound_player)(void *ctx, int hero_idx, int damage,

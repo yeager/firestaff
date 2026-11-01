@@ -19140,6 +19140,37 @@ static int dm2_runtime_mac_overlap_step(const DM2_V1_DungeonData *dd,
     return -1;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    DM2_V1_HeroState hero_state;
+    int hero_index;
+} DM2_RuntimeMoveStaminaContext;
+
+static DM2_V1_HeroState *dm2_runtime_move_stamina_get_hero(
+    void *context, int hero_index)
+{
+    DM2_RuntimeMoveStaminaContext *stamina = context;
+    if (!stamina || hero_index != stamina->hero_index) return NULL;
+    return &stamina->hero_state;
+}
+
+static void dm2_runtime_move_stamina_wound_player(
+    void *context, int hero_index, int damage, int body_parts,
+    int damage_type)
+{
+    DM2_RuntimeMoveStaminaContext *stamina = context;
+    if (!stamina || !stamina->runtime ||
+        hero_index != stamina->hero_index || damage < INT16_MIN ||
+        damage > INT16_MAX) return;
+    (void)dm2_runtime_cloud_wound_party(
+        stamina->runtime, (int16_t)hero_index, (int16_t)damage,
+        body_parts, damage_type);
+    if (damage > 0) {
+        stamina->hero_state.hero_flag = (uint16_t)(
+            stamina->hero_state.hero_flag | DM2_V1_HERO_FLAG_0800);
+    }
+}
+
 int dm2_v1_runtime_move(int dir) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
@@ -19212,8 +19243,9 @@ int dm2_v1_runtime_move(int dir) {
             uint32_t cost;
             uint16_t cost_bits;
             int16_t stamina_cost;
-            uint16_t stamina_bits;
-            int32_t stamina;
+            int16_t stamina_result;
+            DM2_RuntimeMoveStaminaContext stamina_context;
+            DM2_V1_StaminaCallbacks stamina_callbacks;
             if (hero->curHP == 0) continue;
             if (movement_max_load[i] <= 0 ||
                 movement_player_weight[i] < 0) return -1;
@@ -19224,32 +19256,26 @@ int dm2_v1_runtime_move(int dir) {
             stamina_cost = cost_bits <= INT16_MAX
                 ? (int16_t)cost_bits
                 : (int16_t)((int32_t)cost_bits - 65536);
-            stamina_bits = (uint16_t)((uint16_t)hero->curStamina -
-                                      cost_bits);
-            stamina = stamina_bits <= INT16_MAX
-                ? (int32_t)stamina_bits
-                : (int32_t)stamina_bits - 65536;
-            if (stamina > 0) {
-                if (stamina > hero->maxStamina)
-                    stamina = hero->maxStamina;
-                hero->curStamina = (int16_t)stamina;
-            } else {
-                int32_t wound = -stamina / 2;
-                int32_t pending;
-                hero->curStamina = 0;
-                if (wound > 0) {
-                    pending = (int32_t)hero->damagesuffered + wound;
-                    if (pending > INT16_MAX) pending = INT16_MAX;
-                    hero->damagesuffered = (int16_t)pending;
-                    hero->heroflag = (int16_t)(
-                        (uint16_t)hero->heroflag |
-                        DM2_V1_HERO_FLAG_0800);
-                }
+            memset(&stamina_context, 0, sizeof(stamina_context));
+            stamina_context.runtime = rt;
+            stamina_context.hero_index = i;
+            stamina_context.hero_state.cur_stamina = hero->curStamina;
+            stamina_context.hero_state.max_stamina = hero->maxStamina;
+            stamina_context.hero_state.hero_flag =
+                (uint16_t)hero->heroflag;
+            stamina_callbacks.get_hero = dm2_runtime_move_stamina_get_hero;
+            stamina_callbacks.wound_player =
+                dm2_runtime_move_stamina_wound_player;
+            stamina_result = dm2_v1_adjust_stamina(
+                i, stamina_cost, &stamina_callbacks, &stamina_context);
+            if (stamina_result < 0 && stamina_cost != INT16_MIN) return -1;
+            hero->curStamina = stamina_context.hero_state.cur_stamina;
+            {
+                uint16_t flag_bits = stamina_context.hero_state.hero_flag;
+                int32_t signed_flag = flag_bits <= INT16_MAX
+                    ? (int32_t)flag_bits : (int32_t)flag_bits - 65536;
+                hero->heroflag = (int16_t)signed_flag;
             }
-            if (stamina_cost == INT16_MIN ||
-                (stamina_cost < 0 ? -stamina_cost : stamina_cost) >= 10)
-                hero->heroflag = (int16_t)(
-                    (uint16_t)hero->heroflag | DM2_V1_HERO_FLAG_0800);
         }
     }
 
