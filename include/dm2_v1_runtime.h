@@ -1585,8 +1585,8 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
  *                         fail-closed until ADVANCE_TILES_TIME is owned
  *   class 3             — source no-op
  *   class 4 door        — bounded one-step door toggle
- *   class 5 teleporter  — fail-closed until the floor-mecha/teleport owner
- *                         is complete
+ *   class 5 teleporter  — DB1-disabled and close paths dispatch FLOOR_MECHA;
+ *                         enabled opening remains fail-closed
  *   class 6 trickwall   — consumed, CCM tail unbound (fail-closed counter)
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230 (0x04 class dispatch)
@@ -1604,11 +1604,12 @@ typedef struct {
     int floor_mecha;          /* class 1 consumed / CAII activations */
     int pitfall;              /* class 2 close path dispatched to FLOOR_MECHA */
     int door;                 /* class 4 consumed / door mutations */
-    int teleporter;           /* class 5 consumed when a future owner binds */
+    int teleporter;           /* class 5 close/disabled path dispatched */
     int trickwall;            /* class 6 consumed */
-    int unbound_fail_closed;  /* classes 0/5/6 + unavailable state */
+    int unbound_fail_closed;  /* class 6 handler remains unbound */
     int pitfall_rejected;     /* class 2 toggle rejected */
     int door_rejected;        /* class 4 toggle rejected */
+    int teleporter_rejected;  /* class 5 path rejected */
 } DM2_V1_RuntimeActuatorTileReceipt;
 /* Copies the session actuator-tile receipt.  Always returns 1 when `out`
  * is non-NULL; counters are zero until the first 0x04 timer is dispatched.

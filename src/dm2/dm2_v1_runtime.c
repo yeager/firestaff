@@ -385,6 +385,7 @@ struct DM2_V1_RuntimeState {
      * tile subdispatch.  Each class gets a consumed counter; bounded mutations
      * (pitfall, door) also track rejections. */
     int actuator_tile_timers;        /* total 0x04 timers consumed */
+    int actuator_tile_unbound_fail_closed;
     int actuator_tile_wall_mecha;    /* class 0 consumed */
     int actuator_tile_pitfall;       /* class 2 consumed */
     int actuator_tile_pitfall_toggles; /* successful floor<->pit writes */
@@ -393,6 +394,7 @@ struct DM2_V1_RuntimeState {
     int actuator_tile_door_mutations; /* successful door state writes */
     int actuator_tile_door_rejected;
     int actuator_tile_teleporter;    /* class 5 consumed */
+    int actuator_tile_teleporter_rejected;
     int actuator_tile_trickwall;     /* class 6 consumed */
     /* DM2-007 cycle 12: last spell-cast failure feedback for M11 status scope.
      * Cleared on init; populated when a spell cast reports failure_feedback. */
@@ -10014,10 +10016,65 @@ floor_mecha_reject:
     return 0;
 }
 
-/* The source PITFALL owner can close without moving occupants. Opening also
- * calls ADVANCE_TILES_TIME before FLOOR_MECHA, whose party/creature owner is
- * not available in this live dispatcher yet. Keep that half fail-closed. */
-static int dm2_runtime_actuate_pitfall_timer(
+/* Prove the no-op subset of ADVANCE_TILES_TIME: the party marker and active
+ * creature are elsewhere, and the cell has no DB5+ wall item whose position
+ * or timer bytes the source routine would move. Any malformed/incomplete
+ * chain rejects the proof. */
+static int dm2_runtime_advance_tiles_time_is_noop(
+    DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    int map, int x, int y)
+{
+    DM2_V1_GameState *game;
+    int root, budget = 0;
+    int16_t cursor;
+
+    if (!rt || !dungeon || !rt->record_pools_valid ||
+        dungeon->square_bytes != 1 || map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map])
+        return 0;
+    game = rt->boot ? (DM2_V1_GameState *)rt->boot->dm2_state : NULL;
+    if (!game) return 0;
+    if (game->current_level == map &&
+        game->party_x == x && game->party_y == y)
+        return 0;
+    if (dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y) !=
+        DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    root = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (root == DM2_V1_RECORD_HANDLE_END)
+        return 1;
+    if (root == DM2_V1_RECORD_HANDLE_NULL) {
+        const int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+        return raw >= 0 && (raw & 0x10) == 0;
+    }
+    if (root < 0)
+        return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &rt->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            budget > INT_MAX - pool->record_count - pool->extension_count)
+            return 0;
+        budget += pool->record_count + pool->extension_count;
+    }
+    cursor = (int16_t)root;
+    while (cursor != DM2_V1_RECORD_HANDLE_END) {
+        int pool;
+        int16_t next;
+        if (cursor == DM2_V1_RECORD_HANDLE_NULL || budget-- <= 0)
+            return 0;
+        pool = dm2_v1_record_handle_pool(cursor);
+        if (pool > 4 || !dm2_v1_record_pool_address(&rt->record_pools, cursor) ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, cursor, &next))
+            return 0;
+        cursor = next;
+    }
+    return 1;
+}
+
+/* The source PITFALL owner calls ADVANCE_TILES_TIME before FLOOR_MECHA on
+ * open. Admit that only when the source advance is proven to be a no-op. */
+static int dm2_runtime_pitfall_tile_timer_owner(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
 {
@@ -10049,16 +10106,17 @@ static int dm2_runtime_actuate_pitfall_timer(
     /* Source action 2 derives 0=open / 1=close from tile bit 3. */
     if (action == 2)
         action = (raw & 0x08) != 0 ? 1 : 0;
-    if (action == 0) {
+    if (action == 0 && !dm2_runtime_advance_tiles_time_is_noop(
+            rt, dungeon, map, x, y)) {
         rt->actuator_tile_pitfall_rejected++;
         return 0;
     }
 
-    /* SKW_ACTUATE_PITFALL clears bit 3 and always dispatches FLOOR_MECHA,
-     * including when the pit was already closed. Roll the tile back if that
-     * downstream source owner cannot admit its record chain. */
+    /* SKW_ACTUATE_PITFALL sets/clears bit 3 and always dispatches
+     * FLOOR_MECHA. Roll the tile back if that downstream owner rejects. */
     if (dm2_v1_dungeon_set_tile_raw(
-            dungeon, map, x, y, raw & ~0x08) != 0) {
+            dungeon, map, x, y,
+            action == 0 ? raw | 0x08 : raw & ~0x08) != 0) {
         rt->actuator_tile_pitfall_rejected++;
         return 0;
     }
@@ -10069,6 +10127,84 @@ static int dm2_runtime_actuate_pitfall_timer(
         return 0;
     }
     rt->actuator_tile_pitfall++;
+    return 1;
+}
+
+/* The source teleporter owner reads the direct DB1 tile record before the
+ * action. A disabled DB1 (bits 1..2 == 3) skips tile work but still enters
+ * FLOOR_MECHA. Enabled opening calls ADVANCE_TILES_TIME, so only its complete
+ * close and disabled-record paths are admitted here. */
+static int dm2_runtime_teleporter_tile_timer_owner(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int map, x, y, action, raw;
+    int16_t root;
+    uint8_t *teleporter;
+
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        if (rt) rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    if (dungeon->square_bytes != 1 || map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map]) {
+        rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    root = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    teleporter = dm2_v1_record_pool_address_mut(&rt->record_pools, root);
+    if (raw < 0 || ((unsigned int)raw >> 5) != 5u ||
+        dm2_v1_record_handle_pool(root) != 1 || !teleporter) {
+        rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+
+    /* SKW_ACTUATE_TELEPORTER checks DB1 before ActionType and still sends a
+     * disabled record through FLOOR_MECHA without changing tile bit 3. */
+    if ((dm2_runtime_record_rd16(rt, teleporter + 4) & 0x0006u) == 0x0006u) {
+        if (!dm2_runtime_actuate_floor_mecha_timer(
+                rt, timer, source_index, receipt)) {
+            rt->actuator_tile_teleporter_rejected++;
+            return 0;
+        }
+        rt->actuator_tile_teleporter++;
+        return 1;
+    }
+
+    /* Source action 2 resolves to 0=open / 1=close from tile bit 3. */
+    if (action == 2)
+        action = (raw & 0x08) != 0 ? 1 : 0;
+    if (action == 0 && !dm2_runtime_advance_tiles_time_is_noop(
+            rt, dungeon, map, x, y)) {
+        rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+
+    /* Closing clears bit 3; opening sets it after the no-op advance proof.
+     * Both paths always dispatch FLOOR_MECHA. */
+    if (dm2_v1_dungeon_set_tile_raw(
+            dungeon, map, x, y,
+            action == 0 ? raw | 0x08 : raw & ~0x08) != 0) {
+        rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+    if (!dm2_runtime_actuate_floor_mecha_timer(
+            rt, timer, source_index, receipt)) {
+        (void)dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y, raw);
+        rt->actuator_tile_teleporter_rejected++;
+        return 0;
+    }
+    rt->actuator_tile_teleporter++;
     return 1;
 }
 
@@ -12794,8 +12930,9 @@ void dm2_v1_runtime_tick(void) {
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
         dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
-        dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;
+        dispatcher.actuator_tile[2] = dm2_runtime_pitfall_tile_timer_owner;
         dispatcher.actuator_tile[4] = dm2_runtime_actuate_door_mecha_timer;
+        dispatcher.actuator_tile[5] = dm2_runtime_teleporter_tile_timer_owner;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP_DOOR now requires the direct DB0 root at the timer cell, a
@@ -12876,6 +13013,8 @@ void dm2_v1_runtime_tick(void) {
              tile_class < DM2_V1_TIMER_ACTUATOR_TILE_CLASSES; ++tile_class) {
             rt->actuator_tile_timers +=
                 rt->proceed_timers.actuator_tile_tally[tile_class];
+            rt->actuator_tile_unbound_fail_closed +=
+                rt->proceed_timers.actuator_tile_unbound_tally[tile_class];
         }
     }
 
@@ -13384,10 +13523,10 @@ int dm2_v1_runtime_actuator_tile_receipt(
     out->door = rt->actuator_tile_door;
     out->teleporter = rt->actuator_tile_teleporter;
     out->trickwall = rt->actuator_tile_trickwall;
-    out->unbound_fail_closed =
-        out->wall_mecha + out->teleporter + out->trickwall;
+    out->unbound_fail_closed = rt->actuator_tile_unbound_fail_closed;
     out->pitfall_rejected = rt->actuator_tile_pitfall_rejected;
     out->door_rejected = rt->actuator_tile_door_rejected;
+    out->teleporter_rejected = rt->actuator_tile_teleporter_rejected;
     out->valid = 1;
     return 1;
 }

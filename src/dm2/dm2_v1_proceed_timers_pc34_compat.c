@@ -97,6 +97,7 @@ static void dm2_v1_dispatch_actuate_tile(const DM2_V1_TimerDispatcher *dispatche
     }
     if (dispatcher->actuator_tile[tile_class] == NULL) {
         receipt->fail_closed_count++;
+        receipt->actuator_tile_unbound_tally[tile_class]++;
         return;
     }
     if (dispatcher->actuator_tile[tile_class](dispatcher->context, timer,

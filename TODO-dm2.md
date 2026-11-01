@@ -1974,9 +1974,21 @@ partial.
 resolves ActionType 2 from tile bit 3, applies source close semantics by
 clearing bit 3, and always dispatches the original timer through the
 transactional `FLOOR_MECHA` owner. It restores the original tile if that
-downstream owner rejects. Opening still fails closed because the source calls
-`ADVANCE_TILES_TIME` before `FLOOR_MECHA`, and Firestaff has no complete live
-party/creature move owner for that call. GAME_LOAD remains limited to its
+downstream owner rejects. Opening now proceeds only when `ADVANCE_TILES_TIME` is proven a no-op for
+the cell: the party marker and active creature are elsewhere, and there are no
+DB5+ tile items whose positions or timer bytes must move. Cells requiring
+those source effects remain fail-closed. GAME_LOAD remains limited to its
 admitted DB2-only floor chain. The source-matched SPX v4, SPX v5 and DOS rows
 remain partial; other edition/platform coverage and full open behavior are
 still required.
+
+2026-11-01 skproject `ACTUATE_TELEPORTER`: the live class-5 timer owner now
+validates the source DB1 tile root and its endian-aware flags before acting.
+The DB1 disabled value (bits 1..2 both set) skips the tile mutation but still
+dispatches `FLOOR_MECHA`; enabled action-1 and action-2-to-close clear tile bit
+3 and transactionally dispatch the same floor owner. Opening proceeds only when `ADVANCE_TILES_TIME` is proven a no-op for the
+cell: the party marker and active creature are elsewhere, and there are no
+DB5+ tile items whose positions or timer bytes must move. Other open cases
+remain fail-closed pending the complete source movement owner. The GAME_LOAD
+candidate covers only its already admitted DB2 floor subset; other source
+editions and supported platform lanes remain partial.
