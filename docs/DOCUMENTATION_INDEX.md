@@ -76,6 +76,7 @@ remain at the top of `docs/`.
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities, admitted source bindings, capture-provenance contract and placeholder boundaries
+- [Theron JP host-key cold handoff trace](source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md) — authentic manual RUN/Button I reference capture; BIOS poll confirmed, launch branch and wrapper acceptance still missing
 - [Theron native SDL input on authentic US media](source-lock/theron-native-sdl-input-real-media-20261101.md) — three native event-loop runs on hash-verified US Track 02; tested keyboard, mouse-panel, touch and item actions plus parity limits
 - [Theron V1 parity definition matrix](../parity-evidence/theron_v1_parity_definition_matrix.md) — acceptance criteria and evidence gates; use capture readiness for current route status
 - [Theron ISO spawn-record projection](source-lock/theron-track02-spawn-record-iso-projection-20261101.md) — hash-verified US/JP ISO offsets and raw-BIN parity; pointer records 0–4 statically resolve to the five zone records, without inferring runtime spawn semantics
