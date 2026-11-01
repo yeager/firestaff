@@ -44,11 +44,11 @@ compiler/linker BSS initialization rather than a callable symbol.
 
 | Status | Count |
 |---|---:|
-| `MISSING` | 796 |
-| `UNCERTAIN_NUMBERED_EVIDENCE` | 544 |
-| `IMPLEMENTED_NARROW` | 534 |
+| `MISSING` | 795 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 538 |
+| `IMPLEMENTED_NARROW` | 537 |
 | `VERIFIED_SOURCE_MAPPING` | 95 |
-| `SOURCE_NONAPPLICABLE` | 65 |
+| `SOURCE_NONAPPLICABLE` | 69 |
 | `PC34_SOURCE_IMPLEMENTED` | 5 |
 | `PARTIAL` | 94 |
 | **Total** | **2,133** |

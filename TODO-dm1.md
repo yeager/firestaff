@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
+
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: corrected the Atari ST alias and callable row to `MISSING`. The source function computes DOS/Amiga copy-protection code checksums; Firestaff has no equivalent checksum route.
 
 2026-11-01 ReDMCSB `IO.C:F0074-F0078` pointer drawing and visibility: the ledger now maps the host SDL cursor/event route rather than unrelated numeric hits. Firestaff relies on window-system cursor composition; source bitmap save/restore, Atari ST interrupt callbacks, and the paired redraw visibility protocol remain open.
