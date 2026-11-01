@@ -374,29 +374,28 @@ static void test_creature_can_handle_it_class_above_31(void)
 {
     DM2_V1_CreatureHandleCaps caps;
 
-    /* Class 41 (0x29) set, nothing else. */
-    caps.handle_mask = (uint64_t)1 << 41;
-    /* item low six bits select the class; 0x1429 & 0x3f == 0x29. */
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) != 0);
+    /* Class 42 set, nothing else. The source selector comes from flags. */
+    caps.handle_mask = (uint64_t)1 << 42;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0x2a, NULL, NULL) != 0);
 
-    /* Bit 9 must NOT answer for class 41: that is exactly the aliasing the
-     * old 32-bit shift produced on x86-64 (1u << 41 == 1u << 9). */
+    /* Bit 9 must NOT answer for class 42: that is exactly the aliasing the
+     * old 32-bit shift produced on x86-64 (1u << 42 == 1u << 10). */
     caps.handle_mask = (uint64_t)1 << 9;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0x2a, NULL, NULL) == 0);
 
     /* Highest reachable class, 0x3d == 61. */
     caps.handle_mask = (uint64_t)1 << 61;
     assert(dm2_v1_creature_can_handle_it(&caps, 0x143d, 0, NULL, NULL) != 0);
 
-    /* 0x3e and 0x3f stay rejected outright. */
+    /* 0x3e follows the moneybox sentinel rule; 0x3f is the all-items rule. */
     caps.handle_mask = ~(uint64_t)0;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x143e, 0, NULL, NULL) == 0);
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x143f, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143e, 0x3e, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143f, 0x3f, NULL, NULL) != 0);
 
     /* A low class still works. */
     caps.handle_mask = (uint64_t)1 << 3;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1403, 0, NULL, NULL) != 0);
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1404, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1403, 3, NULL, NULL) != 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1404, 4, NULL, NULL) == 0);
 
     printf("test_creature_can_handle_it_class_above_31 OK\n");
 }

@@ -708,15 +708,13 @@ int32_t dm2_v1_creature_attacks_creature(
     const DM2_V1_CreatureAttacksCreatureCallbacks *cb, void *ctx);
 
 /* ---- DM2_CREATURE_CAN_HANDLE_IT (c_creature.cpp:1344) ----
- * Check whether a creature type can pick up/handle an item's class.
- * item classes 0x3e/0x3f are sentinels (empty slot / illegal) and never
- * handled. Class 0x29 (container) gets special moneybox handling: a
- * moneybox creatures cannot loot is only takeable once already opened
- * (flags & 0x80, i.e. a forced pickpocket/steal), otherwise the regular
- * per-type handle_mask bit for the item's class decides. */
+ * Check the item record against the class selector in flags (low six bits),
+ * applying flag 0x80 as the source inversion bit. Classes 0x3e/0x3f are
+ * sentinels. The v4 entry point preserves its direct-accept rule for opened
+ * class-0x29 moneyboxes; v5 checks the creature mask for opened moneyboxes. */
 typedef struct {
     /* bit N set => creature type can handle class N.
-     * 64-bit because item_class is (item & 0x3f), i.e. 0..0x3d: classes 32
+     * 64-bit because item_class is (flags & 0x3f), i.e. 0..0x3d: classes 32
      * and above -- including the moneybox class 0x29 -- are not
      * representable in a 32-bit mask, and shifting by them is undefined. */
     uint64_t handle_mask;
@@ -728,6 +726,9 @@ typedef struct {
 } DM2_V1_CreatureCanHandleCallbacks;
 
 int32_t dm2_v1_creature_can_handle_it(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
+int32_t dm2_v1_creature_can_handle_it_v4(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
 

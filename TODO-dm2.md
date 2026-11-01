@@ -18,9 +18,10 @@ updates, SPX v4 formula selection, and DOS/Amiga/FM Towns/Macintosh runtime
 evidence remain open.
 
 2026-11-01 skproject `DM2_CREATURE_CAN_HANDLE_IT` source review:
-`dm2_v1_creature_can_handle_it` now applies skproject's flag-0x80 inversion,
-0x3e/0x3f sentinel behavior, and the 0x29/0x3e moneybox state branches over
-its supplied mask. The source function still obtains the creature-specific
+`dm2_v1_creature_can_handle_it` now reads the class selector from flags,
+applies skproject's flag-0x80 inversion and 0x3e/0x3f behavior, and keeps
+the SPX v4 opened-moneybox shortcut separate from the v5 mask check. These
+scalar branches operate over the supplied mask. The source function still obtains the creature-specific
 item mask from GDAT and decodes class-specific object fields before mask
 membership. Those live source owners do not yet join current creature state,
 mask selection, record decoding and moneybox state into CCM `SHOOT_ITEM`, so

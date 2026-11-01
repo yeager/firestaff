@@ -1179,11 +1179,11 @@ static int dm2_handle_mask_has_class(uint64_t handle_mask, int item_class)
     return (handle_mask & ((uint64_t)1 << item_class)) != 0;
 }
 
-int32_t dm2_v1_creature_can_handle_it(
+static int32_t dm2_v1_creature_can_handle_it_impl(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
-    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx, int is_v4)
 {
-    int item_class = item & 0x3f;
+    int item_class = flags & 0x3f;
     int invert = flags & 0x80;
 
     /* skproject's 0x3f path reaches the common result label without
@@ -1210,13 +1210,34 @@ int32_t dm2_v1_creature_can_handle_it(
             cb->is_container_moneybox(ctx, item);
         if (!moneybox)
             item_class = 7;
-        else if (!cb->moneybox_already_opened ||
-                 !cb->moneybox_already_opened(ctx, item))
-            return invert;
+        else {
+            int opened = cb->moneybox_already_opened &&
+                cb->moneybox_already_opened(ctx, item);
+            if (!opened)
+                return invert;
+            /* SPX v4 accepts an opened moneybox directly. SPX v5 instead
+             * checks the creature mask for class 0x29. */
+            if (is_v4)
+                return !invert;
+        }
     }
 
     return dm2_handle_mask_has_class(caps->handle_mask, item_class)
         ? !invert : invert;
+}
+
+int32_t dm2_v1_creature_can_handle_it(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
+{
+    return dm2_v1_creature_can_handle_it_impl(caps, item, flags, cb, ctx, 0);
+}
+
+int32_t dm2_v1_creature_can_handle_it_v4(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
+{
+    return dm2_v1_creature_can_handle_it_impl(caps, item, flags, cb, ctx, 1);
 }
 
 int32_t dm2_v1_creature_cast_spell(
