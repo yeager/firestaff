@@ -8,6 +8,14 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 
 Static disassembly maps the `$50D2` window and four observed map-array reader windows uniquely to authenticated JP Track 02. It shows the local checks, indirect-indexed reads, bit `$10` branches, and indexed table writes without assigning data semantics. The v4 hook has an accepted state-only UP/control pair with 946 map-array reads and same-event instruction context. The guest consumed UP at `$44C1`; one observed byte at `$0E8B14` differs from the authenticated BIN. The original target-write allowlist omitted this address, so its zero-row result was inconclusive; the rebuilt instrumenter includes it. A subsequent cold attempt did not observe the `$E11D` game handoff, any LBA 3674 data reads, or a write to `$0E8B14`. It recorded map-reader instruction contexts but no `map_array_read`; the corrected PCE Fast input verifier remains blocked on at least one event interval without a matching controller read. See the [state-only context capture](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md), [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md), and [cold capture report](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md). No cold loader provenance, active-map selection, pose-bound tile consumer, or rendered result is established.
 
+The follow-up manual host-key cold run confirms that active-low RUN reached the
+System Card `$E4C5` poll, but still records no `$E11D` carry branch. Its
+independent `$4000` window is not joined to that branch, and the exact-LBA 3674
+data-port trace is empty. Structural validators pass for the available bounded
+traces, but the capture wrapper did not complete because its isolated remote
+script directory lacked one code-follow verifier. See the [host-key
+handoff report](../source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
+
 **Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
 
 **Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.

@@ -1,5 +1,23 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — manual JP host-key route still lacks a verified BIOS handoff
+
+An isolated authentic JP cold PCE Fast capture delivered RUN and Button I
+through physical host-key events. The trace confirms active-low RUN reads at
+the System Card `$E4C5` poll, and independent validators accept the bounded
+status, callback, I/O/RAM and decision records. The BIOS trace reaches
+`$E11B/$E14C/$E176`, while the decision and branch traces contain no `$E11D`
+launch branch. A separate `$4000` window is capped at 128 instructions but is
+not joined to that branch; LBA 3674 has zero data-port reads. The wrapper could
+not produce its final receipt because its isolated script directory lacked
+`verify_theron_jp_code_follow_trace.py`; this is documented separately from
+the trace evidence. See the [host-key capture report](docs/source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
+
+Next, record the System Card carry decision and a continuous source-authenticated
+transfer into game-owned code with a wrapper-accepted cold capture. Keep BIOS
+and controller observers bounded so they leave room for the handoff. Resume
+the LBA 3674 loader-to-map-byte join only after that transition is verified.
+
 ## 2026-11-01 — cold JP map-byte capture still has no game handoff
 
 The rebuilt Mednafen PCE Fast instrumenter now includes physical `$0E8B14` in
