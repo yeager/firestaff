@@ -6474,6 +6474,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             dataDir && dataDir[0] ? dataDir : "(none)",
             menuState != NULL, skipSwoosh);
     }
+
     if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
@@ -6671,13 +6672,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
             return g_m11_startup_intro_quit_requested ? 0 : 1;
         } else if (g_m11_debug_startup_detail && selectedVersion &&
                    selectedVersion->matched && !selectedIsAmiga) {
-            fprintf(stderr,
-                "firestaff: startup-source-skip game=csb candidate=amiga-swsh-ftl reason=selected-edition-not-amiga platform=%s edition=%s graphics-md5=%s\n",
-                "non-Amiga",
-                selectedVersion->versionId ? selectedVersion->versionId
-                                           : "unknown",
-                selectedVersion->matchedMd5[0] != '\0'
-                    ? selectedVersion->matchedMd5 : "unknown");
+            fprintf(stderr, "firestaff: startup-source-skip game=csb candidate=amiga-swsh-ftl reason=selected-edition-not-amiga\n");
         }
     }
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
