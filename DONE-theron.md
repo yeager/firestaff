@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — validate reader windows against local retail bytes
+
+- Ran the strict source verifier against the authentic local US `TQUS02.bin`
+  (MD5 `f23601102138f87c33025877767ebf76`), using exact 512-byte windows read
+  from known candidate offsets in that image.
+- The verifier accepted both candidates and reported all exact retail matches:
+  `$CBC6` at `0x00a085a`, `0x013385a`, `0x021005a`, `0x025985a`; `$45C3` at
+  `0x0095a93`, `0x0205293`, `0x024ea93`. The remaining duplicate US matches
+  continue to be reported by a complete window scan when the authentic trace
+  arrives.
+- This checks media identity, code-window hashing, opcode, and the recorded
+  MPR/physical-PC relationship in the verifier. The execution rows were a
+  tooling fixture built from those authentic bytes; this is not an emulator
+  capture and does not bind a runtime LBA or code-bank occurrence.
+
 ## 2026-11-01 — gate Drator source reports in the capture wrapper
 
 - Added opt-in `THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1` to the

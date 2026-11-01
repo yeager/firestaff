@@ -40,7 +40,10 @@ both `$CBC6` and `$45C3` to appear and match the retail image; per-PC row
 sequences must be contiguous, shared event sequences must increase, and any
 truncation marker rejects the report. Multiple matching offsets remain
 explicit rather than being collapsed to one source occurrence. The verifier's
-regression passed three loops, but no authentic capture has exercised these
+regression passed three loops, and a tooling fixture using 512-byte windows
+read from the hash-verified US retail BIN resolved all four `$CBC6` and three
+`$45C3` matching raw offsets. These are authentic source bytes but constructed
+execution rows, not a runtime capture; no authentic capture has exercised the
 reader windows yet.
 For an isolated US raw Track 02 replay, set both
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
