@@ -53,8 +53,8 @@ static int16_t encode_xy(int x, int y)
 
 /* Source: skevent.cpp — queues a tty04 timer aimed at the actuator's
  * target coordinates.  The source's c_tim_proc.cpp:4367-4392
- * DM2_INVOKE_ACTUATOR ultimately does the same: reads the actuator's
- * (Xcoord, Ycoord, Direction) and fires INVOKE_MESSAGE. */
+ * DM2_INVOKE_ACTUATOR reads the actuator's (Xcoord, Ycoord, Direction),
+ * adds its stored delay and the caller's extra ticks, then fires the message. */
 int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
                            const uint8_t *actu_record,
                            int action_type, int delay_add,
@@ -71,7 +71,8 @@ int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
     target_y = dm2_actu_ycoord(actu_record);
     dir      = dm2_actu_direction(actu_record);
 
-    t = make_timer(map, game_tick + (uint32_t)delay_add,
+    t = make_timer(map, game_tick + (uint32_t)dm2_actu_delay(actu_record)
+                              + (uint32_t)delay_add,
                    0x04, 0,
                    encode_xy(target_x, target_y),
                    (int16_t)((dir & 0xFF) | ((action_type & 0xFF) << 8)));
