@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `DUNVIEW.C:F0099/F0116/F0117`: the ledger now marks the live row-flip and PC34 left/right square-dispatch routes `PARTIAL`; bitmap ownership and complete edition/platform dispatcher equivalence remain open.
+
 2026-11-01 ReDMCSB `DUNVIEW.C:F0095` wall-set loading: the callable ledger now marks the active-map PC/I34 wall-set resolver as `PARTIAL`; Firestaff loads graphics lazily and does not reproduce each source edition's preload/cache sequence.
 
 2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: mapped `strlen` within the source 16-bit length domain; marked `strchr` partial because ReDMCSB returns NULL for a NUL search while host `strchr` returns the terminator address.
