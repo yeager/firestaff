@@ -45,6 +45,13 @@
 > `$E166->$E176`; no confirmed game-owned handoff was observed. See the
 > [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+> **Drator capture tooling (2026-11-01):** an opt-in PCE Fast filter now
+> records only the observed US reads of generated-row offsets 6–8 at logical
+> PCs `$CBC9` and `$45C3` with physical data `$1F093B-$1F093D`. The parser
+> validates the versioned address receipt but assigns no row semantics. Its
+> focused tooling checks passed three loops; no new authentic run used it, and
+> the previous BIOS-truncated capture remains rejected. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 > **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
 > record the same 128-instruction path into `$C1FC`, including `$C1D6`
 > call/return and conditional fall-through. Since `$C1FC` is also associated

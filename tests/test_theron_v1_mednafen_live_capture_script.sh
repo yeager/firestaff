@@ -25,6 +25,35 @@ if ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-p
     printf '%s\n' 'FAIL: live capture did not explain the invalid System Card I/O/RAM PC filter' >&2
     exit 1
 fi
+if invalid_spawn_filter_output=$(env THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=unknown \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an unknown spawn-consumer PC filter' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER must be none or drator-row' \
+   <<<"$invalid_spawn_filter_output"; then
+    printf '%s\n' 'FAIL: live capture did not explain the invalid spawn-consumer PC filter' >&2
+    exit 1
+fi
+if spawn_filter_module_output=$(env THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row "$script" 2>&1); then
+    printf '%s\n' 'FAIL: Drator row consumer filtering accepted the standard PCE module' >&2
+    exit 1
+fi
+if ! grep -Fq 'the Drator row consumer filter requires the PCE Fast module' \
+   <<<"$spawn_filter_module_output"; then
+    printf '%s\n' 'FAIL: invalid spawn-consumer module lacked a precise diagnostic' >&2
+    exit 1
+fi
+spawn_filter_valid_output=$(env THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid Drator row consumer filter was rejected' >&2
+    exit 1
+}
+if [[ "$spawn_filter_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid Drator row consumer filter did not reach the missing-media gate' >&2
+    exit 1
+fi
 huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
@@ -1837,6 +1866,7 @@ if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER="$spawn_consumer_pc_filter"' "$script" ||
    ! grep -Fq 'pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range"' "$script" ||
    ! grep -Fq 'range_last > 0x1FFFFF' "$script" ||
@@ -2302,6 +2332,16 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'char reader_code_bytes[17] = "unavailable"' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'for(unsigned i = 0; i < 8; i++)' "$party_ram_consumer_read_patch"; then
     printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample bounded reads with source-positioned instruction bytes' >&2
+    exit 1
+fi
+spawn_consumer_trace_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
+if ! grep -Fq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'reader_pc == 0xcbc9' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'reader_pc == 0x45c3' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'spawn_consumer_pc_filter=%s' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'spawn_consumer_pc_filter=${THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER:-none}' "$script" ||
+   ! grep -Fq '"$spawn_consumer_pc_filter" == drator-row' "$script"; then
+    printf '%s\n' 'FAIL: source-scoped Drator row capture must bind the two observed consumer PCs' >&2
     exit 1
 fi
 if ! awk '

@@ -48,7 +48,7 @@ No reference source code exists. Parity is established through:
 | Stage-2 contiguous entry path | PROVEN | 0xB5 bytes ($4000-$40B4) fully bound |
 | System Card status callback byte | PROVEN | Authentic JP cold trace: `$1800=$C8`, `$1801=$04`, callback writes `$2259=$04`; [source-locked r5 trace](../docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) |
 | BIOS continuation after callback | PROVEN | `$E162` reads `$2259=$04`; `$E166->$E176` |
-| RUN reaches game-owned code | OPEN | No `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff in this capture |
+| Original cold RUN reaches game-owned code | OPEN | The cited JP System Card capture follows `$E166->$E176`, but has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff. This original-emulator gate is separate from Firestaff's native JP fresh-start and US Continue routes, which reach loaded dungeons. |
 
 ### 2. Command Dispatcher
 
@@ -118,7 +118,7 @@ No reference source code exists. Parity is established through:
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Track 01 CDDA handoff | PROVEN | `theron_v1_track01_cdda_handoff_from_verified_media` |
-| CD audio availability check | PROVEN | 19-track layout verified, OGG fallback |
+| CUE audio-source admission | PROVEN | 19-track layout and CUE-declared same-stem WAV-to-OGG substitutions are verified; OGG cannot replace missing Track 02 data. This is media admission, not CD-DA or ADPCM playback parity. |
 | ADPCM bank anchors (3) | PROVEN | US/JP offset pairs in Track 02 BIN |
 | Audio trigger mapping | PARTIAL | Static System Card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY. This proves call-site classification only, not a runtime event-to-sample owner. |
 | CD_PLAY track map | PROVEN | 2 code-region CD_PLAY sites (sectors 1224, 3095), both load track $0E via LDA #$0E → STA $FF; 4 data false positives filtered |

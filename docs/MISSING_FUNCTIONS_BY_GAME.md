@@ -1,6 +1,6 @@
 # Missing Functions and Verification by Game
 
-Status: 2026-10-31. This is a summary of Firestaff's remaining gaps, not a
+Status: 2026-11-01. This is a summary of Firestaff's remaining gaps, not a
 list of every historical TODO or symbol name.
 
 For Theron, the current evidence summary is

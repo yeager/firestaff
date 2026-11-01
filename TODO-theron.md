@@ -40,6 +40,22 @@ Card image. Use it for the next cold replay to avoid logging the repeated
 `$1800` status-poll loop. This is an instrumentation option only; it does not
 change the existing incomplete-capture result or prove a game handoff.
 
+The next bounded Drator row replay can set
+`THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`. This opt-in PCE Fast
+scope emits only reads from physical `$1F093B-$1F093D` at the observed US
+reader PCs `$CBC9`/physical `$0DABC9` and `$45C3`/physical `$0D05C3`. The
+versioned trace and verifier retain these as source-address receipts; they do
+not map the bytes to coordinates, creature fields, or stats. Combine it with
+`THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path` to avoid the known BIOS
+poll cap. A different bank mapping will intentionally produce no matching row
+and requires a new source-bound capture before changing the filter.
+
+The filtered observer and parser are tooling only. Their repeated contract
+checks do not constitute a new original-game capture; the prior package remains
+rejected because its BIOS trace was truncated. Keep generated-row semantics
+and complete wrapper verification open until a fresh authentic replay passes
+all independent receipts.
+
 Raw traces and user media remain outside Git. No Drator-positioned save or
 state artifact is checked into the repository; reproduce the route from the
 hash-verified authentic media in a fresh isolated profile. See the

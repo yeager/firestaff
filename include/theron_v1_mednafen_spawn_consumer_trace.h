@@ -17,6 +17,7 @@ typedef enum {
 typedef struct {
     Theron_V1SpawnConsumerTraceStatus status;
     int source_header_verified;
+    int drator_row_pc_filter;
     int sequence_verified;
     int bank_coordinates_verified;
     int boundary_flags_verified;

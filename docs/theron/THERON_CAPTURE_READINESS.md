@@ -23,6 +23,19 @@ main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.
 
+For a source-scoped Drator byte-consumer replay, the wrapper also supports
+`THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`. This PCE Fast-only mode
+records reads of physical `$1F093B-$1F093D` only at the observed US reader
+addresses `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3`. The versioned sidecar parser
+checks the data range, logical address window, PC/address pair and sequence.
+The receipt remains non-semantic. A changed physical bank intentionally
+produces no accepted row until a new authentic source mapping is captured.
+Use this with the System Card `run-path` filter below to keep both traces
+bounded; neither filter alone establishes a complete capture or gameplay.
+The focused parser, wrapper and reference-patch contract checks passed three
+consecutive loops; see the [completed tooling entry](../../DONE-theron.md#2026-11-01--add-source-scoped-drator-row-consumer-trace-filter). No new game run used this spawn filter, so the previous
+truncated package remains rejected and generated-row semantics remain open.
+
 The reference capture wrapper now supports
 `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path`. This source-scoped mode
 keeps only System Card data reads at `$EA4D`, callback writes at `$EA50`, and
@@ -714,28 +727,21 @@ pit query/caller to its physical bank and authentic Track 02 record. Keep game
 media and private emulator artifacts on the operator's machine. Continue
 implementing and validating gameplay in Firestaff's native runtime.
 
-## Historical 2026-10-24 — selected title-menu action not yet tested
+## Historical 2026-10-24 — title-action hold question
 
 At that date, the user reported that starting from the original game's menu
 required holding the selected action for several seconds. The later 2026-10-31
-capture above confirms four-second Button I holds on NEW GAME and FILE 1 for
-the Japanese route. DMWeb's manual identifies Button I as the selector but
-does not specify a multi-second hold. Existing JP
-`pce_fast` captures reached the title menu after a four-second RUN hold and
-advanced through New Game/File 1 with ordinary Space/Button I. The latest US
-interactive session used the normal `pce` module and remained at the authentic
-System Card 3.0 `JUST A MOMENT...` screen; it never exposed the Theron menu and
-therefore did not test the requested hold. Its BRAM and pre-existing states
-were left unchanged. Next capture: use an isolated authenticated `pce_fast`
-profile, confirm the menu visually, hold the highlighted Button I action for
-3–5 seconds, and retain same-session input and screen receipts. Do not treat a
-System Card screen or a prior JP short-press capture as evidence for the US
-hold or full-game parity.
+authentic JP capture confirms four-second Button I holds on NEW GAME and FILE 1
+advance through the Akutuba story to the dungeon. This resolves the JP title
+action observation. DMWeb identifies Button I as the selector but does not
+specify the hold duration. No equivalent verified US title-menu hold capture
+is recorded here; do not generalize the JP timing to US or treat it as native
+Firestaff timing or gameplay parity.
 
 On 2026-10-25, three additional isolated four-second RUN traces likewise
 stopped at System Card BIOS controller reads rather than game-owned input or
 Theron title/menu execution. They are retained only as operator-local negative
-diagnostics; they do not change the boundary above or establish menu timing.
+diagnostics and do not change the later positive JP title-action result.
 
 Reference context: [DMWeb Theron's Quest edition records](../DMWEB_REFERENCE.md)
 separate Japanese and US media and include original menu/gameplay references;

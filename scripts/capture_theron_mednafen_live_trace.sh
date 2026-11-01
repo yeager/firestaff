@@ -151,6 +151,17 @@ replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+spawn_consumer_pc_filter=${THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER:-none}
+if [[ "$spawn_consumer_pc_filter" != none &&
+      "$spawn_consumer_pc_filter" != drator-row ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER must be none or drator-row' >&2
+    exit 1
+fi
+if [[ "$spawn_consumer_pc_filter" == drator-row &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: the Drator row consumer filter requires the PCE Fast module' >&2
+    exit 1
+fi
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
 pce_fast_c852_fetch_enabled=${THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE:-0}
 if [[ "$pce_fast_c852_fetch_enabled" != 0 && "$pce_fast_c852_fetch_enabled" != 1 ]]; then
@@ -1355,6 +1366,11 @@ require_instrumented_mednafen_binary() {
             return 1
         fi
     done
+    if [[ "$spawn_consumer_pc_filter" == drator-row ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the Drator row consumer PC filter; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
     if [[ "$capture_mednafen_module" == pce_fast ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card code-follow hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
@@ -1915,6 +1931,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER="$spawn_consumer_pc_filter" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT="$pce_fast_main_ram_target_write_sample_limit" \
@@ -3116,6 +3133,7 @@ fi
     printf 'ram_provenance_direct_enabled=%s\n' "${THERON_CAPTURE_RAM_PROVENANCE_DIRECT:-0}"
     printf 'main_ram_target_writes=%s\n' "$transition_main_ram_target_write_count"
     printf 'spawn_consumer_reads=%s\n' "$transition_spawn_consumer_read_count"
+    printf 'spawn_consumer_pc_filter=%s\n' "$spawn_consumer_pc_filter"
     printf 'spawn_register_samples=%s\n' "$transition_spawn_register_sample_count"
     printf 'spawn_preconsumer_4644_samples=%s\n' "$transition_spawn_preconsumer_4644_count"
     printf 'spawn_helper_4667_samples=%s\n' "$transition_spawn_helper_4667_count"

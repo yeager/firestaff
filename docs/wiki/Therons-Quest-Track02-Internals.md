@@ -48,6 +48,12 @@ passed three loops, but no original-game run has used this filter yet. The
 current BIOS capture remains truncated; this tooling update adds no gameplay
 or handoff evidence. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
+An additional opt-in PCE Fast `drator-row` filter retains only the observed US
+consumer reads at `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3` for physical row bytes
+`$1F093B-$1F093D`. Its address-only receipt is parser-checked and does not
+identify row fields or semantics. Three focused tooling loops passed, but no
+authentic replay has used this filter; the truncated capture remains rejected.
+
 **Current reference boundary (2026-10-31):** a separate authentic Japanese
 cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`
 callback through BIOS branch `$E166->$E176`. It does not observe a confirmed

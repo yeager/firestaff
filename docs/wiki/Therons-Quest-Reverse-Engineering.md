@@ -62,6 +62,8 @@ Native Debug direct launch with authentic US Track 02 enters Theron's
 title/startup path without Firestaff's Run menu or a System Card. Its boot
 probe stops before dungeon loading (`levelLoaded=0`); this confirms launch
 selection only. See the [source-locked direct-launch note](../source-lock/theron-native-debug-direct-launch-20261031.md).
+The opt-in PCE Fast `drator-row` capture filter now bounds observed US row-byte reads at `$CBC9` and `$45C3`; its parser and wrapper checks passed three loops, but no authentic run has used it and row semantics remain open.
+
 Firestaff gameplay
 runs natively; emulators are reference tools only. See [Theron input
 notes](../theron/theron_input.md), [capture

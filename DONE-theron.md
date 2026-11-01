@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — add source-scoped Drator row-consumer trace filter
+
+- Added the opt-in PCE Fast `THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`
+  capture mode. It retains reads of physical `$1F093B-$1F093D` only at the
+  observed US reader pairs `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3`.
+- Version 2 sidecars declare the filter mode. The parser accepts both the
+  legacy unfiltered schema and the new filtered schema, and validates the
+  physical data window, logical range, exact PC-to-physical-PC pair and event
+  sequence. The receipt remains address evidence only; it does not assign
+  meanings to the row bytes.
+- The live-capture wrapper restricts this mode to PCE Fast and requires the
+  matching instrumented reference binary. The patch, parser, wrapper and
+  focused regressions passed three consecutive loops; shell syntax and
+  `git diff --check` passed. No authentic game run has used this new filter,
+  so the earlier truncated capture remains rejected and Theron gameplay or
+  parity status is unchanged.
+
 ## 2026-11-01 — add source-scoped System Card I/O/RAM capture mode
 
 - Added the opt-in `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path`
