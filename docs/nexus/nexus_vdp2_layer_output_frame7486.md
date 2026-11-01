@@ -8,7 +8,7 @@ Ymir's receipts report 113 of 113 NBG0 row samples and 791 layer records, with n
 
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-vdp2-layer-output-20261102`
 
-The layer stream uses Ymir format `YMLYR001`; its SHA-256 is `6c761ae823976939d8044a31fe4f4b4f0713619dc0e3c8751459d38205d7d0b6`. The paired framebuffer SHA-256 is `6d0742b5e7c96c5c239890c4f15b6fe0c51538c8330393b33eaeb66ce29cbd11a8`.
+The layer stream uses Ymir format `YMLYR001`; its SHA-256 is `6c761ae823976939d8044a31fe4f4b4f0713619dc0e3c8751459d38205d7d0b6`. The paired framebuffer SHA-256 is `6d0742b5e7c96c523890c4f15b6fe0c51538c8330393b33eaeb66ce29cbd11a8`.
 
 ## Observations
 
