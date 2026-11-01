@@ -6,6 +6,15 @@ records, while 5–7 have zero offsets. The remaining task is to establish the
 original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
+The current native regression build passed eight selected US/JP real-media,
+startup, later-dungeon and input CTests in three consecutive loops (24 total
+executions). This verifies those bounded paths only; full campaign, renderer,
+save, combat, audio and gameplay parity remain open. The new `$CBC6`/`$45C3`
+reader-code fetch windows still need an authentic Drator replay and source
+join before they can inform row semantics or native spawning. See the
+[completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions)
+and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## Next original-game analysis — join Drator reader PCs to fetched source bytes
 
 An authentic US cold replay proves a same-session write/read match for row
