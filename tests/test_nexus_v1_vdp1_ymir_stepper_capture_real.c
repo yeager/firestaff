@@ -198,7 +198,8 @@ int main(int argc, char **argv)
     int sys_clip_h = 511, sys_clip_v = 255;
     unsigned int frame_rows = 0U, draws = 0U, mode1_count = 0U;
     unsigned int other_modes = 0U, polygon_count = 0U;
-    unsigned int dgn_source_count = 0U, transparent_mode1_count = 0U;
+    unsigned int dgn_source_count = 0U, palette_fallback_count = 0U;
+    unsigned int transparent_mode1_count = 0U;
     unsigned int user_clip_updates = 0U, system_clip_updates = 0U, local_updates = 0U;
     uint64_t opaque = 0U, exact_matches = 0U, alpha_matches = 0U;
     char *trace_copy = NULL, *line;
@@ -402,13 +403,19 @@ int main(int argc, char **argv)
                         material.dgn_image_size == (int)parsed.texture_byte_count &&
                         material.dgn_palette_size == 32) {
                         unsigned int pal_byte;
+                        if (!material.dgn_unique_join_verified &&
+                            !material.dgn_palette_only_fallback) {
+                            fprintf(stderr, "frame mode-1 row %lu has no explicit DGN join classification\n", index);
+                            goto done;
+                        }
                         texture_bytes = material.dgn_image;
                         for (pal_byte = 0U; pal_byte < 32U; pal_byte += 2U) {
                             dgn_palette_le[pal_byte] = material.dgn_palette[pal_byte + 1U];
                             dgn_palette_le[pal_byte + 1U] = material.dgn_palette[pal_byte];
                         }
                         palette_bytes = dgn_palette_le;
-                        ++dgn_source_count;
+                        if (material.dgn_unique_join_verified) ++dgn_source_count;
+                        else ++palette_fallback_count;
                     } else if (dgn_joined && material.transparent_capture_noop_verified) {
                         /* The 11 all-zero captured spans are verified transparent
                          * no-ops, not DGN-owned textures. Preserve their real bytes. */
@@ -453,12 +460,12 @@ int main(int argc, char **argv)
         }
     }
     if (frame_rows != EXPECTED_FRAME_ROWS || draws != LAST_DRAW-FIRST_DRAW+1U ||
-        mode1_count != 124U || dgn_source_count != 113U ||
+        mode1_count != 124U || dgn_source_count + palette_fallback_count != 113U ||
         transparent_mode1_count != 11U || other_modes != 8U ||
         user_clip_updates != 1U || local_updates != 3U ||
         polygon_count != 28U || system_clip_updates != 0U || !seen[0] || !seen[LAST_DRAW]) {
-        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u dgn=%u transparent=%u polygon=%u userclip=%u local=%u sysclip=%u\n",
-            frame_rows,draws,mode1_count,dgn_source_count,transparent_mode1_count,
+        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u unique_dgn=%u independent_dgn_fallback=%u transparent=%u polygon=%u userclip=%u local=%u sysclip=%u\n",
+            frame_rows,draws,mode1_count,dgn_source_count,palette_fallback_count,transparent_mode1_count,
             polygon_count,user_clip_updates,local_updates,system_clip_updates); goto done;
     }
     if (!is_frame_receipt(&blobs[5])) { fprintf(stderr,"frame receipt changed during validation\n"); goto done; }
@@ -490,8 +497,8 @@ int main(int argc, char **argv)
             goto done;
         }
     }
-    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u retail_dgn=%u transparent_mode1=%u polygons=%u other_mode=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
-        FRAME_INDEX,draws,mode1_count,dgn_source_count,transparent_mode1_count,
+    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u unique_retail_dgn_joins=%u independent_dgn_fallbacks=%u transparent_mode1=%u polygons=%u other_mode=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
+        FRAME_INDEX,draws,mode1_count,dgn_source_count,palette_fallback_count,transparent_mode1_count,
         polygon_count,other_modes,
         (unsigned long long)opaque,(unsigned long long)exact_matches,
         (unsigned long long)alpha_matches);
