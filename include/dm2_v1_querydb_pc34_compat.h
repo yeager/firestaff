@@ -454,6 +454,16 @@ int32_t dm2_v1_query_48ae_01af(int32_t tile_byte, int32_t dir,
 /* Combat / damage (2)                                                        */
 /* -------------------------------------------------------------------------- */
 
+typedef enum {
+    DM2_V1_QUERY_48AE_05AE_DOS = 0,
+    DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4,
+    DM2_V1_QUERY_48AE_05AE_SPX_V5 = 5
+} DM2_V1_Query48ae05aeVariant;
+int32_t dm2_v1_query_48ae_05ae_variant(
+    int32_t itemspec, int32_t creature_type, int32_t slot,
+    int32_t adjust_percent, int32_t increase, int32_t charges,
+    DM2_V1_Query48ae05aeVariant variant,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 int32_t dm2_v1_query_48ae_05ae(int32_t itemspec, int32_t creature_type,
     int32_t slot, int32_t adjust_percent, int32_t increase, int32_t charges,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
@@ -463,6 +473,11 @@ struct DM2_V1_AssetLoader;
 int dm2_v1_query_48ae_05ae_asset_loader(
     uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
     int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader);
+int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    DM2_V1_Query48ae05aeVariant variant, uint16_t itemspec,
+    uint8_t creature_type, uint16_t creature_word8, int32_t argl0,
+    int32_t argl1, int32_t charges, int32_t *out_value,
     const struct DM2_V1_AssetLoader *loader);
 int32_t dm2_v1_query_48ae_05ae_skproject_callback(
     uint16_t distinctive_type, uint8_t creature_type, uint16_t creature_word8,

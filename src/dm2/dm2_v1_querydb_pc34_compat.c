@@ -546,9 +546,10 @@ int32_t dm2_v1_query_gdat_item_weight(int32_t record,
 /* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item-versus-creature
    value calculation. Arithmetic narrows at the same U16 destinations as the
    source; GDAT and mask data come only from source-owned callbacks. */
-int32_t dm2_v1_query_48ae_05ae(
+int32_t dm2_v1_query_48ae_05ae_variant(
     int32_t itemspec, int32_t creature_type, int32_t slot,
     int32_t adjust_percent, int32_t increase, int32_t charges,
+    DM2_V1_Query48ae05aeVariant variant,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
     uint8_t item_mask[64];
@@ -558,12 +559,22 @@ int32_t dm2_v1_query_48ae_05ae(
     int item_db;
     int item_cls;
     int item_index;
-    unsigned slot_byte;
-    unsigned field;
+    uint16_t slot_word;
+    uint8_t slot_byte;
+    uint8_t first_word_index;
+    uint8_t second_word_index;
+    uint8_t adjust_word_index;
+    int32_t first_mask_index;
+    int32_t second_mask_index;
+    int32_t second_mask_creature;
+    int32_t field;
 
     if (!cb || !cb->query_gdat_entry_data_index ||
         !cb->query_cls1_from_record || slot < 0 || slot > 0xffff ||
-        creature_type < 0 || creature_type > 0xff)
+        creature_type < 0 || creature_type > 0xff ||
+        (variant != DM2_V1_QUERY_48AE_05AE_DOS &&
+         variant != DM2_V1_QUERY_48AE_05AE_SPX_V4 &&
+         variant != DM2_V1_QUERY_48AE_05AE_SPX_V5))
         return 0;
 
     item_type = (uint16_t)dm2_v1_get_itemtype_of_itemspec_actuator(item_word);
@@ -573,36 +584,60 @@ int32_t dm2_v1_query_48ae_05ae(
     if (item_cls == 0xff) return 0;
     item_index = (int)(item_word >> 3);
     if (item_index >= (int)sizeof(item_mask)) return 0;
-    slot_byte = (unsigned)(uint8_t)slot;
+    slot_word = (uint16_t)slot;
+    slot_byte = (uint8_t)slot_word;
+    second_mask_creature = creature_type;
+    if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V4) {
+        uint16_t v4_first_mask_word = (uint16_t)(slot_word * 3u + 18u);
+        first_word_index = (uint8_t)(v4_first_mask_word * 3u + 0xa2u);
+        first_mask_index = (uint8_t)v4_first_mask_word;
+        second_word_index = (uint8_t)(slot_word * 3u + 0xa1u);
+        second_mask_index = (uint8_t)(slot_word * 3u + 17u);
+        adjust_word_index = (uint8_t)((uint8_t)(slot_word * 3u) + 0xa0u);
+    } else if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V5) {
+        first_word_index = (uint8_t)(slot_byte * 3u + 0xa2u);
+        first_mask_index = (int16_t)(uint16_t)(slot_word * 3u + 0x12u);
+        second_word_index = (uint8_t)(slot_byte * 3u + 0xa1u);
+        second_mask_index = (int16_t)(uint16_t)(slot_word * 3u + 0x11u);
+        /* The source has an unresolved TODO for this literal mask owner. */
+        second_mask_creature = 0x64;
+        adjust_word_index = (uint8_t)(slot_byte * 3u + 0xa0u);
+    } else {
+        first_word_index = (uint8_t)(slot_byte * 3u + 0xa2u);
+        first_mask_index = (uint8_t)(slot_word * 3u + 0x12u);
+        second_word_index = (uint8_t)(slot_byte * 3u + 0xa1u);
+        second_mask_index = (uint8_t)(slot_word * 3u + 0x11u);
+        adjust_word_index = (uint8_t)(slot_byte * 3u + 0xa0u);
+    }
 
     value = (uint16_t)cb->query_gdat_entry_data_index(
         ctx, (int8_t)item_cls, (int8_t)item_type, 11, 2);
 
     /* Source fields and mask identifiers are narrowed to bytes. */
-    field = (uint8_t)(slot_byte * 3u + 0xa2u);
+    field = first_word_index;
     {
         uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
             ctx, 0x0f, (int8_t)creature_type, 11, (int8_t)field);
         if (percent != 0u) {
-            int mask_idx = (int)(uint8_t)(slot_byte * 3u + 0x12u);
             if (!cb->query_creatures_item_mask) return 0;
             memset(item_mask, 0, sizeof(item_mask));
-            if (cb->query_creatures_item_mask(ctx, creature_type, mask_idx,
+            if (cb->query_creatures_item_mask(ctx, creature_type,
+                                               first_mask_index,
                                                item_mask, 0) != 0 &&
                 (item_mask[item_index] & (uint8_t)(1u << (item_word & 7u))) != 0u)
                 value = (uint16_t)(((uint32_t)value * percent) / 100u);
         }
     }
 
-    field = (uint8_t)(slot_byte * 3u + 0xa1u);
+    field = second_word_index;
     {
         uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
             ctx, 0x0f, (int8_t)creature_type, 11, (int8_t)field);
         if (percent != 0u) {
-            int mask_idx = (int)(uint8_t)(slot_byte * 3u + 0x11u);
             if (!cb->query_creatures_item_mask) return 0;
             memset(item_mask, 0, sizeof(item_mask));
-            if (cb->query_creatures_item_mask(ctx, creature_type, mask_idx,
+            if (cb->query_creatures_item_mask(ctx, second_mask_creature,
+                                               second_mask_index,
                                                item_mask, 0) != 0 &&
                 (item_mask[item_index] & (uint8_t)(1u << (item_word & 7u))) != 0u)
                 value = (uint16_t)(((uint32_t)value * percent) / 100u);
@@ -624,18 +659,31 @@ int32_t dm2_v1_query_48ae_05ae(
     if (adjust_percent != 0) {
         uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
             ctx, 0x0f, (int8_t)creature_type, 11,
-            (int8_t)(uint8_t)(slot_byte * 3u + 0xa0u));
+            (int8_t)adjust_word_index);
         uint16_t delta;
         if (percent == 0u) percent = 10u;
         delta = (uint16_t)(((uint32_t)value * percent) / 100u);
         if (increase != 0) {
             value = (uint16_t)(value + delta);
+        } else if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V4) {
+            /* SPX v4 subtracts the U16 delta without the DOS floor/minimum. */
+            value = (uint16_t)(value - delta);
         } else if (value > 1u) {
             if (delta < 1u) delta = 1u;
             value = (uint16_t)(value - delta);
         }
     }
     return (int32_t)value;
+}
+
+int32_t dm2_v1_query_48ae_05ae(
+    int32_t itemspec, int32_t creature_type, int32_t slot,
+    int32_t adjust_percent, int32_t increase, int32_t charges,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    return dm2_v1_query_48ae_05ae_variant(
+        itemspec, creature_type, slot, adjust_percent, increase, charges,
+        DM2_V1_QUERY_48AE_05AE_DOS, cb, ctx);
 }
 
 typedef struct {
@@ -645,8 +693,11 @@ typedef struct {
 
 static uint8_t dm2_query48ae05ae_cls1(void *ctx, int32_t record)
 {
-    (void)ctx;
-    return (uint8_t)dm2_v1_query_cls1_from_record(record, NULL, NULL);
+    DM2_V1_Query48ae05aeLoaderContext *loader_ctx =
+        (DM2_V1_Query48ae05aeLoaderContext *)ctx;
+    uint8_t cls1 = (uint8_t)dm2_v1_query_cls1_from_record(record, NULL, NULL);
+    if (cls1 == 0xffu && loader_ctx) loader_ctx->missing_data = 1;
+    return cls1;
 }
 
 static int16_t dm2_query48ae05ae_data_index(
@@ -671,7 +722,7 @@ static int32_t dm2_query48ae05ae_item_mask(
     DM2_V1_Query48ae05aeLoaderContext *ctx =
         (DM2_V1_Query48ae05aeLoaderContext *)userdata;
     if (!ctx || !mask_out || creature_type < 0 || creature_type > 0xff ||
-        mask_idx < 0 || mask_idx > 0xff || flag < 0 || flag > 1 ||
+        mask_idx < -0x8000 || mask_idx > 0x7fff || flag < 0 || flag > 1 ||
         !dm2_v1_query_creatures_item_mask_bytes(
             ctx->loader, creature_type, mask_idx, flag, mask_out)) {
         if (ctx) ctx->missing_data = 1;
@@ -686,15 +737,23 @@ static int16_t dm2_query48ae05ae_max_charge(void *ctx, int16_t item_class)
     return dm2_v1_get_max_charge((uint16_t)item_class);
 }
 
-int dm2_v1_query_48ae_05ae_asset_loader(
+int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    DM2_V1_Query48ae05aeVariant variant,
     uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
     int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
     const struct DM2_V1_AssetLoader *loader)
 {
     DM2_V1_Query48ae05aeLoaderContext ctx;
     DM2_V1_QueryDbCallbacks cb;
+    int item_db;
     if (out_value) *out_value = 0;
     if (!out_value || !loader) return 0;
+    if (variant != DM2_V1_QUERY_48AE_05AE_DOS &&
+        variant != DM2_V1_QUERY_48AE_05AE_SPX_V4 &&
+        variant != DM2_V1_QUERY_48AE_05AE_SPX_V5)
+        return 0;
+    item_db = dm2_v1_get_itemdb_of_itemspec_actuator(itemspec);
+    if (item_db < 0 || item_db > 0x0f || (itemspec >> 3) >= 64u) return 0;
     memset(&ctx, 0, sizeof(ctx));
     ctx.loader = loader;
     memset(&cb, 0, sizeof(cb));
@@ -702,10 +761,20 @@ int dm2_v1_query_48ae_05ae_asset_loader(
     cb.query_cls1_from_record = dm2_query48ae05ae_cls1;
     cb.query_creatures_item_mask = dm2_query48ae05ae_item_mask;
     cb.get_max_charge = dm2_query48ae05ae_max_charge;
-    *out_value = dm2_v1_query_48ae_05ae(
+    *out_value = dm2_v1_query_48ae_05ae_variant(
         itemspec, creature_type, creature_word8, argl0, argl1, charges,
-        &cb, &ctx);
+        variant, &cb, &ctx);
     return ctx.missing_data == 0;
+}
+
+int dm2_v1_query_48ae_05ae_asset_loader(
+    uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader)
+{
+    return dm2_v1_query_48ae_05ae_asset_loader_variant(
+        DM2_V1_QUERY_48AE_05AE_DOS, itemspec, creature_type, creature_word8,
+        argl0, argl1, charges, out_value, loader);
 }
 
 int32_t dm2_v1_query_48ae_05ae_skproject_callback(
