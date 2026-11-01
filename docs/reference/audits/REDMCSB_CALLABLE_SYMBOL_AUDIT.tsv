@@ -1238,8 +1238,8 @@ F	1513	F1513_MainLoop	SWITCH.C	referenced-not-verified	referenced_not_verified	e
 F	1524	F1524_VerticalBlankClearPalette	UTSTWKS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1525	F1525_OpenVDIWorkstation	UTSTWKS.C;CEDTINCI.C;ANIM.C;SWITCH.C;HINTSCR.C;UTILITY.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1526	F1526_CloseWorkstationAndExitApplication	UTSTWKS.C;CEDTINCI.C;ANIM.C;SWITCH.C;HINTSCR.C;UTILITY.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	1527	F1527_MOUSE_EnableScreenUpdate_CPSE	HINT001.C;HINTHINT.C;HINTSCR.C;HINTINPT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1528	F1528_MOUSE_DisableScreenUpdate	HINT001.C;HINTHINT.C;HINTINPT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1527	F1527_MOUSE_EnableScreenUpdate_CPSE	HINT001.C;HINTHINT.C;HINTSCR.C;HINTINPT.C	partial	implementation-partial	HINT001 wrapper delegates to F0077; Firestaff has the nested counter helper, but no Amiga hint-screen/runtime platform owner
+F	1528	F1528_MOUSE_DisableScreenUpdate	HINT001.C;HINTHINT.C;HINTINPT.C	partial	implementation-partial	HINT001 wrapper delegates to F0078; Firestaff has the nested counter helper, but no Amiga hint-screen/runtime platform owner
 F	1530	F1530_ShowMousePointerAsArrow	CEDTINCI.C;IO.C;SWITCH.C;HINTSCR.C;UTILITY.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1531	F1531_MouseHandler	CEDTINCI.C;IO.C;SWITCH.C;HINTSCR.C;UTILITY.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1534	F1534_CallAES	ATARIST.H;UTSTAES.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
