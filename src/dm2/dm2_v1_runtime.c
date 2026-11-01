@@ -473,7 +473,7 @@ static int16_t dm2_runtime_resurrect_player_at_position(
     if (!ctx || position > 3u) return -1;
     for (int i = 0; i < ctx->runtime->source_party.heros_in_party; ++i) {
         const DM2_V1_HeroState *hero = &ctx->heroes[i];
-        if (hero->cur_hp > 0 && hero->party_pos == position)
+        if (hero->cur_hp != 0 && hero->party_pos == position)
             return (int16_t)i;
     }
     return -1;
@@ -7524,7 +7524,7 @@ static int16_t dm2_runtime_ccm_get_player_at_position(void *context,
     party = &goal->runtime->source_party;
     for (int i = 0; i < party->heros_in_party && i < DM2_MAX_HEROES; ++i) {
         if (party->hero[i].partypos == (int8_t)party_position &&
-            party->hero[i].curHP > 0)
+            party->hero[i].curHP != 0)
             return (int16_t)i;
     }
     return -1;
