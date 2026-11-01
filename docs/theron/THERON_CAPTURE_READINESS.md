@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01 (updated after JP map-reader source disassembly).** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (updated after native spawn-receipt verification).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
@@ -44,10 +44,12 @@ autoload receipt and the remaining applicable trace schemas. The shell
 regression checks the conditional System Card hook gates. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
-The native `--debug` spawn-source receipt is implemented and has now been
-verified in three fresh native runtime loops each against authentic JP and US
-Track 02. All 13 pointer/zone records per launch match the corresponding raw
-BIN's MODE1/2048 projection, and each run reached `level-loaded=1`. This
+The native `--debug` spawn-source receipt is implemented and verified in three
+fresh native runtime loops per region against both authenticated raw BIN and
+split MODE1/2048 ISO Track 02 media (12 runs total). All 13 pointer/zone records
+per launch match the corresponding media projection, and every run reached
+`level-loaded=1`. The reusable verifier checks media identity, receipt
+structure, offsets, fields, static links and loaded-runtime evidence. This
 verifies bounded source diagnostics only; runtime spawn selection/semantics,
 RNG, and non-Theron log isolation remain unverified. See the
 [receipt report](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).

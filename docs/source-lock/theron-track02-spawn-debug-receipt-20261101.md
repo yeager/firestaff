@@ -60,3 +60,26 @@ the manifest SHA-256 is
 verifies the native diagnostic's source projection and bounded emission only.
 It does not establish original runtime pointer selection, spawn semantics,
 RNG, placement, AI, combat, renderer parity, or non-Theron log isolation.
+
+The reusable verifier is
+[`verify_theron_spawn_debug_receipt.py`](../../scripts/verify_theron_spawn_debug_receipt.py).
+It accepts only the authenticated JP/US raw BIN and MODE1/2048 ISO identities
+and checks every header, record offset, decoded pointer/zone field, zone link,
+and loaded-runtime summary in each supplied log. In addition to the six raw-BIN
+runtime logs above, three fresh native loops per region were run directly from
+the authenticated split MODE1/2048 ISO files. The ISO identities are
+JP `62a39bbf43415c9739c41c2481080a49` and US
+`ceb02343868f80cec899e9b239aff2da`; all six ISO logs pass the verifier and
+reach `level-loaded=1`. Every emitted header, eight pointer records and five
+zone records matches the authenticated ISO bytes at the reported offsets.
+These runs establish the diagnostic's source projection for both accepted
+media layouts, not runtime creature selection or semantics. Example:
+
+```sh
+python3 scripts/verify_theron_spawn_debug_receipt.py \
+  /path/to/TQJP02.bin /path/to/jp-loop-1.log /path/to/jp-loop-2.log
+```
+
+For a split MODE1/2048 image, pass its Track 02 ISO path in place of the BIN.
+Raw logs, ISO projections and their manifest remain outside Git in the external
+scratch directory recorded above.

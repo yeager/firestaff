@@ -176,10 +176,11 @@
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 > **Native spawn-source debug receipt (2026-11-01):** three native JP and three
-> native US runtime loops emitted bounded `--debug` reports from authentic
-> Track 02. Every header, offset, pointer and zone field matched its raw BIN
-> projection and all runs reached a loaded level. This does not establish
-> original runtime selection or spawning. See the
+> native US runtime loops emitted bounded `--debug` reports from authentic raw
+> Track 02 BINs, followed by three loops per region from authenticated split
+> MODE1/2048 ISO images. All twelve receipts match their media projection and
+> reach a loaded level. This does not establish original runtime selection or
+> spawning. See the
 > [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier

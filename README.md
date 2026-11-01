@@ -138,8 +138,13 @@ dungeon tile mapping are not yet connected to a validated renderer. These
 runs confirm native startup, input
 and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
-admission, not campaign parity. Native movement, transitions, combat, audio,
-presentation and save parity remain open.
+admission, not campaign parity. The native `--debug` spawn-source receipt also
+passes three startup loops per region from authenticated raw BINs and three
+more per region from authenticated split MODE1/2048 ISO files; all twelve
+loaded-level receipts match all eight pointer and five zone records to source
+bytes. This verifies source diagnostics only, not original runtime spawn
+selection or behavior. Native movement, transitions, combat, audio, presentation
+and save parity remain open. See the [receipt report](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 A cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
 `$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese

@@ -9,6 +9,13 @@
   receipt, eight pointer rows, and five zone rows. A separate verifier checked
   every emitted field and offset against the matching raw BIN's complete
   MODE1/2048 user-data projection; all rows matched.
+- Added `scripts/verify_theron_spawn_debug_receipt.py`, which independently
+  authenticates JP/US raw BIN and split MODE1/2048 ISO identities and checks
+  receipt structure, every source field and offset, static links, and
+  loaded-runtime evidence. Three additional fresh native loops per region used
+  the authenticated ISO representations; all six ISO receipts pass. The earlier
+  six raw-BIN receipts also pass when checked against their raw-sector source
+  projections.
 - Logs and per-run SHA-256s remain in external-disk scratch and are not tracked.
   This validates static source reporting only, not original spawn selection,
   creature behavior, non-Theron log isolation, or gameplay parity.

@@ -73,14 +73,15 @@ original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 The native `--debug` spawn-source receipt has now been exercised in three
-fresh native runtime loops each for authentic JP and US Track 02. All six
-receipts match the independently hash-verified source projections for the
-header identity, offsets, all pointer and zone fields, and static links, with
-one header per launch; every run reached `level-loaded=1`. This is bounded
-source diagnostic evidence only. Runtime pointer selection, spawn semantics,
-RNG, placement, and creature creation remain unverified; non-Theron isolation
-has not been exercised. See the
-[receipt contract and verification state](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+fresh native runtime loops per region from authentic raw BINs and three more
+per region from authenticated split MODE1/2048 ISO Track 02 files. All twelve
+receipts match the independently authenticated source projections for header
+identity, offsets, all pointer and zone fields, and static links, with one
+header per launch; every run reached `level-loaded=1`. The reusable verifier
+checks both media layouts. This is bounded source diagnostic evidence only.
+Runtime pointer selection, spawn semantics, RNG, placement, and creature
+creation remain unverified; non-Theron isolation has not been exercised. See
+the [receipt contract and verification state](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 An authentic US standard-PCE state and hash-verified US Track 02 now bind all
 four Akutuba map arrays to `HuC.SysCardRAM`; saved MPR3 maps their page into

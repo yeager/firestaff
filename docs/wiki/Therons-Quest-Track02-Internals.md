@@ -96,11 +96,12 @@ creature generation, or combat. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 **Native debug receipt (2026-11-01):** three native JP and three native US
-runtime loops emitted the bounded `--debug` receipt from authentic Track 02.
-Each run reached a loaded level and every reported header, offset, pointer,
-zone field and static link matched the independently verified raw BIN
-projection. This does not prove original runtime selection or creature
-spawning. The per-run verification is documented in the
+runtime loops emitted the bounded `--debug` receipt from authentic raw Track
+02 BINs, then three additional loops per region from authenticated split
+MODE1/2048 ISO images. All twelve runs reached a loaded level and every
+reported header, offset, pointer, zone field and static link matched the
+corresponding independently verified media projection. This does not prove
+original runtime selection or creature spawning. The per-run verification is documented in the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
