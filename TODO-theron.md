@@ -24,6 +24,15 @@ BIOS polling or the state-only source match as that evidence. See the
 [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md), and
 [exact-LBA filter note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
+The native US SDL event-loop suite now passes three consecutive local runs
+against authenticated Track 02 (MD5 `f23601102138f87c33025877767ebf76`).
+Each run exercised keyboard chords/actions, mouse-panel movement and
+champion/wait commands, touch gestures, and source-backed sandals
+pickup/reselect/drop. The suite took 348.18 seconds total. This confirms
+bounded native Firestaff behavior only; it does not prove retail
+viewport, combat, or complete input parity. See the [real-media input
+receipt](docs/source-lock/theron-native-sdl-input-real-media-20261101.md).
+
 The native keyboard Button II chord maps keypad 1/3 to turns alongside the
 existing arrow and A/D bindings. Focused mapping assertions and authentic US
 SDL event-loop routes cover the keypad bindings. On TRV2, the native

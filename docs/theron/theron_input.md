@@ -5,8 +5,12 @@ desktop mapping. SDL regression coverage verifies command dispatch and
 bounded US pickup/reselect/drop; it does not establish full retail input
 semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
 the authentic US and Japanese Rev. 1 input suites. This still does not verify
-world-space clicks or visual parity. See the
-[capture-readiness summary](THERON_CAPTURE_READINESS.md).
+world-space clicks or visual parity. On 2026-11-01, the native US SDL
+event-loop suite passed three consecutive runs against the
+hash-verified authentic US BIN, covering the command routes below
+and source-backed sandals pickup/reselect/drop. See the
+[run receipt](../source-lock/theron-native-sdl-input-real-media-20261101.md)
+and [capture-readiness summary](THERON_CAPTURE_READINESS.md).
 
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts

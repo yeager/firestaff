@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — verify native US input routes on authentic Track 02
+
+- Configured a separate native macOS Debug build with the workspace data
+  root and built the `firestaff` executable. No emulator was used.
+- Seven real-media CTests for US/JP thing data, doors/teleporters, the
+  dungeon loader and map records each passed three loops (21 executions).
+- The authentic US `theron_v1_sdl_input_events` CTest passed three
+  consecutive runs (348.18 seconds). It checked keyboard and keypad
+  actions, mouse-panel movement/turning, champion/wait, touch gestures,
+  popup/fractional-scale hit testing, and source-backed sandals
+  pickup/reselect/drop. Track 02 MD5 was
+  `f23601102138f87c33025877767ebf76`.
+- This proves only these bounded native routes. Viewport rendering,
+  original movement equivalence, combat, save progression and complete
+  Theron parity remain open. See the [run receipt](docs/source-lock/theron-native-sdl-input-real-media-20261101.md).
+
 ## 2026-11-01 — record rejected visual cold-input follow-up
 
 - Opened a cold authentic JP diagnostic route and inspected the PC Engine

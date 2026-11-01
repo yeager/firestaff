@@ -78,7 +78,7 @@ regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
 later-dungeon runtime, and both regions' keyboard/SDL input routes. The longer
 SDL route includes mouse-panel and touch input, movement, wait, champion
 selection, and the US item interaction sequence. These tests establish those
-bounded routes only; they do not close the gameplay-parity gaps below. A newer authentic US cold Drator replay exercised the independent instruction
+bounded routes only; they do not close the gameplay-parity gaps below. A separate native macOS Debug run of the US event-loop suite passed three consecutive times against hash-verified authentic Track 02 (MD5 `f23601102138f87c33025877767ebf76`; 348.18 seconds total); see the [run receipt](../source-lock/theron-native-sdl-input-real-media-20261101.md). A newer authentic US cold Drator replay exercised the independent instruction
 window and observed `$C852` → `$C85E` `JSR $5039` → `$5039` in order. Its
 first five `$C852` 512-byte windows match US Track 02 at raw offset `$A3AD2`;
 the live `$5039` bytes (`44 05 86`) differ from the old static stage-two
