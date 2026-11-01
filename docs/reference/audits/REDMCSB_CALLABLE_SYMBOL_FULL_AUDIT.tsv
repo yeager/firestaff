@@ -1167,7 +1167,7 @@ F1255_CheckMasterDisk	F	CheckMasterDisk	CNFG.C:144	-	MISSING	No exact numbered t
 F1257_CheckMemory	F	CheckMemory	CNFG.C:201	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1258_CheckPrerequisites	F	CheckPrerequisites	CNFG.C:212	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1272_Initialize_CPSX	F	Initialize	SWSH.C:915	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1273_Cleanup	F	Cleanup	SWSH.C:2870	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1273_Cleanup	F	Cleanup	SWSH.C:2870	src/shared/redmcsb_f1089_close_amiga_stuff_pc34_compat.c:redmcsb_f1089_close_amiga_stuff_pc34_compat (empty Amiga stub); src/dm1/dm1_v1_f1226_f1245_anim_audio_source_audit_pc34_compat.c:F1230 fail_closed	PARTIAL	Compared with ReDMCSB SWSH.C::F1273_Cleanup at 2870-2876: WaitBlit(); F1230_CleanupSound(); F1089_CloseAmigaStuff(). Firestaff has only an empty F1089 Amiga teardown stub, while its F1230 audio cleanup audit is fail-closed and it has no WaitBlit equivalent or bound Swoosh cleanup sequence. Source teardown is therefore only represented by incomplete placeholders; implement and integrate cleanup for supported hosts/platforms.
 F1274_Unreferenced	F	Unreferenced	SWSH.C:2878	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1282_WriteString	F	WriteString	AMIGINIT.C:308	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1283_WriteCharacter_Unreferenced	F	WriteCharacter	AMIGINIT.C:312	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
