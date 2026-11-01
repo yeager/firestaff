@@ -15,6 +15,11 @@ autoload captures, while still requiring the verified autoload receipt and
 trace schemas. The shell regression covers this distinction. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
+The next native `--debug` tooling task is a receipt for already-bound Track 02
+pointer and zone records. No build or runtime evidence exists for this receipt;
+it provides no additional gameplay evidence. Its planned fields and acceptance
+checks are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries

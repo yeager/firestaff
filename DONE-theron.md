@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document the pending native spawn-source debug receipt
+
+- Documented the planned bounded `--debug` receipt for authenticated Track 02
+  spawn-table metadata, including its opaque-field boundary and the checks
+  required before treating native output as evidence.
+- Linked the note from the Theron TODO, capture-readiness summary, and
+  documentation index. The diagnostic has not been compiled or observed;
+  no runtime-spawn or gameplay claim was added.
+- Documentation-only change; no tests or build were run.
+
 ## 2026-11-01 — keep Button II turns consistent across keypad bindings
 
 - Added keypad 1/3 to the Button II plus left/right chord in both scancode and
