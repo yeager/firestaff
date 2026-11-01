@@ -77,6 +77,7 @@ def main() -> int:
             layer=3,
             width=width,
             height=height,
+            decoded_plane=None,
             output_rgba=output_path,
             output_json=None,
         )
