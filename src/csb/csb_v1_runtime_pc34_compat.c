@@ -13639,7 +13639,6 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
     uint8_t *record;
     uint16_t thing;
     uint16_t word;
-    uint32_t random_state;
     int thing_type, record_size, type, power, counter, adjusted;
     int old_weight, new_weight = 1, event_index, i;
 
@@ -13663,7 +13662,11 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
     word = csb_v1_runtime_read_u16(record + 2);
     type = (word >> 8) & 0x7f;
     power = word & 0xff;
-    if (type < 0 || type > 14) return 0; /* C15 is handled by the complete water path. */
+    /* PANEL.C F0349 switches on potion Type without rejecting the valid
+     * no-effect entries C03, C19 or C20; after the switch it always writes
+     * C20. C15 has its own complete water path above. */
+    if (type != 3 && (type < 6 || type > 14) && type != 19 && type != 20)
+        return 0;
     old_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
     if (old_weight <= 0 || leader->Load < old_weight) return 0;
     counter = ((511 - power) / (32 + (power + 1) / 8)) >> 1;
@@ -13738,18 +13741,14 @@ int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
         if (iterations < 1) iterations = 1;
         champion->CurrentHealth = (int16_t)(champion->CurrentHealth +
                                              champion->MaximumHealth / counter);
-        random_state = profile->csbwin_random_seed;
         if (old_wounds) {
             do {
                 for (i = 0; i < iterations; ++i) {
-                    random_state = random_state * UINT32_C(0xbb40e62d) +
-                                   UINT32_C(11);
-                    champion->Wounds &= (uint16_t)(random_state >> 8);
+                    champion->Wounds &= csb_v1_runtime_main_random16(profile);
                 }
                 iterations = 1;
             } while (champion->Wounds == old_wounds && --retries);
         }
-        profile->csbwin_random_seed = random_state;
         champion->Attributes |= 0x2200u;
         break;
     }

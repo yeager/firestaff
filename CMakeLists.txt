@@ -29536,6 +29536,21 @@ endif()
         COMMAND test_dm1_v1_slot_boxes_pc34_compat
     )
 
+    # ReDMCSB OBJECT.C F0619 wraps the edition's F0635 slot-zone resolver
+    # and applies the MEDIA508 or MEDIA720 border margin branch.
+    add_executable(test_redmcsb_f0619_slot_box_border
+        tests/test_redmcsb_f0619_slot_box_border.c
+        src/shared/redmcsb_f0619_slot_box_border.c
+    )
+    target_link_libraries(test_redmcsb_f0619_slot_box_border PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0619_slot_box_border PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME redmcsb_f0619_slot_box_border
+        COMMAND test_redmcsb_f0619_slot_box_border
+    )
+
     # DM1 V1 light-power-to-light-amount: Graphics.dat item 562 init
     # var G0039_ai_Graphic562_LightPowerToLightAmount[16] = {0, 5, 12,
     # 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100}. Read sites:
@@ -60638,6 +60653,18 @@ target_include_directories(test_redmcsb_f0698_invert_box_pc34_compat PRIVATE ${C
 target_link_libraries(test_redmcsb_f0698_invert_box_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME redmcsb_f0698_invert_box_pc34_compat COMMAND test_redmcsb_f0698_invert_box_pc34_compat)
 
+add_executable(test_redmcsb_f1131_invert_box_amiga_compat
+    tests/test_redmcsb_f1131_invert_box_amiga_compat.c
+    src/shared/redmcsb_f1131_invert_box_amiga_pc34_compat.c)
+target_include_directories(test_redmcsb_f1131_invert_box_amiga_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_redmcsb_f1131_invert_box_amiga_compat PRIVATE
+        -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME redmcsb_f1131_invert_box_amiga_compat
+    COMMAND test_redmcsb_f1131_invert_box_amiga_compat)
+
 add_executable(test_redmcsb_f0699_video_interrupt_pc34_compat tests/test_redmcsb_f0699_video_interrupt_pc34_compat.c)
 target_include_directories(test_redmcsb_f0699_video_interrupt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_redmcsb_f0699_video_interrupt_pc34_compat PRIVATE firestaff_m10)
@@ -61002,6 +61029,11 @@ add_executable(test_redmcsb_f0918_prim_memory_free_pc34_compat tests/test_redmcs
 target_include_directories(test_redmcsb_f0918_prim_memory_free_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_redmcsb_f0918_prim_memory_free_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME redmcsb_f0918_prim_memory_free_pc34_compat COMMAND test_redmcsb_f0918_prim_memory_free_pc34_compat)
+
+add_executable(test_redmcsb_f0919_prim_file_seek_pc34_compat tests/test_redmcsb_f0919_prim_file_seek_pc34_compat.c)
+target_include_directories(test_redmcsb_f0919_prim_file_seek_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_redmcsb_f0919_prim_file_seek_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME redmcsb_f0919_prim_file_seek_pc34_compat COMMAND test_redmcsb_f0919_prim_file_seek_pc34_compat)
 
 add_executable(test_redmcsb_f0920_prim_file_read_pc34_compat tests/test_redmcsb_f0920_prim_file_read_pc34_compat.c)
 target_include_directories(test_redmcsb_f0920_prim_file_read_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62569,8 +62601,37 @@ add_test(NAME test_dm2_v1_dos_pit_runtime_real_media
 set_tests_properties(test_dm2_v1_dos_pit_runtime_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT
-        "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        "FIRESTAFF_DM2_RUNTIME_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "tier2;dm2;dos;pit;stairs;door;creature;real-media;in-memory;native")
+
+# The source door-step runtime is shared by all supported DM2 editions. Run
+# the same authenticated pit/stairs/door/creature probe against any original
+# Amiga, FM Towns, and extracted Macintosh media installed in the workspace.
+set(_dm2_runtime_media_cases
+    "amiga|dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    "fmtowns|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+    "macintosh|dm2/mac-en/Dungeon Master II/DMFiles")
+foreach(_case IN LISTS _dm2_runtime_media_cases)
+    string(REPLACE "|" ";" _fields "${_case}")
+    list(GET _fields 0 _platform)
+    list(GET _fields 1 _media_path)
+    if(EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_media_path}")
+        add_test(
+            NAME "test_dm2_v1_${_platform}_pit_runtime_real_media"
+            COMMAND test_dm2_v1_dos_pit_runtime_real_media)
+        set_tests_properties(
+            "test_dm2_v1_${_platform}_pit_runtime_real_media" PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT
+                "FIRESTAFF_DM2_RUNTIME_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/${_media_path}"
+            LABELS "tier2;dm2;${_platform};pit;stairs;door;creature;real-media;in-memory;native;skip-safe")
+    endif()
+endforeach()
+unset(_dm2_runtime_media_cases)
+unset(_case)
+unset(_fields)
+unset(_platform)
+unset(_media_path)
 
 add_executable(test_dm2_v1_dos_sksave1_wield_drop_real_media
     tests/test_dm2_v1_dos_sksave1_wield_drop_real_media.c)

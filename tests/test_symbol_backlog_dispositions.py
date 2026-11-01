@@ -34,7 +34,7 @@ def main() -> int:
         disposition_file = Path(temp_dir) / "dispositions.tsv"
         disposition_file.write_text(
             "reference\tsymbol\tdisposition\towner\tevidence\tnotes\n"
-            "ReDMCSB\tF0139_DUNGEON_IsCreatureAllowedOnMap\tSOURCE_NONAPPLICABLE\t"
+            "ReDMCSB\tF0348_INVENTORY_AdjustStatisticCurrentValue\tSOURCE_NONAPPLICABLE\t"
             "test\tfixture\tcovered by fixture\n",
             encoding="utf-8",
         )
@@ -42,8 +42,8 @@ def main() -> int:
         visible = run_backlog(disposition_file, include_disposed=True)
     hidden_symbols = {item["symbol"] for item in hidden["items"]}
     visible_items = {item["symbol"]: item for item in visible["items"]}
-    assert "F0139_DUNGEON_IsCreatureAllowedOnMap" not in hidden_symbols
-    item = visible_items["F0139_DUNGEON_IsCreatureAllowedOnMap"]
+    assert "F0348_INVENTORY_AdjustStatisticCurrentValue" not in hidden_symbols
+    item = visible_items["F0348_INVENTORY_AdjustStatisticCurrentValue"]
     assert item["disposition"] == "SOURCE_NONAPPLICABLE"
     assert item["disposition_evidence"] == "fixture"
     return 0

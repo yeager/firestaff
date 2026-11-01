@@ -676,7 +676,7 @@ F	464	F464_AA07_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0466	F0466_EXPAND_GraphicToBitmap	ATARIST.H;PRIM1.C;GRF1MAIN.C;PRIM.H;ANIM.C;MEMORY.C;FMTOWNS.H;HINTGRAP.C;IIGS.H;DEFS.H;SWITCH.C;GRF1.C;EXPAND.C;IMAGE.C;ANIMLOAD.C;ENDGAME.C;ENTRANCE.C;SWSH.C;DIALOG.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	466	F466_rzzz_	ATARIST.H;PRIM.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0467	F0467_MEMORY_GetGraphicOffset	MEMORY.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0468	F0468_MEMORY_Allocate	PANEL.C;ATARIST.H;GROUP.C;LOADSAVE.C;MEMORY.C;FMTOWNS.H;OBJECT.C;DUNVIEW.C;TEXT2.C;IIGS.H;REVIVE.C;CHAMDRAW.C;READWRIT.C;IO.C;PORTRAIT.C;DEFS.H;ACTIDRAW.C;FLOPPY.C;STARTUP2.C;ENDGAME.C;SOUND.C;TEXT.C;ENTRANCE.C;TITLE.C;DIALOG.C;STARTUP1.C;MENUDRAW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0468	F0468_MEMORY_Allocate	PANEL.C;ATARIST.H;GROUP.C;LOADSAVE.C;MEMORY.C;FMTOWNS.H;OBJECT.C;DUNVIEW.C;TEXT2.C;IIGS.H;REVIVE.C;CHAMDRAW.C;READWRIT.C;IO.C;PORTRAIT.C;DEFS.H;ACTIDRAW.C;FLOPPY.C;STARTUP2.C;ENDGAME.C;SOUND.C;TEXT.C;ENTRANCE.C;TITLE.C;DIALOG.C;STARTUP1.C;MENUDRAW.C	partial	partial	CSB PC34 model covers heap cursor arithmetic and bitmap header; runtime source-owned allocator and platform-specific GEM/EMS/chunk branches remain incomplete
 F	468	F468_ozzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0469	F0469_MEMORY_FreeAtHeapTop	PANEL.C;ATARIST.H;LOADSAVE.C;MEMORY.C;FMTOWNS.H;BLITMASK.C;OBJECT.C;DUNVIEW.C;TEXT2.C;IIGS.H;REVIVE.C;CHAMDRAW.C;READWRIT.C;IO.C;PORTRAIT.C;DEFS.H;ACTIDRAW.C;IMAGE.C;FLOPPY.C;ENDGAME.C;ENTRANCE.C;TITLE.C;DIALOG.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	469	F469_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -993,7 +993,7 @@ F	0914	F0914_Graphic21	GRAPH21.C;MKBIN.C	referenced-not-verified	referenced_not_
 F	0915	F0915_Graphic538	GRAPH538.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0917	F0917_PRIM_15_Memory_Allocate	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0918	F0918_PRIM_16_Memory_Free	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0919	F0919_PRIM_19_File_Seek	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0919	F0919_PRIM_19_File_Seek	PRIM1.C;PRIM2C.C;PRIM.H	implemented-narrow	implemented_narrow	FM Towns error-code-3 route, Amiga library-bracketed ignored-result route and X68000 exact-position status route; separately tested
 F	0920	F0920_PRIM_20_File_Read	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0922	F0922_Custom_strcpy	PRIM1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0924	F0924_SetCriticalErrorHandler	HINT002.C;PRIM1.C;CEDTINCI.C;SWITCH.C;UTIO.C;HINTSCR.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -1110,7 +1110,7 @@ F	1111	F1111_CPSX	AMIGINIT.C;FLOPPYAM.C;FIO1.C;HINT001.C;UTIO.C;CNFG.C	missing	u
 F	1114	F1114_CloseTrackdiskDevice	FLOPPYAM.C;CNFG.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1127	F1127_TransitionFromPaletteToPalette	PALETTE.C;UTAMSCR.C;VDEO1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1128	F1128_IsLeftMouseButtonDown	FILLBOX.C;HINTDATA.C;HINT001.C;UTIO.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c reads only caller-owned mouse status, with no host polling or synthesized button state; focused mouse-accessor test covers the F1128 route.
-F	1131	F1131_InvertBox	FILLBOX.C;CEDTINCN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1131	F1131_InvertBox	FILLBOX.C;CEDTINCN.C;DEFS.H	implemented-narrow	implemented_narrow	Amiga A31/A35 FILLBOX complement-fill route preserves XYWH bounds, raster setup, bottom-scanline wait and WaitBlit sequence
 F	1132	F1132_ConvertBoxCoordinates	BLIT.C;BLITMASK.C;CONVBOXC.C;GRF1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1133	F1133_AddCopperInterrupt	AMIGINIT.C;COPERINT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1134	F1134_RemoveCopperInterrupt	AMIGINIT.C;COPERINT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -1628,7 +1628,7 @@ F	6013	F6013_F0917_PRIM_15_Memory_Allocate	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	un
 F	6014	F6014_F0918_PRIM_16_Memory_Free	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6015	F6015_F6000_PRIM_17_File_Open	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6016	F6016_F6001_PRIM_18_File_Close	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	6017	F6017_F0919_PRIM_19_File_Seek	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	6017	F6017_F0919_PRIM_19_File_Seek	PRIM.H;PRIM2STB.C;PRIM2B.C	implemented-narrow	implemented_narrow	X68000 PRIM slot 19 beginning-relative seek and exact-position status adapter
 F	6018	F6018_F0920_PRIM_20_File_Read	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6019	F6019_F6002_PRIM_22_Console_PrintMessage	PRIM.H;PRIM2STB.C;PRIM2A.C;PRIM2C.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	6020	F6020_F6003_PRIM_23_Input_WaitForChar	PRIM.H;PRIM2STB.C;PRIM2B.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

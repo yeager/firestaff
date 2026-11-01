@@ -1385,9 +1385,9 @@ typedef struct {
     uint32_t transaction_hash;
 } DM2_V1_GameLoadCandidateMissileReceipt;
 
-/* Private source 0x01 DM2_STEP_DOOR atom.  It admits only a direct DB0 door
- * whose tile chain has no party or creature collision; the next animation
- * step stays in the candidate timer heap. */
+/* Private source 0x01 DM2_STEP_DOOR atom. It handles source-order party and
+ * threshold-admitted creature collisions with candidate-owned damage, CAII,
+ * sound and timer state; all effects remain inside the candidate transaction. */
 typedef struct {
     int valid;
     int consumed;
@@ -1951,11 +1951,11 @@ typedef struct {
 
 /* Private result of one real 0x01 DM2_STEP_DOOR timer.  A step remains
  * private until the GAME_LOAD transaction owns party damage, creature
- * collision and the audible GDAT/SND delivery path.  Therefore this atom
- * accepts only an authenticated DB0-first door square without the party or a
- * DB4 creature in its local chain.  It still preserves the original timer's
- * DB0 handle and source direction, and requeues the next real 0x01 record
- * only while an animation frame remains. */
+ * collision and the audible GDAT/SND delivery path.  It accepts source no-op
+ * exits and ordinary opening steps through occupied cells; closing steps
+ * with unsupported party or DB4 collision effects remain blocked. It
+ * preserves the original timer's DB0 handle and source direction, and
+ * requeues the next real 0x01 record only while an animation frame remains. */
 typedef struct {
     int valid;
     int source_noop_destroyed;

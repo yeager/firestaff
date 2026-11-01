@@ -119,8 +119,12 @@ int dm2_v1_process_poison(
     return 1;
 }
 
-int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
-                               const DM2_V1_WalletCallbacks *cb, void *ctx)
+static int dm2_v1_add_coin_to_wallet_source(
+    uint16_t container_ref,
+    uint16_t coin_item_ref,
+    const DM2_V1_WalletCallbacks *cb,
+    void *ctx,
+    int dos_non_currency_result)
 {
     if (!cb)
         return 0;
@@ -134,7 +138,7 @@ int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
     while (item != DM2_V1_OBJECT_END) {
         uint16_t db_type = cb->get_item_db_type(ctx, item);
         if (db_type != DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY)
-            return db_type != 0;
+            return dos_non_currency_result ? db_type != 0 : 0;
         if (cb->get_distinctive_item_type(ctx, item) == denom &&
             cb->get_item_charge(ctx, item) < DM2_V1_COIN_CHARGE_MAX) {
             cb->set_item_charge(ctx, item,
@@ -147,6 +151,21 @@ int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
     cb->set_item_charge(ctx, coin_item_ref, 0);
     cb->append_item_to_container(ctx, coin_item_ref, container_ref);
     return 1;
+}
+
+int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
+                               const DM2_V1_WalletCallbacks *cb, void *ctx)
+{
+    return dm2_v1_add_coin_to_wallet_source(
+        container_ref, coin_item_ref, cb, ctx, 1);
+}
+
+int dm2_v1_add_coin_to_wallet_spx(uint16_t container_ref,
+                                  uint16_t coin_item_ref,
+                                  const DM2_V1_WalletCallbacks *cb, void *ctx)
+{
+    return dm2_v1_add_coin_to_wallet_source(
+        container_ref, coin_item_ref, cb, ctx, 0);
 }
 
 uint16_t dm2_v1_take_coin_from_wallet(uint16_t container_ref,

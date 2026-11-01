@@ -102,6 +102,7 @@ struct DM2_V1_ProceedTimersReceipt {
     int last_map;
     int type_tally[DM2_V1_TIMER_TYPE_MATRIX_SIZE];
     int actuator_tile_tally[DM2_V1_TIMER_ACTUATOR_TILE_CLASSES];
+    int actuator_tile_unbound_tally[DM2_V1_TIMER_ACTUATOR_TILE_CLASSES];
 };
 
 /* DM2_PROCEED_TIMERS boundary: pop every due timer from `queue` in

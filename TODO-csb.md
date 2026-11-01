@@ -23,10 +23,13 @@ editions.
 2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
 stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand
 occupied and resolves to CLEAR, while deposit empties it and resolves to SET.
-The CSB PC34 runtime now computes that predicate for the post-transfer hand
-state. A two-direction regression checks the exact queued fakewall effects.
-The other C013 edition/platform runtime owners and original-media HOLD outcome
-remain unverified.
+The shared CSB runtime now computes that predicate for the post-transfer hand
+state; the supported Atari ST, Amiga, and FM Towns variants all enter this
+runtime through `csb_v1_runtime_init` and have no separate F0275 C013 owner.
+A two-direction regression checks the exact queued fakewall effects. The
+source-level behavior is therefore shared across those platform lanes, while
+original-media HOLD outcomes and complete F0275 platform parity remain
+unverified.
 
 2026-10-31 ReDMCSB F0046 message expiry: `TEXT.C:1663-1666` assigns 70 game
 ticks to MEDIA099, which covers Firestaff's supported A31/A35 Amiga variants,
@@ -505,22 +508,21 @@ native Atari draw correctly requests 315. Keep this platform distinction and
 investigate the remaining button layout/hit-zone behavior and omitted Atari
 rendering passes separately.
 
-2026-10-29 CSB Atari live pointer geometry gap: source review of
-ReDMCSB `DUNVIEW.C` MEDIA720 shows the Atari path drawing through
-`F0791_DUNGEONVIEW_DrawBitmapXX`, deriving its active pixel zones through
-`F0635_`, copying the current D1C door-button or wall-ornament rectangle to
-`G2210_aai_XYZ_DungeonViewClickable[C05]`, and accumulating actual rendered
-floor-object bounds into the corresponding `G2210` rows. `CLIKVIEW.C F0377`
-then hit-tests those current rows with `F0798_COMMAND_IsPointInZone`.
-Firestaff's shared `m11_process_csb_v1_c080_click` uses fixed PC34 object-pile
-boxes and a fixed `{160,175,44,52}` door-button rectangle for Atari ST too.
-The Atari `G0208` D1C door-button source record itself is
-`{160,175,44,52,8,9}`, so that one button's current hit rectangle matches the
-source dimensions and is not established as a bug. The source-derived zones
-for floor-object piles and rendered wall ornaments are not carried into Atari
-C080, and the Atari renderer currently omits those object/ornament passes.
-Implement those render receipts and use their bounds for hit testing before
-claiming pickup or wall-sensor parity; verify against original campaign media.
+2026-10-29 CSB live pointer geometry gap (updated 2026-10-31): source review
+first conflated MEDIA720 F0635/G2210 hit zones with the Atari path. Atari ST
+compiles through MEDIA009 and uses native G0291 byte boxes, corrected and
+implemented in the following entry. On the non-Atari compatibility route,
+Firestaff now retains successfully drawn C2500/F0635 floor-object destination
+rectangles and C080 chooses the matching source view-cell instead of a fixed
+PC34 pile pane. This removes disagreement between input and Firestaff’s own current sprite
+rectangles; it does not close source click-zone parity. The renderer still
+uses fixed PC34 placement tables instead of each platform’s live C696/F0635
+layout.
+The fixed `{160,175,44,52}` door-button rectangle has not been proven equivalent
+to every current C05 source zone, and rendered wall-ornament bounds are still
+not carried into C080. Atari also still lacks the full source object/ornament
+passes; verify remaining interactions and platform behavior against original
+campaign media.
 
 2026-10-31 correction and implementation for Atari F0115 floor-object click
 bounds: ReDMCSB compiles Atari ST through MEDIA009. `DUNVIEW.C F0115`

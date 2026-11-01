@@ -13,6 +13,8 @@ static void make_maps(DM1_V1_MapDescriptorF0173F0174Pc34 maps[3])
     static const uint16_t doors2[] = { 17, 23 };
     static const uint8_t wall2[] = { 3, 4, 7 };
     static const uint8_t floor2[] = { 1, 8 };
+    static const uint8_t creatures2[] = { 2, 5 };
+    static const uint8_t doorOrnaments2[] = { 6, 9 };
     static const uint8_t alcove2[] = { 2, 5, 9 };
 
     memset(maps, 0, sizeof(maps[0]) * 3);
@@ -34,10 +36,14 @@ static void make_maps(DM1_V1_MapDescriptorF0173F0174Pc34 maps[3])
     maps[1].columnCount = 3;
     maps[1].doorInfo = doors2;
     maps[1].doorInfoCount = 2;
+    maps[1].allowedCreatureTypes = creatures2;
+    maps[1].allowedCreatureTypeCount = 2;
     maps[1].wallOrnamentIndices = wall2;
     maps[1].wallOrnamentCount = 3;
     maps[1].floorOrnamentIndices = floor2;
     maps[1].floorOrnamentCount = 2;
+    maps[1].doorOrnamentIndices = doorOrnaments2;
+    maps[1].doorOrnamentCount = 2;
     maps[1].alcoveOrnamentIndices = alcove2;
     maps[1].alcoveOrnamentCount = 3;
 
@@ -80,14 +86,22 @@ static void test_f0173_sets_current_map_only(void)
            maps[1].columnCumulativeSquareFirstThingCounts);
     assert(runtime.currentMapColumnCount == 3);
     assert(runtime.currentMapDoorInfo == maps[1].doorInfo);
-    assert(runtime.currentMapWallOrnamentIndices == maps[1].wallOrnamentIndices);
-    assert(runtime.currentMapFloorOrnamentIndices ==
-           maps[1].floorOrnamentIndices);
-    assert(runtime.currentMapAlcoveOrnamentIndices ==
-           maps[1].alcoveOrnamentIndices);
+    /* F0173 changes core map pointers only; F0174 owns metadata arrays. */
+    assert(runtime.currentMapWallOrnamentIndices == 0);
+    assert(runtime.currentMapFloorOrnamentIndices == 0);
+    assert(runtime.currentMapDoorOrnamentIndices == 0);
     assert(runtime.partyMapIndex == 9);
     assert(runtime.f0173CallCount == 1);
     assert(runtime.f0174CallCount == 0);
+
+    assert(F0173_DUNGEON_SetCurrentMap(&runtime, maps, 3, 2, &result) == 1);
+    assert(result.valid == 1);
+    assert(result.previousCurrentMapIndex == 2);
+    assert(result.currentMapIndex == 2);
+    assert(result.updatedCurrentMap == 0);
+    assert(result.updatedPartyMap == 0);
+    assert(runtime.f0173CallCount == 1);
+    assert(runtime.currentMapBytes == maps[1].mapBytes);
 }
 
 static void test_f0174_sets_current_and_party_map(void)
@@ -118,6 +132,15 @@ static void test_f0174_sets_current_and_party_map(void)
     assert(runtime.partyMapBytes == maps[1].mapBytes);
     assert(runtime.partyMapColumnCumulativeSquareFirstThingCounts ==
            maps[1].columnCumulativeSquareFirstThingCounts);
+    assert(runtime.currentMapAllowedCreatureTypes ==
+           maps[1].allowedCreatureTypes);
+    assert(runtime.currentMapAllowedCreatureTypeCount == 2);
+    assert(runtime.currentMapWallOrnamentIndices == maps[1].wallOrnamentIndices);
+    assert(runtime.currentMapWallOrnamentCount == 3);
+    assert(runtime.currentMapInscriptionWallOrnamentIndex == 3);
+    assert(runtime.currentMapFloorOrnamentIndices == maps[1].floorOrnamentIndices);
+    assert(runtime.currentMapDoorOrnamentIndices == maps[1].doorOrnamentIndices);
+    assert(runtime.currentMapAlcoveOrnamentIndices == maps[1].alcoveOrnamentIndices);
     assert(runtime.f0173CallCount == 2);
     assert(runtime.f0174CallCount == 1);
 

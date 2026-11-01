@@ -788,7 +788,7 @@ static void test_querydb_word_and_ornate_receipts(void)
     uint8_t data[320];
     uint32_t raw_offsets[6];
     uint32_t raw_sizes[6];
-    DM2_V1_GdatEntry entries[21];
+    DM2_V1_GdatEntry entries[22];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
@@ -891,6 +891,9 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[20] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_WEAPONS, 4u, DM2_GDAT_ENTRY_TYPE_TEXT,
         0x18u, 0u, 0u, 5u};
+    entries[21] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 6u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x0fu, 0u, 0u, 0x0008u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
@@ -900,7 +903,7 @@ static void test_querydb_word_and_ornate_receipts(void)
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 21u;
+    loader.entry_count = 22u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -934,29 +937,34 @@ static void test_querydb_word_and_ornate_receipts(void)
 
     CHECK(dm2_v1_query_door_damage_resist_receipt(&loader, 6, &word) &&
               word.accepted && word.category == DM2_GDAT_CATEGORY_DOORS &&
-              word.field == 0x0eu && word.value == 0x0008u,
-          "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS GDAT_DOOR_DEFENSE field 0x0e");
+              word.field == 0x0fu && word.value == 0x0008u,
+          "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS field 0x0f");
     CHECK(dm2_v1_query_door_strength_receipt(&loader, 2, &strength) &&
               strength.accepted && strength.used_explicit_strength &&
               !strength.used_resistance_fallback &&
-              strength.strength == 0x002au,
-          "DM2_QUERY_DOOR_STRENGTH reads DOORS GDAT_DOOR_STRENGTH field 0x0f");
-    CHECK(!dm2_v1_query_door_strength_receipt(&loader, 3, &strength) &&
-              !dm2_v1_query_door_strength_receipt(&loader, 4, &strength),
-          "DM2_QUERY_DOOR_STRENGTH rejects entries missing source field 0x0f");
-    CHECK(!dm2_v1_query_door_strength_receipt(&loader, 5, &strength),
-          "DM2_QUERY_DOOR_STRENGTH rejects a missing source strength field");
+              strength.strength == 0x0033u,
+          "DM2_QUERY_DOOR_STRENGTH reads DOORS field 0x11");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 3, &strength) &&
+              strength.used_resistance_fallback && strength.strength == 6u &&
+              dm2_v1_query_door_strength_receipt(&loader, 4, &strength) &&
+              strength.used_resistance_fallback && strength.strength == 1u,
+          "DM2_QUERY_DOOR_STRENGTH applies its field 0x10 fallback");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 5, &strength) &&
+              strength.accepted && strength.used_resistance_fallback &&
+              strength.resistance_field_value == 0u && strength.strength == 6u,
+          "DM2_QUERY_DOOR_STRENGTH uses source-zero defaults for absent words");
     CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 6, &word) &&
               word.accepted && word.field == 0x0du && word.value == 0x0007u,
           "DM2_GET_GRAPHICS_FOR_DOOR binds DOORS dtWordValue field 0x0d");
     CHECK(dm2_v1_get_door_stat_0x10_receipt(&loader, 6, &word) &&
-              word.accepted && word.field == 0x10u && word.value == 0x0009u,
-          "DM2_GET_DOOR_STAT_0X10 binds DOORS GDAT_DOOR_X10 field 0x10");
+              word.accepted && word.field == 0x0eu && word.value == 0x0008u,
+          "DM2_GET_DOOR_STAT_0X10 binds source field 0x0e");
     CHECK(dm2_v1_query_0cee_3275_receipt(&loader, 6, &word) &&
-              word.accepted && word.field == 0x0du && word.value == 0x0007u,
-          "DM2_query_0cee_3275 binds DOORS graphics field 0x0d");
-    CHECK(!dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word),
-          "DM2_GET_GRAPHICS_FOR_DOOR rejects absent door rows without fallback");
+              word.accepted && word.field == 0x10u && word.value == 0x0009u,
+          "DM2_query_0cee_3275 binds DOORS field 0x10");
+    CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word) &&
+              word.accepted && word.value == 0u,
+          "DM2_GET_GRAPHICS_FOR_DOOR preserves source-zero defaults for absent words");
     CHECK(dm2_v1_query_gdat_item_name_receipt(
               &loader, DM2_GDAT_CATEGORY_WEAPONS, 1, &name) &&
               name.accepted && name.field == 0x18u &&

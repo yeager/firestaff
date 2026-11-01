@@ -1,18 +1,32 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: both Firestaff
+adapters preserve the source early return when the selected map is already
+current. The metadata-aware adapter still lets F0174 refresh its separate
+metadata caches; live transition ownership and platform parity remain open.
+2026-11-01 Follow-up to ReDMCSB `DUNGEON.C:F0173/F0174`: source inspection
+showed F0173 refreshes only core map pointers, dimensions, door info and
+cumulative thing-column counts; F0174 owns allowed-creature and wall/floor/door
+ornament metadata. The descriptor adapter now leaves those metadata pointers
+untouched on F0173 and publishes them from F0174, including the inscription
+ornament ordinal. The simpler dungeon-data adapter still lacks these caches,
+and neither adapter owns a live transition caller, so both symbols remain
+partial across supported editions/platforms. Existing focused assertions were
+updated; CI is the verification path.
+
 2026-11-01 Authentic PC34 save combat follow-up: `LOADSAVE.C:F0435` restores
 live C04 behavior when rebuilding the transient active-group AI mirror. An
-original DOSBox-X PC 3.4 save previously restored every active group as
+authentic DOSBox-X PC 3.4 save previously restored every active group as
 WANDER even when the authentic C04 owner was ATTACK, APPROACH, or FLEE; this
-prevented saved attackers from following the source behavior. The focused
-bundle test and authentic original-save combat/shield regression now pass,
-including all 15 active groups and group 169 attacking. The shared importer is
-also called by the Amiga save handoff, but this report has only been exercised
-with the PC34 save. The separate report that champions disappear from the PC
-HUD was not reproduced: the same authentic save presents all four champion
-slots. Expanded `--debug` HUD receipts now identify top-row presentation or
-the exact rejection stage; native-user captures and other editions still need
-checking if the HUD symptom recurs.
+prevented saved attackers from following source behavior. The focused bundle
+test and authentic original-save combat/shield regression now pass, including
+all 15 active groups and group 169 attacking. The shared importer is also
+called by the Amiga save handoff, but this report has only been exercised with
+the PC34 save. The separate report that champions disappear from the PC HUD
+was not reproduced: the same authentic save presents all four champion slots.
+Expanded `--debug` HUD receipts now identify top-row presentation or the exact
+rejection stage; native-user captures and other editions still need checking
+if the HUD symptom recurs.
 
 2026-11-01 latest-release check for the reported PC combat/HUD symptoms: the
 published v3.0.422 tag points to `995d524e`, before the PC34 save-AI fix in
@@ -3748,7 +3762,10 @@ runtime integration and parity remain open.
 # ReDMCSB F0619 — slot-box border rectangle
 
 `OBJECT.C:378-389` resolves the slot's ZoneIndex through F0618/F0635 and adds
-the configured text margin on MEDIA508/MEDIA720. Firestaff currently has the
-PC34 G0030 table and ZoneIndex accessor, but no equivalent zone rectangle
-resolver. Implement and gate the behavior against each applicable edition;
-the slot table alone does not provide F0619 parity.
+the configured text margin on MEDIA508/MEDIA720. The shared
+`redmcsb_f0619_get_slot_box_border` adapter now calls an edition-owned F0635
+resolver and applies both source margin branches with checked rectangle bounds;
+its focused regression covers those transformations. Platform-specific F0635
+zone data/resolvers and live slot-border rendering remain unintegrated, so this
+is partial coverage and does not establish F0619 parity across supported
+editions.

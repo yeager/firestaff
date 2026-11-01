@@ -17,9 +17,18 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_AUDIT = ROOT / "docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv"
 SKPROJECT_AUDIT = ROOT / "docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv"
+SKPROJECT_ACTIVE_SOURCE_INVENTORY = ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv"
+SKPROJECT_ACTIVE_SOURCE_REVIEW = ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv"
 SYMBOL_DISPOSITIONS = ROOT / "docs/reference/audits/SYMBOL_DISPOSITIONS.tsv"
 
-REDMCSB_OPEN = {"MISSING", "UNCERTAIN_NUMBERED_EVIDENCE"}
+REDMCSB_OPEN = {
+    "MISSING",
+    "UNCERTAIN_NUMBERED_EVIDENCE",
+    "PARTIAL",
+    "PARTIAL_SOURCE_OWNER",
+    "STATIC_INPUT_ONLY",
+    "UNOWNED_SOURCE_MUTATION",
+}
 SKPROJECT_OPEN = {
     "MISSING",
     "UNCERTAIN",
@@ -27,6 +36,7 @@ SKPROJECT_OPEN = {
     "STATIC_INPUT_ONLY",
     "PARTIAL_SOURCE_OWNER",
     "UNOWNED_SOURCE_MUTATION",
+    "UNREVIEWED",
 }
 OPEN_DISPOSITIONS = {"", "OPEN", "NEEDS_IMPLEMENTATION", "NEEDS_VERIFICATION"}
 
@@ -129,12 +139,18 @@ def priority(status: str, family: str, source: str) -> int:
         score += 80
     if status in {"UNCERTAIN", "UNCERTAIN_NUMBERED_EVIDENCE"}:
         score += 60
+    if status == "UNREVIEWED":
+        score += 80
     if family in REDMCSB_RUNTIME_FAMILIES:
         score += 30
     if family in CSB_RUNTIME_FAMILIES:
         score += 30
     if source in DM2_RUNTIME_SOURCES:
         score += 30
+    if source.startswith("SKWINSPX/src/"):
+        score += 30
+    elif source.startswith("SKWINDOS/src/"):
+        score += 10
     if any(token in source.upper() for token in ("VIEW", "GRAPH", "LOAD", "SAVE", "MENU", "WEATHER")):
         score += 10
     return score
@@ -178,19 +194,36 @@ def skproject_backlog(
     rows: Iterable[dict[str, str]],
     dispositions: dict[tuple[str, str], dict[str, str]],
     include_disposed: bool,
+    active_reviews: dict[tuple[str, str, str, str], dict[str, str]] | None = None,
 ) -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
     for row in rows:
-        status = row.get("status", "")
+        source_variant = "source_tree" in row
+        review_key = (row.get("source_tree", ""), row.get("source_file", ""),
+                      row.get("line", ""), row.get("symbol", ""))
+        source_review = (active_reviews or {}).get(review_key, {}) if source_variant else {}
+        status = (source_review.get("review_status", row.get("review_status", "UNREVIEWED"))
+                  if source_variant else row.get("status", ""))
         if status not in SKPROJECT_OPEN:
             continue
         symbol = row.get("symbol", "")
-        disposition = disposition_for(dispositions, "skproject", symbol)
+        # A legacy disposition applies to its reviewed definition and callers.
+        # Do not close a separately listed SPX/DOS definition by name alone.
+        disposition = {} if source_variant else disposition_for(dispositions, "skproject", symbol)
         disposition_name = disposition.get("disposition", "")
         if not include_disposed and not is_open_disposition(disposition_name):
             continue
         source = row.get("source_file", "")
-        family = row.get("family", "")
+        family = row.get("source_tree", row.get("family", ""))
+        firestaff_mapping = source_review.get(
+            "firestaff_mapping", row.get("firestaff_mapping", ""))
+        if source_variant:
+            if status == "UNREVIEWED":
+                legacy_matches = row.get("legacy_audit_exact_symbol_rows", "0")
+                firestaff_mapping = (
+                    f"UNREVIEWED; exact-name rows in older ledger: {legacy_matches} "
+                    "(candidate only; behavior not compared)"
+                )
         items.append({
             "game": "DM2",
             "reference": "skproject",
@@ -198,10 +231,11 @@ def skproject_backlog(
             "family": family,
             "source": f"{source}:{row.get('line', '')}",
             "status": status,
-            "firestaff_mapping": row.get("firestaff_mapping", ""),
+            "firestaff_mapping": firestaff_mapping,
             "disposition": disposition_name or "OPEN",
             "disposition_owner": disposition.get("owner", ""),
             "disposition_evidence": disposition.get("evidence", ""),
+            "review_notes": source_review.get("review_notes", ""),
             "priority": priority(status, family, source),
         })
     return sorted(items, key=lambda item: (-int(item["priority"]), str(item["source"]), str(item["symbol"])))
@@ -279,11 +313,31 @@ def main() -> int:
     if args.allow_missing_audits:
         redmcsb_rows = read_optional_tsv(REDMCSB_AUDIT, warnings)
         skproject_rows = read_optional_tsv(SKPROJECT_AUDIT, warnings)
+        skproject_source_rows = read_optional_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY, warnings)
+        skproject_source_reviews = read_optional_tsv(SKPROJECT_ACTIVE_SOURCE_REVIEW, warnings)
     else:
         redmcsb_rows = read_tsv(REDMCSB_AUDIT)
         skproject_rows = read_tsv(SKPROJECT_AUDIT)
+        skproject_source_rows = read_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY)
+        skproject_source_reviews = read_tsv(SKPROJECT_ACTIVE_SOURCE_REVIEW)
+    active_reviews = {}
+    for review in skproject_source_reviews:
+        key = (review["source_tree"], review["source_file"],
+               review["line"], review["symbol"])
+        if key in active_reviews:
+            raise SystemExit(f"duplicate SKPROJECT active-source review key: {key}")
+        active_reviews[key] = review
+    active_source_keys = {
+        (row["source_tree"], row["source_file"], row["line"], row["symbol"])
+        for row in skproject_source_rows
+    }
+    stale_reviews = set(active_reviews) - active_source_keys
+    if stale_reviews:
+        raise SystemExit(f"SKPROJECT active-source review does not match inventory: {next(iter(stale_reviews))}")
     items = redmcsb_backlog(redmcsb_rows, dispositions, args.include_disposed)
     items.extend(skproject_backlog(skproject_rows, dispositions, args.include_disposed))
+    items.extend(skproject_backlog(skproject_source_rows, dispositions,
+                                   args.include_disposed, active_reviews))
     if args.game:
         items = [item for item in items if item["game"] == args.game]
     if args.reference:
