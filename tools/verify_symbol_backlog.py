@@ -97,7 +97,8 @@ def verify_documented_dm2_counts() -> None:
     active_summary = (
         f"Applying the active-source review overrides gives "
         f"{active_counts['UNREVIEWED']:,} unreviewed, "
-        f"{active_counts['PARTIAL']:,} partial, and "
+        f"{active_counts['PARTIAL']:,} partial, "
+        f"{active_counts['MISSING']:,} missing, and "
         f"{active_counts['IMPLEMENTED_PARITY']:,} implemented-parity definitions."
     )
     if active_summary not in parity_doc:
@@ -112,6 +113,7 @@ def verify_documented_dm2_counts() -> None:
         f"The generated combined skproject backlog is {backlog['totalOpen']:,} open rows "
         f"({backlog['byStatus']['UNREVIEWED']:,} unreviewed, "
         f"{backlog['byStatus']['PARTIAL']:,} partial source or older-ledger rows, "
+        f"{backlog['byStatus'].get('MISSING', 0):,} missing, "
         f"{backlog['byStatus']['PARTIAL_SOURCE_OWNER']:,} partial source owners)."
     )
     if backlog_summary not in parity_doc:
@@ -120,7 +122,8 @@ def verify_documented_dm2_counts() -> None:
     named_summary = (
         f"With active-source review overrides applied, the inventory currently maps "
         f"{active_counts['UNREVIEWED']:,} as `UNREVIEWED`, "
-        f"{active_counts['PARTIAL']:,} as `PARTIAL`, and "
+        f"{active_counts['PARTIAL']:,} as `PARTIAL`, "
+        f"{active_counts['MISSING']:,} as `MISSING`, and "
         f"{active_counts['IMPLEMENTED_PARITY']:,} as `IMPLEMENTED_PARITY`."
     )
     if named_summary not in named_doc:
