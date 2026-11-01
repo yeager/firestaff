@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last status review: 2026-11-01.** This page is the
+**Last status review: 2026-11-02.** This page is the
 concise status source for the README and wiki. The full documentation
 map is in [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 

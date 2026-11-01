@@ -35,7 +35,7 @@
 > [verified implementation record](../../DONE-theron.md#2026-11-01--gate-native-title-actions-on-a-three-second-hold)
 > and [native input guide](../theron/theron_input.md).
 
-> **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
+> **Status reviewed 2026-11-02.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native

@@ -1,6 +1,6 @@
 # Theron's Quest — Keyboard and Mouse Controls
 
-**Status reviewed 2026-11-01.** These controls describe Firestaff's native
+**Status reviewed 2026-11-02.** These controls describe Firestaff's native
 desktop mapping. SDL regression coverage verifies command dispatch and
 bounded US pickup/reselect/drop; it does not establish full retail input
 semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
