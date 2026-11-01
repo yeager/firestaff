@@ -42,8 +42,8 @@ Runtime traces count as source-to-fetch evidence only when the observations
 come from one authentic-media session and the capture package is complete.
 For the US MPR2 `$68` page, C852 schema v3 and the all-writer trace must share
 the wrapper-generated capture ID. The wrapper receipt must bind both sidecar
-SHA-256 hashes, the complete physical `$0D0000–$0D1FFF` range, and row and
-truncation counts. The verifier then checks each fetched byte against its
+SHA-256 hashes, the complete physical `$0D0000–$0D1FFF` range, row counts, and
+completeness/truncation status. The verifier then checks each fetched byte against its
 latest preceding write. Nine fixture cases exercise that tooling contract;
 no authentic same-session capture has passed it, and the byte join alone does
 not establish the writer's CD-source ownership. See the
