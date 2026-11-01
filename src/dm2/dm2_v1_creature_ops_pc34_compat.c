@@ -163,7 +163,12 @@ static int dm2_v1_creature_shoot_item_with_base(
     const DM2_V1_CreatureShootState *state, int16_t base_dmg,
     const DM2_V1_CreatureShootCallbacks *cb, void *ctx)
 {
-    if (!cb || !state)
+    /* This is also used as a public compatibility boundary.  A partial host
+     * binding must fail closed before touching the possession chain or RNG;
+     * the source runtime only reaches this handler with all of these owners
+     * available. */
+    if (!cb || !state || !cb->find_shootable_item || !cb->cut_record ||
+        !cb->rand16 || !cb->between_value || !cb->shoot_item)
         return 1;
     int16_t item = cb->find_shootable_item(ctx, state->capability,
                                             state->inv_link, 0xFF);
