@@ -24,8 +24,10 @@ The cold JP reference route needed a four-second RUN hold at the System Card
 prompt. A separate authentic capture confirms four-second Button I holds on
 NEW GAME and FILE 1 enter the Akutuba story. Its `.mc0` snapshot is not in-game
 BRAM; the captured 2 KiB BRAM remains identical to the known empty JP slot.
-Native Firestaff hold timing, US title-action timing, and positive JP progress
-saving remain unverified. See the
+Firestaff applies a verified three-second host-side hold for native title
+accept/action inputs; whether that timing matches retail remains unverified.
+US title-action timing and positive JP progress saving also remain unverified.
+See the
 [source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [empty-BRAM boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
 
