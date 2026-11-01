@@ -110,3 +110,23 @@ Capture dumps, rendered references, screenshot, and retail game data remain
 outside Git. This verifies the captured menu display state only; selected
 Structure3 face, transform/culling, interactive menu behavior, and production
 renderer admission remain unresolved.
+
+## PR #252 current-head rerun
+
+On code head `3e6d3009cdb85031f8e81f886be621a0cd124422`, the Debug VDP2
+composition target was rebuilt on TRV2 and passed three consecutive runs
+against both pinned Ymir pass buffers. Each run matched all 71,680 RGB pixels;
+the compositor reported 70,185 direct-color VDP1 pixels, 1,495 palette VDP1
+pixels, and an NBG0 overlay. The independent retail source-join test also
+passed three consecutive runs against the same authentic capture, screenshot,
+Japanese `TITLE.BIN`, and `LEV00.DGN` hashes. It matched the pinned receipt for
+126 source spans, 121 informative DGN joins, 113 palette joins, eight direct-
+color joins, and 11 unowned zero-filled spans.
+
+The mode-5 source-address correction does not change this capture's output;
+the result remains specific to the captured New Game menu display. It does
+not establish screenshot-to-session attestation, selected face or runtime
+instance ownership, input handling, dungeon/HUD composition, original-Saturn
+parity, or production renderer admission. Temporary source, build, and copied
+test inputs were removed from TRV2 after verification; the retained originals
+remain on the external disk.

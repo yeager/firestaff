@@ -15,6 +15,19 @@ trace. If an authentic odd-address mode-5 command is found, verify its
 captured VRAM bytes, retail source join, and rendered output against Ymir. See
 [`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
 
+## 2026-11-01 — Re-run the frame-8037 composition on the current parser
+
+After the VDP1 mode-5 source-address correction, the authentic Japanese title
+frame-8037 VDP2 compositor and retail source-join regressions each passed
+three consecutive runs on TRV2 at code head
+`3e6d3009cdb85031f8e81f886be621a0cd124422`. The compositor matched both
+hash-pinned Ymir pass buffers at all 71,680 RGB pixels. The source join
+reproduced its pinned TITLE.BIN/LEV00.DGN receipt. This adds a menu-state
+regression alongside gameplay frame 300; it does not verify dungeon/HUD
+states, menu interaction, face selection, hardware parity, or renderer
+admission. See
+[`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
+
 ## 2026-11-02 — gate champion diagnostic output
 
 Champion recruitment and automatic leader-promotion messages now follow the
