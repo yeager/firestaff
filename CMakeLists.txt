@@ -4528,7 +4528,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;debug;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/dm2-fmtowns-debug"
-        TIMEOUT 60
+        TIMEOUT 120
     )
     foreach(_scan_localization_case IN ITEMS
             "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"

@@ -18,7 +18,7 @@ archive_hash_before=$(firestaff_sha256_file "$archive")
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform amiga --data-dir "$archive" \
-    --script 'key:enter,key:enter,key:escape,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
+    --script 'key:enter,key:enter,key:escape,key:enter,key:enter' --duration 10000 >/dev/null 2>&1
 
 # DM2's third platform card is Amiga; retain the real archive through a
 # pointer-only game -> platform -> Original selection. Scanning the full
@@ -34,8 +34,9 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # retained GDAT then owns New Game at source point (115,65).  At the explicit
 # 1x scale in a 960x600 window, the 320x200 game surface is centered at
 # (320,200), so the SDL click must be sent at window point (435,265).  The
-# host loop also has work between source ticks, so reserve 2,000 loop frames
-# and a 90-second process limit rather than equating script frames with VBlanks.
+# Wait for the native title owner to finish before sending the first menu
+# event; fixed script-frame delays can expire while the source movie owns the
+# host loop.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
@@ -52,7 +53,7 @@ FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --debug --width 960 --height 600 --scale-mode 0 --menu --game dm2 --platform amiga \
     --data-dir "$archive" \
-    --script 'key:enter,key:enter,key:enter,wait:2000,click:435:265' \
+    --script 'key:enter,key:enter,key:enter,wait-dm2-title,click:435:265' \
     --duration 90000 >"$runtime_trace" 2>&1
 python3 - "$runtime_probe" "$runtime_capture" "$runtime_trace" <<'PY'
 import json
@@ -81,6 +82,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 # count matches its command count; require both that frame receipt and the
 # exact original status-pane GDAT/RECT command in the same debug group.
 trace_lines = Path(sys.argv[3]).read_text(encoding="utf-8", errors="replace").splitlines()
+if not any("dm2-platform-intro={platform:amiga-en " in line
+           for line in trace_lines):
+    raise SystemExit(
+        "FAIL: DM2 Amiga --debug did not identify its own intro owner")
 complete_hud = re.compile(
     r"firestaff: dm2-render-debug game=dm2 platform=amiga-en .*"
     r"hud=\{required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ")

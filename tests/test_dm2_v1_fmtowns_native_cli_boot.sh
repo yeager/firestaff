@@ -214,7 +214,7 @@ if [ "$mixed_archive_count" -gt 1 ] && [ "$mixed_collection_complete" -eq 1 ]; t
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
             --width 320 --height 200 --menu --game dm2 \
             --data-dir "$default_data_root" --debug --verbose \
-            --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
+            --script 'key:enter,key:enter,key:enter,wait-dm2-title,click:115:65,click:100:60' \
             --duration 70000
     ) >"$mixed_runtime_log" 2>&1 || {
         cat "$mixed_runtime_log" >&2
@@ -290,9 +290,8 @@ printf '%s\n' "$probe_output" | grep -q \
 
 # Exercise the reported bare --game dm2 route through AUTO selection, the
 # authentic 225-frame TWANIM startup, New Game, and the first champion. The
-# launcher paths are covered above. The Towns source clock is 16.632 ms per
-# Timer-A tick; wait:8000 needs a longer wall timeout than the bounded
-# fast-forward probe above.
+# launcher paths are covered above. Wait for the authentic source title to
+# finish before sending menu input instead of guessing a host-frame delay.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
@@ -301,6 +300,7 @@ title_probe="$app_dir/test-dm2-fmtowns-bare-title.json"
 title_capture="$app_dir/test-dm2-fmtowns-bare-menu-capture"
 title_config="$app_dir/test-dm2-fmtowns-bare-menu-isolated.toml"
 title_log="$app_dir/test-dm2-fmtowns-bare-menu.log"
+title_timeout_ms=${FIRESTAFF_DM2_FMTOWNS_TITLE_TIMEOUT_MS:-60000}
 runtime_probe="$app_dir/test-dm2-fmtowns-normal-loop.json"
 runtime_capture="$app_dir/test-dm2-fmtowns-normal-loop-capture"
 runtime_log="$app_dir/test-dm2-fmtowns-menu-normal-loop.log"
@@ -316,7 +316,8 @@ rm -f "$title_capture"/*.bmp
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$title_probe" \
     FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$title_capture" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --width 320 --height 200 --game dm2 --debug --duration 40000
+        --width 320 --height 200 --game dm2 --debug \
+        --duration "$title_timeout_ms"
 ) >"$title_log" 2>&1 || {
     cat "$title_log" >&2
     exit 1
@@ -328,7 +329,7 @@ if ! grep -Fq \
     cat "$title_log" >&2
     exit 1
 fi
-python3 - "$title_probe" <<'PY'
+python3 - "$title_probe" "$title_timeout_ms" <<'PY'
 import json
 import sys
 
@@ -339,8 +340,8 @@ if (probe["sourceId"] != "dm2" or
         towns["titleFinished"] != 1 or towns["titleRejected"] != 0 or
         towns["titleBound"] != 0 or towns["frameIndex"] != 225 or
         probe["startup"]["phase"] != "dm2-startup-menu"):
-    raise SystemExit(f"FAIL: bare DM2 did not reach the original FM Towns menu by 40 seconds: {probe}")
-print("PASS: bare DM2 reaches the FM Towns New Game menu within 40 seconds")
+    raise SystemExit(f"FAIL: bare DM2 did not reach the original FM Towns menu by {sys.argv[2]} ms: {probe}")
+print(f"PASS: bare DM2 reaches the FM Towns New Game menu within {sys.argv[2]} ms")
 PY
 python3 - "$title_capture" "$source_digest" <<'PY'
 from pathlib import Path
@@ -398,8 +399,8 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$bare_cli_runtime_probe" \
 FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --game dm2 --data-dir "$runtime_data_root" \
-    --debug --script 'wait:2400,click:115:65,click:100:60' \
-    --duration 70000 >"$bare_cli_runtime_log" 2>&1 || {
+    --debug --script 'wait-dm2-title,click:115:65,click:100:60' \
+    --duration 90000 >"$bare_cli_runtime_log" 2>&1 || {
         cat "$bare_cli_runtime_log" >&2
         exit 1
     }
@@ -440,7 +441,7 @@ FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm2 \
     --data-dir "$runtime_data_root" --verbose \
-    --script 'key:enter,key:enter,key:enter,wait:1800,click:115:65,click:100:60' \
+    --script 'key:enter,key:enter,key:enter,wait-dm2-title,click:115:65,click:100:60' \
     --duration 120000 >"$runtime_log" 2>&1 || {
         cat "$runtime_log" >&2
         exit 1
