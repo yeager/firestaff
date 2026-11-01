@@ -3908,3 +3908,12 @@ its focused regression covers those transformations. Platform-specific F0635
 zone data/resolvers and live slot-border rendering remain unintegrated, so this
 is partial coverage and does not establish F0619 parity across supported
 editions.
+
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` M11 integration: the live DM1 map
+transition now constructs the source descriptor from loaded square bytes,
+map-column cumulative SFT data, the selected map's door sets, and authenticated
+metadata bytes, then publishes it through the F0174 owner. The helper owns the
+current/party map pointer and metadata snapshot during M11 transitions. This
+closes the adapter-only gap for the PC34-backed M11 path; other production map
+owners and supported edition/platform bindings remain open, so both audit rows
+stay partial.

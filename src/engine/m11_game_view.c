@@ -45679,7 +45679,7 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
      * G0261[WallOrnamentCount] = C0_WALL_ORNAMENT_INSCRIPTION. */
     metaSize = (int)m->creatureTypeCount + (int)m->wallOrnamentCount +
                (int)m->floorOrnamentCount + (int)m->doorOrnamentCount;
-    if (metaSize <= 0 || metaSize > (int)sizeof(metaBuf)) {
+    if (metaSize < 0 || metaSize > (int)sizeof(metaBuf)) {
         state->ornamentCacheLoaded[mapIndex] = 1;
         return;
     }
@@ -45784,7 +45784,98 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         }
     }
 
+    state->ornamentCacheSourceValid[mapIndex] = 1;
     state->ornamentCacheLoaded[mapIndex] = 1;
+}
+
+/* Publish the source-shaped map pointers consumed by ReDMCSB F0173/F0174.
+ * The cached source map is refreshed only on a dungeon owner change or map
+ * transition; F0174 still republishes the party-map metadata on same-map
+ * calls, matching DUNGEON.C:2742-2762. */
+static int m11_dm1_publish_current_map_f0174(M11_GameViewState* state,
+                                             int mapIndex) {
+    static const uint16_t doorInfoByType[4][2] = {
+        { 0x0003u, 110u }, /* DUNGEON.C:560 portcullis */
+        { 0x0000u, 42u },  /* wooden */
+        { 0x0000u, 230u }, /* iron */
+        { 0x0005u, 255u }  /* animated RA */
+    };
+    const struct DungeonDatState_Compat* dun;
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    DM1_V1_MapDescriptorF0173F0174Pc34 descriptor;
+    DM1_V1_CurrentMapResultF0173F0174Pc34 result;
+    int columnBase = 0;
+
+    if (!state || !(dun = state->world.dungeon) || !dun->loaded ||
+        !dun->maps || !dun->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dun->header.mapCount ||
+        mapIndex >= 32 || !dun->columnsCumulativeSquareFirstThingCount) {
+        return 0;
+    }
+    map = &dun->maps[mapIndex];
+    tiles = &dun->tiles[mapIndex];
+    if (!tiles->squareData || map->width == 0u || map->height == 0u ||
+        map->wallOrnamentCount > 16u || map->floorOrnamentCount > 16u ||
+        map->doorOrnamentCount > 16u || map->creatureTypeCount > 16u ||
+        map->doorSet0 >= 4u || map->doorSet1 >= 4u ||
+        !state->ornamentCacheSourceValid[mapIndex]) {
+        return 0;
+    }
+    for (int i = 0; i < mapIndex; ++i) {
+        if (columnBase > dun->dungeonColumnCount ||
+            (int)dun->maps[i].width > dun->dungeonColumnCount - columnBase)
+            return 0;
+        columnBase += (int)dun->maps[i].width;
+    }
+    if (columnBase < 0 || columnBase > dun->dungeonColumnCount ||
+        (int)map->width > dun->dungeonColumnCount - columnBase ||
+        tiles->squareCount != (int)map->width * (int)map->height)
+        return 0;
+
+    memset(&descriptor, 0, sizeof(descriptor));
+    descriptor.mapIndex = mapIndex;
+    descriptor.width = (int)map->width;
+    descriptor.height = (int)map->height;
+    descriptor.mapBytes = tiles->squareData;
+    descriptor.mapByteCount = (size_t)tiles->squareCount;
+    descriptor.columnCumulativeSquareFirstThingCounts =
+        dun->columnsCumulativeSquareFirstThingCount + columnBase;
+    descriptor.columnCount = (size_t)map->width;
+    for (int i = 0; i < 2; ++i) {
+        const unsigned int type = i == 0 ? map->doorSet0 : map->doorSet1;
+        state->dm1CurrentMapDoorInfo[i * 2] = doorInfoByType[type][0];
+        state->dm1CurrentMapDoorInfo[i * 2 + 1] = doorInfoByType[type][1];
+    }
+    descriptor.doorInfo = state->dm1CurrentMapDoorInfo;
+    descriptor.doorInfoCount = 2u;
+    descriptor.allowedCreatureTypes = map->allowedCreatureTypes;
+    descriptor.allowedCreatureTypeCount = (size_t)map->creatureTypeCount;
+    for (int i = 0; i < 16; ++i) {
+        const int wall = state->wallOrnamentIndices[mapIndex][i];
+        const int floor = state->floorOrnamentIndices[mapIndex][i];
+        const int door = state->doorOrnamentIndices[mapIndex][i];
+        state->dm1CurrentMapWallOrnamentBytes[i] =
+            wall >= 0 && wall <= UINT8_MAX ? (uint8_t)wall : 0u;
+        state->dm1CurrentMapFloorOrnamentBytes[i] =
+            floor >= 0 && floor <= UINT8_MAX ? (uint8_t)floor : 0u;
+        state->dm1CurrentMapDoorOrnamentBytes[i] =
+            door >= 0 && door <= UINT8_MAX ? (uint8_t)door : 0u;
+    }
+    descriptor.wallOrnamentIndices = state->dm1CurrentMapWallOrnamentBytes;
+    descriptor.wallOrnamentCount = (size_t)map->wallOrnamentCount;
+    descriptor.floorOrnamentIndices = state->dm1CurrentMapFloorOrnamentBytes;
+    descriptor.floorOrnamentCount = (size_t)map->floorOrnamentCount;
+    descriptor.doorOrnamentIndices = state->dm1CurrentMapDoorOrnamentBytes;
+    descriptor.doorOrnamentCount = (size_t)map->doorOrnamentCount;
+
+    if (state->dm1CurrentMapDungeonOwner != dun) {
+        DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(
+            &state->dm1CurrentMapF0173F0174);
+        state->dm1CurrentMapDungeonOwner = dun;
+    }
+    return F0174_DUNGEON_SetCurrentMapAndPartyMap(
+        &state->dm1CurrentMapF0173F0174, &descriptor, 1u, mapIndex, &result);
 }
 
 /* ReDMCSB DUNGEON.C F0174 keeps G0267 (the current-map alcove ornament
@@ -45801,7 +45892,14 @@ static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
         return;
     }
     m11_ensure_ornament_cache(state, mapIndex);
-    if (!state->ornamentCacheLoaded[mapIndex]) {
+    if (!state->ornamentCacheLoaded[mapIndex] ||
+        !state->ornamentCacheSourceValid[mapIndex]) {
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+        return;
+    }
+    if (state->dm1CurrentMapDungeonOwner != state->world.dungeon)
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+    if (!m11_dm1_publish_current_map_f0174(state, mapIndex)) {
         dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
         return;
     }
