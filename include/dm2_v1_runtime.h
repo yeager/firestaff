@@ -360,6 +360,13 @@ int dm2_v1_runtime_live_missile_selector_context(
  * M11 owns the panel buffer; DM2 owns the cast transaction. */
 int dm2_v1_runtime_set_spell_runes(int hero_index,
                                    const uint8_t *runes, int rune_count);
+/* DM2 charges each symbol when it is entered, and recanting removes only the
+ * last symbol without refunding that mana. */
+int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index);
+int dm2_v1_runtime_remove_spell_rune(int hero_index);
+int dm2_v1_runtime_clear_spell_runes(int hero_index);
+int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
+                                   int capacity, int *out_rune_count);
 
 /* Transfer an already retained, source-complete private candidate from the
  * boot profile to the bound runtime. On failure the profile keeps ownership.

@@ -23512,6 +23512,23 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_open_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        int rune_count = 0;
+        uint8_t runes[4] = {0, 0, 0, 0};
+        if (caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_get_spell_runes(
+                caster, runes, (int)sizeof(runes), &rune_count)) return 0;
+        memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+        for (int i = 0; i < rune_count; ++i)
+            state->spellBuffer.runes[i] = runes[i];
+        state->spellBuffer.runeCount = rune_count;
+        state->spellRuneRow = rune_count;
+        state->dm1SpellCasting.magicCasterIndex = caster;
+        state->spellPanelOpen = 1;
+        return 1;
+    }
     if (m11_source_is_csb(state)) {
         CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)state->csbBootProfile;
         int caster;
@@ -23708,6 +23725,21 @@ static int m11_csb_consume_source_rune_cost(
     return 1;
 }
 
+static void m11_dm2_sync_spell_mana_to_view(M11_GameViewState *state,
+                                            int caster)
+{
+    DM2_V1_RuntimeSourceHeroStateReceipt hero_state;
+    struct ChampionState_Compat *champion;
+    if (!state || caster < 0 || caster >= DM2_MAX_HEROES ||
+        caster >= state->world.party.championCount ||
+        !dm2_v1_runtime_get_source_hero_state((uint8_t)caster, &hero_state)) {
+        return;
+    }
+    champion = &state->world.party.champions[caster];
+    champion->mana.current = (unsigned short)hero_state.cur_mp;
+    champion->mana.shifted = (unsigned short)(champion->mana.current << 1);
+}
+
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     if (state && m11_is_dm1_source_kind(state->sourceKind)) {
         DM1_V1_G0485SymbolManaCostPc34 cost;
@@ -23732,6 +23764,24 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
         state->spellBuffer.runeCount = step + 1;
         state->spellRuneRow = (step + 1) & 3;
         m11_dm1_spell_sync_legacy_to_caster(state);
+        return 1;
+    }
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        int rune_count = state->spellBuffer.runeCount;
+        if (!state->active || state->partyDead ||
+            state->candidateMirrorPanelActive || !state->spellPanelOpen ||
+            symbolIndex < 0 || symbolIndex >= 6 || rune_count < 0 ||
+            rune_count >= 4 || caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_add_spell_rune(caster, symbolIndex)) {
+            return 0;
+        }
+        state->spellBuffer.runes[rune_count] =
+            (unsigned char)(0x60 + rune_count * 6 + symbolIndex);
+        state->spellBuffer.runeCount = rune_count + 1;
+        state->spellRuneRow = state->spellBuffer.runeCount;
+        m11_dm2_sync_spell_mana_to_view(state, caster);
         return 1;
     }
     DM1_V1_SpellPanelStatePc34 panel =
@@ -23765,6 +23815,11 @@ int M11_GameView_ClearSpell(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_clear_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        if (caster >= 0 && caster < DM2_MAX_HEROES)
+            (void)dm2_v1_runtime_clear_spell_runes(caster);
+    }
     m11_apply_dm1_spell_panel_receipt(state, &receipt);
     if (state->spellPanelOpen) {
         m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL CLEARED",
@@ -23785,6 +23840,11 @@ static int m11_dm1_spell_panel_recant_last_rune(M11_GameViewState* state)
     if (!dm1_v1_spell_panel_command_allowed_pc34(&panel) ||
         !panel.panel_open || panel.rune_count <= 0) {
         return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int caster = m11_dm1_spell_caster_index(state);
+        if (caster < 0 || caster >= DM2_MAX_HEROES ||
+            !dm2_v1_runtime_remove_spell_rune(caster)) return 0;
     }
     removedIndex = panel.rune_count - 1;
     state->spellBuffer.runes[removedIndex] = 0;
@@ -24304,6 +24364,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
             m11_set_status(state, "CAST", "DM2 CAST OWNER UNAVAILABLE");
             return 0;
         }
+        m11_dm2_sync_spell_mana_to_view(state, dm2_caster);
         if (!dm2_receipt.applied) {
             /* DM2_TRY_CAST_SPELL consumes a rejected cast.  It clears the
              * source rune tail for every failure except class 0x30 (the

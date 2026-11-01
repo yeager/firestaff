@@ -4184,6 +4184,96 @@ int dm2_v1_runtime_set_spell_runes(int hero_index,
     return 1;
 }
 
+int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index)
+{
+    /* SKWINSPX/src/v4/skgame.cpp:665 uses these 24 source mana costs and
+     * scales later symbols by RunePowerMultiplicator[firstRune - 0x60]/8. */
+    static const uint8_t rune_mana_power[24] = {
+        1, 2, 3, 4, 5, 6,
+        2, 3, 4, 5, 6, 7,
+        4, 5, 6, 7, 7, 9,
+        2, 2, 3, 4, 6, 7
+    };
+    static const uint8_t rune_power_multiplicator[6] = {
+        8, 12, 16, 20, 24, 28
+    };
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    int rune_count;
+    int cost;
+    int power_index;
+
+    if (!rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || symbol_index < 0 ||
+        symbol_index >= 6) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    rune_count = hero->nrunes;
+    if (hero->curHP <= 0 || rune_count < 0 || rune_count >= 4) return 0;
+    cost = rune_mana_power[rune_count * 6 + symbol_index];
+    if (rune_count != 0) {
+        power_index = (uint8_t)hero->rune[0] - 0x60;
+        if (power_index < 0 || power_index >= 6) return 0;
+        cost = (cost * rune_power_multiplicator[power_index]) >> 3;
+    }
+    if (cost > hero->curMP) return 0;
+    hero->curMP = (int16_t)(hero->curMP - cost);
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x0800u);
+    hero->rune[rune_count] = (char)(0x60 + rune_count * 6 + symbol_index);
+    hero->nrunes = (int8_t)(rune_count + 1);
+    hero->rune[rune_count + 1] = 0;
+    return 1;
+}
+
+int dm2_v1_runtime_remove_spell_rune(int hero_index)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    int rune_count;
+    if (!rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    rune_count = hero->nrunes;
+    if (rune_count <= 0 || rune_count > 4) return 0;
+    hero->rune[rune_count - 1] = 0;
+    hero->nrunes = (int8_t)(rune_count - 1);
+    return 1;
+}
+
+int dm2_v1_runtime_clear_spell_runes(int hero_index)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    if (!rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    memset(hero->rune, 0, sizeof(hero->rune));
+    hero->nrunes = 0;
+    return 1;
+}
+
+int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
+                                   int capacity, int *out_rune_count)
+{
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_Hero *hero;
+    int rune_count;
+    if (!out_runes || !out_rune_count || capacity < 0 ||
+        !rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    rune_count = hero->nrunes;
+    if (rune_count < 0 || rune_count > 4 || capacity < rune_count) return 0;
+    memset(out_runes, 0, (size_t)capacity);
+    for (int i = 0; i < rune_count; ++i)
+        out_runes[i] = (uint8_t)hero->rune[i];
+    *out_rune_count = rune_count;
+    return 1;
+}
+
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt)
