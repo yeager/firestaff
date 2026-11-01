@@ -1,5 +1,12 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 launcher preset clarification: the hierarchical game-card flow's
+"MODERN" preset selected V2.1 upscaling, not V2.2 modern artwork. Renamed the
+choice to "V2.1 UPSCALED" so the five-game launcher describes the mode it
+actually selects. The separate V2.2 mode continues to fall back to V2.1 for
+all five games until each has an admitted finished-real art pack; no synthetic
+art is used to create a visible difference.
+
 2026-11-01 DM1 PC-34 original-media regression: CTest
 `dm1_v1_pc34_native_cli_boot` passed in 542.11 seconds with the installed
 retail archive. The regression covers M12 launch, clean host quit during SWSH

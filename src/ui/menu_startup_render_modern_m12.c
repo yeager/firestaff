@@ -2321,7 +2321,7 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
                       modern_tr(state, "NO SUPPORTED NATIVE PLATFORM"), &sub);
         }
     } else {
-        static const char* const labels[] = {"ORIGINAL", "MODERN", "CUSTOM"};
+        static const char* const labels[] = {"ORIGINAL", "V2.1 UPSCALED", "CUSTOM"};
         static const char* const line1[] = {"V1 PRESERVATION", "V2.X IMPROVEMENTS", "FINE-TUNE SETTINGS"};
         static const char* const line2[] = {"START WITH ORIGINAL RULES", "START WITH MODERN PRESET", "OPEN DETAILED OPTIONS"};
         cardW = 480;
