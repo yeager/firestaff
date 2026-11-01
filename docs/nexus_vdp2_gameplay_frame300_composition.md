@@ -74,8 +74,14 @@ ctest --test-dir build -R '^nexus_v1_vdp1_gameplay_frame300_source_join_real$' -
 `nexus_v1_gameplay_frame300_composition_source_join_real` runs both bounded
 checks against this same frame-300 evidence package: the C priority compositor
 must match Ymir's complete rendered frame, and the VDP1 command trace must
-match the hash-pinned Japanese `LEV01.DGN` materials. Set the evidence root and
-retail data directory before running it:
+match the hash-pinned Japanese `LEV01.DGN` materials. The combined check also
+records the last VDP1 command that wrote each replay pixel and joins that row
+to its source receipt. All 65,991 VDP1 pixels selected as the top VDP2 layer
+map to rows backed by retail DGN or captured Ymir VRAM. The 491 CRAM pixels
+split exactly into 60 pixels from captured polyline row 79 and 431 pixels from
+captured mode-4 sprite row 80. The remaining 65,500 selected VDP1 pixels map
+to indexed retail DGN rows. Set the evidence root and retail data directory
+before running it:
 
 ```sh
 export FIRESTAFF_NEXUS_FRAME300_EVIDENCE_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_face_vdp2_hud_join_20261030
@@ -83,8 +89,9 @@ export FIRESTAFF_NEXUS_DATA_DIR=/path/to/authentic/Japanese/Nexus/data
 ctest --test-dir build -R '^nexus_v1_gameplay_frame300_composition_source_join_real$' --output-on-failure
 ```
 
-The paired check confirms that both verifiers consume one captured gameplay
-state. It does not join each composed pixel to a retail DGN source: only 66 of
-68 textured commands have material matches, active face selection remains
-unknown, and transform/culling are not verified. Renderer admission remains
-blocked.
+The pixel ownership link identifies the last command and source class for
+visible VDP1 pixels; it does not establish a selected Structure3 face for each
+pixel. Only 66 of 68 textured commands have retail DGN material matches, and
+the 431 mode-4 pixels and 60 polyline pixels are capture-backed rather than
+DGN-backed. Active face selection and transform/culling remain unverified, so
+renderer admission remains blocked.

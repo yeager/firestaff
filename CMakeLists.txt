@@ -42203,6 +42203,7 @@ add_executable(test_nexus_v1_dgn_material_raster
             COMMAND ${Python3_EXECUTABLE}
                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_gameplay_frame300_composition_source_join_real.py
                 $<TARGET_FILE:test_nexus_v1_vdp2_runtime_tilemap>
+                $<TARGET_FILE:test_nexus_v1_vdp1_frame300_dgn_stepper_real>
         )
         set_tests_properties(nexus_v1_gameplay_frame300_composition_source_join_real PROPERTIES
             LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;composition;source-join;skip-safe"
