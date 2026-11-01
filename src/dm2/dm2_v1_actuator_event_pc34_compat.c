@@ -644,12 +644,27 @@ static int item_teleport_visitor(void *context,
     /* Move the item via MOVE_RECORD_TO */
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
+        int destination_direction = ctx->dst_dir;
+        int destination_tile_value = dm2_v1_dungeon_c_map_get_tile_value(
+            ctx->dungeon, ctx->map, ctx->dst_x, ctx->dst_y);
+        if (destination_tile_value < 0) {
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+        if ((((unsigned int)destination_tile_value & 0xffu) >> 5) != 0u) {
+            if (!ctx->rng) {
+                ctx->receipt->fail_closed = 1;
+                return 1;
+            }
+            destination_direction = (int)dm2_v1_drops_rand16(
+                ctx->rng, 4u);
+        }
         memset(&move_receipt, 0, sizeof(move_receipt));
         int moved = dm2_v1_move_record_to(
             ctx->pool_set, ctx->dungeon, ctx->queue, handle,
             (int16_t)ctx->src_x, (int16_t)ctx->src_y,
             (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
-            (int16_t)ctx->dst_dir, ctx->map, ctx->game_tick,
+            (int16_t)destination_direction, ctx->map, ctx->game_tick,
             &move_receipt);
         if (!moved || move_receipt.fail_closed) {
             /* MOVE_RECORD_TO may return 1 with a fail-closed receipt after
