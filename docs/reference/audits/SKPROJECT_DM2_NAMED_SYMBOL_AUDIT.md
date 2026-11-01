@@ -27,7 +27,7 @@ definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
  cross-variant checks, plus the explicitly tracked flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,935 definition rows, 3,632 distinct names, and 303
-repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,001 as `UNREVIEWED`, 853 as `PARTIAL`, 0 as `MISSING`, and 71 as `IMPLEMENTED_PARITY`. Eight source entries are `NOT_APPLICABLE_ARCH` and two are `NOT_APPLICABLE_GAME`. The source-specific rows split into 1,118 SPX v4 definitions (850 unreviewed, 250 partial, 0 missing, 17 implemented, 1 architecture-specific), 1,348 SPX v5 definitions (1,037 unreviewed, 283 partial, 0 missing, 28 implemented), 262 shared SKWINSPX definitions (247 unreviewed, 6 partial, 7 architecture-specific, 2 outside-game), 832 legacy DOS definitions (546 unreviewed, 274 partial, 0 missing, 12 implemented), 373 SKWINDOS/src definitions (331 unreviewed, 28 partial, 14 implemented), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 935 entries: 853 partial, 0 missing, 72 implemented, 8 architecture-specific, and 2 outside-game rows, including eight exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
+repeated-name definitions. With active-source review overrides applied, the inventory currently maps 2,998 as `UNREVIEWED`, 856 as `PARTIAL`, 0 as `MISSING`, and 71 as `IMPLEMENTED_PARITY`. Eight source entries are `NOT_APPLICABLE_ARCH` and two are `NOT_APPLICABLE_GAME`. The source-specific rows split into 1,118 SPX v4 definitions (850 unreviewed, 251 partial, 0 missing, 17 implemented, 1 architecture-specific), 1,348 SPX v5 definitions (1,037 unreviewed, 284 partial, 0 missing, 28 implemented), 262 shared SKWINSPX definitions (247 unreviewed, 6 partial, 7 architecture-specific, 2 outside-game), 832 legacy DOS definitions (546 unreviewed, 274 partial, 0 missing, 12 implemented), 373 SKWINDOS/src definitions (331 unreviewed, 29 partial, 14 implemented), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 938 entries: 856 partial, 0 missing, 72 implemented, 8 architecture-specific, and 2 outside-game rows, including eight exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
 ledger is only a search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
 runtime.
@@ -37,7 +37,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,935 (2,728 SPX, 1,205 DOS, 2 SKULLWIN) | 3,013 `UNREVIEWED`; 841 `PARTIAL`; 0 `MISSING`; 71 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,935 (2,728 SPX, 1,205 DOS, 2 SKULLWIN) | 2,998 `UNREVIEWED`; 856 `PARTIAL`; 0 `MISSING`; 71 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
