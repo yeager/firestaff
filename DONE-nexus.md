@@ -8,7 +8,9 @@
   draws own no final visible pixels in this capture. The remaining 491 CRAM
   pixels map to captured polyline row 79 (60) and mode-4 sprite row 80 (431).
 - The combined real-data regression now asserts this exact source-class
-  distribution alongside the full VDP2 RGB match and command/source joins.
+  distribution alongside the full VDP2 RGB match and command/source joins. It
+  also checks that each visible VDP1 pixel matches between the replay and
+  display framebuffer planes before counting command owners.
   It does not establish selected Structure3 face ownership or production
   renderer admission. Details are in
   [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).

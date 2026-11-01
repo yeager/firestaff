@@ -25,7 +25,8 @@ this capture. The 491 CRAM pixels map to captured polyline row 79 (60 pixels)
 and mode-4 sprite row 80 (431 pixels). The combined real-data regression pins
 these source-class counts together with the complete VDP2 RGB match and DGN
 joins. This proves pixel-to-command/source-class ownership for this captured
-state, not a selected Structure3 face per pixel. Active face selection,
+state after matching each visible pixel between replay and display FBS planes,
+not a selected Structure3 face per pixel. Active face selection,
 transform/culling, other gameplay states, and production renderer admission
 remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
