@@ -1,5 +1,47 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `TEXT.C:F0040/F0041` glyph printing: the callable ledger
+now maps bounded source-font M11 name/damage/UI rendering and trailing-space
+routes instead of unrelated numeric-token hits. General glyph-mask, bitmap,
+coordinate, codepage, caller, and all-edition/platform pixel parity remain
+open.
+
+2026-11-01 ReDMCSB `TEXT.C:F0042-F0047` message-area functions: the ledger
+now maps the bounded PC34 cursor, row clear/expiry, row advance, string, and
+word-wrap counterparts. Their bitmap scroll/rendering, source fonts/codepages,
+exact pixel layout, and all-edition/platform integration remain open.
+
+2026-11-01 ReDMCSB Atari ST `F031-F039` aliases: the callable ledger now
+links these aliases to the bounded DM1/CSB source counterparts for names,
+object types/icons, leader-hand text, and slot-box rendering. Their Atari ST
+runtime, authentic asset behavior, and ABI remain open, so the aliases are
+`PARTIAL`.
+
+2026-11-01 ReDMCSB `BASE.C:F0022` and `SWSH.C:F0022` delays: the ledger now
+maps the source-gated PC34 VBlank admission plan and the swoosh hold timing
+helpers instead of an unrelated Nexus number collision. Firestaff's swoosh
+runtime uses millisecond estimates for source VBlank holds; frame-exact delay
+and every edition/platform caller remain unverified.
+
+2026-11-01 ReDMCSB `BASE.C:F0020/F0021` blitters: the full ledger now maps
+the source-named viewport/screen blitters and bounded PC34 admission receipt
+instead of unrelated Nexus numeric-token hits. Equivalent renderers exist,
+but the generic helpers have no verified live M11 caller; edition-specific
+video, transparency, screen-surface and Atari ST ABI behavior remain open.
+
+2026-11-01 ReDMCSB Atari ST `F023-F030` math aliases: the callable ledger now
+links these aliases to the bounded PC34 helpers for absolute value, signed
+min/max/clamp, RNG and scaled product rather than unrelated numeric-token
+hits. Each remains partial because Atari ST runtime ownership, ABI, and
+source-specific RNG/overflow behavior are not proven.
+
+2026-11-01 ReDMCSB `BASE.C:F0009/F0010` spaced writes: the callable ledger
+now maps both shared Firestaff routines instead of unrelated Theron/Nexus
+numeric-token hits. Positive-count byte and word strides have counterparts;
+some ReDMCSB assembly paths wrap a zero count into 65,536 writes, unlike the
+Firestaff C loops. Keep both functions and Atari ST aliases `PARTIAL` until
+the target-platform count semantics and ABI are resolved.
+
 2026-11-01 ReDMCSB `BASE.C:F0006` screen-box inversion: the callable ledger
 now maps bounded Firestaff menu/champion-panel highlight overlays instead of
 an unrelated DM2 phase-gate numeric hit. No general low-level equivalent to
