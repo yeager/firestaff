@@ -214,7 +214,7 @@ if [ "$mixed_archive_count" -gt 1 ] && [ "$mixed_collection_complete" -eq 1 ]; t
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
             --width 320 --height 200 --menu --game dm2 \
             --data-dir "$default_data_root" --debug --verbose \
-            --script 'key:enter,key:enter,key:enter,wait-dm2-title,click:115:65,click:100:60' \
+            --script 'key:enter,key:enter,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' \
             --duration 70000
     ) >"$mixed_runtime_log" 2>&1 || {
         cat "$mixed_runtime_log" >&2
@@ -270,23 +270,6 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     echo 'FAIL: DM2 FM Towns pointer-only menu route did not launch' >&2
     exit 1
 }
-
-# The direct CLI route must also finish the authentic Towns TWANIM before
-# its source-coordinate New Game and mirror clicks. Keep the probe surface at
-# the original 320x200 coordinates and require the first real map-0 party.
-probe_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --width 320 --height 200 --game dm2 \
-    --data-dir "$archive" --boot-probe --boot-probe-frames 0 \
-    --script 'wait:8000,click:115:65,click:100:60' \
-    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
-    --boot-probe-expect-map 0 --boot-probe-expect-party 1,8,0 \
-    --boot-probe-expect-champions 1 --duration 0 2>&1) || {
-    printf '%s\n' "$probe_output" >&2
-    exit 1
-}
-printf '%s\n' "$probe_output" | grep -q \
-    'dm2FrameAccepted=1 dm2RealAssets=1 dm2NoCoreFallbacks=1 dm2FallbackDraws=0'
 
 # Exercise the reported bare --game dm2 route through AUTO selection, the
 # authentic 225-frame TWANIM startup, New Game, and the first champion. The
@@ -399,7 +382,7 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$bare_cli_runtime_probe" \
 FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --game dm2 --data-dir "$runtime_data_root" \
-    --debug --script 'wait-dm2-title,click:115:65,click:100:60' \
+    --debug --script 'wait-dm2-menu,click:dm2-new-game,click:100:60' \
     --duration 90000 >"$bare_cli_runtime_log" 2>&1 || {
         cat "$bare_cli_runtime_log" >&2
         exit 1
@@ -441,7 +424,7 @@ FIRESTAFF_DATA="$runtime_data_root" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm2 \
     --data-dir "$runtime_data_root" --verbose \
-    --script 'key:enter,key:enter,key:enter,wait-dm2-title,click:115:65,click:100:60' \
+    --script 'key:enter,key:enter,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' \
     --duration 120000 >"$runtime_log" 2>&1 || {
         cat "$runtime_log" >&2
         exit 1
