@@ -2,12 +2,12 @@
 
 ## Purpose
 
-The native `--debug` path is being extended to print the authenticated Track 02
+The native `--debug` path prints the authenticated Track 02
 spawn-table source metadata already retained by the Theron world. The receipt
 is intended to make the static source projection inspectable during a native
 launch; it does not implement or authorize creature spawning.
 
-## Planned receipt fields
+## Receipt fields
 
 For an authenticated US or JP Track 02 launch, the diagnostic prints the
 regional identity, Track 02 MD5, source layout (`MODE1/2048` ISO projection or
@@ -24,15 +24,16 @@ spawn failure or a semantic classification.
 
 ## Verification state
 
-The diagnostic's modified engine and decoder translation units compiled
-successfully in an isolated TRV2 Debug configuration. The full application has
-not been linked, and no native `--debug` output has been observed. Treat the
-output format above as an implementation target, not as verified runtime
-evidence. Before relying on it, link the full application on TRV2 and inspect
-one authentic US or JP launch log. Confirm that the printed MD5 and offsets match the
+The receipt implementation is in `m11_debug_theron_spawn_source()` and emits
+once per authenticated Theron launch from the native `--debug` game-event
+path. The full application has linked successfully in the PR's Linux CMake
+build. No native `--debug` output has been captured yet, so the receipt's
+runtime behavior and printed values remain unverified. Inspect one authentic
+US or JP launch log. Confirm that its MD5 and offsets match the
 [authenticated ISO projection report](theron-track02-spawn-record-iso-projection-20261101.md),
-and that a non-Theron launch emits no Theron receipt. Keep the output bounded
-to one receipt per launch.
+and that a non-Theron launch emits no Theron receipt. Source inspection gates
+the receipt on an authenticated US/JP Track 02 world and one launch serial;
+runtime confirmation is still required.
 
 The independent state-only reference replay remains negative for runtime
 spawn semantics: it consumed five scripted controller events, recorded zero
