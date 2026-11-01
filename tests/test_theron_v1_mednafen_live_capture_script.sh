@@ -838,7 +838,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input at the read-trace cap was accepted without a later CPU read' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
+if ! grep -Eq 'final scripted event frame [0-9]+ had no controller-port read exposing its scripted mask' \
     "$input_test_dir/capped.stderr"; then
     printf '%s\n' 'FAIL: capped scripted input rejection lacked a precise diagnostic' >&2
     exit 1
@@ -854,7 +854,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input without a controller-port read was accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
+if ! grep -Eq 'final scripted event frame [0-9]+ had no controller-port read exposing its scripted mask' \
     "$input_test_dir/unconsumed.stderr"; then
     printf '%s\n' 'FAIL: unconsumed scripted input rejection lacked a precise diagnostic' >&2
     exit 1
@@ -956,7 +956,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: controller polling without a scripted apply receipt was accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame has no nonzero apply receipt' \
+if ! grep -Eq 'final scripted event frame [0-9]+ has no nonzero apply receipt' \
     "$input_test_dir/no-apply.stderr"; then
     printf '%s\n' 'FAIL: scripted apply rejection lacked a precise diagnostic' >&2
     exit 1
@@ -2091,6 +2091,85 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
    ! grep -Fq "grep -Eq '^tia(_zero_page)?_truncated '" "$script" ||
    ! grep -Fq "grep -aFq 'tia_start event_sequence='" "$script"; then
     printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
+    exit 1
+fi
+helper_preflight_dir=$(mktemp -d "$repo/build/theron-capture-helper-preflight.XXXXXX")
+cp -p "$script" \
+    "$repo/scripts/theron_x11_keymap.sh" \
+    "$repo/scripts/prepare_theron_authentic_bram.sh" \
+    "$repo/scripts/verify_theron_stage2_system_card_call_trace.sh" \
+    "$repo/scripts/verify_theron_syscard_status_trace.py" \
+    "$repo/scripts/verify_theron_syscard_callback_state_trace.py" \
+    "$repo/scripts/verify_theron_syscard_io_ram_trace.py" \
+    "$repo/scripts/verify_theron_syscard_decision_trace.py" \
+    "$repo/scripts/verify_theron_jp_syscard_bootstrap_follow.py" \
+    "$helper_preflight_dir/"
+mv "$helper_preflight_dir/capture_theron_mednafen_live_trace.sh" \
+    "$helper_preflight_dir/capture.sh"
+if helper_preflight_output=$(env \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/trace" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: cold PCE Fast capture started without its code-follow verifier' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast cold capture is missing required helper(s):' \
+    <<<"$helper_preflight_output" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_output" ||
+   grep -Fq 'Mednafen executable was not found' <<<"$helper_preflight_output"; then
+    printf '%s\n' 'FAIL: cold PCE Fast helper preflight did not report the missing verifier before emulator setup' >&2
+    printf '%s\n' "$helper_preflight_output" >&2
+    exit 1
+fi
+if helper_preflight_pointer_output=$(env \
+    -u THERON_CAPTURE_MEDNAFEN_MODULE \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/pointer-trace" \
+    THERON_CAPTURE_POINTER_C1DF_TRACE=1 \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: pointer-trace cold capture bypassed the PCE Fast helper preflight' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast cold capture is missing required helper(s):' \
+    <<<"$helper_preflight_pointer_output" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_pointer_output" ||
+   grep -Fq 'Mednafen executable was not found' \
+    <<<"$helper_preflight_pointer_output"; then
+    printf '%s\n' 'FAIL: pointer-trace mode did not preflight PCE Fast dependencies before emulator setup' >&2
+    printf '%s\n' "$helper_preflight_pointer_output" >&2
+    exit 1
+fi
+if helper_preflight_state_output=$(env \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/state-trace" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_STATE_TRACE_ONLY=1 \
+    THERON_CAPTURE_AUTOLOAD_STATE="$helper_preflight_dir/authentic.mc0" \
+    THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: state-only source-verification capture bypassed its selected helper preflight' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast state capture is missing required helper(s):' \
+    <<<"$helper_preflight_state_output" ||
+   ! grep -Fq 'verify_theron_pce_fast_code_fetch_source.py' \
+    <<<"$helper_preflight_state_output" ||
+   grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_state_output" ||
+   grep -Fq 'Mednafen executable was not found' \
+    <<<"$helper_preflight_state_output"; then
+    printf '%s\n' 'FAIL: state-only preflight did not check selected helpers without requiring cold-boot verifiers' >&2
+    printf '%s\n' "$helper_preflight_state_output" >&2
     exit 1
 fi
 source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
