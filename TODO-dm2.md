@@ -405,6 +405,15 @@ arrow destinations. The remaining top character/status layout and right-side
 panel content still need source-backed comparison with Amiga gameplay captures;
 the SDL-dummy capture is not proof of native-display pixel parity.
 
+2026-11-02 Amiga movement-arrow input: SKProject `DRAW_ARROW_PANEL` draws the
+six controls into `RECT_040..RECT_045`; M11 now resolves those same native
+rectangles before the Amiga viewport owner and dispatches each click through
+the ordinary movement input pipeline. The Amiga real-media CLI test clicks
+the forward arrow and verifies the party moves from `(1,8)` to `(1,7)` without
+changing facing. This closes only the six movement-arrow pointer route; Amiga
+formation pickup/drop and the remaining status/right-panel interactions are
+still open.
+
 2026-10-30 authentic DOS SKSAVE0 HUD trace: extended the `--debug` frame
 receipt with per-slot party data, occupied/portrait-bound masks, champion
 identity, HP, and source HeroType. Running the original DOS English archive
