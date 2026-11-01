@@ -2858,8 +2858,11 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
                        bank[1] != "mpr_bank" || !is_hex(bank[2], 2) || slot[2] != int(hex_value(logical[2]) / 8192) ||
                        physical[2] != sprintf("%06x", hex_value(bank[2]) * 8192 + hex_value(logical[2]) % 8192)) exit 1
                    old_color = hex_value(old[2]); input_byte = hex_value(input[2])
-                   expected_color = reg[2] == 4 ? int(old_color / 256) * 256 + input_byte :
-                       old_color % 256 + (input_byte % 2) * 256
+                   if (reg[2] == 4) {
+                       expected_color = int(old_color / 256) * 256 + input_byte
+                   } else {
+                       expected_color = old_color % 256 + (input_byte % 2) * 256
+                   }
                    if (hex_value(value[2]) != expected_color) exit 1
                    previous = event[2]; count++; if (count > limit) exit 1; next
                }
