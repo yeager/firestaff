@@ -139,8 +139,9 @@ before treating a mapping as a parity result.
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The 1,757 disposition
 rows cover the older `SKWIN`/`SKULLWIN` source sets; the expanded supplemental
-inventory contains 3,931 `SKWINSPX`/`SKWINDOS` definitions, with 3,803 still
-unreviewed and individual partial or parity dispositions recorded separately. Per-function comparison and runtime evidence remain required for
+inventory contains 3,932 `SKWINSPX`/`SKWINDOS` definitions, with 3,791
+`UNREVIEWED`, 134 `PARTIAL`, and 7 `IMPLEMENTED_PARITY` definitions after
+active-source review overrides. Per-function comparison and runtime evidence remain required for
 DOS, Amiga, FM Towns, and Macintosh.
 
 ## Machine check

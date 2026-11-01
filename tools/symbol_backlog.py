@@ -349,12 +349,15 @@ def main() -> int:
     }
     stale_reviews = set(active_reviews) - active_source_keys - named_source_keys
     key_audits_available = (
-        SKPROJECT_ACTIVE_SOURCE_INVENTORY.exists() and SKPROJECT_AUDIT.exists()
+        SKPROJECT_ACTIVE_SOURCE_INVENTORY.exists() and
+        SKPROJECT_ACTIVE_SOURCE_REVIEW.exists() and
+        SKPROJECT_AUDIT.exists()
     )
     if stale_reviews and (not args.allow_missing_audits or key_audits_available):
         raise SystemExit(f"SKPROJECT active-source review does not match inventory: {next(iter(stale_reviews))}")
     items = redmcsb_backlog(redmcsb_rows, dispositions, args.include_disposed)
-    items.extend(skproject_backlog(skproject_rows, dispositions, args.include_disposed))
+    items.extend(skproject_backlog(skproject_rows, dispositions,
+                                   args.include_disposed, active_reviews))
     items.extend(skproject_backlog(skproject_source_rows, dispositions,
                                    args.include_disposed, active_reviews))
     if args.game:
