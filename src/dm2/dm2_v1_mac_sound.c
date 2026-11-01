@@ -87,14 +87,25 @@ static int parse_sample(const MacSndResource *resource,
     if (!resource || !out || resource->payload_size < 12u) return -1;
     p = resource->payload;
     format = be16(p);
-    if (format != 1u) return -1;
-    data_formats = be16(p + 2u);
-    if (data_formats == 0u || data_formats > 16u ||
-        4u + (size_t)data_formats * 6u + 2u > resource->payload_size)
+    data_type = 0u;
+    init_option = 0u;
+    if (format == 1u) {
+        data_formats = be16(p + 2u);
+        if (data_formats == 0u || data_formats > 16u ||
+            4u + (size_t)data_formats * 6u + 2u > resource->payload_size)
+            return -1;
+        data_type = be16(p + 4u);
+        init_option = be32(p + 6u);
+        commands_offset = 4u + (size_t)data_formats * 6u;
+    } else if (format == 2u) {
+        /* Format 2 stores a reference count, command count, commands, and
+         * then the sampled-sound header/data.  It is the format used by the
+         * authentic DM2 Macintosh application's embedded 'snd ' resources. */
+        if (resource->payload_size < 6u) return -1;
+        commands_offset = 4u;
+    } else {
         return -1;
-    data_type = be16(p + 4u);
-    init_option = be32(p + 6u);
-    commands_offset = 4u + (size_t)data_formats * 6u;
+    }
     command_count = be16(p + commands_offset);
     if (command_count == 0u || command_count > 256u ||
         commands_offset + 2u + (size_t)command_count * 8u > resource->payload_size)
@@ -102,7 +113,10 @@ static int parse_sample(const MacSndResource *resource,
     header = 0u;
     for (i = 0u; i < command_count; ++i) {
         const uint8_t *command = p + commands_offset + 2u + i * 8u;
-        if (be16(command) == 0x8051u) {
+        uint16_t command_id = be16(command);
+        if ((command_id & 0x8000u) != 0u &&
+            ((command_id & 0x7fffu) == 0x0050u ||
+             (command_id & 0x7fffu) == 0x0051u)) {
             header_offset = be32(command + 4u);
             header = (size_t)header_offset;
             break;
@@ -111,6 +125,9 @@ static int parse_sample(const MacSndResource *resource,
     if (header == 0u || header > resource->payload_size ||
         resource->payload_size - header < 22u) return -1;
     p += header;
+    /* Embedded sample data must use a nil pointer; otherwise the resource
+     * points outside the authenticated fork and cannot be safely decoded. */
+    if (be32(p) != 0u) return -1;
     sample_length = be32(p + 4u);
     if (sample_length > resource->payload_size - header - 22u) return -1;
     memset(out, 0, sizeof(*out));
