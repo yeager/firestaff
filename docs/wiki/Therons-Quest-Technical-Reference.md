@@ -158,10 +158,12 @@
 > `--debug` output includes authenticated Track 02 pointer and zone source
 > records. The engine and decoder translation units compiled in an isolated
 > TRV2 Debug configuration, and the full application linked in the successful
-> Linux, macOS, and Windows CI builds for PR #243. An authentic runtime log
-> containing this receipt has not yet been inspected, so its source values
-> remain unverified. It does not establish runtime selection or spawning. See
-> the [receipt contract and verification state](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+> Linux, macOS, and Windows CI builds for PR #243. Three headless native TRV2
+> launches against hash-verified JP Rev. 1 Track 02 each emitted 14 receipt
+> lines; independent MODE1/2352 extraction reproduced all values in each
+> loop. An authentic DM1 control emitted no Theron receipt. This verifies
+> source metadata reporting, not original runtime selection or spawning. See the
+> [receipt contract and verification state](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier
 > accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified

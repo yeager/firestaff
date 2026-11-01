@@ -73,10 +73,13 @@ creature generation, or combat. See the
 pointer and zone records through bounded `--debug` output. The engine and
 decoder translation units compiled in an isolated TRV2 Debug configuration,
 and the full application linked in the successful Linux, macOS, and Windows
-CI builds for PR #243. An authentic runtime log containing this receipt has
-not yet been inspected, so its source values remain unverified. It does not
-prove runtime selection or creature spawning. Its raw-field contract and
-verification status are recorded in the
+CI builds for PR #243. Three headless TRV2 launches against authentic JP Rev.
+1 Track 02 emitted all 14 expected lines; an independent MODE1/2352
+extraction from that hash-verified BIN reproduced them in every loop. A
+separate authentic DM1 control emitted no Theron lines. This verifies the
+static source report at runtime but does not prove original pointer selection
+or creature spawning.
+Its raw-field contract and verification status are recorded in the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an

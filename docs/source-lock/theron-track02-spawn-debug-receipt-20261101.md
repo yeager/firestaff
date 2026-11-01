@@ -29,14 +29,38 @@ isolated TRV2 Debug configuration. The full application also linked in the
 Linux, macOS, and Windows CMake CI builds for PR #243 (run
 [41284640562](https://github.com/yeager/firestaff/actions/runs/41284640562));
 the localization, warning, repository-policy, and cross-platform determinism
-checks passed. These checks verify compilation and integration, but no native
-`--debug` launch log containing the new receipt has been inspected yet. Treat
-the fields above as the implemented output contract, not as verified
-source-receipt values. Before relying on runtime values, inspect one authentic
-US or JP native launch log and compare its MD5 and offsets with the
+checks passed.
+
+On 2026-11-01, a TRV2 native Debug build from `3deebb02f` ran headless in
+three consecutive loops against the authentic JP Rev. 1 Track 02 file. Each
+direct-launch boot probe used:
+
+```text
+--debug --game theron --theron-native jp
+--data-dir /home/trv2/.firestaff/data
+--boot-probe --boot-probe-frames 0
+--script enter,enter,enter,action,tab --duration 0
+```
+
+SDL's dummy video and audio drivers were enabled. Each probe entered
+`theron-runtime`, loaded four source dungeon levels and reported the expected
+Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`. Each emitted one table
+header, eight pointer rows, and five zone rows. A separate Python extraction
+read the same authentic BIN directly on TRV2, checked its MD5 and MODE1/2352
+framing, then independently projected the listed user-data offsets through
+each sector's 16-byte header. Every loop's 14 emitted lines, including raw
+fields and static links, matched exactly. The observed pointer offset was
+`0x273818`; the five zone offsets were `0x273858`, `0x2738d7`, `0x273902`,
+`0x273929`, and `0x273950`, consistent with the
 [authenticated ISO projection report](theron-track02-spawn-record-iso-projection-20261101.md).
-Also confirm that a non-Theron launch emits no Theron receipt. Output is
-bounded to one receipt per launch.
+
+A headless authentic DM1 FM Towns direct-launch boot probe completed as a
+non-Theron control and emitted no `theron-source` lines. Thus the bounded
+receipt and its game boundary have native runtime evidence. The JP probe
+reported `runtimeTick=0`; these checks do not establish original runtime
+pointer selection, spawn/RNG behavior, creature creation, gameplay parity, or
+visible rendering. No game media or emulator was used by Firestaff at runtime,
+and no game media was copied into the repository.
 
 The independent state-only reference replay remains negative for runtime
 spawn semantics: it consumed five scripted controller events, recorded zero

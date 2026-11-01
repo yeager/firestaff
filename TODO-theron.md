@@ -17,16 +17,17 @@ records, while 5–7 have zero offsets. The remaining task is to establish the
 original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-The native `--debug` spawn-source receipt exposes the authenticated source
-MD5, layout, user-data offsets, raw pointer/zone fields, and static
-pointer-to-zone links once per Theron launch. The modified engine and decoder
-translation units compiled in isolated TRV2 Debug configuration, and the full
-application linked in successful Linux, macOS, and Windows CMake CI builds
-(PR #243, run 41284640562). A native runtime log containing the receipt has not
-yet been inspected. Capture one authentic US or JP receipt, compare its MD5
-and offsets against the source-lock report, and confirm other games emit no
-Theron receipt. This diagnostic remains opaque: it does not prove runtime
-selection or authorize RNG, placement, or creature creation. See the
+The native `--debug` spawn-source receipt exposes authenticated Track 02
+source identity, offsets, raw pointer/zone fields, and static links once per
+Theron launch. On TRV2, three native headless JP Rev. 1 loops emitted the
+expected MD5 and all 14 receipt lines. An independent extraction from the
+authentic BIN reproduced every line in each loop, and an authentic DM1 FM
+Towns control emitted no Theron receipt. The full app also links in Linux,
+macOS, and Windows CI (PR
+#243, run 41284640562). The table is now runtime-verified as source metadata;
+the original runtime consumer, pointer selection, spawn/RNG behavior, and
+creature creation remain unproven. Do not use this receipt to authorize native
+spawning. See the
 [receipt contract and verification state](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 An authentic US standard-PCE state and hash-verified US Track 02 now bind all

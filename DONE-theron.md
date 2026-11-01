@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — verify native Theron spawn-source debug receipt against JP media
+
+- Built the full native `firestaff` target on TRV2 in Debug mode with `-j1`
+  from the current source snapshot. In three consecutive loops against
+  authentic JP Rev. 1 Track 02, each headless direct-launch boot probe loaded
+  four source dungeon levels and emitted one table header, eight pointer
+  records, and five zone records.
+- Independently extracted those fields from the same BIN on TRV2 after
+  checking its authenticated MD5 and MODE1/2352 framing. All 14 output lines
+  in each loop matched byte-for-byte, including source offsets and static
+  links. The existing ISO projection source lock agrees with the offsets and
+  links.
+- A headless native DM1 FM Towns boot probe against authentic data emitted no
+  Theron receipt lines. This verifies diagnostic scoping; the Theron probe
+  remained at `runtimeTick=0` and proves no original spawn consumer, creature
+  generation, gameplay parity, or visible rendering. No emulator or game
+  media was copied into the repository.
+- Added the TRV2 runtime evidence and limits to the Theron source-lock note,
+  capture-readiness summary, TODO, documentation index, and technical wiki.
+  No test suite was run.
+
 ## 2026-11-01 — document the pending native spawn-source debug receipt
 
 - Documented the planned bounded `--debug` receipt for authenticated Track 02
