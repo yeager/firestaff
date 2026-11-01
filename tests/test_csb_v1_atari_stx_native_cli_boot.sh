@@ -190,8 +190,14 @@ if [ -n "$archive_data_root" ] && [ -d "$archive_data_root" ]; then
         printf '%s\n' "$direct_intro_output" >&2
         exit 1
     }
+    if ! printf '%s\n' "$direct_intro_output" | grep -Fq \
+        'startup-source-skip game=csb candidate=amiga-swsh-ftl reason=selected-edition-not-amiga platform=non-Amiga edition=st20-21-en'; then
+        echo "FAIL: CSB Atari launch did not record that the Amiga SWSH candidate was rejected" >&2
+        printf '%s\n' "$direct_intro_output" >&2
+        exit 1
+    fi
     if printf '%s\n' "$direct_intro_output" | grep -Fq \
-        'phase=amiga-swsh-ftl'; then
+        'startup-source-complete game=csb phase=amiga-swsh-ftl'; then
         echo "FAIL: CSB Atari launch incorrectly played the sibling Amiga SWSH.FTL prelude" >&2
         printf '%s\n' "$direct_intro_output" >&2
         exit 1
