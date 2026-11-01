@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `SOUND.C:F0061-F0065` audio path: the callable ledger now maps the bounded PSG amplitude table, DM1 sound-state/host initialization, source-sound request arbitration, and pending-event flushes instead of numeric-token collisions. Atari ST key-click/PSG register and Timer-A ownership, edition-specific queue behavior, playback timing, and platform audio-driver parity remain open.
+
 # Firestaff TODO — DM1
 
 2026-11-01 ReDMCSB `TEXT.C:F0040/F0041` glyph printing: the callable ledger
