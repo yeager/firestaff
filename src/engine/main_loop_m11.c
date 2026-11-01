@@ -10020,31 +10020,36 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
              * that request into an implicit load. The explicit --save path
              * is bound to the launch intent later in Phase A. */
             menuState->quickResumeLaunchRequested = 0;
-            /* A direct CLI launch still goes through the M12 launch intent,
-             * whose generic V2.2 gate quite rightly refuses CSB unless every
-             * reviewed CSB material is installed.  The CSB presentation
-             * runtime already has the supported V2.2 -> V2.1 resolution for
-             * this exact case.  Consume it before asking M12 for the intent,
-             * so --game csb --presentation-mode v22 starts in V2.1 rather
-             * than reporting the verified game data as unavailable. */
+            /* Keep direct CLI presentation resolution consistent with the
+             * launcher's game-specific real-art admission gates. */
             if (menuState->gameOptions[gameOptionsSlot].presentationModeIndex ==
                 M12_PRESENTATION_V22_MODERN) {
-                int resolveToV21 = 0;
+                int resolveToV21 = 1;
+                M12_StartupLaunchGate presentationGate;
+                memset(&presentationGate, 0, sizeof(presentationGate));
+                /* A CLI presentation request must not make an otherwise
+                 * launchable original game unavailable. V2.2 is optional
+                 * per-game material; when its real-art gate is closed,
+                 * retain the original game data and resolve the presentation
+                 * to V2.1. This also keeps DM1 and Nexus consistent with the
+                 * existing CSB, DM2 and Theron direct-launch fallback. */
+                if (M12_StartupMenu_GetLaunchGate(menuState, i,
+                                                  &presentationGate) &&
+                    presentationGate.handled &&
+                    presentationGate.presentationReady) {
+                    resolveToV21 = 0;
+                }
                 if (strcmp(gameId, "csb") == 0) {
                     const char* dataDir = M12_AssetStatus_GetRuntimeDataDir(
                         &menuState->assetStatus, gameId);
-                    csb_v22_set_manifest_path(dataDir);
-                    csb_v22_famg_set_manifest_path(dataDir);
-                    csb_v2_presentation_mode_set_m12(
-                        M12_PRESENTATION_V22_MODERN);
-                    resolveToV21 = csb_v2_presentation_mode_get() ==
-                        CSB_V2_PM_V21_UPSCALED;
-                } else if (strcmp(gameId, "dm1") != 0 &&
-                           strcmp(gameId, "nexus") != 0) {
-                    /* M12 only admits a native V2.2 pack for DM1/Nexus.
-                     * A persisted global V2.2 choice must not make an
-                     * otherwise verified direct launch of another game fail. */
-                    resolveToV21 = 1;
+                    if (!resolveToV21) {
+                        csb_v22_set_manifest_path(dataDir);
+                        csb_v22_famg_set_manifest_path(dataDir);
+                        csb_v2_presentation_mode_set_m12(
+                            M12_PRESENTATION_V22_MODERN);
+                        resolveToV21 = csb_v2_presentation_mode_get() ==
+                            CSB_V2_PM_V21_UPSCALED;
+                    }
                 }
                 if (resolveToV21) {
                     menuState->settings.graphicsIndex =
