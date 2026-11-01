@@ -548,7 +548,7 @@ static int item_teleport_adjust_charge(ItemTeleportCtx *ctx, int16_t handle)
     if (cls1 == 0x15u && cls2 == 0u) return 1;
 
     mode = (int)((item_teleport_rd16(
-        ctx->pool_set, ctx->actu_record + 4) >> 3) & 3u);
+        ctx->pool_set, ctx->actu_record + 4) >> 3) & 7u);
     max_charge = dm2_v1_get_max_charge((uint16_t)handle);
     if (mode == 0) delta = max_charge;
     else if (mode == 1) delta = -15;
@@ -557,7 +557,9 @@ static int item_teleport_adjust_charge(ItemTeleportCtx *ctx, int16_t handle)
         delta = (int)dm2_v1_drops_rand16(
             ctx->rng, (uint16_t)(max_charge + 1));
     } else {
-        return 0;
+        /* SKW_MOVE_ITEM_TO skips charge adjustment for ActionType > 2 but
+         * still relocates the item. */
+        return 1;
     }
     if (max_charge == 0) return 1;
 
@@ -641,7 +643,9 @@ static int item_teleport_visitor(void *context,
         return 1;
     }
 
-    /* Move the item via MOVE_RECORD_TO */
+    /* SKW_MOVE_ITEM_TO first cuts from the supplied source tile, then
+     * appends from-nowhere to the destination. Keep the two source calls
+     * explicit so failures are visible to the enclosing mecha transaction. */
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
         int destination_direction = ctx->dst_dir;
@@ -659,18 +663,24 @@ static int item_teleport_visitor(void *context,
             destination_direction = (int)dm2_v1_drops_rand16(
                 ctx->rng, 4u);
         }
+        if (ctx->src_x >= 0 && ctx->src_y >= 0) {
+            memset(&move_receipt, 0, sizeof(move_receipt));
+            int cut = dm2_v1_move_record_to(
+                ctx->pool_set, ctx->dungeon, ctx->queue, handle,
+                (int16_t)ctx->src_x, (int16_t)ctx->src_y,
+                -1, -1, -1, ctx->map, ctx->game_tick, &move_receipt);
+            if (!cut || move_receipt.fail_closed) {
+                ctx->receipt->fail_closed = 1;
+                return 1;
+            }
+        }
         memset(&move_receipt, 0, sizeof(move_receipt));
         int moved = dm2_v1_move_record_to(
             ctx->pool_set, ctx->dungeon, ctx->queue, handle,
-            (int16_t)ctx->src_x, (int16_t)ctx->src_y,
-            (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
+            -1, -1, (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
             (int16_t)destination_direction, ctx->map, ctx->game_tick,
             &move_receipt);
         if (!moved || move_receipt.fail_closed) {
-            /* MOVE_RECORD_TO may return 1 with a fail-closed receipt after
-             * a source cut fails. Never present that partial chain state as
-             * a successful teleport; the owning mecha transaction rolls it
-             * back before publishing any changes. */
             ctx->receipt->fail_closed = 1;
             return 1;
         }
