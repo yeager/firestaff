@@ -138,6 +138,15 @@ also found unrelated stale localization catalogs and a Theron source-boundary
 failure in the merged PR check. See
 [the MAPD 4bpp capture report](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
+The 2026-11-02 Ymir pixel-fetch join now verifies all 71,680 NBG1 fetches in
+the preceding and target passes against adjacent authentic VRAM snapshots.
+Firestaff's decoded dot and RGB match Ymir's final same-pass RGBX at all 44,800
+target pixels with nonzero NBG1 priority. The other 26,880 target pixels have
+zero priority and are excluded from the NBG1 contribution. This is a
+single-layer result; full VDP1+VDP2 frame composition and all MAPD transition
+frames remain open. See
+[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-11-02--authentic-mapd-pixel-fetch-to-layer-output-join).
+
 ## 2026-10-30 — NBG1 8bpp character stride
 
 The generic source-bound NBG1 compositor now follows Saturn's 32-byte PND

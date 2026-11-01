@@ -42272,6 +42272,18 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME nexus_v1_vdp2_runtime_tilemap
         COMMAND test_nexus_v1_vdp2_runtime_tilemap
     )
+    add_test(
+        NAME nexus_v1_vdp2_mapd_pixel_fetch_composition_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_mapd_pixel_fetch_composition_real.py
+            $<TARGET_FILE:test_nexus_v1_vdp2_runtime_tilemap>
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-mapd-frame891-1280-nbg1.rgba
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-mapd-frame891-1280-nbg1-verification.json
+    )
+    set_tests_properties(nexus_v1_vdp2_mapd_pixel_fetch_composition_real PROPERTIES
+        LABELS "nexus;saturn;ymir;mapd;vdp2;nbg1;4bpp;real-data;composition;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
+    )
 
     add_executable(test_nexus_v1_font256_vdp2_capture_join
         tests/test_nexus_v1_font256_vdp2_capture_join.c
