@@ -343,7 +343,7 @@ static int read_texel(const TextureStepper *us,int32_t v,int width,int height,
 static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
                        const Nexus_V1_Vdp1YmirCaptureInput *in,
                        int x,int y,int userclip_enabled,int clip_mode,int calc,
-                       int mesh,uint32_t rgba,
+                       int mesh,int msb_only,uint32_t rgba,
                        int *sysclip,int *userclip)
 {
     if(x<0||y<0||x>in->sys_clip_h||y>in->sys_clip_v||x>=NEXUS_FB_W||y>=NEXUS_FB_H) { ++*sysclip; return 0; }
@@ -356,6 +356,14 @@ static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
     if (mesh && ((x ^ y) & 1)) return 0;
     {
         size_t p=(size_t)y*NEXUS_FB_W+(size_t)x;
+        if (msb_only) {
+            /* Ymir's MSB-on path preserves RGB and sets only the pixel MSB. */
+            working->rgba[p] |= UINT32_C(0xff000000);
+            working->command_owner[p]=in->command_index;
+            return 1;
+        }
+        /* Shadow calculation leaves a transparent destination untouched. */
+        if (calc == 1 && (working->rgba[p] >> 24U) == 0U) return 0;
         working->rgba[p]=color_calc(rgba,working->rgba[p],calc);
         working->command_owner[p]=in->command_index;
     }
@@ -488,11 +496,11 @@ static int rasterize_distorted(
                     rgba=expected_color_mode == 4U
                         ? to_rgba_with_msb(word) : to_rgba(word);
                     if(paint_pixel(tmp,in,line.x,line.y,userclip,clipmode,calc,
-                                   mesh,rgba,
+                                   mesh,(cmd.draw_mode&0x8000U)!=0U,rgba,
                                    &rec.system_or_host_clipped_pixels,&rec.user_clipped_pixels))
                         ++rec.pixels_written;
                     if(aa && paint_pixel(tmp,in,line.x+line.aa_x_inc,line.y+line.aa_y_inc,
-                                   userclip,clipmode,calc,mesh,rgba,&rec.system_or_host_clipped_pixels,
+                                   userclip,clipmode,calc,mesh,(cmd.draw_mode&0x8000U)!=0U,rgba,&rec.system_or_host_clipped_pixels,
                                    &rec.user_clipped_pixels)) ++rec.pixels_written;
                     if(gouraud) gouraud_step(&gs);
                 }
@@ -606,13 +614,13 @@ int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
             uint32_t rgba = to_rgba(color);
             if ((color & 0x8000U) == 0U) rgba &= UINT32_C(0x00ffffff);
             if (paint_pixel(tmp, in, line.x, line.y, user_clip_enabled,
-                            clip_mode, calc, 0, rgba,
+                            clip_mode, calc, 0, 0, rgba,
                             &rec.system_or_host_clipped_pixels,
                             &rec.user_clipped_pixels))
                 ++rec.pixels_written;
             if (aa && paint_pixel(tmp, in, line.x + line.aa_x_inc,
                                   line.y + line.aa_y_inc, user_clip_enabled,
-                                  clip_mode, calc, 0, rgba,
+                                  clip_mode, calc, 0, 0, rgba,
                                   &rec.system_or_host_clipped_pixels,
                                   &rec.user_clipped_pixels))
                 ++rec.pixels_written;
@@ -810,7 +818,7 @@ int nexus_v1_vdp1_ymir_capture_rasterize_polyline(
         for ((void)line_step(&line); line_can_step(&line);
              (void)line_step(&line)) {
             if (paint_pixel(tmp, in, line.x, line.y, userclip, clipmode,
-                            calc, 0, rgba,
+                            calc, 0, (cmd.draw_mode & 0x8000U) != 0U, rgba,
                             &rec.system_or_host_clipped_pixels,
                             &rec.user_clipped_pixels))
                 ++rec.pixels_written;
