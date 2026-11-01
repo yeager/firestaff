@@ -1190,6 +1190,11 @@ static int wall_mecha_visitor(void *context,
             if (dm2_actu_once_only(record_mut) == 1) {
                 if (dm2_actu_active_status(record) == 0) {
                     dm2_actu_set_active_status(record_mut, 1);
+                    /* SKWINSPX/src/v4/skevent.cpp:1307 sets
+                     * glbDoLightCheck when this continuous animator starts
+                     * on the player's map. The runtime owner applies the
+                     * map gate and consumes this request after timer order. */
+                    r->ornate_light_check_requested = 1;
                     uint16_t phase = (uint16_t)(
                         ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
                          % (uint32_t)anim_len) & 0xFF);
@@ -1205,6 +1210,9 @@ static int wall_mecha_visitor(void *context,
                               % (uint32_t)anim_len);
                 if (di == 0) {
                     dm2_actu_set_active_status(record_mut, 0);
+                    /* Source line 1319 requests the same check only when
+                     * the stop phase is exactly zero. */
+                    r->ornate_light_check_requested = 1;
                 } else {
                     di = anim_len - di;
                     DM2_V1_SourceTimer t = make_timer(ctx->map,
@@ -1507,6 +1515,10 @@ static int floor_mecha_visitor(void *context,
             if (dm2_actu_once_only(record_mut) == 1) {
                 if (dm2_actu_active_status(record) == 0) {
                     dm2_actu_set_active_status(record_mut, 1);
+                    /* SKWINSPX/src/v4/skevent.cpp:1307 sets
+                     * glbDoLightCheck when this continuous animator starts
+                     * on the player's map. */
+                    r->ornate_light_check_requested = 1;
                     uint16_t phase = (uint16_t)(
                         ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
                          % (uint32_t)anim_len) & 0xFF);
@@ -1522,6 +1534,9 @@ static int floor_mecha_visitor(void *context,
                               + ctx->game_tick) % (uint32_t)anim_len);
                 if (di == 0) {
                     dm2_actu_set_active_status(record_mut, 0);
+                    /* Source line 1319 requests the same check only when
+                     * the stop phase is exactly zero. */
+                    r->ornate_light_check_requested = 1;
                 } else {
                     di = anim_len - di;
                     DM2_V1_SourceTimer t = make_timer(ctx->map,

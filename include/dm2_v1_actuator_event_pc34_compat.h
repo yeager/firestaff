@@ -224,6 +224,9 @@ typedef struct {
     int shooter_invoked;
     int tick_generator_invoked;
     int ornate_animator_invoked;
+    /* SKProject skevent.cpp::ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR requests
+     * CHECK_RECOMPUTE_LIGHT when the active state changes on the player map. */
+    int ornate_light_check_requested;
     int item_teleport_invoked;
     int counter_invoked;
     int cross_map_invoked;

@@ -235,6 +235,7 @@ struct DM2_V1_RuntimeState {
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
+    int ornate_light_check_pending;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
     uint32_t gdat_scene_control_query_count;
@@ -10005,6 +10006,10 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         creature_killer_ctx.failed) {
         goto wall_mecha_reject;
     }
+    if (event.ornate_light_check_requested && game &&
+        map == game->current_level) {
+        rt->ornate_light_check_pending = 1;
+    }
     if (game) {
         memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
                sizeof(global_state.bit_vars));
@@ -10151,6 +10156,10 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
         goto floor_mecha_reject;
+    }
+    if (event.ornate_light_check_requested && game &&
+        map == game->current_level) {
+        rt->ornate_light_check_pending = 1;
     }
     if (game) {
         memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
@@ -13279,6 +13288,16 @@ void dm2_v1_runtime_tick(void) {
             rt->actuator_tile_unbound_fail_closed +=
                 rt->proceed_timers.actuator_tile_unbound_tally[tile_class];
         }
+    }
+
+    /* SKWINSPX/src/v4/skcore.cpp checks glbDoLightCheck after timer
+     * processing and before drawing the player viewport. Continuous ornate
+     * animator transitions publish the same request from the wall/floor
+     * mecha handlers above; consume it here so the refreshed light receipt
+     * is ready for this frame, after all source-ordered timers have run. */
+    if (rt->ornate_light_check_pending) {
+        rt->ornate_light_check_pending = 0;
+        dm2_runtime_refresh_gdat_scene_control(rt);
     }
 
     /* Drain sound queue — DM2_SOUND8 (c_sound.cpp:633-647).
