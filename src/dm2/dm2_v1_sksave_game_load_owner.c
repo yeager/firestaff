@@ -1,5 +1,6 @@
 #include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_save_suppress_masks_pc34_compat.h"
 #include "dm2_v1_creature_something_pc34_compat.h"
@@ -58,6 +59,44 @@ static void dm2_v1_sksave_owner_add_poison(void *ctx, int hero_index,
         hero_index < (int)owner->state.champion_count)
         owner->heroes[hero_index].poison = (int16_t)(
             owner->heroes[hero_index].poison + amount);
+}
+
+static int dm2_v1_sksave_owner_recompute_inventory_weights(
+    DM2_V1_SksaveGameLoadOwner *owner)
+{
+    uint16_t hero_index;
+
+    if (!owner || !owner->record_pools.valid || !owner->asset_loader ||
+        !owner->asset_loader->loaded ||
+        owner->state.champion_count > DM2_MAX_HEROES) return 0;
+    for (hero_index = 0u; hero_index < owner->state.champion_count;
+         ++hero_index) {
+        DM2_V1_Hero *hero = &owner->heroes[hero_index];
+        uint32_t total_weight = 0u;
+        uint16_t slot;
+
+        for (slot = 0u; slot < DM2_NUM_ITEMS; ++slot) {
+            uint16_t item = (uint16_t)hero->item[slot];
+            DM2_V1_SourceItemWeightReceipt weight;
+            int db_type;
+
+            if (item == DM2_V1_RECORD_HANDLE_NULL) continue;
+            if (item == DM2_V1_RECORD_HANDLE_END ||
+                !dm2_v1_record_pool_address(&owner->record_pools,
+                                             (int16_t)item)) return 0;
+            db_type = dm2_v1_record_handle_pool((int16_t)item);
+            /* Source item-weight queries are zero for non-item DB records.
+             * The inventory root still has to be an authenticated record. */
+            if (db_type < 5 || db_type > 10) continue;
+            if (!dm2_v1_query_source_item_weight(
+                    item, &owner->record_pools, owner->asset_loader,
+                    &weight) || !weight.valid || weight.blocked) return 0;
+            total_weight += (uint32_t)weight.final_weight;
+        }
+        hero->weight = (int16_t)(uint16_t)total_weight;
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x1000u);
+    }
+    return 1;
 }
 
 typedef struct {
@@ -224,11 +263,19 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     owner->savegames1[0] = (uint8_t)((uint16_t)receipt.light_accumulator);
     owner->savegames1[1] = (uint8_t)((uint16_t)receipt.light_accumulator >> 8);
     owner->savegames1[2] = (uint8_t)receipt.attack_count;
+    if (!dm2_v1_sksave_owner_recompute_inventory_weights(owner)) {
+        memcpy(owner->heroes, heroes_before, sizeof(heroes_before));
+        memcpy(owner->savegames1, savegames1_before, sizeof(savegames1_before));
+        owner->global_effect_receipt = receipt;
+        owner->global_effects_complete = 0;
+        owner->weight_recompute_blocked = 1;
+        return 0;
+    }
     owner->global_effect_receipt = receipt;
     owner->global_effects_complete = 1;
-    /* c_party::calc_player_weight also consults curacthero/curactmode and
-     * hand_container for an open chest.  This owner retains neither active
-     * eventqueue nor c_party hand state, so recomputation cannot be proven. */
+    /* The 30 hero inventory slots now follow QUERY_ITEM_WEIGHT. An open chest
+     * adds eight active hand-container slots in c_party::calc_player_weight;
+     * this private owner does not retain the eventqueue/hand-container state. */
     owner->weight_recompute_blocked = 1;
     return 1;
 }
@@ -1096,6 +1143,9 @@ int dm2_v1_sksave_game_load_owner_init_ordered(
         memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
     candidate.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
+    /* Post-load item weight reconstruction needs the same authenticated
+     * GDAT loader used while the SKSAVE records are materialized. */
+    candidate.asset_loader = asset_loader;
     candidate.timer_queue_count = -1;
     candidate.timer_free_head = -1;
     candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;
