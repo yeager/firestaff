@@ -20628,6 +20628,12 @@ int dm2_v1_runtime_select_spell_champion(int hero_index) {
      * DM2 cast owner; only transfer the source champion selection here. */
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_party.curacthero = rt->source_curacthero;
+    /* DOS and SPX SET_SPELLING_CHAMPION also recompute a pending formation
+     * drag after publishing the new champion selection. */
+    if (rt->source_drag_in_progress) {
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    }
     return 1;
 }
 
