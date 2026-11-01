@@ -49,6 +49,12 @@
 > [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
 > and the
 > [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
+> **JP spawn-consumer probe (2026-11-01):** an authenticated JP state-only
+> replay consumed five scripted controller events, but recorded no `$B0E5`
+> spawn entry, spawn-register sample, RNG sample, or dungeon transition. The
+> events cannot be treated as movement evidence. This negative observation
+> does not define runtime spawn semantics; see the
+> [spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
 > physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all
@@ -147,6 +153,15 @@
 > establish runtime pointer selection, category semantics, RNG, creature
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+
+> **Planned native spawn-source debug receipt (2026-11-01):** a bounded
+> `--debug` report is planned for the already-authenticated pointer and zone
+> records, including source identity, offsets, raw fields, and static links.
+> Its engine and decoder translation units compiled in an isolated TRV2 Debug
+> configuration; the full application has not been linked and no native
+> output has been observed. It does not establish runtime selection or
+> spawning. See the
+> [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier
 > accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified

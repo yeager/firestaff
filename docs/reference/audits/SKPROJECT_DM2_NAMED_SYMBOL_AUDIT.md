@@ -170,7 +170,7 @@ definitions, 180 partial source or older-ledger rows, and 2 partial source-owner
 rows. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live
-AI mask/record owner and possession/projectile lifecycle are not integrated. DOS, SPX v4, and SPX v5 stamina-adjustment definitions also remain partial: Firestaff matches the helper arithmetic, but has no live production caller and movement only stages its costs. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
+AI mask/record owner and possession/projectile lifecycle are not integrated. DOS, SPX v4, and SPX v5 stamina-adjustment definitions also remain partial: Firestaff matches the helper arithmetic, and the live movement owner applies source stamina mutation and pending wounds from authenticated party/weight inputs. The helper itself has no production caller, and other stamina callers remain unbound. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
 DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy
 pending-position and transient UI state owners. DOS and SPX v4/v5 coin-wallet definitions now have separate source review

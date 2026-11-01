@@ -214,6 +214,11 @@ static int theron_track02_decode_spawn_source(
     }
     out->authenticated = 1;
     out->variant = variant;
+    out->raw_mode1_2352 = raw_mode ? 1 : 0;
+    memcpy(out->source_md5, expected_md5, sizeof(out->source_md5));
+    out->pointer_user_data_offset = pointer_offset;
+    memcpy(out->zone_user_data_offsets, zone_offsets,
+           sizeof(out->zone_user_data_offsets));
     return 1;
 }
 

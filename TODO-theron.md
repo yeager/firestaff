@@ -1,10 +1,32 @@
 # Firestaff TODO — Theron's Quest
 
+The native keyboard Button II chord maps keypad 1/3 to turns alongside the
+existing arrow and A/D bindings. Focused mapping assertions and authentic US
+SDL event-loop routes cover the keypad bindings. On TRV2, the native
+real-media SDL CTest passed three consecutive runs against hash-verified US
+Track 02 (MD5 `f23601102138f87c33025877767ebf76`). The routes wait 16 loop
+frames after `key:down`, allowing Theron's 200 ms gameplay cadence to apply the
+move before the chord; keypad 1/3 then turn in place at the source-backed
+`(1, 1)` position. Keep authentic US/JP runtime routes and original PCE
+interaction semantics as parity gates; this bounded host-input verification is
+not a claim of broader retail input parity.
+
 The authenticated pointer-to-zone source relationship is now documented for
 both regions: pointer records 0–4 resolve to the five regular-spawn zone
 records, while 5–7 have zero offsets. The remaining task is to establish the
 original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+
+The planned native `--debug` spawn-source receipt should expose the
+authenticated source MD5, layout, user-data offsets, raw pointer/zone fields,
+and static pointer-to-zone links once per Theron launch. The modified engine
+and decoder translation units compile in an isolated TRV2 Debug configuration;
+the full application has not been linked and no native log has been captured.
+Link the application, compare one authentic US or JP receipt against the
+source-lock offsets, and confirm other games emit no Theron receipt. This
+diagnostic must remain opaque: it does not prove runtime selection or authorize
+RNG, placement, or creature creation. See the
+[receipt contract and verification state](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 An authentic US standard-PCE state and hash-verified US Track 02 now bind all
 four Akutuba map arrays to `HuC.SysCardRAM`; saved MPR3 maps their page into
@@ -91,6 +113,14 @@ Pair an accepted input with a no-input control. Do not change movement or
 viewport behavior from static source offsets, retained RAM scans, or event
 ordering alone. The planner's disc LBA 3674 is a capture filter target, not
 evidence that the original read or selected the map.
+
+An identity-gated static scan also lists 21 raw Track 02 candidates per
+edition for the observed `$C1FC` two-byte TII shape. These offsets are only a
+source shortlist: none is bound to the executing fetch, runtime CD read,
+active map, or party-position semantics. Use the
+[candidate report](docs/source-lock/theron-disassembly/theron-position-tii-retail-occurrences-20261101.md)
+to narrow a later source-read/runtime-fetch join; do not change native
+movement from this static match.
 
 The fetched-code verifier rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
@@ -365,8 +395,13 @@ progress remains unchanged. This proves real-data native host paths, not retail
 parity. Quest artifact identity, retrieval messaging, dungeon exit, and
 campaign completion still require the original T900 consumer. Do not map the
 parallel quest-name type indices to quest bits: authentic US/JP tables contain
-repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
-and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
+repeated matching types. The real-data test now lists five ground-linked
+same-index records in dungeons 3, 6 and 7 across both regions, with category,
+source reference, cell and raw offsets; these remain capture targets rather
+than identified quest items. See the
+[candidate report](docs/source-lock/theron-t900-ground-item-index-candidates-20261101.md),
+`tests/test_theron_v1_track02_quest_item_names.c` and
+`docs/source-lock/theron_t900_proof_2026-08-08.md`.
 The pass 215/223 binary-analysis notes describe the retrieved-item strings as
 text evidence only; runtime object identity and quest-state effects remain
 open.

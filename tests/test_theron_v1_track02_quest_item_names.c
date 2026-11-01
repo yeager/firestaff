@@ -3,6 +3,7 @@
 #include "theron_v1_track02_retrieval_text_source.h"
 #include "theron_v1_track02_campaign_mask_source.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02_ground_ref.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -109,6 +110,147 @@ static unsigned int count_carryable_records_with_item_index(
     return matches;
 }
 
+static size_t item_record_user_data_offset(
+    const Theron_DungeonData *maps, int variant, unsigned int dungeon,
+    unsigned int category, unsigned int index) {
+    Theron_QuestBlockOffsets offsets;
+    unsigned int split;
+    unsigned int first_category;
+    unsigned int end_category;
+    size_t cursor;
+    size_t user_data_base = variant == 3 ? 0u : 225u * USER_SECTOR_SIZE;
+    Theron_Track02Variant source_variant = variant == 1 ?
+        THERON_TRACK02_VARIANT_JP_BIN : variant == 3 ?
+        THERON_TRACK02_VARIANT_US_CLONECD_RAW : THERON_TRACK02_VARIANT_US_BIN;
+
+    assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+               source_variant, dungeon - 1u, &offsets) == 1);
+    switch (dungeon - 1u) {
+    case 0u: split = 4u; break;
+    case 4u: split = 1u; break;
+    case 5u: split = 4u; break;
+    default: split = 3u; break;
+    }
+    if (category < split) {
+        cursor = user_data_base + offsets.items_part1_offset;
+        first_category = 0u;
+        end_category = category;
+    } else {
+        cursor = user_data_base + offsets.items_part2_offset;
+        first_category = split;
+        end_category = category;
+    }
+    for (unsigned int current = first_category; current < end_category;
+         ++current) {
+        cursor += (size_t)maps->object_counts[current] *
+                  theron_item_bytes[current];
+    }
+    assert(index < maps->object_counts[category]);
+    return cursor + (size_t)index * theron_item_bytes[category];
+}
+
+/* Print only source identities and locations. The name-table index can occur
+ * in unrelated item categories and is not proof that any occurrence is the
+ * named quest artifact or that T900 consumes it. */
+static unsigned int print_ground_occurrences_with_item_index(
+    const uint8_t *user_data, size_t user_data_size, int variant,
+    unsigned int dungeon, uint8_t quest_index) {
+    Theron_DungeonData maps;
+    Theron_ThingData *things;
+    uint8_t flat_tiles[8192];
+    unsigned int flat_count = 0u;
+    unsigned int ground_ref_count;
+    unsigned int ground_cursor = 0u;
+    unsigned int matches = 0u;
+    Theron_Track02Variant source_variant = variant == 1 ?
+        THERON_TRACK02_VARIANT_JP_BIN : variant == 3 ?
+        THERON_TRACK02_VARIANT_US_CLONECD_RAW : THERON_TRACK02_VARIANT_US_BIN;
+
+    assert(theron_v1_track02_dungeon_map_load_for_variant(
+               user_data, user_data_size, source_variant, dungeon - 1u,
+               &maps) == 1);
+    for (unsigned int map = 0u; map < maps.map_count; ++map) {
+        unsigned int width = maps.maps[map].header.x_dim + 1u;
+        unsigned int height = maps.maps[map].header.y_dim + 1u;
+        for (unsigned int x = 0u; x < width; ++x) {
+            for (unsigned int y = 0u; y < height; ++y) {
+                assert(flat_count < sizeof(flat_tiles));
+                flat_tiles[flat_count++] = maps.maps[map].tiles[x][y];
+            }
+        }
+    }
+    ground_ref_count = theron_v1_track02_compute_ground_ref_count(
+        flat_tiles, flat_count);
+    things = (Theron_ThingData *)calloc(1u, sizeof(*things));
+    assert(things != NULL);
+    assert(theron_v1_track02_thing_data_load_for_variant(
+               user_data, user_data_size, source_variant, dungeon - 1u,
+               maps.object_counts, ground_ref_count, things) == 1);
+
+    for (unsigned int map = 0u; map < maps.map_count; ++map) {
+        unsigned int width = maps.maps[map].header.x_dim + 1u;
+        unsigned int height = maps.maps[map].header.y_dim + 1u;
+        for (unsigned int x = 0u; x < width; ++x) {
+            for (unsigned int y = 0u; y < height; ++y) {
+                uint16_t ref;
+                unsigned int depth = 0u;
+                if (!theron_tile_has_things(maps.maps[map].tiles[x][y]))
+                    continue;
+                assert(ground_cursor < ground_ref_count);
+                ref = things->ground_refs[ground_cursor++];
+                while (!theron_ref_is_end(ref) && depth++ < 100u) {
+                    unsigned int category = theron_ref_category(ref);
+                    unsigned int index = theron_ref_id(ref);
+                    size_t record_size;
+                    const uint8_t *raw;
+                    uint16_t next_ref;
+                    if (category >= THERON_ITEM_CATEGORY_COUNT ||
+                        index >= things->object_counts[category] ||
+                        (record_size = theron_item_bytes[category]) < 2u)
+                        break;
+                    raw = &things->items[category][index * record_size];
+                    next_ref = (uint16_t)raw[0] |
+                               ((uint16_t)raw[1] << 8);
+                    if (category == THERON_CAT_WEAPON ||
+                        category == THERON_CAT_CLOTHING ||
+                        category == THERON_CAT_SCROLL ||
+                        category == THERON_CAT_POTION ||
+                        category == THERON_CAT_MISC) {
+                        Theron_Track02ItemRecord record;
+                        assert(theron_v1_track02_item_record_decode(
+                                   category, raw, record_size, &record) == 1);
+                        if (decoded_item_type(&record) == quest_index) {
+                            size_t user_offset = item_record_user_data_offset(
+                                &maps, variant, dungeon, category, index);
+                            assert(user_offset <= user_data_size &&
+                                   record_size <= user_data_size - user_offset);
+                            assert(memcmp(user_data + user_offset, raw,
+                                          record_size) == 0);
+                            size_t raw_offset =
+                                (user_offset / USER_SECTOR_SIZE) *
+                                    RAW_SECTOR_SIZE + USER_DATA_OFFSET +
+                                user_offset % USER_SECTOR_SIZE;
+                            printf("  ground-index-candidate region=%s "
+                                   "dungeon=%u item_index=%u category=%u "
+                                   "source_ref=0x%04x source_index=%u "
+                                   "map=%u cell=%u,%u user_data_offset=0x%zx "
+                                   "raw_offset=0x%zx\n",
+                                   variant == 1 ? "JP" : "US", dungeon,
+                                   quest_index, category, ref, index, map,
+                                   x, y, user_offset, raw_offset);
+                            ++matches;
+                        }
+                    }
+                    ref = next_ref;
+                }
+            }
+        }
+    }
+    assert(ground_cursor == ground_ref_count);
+    free(things);
+    return matches;
+}
+
 static void verify_variant(const char *path, int variant) {
     static const uint8_t quest_indices[7] = {
         41u, 63u, 45u, 43u, 44u, 43u, 7u
@@ -118,6 +260,9 @@ static void verify_variant(const char *path, int variant) {
     };
     static const uint8_t jp_same_index_counts[7] = {
         0u, 11u, 2u, 2u, 0u, 3u, 2u
+    };
+    static const uint8_t expected_ground_occurrences[7] = {
+        0u, 0u, 2u, 0u, 0u, 1u, 2u
     };
     static const char *const us_names[7] = {
         "SHIELD DEFIANT", "TAZA BOOTS", "TAZA POLEYN", "SOUL CAGE",
@@ -301,11 +446,26 @@ static void verify_variant(const char *path, int variant) {
                    user_data, user_data_size, variant, dungeon, &source) == 1);
         assert(theron_v1_track02_quest_item_name_raw(
                    &source, &name, &name_size) == 1);
-        assert(count_carryable_records_with_item_index(
-                   user_data, user_data_size, variant, dungeon,
-                   quest_indices[dungeon - 1u]) ==
-               (variant == 1 ? jp_same_index_counts[dungeon - 1u] :
-                               us_same_index_counts[dungeon - 1u]));
+        {
+            unsigned int record_matches =
+                count_carryable_records_with_item_index(
+                    user_data, user_data_size, variant, dungeon,
+                    quest_indices[dungeon - 1u]);
+            unsigned int ground_matches =
+                print_ground_occurrences_with_item_index(
+                    user_data, user_data_size, variant, dungeon,
+                    quest_indices[dungeon - 1u]);
+            assert(record_matches ==
+                   (variant == 1 ? jp_same_index_counts[dungeon - 1u] :
+                                   us_same_index_counts[dungeon - 1u]));
+            assert(ground_matches ==
+                   expected_ground_occurrences[dungeon - 1u]);
+            printf("  ground-index-candidate-count region=%s dungeon=%u "
+                   "item_index=%u ground_occurrences=%u matching_records=%u\n",
+                   variant == 1 ? "JP" : "US", dungeon,
+                   quest_indices[dungeon - 1u], ground_matches,
+                   record_matches);
+        }
         if (variant == 1) {
             assert(name_size == jp_sizes[dungeon - 1u]);
             assert(memcmp(name, jp_names[dungeon - 1u], name_size) == 0);

@@ -7,7 +7,7 @@ has been proven is the authentic data and the static loader around it. Calling
 this full T900 support would add gameplay meaning that is not present in the
 evidence.
 
-## Latest Transport Capture (2026-08-09)
+## 2026-08-09 Transport Capture
 
 The capture gate now admits the lower, source-bound CD/FIFO→RAM path even when
 the optional high-level markers are absent. A run from an external drive with
@@ -141,7 +141,7 @@ non-System-Card CD calls and zero `$2600–$27FF` consumer reads. This strengthe
 the reproducibility of the capture evidence but does not change the semantic
 boundary.
 
-The latest native run on the external drive also logged BIOS CD ports with
+The 2026-08-09 native run on the external drive also logged BIOS CD ports with
 HuC6280 PC: `$1804` was reset with `02` and then `00`, followed by writes to
 `$1802` and status reads from `$1802/$1803`. BIOS still does not leave this CD
 initialization path: SCSI READ commands, raw sectors, FIFO bindings and
@@ -199,3 +199,12 @@ test_theron_v1_track02_dungeon_loader (US + JP live creature projection) PASS
 This is evidence of the current boundary, not a claim of complete T900 parity.
 Production must continue to reject T900-driven inventory, loot, use and equip
 semantics until the `$2600` consumer is captured from original media.
+
+The authentic US/JP ground-item index inventory is now listed in
+[the T900 capture-target report](theron-t900-ground-item-index-candidates-20261101.md).
+It identifies five placed records whose decoded type equals a parallel
+quest-name index, across dungeons 3, 6 and 7. Category and location are
+record-level provenance only: they do not identify the quest artifact, a
+runtime T900 caller, or an inventory/progression transaction.
+The [platform status matrix](../PLATFORM_STATUS.md) and repository overview
+link to these capture targets while keeping T900 support marked evidence-gated.

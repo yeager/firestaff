@@ -1,5 +1,63 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document the pending native spawn-source debug receipt
+
+- Documented the planned bounded `--debug` receipt for authenticated Track 02
+  spawn-table metadata, including its opaque-field boundary and the checks
+  required before treating native output as evidence.
+- Linked the note from the Theron TODO, capture-readiness summary, and
+  documentation index. The diagnostic has not been compiled or observed;
+  no runtime-spawn or gameplay claim was added.
+- Documentation-only change; no tests or build were run.
+
+## 2026-11-01 — compile the spawn-source debug receipt translation units
+
+- Compiled `main_loop_m11.c` and both configured compile entries for
+  `theron_v1_track02_creature_spawn_source.c` from the current working-tree
+  sources in an isolated TRV2 Debug configuration. No compiler diagnostics
+  were emitted for these translation units.
+- The full application was not linked, and no native `--debug` launch was
+  performed. The existing user-owned JP Mednafen session remains untouched;
+  runtime output and source-receipt values therefore remain unobserved.
+- Updated the Theron TODO, capture-readiness summary, technical source note,
+  and wiki pages to reflect this compile result and its limits. Refreshed the
+  generated startup-menu POT/PO source references after the `main_loop_m11.c`
+  insertion; `po/update.sh --check` passes and translation strings are
+  unchanged. No tests were run.
+
+## 2026-11-01 — keep Button II turns consistent across keypad bindings
+
+- Added keypad 1/3 to the Button II plus left/right chord in both scancode and
+  keycode paths, matching their existing sidestep aliases without changing
+  unmodified movement.
+- Added focused regression assertions for both event paths. The focused target
+  built successfully; no real-media gameplay semantics were inferred or
+  changed.
+- Extended the authentic US SDL runtime route with right-mouse plus keypad
+  1/3 cases and source-backed expected poses. The script waits 16 loop frames
+  after movement so Theron's 200 ms gameplay cadence applies the move before
+  turning. On TRV2, the native build passed the complete real-media SDL CTest
+  three consecutive times against hash-verified US Track 02 (MD5
+  `f23601102138f87c33025877767ebf76`). Button II + keypad 1/3 turned in place;
+  the test verifies both expected poses. `bash -n` and `git diff --check` pass.
+
+## 2026-11-01 — enumerate authentic T900 ground-item index candidates
+
+- Extended the existing US/JP real-media quest-name regression to list every
+  ground-linked carryable record whose decoded category type matches that
+  dungeon's quest-name index. Output includes category, source reference and
+  index, map cell, user-data offset and raw Track 02 offset; it emits no game
+  record bytes.
+- Each reported table offset is checked byte-for-byte against the record in the
+  loaded user-data stream. Three direct runs against the identity-checked US
+  and JP BINs produced identical output, and the focused CTest passed three
+  consecutive runs.
+- Same-index ground occurrences are shared across US and JP in dungeons 3, 6
+  and 7. The exact per-dungeon counts are `0,0,2,0,0,1,2` in both regions, and
+  the real-media regression asserts them. The report and TODO make clear that
+  these are capture targets, not quest-item identities, T900 consumers, or
+  permission to enable host inventory/progression semantics.
+
 ## 2026-11-01 — bind runtime page joins to one capture
 
 - Added a per-run capture ID to C852 schema v3 and the all-writer page-write
@@ -283,7 +341,23 @@
 - Expanded the source-lock report with the exact verified offsets and the next
   capture requirement. No gameplay, runtime-source ownership, row semantics or
   parity claim was added.
-- `git diff --check` passed. This documentation-only update did not run tests.
+
+## 2026-11-01 — inventory retail `$C1FC` TII source candidates
+
+- Added an identity-gated scanner for authentic US and JP Rev. 1 Track 02
+  media. It finds 21 static occurrences per edition, grouped at seven raw
+  sectors, and reports only raw offsets and hashes of 39-byte contexts.
+- Registered the scanner as a real-media CTest, skipping only when either
+  authenticated BIN is unavailable. Three identical direct runs produced
+  byte-identical reports; the report and active TODO explicitly leave runtime
+  fetch, CD source, active-map and position semantics unbound.
+- Added the evidence boundary and reproduction steps to the source-lock report,
+  this log, the Theron TODO and the documentation index. This is a capture
+  shortlist only and does not claim a gameplay fix or parity.
+- `git diff --check`, Python AST parsing, relative documentation-link checks,
+  three identical direct scanner runs, and three repeated CTest executions
+  passed. CMake configured in the external-disk scratch build directory; no
+  application build or emulator capture was run.
 
 
 ## 2026-11-01 — validate reader windows against local retail bytes

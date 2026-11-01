@@ -71,6 +71,15 @@ add_custom_target(firestaff_gettext_catalogs ALL
 # configurations can skip test-fixture hashing entirely.
 include(CTest)
 
+if(BUILD_TESTING)
+    add_test(
+        NAME symbol_backlog_verification
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_symbol_backlog.py)
+    set_tests_properties(symbol_backlog_verification PROPERTIES
+        LABELS "audit;tooling")
+endif()
+
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
 endif()
@@ -55992,6 +56001,23 @@ if(BUILD_TESTING AND THERON_SOURCES AND
     add_test(
         NAME theron_v1_huc6280_disassembly
         COMMAND test_theron_v1_huc6280_disassembly)
+endif()
+
+# Authentic Track 02 source census for the observed two-byte position TII.
+# The scanner accepts only the registered US/JP retail BIN identities and
+# records candidate offsets; it does not bind a runtime code copy or semantics.
+if(BUILD_TESTING AND THERON_SOURCES AND
+        EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/analyze_theron_position_tii_source.py")
+    add_test(
+        NAME theron_v1_position_tii_source_candidates
+        COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/analyze_theron_position_tii_source.py"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
+    set_tests_properties(theron_v1_position_tii_source_candidates PROPERTIES
+        SKIP_RETURN_CODE 77
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        LABELS "theron;real-media;disassembly;source-lock;no-synthetic")
 endif()
 
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)

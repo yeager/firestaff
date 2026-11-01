@@ -1387,27 +1387,27 @@ require_instrumented_mednafen_binary() {
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the Drator row consumer PC filter; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
-    if [[ "$capture_mednafen_module" == pce_fast ]] &&
+    if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card code-follow hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
-    if [[ "$capture_mednafen_module" == pce_fast ]] &&
+    if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card bootstrap-follow hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
-    if [[ "$capture_mednafen_module" == pce_fast ]] &&
+    if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card status-read hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
-    if [[ "$capture_mednafen_module" == pce_fast ]] &&
+    if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card callback-state hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
-    if [[ "$capture_mednafen_module" == pce_fast ]] &&
+    if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card I/O/RAM hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
