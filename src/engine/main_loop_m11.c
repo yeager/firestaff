@@ -10957,6 +10957,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
     M11_BootProbeReceipt startupReceipt;
     int startupReceiptReady;
     int dm2Platform = -1;
+    int csbAmigaLanguageIndex = -1;
     const char *dm1FmtownsProgram = "";
     const char *dm1FmtownsProgramMd5 = "";
     int dm1FmtownsMenuSelectsProgram = 0;
@@ -10984,6 +10985,11 @@ static void m11_write_autotest_runtime_probe(const char* path,
         dm2Platform = ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform;
         (void)dm2_v1_runtime_last_frame_ownership(&dm2FrameOwnership);
         (void)dm2_v1_runtime_last_m11_frame_receipt(&dm2M11FrameReceipt);
+    }
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        gameView->csbBootProfile) {
+        csbAmigaLanguageIndex = (int)((const CSB_V1_BootProfile *)
+            gameView->csbBootProfile)->amiga_language_index;
     }
     if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
         dm1_v1_fmtowns_startup_receipt_is_native(
@@ -11044,6 +11050,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"active\": %d,\n"
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
+            "  \"csbAmigaLanguageIndex\": %d,\n"
             "  \"bootAssetMd5\": \"%s\",\n"
             "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
@@ -11069,6 +11076,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->active : 0,
             gameView ? gameView->title : "",
             gameView ? gameView->sourceId : "",
+            csbAmigaLanguageIndex,
             startupReceipt.bootAssetMd5,
             dm1FmtownsProgram,
             dm1FmtownsProgramMd5,
