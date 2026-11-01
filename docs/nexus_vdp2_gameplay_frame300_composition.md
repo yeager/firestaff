@@ -18,7 +18,10 @@ empty pixels, unsupported color-calculation cases, or unsupported shadow
 cases. The test pins the input VDP1 framebuffer, VDP2 VRAM, CRAM, and register
 snapshot by SHA-256, then compares every composed RGB triplet against Ymir's
 same-run rendered frame. It also writes a per-pixel layer ownership map for
-inspection.
+inspection. This check passed again against PR head `c1d2664`; the stack hash is
+`935af55c5d7429c4527fc379bb2fc6275e9a6d0447fbc8a0e5eb17a3ba6acc6a`. Outputs
+are retained under
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c1d2664-validation/`.
 
 Run the real-capture regression after building the existing target:
 

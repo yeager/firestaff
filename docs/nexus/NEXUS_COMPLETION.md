@@ -29,9 +29,10 @@ not bind the full NBG0 bitmap, `MENU.BPK`, menu transitions, or input hitboxes.
 At Japanese cold-boot title-prompt frame 13162, command 171 binds to
 `TITLE.BIN` DGT2/PP record 21 and a 921-byte NBG0 span binds to TITL record 2.
 The selected VDP1 FBS + NBG0 + command reconstruction matches all 286,720
-doubled samples within eight levels. At gameplay frames 239 and 397, the captured
-VDP1/VDP2 priority stack matches all 286,720 doubled screenshot samples
-exactly. Each result covers only its selected layers and frame; arbitrary
+doubled samples within eight levels. At gameplay frames 239, 397, and the
+authentic four-champion Continue frame 2173, the captured VDP1/VDP2 priority
+stack matches all 286,720 doubled screenshot samples exactly. Each result
+covers only its selected layers and frame; arbitrary
 VDP states, full title/menu composition, and production renderer admission
 remain unverified. See the linked capture-specific evidence notes in
 `docs/nexus_vdp1_menu_frame119_source_join.md`,
@@ -57,12 +58,20 @@ other eight mode-5 draws are verified as fully transparent by the companion
 real-data capture test. The combined 320×224 VDP1 output matches the
 hash-verified Ymir FBS buffer 0 in all 71,680 RGB555 pixels and opacity bits.
 The stepper reads the exact captured command, texture, CLUT, and Gouraud table
-bytes; the separate frame-13162 source-join test binds 25 mode-1 image/CLUT
-pairs and six mode-5 sources to retail `LEV00.DGN`. This is an exact replay of
-one captured Ymir VDP1 frame, not proof of original-Saturn behavior, arbitrary
-VDP1 states, or retail ownership for every draw. It remains capture-only and
-does not change Nexus production readiness. VDP2 composition, full title/menu
-and gameplay source ownership, and production renderer admission remain open.
+bytes. In the same frame, bounded source-join checks bind 25 mode-1 image/CLUT
+pairs plus six mode-5 sources, while a full-trace inventory binds 113 executed
+mode-1 polygon commands to unique retail `LEV00.DGN` image/CLUT pairs. A
+separate isolated sequence replay writes 145,171 pixels from those 113 draws;
+49 draws remain outside that DGN-bound sequence. Of those, 11 indexed commands
+are separately verified as transparent no-ops from hash-pinned all-zero
+captured texture spans (9,952 texels) with no DGN or palette ownership. The
+isolated sequence output has not been compared to the captured framebuffer or
+screenshot. These results establish exact replay of one captured Ymir VDP1
+frame and retail ownership for the joined subset, not original-Saturn
+behavior, arbitrary VDP1 states, or ownership for every draw. They remain
+capture-only and do not change Nexus production readiness. VDP2 composition,
+full title/menu and gameplay source ownership, and production renderer
+admission remain open.
 See [`docs/nexus_vdp1_frame13162_dgn_window.md`](../nexus_vdp1_frame13162_dgn_window.md).
 
 The same frame-8037 screenshot verifies all five Japanese `TITLE.BIN`

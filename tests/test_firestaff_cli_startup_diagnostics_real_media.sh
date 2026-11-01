@@ -601,14 +601,27 @@ for game_id in dm1 csb dm2 nexus theron; do
     if [ -d "$quick_data_root/$game_id" ]; then
         expected_launch_phase='runtime-entered'
         case "$game_id" in
-            dm1) expected_platform=$quick_dm1_platform ;;
-            csb) expected_platform=$quick_csb_platform ;;
-            dm2) expected_platform=$quick_dm2_platform ;;
+            dm1)
+                expected_platform=$quick_dm1_platform
+                expected_v22_fallback_reason='approved-dm1-modern-art-unavailable'
+                ;;
+            csb)
+                expected_platform=$quick_csb_platform
+                expected_v22_fallback_reason='approved-csb-modern-art-unavailable'
+                ;;
+            dm2)
+                expected_platform=$quick_dm2_platform
+                expected_v22_fallback_reason='dm2-modern-art-runtime-unavailable'
+                ;;
             nexus)
                 expected_platform='Saturn'
                 expected_launch_phase='title-entered'
+                expected_v22_fallback_reason='nexus-modern-presentation-unavailable'
                 ;;
-            theron) expected_platform='PC Engine' ;;
+            theron)
+                expected_platform='PC Engine'
+                expected_v22_fallback_reason='theron-modern-art-runtime-unavailable'
+                ;;
         esac
         default_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
             XDG_CONFIG_HOME="$quick_home/.config" \
@@ -672,7 +685,7 @@ for game_id in dm1 csb dm2 nexus theron; do
         if ! printf '%s\n' "$v22_output" | \
                 grep -Fq "presentation phase=game-handoff game=$game_id requested=v22 resolved=v21 framebuffer=" ||
            ! printf '%s\n' "$v22_output" | \
-                grep -Fq ' fallback=1'; then
+                grep -Fq " fallback=1 fallback_reason=$expected_v22_fallback_reason"; then
             printf '%s\n' "$v22_output" >&2
             printf 'FAIL: authentic %s V2.2 request did not report its V2.1 renderer fallback\n' \
                 "$game_id" >&2

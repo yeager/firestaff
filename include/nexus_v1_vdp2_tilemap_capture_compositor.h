@@ -11,6 +11,7 @@
 #define NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET 0x28U
 #define NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET 0x32U
 #define NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET 0xe4U
+#define NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET 0x0eU
 #define NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH 320U
 #define NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT 224U
 #define NEXUS_V1_VDP2_CAPTURE_PIXELS \
@@ -143,6 +144,8 @@ typedef struct {
     int nbg1_tilemap_mode;
     int pnd_size_two_words;
     int colour_code_256;
+    int nbg1_enabled;
+    int bits_per_pixel;
     int name_table_vram_offset;
     int map_page_columns;
     int map_page_rows;

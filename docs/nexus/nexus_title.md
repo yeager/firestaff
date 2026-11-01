@@ -785,12 +785,15 @@ NBG1 is enabled. MAP1A/B remains `0x1717`, PLSZ and MPOFN remain zero. The
 external evidence package is
 `firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/`.
 
-The capture-only NBG1 decoder currently requires `BGON=0x0007` and
-`CHCTLA=0x1013`; these authentic frames use `BGON=0x0001` or `0x0002` and
-`CHCTLA=0x0013`, so the decoder rejects them. The next consumer step is to
-decode these register states and compare Firestaff's NBG1/VPD1 composition
-against the corresponding same-pass RGBX buffers. The producer-side map match
-does not grant renderer permission or establish Firestaff pixel parity. The
+The capture-only NBG1 decoder accepts the authentic 4bpp tilemap state at frame
+891 / serial 1280 (`BGON=0x0002`, `CHCTLA=0x0013`) and verifies its 1,120 visible
+cells against the hash-pinned Ymir snapshot. It also handles the paired NBG1-
+only state without requiring NBG0 or NBG2 to be enabled. This remains an
+isolated layer decode: it does not establish VDP1/NBG1 arbitration or match the
+same-pass RGBX output, and it does not grant production renderer permission.
+The next consumer step is to implement and verify this register profile's full
+pixel composition against the corresponding same-pass RGBX buffer. The
+producer-side map match alone does not establish Firestaff pixel parity. The
 render-state receipt marks its legacy frame-row status incomplete because
 several VDP1 frame labels contain multiple VDP2 passes; all 163 per-pass
 buffers and snapshot pairs are present.
