@@ -460,7 +460,8 @@ int main(int argc, char **argv)
         }
     }
     if (frame_rows != EXPECTED_FRAME_ROWS || draws != LAST_DRAW-FIRST_DRAW+1U ||
-        mode1_count != 124U || dgn_source_count + palette_fallback_count != 113U ||
+        mode1_count != 124U || dgn_source_count != 113U ||
+        palette_fallback_count != 0U ||
         transparent_mode1_count != 11U || other_modes != 8U ||
         user_clip_updates != 1U || local_updates != 3U ||
         polygon_count != 28U || system_clip_updates != 0U || !seen[0] || !seen[LAST_DRAW]) {
