@@ -7970,9 +7970,12 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
         uint8_t multiplier_cls4 = cls4 == 1u ? 0x34u : 0x35u;
         uint16_t multiplier =
             dm2_v1_skproject_gdat_word_value(record, multiplier_cls4);
+        int32_t multiplier_value = value_mode == 2
+            ? dm2_v1_skproject_signed_word((int32_t)multiplier)
+            : (int32_t)multiplier;
 
         receipt.charge_multiplier_cls4 = multiplier_cls4;
-        if (multiplier > 0u) {
+        if (multiplier_value > 0) {
             uint16_t w2 = record->w2;
             DM2_V1_SkprojectItemChargeReceipt charge_receipt;
 
@@ -7984,14 +7987,11 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
                 int32_t signed_charge = dm2_v1_skproject_signed_word(
                     (int32_t)receipt.charge);
                 receipt.charge_value_added = dm2_v1_skproject_signed_word(
-                    signed_charge * (int32_t)multiplier);
+                    signed_charge * multiplier_value);
             } else if (value_mode == 2) {
-                int32_t signed_charge = dm2_v1_skproject_signed_word(
-                    (int32_t)receipt.charge);
-                int32_t signed_multiplier = dm2_v1_skproject_signed_word(
-                    (int32_t)multiplier);
                 receipt.charge_value_added = dm2_v1_skproject_signed_word(
-                    signed_charge * signed_multiplier);
+                    dm2_v1_skproject_signed_word((int32_t)receipt.charge) *
+                    multiplier_value);
             }
             value += receipt.charge_value_added;
             if (value_mode == 2)
