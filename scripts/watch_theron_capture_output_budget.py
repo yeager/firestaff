@@ -14,14 +14,24 @@ from pathlib import Path
 
 def total_bytes(paths: list[str], directory: Path | None, prefix: str | None) -> int:
     total = 0
+    seen_files: set[tuple[int, int]] = set()
+
+    def add_file(info: os.stat_result) -> None:
+        nonlocal total
+        if not stat.S_ISREG(info.st_mode):
+            return
+        identity = (info.st_dev, info.st_ino)
+        if identity in seen_files:
+            return
+        seen_files.add(identity)
+        total += info.st_size
+
     for raw_path in paths:
         try:
             info = os.stat(raw_path, follow_symlinks=False)
         except FileNotFoundError:
             continue
-        if not stat.S_ISREG(info.st_mode):
-            continue
-        total += info.st_size
+        add_file(info)
     if directory is not None and prefix is not None:
         try:
             with os.scandir(directory) as entries:
@@ -29,8 +39,7 @@ def total_bytes(paths: list[str], directory: Path | None, prefix: str | None) ->
                     if not entry.name.startswith(prefix + "."):
                         continue
                     try:
-                        if entry.is_file(follow_symlinks=False):
-                            total += entry.stat(follow_symlinks=False).st_size
+                        add_file(entry.stat(follow_symlinks=False))
                     except FileNotFoundError:
                         continue
         except FileNotFoundError:
