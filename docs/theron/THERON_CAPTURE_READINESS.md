@@ -34,6 +34,9 @@ continues across all sectors to preserve byte attribution. This is capture
 tooling only. No accepted authentic capture has exercised the filter, and
 LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
 See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The data-port verifier accepts the authenticated raw BIN and MODE1/2048 ISO
+projection, and can require complete LBA 3674 user-byte coverage for the
+descriptor/map span; see that note for the exact command and fixture boundary.
 
 The follow-up Mednafen binary is not yet capture-ready: one build was rejected
 because it linked against `sdl2-compat`, and a later linked binary predates the
