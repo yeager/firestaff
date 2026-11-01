@@ -22176,6 +22176,7 @@ int dm2_v1_runtime_proceed_hand_command(
     int result;
     int is_wield_action;
     int is_attack_action;
+    int action_postcondition;
 
     if (!receipt) receipt = &local_receipt;
     memset(receipt, 0, sizeof(*receipt));
@@ -22339,9 +22340,11 @@ int dm2_v1_runtime_proceed_hand_command(
     }
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
-    if (!result || (is_wield_action
-                        ? !receipt->creature_attacked
-                        : (is_attack_action && !queue.queued))) {
+    action_postcondition =
+        (!is_wield_action || receipt->creature_attacked ||
+         receipt->door_attacked) &&
+        (!is_attack_action || queue.queued);
+    if (!result || !action_postcondition) {
         hero->heroflag &= (int16_t)~0x0800;
         /* ATTACK's source callback enqueues before reaching L_fin. If the
          * same dispatch is subsequently rejected as an unowned route,
@@ -22356,6 +22359,16 @@ int dm2_v1_runtime_proceed_hand_command(
                 rt->source_party.hero[rt->source_party.curacthero - 1].heroflag =
                     (int16_t)attack_hero_flag_before;
         }
+    }
+    /* A source-successful command whose runtime callback failed its
+     * postcondition is an adapter gap. Do not charge the hero for a command
+     * the owner could not actually perform. Ordinary source failures keep
+     * their source-defined L_fin cooldown/stamina behavior below. */
+    if (result && !action_postcondition) {
+        receipt->fail_closed = 1;
+        receipt->hand_cooldown_delay = 0;
+        receipt->stamina_cost = 0;
+        receipt->skill_exp_gained = 0;
     }
     /* Common skproject ENGAGE_COMMAND epilogue: vol_20 (normally CMDSTR
      * field 3, with source branch overrides) adjusts the active hand. */
@@ -22390,7 +22403,10 @@ int dm2_v1_runtime_proceed_hand_command(
             hero->heroflag = (int16_t)signed_flag;
         }
     }
-    return 1;
+    /* SKULLWIN/c_engage.cpp::DM2_ENGAGE_COMMAND returns RG61l after its
+     * common L_fin epilogue (lines 825-870). Preserve that result while still
+     * running source cooldown/stamina updates on ordinary command failures. */
+    return result && action_postcondition;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */
