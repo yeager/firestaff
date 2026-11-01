@@ -6,6 +6,10 @@ app=${1:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <dat
 data_root=${2:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <data-root>}
 data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
+# The timeout covers a full authentic-media scan followed by synchronous
+# source startup. Some systems need more than 90 seconds for both phases.
+picker_duration_ms=${FIRESTAFF_PICKER_TEST_DURATION_MS:-180000}
+
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
@@ -193,7 +197,7 @@ run_game_picker_case() {
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 1920 --height 1080 \
         --data-dir "$menu_data_root" \
-        --script "$navigation" --duration 90000 >"$log" 2>&1 || {
+        --script "$navigation" --duration "$picker_duration_ms" >"$log" 2>&1 || {
             cat "$log" >&2
             return 1
         }
@@ -621,7 +625,7 @@ run_default_root_game_picker_case() {
         HOME="$data_home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
             "$app" --debug --width 1920 --height 1080 \
-            --script "$navigation" --duration 90000
+            --script "$navigation" --duration "$picker_duration_ms"
     ) >"$log" 2>&1 || {
         cat "$log" >&2
         return 1
