@@ -17,9 +17,11 @@ source audits and capture receipts remain in the linked game documentation.
 
 An offline scan of an authentic JP `.mc0` state found the exact 1,260-byte
 Akutuba descriptor-and-map source span in the inflated payload at `0x6633b`.
-All four maps are present, so the snapshot does not identify the active map or
-map that file offset to guest RAM/MPR. The state scan does not change the native
-parity boundary; see the [source-match report](source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
+A source-locked Mednafen 1.32.1 inspector maps it to HuC CD-RAM physical page
+`$74` (`$0E891D`); the saved MPRs do not select that page. All four maps are
+present, so the active map remains unknown. The state includes an embedded
+preview and named VCE/VDC0/VRAM/SAT snapshot variables, but no pose-bound
+consumer. This does not change the native parity boundary; see the [source-match report](source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
 A newer JP PCE Fast state-only reference capture validates 4,096 bounded VRAM
 commits after an authentic-state guest read at `$44C1` (shared events 58758–58761).

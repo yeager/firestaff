@@ -10,8 +10,12 @@
 > An offline scan of an authentic JP `.mc0` state found this complete source
 > span at inflated offset `0x6633b` (state SHA-256
 > `b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`). All
-> four maps are present, so the active map remains unknown; this file offset
-> is not mapped to guest RAM/MPR or a tile consumer.
+> four maps are present, so the active map remains unknown. The source-locked
+> [Mednafen 1.32.1 state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py)
+> maps the match to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs
+> do not select that page. The state embeds a preview and named
+> VCE/VDC0/VRAM/SAT snapshot variables, but no pose-bound tile consumer is
+> established.
 > See the [source report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 

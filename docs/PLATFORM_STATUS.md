@@ -403,9 +403,11 @@ queue acceptance, not audible hardware or retail sound parity.
 
 **JP map-data update (2026-11-01):** an offline scan of an authentic JP
 `.mc0` state found the exact Akutuba descriptor and all four map arrays from
-Track 02 in its inflated payload. All four arrays are resident; the state
-format has no offline parser here, so this does not identify the active map,
-bind its bytes to guest RAM/MPR or a consumer, or establish a rendered result.
+Track 02 in its inflated payload. A source-locked Mednafen 1.32.1 inspector
+maps the match to the named HuC CD-RAM variable at physical page `$74`
+(`$0E891D`); the saved MPRs do not select that page. All four arrays are
+resident, so this does not identify the active map, a runtime consumer, or a
+rendered result.
 See the [source-map report](source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
 | Platform | Status | Current scope | Open boundary |

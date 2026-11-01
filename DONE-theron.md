@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — inspect authentic JP Mednafen state structure and source mapping
+
+- Added a bounded, source-locked reader for Mednafen 1.32.1 PCE Fast `.mc0`
+  files. It validates named sections and variables, checks the authentic JP
+  Track 02 identity, and reports the Akutuba source span, HuC CD-RAM page,
+  saved MPRs, BaseRAM copies, and embedded preview/VCE/VDC0/VRAM/SAT snapshot
+  inventory.
+- The authentic state places the Akutuba source span in HuC CD-RAM page `$74`
+  at physical `$0E891D`; saved MPRs do not select that page and the four maps
+  remain simultaneously present. This does not identify the active map or a
+  game-owned selector, pose, tile consumer, or render input.
+- Updated the current status, capture-readiness, source-map, and reference
+  documentation. Repeated parser and authentic-state checks passed; no private
+  save-state or game-media files were added to the repository.
+
 ## 2026-11-01 — synchronize the JP Akutuba source-map documentation
 
 - Updated the README and Theron technical wiki to describe the identity-gated

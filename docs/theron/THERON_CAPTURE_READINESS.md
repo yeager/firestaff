@@ -68,14 +68,18 @@ physical data-read addresses, not instruction PCs.
 The JP active map is also still unbound. A scan of 106 retained 8 KiB BaseRAM
 snapshots found no contiguous copy of any authenticated Akutuba map tile array;
 this negative result does not cover other RAM, packed data, or a live consumer.
-An offline scan of a separate authentic JP `.mc0` state subsequently found the
-complete descriptor-plus-four-map source span exactly once in its inflated
-payload at offset `0x6633b` (state SHA-256
-`b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`). This
-proves source-byte presence in the saved state, but the file offset is not
-mapped to guest RAM/MPR and all four maps are present, so it does not identify
-the active map. No screenshot-to-state receipt or VDC/VCE/VRAM sidecars exist;
-the Mednafen state chunks cannot currently be parsed offline by Firestaff.
+An offline scan of a separate authentic JP `.mc0` state found the complete
+descriptor-plus-four-map source span once at inflated offset `0x6633b` (state
+SHA-256 `b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`).
+The source-locked Mednafen 1.32.1 inspector maps it to the named
+`HuC.ROMSpace + 0x68 * 8192` CD-RAM variable, at page `$74`, page offset
+`$091d` (physical `$0E891D`). The saved MPRs do not select page `$74`, and no
+contiguous copy of a map array occurs in saved BaseRAM. The state also embeds
+an RGB preview and named VCE/VDC0/VRAM/SAT variables, which form an atomic
+state snapshot; they are not independently joined to the active map or party
+pose. All four maps are present, so the active map remains unknown. See the
+[state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py) and
+[source-state report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md).
 The authenticated source descriptor and all four Akutuba tile arrays map
 to one raw MODE1 sector: Track 02 file sector 308 / disc LBA 3674. Map 0 and
 map 2 discriminating `(2,3)` bytes are at raw BIN offsets `$B10E6` and

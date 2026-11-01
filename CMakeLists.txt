@@ -190,6 +190,13 @@ if(BUILD_TESTING)
     )
     set_tests_properties(theron_39c0_disassembly PROPERTIES
         LABELS "theron;disassembly;source-lock")
+    add_test(
+        NAME theron_mednafen_pce_fast_state_inspector
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_inspect_theron_mednafen_pce_fast_state.py
+    )
+    set_tests_properties(theron_mednafen_pce_fast_state_inspector PROPERTIES
+        LABELS "theron;save-state;source-lock;tooling")
 endif()
 
 if(BUILD_TESTING)

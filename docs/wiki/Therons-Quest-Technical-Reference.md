@@ -58,9 +58,12 @@
 > authenticated descriptor values and raw bytes in coordinate order. The
 > fields named `unknown_1` and `unknown_2`, tile meanings, active-map selector,
 > and party-coordinate mapping remain unresolved. An offline scan found the
-> complete descriptor-and-map source span in an authentic JP `.mc0` state, but
-> all four arrays are resident and the inflated file offset is not mapped to
-> guest RAM/MPR or a consumer. This is a source-analysis aid only; it does not
+> complete descriptor-and-map source span in an authentic JP `.mc0` state.
+> The source-locked [Mednafen 1.32.1 state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py)
+> maps it to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs do not
+> select that page. All four arrays are resident, so active selection and the
+> pose-bound tile consumer remain unknown. This is a source-analysis aid only;
+> it does not
 > authorize runtime rendering. See the [source-sector
 > report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).

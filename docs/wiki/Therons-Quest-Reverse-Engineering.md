@@ -78,9 +78,11 @@ identity-gated planner can dump the four arrays as raw grids and report
 descriptor values, but deliberately does not assign meaning to the two
 unknown fields or tile values, choose the runtime map, or infer renderer
 behavior. An offline scan also found the complete descriptor-and-map source
-span in an authentic JP `.mc0` state at inflated offset `0x6633b`; because all
-four arrays are present, this does not identify the active map or its guest
-RAM/MPR address. See the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+span in an authentic JP `.mc0` state at inflated offset `0x6633b`. The
+source-locked Mednafen 1.32.1 inspector maps it to HuC CD-RAM page `$74`
+(physical `$0E891D`); the saved MPRs do not select that page. Because all four
+arrays are present, this does not identify the active map or its consumer. See
+the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 
 The black presented capture mentioned in older dated reports is historical;

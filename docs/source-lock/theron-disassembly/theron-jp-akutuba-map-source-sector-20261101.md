@@ -78,12 +78,45 @@ matched source span SHA-256 is
 `a8f780a39eee82ef9a36df53808de4e60bef7f05205c660e45f7d7c50d53e615`. Each
 grid also occurs once in source order in that payload. This confirms that all
 four authentic map arrays are present in the state. It does not identify the
-active array: all four are resident. The decompressed file offset is not yet
-mapped to a HuC6280 address, MPR, or RAM region, and there is no offline parser
-for the relevant Mednafen PCE Fast state chunks.
+active array: all four are resident.
 
 The nearby screenshot is timestamped 49 seconds after the state file, but no
-hash-bound receipt proves that it depicts this exact state. No VDC, VCE, or
-VRAM sidecars are available. A runtime consumer/selector join, pose binding,
-cold CD-to-RAM provenance, and rendered-response evidence remain open. This
-static save-state match does not authorize runtime map selection or rendering.
+separate screenshot receipt binds it to this exact state. The `.mc0` itself
+contains an embedded 341×232 RGB preview and named VCE/VDC0/VRAM/SAT state
+variables, so those components form one atomic saved-state snapshot. A
+runtime consumer/selector join, pose binding, cold CD-to-RAM provenance, and
+rendered-response evidence remain open. This static save-state match does not
+authorize runtime map selection or rendering.
+
+## Named Mednafen state mapping (2026-11-01)
+
+[`inspect_theron_mednafen_pce_fast_state.py`](../../../tools/inspect_theron_mednafen_pce_fast_state.py) reads the gzip-compressed
+state only when its header reports Mednafen 1.32.1 (`0x00103201`), validates
+the complete section and variable boundaries, and matches the full source span
+against the authentic JP Rev. 1 Track 02 BIN. Its bounded structural regression
+uses a minimal format-only record; the result below comes from the authentic
+state and media files named above.
+
+The unique match is in `HuC.ROMSpace + 0x68 * 8192`, a 262,144-byte variable
+declared by Mednafen 1.32.1 `src/pce_fast/huc.cpp` in `HuC_StateAction`. The
+source span begins at variable offset `0x1891d`, which corresponds to ROMSpace
+page `$74`, page offset `$091d`, and physical address `$0E891D`. The four map
+arrays begin at variable offsets `$18B03`, `$18B33`, `$18C2A`, and `$18D6D`.
+Mednafen's saved `CPU.MPR` bytes are `FF F8 68 6B 78 70 69 00`; none selects
+page `$74`. `MAIN.BaseRAM` contains no contiguous copy of any of the four
+source arrays. These facts confirm where the source bytes are resident in
+this snapshot, but do not show whether another MPR mapping or decoded copy is
+used during gameplay.
+
+The same state includes the preview RGB SHA-256
+`f6341ff7e8f4bc52c7f6c1f8bd2747b283b27f727f59cefe8a348a8cda33eca4`, VCE
+color-table SHA-256
+`ba02dbd8f03665cce75dae462f53c0120757adc5864d751693d0744e2d0b2875`, VDC0
+VRAM SHA-256 `56b6e2b7b502be2cc0c2ad33ad943dc30aa8dbb1e3af2dcaaf3acaa80c92baa6`,
+and SAT SHA-256
+`46f243e653e59d5558b831051ed9ff4dd9cf70498115b1a5ab02eaa1847b1fb4`. The
+snapshot is suitable for later state-bound capture analysis, but it does not
+identify the active map, party pose, tile read, or Firestaff's production
+renderer input. The next reference trace must observe the game after state
+load, including any remapping or copy, active selector, and pose-bound tile
+consumer, before changing native rendering.

@@ -1422,17 +1422,20 @@ a dummy SDL display and produced no rendered-game frame.
   The source span SHA-256 is
   `a8f780a39eee82ef9a36df53808de4e60bef7f05205c660e45f7d7c50d53e615`.
 - This advances evidence of map-data presence in a saved emulator state. It
-  does not identify which of the four resident arrays is active, map the
-  decompressed offset to guest RAM/MPR, or bind a game-owned selector, pose,
-  tile consumer, or display snapshot. The prior 106-file scan remains accurate
-  for its narrower scope: no contiguous map array was found in those 8 KiB
+  does not identify which of the four resident arrays is active or bind a
+  game-owned selector, pose, or tile consumer. The source-locked Mednafen
+  1.32.1 inspector maps the span to the named HuC CD-RAM variable at physical
+  page `$74` (`$0E891D`); the saved MPRs do not select that page and BaseRAM has
+  no contiguous map-array copy. The prior 106-file scan remains accurate for
+  its narrower scope: no contiguous map array was found in those 8 KiB
   `pce-fast.ram` sidecars.
 - The nearby dungeon screenshot has a later timestamp than the state, but no
-  hash-bound receipt proves it depicts that exact state. No VDC/VCE/VRAM
-  sidecars are available for this state, and Firestaff has no offline parser
-  for the Mednafen PCE Fast state format. The next useful evidence is a
-  state-load capture that maps the matching bytes to guest address/MPR and
-  observes the active selector and pose-bound tile read in one event sequence.
+  hash-bound receipt proves it depicts that exact state. The `.mc0` contains an
+  embedded preview and named VCE/VDC0/VRAM/SAT variables as one atomic snapshot;
+  this does not join them to an active map, party pose, or tile consumer. The
+  next useful evidence is a state-load capture that observes runtime remapping
+  or copying, the active selector, and a pose-bound tile read in one event
+  sequence.
   Keep the cold CD-to-RAM provenance and rendered-response requirements open.
   See the [source-sector report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
