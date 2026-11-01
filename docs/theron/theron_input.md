@@ -91,9 +91,9 @@ Button I hold. The retail manual documents Button I as menu confirmation but
 gives no multi-second timing rule. See
 [DMWeb and Greatstone references](../DMWEB_REFERENCE.md), the
 [capture report](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
-and [TODO-theron.md](../../TODO-theron.md). A focused regression covers the
-duration boundary but still needs execution; this host policy is not a retail
-parity claim.
+and [TODO-theron.md](../../TODO-theron.md). The focused duration-boundary
+regression passed in the full Linux, macOS and Windows CTest jobs for PR #248;
+this host policy is not a retail parity claim.
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
