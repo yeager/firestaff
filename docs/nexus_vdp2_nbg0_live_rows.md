@@ -34,6 +34,18 @@ fixed-point units. The captured final registers encode H/V scroll
 block. The test pins the VDP1 FBS, VDP2 VRAM, CRAM, register
 snapshot, baseline replay, and screenshot by SHA-256.
 
+A second Ymir 0.4.2-dev capture is retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-nbg0-vdp2-write-capture-20261102`.
+It samples the same 113 NBG0 rows on VDP1 frame 7486; scroll, increments,
+priority, color-calculation enable, and ratio match the earlier GDB trace on
+all 113 rows. Its complete VDP2 VRAM/CRAM write trace contains zero writes
+inside frame range `7486:7487`, zero dropped rows, and 2,167,982 rows outside
+that selected range. This shows that VDP2 memory was stable during the sampled
+frame. Its final memory/register snapshots and screenshot are from frame 7663,
+so they are not used as frame-7486 pixel references. The new write capture is
+not consumed by the existing CTest; its checksums and receipts are recorded in
+the external evidence directory.
+
 This compositor admits the observed profile only: `BGON=0x0003`,
 `CHCTLA=0x0013`, `SPCTL=0x1536`, `PRINA=0x0404`, `CCCTL=0x0043`, and
 `CCRNA=0x1010`, with the captured zero bitmap/CRAM offsets. NBG1 is enabled in
@@ -59,9 +71,9 @@ FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE="$row_trace" \
 
 The regression harness authenticates the retained row trace before passing
 row-state values to the C API; the C API itself does not authenticate that
-trace. This capture's SH-2 read trace
-overflowed and has no frame IDs, and its VDP2 write trace was not enabled.
-Therefore source-to-VRAM transfer timing and complete asset ownership remain
-unproven. This scanline compositor is capture-only and does not grant
+trace. The original SH-2 read trace overflowed and has no frame IDs.
+The follow-up capture verifies zero VDP2 VRAM/CRAM writes during frame 7486,
+but it does not record the earlier transfer that populated VRAM. Therefore
+source-to-VRAM transfer timing and complete asset ownership remain unproven. This scanline compositor is capture-only and does not grant
 production renderer permission, prove Saturn hardware parity, or cover other
 register profiles.
