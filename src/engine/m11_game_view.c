@@ -46677,7 +46677,8 @@ static int m11_c080_front_item_blocked_by_creature(
     int viewCell) {
     unsigned short groupThing;
     unsigned short attributes;
-    const struct DungeonGroup_Compat* group;
+    unsigned int groupCells;
+    unsigned int groupDirections;
     int groupIndex;
     unsigned int clickedCell;
 
@@ -46695,7 +46696,15 @@ static int m11_c080_front_item_blocked_by_creature(
         !state->world.things->groups ||
         groupIndex >= state->world.things->groupCount ||
         !dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
-            state->world.things, groupThing, &attributes)) {
+            state->world.things, groupThing, &attributes) ||
+        !dm1_v1_dungeon_get_group_cells_f0145_pc34(
+            state->world.things, state->world.creatureAI,
+            state->world.creatureAICount, state->world.party.mapIndex,
+            state->world.party.mapIndex, groupIndex, &groupCells) ||
+        !dm1_v1_dungeon_get_group_directions_f0147_pc34(
+            state->world.things, state->world.creatureAI,
+            state->world.creatureAICount, state->world.party.mapIndex,
+            state->world.party.mapIndex, groupIndex, &groupDirections)) {
         /* F0373 cannot prove this group is levitating or misses the clicked
          * cell, so fail closed and leave the floor object in place. */
         return 1;
@@ -46703,11 +46712,10 @@ static int m11_c080_front_item_blocked_by_creature(
     if (F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_GROUP, attributes)) {
         return 0;
     }
-    group = &state->world.things->groups[groupIndex];
     clickedCell = ((unsigned int)state->world.party.direction +
                    (unsigned int)viewCell) & 3u;
     return dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
-        state->world.things, groupThing, group->cells, group->direction,
+        state->world.things, groupThing, groupCells, groupDirections,
         clickedCell) != 0;
 }
 
