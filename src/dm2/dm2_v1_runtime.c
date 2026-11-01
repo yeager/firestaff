@@ -4597,7 +4597,7 @@ static int dm2_runtime_spell_make_potion(
     if (!dm2_v1_record_pool_set_itemtype(&rt->record_pools, item,
                                         (uint8_t)(spell_value & 0x3f)))
         return 0;
-    if (rt->record_pools.source_words_big_endian) {
+    if (rt->record_pools.words_big_endian) {
         record[2] = (uint8_t)(power_word >> 8);
         record[3] = (uint8_t)power_word;
     } else {
@@ -4677,7 +4677,6 @@ int dm2_v1_runtime_cast_spell_player(
         return 1;
     }
     if (receipt.cast.execution_class == DM2_V1_SPELL_EXEC_POTION) {
-        DM2_V1_Hero hero_before = *hero;
         DM2_V1_DropRng rng_before = rt->session_rng;
         uint8_t *item_record;
         int16_t item = hero->item[empty_flask_hand];
@@ -4710,7 +4709,6 @@ int dm2_v1_runtime_cast_spell_player(
         receipt.applied = 1;
         receipt.mana_after = hero->curMP;
         if (out_receipt) *out_receipt = receipt;
-        (void)hero_before;
         return 1;
     }
     if (receipt.cast.timer_kind == DM2_V1_SPELL_TIMER_CLOUD &&

@@ -14,9 +14,12 @@ remain open; all reviewed variant rows stay partial.
 the generic query owner with the source slot order (action hand 1, then ready
 hand 0), item type 8 gate, and record cls2 0x14 check from DOS
 `dm2bya.cpp:2332`, SPX v4 `skchamp.cpp:819`, and SPX v5
-`skgdtqdb.cpp:1511`. Missing hero/record callbacks fail closed. The DM2 spell
-runtime still passes no flask state and does not consume/transform the source
-record; all source variants therefore remain partial.
+`skgdtqdb.cpp:1511`. Missing hero/record callbacks fail closed. The DOS/v5 DM2 runtime now passes live flask state and transforms the held record
+with the source itemtype and power roll before committing mana, cooldown, and
+rune clearing. Its record/RNG transaction fails closed and rolls back on
+admission failure. SPX v4 cast routing and platform-specific hand/record
+ownership still need end-to-end source binding; all source variants remain
+partial.
 
 2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS keyboard driver review:
 `driver_keyboardint_T1`, `driver_kbdqueue_pop`, `driver_forceint2d`, and
