@@ -120,6 +120,19 @@ int F1323_FIO1_25_EnumerateMatchesPc34Compat(
     return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
 }
 
+int F1325_FIO1_04_IsDiskWriteableHostCompat(
+    const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
+    int16_t drive_index)
+{
+    if (use_default_drive_name != 1 || !host ||
+        !host->isDiskWriteProtected || drive_index < 0 || drive_index >= 4)
+        return 0;
+    /* FIO1.C F1325 returns writable only for the configured default floppy
+     * and when F1349_IsDiskWriteProtected reports false. Missing host media
+     * probes never grant write permission. */
+    return host->isDiskWriteProtected(host->context, drive_index) == 0;
+}
+
 int F1329_FIO1_21_OpenPc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                  RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -341,7 +354,7 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1343/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1325/F1328-F1343/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
            "Host callbacks abstract Amiga F1337 Lock/Info/UnLock and F1340 "
            "Trackdisk open-state routes, and F1343 device-name resolution. "
