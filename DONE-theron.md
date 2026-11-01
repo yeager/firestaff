@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — add an exact-LBA Akutuba capture filter
+
+- Added `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA` with decimal `uint32`
+  validation, a PCE Fast module gate, and an `exact_source_lba_filter` capture
+  summary field. LBA 3674 now gates CD data-port rows and FIFO-origin RAM
+  receipts before their trace quotas while retaining FIFO byte-origin tracking.
+- The capture-wrapper regression and the complete Mednafen patch-application
+  regression passed three consecutive loops. No accepted authentic capture has
+  used this filter; retail byte authentication, game-owned consumer joins, and
+  rendering evidence remain open.
+
 ## 2026-11-01 — reconcile Akutuba capture target with available LBA filters
 
 - Reviewed the JP Akutuba source report, capture wrapper, CD-port trace and

@@ -597,6 +597,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint8 ret = PCECD_Drive_GetDB();' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'source_lba >= track02_start_lba && source_lba < track02_end_lba' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVWRTraceGateOpen = true' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'bool TheronTracePCEFastVWRTraceGateOpen = false' "$cd_shared_event_patch_file" ||
@@ -668,6 +669,8 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'fifo_origin_main_ram_consumer_v2.patch' "$build_script" ||
    ! grep -Fq 'TheronSCSIQueueDataOrigin' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'SCSICD_GetLastDataOrigin' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'TheronPCECDExactLBAAllowed(source_lba)' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'pce_cd_origin_ram_receipt source_lba=%u source_offset=%u' "$fifo_origin_v2_patch_file"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
     exit 1

@@ -230,6 +230,7 @@ pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
 cd_data_read_start_at_track02=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02:-0}
+cd_exact_source_lba=${THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA:-}
 cd_ram_target_write_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT:-8192}
 cd_ram_writer_pc_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT:-131072}
 input_trace_limit_default=65536
@@ -305,6 +306,27 @@ if [[ "$cd_data_read_start_at_track02" == 1 &&
       "$capture_mednafen_module" != pce_fast ]]; then
     printf '%s\n' 'FAIL: Track 02 CD data-read filtering requires the PCE Fast module' >&2
     exit 1
+fi
+if [[ -n "$cd_exact_source_lba" ]]; then
+    [[ "$cd_exact_source_lba" =~ ^[0-9]+$ ]] || {
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295' >&2
+        exit 1
+    }
+    cd_exact_source_lba_normalized=$cd_exact_source_lba
+    while [[ "$cd_exact_source_lba_normalized" == 0* &&
+             ${#cd_exact_source_lba_normalized} -gt 1 ]]; do
+        cd_exact_source_lba_normalized=${cd_exact_source_lba_normalized#0}
+    done
+    if (( ${#cd_exact_source_lba_normalized} > 10 )) ||
+       (( 10#$cd_exact_source_lba_normalized > 4294967295 )); then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295' >&2
+        exit 1
+    fi
+    cd_exact_source_lba=$cd_exact_source_lba_normalized
+    if [[ "$capture_mednafen_module" != pce_fast ]]; then
+        printf '%s\n' 'FAIL: exact source-LBA filtering requires the PCE Fast module' >&2
+        exit 1
+    fi
 fi
 normalize_decimal_limit() {
     local value=$1
@@ -1958,6 +1980,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02" \
+    FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA="$cd_exact_source_lba" \
     FIRESTAFF_THERON_SYSTEM_CARD_DISPATCH_TRACE="$system_card_dispatch_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace" \
@@ -3208,6 +3231,7 @@ fi
     printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
     printf 'cd_data_port_read_trace_limit=%s\n' "$cd_data_read_trace_limit"
     printf 'cd_data_port_read_start_at_track02=%s\n' "$cd_data_read_start_at_track02"
+    printf 'exact_source_lba_filter=%s\n' "${cd_exact_source_lba:-none}"
     printf 'source_bound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_bound_count"
     printf 'source_unbound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_unbound_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"

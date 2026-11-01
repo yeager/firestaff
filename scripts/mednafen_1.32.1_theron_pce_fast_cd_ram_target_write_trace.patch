@@ -98,7 +98,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +#include "pce.h"
 FIRESTAFF_PATCH_BLANK_CONTEXT
  namespace MDFN_IEN_PCE_FAST
-@@ -261,17 +261,98 @@
+@@ -261,17 +261,116 @@
 +static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 user_data_offset,
 +                                      uint16 raw_sector_offset, uint32 track02_start_lba,
 +                                      uint32 track02_end_lba, uint32 track02_index1_file_offset,
@@ -108,6 +108,9 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + static unsigned count = 0;
 + static unsigned trace_limit = 0;
 + static bool start_at_track02 = false;
++ static bool exact_source_lba_requested = false;
++ static bool exact_source_lba_enabled = false;
++ static uint32 exact_source_lba = 0;
 + static bool trace_options_initialized = false;
 + static bool start_vram_trace_at_track02 = false;
 + static bool start_vram_trace_mode_initialized = false;
@@ -126,15 +129,30 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + {
 +  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT");
 +  const char *start_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02");
++  const char *exact_lba_text = getenv("FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA");
 +  char *end = NULL;
 +  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 65536UL;
 +  trace_limit = end && *end == 0 && parsed >= 65536UL && parsed <= 1048576UL ?
 +    (unsigned)parsed : 65536U;
 +  start_at_track02 = start_text && start_text[0] == '1' && start_text[1] == 0;
++  exact_source_lba_requested = exact_lba_text && *exact_lba_text;
++  if(exact_source_lba_requested)
++  {
++   char *exact_end = NULL;
++   const unsigned long parsed_exact_lba = strtoul(exact_lba_text, &exact_end, 10);
++   if(exact_end && exact_end != exact_lba_text && *exact_end == 0 && parsed_exact_lba <= 0xFFFFFFFFUL)
++   {
++    exact_source_lba = (uint32)parsed_exact_lba;
++    exact_source_lba_enabled = true;
++   }
++  }
 +  trace_options_initialized = true;
 + }
 + if(start_at_track02 && (!source_valid || source_lba < track02_start_lba ||
 +                         source_lba >= track02_end_lba))
++  return;
++ if(exact_source_lba_requested &&
++    (!exact_source_lba_enabled || !source_valid || source_lba != exact_source_lba))
 +  return;
 + if(count >= trace_limit)
 +  return;
