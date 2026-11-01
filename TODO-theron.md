@@ -24,6 +24,23 @@ those bytes. Recompute the identity-checked target with
 [`plan_theron_jp_akutuba_map_trace.py`](tools/plan_theron_jp_akutuba_map_trace.py);
 see the [source-sector report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md).
 
+## 2026-11-01 — define the JP active-map capture acceptance chain
+
+The next authentic cold JP capture must join these events in one shared
+sequence: hash-verified Track 02 reads of the Akutuba descriptor and map arrays;
+the System Card transfer and any `$23AD` decode; the game-owned active-map
+selector; and a read of the tile at the captured party pose. Retain logical and
+physical PCs, fetched instruction bytes, MPRs, disc LBA and user-data offset,
+RAM destinations, and an atomic VDC/VCE/VRAM snapshot so each source-to-consumer
+step can be checked independently.
+
+The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
+use them only after the runtime pose, selected map, and tile consumer are bound.
+Pair an accepted input with a no-input control. Do not change movement or
+viewport behavior from static source offsets, retained RAM scans, or event
+ordering alone. The planner's disc LBA 3674 is a capture filter target, not
+evidence that the original read or selected the map.
+
 The fetched-code verifier now rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
 Its regression passed three loops. The next step remains an isolated
