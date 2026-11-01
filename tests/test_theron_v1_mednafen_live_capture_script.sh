@@ -35,6 +35,36 @@ if ! grep -Fq 'THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER must be none or drator-ro
     printf '%s\n' 'FAIL: live capture did not explain the invalid spawn-consumer PC filter' >&2
     exit 1
 fi
+if verify_value_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=invalid \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an invalid code-fetch source-verification value' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY must be 0 or 1' \
+    <<<"$verify_value_output"; then
+    printf '%s\n' 'FAIL: invalid code-fetch source-verification value lacked a precise diagnostic' >&2
+    exit 1
+fi
+if verify_without_trace_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: code-fetch source verification did not require its trace' >&2
+    exit 1
+fi
+if ! grep -Fq 'code-fetch source verification requires THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1' \
+    <<<"$verify_without_trace_output"; then
+    printf '%s\n' 'FAIL: missing code-fetch trace lacked a precise diagnostic' >&2
+    exit 1
+fi
+if verify_wrong_module_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1 "$script" 2>&1); then
+    printf '%s\n' 'FAIL: code-fetch source verification accepted the standard PCE module' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE requires the pce_fast module' \
+    <<<"$verify_wrong_module_output"; then
+    printf '%s\n' 'FAIL: wrong code-fetch verification module lacked a precise diagnostic' >&2
+    exit 1
+fi
 if spawn_filter_module_output=$(env THERON_CAPTURE_MEDNAFEN_MODULE=pce \
     THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row "$script" 2>&1); then
     printf '%s\n' 'FAIL: Drator row consumer filtering accepted the standard PCE module' >&2

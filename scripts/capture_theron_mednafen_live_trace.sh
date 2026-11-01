@@ -164,8 +164,19 @@ if [[ "$spawn_consumer_pc_filter" == drator-row &&
 fi
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
 pce_fast_c852_fetch_enabled=${THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE:-0}
+pce_fast_code_fetch_source_verify=${THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY:-0}
 if [[ "$pce_fast_c852_fetch_enabled" != 0 && "$pce_fast_c852_fetch_enabled" != 1 ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_code_fetch_source_verify" != 0 &&
+      "$pce_fast_code_fetch_source_verify" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 &&
+      "$pce_fast_c852_fetch_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: code-fetch source verification requires THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1' >&2
     exit 1
 fi
 if [[ "$pce_fast_c852_fetch_enabled" == 1 && "$capture_mednafen_module" != pce_fast ]]; then
@@ -1575,8 +1586,12 @@ pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
 pce_fast_a1b7_bmt_write_trace="${trace}.a1b7-bmt-write"
 pce_fast_a1a9_init_trace="${trace}.a1a9-init"
 pce_fast_c852_fetch_trace=
+pce_fast_c852_fetch_source_report=
 if [[ "$pce_fast_c852_fetch_enabled" == 1 ]]; then
     pce_fast_c852_fetch_trace="${trace}.c852-fetch"
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 ]]; then
+    pce_fast_c852_fetch_source_report="${trace}.c852-fetch-source-report"
 fi
 pce_fast_vram_snapshot="${trace}.pce-fast.vram"
 pce_fast_vce_snapshot="${trace}.pce-fast.vce"
@@ -1661,6 +1676,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$pce_fast_pointer_ram_write_trace" \
     "$pce_fast_a1a9_init_trace" \
     ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} \
+    ${pce_fast_c852_fetch_source_report:+"$pce_fast_c852_fetch_source_report"} \
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
@@ -1715,6 +1731,12 @@ else
             exit 1
             ;;
     esac
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 &&
+      ( "$track02_mode" != 'MODE1/2352' ||
+        "$track02_md5" != f23601102138f87c33025877767ebf76 ) ]]; then
+    printf '%s\n' 'FAIL: code-fetch source verification requires authentic US raw Track 02 BIN' >&2
+    exit 1
 fi
 if [[ -n "$configured_home" ]]; then
     # The configured home is an input-map template, never the live capture
@@ -2347,6 +2369,15 @@ if [[ -n "$pce_fast_c852_fetch_trace" ]]; then
     if [[ ! -s "$pce_fast_c852_fetch_trace" ]] ||
        ! grep -Fqx 'source=mednafen-pce-fast-c852-opcode-fetch event_sequence_source=TheronTraceCDSharedEventSequence' "$pce_fast_c852_fetch_trace"; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid C852 opcode-fetch trace' >&2
+        exit 1
+    fi
+fi
+if [[ -n "$pce_fast_c852_fetch_source_report" ]]; then
+    if ! python3 "$script_dir/verify_theron_pce_fast_code_fetch_source.py" \
+            "$pce_fast_c852_fetch_trace" "$track02_path" \
+            > "$pce_fast_c852_fetch_source_report"; then
+        printf '%s\n' 'FAIL: C852/Drator fetched-code trace did not bind both reader PCs to authentic US Track 02' >&2
+        cat -- "$pce_fast_c852_fetch_source_report" >&2 || true
         exit 1
     fi
 fi
@@ -3044,6 +3075,13 @@ fi
     fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
     printf 'autoload_state_load_status=%s\n' "$autoload_state_load_status"
+    if [[ "$pce_fast_code_fetch_source_verify" == 1 ]]; then
+        printf 'pce_fast_code_fetch_source_verification=passed\n'
+        printf 'pce_fast_code_fetch_source_report=%s\n' \
+            "$pce_fast_c852_fetch_source_report"
+    else
+        printf 'pce_fast_code_fetch_source_verification=not_requested\n'
+    fi
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"

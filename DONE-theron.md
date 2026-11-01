@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — gate Drator source reports in the capture wrapper
+
+- Added opt-in `THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1` to the
+  live-capture wrapper. It requires the C852 fetch hook and authenticated US
+  raw MODE1/2352 Track 02 (`f23601102138f87c33025877767ebf76`), then runs the
+  strict verifier on the produced sidecar before the capture can be reported
+  as source-verified.
+- A successful run writes `<trace>.c852-fetch-source-report` and records its
+  path plus `pce_fast_code_fetch_source_verification=passed` in the transition
+  receipt. Missing PCs, source mismatches, bad sequences, and truncation reject
+  the run. Default capture behavior is unchanged when the flag is off.
+- The full live-capture wrapper contract script passed, including the new
+  invalid-value, missing-hook, and wrong-module checks. The code-fetch
+  verifier regression also passed three loops; `bash -n` and `git diff --check`
+  passed. No emulator was started and no authentic replay has yet
+  used this gated mode.
+
 ## 2026-11-01 — require complete Drator reader-source receipts
 
 - Hardened the fetched-code verifier so a successful report requires both

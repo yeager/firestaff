@@ -19,8 +19,11 @@ The fetched-code verifier now rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
 Its regression passed three loops. The next step remains an isolated
 authentic replay that yields complete windows at both PCs and follows the
-copied work buffer to its downstream reader; the verifier fixtures are not
-gameplay evidence.
+copied work buffer to its downstream reader. For that US raw Track 02 replay,
+enable both `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
+`THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1`; the wrapper then rejects
+an incomplete source join and records a sidecar report. The verifier fixtures
+are not gameplay evidence.
 
 ## Next original-game analysis — join Drator reader PCs to fetched source bytes
 

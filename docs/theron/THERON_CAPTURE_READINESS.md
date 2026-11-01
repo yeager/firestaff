@@ -42,6 +42,14 @@ truncation marker rejects the report. Multiple matching offsets remain
 explicit rather than being collapsed to one source occurrence. The verifier's
 regression passed three loops, but no authentic capture has exercised these
 reader windows yet.
+For an isolated US raw Track 02 replay, set both
+`THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
+`THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1`. The capture wrapper
+requires the authenticated US MODE1/2352 BIN and runs the verifier before
+accepting the source report. It writes
+`${THERON_LIVE_TRACE_OUTPUT}.c852-fetch-source-report` and records the report
+path in the transition receipt. This strict source gate is opt-in and does
+not apply to JP or MODE1/2048 ISO captures.
 Correlate them with the
 main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
