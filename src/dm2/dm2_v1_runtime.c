@@ -4552,10 +4552,12 @@ static void dm2_runtime_apply_spell_cooldown(
     dm2_runtime_apply_hand_cooldown(rt, hero, cooldown_ticks, 2);
 }
 
-/* SKWINSPX v5 skgdtqdb.cpp::DM2_FIND_HAND_WITH_EMPTY_FLASK and
- * skevents.cpp POTION branch: hand 1 is inspected before hand 0; DB8/cls2
- * 0x14 is removed, changed to the produced potion type, assigned its
- * randomized power in record word 1, and equipped back into that hand. */
+/* SKProject source: SKWINSPX v4 skchamp.cpp::FIND_HAND_WITH_EMPTY_FLASK /
+ * skspell.cpp POTION case, and v5 skgdtqdb.cpp::DM2_FIND_HAND_WITH_EMPTY_FLASK /
+ * skevents.cpp POTION branch. Both scan hand 1 before hand 0 for DB8/cls2
+ * 0x14; the successful cast mutates that record to the produced potion type,
+ * assigns randomized power, and equips the same record back into that hand.
+ * Firestaff currently binds this shared scan only through its DOS/v5 runtime. */
 static uint8_t dm2_runtime_spell_query_cls2(uint16_t item, void *ctx)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
