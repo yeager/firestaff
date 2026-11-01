@@ -133,11 +133,9 @@ void dm2_v1_click_magical_map_rune(
     if (!cb || !cb->rune_table || !cb->v1e0b62)
         return;
 
-    /* rune_table is table1d67fe[9], so rune_index must name one of its nine
-     * entries. It arrives unvalidated from the caller: without this bound a
-     * negative or large index read past the table and shifted by >= 31,
-     * which is undefined. */
-    if (rune_index < 0 || rune_index > 8)
+    /* DOS, SKULLWIN and SPX v5 define table1d67fe as four entries; SPX v4
+     * uses RCJ(4, rune). UI event values therefore address indices 0..3. */
+    if (rune_index < 0 || rune_index >= DM2_V1_MAGICAL_MAP_RUNE_COUNT)
         return;
 
     rune_cost = cb->rune_table[rune_index];
