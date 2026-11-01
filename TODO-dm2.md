@@ -2,8 +2,8 @@
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
 The locked checkout yields 3,929 active definitions (2,724 SPX and 1,205 DOS);
-3,851 remain unreviewed, 73 are partial, and 5 have mapped parity entries.
-The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,953 rows. The legacy DOS and SPX shooter
+3,831 remain unreviewed, 93 are partial, and 5 have mapped parity entries.
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,957 rows (3,831 unreviewed, 124 partial and 2 partial owners). The legacy DOS and SPX shooter
 source rows are now marked partial: Firestaff still lacks a live owner for the
 source DB14 allocation, projectile record initialization/tile append, and
 C1D/C1E follow-up timer transaction. Review and implement the remaining rows
@@ -33,6 +33,26 @@ step; failed live and candidate enqueues restore their sound/timer state. The
 party and creature collision calls now pass GEN2 fields in source order:
 category, sound id, 0xfe, and alternate class. Exact platform-specific source
 resource edges and supported-edition mapping remain open.
+
+2026-11-01 DM2 PC reported viewport/HUD and intro-palette issue: Rechecked
+with the authentic DOS EN ZIP. `test_dm2_v1_dos_native_cli_boot.sh` passed the
+first presented INTRO frame's source RGB digest
+`d0c0fa5670a63c09c8a8ee81e6ee8d1cf827cba708794754d8e0f93e49b706d4`, the
+M12-to-runtime launch, and the input/debug matrix. The runtime receipt at the
+authentic start pose `(1,8,north)` reports the frame accepted, real assets,
+zero core fallbacks or blocked materials, 11 walls, eight items and all eight
+HUD commands consumed. Its pixel gate establishes visible regions only; the
+intro digest checks the first frame only, and neither is a same-pose comparison
+with the DOS executable. Cross-platform checks also passed the authentic DM2
+Amiga native CLI route (CTest, 116.95 s), FM Towns native CLI route (CTest,
+288.89 s), and a Mac CLI runtime route using the already extracted original
+English `DMFiles` (map 0, party `(3,8)`, east; 14 walls, eight HUD commands,
+zero fallbacks or blocked materials). Mac's archive-based CTest skipped because
+the canonical retail ZIP is not staged, and no original DOS/Mac screenshot was
+available for visual comparison. Keep the reported PC viewport/HUD and full
+intro-palette symptoms open until a same-state original capture and the reported
+MacBook Pro M5 display are checked; these tests do not prove pixel parity.
+
 2026-11-01 DM2 Amiga no-game M12 runtime retest at `93c644549`: the local
 `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` (90.80 s) against the installed original

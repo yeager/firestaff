@@ -28,6 +28,16 @@ Expanded `--debug` HUD receipts now identify top-row presentation or the exact
 rejection stage; native-user captures and other editions still need checking
 if the HUD symptom recurs.
 
+2026-11-01 latest-release check for the reported PC combat/HUD symptoms: the
+published v3.0.422 tag points to `995d524e`, before the PC34 save-AI fix in
+`eb7638d59`, so that release does not include the restoration fix. On current
+`main`, the local authentic PC34 `DMSAVE.DAT` resumed with `--debug` and
+reported all four champions present/alive (`present-mask=0xf`) and
+`reason=pc34-top-row-presented`. The authentic first-monster combat checks
+passed for PC34, Amiga 2.0, Atari ST 1.2, FM Towns, and Amiga 3.6. The PC34
+save/HUD trace used SDL's dummy display and a local original save; it does not
+verify the user's exact save or physical display/input.
+
 2026-11-01 DM1 Amiga 3.6 no-game M12 runtime retest at `93c644549`: the
 local `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm1-amiga` (90.52 s) against the installed original
