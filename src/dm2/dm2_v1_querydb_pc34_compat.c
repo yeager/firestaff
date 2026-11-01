@@ -23,7 +23,7 @@ int dm2_v1_query_creatures_item_mask_bytes(
     const struct DM2_V1_AssetLoader *loader, int creature_index,
     int text_field_base, int is_creature, uint8_t out_mask[64]);
 int16_t dm2_v1_get_max_charge(uint16_t record_word);
-int32_t dm2_v1_query_cls1_from_record(
+static int32_t dm2_v1_querydb_cls1_from_record(
     int32_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 int16_t dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec);
 
@@ -695,7 +695,7 @@ static uint8_t dm2_query48ae05ae_cls1(void *ctx, int32_t record)
 {
     DM2_V1_Query48ae05aeLoaderContext *loader_ctx =
         (DM2_V1_Query48ae05aeLoaderContext *)ctx;
-    uint8_t cls1 = (uint8_t)dm2_v1_query_cls1_from_record(record, NULL, NULL);
+    uint8_t cls1 = (uint8_t)dm2_v1_querydb_cls1_from_record(record, NULL, NULL);
     if (cls1 == 0xffu && loader_ctx) loader_ctx->missing_data = 1;
     return cls1;
 }
@@ -1053,7 +1053,7 @@ int32_t dm2_v1_query_turn_left(int32_t dir,
 
 /* ── Section 11: Record classification helpers ────────────────────── */
 
-int32_t dm2_v1_query_cls1_from_record(int32_t record,
+static int32_t dm2_v1_querydb_cls1_from_record(int32_t record,
                                       const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
     static const uint8_t table1d3298[16] = {
