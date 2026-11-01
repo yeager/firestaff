@@ -3,7 +3,8 @@ set -euo pipefail
 . "$(dirname "$0")/lib/portable_sha256.sh"
 
 app=${1:?usage: test_m12_main_menu_csb_amiga_multi_runtime_real_media.sh <firestaff> <data-root>}
-data_root=${2:?usage: test_m12_main_menu_csb_amiga_multi_runtime_real_media.sh <firestaff> <data-root>}
+data_root=${2:?usage: test_m12_main_menu_csb_amiga_multi_runtime_real_media.sh <firestaff> <data-root> [en|fr|de]}
+language=${3:-en}
 archive="$data_root/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     echo 'SKIP: Firestaff or authentic CSB Amiga multilingual preservation archive is unavailable'
@@ -36,11 +37,17 @@ probe="$scratch/runtime.json"
 log="$scratch/menu.log"
 mkdir -p "$home"
 
+case "$language" in
+    en) language_click='click:636:540'; expected_language_index=0 ;;
+    fr) language_click='click:594:270'; expected_language_index=1 ;;
+    de) language_click='click:594:810'; expected_language_index=2 ;;
+    *) echo "FAIL: unsupported language '$language' (expected en, fr, or de)" >&2; exit 2 ;;
+esac
 # Select CSB -> Amiga -> Custom, switch from the matched English A31 edition
-# to its authenticated multilingual edition, then choose English in the
-# original APPB language screen. The isolated root exposes only the original
-# Amiga software archive.
-navigation='wait-scan-complete,wait20,click:1190:262,wait20,click:934:405,wait20,click:1458:405,wait20,click:520:442,wait20,click:960:892,wait:1000,click:636:540,key:enter,up'
+# to its authenticated multilingual edition, then choose the requested
+# language in the original APPB selector. The isolated root exposes only the
+# original Amiga software archive. Source click zones in APPB are 320x200.
+navigation="wait-scan-complete,wait20,click:1190:262,wait20,click:934:405,wait20,click:1458:405,wait20,click:520:442,wait20,click:960:892,wait:1000,$language_click,key:enter,up"
 env -u FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS \
     -u FIRESTAFF_ORIGINALS_DIR -u FIRESTAFF_EXIT_AFTER_LAUNCH \
     FIRESTAFF_DATA="$menu_data" \
@@ -65,16 +72,19 @@ if ! grep -Fq 'startup game=none mode=menu' "$log" ||
     exit 1
 fi
 
-python3 - "$probe" <<'PY'
+python3 - "$probe" "$language" "$expected_language_index" <<'PY'
 import json
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as source:
     probe = json.load(source)
+language = sys.argv[2]
+expected_language_index = int(sys.argv[3])
 startup = probe["startup"]
 party = probe["party"]
 if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
         probe.get("sourceId") != "csb" or
+        probe.get("csbAmigaLanguageIndex") != expected_language_index or
         probe.get("bootAssetMd5") != "61fbfd56887c94adc26888a9491c6611" or
         startup.get("receiptReady") != 1 or
         startup.get("phase") != "inactive" or
@@ -85,7 +95,7 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
         not probe.get("csbViewportHash") or
         probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
     raise SystemExit(f"FAIL: CSB Amiga multilingual menu missed its authentic runtime: {probe}")
-print("PASS: CSB Amiga multilingual no-game menu reached its English runtime frame")
+print(f"PASS: CSB Amiga multilingual no-game menu selected {language} and reached its authentic runtime frame")
 PY
 
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then

@@ -308,8 +308,11 @@ int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {
     for (i = 0; i < pool->party_count; i++)
         if (pool->party[i] == mirror_index) return -1;
     pool->party[pool->party_count++] = mirror_index;
-    printf("Recruited %s (%s)\n", pool->champions[mirror_index].name_ascii,
-        pool->champions[mirror_index].name_jp);
+    if (pool->debug_enabled) {
+        printf("Nexus: recruited %s (%s)\n",
+               pool->champions[mirror_index].name_ascii,
+               pool->champions[mirror_index].name_jp);
+    }
     return pool->party_count - 1;
 }
 
@@ -442,10 +445,12 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
 
     if (successor >= 0) {
         pool->leader_index = successor;
-        printf("Leader %s died; promoted %s to party leader (slot %d)\n",
-               pool->champions[dead_champion_index].name_ascii,
-               pool->champions[pool->party[successor]].name_ascii,
-               successor);
+        if (pool->debug_enabled) {
+            printf("Nexus: leader %s died; promoted %s to party leader (slot %d)\n",
+                   pool->champions[dead_champion_index].name_ascii,
+                   pool->champions[pool->party[successor]].name_ascii,
+                   successor);
+        }
         return successor;
     }
 
@@ -775,9 +780,6 @@ int nexus_v1_champion_vi_altar_rebirth(Nexus_V1_Champion *c, int party_direction
      * MASK0x8000_ACTION_HAND | MASK0x1000_STATUS_BOX | MASK0x0400_ICON.
      * Source: REVIVE.C F0283 line 940. */
     c->attributes |= NEXUS_ATTR_LOAD_CHANGED | NEXUS_ATTR_STATISTICS;
-
-    printf("%s [Vi Altar]: reborn with health %d/%d (permanent max-health reduction)\n",
-           c->name_ascii, c->health, c->max_health);
 
     return 0;
 }

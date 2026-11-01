@@ -40,6 +40,18 @@ for version in 20 21; do
         }
     assert_trace "platformHandoff=iigs-g$version-native" "$scratch/g$version-cli.log"
     assert_trace 'party=1,3,3' "$scratch/g$version-cli.log"
+    # A sole original IIGS image must be enough for AUTO platform detection;
+    # do not silently require users to pass --platform apple-iigs.
+    FIRESTAFF_CONFIG_PATH="$scratch/g$version-auto.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --game dm1 --data-dir "$scratch/g$version.po" \
+        --debug --boot-probe --boot-probe-frames 4 --script turn-right \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-asset-md5 1045a36952e64eb2bc7b4c7b2965b112 \
+        >"$scratch/g$version-auto.log" 2>&1 || {
+            cat "$scratch/g$version-auto.log"; exit 1;
+        }
+    assert_trace "platformHandoff=iigs-g$version-native" "$scratch/g$version-auto.log"
+    assert_trace 'party=1,3,3' "$scratch/g$version-auto.log"
     FIRESTAFF_CONFIG_PATH="$scratch/g$version-direct.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         "$app" --game dm1 --platform apple-iigs --data-dir "$scratch/g$version.po" \

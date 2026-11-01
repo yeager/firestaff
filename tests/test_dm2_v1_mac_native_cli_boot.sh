@@ -97,6 +97,25 @@ if [ "$(uname -s)" = Darwin ]; then
             exit 1
             ;;
     esac
+
+    # The detailed startup trace must name the admitted Macintosh platform;
+    # reporting `other` hides which original startup owner was selected.
+    debug_probe_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --debug --game dm2 --platform mac --data-dir "$archive" \
+        --boot-probe --boot-probe-frames 1 --duration 0 2>&1) || {
+        printf '%s\n' 'FAIL: DM2 Macintosh debug boot probe failed' \
+            "$debug_probe_output" >&2
+        exit 1
+    }
+    case "$debug_probe_output" in
+        *'dm2-platform-intro={platform:mac-en '*) ;;
+        *)
+            printf '%s\n' \
+                'FAIL: DM2 --debug did not identify the Macintosh startup platform' \
+                "$debug_probe_output" >&2
+            exit 1
+            ;;
+    esac
 fi
 
 FIRESTAFF_DATA="$menu_data_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \

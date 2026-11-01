@@ -6,6 +6,10 @@ app=${1:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <dat
 data_root=${2:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <data-root>}
 data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
+# The timeout covers a full authentic-media scan followed by synchronous
+# source startup. Some systems need more than 90 seconds for both phases.
+picker_duration_ms=${FIRESTAFF_PICKER_TEST_DURATION_MS:-180000}
+
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
@@ -193,7 +197,7 @@ run_game_picker_case() {
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 1920 --height 1080 \
         --data-dir "$menu_data_root" \
-        --script "$navigation" --duration 90000 >"$log" 2>&1 || {
+        --script "$navigation" --duration "$picker_duration_ms" >"$log" 2>&1 || {
             cat "$log" >&2
             return 1
         }
@@ -531,16 +535,20 @@ if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ]]; then
         "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" 2 Amiga amiga-en
 fi
 dm2_mac_archive=""
+# Authenticate the Macintosh payload through Firestaff's catalogued retail
+# Graphics.dat identity. The original files may be repacked into ZIP without
+# changing that game-data identity, so the outer ZIP hash is not authoritative.
 dm2_mac_archive_present=0
-# Keep this identity aligned with tests/test_dm2_v1_real_media_hash_lock.sh;
-# local collections may contain a stale same-named alias beside the retail ZIP.
-expected_dm2_mac_sha256=dfea2fe53988784bc1525d6ad90ab881d260b74cd6a855e0eb35d04001ecfe5b
+dm2_mac_retail_asset_md5=5cab25f6b975957eae4a203174e7f2a6
 for candidate in \
     "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" \
     "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"; do
     if [[ -f "$candidate" ]]; then
         dm2_mac_archive_present=1
-        if [[ $(firestaff_sha256_file "$candidate") == "$expected_dm2_mac_sha256" ]]; then
+        candidate_probe=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --game dm2 --platform mac --data-dir "$candidate" --boot-probe \
+            --boot-probe-frames 1 --duration 0 2>&1) || candidate_probe=""
+        if [[ "$candidate_probe" == *"assetMd5=$dm2_mac_retail_asset_md5"* ]]; then
             dm2_mac_archive=$candidate
             break
         fi
@@ -550,7 +558,7 @@ if [[ -n "$dm2_mac_archive" ]]; then
     run_alternate_platform_picker_case dm2 \
         "$dm2_mac_archive" 3 Macintosh mac-en-retail
 elif [[ $dm2_mac_archive_present == 1 ]]; then
-    echo 'FAIL: no DM2 Macintosh archive matches the locked retail SHA-256' >&2
+    echo 'FAIL: no DM2 Macintosh ZIP contains the catalogued retail Graphics.dat' >&2
     exit 1
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} == 1 ]]; then
@@ -617,7 +625,7 @@ run_default_root_game_picker_case() {
         HOME="$data_home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
             "$app" --debug --width 1920 --height 1080 \
-            --script "$navigation" --duration 90000
+            --script "$navigation" --duration "$picker_duration_ms"
     ) >"$log" 2>&1 || {
         cat "$log" >&2
         return 1

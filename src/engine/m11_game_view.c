@@ -2800,6 +2800,79 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
            menu_raw_hash != 0u && menu_raw_byte_count != 0u;
 }
 
+static int m11_dm2_amiga_startup_menu_ready(const M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    const uint8_t *palette;
+    size_t palette_size = 0u;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    int color;
+
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_amiga_profile(profile) ||
+        !profile->amiga_animation_media_verified ||
+        !(loader = dm2_v1_boot_asset_loader((DM2_V1_BootProfile *)profile))) {
+        return 0;
+    }
+    memset(&image, 0, sizeof(image));
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 4, &image) ||
+        !image.accepted || image.metadata.width != 320u ||
+        image.metadata.height != 200u || image.metadata.bits_per_pixel != 4u ||
+        image.colors != 16u || image.palette_hash == 0u ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            (DM2_V1_BootProfile *)profile, DM2_GDAT_CATEGORY_TITLE, 0, 4,
+            0x414d4d45u, &raw_hash, &raw_byte_count) ||
+        raw_hash == 0u || raw_byte_count == 0u) {
+        return 0;
+    }
+    palette = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_TITLE, 0, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+        4, &palette_size);
+    if (!palette || palette_size != 16u * 4u) return 0;
+    for (color = 0; color < 16; ++color) {
+        if (palette[(size_t)color * 4u] != (uint8_t)color) return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_GetDm2StartupMenuNewGameHitRect(
+    const M11_GameViewState* state,
+    int* outX, int* outY, int* outW, int* outH)
+{
+    const DM2_V1_BootProfile* profile;
+    DM2_V1_StartupMenuPointerLayout layout;
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+    if (!state || !outX || !outY || !outW || !outH ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2FmtownsTitleFinished ||
+        !state->dm2State.startup_menu_active ||
+        !(profile = (const DM2_V1_BootProfile*)state->dm2BootProfile) ||
+        (!(m11_dm2_is_fmtowns_profile(profile) &&
+           m11_dm2_fmtowns_skull_menu_ready(state)) &&
+         !(m11_dm2_is_amiga_profile(profile) &&
+           m11_dm2_amiga_startup_menu_ready(state)))) {
+        return 0;
+    }
+    memset(&layout, 0, sizeof(layout));
+    if (!dm2_v1_boot_startup_menu_pointer_layout(
+            (DM2_V1_BootProfile*)profile, &layout) || !layout.valid ||
+        layout.new_game.w <= 0 || layout.new_game.h <= 0) {
+        return 0;
+    }
+    *outX = layout.new_game.x;
+    *outY = layout.new_game.y;
+    *outW = layout.new_game.w;
+    *outH = layout.new_game.h;
+    return 1;
+}
+
 /* The HME-242 menu is an IMG2 surface with its own 16×4 IRGB record, rather
  * than the PC raw 64000-byte screen consumed by the generic M11 executor.
  * Present it only through the boot-owned GDAT query after its exact source
@@ -20159,6 +20232,7 @@ static void m11_refresh_hash(M11_GameViewState* state) {
 
 static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
+static int m11_dm1_iigs_front_cell_has_group(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
 static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
@@ -39529,11 +39603,43 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY && input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY)
             return m11_toggle_champion_inventory(state,input-M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+        if (input == M12_MENU_INPUT_CYCLE_CHAMPION)
+            return m11_cycle_active_champion(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_INVENTORY_TOGGLE || input == M12_MENU_INPUT_LEADER_INVENTORY)
             return m11_toggle_champion_inventory(state,state->world.party.activeChampionIndex);
         if (input == M12_MENU_INPUT_BACK && state->inventoryPanelActive)
             return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
         if (input == M12_MENU_INPUT_BACK) return M11_GAME_INPUT_RETURN_TO_MENU;
+        /* Keep the host ACTION control useful in the native IIGS world:
+         * like the other DM1 editions, it attacks a creature in the front
+         * cell before falling back to the IIGS mirror-selection action.
+         * Use the first available melee action through F0391/F0407; a bare
+         * CMD_ATTACK has no live action index and cannot resolve a strike. */
+        if (input == M12_MENU_INPUT_ACTION &&
+            m11_dm1_iigs_front_cell_has_group(state)) {
+            unsigned char actions[3];
+            int championIndex=state->world.party.activeChampionIndex;
+            if (championIndex<0 || championIndex>=state->world.party.championCount)
+                championIndex=0;
+            if (!M11_GameView_SetActingChampion(state,championIndex) ||
+                !M11_GameView_GetActingActionIndices(state,actions)) {
+                M11_GameView_ClearActingChampion(state);
+                return M11_GAME_INPUT_IGNORED;
+            }
+            for (int row=0;row<3;++row) {
+                if (actions[row]!=0xFFu &&
+                    dm1_v1_action_is_melee_contact_f0407_pc34(actions[row])) {
+                    /* A source-valid PUNCH can miss and still consume the
+                     * action/cooldown. That is accepted input, not an
+                     * ignored host command. */
+                    (void)M11_GameView_TriggerActionRow(state,row);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+            M11_GameView_ClearActingChampion(state);
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_ACCEPT)
             return M11_GameView_SelectFrontMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_USE_STAIRS) {
@@ -48113,6 +48219,22 @@ static int m11_front_cell_has_attack_target(const M11_GameViewState* state) {
         return 0;
     }
     return frontCell.summary.groups > 0;
+}
+
+static int m11_dm1_iigs_front_cell_has_group(const M11_GameViewState* state) {
+    M11_ViewportCell frontCell;
+    unsigned short thing;
+    if (!state || !state->dm1IigsActive || !state->world.things ||
+        !m11_get_front_cell(state,&frontCell)) return 0;
+    thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon,state->world.things,state->world.party.mapIndex,
+        frontCell.mapX,frontCell.mapY);
+    for (unsigned guard=0u;thing!=THING_ENDOFLIST && thing!=THING_NONE &&
+        guard<128u;++guard) {
+        if (THING_GET_TYPE(thing)==THING_TYPE_GROUP) return 1;
+        thing=F0512_DUNGEON_GetThingNext_Compat(state->world.things,thing);
+    }
+    return 0;
 }
 
 static int m11_front_cell_is_door(const M11_GameViewState* state) {

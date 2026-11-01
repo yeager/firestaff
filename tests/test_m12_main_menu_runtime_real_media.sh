@@ -80,6 +80,15 @@ run_main_menu_runtime_case() {
     python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" "$probe_route" "$probe"
 
     if [[ "$probe_route" == dm2-amiga ]]; then
+        for required in \
+            'autotest dm2-menu-ready source-rect=' \
+            'autotest dm2-new-game source-rect='; do
+            if ! grep -Fq "$required" "$log"; then
+                printf 'FAIL: authentic DM2 Amiga menu omitted %s\n' "$required" >&2
+                tail -100 "$log" >&2
+                return 1
+            fi
+        done
         if ! grep -Eq '^firestaff: dm2-render-debug game=dm2 platform=amiga-en .*hud=[{]required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ' "$log" ||
            ! grep -Eq '^firestaff: dm2-render-hud-plan game=dm2 platform=amiga-en index=[0-9]+ .*kind=5 .*gdat=8/2/245 rect-id=02f rect=[0-9]+,[0-9]+,43,43 size=43x43 .*table=[0-9a-f]{8}$' "$log"; then
             printf 'FAIL: authentic DM2 Amiga runtime did not consume its GRAPHICSSET/2/F5 squad panel at RECT_47\n' >&2
@@ -155,7 +164,7 @@ run_selected_main_menu_runtime_case dm1 "$dm1_archive" fmtowns-en \
 run_selected_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 150000
 run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
-    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65,click:100:60' 90000
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' 90000
 
 # Exercise the no-game picker through DM1's Amiga architecture and require an
 # authentic Amiga 3.6 runtime receipt, not just a direct --game boot.
@@ -182,7 +191,7 @@ fi
 if [[ "$selected_game" == all || "$selected_game" == dm2-amiga ]]; then
   if [[ -f "$dm2_amiga_archive" ]]; then
     run_main_menu_runtime_case dm2 "$dm2_amiga_archive" amiga-en \
-        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65' \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game' \
         90000 Amiga dm2-amiga
   elif [[ "$selected_game" == dm2-amiga ]]; then
     echo 'SKIP: authentic DM2 Amiga archive is unavailable'

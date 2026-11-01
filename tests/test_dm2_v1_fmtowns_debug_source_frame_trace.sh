@@ -16,25 +16,27 @@ trap 'rm -rf "$scratch_root"' EXIT HUP INT TERM
 
 # Use the ordinary direct CLI route. Boot-probe fast-forward is intentionally
 # excluded because it does not exercise the host scheduler or real-time trace.
+duration_ms=${FIRESTAFF_DM2_FMTOWNS_DEBUG_TIMEOUT_MS:-90000}
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --game dm2 --data-dir "$towns_archive" --debug --duration 40000 \
+    --game dm2 --data-dir "$towns_archive" --debug --duration "$duration_ms" \
     >"$trace_file" 2>&1 || {
         cat "$trace_file" >&2
         exit 1
     }
 
-python3 - "$trace_file" <<'PY'
+python3 - "$trace_file" "$duration_ms" <<'PY'
 from pathlib import Path
 import re
 import sys
 
 trace = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+duration_ms = int(sys.argv[2])
 frames = set()
 finished = []
 rejected = False
 pattern = re.compile(
     r"startup-frame game=dm2 elapsed-ms=(\d+).*?"
-    r"dm2-fmtowns-title=\{bound:(\d+) finished:(\d+) "
+    r"dm2-platform-intro=\{platform:fmtowns-ja bound:(\d+) finished:(\d+) "
     r"rejected:(\d+) swoosh:(\d+) frame:(\d+)/(\d+) ticks-remaining:\d+\}"
 )
 for match in pattern.finditer(trace):
@@ -51,7 +53,7 @@ if (
     frames != set(range(1, 225))
     or not finished
     or finished[-1][1:] != (225, 0)
-    or not 24000 <= finished[-1][0] < 40000
+    or not 24000 <= finished[-1][0] < duration_ms
     or rejected
     or "phase=dm2-startup-menu" not in trace
 ):

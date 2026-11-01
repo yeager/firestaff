@@ -3228,6 +3228,12 @@ uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state);
 uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
                                             int championIndex,
                                             int championSlot);
+/* Return the authenticated DM2 startup-menu New Game hit rectangle after the
+ * platform title hands off to its source-owned menu. Test automation uses its
+ * center instead of guessing coordinates; normal input uses the same route. */
+int M11_GameView_GetDm2StartupMenuNewGameHitRect(
+    const M11_GameViewState* state,
+    int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state);
 int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,

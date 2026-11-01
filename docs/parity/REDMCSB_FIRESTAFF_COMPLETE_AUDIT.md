@@ -866,3 +866,8 @@ Compared the DOS, SPX v4 and SPX v5 item-weight wrappers with Firestaff’s call
 ## Latest DM2 item-value review (2026-11-01)
 
 Compared DOS, SPX v4 and SPX v5 recursive item-value algorithms with Firestaff’s receipt helper. Source combines base values, charged-item bonuses, nested contents and special moneybox coin totals; DOS performs 16-bit accumulation, v4 uses 32-bit values, and v5 narrows charged products and item-value returns to 16 bits. Firestaff keeps int32 arithmetic and therefore differs on the DOS/v5 source-width edges. The helper’s bounded record/recursion checks do not bind the source-specific live record/GDAT callers. All three source functions remain `PARTIAL`. Current active-source counts: 3,013 unreviewed, 841 partial, 0 missing, 71 implemented-parity, 8 architecture-specific, 2 outside-game; combined DM2 backlog: 3,929 (3,013 unreviewed, 914 partial source/older-ledger rows, 0 missing, 2 partial source owners).
+
+
+### DM2 FIND_HAND_WITH_EMPTY_FLASK review (2026-11-01)
+
+Skproject DOS `dm2bya.cpp:2332`, SPX v4 `skchamp.cpp:819`, and SPX v5 `skgdtqdb.cpp:1511` scan hand slots 1 then 0, accepting a type-8 record only when its cls2 is `0x14`. Firestaff now implements the generic query function with the same order and checks, resolving cls2 through the caller callback and preserving the unsigned 16-bit object reference. Missing hero or record callbacks return `-1`. The live DM2 spell runtime still supplies no flask state and does not transform or consume the record, so this function and the source variants remain partial.

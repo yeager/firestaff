@@ -830,8 +830,27 @@ int32_t dm2_v1_querydb_get_player_at_position(int32_t pos,
 int32_t dm2_v1_find_hand_with_empty_flask(int32_t player_idx,
                                           const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:1400 */
-    (void)player_idx; (void)cb; (void)ctx;
+    int hand;
+
+    /* SKWINDOS dm2bya.cpp:2332, SPX v4 skchamp.cpp:819 and SPX v5
+     * skgdtqdb.cpp:1511 all scan action hand before ready hand, accepting
+     * only a DB type-8 item whose authenticated record class-2 is 0x14. */
+    if (!cb || !cb->get_hero_item || !cb->query_cls2_from_record ||
+        !cb->get_heros_in_party || player_idx < 0 ||
+        player_idx >= cb->get_heros_in_party(ctx))
+        return -1;
+
+    for (hand = 1; hand >= 0; --hand) {
+        int16_t item = cb->get_hero_item(ctx, player_idx, hand);
+        uint16_t item_bits;
+
+        item_bits = (uint16_t)item;
+        if (((item_bits >> 10) & 0x0fu) != 8u)
+            continue;
+        if (cb->query_cls2_from_record(ctx, (int32_t)item_bits) == 0x14u)
+            return hand;
+    }
+
     return -1;
 }
 

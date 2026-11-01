@@ -1,8 +1,19 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-29. The items below track open work and include completed
+Reviewed 2026-11-02. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
+
+## 2026-11-02 — gate champion diagnostic output
+
+Champion recruitment and automatic leader-promotion messages now follow the
+Nexus engine's `--debug` setting. The flag is copied into the runtime-only
+champion-pool state after retail roster initialization and when an initialized
+launcher receives an updated debug setting; it is not part of save data. The
+Vi Altar model helper has no runtime diagnostic context, so its unconditional
+stdout message was removed. The champion, engine and launcher translation
+units compile with AppleClang. This is source/compile evidence only; authentic
+runtime output for recruitment and leader promotion remains unverified.
 
 ## 2026-10-31 — NBG0 live-row replay
 

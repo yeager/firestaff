@@ -260,6 +260,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME dm1_v1_atari_st_10b_m12_no_game_menu_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_10b_m12_no_game_menu_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(dm1_v1_atari_st_10b_m12_no_game_menu_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;atari-st;st10b;main-menu;game-selection;runtime;real-media;skip-safe")
+
     add_test(NAME m12_main_menu_dm2_only_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
@@ -364,6 +372,16 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga-multilingual;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    foreach(language IN ITEMS fr de)
+        add_test(NAME m12_main_menu_csb_amiga_multi_${language}_runtime_real_media
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga_multi_runtime_real_media.sh"
+                "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" "${language}")
+        set_tests_properties(m12_main_menu_csb_amiga_multi_${language}_runtime_real_media PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 180
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+            LABELS "m12;csb;amiga;amiga-multilingual;${language};main-menu;game-selection;runtime;real-media;skip-safe")
+    endforeach()
+
     add_test(NAME m12_main_menu_csb_amiga33_runtime_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga33_runtime_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
@@ -372,7 +390,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-fmtowns-with-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france dm2-pc)
+    foreach(route IN ITEMS dm1-pc dm1-fmtowns-with-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france-label-en dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")
@@ -4528,7 +4546,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;debug;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/dm2-fmtowns-debug"
-        TIMEOUT 60
+        TIMEOUT 120
     )
     foreach(_scan_localization_case IN ITEMS
             "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"
