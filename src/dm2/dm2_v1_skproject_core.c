@@ -7931,7 +7931,7 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
     uint16_t object_id,
     uint8_t cls4,
     unsigned depth,
-    int spx_v5_widths,
+    int value_mode,
     DM2_V1_SkprojectItemValueReceipt *out_receipt)
 {
     DM2_V1_SkprojectItemValueReceipt receipt;
@@ -7962,6 +7962,8 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
         return 0;
     }
     value = dm2_v1_skproject_gdat_word_value(record, cls4);
+    if (value_mode == 2)
+        value = dm2_v1_skproject_signed_word(value);
     receipt.base_value = value;
 
     if (cls4 == 1u || cls4 == 2u) {
@@ -7978,20 +7980,36 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
                 object_id, &w2, 0, &charge_receipt);
             receipt.charge_value_added =
                 (int32_t)receipt.charge * (int32_t)multiplier;
-            if (spx_v5_widths) {
+            if (value_mode == 1) {
                 int32_t signed_charge = dm2_v1_skproject_signed_word(
                     (int32_t)receipt.charge);
                 receipt.charge_value_added = dm2_v1_skproject_signed_word(
                     signed_charge * (int32_t)multiplier);
+            } else if (value_mode == 2) {
+                int32_t signed_charge = dm2_v1_skproject_signed_word(
+                    (int32_t)receipt.charge);
+                int32_t signed_multiplier = dm2_v1_skproject_signed_word(
+                    (int32_t)multiplier);
+                receipt.charge_value_added = dm2_v1_skproject_signed_word(
+                    signed_charge * signed_multiplier);
             }
             value += receipt.charge_value_added;
+            if (value_mode == 2)
+                value = dm2_v1_skproject_signed_word(value);
         }
     }
     if (cls4 == 2u && db_type == 8 && value > 1) {
         int32_t half = value >> 1;
 
         receipt.potion_value_before_scale = value;
-        value = half + ((int32_t)(record->w2 & 0x00ffu) * half) / 255;
+        if (value_mode == 2) {
+            int32_t scaled_product = dm2_v1_skproject_signed_word(
+                (int32_t)(record->w2 & 0x00ffu) * half);
+            value = dm2_v1_skproject_signed_word(
+                half + scaled_product / 255);
+        } else {
+            value = half + ((int32_t)(record->w2 & 0x00ffu) * half) / 255;
+        }
         receipt.potion_value_after_scale = value;
     }
     if (db_type == 9 && record->container_type == 0u) {
@@ -8005,7 +8023,7 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
 
             if (++guard > DM2_V1_SKPROJECT_ITEM_VALUE_RECORD_LIMIT) {
                 receipt.blocked_recursion_limit = 1;
-                if (spx_v5_widths)
+                if (value_mode != 0)
                     value = dm2_v1_skproject_signed_word(value);
                 receipt.final_value = value;
                 if (out_receipt) *out_receipt = receipt;
@@ -8014,7 +8032,7 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
             child_record = dm2_v1_skproject_find_item_record(world, child);
             if (!child_record) {
                 receipt.blocked_missing_record = 1;
-                if (spx_v5_widths)
+                if (value_mode != 0)
                     value = dm2_v1_skproject_signed_word(value);
                 receipt.final_value = value;
                 if (out_receipt) *out_receipt = receipt;
@@ -8026,31 +8044,48 @@ static int32_t dm2_v1_skproject_query_item_value_depth(
                 uint16_t charge = dm2_v1_skproject_add_item_charge(
                     child, &w2, 0, 0);
 
-                moneybox_sum +=
-                    (int32_t)dm2_v1_skproject_gdat_word_value(
-                        child_record, cls4) *
-                    (int32_t)(charge + 1u);
+                int32_t coin_base =
+                    dm2_v1_skproject_gdat_word_value(child_record, cls4);
+                if (value_mode == 2)
+                    coin_base = dm2_v1_skproject_signed_word(coin_base);
+                int32_t coin_value = coin_base * (int32_t)(charge + 1u);
+                if (value_mode == 2) {
+                    coin_value = dm2_v1_skproject_signed_word(coin_value);
+                    moneybox_sum = dm2_v1_skproject_signed_word(
+                        moneybox_sum + coin_value);
+                } else {
+                    moneybox_sum += coin_value;
+                }
             } else {
                 int32_t child_value =
                     dm2_v1_skproject_query_item_value_depth(
-                        world, child, cls4, depth + 1u, spx_v5_widths, 0);
+                        world, child, cls4, depth + 1u, value_mode, 0);
 
-                if (spx_v5_widths)
+                if (value_mode == 1)
                     child_value = (int32_t)(uint16_t)child_value;
 
                 value += child_value;
+                if (value_mode == 2)
+                    value = dm2_v1_skproject_signed_word(value);
                 receipt.contained_recursive_value += child_value;
             }
             child = child_record->next_object_id;
         }
         if (record->is_moneybox) {
             receipt.moneybox_contained_value = moneybox_sum;
-            receipt.moneybox_rounding_value =
-                cls4 == 1u ? (moneybox_sum + 4) / 5 : moneybox_sum;
+            if (cls4 == 1u && value_mode == 2) {
+                receipt.moneybox_rounding_value =
+                    dm2_v1_skproject_signed_word(moneybox_sum + 4) / 5;
+            } else {
+                receipt.moneybox_rounding_value =
+                    cls4 == 1u ? (moneybox_sum + 4) / 5 : moneybox_sum;
+            }
             value += receipt.moneybox_rounding_value;
+            if (value_mode == 2)
+                value = dm2_v1_skproject_signed_word(value);
         }
     }
-    if (spx_v5_widths) {
+    if (value_mode == 1) {
         value = dm2_v1_skproject_signed_word(value);
     }
     receipt.valid = 1;
@@ -8067,6 +8102,16 @@ int32_t dm2_v1_skproject_query_item_value(
 {
     return dm2_v1_skproject_query_item_value_depth(
         world, object_id, cls4, 0u, 0, out_receipt);
+}
+
+int32_t dm2_v1_skproject_query_item_value_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t cls4,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt)
+{
+    return dm2_v1_skproject_query_item_value_depth(
+        world, object_id, cls4, 0u, 2, out_receipt);
 }
 
 int32_t dm2_v1_skproject_query_item_value_spx_v5(
@@ -8086,6 +8131,15 @@ int32_t dm2_v1_skproject_query_item_weight(
 {
     return dm2_v1_skproject_query_item_value(world, object_id, 1u,
                                              out_receipt);
+}
+
+int32_t dm2_v1_skproject_query_item_weight_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt)
+{
+    return dm2_v1_skproject_query_item_value_dos(
+        world, object_id, 1u, out_receipt);
 }
 
 int32_t dm2_v1_skproject_query_item_weight_spx_v5(
