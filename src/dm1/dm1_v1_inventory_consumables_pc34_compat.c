@@ -45,10 +45,34 @@ dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5)
     if (strcmp(graphicsMd5, "5095a13692702235d2e74f6b2b1367a9") == 0) {
         return DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
     }
-    /* ReDMCSB MEDIA240 includes G20E/G21E (Apple IIGS 2.0/2.1).
-     * Both supported releases share this authenticated GRAPHICS.GAME bank. */
-    if (strcmp(graphicsMd5, "1045a36952e64eb2bc7b4c7b2965b112") == 0) {
-        return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
+    /* ReDMCSB PANEL.C:1715-1738 selects the 120/150 threshold and 170 cap
+     * under MEDIA240. Resolve every supported edition represented by that
+     * source gate explicitly, including G14ED (the Amiga demo), instead of
+     * letting an unrecognized edition inherit the same default by accident.
+     * The IIGS 2.0/2.1 releases share their authenticated GRAPHICS.GAME hash. */
+    {
+        static const char* const media240_graphics_md5[] = {
+            "c10c512f63461ebe79b5ac365115b61b", /* FM Towns English */
+            "edf47d7da5de8184604d6d80477ef01f", /* FM Towns Japanese */
+            "fa6b1aa29e191418713bf2cda93d962e", /* PC 3.4 English */
+            "f934d97e43e1ba6e5159839acbcd0611", /* PC 3.4 Multilanguage */
+            "9ce2eaf7a9e78620e3f17594437caffa", /* Atari ST 1.2 English */
+            "2bdc5f431f84c0ece738f54dbd787c3b", /* Atari ST 1.2 German */
+            "0d7af44dd14f383464288abdcec76afc", /* Atari ST 1.3 French */
+            "6a2f135b53c2220f0251fa103e2a6e7e", /* Amiga 2.0 English */
+            "dd373954b3fb127db7387946131ea322", /* Amiga 2.0 French */
+            "0679e39da9dcc2e855cb33c6c64ddcb5", /* Amiga 2.0/2.2 German */
+            "b35931b55db649a1bd2d415b61b29801", /* Amiga 2.1/2.2 English */
+            "7f9458e4a3972d06e649a6fa85a7f34b", /* Amiga 3.6 Multilanguage */
+            "491ca939f9abb33ceeb26619b841fe91", /* Amiga English demo / G14ED */
+            "1045a36952e64eb2bc7b4c7b2965b112"  /* Apple IIGS 2.0/2.1 */
+        };
+        size_t i;
+        for (i = 0; i < sizeof(media240_graphics_md5) /
+                            sizeof(media240_graphics_md5[0]); ++i) {
+            if (strcmp(graphicsMd5, media240_graphics_md5[i]) == 0)
+                return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
+        }
     }
     return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
 }
