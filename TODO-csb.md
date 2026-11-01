@@ -125,16 +125,18 @@ campaign and retained source identity. This is a headless runtime regression,
 not physical Atari input or visual parity. The CSB source was unchanged
 between the test executable's build revision and `main` (`0a503955`).
 
-2026-11-01 CSB Atari original-media melee regression: extended
-`tests/test_csb_v1_atari_campaign_group_events_real.c` to call the production
-`csb_v1_runtime_perform_melee_action()` bridge using the authentic Atari
-campaign's map-1 C04 group and a C127 champion loaded from original dungeon
-data. `csb_v1_atari_campaign_group_events_real` passed: champion PUNCH reduced
-creature 2 in C04 `0x1003` from 135 to 125 HP, while the existing checks still
-observed the group's C38/C39 attack damage and an original MINI.DAT ranged
-projectile. This closes the source-runtime player-to-monster damage check for
-this Atari ST campaign route. It does not prove pointer/action-menu dispatch,
-other CSB platforms or editions, full campaign combat, or visual parity.
+2026-11-01 CSB Atari original-media melee regression: the campaign test now
+mirrors the loaded C127 champion into M11, opens the source G0489 action set,
+and selects PUNCH through `M11_GameView_HandlePointerButton`. Against the
+authentic Atari campaign's map-1 C04, the M11 pointer path reduced group
+`0x1003` HP from 411 to 401. `csb_v1_atari_campaign_group_events_real` passed
+with the existing C38/C39 champion-damage and original MINI.DAT projectile
+checks intact. This proves the production M11 action-menu dispatch reaches
+the CSB runtime melee bridge on this Atari campaign route. The controlled
+scenario sets a test party pose against original map/group/champion records;
+it does not establish normal campaign navigation to that group, physical
+mouse delivery, other CSB platforms or editions, complete combat parity, or
+visual parity.
 
 2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the shared PC3.4 viewport
 contracts cover bounded side-wall scheduling, ornament, door, pit/stairs,

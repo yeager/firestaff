@@ -1,5 +1,6 @@
 #include "csb_v1_boot.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "m11_game_view.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -346,23 +347,35 @@ static int append_authentic_c127_champion(
 }
 
 static int verify_authentic_player_melee_damage(
-    CSB_V1_RuntimeProfile *runtime,
+    CSB_V1_BootProfile *boot,
+    uint16_t group_thing,
     int group_x, int group_y,
     int party_x, int party_y)
 {
-    static const int melee_actions[] = {
-        DM1_ACTION_PUNCH, DM1_ACTION_KICK, DM1_ACTION_STAB_NINJA,
-        DM1_ACTION_STAB_FIGHTER, DM1_ACTION_THRUST, DM1_ACTION_JAB,
-        DM1_ACTION_MELEE, DM1_ACTION_SLASH, DM1_ACTION_CLEAVE,
-        DM1_ACTION_STUN
-    };
-    CSB_V1_RuntimeMeleeActionResult result;
+    M11_GameViewState view;
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 mirror;
+    CSB_V1_RuntimeProfile *runtime;
+    CSB_V1_DungeonData *dungeon;
+    unsigned char actions[3];
+    int action_row = -1;
+    int action_x, action_y, action_w, action_h;
+    int row_x, row_y, row_w, row_h;
+    unsigned int hp_before = 0u;
+    unsigned int hp_after = 0u;
     int dx = group_x - party_x;
     int dy = group_y - party_y;
-    int i;
+    int attempt;
 
-    if (!runtime || !runtime->party_state_valid ||
-        runtime->party_state.ChampionCount < 1) return 0;
+    /* ReDMCSB MENU.C F0389 (696), F0391 (803), F0407 (1197), and F0402
+     * (992) own menu activation through melee resolution; PROJEXPL.C F0231
+     * (1416) applies the creature damage. Drive those M11 pointer routes on
+     * the authentic Atari C127/C04 records instead of calling the runtime
+     * melee bridge directly. */
+    if (!boot || !boot->runtime.party_state_valid ||
+        !boot->runtime.dungeon_handle ||
+        boot->runtime.party_state.ChampionCount < 1) return 0;
+    runtime = &boot->runtime;
+    dungeon = runtime->dungeon_handle;
     if (dx == 0 && dy == -1) runtime->party_dir = 0;
     else if (dx == 1 && dy == 0) runtime->party_dir = 1;
     else if (dx == 0 && dy == 1) runtime->party_dir = 2;
@@ -379,30 +392,138 @@ static int verify_authentic_player_melee_damage(
     runtime->party_state.PartyMapX = party_x;
     runtime->party_state.PartyMapY = party_y;
     runtime->party_state.PartyDirection = (uint8_t)runtime->party_dir;
-
-    for (i = 0; i < (int)(sizeof(melee_actions) / sizeof(melee_actions[0]));
-         ++i) {
-        if (!csb_v1_runtime_perform_melee_action(
-                runtime, 0, melee_actions[i], &result)) {
-            fprintf(stderr,
-                    "FAIL: authentic C127 champion rejected CSB melee action %d\n",
-                    melee_actions[i]);
+    memset(&mirror, 0, sizeof(mirror));
+    if (!csb_v1_boot_runtime_m11_mirror_receipt_pc34(boot, &mirror) ||
+        !mirror.valid || !mirror.party.valid ||
+        mirror.party.party.championCount != 1 ||
+        !mirror.party.party.champions[0].present) {
+        fputs("FAIL: authentic C127 party did not produce the M11 input mirror\n",
+              stderr);
+        return 0;
+    }
+    M11_GameView_Init(&view);
+    view.active = 1;
+    view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    view.csbBootProfile = boot;
+    view.csbState.level_loaded = mirror.view.level_loaded;
+    view.csbState.current_level = mirror.view.current_level;
+    view.csbState.party_x = mirror.view.party_x;
+    view.csbState.party_y = mirror.view.party_y;
+    view.csbState.party_dir = mirror.view.party_dir;
+    view.world.party = mirror.party.party;
+    view.world.gameTick = (uint32_t)runtime->game_time;
+    if (view.world.party.activeChampionIndex < 0)
+        view.world.party.activeChampionIndex = 0;
+    if (!M11_GameView_GetV1ActionIconCellZone(
+            0, &action_x, &action_y, &action_w, &action_h) ||
+        !M11_GameView_SetActingChampion(&view, 0) ||
+        M11_GameView_GetActingChampionOrdinal(&view) != 1u ||
+        !M11_GameView_GetActingActionIndices(&view, actions)) {
+        fputs("FAIL: M11 Atari action set did not resolve the authentic C127 G0489 rows\n",
+              stderr);
+        view.csbBootProfile = NULL;
+        view.active = 0;
+        M11_GameView_Shutdown(&view);
+        return 0;
+    }
+    M11_GameView_ClearActingChampion(&view);
+    for (int row = 0; row < 3; ++row) {
+        if (actions[row] == DM1_ACTION_PUNCH) {
+            action_row = row;
+            break;
+        }
+    }
+    if (action_row < 0 ||
+        !M11_GameView_GetV1ActionMenuRowZone(
+            action_row, &row_x, &row_y, &row_w, &row_h)) {
+        fputs("FAIL: original CSB G0489 action set did not expose PUNCH in M11\n",
+              stderr);
+        view.csbBootProfile = NULL;
+        view.active = 0;
+        M11_GameView_Shutdown(&view);
+        return 0;
+    }
+    for (attempt = 0; attempt < 24; ++attempt) {
+        int group_type = -1;
+        int group_size = 0;
+        int creature_count;
+        int creature;
+        const uint8_t *group;
+        if (attempt > 0) {
+            int wait_guard = 0;
+            while (view.actionDisabledTicks[0] > 0 && wait_guard++ < 256)
+                (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        group = csb_v1_dungeon_get_thing_record(
+            dungeon, group_thing, &group_type, NULL, &group_size);
+        if (!group || group_type != CSB_V1_THING_TYPE_GROUP ||
+            group_size < 16) {
+            fputs("FAIL: authentic Atari C04 disappeared before M11 PUNCH input\n",
+                  stderr);
+            view.csbBootProfile = NULL;
+            view.active = 0;
+            M11_GameView_Shutdown(&view);
             return 0;
         }
-        if (result.hit_group && result.damage > 0 &&
-            result.creature_hp_after < result.creature_hp_before) {
-            printf("PASS: authentic Atari champion action %d reduced C04 0x%04x creature %d from %d to %d HP (damage=%d)\n",
-                   melee_actions[i], (unsigned int)result.group_thing,
-                   result.creature_index, result.creature_hp_before,
-                   result.creature_hp_after, result.damage);
+        creature_count = (int)(((uint16_t)group[14] |
+                                ((uint16_t)group[15] << 8)) >> 5 & 0x03u) + 1;
+        if (creature_count > 4) creature_count = 4;
+        hp_before = 0u;
+        for (creature = 0; creature < creature_count; ++creature)
+            hp_before += (unsigned int)group[6 + creature * 2] |
+                ((unsigned int)group[7 + creature * 2] << 8);
+
+        if (M11_GameView_HandlePointerButton(
+                &view, action_x + action_w / 2, action_y + action_h / 2,
+                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+            M11_GameView_GetActingChampionOrdinal(&view) != 1u ||
+            M11_GameView_HandlePointerButton(
+                &view, row_x + row_w / 2, row_y + row_h / 2,
+                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
+            fprintf(stderr,
+                    "FAIL: M11 pointer route did not dispatch authentic CSB PUNCH attempt %d\n",
+                    attempt + 1);
+            view.csbBootProfile = NULL;
+            view.active = 0;
+            M11_GameView_Shutdown(&view);
+            return 0;
+        }
+
+        group = csb_v1_dungeon_get_thing_record(
+            dungeon, group_thing, &group_type, NULL, &group_size);
+        hp_after = 0u;
+        if (group && group_type == CSB_V1_THING_TYPE_GROUP) {
+            if (group_size < 16) {
+                fputs("FAIL: authentic Atari C04 record became truncated after M11 PUNCH\n",
+                      stderr);
+                view.csbBootProfile = NULL;
+                view.active = 0;
+                M11_GameView_Shutdown(&view);
+                return 0;
+            }
+            creature_count = (int)(((uint16_t)group[14] |
+                                    ((uint16_t)group[15] << 8)) >> 5 & 0x03u) + 1;
+            if (creature_count > 4) creature_count = 4;
+            for (creature = 0; creature < creature_count; ++creature)
+                hp_after += (unsigned int)group[6 + creature * 2] |
+                    ((unsigned int)group[7 + creature * 2] << 8);
+        }
+        if (hp_after < hp_before) {
+            printf("PASS: authentic Atari M11 action-menu PUNCH reduced C04 0x%04x HP %u->%u through pointer input\n",
+                   (unsigned int)group_thing, hp_before, hp_after);
+            view.csbBootProfile = NULL;
+            view.active = 0;
+            M11_GameView_Shutdown(&view);
             return 1;
         }
     }
 
     fprintf(stderr,
-            "FAIL: authentic Atari C127 champion's melee actions did not reduce adjacent C04 HP (last-action=%d hit=%d damage=%d HP=%d->%d)\n",
-            result.action_index, result.hit_group, result.damage,
-            result.creature_hp_before, result.creature_hp_after);
+            "FAIL: authentic Atari C127 M11 PUNCH input did not reduce adjacent C04 HP (%u->%u)\n",
+            hp_before, hp_after);
+    view.csbBootProfile = NULL;
+    view.active = 0;
+    M11_GameView_Shutdown(&view);
     return 0;
 }
 
@@ -642,7 +763,7 @@ int main(void)
      * C127 champion already loaded above; this specifically covers the
      * player-to-monster direction missing from the campaign attack check. */
     if (!verify_authentic_player_melee_damage(
-            runtime, adjacent_group_x, adjacent_group_y,
+            &boot, adjacent_group, adjacent_group_x, adjacent_group_y,
             adjacent_party_x, adjacent_party_y)) {
         csb_v1_boot_cleanup(&boot);
         return 1;
