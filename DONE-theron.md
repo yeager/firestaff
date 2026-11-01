@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — reconcile current Akutuba capture-tool readiness docs
+
+- Updated the Theron capture TODO and maintained readiness summary to record
+  that the exact-LBA filter exists but no accepted authentic capture has used
+  it, and that the follow-up reference binary is not capture-ready until the
+  current fetch-hook patch is verified and a standalone-SDL2 build passes its
+  runtime linkage/startup check.
+- Updated the documentation index to expose that tooling gate. Native Theron
+  support and the active-map source-to-consumer evidence boundary are unchanged.
+- Documentation-only update; no tests or builds were run.
+
 ## 2026-11-01 — add an exact-LBA Akutuba capture filter
 
 - Added `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA` with decimal `uint32`

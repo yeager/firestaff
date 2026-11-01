@@ -31,6 +31,13 @@ tooling only. No accepted authentic capture has exercised the filter, and
 LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
 See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
+The follow-up Mednafen binary is not yet capture-ready: one build was rejected
+because it linked against `sdl2-compat`, and a later linked binary predates the
+latest indirect-jump fetch-hook call. Reapply and verify the current patch,
+build against standalone SDL2, and pass the runtime linkage/startup check
+before recording a new capture. Do not treat either binary as accepted runtime
+evidence.
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries

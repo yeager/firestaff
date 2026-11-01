@@ -115,6 +115,14 @@ attribution. This reduces unrelated trace volume; it does not prove that the
 original game read or selected the map. No accepted authentic capture has yet
 used this filter. See the [exact-LBA capture tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
+The follow-up Mednafen build for this capture path is not yet capture-ready.
+One instrumented build linked against `sdl2-compat` and was rejected by the
+runtime verifier; another linked but predates the latest indirect-jump fetch
+hook call. Re-run the patch-application regression against the current patch,
+build against a standalone SDL2 runtime, and pass the linkage/startup verifier
+before using a new capture binary. This is tooling readiness only; it does not
+change native game support or the active-map evidence boundary.
+
 The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
 use them only after the runtime pose, selected map, and tile consumer are bound.
 Pair an accepted input with a no-input control. Do not change movement or
