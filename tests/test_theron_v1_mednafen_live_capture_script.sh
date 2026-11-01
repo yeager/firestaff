@@ -178,6 +178,12 @@ if ! grep -Fq 'validate_autoload_state_receipt || exit 1' "$script" || \
     printf '%s\n' 'FAIL: state-only mode must be gated by the successful autoload receipt' >&2
     exit 1
 fi
+state_only_syscard_gate_count=$(grep -Fc \
+    'capture_mednafen_module" == pce_fast && "$state_trace_only" != 1' "$script")
+if [[ "$state_only_syscard_gate_count" -ne 6 ]]; then
+    printf '%s\n' 'FAIL: state-only PCE Fast capture must not require cold-boot System Card hooks' >&2
+    exit 1
+fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
 python3 "$repo/tests/test_theron_pce_fast_cd_ram_writer_pc_trace_patch.py"

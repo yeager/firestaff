@@ -156,14 +156,17 @@ the highlighted control changes.
   boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
   implemented champion, item, USE-command and wait inputs. The retail manual's
-  Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
-  it turns instead of side-stepping. A standalone right click does not advance
-  a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
-  while Escape remains the desktop Back command. An SDL event-loop regression
-  verifies that Button II plus Right turns, then that Right after release
-  side-steps. A native SDL mouse sequence through the visible host panel also
-  turns twice and advances across a source-backed tile, using authenticated
-  USA Track 02. Existing US and Japanese
+  Button II chord is mapped as right-mouse plus Left/Right Arrow, A/D, or
+  keypad 1/3. The authentic US native SDL regression waits 16 loop frames
+  after `key:down` for Theron's 200 ms gameplay cadence, then verifies that
+  Button II plus keypad 1/3 turns in place at `(1, 1)`. The full real-media
+  regression passed three consecutive runs on TRV2 against hash-verified US
+  Track 02. A standalone right click does not advance a dungeon tick.
+  In a loaded dungeon it is consumed only as the modifier, while Escape remains
+  the desktop Back command. Existing arrow-chord and mouse-panel routes use
+  authentic US runtime evidence. A native SDL mouse sequence through the visible
+  host panel also turns twice and advances across a source-backed tile, using
+  authenticated USA Track 02. Existing US and Japanese
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover

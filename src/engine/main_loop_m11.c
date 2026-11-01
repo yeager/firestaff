@@ -84,6 +84,7 @@
 #include "dm2_v1_mac_input.h"
 #include "fs_gesture_navigation_gate.h"
 #include "theron_v1_world.h"
+#include "theron_v1_track02_creature_spawn.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_hud_hit_rects.h"
 
@@ -2937,6 +2938,8 @@ static struct {
     unsigned int championHealth[CHAMPION_MAX_PARTY];
 } g_m11_debug_health_snapshot;
 
+static unsigned int g_m11_theron_spawn_source_debug_launch_serial;
+
 static struct {
     unsigned int launchSerial;
     int valid;
@@ -3549,6 +3552,63 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
     }
 }
 
+static void m11_debug_theron_spawn_source(const M11_GameViewState* state) {
+    const Theron_V1_World* world;
+    const Theron_Track02SpawnSource* source;
+    const char* region;
+    unsigned int i;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        !state->theronWorld ||
+        g_m11_theron_spawn_source_debug_launch_serial ==
+            g_m11_sync_launch_serial) {
+        return;
+    }
+    world = (const Theron_V1_World*)state->theronWorld;
+    source = &world->track02_spawn_source;
+    if (!source->authenticated ||
+        (source->variant != THERON_V1_TRACK02_VARIANT_JP_BIN &&
+         source->variant != THERON_V1_TRACK02_VARIANT_US_BIN) ||
+        strlen(source->source_md5) != 32u) {
+        return;
+    }
+    region = source->variant == THERON_V1_TRACK02_VARIANT_JP_BIN ? "jp" : "us";
+    fprintf(stderr,
+            "firestaff: theron-source kind=spawn-tables status=authenticated "
+            "region=%s track02_md5=%s layout=%s "
+            "pointer_ud=0x%06x pointer_count=%u zone_count=%u semantics=opaque\n",
+            region, source->source_md5,
+            source->raw_mode1_2352 ? "mode1-2352" : "mode1-2048",
+            (unsigned)source->pointer_user_data_offset,
+            THERON_TRACK02_SPAWN_POINTER_COUNT,
+            THERON_TRACK02_SPAWN_ZONE_COUNT);
+    for (i = 0u; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
+        const Theron_CreaturePointerEntry* pointer = &source->pointers[i];
+        unsigned int zone_index = THERON_TRACK02_SPAWN_ZONE_COUNT;
+        int has_zone = theron_v1_track02_spawn_zone_index_for_pointer(
+            source, i, &zone_index);
+        fprintf(stderr,
+                "firestaff: theron-source kind=spawn-pointer index=%u "
+                "source_ud=0x%06x raw_words=%04x,%04x,%04x,%04x "
+                "static_zone_link=%d\n",
+                i, (unsigned)(source->pointer_user_data_offset + i * 8u),
+                pointer->sprite_desc_offset, pointer->constant_278a,
+                pointer->spawn_data_offset, pointer->constant_016b,
+                has_zone ? (int)zone_index : -1);
+    }
+    for (i = 0u; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
+        const Theron_SpawnZoneDesc* zone = &source->zones[i];
+        fprintf(stderr,
+                "firestaff: theron-source kind=spawn-zone index=%u "
+                "source_ud=0x%06x raw_words=%04x,%04x raw_bytes=%02x,%02x,%02x,%02x\n",
+                i, (unsigned)source->zone_user_data_offsets[i],
+                zone->map_width, zone->map_height, zone->category,
+                zone->count, zone->param1, zone->param2);
+    }
+    g_m11_theron_spawn_source_debug_launch_serial =
+        g_m11_sync_launch_serial;
+}
+
 /* Print source-world events only when the game tick actually emits them. This
  * keeps --debug useful during combat and ordinary play without per-frame spam.
  * The payload is intentionally retained verbatim so logs can be compared with
@@ -3557,6 +3617,7 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
     int i;
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
     m11_debug_native_game_state(state, 0);
+    m11_debug_theron_spawn_source(state);
     if (strcmp(state->sourceId, "dm1") == 0) {
         m11_debug_dm1_combat_receipt(state, "tick", 0);
         return;
@@ -11643,6 +11704,23 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         ev.type = SDL_EVENT_KEY_DOWN;
         ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(keyName);
         ev.key.scancode = SDL_GetScancodeFromKey(ev.key.key, NULL);
+        /* SDL3's keycode-to-scancode conversion has no mapping for keypad
+         * digits. Scripted SDL-loop probes name those physical keys
+         * explicitly so they exercise the same scancode route as live input. */
+        if (strcmp(keyName, "kp1") == 0 || strcmp(keyName, "kp-1") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_1;
+        else if (strcmp(keyName, "kp3") == 0 || strcmp(keyName, "kp-3") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_3;
+        else if (strcmp(keyName, "kp2") == 0 || strcmp(keyName, "kp-2") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_2;
+        else if (strcmp(keyName, "kp4") == 0 || strcmp(keyName, "kp-4") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_4;
+        else if (strcmp(keyName, "kp5") == 0 || strcmp(keyName, "kp-5") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_5;
+        else if (strcmp(keyName, "kp6") == 0 || strcmp(keyName, "kp-6") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_6;
+        else if (strcmp(keyName, "kp8") == 0 || strcmp(keyName, "kp-8") == 0)
+            ev.key.scancode = SDL_SCANCODE_KP_8;
         if (commandModifier) ev.key.mod = SDL_KMOD_GUI;
 #else
         ev.type = SDL_KEYDOWN;

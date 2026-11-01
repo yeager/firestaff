@@ -1,5 +1,46 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-11-01 — JP state-only control replay does not reach the spawn consumer
+
+An isolated replay used the authenticated JP Track 02 image
+`b7afb338ad31be1025b53f9aff12d73a` and the user-created dungeon state
+`14dec90b96ec3e14622ec0fab535a92f`. The instrumented Mednafen binary was
+`746bab0333bc77197c3add0f94869217`. Five scripted controller events were
+consumed at frames 120, 200, 320, 450, and 600, and each was followed by a
+controller read. The bounded run did not establish a cold boot, CD handoff, or
+successful game-owned dungeon transition: the capture receipt marks
+`state_trace_only=1`, `autoload_state_load_status=verified`,
+`transition=missing`, and all CD receipt counts are zero.
+
+The same receipt reports `spawn_consumer_reads=0`,
+`spawn_register_samples=0`, `spawn_entry_b0e5_samples=0`,
+`rng_consumer_samples=0`, and `rng_generator_contexts=0`. These zero counts
+mean this state-and-input route did not observe the spawn/RNG consumer. They do
+not establish that the game does not spawn creatures, and they provide no
+runtime spawn semantics. The state-only capture also records zero dynamic
+`$C852` rows, so the controller events cannot be treated as proof of movement.
+
+This run was accepted for state-only trace packaging after all five scripted
+input events were observed. The output was retained under the isolated TRV2
+temporary directory `/tmp/theron-jp-spawn-audit-20261101/r4`; it is not a
+repository fixture or a portable test artifact. Runtime spawn selection,
+category meaning, and RNG return values remain unbound. The next useful capture
+must reach the actual dungeon update through a verified cold game-owned route
+or an authenticated progressed state that reaches the spawn call; extending
+this same input replay would not close that evidence gap.
+
+## Capture-tool note — state-only traces and cold System Card hooks
+
+`capture_theron_mednafen_live_trace.sh` skips the PCE Fast cold-start
+System Card hook and trace checks when `THERON_CAPTURE_STATE_TRACE_ONLY=1`.
+It also skips the combined cold-start CD/controller/HuC6260 and raw-sector
+validation, including input/IRQ and authenticated CD-to-RAM handoff receipts.
+These checks establish a cold media handoff and do not apply to an autoloaded
+state. State-only packaging still requires a verified autoload-state receipt
+and the remaining applicable trace schemas; its success is not cold-start
+evidence. The shell regression checks that the System Card hook gates are
+conditional; it does not reproduce a full reference capture.
+
 ## 2026-10-30 — JP System Card TIA reads consume preceding BaseRAM writes
 
 A cold reference run using authentic JP Rev. 1 Track 02 and System Card 3.0

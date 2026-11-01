@@ -6,6 +6,23 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+The latest authenticated JP state-only replay used five scripted controller
+events and verified each event reached a controller read. It recorded zero
+spawn-consumer/register entries, zero RNG samples, and no dungeon transition;
+it does not establish movement or spawn semantics. Explicit state-only PCE
+Fast autoload captures skip the cold-start System Card hook and trace checks,
+as well as the combined CD/controller/HuC6260, raw-sector, input/IRQ, and
+authenticated CD-to-RAM handoff checks. They still require a verified
+autoload receipt and the remaining applicable trace schemas. The shell
+regression checks the conditional System Card hook gates. See the
+[runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+
+The new native `--debug` receipt's modified engine and decoder translation
+units compiled in an isolated TRV2 Debug configuration. The full application
+has not been linked and no authentic runtime log has been captured, so this
+adds no gameplay evidence. Its planned fields and remaining acceptance checks
+are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
@@ -49,6 +66,13 @@ the US call path is covered by the separate bounded trace described above. An ea
 rejected at Track 03. A later capture used the complete archived US track set
 and reached the Drator route; see the ordered call-window report for its
 source-validation failure and trace limits.
+
+For the separate T900 item-progression gap, the real-data quest-name regression
+now lists five ground-linked records whose type index matches the local
+quest-name index, across US/JP dungeons 3, 6 and 7. These source locations are
+capture targets only; they do not establish artifact identity or a T900
+consumer. See the
+[ground-item index report](../source-lock/theron-t900-ground-item-index-candidates-20261101.md).
 
 The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
