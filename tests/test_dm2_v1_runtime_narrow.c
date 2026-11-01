@@ -64,6 +64,8 @@ static int16_t as_get_skill_exp(void *ctx, int hi, int sid)
 static void as_add_skill_exp(void *ctx, int hi, int sid, int32_t amount)
 { (void)ctx; (void)hi; (void)sid; g_added_exp += amount; }
 static int as_random_bit(void *ctx) { (void)ctx; return 0; }
+static uint16_t as_rand16(void *ctx, uint16_t max)
+{ (void)ctx; (void)max; return 0; }
 static int g_random_dir_values[2];
 static int g_random_dir_pos;
 static int as_random_dir(void *ctx)
@@ -98,7 +100,8 @@ static void test_adjust_skills(void)
         as_random_bit, as_random_dir, as_get_max_hp, as_set_max_hp,
         as_get_max_stamina, as_set_max_stamina,
         as_get_max_mp, as_set_max_mp,
-        as_add_ability_max, as_mark_dirty, as_display_level_up
+        as_add_ability_max, as_mark_dirty, as_display_level_up,
+        as_rand16
     };
 
     g_added_exp = 0;
@@ -122,7 +125,7 @@ static void test_adjust_skills(void)
     g_last_antimagic_delta = -1;
     lvl = dm2_v1_adjust_skills(0, 12, 15, &cb, NULL);
     assert(lvl == 2);
-    assert(g_max_mp == 104); /* +1 class gain, then RANDDIR() == 3 */
+    assert(g_max_mp == 103); /* priest gains +level, capped RANDDIR jitter */
     assert(g_last_antimagic_delta == 2);
     assert(g_random_dir_pos == 2);
 

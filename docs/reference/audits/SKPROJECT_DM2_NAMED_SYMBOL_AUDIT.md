@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
-repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,778 as `UNREVIEWED`, 146 as `PARTIAL`, and 8 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,116 SPX v4 definitions (1,069 unreviewed, 40 partial, 7 implemented), 1,347 SPX v5 definitions (1,292 unreviewed, 54 partial, 1 implemented), 262 shared SKWINSPX definitions (all unreviewed), 832 legacy DOS definitions (798 unreviewed, 34 partial), 373 SKWINDOS/src definitions (357 unreviewed, 16 partial), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 158 entries: 149 partial and 9 implemented, including six exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
+repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,775 as `UNREVIEWED`, 149 as `PARTIAL`, and 8 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,116 SPX v4 definitions (1,068 unreviewed, 41 partial, 7 implemented), 1,347 SPX v5 definitions (1,291 unreviewed, 55 partial, 1 implemented), 262 shared SKWINSPX definitions (all unreviewed), 832 legacy DOS definitions (797 unreviewed, 35 partial), 373 SKWINDOS/src definitions (357 unreviewed, 16 partial), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 161 entries: 152 partial and 9 implemented, including six exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
 ledger is only a search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
 runtime.
@@ -36,7 +36,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,758 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,778 `UNREVIEWED`; 146 `PARTIAL`; 8 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,775 `UNREVIEWED`; 149 `PARTIAL`; 8 `IMPLEMENTED_PARITY` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -48,11 +48,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,075 |
+| `IMPLEMENTED_PARITY` | 1,074 |
 | `NOT_APPLICABLE_ARCH` | 559 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 51 |
+| `PARTIAL` | 52 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -64,7 +64,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the active inventory currently has 3,778 `UNREVIEWED`, 146 `PARTIAL`, and 8 `IMPLEMENTED_PARITY` definitions; it is not yet a feature-by-platform audit. The per-variant counts above show that SPX v4, SPX v5 and DOS still have large independently open definition sets. Reviewed actuator/projectile paths still have their specific gaps in the supplemental review. The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are recorded as partial; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is source-compared to the callback helper. SPX v4 and v5 door-query variants are now separately reviewed. DOS/v5 strength reads field 0x11 with the field-0x10 fallback; SPX v4 reads field 0x0f directly. SPX v4 resistance reads field 0x0e and gets graphics from map-header flags/door types, while DOS/v5 use GDAT fields 0x0f/0x0d. Firestaff's map-door metadata path already selects parsed door sets behind header enable flags and door-record type; exact 0xff no-door consumer behavior and complete caller coverage remain open. Four Firestaff query receipts were corrected to match the locked skproject field indices; per-platform asset and runtime verification remain open. DOS/SPX v5 door attacks share a narrow Firestaff gate receipt that has no live caller; SPX v4 additionally supports weak-door override and compares damage against map-selected door resistance, which Firestaff does not yet model in an integrated owner.
+With active-source review overrides, the active inventory currently has 3,775 `UNREVIEWED`, 149 `PARTIAL`, and 8 `IMPLEMENTED_PARITY` definitions; it is not yet a feature-by-platform audit. The per-variant counts above show that SPX v4, SPX v5 and DOS still have large independently open definition sets. Reviewed actuator/projectile paths still have their specific gaps in the supplemental review. The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are recorded as partial; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is source-compared to the callback helper. SPX v4 and v5 door-query variants are now separately reviewed. DOS/v5 strength reads field 0x11 with the field-0x10 fallback; SPX v4 reads field 0x0f directly. SPX v4 resistance reads field 0x0e and gets graphics from map-header flags/door types, while DOS/v5 use GDAT fields 0x0f/0x0d. Firestaff's map-door metadata path already selects parsed door sets behind header enable flags and door-record type; exact 0xff no-door consumer behavior and complete caller coverage remain open. Four Firestaff query receipts were corrected to match the locked skproject field indices; per-platform asset and runtime verification remain open. DOS/SPX v5 door attacks share a narrow Firestaff gate receipt that has no live caller; SPX v4 additionally supports weak-door override and compares damage against map-selected door resistance, which Firestaff does not yet model in an integrated owner.
 
 The SKULLWIN, SPX v4 and SPX v5 general `FIND_WALK_PATH` implementations remain
 partial. Firestaff's receipt initializer is empty, its live callback owner uses
@@ -165,9 +165,9 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,976 open rows: 3,778 unreviewed active-source
-definitions, 196 partial source or older-ledger rows, and 2 partial source-owner
-rows. DOS, SPX v4/v5, and SKULLWIN `CHANGE_PLAYER_POS` definitions are now source-compared; the corrected two-stage drag adapter remains partial because M11 does not call it. DOS and SPX v5 `ADJUST_HAND_COOLDOWN` match the shared arithmetic helper, while SPX v4 has a separate source-faithful helper because it uses an already-computed delay and Aura of Speed. All three definitions remain partial because there is no production caller/platform binding. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
+At this revision it reports 3,977 open rows: 3,775 unreviewed active-source
+definitions, 200 partial source or older-ledger rows, and 2 partial source-owner
+rows. DOS, SPX v4/v5, and SKULLWIN `CHANGE_PLAYER_POS` definitions are now source-compared; the corrected two-stage drag adapter remains partial because M11 does not call it. DOS and SPX v5 `ADJUST_HAND_COOLDOWN` match the shared arithmetic helper, while SPX v4 has a separate source-faithful helper because it uses an already-computed delay and Aura of Speed. All three definitions remain partial because there is no production caller/platform binding. `ADJUST_SKILLS` now uses source random-bit masks, priest/wizard maxMP formulas, final-level-based maxHP rolls, and class-scaled stamina rolls for DOS/SPX v5/SKULLWIN; this corrected helper still has no production caller. SPX v4 separately uses current stamina and has no v4-specific Firestaff owner, so all four source definitions remain partial. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live
 AI mask/record owner and possession/projectile lifecycle are not integrated. DOS, SPX v4, and SPX v5 stamina-adjustment definitions also remain partial: Firestaff matches the helper arithmetic, and the live movement owner applies source stamina mutation and pending wounds from authenticated party/weight inputs. The helper itself has no production caller, and other stamina callers remain unbound. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for

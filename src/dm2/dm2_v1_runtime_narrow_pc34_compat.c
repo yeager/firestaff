@@ -298,20 +298,23 @@ int32_t dm2_v1_adjust_skills(
     int hero_idx, int32_t skill_id, int32_t exp_gain,
     const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!cb || !cb->get_exp_scale || !cb->get_skill_lv ||
+        !cb->add_skill_exp)
         return -1;
 
     /* time-window halving for combat (4..11) skill ids */
     if (skill_id >= 4 && skill_id <= 11) {
-        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
-        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
+        if (!cb->get_gametick || !cb->get_exp_window_tick)
+            return -1;
+        int16_t tick = cb->get_gametick(ctx);
+        int16_t window = cb->get_exp_window_tick(ctx);
         if ((int32_t)(tick - 150) > window)
             exp_gain >>= 1;
     }
     if (exp_gain == 0)
         return 0;
 
-    int16_t scale = cb->get_exp_scale ? cb->get_exp_scale(ctx) : 0;
+    int16_t scale = cb->get_exp_scale(ctx);
     if (scale != 0)
         exp_gain *= scale;
 
@@ -323,17 +326,26 @@ int32_t dm2_v1_adjust_skills(
     int16_t level_before = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
 
     if (skill_id >= 4) {
-        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
-        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
+        if (!cb->get_gametick || !cb->get_exp_window_tick)
+            return -1;
+        int16_t tick = cb->get_gametick(ctx);
+        int16_t window = cb->get_exp_window_tick(ctx);
         if (tick - 40 < window)
             exp_gain *= 2;
     }
 
-    if (cb->add_skill_exp) {
-        cb->add_skill_exp(ctx, hero_idx, (int)skill_id, exp_gain);
-        if (skill_id >= 4)
-            cb->add_skill_exp(ctx, hero_idx, group, exp_gain);
-    }
+    if (exp_gain != 0 &&
+        (!cb->random_bit || !cb->rand16 || !cb->get_max_hp ||
+         !cb->set_max_hp || !cb->get_max_stamina ||
+         !cb->set_max_stamina || !cb->add_ability_max ||
+         !cb->mark_hero_dirty ||
+         ((group == 2 || group == 3) &&
+          (!cb->random_dir || !cb->get_max_mp || !cb->set_max_mp))))
+        return -1;
+
+    cb->add_skill_exp(ctx, hero_idx, (int)skill_id, exp_gain);
+    if (skill_id >= 4)
+        cb->add_skill_exp(ctx, hero_idx, group, exp_gain);
 
     int16_t level_after = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
 
@@ -347,43 +359,48 @@ int32_t dm2_v1_adjust_skills(
         int rb1 = cb->random_bit ? cb->random_bit(ctx) : 0;
         int8_t vit_delta = (int8_t)(rb1 + 1);
         int rb2 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int32_t level_gain = (uint16_t)level_after;
         int32_t vit_gain = rb2;
         if (group != 2)
-            vit_gain &= rb0;
+            vit_gain &= (uint8_t)level_gain;
         if (cb->add_ability_max)
             cb->add_ability_max(ctx, hero_idx, /*E_VITALITY*/ 0, (int16_t)vit_gain);
 
         int rb3 = cb->random_bit ? cb->random_bit(ctx) : 0;
-        int16_t antifire_gain = (int16_t)(rb3 & ~rb0);
+        int16_t antifire_gain = (int16_t)(rb3 & ~(uint8_t)level_gain);
         if (cb->add_ability_max)
             cb->add_ability_max(ctx, hero_idx, /*E_ANTIFIRE*/ 1, antifire_gain);
 
-        int16_t hp_gain, sta_gain;
+        int32_t stamina_base = (uint16_t)cb->get_max_stamina(ctx, hero_idx);
+        int32_t maxmp_gain = 0;
         int16_t maxhp, maxsta, maxmp;
         switch (group) {
         case 0: /* fighter */
+            stamina_base >>= 4;
+            level_gain *= 3;
             if (cb->add_ability_max) {
                 cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, vit_delta);
-                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, (int16_t)rb0);
             }
             break;
         case 1: /* ninja */
+            stamina_base /= 21;
+            level_gain *= 2;
             if (cb->add_ability_max) {
-                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, (int16_t)rb0);
                 cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, vit_delta);
             }
             break;
-        case 2: /* wizard */
-            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
-            if (cb->set_max_mp)
-                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+        case 2: /* priest */
+            stamina_base /= 25;
+            maxmp_gain = level_gain;
+            level_gain += (level_gain + 1) >> 1;
             if (cb->add_ability_max)
-                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, (int16_t)rb0);
             break;
-        case 3: /* priest */
-            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
-            if (cb->set_max_mp)
-                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+        case 3: /* wizard */
+            stamina_base >>= 5;
+            maxmp_gain = level_gain + (level_gain >> 1);
             if (cb->add_ability_max)
                 cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, vit_delta);
             break;
@@ -393,7 +410,10 @@ int32_t dm2_v1_adjust_skills(
         if (group == 2 || group == 3) {
             maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
             int mp_jitter = cb->random_dir(ctx) & 3;
-            maxmp = (int16_t)(maxmp + mp_jitter);
+            int mp_jitter_cap = (uint16_t)level_after - 1;
+            if (mp_jitter > mp_jitter_cap)
+                mp_jitter = mp_jitter_cap;
+            maxmp = (int16_t)(maxmp + maxmp_gain + mp_jitter);
             if (maxmp > 0x384)
                 maxmp = 0x384;
             if (cb->set_max_mp)
@@ -409,17 +429,20 @@ int32_t dm2_v1_adjust_skills(
             }
         }
 
-        hp_gain = (int16_t)(1 + rb2);
+        uint16_t hp_random_max = (uint16_t)((level_gain >> 1) + 1);
+        int32_t hp_gain = level_gain +
+            cb->rand16(ctx, hp_random_max);
         maxhp = cb->get_max_hp ? cb->get_max_hp(ctx, hero_idx) : 0;
-        maxhp = (int16_t)(maxhp + hp_gain);
+        maxhp = (int16_t)(maxhp + (int16_t)hp_gain);
         if (maxhp > 999)
             maxhp = 999;
         if (cb->set_max_hp)
             cb->set_max_hp(ctx, hero_idx, maxhp);
 
-        sta_gain = (int16_t)(1 + rb2);
         maxsta = cb->get_max_stamina ? cb->get_max_stamina(ctx, hero_idx) : 0;
-        maxsta = (int16_t)(maxsta + sta_gain);
+        uint16_t sta_random_max = (uint16_t)((stamina_base >> 1) + 1);
+        int32_t sta_gain = stamina_base + cb->rand16(ctx, sta_random_max);
+        maxsta = (int16_t)(maxsta + (int16_t)sta_gain);
         if (maxsta > 9999)
             maxsta = 9999;
         if (cb->set_max_stamina)

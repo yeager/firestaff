@@ -217,7 +217,7 @@ int32_t dm2_v1_hero_2c1d_135d(
  * sub-skill and (if a sub-skill) the parent skill-group, then looping
  * "level up" passes while the new level exceeds the loop count: each
  * pass rolls ability/HP/stamina/MP gains (varying by skill group 0-3:
- * fighter/ninja/wizard/priest) and clamps maxHP<=999, maxStamina<=9999,
+ * fighter/ninja/priest/wizard) and clamps maxHP<=999, maxStamina<=9999,
  * maxMP<=900. Returns the resulting skill level. */
 typedef struct {
     int16_t (*get_gametick)(void *ctx);
@@ -240,6 +240,8 @@ typedef struct {
     void (*add_ability_max)(void *ctx, int hero_idx, int ability, int16_t delta);
     void (*mark_hero_dirty)(void *ctx, int hero_idx);
     void (*display_level_up_hint)(void *ctx, int hero_idx, int skill_group);
+    /* DM2_RAND16(max): source range is [0, max). */
+    uint16_t (*rand16)(void *ctx, uint16_t max);
 } DM2_V1_AdjustSkillsCallbacks;
 
 int32_t dm2_v1_adjust_skills(
