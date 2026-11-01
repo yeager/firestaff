@@ -1381,7 +1381,9 @@ wait_for_trace_producer() {
     local attempt
 
     for ((attempt = 0; attempt < attempts; ++attempt)); do
-        if [[ -s "$file" ]] && grep -Fqx "$marker" "$file"; then
+        if [[ -s "$file" ]] && awk -v marker="$marker" \
+            'index($0, marker) == 1 && (length($0) == length(marker) || substr($0, length(marker) + 1, 1) == " ") { found = 1 } END { exit !found }' \
+            "$file"; then
             return 0
         fi
         sleep 0.25
