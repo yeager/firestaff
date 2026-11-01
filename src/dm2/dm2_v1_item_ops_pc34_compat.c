@@ -37,6 +37,47 @@ int16_t dm2_v1_retrieve_item_bonus(
     return (context >= 0) ? result : -result;
 }
 
+/* SPX v4 skitem.cpp:56 keeps the entire signed GDAT word. DOS and SPX v5
+ * use CUTLX8, so those edition paths continue through the function above. */
+int16_t dm2_v1_retrieve_item_bonus_spx_v4(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word) return 0;
+    int16_t value = cb->query_gdat_dbspec_word(ctx, record_word, bonus_idx);
+    if (value == 0) return 0;
+    if ((value & 0x4000) != 0) {
+        if (context != (int16_t)0xfffe && context != 2 && context != 3)
+            return 0;
+    } else if (equipped == 0 && (((uint16_t)value & 0x8000u) == 0u)) {
+        return 0;
+    }
+    if (context >= 0) return value;
+    uint16_t negated = (uint16_t)(0u - (uint16_t)value);
+    return negated < 0x8000u
+        ? (int16_t)negated
+        : (int16_t)((int32_t)negated - 0x10000);
+}
+
+/* DOS dm2byg.cpp:1536 has a distinct conditional-bonus context gate. */
+int16_t dm2_v1_retrieve_item_bonus_dos(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word) return 0;
+    int16_t value = cb->query_gdat_dbspec_word(ctx, record_word, bonus_idx);
+    if (value == 0) return 0;
+    if ((value & 0x4000) != 0) {
+        if (context == 3) return 0;
+    } else if (equipped == 0 && (((uint16_t)value & 0x8000u) == 0u)) {
+        return 0;
+    }
+    int16_t result = dm2_v1_skproject_cutlx8((int32_t)value);
+    return context < 0 ? (int16_t)-result : result;
+}
+
 /* ---- DM2_IS_MISCITEM_DRINK_WATER (c_item.cpp:528) ---- */
 int dm2_v1_is_miscitem_drink_water(
     uint16_t record_word,
