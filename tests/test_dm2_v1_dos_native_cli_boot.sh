@@ -301,17 +301,24 @@ probe_input() {
         *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*"party=$expected_party"*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
-    if ! printf '%s\n' "$output" | grep -Fq 'game-action game=dm2 tick=native' ||
-       ! printf '%s\n' "$output" | grep -Fq 'compatibility-world=not-authoritative' ||
-       ! printf '%s\n' "$output" | grep -Fq 'game-debug-capabilities game=dm2 source=dm2-runtime' ||
-       ! printf '%s\n' "$output" | grep -Fq 'player-attack=wield-source-receipt' ||
-       ! printf '%s\n' "$output" | grep -Fq 'monster-damage=think-and-missile-source-receipts' ||
-       ! printf '%s\n' "$output" | grep -Fq 'monster-movement=committed-ring-64' ||
-       ! printf '%s\n' "$output" | grep -Fq 'game-state game=dm2 source=dm2-world tick=' ||
-       ! printf '%s\n' "$output" | grep -Fq 'outdoor=0 champions=unavailable'; then
+    if ! contains_text "$output" 'game-action game=dm2 tick=native' ||
+       ! contains_text "$output" 'compatibility-world=not-authoritative' ||
+       ! contains_text "$output" 'game-debug-capabilities game=dm2 source=dm2-runtime' ||
+       ! contains_text "$output" 'player-attack=wield-source-receipt' ||
+       ! contains_text "$output" 'monster-damage=think-and-missile-source-receipts' ||
+       ! contains_text "$output" 'monster-movement=committed-ring-64' ||
+       ! contains_text "$output" 'game-state game=dm2 source=dm2-world tick=' ||
+       ! contains_text "$output" 'outdoor=0 champions=unavailable'; then
         printf '%s\n' "$output" >&2
         exit 1
     fi
+}
+
+contains_text() {
+    case "$1" in
+        *"$2"*) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 # These positions/directions are observed from the retail DOS new-game route.

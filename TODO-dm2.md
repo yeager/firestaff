@@ -1,3 +1,22 @@
+2026-11-01 DM2 PC reported viewport/HUD and intro-palette issue: Rechecked
+with the authentic DOS EN ZIP. `test_dm2_v1_dos_native_cli_boot.sh` passed the
+first presented INTRO frame's source RGB digest
+`d0c0fa5670a63c09c8a8ee81e6ee8d1cf827cba708794754d8e0f93e49b706d4`, the
+M12-to-runtime launch, and the input/debug matrix. The runtime receipt at the
+authentic start pose `(1,8,north)` reports the frame accepted, real assets,
+zero core fallbacks or blocked materials, 11 walls, eight items and all eight
+HUD commands consumed. Its pixel gate establishes visible regions only; the
+intro digest checks the first frame only, and neither is a same-pose comparison
+with the DOS executable. Cross-platform checks also passed the authentic DM2
+Amiga native CLI route (CTest, 116.95 s), FM Towns native CLI route (CTest,
+288.89 s), and a Mac CLI runtime route using the already extracted original
+English `DMFiles` (map 0, party `(3,8)`, east; 14 walls, eight HUD commands,
+zero fallbacks or blocked materials). Mac's archive-based CTest skipped because
+the canonical retail ZIP is not staged, and no original DOS/Mac screenshot was
+available for visual comparison. Keep the reported PC viewport/HUD and full
+intro-palette symptoms open until a same-state original capture and the reported
+MacBook Pro M5 display are checked; these tests do not prove pixel parity.
+
 2026-11-01 DM2 Amiga no-game M12 runtime retest at `93c644549`: the local
 `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` (90.80 s) against the installed original
