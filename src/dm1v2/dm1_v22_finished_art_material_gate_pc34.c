@@ -403,20 +403,14 @@ void dm1_v22_famg_set_manifest_path(const char* dataDir) {
     /* ~/.firestaff/data/dm1 -> ~/.firestaff -> assets/dm1/modern/modern_asset_manifest.json
      * Walks two parents up from dataDir, same pattern as
      * m11_v22_set_manifest_path in dm1_v2_asset_pipeline_pc34.c. */
-    char parent1[FSP_PATH_MAX];
-    char parent2[FSP_PATH_MAX];
-    char assets_root[FSP_PATH_MAX];
     char dm1_modern_dir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
-        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-        FSP_JoinPath(assets_root, sizeof(assets_root), dataDir, "assets");
-    } else {
-        FSP_JoinPath(assets_root, sizeof(assets_root), parent2, "assets");
+    if (!FSP_ResolveGameModernAssetDir(dm1_modern_dir,
+                                       sizeof(dm1_modern_dir), dataDir,
+                                       "dm1") ||
+        !FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path),
+                      dm1_modern_dir, "modern_asset_manifest.json")) {
+        g_manifest_path[0] = '\0';
     }
-    FSP_JoinPath(dm1_modern_dir, sizeof(dm1_modern_dir), assets_root, "dm1");
-    FSP_JoinPath(dm1_modern_dir, sizeof(dm1_modern_dir), dm1_modern_dir, "modern");
-    FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path),
-                 dm1_modern_dir, "modern_asset_manifest.json");
 }
 
 const char* dm1_v22_famg_get_manifest_path(void) {

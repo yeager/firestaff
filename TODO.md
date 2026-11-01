@@ -1,5 +1,25 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 V2.2 asset-root follow-up: all five authentic-media CLI probes
+reported that v22 resolved to v21. The profile stores modern packs in
+`~/.firestaff/assets/<game>/modern`, while the default `~/.firestaff/data`
+points to an external volume and the scanner supplies canonical media paths.
+The shared path resolver now maps those paths back to the logical profile;
+the focused symlink test covers all five game IDs and custom-root behavior.
+The DM1/CSB art-admission and DM1 review-receipt gates are unchanged. DM2,
+Nexus and Theron remain deliberately unavailable for v22 until their
+game-specific finished-real materials and consumers are admitted. Rebuild and
+rerun of the authentic-media mode matrix after the path fix confirms v22 still
+resolves to v21 for all five games. DM1 now reads its manifest from the correct
+profile path, but reports `source-material=0` and `review-receipt=0`: its
+required slots use `pbr_hero`/`gpt-image-2`, not admitted source-export
+material. CSB remains blocked because its source manifest has 26 unbound
+projection records, so the material gate is partial. The path bug is fixed;
+the user-visible mode difference remains limited because v21 upscales the
+original renderer and v22 has no admitted replacement path in this installed
+matrix. Close the visual-mode gap only when the source-backed materials and
+game render consumers pass their gates.
+
 2026-11-01 all-game presentation-mode audit: ran the authentic-media CLI boot
 probe for V1, V2.1 and V2.2 across DM1, CSB, DM2, Theron's Quest and Nexus
 using the installed `.firestaff/data` collection. V1 reported a 320x200

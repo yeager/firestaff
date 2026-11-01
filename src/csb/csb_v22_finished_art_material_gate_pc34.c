@@ -263,49 +263,16 @@ static void csb_v22_famg_extract_fields_from_buf(CSB_V22_FamgSlotRaw* out) {
 
 /* ── Path resolution ───────────────────────────────────────────── */
 void csb_v22_famg_set_manifest_path(const char* dataDir) {
-    char resolved_data_dir[FSP_PATH_MAX];
-    const char *candidates[2];
-    int candidate_count = 1;
-    int candidate_index;
+    char modern_dir[FSP_PATH_MAX];
     if (!dataDir || dataDir[0] == '\0') {
         g_manifest_path[0] = '\0';
         return;
     }
-    candidates[0] = dataDir;
-    if (FSP_ResolvePhysicalPath(resolved_data_dir,
-                                sizeof(resolved_data_dir), dataDir) &&
-        strcmp(resolved_data_dir, dataDir) != 0) {
-        candidates[candidate_count++] = resolved_data_dir;
-    }
-    /* Prefer the logical ~/.firestaff/data/csb ancestry.  It may be a
-     * symlink to a game-data volume while the user's reviewed .fsart remains
-     * under ~/.firestaff/assets.  Fall back to the physical volume only when
-     * the logical sibling manifest is absent. */
-    for (candidate_index = 0; candidate_index < candidate_count;
-         ++candidate_index) {
-        char parent1[FSP_PATH_MAX];
-        char parent2[FSP_PATH_MAX];
-        char assets_root[FSP_PATH_MAX];
-        char csb_modern_dir[FSP_PATH_MAX];
-        char manifest[FSP_PATH_MAX];
-        const char *asset_data_dir = candidates[candidate_index];
-        if (!FSP_ParentDir(parent1, sizeof(parent1), asset_data_dir) ||
-            !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-            FSP_JoinPath(assets_root, sizeof(assets_root), asset_data_dir,
-                         "assets");
-        } else {
-            FSP_JoinPath(assets_root, sizeof(assets_root), parent2, "assets");
-        }
-        FSP_JoinPath(csb_modern_dir, sizeof(csb_modern_dir), assets_root,
-                     "csb");
-        FSP_JoinPath(csb_modern_dir, sizeof(csb_modern_dir), csb_modern_dir,
-                     "modern");
-        FSP_JoinPath(manifest, sizeof(manifest), csb_modern_dir,
-                     "modern_asset_manifest.json");
-        if (candidate_index + 1 == candidate_count || FSP_FileExists(manifest)) {
-            snprintf(g_manifest_path, sizeof(g_manifest_path), "%s", manifest);
-            return;
-        }
+    if (!FSP_ResolveGameModernAssetDir(modern_dir, sizeof(modern_dir),
+                                       dataDir, "csb") ||
+        !FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path), modern_dir,
+                      "modern_asset_manifest.json")) {
+        g_manifest_path[0] = '\0';
     }
 }
 
