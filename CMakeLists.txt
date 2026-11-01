@@ -71,6 +71,15 @@ add_custom_target(firestaff_gettext_catalogs ALL
 # configurations can skip test-fixture hashing entirely.
 include(CTest)
 
+if(BUILD_TESTING)
+    add_test(
+        NAME symbol_backlog_verification
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_symbol_backlog.py)
+    set_tests_properties(symbol_backlog_verification PROPERTIES
+        LABELS "audit;tooling")
+endif()
+
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
 endif()
