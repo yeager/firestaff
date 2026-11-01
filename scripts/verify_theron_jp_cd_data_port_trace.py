@@ -4,19 +4,56 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import re
 import sys
 from pathlib import Path
 
 
-EXPECTED_TRACK02_MD5 = "b7afb338ad31be1025b53f9aff12d73a"
-EXPECTED_TRACK02_BYTES = 8_102_640
-TRACK02_START_LBA = 3_590
-TRACK02_END_LBA = 6_961
-TRACK02_INDEX1_FILE_OFFSET = 526_848
-SECTOR_BYTES = 2_352
-USER_DATA_OFFSET = 16
+@dataclass(frozen=True)
+class Track02Layout:
+    name: str
+    md5: str
+    size: int
+    start_lba: int
+    end_lba: int
+    index1_file_offset: int
+    sector_bytes: int
+    file_user_data_offset: int
+    source_user_data_offset: int = 16
+    user_data_bytes: int = 2_048
+
+
+JP_TRACK02_BIN = Track02Layout(
+    "MODE1/2352",
+    "b7afb338ad31be1025b53f9aff12d73a",
+    8_102_640,
+    3_590,
+    6_961,
+    526_848,
+    2_352,
+    16,
+)
+JP_TRACK02_ISO = Track02Layout(
+    "MODE1/2048",
+    "62a39bbf43415c9739c41c2481080a49",
+    6_596_608,
+    3_590,
+    6_961,
+    0,
+    2_048,
+    0,
+)
+TRACK02_LAYOUTS = (JP_TRACK02_BIN, JP_TRACK02_ISO)
+# Preserve the raw-BIN constants imported by existing source-chain tools.
+EXPECTED_TRACK02_MD5 = JP_TRACK02_BIN.md5
+EXPECTED_TRACK02_BYTES = JP_TRACK02_BIN.size
+TRACK02_START_LBA = JP_TRACK02_BIN.start_lba
+TRACK02_END_LBA = JP_TRACK02_BIN.end_lba
+TRACK02_INDEX1_FILE_OFFSET = JP_TRACK02_BIN.index1_file_offset
+SECTOR_BYTES = JP_TRACK02_BIN.sector_bytes
+USER_DATA_OFFSET = JP_TRACK02_BIN.source_user_data_offset
 USER_DATA_BYTES = 2_048
 MAX_OBSERVED_BYTES = 1_048_576
 TRACE_HEADER = "source=mednafen-pce-fast-cd-data-port-read"
@@ -26,6 +63,26 @@ TRACE_HEADER_WITH_READER_MPR_SHARED_SEQUENCE = (
     TRACE_HEADER_WITH_READER_MPR_CONTEXT
     + " event_sequence_source=TheronTraceCDSharedEventSequence"
 )
+
+
+def identify_track02(raw: bytes) -> Track02Layout:
+    actual_md5 = hashlib.md5(raw).hexdigest()
+    for layout in TRACK02_LAYOUTS:
+        if len(raw) == layout.size and actual_md5 == layout.md5:
+            return layout
+    raise ValueError("Track 02 is not an authenticated JP Rev. 1 BIN or MODE1/2048 ISO")
+
+
+def identify_trace_layout(row: dict[str, int]) -> Track02Layout | None:
+    for layout in TRACK02_LAYOUTS:
+        if (
+            row["track02_start_lba"] == layout.start_lba
+            and row["track02_end_lba"] == layout.end_lba
+            and row["track02_index1_file_offset"] == layout.index1_file_offset
+            and row["track02_sector_bytes"] == layout.sector_bytes
+        ):
+            return layout
+    return None
 
 
 def parse_row(line: str, line_number: int) -> dict[str, int]:
@@ -80,12 +137,11 @@ def verify(
     trace_path: Path,
     track02_path: Path,
     allow_other_sources: bool = False,
+    required_lba: int | None = None,
+    required_user_range: tuple[int, int] | None = None,
 ) -> tuple[bytes, list[dict[str, int]]]:
     raw = track02_path.read_bytes()
-    if len(raw) != EXPECTED_TRACK02_BYTES:
-        raise ValueError("Track 02 has the wrong authenticated JP Rev. 1 size")
-    if hashlib.md5(raw).hexdigest() != EXPECTED_TRACK02_MD5:
-        raise ValueError("Track 02 is not the authenticated JP Rev. 1 BIN")
+    layout = identify_track02(raw)
 
     lines = trace_path.read_text(encoding="ascii").splitlines()
     reader_pc_trace = bool(lines and lines[0] == TRACE_HEADER_WITH_READER_PC)
@@ -148,63 +204,90 @@ def verify(
                 )
 
     # Pass 2 independently recomputes each JP Track 02 row's sector and
-    # raw-file offsets. Mixed-disc captures may contain other authentic
-    # tracks; callers joining against this JP BIN can opt to skip those rows.
+    # file offset from the trace's declared CUE layout. The authenticated input
+    # may be either the raw BIN or its MODE1/2048 projection.
     # Long instrumented captures can read non-adjacent sectors; validate each
     # observed byte against its own CD source receipt instead of assuming the
     # entire trace is one contiguous 4096-byte bootstrap read.
+    trace_layouts: set[str] = set()
     for sequence, row in enumerate(rows):
-        media_metadata_matches = (
-            row["track02_start_lba"] == TRACK02_START_LBA
-            and row["track02_end_lba"] == TRACK02_END_LBA
-            and row["track02_index1_file_offset"] == TRACK02_INDEX1_FILE_OFFSET
-            and row["track02_sector_bytes"] == SECTOR_BYTES
-        )
-        if not media_metadata_matches:
+        trace_layout = identify_trace_layout(row)
+        if trace_layout is None:
             if allow_other_sources:
                 continue
             raise ValueError(f"unexpected source span at row {sequence}")
-        sector_index = row["source_lba"] - TRACK02_START_LBA
+        trace_layouts.add(trace_layout.name)
+        sector_index = row["source_lba"] - trace_layout.start_lba
         user_offset = row["source_user_offset"]
-        if not 0 <= sector_index < TRACK02_END_LBA - TRACK02_START_LBA:
+        if not 0 <= sector_index < trace_layout.end_lba - trace_layout.start_lba:
             if allow_other_sources:
                 continue
             raise ValueError(f"source LBA is outside JP Track 02 at row {sequence}")
-        if not 0 <= user_offset < USER_DATA_BYTES:
+        if not 0 <= user_offset < trace_layout.user_data_bytes:
             raise ValueError(f"source user offset is outside its sector at row {sequence}")
-        expected_offset = (
-            TRACK02_INDEX1_FILE_OFFSET
-            + sector_index * SECTOR_BYTES
-            + USER_DATA_OFFSET
+        expected_trace_offset = (
+            trace_layout.index1_file_offset
+            + sector_index * trace_layout.sector_bytes
+            + trace_layout.file_user_data_offset
             + user_offset
         )
         if (
-            row["track02_start_lba"] != TRACK02_START_LBA
-            or row["track02_end_lba"] != TRACK02_END_LBA
-            or row["track02_index1_file_offset"] != TRACK02_INDEX1_FILE_OFFSET
-            or row["track02_sector_bytes"] != SECTOR_BYTES
-            or row["source_raw_offset"] != USER_DATA_OFFSET + user_offset
-            or row["track02_raw_file_offset"] != expected_offset
+            row["source_raw_offset"] != trace_layout.source_user_data_offset + user_offset
+            or row["track02_raw_file_offset"] != expected_trace_offset
         ):
             raise ValueError(f"unexpected source span at row {sequence}")
 
-    # Pass 3 compares every observed byte with the hash-authenticated raw BIN.
+    # Pass 3 maps LBA/user offsets into the authenticated representation passed
+    # by the caller, independently of the representation used by the trace.
     observed = bytearray()
     for sequence, row in enumerate(rows):
-        metadata_matches = (
-            row["track02_start_lba"] == TRACK02_START_LBA
-            and row["track02_end_lba"] == TRACK02_END_LBA
-            and row["track02_index1_file_offset"] == TRACK02_INDEX1_FILE_OFFSET
-            and row["track02_sector_bytes"] == SECTOR_BYTES
+        trace_layout = identify_trace_layout(row)
+        if trace_layout is None:
+            continue
+        if not trace_layout.start_lba <= row["source_lba"] < trace_layout.end_lba:
+            continue
+        media_offset = (
+            layout.index1_file_offset
+            + (row["source_lba"] - layout.start_lba) * layout.sector_bytes
+            + layout.file_user_data_offset
+            + row["source_user_offset"]
         )
-        if not metadata_matches:
-            continue
-        if not TRACK02_START_LBA <= row["source_lba"] < TRACK02_END_LBA:
-            continue
-        source_offset = row["track02_raw_file_offset"]
-        if source_offset >= len(raw) or raw[source_offset] != row["value"]:
+        if media_offset >= len(raw) or raw[media_offset] != row["value"]:
             raise ValueError(f"data-port byte differs from authentic media at row {sequence}")
         observed.append(row["value"])
+
+    if required_user_range is not None and required_lba is None:
+        raise ValueError("a required user-data range requires --require-lba")
+    if required_lba is not None:
+        if not layout.start_lba <= required_lba < layout.end_lba:
+            raise ValueError("required LBA is outside the authenticated Track 02 span")
+        target_rows = [
+            row for row in rows
+            if row["source_valid"] == 1 and row["source_lba"] == required_lba
+        ]
+        if not target_rows:
+            raise ValueError(f"required source LBA {required_lba} was not observed")
+        if required_user_range is not None:
+            first, end = required_user_range
+            if not 0 <= first < end <= layout.user_data_bytes:
+                raise ValueError("required user-data range is outside one sector")
+            observed_offsets = {
+                row["source_user_offset"] for row in target_rows
+                if identify_trace_layout(row) is not None
+            }
+            missing = [offset for offset in range(first, end) if offset not in observed_offsets]
+            if missing:
+                raise ValueError(
+                    f"LBA {required_lba} is missing {len(missing)} required user-data byte(s)"
+                )
+            authenticated_offsets = {
+                row["source_user_offset"] for row in target_rows
+                if identify_trace_layout(row) is not None
+                and first <= row["source_user_offset"] < end
+            }
+            expected_count = end - first
+            if len(authenticated_offsets) != expected_count:
+                raise ValueError("required source range is not fully authenticated")
     return bytes(observed), rows
 
 
@@ -212,9 +295,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
     parser.add_argument("track02", type=Path)
+    parser.add_argument("--require-lba", type=int)
+    parser.add_argument(
+        "--require-user-range",
+        type=lambda value: tuple(int(part, 0) for part in value.split(":")),
+        help="require complete coverage of the half-open user-data range FIRST:END",
+    )
     args = parser.parse_args()
     try:
-        observed, rows = verify(args.trace, args.track02)
+        if args.require_user_range is not None and len(args.require_user_range) != 2:
+            raise ValueError("--require-user-range must be FIRST:END")
+        observed, rows = verify(
+            args.trace,
+            args.track02,
+            required_lba=args.require_lba,
+            required_user_range=args.require_user_range,
+        )
     except (OSError, UnicodeError, ValueError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -225,6 +321,14 @@ def main() -> int:
         if current["track02_raw_file_offset"] != previous["track02_raw_file_offset"] + 1:
             source_spans += 1
     source_lbas = sorted({row["source_lba"] for row in rows})
+    layout = identify_track02(args.track02.read_bytes())
+    layout_names = sorted({
+        trace_layout.name
+        for row in rows
+        if (trace_layout := identify_trace_layout(row)) is not None
+    })
+    print(f"authenticated_media_layout={layout.name} md5={layout.md5}")
+    print(f"trace_media_layouts={','.join(layout_names) if layout_names else 'none'}")
     print(
         f"PASS: {loop_count} verification loops; {len(observed)} bytes match "
         "authentic JP Track 02"
@@ -239,6 +343,15 @@ def main() -> int:
     if "reader_mpr_slot" in rows[0]:
         active_mpr = rows[0][f"reader_mpr{rows[0]['reader_mpr_slot']}"]
         print(f"reader_mpr_slot={rows[0]['reader_mpr_slot']} active_mpr=0x{active_mpr:02x}")
+    if args.require_lba is not None:
+        target_offsets = {
+            row["source_user_offset"] for row in rows
+            if row["source_valid"] == 1 and row["source_lba"] == args.require_lba
+        }
+        print(f"required_lba={args.require_lba} observed_user_bytes={len(target_offsets)}")
+        if args.require_user_range is not None:
+            first, end = args.require_user_range
+            print(f"required_user_range={first}:{end} complete=1")
     return 0
 
 if __name__ == "__main__":

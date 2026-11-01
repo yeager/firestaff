@@ -64,3 +64,21 @@ samples, the screen remained at the PC Engine Super CD-ROM System splash, and
 the wrapper rejected the capture because the status trace had no `$1800` reads.
 It did not exercise the exact-LBA filter or verify a game handoff; see the
 [visual follow-up record](theron-jp-lba3674-pid-input-cold-capture-20261101.md#visual-follow-up-with-a-pid-targeted-run-attempt).
+
+## Authentic data-port verifier formats
+
+`scripts/verify_theron_jp_cd_data_port_trace.py` accepts the authenticated JP
+Rev. 1 raw `MODE1/2352` Track 02 BIN and its authenticated `MODE1/2048` ISO
+projection. It checks each row's declared CUE layout, recomputes the trace
+file offset, maps the LBA and user-data offset into the supplied authenticated
+media representation, and compares the observed byte. A trace from either
+layout can therefore be checked against either authenticated representation.
+Unknown or modified media is rejected by exact size and MD5 identity.
+
+For the Akutuba source target, pass `--require-lba 3674
+--require-user-range 285:1545`. The range is half-open and must be completely
+represented by source-valid rows whose values match the authenticated media.
+This checks the 1,260-byte descriptor-and-map span; it does not establish that
+the game selected or rendered any of the four maps. Regression tests use
+generated format-only fixture bytes for offset and completeness logic. Those
+fixtures are not game data, source evidence, or gameplay captures.

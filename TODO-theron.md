@@ -135,9 +135,11 @@ The bounded PCE Fast capture wrapper now accepts
 `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It filters CD data-port rows
 and FIFO-origin RAM receipts before their trace quotas, while retaining the
 full CD FIFO origin sequence so intervening sector bytes cannot shift source
-attribution. This reduces unrelated trace volume; it does not prove that the
-original game read or selected the map. No accepted authentic capture has yet
-used this filter. See the [exact-LBA capture tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+attribution. The source verifier checks authenticated raw BIN and MODE1/2048
+ISO layouts and can require complete coverage of the 1,260-byte descriptor/map
+span at LBA 3674. Its format-only fixtures are not game-data evidence. This
+does not prove that the original game read or selected the map; no accepted
+authentic capture has yet used this filter. See the [exact-LBA capture tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 The follow-up Mednafen build for this capture path is not yet capture-ready.
 One instrumented build linked against `sdl2-compat` and was rejected by the
