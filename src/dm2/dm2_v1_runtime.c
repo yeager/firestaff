@@ -20352,6 +20352,7 @@ int dm2_v1_runtime_cycle_action_champion(void) {
     return 0;
 }
 
+
 typedef struct {
     DM2_V1_RuntimeState *rt;
     int hero_index;

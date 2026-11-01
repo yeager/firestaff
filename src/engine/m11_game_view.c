@@ -42154,6 +42154,14 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    /* SKProject IBMIO_USER_INPUT_CHECK maps the left-button release to
+     * source event 129; c_input.cpp then recomputes the champion squad only
+     * when CHANGE_PLAYER_POS has an active drag. */
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        dm2_v1_runtime_recompute_player_pos()) {
+        m11_sync_dm2_state_from_runtime(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
     /* PANEL.C F0353 is dispatched when the button is released after C071.
      * It redraws the normal action-hand panel, which first closes G0426 and
      * then (for a container action hand) reopens it through non-eye F0333.
@@ -44012,12 +44020,6 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             case 125: case 126: case 127: case 128:
                 if (dm2_v1_runtime_change_player_pos(
                         (int)(input_receipt.event_index - 125u))) {
-                    m11_sync_dm2_state_from_runtime(state);
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                return M11_GAME_INPUT_IGNORED;
-            case 129:
-                if (dm2_v1_runtime_recompute_player_pos()) {
                     m11_sync_dm2_state_from_runtime(state);
                     return M11_GAME_INPUT_REDRAW;
                 }

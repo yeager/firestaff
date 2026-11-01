@@ -57,12 +57,13 @@ The live DOS pointer route dispatches SKProject's source formation events
 slot records the pending source row; a second click moves its champion into an
 empty slot or swaps with the occupied champion. Relative rows are resolved
 using the current party facing, and the party snapshot is updated with the
-source party. Source event 129 follows
+source party. The source maps left-button release to event 129, which follows
 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION`: it clears a pending drag at its
-original slot and suppresses a facing update. The DM2 DOS real-media New Game
-test exercises retail GDAT hitboxes, pickup, event-129 recompute, and an
-empty-slot drop. This evidence covers the DOS PC route only; Amiga, FM Towns,
-and Macintosh formation pointer routes remain open.
+original slot and suppresses a facing update. M11 now sends SDL mouse-up
+through that source route. The DM2 DOS real-media New Game test exercises
+retail GDAT hitboxes, pickup, mouse-up recompute, and an empty-slot drop. This
+evidence covers the DOS PC route only; Amiga, FM Towns, and Macintosh formation
+pointer routes remain open.
 
 ## Interpretation boundary
 

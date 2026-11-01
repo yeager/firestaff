@@ -173,7 +173,10 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
-        if (!dm2_v1_runtime_recompute_player_pos() ||
+        if (M11_GameView_HandlePointerButtonRelease(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
             !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
                                                    &hero_after) ||
             hero_after.party_position != hero_before.party_position ||
