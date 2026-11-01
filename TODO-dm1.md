@@ -1,5 +1,24 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `BASE.C:F0006` screen-box inversion: the callable ledger
+now maps bounded Firestaff menu/champion-panel highlight overlays instead of
+an unrelated DM2 phase-gate numeric hit. No general low-level equivalent to
+ReDMCSB's inclusive source-screen rectangle bit inversion has been verified;
+pixel format, edge semantics, and all edition/platform callers remain open.
+
+2026-11-01 ReDMCSB `CLEARBYT.C:F0008` byte clear: the full ledger now maps
+the numbered symbol to Firestaff's shared `memset` wrapper instead of an
+unrelated menu-renderer numeric-token hit. Valid bounded clears have a
+counterpart; source pointer/count widths, platform implementations, and ABI
+behavior remain open, so the function and Atari ST alias are `PARTIAL`.
+
+2026-11-01 ReDMCSB `COPYBYTE.C:F0007` byte copy: the full ledger now maps the
+numbered symbol to Firestaff's shared `memmove` wrapper instead of a DM2
+numeric-token collision. Positive-length overlapping copies have a bounded
+counterpart; ReDMCSB's platform assembly, pointer/size domains, and ABI
+semantics remain unverified, so both the named function and Atari ST alias are
+`PARTIAL`.
+
 2026-11-01 ReDMCSB `GAMELOOP.C:F0002` main loop: the callable inventory now
 maps the bounded tick adapter and live M11 DM1 loop instead of an unrelated
 DM2 numeric-token hit. They cover substantial per-tick source order, but the
