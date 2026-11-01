@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
+
 2026-11-01 ReDMCSB `BLITFILL.C:F0136` screen hatch: the ledger marks Firestaff’s bounded PC34 checkerboard hatch `PARTIAL`; color/pattern and platform-specific box/backend behavior remain open. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
 
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
