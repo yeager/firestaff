@@ -23,7 +23,8 @@ source-read filter, but does not prove that the original reads or consumes
 those bytes. Recompute the identity-checked target with
 [`plan_theron_jp_akutuba_map_trace.py`](tools/plan_theron_jp_akutuba_map_trace.py);
 pass `--dump-grids` to print all four authenticated map arrays as opaque tile
-bytes. This does not identify the runtime map or tile meaning. See the
+bytes and descriptor values; unknown fields remain uninterpreted. This does
+not identify the runtime map or tile meaning. See the
 [source-sector report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md).
 
 ## 2026-11-01 — define the JP active-map capture acceptance chain

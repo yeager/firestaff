@@ -5,7 +5,8 @@
 - Added an opt-in `--dump-grids` mode to the identity-gated JP Akutuba source
   planner. It prints all four maps as raw tile bytes with `y` rows and `x`
   columns, reading the authentic column-major arrays from the verified retail
-  BIN.
+  BIN. It also prints descriptor fields while leaving unknown fields
+  uninterpreted.
 - Ran the mode three times against the local hash-verified `TQJP02.bin`; all
   output was byte-identical. Python compilation and `git diff --check` passed.
 - The dump assigns no tile meaning and does not identify the active runtime

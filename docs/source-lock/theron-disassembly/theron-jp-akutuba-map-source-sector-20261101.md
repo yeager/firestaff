@@ -62,5 +62,7 @@ The tool checks the complete retail identity, parses dimensions from the
 source descriptor, derives raw-sector and disc-LBA ranges, and prints source
 tile values without modifying the media. Its optional `--dump-grids` mode
 prints every Akutuba map byte with rows indexed by `y` and columns by `x`, while
-reading the authentic column-major arrays. The bytes stay opaque: this dump
-does not select the runtime map, decode tile meaning, or authorize rendering.
+reading the authentic column-major arrays. It also prints descriptor bytes
+through the parser's field labels, retaining `unknown_1` and `unknown_2` as
+uninterpreted values. These static IDs and metadata do not identify the
+runtime-selected map, decode tile meaning, or authorize rendering.

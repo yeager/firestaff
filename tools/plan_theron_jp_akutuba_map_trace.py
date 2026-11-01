@@ -101,6 +101,10 @@ def main() -> int:
     descriptor = read_user_range(raw, descriptor_start, descriptor_size)
     x_dims = descriptor[:AKUTUBA_MAP_COUNT]
     y_dims = descriptor[AKUTUBA_MAP_COUNT : 2 * AKUTUBA_MAP_COUNT]
+    descriptor_fields = [
+        descriptor[index * AKUTUBA_MAP_COUNT : (index + 1) * AKUTUBA_MAP_COUNT]
+        for index in range(9)
+    ]
     map_cursor = ud_base + AKUTUBA_MAP_DATA_OFFSET
 
     print(f"track02_md5={TRACK02_MD5}")
@@ -113,6 +117,18 @@ def main() -> int:
     print(f"akutuba_map_data_offset=0x{AKUTUBA_MAP_DATA_OFFSET:x}")
     print(f"akutuba_descriptor_sha256={hashlib.sha256(descriptor).hexdigest()}")
     describe_span("descriptor", descriptor_start, descriptor_size)
+    if args.dump_grids:
+        descriptor_names = (
+            "x_dim", "y_dim", "x_offset", "y_offset", "map_id",
+            "unknown_1", "unknown_2", "creature_count", "xp_modifier",
+        )
+        print("map descriptor bytes (unknown fields remain uninterpreted):")
+        for map_index in range(AKUTUBA_MAP_COUNT):
+            fields = " ".join(
+                f"{name}=0x{descriptor_fields[field_index][map_index]:02x}"
+                for field_index, name in enumerate(descriptor_names)
+            )
+            print(f"  map[{map_index}]: {fields}")
 
     total_map_bytes = sum((x_dims[i] + 1) * (y_dims[i] + 1)
                           for i in range(AKUTUBA_MAP_COUNT))
