@@ -13,9 +13,9 @@ driver_convertalphapalette	SKWINDOS	SKWINDOS/dm2D.cpp	508	void driver_convertalp
 driver_setpalette	SKWINDOS	SKWINDOS/dm2D.cpp	534	void driver_setpalette(i8 mode)	0	UNREVIEWED
 driver_blitfromscreen	SKWINDOS	SKWINDOS/dm2D.cpp	562	void driver_blitfromscreen(c_rect* rect, i16 yofs)	0	UNREVIEWED
 driver_restoremousebackground	SKWINDOS	SKWINDOS/dm2D.cpp	569	void driver_restoremousebackground(void)	0	UNREVIEWED
-sub_min	SKWINDOS	SKWINDOS/dm2D.cpp	586	i16 sub_min(i16 a, i16 b)	0	UNREVIEWED
-sub_max	SKWINDOS	SKWINDOS/dm2D.cpp	592	i16 sub_max(i16 a, i16 b)	0	UNREVIEWED
-driver_drawmouse	SKWINDOS	SKWINDOS/dm2D.cpp	599	void driver_drawmouse(i8* srcmap, c_rect* rect, i16 x, i16 y, i16 w, i8 masked, i8 mask, bool restorebackground)	0	UNREVIEWED
+sub_min	SKWINDOS	SKWINDOS/dm2D.cpp	586	i16 sub_min(i16 a, i16 b)	0	PARTIAL
+sub_max	SKWINDOS	SKWINDOS/dm2D.cpp	592	i16 sub_max(i16 a, i16 b)	0	PARTIAL
+driver_drawmouse	SKWINDOS	SKWINDOS/dm2D.cpp	599	void driver_drawmouse(i8* srcmap, c_rect* rect, i16 x, i16 y, i16 w, i8 masked, i8 mask, bool restorebackground)	0	PARTIAL
 driver_stretched_hblit	SKWINDOS	SKWINDOS/dm2D.cpp	678	void driver_stretched_hblit(ui16 srcx, ui16 destx)	0	UNREVIEWED
 driver_mouseblit	SKWINDOS	SKWINDOS/dm2D.cpp	710	void driver_mouseblit(i8* srcmap, c_rect* rect, i16 stretched)	0	UNREVIEWED
 driver_memcpy	SKWINDOS	SKWINDOS/dm2D.cpp	832	void driver_memcpy(i8* src, i8* dest, i16 bytes)	0	UNREVIEWED
@@ -23,7 +23,7 @@ driver_keyboardint_T1	SKWINDOS	SKWINDOS/dm2D.cpp	840	void driver_keyboardint_T1(
 driver_kbdqueue_pop	SKWINDOS	SKWINDOS/dm2D.cpp	852	i16 driver_kbdqueue_pop(void)	0	UNREVIEWED
 driver_forceint2d	SKWINDOS	SKWINDOS/dm2D.cpp	864	bool driver_forceint2d(void)	0	UNREVIEWED
 driver_requestkeycode	SKWINDOS	SKWINDOS/dm2D.cpp	872	i16 driver_requestkeycode(i16 arg)	0	UNREVIEWED
-driver_drawmouse_clipped	SKWINDOS	SKWINDOS/dm2D.cpp	887	void driver_drawmouse_clipped(bool restorebackground)	0	UNREVIEWED
+driver_drawmouse_clipped	SKWINDOS	SKWINDOS/dm2D.cpp	887	void driver_drawmouse_clipped(bool restorebackground)	0	PARTIAL
 driver_force_restoremousebkg	SKWINDOS	SKWINDOS/dm2D.cpp	979	void driver_force_restoremousebkg(void)	0	UNREVIEWED
 driver_execmouseentry_T1	SKWINDOS	SKWINDOS/dm2D.cpp	989	void driver_execmouseentry_T1(i16 mx, i16 my, i16 mb)	0	UNREVIEWED
 driver_blockmouseinput	SKWINDOS	SKWINDOS/dm2D.cpp	1012	void driver_blockmouseinput(void)	1	UNREVIEWED
