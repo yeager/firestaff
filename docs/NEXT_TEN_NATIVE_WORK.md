@@ -46,9 +46,12 @@ contains only the next cross-game work items, not a complete Theron inventory.
    repository, so reproduce the route from hash-verified media in a fresh
    profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
-   Track 02 transition through its game-owned consumer, then bind bitmap,
-   palette, text and audio state to the native presentation path. Save-state
-   traces do not supply cold CD-to-RAM provenance.
+   Track 02 transition through its game-owned consumer. For the active map,
+   preserve one sequence from authenticated descriptor/map source reads through
+   System Card transfer and optional `$23AD` decoding, the active selector,
+   and a tile read at the captured party pose; pair this with atomic
+   VDC/VCE/VRAM and a no-input control. Save-state traces do not supply cold
+   CD-to-RAM provenance. See the [active-map acceptance chain](../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 7. **Theron JP/US save and later-dungeon matrix.** Verify each region
    separately with authentic progressed saves and level transitions. The
    available JP BRAM is empty; the emulator `.mc0` is a device snapshot, not

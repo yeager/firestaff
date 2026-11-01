@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — refresh current Theron status references
+
+- Reconciled README, project status, documentation index, the cross-game work
+  queue, and wiki home with the current native routes, reader-window verifier
+  scope, BIOS-trace rejection, and JP active-map capture acceptance chain.
+- Corrected the capture-readiness summary's older retail-window occurrence
+  counts. The verifier matches constructed real-media windows at four
+  `$CBC6` and three `$45C3` offsets; neither is claimed as a live source/LBA
+  match.
+- `git diff --check` passed. This documentation-only update did not run tests.
+
 ## 2026-11-01 — define the JP active-map capture acceptance chain
 
 - Updated the active Theron TODO and capture-readiness guide with a concrete

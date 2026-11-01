@@ -146,10 +146,10 @@ A static source search now finds two compatible US Track 02 instruction
 candidates for the captured Drator row readers. The `$CBC9` trace PC fits an
 absolute,Y load beginning at `$CBC6`; the `$45C3` candidate is a ten-byte TII
 from `$2935` to `$2400`, including workspace offsets 6–8. Each appears in
-multiple retail source occurrences (14 and 7 respectively), and neither
-instruction window was joined to a Track 02 source LBA in that capture. This
-narrows the disassembly target but does not prove runtime source ownership or
-row-field semantics. See the
+the verifier reports four matching raw offsets for `$CBC6` and three for
+`$45C3`. These constructed retail-byte windows narrow the disassembly target,
+but do not prove that either window was fetched during the authentic replay,
+bind a unique runtime occurrence or LBA, or assign row-field semantics. See the
 [reader source-candidate report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
 The complete clean-source Mednafen 1.32.1 patch chain applied in three
