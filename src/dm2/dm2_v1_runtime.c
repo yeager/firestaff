@@ -21940,7 +21940,7 @@ static int dm2_runtime_attack_creature_at(
         request.stamina_adj = dm2_v1_hero_get_stamina_adj_raw(
             hero, (int16_t)pre_strength);
     }
-    request.creature_skill_exp_factor = (uint8_t)(ai->w22 >> 8);
+    request.creature_skill_exp_factor = (uint8_t)((ai->w22 >> 8) & 0x0fu);
     /* DM2_CALC_PLAYER_ATTACK_DAMAGE receives a map descriptor difficulty
      * and ddat.v1e0286 party power, not the current map ordinal.  Both are
      * derivable from the already authenticated source state: the map

@@ -155,8 +155,8 @@ int dm2_v1_calc_player_attack_damage_receipt(
             receipt->final_damage = (int16_t)(damage > 32767 ? 32767 : damage);
 
             {
-                int16_t exp = (int16_t)((((int32_t)(request->creature_skill_exp_factor & 0x0fu) *
-                                           damage) >> 4) + 3);
+                int16_t exp = (int16_t)(
+                    ((int32_t)request->creature_skill_exp_factor * damage >> 4) + 3);
                 receipt->skill_exp_awarded = exp;
             }
         }
