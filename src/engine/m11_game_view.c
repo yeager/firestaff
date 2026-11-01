@@ -71863,16 +71863,108 @@ static void m11_apply_v1_champion_icon_invisibility_remap(unsigned char* framebu
     }
 }
 
+static struct {
+    uint64_t signature;
+    int initialized;
+} g_m11_debug_dm1_hud_snapshot;
+
+static void m11_debug_dm1_hud_visibility(
+    const M11_GameViewState* state,
+    const M11_AssetSlot* iconStrip,
+    const char* reason)
+{
+    uint64_t signature = UINT64_C(1469598103934665603);
+    int presentMask = 0;
+    int aliveMask = 0;
+    int eligibleMask = 0;
+    int slot;
+    int chrome;
+    int verticalSlice;
+    int loaded = iconStrip && iconStrip->loaded && iconStrip->pixels;
+    int stripWidth = loaded ? (int)iconStrip->width : 0;
+    int stripHeight = loaded ? (int)iconStrip->height : 0;
+
+    if (!state || !state->debugMovementTraceEnabled ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+    chrome = m11_v1_chrome_mode_enabled(state);
+    verticalSlice = m11_v2_vertical_slice_enabled(state);
+#define M11_DM1_HUD_HASH(value) do { \
+    signature ^= (uint32_t)(value); \
+    signature *= UINT64_C(1099511628211); \
+} while (0)
+    M11_DM1_HUD_HASH(state->sourceKind);
+    M11_DM1_HUD_HASH(state->presentationMode);
+    M11_DM1_HUD_HASH(state->showDebugHUD);
+    M11_DM1_HUD_HASH(state->inventoryPanelActive);
+    M11_DM1_HUD_HASH(chrome);
+    M11_DM1_HUD_HASH(verticalSlice);
+    M11_DM1_HUD_HASH(state->assetsAvailable);
+    M11_DM1_HUD_HASH(loaded);
+    M11_DM1_HUD_HASH(stripWidth);
+    M11_DM1_HUD_HASH(stripHeight);
+    M11_DM1_HUD_HASH(state->world.party.championCount);
+    if (reason) {
+        const unsigned char* text = (const unsigned char*)reason;
+        while (*text) M11_DM1_HUD_HASH(*text++);
+    }
+    for (slot = 0; slot < state->world.party.championCount &&
+                   slot < CHAMPION_MAX_PARTY; ++slot) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[slot];
+        if (champion->present) presentMask |= 1 << slot;
+        if (champion->present && champion->hp.current > 0) aliveMask |= 1 << slot;
+        M11_DM1_HUD_HASH(champion->present);
+        M11_DM1_HUD_HASH(champion->hp.current);
+        M11_DM1_HUD_HASH(champion->portraitIndex);
+        M11_DM1_HUD_HASH(champion->direction);
+    }
+    eligibleMask = m11_is_dm1_fmtowns(state) ? aliveMask : presentMask;
+    M11_DM1_HUD_HASH(eligibleMask);
+#undef M11_DM1_HUD_HASH
+    if (g_m11_debug_dm1_hud_snapshot.initialized &&
+        g_m11_debug_dm1_hud_snapshot.signature == signature) return;
+    g_m11_debug_dm1_hud_snapshot.initialized = 1;
+    g_m11_debug_dm1_hud_snapshot.signature = signature;
+    fprintf(stderr,
+            "firestaff: dm1-hud-state source-kind=%d platform={iigs:%d fmtowns:%d} "
+            "mode=%d v1-chrome=%d v2-slice=%d inventory=%d reason=%s "
+            "fallback-icon-strip={loaded:%d size:%dx%d} champions=%d "
+            "present-mask=0x%x alive-mask=0x%x icon-eligible-mask=0x%x\n",
+            (int)state->sourceKind, state->dm1IigsActive,
+            m11_is_dm1_fmtowns(state),
+            (int)state->presentationMode, chrome, verticalSlice,
+            state->inventoryPanelActive, reason ? reason : "unknown",
+            loaded, stripWidth, stripHeight, state->world.party.championCount,
+            presentMask, aliveMask, eligibleMask);
+    for (slot = 0; slot < state->world.party.championCount &&
+                   slot < CHAMPION_MAX_PARTY; ++slot) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[slot];
+        fprintf(stderr,
+                "firestaff: dm1-hud-champion slot=%d present=%d hp=%u/%u "
+                "portrait=%u direction=%u eligible=%d\n",
+                slot, champion->present, champion->hp.current,
+                champion->hp.maximum, (unsigned int)champion->portraitIndex,
+                (unsigned int)champion->direction,
+                (eligibleMask & (1 << slot)) != 0);
+    }
+}
+
 static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
                                         int framebufferHeight) {
     int slot;
     const M11_AssetSlot* iconStrip = NULL;
-    if (!state || !framebuffer || state->showDebugHUD) {
+    if (!state || !framebuffer) {
+        return;
+    }
+    if (state->showDebugHUD) {
+        m11_debug_dm1_hud_visibility(state, NULL, "debug-hud-visible");
         return;
     }
     if (!m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
+        m11_debug_dm1_hud_visibility(state, NULL, "v1-icon-route-disabled");
         return;
     }
     if (state->assetsAvailable) {
@@ -71880,6 +71972,9 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)dm1_v1_graphic_champion_icons_pc34());
     }
+    m11_debug_dm1_hud_visibility(state, iconStrip,
+        !iconStrip || !iconStrip->loaded || !iconStrip->pixels
+            ? "source-icon-strip-missing" : "source-icon-strip-loaded");
 
     if (m11_is_dm1_fmtowns(state)) {
         DM1_V1_FmtownsHudEdition edition;
@@ -73010,8 +73105,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
         return 0;
     }
     if (m11_is_dm1_fmtowns(state)) {
-        return m11_draw_dm1_fmtowns_top_row_zones(
+        const int presented = m11_draw_dm1_fmtowns_top_row_zones(
             state, framebuffer, framebufferWidth, framebufferHeight);
+        m11_debug_dm1_hud_visibility(state, NULL,
+            presented ? "fmtowns-top-row-presented"
+                      : "fmtowns-top-row-rejected");
+        return presented;
     }
     if (m11_is_dm1_fmtowns(state) &&
         (!state->dm1FmtownsStartupReceiptValid ||
@@ -73019,27 +73118,54 @@ static int m11_draw_dm1_v1_top_row_receipt(
         return 0;
     }
     indexedPalette = m11_dm1_v1_top_row_palette(state);
-    if (!(m11_is_dm1_fmtowns(state)
-              ? dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
-                    (M11_AssetLoader*)&state->assetLoader,
-                    &state->originalFont, indexedPalette,
-                    VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials)
-              : dm1_v1_champion_panel_material_from_m11_loader_pc34(
+    if (!dm1_v1_champion_panel_material_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &state->originalFont,
-                    indexedPalette, VGA_PALETTE_PC34_COLOR_COUNT,
-                    &panelMaterials)) ||
-        !panelMaterials.valid || !panelMaterials.suppressSyntheticFallback ||
-        !dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
-            (M11_AssetLoader*)&state->assetLoader, &assets) ||
-        !dm1_v1_champion_top_row_frame_from_party_pc34(
+            indexedPalette, VGA_PALETTE_PC34_COLOR_COUNT,
+            &panelMaterials)) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-panel-material-load-rejected");
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+    if (!panelMaterials.valid || !panelMaterials.suppressSyntheticFallback) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-panel-material-invalid");
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+    if (!dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
+            (M11_AssetLoader*)&state->assetLoader, &assets)) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-assets-rejected");
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+    if (!dm1_v1_champion_top_row_frame_from_party_pc34(
             &state->world.party, (int)state->actingChampionOrdinal,
             (int)state->world.magic.event71CountInvisibility,
-            &assets.assets, &frame) ||
-        !dm1_v1_champion_top_row_presentation_from_frame_pc34(
-            &frame, &assets, &presentation) || !presentation.valid ||
-        !m11_dm1_v1_party_inventory_handoff_from_frame(
+            &assets.assets, &frame)) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-frame-rejected");
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+    if (!dm1_v1_champion_top_row_presentation_from_frame_pc34(
+            &frame, &assets, &presentation) || !presentation.valid) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-presentation-rejected");
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+    if (!m11_dm1_v1_party_inventory_handoff_from_frame(
             state, &presentation, &redrawMaterials, &redraw, &handoff) ||
         !handoff.valid) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-inventory-handoff-rejected");
         m11_clear_dm1_v1_top_row_receipt_zones(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
@@ -73047,6 +73173,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
 
     if (!m11_dm1_v1_top_row_atomic_host_consume(
             state, &assets, framebuffer, framebufferWidth, framebufferHeight)) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-atomic-consume-rejected");
         m11_clear_dm1_v1_top_row_receipt_zones(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
@@ -73069,6 +73197,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
           state->world.magic.partyShieldDefense > 0) &&
          !shieldMaterialReady) ||
         (frame.invisibilityCount > 0 && !invisibilityMaterialReady)) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-conditional-status-material-rejected");
         m11_clear_dm1_v1_top_row_receipt_zones(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
@@ -73085,6 +73215,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
             const Dm1V1ChampionTopRowPresentationOpPc34* source;
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= presentation.operationCount) {
+                m11_debug_dm1_hud_visibility(state, NULL,
+                    "pc34-top-row-handoff-index-rejected");
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -73098,6 +73230,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
                   source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_COMPOSE_ICON_PC34 ||
                   source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34) &&
                  !m11_dm1_v1_top_row_receipt_source_slot(state, source))) {
+                m11_debug_dm1_hud_visibility(state, NULL,
+                    "pc34-top-row-handoff-source-rejected");
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -73106,6 +73240,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
             const Dm1V1ChampionRedrawPriorityOpPc34* source;
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= redraw.operationCount) {
+                m11_debug_dm1_hud_visibility(state, NULL,
+                    "pc34-top-row-redraw-index-rejected");
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -73124,11 +73260,15 @@ static int m11_draw_dm1_v1_top_row_receipt(
                 (source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34 &&
                  (source->pendingDamageAmount <= 0 ||
                   !m11_dm1_pc34_hud_font_is_source_bound(state)))) {
+                m11_debug_dm1_hud_visibility(state, NULL,
+                    "pc34-top-row-redraw-source-rejected");
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
         } else {
+            m11_debug_dm1_hud_visibility(state, NULL,
+                "pc34-top-row-handoff-kind-rejected");
             m11_clear_dm1_v1_top_row_receipt_zones(
                 state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
@@ -73258,6 +73398,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
                 break;
 
             default:
+                m11_debug_dm1_hud_visibility(state, NULL,
+                    "pc34-top-row-presentation-operation-rejected");
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -73267,6 +73409,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
     statusBarFrameReady = m11_draw_dm1_v1_status_bar_frame_receipt(
         state, &assets, framebuffer, framebufferWidth, framebufferHeight);
     if (!statusBarFrameReady) {
+        m11_debug_dm1_hud_visibility(state, NULL,
+            "pc34-top-row-status-bar-frame-rejected");
         m11_clear_dm1_v1_top_row_receipt_zones(
             state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_dm1_v1_status_bar_receipt_zones(
@@ -73303,6 +73447,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
                             source->championSlot,
                             source->pendingDamageAmount,
                             isInventory, &origin)) {
+                        m11_debug_dm1_hud_visibility(state, NULL,
+                            "pc34-top-row-damage-origin-rejected");
                         m11_clear_dm1_v1_top_row_receipt_zones(
                             state, framebuffer, framebufferWidth, framebufferHeight);
                         return 0;
@@ -73320,6 +73466,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
         const unsigned int materialFNV1a =
             m11_dm1_v1_top_row_material_fnv1a(&assets);
         if (materialFNV1a == 0u) {
+            m11_debug_dm1_hud_visibility(state, NULL,
+                "pc34-top-row-material-fingerprint-rejected");
             m11_clear_dm1_v1_top_row_receipt_zones(
                 state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
@@ -73330,6 +73478,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
             state->world.gameTick, (unsigned int)frame.actingChampionOrdinal,
             materialFNV1a);
     }
+    m11_debug_dm1_hud_visibility(state, NULL,
+        "pc34-top-row-presented");
     return 1;
 }
 

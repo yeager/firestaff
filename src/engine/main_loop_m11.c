@@ -2949,9 +2949,175 @@ static uint64_t m11_debug_tick_emission_fingerprint(
 /* The compatibility world and TickResult below are authoritative for DM1
  * only. CSB and DM2 own separate boot runtimes; emit their own state rather
  * than presenting the stale DM1 mirror as if it described those games. */
+static struct {
+    unsigned int launchSerial;
+    uint64_t signature;
+    int initialized;
+} g_m11_debug_dm1_world_snapshot;
+
+static void m11_debug_dm1_world_state(const M11_GameViewState* state)
+{
+    const struct GameWorld_Compat* world;
+    const struct DungeonThings_Compat* things;
+    uint64_t signature = UINT64_C(1469598103934665603);
+    int presentMask = 0;
+    int aliveMask = 0;
+    int activeMapGroups = 0;
+    int aiCount;
+    int groupCount;
+    int timelineCount;
+    int pendingCreatureTicks = 0;
+    int pendingCreatureReactions = 0;
+    int pendingGroupMoves = 0;
+    int i;
+
+    if (!state || !state->debugMovementTraceEnabled || !state->active ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+    if (g_m11_debug_dm1_world_snapshot.launchSerial !=
+        g_m11_sync_launch_serial) {
+        g_m11_debug_dm1_world_snapshot.launchSerial = g_m11_sync_launch_serial;
+        g_m11_debug_dm1_world_snapshot.initialized = 0;
+    }
+    world = &state->world;
+    things = world->things;
+    aiCount = world->creatureAICount;
+    if (aiCount < 0 || aiCount > GAMEWORLD_CREATURE_AI_CAPACITY)
+        aiCount = 0;
+    groupCount = things ? things->groupCount : 0;
+    if (groupCount < 0 || groupCount > 65536) groupCount = 0;
+    timelineCount = world->timeline.count;
+    if (timelineCount < 0 || timelineCount > TIMELINE_QUEUE_CAPACITY)
+        timelineCount = 0;
+
+#define M11_DM1_DEBUG_HASH_WORD(value) do { \
+    signature ^= (uint32_t)(value); \
+    signature *= UINT64_C(1099511628211); \
+} while (0)
+    M11_DM1_DEBUG_HASH_WORD(state->sourceKind);
+    M11_DM1_DEBUG_HASH_WORD(state->dm1IigsActive);
+    M11_DM1_DEBUG_HASH_WORD(state->dm1FmtownsStartupReceiptValid);
+    M11_DM1_DEBUG_HASH_WORD(world->iigsCreatureProfileBound);
+    M11_DM1_DEBUG_HASH_WORD(world->party.mapIndex);
+    M11_DM1_DEBUG_HASH_WORD(world->party.mapX);
+    M11_DM1_DEBUG_HASH_WORD(world->party.mapY);
+    M11_DM1_DEBUG_HASH_WORD(world->party.direction);
+    M11_DM1_DEBUG_HASH_WORD(world->party.championCount);
+    M11_DM1_DEBUG_HASH_WORD(world->party.activeChampionIndex);
+    M11_DM1_DEBUG_HASH_WORD(groupCount);
+    M11_DM1_DEBUG_HASH_WORD(aiCount);
+    M11_DM1_DEBUG_HASH_WORD(world->pc34ActiveGroupSourceCount);
+    for (i = 0; i < world->party.championCount &&
+                i < CHAMPION_MAX_PARTY; ++i) {
+        const struct ChampionState_Compat* champion =
+            &world->party.champions[i];
+        if (champion->present) presentMask |= 1 << i;
+        if (champion->present && champion->hp.current > 0) aliveMask |= 1 << i;
+        M11_DM1_DEBUG_HASH_WORD(champion->present);
+        M11_DM1_DEBUG_HASH_WORD(champion->hp.current);
+        M11_DM1_DEBUG_HASH_WORD(champion->hp.maximum);
+        M11_DM1_DEBUG_HASH_WORD(champion->stamina.current);
+        M11_DM1_DEBUG_HASH_WORD(champion->mana.current);
+    }
+    for (i = 0; i < timelineCount; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_CREATURE_TICK) ++pendingCreatureTicks;
+        else if (event->kind == TIMELINE_EVENT_CREATURE_REACTION)
+            ++pendingCreatureReactions;
+        else if (event->kind == TIMELINE_EVENT_MOVE_GROUP_SILENT ||
+                 event->kind == TIMELINE_EVENT_MOVE_GROUP_AUDIBLE)
+            ++pendingGroupMoves;
+    }
+    for (i = 0; i < aiCount; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->groupMapIndex != world->party.mapIndex || ai->reserved0 < 0 ||
+            ai->reserved0 >= groupCount) continue;
+        ++activeMapGroups;
+        M11_DM1_DEBUG_HASH_WORD(ai->reserved0);
+        M11_DM1_DEBUG_HASH_WORD(ai->stateKind);
+        M11_DM1_DEBUG_HASH_WORD(ai->creatureType);
+        M11_DM1_DEBUG_HASH_WORD(ai->groupMapX);
+        M11_DM1_DEBUG_HASH_WORD(ai->groupMapY);
+        M11_DM1_DEBUG_HASH_WORD(ai->groupCells);
+        M11_DM1_DEBUG_HASH_WORD(ai->targetChampionIndex);
+        M11_DM1_DEBUG_HASH_WORD(ai->aspect[0]);
+        M11_DM1_DEBUG_HASH_WORD(ai->aspect[1]);
+        M11_DM1_DEBUG_HASH_WORD(ai->aspect[2]);
+        M11_DM1_DEBUG_HASH_WORD(ai->aspect[3]);
+        if (things && things->groups && ai->reserved0 < things->groupCount) {
+            const struct DungeonGroup_Compat* group =
+                &things->groups[ai->reserved0];
+            M11_DM1_DEBUG_HASH_WORD(group->behavior);
+            M11_DM1_DEBUG_HASH_WORD(group->count);
+            M11_DM1_DEBUG_HASH_WORD(group->health[0]);
+            M11_DM1_DEBUG_HASH_WORD(group->health[1]);
+            M11_DM1_DEBUG_HASH_WORD(group->health[2]);
+            M11_DM1_DEBUG_HASH_WORD(group->health[3]);
+        }
+    }
+#undef M11_DM1_DEBUG_HASH_WORD
+
+    if (g_m11_debug_dm1_world_snapshot.initialized &&
+        signature == g_m11_debug_dm1_world_snapshot.signature) return;
+    g_m11_debug_dm1_world_snapshot.initialized = 1;
+    g_m11_debug_dm1_world_snapshot.signature = signature;
+    fprintf(stderr,
+            "firestaff: game-state game=dm1 source=reDMCSB-derived-simulation "
+            "tick=%u source-kind=%d platform={iigs:%d fmtowns:%d iigs-creature-profile:%d} "
+            "map=%d party=%d,%d dir=%d champions=%d active-champion=%d "
+            "present-mask=0x%x alive-mask=0x%x groups=%d active-source-groups=%d "
+            "active-map-groups=%d timeline={count:%d creature-ticks:%d reactions:%d group-moves:%d}\n",
+            (unsigned int)world->gameTick, (int)state->sourceKind,
+            state->dm1IigsActive, state->dm1FmtownsStartupReceiptValid,
+            world->iigsCreatureProfileBound, world->party.mapIndex,
+            world->party.mapX, world->party.mapY, world->party.direction,
+            world->party.championCount, world->party.activeChampionIndex,
+            presentMask, aliveMask, groupCount,
+            world->pc34ActiveGroupSourceCount, activeMapGroups,
+            timelineCount, pendingCreatureTicks, pendingCreatureReactions,
+            pendingGroupMoves);
+    for (i = 0; i < world->party.championCount &&
+                i < CHAMPION_MAX_PARTY; ++i) {
+        const struct ChampionState_Compat* champion =
+            &world->party.champions[i];
+        fprintf(stderr,
+                "firestaff: game-entity game=dm1 type=champion slot=%d "
+                "present=%d hp=%u/%u stamina=%u/%u mana=%u/%u active=%d\n",
+                i, champion->present, champion->hp.current,
+                champion->hp.maximum, champion->stamina.current,
+                champion->stamina.maximum, champion->mana.current,
+                champion->mana.maximum,
+                world->party.activeChampionIndex == i);
+    }
+    for (i = 0; i < aiCount; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        const struct DungeonGroup_Compat* group;
+        unsigned int health = 0u;
+        int creature;
+        if (ai->groupMapIndex != world->party.mapIndex || ai->reserved0 < 0 ||
+            ai->reserved0 >= groupCount || !things || !things->groups ||
+            ai->reserved0 >= things->groupCount) continue;
+        group = &things->groups[ai->reserved0];
+        for (creature = 0; creature <= (int)group->count && creature < 4;
+             ++creature) health += group->health[creature];
+        fprintf(stderr,
+                "firestaff: game-entity game=dm1 type=monster "
+                "group=%d creature-type=%d state=%d behavior=%u count=%u "
+                "hp=%u map=%d at=%d,%d cells=0x%x target-champion=%d "
+                "cooldown={move:%d attack:%d} aspect={%02x,%02x,%02x,%02x}\n",
+                ai->reserved0, ai->creatureType, ai->stateKind,
+                (unsigned int)group->behavior,
+                (unsigned int)group->count + 1u, health,
+                ai->groupMapIndex, ai->groupMapX, ai->groupMapY,
+                ai->groupCells, ai->targetChampionIndex,
+                ai->movementCooldownTicks, ai->attackCooldownTicks,
+                ai->aspect[0], ai->aspect[1], ai->aspect[2], ai->aspect[3]);
+    }
+}
+
 static void m11_debug_native_game_state(const M11_GameViewState* state,
                                        int reportSummary) {
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    m11_debug_dm1_world_state(state);
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbBootProfile) {
         typedef struct {

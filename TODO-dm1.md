@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-11-01 Authentic PC34 save combat follow-up: `LOADSAVE.C:F0435` restores
+live C04 behavior when rebuilding the transient active-group AI mirror. An
+original DOSBox-X PC 3.4 save previously restored every active group as
+WANDER even when the authentic C04 owner was ATTACK, APPROACH, or FLEE; this
+prevented saved attackers from following the source behavior. The focused
+bundle test and authentic original-save combat/shield regression now pass,
+including all 15 active groups and group 169 attacking. The shared importer is
+also called by the Amiga save handoff, but this report has only been exercised
+with the PC34 save. The separate report that champions disappear from the PC
+HUD was not reproduced: the same authentic save presents all four champion
+slots. Expanded `--debug` HUD receipts now identify top-row presentation or
+the exact rejection stage; native-user captures and other editions still need
+checking if the HUD symptom recurs.
+
 2026-11-01 DM1 Amiga 3.6 no-game M12 runtime retest at `93c644549`: the
 local `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm1-amiga` (90.52 s) against the installed original

@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM1 PC34 saved combat`: restore active monster ATTACK, APPROACH and FLEE
+  behavior from the original group records when loading a save.
 - `CSB Amiga startup`: use the selected authentic A31M disk for its SWSH
   intro, preventing a sibling edition in the data directory from suppressing
   the animation.
@@ -33,6 +35,8 @@
 - `Theron evidence`: update authentic fresh-start, native pickup, save/continue and System Card source tracing; claims remain bounded to tested routes.
 - `Nexus evidence`: update BKR trace-order and consumer-read validation, and add VDP1/VDP2 composition checks against authentic captures.
 - `CLI diagnostics`: change achievement and startup logging to emit details only when `--debug` is enabled where applicable.
+- `DM1 diagnostics`: report source-owned world/creature state transitions and
+  champion HUD presentation failures only when `--debug` is enabled.
 - `Localization`: regenerate startup-menu references after catalog changes.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 

@@ -14,6 +14,23 @@ static const unsigned char dm1_v1_thing_record_bytes_pc34[16] = {
     4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u
 };
 
+/* ReDMCSB GROUP.C:F0180 (311-338) resets only values at or above
+ * C4_BEHAVIOR_USELESS; F0183 (389 onward) retains the source GROUP record,
+ * and F0195 (1098-1126) calls both while admitting map groups. Live
+ * FLEE/ATTACK/APPROACH values therefore remain source state. ACTIVE_GROUP
+ * does not serialize Behavior, so F0435 restore must rebuild the runtime AI
+ * mirror from its authenticated raw C04 owner. */
+static int dm1_v1_group_behavior_to_ai_state_pc34(unsigned char behavior)
+{
+    switch (behavior) {
+        case DM1_BEHAVIOR_ATTACK: return AI_STATE_ATTACK;
+        case DM1_BEHAVIOR_APPROACH: return AI_STATE_APPROACH;
+        case DM1_BEHAVIOR_FLEE: return AI_STATE_FLEE;
+        case DM1_BEHAVIOR_WANDER:
+        default: return AI_STATE_WANDER;
+    }
+}
+
 static uint16_t dm1_v1_read_u16_pc34(const unsigned char *bytes)
 {
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
@@ -299,7 +316,9 @@ int dm1_v1_group_state_apply_save_handoff_pc34(
             src->homeMapY < 0 || src->homeMapY > 0xff) {
             return 0;
         }
-        staged[index].stateKind = AI_STATE_WANDER;
+        staged[index].stateKind =
+            dm1_v1_group_behavior_to_ai_state_pc34(
+                world->things->groups[groupIndex].behavior);
         staged[index].creatureType = world->things->groups[groupIndex].creatureType;
         staged[index].groupMapIndex = world->partyMapIndex;
         staged[index].groupMapX = src->priorMapX;

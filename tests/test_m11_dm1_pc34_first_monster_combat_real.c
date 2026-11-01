@@ -22,6 +22,17 @@ static unsigned int group_health_total(const struct DungeonGroup_Compat *group)
     return total;
 }
 
+static int expected_ai_state_for_group_behavior(unsigned char behavior)
+{
+    switch (behavior) {
+        case DM1_BEHAVIOR_ATTACK: return AI_STATE_ATTACK;
+        case DM1_BEHAVIOR_APPROACH: return AI_STATE_APPROACH;
+        case DM1_BEHAVIOR_FLEE: return AI_STATE_FLEE;
+        case DM1_BEHAVIOR_WANDER:
+        default: return AI_STATE_WANDER;
+    }
+}
+
 typedef struct {
     uint64_t cursor;
     uint64_t dropped;
@@ -352,6 +363,47 @@ int main(void)
                     formationCells);
             M11_GameView_Shutdown(&resumed);
             return 1;
+        }
+        {
+            int active = 0;
+            int group169AttackRestored = 0;
+            for (slot = 0; slot < resumed.world.creatureAICount; ++slot) {
+                const struct CreatureAIState_Compat *ai =
+                    &resumed.world.creatureAI[slot];
+                const int groupIndex = ai->reserved0;
+                unsigned char behavior;
+                if (groupIndex < 0 || groupIndex >=
+                        resumed.world.things->groupCount) {
+                    continue;
+                }
+                behavior = resumed.world.things->groups[groupIndex].behavior;
+                if (ai->stateKind !=
+                    expected_ai_state_for_group_behavior(behavior)) {
+                    fprintf(stderr,
+                            "FAIL: authentic PC34 save group %d behavior=%u "
+                            "restored AI state=%d expected=%d\n",
+                            groupIndex, (unsigned int)behavior, ai->stateKind,
+                            expected_ai_state_for_group_behavior(behavior));
+                    M11_GameView_Shutdown(&resumed);
+                    return 1;
+                }
+                ++active;
+                if (groupIndex == 169 &&
+                    behavior == DM1_BEHAVIOR_ATTACK &&
+                    ai->stateKind == AI_STATE_ATTACK) {
+                    group169AttackRestored = 1;
+                }
+            }
+            if (resumed.world.things->groupCount > 169 &&
+                resumed.world.things->groups[169].behavior ==
+                    DM1_BEHAVIOR_ATTACK && !group169AttackRestored) {
+                fputs("FAIL: authentic save lost group 169's attack state\n",
+                      stderr);
+                M11_GameView_Shutdown(&resumed);
+                return 1;
+            }
+            printf("PASS: authentic PC34 save restores source behavior for %d active monster groups\n",
+                   active);
         }
         M11_GameView_Shutdown(&resumed);
         puts("PASS: authentic PC34 save restores all four source champion cells");
