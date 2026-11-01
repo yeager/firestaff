@@ -16,6 +16,18 @@
   The parser fixture is protocol coverage, not game data or a parity claim.
   Details: [`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
 
+## 2026-11-01 — Re-verify the authentic frame-8037 VDP composition
+
+- On the current parser head, the frame-8037 VDP2 composition and retail
+  source-join tests each passed three consecutive runs on TRV2. The display
+  output matched both pinned Ymir passes across all 71,680 RGB pixels; source
+  matching reproduced the existing Japanese retail receipt.
+- This is a second, title-menu capture state after gameplay frame 300. It
+  remains capture-only and does not prove menu input, dungeon/HUD states,
+  original-Saturn parity, selected Structure3 face ownership, or production
+  renderer admission. Details are in
+  [`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
+
 ## 2026-11-01 — Verify frame-300 visible pixel source classes
 
 - The authentic Japanese frame-300 composition joins all 65,991 visible VDP1
