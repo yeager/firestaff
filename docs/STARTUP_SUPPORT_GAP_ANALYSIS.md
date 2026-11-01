@@ -115,6 +115,15 @@ no-game launcher scan, including localized task labels and no unintended
 game handoff. These checks cover diagnostic labels and launcher state, not
 the rendered progress-bar appearance.
 
+`startup_scan_intro_capture_dm1_real_media` now captures the actual startup
+intro RGBA frame during an authentic DM1 PC 3.4 scan; it passed in 0.26 s,
+checked the 480×270 output and confirmed the original archive stayed unchanged.
+The inspected Swedish 0% frame places the status and 376×4 progress track at
+the lower center; the test checks the real unfilled track pixel at its right
+edge. This establishes the rendered startup surface and capture route only; it
+does not verify later fill animation, native-window scaling, or gameplay
+visual parity.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
