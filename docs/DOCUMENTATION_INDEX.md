@@ -181,12 +181,13 @@ emulator saves, private capture logs or generated placeholder art.
 
 **Last reviewed:** 2026-11-01. The current status reflects the source and
 authenticated-media evidence recorded on the linked status and per-game
-work-log pages. The previously verified clean-source Mednafen 1.32.1 patch
-chain passed three loops, and the `$C852` instrumented PCE Fast binary built
-against real SDL2 2.33.0 and passed isolated runtime verification. The newer
-proposed `$3879` window extension is not source-application-verified: current
-patch-only validation stops at the E009 destination-consumer-read patch before
-reaching either PCE hook. See the current [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+work-log pages. The complete Mednafen 1.32.1 patch-only chain, including the
+new `$3879` window extension, applied in three consecutive isolated loops; a
+separate pass with PCE Fast enabled also passed. The instrumented PCE Fast
+emulator built against SDL2 2.32.10 and passed isolated startup/runtime
+version verification. No authentic `$C852`→`$C85E`→`$5039` trace has been
+produced. See the current
+[Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
 A rebuilt cold US replay
 reached Drator `left-event` and reentry, and captured 132 `$C852` fetches at physical
 `$0DC852`; the first five 512-byte windows exactly match Track 02 offset `$A3AD2`. The filtered

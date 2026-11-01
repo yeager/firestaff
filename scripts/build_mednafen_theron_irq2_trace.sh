@@ -210,7 +210,7 @@ single_write_patch="$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fi
 single_write_rendered="$build_root/theron-single-logical-write.rendered.patch"
 if [[ "$pce_fast_enabled" != 1 ]]; then
     sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$single_write_patch" > "$single_write_rendered"
-    patch -d "$build_root/source" -p1 --batch --forward \
+    patch -d "$build_root/source" -p1 --batch --forward --fuzz=0 \
         < "$single_write_rendered"
 fi
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
@@ -401,7 +401,9 @@ if ! awk '
 fi
 if ! awk '
     index($0, "b1 = RdAtPC();") { opcode_fetch = NR }
-    index($0, "c852_fetch sequence=") { trace_record = NR }
+    index($0, "const bool is_c852 = TheronTraceInstructionPC == 0xC852;") {
+        trace_record = NR
+    }
     index($0, "ADDCYC(CycTable[b1]);") { dispatch_cycle = NR }
     END {
         if (!opcode_fetch || !dispatch_cycle || !trace_record ||

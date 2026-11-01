@@ -55,16 +55,16 @@ payloads. No captured MPR2 or instruction path proves that this candidate ran.
 The next US trace should record `$C85E`, `$5039`, the `$4F`-based read and
 `$3879` entry with ordered events and all MPRs. See the
 [stage-two call-target report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
-The proposed PCE and PCE Fast `$3879` trace-hook extension starts a bounded
+The PCE and PCE Fast `$3879` trace-hook extension starts a bounded
 128-instruction window at the first runtime `$C852` instruction and retains
 the caller range, MPRs and CPU registers through later instructions that may
-reach `$5039`. It is not yet source-application-verified: patch-only validation
-of the full Mednafen chain fails first at
-`mednafen_1.32.1_theron_e009_destination_consumer_read.patch`
-(`src/pce/pcecd.cpp:196`), before either hook is reached. An isolated follow-up
-also found a rejected hunk in the preceding E009 trace patch. Static assertions
-do not prove patch applicability, and no new emulator trace has been captured.
-Repair the full chain before relying on these hooks for an authentic replay.
+reach `$5039`. The complete Mednafen 1.32.1 patch-only chain applied in three
+consecutive isolated regression loops; a separate patch-only pass with PCE
+Fast enabled also passed. The instrumented PCE Fast emulator was built against
+SDL2 2.32.10 and passed the isolated startup/runtime version check. No
+authentic game run was captured, so the ordered runtime
+`$C852`→`$C85E`→`$5039` path, target execution and caller data semantics remain
+unproven.
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
 to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
 relationship and all matching raw offsets. A complete verification requires

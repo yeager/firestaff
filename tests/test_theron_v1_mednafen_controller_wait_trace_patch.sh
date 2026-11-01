@@ -495,7 +495,7 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
        in_block && index($0, "s/^ FIRESTAFF_PATCH_TAB_CONTEXT") { prefixed_marker = 1 }
        in_block && index($0, "s/^FIRESTAFF_PATCH_TAB_CONTEXT") { plain_marker = 1 }
        in_block && /--fuzz=0/ { strict_fuzz = 1 }
-       in_block && /< "\\$theron_3879_trace_rendered"/ {
+       in_block && index($0, "< \"$theron_3879_trace_rendered\"") {
            if (prefixed_marker && plain_marker && strict_fuzz) found = 1
            in_block = 0
        }
@@ -510,6 +510,8 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'RdMem(0x2004)' "$indirect_target_patch_file" ||
    ! grep -Fq 'target_physical' "$indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879TargetStepsRemaining = 128' "$indirect_target_patch_file" ||
+   ! grep -Fq '(PC >= 0xc852 && PC <= 0xc85e)' "$indirect_target_patch_file" ||
+   ! grep -Fq 'PC == 0xc852 && !Theron3879C852WindowStarted' "$indirect_target_patch_file" ||
    ! grep -Fq 'theron_trace_physical_pc = (MPR[PC >> 13]' "$indirect_target_patch_file" ||
    ! grep -Fq 'PC, theron_trace_physical_pc, lastop' "$indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2003)' "$pce_fast_indirect_target_patch_file" ||
@@ -517,6 +519,8 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOpcode = HuCPU.PCERead' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879FastTargetStepsRemaining = 128' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq '(TheronTraceInstructionPC >= 0xc852 && TheronTraceInstructionPC <= 0xc85e)' "$pce_fast_indirect_target_patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC == 0xc852 && !Theron3879FastC852WindowStarted' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC()' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq '+static char Theron3879FastRuntimeCodeWindow[27];' "$pce_fast_indirect_target_patch_file" ||
