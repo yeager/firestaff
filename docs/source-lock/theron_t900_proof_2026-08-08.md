@@ -206,3 +206,5 @@ It identifies five placed records whose decoded type equals a parallel
 quest-name index, across dungeons 3, 6 and 7. Category and location are
 record-level provenance only: they do not identify the quest artifact, a
 runtime T900 caller, or an inventory/progression transaction.
+The [platform status matrix](../PLATFORM_STATUS.md) and repository overview
+link to these capture targets while keeping T900 support marked evidence-gated.

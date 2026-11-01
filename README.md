@@ -317,7 +317,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 | CSB | — | Atari ST, Amiga and FM Towns bounded runtime routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn disc/resource parsing and bounded rendering of authentic MAPD title planes | Saturn demo/fan translations | — |
-| Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement-command dispatch; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated | — |
+| Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement-command dispatch; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated; five same-index ground placements are documented as capture candidates only | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
 the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for

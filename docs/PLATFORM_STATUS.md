@@ -8,6 +8,10 @@ that every menu, save format or visual parity gate is complete.
 For Theron implementation and capture details, use the concise
 [capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); the dated
 startup runs below are history and should not be read as complete parity.
+The current T900 item-progression evidence boundary and five authentic US/JP
+ground-placement capture candidates are documented in the
+[T900 evidence report](source-lock/theron_t900_proof_2026-08-08.md) and its
+[ground-item index](source-lock/theron-t900-ground-item-index-candidates-20261101.md).
 
 The preceding functional revision `e70c460d` had successful GitHub Actions main CI run
 [`40487479502`](https://github.com/yeager/firestaff/actions/runs/40487479502)
