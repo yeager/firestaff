@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — verify native JP/US spawn-source debug receipts
+
+- Built the native macOS Debug `firestaff` target in an isolated build outside
+  the checkout, then ran three fresh gameplay-startup loops each with
+  authenticated JP and US Track 02 media.
+- All six launches reached `level-loaded=1` and emitted exactly one table
+  receipt, eight pointer rows, and five zone rows. A separate verifier checked
+  every emitted field and offset against the matching raw BIN's complete
+  MODE1/2048 user-data projection; all rows matched.
+- Logs and per-run SHA-256s remain in external-disk scratch and are not tracked.
+  This validates static source reporting only, not original spawn selection,
+  creature behavior, non-Theron log isolation, or gameplay parity.
+
 ## 2026-11-01 — compile v4 JP map-reader instruction-context hook
 
 - Extended the PCE Fast reference hook to capture fetched opcode and fetch PC,

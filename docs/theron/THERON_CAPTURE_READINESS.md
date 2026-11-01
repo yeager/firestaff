@@ -44,11 +44,13 @@ autoload receipt and the remaining applicable trace schemas. The shell
 regression checks the conditional System Card hook gates. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
-The native `--debug` spawn-source receipt is implemented and the full
-application linked in the PR's Linux CMake build. No authentic runtime log has
-been captured, so the receipt's runtime output and values remain unverified
-and this adds no gameplay evidence. Its fields and remaining acceptance checks
-are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+The native `--debug` spawn-source receipt is implemented and has now been
+verified in three fresh native runtime loops each against authentic JP and US
+Track 02. All 13 pointer/zone records per launch match the corresponding raw
+BIN's MODE1/2048 projection, and each run reached `level-loaded=1`. This
+verifies bounded source diagnostics only; runtime spawn selection/semantics,
+RNG, and non-Theron log isolation remain unverified. See the
+[receipt report](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 The PCE Fast reference wrapper now supports the exact source-sector filter
 `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It gates CD data-port rows and

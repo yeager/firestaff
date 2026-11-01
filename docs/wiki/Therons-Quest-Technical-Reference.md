@@ -175,11 +175,11 @@
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-> **Native spawn-source debug receipt (2026-11-01):** the bounded `--debug`
-> report exposes the already-authenticated pointer and zone records, including
-> source identity, offsets, raw fields, and static links. The application
-> linked in the PR's Linux CMake build, but no native output has been observed.
-> It does not establish runtime selection or spawning. See the
+> **Native spawn-source debug receipt (2026-11-01):** three native JP and three
+> native US runtime loops emitted bounded `--debug` reports from authentic
+> Track 02. Every header, offset, pointer and zone field matched its raw BIN
+> projection and all runs reached a loaded level. This does not establish
+> original runtime selection or spawning. See the
 > [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier

@@ -95,11 +95,12 @@ runtime pointer selection, JP category semantics, a spawn/RNG consumer,
 creature generation, or combat. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-**Native debug receipt (2026-11-01):** Firestaff exposes the already-bound
-pointer and zone records through bounded `--debug` output. The application
-linked in the PR's Linux CMake build, but no native receipt has been observed.
-It does not prove runtime selection or creature spawning. Its raw-field
-contract and remaining acceptance checks are recorded in the
+**Native debug receipt (2026-11-01):** three native JP and three native US
+runtime loops emitted the bounded `--debug` receipt from authentic Track 02.
+Each run reached a loaded level and every reported header, offset, pointer,
+zone field and static link matched the independently verified raw BIN
+projection. This does not prove original runtime selection or creature
+spawning. The per-run verification is documented in the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
