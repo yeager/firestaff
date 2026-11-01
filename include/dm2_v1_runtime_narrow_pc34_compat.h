@@ -242,9 +242,16 @@ typedef struct {
     void (*display_level_up_hint)(void *ctx, int hero_idx, int skill_group);
     /* DM2_RAND16(max): source range is [0, max). */
     uint16_t (*rand16)(void *ctx, uint16_t max);
+    int16_t (*get_current_stamina)(void *ctx, int hero_idx);
 } DM2_V1_AdjustSkillsCallbacks;
 
 int32_t dm2_v1_adjust_skills(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx);
+
+/* SPX v4 variant (skchamp.cpp:843): the combat-double window is 25 ticks
+ * and stamina growth is based on current stamina. */
+int32_t dm2_v1_adjust_skills_spx_v4(
     int hero_idx, int32_t skill_id, int32_t exp_gain,
     const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx);
 

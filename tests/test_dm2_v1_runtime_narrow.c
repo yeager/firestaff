@@ -77,6 +77,7 @@ static int as_random_dir(void *ctx)
 static int16_t as_get_max_hp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
 static void as_set_max_hp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
 static int16_t as_get_max_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
+static int16_t as_get_current_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 80; }
 static void as_set_max_stamina(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
 static int16_t g_max_mp;
 static int16_t as_get_max_mp(void *ctx, int hi) { (void)ctx; (void)hi; return g_max_mp; }
@@ -101,7 +102,7 @@ static void test_adjust_skills(void)
         as_get_max_stamina, as_set_max_stamina,
         as_get_max_mp, as_set_max_mp,
         as_add_ability_max, as_mark_dirty, as_display_level_up,
-        as_rand16
+        as_rand16, as_get_current_stamina
     };
 
     g_added_exp = 0;

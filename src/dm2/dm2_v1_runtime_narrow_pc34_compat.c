@@ -294,9 +294,10 @@ int32_t dm2_v1_hero_2c1d_135d(
 }
 
 /* DM2_ADJUST_SKILLS — c_hero.cpp:1166 */
-int32_t dm2_v1_adjust_skills(
+static int32_t dm2_v1_adjust_skills_variant(
     int hero_idx, int32_t skill_id, int32_t exp_gain,
-    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx,
+    int spx_v4)
 {
     if (!cb || !cb->get_exp_scale || !cb->get_skill_lv ||
         !cb->add_skill_exp)
@@ -330,7 +331,8 @@ int32_t dm2_v1_adjust_skills(
             return -1;
         int16_t tick = cb->get_gametick(ctx);
         int16_t window = cb->get_exp_window_tick(ctx);
-        if (tick - 40 < window)
+        int double_window = spx_v4 ? 25 : 40;
+        if (tick - double_window < window)
             exp_gain *= 2;
     }
 
@@ -339,6 +341,7 @@ int32_t dm2_v1_adjust_skills(
          !cb->set_max_hp || !cb->get_max_stamina ||
          !cb->set_max_stamina || !cb->add_ability_max ||
          !cb->mark_hero_dirty ||
+         (spx_v4 && !cb->get_current_stamina) ||
          ((group == 2 || group == 3) &&
           (!cb->random_dir || !cb->get_max_mp || !cb->set_max_mp))))
         return -1;
@@ -371,7 +374,9 @@ int32_t dm2_v1_adjust_skills(
         if (cb->add_ability_max)
             cb->add_ability_max(ctx, hero_idx, /*E_ANTIFIRE*/ 1, antifire_gain);
 
-        int32_t stamina_base = (uint16_t)cb->get_max_stamina(ctx, hero_idx);
+        int32_t stamina_base = (uint16_t)(spx_v4
+            ? cb->get_current_stamina(ctx, hero_idx)
+            : cb->get_max_stamina(ctx, hero_idx));
         int32_t maxmp_gain = 0;
         int16_t maxhp, maxsta, maxmp;
         switch (group) {
@@ -455,6 +460,22 @@ int32_t dm2_v1_adjust_skills(
     }
 
     return level_after;
+}
+
+int32_t dm2_v1_adjust_skills(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+{
+    return dm2_v1_adjust_skills_variant(
+        hero_idx, skill_id, exp_gain, cb, ctx, 0);
+}
+
+int32_t dm2_v1_adjust_skills_spx_v4(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+{
+    return dm2_v1_adjust_skills_variant(
+        hero_idx, skill_id, exp_gain, cb, ctx, 1);
 }
 
 /* DM2_WOUND_PLAYER — c_hero.cpp:1496 */
