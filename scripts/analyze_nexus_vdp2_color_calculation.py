@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Report VDP2 layer gates and global mixer mode from an authentic register dump.
 
-The input is Ymir's 512-byte little-endian VDP2 register span. This tool only
-interprets captured register bytes; it does not reconstruct pixels or admit a
-renderer path.
+The input is Ymir's 512-byte VDP2 register span. Byte order is inferred from
+TVMD, BGON, and CHCTLA unless explicitly selected. This tool only interprets
+captured register bytes; it does not reconstruct pixels or admit a renderer
+path.
 """
 
 from __future__ import annotations
@@ -34,17 +35,48 @@ def read_capture(path: Path) -> bytes:
     return data
 
 
-def register(data: bytes, address: int) -> int:
-    return int.from_bytes(data[address:address + 2], "little")
+def register(data: bytes, address: int, byte_order: str) -> int:
+    return int.from_bytes(data[address:address + 2], byte_order)
 
 
-def report(data: bytes) -> None:
-    tvmd = register(data, 0x000)
-    bgon = register(data, 0x020)
-    ccctl = register(data, 0x0EC)
-    sfccmd = register(data, 0x0EE)
-    ccrna = register(data, 0x108)
+def register_score(data: bytes, byte_order: str) -> int:
+    tvmd = register(data, 0x000, byte_order)
+    bgon = register(data, 0x020, byte_order)
+    chctla = register(data, 0x028, byte_order)
+    score = 0
+    if tvmd & 0x8000:
+        score += 3
+    if bgon & 0x001F:
+        score += 4
+    if not bgon & ~0x1F3F:
+        score += 1
+    if bgon & 0x0002:
+        score += 2
+        if chctla & 0x0200:
+            score += 1
+    return score
 
+
+def detect_byte_order(data: bytes) -> str:
+    big_tvmd = register(data, 0x000, "big")
+    little_tvmd = register(data, 0x000, "little")
+    if big_tvmd == 0x8000:
+        return "big"
+    if little_tvmd == 0x8000:
+        return "little"
+    big_score = register_score(data, "big")
+    little_score = register_score(data, "little")
+    return "little" if little_score > big_score else "big"
+
+
+def report(data: bytes, byte_order: str) -> None:
+    tvmd = register(data, 0x000, byte_order)
+    bgon = register(data, 0x020, byte_order)
+    ccctl = register(data, 0x0EC, byte_order)
+    sfccmd = register(data, 0x0EE, byte_order)
+    ccrna = register(data, 0x108, byte_order)
+
+    print(f"register_byte_order={byte_order}")
     print(f"TVMD=0x{tvmd:04x}")
     print(f"BGON=0x{bgon:04x}")
     print(f"CCCTL=0x{ccctl:04x}")
@@ -96,7 +128,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "registers", type=Path,
-        help="authentic 512-byte Ymir VDP2 register dump (little-endian uint16)",
+        help="authentic 512-byte Ymir VDP2 register dump",
+    )
+    parser.add_argument(
+        "--byte-order", choices=("auto", "big", "little"), default="auto",
+        help="register word byte order (default: infer from TVMD/BGON/CHCTLA)",
     )
     args = parser.parse_args(argv)
     try:
@@ -104,7 +140,8 @@ def main(argv: list[str] | None = None) -> int:
     except CaptureError as error:
         print(f"NEXUS_VDP2_COLOR_CALCULATION_INVALID: {error}", file=sys.stderr)
         return 1
-    report(data)
+    byte_order = detect_byte_order(data) if args.byte_order == "auto" else args.byte_order
+    report(data, byte_order)
     return 0
 
 
