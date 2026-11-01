@@ -10666,6 +10666,17 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-02 — reconcile the current Theron capture documentation
+
+- Audited the current Theron support summaries, capture-readiness page, input
+  guide, runbook, documentation index, and active TODO/DONE entries against
+  the implemented native title hold and capture-wrapper safeguards.
+- Clarified that Firestaff's three-second title hold is implemented and
+  regression-tested, while matching the original game's timing remains
+  unverified. No new gameplay or retail-parity claim was added.
+- Confirmed that helper preflight and the aggregate output budget are already
+  described in the capture-readiness page, runbook, index, TODO, and DONE.
+
 ## 2026-11-01 — add shared sequencing to C852 reference checkpoints
 
 - Added a monotonically increasing `event_sequence` from
