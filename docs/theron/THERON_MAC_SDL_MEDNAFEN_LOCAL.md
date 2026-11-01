@@ -15,6 +15,11 @@ current native/runtime boundary and source-locked capture evidence. The
 [input guide](theron_input.md) documents Firestaff's native keyboard and
 mouse controls.
 
+The authentic USA standard-PCE save-state map comparison is documented in the
+[US state-map source lock](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+It verifies saved CD-RAM page mapping only; it does not replace a cold capture
+or prove the active map and tile consumer.
+
 The cold JP reference route needed a four-second RUN hold at the System Card
 prompt. A separate authentic capture confirms four-second Button I holds on
 NEW GAME and FILE 1 enter the Akutuba story. Its `.mc0` snapshot is not in-game

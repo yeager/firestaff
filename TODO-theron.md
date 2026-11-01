@@ -6,6 +6,14 @@ records, while 5–7 have zero offsets. The remaining task is to establish the
 original runtime consumer and semantics; the static link does not authorize
 native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
+An authentic US standard-PCE state and hash-verified US Track 02 now bind all
+four Akutuba map arrays to `HuC.SysCardRAM`; saved MPR3 maps their page into
+`$6000–$7fff`. The prior viewport trace's physical reads at `$0e8ae1` and
+`$0e8af7` match map-0 bytes only under the saved page mapping, and the capture
+does not include MPR at each read. The next US capture must record MPR and the
+active map selector alongside a pose-bound tile read before these addresses
+can support gameplay semantics. See the [state-map report](docs/source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+
 The current native regression build passed eight selected US/JP real-media,
 startup, later-dungeon and input CTests in three consecutive loops (24 total
 executions). This verifies those bounded paths only; full campaign, renderer,

@@ -155,7 +155,11 @@ The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
 current summary of native runtime and original-reference evidence, including
 the authentic US mouse-held save-state replay. That replay has no runtime CD
 provenance and does not establish a semantic mouse action, movement, or
-renderer behavior.
+renderer behavior. A separate read-only comparison maps all four US
+Akutuba source arrays into the saved standard-PCE `HuC.SysCardRAM` page
+selected by MPR3. The arrays remain simultaneously resident, so this does not
+identify the active map or prove the older trace's map reads without a
+contemporaneous MPR record. See the [US state map binding report](docs/source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
 
 The Japanese F5 blocked-wall probe (autoload-state SHA-256
 `2cc9938b96640a74db1a5b706113564b5d578d5011daf5f85c588ef1c98d70ee`) found

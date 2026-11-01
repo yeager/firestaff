@@ -23,6 +23,15 @@ present, so the active map remains unknown. The state includes an embedded
 preview and named VCE/VDC0/VRAM/SAT snapshot variables, but no pose-bound
 consumer. This does not change the native parity boundary; see the [source-match report](source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
+A read-only comparison of the authenticated US standard-PCE state
+(`f17f377df210b4a3ae904a13fb85a7f0`) and US Track 02 maps all four authentic
+Akutuba arrays to `HuC.SysCardRAM` offsets `0x18ad7`, `0x18afa`, `0x18bd2`
+and `0x18cf2`. Saved MPR3 selects page `$74`, which maps the page into
+`$6000–$7fff`; the four arrays remain resident together, so this does not
+identify the active map. Two addresses from an older movement trace align
+with bytes in map 0 under the saved mapping, but that trace lacks a
+contemporaneous MPR record. See the [US state map binding report](source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+
 A newer JP PCE Fast state-only reference capture validates 4,096 bounded VRAM
 commits after an authentic-state guest read at `$44C1` (shared events 58758–58761).
 It confirms trace-gate operation and event ordering only: the run reports

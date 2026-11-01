@@ -28,6 +28,11 @@
 > source is mapped, while direct generated-row consumer attribution and
 > downstream row semantics remain open; the associated BIOS trace was
 > explicitly truncated and fails closed. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
+> four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
+> physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all
+> resident, and no active-map or pose-bound tile consumer is identified. See
+> the [US state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
 > Three JP PCE Fast
 > reference UP runs bind scripted `up@61:120` to the same-frame guest read at
 > `$44C1` and the shared event order through `$D334` read, `$D349` write, and

@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document US saved-state Akutuba map mapping
+
+- Compared the authentic US standard-PCE save state with the hash-verified US
+  Track 02 source. All four map byte arrays occur exactly once in
+  `HuC.SysCardRAM`; saved MPR3 selects physical page `$74` in CPU window
+  `$6000–$7fff`.
+- Recorded source offsets, map dimensions, per-array hashes and address
+  arithmetic in a new source-lock report. Two old physical reads align with
+  map-0 bytes conditionally; their capture does not retain MPR at each read.
+- Updated the README, project/platform status, capture readiness, real-data
+  inventory, documentation index and Theron wiki links. The active map,
+  source-consumer join, gameplay semantics and rendering remain unresolved.
+- Documentation link and diff checks passed; no tests were run.
+
 ## 2026-11-01 — inspect authentic JP Mednafen state structure and source mapping
 
 - Added a bounded, source-locked reader for Mednafen 1.32.1 PCE Fast `.mc0`

@@ -11,6 +11,15 @@ runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
 above or the linked project status and TODO pages.
 
+An authentic US standard-PCE save-state comparison maps all four US Akutuba
+arrays from the hash-verified Track 02 projection into `HuC.SysCardRAM`.
+Saved MPR3 selects physical page `$74` in CPU window `$6000–$7fff`; this
+establishes the saved guest mapping, not which resident map is active. Two
+older movement-trace read addresses align with map-0 source bytes under that
+mapping, but the trace did not preserve MPR at each read. The active selector,
+pose-bound tile consumer, and render update are still unbound. See the
+[US state map binding](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+
 The current native regression build also passed eight selected US/JP
 real-media and input CTests in three consecutive loops (24 executions):
 regional Track 02 source checks, JP fresh start, US BRAM Continue, JP

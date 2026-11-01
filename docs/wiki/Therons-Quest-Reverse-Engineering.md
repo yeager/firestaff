@@ -58,6 +58,13 @@ the story. Its `.mc0` snapshot is an emulator state, not in-game BRAM, and does
 not prove a game-owned input/CD-loader join or native parity. See
 the [JP save-body boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
 and [capture-readiness record](../theron/THERON_CAPTURE_READINESS.md).
+
+**US saved-state map update (2026-11-01):** a source comparison binds all
+four authentic Akutuba arrays to `HuC.SysCardRAM` in the USA standard-PCE
+state, with MPR3 selecting physical page `$74`. The same page arithmetic makes
+two old collision-trace reads consistent with map-0 byte offsets, but no MPR
+was retained at those reads. This does not identify the active map or prove a
+live source consumer. See the [state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
 Native Debug direct launch with authentic US Track 02 enters Theron's
 title/startup path without Firestaff's Run menu or a System Card. Its boot
 probe stops before dungeon loading (`levelLoaded=0`); this confirms launch

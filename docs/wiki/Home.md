@@ -6,6 +6,9 @@
 > Firestaff's native C/SDL runtime: authentic JP fresh start and US Continue
 > routes reach loaded dungeons, while full gameplay and visual parity remain
 > open. Emulator traces are reference evidence, not Firestaff runtime support.
+> A source-bound comparison maps all four US Akutuba arrays into an authentic
+> standard-PCE save state's selected CD-RAM page, but does not identify the
+> active map.
 > See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
 > [preservation status](../PRESERVATION_STATUS_2026-08-11.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.

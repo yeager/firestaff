@@ -24,6 +24,11 @@
 > [Theron TODO](../../TODO-theron.md). Track 02 byte layouts and historical
 > capture notes below are not claims of semantic dungeon or gameplay parity.
 
+An authentic US standard-PCE save-state comparison maps all four Akutuba map
+arrays to the `HuC.SysCardRAM` bytes selected by saved MPR3. The report records
+the source offsets, dimensions and hashes; active-map selection and a
+pose-bound tile consumer remain open. See the [US state-map source lock](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+
 ## Authenticated startup handoff (2026-08-08)
 
 **Native status (2026-11-01):** Firestaff's bounded JP fresh-start and US

@@ -410,6 +410,14 @@ resident, so this does not identify the active map, a runtime consumer, or a
 rendered result.
 See the [source-map report](source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
+**US saved-state map update (2026-11-01):** a read-only comparison against
+authenticated US Track 02 finds all four Akutuba arrays in the authentic
+standard-PCE state's `HuC.SysCardRAM`. Saved MPR3 selects page `$74` in the
+`$6000–$7fff` window. Two prior collision-trace addresses align with map-0
+bytes only conditionally because that trace has no same-event MPR snapshot.
+The saved mapping does not identify the active map, tile consumer, movement
+semantics or rendered result. See the [US state map report](source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
 | PC Engine/TurboGrafx-16 Japanese | **Verified bounded native route** | Firestaff runs Theron in its native C/SDL runtime. Native SDL regressions cover DM1-like keyboard and mouse-panel movement-command dispatch, champion selection and wait against authentic JP Track 02; they do not verify retail click hitboxes or original-game movement semantics. A cold JP reference capture confirms four-second Button I holds on NEW GAME and FILE 1 advance into Akutuba; native hold-duration parity and a cold game-owned handoff remain unproven. Native JP fresh-start integration reaches a loaded dungeon. Native M11 rejects the authentic empty JP BRAM; a progressed JP BRAM is not available. Hash-verified US/JP ISO projections bind the same eight creature-pointer and five regular-spawn zone records as their raw BINs. In both regions, pointer records 0–4 resolve in order to the five zone records and 5–7 have zero offsets; runtime selection, JP category semantics and spawn/RNG consumers remain unverified. Three matched state-only PCE Fast UP/control pairs repeat Button II+UP-conditioned `$C1FC` TII transfers from `$20B4` into candidate `$2040/$2041` bytes; a follow-up records the same 128-instruction context into `$C1FC`. Static source associates this TII with teleporter destination copying, so it does not prove player movement. A separate state-only trace validates 4,096 gated VRAM commits after a guest read in shared event order only. | Map/field meaning, JP category behavior, runtime spawn/RNG consumer, movement versus teleporter role, collision, visible input effect, dynamic viewport and paired retail frame, cold CD-to-RAM handoff, positive JP save/Continue, later dungeons, combat, item-use and full audio/gameplay parity remain open. See [capture readiness](theron/THERON_CAPTURE_READINESS.md), the [spawn-record source lock](source-lock/theron-track02-spawn-record-iso-projection-20261101.md) and the [TII control-flow report](source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md). |
