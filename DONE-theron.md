@@ -283,7 +283,23 @@
 - Expanded the source-lock report with the exact verified offsets and the next
   capture requirement. No gameplay, runtime-source ownership, row semantics or
   parity claim was added.
-- `git diff --check` passed. This documentation-only update did not run tests.
+
+## 2026-11-01 — inventory retail `$C1FC` TII source candidates
+
+- Added an identity-gated scanner for authentic US and JP Rev. 1 Track 02
+  media. It finds 21 static occurrences per edition, grouped at seven raw
+  sectors, and reports only raw offsets and hashes of 39-byte contexts.
+- Registered the scanner as a real-media CTest, skipping only when either
+  authenticated BIN is unavailable. Three identical direct runs produced
+  byte-identical reports; the report and active TODO explicitly leave runtime
+  fetch, CD source, active-map and position semantics unbound.
+- Added the evidence boundary and reproduction steps to the source-lock report,
+  this log, the Theron TODO and the documentation index. This is a capture
+  shortlist only and does not claim a gameplay fix or parity.
+- `git diff --check`, Python AST parsing, relative documentation-link checks,
+  three identical direct scanner runs, and three repeated CTest executions
+  passed. CMake configured in the external-disk scratch build directory; no
+  application build or emulator capture was run.
 
 
 ## 2026-11-01 — validate reader windows against local retail bytes

@@ -92,6 +92,14 @@ viewport behavior from static source offsets, retained RAM scans, or event
 ordering alone. The planner's disc LBA 3674 is a capture filter target, not
 evidence that the original read or selected the map.
 
+An identity-gated static scan also lists 21 raw Track 02 candidates per
+edition for the observed `$C1FC` two-byte TII shape. These offsets are only a
+source shortlist: none is bound to the executing fetch, runtime CD read,
+active map, or party-position semantics. Use the
+[candidate report](docs/source-lock/theron-disassembly/theron-position-tii-retail-occurrences-20261101.md)
+to narrow a later source-read/runtime-fetch join; do not change native
+movement from this static match.
+
 The fetched-code verifier rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
 Its regression passed three loops. A later authentic US cold replay emitted
