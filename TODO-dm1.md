@@ -1,13 +1,11 @@
 # Firestaff TODO — DM1
 
-2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: the source returns
-without refreshing current-map caches when the requested map is already
-selected. Both Firestaff adapters now preserve that no-op; the metadata-aware
-adapter still lets F0174 refresh party-map caches. Raw map/thing-column and
-ornament caches in the simpler dungeon-data adapter, plus live transition
-ownership and platform parity, remain open.
+2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: both Firestaff
+adapters preserve the source early return when the selected map is already
+current. The metadata-aware adapter still lets F0174 refresh its separate
+metadata caches; live transition ownership and platform parity remain open.
 2026-11-01 Follow-up to ReDMCSB `DUNGEON.C:F0173/F0174`: source inspection
-showed F0173 refreshes only the core map pointers, dimensions, door info and
+showed F0173 refreshes only core map pointers, dimensions, door info and
 cumulative thing-column counts; F0174 owns allowed-creature and wall/floor/door
 ornament metadata. The descriptor adapter now leaves those metadata pointers
 untouched on F0173 and publishes them from F0174, including the inscription
@@ -15,6 +13,21 @@ ornament ordinal. The simpler dungeon-data adapter still lacks these caches,
 and neither adapter owns a live transition caller, so both symbols remain
 partial across supported editions/platforms. Existing focused assertions were
 updated; CI is the verification path.
+
+2026-11-01 Authentic PC34 save combat follow-up: `LOADSAVE.C:F0435` restores
+live C04 behavior when rebuilding the transient active-group AI mirror. An
+authentic DOSBox-X PC 3.4 save previously restored every active group as
+WANDER even when the authentic C04 owner was ATTACK, APPROACH, or FLEE; this
+prevented saved attackers from following source behavior. The focused bundle
+test and authentic original-save combat/shield regression now pass, including
+all 15 active groups and group 169 attacking. The shared importer is also
+called by the Amiga save handoff, but this report has only been exercised with
+the PC34 save. The separate report that champions disappear from the PC HUD
+was not reproduced: the same authentic save presents all four champion slots.
+Expanded `--debug` HUD receipts now identify top-row presentation or the exact
+rejection stage; native-user captures and other editions still need checking
+if the HUD symptom recurs.
+
 2026-11-01 DM1 Amiga 3.6 no-game M12 runtime retest at `93c644549`: the
 local `m12_main_menu_runtime_real_media` test passed with
 `FIRESTAFF_MAIN_MENU_GAME=dm1-amiga` (90.52 s) against the installed original
