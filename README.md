@@ -274,7 +274,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
-| DM1 | — | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes | PC-9801 preservation | X68000 |
+| DM1 | — | PC DOS, Atari ST, Amiga, FM Towns and Apple IIGS startup; selected dungeon routes | PC-9801 preservation | X68000 |
 | CSB | — | Atari ST, Amiga and FM Towns bounded runtime routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn disc/resource parsing and bounded rendering of authentic MAPD title planes | Saturn demo/fan translations | — |
