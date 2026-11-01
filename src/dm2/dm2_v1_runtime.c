@@ -19181,21 +19181,21 @@ typedef struct {
     DM2_V1_RuntimeState *runtime;
     DM2_V1_HeroState hero_state;
     int hero_index;
-} DM2_RuntimeMoveStaminaContext;
+} DM2_RuntimeStaminaContext;
 
-static DM2_V1_HeroState *dm2_runtime_move_stamina_get_hero(
+static DM2_V1_HeroState *dm2_runtime_stamina_get_hero(
     void *context, int hero_index)
 {
-    DM2_RuntimeMoveStaminaContext *stamina = context;
+    DM2_RuntimeStaminaContext *stamina = context;
     if (!stamina || hero_index != stamina->hero_index) return NULL;
     return &stamina->hero_state;
 }
 
-static void dm2_runtime_move_stamina_wound_player(
+static void dm2_runtime_stamina_wound_player(
     void *context, int hero_index, int damage, int body_parts,
     int damage_type)
 {
-    DM2_RuntimeMoveStaminaContext *stamina = context;
+    DM2_RuntimeStaminaContext *stamina = context;
     if (!stamina || !stamina->runtime ||
         hero_index != stamina->hero_index || damage < INT16_MIN ||
         damage > INT16_MAX) return;
@@ -19281,7 +19281,7 @@ int dm2_v1_runtime_move(int dir) {
             uint16_t cost_bits;
             int16_t stamina_cost;
             int16_t stamina_result;
-            DM2_RuntimeMoveStaminaContext stamina_context;
+            DM2_RuntimeStaminaContext stamina_context;
             DM2_V1_StaminaCallbacks stamina_callbacks;
             if (hero->curHP == 0) continue;
             if (movement_max_load[i] <= 0 ||
@@ -19300,9 +19300,9 @@ int dm2_v1_runtime_move(int dir) {
             stamina_context.hero_state.max_stamina = hero->maxStamina;
             stamina_context.hero_state.hero_flag =
                 (uint16_t)hero->heroflag;
-            stamina_callbacks.get_hero = dm2_runtime_move_stamina_get_hero;
+            stamina_callbacks.get_hero = dm2_runtime_stamina_get_hero;
             stamina_callbacks.wound_player =
-                dm2_runtime_move_stamina_wound_player;
+                dm2_runtime_stamina_wound_player;
             stamina_result = dm2_v1_adjust_stamina(
                 i, stamina_cost, &stamina_callbacks, &stamina_context);
             if (stamina_result < 0 && stamina_cost != INT16_MIN) return -1;
@@ -22108,6 +22108,17 @@ int dm2_v1_runtime_proceed_hand_command(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    /* skproject skengage.cpp:157 adds RANDBIT to CMDSTR field 4 before
+     * dispatch. Consume the authenticated session stream at that source
+     * boundary; the receipt epilogue later spends the resulting stamina. */
+    {
+        int32_t power_bits = (uint16_t)request.cmd.power_random +
+            (int32_t)dm2_v1_drops_randbit(&rt->session_rng);
+        uint16_t narrowed = (uint16_t)power_bits;
+        request.cmd.power_random = narrowed <= INT16_MAX
+            ? (int16_t)narrowed
+            : (int16_t)((int32_t)narrowed - 65536);
+    }
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
     if (!result || (is_wield_action
@@ -22123,6 +22134,33 @@ int dm2_v1_runtime_proceed_hand_command(
         dm2_runtime_apply_hand_cooldown(
             rt, hero, receipt->hand_cooldown_delay,
             rt->source_party.curactmode);
+    if (receipt->stamina_cost != 0) {
+        DM2_RuntimeStaminaContext stamina_context;
+        DM2_V1_StaminaCallbacks stamina_callbacks;
+        int stamina_result;
+        memset(&stamina_context, 0, sizeof(stamina_context));
+        stamina_context.runtime = rt;
+        stamina_context.hero_index = request.hero_index;
+        stamina_context.hero_state.cur_stamina = hero->curStamina;
+        stamina_context.hero_state.max_stamina = hero->maxStamina;
+        stamina_context.hero_state.hero_flag = (uint16_t)hero->heroflag;
+        stamina_callbacks.get_hero = dm2_runtime_stamina_get_hero;
+        stamina_callbacks.wound_player = dm2_runtime_stamina_wound_player;
+        stamina_result = dm2_v1_adjust_stamina(
+            request.hero_index, receipt->stamina_cost,
+            &stamina_callbacks, &stamina_context);
+        if (stamina_result < 0 && receipt->stamina_cost != INT16_MIN) {
+            if (receipt) receipt->fail_closed = 1;
+            return 0;
+        }
+        hero->curStamina = stamina_context.hero_state.cur_stamina;
+        {
+            uint16_t flag_bits = stamina_context.hero_state.hero_flag;
+            int32_t signed_flag = flag_bits <= INT16_MAX
+                ? (int32_t)flag_bits : (int32_t)flag_bits - 65536;
+            hero->heroflag = (int16_t)signed_flag;
+        }
+    }
     return 1;
 }
 
