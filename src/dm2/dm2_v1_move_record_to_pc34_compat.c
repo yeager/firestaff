@@ -104,9 +104,21 @@ int dm2_v1_move_record_to(
     /* APPEND to destination tile (unless to-nowhere). */
     if (!receipt->is_to_nowhere && !receipt->fail_closed) {
         DM2_V1_SkprojectAppendRecordReceipt app_rc;
+        uint16_t destination_handle = (uint16_t)record_handle;
+
+        /* SKULLWIN/c_move.cpp:2152 and c_moverec.cpp:392 preserve the
+         * destination ObjectID's direction bits when inserting the record.
+         * A negative direction means the caller did not request a change;
+         * otherwise the low two direction bits replace the packed ObjectID
+         * orientation before APPEND_RECORD_TO links it into the tile chain. */
+        if (dest_direction >= 0) {
+            destination_handle = (uint16_t)(
+                ((uint16_t)record_handle & 0x3fffu) |
+                (((uint16_t)dest_direction & 0x3u) << 14));
+        }
         memset(&app_rc, 0, sizeof(app_rc));
         if (dm2_v1_skproject_append_record_to(
-                dungeon, (uint16_t)record_handle, NULL,
+                dungeon, destination_handle, NULL,
                 current_map, dest_x, dest_y, &app_rc)) {
             receipt->record_appended = 1;
         } else {

@@ -586,7 +586,7 @@ static int item_teleport_visitor(void *context,
 {
     ItemTeleportCtx *ctx = (ItemTeleportCtx *)context;
     int db_type = dm2_v1_record_handle_pool(handle);
-    int item_dir = (int)(handle & 3u);
+    int item_dir = (int)(((uint16_t)handle >> 14) & 3u);
     (void)record_unused;
 
     /* Source item range: dbWeapon=5 through dbMiscellaneous_item=10. */
