@@ -53,7 +53,9 @@ FIRESTAFF_NEXUS_YMIR_PASS0_STACK_OUT=/path/to/firestaff-priority-stack.bin \
 ```
 
 Without those environment variables, the test still runs its existing bounded
-NBG decoder checks and skips the external-media composition comparison.
+NBG decoder checks and skips the external-media composition comparison. If any
+pass-0 variable is set, all six inputs, reference, and output paths are required;
+a partial configuration fails instead of silently skipping the comparison.
 
 ## Cross-state repeatability check
 
