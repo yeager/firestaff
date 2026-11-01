@@ -22,6 +22,19 @@ structural owner; the live runtime and transactional candidate own those
 collision effects.
 Supported-platform source mapping remains open.
 
+2026-11-01 authenticated live door-record regression in the source 0x01 step:
+the door actuator updates DoorBit09/10 in the runtime record pool, while the
+timer had read and written the separate parsed DUNGEON.DAT record copy. The
+step owner now validates the source record chain, then reads, mutates and rolls
+back those bits through the live record-pool entry. Before the fix, the
+authentic pit/stairs/door/creature runtime probe failed at the door step on DOS
+EN, Amiga EN, FM Towns JA and Macintosh English; it passed on all four after
+the fix. Optional CTest entries now run the same probe for each installed
+original edition. Macintosh uses the existing authentic extracted `DMFiles`
+from the original `.sit`, since its canonical ZIP is not staged. The separate
+M11 Mac wall census still exits earlier at its CHARSHEET slot-selection check;
+that UI path is not covered by this direct door-runtime probe.
+
 2026-10-31 skproject `SKWINDOS/dm2byf.cpp::SKW_STEP_DOOR` ordinary step sound:
 Both live and GAME_LOAD candidate door-step paths now queue source sound 0x8f
 only when the resulting door state is 4; every other state queues 0x8e before

@@ -1,4 +1,4 @@
-/* Native real-media DOS DM2 open-pit runtime regression. */
+/* Native real-media DM2 open-pit runtime regression. */
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -14,7 +14,7 @@ static int advance_authentic_dos_tick(DM2_V1_BootProfile *profile)
     memset(&receipt, 0, sizeof(receipt));
     ok = dm2_v1_boot_runtime_tick(profile, &receipt);
     if (ok && receipt.runtime_ready && receipt.tick_count == 0)
-        printf("  DOS boot tick returned zero\n");
+        printf("  DM2 boot tick returned zero\n");
     return ok && receipt.runtime_ready;
 }
 
@@ -48,7 +48,7 @@ static void __attribute__((unused)) census_authentic_db4_records(
                         memset(&info, 0, sizeof(info));
                         if (dm2_v1_runtime_creature_record_receipt(
                                 (int16_t)(uint16_t)cursor, &info)) {
-                            printf("  DOS DB4 census handle %04x map %d,%d,%d type %d HP %u kill %d possession %04x drops %d\n",
+                            printf("  DM2 DB4 census handle %04x map %d,%d,%d type %d HP %u kill %d possession %04x drops %d\n",
                                    (unsigned)cursor, map, x, y,
                                    info.creature_type, info.hp,
                                    info.kill_flag, info.possession_head,
@@ -61,7 +61,7 @@ static void __attribute__((unused)) census_authentic_db4_records(
             }
         }
     }
-    printf("  DOS DB4 census records %d\n", count);
+    printf("  DM2 DB4 census records %d\n", count);
 }
 
 static int find_authentic_kill_candidate(
@@ -147,10 +147,10 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
 
     memset(&target, 0, sizeof(target));
     if (!find_authentic_kill_candidate(dungeon, &map, &x, &y, &target)) {
-        printf("  DOS kill candidate not found\n");
+        printf("  DM2 kill candidate not found\n");
         return 77;
     }
-    printf("  DOS kill target %04x map %d,%d,%d type %d HP %u armor %u flags %04x drops %d\n",
+    printf("  DM2 kill target %04x map %d,%d,%d type %d HP %u armor %u flags %04x drops %d\n",
            (unsigned)(uint16_t)target.record_handle, map, x, y,
            target.creature_type, target.hp,
            dm2_v1_creature_ai_spec(target.creature_type)->ArmorClass,
@@ -168,7 +168,7 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
             break;
         }
     }
-    if (dir < 0) { printf("  DOS kill no adjacent passage\n"); return 0; }
+    if (dir < 0) { printf("  DM2 kill no adjacent passage\n"); return 0; }
     hero = dm2_v1_runtime_get_active_champion_index();
     hand = dm2_v1_runtime_get_active_hand();
     if (hero < 0) {
@@ -185,18 +185,18 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
         }
     }
     if (hero < 0 || hand < 0) {
-        printf("  DOS kill no active hero/hand %d/%d\n", hero, hand);
+        printf("  DM2 kill no active hero/hand %d/%d\n", hero, hand);
         return 0;
     }
     dm2_v1_runtime_set_position(map, px, py, dir);
     dm2_v1_runtime_set_outdoor(dm2_v1_dungeon_is_outdoor(dungeon, map));
     if (!dm2_v1_runtime_set_spell_runes(hero, runes, 4)) {
-        printf("  DOS kill rune setup rejected\n"); return 0;
+        printf("  DM2 kill rune setup rejected\n"); return 0;
     }
     memset(&cast, 0, sizeof(cast));
     if (!dm2_v1_runtime_cast_spell_player(hero, hand, &cast) ||
         !cast.applied) {
-        printf("  DOS kill cast rejected valid %d applied %d success %d cost %d mana %d->%d failure %d\n",
+        printf("  DM2 kill cast rejected valid %d applied %d success %d cost %d mana %d->%d failure %d\n",
                cast.valid, cast.applied, cast.cast.cast_success,
                cast.cast.mana_cost, cast.mana_before, cast.mana_after,
                cast.missile_failure_stage);
@@ -207,7 +207,7 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
         memset(&schedule, 0, sizeof(schedule));
         if (!dm2_v1_runtime_schedule_creature_at(
                 map, x, y, &schedule) || !schedule.valid) {
-            printf("  DOS kill schedule rejected at %d,%d\n", x, y);
+            printf("  DM2 kill schedule rejected at %d,%d\n", x, y);
             return 0;
         }
     }
@@ -227,7 +227,7 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
                 int scheduled = dm2_v1_runtime_schedule_creature_at(
                     live_map, live_x, live_y, &schedule);
                 if (tick == 0)
-                    printf("  DOS kill reschedule tick %d map %d,%d,%d rc %d valid %d resolved %d type %d due %lu ticket %u\n",
+                    printf("  DM2 kill reschedule tick %d map %d,%d,%d rc %d valid %d resolved %d type %d due %lu ticket %u\n",
                            dm2_v1_runtime_get_tick_count(),
                            live_map, live_x, live_y, scheduled,
                            schedule.valid, schedule.resolved, schedule.timer_type,
@@ -235,7 +235,7 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
             }
         }
         if (tick == 0)
-            printf("  DOS kill boot tick rc %d\n",
+            printf("  DM2 kill boot tick rc %d\n",
                    advance_authentic_dos_tick(profile));
         else
             advance_authentic_dos_tick(profile);
@@ -252,25 +252,25 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
             dm2_v1_runtime_think_creature_receipt(&think);
             dm2_v1_runtime_creature_record_receipt(
                 target.record_handle, &after);
-            printf("  DOS kill think timers %d resolved %d last %d body %d rejected %d\n",
+            printf("  DM2 kill think timers %d resolved %d last %d body %d rejected %d\n",
                    think.think_timers, think.resolved, think.last_record,
                    think.body_consumed, think.body_rejected);
-        printf("  DOS kill target after valid %d hp %u word %04x possession %04x caii %u pending %u\n",
+        printf("  DM2 kill target after valid %d hp %u word %04x possession %04x caii %u pending %u\n",
                    after.valid, after.hp, after.record_word,
                    after.possession_head, after.caii_slot,
                    after.pending_damage);
         }
-        printf("  DOS kill impact valid %d hit %d consumed %d missile %d creature %d damage %d hp %d resched %d\n",
+        printf("  DM2 kill impact valid %d hit %d consumed %d missile %d creature %d damage %d hp %d resched %d\n",
                impact.valid, impact.destination_hit, impact.missile_consumed,
                impact.missile_record, impact.creature_record,
                impact.damage_amount, impact.damage_hp_word_after,
                impact.damage_rescheduled);
-        printf("  DOS kill no lethal receipt valid %d record %d HP %d->%d pending %d wound %d\n",
+        printf("  DM2 kill no lethal receipt valid %d record %d HP %d->%d pending %d wound %d\n",
                damage.valid, damage.creature_record, damage.hp_before,
                damage.hp_after, damage.pending_damage, damage.wound_applied);
         return 0;
     }
-    printf("  DOS kill candidate %04x map %d,%d,%d type %d HP %d->%d damage %d deallocated %d drops %d\n",
+    printf("  DM2 kill candidate %04x map %d,%d,%d type %d HP %d->%d damage %d deallocated %d drops %d\n",
            (unsigned)(uint16_t)target.record_handle, map, x, y,
            target.creature_type, damage.hp_before, damage.hp_after,
            damage.pending_damage, damage.deallocated, damage.drops_placed);
@@ -307,7 +307,7 @@ static int exercise_authentic_pit(
                         !dm2_v1_boot_runtime_capture(profile, &receipt) ||
                         receipt.current_level == map)
                         continue;
-                    printf("  authentic DOS pit transition map %d,%d,%d -> %d,%d,%d\n",
+                    printf("  authentic DM2 pit transition map %d,%d,%d -> %d,%d,%d\n",
                            map, px, py, receipt.current_level,
                            receipt.party_x, receipt.party_y);
                     return 1;
@@ -333,7 +333,7 @@ static int census_authentic_stairs(
                         dungeon, map, x, y) != 3)
                     continue;
                 ++candidates;
-                printf("  DOS stairs candidate map %d,%d,%d raw=%02x offset=%d,%d\n",
+                printf("  DM2 stairs candidate map %d,%d,%d raw=%02x offset=%d,%d\n",
                        map, x, y, raw & 0xff,
                        dungeon->map_offset_x[map], dungeon->map_offset_y[map]);
                 for (int dir = 0; dir < 4; ++dir) {
@@ -354,7 +354,7 @@ static int census_authentic_stairs(
                     if (dm2_v1_runtime_move(dir) == 0 &&
                         dm2_v1_boot_runtime_capture(profile, &receipt) &&
                         receipt.current_level != map) {
-                        printf("  authentic DOS stairs transition map %d,%d,%d -> %d,%d,%d\n",
+                        printf("  authentic DM2 stairs transition map %d,%d,%d -> %d,%d,%d\n",
                                map, x, y, receipt.current_level,
                                receipt.party_x, receipt.party_y);
                         return 1;
@@ -363,7 +363,7 @@ static int census_authentic_stairs(
             }
         }
     }
-    printf("  DOS stairs candidates=%u (no positive runtime route)\n",
+    printf("  DM2 stairs candidates=%u (no positive runtime route)\n",
            candidates);
     return candidates ? -1 : 0;
 }
@@ -410,7 +410,7 @@ static int exercise_authentic_door(
                         if (actuator.door <= 0 || step.mutations <= 0 ||
                             dm2_v1_runtime_get_door_state(map, x, y) != 0)
                             continue;
-                        printf("  authentic DOS door action map %d,%d,%d state %d->%d\n",
+                        printf("  authentic DM2 door action map %d,%d,%d state %d->%d\n",
                                map, x, y, before,
                                dm2_v1_runtime_get_door_state(map, x, y));
                         return 1;
@@ -445,7 +445,7 @@ static int exercise_authentic_active_creature(
             memset(&record_info, 0, sizeof(record_info));
             if (dm2_v1_runtime_creature_record_receipt(
                     (int16_t)material->object_id, &record_info)) {
-                printf("  DOS candidate DB4/F9 map %d,%d,%d type %d HP %u armor %u kill %d possession %04x drops %d\n",
+                printf("  DM2 candidate DB4/F9 map %d,%d,%d type %d HP %u armor %u kill %d possession %04x drops %d\n",
                        map, material->x, material->y, record_info.creature_type,
                        record_info.hp,
                        dm2_v1_creature_ai_spec(record_info.creature_type)->ArmorClass,
@@ -475,7 +475,7 @@ static int exercise_authentic_active_creature(
                     creature.asset_blit_ready && !creature.fallback_drawn &&
                     creature.gdat_index != 0 &&
                     dm2_v1_creature_drop_slots_loaded(creature.creature_type)) {
-                    printf("  active DOS creature DB4/F9 map %d,%d,%d type %d GDAT %d\n",
+                    printf("  active DM2 creature DB4/F9 map %d,%d,%d type %d GDAT %d\n",
                            map, material->x, material->y,
                            creature.creature_type, creature.gdat_index);
                     {
@@ -495,11 +495,11 @@ static int exercise_authentic_active_creature(
                              (!had_before ||
                               after.sequence != before.sequence))) {
                             fprintf(stderr,
-                                    "FAIL: DOS AI timer admission was reported "
+                                    "FAIL: DM2 AI timer admission was reported "
                                     "as a committed creature movement\n");
                             return 0;
                         }
-                        printf("  PASS: DOS AI queue admission does not emit a movement receipt\n");
+                        printf("  PASS: DM2 AI queue admission does not emit a movement receipt\n");
                     }
                     /* A source-owned viewport proof is sufficient here.
                      * Positioning a restored party beside arbitrary DB4
@@ -572,7 +572,7 @@ static int exercise_authentic_db1(
                     if (receipt.current_level == dest_map &&
                         receipt.party_x == dest_x && receipt.party_y == dest_y &&
                         receipt.party_dir == expected_dir) {
-                        printf("  authentic DOS DB1 transition map %d,%d,%d -> %d,%d,%d\n",
+                        printf("  authentic DM2 DB1 transition map %d,%d,%d -> %d,%d,%d\n",
                                map, x, y, dest_map, dest_x, dest_y);
                         return 1;
                     }
@@ -585,49 +585,73 @@ static int exercise_authentic_db1(
 
 int main(void)
 {
-    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+    const char *archive = getenv("FIRESTAFF_DM2_RUNTIME_ARCHIVE");
     DM2_V1_BootStartupLaunch launch;
     DM2_V1_BootProfile *profile;
     DM2_V1_BootRuntimeReceipt runtime;
     int ok;
 
+    if (!archive || !archive[0])
+        archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     if (!archive || !archive[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
+        puts("SKIP: FIRESTAFF_DM2_RUNTIME_ARCHIVE is not set");
         return 77;
     }
     memset(&launch, 0, sizeof(launch));
-    /* The real DOS distribution stays mounted as a ZIP.  The boot owner
-     * resolves its data members through virtual archive paths in RAM. */
+    /* The original distribution stays mounted in its native container. The
+     * boot owner resolves archived data members in RAM and accepts authentic
+     * extracted Macintosh DMFiles as a directory. */
     if (!dm2_v1_boot_startup_launch_alloc(archive, &launch) ||
         !launch.profile || !launch.profile->assets_verified) {
-        fprintf(stderr, "FAIL: native DOS DM2 archive was not admitted\n");
+        fprintf(stderr, "FAIL: native DM2 archive was not admitted\n");
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
     profile = launch.profile;
     if (!dm2_v1_boot_prepare_new_game_world(profile) ||
         !dm2_v1_boot_commit_new_game_session(profile)) {
-        fprintf(stderr, "FAIL: DOS NEW GAME did not commit\n");
+        fprintf(stderr, "FAIL: DM2 NEW GAME did not commit\n");
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
     memset(&runtime, 0, sizeof(runtime));
-    ok = dm2_v1_boot_runtime_capture(profile, &runtime) && runtime.runtime_ready &&
-         exercise_authentic_pit(
-             profile, (const DM2_V1_DungeonData *)profile->dungeon_data) &&
-         census_authentic_stairs(
-             profile, (const DM2_V1_DungeonData *)profile->dungeon_data) == 1 &&
-         exercise_authentic_door(
-             profile, (const DM2_V1_DungeonData *)profile->dungeon_data) &&
-         exercise_authentic_active_creature(
-             profile, (const DM2_V1_DungeonData *)profile->dungeon_data) &&
-         exercise_authentic_db1(
-             profile, (const DM2_V1_DungeonData *)profile->dungeon_data);
-    dm2_v1_boot_startup_launch_cleanup(&launch);
+    ok = dm2_v1_boot_runtime_capture(profile, &runtime) && runtime.runtime_ready;
     if (!ok) {
-        fprintf(stderr, "FAIL: DOS did not commit an authentic open-pit transition\n");
+        fprintf(stderr, "FAIL: authentic DM2 runtime did not become ready\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
-    puts("PASS: authentic DOS DM2 pit reaches active runtime");
+    if (!exercise_authentic_pit(
+            profile, (const DM2_V1_DungeonData *)profile->dungeon_data)) {
+        fprintf(stderr, "FAIL: authentic DM2 open-pit transition was not committed\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+        return 1;
+    }
+    if (census_authentic_stairs(
+            profile, (const DM2_V1_DungeonData *)profile->dungeon_data) != 1) {
+        fprintf(stderr, "FAIL: authentic DM2 stairs transition was not committed\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+        return 1;
+    }
+    if (!exercise_authentic_door(
+            profile, (const DM2_V1_DungeonData *)profile->dungeon_data)) {
+        fprintf(stderr, "FAIL: authentic DM2 door step did not reach its open state\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+        return 1;
+    }
+    if (!exercise_authentic_active_creature(
+            profile, (const DM2_V1_DungeonData *)profile->dungeon_data)) {
+        fprintf(stderr, "FAIL: authentic DM2 active creature route was not admitted\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+        return 1;
+    }
+    if (!exercise_authentic_db1(
+            profile, (const DM2_V1_DungeonData *)profile->dungeon_data)) {
+        fprintf(stderr, "FAIL: authentic DM2 DB1 transition was not committed\n");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+        return 1;
+    }
+    dm2_v1_boot_startup_launch_cleanup(&launch);
+    puts("PASS: authentic DM2 pit reaches active runtime");
     return 0;
 }

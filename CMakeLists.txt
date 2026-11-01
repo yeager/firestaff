@@ -62601,8 +62601,37 @@ add_test(NAME test_dm2_v1_dos_pit_runtime_real_media
 set_tests_properties(test_dm2_v1_dos_pit_runtime_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT
-        "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        "FIRESTAFF_DM2_RUNTIME_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "tier2;dm2;dos;pit;stairs;door;creature;real-media;in-memory;native")
+
+# The source door-step runtime is shared by all supported DM2 editions. Run
+# the same authenticated pit/stairs/door/creature probe against any original
+# Amiga, FM Towns, and extracted Macintosh media installed in the workspace.
+set(_dm2_runtime_media_cases
+    "amiga|dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    "fmtowns|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+    "macintosh|dm2/mac-en/Dungeon Master II/DMFiles")
+foreach(_case IN LISTS _dm2_runtime_media_cases)
+    string(REPLACE "|" ";" _fields "${_case}")
+    list(GET _fields 0 _platform)
+    list(GET _fields 1 _media_path)
+    if(EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_media_path}")
+        add_test(
+            NAME "test_dm2_v1_${_platform}_pit_runtime_real_media"
+            COMMAND test_dm2_v1_dos_pit_runtime_real_media)
+        set_tests_properties(
+            "test_dm2_v1_${_platform}_pit_runtime_real_media" PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT
+                "FIRESTAFF_DM2_RUNTIME_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/${_media_path}"
+            LABELS "tier2;dm2;${_platform};pit;stairs;door;creature;real-media;in-memory;native;skip-safe")
+    endif()
+endforeach()
+unset(_dm2_runtime_media_cases)
+unset(_case)
+unset(_fields)
+unset(_platform)
+unset(_media_path)
 
 add_executable(test_dm2_v1_dos_sksave1_wield_drop_real_media
     tests/test_dm2_v1_dos_sksave1_wield_drop_real_media.c)

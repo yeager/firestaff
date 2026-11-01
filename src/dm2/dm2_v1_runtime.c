@@ -8987,6 +8987,7 @@ static int dm2_runtime_door_step_timer(void *user,
     int link_type = -1;
     int link_size = 0;
     uint8_t *door_record;
+    uint8_t *live_door_record;
     uint16_t door_attributes;
     int party_collision;
 
@@ -9029,6 +9030,16 @@ static int dm2_runtime_door_step_timer(void *user,
         if (receipt != NULL) receipt->handler_rejected_count++;
         return 1;
     }
+    /* Source STEP_DOOR reads the live record pool. The dungeon's parsed raw
+     * record is a separate copy; ACTUATE_DOOR updates the pool's DoorBit09/10
+     * there, so reading the raw copy would lose the new direction and moving
+     * gate before this timer runs. */
+    live_door_record = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, (int16_t)(uint16_t)timer->value_b);
+    if (!door_record || !live_door_record) {
+        if (receipt != NULL) receipt->handler_rejected_count++;
+        return 1;
+    }
     current_state = dm2_door_get_state(raw);
 
     /* TIMELINE.C:750 — DESTROYED is sticky; the source returns immediately. */
@@ -9036,7 +9047,7 @@ static int dm2_runtime_door_step_timer(void *user,
         return 1;
     }
 
-    door_attributes = dm2_runtime_record_rd16(rt, door_record + 2);
+    door_attributes = dm2_runtime_record_rd16(rt, live_door_record + 2);
     /* SKWINSPX skevent.cpp::STEP_DOOR reads DoorBit10 as the moving gate
      * and DoorBit09 as its current direction. ACTUATE_DOOR can reverse the
      * direction while a step timer is already queued, so actor is stale. */
@@ -9052,7 +9063,7 @@ static int dm2_runtime_door_step_timer(void *user,
         /* SKWINSPX STEP_DOOR clears DoorBit10 and returns before either
          * collision branch once the requested endpoint is already reached. */
         door_attributes &= (uint16_t)~0x0400u;
-        dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
+        dm2_runtime_record_wr16(rt, live_door_record + 2, door_attributes);
         return 1;
     }
 
@@ -9166,7 +9177,7 @@ static int dm2_runtime_door_step_timer(void *user,
             (((timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) + 2u) &
              DM2_V1_SOURCE_TIMER_TICK_MASK);
         door_attributes |= 0x1000u;
-        dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
+        dm2_runtime_record_wr16(rt, live_door_record + 2, door_attributes);
         if (dm2_v1_runtime_enqueue_source_timer(&next, source_index) != 0) {
             rt->source_party = party_before;
             rt->session_rng = rng_before;
@@ -9175,7 +9186,8 @@ static int dm2_runtime_door_step_timer(void *user,
                 memcpy(sound_before.ssound_entries, sound_entries_before,
                        sound_entries_before_size);
             rt->timer_queue = queue_before;
-            dm2_runtime_record_wr16(rt, door_record + 2, attributes_before);
+            dm2_runtime_record_wr16(rt, live_door_record + 2,
+                                    attributes_before);
             (void)dm2_v1_dungeon_set_tile_raw(
                 dungeon, map, x, y, raw_before);
             free(sound_entries_before);
@@ -9331,7 +9343,7 @@ static int dm2_runtime_door_step_timer(void *user,
                         goto door_creature_rollback;
 
                     door_attributes |= 0x1000u;
-                    dm2_runtime_record_wr16(rt, door_record + 2,
+                    dm2_runtime_record_wr16(rt, live_door_record + 2,
                                             door_attributes);
                     next = *timer;
                     next.ticks_and_map =
@@ -9366,7 +9378,7 @@ door_creature_rollback:
                         (void)dm2_v1_dungeon_set_tile_raw(
                             dungeon, map, x, y, raw_before);
                     if (door_attributes != attributes_before)
-                        dm2_runtime_record_wr16(rt, door_record + 2,
+                        dm2_runtime_record_wr16(rt, live_door_record + 2,
                                                 attributes_before);
                     if (pool_cloned) {
                         dm2_v1_record_pool_set_free(&rt->record_pools);
@@ -9444,7 +9456,7 @@ door_creature_rollback:
     } else {
         door_attributes |= 0x1400u;
     }
-    dm2_runtime_record_wr16(rt, door_record + 2, door_attributes);
+    dm2_runtime_record_wr16(rt, live_door_record + 2, door_attributes);
     rt->door_step_mutations++;
 
     /* Re-queue the next step timer if we have not reached the target state.
