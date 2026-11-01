@@ -2,12 +2,12 @@
 
 ## Purpose
 
-The native `--debug` path is being extended to print the authenticated Track 02
-spawn-table source metadata already retained by the Theron world. The receipt
-is intended to make the static source projection inspectable during a native
-launch; it does not implement or authorize creature spawning.
+The native `--debug` path prints the authenticated Track 02 spawn-table source
+metadata already retained by the Theron world. The receipt makes the static
+source projection inspectable during a native launch; it does not implement
+or authorize creature spawning.
 
-## Planned receipt fields
+## Receipt fields
 
 For an authenticated US or JP Track 02 launch, the diagnostic prints the
 regional identity, Track 02 MD5, source layout (`MODE1/2048` ISO projection or
@@ -24,15 +24,19 @@ spawn failure or a semantic classification.
 
 ## Verification state
 
-The diagnostic's modified engine and decoder translation units compiled
-successfully in an isolated TRV2 Debug configuration. The full application has
-not been linked, and no native `--debug` output has been observed. Treat the
-output format above as an implementation target, not as verified runtime
-evidence. Before relying on it, link the full application on TRV2 and inspect
-one authentic US or JP launch log. Confirm that the printed MD5 and offsets match the
-[authenticated ISO projection report](theron-track02-spawn-record-iso-projection-20261101.md),
-and that a non-Theron launch emits no Theron receipt. Keep the output bounded
-to one receipt per launch.
+The modified engine and decoder translation units compiled successfully in an
+isolated TRV2 Debug configuration. The full application also linked in the
+Linux, macOS, and Windows CMake CI builds for PR #243 (run
+[41284640562](https://github.com/yeager/firestaff/actions/runs/41284640562));
+the localization, warning, repository-policy, and cross-platform determinism
+checks passed. These checks verify compilation and integration, but no native
+`--debug` launch log containing the new receipt has been inspected yet. Treat
+the fields above as the implemented output contract, not as verified
+source-receipt values. Before relying on runtime values, inspect one authentic
+US or JP native launch log and compare its MD5 and offsets with the
+[authenticated ISO projection report](theron-track02-spawn-record-iso-projection-20261101.md).
+Also confirm that a non-Theron launch emits no Theron receipt. Output is
+bounded to one receipt per launch.
 
 The independent state-only reference replay remains negative for runtime
 spawn semantics: it consumed five scripted controller events, recorded zero
