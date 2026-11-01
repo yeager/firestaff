@@ -65,11 +65,12 @@ real-media evidence.
 | DM Nexus | Verified Saturn data and bounded MAPD title-plane render; Japanese retail and English-version Ymir references reach the native menu, but Firestaff does not yet reproduce that native title/menu or start Nexus as a playable game. The measured implementation coverage is documented separately. | [Nexus platform row](PLATFORM_STATUS.md#dm-nexus), [Nexus completion](nexus/NEXUS_COMPLETION.md), [English cold-boot evidence](nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27) |
 | Theron's Quest | Firestaff runs the game in its native C/SDL runtime. Direct native launch enters Theron's title/startup path without Firestaff's Run menu or a System Card; the dedicated US Debug boot probe reported `levelLoaded=0`. Separately, JP reaches a loaded dungeon with native ticks and rendered frames, and authentic US Continue reaches dungeon 2. The viewport is not yet proven to update from authenticated game state, and neither dungeon route has a paired retail image. Host save persistence and campaign-state translation remain distinct evidence boundaries. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest), [capture readiness](theron/THERON_CAPTURE_READINESS.md), [direct-launch evidence](source-lock/theron-native-debug-direct-launch-20261031.md) |
 
-Nexus is the sole exception with an explicitly defined numeric measurement:
-44.0% implementation coverage across its six measured domains, 33.1% for its
-weighted startup-to-HUD chain, and 0% production grade. Those values describe
-only the documented Saturn capture model and must not be averaged with the
-status labels above.
+The completion matrix also includes evidence-coverage scores for individual
+game targets; those scores describe documented gate coverage, not a percentage
+of a finished game. Nexus separately reports its six-domain implementation
+coverage (44.0%), weighted startup-to-HUD chain (33.1%), and production grade
+(0%) under its Saturn capture model. Neither set of figures replaces the
+evidence-backed status labels above.
 
 The dated [preservation status](PRESERVATION_STATUS_2026-08-11.md) records
 the current source, format and real-media boundary for every game.

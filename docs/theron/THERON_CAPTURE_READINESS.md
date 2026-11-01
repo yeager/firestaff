@@ -6,6 +6,11 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+Everything below this maintained summary is a dated capture and tooling
+runbook. Historical results retain their original scope and may refer to
+earlier diagnostic paths; they do not supersede the current parity boundaries
+above or the linked project status and TODO pages.
+
 The current native regression build also passed eight selected US/JP
 real-media and input CTests in three consecutive loops (24 executions):
 regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
@@ -971,25 +976,28 @@ assertion remains a separate gate because this replay did not execute the
 `$2c54-$2c69` window. This prevents a transport receipt from being mistaken
 for a dynamic level/object consumer.
 
-An operator-supplied raw VDC/VCE pair is accepted only by the explicit capture
-tool when its exact FNV receipts are present. That path now feeds the
-production native 256×224 screen-space BAT consumer, not a README promotion:
-it does not prove
-square-to-tile perspective, creature ownership or HUD layout.
+An operator-supplied raw VDC/VCE bundle can be replayed by the explicit
+diagnostic capture tool when its exact receipts are present. This is a
+screen-space snapshot replay path; it is not the production dungeon viewport
+and does not prove a source-bound map/pose-to-render chain, square-to-tile
+perspective, creature ownership, or HUD layout. The production Theron world
+viewport remains fail-closed pending that evidence.
 
-The strongest current proof is:
+Tests and captures recorded at this historical checkpoint:
 
 - `tier1_strict_boot_probe`: JP canonical, JP extras, and US extras reach the
   `TQR level load` boot milestone when those data paths are present.
 - `theron_v1_m11_direct_launch`: M11 consumes the hash-verified Track 02 path
-  without re-walking the data root and builds the Theron world and viewport.
+  without re-walking the data root and builds the bounded Theron runtime state;
+  it does not establish a source-bound rendered dungeon viewport.
 - `theron_v1_raw_bin_runtime_boot`: a configured user-owned `TQUS02.bin`
   layout is launched through the actual CLI, enters the source-backed Theron
   runtime, loads the first level and forms the initial party. It is a
   real-media test and SKIPs on hosts without that copyrighted file; it does
   not assert unproven later rendering, combat or dungeon semantics.
-- `theron_v1_viewport_renderer` and `theron_v1_rendering`: the data-free
-  Theron viewport, palette, UI chrome, and M11 blit contracts are covered.
+- `theron_v1_viewport_renderer` and `theron_v1_rendering`: data-free viewport,
+  palette, UI-chrome, and M11 blit contracts are covered. These contract tests
+  do not establish the production world renderer or authentic visual parity.
 - `theron_v1_cross_route_mechanics`: synthetic runtime mechanics now cover a
   bounded movement/interact route across explicit door opening, pools, alarms, triggers,
   teleporters, pits, post-move drain, and click-route TAKE.
@@ -999,8 +1007,9 @@ The strongest current proof is:
   deterministic fallback assets are capture-path proof, not final art or
   source-bank proof. Without an explicit authenticated VDC/VCE pair the gate
   is a successful SKIP; a black fail-closed viewport is never accepted as a
-  screenshot. To verify the real source-screen route, supply an authenticated
-  VDC/VCE pair with --vram-snapshot and --vce-snapshot. Missing data is also
+  screenshot. To inspect the diagnostic screen-space replay, supply an
+  authenticated VDC/VCE pair with --vram-snapshot and --vce-snapshot. This
+  does not prove a production world-render route. Missing data is also
   a successful SKIP, not a failure.
 - `theron_v1_track02_bank` and `theron_v1_track02_descriptor_table`: when
   real Track 02 data is present, both probes hash-gate the bank-anchor
