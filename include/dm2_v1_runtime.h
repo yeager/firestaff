@@ -1587,7 +1587,8 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
  *   class 4 door        — bounded one-step door toggle
  *   class 5 teleporter  — DB1-disabled and close paths dispatch FLOOR_MECHA;
  *                         enabled opening remains fail-closed
- *   class 6 trickwall   — consumed, CCM tail unbound (fail-closed counter)
+ *   class 6 trickwall   — opens/closes bit 2 and defers blocked closes;
+ *                         sound/light-check presentation remains partial
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230 (0x04 class dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:1923   (DM2_ACTUATE_WALL_MECHA)
@@ -1606,7 +1607,10 @@ typedef struct {
     int door;                 /* class 4 consumed / door mutations */
     int teleporter;           /* class 5 close/disabled path dispatched */
     int trickwall;            /* class 6 consumed */
-    int unbound_fail_closed;  /* class 6 handler remains unbound */
+    int trickwall_mutations;  /* class 6 tile bit writes */
+    int trickwall_requeues;   /* class 6 blocked-close retries */
+    int trickwall_rejected;   /* class 6 invalid/unowned state */
+    int unbound_fail_closed;  /* unbound actuator classes */
     int pitfall_rejected;     /* class 2 toggle rejected */
     int door_rejected;        /* class 4 toggle rejected */
     int teleporter_rejected;  /* class 5 path rejected */

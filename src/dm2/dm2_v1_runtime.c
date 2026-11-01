@@ -396,6 +396,9 @@ struct DM2_V1_RuntimeState {
     int actuator_tile_teleporter;    /* class 5 consumed */
     int actuator_tile_teleporter_rejected;
     int actuator_tile_trickwall;     /* class 6 consumed */
+    int actuator_tile_trickwall_mutations;
+    int actuator_tile_trickwall_requeues;
+    int actuator_tile_trickwall_rejected;
     /* DM2-007 cycle 12: last spell-cast failure feedback for M11 status scope.
      * Cleared on init; populated when a spell cast reports failure_feedback. */
     const char *last_spell_status_scope;
@@ -10208,6 +10211,93 @@ static int dm2_runtime_teleporter_tile_timer_owner(
     return 1;
 }
 
+/* Source ACTUATE_TRICKWALL (SKULLWIN/c_tim_proc.cpp:3875) opens by setting
+ * tile bit 2. Closing waits one tick while the party or a non-levitating
+ * creature occupies the cell. Sound and the source light-check global are
+ * still separate presentation owners. */
+static int dm2_runtime_actuate_trickwall_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    DM2_V1_SourceTimer next;
+    int map, x, y, action, raw;
+    int blocked = 0;
+
+    (void)receipt;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid || !rt->record_pools.valid ||
+        !rt->record_pools.record_graph_complete) {
+        if (rt) rt->actuator_tile_trickwall_rejected++;
+        return 0;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    if (!game || dungeon->square_bytes != 1 || map < 0 ||
+        map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map]) {
+        rt->actuator_tile_trickwall_rejected++;
+        return 0;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0 || ((unsigned int)raw >> 5) != 6u) {
+        rt->actuator_tile_trickwall_rejected++;
+        return 0;
+    }
+    /* DOS, SKULLWIN and SPX v4/v5 resolve action 2 from bit 2. */
+    if (action == 2)
+        action = (raw & 0x04) != 0 ? 1 : 0;
+    if (action == 1) {
+        int16_t creature;
+        if (game->current_level == map && game->party_x == x &&
+            game->party_y == y)
+            blocked = 1;
+        creature = dm2_v1_get_creature_at(
+            &rt->record_pools, dungeon, map, x, y);
+        if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, creature);
+            uint16_t ai_flags = 0u;
+            if (!record || !dm2_v1_creature_ai_spec_flags(
+                    (int)record[4], &ai_flags)) {
+                rt->actuator_tile_trickwall_rejected++;
+                return 0;
+            }
+            if ((ai_flags & 0x20u) == 0u)
+                blocked = 1;
+        }
+        if (blocked) {
+            next = *timer;
+            /* c_timer.h::c_tim::incdata increments the source dword. */
+            next.ticks_and_map = timer->ticks_and_map + 1u;
+            if (dm2_v1_source_timer_enqueue(
+                    &rt->timer_queue, &next, source_index) !=
+                DM2_V1_SOURCE_TIMER_OK) {
+                rt->actuator_tile_trickwall_rejected++;
+                return 0;
+            }
+            rt->actuator_tile_trickwall++;
+            rt->actuator_tile_trickwall_requeues++;
+            return 1;
+        }
+    }
+    if (dm2_v1_dungeon_set_tile_raw(
+            dungeon, map, x, y,
+            action == 1 ? raw & ~0x04 : raw | 0x04) != 0) {
+        rt->actuator_tile_trickwall_rejected++;
+        return 0;
+    }
+    rt->actuator_tile_trickwall++;
+    rt->actuator_tile_trickwall_mutations++;
+    return 1;
+}
+
 /* Source-owned class-4 door actuator.  This is the post-GAME_LOAD analogue
  * of the candidate owner in dm2_v1_game_load_world_owner.c: admission is by
  * the direct DB0 root and the complete ground-stack chain, then the source
@@ -12924,15 +13014,16 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
         }
-        /* c_tim_proc's 0x04 dispatch is record-owned. Wall/floor classes now
-         * enter the complete source actuator chain walkers. Other classes
-         * remain fail-closed; no value_b-only terrain mutation is allowed. */
+        /* c_tim_proc's 0x04 dispatch is record-owned. Wall/floor classes
+         * enter their source chain walkers; tile-only owners additionally
+         * validate the live map/party/record state before mutation. */
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
         dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
         dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;
         dispatcher.actuator_tile[4] = dm2_runtime_actuate_door_mecha_timer;
         dispatcher.actuator_tile[5] = dm2_runtime_teleporter_tile_timer_owner;
+        dispatcher.actuator_tile[6] = dm2_runtime_actuate_trickwall_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP_DOOR now requires the direct DB0 root at the timer cell, a
@@ -13523,6 +13614,9 @@ int dm2_v1_runtime_actuator_tile_receipt(
     out->door = rt->actuator_tile_door;
     out->teleporter = rt->actuator_tile_teleporter;
     out->trickwall = rt->actuator_tile_trickwall;
+    out->trickwall_mutations = rt->actuator_tile_trickwall_mutations;
+    out->trickwall_requeues = rt->actuator_tile_trickwall_requeues;
+    out->trickwall_rejected = rt->actuator_tile_trickwall_rejected;
     out->unbound_fail_closed = rt->actuator_tile_unbound_fail_closed;
     out->pitfall_rejected = rt->actuator_tile_pitfall_rejected;
     out->door_rejected = rt->actuator_tile_door_rejected;

@@ -1992,3 +1992,10 @@ DB5+ tile items whose positions or timer bytes must move. Other open cases
 remain fail-closed pending the complete source movement owner. The GAME_LOAD
 candidate covers only its already admitted DB2 floor subset; other source
 editions and supported platform lanes remain partial.
+
+2026-11-01 skproject `ACTUATE_TRICKWALL`: the live class-6 owner now resolves
+action 2 from tile bit 2, sets the open bit, and closes only when the party is
+elsewhere and any creature on the cell has AI flag `0x20`. A blocked close
+requeues the source timer one tick later. Missing creature-AI evidence fails
+closed. The source light-check state and SPX-v4/DOS open/close sound effects
+remain unbound, as do complete per-edition runtime lanes.
