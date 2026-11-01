@@ -76,7 +76,9 @@ checks against this same frame-300 evidence package: the C priority compositor
 must match Ymir's complete rendered frame, and the VDP1 command trace must
 match the hash-pinned Japanese `LEV01.DGN` materials. The combined check also
 records the last VDP1 command that wrote each replay pixel and joins that row
-to its source receipt. All 65,991 VDP1 pixels selected as the top VDP2 layer
+to its source receipt. Before assigning owners, it verifies that every
+selected visible VDP1 pixel is identical in the replayed FBS buffer and the
+display FBS buffer. All 65,991 VDP1 pixels selected as the top VDP2 layer
 map to rows backed by retail DGN or captured Ymir VRAM. The 491 CRAM pixels
 split exactly into 60 pixels from captured polyline row 79 and 431 pixels from
 captured mode-4 sprite row 80. The remaining 65,500 selected VDP1 pixels map

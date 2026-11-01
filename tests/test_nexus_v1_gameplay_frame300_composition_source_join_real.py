@@ -112,7 +112,13 @@ def main() -> int:
             sprite = struct.unpack_from(">H", vdp1_fbs, fbs_offset)[0]
             top_layer = stack[pixel * 4]
             owner = struct.unpack_from("<H", owners, pixel * 2)[0]
+            replay_sprite = struct.unpack_from(
+                ">H", vdp1_fbs, fbs_offset - VDP1_BUFFER_BYTES
+            )[0]
             cram_sprite = top_layer == VDP1_LAYER and sprite != 0 and not (sprite & 0x8000)
+            if top_layer == VDP1_LAYER and sprite != 0 and replay_sprite != sprite:
+                print(f"FAIL: display and replay VDP1 buffers differ at visible pixel {pixel}")
+                return 1
             if cram_sprite:
                 cram_pixels += 1
                 cram_owner_counts[owner] += 1
