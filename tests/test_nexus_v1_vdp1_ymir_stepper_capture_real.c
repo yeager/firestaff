@@ -1,7 +1,9 @@
 #include "firestaff_x68k_media_receipt.h"
+#include "nexus_v1_vdp1_dgn_material_resolver.h"
 #include "nexus_v1_vdp1_ymir_stepper_capture.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -181,18 +183,22 @@ int main(int argc, char **argv)
         {"vdp1-capture-bundle.txt", "32ce0c4db50ab600aec8b345f5372453c2e4242e35a0d0518fbf33cf45781cbc", 0U}
     };
     const char *capture_env = getenv("FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR");
+    const char *dgn_env = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     char dump_root[4096], paths[sizeof(files) / sizeof(files[0])][4096];
     Blob blobs[sizeof(files) / sizeof(files[0])] = {{0}};
+    Blob dgn = {NULL, 0U};
     uint8_t *le_vram = NULL;
     Nexus_V1_Vdp1YmirCaptureSurface *surface = NULL;
     Nexus_V1_Vdp1YmirCaptureReceipt receipt;
     Nexus_V1_Vdp1YmirCaptureInput input;
+    Nexus_V1_Vdp1DgnMaterialResolverInput dgn_resolver = {0};
     uint8_t seen[EXPECTED_FRAME_ROWS] = {0};
     int16_t local_x = 0, local_y = 0;
     int user_x0 = 0, user_y0 = 0, user_x1 = 512, user_y1 = 256;
     int sys_clip_h = 511, sys_clip_v = 255;
     unsigned int frame_rows = 0U, draws = 0U, mode1_count = 0U;
     unsigned int other_modes = 0U, polygon_count = 0U;
+    unsigned int dgn_source_count = 0U, transparent_mode1_count = 0U;
     unsigned int user_clip_updates = 0U, system_clip_updates = 0U, local_updates = 0U;
     uint64_t opaque = 0U, exact_matches = 0U, alpha_matches = 0U;
     char *trace_copy = NULL, *line;
@@ -200,8 +206,8 @@ int main(int argc, char **argv)
     int result = 1;
     (void)argv;
 
-    if (argc != 1 || !capture_env || !*capture_env) {
-        fprintf(stderr, "SKIP: set FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR to the external authentic Ymir capture\n");
+    if (argc != 1 || !capture_env || !*capture_env || !dgn_env || !*dgn_env) {
+        fprintf(stderr, "SKIP: set FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR and FIRESTAFF_NEXUS_DATA_DIR to authentic capture and retail game data\n");
         return 77;
     }
     if (!choose_dump_root(capture_env, dump_root, sizeof(dump_root))) {
@@ -227,6 +233,27 @@ int main(int argc, char **argv)
     if (!is_frame_receipt(&blobs[5])) {
         fprintf(stderr, "capture bundle receipt does not identify complete frame 13162\n");
         goto done;
+    }
+    {
+        char dgn_path[4096];
+        int written = snprintf(dgn_path, sizeof(dgn_path), "%s/LEV00.DGN", dgn_env);
+        if (written < 0 || (size_t)written >= sizeof(dgn_path)) {
+            fprintf(stderr, "Nexus data path is too long\n"); goto done;
+        }
+        dgn = read_blob(dgn_path);
+        if (!dgn.bytes) {
+            fprintf(stderr, "SKIP: authentic Japanese LEV00.DGN is unavailable: %s\n", dgn_path);
+            result = 77; goto done;
+        }
+        if (!hash_is(&dgn, "24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a") ||
+            dgn.size > (size_t)INT_MAX) {
+            fprintf(stderr, "retail LEV00.DGN hash or size does not match the pinned Japanese source\n");
+            goto done;
+        }
+        dgn_resolver.dgn_bytes = dgn.bytes;
+        dgn_resolver.dgn_byte_count = (int)dgn.size;
+        dgn_resolver.source_hash_verified = 1;
+        dgn_resolver.palette_slot_base = 0;
     }
     /* VDP1 FBCR bit 3 is DIE; bit 4 is EOS. This capture disables
      * double-interlace and selects even X coordinates for HSS. VDP2 TVMD
@@ -356,19 +383,51 @@ int main(int argc, char **argv)
                 {
                     uint32_t palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
                     uint32_t texture_offset = parsed.texture_source_byte_offset;
+                    Nexus_V1_Vdp1CaptureCompositeInput material;
+                    const uint8_t *texture_bytes;
+                    const uint8_t *palette_bytes;
+                    uint8_t dgn_palette_le[32];
+                    int dgn_joined;
                     if (palette_offset > blobs[1].size - 32U ||
                         texture_offset > blobs[1].size || parsed.texture_byte_count > blobs[1].size - texture_offset) {
                         fprintf(stderr,"captured texture or palette span out of bounds\n"); goto done;
                     }
+                    memset(&material, 0, sizeof(material));
+                    dgn_joined = nexus_v1_vdp1_dgn_material_resolver(
+                        le_vram, (int)blobs[1].size, command,
+                        (int)sizeof(command), &parsed, (uint32_t)address,
+                        &material, &dgn_resolver);
+                    if (dgn_joined && material.dgn_source_hash_verified &&
+                        material.dgn_image && material.dgn_palette &&
+                        material.dgn_image_size == (int)parsed.texture_byte_count &&
+                        material.dgn_palette_size == 32) {
+                        unsigned int pal_byte;
+                        texture_bytes = material.dgn_image;
+                        for (pal_byte = 0U; pal_byte < 32U; pal_byte += 2U) {
+                            dgn_palette_le[pal_byte] = material.dgn_palette[pal_byte + 1U];
+                            dgn_palette_le[pal_byte + 1U] = material.dgn_palette[pal_byte];
+                        }
+                        palette_bytes = dgn_palette_le;
+                        ++dgn_source_count;
+                    } else if (dgn_joined && material.transparent_capture_noop_verified) {
+                        /* The 11 all-zero captured spans are verified transparent
+                         * no-ops, not DGN-owned textures. Preserve their real bytes. */
+                        texture_bytes = blobs[1].bytes + texture_offset;
+                        palette_bytes = le_vram + palette_offset;
+                        ++transparent_mode1_count;
+                    } else {
+                        fprintf(stderr, "frame mode-1 row %lu has no unique retail DGN join or verified transparent no-op\n", index);
+                        goto done;
+                    }
                     memset(&input, 0, sizeof(input));
                     input.command = command; input.command_size = (int)sizeof(command);
-                    input.texture_bytes = blobs[1].bytes + texture_offset;
+                    input.texture_bytes = texture_bytes;
                     input.texture_size = (int)parsed.texture_byte_count;
-                    input.palette_bytes = le_vram + palette_offset; input.palette_size = 32;
+                    input.palette_bytes = palette_bytes; input.palette_size = 32;
                     input.vdp1_vram = le_vram; input.vdp1_vram_size = (int)blobs[1].size;
                     input.command_capture_verified = 1;
-                    /* These attest the exact command-to-captured-VRAM spans,
-                     * not retail DGN ownership. No unjoined row is called a DGN material. */
+                    /* Image and palette are retail DGN bytes for uniquely joined
+                     * draws; the captured zero patterns above remain no-ops. */
                     input.source_image_join_verified = 1;
                     input.palette_join_verified = 1;
                     input.vdp1_vram_hash_verified = 1;
@@ -394,16 +453,19 @@ int main(int argc, char **argv)
         }
     }
     if (frame_rows != EXPECTED_FRAME_ROWS || draws != LAST_DRAW-FIRST_DRAW+1U ||
-        mode1_count != 124U || other_modes != 8U || user_clip_updates != 1U || local_updates != 3U ||
+        mode1_count != 124U || dgn_source_count != 113U ||
+        transparent_mode1_count != 11U || other_modes != 8U ||
+        user_clip_updates != 1U || local_updates != 3U ||
         polygon_count != 28U || system_clip_updates != 0U || !seen[0] || !seen[LAST_DRAW]) {
-        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u polygon=%u userclip=%u local=%u sysclip=%u\n",
-            frame_rows,draws,mode1_count,polygon_count,user_clip_updates,local_updates,system_clip_updates); goto done;
+        fprintf(stderr,"incomplete authenticated frame receipt rows=%u draws=%u mode1=%u dgn=%u transparent=%u polygon=%u userclip=%u local=%u sysclip=%u\n",
+            frame_rows,draws,mode1_count,dgn_source_count,transparent_mode1_count,
+            polygon_count,user_clip_updates,local_updates,system_clip_updates); goto done;
     }
     if (!is_frame_receipt(&blobs[5])) { fprintf(stderr,"frame receipt changed during validation\n"); goto done; }
 
     /* FBS buffer 0 is 512x256 BGR555, big-endian. Compare the 320x224
-     * captured viewport only. The test intentionally records partial
-     * command-set agreement; a nonzero residual is not renderer parity. */
+     * captured viewport after the retail DGN sources, authenticated no-op
+     * spans, polygons, and transparent mode-5 commands have been accounted for. */
     for (int y = 0; y < NEXUS_FB_H; ++y) for (int x = 0; x < NEXUS_FB_W; ++x) {
         size_t p=(size_t)y*NEXUS_FB_W+(size_t)x;
         uint32_t rgba=surface->rgba[p];
@@ -428,14 +490,15 @@ int main(int argc, char **argv)
             goto done;
         }
     }
-    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u polygons=%u other_mode=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; DGN ownership claims=0; renderer_permitted=false\n",
-        FRAME_INDEX,draws,mode1_count,polygon_count,other_modes,
+    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u retail_dgn=%u transparent_mode1=%u polygons=%u other_mode=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
+        FRAME_INDEX,draws,mode1_count,dgn_source_count,transparent_mode1_count,
+        polygon_count,other_modes,
         (unsigned long long)opaque,(unsigned long long)exact_matches,
         (unsigned long long)alpha_matches);
-    printf("PASS: authentic 168-row trace and captured VDP1 framebuffer match exactly at 320x224; production renderer admission remains blocked\n");
+    printf("PASS: retail DGN-backed Ymir-stepper replay and authentic VDP1 framebuffer match exactly at 320x224; production renderer admission remains blocked\n");
     result=0;
 done:
-    free(trace_copy); free(le_vram); free(surface);
+    free(trace_copy); free(le_vram); free(surface); free_blob(&dgn);
     for(i=0U;i<file_count;i++) free_blob(&blobs[i]);
     return result;
 }

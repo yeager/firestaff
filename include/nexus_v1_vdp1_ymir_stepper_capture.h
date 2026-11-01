@@ -72,9 +72,13 @@ typedef struct {
  *
  * Coordinates in the command are signed 13-bit values; local_origin_* is
  * Ymir's captured VDP1 local-coordinate state. sys_clip_h/v are inclusive.
- * texture_bytes and palette_bytes must be the captured command's exact spans,
- * with source/palette ownership established by the caller. If Gouraud is
- * enabled, the table is read from the hash-verified full VDP1 VRAM snapshot.
+ * texture_bytes and palette_bytes must be the authentic spans selected by the
+ * captured command, supplied either from hash-verified captured VRAM or from
+ * a retail source/palette join established by the caller. The join flags
+ * attest those supplied bytes; they do not by themselves claim unique retail
+ * asset ownership. Verified all-zero transparent no-ops may use their captured
+ * spans. If Gouraud is enabled, the table is read from the hash-verified full
+ * VDP1 VRAM snapshot.
  * The destination is updated atomically only on a valid receipt.
  *
  * Unsupported command features (mesh rendering, double density, malformed
