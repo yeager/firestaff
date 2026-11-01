@@ -82,8 +82,8 @@ display FBS buffer. All 65,991 VDP1 pixels selected as the top VDP2 layer
 map to rows backed by retail DGN or captured Ymir VRAM. The 491 CRAM pixels
 split exactly into 60 pixels from captured polyline row 79 and 431 pixels from
 captured mode-4 sprite row 80. The remaining 65,500 selected VDP1 pixels map
-to indexed retail DGN rows. Although 15 direct-color DGN draws are present in
-the command receipt, none owns a final visible pixel in this captured frame;
+to retail indexed DGN rows. Fifteen direct-RGB DGN draws join retail data,
+but none owns a final visible pixel in this captured frame;
 the regression pins this per-pixel class distribution explicitly. Set the
 evidence root and retail data directory before running it:
 
