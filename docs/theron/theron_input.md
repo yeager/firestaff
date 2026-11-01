@@ -208,7 +208,10 @@ the highlighted control changes.
   consumer before source-derived hit testing can be enabled. The viewport
   must also update from native game state for clicks to provide visible,
   end-to-end gameplay. See the current evidence and remaining capture gate in
-  [`TODO-theron.md`](../../TODO-theron.md).
+  [`TODO-theron.md`](../../TODO-theron.md). One authentic JP state-only trace
+  reaches `$D515` but takes `$D52C` around `$D588`; it records no mouse
+  coordinates and has no cold media-to-RAM provenance. See the
+  [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
