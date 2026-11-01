@@ -6,6 +6,15 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+The latest authenticated JP state-only replay used five scripted controller
+events and verified each event reached a controller read. It recorded zero
+spawn-consumer/register entries, zero RNG samples, and no dungeon transition;
+it does not establish movement or spawn semantics. The capture wrapper now
+skips cold System Card hook-presence checks only for explicitly state-only
+autoload captures, while still requiring the verified autoload receipt and
+trace schemas. The shell regression covers this distinction. See the
+[runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
