@@ -27,7 +27,7 @@ definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
 repeated-name definitions. With active-source review overrides applied, the
-inventory currently maps 3,816 as `UNREVIEWED`, 111 as `PARTIAL`, and 5 as
+inventory currently maps 3,814 as `UNREVIEWED`, 114 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -154,9 +154,11 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,963 open rows: 3,816 unreviewed active-source
-definitions, 145 partial source or older-ledger rows, and 2 partial source-owner
-rows. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
+At this revision it reports 3,966 open rows: 3,814 unreviewed active-source
+definitions, 150 partial source or older-ledger rows, and 2 partial source-owner
+rows. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
+rows and the SPX v4 creature-shooter route; these remain partial because the live
+AI mask/record owner and possession/projectile lifecycle are not integrated. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
 DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy
 pending-position and transient UI state owners. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
