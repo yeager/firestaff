@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-01 — Verify frame-300 visible pixel source classes
+
+- The authentic Japanese frame-300 composition joins all 65,991 visible VDP1
+  pixels to their last-writing command and verified source receipt. Of these,
+  65,500 belong to indexed retail `LEV01.DGN` rows; the 15 direct-color DGN
+  draws own no final visible pixels in this capture. The remaining 491 CRAM
+  pixels map to captured polyline row 79 (60) and mode-4 sprite row 80 (431).
+- The combined real-data regression now asserts this exact source-class
+  distribution alongside the full VDP2 RGB match and command/source joins.
+  It does not establish selected Structure3 face ownership or production
+  renderer admission. Details are in
+  [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).
+
 ## 2026-11-01 — Match an authentic gameplay VDP pass in Firestaff
 
 - Added an optional real-media test case with SHA-256-pinned VDP1 FBS, VDP2
