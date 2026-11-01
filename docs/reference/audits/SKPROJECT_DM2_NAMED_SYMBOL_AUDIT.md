@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,934 definition rows, 3,632 distinct names, and 302
-repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,567 as `UNREVIEWED`, 319 as `PARTIAL`, and 48 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,118 SPX v4 definitions (1,013 unreviewed, 94 partial, 12 implemented), 1,347 SPX v5 definitions (1,235 unreviewed, 94 partial, 18 implemented), 262 shared SKWINSPX definitions (261 unreviewed, 1 partial), 832 legacy DOS definitions (726 unreviewed, 102 partial, 4 implemented), 373 SKWINDOS/src definitions (333 unreviewed, 26 partial, 14 implemented), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 375 entries: 326 partial and 49 implemented, including eight exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
+repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,564 as `UNREVIEWED`, 322 as `PARTIAL`, and 48 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,118 SPX v4 definitions (1,010 unreviewed, 97 partial, 12 implemented), 1,347 SPX v5 definitions (1,235 unreviewed, 94 partial, 18 implemented), 262 shared SKWINSPX definitions (261 unreviewed, 1 partial), 832 legacy DOS definitions (726 unreviewed, 102 partial, 4 implemented), 373 SKWINDOS/src definitions (333 unreviewed, 26 partial, 14 implemented), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 378 entries: 329 partial and 49 implemented, including eight exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
 ledger is only a search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
 runtime.
@@ -171,8 +171,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,961 open rows: 3,567 unreviewed active-source
-definitions, 392 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,961 open rows: 3,564 unreviewed active-source
+definitions, 395 partial source or older-ledger rows, and 2 partial source-owner
 rows. Recounted with `python3 tools/symbol_backlog.py --game DM2 --reference skproject`. DOS, SPX v4/v5, and SKULLWIN `CHANGE_PLAYER_POS` definitions are source-compared; M11 now calls the source-shaped two-stage formation model, while cursor-icon feedback and non-M11 platform routes remain open. DOS and SPX v5 `ADJUST_HAND_COOLDOWN` match the shared arithmetic helper, while SPX v4 has a separate source-faithful helper because it uses an already-computed delay and Aura of Speed. All three definitions remain partial because there is no production caller/platform binding. `ADJUST_SKILLS` now uses source random-bit masks, priest/wizard maxMP formulas, final-level-based maxHP rolls, and class-scaled stamina rolls for DOS/SPX v5/SKULLWIN; this corrected helper still has no production caller. SPX v4 now has a separate helper for its 25-tick combat-double window and current-stamina base; its map-header, RNG, UI and production platform bindings remain open, so all four source definitions stay partial. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live
