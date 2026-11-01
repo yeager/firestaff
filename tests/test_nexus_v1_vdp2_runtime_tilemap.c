@@ -890,7 +890,6 @@ int main(void)
                  sizeof(ymir_pass0_environment[0])) ||
          getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME397_VDP1_FBS") ||
-         getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME300_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP1_FBS")) &&
         !run_external_ymir_priority_stack()) {
