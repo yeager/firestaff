@@ -435,19 +435,25 @@ void dm2_v1_change_player_pos(
     int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
     const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx);
 
-/* ---- DM2_hero_2c1d_1de2 (c_hero.cpp:3903) ----
- * Throw an item held by a hero: if throwing directly from the mouse
- * "hand" (hand_slot < 0), first swaps it into inventory slot 1;
- * otherwise removes the item from the given inventory slot. Computes
- * the throw strength via the attack/throw strength formula, queues the
- * launch noise, and shoots the item as a missile from the party's tile.
- * Returns 1 if an item was actually thrown. */
+/* ---- DM2_hero_2c1d_1de2 (SKULLWIN/c_hero.cpp:3903;
+ * SPX v5/skhero.cpp:3905; SPX v4/skchamp.cpp:1234;
+ * DOS/dm2byh.cpp:423) ----
+ * Throw an item held by a hero. A mouse-hand item is placed in inventory
+ * slot 1 only while throw strength is computed, then the prior slot value
+ * is restored. Source item-weight stamina cost and hand cooldown are applied
+ * after launch noise when the matching callbacks are supplied. */
 typedef struct {
     int16_t (*remove_from_hand)(void *ctx);
     int16_t (*remove_possession)(void *ctx, int hero_idx, int slot);
+    int16_t (*get_hand_slot1)(void *ctx, int hero_idx);
     void (*set_hand_slot1)(void *ctx, int hero_idx, int16_t item);
+    int (*hand_throw_allowed)(void *ctx);
     int16_t (*compute_throw_strength)(void *ctx, int hero_idx, int slot);
     void (*queue_launch_noise)(void *ctx, uint16_t item, int16_t x, int16_t y);
+    int16_t (*query_item_weight)(void *ctx, uint16_t item);
+    void (*adjust_stamina)(void *ctx, int hero_idx, int16_t amount);
+    void (*adjust_hand_cooldown)(void *ctx, int hero_idx,
+                                 int16_t cooldown_ticks, int hand_idx);
     void (*shoot_item)(void *ctx, uint16_t item, int16_t x, int16_t y,
                        int direction, int16_t strength);
 } DM2_V1_ThrowItemCallbacks;

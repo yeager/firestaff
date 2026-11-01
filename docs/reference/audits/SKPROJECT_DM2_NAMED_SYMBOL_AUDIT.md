@@ -26,7 +26,7 @@ ledger. The supplemental
 definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
 the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
 cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
-repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,790 as `UNREVIEWED`, 134 as `PARTIAL`, and 8 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,116 SPX v4 definitions (1,073 unreviewed, 36 partial, 7 implemented), 1,347 SPX v5 definitions (1,296 unreviewed, 50 partial, 1 implemented), 262 shared SKWINSPX definitions (all unreviewed), 832 legacy DOS definitions (801 unreviewed, 31 partial), 373 SKWINDOS/src definitions (358 unreviewed, 15 partial), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 146 entries: 137 partial and 9 implemented, including six exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
+repeated-name definitions. With active-source review overrides applied, the inventory currently maps 3,787 as `UNREVIEWED`, 137 as `PARTIAL`, and 8 as `IMPLEMENTED_PARITY`. The source-specific rows split into 1,116 SPX v4 definitions (1,072 unreviewed, 37 partial, 7 implemented), 1,347 SPX v5 definitions (1,295 unreviewed, 51 partial, 1 implemented), 262 shared SKWINSPX definitions (all unreviewed), 832 legacy DOS definitions (800 unreviewed, 32 partial), 373 SKWINDOS/src definitions (358 unreviewed, 15 partial), and 2 SKULLWIN cross-variant definitions (both partial). The source-review ledger has 149 entries: 140 partial and 9 implemented, including six exact SKULLWIN cross-variant rows applied to matching named-symbol entries. Exact name overlap with the older
 ledger is only a search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
 runtime.
@@ -36,7 +36,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,757 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,790 `UNREVIEWED`; 134 `PARTIAL`; 8 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,787 `UNREVIEWED`; 137 `PARTIAL`; 8 `IMPLEMENTED_PARITY` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -139,8 +139,8 @@ before treating a mapping as a parity result.
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The 1,757 disposition
 rows cover the older `SKWIN`/`SKULLWIN` source sets; the expanded supplemental
-inventory contains 3,932 `SKWINSPX`/`SKWINDOS` definitions, with 3,790
-`UNREVIEWED`, 134 `PARTIAL`, and 8 `IMPLEMENTED_PARITY` definitions after
+inventory contains 3,932 `SKWINSPX`/`SKWINDOS` definitions, with 3,787
+`UNREVIEWED`, 137 `PARTIAL`, and 8 `IMPLEMENTED_PARITY` definitions after
 active-source review overrides. Per-function comparison and runtime evidence remain required for
 DOS, Amiga, FM Towns, and Macintosh.
 
@@ -165,8 +165,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,972 open rows: 3,790 unreviewed active-source
-definitions, 180 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,973 open rows: 3,787 unreviewed active-source
+definitions, 184 partial source or older-ledger rows, and 2 partial source-owner
 rows. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live

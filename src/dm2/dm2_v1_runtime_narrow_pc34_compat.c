@@ -3,6 +3,7 @@
  * light). See dm2_v1_runtime_narrow_pc34_compat.h for source references. */
 
 #include "dm2_v1_runtime_narrow_pc34_compat.h"
+#include "dm2_v1_party.h"
 #include <stddef.h>
 
 /* =====================================================================
@@ -718,7 +719,10 @@ void dm2_v1_change_player_pos(
     }
 }
 
-/* DM2_hero_2c1d_1de2 — c_hero.cpp:3903 (throw item) */
+/* DM2_hero_2c1d_1de2 — SKULLWIN/c_hero.cpp:3903,
+ * SKWINSPX/src/v5/skhero.cpp:3905, v4/skchamp.cpp:1234, and
+ * SKWINDOS/dm2byh.cpp:423. Projectile skill/RNG setup and full SHOOT_ITEM
+ * parameters remain outside this narrow transaction adapter. */
 int32_t dm2_v1_hero_2c1d_1de2(
     int hero_idx, int slot, int16_t x, int16_t y, int direction,
     const DM2_V1_ThrowItemCallbacks *cb, void *ctx)
@@ -727,24 +731,52 @@ int32_t dm2_v1_hero_2c1d_1de2(
         return 0;
 
     int16_t item;
+    int16_t previous_slot1 = -1;
+    int hand_throw = slot < 0;
+
+    if (hand_throw && cb->hand_throw_allowed &&
+        !cb->hand_throw_allowed(ctx))
+        return 0;
+
     if (slot < 0) {
+        /* Source temporarily stages the held item in inventory slot 1 so
+         * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH sees it, then restores the
+         * previous slot before continuing the throw transaction. */
+        if (!cb->get_hand_slot1 || !cb->set_hand_slot1)
+            return 0;
+        previous_slot1 = cb->get_hand_slot1(ctx, hero_idx);
         item = cb->remove_from_hand ? cb->remove_from_hand(ctx) : -1;
         if (item == -1)
             return 0;
-        if (cb->set_hand_slot1)
-            cb->set_hand_slot1(ctx, hero_idx, item);
+        cb->set_hand_slot1(ctx, hero_idx, item);
         slot = 1;
-    } else {
-        item = cb->remove_possession ? cb->remove_possession(ctx, hero_idx, slot) : -1;
-        if (item == -1)
-            return 0;
     }
 
     int16_t strength = cb->compute_throw_strength
         ? cb->compute_throw_strength(ctx, hero_idx, slot) : 0;
 
+    if (hand_throw) {
+        cb->set_hand_slot1(ctx, hero_idx, previous_slot1);
+    } else {
+        /* Source computes strength while the item is still in its original
+         * possession slot, and only then removes that possession. */
+        item = cb->remove_possession
+            ? cb->remove_possession(ctx, hero_idx, slot) : -1;
+        if (item == -1)
+            return 0;
+    }
+
     if (cb->queue_launch_noise)
         cb->queue_launch_noise(ctx, (uint16_t)item, x, y);
+    if (cb->query_item_weight && cb->adjust_stamina) {
+        int16_t weight = cb->query_item_weight(ctx, (uint16_t)item);
+        if (weight >= 0) {
+            cb->adjust_stamina(
+                ctx, hero_idx, dm2_v1_hero_2c1d_0e23(weight));
+        }
+    }
+    if (cb->adjust_hand_cooldown)
+        cb->adjust_hand_cooldown(ctx, hero_idx, 4, slot);
     if (cb->shoot_item)
         cb->shoot_item(ctx, (uint16_t)item, x, y, direction, strength);
     return 1;
