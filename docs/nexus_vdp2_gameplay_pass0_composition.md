@@ -54,3 +54,15 @@ FIRESTAFF_NEXUS_YMIR_PASS0_STACK_OUT=/path/to/firestaff-priority-stack.bin \
 
 Without those environment variables, the test still runs its existing bounded
 NBG decoder checks and skips the external-media composition comparison.
+
+## Cross-state repeatability check
+
+The same PR revision was also rebuilt on TRV2 and run three times against the
+authentic frame-8037 title-menu capture. Each run matched both Ymir VDP2 pass
+buffers exactly across all 71,680 RGB pixels. The output reports 70,185 direct
+VDP1 pixels, 1,495 palette/special VDP1 pixels, and 18,513 NBG0 overlay pixels;
+the compositor remains capture-only and does not claim DGN source ownership.
+The verbose CTest logs and run details are retained externally under
+`firestaff-evidence/nexus/ymir-vdp2-repeat-validation-20261101/frame8037/`.
+The test implementation and frame-specific limitations are documented in
+[`nexus_vdp1_frame8037_ymir_composition.md`](nexus_vdp1_frame8037_ymir_composition.md).
