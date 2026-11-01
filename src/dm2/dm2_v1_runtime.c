@@ -18946,13 +18946,18 @@ static int dm2_runtime_source_move_admitted(const DM2_V1_RuntimeState *rt,
  * event hero; Firestaff's leader-hand record resolves that exact weight
  * through the mounted source record/GDAT owners. */
 static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
-                                                int *out_delay)
+                                                int *out_delay,
+                                                int16_t out_max_load[4],
+                                                int16_t out_player_weight[4])
 {
     const DM2_V1_AssetLoader *loader;
     int event_hero;
     int hand_weight = 0;
     int party_delay = 1;
 
+    if (out_max_load) memset(out_max_load, 0, sizeof(int16_t) * 4u);
+    if (out_player_weight)
+        memset(out_player_weight, 0, sizeof(int16_t) * 4u);
     if (!rt || !out_delay || !rt->source_party_valid ||
         !rt->source_aura_of_speed_valid || !rt->record_pools_valid ||
         rt->source_party.heros_in_party <= 0 ||
@@ -19003,6 +19008,14 @@ static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
         if (max_load <= 0 || hero->weight < 0 ||
             (i == event_hero && hero->weight > INT16_MAX - hand_weight)) {
             return 0;
+        }
+        if (out_max_load) out_max_load[i] = max_load;
+        if (out_player_weight) {
+            int weight = hero->curHP != 0 ? hero->weight : 0;
+            if (hero->curHP != 0 && i == event_hero)
+                weight += hand_weight;
+            if (weight < 0 || weight > INT16_MAX) return 0;
+            out_player_weight[i] = (int16_t)weight;
         }
         if (hero->curHP != 0) {
             int32_t delay = 1;
@@ -19149,6 +19162,8 @@ int dm2_v1_runtime_move(int dir) {
     int pit_y = -1;
     int pit_status = 0;
     int source_walk_delay = 0;
+    int16_t movement_max_load[DM2_MAX_HEROES] = { 0, 0, 0, 0 };
+    int16_t movement_player_weight[DM2_MAX_HEROES] = { 0, 0, 0, 0 };
 
     if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
         return -1;
@@ -19181,8 +19196,61 @@ int dm2_v1_runtime_move(int dir) {
      * matching strength enchantment has already consumed its source RNG draw
      * at this point in the original routine. */
     if (rt->source_movement_valid &&
-        !dm2_runtime_source_party_walk_delay(rt, &source_walk_delay)) {
+        !dm2_runtime_source_party_walk_delay(
+            rt, &source_walk_delay, movement_max_load,
+            movement_player_weight)) {
         return -1;
+    }
+
+    /* c_move.cpp::DM2_PERFORM_MOVE drains stamina before classifying the
+     * target square, including attempts that will hit a wall/door/creature.
+     * Reuse the same authenticated max-load and event-hand weight inputs as
+     * the walk-delay calculation so an enchantment RNG draw is not repeated. */
+    if (rt->source_movement_valid && rt->source_party_valid) {
+        for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+            DM2_V1_Hero *hero = &rt->source_party.hero[i];
+            uint32_t cost;
+            uint16_t cost_bits;
+            int16_t stamina_cost;
+            uint16_t stamina_bits;
+            int32_t stamina;
+            if (hero->curHP == 0) continue;
+            if (movement_max_load[i] <= 0 ||
+                movement_player_weight[i] < 0) return -1;
+            cost = (3u * (uint32_t)movement_player_weight[i]) /
+                   (uint16_t)movement_max_load[i] + 1u;
+            /* The source narrows the quotient to its 16-bit stamina ABI. */
+            cost_bits = (uint16_t)cost;
+            stamina_cost = cost_bits <= INT16_MAX
+                ? (int16_t)cost_bits
+                : (int16_t)((int32_t)cost_bits - 65536);
+            stamina_bits = (uint16_t)((uint16_t)hero->curStamina -
+                                      cost_bits);
+            stamina = stamina_bits <= INT16_MAX
+                ? (int32_t)stamina_bits
+                : (int32_t)stamina_bits - 65536;
+            if (stamina > 0) {
+                if (stamina > hero->maxStamina)
+                    stamina = hero->maxStamina;
+                hero->curStamina = (int16_t)stamina;
+            } else {
+                int32_t wound = -stamina / 2;
+                int32_t pending;
+                hero->curStamina = 0;
+                if (wound > 0) {
+                    pending = (int32_t)hero->damagesuffered + wound;
+                    if (pending > INT16_MAX) pending = INT16_MAX;
+                    hero->damagesuffered = (int16_t)pending;
+                    hero->heroflag = (int16_t)(
+                        (uint16_t)hero->heroflag |
+                        DM2_V1_HERO_FLAG_0800);
+                }
+            }
+            if (stamina_cost == INT16_MIN ||
+                (stamina_cost < 0 ? -stamina_cost : stamina_cost) >= 10)
+                hero->heroflag = (int16_t)(
+                    (uint16_t)hero->heroflag | DM2_V1_HERO_FLAG_0800);
+        }
     }
 
     /* Detect turn-only (facing change, no movement) */
