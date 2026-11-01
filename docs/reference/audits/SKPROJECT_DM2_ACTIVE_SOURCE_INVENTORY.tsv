@@ -205,7 +205,7 @@ SKW_3929_0929	SKWINDOS	SKWINDOS/dm2bya.cpp	4031	void SKW_3929_0929(x16 eaxw, t_t
 SKW_DISPLAY_HINT_TEXT	SKWINDOS	SKWINDOS/dm2bya.cpp	4049	void SKW_DISPLAY_HINT_TEXT(x16 eaxw, const t_text* edxt)	0	PARTIAL
 SKW_3929_0e16	SKWINDOS	SKWINDOS/dm2bya.cpp	4099	void SKW_3929_0e16(void)	0	PARTIAL
 SKW_REARRANGE_TIMERLIST	SKWINDOS	SKWINDOS/dm2bya.cpp	4113	void SKW_REARRANGE_TIMERLIST(void)	0	PARTIAL
-SKW_3a15_0381	SKWINDOS	SKWINDOS/dm2bya.cpp	4135	bool SKW_3a15_0381(c_tim* eaxptim, c_tim* edxptim)	0	UNREVIEWED
+SKW_3a15_0381	SKWINDOS	SKWINDOS/dm2bya.cpp	4135	bool SKW_3a15_0381(c_tim* eaxptim, c_tim* edxptim)	0	IMPLEMENTED_PARITY
 SKW_DELETE_TIMER	SKWINDOS	SKWINDOS/dm2bya.cpp	4145	void SKW_DELETE_TIMER(x16 eaxw)	0	UNREVIEWED
 SKW_QUEUE_TIMER	SKWINDOS	SKWINDOS/dm2bya.cpp	4171	x16 SKW_QUEUE_TIMER(c_tim* eaxptim)	0	UNREVIEWED
 SKW_ACTUATE_TRICKWALL	SKWINDOS	SKWINDOS/dm2bya.cpp	4192	void SKW_ACTUATE_TRICKWALL(c_tim* eaxptim)	0	PARTIAL
@@ -2047,7 +2047,7 @@ SET_TIMER_3C_OR_3D	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	620	void SkWinCore::SET_
 _075f_0182	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	640	void SkWinCore::_075f_0182(ObjectID rl, X16 xx, X16 yy)	0	UNREVIEWED
 CREATE_CLOUD	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	668	void SkWinCore::CREATE_CLOUD(ObjectID rl, U16 ww, U16 xx, U16 yy, U16 ss)	0	UNREVIEWED
 SET_TIMER_WEATHER	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	801	void SkWinCore::SET_TIMER_WEATHER(U32 tickDelta)	0	UNREVIEWED
-TIMER_COMPARE	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	828	int SkWinCore::TIMER_COMPARE(Timer* xTimer1, Timer* xTimer2)	0	UNREVIEWED
+TIMER_COMPARE	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	828	int SkWinCore::TIMER_COMPARE(Timer* xTimer1, Timer* xTimer2)	0	IMPLEMENTED_PARITY
 TIMER_SORT_EXCHANGE	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	855	void SkWinCore::TIMER_SORT_EXCHANGE(U16 xx)	0	UNREVIEWED
 GET_TIMER_NEW_INDEX	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	900	Bit16u SkWinCore::GET_TIMER_NEW_INDEX(U16 iCurrentTimerIndex)	0	UNREVIEWED
 QUEUE_TIMER	SKWINSPX	SKWINSPX/src/v4/skevent.cpp	916	Bit16u SkWinCore::QUEUE_TIMER(Timer *ref)	0	UNREVIEWED
@@ -3603,7 +3603,7 @@ SUBSAVE	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2056	#define SUBSAVE(x) FSUBSAVE(x
 FSUBSAVE	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2059	"int FSUBSAVE(bool flag, t_text* tpv, i32 val)	// SPX: changed void to int for MSVC6 compilation convenience"	1	UNREVIEWED
 DM2_GAME_SAVE_MENU	SKWINSPX	SKWINSPX/src/v5/sksvgame.cpp	2084	"int DM2_GAME_SAVE_MENU(void)		// SPX: changed void to int for MSVC6 compilation convenience"	1	UNREVIEWED
 init	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	10	void c_timerdata::init(void)	24	UNREVIEWED
-DM2_cmp_timers	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	34	static bool DM2_cmp_timers(c_tim* eaxtimp, c_tim* edxtimp)	1	UNREVIEWED
+DM2_cmp_timers	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	34	static bool DM2_cmp_timers(c_tim* eaxtimp, c_tim* edxtimp)	1	IMPLEMENTED_PARITY
 DM2_timer_3a15_0486	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	53	static void DM2_timer_3a15_0486(i16 eaxw)	1	UNREVIEWED
 DM2_REARRANGE_TIMERLIST	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	100	void DM2_REARRANGE_TIMERLIST(void)	1	PARTIAL
 DM2_SORT_TIMERS	SKWINSPX	SKWINSPX/src/v5/sktimer.cpp	129	void DM2_SORT_TIMERS(void)	1	UNREVIEWED
