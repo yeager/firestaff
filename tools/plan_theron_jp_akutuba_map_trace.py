@@ -123,7 +123,7 @@ def main() -> int:
         width = x_dims[map_index] + 1
         height = y_dims[map_index] + 1
         tile_count = width * height
-        if args.x >= width or args.y >= height:
+        if args.x < 0 or args.x >= width or args.y < 0 or args.y >= height:
             tile = "out-of-bounds"
             tile_user_offset = tile_cursor
         else:
