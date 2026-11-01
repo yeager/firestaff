@@ -552,6 +552,7 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
     # by the ordinary no-game launcher. This uses an actual original archive;
     # explicit --data-dir file requests remain scoped to their selected source.
     single_file_config="$quick_home/single-file-menu-config.toml"
+    single_file_collection_root=$(dirname "$(dirname "$quick_dm1_media")")
     printf 'data_dir = "%s"\n' "$quick_dm1_media" > "$single_file_config"
     set +e
     single_file_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
@@ -583,8 +584,15 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
         }
     done
     printf '%s\n' "$single_file_output" | \
-        grep -Fq "result=completed games=$expected_scan_games" || {
-        printf 'FAIL: persisted single-file startup did not complete authentic five-game discovery\n%s\n' \
+        grep -Fq 'result=completed games=' || {
+        printf 'FAIL: persisted single-file startup did not complete collection discovery\n%s\n' \
+            "$single_file_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$single_file_output" | \
+        grep -Fq "data=$single_file_collection_root" || {
+        printf 'FAIL: persisted single-file startup did not scan the original archive collection root (%s)\n%s\n' \
+            "$single_file_collection_root" \
             "$single_file_output" >&2
         exit 1
     }

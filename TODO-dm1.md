@@ -3702,9 +3702,20 @@ mouth frames and four presentation-gated Delay(8) waits. The host cadence is
 an explicit nominal NTSC 60 Hz profile. Toolbox Reference Volume 1 pp.14-48/49
 states that SetHeartBeat counts VBL interrupts; p.14-12 documents the machine's
 50/60 selection, which these original game bytes do not select. PAL 50 Hz and
-exact hardware-frequency validation remain open. Drinks, potions, empty-hand
-food/water panel and remaining chest/eye/interaction paths remain unfinished.
+exact hardware-frequency validation remain open. A real-media test now covers
+one charged-water-flask route and a controlled original-potion use. Natural
+campaign access to potions, waterskin variants, the empty-hand food/water panel
+and remaining chest/eye/interaction paths still need coverage.
 Reference: https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/programming/65816_gs/Apple%20IIGS%20Toolbox%20Reference%20Volume%201.pdf
+
+2026-11-01 IIGS potion transaction: `m11_dm1_iigs_startup_real_media` finds
+the original KU potion (type 7, power 128) in each authenticated campaign's
+Thing lists, uses ordinary M11 pickup and the inventory mouth pointer, then
+checks the ReDMCSB `PANEL.C:F0349:1863-1865` +8 strength effect, original
+potion-to-empty-flask conversion, icon and single hand ownership for both 2.0
+and 2.1. The test places the party on the original item square to isolate use;
+it does not prove the campaign route or potion discovery. Other potion effects
+and natural access remain unverified on IIGS.
 
 2026-10-16 native audio follow-up: authenticated DOC bank, 15 stereo pairs,
 64 KB source page allocator/eviction, rational scan clock and isolated SDL

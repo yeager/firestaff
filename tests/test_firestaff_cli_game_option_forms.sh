@@ -191,6 +191,25 @@ check_invalid_game --game nonsense
 check_invalid_game --game=unknown
 check_invalid_game --game --version
 
+check_invalid_platform() {
+    platform=$1
+    output=$("$firestaff_bin" --game dm1 --platform "$platform" --version 2>&1) && {
+        printf 'fail: invalid --platform value was accepted: %s\n%s\n' \
+            "$platform" "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)'*) ;;
+        *)
+            printf 'fail: invalid --platform value did not produce the documented diagnostic: %s\n%s\n' \
+                "$platform" "$output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+check_invalid_platform unknown
+
 check_missing_value() {
     option=$1
     diagnostic=$2
@@ -228,6 +247,7 @@ check_missing_value_before_option() {
 }
 
 check_missing_value_before_option --script
+check_missing_value_before_option --platform
 check_missing_value_before_option --data-dir
 check_missing_value_before_option --theron-native
 check_missing_value_before_option --save

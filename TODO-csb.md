@@ -122,9 +122,21 @@ input outcomes, original-media champion recruitment, Atari HUD structure,
 button-door activation, stair transition to map 1, monster movement, and
 champion health changes. Its no-game M12 route also selected the Atari
 campaign and retained source identity. This is a headless runtime regression,
-not physical Atari input or visual parity; it does not verify player damage
-against monsters. The CSB source was unchanged between the test executable's
-build revision and current `main` (`0a503955`).
+not physical Atari input or visual parity. The CSB source was unchanged
+between the test executable's build revision and `main` (`0a503955`).
+
+2026-11-01 CSB Atari original-media melee regression: the campaign test now
+mirrors the loaded C127 champion into M11, opens the source G0489 action set,
+and selects PUNCH through `M11_GameView_HandlePointerButton`. Against the
+authentic Atari campaign's map-1 C04, the M11 pointer path reduced group
+`0x1003` HP from 411 to 401. `csb_v1_atari_campaign_group_events_real` passed
+with the existing C38/C39 champion-damage and original MINI.DAT projectile
+checks intact. This proves the production M11 action-menu dispatch reaches
+the CSB runtime melee bridge on this Atari campaign route. The controlled
+scenario sets a test party pose against original map/group/champion records;
+it does not establish normal campaign navigation to that group, physical
+mouse delivery, other CSB platforms or editions, complete combat parity, or
+visual parity.
 
 2026-10-31 ReDMCSB F0116/F0117 D3L/D3R review: the shared PC3.4 viewport
 contracts cover bounded side-wall scheduling, ornament, door, pit/stairs,
