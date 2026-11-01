@@ -13,7 +13,7 @@ driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscr
 driver_setcolors	SKWINDOS	SKWINDOS/dm2D.cpp	481	void driver_setcolors(void)	1	PARTIAL
 driver_convertalphapalette	SKWINDOS	SKWINDOS/dm2D.cpp	508	void driver_convertalphapalette(i8* p)	0	PARTIAL
 driver_setpalette	SKWINDOS	SKWINDOS/dm2D.cpp	534	void driver_setpalette(i8 mode)	0	PARTIAL
-driver_blitfromscreen	SKWINDOS	SKWINDOS/dm2D.cpp	562	void driver_blitfromscreen(c_rect* rect, i16 yofs)	0	UNREVIEWED
+driver_blitfromscreen	SKWINDOS	SKWINDOS/dm2D.cpp	562	void driver_blitfromscreen(c_rect* rect, i16 yofs)	0	PARTIAL
 driver_restoremousebackground	SKWINDOS	SKWINDOS/dm2D.cpp	569	void driver_restoremousebackground(void)	0	PARTIAL
 sub_min	SKWINDOS	SKWINDOS/dm2D.cpp	586	i16 sub_min(i16 a, i16 b)	0	PARTIAL
 sub_max	SKWINDOS	SKWINDOS/dm2D.cpp	592	i16 sub_max(i16 a, i16 b)	0	PARTIAL
