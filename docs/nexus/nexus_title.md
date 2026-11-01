@@ -789,11 +789,40 @@ The capture-only NBG1 decoder accepts the authentic 4bpp tilemap state at frame
 891 / serial 1280 (`BGON=0x0002`, `CHCTLA=0x0013`) and verifies its 1,120 visible
 cells against the hash-pinned Ymir snapshot. It also handles the paired NBG1-
 only state without requiring NBG0 or NBG2 to be enabled. This remains an
-isolated layer decode: it does not establish VDP1/NBG1 arbitration or match the
-same-pass RGBX output, and it does not grant production renderer permission.
-The next consumer step is to implement and verify this register profile's full
-pixel composition against the corresponding same-pass RGBX buffer. The
-producer-side map match alone does not establish Firestaff pixel parity. The
-render-state receipt marks its legacy frame-row status incomplete because
-several VDP1 frame labels contain multiple VDP2 passes; all 163 per-pass
-buffers and snapshot pairs are present.
+isolated layer decode; its raw final-snapshot plane alone is not the rendered
+NBG1 output for every scanline. The render-state receipt marks its legacy
+frame-row status incomplete because several VDP1 frame labels contain multiple
+VDP2 passes; all 163 per-pass buffers and snapshot pairs are present.
+
+### 2026-11-02 — Authentic MAPD pixel-fetch to layer-output join
+
+The new real-data CTest runs Firestaff's 4bpp tilemap decoder against the
+hash-pinned target VDP2 snapshot, then checks Ymir's `--debug` pixel-fetch trace
+for VDP1 frame 891 / VDP2 serial 1280. The trace receipt is complete and covers
+both full 320×224 passes (143,360 records). For every sample, the recorded PND
+matches one of the adjacent authentic VRAM snapshots and the fetched 4bpp
+nibble matches the snapshot selected by that PND's source. In the target pass,
+26,880 samples use serial 1279 VRAM (rows 0–83) and 44,800 use serial 1280
+VRAM (rows 84–223).
+
+The preceding pass has zero NBG1 priority at every pixel. In serial 1280,
+NBG1's nonzero-priority region is exactly rows 84–223. There, Firestaff's
+decoded dot index and RGB match Ymir's final same-pass RGBX output at all
+44,800 pixels. The 26,880 zero-priority pixels have zero fetched dot and are
+excluded from NBG1 output even though the post-transfer raw tile decode has
+data at those coordinates.
+
+Run the test with the retained external data:
+
+```sh
+FIRESTAFF_NEXUS_YMIR_MAPD_COMPOSITION_DIR=/path/to/mapd-frame891-frame1280 \
+FIRESTAFF_NEXUS_YMIR_MAPD_REFERENCE_FILE=/path/to/vdp1-891-vdp2-1280-320x224.rgbx8888le \
+ctest --test-dir build -R '^nexus_v1_vdp2_mapd_pixel_fetch_composition_real$' --output-on-failure
+```
+
+The complete trace, receipt, paired VRAM snapshots, same-pass reference,
+Firestaff output plane, and verification report are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/`.
+The test and report verify one NBG1 contribution; they do not compose the full
+VDP1+VDP2 frame, establish all MAPD transition frames or original-Saturn
+parity, or permit production rendering.

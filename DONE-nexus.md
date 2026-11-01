@@ -1,5 +1,23 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-02 — Verify authentic MAPD NBG1 4bpp pixel output
+
+- Added a real-data CTest that runs Firestaff's NBG1 4bpp tile decoder and
+  validates Ymir's complete per-pixel fetch trace against the adjacent
+  authentic VRAM snapshots.
+- For VDP1 frame 891 / VDP2 serial 1280, all 71,680 traced NBG1 pixels have
+  valid source provenance and exact 4bpp nibble matches. PND sources switch
+  from the preceding VRAM snapshot to the target snapshot between rows 83 and
+  84. Firestaff's decoded dot and RGB match Ymir's final RGBX output on all
+  44,800 pixels where NBG1 has nonzero priority; 26,880 zero-priority pixels
+  are excluded from the NBG1 contribution.
+- This verifies one authentic layer contribution only. It does not verify the
+  complete VDP1+VDP2 frame composition, all MAPD transition frames, Saturn
+  hardware parity, or production renderer admission. Details and replay
+  instructions are in
+  [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md); raw inputs remain
+  outside Git.
+
 ## 2026-11-01 — Match 16-bpp VDP1 source alignment to Ymir
 
 - The VDP1 command parser now aligns mode-5 CMDSRCA down to a 16-byte
