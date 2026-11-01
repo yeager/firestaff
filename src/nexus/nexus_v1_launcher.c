@@ -143,6 +143,7 @@ int nexus_v1_launcher_init_with_debug(const char *data_dir,
         if (strcmp(s_engine.data_dir, data_dir) == 0) {
             s_engine.debug_enabled = debug_enabled != 0;
             s_engine.game.debug_enabled = s_engine.debug_enabled;
+            s_engine.champions.debug_enabled = s_engine.debug_enabled;
             s_engine.ui.debug_enabled = s_engine.debug_enabled;
             s_engine.audio.debug_enabled = s_engine.debug_enabled;
             s_engine.font.debug_enabled = s_engine.debug_enabled;
