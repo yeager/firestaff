@@ -18,6 +18,78 @@
 
 typedef struct { uint8_t *bytes; size_t size; } Blob;
 
+typedef enum {
+    ROW_UNSET = 0,
+    ROW_STATE,
+    ROW_DRAW_SKIP,
+    ROW_END,
+    ROW_CLIPPED_NOOP,
+    ROW_DGN_INDEXED,
+    ROW_DGN_DIRECT_RGB,
+    ROW_CAPTURED_TRANSPARENT,
+    ROW_CAPTURED_POLYLINE,
+    ROW_CAPTURED_POLYGON,
+    ROW_CAPTURED_MODE4
+} RowSourceKind;
+
+static const char *row_source_kind_name(RowSourceKind kind)
+{
+    switch (kind) {
+    case ROW_STATE: return "state";
+    case ROW_DRAW_SKIP: return "draw-skip";
+    case ROW_END: return "end";
+    case ROW_CLIPPED_NOOP: return "clipped-noop";
+    case ROW_DGN_INDEXED: return "retail-dgn-indexed";
+    case ROW_DGN_DIRECT_RGB: return "retail-dgn-direct-rgb";
+    case ROW_CAPTURED_TRANSPARENT: return "captured-transparent";
+    case ROW_CAPTURED_POLYLINE: return "captured-polyline";
+    case ROW_CAPTURED_POLYGON: return "captured-polygon";
+    case ROW_CAPTURED_MODE4: return "captured-mode4-vram";
+    case ROW_UNSET: default: return "unset";
+    }
+}
+
+static int write_owner_plane(const char *path,
+    const Nexus_V1_Vdp1YmirCaptureSurface *surface)
+{
+    FILE *file;
+    size_t i;
+    if (!path || !*path || !surface) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    for (i = 0U; i < (size_t)NEXUS_FB_W * NEXUS_FB_H; ++i) {
+        uint16_t owner = surface->command_owner[i];
+        uint8_t bytes[2] = {(uint8_t)owner, (uint8_t)(owner >> 8U)};
+        if (fwrite(bytes, 1U, sizeof(bytes), file) != sizeof(bytes)) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
+static int write_row_sources(const char *path,
+    const RowSourceKind row_sources[EXPECTED_FRAME_ROWS])
+{
+    FILE *file;
+    size_t i;
+    if (!path || !*path || !row_sources) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fputs("frame,index,source_kind\n", file) < 0) {
+        fclose(file);
+        return 0;
+    }
+    for (i = 0U; i < EXPECTED_FRAME_ROWS; ++i) {
+        if (fprintf(file, "%u,%lu,%s\n", FRAME_INDEX,
+                    (unsigned long)i, row_source_kind_name(row_sources[i])) < 0) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
 static Blob read_blob(const char *path)
 {
     Blob out = {NULL, 0U};
@@ -214,6 +286,7 @@ int main(int argc, char **argv)
     Nexus_V1_Vdp1YmirCaptureInput input;
     Nexus_V1_Vdp1DgnMaterialResolverInput dgn_resolver = {0};
     uint8_t seen[EXPECTED_FRAME_ROWS] = {0};
+    RowSourceKind row_sources[EXPECTED_FRAME_ROWS] = {ROW_UNSET};
     int16_t local_x = 0, local_y = 0;
     int user_x0 = 0, user_y0 = 0, user_x1 = 512, user_y1 = 256;
     int sys_clip_h = 511, sys_clip_v = 255;
@@ -294,6 +367,8 @@ int main(int argc, char **argv)
     le_vram = (uint8_t *)malloc(blobs[1].size);
     surface = (Nexus_V1_Vdp1YmirCaptureSurface *)calloc(1U, sizeof(*surface));
     if (!trace_copy || !le_vram || !surface) { fprintf(stderr, "out of memory\n"); goto done; }
+    for (i = 0U; i < (size_t)NEXUS_FB_W * NEXUS_FB_H; ++i)
+        surface->command_owner[i] = NEXUS_V1_VDP1_YMIR_CAPTURE_NO_OWNER;
     /* Ymir dumps VRAM as big-endian words. Normalize word-oriented command,
      * palette, and Gouraud reads to LE; texture nibbles retain raw byte order. */
     for (i = 0U; i < blobs[1].size; i += 2U) {
@@ -350,11 +425,13 @@ int main(int argc, char **argv)
                         fprintf(stderr, "frame-300 root command is not an authenticated draw skip\n");
                         goto done;
                     }
+                    row_sources[index] = ROW_DRAW_SKIP;
                     ++skipped_draw_commands;
                     continue;
                 }
                 if (parsed.command_type == 10U) {
                     local_x = parsed.xa; local_y = parsed.ya; ++local_updates;
+                    row_sources[index] = ROW_STATE;
                     continue;
                 }
                 if (parsed.command_type == 8U) {
@@ -363,16 +440,19 @@ int main(int argc, char **argv)
                     user_x1 = (int)read_le16(command + 20U);
                     user_y1 = (int)read_le16(command + 22U);
                     ++user_clip_updates;
+                    row_sources[index] = ROW_STATE;
                     continue;
                 }
                 if (parsed.command_type == 9U) {
                     sys_clip_h = (int)read_le16(command + 20U);
                     sys_clip_v = (int)read_le16(command + 22U);
                     ++system_clip_updates;
+                    row_sources[index] = ROW_STATE;
                     continue;
                 }
                 if ((parsed.control & 0x4000U) != 0U) {
                     ++skipped_draw_commands;
+                    row_sources[index] = ROW_DRAW_SKIP;
                     continue;
                 }
                 if (parsed.end_command) {
@@ -381,16 +461,21 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++end_commands;
+                    row_sources[index] = ROW_END;
                     continue;
                 }
                 if ((index < FIRST_DRAW || index > LAST_DRAW) &&
-                    index != 2U && index != 79U && index != 80U) continue;
+                    index != 2U && index != 79U && index != 80U) {
+                    row_sources[index] = ROW_STATE;
+                    continue;
+                }
                 if (parsed.command_type <= 7U) ++draws;
                 if (index == 2U) {
                     memset(&input, 0, sizeof(input));
                     input.command = command;
                     input.command_size = (int)sizeof(command);
                     input.command_capture_verified = 1;
+                    input.command_index = (uint16_t)index;
                     input.local_origin_verified = 1;
                     input.local_origin_x = (int)row_local_x;
                     input.local_origin_y = (int)row_local_y;
@@ -406,6 +491,7 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++polygon_count;
+                    row_sources[index] = ROW_CAPTURED_POLYGON;
                     continue;
                 }
                 if (index == 79U) {
@@ -413,6 +499,7 @@ int main(int argc, char **argv)
                     input.command = command;
                     input.command_size = (int)sizeof(command);
                     input.command_capture_verified = 1;
+                    input.command_index = (uint16_t)index;
                     input.local_origin_verified = 1;
                     input.local_origin_x = (int)row_local_x;
                     input.local_origin_y = (int)row_local_y;
@@ -432,6 +519,7 @@ int main(int argc, char **argv)
                         fprintf(stderr, "stepper rejected authentic frame-300 polyline row %lu\n", index);
                         goto done;
                     }
+                    row_sources[index] = ROW_CAPTURED_POLYLINE;
                     continue;
                 }
                 if (index == 80U) {
@@ -448,6 +536,7 @@ int main(int argc, char **argv)
                     input.texture_size = (int)parsed.texture_byte_count;
                     input.command_capture_verified = 1;
                     input.texture_capture_verified = 1;
+                    input.command_index = (uint16_t)index;
                     input.local_origin_verified = 1;
                     input.local_origin_x = (int)row_local_x;
                     input.local_origin_y = (int)row_local_y;
@@ -464,6 +553,7 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++captured_mode4_count;
+                    row_sources[index] = ROW_CAPTURED_MODE4;
                     continue;
                 }
                 if (parsed.command_type == 4U) {
@@ -471,6 +561,7 @@ int main(int argc, char **argv)
                     input.command = command;
                     input.command_size = (int)sizeof(command);
                     input.command_capture_verified = 1;
+                    input.command_index = (uint16_t)index;
                     input.vdp1_vram = le_vram;
                     input.vdp1_vram_size = (int)blobs[1].size;
                     input.vdp1_vram_hash_verified = 1;
@@ -493,9 +584,13 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++polygon_count;
+                    row_sources[index] = ROW_CAPTURED_POLYGON;
                     continue;
                 }
-                if (parsed.command_type != 2U) continue;
+                if (parsed.command_type != 2U) {
+                    row_sources[index] = ROW_STATE;
+                    continue;
+                }
                 if (parsed.colour_mode == 0U) {
                     if (!is_frame300_clipped_mode0(&parsed, address,
                             row_local_x, row_local_y, user_x0, user_y0,
@@ -504,6 +599,7 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++mode0_noops;
+                    row_sources[index] = ROW_CLIPPED_NOOP;
                     continue;
                 }
                 if (!parsed.texture_command || (parsed.control & 0x4000U) != 0U ||
@@ -538,6 +634,7 @@ int main(int argc, char **argv)
                         texture_bytes = material.dgn_direct_image;
                         palette_bytes = NULL;
                         ++direct_source_count;
+                        row_sources[index] = ROW_DGN_DIRECT_RGB;
                     } else if (parsed.colour_mode == 1U && dgn_joined && material.dgn_source_hash_verified &&
                         material.dgn_image && material.dgn_palette &&
                         material.dgn_image_size == (int)parsed.texture_byte_count &&
@@ -550,12 +647,14 @@ int main(int argc, char **argv)
                         }
                         palette_bytes = dgn_palette_le;
                         ++dgn_source_count;
+                        row_sources[index] = ROW_DGN_INDEXED;
                     } else if (parsed.colour_mode == 1U && dgn_joined && material.transparent_capture_noop_verified) {
                         /* The 11 all-zero captured spans are verified transparent
                          * no-ops, not DGN-owned textures. Preserve their real bytes. */
                         texture_bytes = blobs[1].bytes + texture_offset;
                         palette_bytes = le_vram + palette_offset;
                         ++transparent_mode1_count;
+                        row_sources[index] = ROW_CAPTURED_TRANSPARENT;
                     } else {
                         fprintf(stderr, "frame mode-1 row %lu has no unique retail DGN join or verified transparent no-op\n", index);
                         goto done;
@@ -568,6 +667,7 @@ int main(int argc, char **argv)
                     input.palette_size = parsed.colour_mode == 1U ? 32 : 0;
                     input.vdp1_vram = le_vram; input.vdp1_vram_size = (int)blobs[1].size;
                     input.command_capture_verified = 1;
+                    input.command_index = (uint16_t)index;
                     /* Image and palette are retail DGN bytes for uniquely joined
                      * draws; the captured zero patterns above remain no-ops. */
                     input.source_image_join_verified = parsed.colour_mode == 1U;
@@ -639,6 +739,22 @@ int main(int argc, char **argv)
         fprintf(stderr,"captured VDP1 output differs: opaque=%llu rgb_exact=%llu alpha_exact=%llu; expected 71189 opaque and 71680 exact\n",
             (unsigned long long)opaque,(unsigned long long)exact_matches,
             (unsigned long long)alpha_matches); goto done;
+    }
+    {
+        const char *owner_path = getenv("FIRESTAFF_NEXUS_YMIR_STEPPER_OWNER_OUT");
+        const char *source_path = getenv("FIRESTAFF_NEXUS_YMIR_STEPPER_SOURCE_RECEIPT_OUT");
+        for (i = 0U; i < EXPECTED_FRAME_ROWS; ++i) {
+            if (row_sources[i] == ROW_UNSET) {
+                fprintf(stderr, "frame-300 source receipt omitted command row %lu\n",
+                        (unsigned long)i);
+                goto done;
+            }
+        }
+        if ((owner_path && *owner_path && !write_owner_plane(owner_path, surface)) ||
+            (source_path && *source_path && !write_row_sources(source_path, row_sources))) {
+            fprintf(stderr, "unable to write frame-300 command ownership evidence\n");
+            goto done;
+        }
     }
     printf("Ymir stepper composition: frame=%u draws=%u mode1=%u retail_dgn=%u direct_rgb_dgn=%u captured_mode4=%u mode0_clipped=%u skipped=%u ends=%u transparent_mode1=%u polygons=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
         FRAME_INDEX,draws,mode1_count,dgn_source_count,direct_source_count,

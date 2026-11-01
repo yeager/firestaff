@@ -6,11 +6,14 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_rasterizer.h"
 
+#define NEXUS_V1_VDP1_YMIR_CAPTURE_NO_OWNER UINT16_MAX
+
 /* This is a standalone, capture-only port of Ymir's integer VDP1 quad,
  * line, texture, and Gouraud steppers. It is intentionally not linked to
  * Firestaff's production renderer and never grants renderer admission. */
 typedef struct {
     uint32_t rgba[NEXUS_FB_W * NEXUS_FB_H];
+    uint16_t command_owner[NEXUS_FB_W * NEXUS_FB_H];
 } Nexus_V1_Vdp1YmirCaptureSurface;
 
 typedef struct {
@@ -24,6 +27,7 @@ typedef struct {
     int vdp1_vram_size;
     int command_capture_verified;
     int texture_capture_verified;
+    uint16_t command_index;
     int source_image_join_verified;
     int direct_source_join_verified;
     int palette_join_verified;

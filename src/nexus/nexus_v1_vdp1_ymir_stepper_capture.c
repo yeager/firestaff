@@ -354,7 +354,11 @@ static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
     /* Ymir vdp_renderer_sw.cpp::VDP1PlotPixel skips alternating mesh pixels
      * when transparent-mesh enhancement is disabled. */
     if (mesh && ((x ^ y) & 1)) return 0;
-    { size_t p=(size_t)y*NEXUS_FB_W+(size_t)x; working->rgba[p]=color_calc(rgba,working->rgba[p],calc); }
+    {
+        size_t p=(size_t)y*NEXUS_FB_W+(size_t)x;
+        working->rgba[p]=color_calc(rgba,working->rgba[p],calc);
+        working->command_owner[p]=in->command_index;
+    }
     return 1;
 }
 
