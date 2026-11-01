@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — enumerate authentic T900 ground-item index candidates
+
+- Extended the existing US/JP real-media quest-name regression to list every
+  ground-linked carryable record whose decoded category type matches that
+  dungeon's quest-name index. Output includes category, source reference and
+  index, map cell, user-data offset and raw Track 02 offset; it emits no game
+  record bytes.
+- Each reported table offset is checked byte-for-byte against the record in the
+  loaded user-data stream. Three direct runs against the identity-checked US
+  and JP BINs produced identical output, and the focused CTest passed three
+  consecutive runs.
+- Five same-index ground occurrences are shared across US and JP in dungeons
+  3, 6 and 7. The report and TODO make clear that these are capture targets,
+  not quest-item identities, T900 consumers, or permission to enable host
+  inventory/progression semantics.
+
 ## 2026-11-01 — bind runtime page joins to one capture
 
 - Added a per-run capture ID to C852 schema v3 and the all-writer page-write

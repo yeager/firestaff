@@ -199,3 +199,10 @@ test_theron_v1_track02_dungeon_loader (US + JP live creature projection) PASS
 This is evidence of the current boundary, not a claim of complete T900 parity.
 Production must continue to reject T900-driven inventory, loot, use and equip
 semantics until the `$2600` consumer is captured from original media.
+
+The authentic US/JP ground-item index inventory is now listed in
+[the T900 capture-target report](theron-t900-ground-item-index-candidates-20261101.md).
+It identifies five placed records whose decoded type equals a parallel
+quest-name index, across dungeons 3, 6 and 7. Category and location are
+record-level provenance only: they do not identify the quest artifact, a
+runtime T900 caller, or an inventory/progression transaction.

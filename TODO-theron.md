@@ -373,8 +373,13 @@ progress remains unchanged. This proves real-data native host paths, not retail
 parity. Quest artifact identity, retrieval messaging, dungeon exit, and
 campaign completion still require the original T900 consumer. Do not map the
 parallel quest-name type indices to quest bits: authentic US/JP tables contain
-repeated matching types. See `tests/test_theron_v1_track02_quest_item_names.c`
-and `docs/source-lock/theron_t900_proof_2026-08-08.md`.
+repeated matching types. The real-data test now lists five ground-linked
+same-index records in dungeons 3, 6 and 7 across both regions, with category,
+source reference, cell and raw offsets; these remain capture targets rather
+than identified quest items. See the
+[candidate report](docs/source-lock/theron-t900-ground-item-index-candidates-20261101.md),
+`tests/test_theron_v1_track02_quest_item_names.c` and
+`docs/source-lock/theron_t900_proof_2026-08-08.md`.
 The pass 215/223 binary-analysis notes describe the retrieved-item strings as
 text evidence only; runtime object identity and quest-state effects remain
 open.

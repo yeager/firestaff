@@ -50,6 +50,13 @@ rejected at Track 03. A later capture used the complete archived US track set
 and reached the Drator route; see the ordered call-window report for its
 source-validation failure and trace limits.
 
+For the separate T900 item-progression gap, the real-data quest-name regression
+now lists five ground-linked records whose type index matches the local
+quest-name index, across US/JP dungeons 3, 6 and 7. These source locations are
+capture targets only; they do not establish artifact identity or a T900
+consumer. See the
+[ground-item index report](../source-lock/theron-t900-ground-item-index-candidates-20261101.md).
+
 The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
 left-event and reentry, while the bounded consumer trace hit its row cap
