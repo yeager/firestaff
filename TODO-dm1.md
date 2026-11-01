@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `IO.C:F0074-F0078` pointer drawing and visibility: the ledger now maps the host SDL cursor/event route rather than unrelated numeric hits. Firestaff relies on window-system cursor composition; source bitmap save/restore, Atari ST interrupt callbacks, and the paired redraw visibility protocol remain open.
+
 2026-11-01 ReDMCSB `MOUSESET.C:F0066-F0071/F0073`: the callable ledger now maps host-pointer initialization, bounded arrow/hand/object state, champion-icon formation pickup/drop, and the PC34 screen-area suppression receipt. Source cursor bitmap rendering, Atari ST driver callbacks, platform-specific pointer save/restore, and exact pixel/caller behavior remain open.
 
 2026-11-01 ReDMCSB `SOUND.C:F0061-F0065` audio path: the callable ledger now maps the bounded PSG amplitude table, DM1 sound-state/host initialization, source-sound request arbitration, and pending-event flushes instead of numeric-token collisions. Atari ST key-click/PSG register and Timer-A ownership, edition-specific queue behavior, playback timing, and platform audio-driver parity remain open.
