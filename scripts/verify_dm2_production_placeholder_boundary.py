@@ -247,16 +247,16 @@ def verify(repo: Path) -> list[str]:
         errors.append(f"missing {runtime_path}")
         return errors
     runtime = runtime_path.read_text(encoding="utf-8")
-    # The class-2 PITFALL path now has a bounded source-owned close handler.
-    # Opening is admitted only for cells where ADVANCE_TILES_TIME is proven
-    # to be a no-op; cells with party/creature movement or DB5+ tile items
-    # still fail closed until the complete source owner exists.
+    # PITFALL and TRICKWALL now have bounded source-owned tile handlers.
+    # PITFALL opening remains admitted only where ADVANCE_TILES_TIME is a
+    # proven no-op; TRICKWALL closing uses source occupancy/AI checks and
+    # retries blocked closes. Full tile-advance and presentation owners
+    # remain open.
     for forbidden in (
             "dm2_runtime_process_3d_timer",
             "dm2_runtime_invoke_message",
             "dm2_runtime_invoke_actuator",
             "dm2_runtime_actuate_teleporter",
-            "dm2_runtime_actuate_trickwall",
             "dm2_runtime_delete_creature_full",
             "dm2_v1_caii_set_delete_creature_full_fn",
     ):
@@ -286,6 +286,31 @@ def verify(repo: Path) -> list[str]:
                 errors.append(f"DM2 PITFALL source guard missing: {guard}")
         if "dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;" not in runtime:
             errors.append("DM2 source-owned class-2 PITFALL handler is not dispatched")
+
+    trickwall = re.search(
+        r"static int dm2_runtime_actuate_trickwall_timer\s*\([^;]*?\)\s*\{.*?\n\}",
+        runtime,
+        re.DOTALL,
+    )
+    if not trickwall:
+        errors.append("DM2 source-owned class-6 TRICKWALL handler is missing")
+    else:
+        trickwall_body = trickwall.group(0)
+        required_trickwall_guards = (
+            "((unsigned int)raw >> 5) != 6u",
+            "if (action == 2)",
+            "if (action == 1)",
+            "game->current_level == map && game->party_x == x",
+            "(ai_flags & 0x20u) == 0u",
+            "next.ticks_and_map = timer->ticks_and_map + 1u;",
+            "dm2_v1_source_timer_enqueue(",
+            "action == 1 ? raw & ~0x04 : raw | 0x04",
+        )
+        for guard in required_trickwall_guards:
+            if guard not in trickwall_body:
+                errors.append(f"DM2 TRICKWALL source guard missing: {guard}")
+        if "dispatcher.actuator_tile[6] = dm2_runtime_actuate_trickwall_timer;" not in runtime:
+            errors.append("DM2 source-owned class-6 TRICKWALL handler is not dispatched")
 
     # DELETE_CREATURE_RECORD is now consumed by the source-owned runtime
     # recycler through the M10 compatibility archive.  It must be present in
