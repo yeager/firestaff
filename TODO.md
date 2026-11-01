@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 startup scan localization coverage now includes all five games.
+The Swedish real-media scan tests pass for DM1 PC, CSB FM Towns, DM2 FM Towns,
+Nexus Saturn, and Theron PC Engine. Nexus and Theron use a source-bound
+direct-media path, so their localized startup status and selected authentic
+edition are asserted instead of the M12 directory-scan task labels used by
+DM1, CSB, and DM2. This verifies diagnostic/menu localization and authentic
+edition selection only; it does not establish visual progress-bar parity or
+native-window behavior.
+
 2026-11-01 launcher preset clarification: the hierarchical game-card flow's
 "MODERN" preset selected V2.1 upscaling, not V2.2 modern artwork. Renamed the
 choice to "V2.1 UPSCALED" so the five-game launcher describes the mode it

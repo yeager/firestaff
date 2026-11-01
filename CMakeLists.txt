@@ -4524,7 +4524,9 @@ if(BUILD_TESTING)
     foreach(_scan_localization_case IN ITEMS
             "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"
             "csb|fmtowns|fmtowns-en|csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
-            "dm2|fmtowns|fmtowns-ja|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
+            "dm2|fmtowns|fmtowns-ja|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+            "nexus|saturn|nexus-saturn-en-fan-v2|nexus/Dungeon Master Nexus (English).iso"
+            "theron|pce|pce-en|theron/TQUS02.bin")
         string(REPLACE "|" ";" _scan_localization_fields "${_scan_localization_case}")
         list(GET _scan_localization_fields 0 _scan_game)
         list(GET _scan_localization_fields 1 _scan_platform)
