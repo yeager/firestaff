@@ -1,6 +1,6 @@
 # Theron's Quest — Keyboard and Mouse Controls
 
-**Status reviewed 2026-11-02.** These controls describe Firestaff's native
+**Status reviewed 2026-11-01.** These controls describe Firestaff's native
 desktop mapping. SDL regression coverage verifies command dispatch and
 bounded US pickup/reselect/drop; it does not establish full retail input
 semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
@@ -211,7 +211,7 @@ the highlighted control changes.
   [`TODO-theron.md`](../../TODO-theron.md). One authentic JP state-only trace
   reaches `$D515` but takes `$D52C` around `$D588`; it records no mouse
   coordinates and has no cold media-to-RAM provenance. See the
-  [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
+  [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
@@ -221,9 +221,10 @@ the highlighted control changes.
   Changing champion clears the selection. I selects the next source-backed
   slot for the active champion, so a carried occurrence can be selected again
   after resume; compact item IDs without provenance are skipped. DROP without
-  a selected source slot remains unavailable. Use operates an existing door in the facing cell;
-  a locked source-level door remains closed until the original T900 key
-  consumer is recovered.
+  a selected source slot remains unavailable. U dispatches USE to the facing
+  door. Authentic Track 02 doors remain fail-closed until the original T900
+  button/actuator consumer is bound; fixture door transitions do not establish
+  retail effects.
 - F12 = screenshot (engine-global).
 - Theron currently has no usable Firestaff save command in the dungeon:
   `Ctrl+S` and `F5` report `THERON SAVE HANDOFF NOT READY`, and `F9` cannot

@@ -21,7 +21,7 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed on 2026-11-02. The
+The status pages were reviewed on 2026-11-01. The
 latest full five-card authentic-media selection check verified keyboard and
 mouse selection plus default-root handoff for DM1, CSB, DM2, Nexus and Theron.
 Separate real-media runtime checks reached Firestaff gameplay for DM1, CSB,
@@ -117,7 +117,10 @@ based, so clicks outside the panel are ignored until screen-space target
 semantics are authenticated. Mouse motion only moves the pointer. Mouse button
 2 remains Button II for cancel/back and does not advance a dungeon tick by
 itself. On touch screens, a short touch is Button I and a long touch is Button
-II. The native dungeon presentation still needs a state-driven renderer, so
+II. A recent authentic JP state-only pointer trace enters `$D515` but branches
+around the `$D530` call to `$D588`; it contains no mouse-coordinate receipt or
+cold CD-to-RAM provenance and does not establish world-click behavior. The
+native dungeon presentation still needs a state-driven renderer, so
 working input dispatch alone does not establish visual gameplay parity. The
 matched JP PCE Fast `$C1FC` TII trace is input-conditioned state transfer; the
 same instruction is associated with teleporter destination copying, so it

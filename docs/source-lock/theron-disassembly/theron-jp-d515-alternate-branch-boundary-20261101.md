@@ -1,6 +1,6 @@
 # Theron JP `$D515` alternate-branch boundary
 
-Date: 2026-11-02
+Date: 2026-11-01
 
 ## Authentic state-only trace
 
