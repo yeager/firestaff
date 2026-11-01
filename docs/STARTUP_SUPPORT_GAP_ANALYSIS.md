@@ -805,7 +805,20 @@ device. They verify the listed start routes only; additional selectable
 editions, saved-game routes, native presentation, and complete gameplay
 remain open.
 
-## Latest local real-media menu check (2026-10-27)
+## Latest local real-media menu check (2026-11-01)
+
+The authentic-media picker regression passed in priority-game-only mode using
+the v3.0.423 executable built from source commit `328f57b9` and the current
+`main` test script at `2f027b14`. It verified keyboard selection of DM1, CSB,
+and DM2 from the no-game menu, including their default FM Towns routes, plus
+DM1 PC/Atari ST/Amiga, CSB Amiga/Atari ST, and DM2 PC/Amiga alternatives. It
+also passed each game's default `~/.firestaff/data` FM Towns launch. The test
+checked that the original media remained unchanged. This is SDL dummy-driver
+startup/handoff evidence only; it does not verify native display, audio,
+physical input, or gameplay parity. Nexus and Theron were excluded from this
+priority-only run.
+
+### 2026-10-27 five-game picker check
 
 The Firestaff executable was rebuilt from the working tree based on source
 snapshot `88ef19df`, then tested with the authentic installations under
