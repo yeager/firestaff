@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `NEWMAP.C:F0003` map transition: the callable inventory now
+maps the exact M11 route through `F0003_WORLD_TransitionPartyMap_Compat`
+instead of an unrelated DM2 numeric-token hit. The staged active-group removal,
+party-map switch, and group re-addition cover the central `GROUP.C:F0194/F0195`
+boundary. M11 has separate map-track helpers for stairs and post-move transitions and
+resolves active-map graphics and palette during rendering. The audit has not
+proved that all callers preserve the complete source ordering across supported
+DM1 editions/platforms, and ReDMCSB copy-protection event behavior remains
+unmapped. The source routine and Atari ST alias are explicitly `PARTIAL`.
+
 2026-11-01 ReDMCSB `INPUT.C:F1097-F1099` input-ring critical section: the
 64-slot FIFO now uses a process-wide C11 atomic critical section around key
 insert, read/advance, availability check, and discard/reset. This matches the
