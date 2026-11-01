@@ -58,9 +58,14 @@ all 286,720 doubled screenshot samples exactly; frame 300 matches all 71,680
 pixels in its same-run Ymir RGB reference. Separate authentic frame-7486
 NBG0 live-row/color-calculation and frame-8037 title-menu composition tests
 also pass against their retained Ymir outputs. The NBG1 active per-character
-color-calculation path remains unverified because the available eligible BKR
-captures contain no visible NBG1 PND with CCE set. These capture-only results
-do not enable production rendering or establish arbitrary-frame parity.
+color-calculation path remains unverified. A paired scan of the retained
+external VDP2 corpus found 404 VRAM dumps, 402 matching register snapshots,
+and 125 captures with enabled NBG1 in character mode; none had CCE set in a
+visible map PND. This does not prove the retail game never uses the feature.
+Repeat the inventory against new authentic captures with
+`python3 scripts/analyze_nexus_vdp2_capture_cce_inventory.py
+/Volumes/Extern-disk/firestaff-evidence/nexus`. The existing capture-only
+results do not enable production rendering or establish arbitrary-frame parity.
 Outputs are retained at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c376f0c4-validation/`.
 
