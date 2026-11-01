@@ -1183,20 +1183,40 @@ int32_t dm2_v1_creature_can_handle_it(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
 {
-    if (!caps)
-        return 0;
     int item_class = item & 0x3f;
-    if (item_class == 0x3e || item_class == 0x3f)
-        return 0;
+    int invert = flags & 0x80;
 
-    if (item_class == 0x29 && cb && cb->is_container_moneybox &&
-        cb->is_container_moneybox(ctx, item)) {
-        if (cb->moneybox_already_opened && cb->moneybox_already_opened(ctx, item))
-            return dm2_handle_mask_has_class(caps->handle_mask, item_class);
-        return (flags & 0x80) != 0;
+    /* skproject's 0x3f path reaches the common result label without
+     * consulting a GDAT mask, so it means all ordinary handleable classes. */
+    if (item_class == 0x3f)
+        return !invert;
+
+    if (item_class == 0x3e) {
+        int moneybox = cb && cb->is_container_moneybox &&
+            cb->is_container_moneybox(ctx, item);
+        int has_open_state = moneybox && cb->moneybox_already_opened;
+        int opened = has_open_state &&
+            cb->moneybox_already_opened(ctx, item);
+        /* In skproject, a non-moneybox or an already-open moneybox returns
+         * the inversion bit. A known closed moneybox reaches the common
+         * result; absent state callbacks retain the inversion fallback. */
+        return (!moneybox || opened || !has_open_state) ? invert : !invert;
     }
 
-    return dm2_handle_mask_has_class(caps->handle_mask, item_class);
+    if (!caps) return 0;
+
+    if (item_class == 0x29) {
+        int moneybox = cb && cb->is_container_moneybox &&
+            cb->is_container_moneybox(ctx, item);
+        if (!moneybox)
+            item_class = 7;
+        else if (!cb->moneybox_already_opened ||
+                 !cb->moneybox_already_opened(ctx, item))
+            return invert;
+    }
+
+    return dm2_handle_mask_has_class(caps->handle_mask, item_class)
+        ? !invert : invert;
 }
 
 int32_t dm2_v1_creature_cast_spell(

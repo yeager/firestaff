@@ -18,12 +18,13 @@ updates, SPX v4 formula selection, and DOS/Amiga/FM Towns/Macintosh runtime
 evidence remain open.
 
 2026-11-01 skproject `DM2_CREATURE_CAN_HANDLE_IT` source review:
-`dm2_v1_creature_can_handle_it` currently implements only the supplied
-class-mask membership check. The source function also obtains the
-creature-specific item mask from GDAT, decodes class-specific object
-fields and checks container/moneybox state. The mask-build and special
-object branches do not yet have a live CCM `SHOOT_ITEM` owner, so this
-symbol is now `PARTIAL` in the named audit and contributes one row to
+`dm2_v1_creature_can_handle_it` now applies skproject's flag-0x80 inversion,
+0x3e/0x3f sentinel behavior, and the 0x29/0x3e moneybox state branches over
+its supplied mask. The source function still obtains the creature-specific
+item mask from GDAT and decodes class-specific object fields before mask
+membership. Those live source owners do not yet join current creature state,
+mask selection, record decoding and moneybox state into CCM `SHOOT_ITEM`, so
+this symbol remains `PARTIAL` in the named audit and contributes one row to
 the 3,969-row open backlog.
 The DOS and SPX v4/v5 shooter definitions have now been compared individually:
 actuator selection, directional item cutting, single-shot random direction,
