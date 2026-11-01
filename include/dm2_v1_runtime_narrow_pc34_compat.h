@@ -413,20 +413,21 @@ int dm2_v1_player_consume_object(
 
 /* ---- DM2_CHANGE_PLAYER_POS (c_hero.cpp:4037) ----
  * Reorder party formation: the low byte packs a source slot, the high
- * bit selects "swap absolute direction too". If a drag-in-progress flag
- * (ddat.v1e00b8) is set, it swaps the dragged hero and the target-slot
- * hero's partypos (and absdir when the high bit was set); otherwise (no
- * drag) it performs the UI icon-swap animation path, which the narrow
- * form represents as a plain position swap. */
+ * bit suppresses the dragged hero's absdir update. With no drag pending,
+ * the source starts an icon drag and records the source slot; it does not
+ * change formation. With a drag pending, the next slot click commits the
+ * position exchange (or moves into an empty slot) and clears the pending
+ * drag. Cursor animation remains a caller-owned UI effect. */
 typedef struct {
     int drag_in_progress;      /* ddat.v1e00b8 != 0 */
-    int drag_source_position;  /* (ddat.v1e00b8 - 1 + rotation) & 3 */
-    int also_swap_direction;   /* packed_pos high bit */
+    int drag_source_position;  /* ddat.v1e00b8 - 1, before rotation */
 } DM2_V1_ChangePlayerPosState;
 
 typedef struct {
     int (*get_player_at_position)(void *ctx, int position);
-    void (*swap_positions)(void *ctx, int hero_a, int hero_b);
+    void (*begin_drag)(void *ctx, int source_position);
+    void (*clear_drag)(void *ctx);
+    void (*set_position)(void *ctx, int hero_idx, int8_t position);
     void (*set_direction)(void *ctx, int hero_idx, int8_t direction);
     int8_t (*get_party_facing)(void *ctx);
 } DM2_V1_ChangePlayerPosCallbacks;

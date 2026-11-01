@@ -695,28 +695,61 @@ void dm2_v1_change_player_pos(
     int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
     const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx)
 {
-    if (!cb || !state)
+    int source_slot;
+    int target_slot;
+    int source_hero;
+    int target_hero;
+    int source_position;
+    int target_position;
+    int8_t facing;
+
+    if (!cb || !state || !cb->get_player_at_position ||
+        !cb->get_party_facing)
         return;
 
-    int target_slot = packed_pos & 0x7fff;
-    int also_dir = state->also_swap_direction;
+    facing = cb->get_party_facing(ctx);
+    if (facing < 0 || facing > 3)
+        return;
+    target_slot = packed_pos & 0x7fff;
+    if ((packed_pos & (int16_t)0x8000) != 0)
+        target_slot &= 3;
+    if (target_slot < 0 || target_slot > 3)
+        return;
 
-    int target_hero = cb->get_player_at_position
-        ? cb->get_player_at_position(ctx, target_slot) : -1;
-
-    if (state->drag_in_progress) {
-        int src_hero = cb->get_player_at_position
-            ? cb->get_player_at_position(ctx, state->drag_source_position) : -1;
-        if (also_dir && src_hero != -1 && cb->set_direction && cb->get_party_facing) {
-            cb->set_direction(ctx, src_hero, cb->get_party_facing(ctx));
-        }
-        if (state->drag_source_position != target_slot) {
-            if (target_hero != -1 && cb->swap_positions)
-                cb->swap_positions(ctx, target_hero, src_hero);
-        }
-    } else if (target_hero != -1 && cb->swap_positions) {
-        cb->swap_positions(ctx, target_hero, target_slot);
+    target_position = (target_slot + facing) & 3;
+    target_hero = cb->get_player_at_position(ctx, target_position);
+    if (!state->drag_in_progress) {
+        /* CHANGE_PLAYER_POS first paints the selected champion as the
+         * platform cursor and records v1e00b0/v1e00b8. The formation itself
+         * remains untouched until the destination event arrives. */
+        if (target_hero >= 0 && cb->begin_drag)
+            cb->begin_drag(ctx, target_slot);
+        return;
     }
+
+    source_slot = state->drag_source_position;
+    if (source_slot < 0 || source_slot > 3)
+        return;
+    if (!cb->clear_drag || !cb->set_position ||
+        (((packed_pos & (int16_t)0x8000) == 0) && !cb->set_direction))
+        return;
+    source_position = (source_slot + facing) & 3;
+    source_hero = cb->get_player_at_position(ctx, source_position);
+
+    /* The source clears v1e00b8 before looking up the dragged hero or
+     * mutating either party position. */
+    cb->clear_drag(ctx);
+    if (source_hero < 0)
+        return;
+
+    if ((packed_pos & (int16_t)0x8000) == 0)
+        cb->set_direction(ctx, source_hero, facing);
+    if (source_slot == target_slot)
+        return;
+
+    if (target_hero >= 0)
+        cb->set_position(ctx, target_hero, (int8_t)source_position);
+    cb->set_position(ctx, source_hero, (int8_t)target_position);
 }
 
 /* DM2_hero_2c1d_1de2 — SKULLWIN/c_hero.cpp:3903,
