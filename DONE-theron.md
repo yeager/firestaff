@@ -15,6 +15,15 @@
 - Documentation link and diff checks passed. No additional local tests were
   run; the PR's Linux, macOS and Windows CI checks completed successfully.
 
+## 2026-11-01 — reconcile Theron platform and parity summaries
+
+- Added the authenticated US standard-PCE state-to-map binding to the
+  platform matrix and completion matrix, which still omitted this finding.
+- Kept the boundary explicit: the four arrays and saved MPR3 mapping are
+  verified, while active-map selection and a live consumer remain unknown.
+- No gameplay claim or parity score changed. No tests were run for this
+  documentation-only reconciliation.
+
 ## 2026-11-01 — inspect authentic JP Mednafen state structure and source mapping
 
 - Added a bounded, source-locked reader for Mednafen 1.32.1 PCE Fast `.mc0`
