@@ -44,19 +44,22 @@ compiler/linker BSS initialization rather than a callable symbol.
 
 | Status | Count |
 |---|---:|
-| `MISSING` | 795 |
-| `UNCERTAIN_NUMBERED_EVIDENCE` | 628 |
+| `MISSING` | 794 |
+| `UNCERTAIN_NUMBERED_EVIDENCE` | 624 |
 | `IMPLEMENTED_NARROW` | 534 |
 | `VERIFIED_SOURCE_MAPPING` | 95 |
 | `SOURCE_NONAPPLICABLE` | 65 |
 | `PC34_SOURCE_IMPLEMENTED` | 5 |
-| `PARTIAL` | 11 |
+| `PARTIAL` | 16 |
 | **Total** | **2,133** |
 
 The open rows include platform service routines, ABI aliases, unreferenced
 symbols, and gameplay/UI functions. They must be triaged by reachability and
 supported game/platform before interpreting the totals as missing game
-features. The current platform coverage register is in
+features. These status counts describe the current audit rows, not complete
+functional parity: every applicable ReDMCSB function still requires a Firestaff
+counterpart and behavior review for each supported DM1/CSB platform and edition.
+The current platform coverage register is in
 `docs/parity/REDMCSB_FIRESTAFF_COMPLETE_AUDIT.md`.
 
 ## Machine check
