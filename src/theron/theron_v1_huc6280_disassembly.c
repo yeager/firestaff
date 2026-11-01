@@ -41,6 +41,16 @@
 #define THERON_STAGE2_DISPATCH_US_FILE_OFFSET 0x2bee9du
 #define THERON_STAGE2_DISPATCH_JP_FILE_OFFSET 0x2be56du
 #define THERON_STAGE2_DISPATCH_FNV1A 0x7f6a7f04u
+#define THERON_US_C852_WINDOW_FILE_OFFSET 0x0a3ad2u
+#define THERON_C852_CALL_INSTRUCTION_ADDRESS 0xc85eu
+#define THERON_C852_CALL_INSTRUCTION_OFFSET 0x0cu
+#define THERON_C852_CALL_INSTRUCTION_BYTES 3u
+#define THERON_STAGE2_US_USERDATA_FILE_OFFSET 0x2bed90u
+#define THERON_STAGE2_JP_USERDATA_FILE_OFFSET 0x2be460u
+#define THERON_STAGE2_LOAD_ADDRESS 0x4000u
+#define THERON_STAGE2_LOOKUP_ADDRESS 0x5039u
+#define THERON_STAGE2_LOOKUP_BYTES 8u
+#define THERON_STAGE2_LOOKUP_FNV1A 0x0bc3d6d9u
 #define THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET 0x9e15u
 #define THERON_VCE_PALETTE_CONSUMER_ADDRESS 0x96a5u
 #define THERON_VCE_PALETTE_CONSUMER_BYTES 37u
@@ -242,6 +252,18 @@ static const uint16_t g_stage2_dispatch_targets[THERON_STAGE2_DISPATCH_ENTRIES] 
     0x484eu
 };
 
+/* Static stage-two candidate called by the exact US $C852 source window.
+ * Authentic US/JP payloads share these bytes; no runtime MPR2 or semantic
+ * contract is inferred. */
+static const uint8_t g_stage2_lookup_candidate[
+    THERON_STAGE2_LOOKUP_BYTES] = {
+    0x31, 0x4f, 0x20, 0x79, 0x38, 0x64, 0x5b, 0x60
+};
+static const uint8_t g_c852_lookup_call_instruction[
+    THERON_C852_CALL_INSTRUCTION_BYTES] = {
+    0x20, 0x39, 0x50
+};
+
 static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
     uint32_t hash = 2166136261u;
     for (size_t i = 0u; i < count; ++i) {
@@ -348,6 +370,9 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t decompressor_caller[THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES];
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
     uint8_t stage2_dispatch_table[THERON_STAGE2_DISPATCH_BYTES];
+    uint8_t stage2_lookup_candidate[THERON_STAGE2_LOOKUP_BYTES];
+    uint8_t c852_lookup_call_instruction[
+        THERON_C852_CALL_INSTRUCTION_BYTES];
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
     uint8_t vce_palette_caller[THERON_VCE_PALETTE_CALLER_BYTES];
     uint8_t initializer_callee_candidates[
@@ -430,6 +455,23 @@ int theron_v1_huc6280_disassembly_read_file(
                  SEEK_SET) != 0 ||
           fread(stage2_dispatch_table, 1u, sizeof(stage2_dispatch_table),
                 file) != sizeof(stage2_dispatch_table))) ||
+        (raw_bin_variant &&
+         (fseek(file, (long)((track02_variant ==
+                                  THERON_TRACK02_VARIANT_US_BIN ?
+                                  THERON_STAGE2_US_USERDATA_FILE_OFFSET :
+                                  THERON_STAGE2_JP_USERDATA_FILE_OFFSET) +
+                             (THERON_STAGE2_LOOKUP_ADDRESS -
+                              THERON_STAGE2_LOAD_ADDRESS)), SEEK_SET) != 0 ||
+          fread(stage2_lookup_candidate, 1u,
+                sizeof(stage2_lookup_candidate), file) !=
+              sizeof(stage2_lookup_candidate))) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         (fseek(file,
+                (long)(THERON_US_C852_WINDOW_FILE_OFFSET +
+                       THERON_C852_CALL_INSTRUCTION_OFFSET), SEEK_SET) != 0 ||
+          fread(c852_lookup_call_instruction, 1u,
+                sizeof(c852_lookup_call_instruction), file) !=
+              sizeof(c852_lookup_call_instruction))) ||
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          (fseek(file, THERON_US_SPAWN_RNG_HELPER_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_rng_helper, 1u, sizeof(spawn_rng_helper), file) !=
@@ -516,6 +558,16 @@ int theron_v1_huc6280_disassembly_read_file(
         (raw_bin_variant &&
          !stage2_dispatch_table_matches(stage2_dispatch_table)) ||
         (raw_bin_variant &&
+         (memcmp(stage2_lookup_candidate, g_stage2_lookup_candidate,
+                 sizeof(stage2_lookup_candidate)) != 0 ||
+          fnv1a(stage2_lookup_candidate,
+                sizeof(stage2_lookup_candidate)) !=
+              THERON_STAGE2_LOOKUP_FNV1A)) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         memcmp(c852_lookup_call_instruction,
+                g_c852_lookup_call_instruction,
+                sizeof(c852_lookup_call_instruction)) != 0) ||
+        (raw_bin_variant &&
          memcmp(vce_palette_consumer, g_vce_palette_consumer,
                 sizeof(vce_palette_consumer)) != 0) ||
         (raw_bin_variant &&
@@ -590,6 +642,28 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.stage2_resource_bank_table_population_verified = 1;
     receipt.stage2_resource_destination_registers_verified = 1;
     receipt.stage2_dispatch_table_verified = raw_bin_variant;
+    receipt.stage2_lookup_candidate_verified = raw_bin_variant;
+    if (raw_bin_variant) {
+        receipt.stage2_lookup_candidate_address =
+            THERON_STAGE2_LOOKUP_ADDRESS;
+        receipt.stage2_lookup_candidate_bytes = THERON_STAGE2_LOOKUP_BYTES;
+        receipt.stage2_lookup_candidate_file_offset =
+            (track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                 THERON_STAGE2_US_USERDATA_FILE_OFFSET :
+                 THERON_STAGE2_JP_USERDATA_FILE_OFFSET) +
+            (THERON_STAGE2_LOOKUP_ADDRESS - THERON_STAGE2_LOAD_ADDRESS);
+        receipt.stage2_lookup_candidate_fnv1a = fnv1a(
+            stage2_lookup_candidate, sizeof(stage2_lookup_candidate));
+    }
+    receipt.c852_lookup_callsite_verified =
+        track02_variant == THERON_TRACK02_VARIANT_US_BIN;
+    if (receipt.c852_lookup_callsite_verified) {
+        receipt.c852_lookup_callsite_address =
+            THERON_C852_CALL_INSTRUCTION_ADDRESS;
+        receipt.c852_lookup_callsite_file_offset =
+            THERON_US_C852_WINDOW_FILE_OFFSET +
+            THERON_C852_CALL_INSTRUCTION_OFFSET;
+    }
     receipt.spawn_rng_helper_verified =
         track02_variant == THERON_TRACK02_VARIANT_US_BIN;
     if (receipt.spawn_rng_helper_verified) {

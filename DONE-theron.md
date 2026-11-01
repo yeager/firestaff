@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — source-lock the US Drator `$C852` call target
+
+- Extended the authentic Track 02 disassembly receipt to verify the US
+  `$C85E` `JSR $5039` bytes and the matching eight-byte target candidate in
+  both US and JP stage-two payloads.
+- Added a raw HuC6280 listing and source-lock report with regional offsets,
+  exact byte hashes, and the remaining MPR2/runtime-call gap. No row or
+  gameplay semantics were inferred.
+- The focused source-receipt check passed three consecutive runs against the
+  installed authentic US and JP Track 02 BINs; no game-media files were added
+  to Git.
+
 ## 2026-11-01 — document US saved-state Akutuba map mapping
 
 - Compared the authentic US standard-PCE save state with the hash-verified US

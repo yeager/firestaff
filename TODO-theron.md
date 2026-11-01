@@ -23,6 +23,15 @@ join before they can inform row semantics or native spawning. See the
 [completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions)
 and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
+The US Drator `$C852` caller has a new static call-target candidate: its
+source-locked `$C85E` instruction is `JSR $5039`, and the eight bytes at that
+address match in authentic US and JP stage-two payloads. The current capture
+does not retain the `$C85E`/`$5039` instruction path or MPR2 at the call, so
+this does not prove target execution or row semantics. The next US trace must
+record ordered `$C852`→`$C85E`→`$5039` events, all MPRs and registers, the
+`($4f),Y` read, and the `$3879` callee before joining `$CBC6`/`$45C3` row
+reads. See the [source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
+
 The authentic JP Akutuba source spans are now mapped to raw Track 02 sector
 308 (Track 02 LBA 84, disc LBA 3674). Its descriptor and all four map arrays
 fit in that one MODE1 sector; map 0 and map 2 tile `(2,3)` bytes are at raw

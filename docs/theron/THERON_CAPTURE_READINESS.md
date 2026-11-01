@@ -49,6 +49,12 @@ and `event_sequence` from the same shared counter used by the row-lifecycle
 trace. These code-fetch receipts can be searched against the authenticated
 Track 02 BIN to narrow repeated static occurrences; they do not prove source
 ownership until the bytes match and the physical mapping is accounted for.
+The `$C852` source bytes also contain a direct `JSR $5039` at `$C85E`; matching
+static target bytes occur at `$5039` in the authentic US and JP stage-two
+payloads. No captured MPR2 or instruction path proves that this candidate ran.
+The next US trace should record `$C85E`, `$5039`, the `$4F`-based read and
+`$3879` entry with ordered events and all MPRs. See the
+[stage-two call-target report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
 to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
 relationship and all matching raw offsets. A complete verification requires
