@@ -5,8 +5,9 @@
   source behavior and group 169 attacks. The shared import routine is used by
   the Amiga save loader as well, but this regression was verified only with
   the PC34 save. A new real-save framebuffer assertion now draws that same
-  authentic four-champion PC34 save and confirms each HUD icon contributes 197
-  pixels beyond its source fill. The report was not reproduced in this SDL
+  authentic four-champion PC34 save and compares each HUD icon pixel-for-pixel
+  with the selected GRAPHICS.DAT strip; each source icon contributes 197
+  non-transparent pixels. The report was not reproduced in this SDL
   dummy-driver run; it does not establish native-display HUD parity. `--debug`
   reports DM1 world/AI changes and PC34 top-row HUD success or rejection stage
   only when the diagnostic snapshot changes. This does not establish full

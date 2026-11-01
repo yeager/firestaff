@@ -8,6 +8,7 @@
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
+#include "asset_loader_m11.h"
 #include "menu_input_m12.h"
 #include "render_sdl_m11.h"
 
@@ -38,9 +39,18 @@ static int expected_ai_state_for_group_behavior(unsigned char behavior)
 static int verify_saved_champion_hud_icons(M11_GameViewState *state)
 {
     unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *iconStrip;
     int slot;
     if (!state || state->world.party.championCount != CHAMPION_MAX_PARTY)
         return 0;
+    iconStrip = M11_AssetLoader_Load(&state->assetLoader,
+                                     DM1_GFX_CHAMPION_ICONS);
+    if (!iconStrip || !iconStrip->loaded || !iconStrip->pixels ||
+        iconStrip->width != DM1_CHAMPION_ICON_WIDTH * CHAMPION_MAX_PARTY ||
+        iconStrip->height != DM1_CHAMPION_ICON_HEIGHT) {
+        fputs("FAIL: authentic PC34 champion icon strip did not load\n", stderr);
+        return 0;
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(state, framebuffer, 320, 200);
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
@@ -48,7 +58,8 @@ static int verify_saved_champion_hud_icons(M11_GameViewState *state)
             &state->world.party.champions[slot];
         DM1_V1_LayoutZoneRectPc34 rect;
         DM1_ChampionPanel_IconBitmapModel model;
-        unsigned int iconPixels = 0;
+        unsigned int spritePixels = 0;
+        unsigned int mismatches = 0;
         int x, y;
         if (!champion->present || champion->hp.current == 0 ||
             !dm1_v1_champion_icon_rect_pc34(slot, &rect) ||
@@ -61,20 +72,35 @@ static int verify_saved_champion_hud_icons(M11_GameViewState *state)
                     slot);
             return 0;
         }
-        for (y = rect.y; y < rect.y + rect.h; ++y) {
-            for (x = rect.x; x < rect.x + rect.w; ++x) {
-                if (framebuffer[y * 320 + x] != (unsigned char)model.fillColor)
-                    ++iconPixels;
-            }
-        }
-        if (iconPixels == 0) {
+        if (model.applyInvisibilityPalette || rect.w < model.width ||
+            rect.h < model.height) {
             fprintf(stderr,
-                    "FAIL: authentic PC34 saved champion %d has no rendered HUD icon pixels in %d,%d %dx%d\n",
-                    slot, rect.x, rect.y, rect.w, rect.h);
+                    "FAIL: authentic PC34 saved champion %d has unsupported HUD comparison state\n",
+                    slot);
             return 0;
         }
-        printf("PASS: authentic PC34 saved champion %d HUD icon rendered %u pixels\n",
-               slot, iconPixels);
+        for (y = 0; y < model.height; ++y) {
+            for (x = 0; x < model.width; ++x) {
+                const unsigned char source = iconStrip->pixels[
+                    (model.sourceY + y) * iconStrip->width +
+                    model.sourceX + x];
+                const unsigned char expected = source == model.transparentColor
+                    ? (unsigned char)model.fillColor : source;
+                const unsigned char actual =
+                    framebuffer[(rect.y + y) * 320 + rect.x + x];
+                if (source != model.transparentColor) ++spritePixels;
+                if (actual != expected) ++mismatches;
+            }
+        }
+        if (spritePixels == 0 || mismatches != 0) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 saved champion %d HUD icon differs from GRAPHICS.DAT: sprite-pixels=%u mismatches=%u rect=%d,%d %dx%d\n",
+                    slot, spritePixels, mismatches, rect.x, rect.y,
+                    rect.w, rect.h);
+            return 0;
+        }
+        printf("PASS: authentic PC34 saved champion %d HUD icon matches GRAPHICS.DAT (%u sprite pixels)\n",
+               slot, spritePixels);
     }
     return 1;
 }
