@@ -20180,6 +20180,61 @@ static int dm2_runtime_hand_next_link(void *context, uint16_t ref,
     return 1;
 }
 
+/* skproject SKWINDOS/dm2byb.cpp::SKW_RELEASE_MINION:719,
+ * SKWINSPX/src/v4/skcrture.cpp::RELEASE_MINION:449,
+ * SKWINSPX/src/v5/SK1C9A.cpp::DM2_RELEASE_MINION:6148, and
+ * SKULLWIN/c_1c9a.cpp::DM2_RELEASE_MINION:6148 resolve the minion's
+ * missile, then dispatch the source 0x13 creature command at its map and
+ * coordinates. The source callers are dm2bye.cpp:4491, skgame.cpp:1214,
+ * skengage.cpp:624, and c_engage.cpp:625 respectively. */
+static int dm2_runtime_release_minion(void *context, uint16_t minion_record)
+{
+    DM2_RuntimeHandActivationQuery *query =
+        (DM2_RuntimeHandActivationQuery *)context;
+    DM2_V1_RuntimeState *rt;
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordChainAccess chain;
+    DM2_V1_ItemMissileReceipt missile_receipt;
+    DM2_V1_CaiiAiTurnReceipt ai_receipt;
+    uint16_t missile_ref;
+    uint16_t missile_position;
+    int map_id;
+    int x;
+    int y;
+
+    if (!query || !(rt = query->rt) || !rt->boot ||
+        !(dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !rt->caii_ready)
+        return 0;
+
+    memset(&chain, 0, sizeof(chain));
+    chain.record_word = dm2_runtime_hand_record_word;
+    chain.next_link = dm2_runtime_hand_next_link;
+    chain.context = query;
+    missile_ref = dm2_v1_GET_MISSILE_REF_OF_MINION(
+        &chain, minion_record, 0xffffu, &missile_receipt);
+    if (missile_receipt.blocked) return 0;
+    if (missile_ref == DM2_V1_ITEM_MISSILE_NULL_REF) return 1;
+    if (dm2_v1_record_handle_pool((int16_t)missile_ref) != 14 ||
+        !dm2_runtime_hand_record_word(query, missile_ref, 4u,
+                                      &missile_position))
+        return 0;
+
+    map_id = (missile_position >> 10) & 0x3f;
+    y = (missile_position >> 5) & 0x1f;
+    x = missile_position & 0x1f;
+    memset(&ai_receipt, 0, sizeof(ai_receipt));
+    if (dm2_v1_caii_ai_13e4_0360(
+            &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+            map_id, (unsigned long)rt->tick_count,
+            (int16_t)minion_record, x, y, 0x13, 1, &ai_receipt))
+        return 1;
+
+    /* The source helper is void: an absent CAII slot or an already
+     * stopping/dying minion is a no-op, not a failed hand action. */
+    return ai_receipt.no_slot || ai_receipt.guard_denied;
+}
+
 static int dm2_runtime_hand_container_type(
     DM2_RuntimeHandActivationQuery *query, uint16_t item_ref,
     uint8_t *out_type, uint8_t *out_subtype, uint16_t *out_w6,
@@ -22106,6 +22161,8 @@ int dm2_v1_runtime_proceed_hand_command(
     DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
     DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
     DM2_V1_EngageCommandRequest request;
+    DM2_V1_EngageCommandReceipt local_receipt;
+    DM2_RuntimeHandActivationQuery hand_query;
     DM2_RuntimeAttackQueueContext queue;
     DM2_RuntimeWieldContext wield;
     DM2_V1_SourceTimerQueue timer_queue_before;
@@ -22118,8 +22175,10 @@ int dm2_v1_runtime_proceed_hand_command(
     int entry;
     int result;
     int is_wield_action;
+    int is_attack_action;
 
-    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!receipt) receipt = &local_receipt;
+    memset(receipt, 0, sizeof(*receipt));
     if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
         !rt->source_aura_of_speed_valid ||
         !rt->session_snapshot_valid || !rt->record_pools_valid ||
@@ -22163,6 +22222,9 @@ int dm2_v1_runtime_proceed_hand_command(
     memset(&request, 0, sizeof(request));
     memset(&queue, 0, sizeof(queue));
     memset(&wield, 0, sizeof(wield));
+    memset(&hand_query, 0, sizeof(hand_query));
+    hand_query.rt = rt;
+    hand_query.hero_index = rt->source_party.curacthero - 1;
     if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
                                      &request.cmd.action_id)) {
         if (receipt) receipt->fail_closed = 1;
@@ -22170,13 +22232,15 @@ int dm2_v1_runtime_proceed_hand_command(
     }
     is_wield_action = request.cmd.action_id == (DM2_ENGAGE_WIELD_WEAPON + 1) ||
                       request.cmd.action_id == 8;
+    is_attack_action = request.cmd.action_id == (DM2_ENGAGE_ATTACK + 1);
     if ((!is_wield_action &&
          (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
           (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode))) ||
-        (request.cmd.action_id != (DM2_ENGAGE_ATTACK + 1) &&
+        (!is_attack_action &&
          request.cmd.action_id != (DM2_ENGAGE_CAST_MISSILE + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_WIELD_WEAPON + 1) &&
-         request.cmd.action_id != 8) ||
+         request.cmd.action_id != 8 &&
+         request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1)) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
                                      &request.cmd.skill_type) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
@@ -22246,6 +22310,16 @@ int dm2_v1_runtime_proceed_hand_command(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    if (request.cmd.action_id == (DM2_ENGAGE_RELEASE_MINION + 1)) {
+        if (dm2_v1_record_handle_pool((int16_t)item) != 9 ||
+            !dm2_runtime_hand_record_word(&hand_query, item, 2u,
+                                          &request.minion_record)) {
+            receipt->fail_closed = 1;
+            return 0;
+        }
+        request.release_minion_cb = dm2_runtime_release_minion;
+        request.release_minion_ctx = &hand_query;
+    }
     timer_queue_before = rt->timer_queue;
     attack_counter_before = rt->source_attack_counter;
     if (rt->source_party.curacthero > 0 &&
@@ -22266,8 +22340,8 @@ int dm2_v1_runtime_proceed_hand_command(
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
     if (!result || (is_wield_action
-                        ? (!receipt || !receipt->creature_attacked)
-                        : !queue.queued)) {
+                        ? !receipt->creature_attacked
+                        : (is_attack_action && !queue.queued))) {
         hero->heroflag &= (int16_t)~0x0800;
         /* ATTACK's source callback enqueues before reaching L_fin. If the
          * same dispatch is subsequently rejected as an unowned route,

@@ -458,8 +458,9 @@ int dm2_v1_engage_command(
     case 47: /* RELEASE_MINION — skengage.cpp:622-625 */
         receipt->minion_released = 1;
         if (request->release_minion_cb) {
-            request->release_minion_cb(request->release_minion_ctx,
-                                       request->minion_record);
+            if (!request->release_minion_cb(request->release_minion_ctx,
+                                            request->minion_record))
+                receipt->fail_closed = 1;
         } else {
             receipt->fail_closed = 1;
         }
