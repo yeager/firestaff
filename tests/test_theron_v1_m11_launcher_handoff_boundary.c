@@ -885,6 +885,32 @@ static void run_keyboard_arrow_forcefield_focus_regression(void) {
                 "Theron startup maps the M11 strafe-right token to menu focus-right");
 }
 
+static void run_title_start_hold_duration_regression(void) {
+    M11_TheronStartHoldState hold = {0};
+
+    M11_TheronStartHoldBegin(&hold, M11_THERON_START_HOLD_KEYBOARD,
+                             0, 1, M12_MENU_INPUT_ACTION,
+                             1000U, 0, 0);
+    expect_true(M11_TheronStartHoldEnd(&hold,
+                                      M11_THERON_START_HOLD_KEYBOARD,
+                                      0, 1, 3999U) == M12_MENU_INPUT_NONE,
+                "Theron title rejects an action held for less than three seconds");
+    M11_TheronStartHoldBegin(&hold, M11_THERON_START_HOLD_MOUSE,
+                             0, 1, M12_MENU_INPUT_ACCEPT,
+                             5000U, 120, 80);
+    expect_true(M11_TheronStartHoldEnd(&hold,
+                                      M11_THERON_START_HOLD_MOUSE,
+                                      0, 1, 7999U) == M12_MENU_INPUT_ACCEPT,
+                "Theron title accepts a mouse hold at the three-second threshold");
+    M11_TheronStartHoldBegin(&hold, M11_THERON_START_HOLD_GAMEPAD,
+                             42U, 0, M12_MENU_INPUT_ACCEPT,
+                             UINT32_MAX - 1000U, 0, 0);
+    expect_true(M11_TheronStartHoldEnd(&hold,
+                                      M11_THERON_START_HOLD_GAMEPAD,
+                                      42U, 0, 1999U) == M12_MENU_INPUT_ACCEPT,
+                "Theron title hold duration survives the host millisecond counter wrap");
+}
+
 static void run_production_forcefield_binds_selected_records_without_names(void) {
     Theron_StartupFlow flow;
     Theron_DungeonProgression progression;
@@ -989,6 +1015,7 @@ int main(void) {
     run_explicit_real_cue_campaign_if_available();
     run_production_forcefield_transition_without_roster();
     run_keyboard_arrow_forcefield_focus_regression();
+    run_title_start_hold_duration_regression();
     run_production_forcefield_binds_selected_records_without_names();
     run_real_us_roster_text_forcefield_handoff_if_available();
     run_theron_pointer_and_button_input_contract();

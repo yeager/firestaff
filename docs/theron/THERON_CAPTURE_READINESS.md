@@ -1,12 +1,92 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01.** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (reviewed; no new gameplay evidence).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-The latest authenticated JP state-only replay used five scripted controller
+Static disassembly maps the `$50D2` window and four observed map-array reader windows uniquely to authenticated JP Track 02. It shows the local checks, indirect-indexed reads, bit `$10` branches, and indexed table writes without assigning data semantics. The v4 hook has an accepted state-only UP/control pair with 946 map-array reads and same-event instruction context. The guest consumed UP at `$44C1`; one observed byte at `$0E8B14` differs from the authenticated BIN. The original target-write allowlist omitted this address, so its zero-row result was inconclusive; the rebuilt instrumenter includes it. A subsequent cold attempt did not observe the `$E11D` game handoff, any LBA 3674 data reads, or a write to `$0E8B14`. It recorded map-reader instruction contexts but no `map_array_read`; the corrected PCE Fast input verifier remains blocked on at least one event interval without a matching controller read. See the [state-only context capture](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md), [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md), and [cold capture report](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md). No cold loader provenance, active-map selection, pose-bound tile consumer, or rendered result is established.
+
+**Native title input:** Theron title accept/action inputs from keyboard, left
+mouse, and mapped gamepad are gated until the input has remained held for at
+least 3,000 ms; the action is committed on release. This is a Firestaff host
+policy, independent of the original game's four-second JP title-action
+capture. The focused unit regression covers short-hold rejection, the
+threshold, and millisecond-counter wrap; the full CTest suite passed on Linux,
+macOS, and Windows CI for PR #248. This does not establish title-timing parity
+with retail. See the
+[native input guide](theron_input.md).
+
+The follow-up manual host-key cold run confirms that active-low RUN and Button
+I reached the System Card `$E4C5` poll (46 Button I reads across 33 frames), but
+still records no `$E11D` carry branch. Those are BIOS reads, not a game-owned
+poll. Its
+independent `$4000` window is not joined to that branch, and the exact-LBA 3674
+data-port trace is empty. Structural validators pass for the available bounded
+traces, but the capture wrapper did not complete because its isolated remote
+script directory lacked one code-follow verifier. See the [host-key
+handoff report](../source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
+The wrapper now preflights that verifier before a cold PCE Fast run; the
+historical run remains rejected and still provides no game handoff.
+
+The capture wrapper now checks all required helpers for the selected PCE Fast
+mode before launching Mednafen, including optional verifiers when their
+capture flags are enabled. A staged-directory regression confirms that cold
+captures reject missing code-follow verification and state-only captures check
+their selected source-fetch verifier without requiring cold-boot helpers. This
+prevents late packaging failures; it does not establish a BIOS handoff or change
+the rejected capture's evidence.
+
+The wrapper also caps aggregate output at 1 GiB by default and supports a
+bounded `THERON_CAPTURE_MAX_OUTPUT_BYTES` override. Its live watchdog sums the
+configured trace-prefix files and optional external `$23AD` sidecar, terminates
+only the current capture process group after a limit breach, and writes a
+receipt that causes wrapper rejection. Wall-clock and individual trace limits
+remain separate controls.
+
+**Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
+
+**Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.
+
+A new isolated JP cold attempt using the CDDA-command hook was rejected: the scripted-input trace reached its 1,048,576-row cap, the callback-state trace truncated at the older binary limit of 131,072 rows, and no CDDA command sidecar was produced. The attempt does not establish a game handoff or track selection. Its private raw traces were removed. Rebuild against the current hook/verifier contract and bound the pre-game traces before another route capture; see the [current TODO](../../TODO-theron.md#2026-11-01--cdda-route-capture-rejected-before-gameplay-evidence).
+
+The instrumented Mednafen 1.32.1 PCE Fast binary has since been rebuilt from a
+clean source baseline with the current patch set and standalone SDL 2.32.10.
+The binary contains the current 524,288-row callback-state limit and CDDA
+command hook. The first isolated retry was rejected before gameplay because
+the existing authentic post-Akutuba state uses save-state sections and
+variables incompatible with this rebuilt Mednafen version. The wrapper stopped
+without a CDDA command sidecar, so this run adds no handoff or gameplay-audio
+evidence. Recreate a compatible state with this emulator or use a bounded cold
+route.
+
+The Mednafen movement-context instrumenter emits a separate
+`map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
+state-only captures do not include pre-instruction registers, fetched opcodes,
+or the PCE Fast `Page1_local` operands at the observed reader PCs. The v4 hook
+records that instruction context, including a distinct code-window peek; its
+per-kind limit
+supports up to 4096 rows and emits an explicit marker if the cap is reached.
+Three authentic JP state-only runs at that limit retained 1,677, 1,513 and
+1,556 rows without truncation. Each read byte matches the hash-verified JP
+Track 02 BIN; the captures touch 17 distinct addresses in Map 0 and Map 3.
+Map 1 and Map 2 reads were not observed during these bounded runs. This does
+not identify the active map, and the party pose, tile consumer and video state
+remain unjoined. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+and [instrumentation note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+
+The latest matched JP state-only pair loaded the same authentic Mednafen state
+with and without `up@61:120`. The UP replay verified a guest controller read at
+`$44C1` with `raw=0010`. Both movement-context captures retained 256 identical
+`movement_data_read` rows after normalizing per-run event sequence; each byte
+matches authentic JP Track 02. Those reads are in the source span before the
+map arrays, their semantics remain unknown, and neither capture recorded a
+movement-command write. Both are state-only with `transition=missing`; they do
+not prove movement, active-map selection, a rendered effect, cold handoff, or
+native parity. See the [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+
+The preceding authenticated JP state-only replay used five scripted controller
 events and verified each event reached a controller read. It recorded zero
 spawn-consumer/register entries, zero RNG samples, and no dungeon transition;
 it does not establish movement or spawn semantics. Explicit state-only PCE
@@ -17,16 +97,61 @@ autoload receipt and the remaining applicable trace schemas. The shell
 regression checks the conditional System Card hook gates. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
-The new native `--debug` receipt's modified engine and decoder translation
-units compiled in an isolated TRV2 Debug configuration. The full application
-has not been linked and no authentic runtime log has been captured, so this
-adds no gameplay evidence. Its planned fields and remaining acceptance checks
-are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+The native `--debug` spawn-source receipt is implemented and verified in three
+fresh native runtime loops per region against both authenticated raw BIN and
+split MODE1/2048 ISO Track 02 media (12 runs total). All 13 pointer/zone records
+per launch match the corresponding media projection, and every run reached
+`level-loaded=1`. The reusable verifier checks media identity, receipt
+structure, offsets, fields, static links and loaded-runtime evidence. This
+verifies bounded source diagnostics only; runtime spawn selection/semantics,
+RNG, and non-Theron log isolation remain unverified. See the
+[receipt report](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+
+The PCE Fast reference wrapper now supports the exact source-sector filter
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It gates CD data-port rows and
+FIFO-origin RAM receipts before their trace quotas; CD FIFO origin tracking
+continues across all sectors to preserve byte attribution. This is capture
+tooling only. No accepted authentic capture has exercised the filter, and
+LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
+See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The data-port verifier accepts the authenticated raw BIN and MODE1/2048 ISO
+projection, and can require complete LBA 3674 user-byte coverage for the
+descriptor/map span; see that note for the exact command and fixture boundary.
+
+The current Mednafen 1.32.1 r4 binary was rebuilt from patched source against
+standalone SDL 2.32.10; isolated startup and linked-runtime version checks
+passed. The latest visual follow-up used authentic JP media and a
+PID-targeted four-second RUN attempt, but the PCE input trace recorded only
+released-button samples. The window remained at the PC Engine Super CD-ROM
+System splash, decision/status traces had no rows, and the wrapper rejected
+the attempt because the status trace contained no `$1800` reads. This run did
+not establish title-menu readiness or a game handoff. An earlier cold run
+recorded all 15 requested host presses and active-low RUN/I samples at System
+Card poll `$E4C5`, but did not verify the `$E11D` bootstrap branch or a
+game-owned poll. That run also recorded zero CD IRQs, zero authenticated
+CD-to-RAM receipts, and no LBA 3674 data-port rows before timing out. The
+exact-LBA filter remains unexercised on an accepted game load. See the
+[PID-input capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
+[current TODO](../../TODO-theron.md), and
+[exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
+An earlier headless capture did hit the decision trace’s 2,048-row cap. The
+earlier PID-input capture did not: its decision verifier accepted 88 rows
+across six BIOS PCs, while its separate System Card status trace reached its
+65,536-row cap and recorded an explicit truncation marker. The visual
+follow-up's status trace had no rows. None of these cold attempts establishes
+a game handoff or an active-map source read.
 
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
 above or the linked project status and TODO pages.
+
+The matched trace also exposed a macOS `awk` portability error in the VCE
+write-trace validator. Replacing its multiline conditional expression with a
+standard `if/else` made the same state-only captures pass wrapper validation.
+This fixes capture acceptance on the tested macOS host; it adds no gameplay
+evidence.
 
 An authentic US standard-PCE save-state comparison maps all four US Akutuba
 arrays from the hash-verified Track 02 projection into `HuC.SysCardRAM`.
@@ -43,7 +168,7 @@ regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
 later-dungeon runtime, and both regions' keyboard/SDL input routes. The longer
 SDL route includes mouse-panel and touch input, movement, wait, champion
 selection, and the US item interaction sequence. These tests establish those
-bounded routes only; they do not close the gameplay-parity gaps below. A newer authentic US cold Drator replay exercised the independent instruction
+bounded routes only; they do not close the gameplay-parity gaps below. A separate native macOS Debug run of the US event-loop suite passed three consecutive times against hash-verified authentic Track 02 (MD5 `f23601102138f87c33025877767ebf76`; 348.18 seconds total); see the [run receipt](../source-lock/theron-native-sdl-input-real-media-20261101.md). A newer authentic US cold Drator replay exercised the independent instruction
 window and observed `$C852` → `$C85E` `JSR $5039` → `$5039` in order. Its
 first five `$C852` 512-byte windows match US Track 02 at raw offset `$A3AD2`;
 the live `$5039` bytes (`44 05 86`) differ from the old static stage-two
@@ -487,6 +612,14 @@ all three scripted inputs at System Card controller polls, but observes no non-S
 poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
+
+A separate authentic JP state-only code-follow trace reaches `$D515`, but its
+indexed record yields `$FF` and branches around the `$D530` call to `$D588`.
+It has one controller event at `$44D2`, no mouse-coordinate receipt, and no
+cold CD-to-RAM provenance; the seven identical Track 02 copies remain
+ambiguous. The next pointer trace must produce the `$D530` → `$D588` path and
+join its result to the Button-I consumer before native world clicks can be
+enabled. See the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
 
 A separate US saved-state PCE Fast run loaded its existing state and recorded
 scripted input-apply events. Its shared input trace contains 1,354

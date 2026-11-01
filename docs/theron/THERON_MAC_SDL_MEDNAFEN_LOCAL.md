@@ -24,10 +24,22 @@ The cold JP reference route needed a four-second RUN hold at the System Card
 prompt. A separate authentic capture confirms four-second Button I holds on
 NEW GAME and FILE 1 enter the Akutuba story. Its `.mc0` snapshot is not in-game
 BRAM; the captured 2 KiB BRAM remains identical to the known empty JP slot.
-Native Firestaff hold timing, US title-action timing, and positive JP progress
-saving remain unverified. See the
+Firestaff applies a verified three-second host-side hold for native title
+accept/action inputs; whether that timing matches retail remains unverified.
+US title-action timing and positive JP progress saving also remain unverified.
+See the
 [source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [empty-BRAM boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
+
+The latest visual follow-up remained at the PC Engine Super CD-ROM System
+splash after a PID-targeted four-second RUN attempt. The PCE input trace
+contained only released-button samples, and the wrapper rejected the run
+because the System Card status trace had no `$1800` reads. An earlier cold
+attempt did record 15 PID-bound presses and active-low RUN/I at poll `$E4C5`,
+but no verified `$E11D` handoff, game-owned poll, CD IRQ, authenticated
+CD-to-RAM receipt, or LBA 3674 read. Neither capture establishes whether the
+sector is used by a successful game load. See the
+[capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md).
 
 ## Capture requirements
 
@@ -52,6 +64,14 @@ dependencies and do not prove game semantics by themselves. Consult the
 dated reports linked from [capture readiness](THERON_CAPTURE_READINESS.md)
 for exact options, hashes and result scope; machine-specific retired paths
 are intentionally not reproduced here.
+
+The live-capture wrapper enforces an aggregate output budget of 1 GiB by
+default. `THERON_CAPTURE_MAX_OUTPUT_BYTES` can set a positive limit from 1 MiB
+through 1 TiB. The watchdog totals regular files with the configured trace
+prefix and any separately configured `$23AD` trace; if the budget is exceeded,
+it stops only that capture process group, leaves a `.output-budget-exceeded`
+receipt, and rejects the package. This byte cap complements the wall-clock and
+per-trace row limits; it does not make a truncated capture admissible.
 
 Greatstone's Theron material concerns CSBWin custom-dungeon conversion and is
 not PC Engine retail game data. DMWeb supplies edition and manual context.

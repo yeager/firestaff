@@ -25,6 +25,15 @@ if ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-p
     printf '%s\n' 'FAIL: live capture did not explain the invalid System Card I/O/RAM PC filter' >&2
     exit 1
 fi
+if invalid_output_budget=$(env THERON_CAPTURE_MAX_OUTPUT_BYTES=1024 "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an output budget below 1 MiB' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_MAX_OUTPUT_BYTES must be an integer from 1048576 through 1099511627776' \
+    <<<"$invalid_output_budget"; then
+    printf '%s\n' 'FAIL: invalid output budget lacked a precise diagnostic' >&2
+    exit 1
+fi
 if invalid_spawn_filter_output=$(env THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=unknown \
     "$script" 2>&1); then
     printf '%s\n' 'FAIL: live capture accepted an unknown spawn-consumer PC filter' >&2
@@ -138,6 +147,25 @@ fi
 if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     "$host_key_gate_dir/press-gate.sh" "$host_key_gate_dir/input.trace" 2>/dev/null; then
     printf '%s\n' 'FAIL: an unmatched key-down was counted as a complete host key press' >&2
+    exit 1
+fi
+sed -n '/^wait_for_trace_producer() {/,/^}/p' "$script" \
+    >"$host_key_gate_dir/trace-producer-gate.sh"
+printf '%s\n' \
+    'source=mednafen-pce-fast-instrumented-input event_sequence_source=TheronTraceCDSharedEventSequence' \
+    >"$host_key_gate_dir/trace-producer.trace"
+if ! bash -c 'source "$1"; wait_for_trace_producer "$2" 1 "$3"' _ \
+    "$host_key_gate_dir/trace-producer-gate.sh" \
+    "$host_key_gate_dir/trace-producer.trace" \
+    'source=mednafen-pce-fast-instrumented-input'; then
+    printf '%s\n' 'FAIL: trace producer gate rejected a valid source marker with schema metadata' >&2
+    exit 1
+fi
+if bash -c 'source "$1"; wait_for_trace_producer "$2" 1 "$3"' _ \
+    "$host_key_gate_dir/trace-producer-gate.sh" \
+    "$host_key_gate_dir/trace-producer.trace" \
+    'source=mednafen-standard-pce-instrumented-input'; then
+    printf '%s\n' 'FAIL: trace producer gate accepted a non-matching source marker' >&2
     exit 1
 fi
 state_autoload_gate="$host_key_gate_dir/autoload-gate.sh"
@@ -269,6 +297,39 @@ cd_filter_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" 
 }
 if [[ "$cd_filter_valid_output" != *'SKIP:'* ]]; then
     printf '%s\n' 'FAIL: valid CD data-read settings did not reach the missing-media gate' >&2
+    exit 1
+fi
+exact_lba_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=4294967296 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: out-of-range exact source LBA was accepted' >&2
+    exit 1
+}
+if [[ "$exact_lba_invalid_output" != *'THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295'* ]]; then
+    printf '%s\n' 'FAIL: invalid exact source LBA lacked a precise diagnostic' >&2
+    exit 1
+fi
+exact_lba_module_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: exact source-LBA filtering accepted the standard PCE module' >&2
+    exit 1
+}
+if [[ "$exact_lba_module_output" != *'exact source-LBA filtering requires the PCE Fast module'* ]]; then
+    printf '%s\n' 'FAIL: exact source-LBA module gate lacked a precise diagnostic' >&2
+    exit 1
+fi
+exact_lba_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=0003674 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid exact source-LBA filter was rejected' >&2
+    exit 1
+}
+if [[ "$exact_lba_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid exact source-LBA filter did not reach the missing-media gate' >&2
     exit 1
 fi
 cd_ram_write_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
@@ -786,7 +847,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input at the read-trace cap was accepted without a later CPU read' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
+if ! grep -Eq 'final scripted event frame [0-9]+ had no controller-port read exposing its scripted mask' \
     "$input_test_dir/capped.stderr"; then
     printf '%s\n' 'FAIL: capped scripted input rejection lacked a precise diagnostic' >&2
     exit 1
@@ -802,7 +863,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted input without a controller-port read was accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame had no controller-port read exposing its scripted mask' \
+if ! grep -Eq 'final scripted event frame [0-9]+ had no controller-port read exposing its scripted mask' \
     "$input_test_dir/unconsumed.stderr"; then
     printf '%s\n' 'FAIL: unconsumed scripted input rejection lacked a precise diagnostic' >&2
     exit 1
@@ -904,7 +965,7 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: controller polling without a scripted apply receipt was accepted' >&2
     exit 1
 fi
-if ! grep -Fq 'final scripted event frame has no nonzero apply receipt' \
+if ! grep -Eq 'final scripted event frame [0-9]+ has no nonzero apply receipt' \
     "$input_test_dir/no-apply.stderr"; then
     printf '%s\n' 'FAIL: scripted apply rejection lacked a precise diagnostic' >&2
     exit 1
@@ -2041,6 +2102,86 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
     printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
     exit 1
 fi
+helper_preflight_dir=$(mktemp -d "$repo/build/theron-capture-helper-preflight.XXXXXX")
+cp -p "$script" \
+    "$repo/scripts/theron_x11_keymap.sh" \
+    "$repo/scripts/prepare_theron_authentic_bram.sh" \
+    "$repo/scripts/watch_theron_capture_output_budget.py" \
+    "$repo/scripts/verify_theron_stage2_system_card_call_trace.sh" \
+    "$repo/scripts/verify_theron_syscard_status_trace.py" \
+    "$repo/scripts/verify_theron_syscard_callback_state_trace.py" \
+    "$repo/scripts/verify_theron_syscard_io_ram_trace.py" \
+    "$repo/scripts/verify_theron_syscard_decision_trace.py" \
+    "$repo/scripts/verify_theron_jp_syscard_bootstrap_follow.py" \
+    "$helper_preflight_dir/"
+mv "$helper_preflight_dir/capture_theron_mednafen_live_trace.sh" \
+    "$helper_preflight_dir/capture.sh"
+if helper_preflight_output=$(env \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/trace" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: cold PCE Fast capture started without its code-follow verifier' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast cold capture is missing required helper(s):' \
+    <<<"$helper_preflight_output" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_output" ||
+   grep -Fq 'Mednafen executable was not found' <<<"$helper_preflight_output"; then
+    printf '%s\n' 'FAIL: cold PCE Fast helper preflight did not report the missing verifier before emulator setup' >&2
+    printf '%s\n' "$helper_preflight_output" >&2
+    exit 1
+fi
+if helper_preflight_pointer_output=$(env \
+    -u THERON_CAPTURE_MEDNAFEN_MODULE \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/pointer-trace" \
+    THERON_CAPTURE_POINTER_C1DF_TRACE=1 \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: pointer-trace cold capture bypassed the PCE Fast helper preflight' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast cold capture is missing required helper(s):' \
+    <<<"$helper_preflight_pointer_output" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_pointer_output" ||
+   grep -Fq 'Mednafen executable was not found' \
+    <<<"$helper_preflight_pointer_output"; then
+    printf '%s\n' 'FAIL: pointer-trace mode did not preflight PCE Fast dependencies before emulator setup' >&2
+    printf '%s\n' "$helper_preflight_pointer_output" >&2
+    exit 1
+fi
+if helper_preflight_state_output=$(env \
+    MEDNAFEN_BIN=/bin/true \
+    THERON_CUE="$helper_preflight_dir/authentic.cue" \
+    THERON_SYSTEM_CARD="$helper_preflight_dir/authentic.syscard" \
+    THERON_LIVE_TRACE_OUTPUT="$helper_preflight_dir/state-trace" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_STATE_TRACE_ONLY=1 \
+    THERON_CAPTURE_AUTOLOAD_STATE="$helper_preflight_dir/authentic.mc0" \
+    THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    "$helper_preflight_dir/capture.sh" 2>&1); then
+    printf '%s\n' 'FAIL: state-only source-verification capture bypassed its selected helper preflight' >&2
+    exit 1
+fi
+if ! grep -Fq 'PCE Fast state capture is missing required helper(s):' \
+    <<<"$helper_preflight_state_output" ||
+   ! grep -Fq 'verify_theron_pce_fast_code_fetch_source.py' \
+    <<<"$helper_preflight_state_output" ||
+   grep -Fq 'verify_theron_jp_code_follow_trace.py' \
+    <<<"$helper_preflight_state_output" ||
+   grep -Fq 'Mednafen executable was not found' \
+    <<<"$helper_preflight_state_output"; then
+    printf '%s\n' 'FAIL: state-only preflight did not check selected helpers without requiring cold-boot verifiers' >&2
+    printf '%s\n' "$helper_preflight_state_output" >&2
+    exit 1
+fi
 source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
 writer_pc_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_writer_pc_trace.patch"
 if [[ ! -f "$writer_pc_trace_patch" ]] ||
@@ -2556,5 +2697,6 @@ if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_
 fi
 
 python3 "$repo/tests/test_verify_theron_pce_fast_code_fetch_source.py"
+python3 "$repo/tests/test_theron_capture_output_budget.py"
 
 printf 'PASS: live capture script requires explicit authentic inputs\n'

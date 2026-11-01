@@ -49128,6 +49128,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_stage2_instruction_snapshot_source.py
     )
     add_test(
+        NAME theron_jp_cd_data_port_trace_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_cd_data_port_trace.py
+    )
+    add_test(
         NAME theron_v1_mednafen_pce_fast_vram_commit_patch
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh
     )

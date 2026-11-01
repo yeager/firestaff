@@ -48,6 +48,32 @@ does not join a cold CD handoff, decode VRAM semantics, prove a visible input
 effect, or establish native parity. See the
 [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
+**JP candidate map-index disassembly (2026-11-01):** the authentic state
+contains a unique code window at `$50D2`; a bounded trace observes reads from
+a candidate four-list structure at the end of the unclassified `thing_list`
+region. Its role, active-map relation and tile consumer are not established;
+no rendered result is established.
+See the [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+
+**JP map-array reads (2026-11-01):** three authentic state-only captures
+recorded 1,677, 1,513 and 1,556 reads from the parser-established arrays.
+They touched 17 source-matched byte addresses in Map 0 and Map 3 without
+reaching the 4096-row cap. Static raw-BIN windows decode the reader PCs as
+three `LDA ($14),Y` accesses and one `ADC $6DF6,X`; the earlier captures lack
+same-event registers and fetched opcode bytes. The compiled v4 hook records
+opcode/register context, page-1 operands and MPRs, but has not yet produced a
+gameplay trace. This does not establish active-map selection or rendering. See
+the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+and [tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+
+**Matched JP input/data-read update (2026-11-01):** a verified state-only UP
+replay read the scripted mask at `$44C1`; its matched no-input control and UP
+trace each retained 256 identical data-read rows, all matching authentic JP
+Track 02 bytes. The reads are before the map arrays and no movement-command
+write was observed. This does not identify the reader's data, the active map,
+player movement, or a rendered result. Both traces report
+`transition=missing`. See the [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+
 Native direct launch enters the Theron title/startup path without Firestaff's
 Run menu or a System Card. The Debug boot-probe receipt remained at
 `levelLoaded=0`; it does not establish Track 02 dungeon loading or gameplay.
@@ -69,26 +95,40 @@ runtime pointer selection, JP category semantics, a spawn/RNG consumer,
 creature generation, or combat. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-**Planned native debug receipt (2026-11-01):** Firestaff is planned to expose
-the already-bound pointer and zone records through bounded `--debug` output.
-The engine and decoder translation units compile in an isolated TRV2 Debug
-configuration, but the full application has not been linked and no native
-receipt has been observed. It does not prove runtime selection or creature
-spawning. Its raw-field contract and acceptance checks are recorded in the
+**Native debug receipt (2026-11-01):** three native JP and three native US
+runtime loops emitted the bounded `--debug` receipt from authentic raw Track
+02 BINs, then three additional loops per region from authenticated split
+MODE1/2048 ISO images. All twelve runs reached a loaded level and every
+reported header, offset, pointer, zone field and static link matched the
+corresponding independently verified media projection. This does not prove
+original runtime selection or creature spawning. The per-run verification is documented in the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
 opt-in System Card `run-path` PC filter for `$EA4D`, `$EA50`, `$E162` and
 callback `$2259`. Instrumenter, streaming verifier and wrapper regressions
-passed three loops, but no original-game run has used this filter yet. The
-current BIOS capture remains truncated; this tooling update adds no gameplay
-or handoff evidence. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+passed three loops. A later authentic US cold capture used this filter, but
+the wrapper rejected the package because trace caps were reached and live
+`$45C3` windows failed source validation. This adds no accepted handoff or
+gameplay evidence. See the [ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md)
+and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 An additional opt-in PCE Fast `drator-row` filter retains only the observed US
 consumer reads at `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3` for physical row bytes
 `$1F093B-$1F093D`. Its address-only receipt is parser-checked and does not
-identify row fields or semantics. Three focused tooling loops passed, but no
-authentic replay has used this filter; the truncated capture remains rejected.
+identify row fields or semantics. Three focused tooling loops passed; a later
+authentic US cold capture used this filter but was rejected because trace caps
+were reached and live `$45C3` windows failed source validation. The capture
+adds no accepted handoff or gameplay evidence. See the
+[ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
+
+The source-sector planner maps JP Akutuba's descriptor and maps to disc LBA
+3674. The reference capture wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` and gates CD data-port rows and
+FIFO-origin RAM receipts before their quotas. It leaves the full FIFO origin
+sequence intact. This is an instrumentation filter, not a source-to-consumer
+proof; no accepted authentic capture has exercised it yet. See the
+[exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 **Current reference boundary (2026-10-31):** a separate authentic Japanese
 cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`

@@ -45,9 +45,22 @@ fifo_origin_main_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_fif
 fifo_origin_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer.patch
 main_ram_e009_return_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_return_trace.patch
 fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
+indirect_jump_follow_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch
 later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
+
+if ! grep -Fq 'fflush(TheronIndirectJumpTraceFile);' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq '+ TheronTraceIndirectJumpFollowArm(target, event_sequence);' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq $'+\t  TheronTraceIndirectJumpFollowFetch();' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'theron-pce-fast-indirect-jump-follow.rendered.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   grep -Fq '@@ -1161 +1162' "$indirect_jump_follow_patch_file"; then
+    printf '%s\n' 'FAIL: indirect-jump follow hook must anchor after its dispatch trace, not a line-number-only brace' >&2
+    exit 1
+fi
+
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 fast_ram_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch
 fast_vdc_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch
@@ -597,6 +610,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint8 ret = PCECD_Drive_GetDB();' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'source_lba >= track02_start_lba && source_lba < track02_end_lba' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVWRTraceGateOpen = true' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'bool TheronTracePCEFastVWRTraceGateOpen = false' "$cd_shared_event_patch_file" ||
@@ -648,6 +662,23 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
     printf '%s\n' 'FAIL: PCE Fast CD RAM target-write provenance trace is missing or not wired into live capture' >&2
     exit 1
 fi
+if ! awk '
+    /static void TheronTraceCDDataPortRead\(/ { in_reader = 1 }
+    in_reader && /TheronTracePCEFastVWRTraceGateOpen = true/ { gate = NR }
+    in_reader && /if\(exact_source_lba_requested &&/ {
+        if (!gate || gate >= NR) exit 1
+        exact_filter = NR
+    }
+    in_reader && /if\(count >= trace_limit\)/ {
+        if (!gate || gate >= NR) exit 1
+        count_limit = NR
+    }
+    in_reader && /^ static INLINE uint8 read_1808/ { in_reader = 0 }
+    END { if (!exact_filter || !count_limit) exit 1 }
+' "$cd_ram_target_write_patch_file"; then
+    printf '%s\n' 'FAIL: trace filters must not prevent the Track 02 VRAM gate from opening' >&2
+    exit 1
+fi
 if ! grep -Fq 'trace_files_are_line_delimited "$trace" "$cd_trace"' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: PCE Fast runtime window trace is not checked for line-delimited records' >&2
@@ -668,6 +699,8 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'fifo_origin_main_ram_consumer_v2.patch' "$build_script" ||
    ! grep -Fq 'TheronSCSIQueueDataOrigin' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'SCSICD_GetLastDataOrigin' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'TheronPCECDExactLBAAllowed(source_lba)' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA' "$fifo_origin_v2_patch_file" ||
    ! grep -Fq 'pce_cd_origin_ram_receipt source_lba=%u source_offset=%u' "$fifo_origin_v2_patch_file"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
     exit 1

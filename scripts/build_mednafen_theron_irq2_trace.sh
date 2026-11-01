@@ -438,8 +438,14 @@ fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_indirect_jump_trace.py" \
     "$build_root/source" \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
+pce_fast_indirect_jump_follow_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+pce_fast_indirect_jump_follow_rendered="$build_root/theron-pce-fast-indirect-jump-follow.rendered.patch"
+sed \
+    -e 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^ FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' \
+    "$pce_fast_indirect_jump_follow_patch" > "$pce_fast_indirect_jump_follow_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+    < "$pce_fast_indirect_jump_follow_rendered"
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_indirect_jump_follow_declaration.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_callback_state_trace.py" \

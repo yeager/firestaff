@@ -41,15 +41,20 @@ been observed in the same run.
 
 ## Capture use and limits
 
-Use disc LBA 3674 (or the equivalent Track 02 file-sector/user-byte range) as
-the narrow source-read filter for a cold JP capture. Preserve a shared event
-sequence from the read through its System Card or game-owned RAM destination,
-the active-map selection, and a tile read at the captured pose; pair it with
-atomic VDC/VCE/VRAM and an accepted-input/no-input control. A static media
-location does not show that the original reads, selects, copies, or consumes
-these bytes. It does not identify a runtime map, player coordinate, visual
-meaning, or renderer behavior. Current cold JP RUN captures stop in the System
-Card and report `transition=missing`, so no such game-owned join is claimed.
+The reference wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` for this target. It gates the
+CD data-port and FIFO-origin RAM receipt sidecars before their quotas while
+retaining FIFO origin tracking for all sectors. See the
+[implementation note](../theron-jp-akutuba-exact-lba-capture-tool-20261101.md)
+for its validation and limits. Preserve a shared event sequence from the
+filtered read through its System Card or game-owned RAM destination, the
+active-map selection, and a tile read at the captured pose; pair it with atomic
+VDC/VCE/VRAM and an accepted-input/no-input control. The exact-LBA filter alone
+does not show that the original selects or consumes these bytes. It does not
+identify a runtime map, player coordinate, visual meaning, or renderer
+behavior. No accepted authentic capture has exercised the new filter, and
+current cold JP RUN captures stop in the System Card and report
+`transition=missing`, so no game-owned join is claimed.
 
 Recompute the authentic-media target with:
 
@@ -117,6 +122,11 @@ and SAT SHA-256
 `46f243e653e59d5558b831051ed9ff4dd9cf70498115b1a5ab02eaa1847b1fb4`. The
 snapshot is suitable for later state-bound capture analysis, but it does not
 identify the active map, party pose, tile read, or Firestaff's production
-renderer input. The next reference trace must observe the game after state
-load, including any remapping or copy, active selector, and pose-bound tile
-consumer, before changing native rendering.
+renderer input. A separate state-only trace observes a `$50D2` code path
+reading bytes from a candidate pointer-like structure at the tail of
+`thing_list`; this does not identify the active selector or establish a
+map-array consumer. See the
+[candidate reader disassembly](theron-jp-akutuba-map-index-reader-20261101.md).
+The next reference trace must observe the game after state load, including any
+remapping or copy, active selector, and pose-bound tile consumer, before
+changing native rendering.
