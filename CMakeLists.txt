@@ -7194,10 +7194,11 @@ list(REMOVE_ITEM M10_SOURCES
 # `dm2_v1_runtime_narrow_pc34_compat.c` is a disconnected callback audit.
 # In particular, its `DM2_hero_39796` stand-in is not the original name-entry
 # UI at c_hero.cpp:464, and several moverec/light symbols have real, separate
-# implementations.  Do not let the broad glob choose an arbitrary test stub
-# for a production DM2 session; its two unit targets compile it explicitly.
+# implementations. DM2_CHANGE_PLAYER_POS is split into its own production
+# source because the active M11 runtime calls that one transaction.
 list(REMOVE_ITEM M10_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_change_player_pos_pc34_compat.c")
 # `dm2_v1_runtime_parity_pc34_compat.c` contains callback-only timer, record,
 # creature and actuator transcripts with no live DB/CCM owner.  Its sole
 # production requirement, the ddat global-variable store, is split into

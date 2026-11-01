@@ -641,7 +641,9 @@ int dm2_v1_events_30dea(
 
     r.handled = 1;
     if (receipt) *receipt = r;
-    return destroyed ? 0 : 1;
+    /* Both the DOS R_30DEA adapter and SKULLWIN/SPX v5 return the zero-charge
+     * flag. PROCEED_COMMAND_SLOT uses that true result to clear v1e0adc. */
+    return destroyed;
 }
 
 /* ---- DM2_events_443c_0434 (c_events.cpp:3958) ---- */

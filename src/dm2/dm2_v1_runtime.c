@@ -165,6 +165,15 @@ struct DM2_V1_RuntimeState {
     uint8_t source_hero_ench_countdown;
     int16_t source_hero_ench_target;
     uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
+    /* SKWINDOS/dm2bya.cpp::SKW_PROCEED_COMMAND_SLOT and
+     * SKWINSPX/src/v5/skevents.cpp::DM2_PROCEED_COMMAND_SLOT use one
+     * eight-byte v1e0adc record per hero and hand. Keep the fields consumed
+     * by that transaction as values instead of depending on host layout. */
+    struct {
+        uint16_t random_range;
+        uint16_t remaining;
+        uint8_t consume_chance;
+    } source_command_hand[DM2_MAX_HEROES][2];
     /* c_events.cpp/startend.cpp savegames1.b_04: Aura of Speed. */
     uint8_t source_aura_of_speed;
     int source_aura_of_speed_valid;
@@ -5105,6 +5114,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
 
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
     rt->source_party = candidate->party;
+    memset(rt->source_command_hand, 0, sizeof(rt->source_command_hand));
     rt->source_party_valid = 1;
     rt->source_next_champion_number = candidate->source_next_champion_number;
     rt->source_hero_ench_countdown = candidate->source_savegames1_valid &&
@@ -21695,6 +21705,94 @@ static int dm2_runtime_query_cmd_field(
     return 1;
 }
 
+/* Apply the charge half of SKW_PROCEED_COMMAND_SLOT /
+ * DM2_PROCEED_COMMAND_SLOT after its source-owned chance gate. The charge
+ * transaction is DM2_events_30DEA: c_events.cpp:2903 (SKULLWIN),
+ * SKWINSPX/src/v5/map.cpp:3203, and SKWINDOS/dm2bya.cpp:2273. */
+static int dm2_runtime_consume_hand_command_charge(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand, uint16_t item,
+    uint8_t cls1, uint8_t cls2, int16_t charge_type,
+    int *out_depleted)
+{
+    DM2_V1_Hero *hero;
+    const DM2_V1_AssetLoader *loader;
+    uint8_t *record;
+    uint16_t w2_before;
+    uint16_t w2;
+    uint16_t remaining;
+    uint16_t dbspec;
+    uint16_t charge_delta;
+    int16_t charge_delta_signed;
+    int db_type;
+    DM2_V1_SkprojectItemChargeReceipt charge_receipt;
+
+    if (out_depleted) *out_depleted = 0;
+    if (!rt || !rt->source_party_valid || !rt->record_pools_valid ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hand < 0 || hand > 1 || item == 0xffffu ||
+        (uint16_t)rt->source_party.hero[hero_index].item[hand] != item ||
+        !(loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL) ||
+        !(record = dm2_v1_record_pool_address_mut(&rt->record_pools, item)))
+        return 0;
+    db_type = dm2_v1_record_handle_pool((int16_t)item);
+    if (db_type < 0 || db_type > 0xff ||
+        dm2_v1_record_pool_record_size(db_type) < 6)
+        return 0;
+
+    if (charge_type == 0x10) charge_type = 0x0f;
+    w2_before = dm2_runtime_record_rd16(rt, record + 4);
+    w2 = w2_before;
+    if (charge_type != 0x11 && charge_type != 0x12) {
+        /* The source negates this field at 16-bit width. */
+        charge_delta = (uint16_t)(0u - (uint16_t)charge_type);
+        charge_delta_signed = charge_delta <= INT16_MAX
+            ? (int16_t)charge_delta
+            : (int16_t)((int32_t)charge_delta - 65536);
+        (void)dm2_v1_skproject_add_item_charge(
+            item, &w2, charge_delta_signed, &charge_receipt);
+        if (!charge_receipt.valid) return 0;
+        dm2_runtime_record_wr16(rt, record + 4, w2);
+    }
+    (void)dm2_v1_skproject_add_item_charge(item, &w2, 0,
+                                           &charge_receipt);
+    if (!charge_receipt.valid) {
+        dm2_runtime_record_wr16(rt, record + 4, w2_before);
+        return 0;
+    }
+    remaining = charge_receipt.new_charge;
+    if (remaining != 0u) return 1;
+    if (out_depleted) *out_depleted = 1;
+
+    /* QUERY_GDAT_DBSPEC_WORD_VALUE(item, 0) controls source destruction.
+     * Validate the live GDAT lookup separately because zero is a valid word. */
+    if (!dm2_v1_query_gdat_entry_data_index(
+            loader, cls1, cls2, 11, 0, &dbspec)) {
+        dm2_runtime_record_wr16(rt, record + 4, w2_before);
+        return 0;
+    }
+    if ((dbspec & 0x0800u) == 0u) return 1;
+
+    hero = &rt->source_party.hero[hero_index];
+    {
+        DM2_V1_Hero hero_before = *hero;
+        DM2_V1_ProcessItemBonusReceipt bonus_receipt;
+        hero->item[hand] = (int16_t)-1;
+        if (!dm2_v1_process_source_item_bonus_for_timer(
+                hero, (int16_t)hero_index, item, (int16_t)hand, -1,
+                &rt->record_pools, loader, &bonus_receipt) ||
+            !dm2_v1_record_pool_dealloc_record(
+                &rt->record_pools, (int16_t)item)) {
+            *hero = hero_before;
+            dm2_runtime_record_wr16(rt, record + 4, w2_before);
+            return 0;
+        }
+    }
+    rt->champion_inventory_objects[hero_index][hand] = 0xffffu;
+    dm2_runtime_copy_source_hero_to_snapshot(
+        &rt->session_snapshot, hero_index, hero);
+    return 1;
+}
+
 static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record);
 static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record);
 static int16_t dm2_runtime_attack_dbspec_index(
@@ -22392,6 +22490,8 @@ int dm2_v1_runtime_proceed_hand_command(
     uint8_t cls1 = 0xffu;
     uint8_t cls2 = 0xffu;
     int16_t where;
+    int16_t charge_type;
+    int16_t repeat_count;
     int entry;
     int result;
     int is_wield_action;
@@ -22475,6 +22575,10 @@ int dm2_v1_runtime_proceed_hand_command(
                                      &request.cmd.defense_class) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 9,
                                      &request.cmd.skill_exp) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 8,
+                                     &charge_type) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 14,
+                                     &repeat_count) ||
         ((!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
                                        &request.cmd.damage_type)) &&
          request.cmd.action_id != 8)) {
@@ -22560,6 +22664,48 @@ int dm2_v1_runtime_proceed_hand_command(
     }
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
+    {
+        int active_hero = rt->source_party.curacthero - 1;
+        int hand = rt->source_party.curactmode;
+        int depleted = 0;
+        int consume_charge;
+        /* c_engage.cpp writes field 14 to v1e0adc[hero][hand].w2 after a
+         * successful command, and seeds w0/b4 only for a nonzero value.
+         * DOS R_30DEA and SPX v5 DM2_events_30DEA then consume on w2 == 0,
+         * or on RAND16(w0 + 1) == 0 when b4 is set. */
+        if (result) {
+            rt->source_command_hand[active_hero][hand].remaining =
+                (uint16_t)repeat_count;
+            if (repeat_count != 0) {
+                rt->source_command_hand[active_hero][hand].random_range =
+                    (uint16_t)repeat_count;
+                rt->source_command_hand[active_hero][hand].consume_chance = 1u;
+            }
+        }
+        consume_charge =
+            rt->source_command_hand[active_hero][hand].remaining == 0u;
+        if (!consume_charge &&
+            rt->source_command_hand[active_hero][hand].consume_chance) {
+            uint16_t range = rt->source_command_hand[active_hero][hand]
+                                 .random_range;
+            consume_charge = dm2_v1_drops_rand16(
+                &rt->session_rng, (uint16_t)(range + 1u)) == 0u;
+        }
+        if (consume_charge) {
+            if (!dm2_runtime_consume_hand_command_charge(
+                    rt, active_hero, hand, item, cls1, cls2,
+                    charge_type, &depleted)) {
+                receipt->fail_closed = 1;
+            } else if (depleted) {
+                memset(&rt->source_command_hand[active_hero][hand], 0,
+                       sizeof(rt->source_command_hand[active_hero][hand]));
+            }
+        }
+        /* The source event keeps the magical-map hand bit only while a map
+         * flag is active; M11 redraw owns the corresponding panel refresh. */
+        if (rt->source_v1e0b62 != 0)
+            rt->source_v1e0b62 &= (int16_t)~0x0400;
+    }
     action_postcondition =
         (!is_wield_action || receipt->creature_attacked ||
          receipt->door_attacked) &&
