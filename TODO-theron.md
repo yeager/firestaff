@@ -14,19 +14,18 @@ verify the `$E11D` bootstrap branch or a game-owned poll; it recorded zero CD
 IRQs, zero authenticated CD-to-RAM receipts, and no LBA 3674 data-port rows
 before timing out.
 
-A source-locked disassembly maps the `$50D2` reader window to a unique authentic JP Track 02 occurrence and documents a candidate four-list index region. Three state-only captures now observe dynamic reads from 17 source-matched bytes in Map 0 and Map 3. Static state windows matched to authentic source decode `$50FE`, `$4FFC`, and `$4FD4` as `LDA ($14),Y` and `$AE66` as `ADC $6DF6,X`; the capture still lacks same-event registers and fetched opcode bytes. No list role, active-map selection or pose-bound tile consumer is established. Preserve the candidate fields as opaque. See the [reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [map-array capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
+A source-locked disassembly maps the `$50D2` reader window and all four observed map-array reader windows to unique occurrences in authenticated JP Track 02. The source windows now decode the local paths around `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`; bit `$10` branches and table writes are visible, but no field or table semantics are assigned. Three earlier state-only captures observe 17 source-matched bytes in Map 0 and Map 3 and lack same-event registers/opcode records. The compiled v4 hook now records that instruction context, but has not yet produced an authentic gameplay trace. No list role, active-map selection or pose-bound tile consumer is established. Preserve candidate fields as opaque. See the [reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [map-array capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 
-The instrumenter supports a 4096-row cap and emits a truncation marker. The
-three runs did not hit that cap; raw trace files remain outside Git. Static
-source windows now decode the observed PCs: `$50FE`, `$4FFC` and `$4FD4` are
-`LDA ($14),Y`; `$AE66` is `ADC $6DF6,X`. Extend the isolated reference trace
-to capture fetched opcode bytes and pre-instruction A/X/Y/P at those PCs and
-at `$50D2/$50D6/$4FA7`, plus the `Page1_local` operand bytes `$14..$15` and
-`$2A..$33` that Mednafen 1.32.1's `GetIY` and direct-page handlers actually read.
-`Page1_local` follows MPR[1], so do not label those samples as MPR[0] reads.
-Also record `HuCPU.ZNFlags` if reconstructing architectural N/Z flags. Then join
-map selection, pose-bound
-tile consumption, and atomic VDC/VCE/VRAM output in one session. See the
+The existing instrumenter supports a 4096-row cap and emits a truncation
+marker. The three state-only runs did not hit that cap; raw traces remain
+outside Git. Static raw-BIN windows now disassemble the observed local reader
+paths. Build and run the v4 reference hook against an authentic JP state with
+input, retaining opcode-fetch PC/opcode, A/X/Y/P locals, `HuCPU.ZNFlags`,
+Page1 operands `$14..$15` and `$2A..$33`, MPR mapping, and bounded code-window
+peeks at `$50D2/$50D6/$4FA7`, `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`. `Page1_local`
+follows MPR[1], so do not label those samples as MPR[0] reads. Then join map
+selection, pose-bound tile consumption, and atomic VDC/VCE/VRAM output in one
+session. See the
 [capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
 and [instrumentation note](docs/source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 

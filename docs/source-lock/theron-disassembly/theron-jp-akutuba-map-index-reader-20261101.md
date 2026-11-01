@@ -99,16 +99,19 @@ rendered response. See the [matched input/data-read report](theron-jp-state-only
 
 The source table and code bytes are authentic and uniquely matched as stated
 above. The relation between the reader, the pointer-like `thing_list` tail,
-and a map cell remains a candidate. A later three-run state-only capture recorded reads in Map 0 and Map 3 from PCs `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`; the dynamic bytes match the authentic BIN source. The `$50FE` PC lies within the uniquely source-matched `$50D2` code window, and a code window at `$AE66` also has a unique source occurrence. These observations do not establish fetched runtime opcode bytes and register context at those PCs, nor connect either reader to the `$50D2` list. A follow-up reference trace should record pre-instruction A/X/Y/P and opcode
-bytes at `$50D2/$50D6`, plus the Page1-backed bytes `$2A..$33`, the resolved
-address and registers at `$50E4`,
-subsequent reads within the real map spans, and any `$4FA7` consumer in shared event order. PCE Fast's interpreter keeps X/Y/P in locals; capture
-those live locals and the `Page1_local` values instead of relying on potentially
-stale `HuCPU.X/Y/P` fields or calling them CPU `$00xx` reads. To support
-rendering, join that trace
-to input receipt, active-map/pose evidence, and atomic VDC/VCE/VRAM state. Until
-then, keep the list and fields opaque and do not use them to select or render
-a native map.
+and a map cell remains a candidate. The earlier three-run state-only capture
+recorded Map 0 and Map 3 reads from `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`, but
+did not retain same-event opcode/register context. The compiled v4 reference
+hook now records the fetched opcode, pre-instruction A/X/Y/P locals,
+`HuCPU.ZNFlags`, Page1-backed operands, MPR mapping, and separate code-window
+peeks. Patch application and PCE Fast object compilation passed; an authentic
+gameplay trace has not yet been captured. A useful run should include
+`$50D2/$50D6`, Page1 operands `$2A..$33`, resolved address/registers at
+`$50E4`, map-span reads, and `$4FA7` in shared event order. PCE Fast keeps
+X/Y/P in interpreter locals, so stale `HuCPU.X/Y/P` fields must not substitute
+for them. Join a future trace to input receipt, active-map/pose evidence, and
+atomic VDC/VCE/VRAM state before using these values to select or render a
+native map.
 
 The source-map report records the authenticated descriptor and true array
 boundaries: [JP Akutuba source-sector report](theron-jp-akutuba-map-source-sector-20261101.md).

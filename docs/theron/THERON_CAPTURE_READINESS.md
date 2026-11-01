@@ -1,18 +1,19 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01 (updated after the matched JP state-only UP/control trace).** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (updated after JP map-reader source disassembly).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-Static disassembly maps the `$50D2` code window uniquely to the authentic JP BIN. The later map-array trace PCs also match unique state windows in authentic Track 02: `$50FE`, `$4FFC` and `$4FD4` decode as `LDA ($14),Y`; `$AE66` decodes as `ADC $6DF6,X`. The capture did not record contemporaneous registers or opcode bytes, so the candidate pointer-list role, active-map relation and tile consumer remain unknown; no rendered result has been captured. See the [reader and opcode report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [three-run capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
+Static disassembly maps the `$50D2` window and four observed map-array reader windows uniquely to authenticated JP Track 02. It shows the local checks, indirect-indexed reads, bit `$10` branches, and indexed table writes without assigning data semantics. The previous state-only captures did not record contemporaneous registers or opcodes. The v4 reference hook now records that context and has passed a PCE Fast object compilation, but has not yet produced a gameplay trace. The candidate pointer-list role, active-map relation, pose-bound tile consumer, and rendered result remain unverified. See the [reader and opcode report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [three-run capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 
-The Mednafen movement-context instrumenter now emits a separate
+The Mednafen movement-context instrumenter emits a separate
 `map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
 state-only captures do not include pre-instruction registers, fetched opcodes,
-or the PCE Fast `Page1_local` operands at the observed reader PCs; that context
-is required for the next same-session reader capture. Its per-kind limit
+or the PCE Fast `Page1_local` operands at the observed reader PCs. The v4 hook
+records that instruction context, including a distinct code-window peek; its
+per-kind limit
 supports up to 4096 rows and emits an explicit marker if the cap is reached.
 Three authentic JP state-only runs at that limit retained 1,677, 1,513 and
 1,556 rows without truncation. Each read byte matches the hash-verified JP

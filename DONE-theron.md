@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — compile v4 JP map-reader instruction-context hook
+
+- Extended the PCE Fast reference hook to capture fetched opcode and fetch PC,
+  pre-instruction A/X/Y/P locals, lazy N/Z flags, Page1 operands, MPR mapping,
+  and separately labeled code-window peeks at the observed readers.
+- Applied the complete isolated Mednafen patch chain and compiled
+  `pce_fast/huc6280.o`; targeted verifier and shell-capture checks passed.
+- No gameplay trace has yet been captured with v4. Active-map selection,
+  reader semantics, pose-to-tile consumption and rendering remain unverified.
+
 ## 2026-11-01 — source-decode the observed JP map readers
 
 - Matched state-resident windows around all four map-array reader PCs to the

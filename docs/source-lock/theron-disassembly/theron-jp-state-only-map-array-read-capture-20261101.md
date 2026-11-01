@@ -62,6 +62,34 @@ not a trace-time opcode-byte capture; execution may modify or relocate code.
 | `$4FD4` | `$68` | `B1 14` | `LDA ($14),Y` | 256 bytes, `$4F54` / `0x82754`, SHA-256 `b564ba2754884f38d30c33002908c94016ac20c4c2e74d17bd1087c06a208bf3` | `$95CA4` |
 | `$AE66` | `$70` | `7D F6 6D` | `ADC $6DF6,X` | 128 bytes, `$AE26` / `0x92626`, SHA-256 `2e39186314b9cd90625bccb827d92c699461551e9ced421b3e2e649b8e04e247` | `$A8136` |
 
+The source positions above use the full raw BIN's MODE1/2048 user-data
+projection. Reprojecting all 3,445 raw sectors (2,352 bytes each) matches the
+external 6,596,608-byte split ISO exactly after dropping the first 224
+projected sectors. The corresponding split-ISO offsets are `0x1287e`,
+`0x1277c`, `0x12754`, and `0x22626`. The raw BIN identity is MD5
+`b7afb338ad31be1025b53f9aff12d73a` and SHA-256
+`d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`.
+
+### Source disassembly around the readers
+
+Static disassembly of the unique raw-BIN windows shows these local paths. It
+identifies access and branch structure, but assigns no map, object, collision,
+or graphics meaning to the values.
+
+| Reader PC | Source instructions around the access | What the bytes establish |
+|---|---|---|
+| `$50FE` | `$50F1 JSR $4FB2`; `$50F6 JSR $4FBB`; `$50FB BSR $50C7`; `$50FD CLY`; `$50FE LDA ($14),Y`; `$5100 RTS` | The routine performs two checks and calls `$50C7` before its indirect-indexed byte read. Its full caller contract is unknown. |
+| `$4FD4` | `$4FCE STY $B9`; `$4FD0 JSR $50C7`; `$4FD3 CLY`; `$4FD4 LDA ($14),Y`; `$4FD6 AND #$10`; `$4FD8 BNE $4FDF`; otherwise `$4FDA..$4FDE` returns `$FF,$FF` | The path depends on bit `$10` of the loaded byte. The bit's role is unassigned. |
+| `$4FFC` | `$4FF1 JSR $50C7`; `$4FF4 LDY $14`; `$4FF6 STZ $14`; `$4FF8 LDA $B9`; `$4FFA BEQ $5021`; `$4FFC LDA ($14),Y`; `$4FFE AND #$10` | A second indirect-indexed read is conditionally reached after the `$B9` check and then masked by `$10`; its value semantics remain unknown. |
+| `$AE66` | `$AE66 ADC $6DF6,X`; `$AE69 TAX`; indexed loads from `$6E1D`, `$6E4F`, and `$6E81` are stored to `$AEC0..$AEC2` | The code derives an index and copies three table bytes into scratch state. It does not identify those tables as tile or palette data. |
+
+The source was disassembled from the hash-verified raw BIN with
+`unidasm -arch h6280`; the split-ISO projection independently matches the
+same windows. A raw-byte scan finds six `20 FE 50` sequences, one `20 D4 4F`,
+and one `20 66 AE` in the BIN. These are candidate call-site byte patterns
+only: the scan does not establish instruction boundaries, control flow, or
+runtime callers. No direct `JSR $50D2` or `JSR $4FFC` byte pattern occurs.
+
 `$B1 14` is indirect-indexed LDA. In the isolated Mednafen 1.32.1 PCE Fast
 implementation, `GetIY` reads its 16-bit base from `HU_Page1[0x14..0x15]`, adds
 the live Y register, then calls `RdMem`. `HU_Page1` is backed by the MPR[1]
@@ -69,14 +97,14 @@ page pointer in this core; the reference state's saved MPR[1] is `$F8`. The
 next trace should therefore record these page-1 operand bytes and their MPR
 mapping, rather than label them as values read through `MPR[0]`. The `$AE66`
 indexed read addresses `$6DFD` and `$6DFF` imply X values 7 and 9, respectively,
-if the state-resident opcode is unchanged at execution. The capture did not
-record these registers, prove the fetched bytes matched the state, or bind the
-reads to a map-selection routine. The PCE Fast
-interpreter keeps X, Y and P in locals during execution, so a future hook must
-read `X_local`, `Y_local` and `P_local` at opcode fetch; `HuCPU.X/Y/P` can be
-stale there. With lazy flags enabled, record `HuCPU.ZNFlags` as well if the
-architectural N/Z state is needed. These instructions describe access forms
-only; they do not identify cell meaning,
+if the state-resident opcode is unchanged at execution. The three earlier
+captures did not record these registers, verify the runtime opcode, or bind
+the reads to a map-selection routine. The v4 reference hook now records the
+opcode, pre-instruction A/X/Y/P locals, `HuCPU.ZNFlags`, Page1 operands, MPRs,
+and a separately labeled code-window peek at these PCs. It has passed patch
+application and a PCE Fast object compilation, but no v4 gameplay trace has
+been captured yet. These instructions describe access forms only; they do
+not identify cell meaning,
 active map, party pose, collision or rendering. The opcode forms were checked
 against the HuC6280 implementation in the isolated Mednafen 1.32.1 source
 (`src/pce_fast/huc6280_ops.inc`, cases `$B1` and `$7D`;
