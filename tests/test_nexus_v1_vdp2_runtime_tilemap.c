@@ -7,6 +7,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char *const ymir_pass0_environment[] = {
+    "FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS",
+    "FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_VRAM",
+    "FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_CRAM",
+    "FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_REGS",
+    "FIRESTAFF_NEXUS_YMIR_PASS0_RENDERED",
+    "FIRESTAFF_NEXUS_YMIR_PASS0_STACK_OUT"
+};
+
+static int any_environment_value_set(
+    const char *const *names, size_t count)
+{
+    size_t i;
+    for (i = 0U; i < count; ++i) {
+        const char *value = getenv(names[i]);
+        if (value && *value) return 1;
+    }
+    return 0;
+}
+
+static int all_environment_values_set(
+    const char *const *names, size_t count)
+{
+    size_t i;
+    for (i = 0U; i < count; ++i) {
+        const char *value = getenv(names[i]);
+        if (!value || !*value) return 0;
+    }
+    return 1;
+}
+
 static void le16(uint8_t *p, unsigned int value)
 {
     p[0] = (uint8_t)value;
@@ -282,7 +313,12 @@ static int run_external_ymir_priority_stack(void)
     };
     YmirPriorityStackCapture capture;
     int ran = 0;
-    if (getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS")) {
+    if (any_environment_value_set(ymir_pass0_environment,
+            sizeof(ymir_pass0_environment) / sizeof(ymir_pass0_environment[0]))) {
+        if (!all_environment_values_set(ymir_pass0_environment,
+                sizeof(ymir_pass0_environment) /
+                    sizeof(ymir_pass0_environment[0])))
+            return 0;
         capture = frame0;
         capture.vdp1_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS");
         capture.vram_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_VRAM");
@@ -839,7 +875,10 @@ int main(void)
         fprintf(stderr, "FAIL: authentic Ymir MAPD NBG1 4bpp plane decode\n");
         return 1;
     }
-    if ((getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") ||
+    if ((any_environment_value_set(ymir_pass0_environment,
+             sizeof(ymir_pass0_environment) /
+                 sizeof(ymir_pass0_environment[0])) ||
+         getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME397_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME300_VDP1_FBS") ||
