@@ -818,6 +818,14 @@ startup/handoff evidence only; it does not verify native display, audio,
 physical input, or gameplay parity. Nexus and Theron were excluded from this
 priority-only run.
 
+The authentic-media CLI startup diagnostics suite also passed for DM1, CSB, and
+DM2 direct starts, default platform selection, and Swedish scan diagnostics.
+Its saved single-file preference check now requires a completed scan of the
+actual collection root containing that original archive; other installed
+editions in the same root may legitimately be discovered. This verifies the
+headless CLI and scanner routes only, not native display, audio, physical input,
+or complete gameplay.
+
 ### 2026-10-27 five-game picker check
 
 The Firestaff executable was rebuilt from the working tree based on source
