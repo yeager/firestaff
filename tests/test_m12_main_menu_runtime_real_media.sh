@@ -155,7 +155,7 @@ run_selected_main_menu_runtime_case dm1 "$dm1_archive" fmtowns-en \
 run_selected_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 150000
 run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
-    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65,click:100:60' 90000
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' 90000
 
 # Exercise the no-game picker through DM1's Amiga architecture and require an
 # authentic Amiga 3.6 runtime receipt, not just a direct --game boot.
@@ -182,7 +182,7 @@ fi
 if [[ "$selected_game" == all || "$selected_game" == dm2-amiga ]]; then
   if [[ -f "$dm2_amiga_archive" ]]; then
     run_main_menu_runtime_case dm2 "$dm2_amiga_archive" amiga-en \
-        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65' \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game' \
         90000 Amiga dm2-amiga
   elif [[ "$selected_game" == dm2-amiga ]]; then
     echo 'SKIP: authentic DM2 Amiga archive is unavailable'
