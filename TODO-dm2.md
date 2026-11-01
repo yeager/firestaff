@@ -1983,6 +1983,17 @@ full source-media behavior across every supported DM2 edition/platform still
 need implementation or direct source validation; this function remains
 partial.
 
+2026-11-01 skproject `SET_SPELLING_CHAMPION` variants: DOS and SPX v4/v5 all
+select a live champion, enter source spell mode, clear the magical-map flags,
+recompute any pending squad position, and refresh the right panel. Firestaff's
+`M11_GameView_OpenSpellPanel` instead selects the DM2 runtime champion and
+restores its rune buffer into the separate M11 spell panel while preserving
+`party.curactmode` as the active physical hand required by the cast owner.
+This is the architectural spell-mode equivalent; the source pending-position
+callback and magical-map transient clearing have no separate M11 owner, and
+source UI behavior is not validated across all DM2 editions/platforms. Keep
+the DOS, SPX v4, and SPX v5 source rows partial.
+
 2026-11-01 skproject `ACTUATE_PITFALL`: the live class-2 timer owner now
 resolves ActionType 2 from tile bit 3, applies source close semantics by
 clearing bit 3, and always dispatches the original timer through the

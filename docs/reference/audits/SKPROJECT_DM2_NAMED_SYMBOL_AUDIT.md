@@ -23,10 +23,11 @@ engine; the disposition ledger below covers only the older `SKWIN`/`SKULLWIN`
 trees, with one selected SPX definition. `SKWINDOS` is also outside that
 ledger. The supplemental
 `SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists per-file `ctags -x`
-definitions from `SKWINSPX/src`, `SKWINDOS/src`, and the legacy DOS files at
-the top level of `SKWINDOS/` in the locked checkout: 3,929 definition rows,
-3,629 distinct names, and 300 repeated-name definitions. The active review
-ledger currently maps 3,828 as `UNREVIEWED`, 96 as `PARTIAL`, and 5 as
+definitions from `SKWINSPX/src`, `SKWINDOS/src`, the legacy DOS files at
+the top level of `SKWINDOS/`, and two `SKULLWIN/` definitions used in
+cross-variant checks: 3,932 definition rows, 3,630 distinct names, and 302
+repeated-name definitions. The active review ledger currently maps 3,824 as
+`UNREVIEWED`, 103 as `PARTIAL`, and 5 as
 `IMPLEMENTED_PARITY`; exact name overlap with the older ledger is only a
 search hint, not proof of semantic parity. Editor and asset-tool trees (`DM2GDED`,
 `DMDC2`, and `Utils`) are excluded because they do not implement the game
@@ -37,7 +38,7 @@ runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,754 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, and legacy top-level `SKWINDOS/` | 3,929 (2,724 SPX, 1,205 DOS) | 3,828 `UNREVIEWED`; 96 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,932 (2,725 SPX, 1,205 DOS, 2 SKULLWIN) | 3,824 `UNREVIEWED`; 103 `PARTIAL`; 5 `IMPLEMENTED_PARITY` |
 
 ## Dispositions
 
@@ -153,9 +154,10 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,962 open rows: 3,827 unreviewed active-source
-definitions, 133 partial source or older-ledger rows, and 2 partial source-owner
-rows. `ACTIVATE_ACTION_HAND` is source-compared for DOS, SPX v4, and SPX v5; each
+At this revision it reports 3,962 open rows: 3,824 unreviewed active-source
+definitions, 136 partial source or older-ledger rows, and 2 partial source-owner
+rows. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
+DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy
 pending-position and transient UI state owners. DOS and SPX v4/v5 coin-wallet definitions now have separate source review
 rows because their add non-currency return behavior differs; take-wallet
