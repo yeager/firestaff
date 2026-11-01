@@ -105,12 +105,18 @@ The reconstructed RGBA and hash-bound report are retained at
 `firestaff-evidence/nexus/nexus_vdp1_frame13162_retail_dgn_stepper_20261101/`
 on the external disk.
 Set `FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its profile directory (or
-`dumps/`) and make the authentic Japanese data directory available through
-`FIRESTAFF_NEXUS_DATA_DIR`, then run:
+`dumps/`). CTest sets `FIRESTAFF_NEXUS_DATA_DIR` from
+`${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus`; if the retail files are elsewhere,
+configure the build with `-DFIRESTAFF_WORKSPACE_DATA_DIR=/path/to/data` so that
+the `nexus/` subdirectory contains the authentic Japanese files. Then run:
 
 ```sh
 ctest --test-dir build -R '^nexus_v1_vdp1_ymir_stepper_capture_real$' --output-on-failure
 ```
+
+To use a separate data directory without reconfiguring CMake, invoke the test
+executable directly with `FIRESTAFF_NEXUS_DATA_DIR=/path/to/nexus` and the
+capture-directory variable set in the same environment.
 
 The Ymir stepper is a separate capture-only path; it does not enable the
 production renderer. The source references are Ymir
