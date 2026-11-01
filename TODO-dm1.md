@@ -9,10 +9,12 @@
 2026-11-01 ReDMCSB `DUNVIEW.C:F0113` teleporter field rendering: downgraded the
 callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
 projection-mask assets and fails closed when either is absent, but ReDMCSB
-calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw while
-Firestaff uses deterministic `animTick` phase inputs. The pixel-mask sampling
-also does not reproduce F0133's source unit and temporary-bitmap path. Dynamic
-field-pattern and source RNG parity remain open.
+calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw. Firestaff's
+live M11 PC34 route now consumes those values from the DM1 master RNG, in
+source order, after field and mask media are available. The secondary viewport
+helper still needs production phase-callback ownership. Pixel-mask sampling
+also does not reproduce F0133's source unit and temporary-bitmap path;
+edition-specific RNG and bitmap behavior remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
 

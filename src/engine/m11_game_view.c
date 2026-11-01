@@ -50444,7 +50444,7 @@ static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
     return 1;
 }
 
-static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
+static int m11_draw_dm1_field_zone(M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int fbW,
                                    int fbH,
@@ -50457,6 +50457,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     int dstY;
     int dstW;
     int dstH;
+    int fieldStartUnitDelta;
+    int fieldYPhase;
     if (!state || !state->assetsAvailable || !framebuffer || !plan ||
         plan->dstW <= 0 || plan->dstH <= 0) {
         return 0;
@@ -50483,6 +50485,13 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             return 0;
         }
     }
+    /* ReDMCSB DUNVIEW.C:F0113 evaluates M005_RANDOM(2), then
+     * M003_RANDOM(32), immediately before F0133's field blit.  Both draws
+     * use the DM1 master generator and happen once per admitted field. */
+    fieldStartUnitDelta = F0732_COMBAT_RngRandom_Compat(
+        &state->world.masterRng, 2);
+    fieldYPhase = F0732_COMBAT_RngRandom_Compat(
+        &state->world.masterRng, 32);
     for (y = 0; y < dstH; ++y) {
         int fbY = M11_VIEWPORT_Y + dstY + y;
         int x;
@@ -50497,8 +50506,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             if (fbX < 0 || fbX >= fbW) {
                 continue;
             }
-            if (!dm1_v1_field_bitmap_pixel_pc34(
-                    plan, state->animTick, x, y,
+            if (!dm1_v1_field_bitmap_pixel_with_phase_pc34(
+                    plan, fieldStartUnitDelta, fieldYPhase, x, y,
                     field->pixels, (int)field->width, (int)field->height,
                     (int)field->width,
                     mask ? mask->pixels : NULL,
@@ -53374,7 +53383,7 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
+static void m11_draw_dm1_teleporter_fields(M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
                                            int fbH,
@@ -53417,7 +53426,7 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
  * the D0 terminal pass, but D3..D1 must be admitted from the F0128 square
  * plan: DUNVIEW.C calls F0113 after that square's F0115 route, rather than
  * collecting every teleporter into one global pre-object batch. */
-static void m11_draw_dm1_teleporter_field_at(const M11_GameViewState* state,
+static void m11_draw_dm1_teleporter_field_at(M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
                                              int fbH,
@@ -70521,7 +70530,7 @@ static void m11_dm1_f0128_execute_source_step(
             break;
         case DM1_V1_F0128_STEP_F0113_FIELD:
             m11_draw_dm1_teleporter_field_at(
-                dispatch->state, dispatch->framebuffer,
+                dispatch->mutableState, dispatch->framebuffer,
                 dispatch->framebufferWidth, dispatch->framebufferHeight,
                 relForward, relSide);
             break;
@@ -70655,7 +70664,7 @@ static void m11_dm1_f0128_execute_source_step(
         }
         if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
             m11_draw_dm1_teleporter_field_at(
-                dispatch->state, dispatch->framebuffer,
+                dispatch->mutableState, dispatch->framebuffer,
                 dispatch->framebufferWidth, dispatch->framebufferHeight,
                 0, relSide);
             ++dispatch->rasterStepCount;
@@ -70671,7 +70680,7 @@ static void m11_dm1_f0128_execute_source_step(
             return;
         }
         m11_draw_dm1_teleporter_field_at(
-            dispatch->state, dispatch->framebuffer,
+            dispatch->mutableState, dispatch->framebuffer,
             dispatch->framebufferWidth, dispatch->framebufferHeight,
             0, relSide);
         ++dispatch->rasterStepCount;
