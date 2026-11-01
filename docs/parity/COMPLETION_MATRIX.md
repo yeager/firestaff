@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last reviewed: 2026-11-02 (evidence scores unchanged)
+Last reviewed: 2026-11-01 (evidence scores unchanged)
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -57,7 +57,7 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
-| Theron V1 | 72% | 72/100 | `hw_config_cd_play_vdc_joypad_proven` | Native JP fresh-start and US BRAM-Continue routes are verified. Native SDL-loop regressions cover bounded movement-command dispatch, champion selection, wait and US pickup/reselect/drop; they do not establish original-game movement semantics. USE effects and positive JP progress restoration remain unverified. Matched JP state-only TII transfers and their 128-instruction context do not prove movement: `$C1FC` is also associated with teleporter destination copying, while map and field semantics remain unknown. Original-versus-Firestaff frame regression (0/10), dynamic source-bound viewport, broader gameplay and original save/audio semantics remain open. |
+| Theron V1 | 72% | 72/100 | `hw_config_cd_play_vdc_joypad_proven` | Native JP fresh-start and US BRAM-Continue routes are verified. Native SDL-loop regressions cover bounded movement-command dispatch, champion selection, wait and US pickup/reselect/drop; they do not establish original-game movement semantics. USE effects, world-space mouse-click semantics, and positive JP progress restoration remain unverified. An authentic JP state-only trace enters `$D515` but skips `$D588`; it lacks mouse-coordinate receipt and cold CD-to-RAM provenance, so it does not close the click gap. Matched JP state-only TII transfers and their 128-instruction context do not prove movement: `$C1FC` is also associated with teleporter destination copying, while map and field semantics remain unknown. Original-versus-Firestaff frame regression (0/10), dynamic source-bound viewport, broader gameplay and original save/audio semantics remain open. |
 
 ## Recent evidence incorporated
 

@@ -6,11 +6,18 @@
 
 **Latest JP cold-capture update (2026-11-01):** the authentic cold map-byte route did not reach the `$E11D` handoff or read LBA 3674. The corrected input verifier fixes serial-index versus controller-slot validation, but at least one scripted event still lacks a matching guest read. The rejected capture establishes no loader provenance or gameplay input; see the [cold JP map-byte capture](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
 
+**Latest pointer-path update (2026-11-01):** an authentic JP state-only trace
+enters `$D515`, reads `$FF` at the indexed comparison, and branches around the
+`$D530` call to `$D588`. The single controller event is observed at `$44D2`;
+the trace has no mouse-coordinate receipt or cold CD-to-RAM provenance. It
+does not identify pointer records, hitboxes, or Button-I click semantics. See
+the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
+
 **Startup update (2026-08-08):** authenticated US Track 02 media proves the
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Current native and reference boundary (reviewed 2026-11-02):** authentic Japanese
+**Current native and reference boundary (reviewed 2026-11-01):** authentic Japanese
 Track 02 reaches a loaded dungeon through Firestaff's native C/SDL fresh-start
 route. Authentic US Track 02 plus a matching Ak-Tu-Ba-complete BRAM reaches
 dungeon 2 through Continue, with bounded native movement and item

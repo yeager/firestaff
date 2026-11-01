@@ -35,7 +35,14 @@
 > [verified implementation record](../../DONE-theron.md#2026-11-01--gate-native-title-actions-on-a-three-second-hold)
 > and [native input guide](../theron/theron_input.md).
 
-> **Status reviewed 2026-11-02.** Firestaff runs Theron's Quest in native
+> **Pointer/click boundary (2026-11-01):** an authentic JP state-only trace
+> enters `$D515` but branches around the `$D530` call to `$D588`; it records
+> no mouse-coordinate receipt and is not joined to cold CD-to-RAM loading.
+> This is a branch observation only and does not establish pointer-table,
+> hitbox, Button-I, or world-click semantics. See the
+> [source-locked report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
+
+> **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native
@@ -429,7 +436,7 @@ receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
 ## Scope
 
-**Current capture boundary (reviewed 2026-10-31):** An isolated authentic JP
+**2026-10-31 capture boundary:** An isolated authentic JP
 cold capture confirms that a four-second Button I hold on NEW GAME opens file
 selection and a second four-second hold on FILE 1 enters the Akutuba story.
 The later dungeon `.mc0` is an emulator snapshot, not BRAM. This visible result

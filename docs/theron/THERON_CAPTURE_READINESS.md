@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-02 (reviewed; no new gameplay evidence).** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (reviewed; no new gameplay evidence).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
@@ -619,7 +619,7 @@ It has one controller event at `$44D2`, no mouse-coordinate receipt, and no
 cold CD-to-RAM provenance; the seven identical Track 02 copies remain
 ambiguous. The next pointer trace must produce the `$D530` → `$D588` path and
 join its result to the Button-I consumer before native world clicks can be
-enabled. See the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
+enabled. See the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
 
 A separate US saved-state PCE Fast run loaded its existing state and recorded
 scripted input-apply events. Its shared input trace contains 1,354

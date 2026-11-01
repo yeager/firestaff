@@ -10666,7 +10666,7 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
-## 2026-11-02 — source-trace the JP `$D515` alternate-branch boundary
+## 2026-11-01 — source-trace the JP `$D515` alternate-branch boundary
 
 - Rechecked a retained authentic JP state-only runtime trace against the
   hash-locked `$D515/$D588` disassembly. The trace enters `$D515` at physical
@@ -10678,7 +10678,7 @@ T900/original inventory semantics. No synthetic media was used.
 - Updated the pointer-click work order. No pointer, hitbox, Button-I, or
   gameplay meaning is inferred from this state-only path.
 
-## 2026-11-02 — reconcile the current Theron capture documentation
+## 2026-11-01 — reconcile the current Theron capture documentation
 
 - Audited the current Theron support summaries, capture-readiness page, input
   guide, runbook, documentation index, and active TODO/DONE entries against
@@ -10688,6 +10688,12 @@ T900/original inventory semantics. No synthetic media was used.
   unverified. No new gameplay or retail-parity claim was added.
 - Confirmed that helper preflight and the aggregate output budget are already
   described in the capture-readiness page, runbook, index, TODO, and DONE.
+- Aligned review and evidence dates to 2026-11-01, renamed the D515 report to
+  match its verified capture date, and propagated its evidence boundary through
+  the README, project/platform summaries, completion matrix and wiki.
+- Corrected the input guide: USE dispatches to the facing door, while authentic
+  Track 02 doors remain fail-closed pending the original T900 consumer. Also
+  relabeled an October 31 capture note as historical rather than current.
 
 ## 2026-11-01 — add shared sequencing to C852 reference checkpoints
 
