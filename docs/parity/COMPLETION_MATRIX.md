@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-10-31
+Last updated: 2026-11-01
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -61,7 +61,7 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 
 ## Recent evidence incorporated
 
-This refresh incorporates the post-2026-05-09 work now present on `origin/main`, including:
+This matrix reflects the parity evidence recorded in the current source and documentation, including:
 
 | Area | Evidence now counted |
 |---|---|
@@ -71,7 +71,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 | CSB V2 | HUD overlay probe, smooth movement/runtime binding, phase-gate verification, filter config/chain/dispatch, texture upscale, V2.2 shape probes, and CTest registration of previously build-only probes. |
 | DM2 V1 | Authentic DOS MVE → SKULL → New Game CLI, Amiga title/runtime, FM Towns title/New Game/champion/runtime, and Mac retail boot; the separately supplied Mac First Chapter demo is fail-closed and cannot select a retail sibling; door/button toggle boundary; minimap level-transition/save-load gate; weather/timer save round-trip; projectile-vs-creature collision; creature death/drop observer; pressure plate and trigger gates; focused combat/shop probes. |
 | Nexus V1 | DMDF palette/string bounds, DGN malformed actor guard, BPK/BPX archive boundaries, Saturn font parse/render determinism, save-slot round-trip, mechanics parity slices, and renderer/data loader probes. |
-| Theron V1 | Authentic JP fresh-start and US BRAM-Continue integration tests on macOS Debug; all-seven source dungeon loaders per region; Track 02 bank/object marker, save/progress round-trip, mechanics/champion/progression probes, runtime screenshot-readiness manifests, authentic US keyboard/mouse movement and pickup/reselect/drop, native rejection of empty JP BRAM, and matched JP state-only UP/control traces. The observed TII overlaps a source-locked teleporter destination path, so movement semantics remain unresolved. The renderer and original-game consumer gaps remain open. |
+| Theron V1 | Authentic JP fresh-start and US BRAM-Continue integration tests on macOS Debug; all-seven source dungeon loaders per region; Track 02 bank/object marker, save/progress round-trip, mechanics/champion/progression probes, runtime screenshot-readiness manifests, authentic US keyboard/mouse movement and pickup/reselect/drop, native rejection of empty JP BRAM, and matched JP state-only UP/control traces. The observed TII overlaps a source-locked teleporter destination path, so movement semantics remain unresolved. The 2026-11-01 source-only updates bind matching US/JP creature-pointer and regular-spawn zone records to their raw BIN and full-ISO projections, and map the JP Akutuba descriptor and four opaque tile arrays to raw Track 02 sector 308. Neither update establishes runtime selection, tile meaning, spawning, or rendering, so no parity gate changed. The renderer and original-game consumer gaps remain open. |
 | Cross-cutting | Nested ZIP deflate cache materialization, ISO/BIN case-insensitive duplicate-hash scanning, M12 no-data/data-dir cache gates, 19-language launcher and game-domain l10n layout validation, and Tier 1 strict boot coverage. |
 
 ## Detail

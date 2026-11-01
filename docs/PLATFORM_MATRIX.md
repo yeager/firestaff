@@ -110,7 +110,7 @@ all listed non-Mac platforms show the cursor/cross graphical glitch,
 with Amiga retaining the cursor-loss bug after button release; Japanese
 and English Macintosh versions are explicitly exempt.
 
-## Theron's Quest — 1 known version
+## Theron's Quest — 2 known regional editions
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
