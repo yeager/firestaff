@@ -7646,7 +7646,7 @@ int16_t dm2_v1_skproject_create_minion(
 
 /* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to
    DM2_ENGAGE_COMMAND; when the creature has a live missile reference,
-   switches to the missile's map, computes its direction/distance words,
+   switches to the missile's map, extracts its packed map/x/y position,
    dispatches DM2_ai_13e4_0360 with reason 0x13, then restores the
    previous current map. */
 typedef struct {

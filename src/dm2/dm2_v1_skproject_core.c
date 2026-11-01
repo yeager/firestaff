@@ -19878,7 +19878,7 @@ void dm2_v1_skproject_release_minion(
     {
         uint16_t word4 = (uint16_t)missile_word;
         int16_t map = (int16_t)(word4 >> 10);
-        int16_t y = (int16_t)(word4 >> 5);
+        int16_t y = (int16_t)((word4 >> 5) & 0x1fu);
         int16_t x = (int16_t)(word4 & 0x1fu);
 
         change_map_fn(map, user);
