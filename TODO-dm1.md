@@ -3909,13 +3909,14 @@ zone data/resolvers and live slot-border rendering remain unintegrated, so this
 is partial coverage and does not establish F0619 parity across supported
 editions.
 
-2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` M11 integration: the live DM1 M11
-map-dependent alcove, render, and click route now constructs the source
-descriptor from loaded square bytes,
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` M11 integration: stair, F0003
+map-handoff, post-move, and rope-pit transitions now synchronize the live DM1
+map owner; alcove, render, and click consumers also request source publication.
+The source descriptor uses loaded square bytes,
 map-column cumulative SFT data, the selected map's door sets, and authenticated
 metadata bytes, then publishes it through the F0174 owner. The helper owns the
-current/party map pointer and metadata snapshot whenever an M11 consumer
-requests map-dependent state. This
+current/party map pointer and metadata snapshot when M11 enters a map or a
+map-dependent consumer requests state. This
 closes the adapter-only gap for the PC34-backed M11 path; other production map
 owners and supported edition/platform bindings remain open, so both audit rows
 stay partial.

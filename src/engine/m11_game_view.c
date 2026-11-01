@@ -918,6 +918,8 @@ static void m11_log_event(M11_GameViewState* state,
                           unsigned char color,
                           const char* fmt,
                            ...);
+static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
+                                                 int mapIndex);
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex);
 static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state);
 enum {
@@ -21245,6 +21247,8 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
             state->world.party = before;
             return 0;
         }
+        if (m11_is_dm1_source_kind(state->sourceKind))
+            m11_dm1_wire_current_map_alcove_list(state, stairs.toMapIndex);
     }
 
     if (state->dm1MusicSourceBound) {
@@ -21331,6 +21335,9 @@ static int m11_apply_post_move_environment_from_compat(M11_GameViewState* state)
     state->world.party.mapY = resolution.finalMapY;
     state->world.party.direction = resolution.finalDirection;
     state->world.party.mapIndex = resolution.finalMapIndex;
+    if (m11_is_dm1_source_kind(state->sourceKind))
+        m11_dm1_wire_current_map_alcove_list(state,
+                                             resolution.finalMapIndex);
     if (state->dm1MusicSourceBound) {
         DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
         (void)dm1_v1_f0742_set_map_track_pc34(
@@ -35814,6 +35821,8 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
     if (m11_is_dm1_source_kind(state->sourceKind) &&
         beforeParty.mapIndex != state->world.partyMapIndex) {
+        m11_dm1_wire_current_map_alcove_list(
+            state, state->world.party.mapIndex);
         /* ReDMCSB NEWMAP.C F0003 selects the destination map's soundtrack.
          * Stair and post-move callers do this in their own transition shim;
          * this is the shared movement/teleporter handoff. */
@@ -64136,6 +64145,10 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state,
     state->world.party.mapIndex = postMove.finalMapIndex;
     state->world.partyMapIndex = postMove.finalMapIndex;
     state->world.newPartyMapIndex = -1;
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        movedParty.mapIndex != postMove.finalMapIndex)
+        m11_dm1_wire_current_map_alcove_list(state,
+                                             postMove.finalMapIndex);
     /* MOVESENS.C F0267:579-606 keeps G0402 active across the pit transfer.
      * Its rope branch does not apply the generic 20-point fall damage; every
      * living champion instead pays ((Load * 25) / F0309(MaxLoad)) + 1
