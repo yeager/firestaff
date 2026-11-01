@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — rebuild the reference trace binary and record the cold-capture boundary
+
+- Fixed the indirect-jump follow-trace patch to arm from the executed dispatch
+  and attach its fetch hook at the HuC6280 opcode-fetch point. The complete
+  Mednafen 1.32.1 patch-application regression passed three consecutive loops.
+- Built the r4 reference binary against standalone SDL 2.32.10; isolated
+  startup and the compiled/runtime SDL version check passed.
+- A cold authentic JP attempt remained on the System Card route, emitted no
+  CD data-port rows at LBA 3674, and was rejected when the System Card decision
+  trace reached its 65,536-row cap. It did not exercise the exact-LBA filter
+  or establish a game handoff. The bounded diagnostic jump windows are not
+  accepted gameplay/source evidence.
+- Updated the capture-readiness summary, exact-LBA source note, documentation
+  index, README, parity summaries, and technical wiki. The next reference run
+  needs a verified cold input route and a bounded decision trace that retains
+  explicit truncation detection. No release was created.
+
 ## 2026-11-01 — reconcile current Akutuba capture-tool readiness docs
 
 - Updated the Theron capture TODO and maintained readiness summary to record

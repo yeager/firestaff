@@ -45,9 +45,22 @@ fifo_origin_main_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_fif
 fifo_origin_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer.patch
 main_ram_e009_return_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_return_trace.patch
 fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
+indirect_jump_follow_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch
 later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
+
+if ! grep -Fq 'fflush(TheronIndirectJumpTraceFile);' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq '+ TheronTraceIndirectJumpFollowArm(target, event_sequence);' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq $'+\t  TheronTraceIndirectJumpFollowFetch();' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT' "$indirect_jump_follow_patch_file" ||
+   ! grep -Fq 'theron-pce-fast-indirect-jump-follow.rendered.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
+   grep -Fq '@@ -1161 +1162' "$indirect_jump_follow_patch_file"; then
+    printf '%s\n' 'FAIL: indirect-jump follow hook must anchor after its dispatch trace, not a line-number-only brace' >&2
+    exit 1
+fi
+
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 fast_ram_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch
 fast_vdc_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch

@@ -1,8 +1,17 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1103,0 +1104 @@
+@@ -1571,6 +1571,7 @@
+ static unsigned TheronIndirectJumpTraceCount;
+ static unsigned TheronIndirectJumpTraceLimit;
+ static bool TheronIndirectJumpTraceTruncationReported;
 +static void TheronTraceIndirectJumpFollowArm(unsigned int target, uint32 dispatch_event);
-@@ -1161 +1162,131 @@
+ static void TheronTraceIndirectJump(unsigned int base, unsigned int index,
+                                     uint8 low, uint8 high, unsigned int target)
+ {
+@@ -1628,6 +1629,137 @@
+          HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
+          HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
+  fflush(TheronIndirectJumpTraceFile);
 -}
 + TheronTraceIndirectJumpFollowArm(target, event_sequence);
 +}
@@ -135,5 +144,12 @@
 +  TheronTraceIndirectJumpFollowFinish("instruction-cap", true);
 +}
 +
-@@ -1508,0 +1640 @@
-+  TheronTraceIndirectJumpFollowFetch();
++
+ #define BMT_HONKHONK(pork) if(HuCPU.timestamp >= next_user_event) goto GetOutBMT; continue_the_##pork:
+ FIRESTAFF_PATCH_BLANK_CONTEXT
+@@ -2721,4 +2721,5 @@
+ FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,
+ FIRESTAFF_PATCH_TAB_CONTEXT                        HU_ZNFlags);
++	  TheronTraceIndirectJumpFollowFetch();
+ FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();
+ /* Reference-only probe for src/pce_fast/huc6280_ops.inc:544, which dispatches

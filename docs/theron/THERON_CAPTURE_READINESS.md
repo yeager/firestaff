@@ -1,6 +1,6 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01.** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (updated after the r4 cold reference attempt).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
@@ -31,12 +31,17 @@ tooling only. No accepted authentic capture has exercised the filter, and
 LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
 See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
-The follow-up Mednafen binary is not yet capture-ready: one build was rejected
-because it linked against `sdl2-compat`, and a later linked binary predates the
-latest indirect-jump fetch-hook call. Reapply and verify the current patch,
-build against standalone SDL2, and pass the runtime linkage/startup check
-before recording a new capture. Do not treat either binary as accepted runtime
-evidence.
+The current follow-up Mednafen 1.32.1 binary was rebuilt from the patched
+source against standalone SDL 2.32.10; its isolated startup and linked-runtime
+version check passed. The r4 cold JP attempt used authentic media in a private
+profile, but remained in the System Card route, produced no CD data-port rows
+for LBA 3674, and was rejected when the System Card decision trace reached its
+65,536-row cap. The capture therefore did not exercise the exact-LBA filter or
+establish a game handoff. Keep the binary/tooling status separate from runtime
+evidence; the next cold attempt needs a verified input route and bounded
+decision trace that preserves truncation detection. See the current entry in
+[`DONE-theron.md`](../../DONE-theron.md) and the
+[exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to

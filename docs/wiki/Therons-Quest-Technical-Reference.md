@@ -190,6 +190,16 @@
 > used this filter; the package remained rejected at trace caps, and the tool
 > does not change runtime support. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
+> **JP exact-LBA capture follow-up (2026-11-01):** the r4 Mednafen 1.32.1
+> reference binary was rebuilt against standalone SDL 2.32.10 and passed its
+> isolated startup/linkage check. The cold capture remained in the System Card
+> route, observed no LBA 3674 data-port rows, and was rejected when the decision
+> trace reached its 65,536-row cap. It neither tested the exact-LBA filter on a
+> game load nor establishes a handoff. A verified cold input route and bounded,
+> truncation-reporting decision trace are needed before the source-to-consumer
+> capture can proceed. See the [exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md)
+> and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. Firestaff accepts

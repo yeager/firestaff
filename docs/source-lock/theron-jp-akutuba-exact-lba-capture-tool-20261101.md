@@ -1,6 +1,7 @@
 # Exact-LBA capture filter for the JP Akutuba source sector
 
-**Status: instrumentation implemented; authentic capture evidence remains open.**
+**Status: instrumentation implemented and reference binary rebuilt; authentic
+capture evidence remains open.**
 
 The identity-checked JP Rev. 1 planner maps the Akutuba descriptor and all
 four map arrays to Track 02 file sector 308, Track 02 relative LBA 84, and disc
@@ -39,5 +40,16 @@ The capture-wrapper regression covers valid LBA 3674 (including zero-padded
 input), out-of-range input, and rejection under the standard PCE module. The
 instrumentation patch regression requires the CD data-port and FIFO-origin
 gates and verifies that the complete Mednafen 1.32.1 Theron patch set applies
-to a disposable source copy. Results from the current run are recorded in
-`DONE-theron.md`; passing these tooling checks is not a captured-game result.
+to a disposable source copy. The follow-up indirect-jump trace patch now arms
+its bounded fetch window from the executed dispatch and places the fetch hook
+at the HuC6280 opcode-fetch point; its patch-application regression passed
+three consecutive loops. The complete r4 binary was built against standalone
+SDL 2.32.10 and passed its isolated startup/linkage check.
+
+The subsequent cold JP reference attempt did not exercise this exact-LBA gate:
+it remained in the System Card route and yielded zero data-port rows at LBA
+3674. The wrapper rejected the package because the System Card decision trace
+reached its 65,536-row cap. This is a failed diagnostic capture, not evidence
+that the sector was absent from a successful game load. Results and remaining
+work are recorded in [`DONE-theron.md`](../../DONE-theron.md) and the
+[capture-readiness summary](../theron/THERON_CAPTURE_READINESS.md).

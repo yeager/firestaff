@@ -1,5 +1,18 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — resume cold JP reference capture after trace-cap failure
+
+The r4 Mednafen 1.32.1 reference binary now builds against standalone SDL
+2.32.10 and passes isolated startup/linkage checks. Its cold JP capture remained
+in the System Card route, recorded zero CD data-port rows for LBA 3674, and was
+rejected at the 65,536-row System Card decision-trace cap. This attempt does not
+show that the sector was absent from a game load and does not exercise the
+exact-LBA filter. Next, make the decision trace bounded with explicit
+truncation reporting, then use a verified cold input route to reach the game
+and capture a same-run LBA 3674 source-to-consumer chain. Preserve the existing
+fail-closed checks. See the [capture-readiness summary](docs/theron/THERON_CAPTURE_READINESS.md)
+and [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+
 The native keyboard Button II chord maps keypad 1/3 to turns alongside the
 existing arrow and A/D bindings. Focused mapping assertions and authentic US
 SDL event-loop routes cover the keypad bindings. On TRV2, the native
