@@ -7377,6 +7377,23 @@ static int32_t dm2_runtime_ccm_proceed_walking(
         dm2_runtime_record_wr16(rt, creature_record + 0x0e, facing_word);
         return 0; /* source CCM06 handler is void */
     }
+    if (command == 0x03u || command == 0x04u) {
+        uint8_t phase;
+        int32_t result = 0;
+        if (!slot) return 0;
+        phase = slot[0x1f];
+        if (phase == 0u) {
+            /* DM2_CREATURE_CCM03 phase 0 calls CCM06. */
+            result = dm2_runtime_ccm_proceed_walking(
+                goal, 0x06u, creature_type, slot, 0u, 0u, game_tick);
+        } else if (phase == 1u) {
+            /* Phase 1 delegates to WALK_NOW, which queues MOVE_RECORD_TO. */
+            result = dm2_runtime_ccm_proceed_walking(
+                goal, 0x01u, creature_type, slot, 0u, 0u, game_tick);
+        }
+        slot[0x1f] = (uint8_t)(phase + 1u);
+        return result;
+    }
     if (command != 0x01u && command != 0x02u && command != 0x09u)
         return 0;
     dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
