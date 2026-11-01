@@ -28561,6 +28561,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    /* These caches belong to one loaded dungeon owner. A reused M11 state
+     * may launch another edition or game with the same numeric map indices. */
+    memset(state->ornamentCacheLoaded, 0,
+           sizeof(state->ornamentCacheLoaded));
+    memset(state->ornamentCacheSourceValid, 0,
+           sizeof(state->ornamentCacheSourceValid));
+    state->dm1CurrentMapDungeonOwner = NULL;
+    DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(
+        &state->dm1CurrentMapF0173F0174);
+    dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
     state->dm1V1MovementOutcomeSerial = 0;
     state->dm1V1MovementOutcomeCounter = 0;
     /* A fresh launch cannot retain a derived generation from an old loader. */
@@ -45788,10 +45798,11 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     state->ornamentCacheLoaded[mapIndex] = 1;
 }
 
-/* Publish the source-shaped map pointers consumed by ReDMCSB F0173/F0174.
- * The cached source map is refreshed only on a dungeon owner change or map
- * transition; F0174 still republishes the party-map metadata on same-map
- * calls, matching DUNGEON.C:2742-2762. */
+/* Source: ReDMCSB DUNGEON.C:F0173_DUNGEON_SetCurrentMap (2724-2740) and
+ * F0174_DUNGEON_SetCurrentMapAndPartyMap (2742-2762); LOADSAVE.C:1970-1980
+ * builds each map's first-column index from preceding decoded map widths.
+ * F0173 refreshes only on a dungeon owner change or map transition; F0174
+ * republishes the party-map metadata each time this M11 consumer requests it. */
 static int m11_dm1_publish_current_map_f0174(M11_GameViewState* state,
                                              int mapIndex) {
     static const uint16_t doorInfoByType[4][2] = {
