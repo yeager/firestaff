@@ -834,10 +834,21 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
     int cpuAvailable;
     int memoryAvailable;
     Uint64 perfNow;
+    const char* dm2IntroPlatform = "unknown";
     if (!trace || !gameView || !tracedGameId || !gameView->active ||
         !m11_is_supported_game_id(tracedGameId) ||
         !M11_GameView_GetStartupTraceReceipt(gameView, &current)) {
         return;
+    }
+    if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2BootProfile) {
+        const DM2_V1_BootProfile* profile =
+            (const DM2_V1_BootProfile*)gameView->dm2BootProfile;
+        dm2IntroPlatform = profile->version_id[0]
+            ? profile->version_id : "unknown";
+        if (profile->platform == DM2_PLATFORM_MAC_EN) {
+            dm2IntroPlatform = "mac-en";
+        }
     }
     changed = !trace->valid ||
         strcmp(current.sourceId, trace->previous.sourceId) != 0 ||
@@ -912,7 +923,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
         (unsigned long long)virtualBytes);
     else fprintf(stderr, "unavailable");
     fprintf(stderr,
-            " source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-fmtowns-title={bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
+            " source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-platform-intro={platform:%s bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
             current.sourceId[0] ? current.sourceId : "unknown",
             current.startupPhase[0] ? current.startupPhase : "unknown",
             current.startupActive,
@@ -926,6 +937,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
             current.dm1StartupTitleConsumed,
             current.dm1StartupEntranceConsumed,
             current.dm1StartupFullGraphicsConsumed,
+            dm2IntroPlatform,
             gameView->dm2FmtownsTitleBound,
             gameView->dm2FmtownsTitleFinished,
             gameView->dm2FmtownsTitleRejected,
