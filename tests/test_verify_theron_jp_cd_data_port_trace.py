@@ -49,7 +49,7 @@ class JPDataPortTraceTests(unittest.TestCase):
         layout: verifier.Track02Layout,
         offsets: tuple[int, ...],
     ) -> tuple[Path, Path, tempfile.TemporaryDirectory]:
-        temp = tempfile.TemporaryDirectory(dir=repo / ".codex-scratch")
+        temp = tempfile.TemporaryDirectory()
         root = Path(temp.name)
         track = bytearray(layout.size)
         values = {offset: (0xA0 + index) & 0xFF for index, offset in enumerate(offsets)}

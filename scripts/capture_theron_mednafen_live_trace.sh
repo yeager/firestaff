@@ -3018,7 +3018,10 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
                 --huc6280-23ad-limit 2000000
             )
         fi
-        merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")
+        merge_source_graphics_args+=(
+            --exact-source-lba "${cd_exact_source_lba:-none}"
+            --output "$pce_fast_source_graphics_event_order"
+        )
         python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
             "${merge_source_graphics_args[@]}" || exit 1
         if ! trace_files_are_line_delimited "$pce_fast_source_graphics_event_order"; then

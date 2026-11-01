@@ -151,11 +151,6 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + if(start_at_track02 && (!source_valid || source_lba < track02_start_lba ||
 +                         source_lba >= track02_end_lba))
 +  return;
-+ if(exact_source_lba_requested &&
-+    (!exact_source_lba_enabled || !source_valid || source_lba != exact_source_lba))
-+  return;
-+ if(count >= trace_limit)
-+  return;
 + if(!start_vram_trace_mode_initialized)
 + {
 +  const char *start_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02");
@@ -165,6 +160,11 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + if(start_vram_trace_at_track02 && source_valid &&
 +    source_lba >= track02_start_lba && source_lba < track02_end_lba)
 +  TheronTracePCEFastVWRTraceGateOpen = true;
++ if(exact_source_lba_requested &&
++    (!exact_source_lba_enabled || !source_valid || source_lba != exact_source_lba))
++  return;
++ if(count >= trace_limit)
++  return;
 + const unsigned reader_mpr_slot = (cpu_pc >> 13) & 7;
 + const uint8 reader_mpr = HuCPU.MPR[reader_mpr_slot];
 + const uint32 reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff);

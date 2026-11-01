@@ -50,6 +50,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
    ! grep -Fq 'pce_fast_vce_write_trace_status=%s' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$capture_script" ||
    ! grep -Fq 'merge_theron_pce_fast_source_graphics_events.py' "$capture_script" ||
+   ! grep -Fq -- '--exact-source-lba "${cd_exact_source_lba:-none}"' "$capture_script" ||
    ! grep -Fq -- '--vram-commit-limit "$pce_fast_vram_commit_trace_limit"' "$capture_script" ||
    ! grep -Fq -- '--vce-write-limit "$pce_fast_vce_write_trace_limit"' "$capture_script" ||
    ! grep -Fq 'merged_limit_reached' "$capture_script" ||
