@@ -30,8 +30,9 @@
   links.
 - A headless native DM1 FM Towns boot probe against authentic data emitted no
   Theron receipt lines. This verifies diagnostic scoping; the Theron probe
-  remained at `runtimeTick=0` and proves no original spawn consumer, creature
-  generation, gameplay parity, or visible rendering. No emulator or game
+  remained at `runtimeTick=0` and did not exercise the runtime spawn path.
+  Original consumer behavior, creature generation, gameplay parity, and visible
+  rendering remain unverified. No emulator or game
   media was copied into the repository.
 - Added the TRV2 runtime evidence and limits to the Theron source-lock note,
   capture-readiness summary, TODO, documentation index, and technical wiki.
@@ -55,9 +56,9 @@
   were emitted for these translation units.
 - PR #243 CI then linked the full application in Linux, macOS, and Windows
   CMake builds; localization, warning, repository-policy, and deterministic
-  cross-platform checks passed. No authentic native `--debug` receipt log has
-  been inspected, so runtime source values remain unverified. The existing
-  user-owned JP Mednafen session was left untouched.
+  cross-platform checks passed. At the time of that CI run, no authentic native
+  `--debug` receipt log had yet been inspected; the later receipt evidence is
+  recorded above. The existing user-owned JP Mednafen session was left untouched.
 - Updated the Theron TODO, capture-readiness summary, documentation index,
   technical source note, wiki pages, and receipt note to reflect CI evidence
   and its limits. Refreshed the
