@@ -13,6 +13,14 @@
 
 #define DM2_V1_SKPROJECT_RANDOM_MAGIC 0xbb40e62du
 
+int16_t dm2_v1_skproject_cutlx8(int32_t value)
+{
+    uint8_t low_byte = (uint8_t)((uint32_t)value & 0xffu);
+    return low_byte < 0x80u
+        ? (int16_t)low_byte
+        : (int16_t)low_byte - 0x100;
+}
+
 static uint32_t dm2_v1_skproject_rect_hash(
     uint8_t slot,
     uint8_t next_slot,

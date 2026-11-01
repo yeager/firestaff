@@ -33,8 +33,7 @@ int16_t dm2_v1_retrieve_item_bonus(
         if (context != (int16_t)0xFFFE && context != 2 && context != 3)
             return 0;
     }
-    int8_t signed_val = (int8_t)(val & 0xFF);
-    int16_t result = (int16_t)signed_val;
+    int16_t result = dm2_v1_skproject_cutlx8((int32_t)val);
     return (context >= 0) ? result : -result;
 }
 

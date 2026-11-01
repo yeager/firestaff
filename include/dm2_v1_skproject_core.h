@@ -2779,6 +2779,8 @@ typedef struct {
 
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
+/* DOS and SPX v5 CUTLX8 retain the low byte and sign-extend it to i8. */
+int16_t dm2_v1_skproject_cutlx8(int32_t value);
 int16_t dm2_v1_skproject_between_value(int16_t minv,
                                        int16_t newv,
                                        int16_t maxv);
