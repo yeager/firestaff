@@ -51,8 +51,10 @@ contains only the next cross-game work items, not a complete Theron inventory.
    sidecar records a bounded first-hit window without consuming that cap; the
    JP run reports `not_observed`. The ordered US `$C852`→`$C85E`→`$5039` path is now observed in a bounded
 authentic reference trace. A hash-gated scan of 102 unique MPR2 `$68` windows
-found no contiguous 8 KiB match in raw US Track 02 or Track 19; decoded,
-relocated, mixed-source or runtime-written code remains possible. The full
+found no contiguous 8 KiB match in raw US Track 02 or Track 19. A separate
+authentic `$23AD` decoder capture matched 0/102 runtime instruction windows;
+this cross-capture result does not rule out another decode or runtime write.
+The full
 package is rejected and target source ownership remains open. See [the page
 source scan](source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).

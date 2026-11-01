@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — compare the live MPR2 page with authentic `$23AD` output
+
+- Compared all 102 unique instruction windows from the complete authentic US
+  `$C852` runtime sidecar against the 5,064 ordered `$23AD` output bytes from a
+  separate authentic US capture. The decoder output's exact identity hash is
+  retained in the [runtime-page report](docs/source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
+- No three-byte window matches at the MPR2 `$68` page offsets (0/102),
+  including the live `$5039` sample at offset `$1039`. Both inputs passed
+  their recorded trace identities and the decoder-output SHA-256 check during
+  analysis.
+- This is a cross-capture comparison, not a same-session provenance join. It
+  rules out only the captured `$23AD` output bytes as the direct match for the
+  later instruction windows; the runtime page's source owner remains unknown.
+  The next capture must join all writes to physical `$0D0000–$0D1FFF` with
+  `$23AD`, CD source reads, and instruction fetches in one run.
+
 ## 2026-11-01 — scan the authentic US runtime MPR2 page against retail source
 
 - Added `analyze_theron_runtime_mpr_page_source.py`, which validates the

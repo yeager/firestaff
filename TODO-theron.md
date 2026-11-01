@@ -32,10 +32,14 @@ stage-two payloads. A later authentic cold run records the ordered
 the target source owner and row semantics remain unresolved. A new identity-
 checked scan compared 102 unique MPR2 `$68` code windows against full raw US
 Track 02 and Track 19; neither contains a single contiguous 8 KiB page matching
-the runtime bytes. This is a bounded raw-source search and does not rule out
-decoding, relocation, mixed source segments or runtime writes. Capture the
-source read, System Card copy/decode, destination span and later instruction
-fetches in one event sequence. The same package was rejected because live
+the runtime bytes. A cross-capture comparison also found 0/102 instruction
+windows in the authentic `$23AD` output from a separate US session, including
+the `$5039` target. This does not rule out another decode, relocation, mixed
+source segments or runtime writes. Capture every write to physical
+`$0D0000–$0D1FFF`, `$23AD` output, CD source reads, and later instruction
+fetches in one event sequence. The existing code-RAM writer trace filters to
+`$1F1C00–$1F1DFF`, so widen that evidence path before assigning the page's
+owner. The same package was rejected because live
 `$45C3` did not match retail Track 02 and other traces reached their caps. The instrumented PCE Fast sidecar and complete
 patch-only chain passed their focused checks. An authentic JP state-only run
 separately hit the shared 8,192-row cap before `$C852`, reported

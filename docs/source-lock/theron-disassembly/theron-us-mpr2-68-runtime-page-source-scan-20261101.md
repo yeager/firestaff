@@ -33,12 +33,32 @@ is absent from the game, nor rule out decompression, relocation, mixed source
 segments, runtime writes, or a source elsewhere on the disc. It assigns no
 semantics to `$5039` or its caller.
 
+## Cross-capture comparison with the authentic `$23AD` output
+
+A separate authentic US capture recorded the complete 5,064-byte `$23AD`
+decoder output at physical `$0D0000–$0D13C7`, with SHA-256
+`9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`. Its
+source trace SHA-256 is
+`a4bdc26eb82d6982490a717f873ee92fa3510818df941c67313c39592087e08d`; see the
+[decoder trace boundary](theron-23ad-trace-boundary-20261029.md). The 102
+unique MPR2 `$68` instruction windows from the later cold US capture all fall
+inside that physical range when mapped by page offset, but none matches the
+corresponding decoder-output bytes (0/102), including the `$5039` sample at
+page offset `$1039`.
+
+These are separate authentic capture sessions. This cross-capture comparison
+shows that the recorded `$23AD` output does not explain the later live code
+bytes; it does not prove that `$23AD` never writes a code page in another
+session or identify the later page's owner.
+
 ## Next source join
 
-Capture the code page's actual population path in the same cold US run: source
-read/LBA and bytes, any System Card copy or decode, destination physical span,
-and subsequent instruction fetches. The source-window join must account for
-the runtime bytes before assigning the static stage-two candidate or inferring
-row semantics. The full Drator capture package remains rejected because live
-`$45C3` windows fail retail-source verification and other traces hit their
-caps; see the [ordered call-window report](theron-us-c852-runtime-call-capture-20261101.md).
+Capture all CPU writes to physical `$0D0000–$0D1FFF`, the `$23AD` decoder
+output, and the bounded instruction-fetch window in one cold US session. Join
+writes and reads by shared event order, source read/LBA, destination span, and
+MPR mapping. The existing code-RAM trace filters writers to `$1F1C00–$1F1DFF`,
+so it cannot establish whether another routine populated the live page. Keep
+row bytes opaque until the runtime page source is accounted for. The full
+Drator capture package remains rejected because live `$45C3` windows fail
+retail-source verification and other traces hit their caps; see the
+[ordered call-window report](theron-us-c852-runtime-call-capture-20261101.md).

@@ -73,8 +73,9 @@ The authentic US Drator cold replay maps the captured `$C852` runtime code windo
 sidecar contains 102 unique instruction windows under MPR2 `$68`; three
 identity-checked searches found no contiguous 8 KiB match in raw US Track 02
 or Track 19. This bounded negative result does not rule out decoded,
-relocated, mixed-source, or runtime-written code. The code-page population
-path remains the next source join. See the [runtime-page source scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
+relocated, mixed-source, or runtime-written code. A separate authentic
+`$23AD` output matched 0/102 windows in a cross-capture comparison. The
+code-page population path remains the next source join. See the [runtime-page source scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
 A separate authentic JP state-only `$3879` trace also reached its 8,192-row cap before `$C852`; it recorded JP `$C85E` as opcode `$A6` at physical `$0D285E` and no `$5039` execution. This does not establish the US caller path. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
 Firestaff gameplay
