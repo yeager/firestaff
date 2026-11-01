@@ -15,7 +15,10 @@
 > maps the match to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs
 > do not select that page. The state embeds a preview and named
 > VCE/VDC0/VRAM/SAT snapshot variables, but no pose-bound tile consumer is
-> established.
+> established. Disc LBA 3674 is a target only: the capture wrapper currently
+> filters to the Track 02 span, not an exact LBA, and FIFO-origin RAM receipts
+> lack a matching exact-LBA media-byte-to-consumer join. See the
+> [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md).
 > See the [source report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 

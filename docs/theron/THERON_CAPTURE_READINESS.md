@@ -189,8 +189,12 @@ pose. All four maps are present, so the active map remains unknown. See the
 The authenticated source descriptor and all four Akutuba tile arrays map
 to one raw MODE1 sector: Track 02 file sector 308 / disc LBA 3674. Map 0 and
 map 2 discriminating `(2,3)` bytes are at raw BIN offsets `$B10E6` and
-`$B121F`. Use that sector as a capture filter only; source presence does not
-establish that the original read or selected it. The repeatable source mapping
+`$B121F`. This is a capture target, but the current wrapper filters only to
+the whole Track 02 range; it has no exact-LBA option. The FIFO-origin RAM
+receipt path also lacks an exact-LBA filter and an end-to-end join that
+authenticates media bytes before following them through RAM to a consumer.
+Filtering rows after capture does not reduce trace volume or prevent cap
+truncation. The repeatable source mapping
 is reported in the [JP Akutuba sector trace plan](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and can be recomputed with the
 [`identity-checked planner`](../../tools/plan_theron_jp_akutuba_map_trace.py).

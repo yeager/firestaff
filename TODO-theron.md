@@ -90,9 +90,12 @@ and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 The authentic JP Akutuba source spans are now mapped to raw Track 02 sector
 308 (Track 02 LBA 84, disc LBA 3674). Its descriptor and all four map arrays
 fit in that one MODE1 sector; map 0 and map 2 tile `(2,3)` bytes are at raw
-offsets `$B10E6` and `$B121F`. This gives the next cold capture a concrete
-source-read filter, but does not prove that the original reads or consumes
-those bytes. Recompute the identity-checked target with
+offsets `$B10E6` and `$B121F`. LBA 3674 is a capture target, not a supported
+exact-LBA filter: the current wrapper filters CD data-port reads only to the
+whole Track 02 range, and the FIFO-origin RAM receipt path has no exact-LBA
+gate or a source-byte-authenticated consumer join. Post-capture
+`source_lba` filtering will not reduce trace volume or prevent cap truncation. Recompute the
+identity-checked target with
 [`plan_theron_jp_akutuba_map_trace.py`](tools/plan_theron_jp_akutuba_map_trace.py);
 pass `--dump-grids` to print all four authenticated map arrays as opaque tile
 bytes and descriptor values; unknown fields remain uninterpreted. This does
@@ -102,19 +105,25 @@ not identify the runtime map or tile meaning. See the
 ## 2026-11-01 — define the JP active-map capture acceptance chain
 
 The next authentic cold JP capture must join these events in one shared
-sequence: hash-verified Track 02 reads of the Akutuba descriptor and map arrays;
-the System Card transfer and any `$23AD` decode; the game-owned active-map
-selector; and a read of the tile at the captured party pose. Retain logical and
-physical PCs, fetched instruction bytes, MPRs, disc LBA and user-data offset,
-RAM destinations, and an atomic VDC/VCE/VRAM snapshot so each source-to-consumer
-step can be checked independently.
+sequence: exact-LBA-filtered, hash-verified Track 02 reads of the Akutuba
+descriptor and map arrays; the System Card transfer and any `$23AD` decode;
+the game-owned active-map selector; and a read of the tile at the captured
+party pose. First add exact LBA 3674 filtering to both CD data-port reads and
+FIFO-origin RAM receipts, then verify each joined byte against the authentic
+MODE1/2352 BIN and its sector offset. Retain logical and physical PCs, fetched
+instruction bytes, MPRs, disc LBA and user-data offset, RAM destinations, and
+an atomic VDC/VCE/VRAM snapshot so each source-to-consumer step can be checked
+independently.
 
 The `(2,3)` source bytes distinguish map 0 (`0x20`) from map 2 (`0x00`), but
 use them only after the runtime pose, selected map, and tile consumer are bound.
 Pair an accepted input with a no-input control. Do not change movement or
 viewport behavior from static source offsets, retained RAM scans, or event
-ordering alone. The planner's disc LBA 3674 is a capture filter target, not
-evidence that the original read or selected the map.
+ordering alone. The planner's disc LBA 3674 is a target for the missing
+exact-LBA capture filter, not evidence that the original read or selected the
+map. The existing
+Track 02-wide trace and post-capture filtering cannot establish the required
+byte-to-consumer join.
 
 An identity-gated static scan also lists 21 raw Track 02 candidates per
 edition for the observed `$C1FC` two-byte TII shape. These offsets are only a

@@ -95,9 +95,11 @@
 > The source-locked [Mednafen 1.32.1 state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py)
 > maps it to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs do not
 > select that page. All four arrays are resident, so active selection and the
-> pose-bound tile consumer remain unknown. This is a source-analysis aid only;
-> it does not
-> authorize runtime rendering. See the [source-sector
+> pose-bound tile consumer remain unknown. Disc LBA 3674 is only a capture
+> target: the current wrapper filters to the whole Track 02 range, while
+> FIFO-origin RAM receipts have no exact-LBA gate or end-to-end media-byte-authenticated
+> consumer join. Filtering after capture cannot prevent trace-cap truncation. This is a
+> source-analysis aid only; it does not authorize runtime rendering. See the [source-sector
 > report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 

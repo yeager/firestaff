@@ -41,15 +41,27 @@ been observed in the same run.
 
 ## Capture use and limits
 
-Use disc LBA 3674 (or the equivalent Track 02 file-sector/user-byte range) as
-the narrow source-read filter for a cold JP capture. Preserve a shared event
-sequence from the read through its System Card or game-owned RAM destination,
-the active-map selection, and a tile read at the captured pose; pair it with
-atomic VDC/VCE/VRAM and an accepted-input/no-input control. A static media
-location does not show that the original reads, selects, copies, or consumes
-these bytes. It does not identify a runtime map, player coordinate, visual
-meaning, or renderer behavior. Current cold JP RUN captures stop in the System
-Card and report `transition=missing`, so no such game-owned join is claimed.
+Disc LBA 3674 is the target for a narrow source-read capture, but the current
+capture wrapper supports only a Track 02-wide CD data-port filter, not an exact
+LBA filter. Its FIFO-origin main-RAM receipts and validators do not yet provide an
+end-to-end join that authenticates receipt bytes against the retail BIN at
+exact LBA 3674 and follows them into a pose-bound consumer. Rows can be
+filtered after capture by `source_lba`, but that does not reduce trace volume
+or protect the trace cap.
+
+No authentic capture has yet verified a read of this sector into a game-owned
+consumer.
+
+The next instrumentation change must filter both CD data-port reads and
+FIFO-origin RAM receipts to exact LBA 3674 (or a validated half-open range),
+then verify raw BIN bytes by sector offset/value and join them through the
+shared event sequence to RAM destination and a pose-bound tile consumer.
+Preserve atomic VDC/VCE/VRAM and an accepted-input/no-input control. A static
+media location does not show that the original reads, selects, copies, or
+consumes these bytes. It does not identify a runtime map, player coordinate,
+visual meaning, or renderer behavior. Current cold JP RUN captures stop in the
+System Card and report `transition=missing`, so no such game-owned join is
+claimed.
 
 Recompute the authentic-media target with:
 

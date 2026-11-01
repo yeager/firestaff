@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — reconcile Akutuba capture target with available LBA filters
+
+- Reviewed the JP Akutuba source report, capture wrapper, CD-port trace and
+  FIFO-origin receipt validators. The source bytes are at disc LBA 3674, but
+  the current CD data-port trace can filter only to the full Track 02 span;
+  post-capture `source_lba` filtering does not reduce trace volume. The
+  FIFO-origin receipt path also lacks an exact-LBA filter and an end-to-end
+  media-byte-authenticated consumer join.
+- Updated the Theron TODO, capture-readiness summary, source-sector report,
+  README, documentation index, project/platform/completion status, parity
+  definition matrix and Theron wiki pages to describe LBA 3674 as a target
+  rather than an available filter, and to state the next instrumentation and
+  verification requirements.
+- Documentation and source review only; no build, emulator capture or tests
+  were run. No native rendering or gameplay claim changed.
+
 ## 2026-11-01 — verify native Theron spawn-source debug receipt against JP media
 
 - Built the full native `firestaff` target on TRV2 in Debug mode with `-j1`
