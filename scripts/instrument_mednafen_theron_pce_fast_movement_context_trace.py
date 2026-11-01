@@ -145,7 +145,7 @@ static void TheronPCEFastMovementInstructionContext(uint16 pc, uint8 opcode)
   {
    TheronPCEFastMovementContextTrace = fopen(path, "w");
    if(TheronPCEFastMovementContextTrace)
-    fputs("source=mednafen-pce-fast-theron-movement-context-v3 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
+    fputs("source=mednafen-pce-fast-theron-movement-context-v4 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
   }
  }
  if(!TheronPCEFastMovementContextTrace)
@@ -165,6 +165,76 @@ static void TheronPCEFastMovementInstructionContext(uint16 pc, uint8 opcode)
           row->physical_pc, row->opcode, row->bytes[0], row->bytes[1],
           row->bytes[2], row->bytes[3]);
  }
+ fflush(TheronPCEFastMovementContextTrace);
+}
+static void TheronPCEFastMapReaderInstructionContext(
+    uint16 pc, uint8 opcode, uint8 accumulator, uint8 index_x, uint8 index_y,
+    uint8 status, const uint8 *page1)
+{
+ static unsigned map_array_count;
+ static unsigned map_index_count;
+ static bool map_array_truncated;
+ static bool map_index_truncated;
+ const bool map_array_pc = pc == 0x50FE || pc == 0x4FFC ||
+                           pc == 0x4FD4 || pc == 0xAE66;
+ const bool map_index_pc = pc == 0x50D2 || pc == 0x50D6 || pc == 0x4FA7;
+ if(!map_array_pc && !map_index_pc)
+  return;
+ if(TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
+  return;
+
+ unsigned *count = map_array_pc ? &map_array_count : &map_index_count;
+ bool *truncated = map_array_pc ? &map_array_truncated : &map_index_truncated;
+ if(*count >= TheronPCEFastMovementContextLimit())
+ {
+  if(!*truncated && TheronPCEFastMovementContextTrace)
+  {
+   *truncated = true;
+   fprintf(TheronPCEFastMovementContextTrace,
+           "%s_truncated=sample_limit count=%u limit=%u\n",
+           map_array_pc ? "map_array_instruction_context" :
+                          "map_index_reader_instruction_context",
+           *count, TheronPCEFastMovementContextLimit());
+   fflush(TheronPCEFastMovementContextTrace);
+  }
+  return;
+ }
+ if(!TheronPCEFastMovementContextTrace)
+ {
+  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE");
+  if(path && *path)
+  {
+   TheronPCEFastMovementContextTrace = fopen(path, "w");
+   if(TheronPCEFastMovementContextTrace)
+    fputs("source=mednafen-pce-fast-theron-movement-context-v4 event_sequence_source=TheronTraceCDSharedEventSequence\n",
+          TheronPCEFastMovementContextTrace);
+  }
+ }
+ if(!TheronPCEFastMovementContextTrace)
+  return;
+
+ const uint8 mpr = HuCPU.MPR[pc >> 13];
+ const uint32 physical_pc = (mpr << 13) | (pc & 0x1FFF);
+ uint8 peek_bytes[4] = { opcode, 0, 0, 0 };
+ for(unsigned i = 1; i < sizeof(peek_bytes); i++)
+ {
+  const uint16 address = (uint16)(pc + i);
+  const unsigned slot = address >> 13;
+  peek_bytes[i] = *(const uint8 *)(HuCPU.FastPageR[slot] + address);
+ }
+ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
+ fprintf(TheronPCEFastMovementContextTrace,
+         "%s sequence=%u event_sequence=%u frame=%u pc=%04x pc_mpr=%02x physical_pc=%06x opcode=%02x code_window_peek=%02x%02x%02x%02x a=%02x x=%02x y=%02x p_raw=%02x znflags=%08x s=%02x page1_14=%02x page1_15=%02x page1_2a=%02x page1_2b=%02x page1_2c=%02x page1_2d=%02x page1_2e=%02x page1_2f=%02x page1_30=%02x page1_31=%02x page1_32=%02x page1_33=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
+         map_array_pc ? "map_array_instruction_context" :
+                        "map_index_reader_instruction_context",
+         (*count)++, event_sequence, TheronPCEFastScriptFrame, pc, mpr,
+         physical_pc, opcode, peek_bytes[0], peek_bytes[1], peek_bytes[2], peek_bytes[3],
+         accumulator, index_x, index_y, status, HuCPU.ZNFlags, HuCPU.S,
+         page1[0x14], page1[0x15], page1[0x2A], page1[0x2B],
+         page1[0x2C], page1[0x2D], page1[0x2E], page1[0x2F],
+         page1[0x30], page1[0x31], page1[0x32], page1[0x33],
+         HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
+         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
  fflush(TheronPCEFastMovementContextTrace);
 }
 static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_address,
@@ -205,7 +275,7 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
   {
    TheronPCEFastMovementContextTrace = fopen(path, "w");
    if(TheronPCEFastMovementContextTrace)
-    fputs("source=mednafen-pce-fast-theron-movement-context-v3 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
+    fputs("source=mednafen-pce-fast-theron-movement-context-v4 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
   }
  }
  if(TheronPCEFastMovementContextTrace)
@@ -260,7 +330,7 @@ static void TheronPCEFastMovementTIICandidateStateTransfer(unsigned int logical_
   {
    TheronPCEFastMovementContextTrace = fopen(path, "w");
    if(TheronPCEFastMovementContextTrace)
-    fputs("source=mednafen-pce-fast-theron-movement-context-v3 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
+    fputs("source=mednafen-pce-fast-theron-movement-context-v4 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
   }
  }
  if(TheronPCEFastMovementContextTrace)
@@ -334,7 +404,7 @@ static void TheronPCEFastMovementStateWrite(const char *write_path,
   {
    TheronPCEFastMovementContextTrace = fopen(path, "w");
    if(TheronPCEFastMovementContextTrace)
-    fputs("source=mednafen-pce-fast-theron-movement-context-v3 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
+    fputs("source=mednafen-pce-fast-theron-movement-context-v4 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
   }
  }
  if(TheronPCEFastMovementContextTrace)
@@ -394,7 +464,7 @@ static void TheronPCEFastMovementStateWrite(const char *write_path,
     replace_once(
         huc,
         "\t  b1 = RdAtPC();\n",
-        "\t  b1 = RdAtPC();\n\t  TheronPCEFastMovementInstructionContext(TheronTraceInstructionPC, b1);\n",
+        "\t  b1 = RdAtPC();\n\t  TheronPCEFastMovementInstructionContext(GetRealPC(), b1);\n\t  TheronPCEFastMapReaderInstructionContext(GetRealPC(), b1, HuCPU.A, X_local, Y_local, P_local, Page1_local);\n",
     )
 
 
