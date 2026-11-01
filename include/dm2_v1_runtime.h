@@ -38,6 +38,8 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_ccm_loop_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"

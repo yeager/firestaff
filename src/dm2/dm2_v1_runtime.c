@@ -52,6 +52,7 @@
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_projectile_impact_attack.h"
 #include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
@@ -4543,6 +4544,74 @@ static void dm2_runtime_apply_spell_cooldown(
     dm2_runtime_apply_hand_cooldown(rt, hero, cooldown_ticks, 2);
 }
 
+/* SKWINSPX v5 skgdtqdb.cpp::DM2_FIND_HAND_WITH_EMPTY_FLASK and
+ * skevents.cpp POTION branch: hand 1 is inspected before hand 0; DB8/cls2
+ * 0x14 is removed, changed to the produced potion type, assigned its
+ * randomized power in record word 1, and equipped back into that hand. */
+static int dm2_runtime_spell_find_empty_flask(
+    DM2_V1_RuntimeState *rt, const DM2_V1_Hero *hero)
+{
+    if (!rt || !hero || !rt->record_pools_valid) return -1;
+    for (int hand = 1; hand >= 0; --hand) {
+        int16_t item = hero->item[hand];
+        uint8_t cls2;
+        if (item < 0 || dm2_v1_record_handle_pool(item) != 8 ||
+            !dm2_v1_record_pool_address(&rt->record_pools, item) ||
+            !dm2_v1_skproject_query_cls2_from_record(
+                (uint16_t)item, &rt->record_pools, &cls2, NULL) ||
+            cls2 != 0x14u)
+            continue;
+        return hand;
+    }
+    return -1;
+}
+
+static void dm2_runtime_copy_source_hero_to_snapshot(
+    DM2_V1_SessionState *session, int slot, const DM2_V1_Hero *hero);
+
+static int dm2_runtime_spell_make_potion(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand, int spell_value,
+    const DM2_V1_SpellCastPlayerReceipt *cast)
+{
+    DM2_V1_Hero *hero;
+    int16_t item;
+    uint8_t *record;
+    uint16_t power_word;
+    uint16_t random_low;
+    int potion_power;
+    if (!rt || !cast || !rt->source_party_valid ||
+        !rt->record_pools_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hand < 0 || hand > 1)
+        return 0;
+    hero = &rt->source_party.hero[hero_index];
+    item = hero->item[hand];
+    if (item < 0 || dm2_runtime_spell_find_empty_flask(rt, hero) != hand ||
+        !(record = dm2_v1_record_pool_address_mut(&rt->record_pools, item)) ||
+        rt->record_pools.pools[8].record_size < 4)
+        return 0;
+    /* DM2_RAND() is consumed once; source uses CUTX16(RAND()) & 15. */
+    random_low = (uint16_t)dm2_v1_drops_rand24(&rt->session_rng);
+    potion_power = cast->cast_power * 40 + (random_low & 0x0fu);
+    power_word = (uint16_t)potion_power;
+    if (!dm2_v1_record_pool_set_itemtype(&rt->record_pools, item,
+                                        (uint8_t)(spell_value & 0x3f)))
+        return 0;
+    if (rt->record_pools.source_words_big_endian) {
+        record[2] = (uint8_t)(power_word >> 8);
+        record[3] = (uint8_t)power_word;
+    } else {
+        record[2] = (uint8_t)power_word;
+        record[3] = (uint8_t)(power_word >> 8);
+    }
+    /* The hand slot remains the same record throughout the source operation;
+     * refresh snapshot ownership after the record mutation. */
+    rt->champion_inventory_objects[hero_index][hand] = (uint16_t)item & 0x3fffu;
+    dm2_runtime_copy_source_hero_to_snapshot(
+        &rt->session_snapshot, hero_index, hero);
+    return 1;
+}
+
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt)
@@ -4565,6 +4634,7 @@ int dm2_v1_runtime_cast_spell_player(
     int light_type;
     int enchant_type;
     uint8_t enchant_mask;
+    int empty_flask_hand = -1;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.hand_index = hand_index;
@@ -4591,9 +4661,11 @@ int dm2_v1_runtime_cast_spell_player(
      * the only admissible runtime table until those records are transferred
      * as a source-owned table rather than reconstructed from a hash. */
     dm2_v1_spell_cast_player_build_table(&extended, &table);
+    empty_flask_hand = dm2_runtime_spell_find_empty_flask(rt, hero);
     receipt.cast = dm2_v1_spell_cast_player(
         &table, (const uint8_t *)hero->rune,
-        hero->ability[DM2_ABILITY_WIZARDRY][0], hero->curMP, 0);
+        hero->ability[DM2_ABILITY_WIZARDRY][0], hero->curMP,
+        empty_flask_hand >= 0);
     receipt.valid = receipt.cast.valid;
     receipt.source_owner_available = 0;
     receipt.mana_before = hero->curMP;
@@ -4602,6 +4674,43 @@ int dm2_v1_runtime_cast_spell_player(
     receipt.light_after = rt->source_light_level;
     if (!receipt.cast.valid || !receipt.cast.cast_success) {
         if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.cast.execution_class == DM2_V1_SPELL_EXEC_POTION) {
+        DM2_V1_Hero hero_before = *hero;
+        DM2_V1_DropRng rng_before = rt->session_rng;
+        uint8_t *item_record;
+        int16_t item = hero->item[empty_flask_hand];
+        if (item < 0 || !(item_record = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, item))) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        uint8_t record_before[4];
+        if (rt->record_pools.pools[8].record_size < (int)sizeof(record_before)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        memcpy(record_before, item_record, sizeof(record_before));
+        if (!dm2_runtime_spell_make_potion(rt, hero_index, empty_flask_hand,
+                                           table.records[receipt.cast.spell_index].spell_value,
+                                           &receipt.cast)) {
+            memcpy(item_record, record_before, sizeof(record_before));
+            rt->session_rng = rng_before;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index, hero);
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.mana_after = hero->curMP;
+        if (out_receipt) *out_receipt = receipt;
+        (void)hero_before;
         return 1;
     }
     if (receipt.cast.timer_kind == DM2_V1_SPELL_TIMER_CLOUD &&
