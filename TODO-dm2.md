@@ -2023,3 +2023,14 @@ elsewhere and any creature on the cell has AI flag `0x20`. A blocked close
 requeues the source timer one tick later. Missing creature-AI evidence fails
 closed. The source light-check state and SPX-v4/DOS open/close sound effects
 remain unbound, as do complete per-edition runtime lanes.
+
+2026-11-01 skproject `ADD_RUNE_TO_TAIL` variants: the rune cost tables and
+mutation logic match the Firestaff runtime's indexed costs, mana deduction,
+0x0800 hero flag, encoded rune append and terminator. SPX v5's
+`table1d6797[encodedRune + 1]` address lands in row 4 of `table1d67e0`, whose
+values are 8, 12, 16, 20, 24 and 28, matching SPX v4's explicit
+`RunePowerMultiplicator`. The analogous DOS pointer expression remains
+unreconciled at the address level. Keep DOS and SPX v4/v5 rows partial because
+exact panel-refresh sequencing, DOS UI integration, assets and supported-
+platform runtime evidence remain open; the multiplier uncertainty is resolved
+for the SPX v5 variant.
