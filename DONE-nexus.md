@@ -1,5 +1,12 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-02 — Capture complete Ymir VDP2 layer output for Nexus
+
+- Captured authentic Japanese retail startup output at VDP1 frame 7486 / VDP2 serial 8199, rows 4–116. Ymir reports 113/113 NBG0 row samples and 791 complete layer records, with no layer-output truncation or write error.
+- The active NBG0 bitmap state accompanies layer slot 2 output: 21,209 of 36,160 color words are nonzero (58.653%). Slot 3 (NBG1/EXBG) and the other background/mesh slots contain only zero color words. Slot 3 is shared by NBG1/EXBG, so the capture does not establish whether NBG1 was enabled.
+- A same-pass 320×224 framebuffer was captured. This is a layer-output observation, not a retail pixel-parity or source-data join. The later frame-7663 snapshots do not establish frame-7486 memory state; SH-2 write history also dropped 1,660,912 master rows.
+- Added a standalone YMLYR001 analyzer and an evidence report with reproduction instructions. Raw captures and checksums remain on the external disk; firmware, profile, and save-state files are excluded. See [the frame-7486 layer-output report](docs/nexus/nexus_vdp2_layer_output_frame7486.md).
+
 ## 2026-11-02 — Verify authentic MAPD NBG1 4bpp pixel output
 
 - Added a real-data CTest that runs Firestaff's NBG1 4bpp tile decoder and
