@@ -56,9 +56,11 @@ if ! grep -Fq 'startup game=none mode=menu' "$log" ||
    ! grep -Fq 'scan complete' "$log" ||
    ! grep -Fq 'games=dm1:no,csb:yes,dm2:no,nexus:no,theron:no' "$log" ||
    ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga31-multi source=$expected_prefix" "$log" ||
-   ! grep -Fq 'CSB READY: gameId=csb' "$log"; then
-    echo 'FAIL: CSB Amiga 3.3 no-game picker did not select its original multilingual package' >&2
-    grep -E 'startup game=|scan complete|CSB READY|game-handoff|failed|error' "$log" | tail -n 100 >&2 || true
+   ! grep -Fq 'CSB READY: gameId=csb' "$log" ||
+   ! grep -Eq 'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio=' "$log" ||
+   ! grep -Eq 'phase=csb-amiga-a31-titl.*title-frame=[1-9][0-9]*/' "$log"; then
+    echo 'FAIL: CSB Amiga 3.3 no-game picker missed its authentic animated intro or runtime' >&2
+    grep -E 'startup game=|scan complete|CSB READY|game-handoff|amiga-swsh-ftl|swsh-intro|csb-amiga-a31-titl|failed|error' "$log" | tail -n 100 >&2 || true
     exit 1
 fi
 
