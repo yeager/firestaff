@@ -3897,6 +3897,17 @@ int32_t dm2_v1_skproject_query_item_value(
     uint16_t object_id,
     uint8_t cls4,
     DM2_V1_SkprojectItemValueReceipt *out_receipt);
+/* SPX v5 returns i16 from every recursive value call, while accumulating in
+   32-bit registers; nested calls are promoted through unsignedlong(i16). */
+int32_t dm2_v1_skproject_query_item_value_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t cls4,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
+int32_t dm2_v1_skproject_query_item_weight_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
 int32_t dm2_v1_skproject_query_item_weight(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,
