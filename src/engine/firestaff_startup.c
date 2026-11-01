@@ -49,7 +49,7 @@ void fs_startup_ensure_data_dirs(const char *base_dir) {
                 fprintf(f, "  nexus/  - DM Nexus (original Saturn CUE/BIN set or supported archive)\n");
                 fprintf(f, "  theron/ - Theron's Quest (PC Engine HuCard)\n");
 
-                fprintf(f, "Run: firestaff --validate\n");
+                fprintf(f, "Run: firestaff --scan-data\n");
                 fclose(f);
             }
         } else {
