@@ -168,6 +168,14 @@ def main() -> int:
         row_modes[(int(state["scroll_inc_h_11_8"]), int(state["scroll_inc_v_11_8"]))] += 1
         sprite, sprite_priority, _, _, _ = records[(FRAME, SERIAL, row, 0)]
         nbg0, nbg0_priority, nbg0_special, _, _ = records[(FRAME, SERIAL, row, 2)]
+        for inactive_layer in (1, 3, 4, 5, 6):
+            other, other_priority, _, _, _ = records[(FRAME, SERIAL, row, inactive_layer)]
+            if any(other) or any(other_priority):
+                raise ValueError(f"unexpected active layer {inactive_layer} at row {row}")
+        if any(priority not in (0, 2) for priority in sprite_priority):
+            raise ValueError(f"unexpected sprite priority at row {row}")
+        if any(priority not in (0, 4) for priority in nbg0_priority):
+            raise ValueError(f"unexpected NBG0 priority at row {row}")
 
         for x in range(WIDTH):
             source_x_fp = (int(state["scroll_h_11_8"]) +
