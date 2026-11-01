@@ -405,6 +405,14 @@ queue acceptance, not audible hardware or retail sound parity.
 
 ## Theron's Quest
 
+**Native source-receipt update (2026-11-01):** the native `--debug` spawn
+receipt was verified in three JP and three US gameplay-startup loops using
+authentic raw Track 02 data. Each reached a loaded level, emitted one table
+header, eight pointer rows and five zone rows, and matched every field to the
+regional BIN projection. This verifies metadata reporting only; original
+spawn selection/semantics and creature behavior remain unverified. See the
+[receipt report](source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+
 **JP map-data update (2026-11-01):** an offline scan of an authentic JP
 `.mc0` state found the exact Akutuba descriptor and all four map arrays from
 Track 02 in its inflated payload. A source-locked Mednafen 1.32.1 inspector
