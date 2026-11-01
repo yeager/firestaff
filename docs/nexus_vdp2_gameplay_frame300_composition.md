@@ -109,3 +109,23 @@ pixel. Only 66 of 68 textured commands have retail DGN material matches, and
 the 431 mode-4 pixels and 60 polyline pixels are capture-backed rather than
 DGN-backed. Active face selection and transform/culling remain unverified, so
 renderer admission remains blocked.
+
+### Why projected-quad fitting does not identify a DGN face
+
+The retained retail `LEV01.DGN` data provides Structure3 local 16.16 vertex
+positions, face vertex indexes, material selectors, and per-face normal rows.
+It does not provide per-corner UV coordinates in the parsed face records. The
+VDP1 command instead records a source rectangle and four already-projected
+screen-space corners. A candidate face's local vertices therefore cannot be
+compared directly with the command's screen-space quad. Fitting a projection
+to one quad would be underconstrained and would not prove that the game selected
+that face or runtime instance.
+
+Some material selectors have only one candidate face in this level's inventory,
+but selector uniqueness alone does not establish which instance was drawn. The
+next required evidence is a same-invocation retail trace binding a VDP1 command
+VRAM offset to a Structure3 entry and face ordinal, together with the selected
+runtime instance, projected vertex tuple, coordinate origin, clip state, and
+texture-corner correspondence. Until that binding is captured, the source join
+establishes only texture-material matches and a bounded candidate-owner set; it
+does not establish active face ownership or enable production rendering.
