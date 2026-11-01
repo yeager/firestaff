@@ -43,7 +43,7 @@ this address, but a later audit found that its address allowlist omitted bank
 `$74`, offset `$0B14` (`$0E8B14`). That zero-row result cannot establish that
 no write occurred. The autoloaded state still provides no cold loader
 provenance; keep the byte's origin and meaning unresolved. See the
-[writer-trace audit](theron-jp-map-byte-writer-trace-audit-20261101.md).
+[writer-trace audit](theron-jp-map-byte-writer-trace-audit-20261101.md). The later authentic cold attempt and its blocked handoff are documented in the [cold capture report](theron-jp-cold-map-byte-writer-capture-20261101.md); it does not provide loader provenance.
 
 The first 946 normalized map-array address/value/PC/MPR tuples in the UP
 replay match the no-input control exactly. Their captured frame ranges differ
