@@ -66,3 +66,24 @@ reading the authentic column-major arrays. It also prints descriptor bytes
 through the parser's field labels, retaining `unknown_1` and `unknown_2` as
 uninterpreted values. These static IDs and metadata do not identify the
 runtime-selected map, decode tile meaning, or authorize rendering.
+
+## Offline save-state source match (2026-11-01)
+
+An offline byte scan of an existing JP Mednafen `.mc0` save state found the
+complete 1,260-byte source span from the descriptor through the end of all four
+Akutuba maps exactly once in the gzip-inflated state payload at offset
+`0x6633b`. The state file SHA-256 is
+`b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`; the
+matched source span SHA-256 is
+`a8f780a39eee82ef9a36df53808de4e60bef7f05205c660e45f7d7c50d53e615`. Each
+grid also occurs once in source order in that payload. This confirms that all
+four authentic map arrays are present in the state. It does not identify the
+active array: all four are resident. The decompressed file offset is not yet
+mapped to a HuC6280 address, MPR, or RAM region, and there is no offline parser
+for the relevant Mednafen PCE Fast state chunks.
+
+The nearby screenshot is timestamped 49 seconds after the state file, but no
+hash-bound receipt proves that it depicts this exact state. No VDC, VCE, or
+VRAM sidecars are available. A runtime consumer/selector join, pose binding,
+cold CD-to-RAM provenance, and rendered-response evidence remain open. This
+static save-state match does not authorize runtime map selection or rendering.

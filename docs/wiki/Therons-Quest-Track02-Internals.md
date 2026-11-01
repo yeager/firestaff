@@ -7,6 +7,11 @@
 > prints descriptor values and opaque bytes from all four arrays. This
 > establishes static source layout only: unknown descriptor fields, tile
 > semantics, runtime map selection, and the pose-to-render path remain open.
+> An offline scan of an authentic JP `.mc0` state found this complete source
+> span at inflated offset `0x6633b` (state SHA-256
+> `b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`). All
+> four maps are present, so the active map remains unknown; this file offset
+> is not mapped to guest RAM/MPR or a tile consumer.
 > See the [source report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 

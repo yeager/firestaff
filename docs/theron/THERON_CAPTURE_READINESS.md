@@ -63,7 +63,15 @@ physical data-read addresses, not instruction PCs.
 The JP active map is also still unbound. A scan of 106 retained 8 KiB BaseRAM
 snapshots found no contiguous copy of any authenticated Akutuba map tile array;
 this negative result does not cover other RAM, packed data, or a live consumer.
-The authenticated source descriptor and all four Akutuba tile arrays now map
+An offline scan of a separate authentic JP `.mc0` state subsequently found the
+complete descriptor-plus-four-map source span exactly once in its inflated
+payload at offset `0x6633b` (state SHA-256
+`b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`). This
+proves source-byte presence in the saved state, but the file offset is not
+mapped to guest RAM/MPR and all four maps are present, so it does not identify
+the active map. No screenshot-to-state receipt or VDC/VCE/VRAM sidecars exist;
+the Mednafen state chunks cannot currently be parsed offline by Firestaff.
+The authenticated source descriptor and all four Akutuba tile arrays map
 to one raw MODE1 sector: Track 02 file sector 308 / disc LBA 3674. Map 0 and
 map 2 discriminating `(2,3)` bytes are at raw BIN offsets `$B10E6` and
 `$B121F`. Use that sector as a capture filter only; source presence does not

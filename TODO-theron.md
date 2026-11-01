@@ -171,7 +171,7 @@ repeated runs. Existing allowlisted screen captures authorize screen-space
 replay only. Do not map a cell to an attractive tile by visual resemblance or
 promote a save-state input trace as cold media provenance. See the
 [source-to-RAM cold-loader boundary](docs/source-lock/theron-disassembly/theron-jp-cold-loader-byte-copy-capture-20261029.md),
-[atomic VDC capture boundary](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-13-ramvdc-replays-vdcvce-pair-is-screen-space-admitted),
+[atomic VDC capture boundary](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-13--ramvdc-replays-vdcvce-pair-is-screen-space-admitted),
 [US authentic VDC comparison](docs/source-lock/theron-us-authentic-vdc-turn-pair-2026-10-25.md),
 and [current capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
@@ -201,7 +201,7 @@ active map, then establish passability/collision behavior and an original
 rendered response. All state-only captures lack a cold CD handoff; variable
 VRAM snapshots do not establish visible response. See the [comparison evidence](parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md),
 [dynamic instruction-context capture](docs/source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md),
-and [source-locked teleporter analysis](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09-authenticated-track-02-teleporter-handoff-correction).
+and [source-locked teleporter analysis](docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md#2026-08-09--authenticated-track-02-teleporter-handoff-correction).
 
 ## 2026-10-31 — input-gated PCE Fast VRAM event-order trace captured
 
@@ -1411,6 +1411,30 @@ a dummy SDL display and produced no rendered-game frame.
   to the party pose and tile consumer. Pair the accepted input with a no-input
   control and a same-session VDC/VCE/VRAM snapshot before making movement or
   viewport changes. Do not promote contiguous RAM byte matches alone.
+
+## 2026-11-01 — authentic JP state contains all Akutuba source maps
+
+- An offline scan of the existing authentic JP `.mc0` state found the exact
+  1,260-byte Track 02 source span containing the Akutuba descriptor and all
+  four map arrays. The state file SHA-256 is
+  `b4f2a06788e4723110b19892f93e8ac4aef1b5c18c6358a9fe36f1baf747b068`; its
+  gzip-inflated payload contains the source span once at offset `0x6633b`.
+  The source span SHA-256 is
+  `a8f780a39eee82ef9a36df53808de4e60bef7f05205c660e45f7d7c50d53e615`.
+- This advances evidence of map-data presence in a saved emulator state. It
+  does not identify which of the four resident arrays is active, map the
+  decompressed offset to guest RAM/MPR, or bind a game-owned selector, pose,
+  tile consumer, or display snapshot. The prior 106-file scan remains accurate
+  for its narrower scope: no contiguous map array was found in those 8 KiB
+  `pce-fast.ram` sidecars.
+- The nearby dungeon screenshot has a later timestamp than the state, but no
+  hash-bound receipt proves it depicts that exact state. No VDC/VCE/VRAM
+  sidecars are available for this state, and Firestaff has no offline parser
+  for the Mednafen PCE Fast state format. The next useful evidence is a
+  state-load capture that maps the matching bytes to guest address/MPR and
+  observes the active selector and pose-bound tile read in one event sequence.
+  Keep the cold CD-to-RAM provenance and rendered-response requirements open.
+  See the [source-sector report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md#offline-save-state-source-match-2026-11-01).
 
 ## 2026-10-30 — retry combined TIA and RAM-writer capture
 
