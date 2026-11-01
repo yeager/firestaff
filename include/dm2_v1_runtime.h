@@ -365,6 +365,9 @@ int dm2_v1_runtime_set_spell_runes(int hero_index,
 int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index);
 int dm2_v1_runtime_remove_spell_rune(int hero_index);
 int dm2_v1_runtime_clear_spell_runes(int hero_index);
+/* Source events 0x97..0x9a toggle the four magical-map rune bits, charging
+ * active-hero mana on selection and updating the composed-spell cost. */
+int dm2_v1_runtime_click_magical_map_rune(int rune_index);
 int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
                                    int capacity, int *out_rune_count);
 

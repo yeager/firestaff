@@ -69,6 +69,7 @@
 #include "dm2_v1_light_terminal_receipt.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_item_missile_helpers.h"
+#include "dm2_v1_event_handlers_pc34_compat.h"
 #include "dm2_v1_skill_query_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
@@ -175,6 +176,8 @@ struct DM2_V1_RuntimeState {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
+    int16_t source_v1e0b62;
+    int16_t source_v1e0b4e;
     int source_drag_in_progress;
     int16_t source_drag_position;
     int16_t source_event_hero_index;
@@ -3776,6 +3779,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_v1e0b62 = 0;
+    g_dm2_runtime.source_v1e0b4e = 0;
     g_dm2_runtime.source_drag_in_progress = 0;
     g_dm2_runtime.source_drag_position = 0;
     g_dm2_runtime.source_event_hero_index = 0;
@@ -4348,6 +4353,65 @@ int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index)
     hero->nrunes = (int8_t)(rune_count + 1);
     hero->rune[rune_count + 1] = 0;
     return 1;
+}
+
+static DM2_V1_Hero *dm2_runtime_get_magical_map_active_hero(
+    DM2_V1_RuntimeState *rt)
+{
+    int hero_index;
+    if (!rt || !rt->source_party_valid) return NULL;
+    hero_index = rt->source_party.curacthero - 1;
+    if (hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return NULL;
+    return &rt->source_party.hero[hero_index];
+}
+
+static int16_t dm2_runtime_magical_map_get_active_hero_mp(void *ctx)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    return hero ? hero->curMP : 0;
+}
+
+static void dm2_runtime_magical_map_set_active_hero_mp(void *ctx, int16_t mp)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    if (hero) hero->curMP = mp;
+}
+
+static void dm2_runtime_magical_map_set_active_hero_flag(
+    void *ctx, int16_t flag_bits)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    if (hero) {
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                                   (uint16_t)flag_bits);
+    }
+}
+
+int dm2_v1_runtime_click_magical_map_rune(int rune_index)
+{
+    static const int16_t rune_mana[DM2_V1_MAGICAL_MAP_RUNE_COUNT] = {
+        2, 3, 1, 1
+    };
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_ClickMagicalMapRuneCallbacks callbacks;
+    int16_t old_mask;
+
+    if (rune_index < 0 || rune_index >= DM2_V1_MAGICAL_MAP_RUNE_COUNT ||
+        !dm2_runtime_get_magical_map_active_hero(rt)) return 0;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.rune_table = rune_mana;
+    callbacks.v1e0b62 = &rt->source_v1e0b62;
+    callbacks.get_active_hero_mp =
+        dm2_runtime_magical_map_get_active_hero_mp;
+    callbacks.set_active_hero_mp =
+        dm2_runtime_magical_map_set_active_hero_mp;
+    callbacks.set_active_hero_flag =
+        dm2_runtime_magical_map_set_active_hero_flag;
+    callbacks.v1e0b4e = &rt->source_v1e0b4e;
+    old_mask = rt->source_v1e0b62;
+    dm2_v1_click_magical_map_rune((int16_t)rune_index, &callbacks, rt);
+    return old_mask != rt->source_v1e0b62;
 }
 
 int dm2_v1_runtime_remove_spell_rune(int hero_index)
@@ -20602,6 +20666,7 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         !activation_receipt.valid || !activation_receipt.result) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
+    rt->source_v1e0b62 = 0;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
     /* ACTIVATE_ACTION_HAND calls CHAMPION_SQUAD_RECOMPUTE_POSITION after
@@ -20627,6 +20692,7 @@ int dm2_v1_runtime_select_spell_champion(int hero_index) {
      * selection mode. Keep party.curactmode as the active hand used by the
      * DM2 cast owner; only transfer the source champion selection here. */
     rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_v1e0b62 = 0;
     rt->source_party.curacthero = rt->source_curacthero;
     /* DOS and SPX SET_SPELLING_CHAMPION also recompute a pending formation
      * drag after publishing the new champion selection. */
@@ -20732,6 +20798,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_v1e0b62 = 0;
+    g_dm2_runtime.source_v1e0b4e = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     memset(&g_dm2_runtime.source_movement, 0,
            sizeof(g_dm2_runtime.source_movement));
