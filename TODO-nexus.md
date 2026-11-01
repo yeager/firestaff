@@ -1,8 +1,23 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-29. The items below track open work and include completed
+Reviewed 2026-11-01. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
+
+## 2026-11-01 — Frame-300 VDP pixel-to-command ownership
+
+The authentic Japanese gameplay frame-300 VDP2 composition now links each of
+its 65,991 visible top-layer VDP1 pixels to the last-writing VDP1 command and
+that row's source receipt. The 65,500 RGB pixels map to indexed retail
+`LEV01.DGN` rows. The 491 CRAM pixels map to captured polyline row 79 (60
+pixels) and mode-4 sprite row 80 (431 pixels). The combined real-data
+regression verifies those counts together with the complete VDP2 RGB match and
+the DGN joins. This proves pixel-to-command/source-class ownership for this
+captured state, not a selected Structure3 face per pixel. Active face
+selection, transform/culling, other gameplay states, and production renderer
+admission remain unresolved. See
+[`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
+and PR [#252](https://github.com/yeager/firestaff/pull/252).
 
 ## 2026-10-31 — NBG0 live-row replay
 
