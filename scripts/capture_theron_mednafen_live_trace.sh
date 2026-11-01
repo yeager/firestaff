@@ -46,6 +46,11 @@ if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE' >&2
     exit 1
 fi
+if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 &&
+      ! -r "$script_dir/verify_theron_jp_code_follow_trace.py" ]]; then
+    printf '%s\n' 'FAIL: PCE Fast cold capture requires verify_theron_jp_code_follow_trace.py beside the capture script; refusing to start an unreceiptable capture' >&2
+    exit 1
+fi
 huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
     if [[ -n ${THERON_CAPTURE_MEDNAFEN_MODULE:-} &&
