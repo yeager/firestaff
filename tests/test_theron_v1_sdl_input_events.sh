@@ -24,6 +24,8 @@ fi
 mkdir -p "$scratch_root"
 held_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-held.XXXXXX")
 released_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-released.XXXXXX")
+keypad_left_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-keypad-left.XXXXXX")
+keypad_right_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-keypad-right.XXXXXX")
 panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-panel.XXXXXX")
 item_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-item.XXXXXX")
 side_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-side-steps.XXXXXX")
@@ -36,6 +38,8 @@ fractional_panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-fractional-p
 popup_panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-popup-panel.XXXXXX")
 held_output=$(mktemp "$scratch_root/firestaff-theron-sdl-held-output.XXXXXX")
 released_output=$(mktemp "$scratch_root/firestaff-theron-sdl-released-output.XXXXXX")
+keypad_left_output=$(mktemp "$scratch_root/firestaff-theron-sdl-keypad-left-output.XXXXXX")
+keypad_right_output=$(mktemp "$scratch_root/firestaff-theron-sdl-keypad-right-output.XXXXXX")
 panel_output=$(mktemp "$scratch_root/firestaff-theron-sdl-panel-output.XXXXXX")
 item_output=$(mktemp "$scratch_root/firestaff-theron-sdl-item-output.XXXXXX")
 side_output=$(mktemp "$scratch_root/firestaff-theron-sdl-side-steps-output.XXXXXX")
@@ -52,7 +56,7 @@ popup_config=$(mktemp "$scratch_root/firestaff-theron-sdl-popup-config.XXXXXX")
 printf 'touch_controls_index = 1\ninput_mode_index = 0\n' >"$touch_config"
 printf 'touch_controls_index = 1\ninput_mode_index = 0\ngame_4_resolution = 4\n' >"$fractional_config"
 printf 'touch_controls_index = 1\ninput_mode_index = 0\ngame_4_resolution = 4\n' >"$popup_config"
-trap 'rm -f "$held_probe" "$released_probe" "$panel_probe" "$item_probe" "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" "$touch_forward_probe" "$touch_turn_probe" "$held_output" "$released_output" "$panel_output" "$item_output" "$side_output" "$action_output" "$left_turn_output" "$keyboard_action_output" "$touch_forward_output" "$touch_turn_output" "$fractional_panel_probe" "$fractional_panel_output" "$popup_panel_probe" "$popup_panel_output" "$touch_config" "$fractional_config" "$popup_config"' EXIT
+trap 'rm -f "$held_probe" "$released_probe" "$keypad_left_probe" "$keypad_right_probe" "$panel_probe" "$item_probe" "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" "$touch_forward_probe" "$touch_turn_probe" "$held_output" "$released_output" "$keypad_left_output" "$keypad_right_output" "$panel_output" "$item_output" "$side_output" "$action_output" "$left_turn_output" "$keyboard_action_output" "$touch_forward_output" "$touch_turn_output" "$fractional_panel_probe" "$fractional_panel_output" "$popup_panel_probe" "$popup_panel_output" "$touch_config" "$fractional_config" "$popup_config"' EXIT
 
 startup_script='enter,enter,down,down,down,down,down,down,enter,down,enter,tab'
 run_event_route() {
@@ -87,6 +91,10 @@ run_event_route "$held_probe" "$held_output" \
     'down,rightdown:40:40,key:right,wait:8'
 run_event_route "$released_probe" "$released_output" \
     'down,rightdown:40:40,rightup:40:40,key:right,wait:8'
+run_event_route "$keypad_left_probe" "$keypad_left_output" \
+    'rightdown:40:40,key:kp1,wait:8'
+run_event_route "$keypad_right_probe" "$keypad_right_output" \
+    'rightdown:40:40,key:kp3,wait:8'
 run_event_route "$panel_probe" "$panel_output" \
     'click:292:144,click:292:144,click:248:144,wait:8'
 # Walk to the authentic level-0 sandals, then use the visible mouse controls
@@ -119,7 +127,8 @@ run_event_route "$fractional_panel_probe" "$fractional_panel_output" \
 run_event_route "$popup_panel_probe" "$popup_panel_output" \
     'key:f10,click:729:591,wait:8' 1280 960 v21 "$popup_config"
 
-python3 - "$held_probe" "$released_probe" "$panel_probe" "$item_probe" \
+python3 - "$held_probe" "$released_probe" "$keypad_left_probe" \
+    "$keypad_right_probe" "$panel_probe" "$item_probe" \
     "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" \
     "$touch_forward_probe" "$touch_turn_probe" "$fractional_panel_probe" \
     "$expected_md5" \
@@ -128,13 +137,18 @@ import json
 import re
 import sys
 
-held_path, released_path, panel_path, item_path, side_path, action_path, \
+held_path, released_path, keypad_left_path, keypad_right_path, panel_path, \
+item_path, side_path, action_path, \
     left_turn_path, keyboard_action_path, touch_forward_path, touch_turn_path, \
     fractional_panel_path, expected_md5, keyboard_log_path = sys.argv[1:]
 with open(held_path, encoding="utf-8") as stream:
     held = json.load(stream)
 with open(released_path, encoding="utf-8") as stream:
     released = json.load(stream)
+with open(keypad_left_path, encoding="utf-8") as stream:
+    keypad_left = json.load(stream)
+with open(keypad_right_path, encoding="utf-8") as stream:
+    keypad_right = json.load(stream)
 with open(panel_path, encoding="utf-8") as stream:
     panel = json.load(stream)
 with open(item_path, encoding="utf-8") as stream:
@@ -154,7 +168,9 @@ with open(touch_turn_path, encoding="utf-8") as stream:
 with open(fractional_panel_path, encoding="utf-8") as stream:
     fractional_panel = json.load(stream)
 
-for label, probe in (("held", held), ("released", released), ("panel", panel),
+for label, probe in (("held", held), ("released", released),
+                     ("keypad-left", keypad_left),
+                     ("keypad-right", keypad_right), ("panel", panel),
                      ("item", item), ("side", side), ("actions", actions),
                      ("left-turn", left_turn), ("keyboard-actions", keyboard_actions),
                      ("touch-forward", touch_forward), ("touch-turn", touch_turn),
@@ -173,6 +189,13 @@ if (held_party["mapX"], held_party["mapY"], held_party["direction"]) != (1, 1, 1
     raise SystemExit(f"FAIL: held Button II + Right did not turn in place: {held_party}")
 if (released_party["mapX"], released_party["mapY"], released_party["direction"]) != (2, 1, 0):
     raise SystemExit(f"FAIL: Right after Button II release did not side-step: {released_party}")
+for label, probe, expected_direction in (("keypad 1", keypad_left, 3),
+                                         ("keypad 3", keypad_right, 1)):
+    party = probe["party"]
+    actual = (party["mapX"], party["mapY"], party["direction"])
+    expected = (1, 1, expected_direction)
+    if actual != expected:
+        raise SystemExit(f"FAIL: Button II + {label} pose {actual} != {expected}")
 if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 1, 2):
     raise SystemExit(f"FAIL: live SDL mouse-panel turn-and-forward clicks did not move: {panel_party}")
 if (item_party["mapX"], item_party["mapY"], item_party["direction"]) != (1, 2, 3):
@@ -184,7 +207,8 @@ if (left_turn["party"]["mapX"], left_turn["party"]["mapY"],
         left_turn["party"]["direction"]) != (1, 0, 3):
     raise SystemExit(f"FAIL: mouse-panel left turn did not update the source-backed pose: {left_turn['party']}")
 if any(probe.get("bootAssetMd5") != expected_md5 for probe in
-       (held, released, panel, item, side, actions, left_turn, keyboard_actions,
+       (held, released, keypad_left, keypad_right, panel, item, side, actions,
+        left_turn, keyboard_actions,
         touch_forward, touch_turn, fractional_panel)):
     raise SystemExit("FAIL: runtime event route did not use authenticated USA Track 02")
 if keyboard_actions.get("gameTick", 0) < 2:

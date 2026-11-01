@@ -161,10 +161,11 @@ the highlighted control changes.
   standalone right click does not advance a dungeon tick. In a loaded dungeon
   it is consumed only as the modifier, while Escape remains the desktop Back
   command. An SDL event-loop regression
-  verifies that Button II plus Right turns, then that Right after release
-  side-steps. A native SDL mouse sequence through the visible host panel also
-  turns twice and advances across a source-backed tile, using authenticated
-  USA Track 02. Existing US and Japanese
+  verifies that Button II plus Right turns, keypad 1 and 3 turn in their
+  corresponding directions, then that Right after release side-steps, using
+  the authentic US runtime. A native SDL mouse sequence through the visible
+  host panel also turns twice and advances across a source-backed tile, using
+  authenticated USA Track 02. Existing US and Japanese
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover

@@ -8,6 +8,9 @@
 - Added focused regression assertions for both event paths. The focused target
   built successfully; no real-media gameplay semantics were inferred or
   changed.
+- Extended the existing authentic US SDL runtime route with right-mouse plus
+  keypad 1/3 cases and source-backed expected poses. The test script passes
+  `bash -n`; its full native runtime route remains pending a Firestaff build.
 
 ## 2026-11-01 — enumerate authentic T900 ground-item index candidates
 
