@@ -66,6 +66,9 @@ typedef struct {
     /* byte@0x1e — creature type / GDAT cls index. */
     uint8_t (*get_creature_type)(void *ctx);
 
+    /* s350.v1e054c — current creature's DB4 record handle. */
+    uint16_t (*get_current_creature_record)(void *ctx);
+
     /* byte@0x1c — creature "level"/kind used as an item-class filter
      * (0xff = no filter). */
     uint8_t (*get_item_class_filter)(void *ctx);
@@ -287,8 +290,9 @@ int dm2_v1_ccm_advanced_ccm03(const DM2_V1_CCMAdvancedCallbacks *cb,
  *   which the source explicitly stashes/restores), apply the
  *   dir-delta rotation to the packed 0x18 word, advance to phase 1.
  * phase 1: call WALK_NOW; advance to phase 2 on success else phase 3.
- * phase 2: advance to phase 3, MOVE_RECORD_TO the party onto the
- *   creature's current tile, poke the transition cache, return 0.
+ * phase 2: advance to phase 3, MOVE_RECORD_TO the creature record from
+ *   its current tile back onto that same tile, set the action flag when
+ *   the move succeeds, poke the transition cache, and return 0.
  * phase >=3: no-op, return 0. */
 int dm2_v1_ccm_advanced_jumps(const DM2_V1_CCMAdvancedCallbacks *cb,
                               DM2_V1_CCMAdvancedReceipt *out);

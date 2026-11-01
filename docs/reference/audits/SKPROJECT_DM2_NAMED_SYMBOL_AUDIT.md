@@ -55,15 +55,15 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,082 |
+| `IMPLEMENTED_PARITY` | 1,081 |
 | `NOT_APPLICABLE_ARCH` | 559 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 41 |
+| `PARTIAL` | 44 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
-| **Total** | **1,757** |
+| **Total** | **1,759** |
 
 The supplemental inventory covers 17 SPX v5 and 15 DOS `c_alloc.cpp`
 definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS source. Reviewed entries are recorded in the companion source-review ledger with source mappings and variant-specific evidence. The supplemental review now covers wall/floor/pitfall/teleporter/trickwall actuator timer variants in legacy DOS and SKWINSPX v4/v5. Wall/floor mecha have live runtime owners; GAME_LOAD is narrower. Pitfall, teleporter and trickwall timer classes remain fail-closed in the active runtime dispatcher, and their standalone parity helpers do not implement the full source effects. The DOS
