@@ -735,10 +735,10 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
             if (distinctive >= 512u ||
                 (ctx->item_mask[distinctive >> 3] &
                  (uint8_t)(1u << (distinctive & 7u))) == 0u) return 0;
-        } else if (distinctive != ctx->filter_data) {
-            return 0;
-        } else {
+        } else if (distinctive == ctx->filter_data) {
             exact_type_match = 1;
+        } else if (ctx->filter_data != 0x1ffu) {
+            return 0;
         }
     }
 
