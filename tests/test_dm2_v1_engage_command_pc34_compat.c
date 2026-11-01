@@ -571,31 +571,45 @@ static void test_step_forward_with_callback(void)
     printf("  PASS: step_forward_with_callback\n");
 }
 
-static int g_turn_called;
+static int g_throw_called;
+static int g_throw_direction;
 
-static int mock_turn(void *ctx, int hero_idx, int hand, int16_t swap_dir)
+static int mock_throw(void *ctx, int hero_idx, int hand,
+                      int16_t party_x, int16_t party_y,
+                      int throw_direction)
 {
-    (void)ctx; (void)hero_idx; (void)hand; (void)swap_dir;
-    g_turn_called = 1;
+    (void)ctx; (void)hero_idx; (void)hand; (void)party_x; (void)party_y;
+    g_throw_called = 1;
+    g_throw_direction = throw_direction;
     return 1;
 }
 
-static void test_turn_with_callback(void)
+static void test_throw_action_with_callback(void)
 {
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(42); /* case 41 */
-    req.turn_cb = mock_turn;
-    req.turn_ctx = NULL;
+    req.throw_item_cb = mock_throw;
+    req.throw_item_ctx = NULL;
     req.party_dir = 0;
     req.hero_party_pos = 1;
-    g_turn_called = 0;
+    g_throw_called = 0;
 
     int r = dm2_v1_engage_command(&req, &receipt);
     assert(r == 1);
-    assert(receipt.position_swapped == 1);
+    assert(receipt.item_thrown == 1);
     assert(!receipt.fail_closed);
-    assert(g_turn_called);
-    printf("  PASS: turn_with_callback\n");
+    assert(g_throw_called);
+    assert(g_throw_direction == 1);
+
+    req.hero_party_pos = 0;
+    g_throw_called = 0;
+    g_throw_direction = -1;
+    r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.item_thrown == 1);
+    assert(g_throw_called);
+    assert(g_throw_direction == 0);
+    printf("  PASS: throw_action_with_callback\n");
 }
 
 static int g_release_called;
@@ -651,7 +665,7 @@ int main(void)
     test_consume_with_callback();
     test_cloud_with_callback();
     test_step_forward_with_callback();
-    test_turn_with_callback();
+    test_throw_action_with_callback();
     test_release_minion_with_callback();
     printf("All engage command tests passed.\n");
     return 0;

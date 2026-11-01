@@ -296,7 +296,7 @@ DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		NOT_APPLICABLE_ARCH	DOS
 DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
-DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_engage_command; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24	src/dm2/dm2_v1_engage_command_pc34_compat.c; include/dm2_v1_engage_command_pc34_compat.h	PARTIAL	Source case 41 is item throwing through DM2_hero_2c1d_1de2, with direction 0 or 1 selected by party facing and hero party position (SKULLWIN/c_engage.cpp:547-567; SKULLWIN/c_hero.cpp:3903-4017). Firestaff previously treated it as a position swap; the dispatcher now routes it to the active-hand throw callback. Other action transaction bindings, epilogue side effects, live caller routing, and platform parity remain open.
 init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH	-
 set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	NOT_APPLICABLE_ARCH	-
 PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture

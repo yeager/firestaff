@@ -52,7 +52,7 @@ typedef enum {
     DM2_ENGAGE_HEAL_SELF        = 35,
     DM2_ENGAGE_LIGHT_2          = 37,
     DM2_ENGAGE_LIGHT_3          = 38,
-    DM2_ENGAGE_TURN_POSITION    = 41,
+    DM2_ENGAGE_THROW_ITEM       = 41,
     DM2_ENGAGE_SET_MINION_DEST  = 43,
     DM2_ENGAGE_MINION_MISSILE   = 44,
     DM2_ENGAGE_MINION_ATTACK    = 45,
@@ -159,9 +159,12 @@ typedef struct {
     int (*equip_cb)(void *ctx, int hero_idx, int hand);
     void *equip_ctx;
 
-    /* case 41 TURN: position swap */
-    int (*turn_cb)(void *ctx, int hero_idx, int hand, int16_t swap_dir);
-    void *turn_ctx;
+    /* case 41 throw from active hand; direction is selected by source
+     * relative to party facing and hero party position. */
+    int (*throw_item_cb)(void *ctx, int hero_idx, int hand,
+                         int16_t party_x, int16_t party_y,
+                         int throw_direction);
+    void *throw_item_ctx;
 
     /* case 43 SET_MINION_DEST */
     int (*set_minion_dest_cb)(void *ctx, uint16_t item,
@@ -210,7 +213,7 @@ typedef struct {
     int minion_created;
     int minion_released;
     int minion_dest_set;
-    int position_swapped;
+    int item_thrown;
     int interface_loaded;
     int enchantment_cast;
     int hero_flag_set;

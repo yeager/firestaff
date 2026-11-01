@@ -20,7 +20,7 @@
  *   31      SHOOT:   DM2_SHOOT_CHAMPION_MISSILE from launcher
  *   32-34   ACT:     DM2_hero_2c1d_0186 (type 0/1/2)
  *   35      HEAL_HP: convert MP to HP (loop)
- *   41      TURN:    DM2_hero_2c1d_1de2 (position swap)
+ *   41      THROW:   DM2_hero_2c1d_1de2 from the active hand
  *   43      MINION:  DM2_SET_DESTINATION_OF_MINION_MAP
  *   44,45   MINION:  set minion missile ref action
  *   46      MINION:  DM2_CREATE_MINION (type 0x30)
@@ -373,24 +373,24 @@ int dm2_v1_engage_command(
         break;
     }
 
-    case 41: /* TURN/POSITION swap — skengage.cpp:547-565 */
-        receipt->position_swapped = 1;
-        if (request->turn_cb) {
-            int16_t swap_dir;
-            int16_t hero_pos = request->hero_party_pos;
-            int16_t fwd = (request->party_dir + 1) & 0x3;
-            int16_t back = (request->party_dir + 2) & 0x3;
-            if (hero_pos == fwd) {
-                swap_dir = back;
-            } else if (hero_pos == back) {
-                swap_dir = fwd;
-            } else {
-                swap_dir = 0;
-            }
-            receipt->success = request->turn_cb(request->turn_ctx,
-                                                request->hero_index,
-                                                request->hand, swap_dir);
+    case 41: /* THROW — skengage.cpp:546-565 */
+        if (request->throw_item_cb) {
+            int throw_direction = 0;
+            int hero_pos = request->hero_party_pos & 0x3;
+            int clockwise = ((request->party_dir & 0x3) + 1) & 0x3;
+            int opposite = ((request->party_dir & 0x3) + 2) & 0x3;
+
+            /* Source calls DM2_hero_2c1d_1de2 with direction 0 unless the
+             * active champion occupies party-facing +1 or +2, when the
+             * deferred path calls it with direction 1. */
+            if (hero_pos == clockwise || hero_pos == opposite)
+                throw_direction = 1;
+            receipt->item_thrown = request->throw_item_cb(
+                request->throw_item_ctx, request->hero_index, request->hand,
+                request->party_x, request->party_y, throw_direction);
+            receipt->success = receipt->item_thrown;
         } else {
+            receipt->success = 0;
             receipt->fail_closed = 1;
         }
         break;
