@@ -10206,6 +10206,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
         dm2_runtime_queue_ornate_activation_sound, rt,
+        &rt->session_rng,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {

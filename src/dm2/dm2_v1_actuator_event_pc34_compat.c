@@ -15,6 +15,7 @@
 
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
@@ -501,8 +502,83 @@ typedef struct {
     int item_mask_valid;
     int map;
     uint32_t game_tick;
+    DM2_V1_DropRng *rng;
     DM2_V1_ItemTeleportReceipt *receipt;
 } ItemTeleportCtx;
+
+static uint16_t item_teleport_rd16(const DM2_V1_RecordPoolSet *pools,
+                                   const uint8_t *bytes)
+{
+    if (pools->source_words_big_endian)
+        return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+    return (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static void item_teleport_wr16(const DM2_V1_RecordPoolSet *pools,
+                               uint8_t *bytes, uint16_t value)
+{
+    if (pools->source_words_big_endian) {
+        bytes[0] = (uint8_t)(value >> 8);
+        bytes[1] = (uint8_t)value;
+    } else {
+        bytes[0] = (uint8_t)value;
+        bytes[1] = (uint8_t)(value >> 8);
+    }
+}
+
+/* SKW_MOVE_ITEM_TO applies the actuator ActionType to charged items before
+ * relocating them: 0 fills, 1 removes 15 charges, and 2 adds RAND16(max+1).
+ * Record words follow the admitted platform byte order. */
+static int item_teleport_adjust_charge(ItemTeleportCtx *ctx, int16_t handle)
+{
+    uint8_t cls1 = 0xffu, cls2 = 0xffu;
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    uint8_t *record;
+    uint16_t word, mask, type;
+    int shift, max_charge, current, delta, updated, mode;
+    memset(&cls1_receipt, 0, sizeof(cls1_receipt));
+    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+    if (!dm2_v1_skproject_query_cls1_from_record_ex(
+            (uint16_t)handle, ctx->pool_set, &cls1, &cls1_receipt) ||
+        !cls1_receipt.valid ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            (uint16_t)handle, ctx->pool_set, &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu) return 0;
+    if (cls1 == 0x15u && cls2 == 0u) return 1;
+
+    mode = (int)((item_teleport_rd16(
+        ctx->pool_set, ctx->actu_record + 4) >> 3) & 3u);
+    max_charge = dm2_v1_get_max_charge((uint16_t)handle);
+    if (mode == 0) delta = max_charge;
+    else if (mode == 1) delta = -15;
+    else if (mode == 2) {
+        if (!ctx->rng) return 0;
+        delta = (int)dm2_v1_drops_rand16(
+            ctx->rng, (uint16_t)(max_charge + 1));
+    } else {
+        return 0;
+    }
+    if (max_charge == 0) return 1;
+
+    record = dm2_v1_record_pool_address_mut(ctx->pool_set, handle);
+    if (!record) return 0;
+    type = (uint16_t)dm2_v1_record_handle_pool(handle);
+    if (type == 0x05) { shift = 10; mask = 0x3c00u; }
+    else if (type == 0x06) { shift = 9; mask = 0x1e00u; }
+    else if (type == 0x0a) { shift = 14; mask = 0xc000u; }
+    else return 1;
+    word = item_teleport_rd16(ctx->pool_set, record + 2);
+    current = (int)((word & mask) >> shift);
+    updated = current + delta;
+    if (updated < 0) updated = 0;
+    if (updated > max_charge) updated = max_charge;
+    word = (uint16_t)((word & (uint16_t)~mask) |
+                      (((uint16_t)updated << shift) & mask));
+    item_teleport_wr16(ctx->pool_set, record + 2, word);
+    ctx->receipt->charged_items++;
+    return 1;
+}
 
 static int item_teleport_visitor(void *context,
                                  int16_t handle,
@@ -560,6 +636,11 @@ static int item_teleport_visitor(void *context,
 
     ctx->receipt->items_counted++;
 
+    if (!item_teleport_adjust_charge(ctx, handle)) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+
     /* Move the item via MOVE_RECORD_TO */
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
@@ -598,6 +679,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   int is_floor, int recycler,
                                   int capture, int only_first_item,
                                   int map, uint32_t game_tick,
+                                  DM2_V1_DropRng *rng,
                                   DM2_V1_ItemTeleportReceipt *receipt)
 {
     DM2_V1_ItemTeleportReceipt local;
@@ -675,6 +757,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     ctx.filter_data = dm2_actu_data(actu_record);
     ctx.map = map;
     ctx.game_tick = game_tick;
+    ctx.rng = rng;
     ctx.receipt = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1249,7 +1332,7 @@ static int wall_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
+            0, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         (void)si;
@@ -1264,7 +1347,7 @@ static int wall_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
+            0, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1278,7 +1361,7 @@ static int wall_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
+            0, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1292,7 +1375,7 @@ static int wall_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
+            0, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1306,7 +1389,7 @@ static int wall_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
+            0, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1655,7 +1738,7 @@ static int floor_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
+            1, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1669,7 +1752,7 @@ static int floor_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
+            1, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1683,7 +1766,7 @@ static int floor_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
+            1, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1697,7 +1780,7 @@ static int floor_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
+            1, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1711,7 +1794,7 @@ static int floor_mecha_visitor(void *context,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
+            1, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1785,6 +1868,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                void *ornate_ctx,
                                DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                                void *ornate_sound_ctx,
+                               DM2_V1_DropRng *rng,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1815,6 +1899,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.ornate_ctx  = ornate_ctx;
     ctx.queue_ornate_sound = queue_ornate_sound;
     ctx.ornate_sound_ctx = ornate_sound_ctx;
+    ctx.rng = rng;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));

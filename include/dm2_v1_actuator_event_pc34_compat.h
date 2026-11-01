@@ -320,6 +320,7 @@ typedef struct {
     int creatures_checked;/* creature possession chains walked */
     int recycler_mask_missing; /* 1 = GDAT mask unavailable; source zero-mask no-op */
     int item_type_lookup_failed;
+    int charged_items;    /* source MOVE_ITEM_TO charge update applied */
     int fail_closed;
 } DM2_V1_ItemTeleportReceipt;
 
@@ -410,6 +411,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                void *ornate_ctx,
                                DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                                void *ornate_sound_ctx,
+                               DM2_V1_DropRng *rng,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.
@@ -471,6 +473,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   int is_floor, int recycler,
                                   int capture, int only_first_item,
                                   int map, uint32_t game_tick,
+                                  DM2_V1_DropRng *rng,
                                   DM2_V1_ItemTeleportReceipt *receipt);
 
 /* PUSH_BUTTON_SWITCH — set/clear/toggle the directly addressed Door bit 13.
