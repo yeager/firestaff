@@ -27,12 +27,12 @@ outside that ledger. The supplemental
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,936 location-specific rows,
 3,633 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,975 `UNREVIEWED`, 879 `PARTIAL`, 0 `MISSING`,
+source-review overrides yields 2,972 `UNREVIEWED`, 882 `PARTIAL`, 0 `MISSING`,
 72 `IMPLEMENTED_PARITY`, 8 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
-rows. By source tree, SKWINDOS has 1,205 rows (862 unreviewed, 317 partial,
-26 implemented); SKWINSPX has 2,729 rows (2,113 unreviewed, 561 partial, 46
+rows. By source tree, SKWINDOS has 1,205 rows (861 unreviewed, 318 partial,
+26 implemented); SKWINSPX has 2,729 rows (2,111 unreviewed, 562 partial, 46
 implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
-cross-variant rows are partial. The review ledger contains 969 rows (886
+cross-variant rows are partial. The review ledger contains 972 rows (889
 partial, 73 implemented, 8 architecture-specific, and 2 outside-game),
 including eight cross-variant rows not present in the supplemental inventory.
 
@@ -64,11 +64,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,054 |
+| `IMPLEMENTED_PARITY` | 1,053 |
 | `NOT_APPLICABLE_ARCH` | 558 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 75 |
+| `PARTIAL` | 76 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -80,7 +80,9 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,936-row inventory currently has 2,975 `UNREVIEWED`, 879 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 73 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,929. DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
+With active-source review overrides, the 3,936-row inventory currently has 2,972 `UNREVIEWED`, 882 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 73 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,930. DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff has a live common callback, but DOS/v5 phase-zero wall sound lacks the facing-relative tile offset and the chance-based helper previously attributed to this named symbol is unrelated.
+
+DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
 This is not yet a complete callable-source or feature-by-platform audit. The per-variant counts above show that SPX v4, SPX v5 and DOS still have large independently open definition sets. Reviewed actuator/projectile paths still have their specific gaps in the supplemental review. The legacy DOS shooter definitions in `SKWINDOS/dm2byg.cpp` and `dm2byc.cpp` are recorded as partial; their implementations do not have a complete live projectile owner. The DOS `SKW_IS_REBIRTH_ALTAR` predicate is also mapped to Firestaff’s matching helper; map-header input decoding and caller parity remain open for each supported platform. `SKW_QUERY_DOOR_STRENGTH` is source-compared to the callback helper. SPX v4 and v5 door-query variants are now separately reviewed. DOS/v5 strength reads field 0x11 with the field-0x10 fallback; SPX v4 reads field 0x0f directly. SPX v4 resistance reads field 0x0e and gets graphics from map-header flags/door types, while DOS/v5 use GDAT fields 0x0f/0x0d. Firestaff's map-door metadata path already selects parsed door sets behind header enable flags and door-record type; exact 0xff no-door consumer behavior and complete caller coverage remain open. Four Firestaff query receipts were corrected to match the locked skproject field indices; per-platform asset and runtime verification remain open. DOS, SPX v4 and SPX v5 `_2759_0155` variants now have source-specific review rows matched against the Firestaff query receipt: scan text entries 8–11 for a loadable entry, a nonzero command field 2 and nonzero charge field 8. DOS, SPX v4 and SPX v5 max-charge helpers also match the shared Firestaff DB5/DB6=15, DB10=3 mapping and null/unsupported=0 results; live item-stat-bar routing remains open. DOS/SPX v4/v5 container-map predicates now map to the DB9/type-1 Firestaff helper and runtime record-pool callback; non-hand-action platform routes still need coverage. The SPX-v4 `ADD_ITEM_TO_PLAYER` auto-equip order is now represented by a dedicated Firestaff adapter using the exact source slot groups. The adapter has no live DM2 runtime caller, so revive/hand workflows and platform routes remain open. `PUT_ITEM_TO_PLAYER` has a matching Firestaff helper and input-event dispatcher, but the runtime callback owner is not established. DOS, SPX v4 and SPX v5 `SELECT_CHAMPION_LEADER` all match the Firestaff leader-state helper for dead-target rejection, old/new flags and the last-hero exclusion; their platform-specific runtime routes remain open. SPX-v4 `ADD_MINION_ASSOC`/`RECOVER_MINION_ASSOC` stage temporary DB9/DB14 handles and reconstruct the serialized circular object-link graph; Firestaff's persistent `DM2_MinionTable` stores original object/owner pairs and does not implement that save/load rebinding path. DOS, SPX v4 and SPX v5 `APPEND_RECORD_TO` use the same parent-list, existing-tile chain, and new ground-root insertion semantics; Firestaff has bounded pool and dungeon-data helpers, but its runtime ownership and source fatal-error paths remain incomplete. Record-class lookup, live GDAT/command-string ownership and charge-stat-bar integration remain open. DOS/SPX v5 door attacks share a narrow Firestaff gate receipt that has no live caller; SPX v4 additionally supports weak-door override and compares damage against map-selected door resistance, which Firestaff does not yet model in an integrated owner.
 

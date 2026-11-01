@@ -82,8 +82,9 @@ void dm2_v1_activate_shooter_narrow(
     int timer_idx, int16_t x, int16_t y, uint16_t item, int direction,
     const DM2_V1_ActivateShooterCallbacks *cb, void *ctx);
 
-/* ---- DM2_TRY_ORNATE_NOISE (c_tim_proc.cpp:4591) ----
- * Roll a chance-based ornament noise and queue a timer if it triggers. */
+/* Legacy chance-based ornament helper. This is not SKProject
+ * DM2_TRY_ORNATE_NOISE (c_tim_proc.cpp:4591), which schedules its animation
+ * cadence and GDAT-derived activation sound in the live runtime owner. */
 typedef struct {
     int (*random)(void *ctx, int max);
     void (*queue_timer)(void *ctx, int16_t x, int16_t y, uint32_t delay);

@@ -25,6 +25,8 @@ void dm2_v1_continue_ornate_noise_cb(
     cb->requeue_timer(ctx, timer_idx, delay);
 }
 
+/* Chance-based legacy helper; this is not SKProject TRY_ORNATE_NOISE.
+ * The source ornament-animation path is implemented in dm2_v1_runtime.c. */
 void dm2_v1_activate_ornate_animator(
     int16_t x, int16_t y, int frame_count,
     const DM2_V1_ActivateOrnateAnimatorCallbacks *cb, void *ctx)
