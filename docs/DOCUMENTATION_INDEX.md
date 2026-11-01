@@ -75,6 +75,7 @@ remain at the top of `docs/`.
 - [Latest versioned release summary](releases/RELEASE_3.0.390.md) — older summaries are grouped in the same directory; see the [current changelog](https://github.com/yeager/firestaff/blob/main/RELEASE_NOTES.md)
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, title hold policy, visible in-dungeon mouse movement panel, and Button I/II behavior
+- [Theron native title-hold verification](../DONE-theron.md#2026-11-01--gate-native-title-actions-on-a-three-second-hold) — 3,000 ms host-side title accept/action threshold, release behavior, focused regression boundaries and cross-platform CI result; not a retail timing-parity claim
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities, admitted source bindings, capture-provenance contract and placeholder boundaries
 - [Theron JP host-key cold handoff trace](source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md) — authentic manual RUN/Button I reads confirmed at the BIOS poll; launch branch and wrapper acceptance still missing
 - [Theron native SDL input on authentic US media](source-lock/theron-native-sdl-input-real-media-20261101.md) — three native event-loop runs on hash-verified US Track 02; tested keyboard, mouse-panel, touch and item actions plus parity limits

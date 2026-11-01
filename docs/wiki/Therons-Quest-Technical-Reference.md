@@ -25,6 +25,16 @@
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.
 
+> **Native title input (2026-11-01):** Firestaff gates Theron title
+> accept/action inputs from keyboard, left mouse and mapped gamepad until the
+> input has remained held for at least 3,000 ms; the action dispatches on
+> release. The focused regression covers short holds, the exact threshold and
+> millisecond-counter wrap, and the Linux, macOS and Windows CI CTest jobs
+> passed for PR #248. This is host-side behavior; it does not reproduce or
+> establish the original JP game's captured four-second hold. See the
+> [verified implementation record](../../DONE-theron.md#2026-11-01--gate-native-title-actions-on-a-three-second-hold)
+> and [native input guide](../theron/theron_input.md).
+
 > **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
