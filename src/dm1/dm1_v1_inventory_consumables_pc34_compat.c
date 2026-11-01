@@ -46,9 +46,10 @@ dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5)
         return DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
     }
     /* ReDMCSB PANEL.C:1715-1738 selects the 120/150 threshold and 170 cap
-     * under MEDIA240. Resolve every supported edition represented by that
-     * source gate explicitly, including G14ED (the Amiga demo), instead of
-     * letting an unrecognized edition inherit the same default by accident.
+     * under MEDIA240. Keep the supported edition hashes represented by that
+     * source gate explicit for the audit, including G14ED (the Amiga demo).
+     * The listed editions all use PC34_PLUS. The existing fallback below is
+     * retained for other hashes; media admission is a separate responsibility.
      * The IIGS 2.0/2.1 releases share their authenticated GRAPHICS.GAME hash. */
     {
         static const char* const media240_graphics_md5[] = {
