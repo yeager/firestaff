@@ -1203,8 +1203,6 @@ static int32_t dm2_v1_creature_can_handle_it_impl(
         return (!moneybox || opened || !has_open_state) ? invert : !invert;
     }
 
-    if (!caps) return 0;
-
     if (item_class == 0x29) {
         int moneybox = cb && cb->is_container_moneybox &&
             cb->is_container_moneybox(ctx, item);
@@ -1221,6 +1219,8 @@ static int32_t dm2_v1_creature_can_handle_it_impl(
                 return !invert;
         }
     }
+
+    if (!caps) return 0;
 
     return dm2_handle_mask_has_class(caps->handle_mask, item_class)
         ? !invert : invert;
