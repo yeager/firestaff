@@ -12,9 +12,10 @@ Static disassembly maps the `$50D2` window and four observed map-array reader wi
 mouse, and mapped gamepad are gated until the input has remained held for at
 least 3,000 ms; the action is committed on release. This is a Firestaff host
 policy, independent of the original game's four-second JP title-action
-capture. A focused unit regression covers short-hold rejection, the threshold,
-and millisecond-counter wrap, but has not yet been executed. This does not
-establish title-timing parity with retail. See the
+capture. The focused unit regression covers short-hold rejection, the
+threshold, and millisecond-counter wrap; the full CTest suite passed on Linux,
+macOS, and Windows CI for PR #248. This does not establish title-timing parity
+with retail. See the
 [native input guide](theron_input.md).
 
 The follow-up manual host-key cold run confirms that active-low RUN and Button

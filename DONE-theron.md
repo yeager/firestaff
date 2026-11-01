@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — gate native title actions on a three-second hold
+
+- Native Theron TITLE accept/action inputs from keyboard, left mouse and
+  mapped gamepad now dispatch only when the matching input is released after
+  at least 3,000 ms. Short taps are ignored, timer subtraction handles the
+  SDL millisecond counter wrap, and losing focus clears a pending hold.
+- The focused regression covers short-hold rejection, the exact threshold and
+  timer wrap. The full CTest suite passed in Linux, macOS and Windows CI for
+  PR #248. This host-side rule is separate from the authentic JP capture of
+  four-second Button I holds and does not establish retail timing parity. See
+  the [native input guide](docs/theron/theron_input.md) and
+  [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
+
 ## 2026-11-01 — correct PCE Fast scripted-input slot validation
 
 - A cold JP capture exposed that the verifier treated PCE Fast's serial
