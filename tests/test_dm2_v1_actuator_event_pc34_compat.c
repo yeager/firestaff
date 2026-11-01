@@ -54,7 +54,7 @@ static void test_actu_accessors(void)
 
     /* w6: direction, xcoord, ycoord */
     memset(r, 0, sizeof(r));
-    r[6] = (3 << 4) | (0x1F << 6);
+    r[6] = (uint8_t)((3u << 4) | (0x1Fu << 6));
     r[7] = (0x1F << 6) >> 8 | (0x1F << 3);
     assert(dm2_actu_direction(r) == 3);
 
