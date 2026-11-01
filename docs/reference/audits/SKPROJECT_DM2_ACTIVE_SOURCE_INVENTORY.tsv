@@ -4,7 +4,7 @@ sti	SKWINDOS	SKWINDOS/dm2D.cpp	30	void sti(void) { iflag = true; }	0	UNREVIEWED
 driver_blit_hline_stretched	SKWINDOS	SKWINDOS/dm2D.cpp	34	#define driver_blit_hline_stretched(a, b) driver_stretched_hblit(((a >> 7) + 8) * 0xe0 + 0x15, b) // shr used	0	UNREVIEWED
 driver_init	SKWINDOS	SKWINDOS/dm2D.cpp	248	void driver_init(i8* gfxout)	0	UNREVIEWED
 driver_blit_hline	SKWINDOS	SKWINDOS/dm2D.cpp	400	void driver_blit_hline(ui16 sofs, ui16 dofs, ui16 numpixels)	0	PARTIAL
-driver_blit_hline_masked	SKWINDOS	SKWINDOS/dm2D.cpp	411	void driver_blit_hline_masked(ui16 sofs, ui16 dofs, ui16 pixel, ui8 mask)	0	UNREVIEWED
+driver_blit_hline_masked	SKWINDOS	SKWINDOS/dm2D.cpp	411	void driver_blit_hline_masked(ui16 sofs, ui16 dofs, ui16 pixel, ui8 mask)	0	PARTIAL
 driver_blit	SKWINDOS	SKWINDOS/dm2D.cpp	428	void driver_blit(i8* srcmap, i8* destmap, c_rect* rect, i16 sx, i16 sy, i16 sw, i16 dw, i8 masked, i8 mask)	0	UNREVIEWED
 driver_vsync	SKWINDOS	SKWINDOS/dm2D.cpp	459	void driver_vsync(void)	0	UNREVIEWED
 driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscreenrectdisabled(c_rect* r)	0	UNREVIEWED
