@@ -1,6 +1,6 @@
 # ReDMCSB Firestaff complete audit
 
-Updated: 2026-10-31
+Updated: 2026-11-01
 
 This is the DM1/CSB source-review contract for comparing ReDMCSB against
 Firestaff. ReDMCSB is the primary functional reference for DM1 and CSB V1.
@@ -49,6 +49,8 @@ source functions are mapped to Firestaff behavior and platform-specific gates.
 | DM2 | FM Towns | `docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`, FM Towns row | PARTIAL |
 | DM2 | Macintosh | `README.md` Macintosh English route; Macintosh First Chapter demo remains explicitly unsupported | PARTIAL |
 
+Current inventory snapshot (2026-11-01): the ReDMCSB full callable ledger has 2,133 rows: 2,100 functions (782 `MISSING`, 624 `UNCERTAIN_NUMBERED_EVIDENCE`, 534 `IMPLEMENTED_NARROW`, 95 `VERIFIED_SOURCE_MAPPING`, 65 `SOURCE_NONAPPLICABLE`, 16 `PARTIAL`, and 5 `PC34_SOURCE_IMPLEMENTED`) plus 33 auxiliary rows. The largest missing-function families are platform/toolchain contracts (`AES`, `VDI`, `FIO1`, `VDEO`, floppy, and ABI support), so they require per-edition reachability review before being called game-feature gaps. The DM2 active-source inventory has 3,932 definitions (2,725 SPX, 1,205 DOS, 2 SKULLWIN); 3,816 remain unreviewed, 111 partial, and 5 narrowly implemented. Neither inventory is yet a complete feature-by-platform audit.
+
 F0275 has one bounded DM1 PC34 M11 C080 behavior regression in this review:
 successful non-head C017 removal and the linked-head exception. ReDMCSB's
 `MOVESENS.C:1415-1427` compiles the unlink under MEDIA009/MEDIA529. MEDIA009
@@ -65,7 +67,9 @@ the DM2 skproject inventory or the per-platform status register. Completion
 claims must be made per game and per supported platform lane.
 
 The source review covers behavior and presentation, not only existing
-completion percentages:
+completion percentages. The following family-level index is a triage map; every
+underlying function, caller chain, supported edition and platform still needs
+its own disposition:
 
 | Lane | ReDMCSB source roots | Firestaff surface | Status |
 |---|---|---|---|
