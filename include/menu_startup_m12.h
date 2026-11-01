@@ -478,6 +478,9 @@ typedef struct {
     int canLaunch;
     int rendererReady;
     int presentationReady;
+    int requestedPresentationMode;
+    int resolvedPresentationMode;
+    int presentationFallback;
     int dataReady;
     int versionReady;
     int fullStartGraphicsReady;

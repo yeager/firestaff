@@ -65,8 +65,12 @@ source-derived original game media and is not counted as parity evidence.
 Fixed M12 launch readiness to require the same reviewed real-art admission as
 runtime: DM1 and CSB use their game-specific gates; DM2, Nexus and Theron's
 Quest remain unavailable for V2.2 until their own finished-real packs are
-supported. The all-five-game launcher contract regression passed after the
-change. Existing full-worktree Gitleaks scanning reports 94
+supported. A follow-up found that this policy incorrectly blocked menu
+launches even though the CLI and runtime resolved missing V2.2 art to V2.1.
+The menu gate now preserves the requested mode, records the resolved V2.1
+fallback, and allows the original game data to launch. Existing full-worktree Gitleaks scanning reports 94
+fallback, and allows the original game data to launch. Existing full-worktree
+Gitleaks scanning reports 94
 `generic-api-key` findings in already-present files; the staged change scan
 reports no leaks. See `m12_all_games_boot_readiness_contract_fixture`.
 
