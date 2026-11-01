@@ -4,9 +4,10 @@
 
 - The authentic Japanese frame-300 composition joins all 65,991 visible VDP1
   pixels to their last-writing command and verified source receipt. Of these,
-  65,500 belong to indexed retail `LEV01.DGN` rows; the 15 direct-color DGN
-  draws own no final visible pixels in this capture. The remaining 491 CRAM
-  pixels map to captured polyline row 79 (60) and mode-4 sprite row 80 (431).
+  65,500 visible VDP1 pixels map to retail indexed `LEV01.DGN` rows. The 15
+  direct-RGB DGN draws join retail data but own no final visible pixels in
+  this capture. The remaining 491 CRAM pixels map to captured polyline row 79
+  (60) and mode-4 sprite row 80 (431).
 - The combined real-data regression now asserts this exact source-class
   distribution alongside the full VDP2 RGB match and command/source joins. It
   also checks that each visible VDP1 pixel matches between the replay and

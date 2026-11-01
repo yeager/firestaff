@@ -68,11 +68,12 @@ def main() -> int:
             return composition.returncode
 
         env["FIRESTAFF_NEXUS_YMIR_GAMEPLAY_FRAME300_CAPTURE_DIR"] = str(dumps)
-        env["FIRESTAFF_NEXUS_DATA_DIR"] = os.environ.get(
-            "FIRESTAFF_NEXUS_DATA_DIR", ""
+        configured_data = os.environ.get("FIRESTAFF_NEXUS_DATA_DIR")
+        env["FIRESTAFF_NEXUS_DATA_DIR"] = configured_data or str(
+            Path.home() / ".firestaff" / "data" / "nexus"
         )
-        if not env["FIRESTAFF_NEXUS_DATA_DIR"]:
-            print("SKIP: set FIRESTAFF_NEXUS_DATA_DIR to authentic Japanese Nexus data")
+        if not Path(env["FIRESTAFF_NEXUS_DATA_DIR"]).is_dir():
+            print("SKIP: authentic Japanese Nexus data directory is unavailable")
             return 77
         env["FIRESTAFF_NEXUS_YMIR_STEPPER_OWNER_OUT"] = str(owner_output)
         env["FIRESTAFF_NEXUS_YMIR_STEPPER_SOURCE_RECEIPT_OUT"] = str(source_receipt_output)
