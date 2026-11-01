@@ -1,5 +1,11 @@
 # Firestaff TODO — Theron's Quest
 
+The authenticated pointer-to-zone source relationship is now documented for
+both regions: pointer records 0–4 resolve to the five regular-spawn zone
+records, while 5–7 have zero offsets. The remaining task is to establish the
+original runtime consumer and semantics; the static link does not authorize
+native creature spawning. See the [source lock](docs/source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+
 ## Next original-game analysis — source-map the Drator row consumers
 
 An authentic US cold replay proves a same-session write/read match for row

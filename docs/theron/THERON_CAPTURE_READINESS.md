@@ -117,9 +117,13 @@ parity.
 The 2026-11-01 source update admits the eight creature-pointer records and
 five regular-spawn zone records from authenticated US and JP full-ISO
 projections. Each decoded record matches its regional raw Track 02 BIN, and
-native ISO dungeon startup now binds those records. This is source metadata
-only: it does not establish JP category semantics, a runtime spawn consumer,
-RNG, creature generation, or combat. See the
+native ISO dungeon startup now binds those records. The first five pointer
+records' source-relative offsets (`$0058`, `$00D7`, `$0102`, `$0129`, `$0150`)
+resolve in order to the five authenticated regular-spawn zone records in both
+US and JP data; the remaining three pointer offsets are zero. This is an
+authenticated static table join only. It does not establish runtime pointer
+selection, category meaning, a spawn consumer, RNG, creature generation, or
+combat. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 On 2026-10-31, a clean macOS Debug/SDL3 build passed three repetitions each of

@@ -98,8 +98,11 @@
 > **Track 02 spawn source records (2026-11-01):** authenticated US and JP full
 > ISO projections decode the same creature-pointer and regular-spawn zone
 > records as their raw BINs, and native ISO dungeon startup binds those source
-> records. The JP category semantics, runtime consumer, RNG, creature
-> generation and combat remain unverified. See the
+> records. In both regions the first five pointer offsets (`$0058`, `$00D7`,
+> `$0102`, `$0129`, `$0150`) resolve in order to the five zone records; the
+> remaining three offsets are zero. This static source-table join does not
+> establish runtime pointer selection, category semantics, RNG, creature
+> generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 > **System Card trace tooling (2026-11-01):** the reference capture wrapper

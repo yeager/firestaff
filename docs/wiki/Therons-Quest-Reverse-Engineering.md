@@ -189,7 +189,11 @@ tests remain expected skips when those local fixtures are absent. This closes
 the test-environment blocker, not the semantic one: no game-owned dungeon
 handoff, runtime spawn consumer, or RNG window is admitted yet. Authenticated
 US/JP raw BINs and complete ISO projections now admit the same source spawn
-records, as documented in the [projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+records. In each region, the first five pointer records resolve through their
+source-relative offsets to the five regular-spawn zone records in order; the
+last three pointers have zero offsets. This static link does not establish
+runtime pointer selection, category behavior, or creature spawning. Details
+are in the [projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 ---
 

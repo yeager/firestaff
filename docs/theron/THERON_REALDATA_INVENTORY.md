@@ -75,8 +75,10 @@ the same component and complete-image hash checks used for the US split pair.
   projections. The ISO decoder uses the pregap-normalized shared offset
   `0x203818`, requires the exact regional full-image hash and roster marker,
   and is regression-checked against each raw BIN. This admits source metadata
-  only; JP category/runtime semantics and the original RNG consumer remain
-  closed. See the [spawn-record projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+  only. In both regions pointer records 0–4 resolve in order to the five zone
+  records; records 5–7 have zero offsets. This does not establish runtime
+  pointer selection, JP category semantics, or the original RNG consumer.
+  See the [spawn-record projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 - Later-level runtime receipts retain the retail resource frame length
   (`LE16(+2)-5`) and exact user-data end offset in addition to the block and
   payload hashes. The payload remains opaque until the HuC6280 consumer is

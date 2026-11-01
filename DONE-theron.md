@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document authenticated pointer-to-zone source joins
+
+- Recorded the hash-verified US/JP relationship between the first five
+  creature-pointer `spawn_data_offset` values and the five regular-spawn zone
+  records, including raw BIN and pregap-adjusted ISO offsets. Pointer records
+  5–7 have zero offsets and no matching zone record.
+- Synchronized the source lock, capture readiness, reverse-engineering and
+  technical references, platform/project summaries, documentation index, and
+  Theron missing-functions summary. Each states that this is static source
+  metadata only; runtime pointer selection, category semantics, spawning, RNG,
+  and combat remain unproven.
+- No additional gameplay or parity claim is made by this documentation update.
+
 ## 2026-11-01 — add source-scoped Drator row-consumer trace filter
 
 - Added the opt-in PCE Fast `THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`

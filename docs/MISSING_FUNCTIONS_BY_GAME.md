@@ -213,7 +213,10 @@ the native SDL input loop. USE is dispatched as a command, but authentic door
 and object effects remain fail-closed until the T900 consumer is source-bound.
 Native M11 rejects the authentic empty JP BRAM; positive JP progress
 restoration remains unverified. Source-only loaders cover all seven dungeons
-per region. These results are recorded in the
+per region. Authenticated US and JP pointer records 0–4 resolve by their
+source-relative offsets to the five regular-spawn zone records in order;
+pointer records 5–7 have zero offsets. This static source join does not prove
+runtime pointer selection or spawning. These results are recorded in the
 [capture-readiness summary](theron/THERON_CAPTURE_READINESS.md); they do not
 establish complete retail gameplay or visual parity.
 

@@ -37,8 +37,12 @@ object, tile, palette, HUD, creature, T700 or T900 state.
 **Track 02 source records (2026-11-01):** hash-verified US and JP full-ISO
 projections now admit the same eight creature-pointer and five regular-spawn
 zone records as their raw BINs. Native ISO dungeon startup binds these source
-records. This does not establish JP category semantics or a runtime spawn,
-RNG, creature-generation, or combat consumer. See the
+records. In both regions, pointer records 0–4 contain offsets `$0058`,
+`$00D7`, `$0102`, `$0129`, and `$0150`, which resolve in order to the five
+zone records relative to the authenticated regional table base; records 5–7
+have zero offsets. This static source-table relationship does not establish
+runtime pointer selection, JP category semantics, a spawn/RNG consumer,
+creature generation, or combat. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
