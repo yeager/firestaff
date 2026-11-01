@@ -46671,6 +46671,46 @@ static int m11_csb_runtime_object_name_for_thing(
 
 /* Grab the first floor item from the front cell into the leader hand.
  * Mirrors ReDMCSB CLIKVIEW.C F0373. */
+static int m11_c080_front_item_blocked_by_creature(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    int viewCell) {
+    unsigned short groupThing;
+    unsigned short attributes;
+    const struct DungeonGroup_Compat* group;
+    int groupIndex;
+    unsigned int clickedCell;
+
+    if (viewCell < 2) return 0;
+    if (!state || !cell || !cell->valid || !state->world.dungeon ||
+        !state->world.things) {
+        return 1;
+    }
+    groupThing = dm1_v1_group_get_thing_f0175_pc34(
+        state->world.dungeon, state->world.things,
+        state->world.party.mapIndex, cell->mapX, cell->mapY);
+    if (groupThing == THING_ENDOFLIST) return 0;
+    groupIndex = THING_GET_INDEX(groupThing);
+    if (THING_GET_TYPE(groupThing) != THING_TYPE_GROUP || groupIndex < 0 ||
+        !state->world.things->groups ||
+        groupIndex >= state->world.things->groupCount ||
+        !dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+            state->world.things, groupThing, &attributes)) {
+        /* F0373 cannot prove this group is levitating or misses the clicked
+         * cell, so fail closed and leave the floor object in place. */
+        return 1;
+    }
+    if (F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_GROUP, attributes)) {
+        return 0;
+    }
+    group = &state->world.things->groups[groupIndex];
+    clickedCell = ((unsigned int)state->world.party.direction +
+                   (unsigned int)viewCell) & 3u;
+    return dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+        state->world.things, groupThing, group->cells, group->direction,
+        clickedCell) != 0;
+}
+
 static int m11_c080_grab_leader_hand(M11_GameViewState* state,
                                      int viewCell) {
     M11_ViewportCell cell;
@@ -46696,6 +46736,12 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     }
     targetMapX = cell.mapX;
     targetMapY = cell.mapY;
+
+    /* ReDMCSB CLIKVIEW.C F0373:117-123 rejects a front-square pile click
+     * when a non-levitating F0175 group occupies the clicked F0176 cell. */
+    if (m11_c080_front_item_blocked_by_creature(state, &cell, viewCell)) {
+        return 0;
+    }
 
     item = m11_find_pile_top_item_on_square(
         &state->world,
