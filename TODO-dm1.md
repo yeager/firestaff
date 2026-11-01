@@ -121,6 +121,29 @@ map state in separate movement code; it does not coordinate all F0173/F0174
 state in one transition route. Both symbols remain partial across supported
 editions/platforms. Existing focused assertions cover the isolated adapters;
 CI is the verification path.
+2026-11-01 Apple IIGS combat cross-check: the authentic `m11_dm1_iigs_startup_real_media`
+run now passes both original IIGS 2.0 and 2.1 media through HoC recruitment,
+first descent, native group activation, monster damage, and a repeated source-
+timeline attack. The run exposed an overstrict DOC audio assertion: one
+authentic floor-sensor move requests both a footstep and prioritized C01, so
+the request count advances by two rather than exactly one. The check now pins
+the newly triggered C01 pair and its full stereo volume; no game-data fixture
+or gameplay behavior was changed. This covers monster attacks on IIGS, not
+champion combat actions, HUD pixels, native audio output, or every encounter.
+
+2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: both Firestaff
+adapters preserve the source early return when the selected map is already
+current. The metadata-aware adapter still lets F0174 refresh its separate
+metadata caches; live transition ownership and platform parity remain open.
+2026-11-01 Follow-up to ReDMCSB `DUNGEON.C:F0173/F0174`: source inspection
+showed F0173 refreshes only core map pointers, dimensions, door info and
+cumulative thing-column counts; F0174 owns allowed-creature and wall/floor/door
+ornament metadata. The descriptor adapter now leaves those metadata pointers
+untouched on F0173 and publishes them from F0174, including the inscription
+ornament ordinal. The simpler dungeon-data adapter still lacks these caches,
+and neither adapter owns a live transition caller, so both symbols remain
+partial across supported editions/platforms. Existing focused assertions were
+updated; CI is the verification path.
 
 2026-11-01 Authentic PC34 save combat follow-up: `LOADSAVE.C:F0435` restores
 live C04 behavior when rebuilding the transient active-group AI mirror. An
