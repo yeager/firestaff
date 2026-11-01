@@ -8,7 +8,7 @@ driver_blit_hline_masked	SKWINDOS	SKWINDOS/dm2D.cpp	411	void driver_blit_hline_m
 driver_blit	SKWINDOS	SKWINDOS/dm2D.cpp	428	void driver_blit(i8* srcmap, i8* destmap, c_rect* rect, i16 sx, i16 sy, i16 sw, i16 dw, i8 masked, i8 mask)	0	PARTIAL
 driver_vsync	SKWINDOS	SKWINDOS/dm2D.cpp	459	void driver_vsync(void)	0	PARTIAL
 driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscreenrectdisabled(c_rect* r)	0	PARTIAL
-driver_setcolors	SKWINDOS	SKWINDOS/dm2D.cpp	481	void driver_setcolors(void)	1	UNREVIEWED
+driver_setcolors	SKWINDOS	SKWINDOS/dm2D.cpp	481	void driver_setcolors(void)	1	PARTIAL
 driver_convertalphapalette	SKWINDOS	SKWINDOS/dm2D.cpp	508	void driver_convertalphapalette(i8* p)	0	UNREVIEWED
 driver_setpalette	SKWINDOS	SKWINDOS/dm2D.cpp	534	void driver_setpalette(i8 mode)	0	UNREVIEWED
 driver_blitfromscreen	SKWINDOS	SKWINDOS/dm2D.cpp	562	void driver_blitfromscreen(c_rect* rect, i16 yofs)	0	UNREVIEWED
@@ -2803,7 +2803,7 @@ palettecolor_to_ui8	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	26	ui8 palettecolor_to_u
 palettecolor_to_pixel	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	27	c_pixel256 palettecolor_to_pixel(t_palette pal) { c_pixel256 pix; pix = pal.c; return pix; }	1	UNREVIEWED
 conv	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	29	void t_palette::conv(const t_colconv* colconv)	1	UNREVIEWED
 init	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	85	void c_palettedata::init(void)	24	UNREVIEWED
-driver_setcolors	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	99	void driver_setcolors(void)	1	UNREVIEWED
+driver_setcolors	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	99	void driver_setcolors(void)	1	PARTIAL
 DM2_CONVERT_DRIVERPALETTE	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	130	void DM2_CONVERT_DRIVERPALETTE(ui8* pb)	1	UNREVIEWED
 DM2_SELECT_PALETTE_SET	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	162	void DM2_SELECT_PALETTE_SET(i16 set)	1	UNREVIEWED
 DM2_UPDATE_BLIT_PALETTE	SKWINSPX	SKWINSPX/src/v5/gfxpal.cpp	236	void DM2_UPDATE_BLIT_PALETTE(t_palette* palette)	1	UNREVIEWED

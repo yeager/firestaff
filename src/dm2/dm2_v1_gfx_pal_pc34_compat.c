@@ -117,7 +117,8 @@ DM2_V1_DriverSetColorsReceipt dm2_v1_driver_setcolors(
     const DM2_V1_GfxPalCallbacks *cb, void *ctx, const int8_t *dmpal)
 {
     DM2_V1_DriverSetColorsReceipt receipt = {false, 0};
-    if (!cb || !dmpal) return receipt;
+    if (!cb || !dmpal || !cb->wait_for_vsync || !cb->set_screen_color)
+        return receipt;
 
     /* Convert 6-bit DAC palette to float colors and set via callback */
     float colors[256][3];
@@ -128,18 +129,16 @@ DM2_V1_DriverSetColorsReceipt dm2_v1_driver_setcolors(
         colors[i][2] = (float)((uint8_t)dmpal[base + 2]) * (float)DM2_V1_DMFCOL;
     }
 
-    /* Fade in over 1000 steps */
+    /* DOS dm2D.cpp:driver_setcolors and SPX-v5 gfxpal.cpp:driver_setcolors
+     * publish levels 0..999/1000, then wait for vsync after each write. */
     for (int step = 0; step < 1000; step++) {
-        float t = (float)(step + 1) / 1000.0f;
-        if (cb->wait_for_vsync) cb->wait_for_vsync(ctx);
         for (int i = 0; i < 256; i++) {
-            if (cb->set_screen_color) {
-                cb->set_screen_color(ctx, i,
-                    colors[i][0] * t,
-                    colors[i][1] * t,
-                    colors[i][2] * t);
-            }
+            cb->set_screen_color(ctx, i,
+                (float)((colors[i][0] * (float)step) / 1000.0),
+                (float)((colors[i][1] * (float)step) / 1000.0),
+                (float)((colors[i][2] * (float)step) / 1000.0));
         }
+        cb->wait_for_vsync(ctx);
     }
 
     receipt.colors_set = true;
