@@ -235,7 +235,7 @@ struct DM2_V1_RuntimeState {
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
-    int ornate_light_check_pending;
+    int light_check_pending;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
     uint32_t gdat_scene_control_query_count;
@@ -10008,7 +10008,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     }
     if (event.ornate_light_check_requested && game &&
         map == game->current_level) {
-        rt->ornate_light_check_pending = 1;
+        rt->light_check_pending = 1;
     }
     if (game) {
         memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
@@ -10159,7 +10159,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     }
     if (event.ornate_light_check_requested && game &&
         map == game->current_level) {
-        rt->ornate_light_check_pending = 1;
+        rt->light_check_pending = 1;
     }
     if (game) {
         memcpy(game->glob_vars.bit_vars, global_state.bit_vars,
@@ -10394,8 +10394,7 @@ static int dm2_runtime_teleporter_tile_timer_owner(
 
 /* Source ACTUATE_TRICKWALL (SKULLWIN/c_tim_proc.cpp:3875) opens by setting
  * tile bit 2. Closing waits one tick while the party or a non-levitating
- * creature occupies the cell. Sound and the source light-check global are
- * still separate presentation owners. */
+ * creature occupies the cell. */
 static int dm2_runtime_actuate_trickwall_timer(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
@@ -10465,6 +10464,8 @@ static int dm2_runtime_actuate_trickwall_timer(
             }
             rt->actuator_tile_trickwall++;
             rt->actuator_tile_trickwall_requeues++;
+            if (map == game->current_level)
+                rt->light_check_pending = 1;
             return 1;
         }
     }
@@ -10474,6 +10475,8 @@ static int dm2_runtime_actuate_trickwall_timer(
         rt->actuator_tile_trickwall_rejected++;
         return 0;
     }
+    if (map == game->current_level)
+        rt->light_check_pending = 1;
     rt->actuator_tile_trickwall++;
     rt->actuator_tile_trickwall_mutations++;
     return 1;
@@ -13291,12 +13294,11 @@ void dm2_v1_runtime_tick(void) {
     }
 
     /* SKWINSPX/src/v4/skcore.cpp checks glbDoLightCheck after timer
-     * processing and before drawing the player viewport. Continuous ornate
-     * animator transitions publish the same request from the wall/floor
-     * mecha handlers above; consume it here so the refreshed light receipt
-     * is ready for this frame, after all source-ordered timers have run. */
-    if (rt->ornate_light_check_pending) {
-        rt->ornate_light_check_pending = 0;
+     * processing and before drawing the player viewport; DOS/SKULLWIN use
+     * ddat.v1e0390. Wall/floor ornate animators and trickwall timers publish
+     * the matching player-map request above. */
+    if (rt->light_check_pending) {
+        rt->light_check_pending = 0;
         dm2_runtime_refresh_gdat_scene_control(rt);
     }
 
