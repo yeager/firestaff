@@ -582,21 +582,17 @@ static int item_teleport_adjust_charge(ItemTeleportCtx *ctx, int16_t handle)
     return 1;
 }
 
-static int item_teleport_visitor(void *context,
-                                 int16_t handle,
-                                 const uint8_t *record_unused)
+static int item_teleport_process_item(ItemTeleportCtx *ctx,
+                                      int16_t handle,
+                                      int16_t possession_owner,
+                                      int16_t possession_previous,
+                                      int16_t saved_next)
 {
-    ItemTeleportCtx *ctx = (ItemTeleportCtx *)context;
     int db_type = dm2_v1_record_handle_pool(handle);
     int item_dir = (int)(((uint16_t)handle >> 14) & 3u);
-    (void)record_unused;
 
     /* Source item range: dbWeapon=5 through dbMiscellaneous_item=10. */
     if (db_type < DM2_DB_WEAPON || db_type > DM2_DB_MISC_ITEM) {
-        /* Check creature possessions */
-        if (db_type == DM2_DB_CREATURE) {
-            ctx->receipt->creatures_checked++;
-        }
         return 0;
     }
 
@@ -643,9 +639,9 @@ static int item_teleport_visitor(void *context,
         return 1;
     }
 
-    /* SKW_MOVE_ITEM_TO first cuts from the supplied source tile, then
-     * appends from-nowhere to the destination. Keep the two source calls
-     * explicit so failures are visible to the enclosing mecha transaction. */
+    /* SKW_MOVE_ITEM_TO cuts tile items from the source tile before appending
+     * them. A recursively visited possession item is cut from its owning
+     * creature's +2 link instead. */
     {
         DM2_V1_MoveRecordToReceipt move_receipt;
         int destination_direction = ctx->dst_dir;
@@ -663,7 +659,45 @@ static int item_teleport_visitor(void *context,
             destination_direction = (int)dm2_v1_drops_rand16(
                 ctx->rng, 4u);
         }
-        if (ctx->src_x >= 0 && ctx->src_y >= 0) {
+        if (possession_owner != (int16_t)0xffff) {
+            uint8_t *owner_pool = dm2_v1_record_pool_address_mut(
+                ctx->pool_set, possession_owner);
+            uint8_t *owner_raw = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+                ctx->dungeon, (uint16_t)possession_owner & 0x3fffu,
+                NULL, NULL, NULL);
+            uint16_t head;
+            if (!owner_pool || !owner_raw) {
+                ctx->receipt->fail_closed = 1;
+                return 1;
+            }
+            head = item_teleport_rd16(ctx->pool_set, owner_pool + 2);
+            if (possession_previous == (int16_t)0xffff) {
+                if ((head & 0x3fffu) != ((uint16_t)handle & 0x3fffu)) {
+                    ctx->receipt->fail_closed = 1;
+                    return 1;
+                }
+                head = (uint16_t)saved_next;
+            } else {
+                uint8_t *previous_pool = dm2_v1_record_pool_address_mut(
+                    ctx->pool_set, possession_previous);
+                uint8_t *previous_raw = (uint8_t *)
+                    dm2_v1_dungeon_get_thing_record(
+                        ctx->dungeon,
+                        (uint16_t)possession_previous & 0x3fffu,
+                        NULL, NULL, NULL);
+                if (!previous_pool || !previous_raw) {
+                    ctx->receipt->fail_closed = 1;
+                    return 1;
+                }
+                item_teleport_wr16(ctx->pool_set, previous_pool,
+                                   (uint16_t)saved_next);
+                memcpy(previous_raw, previous_pool, 2u);
+            }
+            item_teleport_wr16(ctx->pool_set, owner_pool + 2, head);
+            memcpy(owner_raw + 2, owner_pool + 2, 2u);
+            /* Keep the source successor in the detached record until the
+             * destination append resets it, matching CUT_RECORD_FROM. */
+        } else if (ctx->src_x >= 0 && ctx->src_y >= 0) {
             memset(&move_receipt, 0, sizeof(move_receipt));
             int cut = dm2_v1_move_record_to(
                 ctx->pool_set, ctx->dungeon, ctx->queue, handle,
@@ -691,6 +725,93 @@ static int item_teleport_visitor(void *context,
         return 1;
     }
     return 0;
+}
+
+static int item_teleport_walk_possessions(ItemTeleportCtx *ctx,
+                                          int16_t creature_handle,
+                                          unsigned depth)
+{
+    uint8_t *creature_pool;
+    uint16_t cursor;
+    int16_t previous = (int16_t)0xffff;
+    size_t budget = 1u;
+    int type;
+
+    if (depth > 64u) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    creature_pool = dm2_v1_record_pool_address_mut(ctx->pool_set,
+                                                    creature_handle);
+    if (!creature_pool) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    for (type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
+        budget += ctx->pool_set->pools[type].record_count;
+        budget += ctx->pool_set->pools[type].extension_count;
+    }
+    cursor = item_teleport_rd16(ctx->pool_set, creature_pool + 2);
+    while (cursor != 0xfffeu) {
+        uint8_t *record;
+        int16_t next;
+        int db_type;
+        if (cursor == 0xffffu || budget-- == 0u) {
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+        record = dm2_v1_record_pool_address_mut(ctx->pool_set,
+                                                 (int16_t)cursor);
+        if (!record || !dm2_v1_record_pool_next_link(
+                ctx->pool_set, (int16_t)cursor, &next)) {
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+        db_type = dm2_v1_record_handle_pool((int16_t)cursor);
+        if (db_type == DM2_DB_CREATURE) {
+            int moved_before = ctx->receipt->items_moved;
+            ctx->receipt->creatures_checked++;
+            (void)item_teleport_walk_possessions(
+                ctx, (int16_t)cursor, depth + 1u);
+            if (ctx->receipt->fail_closed ||
+                (ctx->only_first_item &&
+                 ctx->receipt->items_moved > moved_before))
+                return 1;
+        } else if (db_type >= DM2_DB_WEAPON &&
+                   db_type <= DM2_DB_MISC_ITEM) {
+            int moved_before = ctx->receipt->items_moved;
+            int stop = item_teleport_process_item(
+                ctx, (int16_t)cursor, creature_handle, previous, next);
+            if (ctx->receipt->fail_closed || stop) return 1;
+            if (ctx->receipt->items_moved == moved_before)
+                previous = (int16_t)cursor;
+        } else {
+            previous = (int16_t)cursor;
+        }
+        cursor = (uint16_t)next;
+    }
+    return 0;
+}
+
+static int item_teleport_visitor(void *context,
+                                 int16_t handle,
+                                 const uint8_t *record_unused)
+{
+    ItemTeleportCtx *ctx = (ItemTeleportCtx *)context;
+    int db_type = dm2_v1_record_handle_pool(handle);
+    (void)record_unused;
+
+    if (db_type == DM2_DB_CREATURE && !ctx->recycler) {
+        int moved_before = ctx->receipt->items_moved;
+        ctx->receipt->creatures_checked++;
+        (void)item_teleport_walk_possessions(ctx, handle, 0u);
+        return ctx->receipt->fail_closed ||
+               (ctx->only_first_item &&
+                ctx->receipt->items_moved > moved_before);
+    }
+    return item_teleport_process_item(
+        ctx, handle, (int16_t)0xffff, (int16_t)0xffff,
+        (int16_t)0xffff);
 }
 
 int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
