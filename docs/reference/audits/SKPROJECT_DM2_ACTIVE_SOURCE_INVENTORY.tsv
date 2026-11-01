@@ -6,7 +6,7 @@ driver_init	SKWINDOS	SKWINDOS/dm2D.cpp	248	void driver_init(i8* gfxout)	0	UNREVI
 driver_blit_hline	SKWINDOS	SKWINDOS/dm2D.cpp	400	void driver_blit_hline(ui16 sofs, ui16 dofs, ui16 numpixels)	0	PARTIAL
 driver_blit_hline_masked	SKWINDOS	SKWINDOS/dm2D.cpp	411	void driver_blit_hline_masked(ui16 sofs, ui16 dofs, ui16 pixel, ui8 mask)	0	PARTIAL
 driver_blit	SKWINDOS	SKWINDOS/dm2D.cpp	428	void driver_blit(i8* srcmap, i8* destmap, c_rect* rect, i16 sx, i16 sy, i16 sw, i16 dw, i8 masked, i8 mask)	0	PARTIAL
-driver_vsync	SKWINDOS	SKWINDOS/dm2D.cpp	459	void driver_vsync(void)	0	UNREVIEWED
+driver_vsync	SKWINDOS	SKWINDOS/dm2D.cpp	459	void driver_vsync(void)	0	PARTIAL
 driver_showscreenrectdisabled	SKWINDOS	SKWINDOS/dm2D.cpp	466	void driver_showscreenrectdisabled(c_rect* r)	0	UNREVIEWED
 driver_setcolors	SKWINDOS	SKWINDOS/dm2D.cpp	481	void driver_setcolors(void)	1	UNREVIEWED
 driver_convertalphapalette	SKWINDOS	SKWINDOS/dm2D.cpp	508	void driver_convertalphapalette(i8* p)	0	UNREVIEWED
@@ -2898,7 +2898,7 @@ SKW5_GAME_LOOP	SKWINSPX	SKWINSPX/src/v5/sk5start.cpp	77	void SkWinCore::SKW5_GAM
 SKW5_STARTUP_THREAD_MAIN_LOOP_01	SKWINSPX	SKWINSPX/src/v5/sk5start.cpp	82	void SkWinCore::SKW5_STARTUP_THREAD_MAIN_LOOP_01()	0	UNREVIEWED
 SKW5_INIT	SKWINSPX	SKWINSPX/src/v5/sk5start.cpp	166	void SkWinCore::SKW5_INIT(void)	0	UNREVIEWED
 event_loop_T1	SKWINSPX	SKWINSPX/src/v5/skaddon.cpp	37	void event_loop_T1(void)	1	UNREVIEWED
-wait_for_vsync	SKWINSPX	SKWINSPX/src/v5/skaddon.cpp	147	void wait_for_vsync(void)	1	UNREVIEWED
+wait_for_vsync	SKWINSPX	SKWINSPX/src/v5/skaddon.cpp	147	void wait_for_vsync(void)	1	IMPLEMENTED_PARITY
 wft	SKWINSPX	SKWINSPX/src/v5/skaddon.cpp	152	void wft(void)	1	UNREVIEWED
 DM2_14cd_2807	SKWINSPX	SKWINSPX/src/v5/skai.cpp	28	static i32 DM2_14cd_2807(i16* eaxpw, i16* edxpw)	1	UNREVIEWED
 DM2_14cd_2886	SKWINSPX	SKWINSPX/src/v5/skai.cpp	63	static i16 DM2_14cd_2886(t_record* eaxp, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1)	1	UNREVIEWED
