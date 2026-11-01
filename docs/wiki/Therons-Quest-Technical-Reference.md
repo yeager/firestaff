@@ -14,6 +14,8 @@
 > [Theron TODO](../../TODO-theron.md).
 
 > Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> The latest v4 map-reader evidence is a state-only UP/control replay, not a
+> cold load: [capture details](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.
 

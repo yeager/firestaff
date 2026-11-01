@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — capture JP v4 map-reader state context
+
+- Built an isolated Mednafen 1.32.1 PCE Fast binary with the v4 movement-context
+  hook and accepted a same-state 20-second UP replay and no-input control.
+  The guest read UP at `$44C1` (`raw=$0010`); the replay recorded 946 map-array
+  reads, 946 reader-context rows, and 1,908 `$50D2`/`$50D6`/`$4FA7` instruction
+  contexts without map-context truncation.
+- Twenty-three of 24 observed addresses match authenticated JP Track 02 bytes.
+  The autoloaded state reads `$BC` at `$0E8B14` (source `$B4`); no write to that
+  address was recorded during the capture window. UP/control prefixes match,
+  but this does not establish movement, an active map, or rendering.
+- Both receipts are state-only, with no cold handoff, CD IRQ, CDDA command, or
+  dungeon transition. Raw state and trace data remain on TRV2. See the [capture
+  report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).
+
 ## 2026-11-01 — rebuild current isolated PCE Fast reference instrumenter
 
 - Applied the current Theron Mednafen patch set to a clean 1.32.1 source
@@ -72,7 +87,8 @@
   and separately labeled code-window peeks at the observed readers.
 - Applied the complete isolated Mednafen patch chain and compiled
   `pce_fast/huc6280.o`; targeted verifier and shell-capture checks passed.
-- No gameplay trace has yet been captured with v4. Active-map selection,
+- No cold gameplay trace was captured as part of this compile task. The later
+  accepted v4 state-only capture is documented separately; active-map selection,
   reader semantics, pose-to-tile consumption and rendering remain unverified.
 
 ## 2026-11-01 — source-decode the observed JP map readers
