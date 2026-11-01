@@ -430,6 +430,114 @@ struct DM2_V1_RuntimeState {
     void *cdda_cb_ctx;
 };
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    DM2_V1_HeroState heroes[DM2_MAX_HEROES];
+} DM2_RuntimeResurrectContext;
+
+static DM2_V1_HeroState *dm2_runtime_resurrect_get_hero(
+    void *context, int hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || !ctx->runtime || !ctx->runtime->source_party_valid ||
+        hero_index < 0 || hero_index >= ctx->runtime->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES)
+        return NULL;
+    return &ctx->heroes[hero_index];
+}
+
+static int16_t dm2_runtime_resurrect_player_at_position(
+    void *context, uint8_t position)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || position > 3u) return -1;
+    for (int i = 0; i < ctx->runtime->source_party.heros_in_party; ++i) {
+        const DM2_V1_HeroState *hero = &ctx->heroes[i];
+        if (hero->cur_hp > 0 && hero->party_pos == position)
+            return (int16_t)i;
+    }
+    return -1;
+}
+
+static void dm2_runtime_resurrect_clear_items(void *context, int hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || !ctx->runtime || hero_index < 0 ||
+        hero_index >= DM2_MAX_HEROES) return;
+    for (int i = 0; i < DM2_NUM_ITEMS; ++i)
+        ctx->runtime->source_party.hero[hero_index].item[i] = -1;
+    memset(ctx->runtime->champion_inventory_objects[hero_index], 0,
+           sizeof(ctx->runtime->champion_inventory_objects[hero_index]));
+}
+
+static void dm2_runtime_prepare_resurrect_callbacks(
+    DM2_V1_RuntimeState *rt, DM2_V1_ResurrectCallbacks *callbacks,
+    DM2_RuntimeResurrectContext *context)
+{
+    memset(callbacks, 0, sizeof(*callbacks));
+    memset(context, 0, sizeof(*context));
+    context->runtime = rt;
+    callbacks->hero_count = rt->source_party.heros_in_party;
+    callbacks->get_hero = dm2_runtime_resurrect_get_hero;
+    callbacks->get_player_at_position =
+        dm2_runtime_resurrect_player_at_position;
+    callbacks->formation_start = (uint8_t)(rt->source_party.absdir & 3);
+    callbacks->clear_hero_items = dm2_runtime_resurrect_clear_items;
+    for (int i = 0; i < DM2_MAX_HEROES; ++i) {
+        const DM2_V1_Hero *source = &rt->source_party.hero[i];
+        DM2_V1_HeroState *target = &context->heroes[i];
+        target->cur_hp = source->curHP;
+        target->max_hp = source->maxHP;
+        target->hero_flag = (uint16_t)source->heroflag;
+        target->party_pos = (uint8_t)source->partypos;
+        target->absdir = (uint8_t)source->absdir;
+        target->ench_aura = (uint8_t)source->ench_aura;
+        target->ench_power = (uint8_t)source->ench_power;
+    }
+}
+
+static int dm2_runtime_revive_champion(void *context, int16_t hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    DM2_V1_ResurrectCallbacks callbacks;
+    DM2_V1_HeroState *hero;
+    DM2_V1_Hero *target;
+    DM2_V1_Party party_before;
+    uint32_t inventory_before[30];
+    int16_t hero_count;
+    if (!ctx || !ctx->runtime || !ctx->runtime->source_party_valid ||
+        hero_index < 0 || hero_index >= ctx->runtime->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES ||
+        ctx->runtime->source_party.heros_in_party <= 0 ||
+        ctx->runtime->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    party_before = ctx->runtime->source_party;
+    memcpy(inventory_before,
+           ctx->runtime->champion_inventory_objects[hero_index],
+           sizeof(inventory_before));
+    hero_count = ctx->runtime->source_party.heros_in_party;
+    dm2_runtime_prepare_resurrect_callbacks(ctx->runtime, &callbacks, ctx);
+    dm2_v1_hero_bring_to_life(hero_index, &callbacks, ctx);
+    hero = &ctx->heroes[hero_index];
+    target = &ctx->runtime->source_party.hero[hero_index];
+    target->curHP = hero->cur_hp;
+    target->maxHP = hero->max_hp;
+    target->heroflag = (int16_t)hero->hero_flag;
+    target->partypos = (int8_t)hero->party_pos;
+    target->absdir = (int8_t)hero->absdir;
+    target->ench_aura = (int8_t)hero->ench_aura;
+    target->ench_power = hero->ench_power;
+    target->weight = 0;
+    if (hero->cur_hp <= 0) {
+        ctx->runtime->source_party = party_before;
+        ctx->runtime->source_party.heros_in_party = hero_count;
+        memcpy(ctx->runtime->champion_inventory_objects[hero_index],
+               inventory_before, sizeof(inventory_before));
+        return 0;
+    }
+    return 1;
+}
+
 static int32_t __attribute__((unused)) dm2_runtime_mac_key_can_handle(
     uint16_t actuator, int16_t expected_item_type, void *user)
 {
@@ -9961,6 +10069,10 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_ResurrectCallbacks resurrect_cb;
+    DM2_RuntimeResurrectContext resurrect_ctx;
+    DM2_V1_Party party_backup;
+    uint32_t inventory_backup[4][30];
     DM2_RuntimeShooterNoiseContext shooter_noise_ctx;
     DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
@@ -10013,6 +10125,9 @@ static int dm2_runtime_actuate_wall_mecha_timer(
                sizeof(global_state.word_vars));
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
+    party_backup = rt->source_party;
+    memcpy(inventory_backup, rt->champion_inventory_objects,
+           sizeof(inventory_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
@@ -10044,7 +10159,9 @@ static int dm2_runtime_actuate_wall_mecha_timer(
            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
     backup_ready = 1;
     memset(&event, 0, sizeof(event));
-    (void)dm2_v1_actuate_wall_mecha_with_rng(
+    dm2_runtime_prepare_resurrect_callbacks(rt, &resurrect_cb,
+                                             &resurrect_ctx);
+    (void)dm2_v1_actuate_wall_mecha_with_rng_and_revive(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
         dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
@@ -10055,6 +10172,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         dm2_runtime_queue_ornate_activation_sound, rt,
         dm2_runtime_queue_shooter_noise, &shooter_noise_ctx,
         &rt->session_rng,
+        dm2_runtime_revive_champion, &resurrect_ctx,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -10094,6 +10212,9 @@ wall_mecha_reject:
         if (caii_backup && rt->caii.slots)
             memcpy(rt->caii.slots, caii_backup, caii_backup_size);
         rt->session_rng = rng_backup;
+        rt->source_party = party_backup;
+        memcpy(rt->champion_inventory_objects, inventory_backup,
+               sizeof(inventory_backup));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(sound_entries_backup);
@@ -10116,6 +10237,10 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_ResurrectCallbacks resurrect_cb;
+    DM2_RuntimeResurrectContext resurrect_ctx;
+    DM2_V1_Party party_backup;
+    uint32_t inventory_backup[4][30];
     DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
@@ -10166,6 +10291,9 @@ static int dm2_runtime_actuate_floor_mecha_timer(
                sizeof(global_state.word_vars));
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
+    party_backup = rt->source_party;
+    memcpy(inventory_backup, rt->champion_inventory_objects,
+           sizeof(inventory_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
@@ -10197,7 +10325,9 @@ static int dm2_runtime_actuate_floor_mecha_timer(
            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
     backup_ready = 1;
     memset(&event, 0, sizeof(event));
-    (void)dm2_v1_actuate_floor_mecha(
+    dm2_runtime_prepare_resurrect_callbacks(rt, &resurrect_cb,
+                                             &resurrect_ctx);
+    (void)dm2_v1_actuate_floor_mecha_with_revive(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
         dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
@@ -10207,6 +10337,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         dm2_runtime_get_ornate_anim_len, rt,
         dm2_runtime_queue_ornate_activation_sound, rt,
         &rt->session_rng,
+        dm2_runtime_revive_champion, &resurrect_ctx,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -10246,6 +10377,9 @@ floor_mecha_reject:
         if (caii_backup && rt->caii.slots)
             memcpy(rt->caii.slots, caii_backup, caii_backup_size);
         rt->session_rng = rng_backup;
+        rt->source_party = party_backup;
+        memcpy(rt->champion_inventory_objects, inventory_backup,
+               sizeof(inventory_backup));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(sound_entries_backup);

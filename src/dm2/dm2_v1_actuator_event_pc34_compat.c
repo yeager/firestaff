@@ -503,6 +503,8 @@ typedef struct {
     int map;
     uint32_t game_tick;
     DM2_V1_DropRng *rng;
+    DM2_V1_ReviveChampionFn revive_champion;
+    void *revive_ctx;
     DM2_V1_ItemTeleportReceipt *receipt;
 } ItemTeleportCtx;
 
@@ -582,6 +584,111 @@ static int item_teleport_adjust_charge(ItemTeleportCtx *ctx, int16_t handle)
     return 1;
 }
 
+static int item_teleport_cut_possession(ItemTeleportCtx *ctx,
+                                        int16_t owner_handle,
+                                        int16_t handle,
+                                        int16_t previous_handle,
+                                        int16_t saved_next)
+{
+    uint8_t *owner_pool = dm2_v1_record_pool_address_mut(
+        ctx->pool_set, owner_handle);
+    uint8_t *owner_raw = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        ctx->dungeon, (uint16_t)owner_handle & 0x3fffu, NULL, NULL, NULL);
+    uint8_t *item_pool = dm2_v1_record_pool_address_mut(ctx->pool_set,
+                                                        handle);
+    uint8_t *item_raw = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        ctx->dungeon, (uint16_t)handle & 0x3fffu, NULL, NULL, NULL);
+    uint16_t head;
+
+    if (!owner_pool || !owner_raw || !item_pool || !item_raw) return 0;
+    head = item_teleport_rd16(ctx->pool_set, owner_pool + 2);
+    if (previous_handle == (int16_t)0xffff) {
+        if ((head & 0x3fffu) != ((uint16_t)handle & 0x3fffu)) return 0;
+        head = (uint16_t)saved_next;
+    } else {
+        uint8_t *previous_pool = dm2_v1_record_pool_address_mut(
+            ctx->pool_set, previous_handle);
+        uint8_t *previous_raw = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+            ctx->dungeon, (uint16_t)previous_handle & 0x3fffu,
+            NULL, NULL, NULL);
+        if (!previous_pool || !previous_raw) return 0;
+        item_teleport_wr16(ctx->pool_set, previous_pool,
+                           (uint16_t)saved_next);
+        memcpy(previous_raw, previous_pool, 2u);
+    }
+    item_teleport_wr16(ctx->pool_set, owner_pool + 2, head);
+    memcpy(owner_raw + 2, owner_pool + 2, 2u);
+    item_teleport_wr16(ctx->pool_set, item_pool, 0xfffeu);
+    memcpy(item_raw, item_pool, 2u);
+    return 1;
+}
+
+static int item_teleport_champion_index(ItemTeleportCtx *ctx,
+                                        int16_t handle)
+{
+    const uint8_t *record = dm2_v1_record_pool_address(ctx->pool_set, handle);
+    uint16_t word;
+    int type = dm2_v1_record_handle_pool(handle);
+    if (!record) return -1;
+    word = item_teleport_rd16(ctx->pool_set, record + 2);
+    if (type == 5) return (int)(((uint32_t)word * 4u) >> 12);
+    if (type == 6) return (int)(((uint32_t)word * 8u) >> 12);
+    if (type == 10) return (int)(word >> 14);
+    return -1;
+}
+
+static int item_teleport_revive_champion(ItemTeleportCtx *ctx,
+                                         int16_t handle,
+                                         int16_t possession_owner,
+                                         int16_t possession_previous,
+                                         int16_t saved_next)
+{
+    int champion_index = item_teleport_champion_index(ctx, handle);
+    uint8_t *pool_record;
+    uint8_t *raw_record;
+    if (!ctx->revive_champion || champion_index < 0 || champion_index > 3) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    if (possession_owner != (int16_t)0xffff) {
+        if (!item_teleport_cut_possession(ctx, possession_owner, handle,
+                                          possession_previous, saved_next)) {
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+    } else {
+        DM2_V1_MoveRecordToReceipt cut_receipt;
+        memset(&cut_receipt, 0, sizeof(cut_receipt));
+        if (!dm2_v1_move_record_to(
+                ctx->pool_set, ctx->dungeon, ctx->queue, handle,
+                (int16_t)ctx->src_x, (int16_t)ctx->src_y,
+                -1, -1, -1, ctx->map, ctx->game_tick, &cut_receipt) ||
+            cut_receipt.fail_closed) {
+            ctx->receipt->fail_closed = 1;
+            return 1;
+        }
+    }
+    if (!dm2_v1_record_pool_dealloc_record(ctx->pool_set, handle)) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    pool_record = dm2_v1_record_pool_address_mut(ctx->pool_set, handle);
+    raw_record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        ctx->dungeon, (uint16_t)handle & 0x3fffu, NULL, NULL, NULL);
+    if (!pool_record || !raw_record) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    memcpy(raw_record, pool_record, 2u);
+    if (!ctx->revive_champion(ctx->revive_ctx, (int16_t)champion_index)) {
+        ctx->receipt->fail_closed = 1;
+        return 1;
+    }
+    ctx->receipt->champions_revived++;
+    ctx->receipt->last_champion_index = (int16_t)champion_index;
+    return 1;
+}
+
 static int item_teleport_process_item(ItemTeleportCtx *ctx,
                                       int16_t handle,
                                       int16_t possession_owner,
@@ -590,6 +697,8 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
 {
     int db_type = dm2_v1_record_handle_pool(handle);
     int item_dir = (int)(((uint16_t)handle >> 14) & 3u);
+    uint16_t distinctive = 0xffffu;
+    int exact_type_match = 0;
 
     /* Source item range: dbWeapon=5 through dbMiscellaneous_item=10. */
     if (db_type < DM2_DB_WEAPON || db_type > DM2_DB_MISC_ITEM) {
@@ -608,7 +717,6 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
      * distinctive type. */
     if (ctx->recycler || ctx->filter_data != 0x1ffu) {
         uint8_t cls2 = 0xffu;
-        uint16_t distinctive = 0xffffu;
         DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
         DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
         memset(&cls2_receipt, 0, sizeof(cls2_receipt));
@@ -629,6 +737,31 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
                  (uint8_t)(1u << (distinctive & 7u))) == 0u) return 0;
         } else if (distinctive != ctx->filter_data) {
             return 0;
+        } else {
+            exact_type_match = 1;
+        }
+    }
+
+    /* SKWINSPX v4 skevent.cpp:1435 revives a matching champion token only
+     * when OnceOnlyActuator is clear. DOS and SPX v5 use their own actuator
+     * flag gate; those source-specific gates remain separately audited. */
+    if (exact_type_match && !ctx->recycler &&
+        dm2_actu_once_only(ctx->actu_record) == 0) {
+        uint8_t cls1 = 0xffu, cls2 = 0xffu;
+        DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+        DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+        memset(&cls1_receipt, 0, sizeof(cls1_receipt));
+        memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+        if (dm2_v1_skproject_query_cls1_from_record_ex(
+                (uint16_t)handle, ctx->pool_set, &cls1, &cls1_receipt) &&
+            cls1_receipt.valid && cls1 == 0x15u &&
+            dm2_v1_skproject_query_cls2_from_record(
+                (uint16_t)handle, ctx->pool_set, &cls2, &cls2_receipt) &&
+            cls2_receipt.valid && cls2 == 0u) {
+            ctx->receipt->items_counted++;
+            return item_teleport_revive_champion(
+                ctx, handle, possession_owner, possession_previous,
+                saved_next);
         }
     }
 
@@ -660,43 +793,12 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
                 ctx->rng, 4u);
         }
         if (possession_owner != (int16_t)0xffff) {
-            uint8_t *owner_pool = dm2_v1_record_pool_address_mut(
-                ctx->pool_set, possession_owner);
-            uint8_t *owner_raw = (uint8_t *)dm2_v1_dungeon_get_thing_record(
-                ctx->dungeon, (uint16_t)possession_owner & 0x3fffu,
-                NULL, NULL, NULL);
-            uint16_t head;
-            if (!owner_pool || !owner_raw) {
+            if (!item_teleport_cut_possession(
+                    ctx, possession_owner, handle, possession_previous,
+                    saved_next)) {
                 ctx->receipt->fail_closed = 1;
                 return 1;
             }
-            head = item_teleport_rd16(ctx->pool_set, owner_pool + 2);
-            if (possession_previous == (int16_t)0xffff) {
-                if ((head & 0x3fffu) != ((uint16_t)handle & 0x3fffu)) {
-                    ctx->receipt->fail_closed = 1;
-                    return 1;
-                }
-                head = (uint16_t)saved_next;
-            } else {
-                uint8_t *previous_pool = dm2_v1_record_pool_address_mut(
-                    ctx->pool_set, possession_previous);
-                uint8_t *previous_raw = (uint8_t *)
-                    dm2_v1_dungeon_get_thing_record(
-                        ctx->dungeon,
-                        (uint16_t)possession_previous & 0x3fffu,
-                        NULL, NULL, NULL);
-                if (!previous_pool || !previous_raw) {
-                    ctx->receipt->fail_closed = 1;
-                    return 1;
-                }
-                item_teleport_wr16(ctx->pool_set, previous_pool,
-                                   (uint16_t)saved_next);
-                memcpy(previous_raw, previous_pool, 2u);
-            }
-            item_teleport_wr16(ctx->pool_set, owner_pool + 2, head);
-            memcpy(owner_raw + 2, owner_pool + 2, 2u);
-            /* Keep the source successor in the detached record until the
-             * destination append resets it, matching CUT_RECORD_FROM. */
         } else if (ctx->src_x >= 0 && ctx->src_y >= 0) {
             memset(&move_receipt, 0, sizeof(move_receipt));
             int cut = dm2_v1_move_record_to(
@@ -814,7 +916,8 @@ static int item_teleport_visitor(void *context,
         (int16_t)0xffff);
 }
 
-int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
+static int dm2_v1_activate_item_teleport_impl(
+                                  DM2_V1_RecordPoolSet *pool_set,
                                   DM2_V1_DungeonData *dungeon,
                                   const DM2_V1_AssetLoader *asset_loader,
                                   DM2_V1_SourceTimerQueue *queue,
@@ -826,6 +929,8 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   int capture, int only_first_item,
                                   int map, uint32_t game_tick,
                                   DM2_V1_DropRng *rng,
+                                  DM2_V1_ReviveChampionFn revive_champion,
+                                  void *revive_ctx,
                                   DM2_V1_ItemTeleportReceipt *receipt)
 {
     DM2_V1_ItemTeleportReceipt local;
@@ -839,6 +944,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
         memset(receipt, 0, sizeof(*receipt));
     }
     memset(&ctx, 0, sizeof(ctx));
+    receipt->last_champion_index = -1;
 
     if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
         receipt->fail_closed = 1;
@@ -904,6 +1010,8 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     ctx.map = map;
     ctx.game_tick = game_tick;
     ctx.rng = rng;
+    ctx.revive_champion = revive_champion;
+    ctx.revive_ctx = revive_ctx;
     ctx.receipt = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -913,6 +1021,27 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
     if (receipt->fail_closed) return 0;
     receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
+                                  DM2_V1_DungeonData *dungeon,
+                                  const DM2_V1_AssetLoader *asset_loader,
+                                  DM2_V1_SourceTimerQueue *queue,
+                                  const uint8_t *actu_record,
+                                  int timer_x, int timer_y,
+                                  int timer_direction,
+                                  int timer_action_type,
+                                  int is_floor, int recycler,
+                                  int capture, int only_first_item,
+                                  int map, uint32_t game_tick,
+                                  DM2_V1_DropRng *rng,
+                                  DM2_V1_ItemTeleportReceipt *receipt)
+{
+    return dm2_v1_activate_item_teleport_impl(
+        pool_set, dungeon, asset_loader, queue, actu_record,
+        timer_x, timer_y, timer_direction, timer_action_type,
+        is_floor, recycler, capture, only_first_item, map, game_tick,
+        rng, NULL, NULL, receipt);
 }
 
 /* ── Wall mecha record walk context ────────────────────────────────── */
@@ -938,6 +1067,8 @@ typedef struct {
     DM2_V1_QueueShooterNoiseFn queue_shooter_noise;
     void *shooter_sound_ctx;
     DM2_V1_DropRng *rng;
+    DM2_V1_ReviveChampionFn revive_champion;
+    void *revive_ctx;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -1474,11 +1605,12 @@ static int wall_mecha_visitor(void *context,
         int16_t si = dm2_v1_tile_record_link(ctx->dungeon, ctx->map,
             (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record));
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            0, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         (void)si;
@@ -1489,11 +1621,12 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            0, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1503,11 +1636,12 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            0, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1517,11 +1651,12 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            0, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1531,11 +1666,12 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            0, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            0, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1613,7 +1749,7 @@ static int wall_mecha_visitor(void *context,
 
 /* ── ACTUATE_WALL_MECHA ────────────────────────────────────────────── */
 
-int dm2_v1_actuate_wall_mecha_with_rng(
+int dm2_v1_actuate_wall_mecha_with_rng_and_revive(
                               DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_CaiiArray *caii,
@@ -1631,6 +1767,8 @@ int dm2_v1_actuate_wall_mecha_with_rng(
                               DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
                               void *shooter_sound_ctx,
                               DM2_V1_DropRng *rng,
+                              DM2_V1_ReviveChampionFn revive_champion,
+                              void *revive_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1664,6 +1802,8 @@ int dm2_v1_actuate_wall_mecha_with_rng(
     ctx.queue_shooter_noise = queue_shooter_noise;
     ctx.shooter_sound_ctx = shooter_sound_ctx;
     ctx.rng = rng;
+    ctx.revive_champion = revive_champion;
+    ctx.revive_ctx = revive_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1672,6 +1812,34 @@ int dm2_v1_actuate_wall_mecha_with_rng(
 
     receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_actuate_wall_mecha_with_rng(
+                              DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
+                              DM2_V1_SourceTimerQueue *queue,
+                              int map, int x, int y,
+                              int action_type, int direction,
+                              uint32_t game_tick,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
+                              DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
+                              void *shooter_sound_ctx,
+                              DM2_V1_DropRng *rng,
+                              DM2_V1_ActuatorEventReceipt *receipt)
+{
+    return dm2_v1_actuate_wall_mecha_with_rng_and_revive(
+        pool_set, dungeon, caii, asset_loader, queue, map, x, y,
+        action_type, direction, game_tick, global_state, creature_killer_cb,
+        get_ornate_anim_len, ornate_ctx, queue_ornate_sound,
+        ornate_sound_ctx, queue_shooter_noise, shooter_sound_ctx, rng,
+        NULL, NULL, receipt);
 }
 
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
@@ -1880,11 +2048,12 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_PLACED_ITEM_TELEPORTER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            1, 0, 0, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1894,11 +2063,12 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            1, 0, 1, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1908,11 +2078,12 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_RECYCLER: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            1, 1, 0, 0, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1922,11 +2093,12 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_TELEPORT_UNK: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            1, 0, 0, 1, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -1936,11 +2108,12 @@ static int floor_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
         DM2_V1_ItemTeleportReceipt it_receipt;
         memset(&it_receipt, 0, sizeof(it_receipt));
-        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon,
+        dm2_v1_activate_item_teleport_impl(ctx->pool_set, ctx->dungeon,
             ctx->asset_loader, ctx->queue,
             record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
             ctx->direction, ctx->action_type,
-            1, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, &it_receipt);
+            1, 0, 1, 1, ctx->map, ctx->game_tick, ctx->rng, ctx->revive_champion,
+            ctx->revive_ctx, &it_receipt);
         r->item_teleport_invoked++;
         if (it_receipt.fail_closed) r->fail_closed++;
         break;
@@ -2000,7 +2173,8 @@ static int floor_mecha_visitor(void *context,
 
 /* ── ACTUATE_FLOOR_MECHA ───────────────────────────────────────────── */
 
-int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
+int dm2_v1_actuate_floor_mecha_with_revive(
+                               DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
                                DM2_V1_CaiiArray *caii,
                                const DM2_V1_AssetLoader *asset_loader,
@@ -2015,6 +2189,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                                void *ornate_sound_ctx,
                                DM2_V1_DropRng *rng,
+                               DM2_V1_ReviveChampionFn revive_champion,
+                               void *revive_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -2046,6 +2222,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.queue_ornate_sound = queue_ornate_sound;
     ctx.ornate_sound_ctx = ornate_sound_ctx;
     ctx.rng = rng;
+    ctx.revive_champion = revive_champion;
+    ctx.revive_ctx = revive_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -2054,6 +2232,30 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
+                               DM2_V1_DungeonData *dungeon,
+                               DM2_V1_CaiiArray *caii,
+                               const DM2_V1_AssetLoader *asset_loader,
+                               DM2_V1_SourceTimerQueue *queue,
+                               int map, int x, int y,
+                               int action_type, int direction,
+                               uint32_t game_tick,
+                               DM2_V1_GlobVarState *global_state,
+                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                               void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
+                               DM2_V1_DropRng *rng,
+                               DM2_V1_ActuatorEventReceipt *receipt)
+{
+    return dm2_v1_actuate_floor_mecha_with_revive(
+        pool_set, dungeon, caii, asset_loader, queue, map, x, y,
+        action_type, direction, game_tick, global_state, creature_killer_cb,
+        get_ornate_anim_len, ornate_ctx, queue_ornate_sound, ornate_sound_ctx,
+        rng, NULL, NULL, receipt);
 }
 
 /* ── ACTIVATE_CREATURE_KILLER — c_tim_proc.cpp:2907-3007 ──────────── */
