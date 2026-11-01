@@ -6480,15 +6480,14 @@ uint8_t *dm2_v1_skproject_query_mement_buff_from_cache_index(
 }
 
 uint32_t dm2_v1_skproject_get_temp_cache_hash(
-    const DM2_V1_SkprojectCacheState *state)
+    DM2_V1_SkprojectCacheState *state)
 {
     uint16_t ici = 0u;
     uint32_t hash;
 
     if (!state) return 0u;
     for (uint32_t guard = 0; guard < 0x10000u; ++guard) {
-        hash = 0xffff0000u |
-               (uint32_t)((state->temp_hash_counter + guard) & 0xffffu);
+        hash = 0xffff0000u | (uint32_t)state->temp_hash_counter++;
         if (dm2_v1_skproject_find_ici_from_cache_hash(
                 state, hash, &ici) == 0) {
             return hash;
@@ -6508,7 +6507,6 @@ uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     if (hash == 0u) return DM2_V1_SKPROJECT_MEMENT_NONE;
     if (dm2_v1_skproject_add_cache_hash(state, hash, &cache_index) < 0)
         return DM2_V1_SKPROJECT_MEMENT_NONE;
-    state->temp_hash_counter++;
     return cache_index;
 }
 

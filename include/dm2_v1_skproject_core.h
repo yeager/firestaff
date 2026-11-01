@@ -3722,7 +3722,7 @@ uint8_t *dm2_v1_skproject_query_mement_buff_from_cache_index(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_index);
 uint32_t dm2_v1_skproject_get_temp_cache_hash(
-    const DM2_V1_SkprojectCacheState *state);
+    DM2_V1_SkprojectCacheState *state);
 uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     DM2_V1_SkprojectCacheState *state);
 #if defined(FIRESTAFF_DM2_SKPROJECT_CORE_TESTING)
