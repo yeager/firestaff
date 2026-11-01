@@ -191,13 +191,15 @@
 > does not change runtime support. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 > **JP exact-LBA capture follow-up (2026-11-01):** the r4 Mednafen 1.32.1
-> reference binary was rebuilt against standalone SDL 2.32.10 and passed its
-> isolated startup/linkage check. The cold capture remained in the System Card
-> route, observed no LBA 3674 data-port rows, and was rejected when the decision
-> trace reached its 65,536-row cap. It neither tested the exact-LBA filter on a
-> game load nor establishes a handoff. A verified cold input route and bounded,
-> truncation-reporting decision trace are needed before the source-to-consumer
-> capture can proceed. See the [exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md)
+> binary passed standalone SDL 2.32.10 startup/linkage checks. A PID-bound cold
+> JP run delivered 15 host presses, with RUN/I observed at the System Card poll
+> `$E4C5`. The required `$E11D` branch and a game-owned poll were not verified;
+> no CD IRQ, authenticated CD-to-RAM receipt, or LBA 3674 row was captured
+> before timeout. The exact-LBA filter remains unexercised on an accepted game
+> load. The decision trace passed with 88 rows; an earlier headless attempt hit
+> its 2,048-row cap, while the separate status trace in the latest run reached
+> its 65,536-row cap. See the [PID-input capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
+> [exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md),
 > and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 ## Door movement boundary

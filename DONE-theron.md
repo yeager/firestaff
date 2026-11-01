@@ -1,21 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-11-01 — rebuild the reference trace binary and record the cold-capture boundary
+## 2026-11-01 — unblock PID-bound host input and record the cold JP attempt
 
-- Fixed the indirect-jump follow-trace patch to arm from the executed dispatch
-  and attach its fetch hook at the HuC6280 opcode-fetch point. The complete
-  Mednafen 1.32.1 patch-application regression passed three consecutive loops.
-- Built the r4 reference binary against standalone SDL 2.32.10; isolated
-  startup and the compiled/runtime SDL version check passed.
-- A cold authentic JP attempt remained on the System Card route, emitted no
-  CD data-port rows at LBA 3674, and was rejected when the System Card decision
-  trace reached its 65,536-row cap. It did not exercise the exact-LBA filter
-  or establish a game handoff. The bounded diagnostic jump windows are not
-  accepted gameplay/source evidence.
-- Updated the capture-readiness summary, exact-LBA source note, documentation
-  index, README, parity summaries, and technical wiki. The next reference run
-  needs a verified cold input route and a bounded decision trace that retains
-  explicit truncation detection. No release was created.
+- Fixed the host-input readiness gate: it now accepts the instrumented PCE Fast
+  trace source token followed by schema metadata, while requiring a token
+  boundary. The live-capture wrapper regression passed three consecutive loops.
+- A cold authentic JP capture used PID-bound Quartz events in a private profile.
+  All 15 requested PCE key presses were observed; System Card poll `$E4C5`
+  recorded active-low RUN `0008` and Button I `0001` samples. This confirms
+  delivery to BIOS polling only.
+- The independent BIOS decision trace passed with 88 rows and no truncation.
+  The status sidecar reached its explicit 65,536-row cap. The required `$E11D`
+  bootstrap branch and game-owned poll were not verified; `$4000` entries in
+  the dispatcher trace remain classified as System Card path. The wrapper saw
+  zero CD IRQs, zero authenticated CD-to-RAM receipts, no LBA 3674 data-port
+  rows, and rejected the run at its 140-second timeout.
+- The earlier headless attempt separately hit the 2,048-row decision-trace
+  cap. Neither attempt exercised the exact-LBA filter on a verified game load.
+  Full evidence and hashes are in the
+  [PID-input capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md).
+- Rebuilt Mednafen 1.32.1 against standalone SDL 2.32.10; isolated startup and
+  runtime-linkage checks passed. No release was created.
 
 ## 2026-11-01 — reconcile current Akutuba capture-tool readiness docs
 

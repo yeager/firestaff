@@ -151,7 +151,7 @@ authenticated CD-to-RAM transition or establish native timing/parity. See the
 [source-locked title route](docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [System Card trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
-The latest reference-tooling follow-up rebuilt Mednafen 1.32.1 against standalone SDL 2.32.10. Its cold JP diagnostic remained at the System Card, produced no LBA 3674 data-port rows, and was rejected at the decision-trace cap; it is not an accepted game-load capture. The next capture must reach the game and join authenticated source bytes to a game-owned consumer. See the [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The latest reference-tooling follow-up rebuilt Mednafen 1.32.1 against standalone SDL 2.32.10. A PID-bound cold JP run delivered 15 host button presses, and the System Card poll recorded active-low RUN/I input, but the run did not verify the `$E11D` game handoff or any game-owned poll. It produced no LBA 3674 data-port rows and was rejected at timeout. The exact-LBA filter remains unexercised on an accepted game load. See the [capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md) and [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
 current summary of native runtime and original-reference evidence, including

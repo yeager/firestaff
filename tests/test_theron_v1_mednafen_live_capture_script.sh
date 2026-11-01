@@ -140,6 +140,25 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     printf '%s\n' 'FAIL: an unmatched key-down was counted as a complete host key press' >&2
     exit 1
 fi
+sed -n '/^wait_for_trace_producer() {/,/^}/p' "$script" \
+    >"$host_key_gate_dir/trace-producer-gate.sh"
+printf '%s\n' \
+    'source=mednafen-pce-fast-instrumented-input event_sequence_source=TheronTraceCDSharedEventSequence' \
+    >"$host_key_gate_dir/trace-producer.trace"
+if ! bash -c 'source "$1"; wait_for_trace_producer "$2" 1 "$3"' _ \
+    "$host_key_gate_dir/trace-producer-gate.sh" \
+    "$host_key_gate_dir/trace-producer.trace" \
+    'source=mednafen-pce-fast-instrumented-input'; then
+    printf '%s\n' 'FAIL: trace producer gate rejected a valid source marker with schema metadata' >&2
+    exit 1
+fi
+if bash -c 'source "$1"; wait_for_trace_producer "$2" 1 "$3"' _ \
+    "$host_key_gate_dir/trace-producer-gate.sh" \
+    "$host_key_gate_dir/trace-producer.trace" \
+    'source=mednafen-standard-pce-instrumented-input'; then
+    printf '%s\n' 'FAIL: trace producer gate accepted a non-matching source marker' >&2
+    exit 1
+fi
 state_autoload_gate="$host_key_gate_dir/autoload-gate.sh"
 sed -n '/^validate_autoload_state_receipt() {/,/^}/p' "$script" \
     >"$state_autoload_gate"

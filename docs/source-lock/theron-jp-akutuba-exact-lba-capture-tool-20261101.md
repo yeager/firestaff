@@ -46,10 +46,14 @@ at the HuC6280 opcode-fetch point; its patch-application regression passed
 three consecutive loops. The complete r4 binary was built against standalone
 SDL 2.32.10 and passed its isolated startup/linkage check.
 
-The subsequent cold JP reference attempt did not exercise this exact-LBA gate:
-it remained in the System Card route and yielded zero data-port rows at LBA
-3674. The wrapper rejected the package because the System Card decision trace
-reached its 65,536-row cap. This is a failed diagnostic capture, not evidence
-that the sector was absent from a successful game load. Results and remaining
-work are recorded in [`DONE-theron.md`](../../DONE-theron.md) and the
-[capture-readiness summary](../theron/THERON_CAPTURE_READINESS.md).
+The earlier headless JP attempt stayed in the System Card and hit the
+2,048-row decision-trace cap. A later PID-bound cold attempt delivered all 15
+requested host key presses and recorded active-low RUN/I values at BIOS poll
+`$E4C5`, but did not verify the `$E11D` bootstrap branch or a game-owned poll.
+Its dispatcher `$4000` entries remain classified as System Card path. The
+wrapper recorded zero CD IRQs, zero authenticated CD-to-RAM receipts, and only
+the exact-LBA sidecar header (no LBA 3674 rows) before timing out. Its decision
+trace passed with 88 rows; the separate status trace reached its 65,536-row
+cap. Neither attempt shows that the sector is absent from a successful game
+load. See the [PID-input capture report](theron-jp-lba3674-pid-input-cold-capture-20261101.md)
+and [capture-readiness summary](../theron/THERON_CAPTURE_READINESS.md).

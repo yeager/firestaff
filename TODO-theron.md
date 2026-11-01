@@ -1,17 +1,23 @@
 # Firestaff TODO — Theron's Quest
 
-## 2026-11-01 — resume cold JP reference capture after trace-cap failure
+## 2026-11-01 — reach a verified JP game handoff before source-LBA capture
 
-The r4 Mednafen 1.32.1 reference binary now builds against standalone SDL
-2.32.10 and passes isolated startup/linkage checks. Its cold JP capture remained
-in the System Card route, recorded zero CD data-port rows for LBA 3674, and was
-rejected at the 65,536-row System Card decision-trace cap. This attempt does not
-show that the sector was absent from a game load and does not exercise the
-exact-LBA filter. Next, make the decision trace bounded with explicit
-truncation reporting, then use a verified cold input route to reach the game
-and capture a same-run LBA 3674 source-to-consumer chain. Preserve the existing
-fail-closed checks. See the [capture-readiness summary](docs/theron/THERON_CAPTURE_READINESS.md)
-and [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The r4 Mednafen 1.32.1 binary builds against standalone SDL 2.32.10. The
+host-input readiness gate now accepts its schema-qualified source header, and
+the wrapper regression passed three consecutive loops. A private cold JP run
+observed 15 PID-bound button presses and active-low RUN/I values at System Card
+poll `$E4C5`, but it did not verify the `$E11D` bootstrap branch or a game-owned
+poll. It recorded zero CD IRQs, zero authenticated CD-to-RAM receipts, and no
+LBA 3674 data-port rows before timing out. The dispatcher’s `$4000` entries
+remain BIOS-path evidence only.
+
+Next, establish the visible title/menu readiness for this exact cold route and
+send the documented 3–5 second actions only after each menu is ready. Capture a
+same-run authenticated LBA 3674 read through a game-owned consumer and pose-bound
+tile/render update. Do not treat BIOS polling or the state-only source match as
+that evidence. See the [PID-input capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
+[capture readiness](docs/theron/THERON_CAPTURE_READINESS.md), and
+[exact-LBA filter note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 The native keyboard Button II chord maps keypad 1/3 to turns alongside the
 existing arrow and A/D bindings. Focused mapping assertions and authentic US
