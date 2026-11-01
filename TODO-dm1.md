@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `DUNVIEW.C:F0112/F0118-F0123/F0125` viewport dispatch: the ledger now marks the bounded PC34 ceiling-pit, CSB D3C/D2/D1, and DM1 D0/D1/D2 wall routes `PARTIAL`; full element ordering, cross-edition caller paths, and platform pixel/zone behavior remain open.
+
 2026-11-01 ReDMCSB `DUNVIEW.C:F0099/F0116/F0117`: the ledger now marks the live row-flip and PC34 left/right square-dispatch routes `PARTIAL`; bitmap ownership and complete edition/platform dispatcher equivalence remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0095` wall-set loading: the callable ledger now marks the active-map PC/I34 wall-set resolver as `PARTIAL`; Firestaff loads graphics lazily and does not reproduce each source edition's preload/cache sequence.
