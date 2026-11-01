@@ -20034,6 +20034,7 @@ int dm2_v1_runtime_recompute_player_pos(void)
         rt->source_party.heros_in_party > DM2_MAX_HEROES) {
         return 0;
     }
+    if (!rt->source_formation_drag_active) return 0;
 
     /* c_input.cpp dispatches event 129 to
      * DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION, which calls
