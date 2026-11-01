@@ -144,6 +144,14 @@ int dm2_v1_creature_shoot_item(
     const DM2_V1_CreatureShootState *state,
     const DM2_V1_CreatureShootCallbacks *cb, void *ctx);
 
+/* SPX v4 CREATURE_SHOOT_ITEM (skcrture.cpp:4612) uses
+ * AIDef::GetShootStrength()+1 as its damage base.  The v5/SKULLWIN
+ * entry above instead uses AttackStrength/4+1.  This variant shares the
+ * record/RNG/projectile transaction but preserves the v4 source formula. */
+int dm2_v1_creature_shoot_item_v4(
+    const DM2_V1_CreatureShootState *state, int16_t shoot_strength,
+    const DM2_V1_CreatureShootCallbacks *cb, void *ctx);
+
 /* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ----
  * Distribute creature attack across all living party heroes. */
 typedef struct {

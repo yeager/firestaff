@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dm2_v1_actuator_event_pc34_compat.h"
@@ -295,10 +296,16 @@ static void test_shooter_fails_closed_without_db14_owner(void)
 
 static void test_handle_helpers(void)
 {
-    /* DB type from handle: bits 10-13 */
-    int16_t h = (int16_t)((3 << 10) | 42); /* db3 (actuator), index 42 */
-    assert(dm2_handle_db_type(h) == 3);
-    assert(dm2_handle_dir(h) == (42 & 3));
+    /* ObjectID packs DB type in bits 10-13 and direction in bits 14-15;
+     * source record index bits must not leak into direction. */
+    for (int direction = 0; direction < 4; ++direction) {
+        int16_t h = (int16_t)((direction << 14) | (3 << 10) | 42);
+        if (dm2_handle_db_type(h) != 3 || dm2_handle_dir(h) != direction) {
+            fprintf(stderr, "FAIL: ObjectID direction %d was decoded incorrectly\n",
+                    direction);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     printf("  PASS: handle_helpers\n");
 }

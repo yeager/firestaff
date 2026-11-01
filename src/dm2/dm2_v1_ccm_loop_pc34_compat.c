@@ -516,6 +516,14 @@ int dm2_v1_ccm_message_loop(
                 int32_t hr = proceed_ccm(proceed_ctx, slot[0x1a],
                     creature_type, slot, (uint16_t)adj[0],
                     (uint16_t)adj[1], game_tick);
+                if (hr == DM2_V1_CCM_PROCEED_SUPPRESS_REQUEUE) {
+                    /* Runtime bridge for s350.v1e0570. The source handler's
+                     * RG3L remains zero; the host action flag independently
+                     * suppresses m_15785's delta/requeue tail. */
+                    suppress_requeue = 1;
+                    hr = 0;
+                    receipt->ccm_handler_requeue_suppressed = 1;
+                }
                 receipt->ccm_handler_dispatched = 1;
                 receipt->ccm_handler_result = (int)hr;
                 /* c_creature.cpp:3186-3188: RG3L = RG1L when handler
@@ -564,6 +572,11 @@ int dm2_v1_ccm_message_loop(
         int32_t delta = 0;
         DM2_V1_CaiiCcmEndRequeueReceipt erc;
 
+        if (suppress_requeue != 0) {
+            /* c_ai.cpp:5609-5613 sets v1e0562's type before the v1e0570
+             * early return. Keep this mutation in the mutable timer owner. */
+            timer->type = (uint8_t)(receipt->loop_result != 1 ? 0x22u : 0x21u);
+        }
         if (suppress_requeue == 0) {
             /* The suppression return (c_ai.cpp:5612-5613) precedes the
              * delta computation in the source — the bound 1c9a_0a48

@@ -1,5 +1,130 @@
+2026-11-01 ReDMCSB `BLITFILL.C:F0136` screen hatch: the ledger marks Firestaff’s bounded PC34 checkerboard hatch `PARTIAL`; color/pattern and platform-specific box/backend behavior remain open. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
+
+2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
+
+2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0112/F0118-F0123/F0125` viewport dispatch: the ledger now marks the bounded PC34 ceiling-pit, CSB D3C/D2/D1, and DM1 D0/D1/D2 wall routes `PARTIAL`; full element ordering, cross-edition caller paths, and platform pixel/zone behavior remain open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0099/F0116/F0117`: the ledger now marks the live row-flip and PC34 left/right square-dispatch routes `PARTIAL`; bitmap ownership and complete edition/platform dispatcher equivalence remain open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0095` wall-set loading: the callable ledger now marks the active-map PC/I34 wall-set resolver as `PARTIAL`; Firestaff loads graphics lazily and does not reproduce each source edition's preload/cache sequence.
+
+2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: mapped `strlen` within the source 16-bit length domain; marked `strchr` partial because ReDMCSB returns NULL for a NUL search while host `strchr` returns the terminator address.
+
+2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
+
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: corrected the Atari ST alias and callable row to `MISSING`. The source function computes DOS/Amiga copy-protection code checksums; Firestaff has no equivalent checksum route.
+
+2026-11-01 ReDMCSB `IO.C:F0074-F0078` pointer drawing and visibility: the ledger now maps the host SDL cursor/event route rather than unrelated numeric hits. Firestaff relies on window-system cursor composition; source bitmap save/restore, Atari ST interrupt callbacks, and the paired redraw visibility protocol remain open.
+
+2026-11-01 ReDMCSB `MOUSESET.C:F0066-F0071/F0073`: the callable ledger now maps host-pointer initialization, bounded arrow/hand/object state, champion-icon formation pickup/drop, and the PC34 screen-area suppression receipt. Source cursor bitmap rendering, Atari ST driver callbacks, platform-specific pointer save/restore, and exact pixel/caller behavior remain open.
+
+2026-11-01 ReDMCSB `SOUND.C:F0061-F0065` audio path: the callable ledger now maps the bounded PSG amplitude table, DM1 sound-state/host initialization, source-sound request arbitration, and pending-event flushes instead of numeric-token collisions. Atari ST key-click/PSG register and Timer-A ownership, edition-specific queue behavior, playback timing, and platform audio-driver parity remain open.
+
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `TEXT.C:F0040/F0041` glyph printing: the callable ledger
+now maps bounded source-font M11 name/damage/UI rendering and trailing-space
+routes instead of unrelated numeric-token hits. General glyph-mask, bitmap,
+coordinate, codepage, caller, and all-edition/platform pixel parity remain
+open.
+
+2026-11-01 ReDMCSB `TEXT.C:F0042-F0047` message-area functions: the ledger
+now maps the bounded PC34 cursor, row clear/expiry, row advance, string, and
+word-wrap counterparts. Their bitmap scroll/rendering, source fonts/codepages,
+exact pixel layout, and all-edition/platform integration remain open.
+
+2026-11-01 ReDMCSB Atari ST `F031-F039` aliases: the callable ledger now
+links these aliases to the bounded DM1/CSB source counterparts for names,
+object types/icons, leader-hand text, and slot-box rendering. Their Atari ST
+runtime, authentic asset behavior, and ABI remain open, so the aliases are
+`PARTIAL`.
+
+2026-11-01 ReDMCSB `BASE.C:F0022` and `SWSH.C:F0022` delays: the ledger now
+maps the source-gated PC34 VBlank admission plan and the swoosh hold timing
+helpers instead of an unrelated Nexus number collision. Firestaff's swoosh
+runtime uses millisecond estimates for source VBlank holds; frame-exact delay
+and every edition/platform caller remain unverified.
+
+2026-11-01 ReDMCSB `BASE.C:F0020/F0021` blitters: the full ledger now maps
+the source-named viewport/screen blitters and bounded PC34 admission receipt
+instead of unrelated Nexus numeric-token hits. Equivalent renderers exist,
+but the generic helpers have no verified live M11 caller; edition-specific
+video, transparency, screen-surface and Atari ST ABI behavior remain open.
+
+2026-11-01 ReDMCSB Atari ST `F023-F030` math aliases: the callable ledger now
+links these aliases to the bounded PC34 helpers for absolute value, signed
+min/max/clamp, RNG and scaled product rather than unrelated numeric-token
+hits. Each remains partial because Atari ST runtime ownership, ABI, and
+source-specific RNG/overflow behavior are not proven.
+
+2026-11-01 ReDMCSB `BASE.C:F0009/F0010` spaced writes: the callable ledger
+now maps both shared Firestaff routines instead of unrelated Theron/Nexus
+numeric-token hits. Positive-count byte and word strides have counterparts;
+some ReDMCSB assembly paths wrap a zero count into 65,536 writes, unlike the
+Firestaff C loops. Keep both functions and Atari ST aliases `PARTIAL` until
+the target-platform count semantics and ABI are resolved.
+
+2026-11-01 ReDMCSB `BASE.C:F0006` screen-box inversion: the callable ledger
+now maps bounded Firestaff menu/champion-panel highlight overlays instead of
+an unrelated DM2 phase-gate numeric hit. No general low-level equivalent to
+ReDMCSB's inclusive source-screen rectangle bit inversion has been verified;
+pixel format, edge semantics, and all edition/platform callers remain open.
+
+2026-11-01 ReDMCSB `CLEARBYT.C:F0008` byte clear: the full ledger now maps
+the numbered symbol to Firestaff's shared `memset` wrapper instead of an
+unrelated menu-renderer numeric-token hit. Valid bounded clears have a
+counterpart; source pointer/count widths, platform implementations, and ABI
+behavior remain open, so the function and Atari ST alias are `PARTIAL`.
+
+2026-11-01 ReDMCSB `COPYBYTE.C:F0007` byte copy: the full ledger now maps the
+numbered symbol to Firestaff's shared `memmove` wrapper instead of a DM2
+numeric-token collision. Positive-length overlapping copies have a bounded
+counterpart; ReDMCSB's platform assembly, pointer/size domains, and ABI
+semantics remain unverified, so both the named function and Atari ST alias are
+`PARTIAL`.
+
+2026-11-01 ReDMCSB `GAMELOOP.C:F0002` main loop: the callable inventory now
+maps the bounded tick adapter and live M11 DM1 loop instead of an unrelated
+DM2 numeric-token hit. They cover substantial per-tick source order, but the
+complete edition-specific map replay, VBlank/input wait, UI/pointer refresh,
+copy-protection watchdog, sound/damage ordering, platform drivers, and
+infinite-loop behavior still require per-edition/platform comparison.
+
+2026-11-01 ReDMCSB `NEWMAP.C:F0003` map transition: the callable inventory now
+maps the exact M11 route through `F0003_WORLD_TransitionPartyMap_Compat`
+instead of an unrelated DM2 numeric-token hit. The staged active-group removal,
+party-map switch, and group re-addition cover the central
+`GROUP.C:F0194/F0195` boundary. M11 now selects the destination
+music track after its shared movement/teleporter handoff; stairs and post-move
+transitions have separate track-selection paths. Rendering resolves active-map
+graphics and palette. Caller ordering across every supported edition/platform
+and ReDMCSB copy-protection event behavior remain unverified, so the source
+routine and Atari ST alias are explicitly `PARTIAL`.
+
+2026-11-01 ReDMCSB `INPUT.C:F1097-F1099` input-ring critical section: the
+64-slot FIFO now uses a process-wide C11 atomic critical section around key
+insert, read/advance, availability check, and discard/reset. This matches the
+source `Forbid/Permit` boundary for the shared ring state while keeping its
+source index and full-buffer behavior. The compatibility ring is not yet
+proven as the live Amiga device interrupt owner or as the live M11 input route
+across supported platforms; all three callable audit rows remain partial.
+
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` current-map gap: the active M11
+renderer lazily resolves map data by party-map index and caches F0174 wall,
+floor, and door ornament arrays from the DUNGEON.DAT metadata stream. It also
+wires the party map's wall list to the F0174 G0267 alcove-list consumer during
+render and click handling. The separate descriptor adapters model F0173's
+core pointer/dimension/door/column refresh and F0174's allowed-creature and
+ornament arrays, including the inscription ordinal, but they are not the live
+transition owner. Runtime still reads descriptors directly and updates party
+map state in separate movement code; it does not coordinate all F0173/F0174
+state in one transition route. Both symbols remain partial across supported
+editions/platforms. Existing focused assertions cover the isolated adapters;
+CI is the verification path.
 2026-11-01 Apple IIGS combat cross-check: the authentic `m11_dm1_iigs_startup_real_media`
 run now passes both original IIGS 2.0 and 2.1 media through HoC recruitment,
 first descent, native group activation, monster damage, and a repeated source-

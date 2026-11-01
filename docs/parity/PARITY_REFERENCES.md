@@ -9,13 +9,17 @@ This file inventories all known local reference sources and artifacts available 
 ## Product contract
 
 **Version 1** targets 1:1 original-faithful parity with **all three original games**:
-- **DM1** — PC 3.4 English and Multilanguage.
+- **DM1** — PC DOS 3.4 English and Multilanguage; Atari ST, Amiga, FM Towns,
+  and Apple IIGS runtime lanes. Edition-specific media/version identities and
+  evidence are tracked separately in `docs/PLATFORM_STATUS.md`.
 - **CSB** — Atari ST 2.0/2.1, Amiga 3.1/3.5, and FM Towns English/Japanese.
 - **DM2** — PC English, French, and German/English JewelCase editions.
 
 This edition list follows the current [project guide](../PROJECT_GUIDE.md).
 Parity review must cover each supported edition and platform path, not only the
-edition used for a focused source or media check.
+edition used for a focused source or media check. The current DM1 runtime lane
+list includes bounded original-media routes beyond PC 3.4; those routes do not
+inherit PC source/runtime parity claims.
 
 V2 (modern graphics/resolution) and V3 (modern 3D) are separate product tracks.
 Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementation.

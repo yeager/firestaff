@@ -159,11 +159,16 @@ int dm2_v1_creature_create_cloud(
     return cb->create_cloud(ctx, (int)0xFF8E, (uint16_t)strength, x, y, 0xFF);
 }
 
-int dm2_v1_creature_shoot_item(
-    const DM2_V1_CreatureShootState *state,
+static int dm2_v1_creature_shoot_item_with_base(
+    const DM2_V1_CreatureShootState *state, int16_t base_dmg,
     const DM2_V1_CreatureShootCallbacks *cb, void *ctx)
 {
-    if (!cb || !state)
+    /* This is also used as a public compatibility boundary.  A partial host
+     * binding must fail closed before touching the possession chain or RNG;
+     * the source runtime only reaches this handler with all of these owners
+     * available. */
+    if (!cb || !state || !cb->find_shootable_item || !cb->cut_record ||
+        !cb->rand16 || !cb->between_value || !cb->shoot_item)
         return 1;
     int16_t item = cb->find_shootable_item(ctx, state->capability,
                                             state->inv_link, 0xFF);
@@ -172,7 +177,6 @@ int dm2_v1_creature_shoot_item(
     uint16_t item_w = (uint16_t)item;
     uint16_t inv = state->inv_link;
     cb->cut_record(ctx, item_w, &inv, -1, 0);
-    int16_t base_dmg = (int16_t)(state->attack_stat / 4 + 1);
     base_dmg = (int16_t)(base_dmg + cb->rand16(ctx, base_dmg));
     base_dmg = (int16_t)(base_dmg + cb->rand16(ctx, base_dmg));
     uint8_t damage = (uint8_t)cb->between_value(20, 255, base_dmg);
@@ -180,6 +184,28 @@ int dm2_v1_creature_shoot_item(
                    state->creature_dir, state->creature_facing,
                    damage, state->speed_stat, 0x08);
     return 0;
+}
+
+int dm2_v1_creature_shoot_item(
+    const DM2_V1_CreatureShootState *state,
+    const DM2_V1_CreatureShootCallbacks *cb, void *ctx)
+{
+    int16_t base_dmg;
+    if (!state)
+        return 1;
+    base_dmg = (int16_t)(state->attack_stat / 4 + 1);
+    return dm2_v1_creature_shoot_item_with_base(state, base_dmg, cb, ctx);
+}
+
+int dm2_v1_creature_shoot_item_v4(
+    const DM2_V1_CreatureShootState *state, int16_t shoot_strength,
+    const DM2_V1_CreatureShootCallbacks *cb, void *ctx)
+{
+    int16_t base_dmg;
+    if (!state)
+        return 1;
+    base_dmg = (int16_t)(shoot_strength + 1);
+    return dm2_v1_creature_shoot_item_with_base(state, base_dmg, cb, ctx);
 }
 
 uint8_t dm2_v1_creature_ops_attack_party(

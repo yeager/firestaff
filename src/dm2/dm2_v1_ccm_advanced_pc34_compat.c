@@ -13,7 +13,6 @@
 /* Record-chain terminator (OBJECT_END_MARKER) used by the item-chain
  * walks in TAKES_ITEM / PUTS_DOWN_ITEM. */
 #define DM2_V1_CCM_ADV_RECORD_END   0xFFFEu
-#define DM2_V1_CCM_ADV_RECORD_NULL  0xFFFFu
 
 /* Bounded walk guard: no proven source chain is longer than this, and
  * the source's own record pools are far smaller — bounding here keeps
@@ -68,7 +67,8 @@ int dm2_v1_ccm_advanced_jumps(const DM2_V1_CCMAdvancedCallbacks *cb,
     out->result = 0;
     if (!cb || !cb->get_phase || !cb->set_phase || !cb->walk_now ||
         !cb->get_facing || !cb->get_pos_word || !cb->set_pos_word ||
-        !cb->get_xy || !cb->move_record_to || !cb->transition_cache_poke ||
+        !cb->get_xy || !cb->get_current_creature_record ||
+        !cb->move_record_to || !cb->transition_cache_poke ||
         !cb->get_dest_level)
         return 0;
 
@@ -117,16 +117,17 @@ int dm2_v1_ccm_advanced_jumps(const DM2_V1_CCMAdvancedCallbacks *cb,
         return 1;
     }
 
-    /* m_1A0D6: land the party on the creature's current tile. */
+    /* m_1A0D6: move the creature record from its tile back onto itself. */
     {
         int16_t x, y;
         int moved;
 
         cb->set_phase(cb->ctx, 3);
         cb->get_xy(cb->ctx, &x, &y);
-        moved = cb->move_record_to(cb->ctx, DM2_V1_CCM_ADV_RECORD_NULL,
-                                    -1, -1, x, y, 0);
-        if (!moved && cb->mark_needs_redraw)
+        moved = cb->move_record_to(
+            cb->ctx, (int16_t)cb->get_current_creature_record(cb->ctx),
+            x, y, x, y, 0);
+        if (moved && cb->mark_needs_redraw)
             cb->mark_needs_redraw(cb->ctx);
         cb->transition_cache_poke(cb->ctx, cb->get_dest_level(cb->ctx));
     }

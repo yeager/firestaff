@@ -414,9 +414,9 @@ int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
  * Item shooters (0x0E/0x0F) pick items from the source tile.
  * Others allocate via ALLOC_NEW_DBITEM or use missile records.
  *
- * The source launch facts are decoded below, but the DB14 item ownership and
- * SHOOT_ITEM timer transaction remains closed until its live owner is bound.
- * Do not replace that gate with a synthetic tty07 timer. */
+ * This compatibility helper only reports source launch facts and remains
+ * fail-closed without a runtime transaction. The live wall-mecha path is
+ * separately owned by activate_shooter_live above. */
 
 int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
                             DM2_V1_DungeonData *dungeon,
@@ -461,14 +461,9 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
         receipt->launch_direction_randomized = receipt->single_projectile;
     }
 
-    /* SKProject c_tim_proc.cpp::DM2_INVOKE_ACTUATOR and
-     * ::DM2_STEP_MISSILE own more than the actuator's eight bytes: the
-     * source DB14/DB item record, projectile energy/attack/facing and the
-     * follow-up timer are one transaction.  Firestaff has no authenticated
-     * live owner for that transaction yet.  Keep the older callback-only
-     * study below out of every runtime call; otherwise a real DB3 actuator
-     * would still allocate an invented item or queue a timer carrying
-     * unverified payload fields. */
+    /* Runtime dispatch uses activate_shooter_live with the session RNG and
+     * the outer wall-mecha transaction. Keep this fact-only adapter closed
+     * for standalone callers that cannot own DB14, tile-list and timer state. */
     (void)pool_set;
     (void)dungeon;
     (void)queue;
@@ -711,8 +706,220 @@ typedef struct {
     void *ornate_ctx;
     DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound;
     void *ornate_sound_ctx;
+    DM2_V1_QueueShooterNoiseFn queue_shooter_noise;
+    void *shooter_sound_ctx;
+    DM2_V1_DropRng *rng;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
+
+static void shooter_wr16(const DM2_V1_RecordPoolSet *pools,
+                         uint8_t *p, uint16_t value)
+{
+    if (pools->source_words_big_endian) {
+        p[0] = (uint8_t)(value >> 8);
+        p[1] = (uint8_t)value;
+    } else {
+        p[0] = (uint8_t)value;
+        p[1] = (uint8_t)(value >> 8);
+    }
+}
+
+/* Source: SKWINSPX/src/v4/skevent.cpp:1536-1631 and skgame.cpp:440-501;
+ * SKWINSPX/src/v5/sktimprc.cpp:1611-1812 and bitem.cpp:1043-1138;
+ * SKWINDOS/dm2byg.cpp:2765-2841 and dm2byc.cpp:359-424. The runtime wall
+ * owner supplies its transaction snapshot, session RNG and source noise
+ * callback. */
+static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
+                                 DM2_V1_DungeonData *dungeon,
+                                 DM2_V1_SourceTimerQueue *queue,
+                                 DM2_V1_DropRng *rng,
+                                 DM2_V1_QueueShooterNoiseFn queue_noise,
+                                 void *shooter_sound_ctx,
+                                 const uint8_t *actuator,
+                                 int timer_x, int timer_y, int timer_dir,
+                                 int map, uint32_t game_tick,
+                                 DM2_V1_ShooterReceipt *receipt)
+{
+    int type, data, low, high, single, dir, launch_dir, launch_x, launch_y;
+    int16_t objects[2] = {-1, -1};
+    int object_count = 1;
+    int budget = 0;
+    int16_t cursor;
+    if (!pools || !pools->valid || !dungeon || !queue || !rng ||
+        !actuator || !receipt || map < 0 || map >= dungeon->level_count ||
+        timer_x < 0 || timer_y < 0 ||
+        timer_x >= dungeon->level_widths[map] ||
+        timer_y >= dungeon->level_heights[map]) return 0;
+    type = dm2_actu_type(actuator);
+    data = dm2_actu_data(actuator);
+    low = (int)((dm2_actu_w6(actuator) >> 4) & 0xffu);
+    high = (int)((dm2_actu_w6(actuator) >> 12) & 0xffu);
+    dir = timer_dir & 3;
+    launch_dir = (dir + 2) & 3;
+    single = (type == DM2_ACTU_SOME_SHOOTER ||
+              type == DM2_ACTU_MISSILE_SHOOTER ||
+              type == DM2_ACTU_ITEM_SHOOTER);
+    if (!(single || type == DM2_ACTU_WEAPON_SHOOTER ||
+          type == DM2_ACTU_MISSILE_SHOOTER_2 ||
+          type == DM2_ACTU_ITEM_SHOOTER_X2)) return 0;
+    receipt->source_fields_decoded = 1;
+    receipt->actuator_type = type;
+    receipt->actuator_data = data;
+    receipt->timer_x = timer_x;
+    receipt->timer_y = timer_y;
+    receipt->timer_direction = dir;
+    receipt->payload_low = low;
+    receipt->payload_high = high;
+    receipt->projectile_energy = 100;
+    receipt->single_projectile = single;
+
+    if (type == DM2_ACTU_ITEM_SHOOTER ||
+        type == DM2_ACTU_ITEM_SHOOTER_X2) {
+        int found = 0;
+        cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, timer_x, timer_y);
+        for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db)
+            budget += pools->pools[db].record_count +
+                      pools->pools[db].extension_count;
+        while (cursor != DM2_V1_RECORD_HANDLE_END && cursor >= 0 &&
+               budget-- > 0) {
+            int16_t next;
+            int record_db = dm2_v1_record_handle_pool(cursor);
+            if (record_db > DM2_DB_ACTUATOR &&
+                (dm2_handle_dir(cursor) == dir ||
+                 dm2_handle_dir(cursor) == ((dir + 1) & 3))) {
+                objects[found++] = cursor;
+                if (found == 2) break;
+            }
+            if (!dm2_v1_record_pool_next_link(pools, cursor, &next)) return 0;
+            cursor = next;
+        }
+        if (found == 0) return 1; /* Source no-op: no directional item. */
+        if (type == DM2_ACTU_ITEM_SHOOTER_X2 && found > 1) {
+            object_count = 2;
+            single = 0;
+        } else {
+            single = 1;
+        }
+        if (!dm2_v1_record_pool_cut_from_tile(
+                pools, dungeon, map, timer_x, timer_y, objects[0])) return 0;
+        receipt->source_items_cut++;
+        if (object_count == 2) {
+            if (!dm2_v1_record_pool_cut_from_tile(
+                    pools, dungeon, map, timer_x, timer_y,
+                    objects[1])) return 0;
+            receipt->source_items_cut++;
+        }
+    } else if (type == DM2_ACTU_MISSILE_SHOOTER ||
+               type == DM2_ACTU_MISSILE_SHOOTER_2) {
+        objects[0] = (int16_t)(0xff80u + (uint16_t)data);
+        if (!single) {
+            objects[1] = (int16_t)(0xff80u + (uint16_t)data);
+            object_count = 2;
+        }
+    } else {
+        objects[0] = dm2_v1_alloc_new_dbitem(pools, (uint16_t)data);
+        if (objects[0] < 0) return 1; /* Source allocation no-op. */
+        if (!single) {
+            objects[1] = dm2_v1_alloc_new_dbitem(pools, (uint16_t)data);
+            if (objects[1] < 0) single = 1;
+            else object_count = 2;
+        }
+    }
+
+    if (single) {
+        launch_dir = (launch_dir + (int)dm2_v1_drops_randbit(rng)) & 3;
+        receipt->launch_direction_randomized = 1;
+    }
+    receipt->single_projectile = single;
+    receipt->launch_x = timer_x + dm2_x_delta(dir);
+    receipt->launch_y = timer_y + dm2_y_delta(dir);
+    receipt->launch_direction = launch_dir;
+    receipt->second_launch_direction = (launch_dir + 1) & 3;
+    launch_x = receipt->launch_x;
+    launch_y = receipt->launch_y;
+    if (launch_x < 0 || launch_y < 0 ||
+        launch_x >= dungeon->level_widths[map] ||
+        launch_y >= dungeon->level_heights[map]) return 0;
+
+    for (int i = 0; i < object_count; ++i) {
+        int projectile_dir = i == 0 ? launch_dir : ((launch_dir + 1) & 3);
+        int16_t db14 = dm2_v1_record_pool_alloc_new_record(pools, 14u);
+        uint8_t *missile = db14 >= 0
+            ? dm2_v1_record_pool_address_mut(pools, db14) : NULL;
+        int16_t head;
+        int tile_raw;
+        DM2_V1_SourceTimer follow;
+        if (db14 < 0) {
+            /* SKULLWIN/c_item.cpp:1058-1068 and SPX v4 skgame.cpp:451-459:
+             * if the DB14 missile record cannot be allocated, ordinary
+             * items are placed on the launch tile facing the projectile
+             * direction. Cloud objects have no such fallback. The caller's
+             * wall-mecha snapshot owns rollback if MOVE_RECORD_TO cannot
+             * complete this source fallback. */
+            if (dm2_v1_record_handle_pool(objects[i]) != 0x0f) {
+                DM2_V1_MoveRecordToReceipt move;
+                memset(&move, 0, sizeof(move));
+                if (!dm2_v1_move_record_to(
+                        pools, dungeon, queue, objects[i], -1, 0,
+                        (int16_t)launch_x, (int16_t)launch_y,
+                        (int16_t)projectile_dir, map, game_tick, &move) ||
+                    move.fail_closed)
+                    return 0;
+                receipt->allocation_fallback_items_moved++;
+            }
+            continue;
+        }
+        if (!missile || pools->pools[14].record_size < 8)
+            return 0;
+        /* c_item.cpp:1097-1100 — DM2_SHOOT_ITEM requests GEN2 noise before
+         * publishing the missile record/timer. Noise is best-effort: the
+         * source routine returns void and continues when sound admission is
+         * unavailable. A missing sound queue must not suppress the shot. */
+        if (queue_noise &&
+            queue_noise(shooter_sound_ctx, (uint16_t)objects[i], map,
+                        launch_x, launch_y, game_tick))
+            receipt->sound_queued++;
+        shooter_wr16(pools, missile, 0xfffeu);
+        shooter_wr16(pools, missile + 2, (uint16_t)objects[i]);
+        missile[4] = (uint8_t)low;
+        missile[5] = 100u;
+        shooter_wr16(pools, missile + 6, 0u);
+        tile_raw = dm2_v1_dungeon_get_tile_raw(
+            dungeon, map, launch_x, launch_y);
+        head = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, launch_x, launch_y);
+        if (head < 0 && (tile_raw < 0 || (tile_raw & 0x10) == 0)) {
+            if (dm2_v1_dungeon_insert_first_thing_empty_tile(
+                    dungeon, map, launch_x, launch_y, (uint16_t)db14) != 0)
+                return 0;
+        } else if (head < 0) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, launch_x, launch_y, (uint16_t)db14) != 0)
+                return 0;
+        } else {
+            if (!dm2_v1_record_pool_append_to_list(pools, &head, db14) ||
+                dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, launch_x, launch_y, (uint16_t)head) != 0)
+                return 0;
+        }
+        memset(&follow, 0, sizeof(follow));
+        follow.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            ((game_tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        follow.type = 0x1eu;
+        follow.value_a = (int16_t)(((uint16_t)db14 & 0x3fffu) |
+                                   ((uint16_t)projectile_dir << 14));
+        follow.value_b = (int16_t)((launch_x & 0x1f) |
+            ((launch_y & 0x1f) << 5) | ((projectile_dir & 3) << 10) |
+            (((i == 0 ? high : dir) & 0xf) << 12));
+        if (dm2_v1_source_timer_enqueue(queue, &follow, 0) !=
+            DM2_V1_SOURCE_TIMER_OK) return 0;
+        ++receipt->projectiles_created;
+        ++receipt->continuation_timers_queued;
+    }
+    receipt->valid = 1;
+    return 1;
+}
 
 /* Visitor callback for dm2_v1_tile_record_walk.
  * Ports the body of ACTUATE_WALL_MECHA's for-loop (skevent.cpp:1643-2063). */
@@ -880,13 +1087,25 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_ITEM_SHOOTER:
     case DM2_ACTU_ITEM_SHOOTER_X2: {
         DM2_V1_ShooterReceipt sh_receipt;
+        int shooter_ok;
         memset(&sh_receipt, 0, sizeof(sh_receipt));
-        dm2_v1_activate_shooter(ctx->pool_set, ctx->dungeon, ctx->queue,
-                                 record,
-                                 (int)dm2_actu_xcoord(record),
-                                 (int)dm2_actu_ycoord(record),
-                                 ctx->direction,
-                                 ctx->map, ctx->game_tick, &sh_receipt);
+        /* SKWIN/SkWinCore.cpp ACTUATE_WALL_MECHA (around line 62036)
+         * passes Timer::XcoordB/YcoordB to ACTIVATE_SHOOTER (line 61938).
+         * These are the activated wall tile in ctx->x/y; Actuator::w6 is
+         * shooter payload and must not be decoded as a map position. */
+        if (ctx->rng) {
+            shooter_ok = activate_shooter_live(
+                ctx->pool_set, ctx->dungeon, ctx->queue, ctx->rng,
+                ctx->queue_shooter_noise, ctx->shooter_sound_ctx, record,
+                ctx->x, ctx->y,
+                ctx->direction, ctx->map, ctx->game_tick, &sh_receipt);
+        } else {
+            shooter_ok = dm2_v1_activate_shooter(
+                ctx->pool_set, ctx->dungeon, ctx->queue, record,
+                ctx->x, ctx->y,
+                ctx->direction, ctx->map, ctx->game_tick, &sh_receipt);
+        }
+        if (!shooter_ok) sh_receipt.fail_closed = 1;
         r->shooter_invoked++;
         if (sh_receipt.fail_closed) r->fail_closed++;
         break;
@@ -971,6 +1190,11 @@ static int wall_mecha_visitor(void *context,
             if (dm2_actu_once_only(record_mut) == 1) {
                 if (dm2_actu_active_status(record) == 0) {
                     dm2_actu_set_active_status(record_mut, 1);
+                    /* SKWINSPX/src/v4/skevent.cpp:1307 sets
+                     * glbDoLightCheck when this continuous animator starts
+                     * on the player's map. The runtime owner applies the
+                     * map gate and consumes this request after timer order. */
+                    r->ornate_light_check_requested = 1;
                     uint16_t phase = (uint16_t)(
                         ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
                          % (uint32_t)anim_len) & 0xFF);
@@ -986,6 +1210,9 @@ static int wall_mecha_visitor(void *context,
                               % (uint32_t)anim_len);
                 if (di == 0) {
                     dm2_actu_set_active_status(record_mut, 0);
+                    /* Source line 1319 requests the same check only when
+                     * the stop phase is exactly zero. */
+                    r->ornate_light_check_requested = 1;
                 } else {
                     di = anim_len - di;
                     DM2_V1_SourceTimer t = make_timer(ctx->map,
@@ -1157,7 +1384,8 @@ static int wall_mecha_visitor(void *context,
 
 /* ── ACTUATE_WALL_MECHA ────────────────────────────────────────────── */
 
-int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
+int dm2_v1_actuate_wall_mecha_with_rng(
+                              DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_CaiiArray *caii,
                               const DM2_V1_AssetLoader *asset_loader,
@@ -1171,6 +1399,9 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               void *ornate_ctx,
                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                               void *ornate_sound_ctx,
+                              DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
+                              void *shooter_sound_ctx,
+                              DM2_V1_DropRng *rng,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1201,6 +1432,9 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.ornate_ctx  = ornate_ctx;
     ctx.queue_ornate_sound = queue_ornate_sound;
     ctx.ornate_sound_ctx = ornate_sound_ctx;
+    ctx.queue_shooter_noise = queue_shooter_noise;
+    ctx.shooter_sound_ctx = shooter_sound_ctx;
+    ctx.rng = rng;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1209,6 +1443,29 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
+                              DM2_V1_SourceTimerQueue *queue,
+                              int map, int x, int y,
+                              int action_type, int direction,
+                              uint32_t game_tick,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
+                              DM2_V1_ActuatorEventReceipt *receipt)
+{
+    return dm2_v1_actuate_wall_mecha_with_rng(
+        pool_set, dungeon, caii, asset_loader, queue, map, x, y,
+        action_type, direction, game_tick, global_state, creature_killer_cb,
+        get_ornate_anim_len, ornate_ctx, queue_ornate_sound, ornate_sound_ctx,
+        NULL, NULL, NULL, receipt);
 }
 
 /* ── Floor mecha visitor ───────────────────────────────────────────── */
@@ -1258,6 +1515,10 @@ static int floor_mecha_visitor(void *context,
             if (dm2_actu_once_only(record_mut) == 1) {
                 if (dm2_actu_active_status(record) == 0) {
                     dm2_actu_set_active_status(record_mut, 1);
+                    /* SKWINSPX/src/v4/skevent.cpp:1307 sets
+                     * glbDoLightCheck when this continuous animator starts
+                     * on the player's map. */
+                    r->ornate_light_check_requested = 1;
                     uint16_t phase = (uint16_t)(
                         ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
                          % (uint32_t)anim_len) & 0xFF);
@@ -1273,6 +1534,9 @@ static int floor_mecha_visitor(void *context,
                               + ctx->game_tick) % (uint32_t)anim_len);
                 if (di == 0) {
                     dm2_actu_set_active_status(record_mut, 0);
+                    /* Source line 1319 requests the same check only when
+                     * the stop phase is exactly zero. */
+                    r->ornate_light_check_requested = 1;
                 } else {
                     di = anim_len - di;
                     DM2_V1_SourceTimer t = make_timer(ctx->map,
