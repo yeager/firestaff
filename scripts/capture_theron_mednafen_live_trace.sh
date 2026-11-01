@@ -47,6 +47,7 @@ if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
     exit 1
 fi
 if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 &&
+      -n "$mednafen_bin" && -n "$cue" && -n "$system_card" && -n "$trace" &&
       ! -r "$script_dir/verify_theron_jp_code_follow_trace.py" ]]; then
     printf '%s\n' 'FAIL: PCE Fast cold capture requires verify_theron_jp_code_follow_trace.py beside the capture script; refusing to start an unreceiptable capture' >&2
     exit 1
