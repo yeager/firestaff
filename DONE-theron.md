@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — capture Drator row-reader instruction windows
+
+- Extended the opt-in PCE Fast opcode-fetch trace to retain 512-byte code
+  windows at `$CBC6` and `$45C3` alongside the existing `$C852` windows. These
+  are the authentic Track 02 candidates associated with observed row-reader
+  PCs `$CBC9` and `$45C3`.
+- Each record carries the physical PC, MPR registers, fetched opcode and the
+  shared event sequence so it can be joined to same-session row-byte reads.
+  The per-site cap is 4,096 rows and emits an explicit truncation marker.
+- Updated the capture-readiness guide and active TODO. This adds capture
+  capability only: no authentic replay has used the new reader-code windows,
+  and runtime source ownership and row semantics remain unverified.
+
 ## 2026-11-01 — verify the pointer-to-zone API against retail media
 
 - Exercised the source-only pointer-to-zone lookup for US and JP authentic raw

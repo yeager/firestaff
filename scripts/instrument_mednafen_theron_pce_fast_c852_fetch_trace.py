@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add an opt-in bounded opcode and source-mapping trace for logical PC $C852."""
+"""Trace C852 and Drator row-reader opcode windows for source mapping."""
 
 from pathlib import Path
 import sys
@@ -8,8 +8,12 @@ import sys
 TRACE_BLOCK = r'''  {
    static FILE *trace = NULL;
    static bool initialized = false;
-   static unsigned count = 0;
-   static bool truncation_reported = false;
+   static unsigned c852_count = 0;
+   static bool c852_truncation_reported = false;
+   static unsigned cbc6_count = 0;
+   static unsigned cbc6_dropped = 0;
+   static unsigned c45c3_count = 0;
+   static unsigned c45c3_dropped = 0;
    if(!initialized)
    {
     const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE");
@@ -23,17 +27,31 @@ TRACE_BLOCK = r'''  {
       fputs("FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE_ERROR error=open\n", stderr);
     }
    }
-   if(trace && TheronTraceInstructionPC == 0xC852)
+   if(trace && (TheronTraceInstructionPC == 0xC852 ||
+                TheronTraceInstructionPC == 0xCBC6 ||
+                TheronTraceInstructionPC == 0x45C3))
    {
+    const bool is_c852 = TheronTraceInstructionPC == 0xC852;
+    const bool is_cbc6 = TheronTraceInstructionPC == 0xCBC6;
     const unsigned limit = 4096;
-    if(count >= limit)
+    unsigned *count = is_c852 ? &c852_count :
+                      (is_cbc6 ? &cbc6_count : &c45c3_count);
+    unsigned *dropped = is_c852 ? NULL :
+                        (is_cbc6 ? &cbc6_dropped : &c45c3_dropped);
+    if(*count >= limit)
     {
-     if(!truncation_reported)
+     if(is_c852)
      {
-      fprintf(trace, "c852_fetch_truncated limit=%u\n", limit);
-      fflush(trace);
-      truncation_reported = true;
+      if(!c852_truncation_reported)
+      {
+       fprintf(trace, "c852_fetch_truncated limit=%u\n", limit);
+       fflush(trace);
+       c852_truncation_reported = true;
+      }
      }
+     else if((*dropped)++ == 0)
+      fprintf(trace, "row_reader_fetch_truncated logical_pc=%04x limit=%u\n",
+              TheronTraceInstructionPC, limit);
     }
     else
     {
@@ -47,8 +65,9 @@ TRACE_BLOCK = r'''  {
       for(unsigned i = 0; i < 512; i++)
        snprintf(code_bytes + i * 2, 3, "%02x", code[i]);
      }
-     fprintf(trace, "c852_fetch sequence=%u event_sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x code_bytes=%s mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
-             count++, event_sequence, TheronTraceInstructionPC,
+     fprintf(trace, "%s sequence=%u event_sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x code_bytes=%s mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
+             is_c852 ? "c852_fetch" : "row_reader_fetch",
+             (*count)++, event_sequence, TheronTraceInstructionPC,
              TheronTraceInstructionPhysicalPC, b1, code_bytes,
              HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
              HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],

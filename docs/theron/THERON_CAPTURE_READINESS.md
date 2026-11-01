@@ -16,9 +16,14 @@ row publication bytes to later reads and a work-buffer copy. Enable the bounded
 fetch hook with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; it runs after `RdAtPC()` and
 before instruction dispatch, and writes `${THERON_LIVE_TRACE_OUTPUT}.c852-fetch`
-with at most 4,096 hits. Each row records the fetched opcode, a 512-byte runtime
-code window, physical PC, MPR snapshot, registers and `event_sequence` from the
-same shared counter used by the row-lifecycle trace. Correlate it with the
+with at most 4,096 hits per observed code site. In addition to `$C852`, it
+records 512-byte instruction windows beginning at the Drator row-reader
+candidate PCs `$CBC6` and `$45C3`, with physical PC, MPR snapshot, registers
+and `event_sequence` from the same shared counter used by the row-lifecycle
+trace. These code-fetch receipts can be searched against the authenticated
+Track 02 BIN to narrow repeated static occurrences; they do not prove source
+ownership until the bytes match and the physical mapping is accounted for.
+Correlate them with the
 main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.

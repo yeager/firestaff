@@ -40,6 +40,12 @@ def main() -> None:
         assert "<= 0x1E00" in changed
         assert "i < 512" in changed
         assert "code_bytes=%s" in changed
+        assert "TheronTraceInstructionPC == 0xCBC6" in changed
+        assert "TheronTraceInstructionPC == 0x45C3" in changed
+        assert '"row_reader_fetch"' in changed
+        assert "row_reader_fetch_truncated" in changed
+        assert "if(is_c852)" in changed
+        assert "if(!c852_truncation_reported)" in changed
         result = subprocess.run(
             [sys.executable, str(INSTRUMENTER), str(root)],
             check=False,
