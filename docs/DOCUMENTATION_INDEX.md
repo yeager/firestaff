@@ -131,6 +131,8 @@ remain at the top of `docs/`.
 - [Theron US returned-mask capture](source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md) — three scripted inputs reach System Card polls; no game-owned poll or runtime CD source provenance was observed
 - [Theron System Card RUN trace](source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) and [bounded `$EA3B` disassembly](source-lock/theron-disassembly/theron-system-card3-ea3b-20261031.asm) — callback byte and BIOS branch evidence; game handoff remains unobserved
 
+- [Theron JP cold map-byte writer capture (2026-11-01)](source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md) — authentic cold route rejected before game handoff; documents the PCE Fast input-verifier correction, remaining event-consumption blocker, trace limits, and evidence hashes
+
 ## Per-game technical notes
 
 Focused implementation, format and parity notes are grouped by game. These

@@ -201,8 +201,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
                                 (read_frame + 0) < (planned_frame[event_index] + planned_hold[event_index]))
                                 expected_frame_mask = mask_union(expected_frame_mask,
                                                                  planned_mask[event_index])
-                        if (read_index != expected_input_index || read_device_raw != 0)
-                            failure = "PCE Fast scripted read selected a different or physically active controller slot"
+                        # `read_index` is the serial shift position within a
+                        # PCE poll, not the gamepad slot. `scripted_port` above
+                        # identifies the slot; the witness helper below filters
+                        # to the selected serial index.
+                        if (read_device_raw != 0)
+                            failure = "PCE Fast scripted read had physical input on the selected controller slot"
                         else if (read_frame_port != expected_input_index)
                             failure = "PCE Fast same-frame apply receipt targets a different controller slot"
                         else if (read_scripted_mask_value < 0 || read_frame_mask == "" ||
@@ -338,9 +342,9 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
         }
         if (pending_frame != "" && event_frame != pending_frame) {
             if (!pending_apply)
-                failure = "a scripted event frame has no nonzero apply receipt before the next frame"
+                failure = "scripted event frame " pending_frame " has no nonzero apply receipt before the next event frame"
             else if (!pending_read)
-                failure = "a scripted event frame had no controller-port read exposing its scripted mask before the next frame"
+                failure = "scripted event frame " pending_frame " had no controller-port read exposing its scripted mask before the next event frame"
             else {
                 frames_with_apply++
                 frames_with_controller_read++
@@ -382,12 +386,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
             else if (pending_result)
                 failure = "final legacy PCE raw input read has no adjacent result record"
             else if (pending_frame != "" && !pending_apply)
-                failure = "the final scripted event frame has no nonzero apply receipt"
+                failure = "final scripted event frame " pending_frame " has no nonzero apply receipt"
             else if (pending_frame != "" && !pending_read) {
                 if (pending_out_of_window_read)
-                    failure = "the final scripted event frame was only read outside its active hold interval"
+                    failure = "final scripted event frame " pending_frame " was only read outside its active hold interval"
                 else
-                    failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
+                    failure = "final scripted event frame " pending_frame " had no controller-port read exposing its scripted mask"
             }
             else if (pending_frame != "") {
                 frames_with_apply++

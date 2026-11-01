@@ -4,6 +4,8 @@
 > and [Theron TODO](../../TODO-theron.md). Older dated sections below record
 > evidence as it was available and must not be read as current support claims.
 
+**Latest JP cold-capture update (2026-11-01):** the authentic cold map-byte route did not reach the `$E11D` handoff or read LBA 3674. The corrected input verifier fixes serial-index versus controller-slot validation, but at least one scripted event still lacks a matching guest read. The rejected capture establishes no loader provenance or gameplay input; see the [cold JP map-byte capture](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
+
 **Startup update (2026-08-08):** authenticated US Track 02 media proves the
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.

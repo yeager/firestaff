@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — correct PCE Fast scripted-input slot validation
+
+- A cold JP capture exposed that the verifier treated PCE Fast's serial
+  `read_index` as a controller slot. Source and trace evidence show
+  `scripted_port` identifies the slot while `read_index` advances through the
+  serial poll. Updated the verifier to keep those roles separate.
+- Re-ran the corrected verifier on the authentic capture. It no longer rejects
+  serial indexes 1–4 as other slots, but still blocks because at least one
+  scheduled event interval lacks a matching controller read. The run also
+  lacked the `$E11D` launch branch and recorded no exact-LBA 3674 reads, so it
+  does not establish game handoff or gameplay input. See the [cold capture
+  report](docs/source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
+
 ## 2026-11-01 — capture JP v4 map-reader state context
 
 - Built an isolated Mednafen 1.32.1 PCE Fast binary with the v4 movement-context

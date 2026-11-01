@@ -1,5 +1,25 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — cold JP map-byte capture still has no game handoff
+
+The rebuilt Mednafen PCE Fast instrumenter now includes physical `$0E8B14` in
+its CD-RAM target-write allowlist. A 360-second authentic cold JP capture
+scheduled all 15 RUN/Button I events, but the wrapper did not observe the
+System Card `$E11D` launch branch (`transition=missing`). The exact-LBA 3674
+trace recorded no CD data reads, and the target-write trace had no
+`$0E8B14` row; neither result gives loader provenance because the handoff was
+not established. The map-reader context hook recorded instruction contexts but
+zero `map_array_read` events. The cold route and evidence boundary are in the
+[capture report](docs/source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
+
+The run also exposed a PCE Fast input-verifier bug: `read_index` is the serial
+shift position, not the gamepad slot. The verifier now uses `scripted_port` for
+the slot check and keeps the selected serial index for its guest-read witness.
+The corrected verifier still blocks this capture because at least one event
+interval lacks a matching controller read. Continue by resolving that poll
+gap and the System Card handoff before repeating the target-byte provenance
+capture. Do not treat the scheduled events as proof of gameplay input.
+
 ## 2026-11-01 — CDDA route capture rejected before gameplay evidence
 
 An isolated authentic JP cold replay used the reference wrapper with the

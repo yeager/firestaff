@@ -15,6 +15,7 @@
 > [Theron TODO](../../TODO-theron.md).
 
 > Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> The latest authentic cold JP map-byte capture was rejected: `$E11D` handoff and LBA 3674 reads were absent, and the corrected input verifier still found an event interval without a matching guest controller read. See the [cold JP map-byte capture](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md). This is not loader-provenance or gameplay-input evidence.
 > The latest v4 map-reader evidence is a state-only UP/control replay, not a
 > cold load: [capture details](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).
 > The capture reports `$BC` at `$0E8B14` against source `$B4`; an audit found

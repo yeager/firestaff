@@ -35,6 +35,8 @@ subsequent `$0E8B14` read and continue through active-map selection, the
 pose-bound tile consumer, and atomic video state. The state-only reports remain
 useful for read context, but their previous zero-write count is not exhaustive.
 
+The subsequent authentic cold attempt exercised the rebuilt address filter but was rejected before the game handoff; see the [cold capture report](theron-jp-cold-map-byte-writer-capture-20261101.md). Its zero target-write rows therefore still do not establish loader provenance.
+
 Related evidence: [state-only map-index context capture](theron-jp-state-only-map-index-context-capture-20261101.md),
 [capture readiness](../../theron/THERON_CAPTURE_READINESS.md), and
 [Theron TODO](../../../TODO-theron.md).
