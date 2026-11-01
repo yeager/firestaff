@@ -90,6 +90,17 @@ background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
 
+### 2026-11-02 DM1/CSB/DM2 focused picker recheck
+
+On current `main` at `12ecef6c`,
+`FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY=1 ctest -R
+^m12_main_menu_game_selection_real_media$` passed (198.53 s) against the
+installed original-media corpus. The focused mode exercised the DM1, CSB, and
+DM2 no-game main-menu selection and authenticated handoff routes while
+restricting the selected game set to those three titles. This verifies the
+bounded launcher routes only; it does not establish platform-wide runtime,
+native display/input, or visual parity.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
