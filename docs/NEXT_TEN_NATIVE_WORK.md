@@ -41,10 +41,12 @@ contains only the next cross-game work items, not a complete Theron inventory.
    its matched input-conditioned transfers may be teleporter destination
    copying and do not prove movement, collision or visible effect. See the
    [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). The clean
-   Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check have
-   passed. No Drator-positioned save or state artifact is checked into the
-   repository, so reproduce the route from hash-verified media in a fresh
-   profile.
+   base Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check
+   passed. The newer proposed `$3879` window extension has not applied in the
+   full patch-only chain: validation stops at the E009 destination-consumer-
+   read patch before reaching either hook. See [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+   No Drator-positioned save or state artifact is checked into the repository,
+   so reproduce the route from hash-verified media in a fresh profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
    Track 02 transition through its game-owned consumer. For the active map,
    preserve one sequence from authenticated descriptor/map source reads through

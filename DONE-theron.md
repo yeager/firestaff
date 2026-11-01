@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — `$C852` reference trace-window extension is not source-verified
+
+- Drafted Mednafen PCE and PCE Fast `$3879` trace-hook changes to start a
+  bounded 128-instruction window at the first runtime `$C852` hit. The intended
+  window retains the `$C852..$C85E` caller bytes, CPU registers and MPRs, to
+  investigate the static `$C85E` `JSR $5039` candidate.
+- The static regression assertions pass, but this does not establish that the
+  patch applies to the identified Mednafen source. Full patch-only validation
+  currently stops at `mednafen_1.32.1_theron_e009_destination_consumer_read.patch`
+  (`src/pce/pcecd.cpp:196`), before reaching either `$3879` hook. A preceding
+  E009 trace hunk also rejects in isolated follow-up. No new emulator trace or
+  gameplay semantics are claimed; keep this work open until the complete patch
+  chain applies and an authentic run records the event path.
+
 ## 2026-11-01 — source-lock the US Drator `$C852` call target
 
 - Extended the authentic Track 02 disassembly receipt to verify the US

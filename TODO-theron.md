@@ -30,7 +30,15 @@ does not retain the `$C85E`/`$5039` instruction path or MPR2 at the call, so
 this does not prove target execution or row semantics. The next US trace must
 record ordered `$C852`→`$C85E`→`$5039` events, all MPRs and registers, the
 `($4f),Y` read, and the `$3879` callee before joining `$CBC6`/`$45C3` row
-reads. See the [source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
+reads. A proposed Mednafen PCE and PCE Fast `$3879` trace extension would open
+a bounded 128-instruction window at the first `$C852` execution and retain the
+caller and MPR/register state. It is not yet verified against the source: the
+full patch-only chain currently fails at
+`mednafen_1.32.1_theron_e009_destination_consumer_read.patch`
+(`src/pce/pcecd.cpp:196`), before reaching either hook. Repair and apply the
+complete patch chain, then run an authentic capture and verify ordered
+`$C852`→`$C85E`→`$5039` events before making any gameplay claim. No new runtime
+trace has been produced. See the [source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 
 The authentic JP Akutuba source spans are now mapped to raw Track 02 sector
 308 (Track 02 LBA 84, disc LBA 3674). Its descriptor and all four map arrays
