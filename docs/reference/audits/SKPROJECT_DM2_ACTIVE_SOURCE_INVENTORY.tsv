@@ -124,7 +124,7 @@ R_2F5DE	SKWINDOS	SKWINDOS/dm2bya.cpp	2086	void R_2F5DE(t_gfxdata* eaxp, t_gfxdat
 SKW_QUERY_GDAT_IMAGE_METRICS	SKWINDOS	SKWINDOS/dm2bya.cpp	2098	void SKW_QUERY_GDAT_IMAGE_METRICS(x8 eaxb, x8 ebxb, x16* ecxpw, x8 edxb, x16* argpw0)	0	PARTIAL
 SKW_QUERY_CMDSTR_TEXT	SKWINDOS	SKWINDOS/dm2bya.cpp	2114	ui16 SKW_QUERY_CMDSTR_TEXT(t_text* eaxt, const t_text* edxt)	0	PARTIAL
 SKW_QUERY_CMDSTR_ENTRY	SKWINDOS	SKWINDOS/dm2bya.cpp	2147	ui16 SKW_QUERY_CMDSTR_ENTRY(x8 eaxb, x8 ebxb, x16 ecxw, x8 edxb)	0	PARTIAL
-SKW_2759_01fe	SKWINDOS	SKWINDOS/dm2bya.cpp	2160	bool SKW_2759_01fe(x16 ebxw, x16 edxw)	0	UNREVIEWED
+SKW_2759_01fe	SKWINDOS	SKWINDOS/dm2bya.cpp	2160	bool SKW_2759_01fe(x16 ebxw, x16 edxw)	0	PARTIAL
 SKW_IS_MISSILE_VALID_TO_LAUNCHER	SKWINDOS	SKWINDOS/dm2bya.cpp	2197	bool SKW_IS_MISSILE_VALID_TO_LAUNCHER(x16 eaxw, x16 ebxw, x16 edxw)	0	UNREVIEWED
 SKW_ADJUST_HAND_COOLDOWN	SKWINDOS	SKWINDOS/dm2bya.cpp	2215	void SKW_ADJUST_HAND_COOLDOWN(x16 eaxw, x16 ebxw, x16 edxw)	0	PARTIAL
 R_30DEA	SKWINDOS	SKWINDOS/dm2bya.cpp	2252	bool R_30DEA(x16 eaxw)	0	UNREVIEWED
@@ -3206,7 +3206,7 @@ DM2_query_2fcf_164e	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4261	i32 DM2_query_2fc
 DM2_query_2fcf_16ff	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4299	i32 DM2_query_2fcf_16ff(i32 eaxl)	1	UNREVIEWED
 DM2_query_48ae_0767	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4402	i32 DM2_query_48ae_0767(i32 eaxl, i32 edxl, i16* ebxpw, unk* xecxp)	1	UNREVIEWED
 DM2_query_2759_0155	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4450	i32 DM2_query_2759_0155(i32 eaxl)	1	UNREVIEWED
-DM2_query_2759_01fe	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4506	i32 DM2_query_2759_01fe(i32 ebxl, i32 edxl)	1	UNREVIEWED
+DM2_query_2759_01fe	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4506	i32 DM2_query_2759_01fe(i32 ebxl, i32 edxl)	1	PARTIAL
 DM2_IS_ITEM_HAND_ACTIVABLE	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4564	i32 DM2_IS_ITEM_HAND_ACTIVABLE(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
 DM2_query_0cee_06dc	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4767	i32 DM2_query_0cee_06dc(i32 eaxl, i32 edxl)	1	UNREVIEWED
 DM2_query_19f0_124b	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	4809	i32 DM2_query_19f0_124b(i16* eaxpw, i16* edxpw, i32 ebxl, i32 ecxl, i32 argl0)	1	UNREVIEWED
