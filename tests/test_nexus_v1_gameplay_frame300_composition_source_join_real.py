@@ -132,6 +132,14 @@ def main() -> int:
         if cram_owner_counts != Counter({79: 60, 80: 431}):
             print(f"FAIL: CRAM VDP1 pixels do not map to the verified polyline/sprite rows: {dict(cram_owner_counts)}")
             return 1
+        expected_source_owner_counts = Counter({
+            "retail-dgn-indexed": 65500,
+            "captured-mode4-vram": 431,
+            "captured-polyline": 60,
+        })
+        if source_owner_counts != expected_source_owner_counts:
+            print(f"FAIL: visible VDP1 pixel source classes differ from the authenticated frame: {dict(source_owner_counts)}")
+            return 1
         print(f"Pixel ownership: {vdp1_top_pixels} visible VDP1 pixels map to source-verified command rows; the 491 CRAM pixels map to row 79={cram_owner_counts[79]} and row 80={cram_owner_counts[80]}")
         print(f"VDP1 pixel source counts: {dict(source_owner_counts)}")
 
