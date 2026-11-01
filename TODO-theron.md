@@ -98,9 +98,11 @@ The capture wrapper now offers the source-locked
 `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path` scope. It retains data
 reads at `$EA4D`, callback writes at `$EA50` and callback-result reads at
 `$E162`, while verifying their instruction bytes against the authentic System
-Card image. Use it for the next cold replay to avoid logging the repeated
-`$1800` status-poll loop. This is an instrumentation option only; it does not
-change the existing incomplete-capture result or prove a game handoff.
+Card image. Use it when performing the separate US Drator reader-source replay
+to avoid logging the repeated `$1800` status-poll loop. The immediate capture
+priority remains the JP active-map source-to-consumer chain above. This is an
+instrumentation option only; it does not change the existing
+incomplete-capture result or prove a game handoff.
 
 The next bounded Drator row replay can set
 `THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`. This opt-in PCE Fast

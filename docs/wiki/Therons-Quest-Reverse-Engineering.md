@@ -72,6 +72,14 @@ readiness](../theron/THERON_CAPTURE_READINESS.md), and the
 references and Greatstone SCK's extraction corpus inform provenance and media
 handling.
 
+**JP Akutuba source-map analysis (2026-11-01):** the authentic JP Rev. 1
+Track 02 descriptor and four raw tile arrays occupy file sector 308. The
+identity-gated planner can dump the four arrays as raw grids and report
+descriptor values, but deliberately does not assign meaning to the two
+unknown fields or tile values, choose the runtime map, or infer renderer
+behavior. See the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
 result establishes visual parity.

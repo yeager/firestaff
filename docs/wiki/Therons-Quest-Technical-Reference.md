@@ -52,6 +52,16 @@
 > focused tooling checks passed three loops; no new authentic run used it, and
 > the previous BIOS-truncated capture remains rejected. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
+> **JP Akutuba source maps (2026-11-01):** the identity-checked planner maps
+> the 68-byte descriptor and four opaque tile arrays to raw MODE1 sector 308
+> (Track 02 LBA 84, disc LBA 3674). Its `--dump-grids` option prints the
+> authenticated descriptor values and raw bytes in coordinate order. The
+> fields named `unknown_1` and `unknown_2`, tile meanings, active-map selector,
+> and party-coordinate mapping remain unresolved. This is a source-analysis
+> aid only; it does not authorize runtime rendering. See the [source-sector
+> report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+> and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+
 > **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
 > record the same 128-instruction path into `$C1FC`, including `$C1D6`
 > call/return and conditional fall-through. Since `$C1FC` is also associated
@@ -172,16 +182,17 @@ the production `theron_v1_vram_trace_real_capture` test. This admits only
 the captured BAT/tile/palette screen route; JP level/object publication and
 the HuC6280 consumer remain fail-closed.
 
-## Scripted replay transport boundary
+## Historical scripted replay transport boundary (2026-08-13)
 
-The latest authenticated external-disk replay uses the US Track 02/System
+This dated authenticated external-disk replay used the US Track 02/System
 Card identity and the scripted PCE sequence `run@1:1,run@480:30,i@900:30`.
 It proves CD transport and initialization: 240 raw-sector spans, 25 CD IRQ
 callbacks, 256 authenticated CD-RAM receipts, 32 game-owned `$E009`
 dispatches, and a parser-approved transition receipt.
 
-The Main-RAM consumer sidecar is still init-only. It has 65,536 reads and 512
-reads in `$2600-$27FF`, all zero-valued reads from `$CB22`; it has no runtime
+In that replay, the Main-RAM consumer sidecar was init-only. It had 65,536
+reads and 512 reads in `$2600-$27FF`, all zero-valued reads from `$CB22`; it
+had no runtime
 reads, no `$C3A0` reader, and no dynamic level/object publication. Therefore
 this replay does not open square/tile/HUD/T700/T900 semantics or production
 dungeon admission. The raw sidecars and instrumented emulator remain local on

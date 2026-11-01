@@ -1,5 +1,15 @@
 # Theron's Quest Track 02 Internals
 
+> **Current source-map note (2026-11-01):** The authenticated JP Akutuba
+> descriptor and four tile arrays are located in raw Track 02 sector 308
+> (relative LBA 84, disc LBA 3674). The identity-checked
+> [`--dump-grids` planner](../../tools/plan_theron_jp_akutuba_map_trace.py)
+> prints descriptor values and opaque bytes from all four arrays. This
+> establishes static source layout only: unknown descriptor fields, tile
+> semantics, runtime map selection, and the pose-to-render path remain open.
+> See the [source report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+> and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 > Current runtime status and open evidence joins are in
 > [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
 > [Theron TODO](../../TODO-theron.md). Track 02 byte layouts and historical

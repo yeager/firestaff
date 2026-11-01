@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — synchronize the JP Akutuba source-map documentation
+
+- Updated the README and Theron technical wiki to describe the identity-gated
+  descriptor/grid dump and its sector mapping, while keeping tile and unknown
+  descriptor fields uninterpreted.
+- Linked the descriptions to the source-sector report and the active-map
+  capture acceptance chain. No runtime, renderer, or parity claim was added.
+- `git diff --check` passed; no tests were run for this documentation-only
+  update.
+
 ## 2026-11-01 — print authenticated JP Akutuba map grids for source analysis
 
 - Added an opt-in `--dump-grids` mode to the identity-gated JP Akutuba source

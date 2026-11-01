@@ -16,12 +16,14 @@ bounded routes only; they do not close the gameplay-parity gaps below. No
 authentic Drator replay has yet exercised the newly added reader-code fetch
 windows, so their source join remains pending.
 
-The latest original-game capture maps the runtime `$C852` code window to
+The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
 left-event and reentry, while the bounded consumer trace hit its row cap
 before reentry. The wrapper rejected the package because the exhaustive BIOS
-trace hit its row cap; the next useful capture should use the new source-scoped
-BIOS mode below. The existing capture also joins generated-
+trace hit its row cap. The current next capture work is the JP active-map
+source-to-consumer join above; when conducting a separate US Drator
+reader-source replay, use the source-scoped BIOS mode below to bound that
+replay. The existing capture also joins generated-
 row publication bytes to later reads and a work-buffer copy. Enable the bounded
 fetch hook with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; it runs after `RdAtPC()` and
@@ -885,7 +887,7 @@ screen replay without unlocking generated tiles or unproven square-to-tile
 semantics. The resulting frame remains diagnostic evidence: it is not yet a
 README-eligible gameplay screenshot.
 
-**Last verified: 2026-08-12.** The fresh authentic US CUE/ISO capture used
+**Historical capture (2026-08-12).** The fresh authentic US CUE/ISO capture used
 the real System Card 3.0 and the instrumented real-SDL2 Mednafen build. It
 observed 161 raw sectors, 51 SCSI read commands, 25 CD IRQ callbacks, two
 authenticated CD-to-RAM receipts and 32 game-main-RAM `$E009` dispatches. It
@@ -903,7 +905,7 @@ valid `$B0E5` category; the RNG sidecar is not a `$5D64/$5D6A` source join.
 The replay therefore remains transport/provenance evidence only.
 The raw output remains outside GitHub in private operator storage.
 
-### Historical runtime/status checkpoint (2026-08-13)
+### Historical runtime/status checkpoint (2026-08-13; superseded)
 
 The external-`TMPDIR` Theron regression is green: 253 selected CTest cases
 passed (247 executed, six expected capture skips). With the local authenticated
@@ -925,7 +927,7 @@ between objects.
 
 README-eligible screenshots must be rendered by Firestaff itself.
 
-At the 2026-08-13 checkpoint, the Firestaff runtime had no
+At that 2026-08-13 checkpoint, the Firestaff runtime had no
 `README_ELIGIBLE` Theron row. The status at that time was:
 Firestaff can hash-verify JP/US Track 02 data, lock
 raw bank-anchor offsets, read the authenticated US 53-entry descriptor table
@@ -934,7 +936,8 @@ the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
 broader loader parity, runtime playability proof, and reviewed screenshot
 promotion are still active work.
 
-The latest external-disk cold-start capture adds a bounded raw window receipt:
+The 2026-08-13 external-disk cold-start capture added a bounded raw window
+receipt:
 the real US route reached seven game-main-RAM `$E009` dispatches, nine
 `$4644` preconsumer entries and 32 `$4667` helper entries after 40 raw-sector
 spans. This is positive CD→RAM→HuC6280 runtime evidence. It did not reach
@@ -952,7 +955,7 @@ The same normalization is applied to the Main-RAM consumer trace and its
 code-window verifier, so a transport-escaped sidecar cannot be accepted by
 the loader stage but rejected later by the consumer stage.
 
-The latest authenticated replay sidecar is parser-ready but remains
+The 2026-08-13 authenticated replay sidecar was parser-ready but remained
 initialisation-only: its `$2600-$27FF` window contains 512 `$CB22` reads, all
 zero-valued, with no `$C3A0` reader. Run that sidecar through the parser-only
 gate with `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1`; the code-window
