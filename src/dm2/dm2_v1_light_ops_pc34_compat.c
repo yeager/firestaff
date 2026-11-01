@@ -428,7 +428,8 @@ static int dm2_v1_mode7_flags3_floor_terms(
     }
     if (evidence->creature_present)
         *creature_light = (int16_t)(evidence->creature_f8_word & 0x7fffu);
-    if ((room->raw_tile >> 5) == 2u ||
+    if (((room->raw_tile >> 5) == 1u && room->raw_tile == 0x30u) ||
+        (room->raw_tile >> 5) == 2u ||
         (room->raw_tile >> 5) == 3u ||
         (room->raw_tile >> 5) == 4u ||
         (room->raw_tile >> 5) == 5u) {
@@ -481,12 +482,13 @@ int dm2_v1_mode7_record_darkness_term(
     int term = 0;
     if (!out_term || (record_type != 14u && record_type != 15u)) return 0;
     if (record_type == 14u) {
-        /* SKULLWIN/c_light.cpp:386-397: DBE needs selector FF80. */
+        /* SKULLWIN/c_light.cpp:386-397 and SPX v4 skgame.cpp:2136-2137:
+         * DBE is the fireball missile; source object selector is FF80. */
         if (word_2 == 0xff80u) term = (int)(byte_4 / 2u) - 45;
     } else {
-        /* SKULLWIN/c_light.cpp:398-405 accepts a zero low-seven-bit selector
-         * as well as selectors 2 and 30. Each admitted DBF term contributes
-         * half of word_2's high byte; other nonzero selectors are ignored. */
+        /* SKULLWIN/c_light.cpp:398-405 and SPX v4 skgame.cpp:2128-2132:
+         * DBF is a cloud. Selectors 0, 2 and 30 contribute half of word_2's
+         * high byte; other cloud types are ignored. */
         uint16_t selector = word_2 & 0x007fu;
         if (selector == 0u || selector == 2u || selector == 0x30u)
             term = (int)((word_2 >> 8) / 2u);
