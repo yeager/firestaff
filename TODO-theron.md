@@ -1,5 +1,21 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-02 — authentic JP `$D515` trace skips `$D588`
+
+A retained state-only runtime trace enters `$D515` with accumulator `$0C` and
+MPR6 `$6B`. Its indexed record yields `$FF` at the `$D52A` compare, so the
+`BNE $D534` skips the `$D530` call to `$D588`. One scripted controller event
+was consumed at `$44D2`; the trace contains no mouse-coordinate evidence. The
+autoloaded save state bypassed CD-to-RAM loading, and seven identical JP
+Track 02 code copies remain possible sources. This does not identify a
+descriptor, hitbox, Button-I result, or click behavior.
+
+Next, vary pointer movement, mouse button, and controller input independently
+in a bounded authentic-state sweep. Capture `$D4EC..$D5A6` registers/table
+reads and the resulting command/display state; first reproduce the `$D530` →
+`$D588` branch. Then obtain a cold media-to-bank source join before enabling
+world-space hit testing. See the [source-locked branch report](docs/source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
+
 ## 2026-11-01 — aggregate capture-output budget enforced
 
 The live trace wrapper now watches all regular files under its configured trace

@@ -613,6 +613,14 @@ poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
 
+A separate authentic JP state-only code-follow trace reaches `$D515`, but its
+indexed record yields `$FF` and branches around the `$D530` call to `$D588`.
+It has one controller event at `$44D2`, no mouse-coordinate receipt, and no
+cold CD-to-RAM provenance; the seven identical Track 02 copies remain
+ambiguous. The next pointer trace must produce the `$D530` → `$D588` path and
+join its result to the Button-I consumer before native world clicks can be
+enabled. See the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
+
 A separate US saved-state PCE Fast run loaded its existing state and recorded
 scripted input-apply events. Its shared input trace contains 1,354
 short-format rows at `$44CA/$44DB`, all reporting `raw=0000`; because standard

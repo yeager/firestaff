@@ -10666,6 +10666,18 @@ T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-02 — source-trace the JP `$D515` alternate-branch boundary
+
+- Rechecked a retained authentic JP state-only runtime trace against the
+  hash-locked `$D515/$D588` disassembly. The trace enters `$D515` at physical
+  `$0D7515` under MPR6 `$6B`, then reaches `$D52C` with accumulator `$FF`;
+  the branch skips the `$D530` call to `$D588`.
+- Bound the trace to its one controller event at `$44D2`, autoloaded-state
+  receipt, and trace SHA-256. It has no mouse-coordinate receipt, cold
+  CD-to-RAM provenance, or unique Track 02 source-copy join.
+- Updated the pointer-click work order. No pointer, hitbox, Button-I, or
+  gameplay meaning is inferred from this state-only path.
+
 ## 2026-11-02 — reconcile the current Theron capture documentation
 
 - Audited the current Theron support summaries, capture-readiness page, input
