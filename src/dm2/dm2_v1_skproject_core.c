@@ -13122,7 +13122,7 @@ int dm2_v1_skproject_query_0b36_037e(
 int dm2_v1_skproject_query_48ae_05ae(
     uint16_t item_handle,
     uint8_t creature_type,
-    uint16_t item_word10,
+    uint16_t creature_word8,
     int32_t argl0,
     int32_t argl1,
     int32_t *out_result,
@@ -13134,7 +13134,7 @@ int dm2_v1_skproject_query_48ae_05ae(
     memset(&receipt, 0, sizeof(receipt));
     receipt.item_handle = item_handle;
     receipt.creature_type = creature_type;
-    receipt.item_word10 = item_word10;
+    receipt.creature_word8 = creature_word8;
     receipt.argl0 = argl0;
     receipt.argl1_in = argl1;
     receipt.argl1_out = argl1;
@@ -17093,10 +17093,10 @@ int dm2_v1_skproject_19f0_0d10(
 }
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
-   callback.  state_words layout follows the source: [0] result accumulator
-   (in/out), [2] handle for DM2_CREATURE_CAN_HANDLE_IT, [4] GDAT arg 3,
-   [6] GDAT arg 4, [8] charge flag.  The damage add uses the cycle-12
-   DM2_query_48ae_05ae receipt, which stays fail-closed on the GDAT path. */
+   callback. state_words layout follows the source: [0] result accumulator
+   (in/out), [2] handle for DM2_CREATURE_CAN_HANDLE_IT, [4]/[6] query flags,
+   [8] charge flag. The item-versus-creature result is supplied by the
+   callback-bound DM2_query_48ae_05ae owner; absent that owner, fail closed. */
 int dm2_v1_skproject_14cd_2807(
     uint16_t item_handle,
     int16_t *state_words,
@@ -17138,10 +17138,20 @@ int dm2_v1_skproject_14cd_2807(
     receipt.distinctive_type = ctx->type_fn(item_handle, ctx->user);
 
     damage = 0;
-    dm2_v1_skproject_query_48ae_05ae(
-        receipt.distinctive_type, ctx->creature_type, ctx->creature_word8,
-        state_words[4], state_words[6], &damage, &sub);
-    receipt.blocked_gdat_path = sub.blocked_missing_gdat_path;
+    if (ctx->query_48ae_05ae_fn &&
+        ctx->query_48ae_05ae_fn(
+            receipt.distinctive_type, ctx->creature_type, ctx->creature_word8,
+            state_words[4], state_words[6], receipt.charge, &damage,
+            ctx->query_48ae_05ae_user
+                ? ctx->query_48ae_05ae_user : ctx->user) != 0) {
+        receipt.blocked_gdat_path = 0;
+        damage = (int16_t)damage;
+    } else {
+        dm2_v1_skproject_query_48ae_05ae(
+            receipt.distinctive_type, ctx->creature_type, ctx->creature_word8,
+            state_words[4], state_words[6], &damage, &sub);
+        receipt.blocked_gdat_path = 1;
+    }
     receipt.damage = damage;
     state_words[0] = (int16_t)(state_words[0] + (int16_t)damage);
     receipt.accumulated = state_words[0];

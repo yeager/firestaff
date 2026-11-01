@@ -5207,16 +5207,16 @@ int dm2_v1_skproject_query_object_5x5_pos(
     uint8_t *out_pos,
     DM2_V1_SkprojectQueryObject5x5PosReceipt *out_receipt);
 
-/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item-versus-creature
-   damage/value formula.  Full evaluation needs GDAT creature-word and item
-   DBSPEC lookups; the helper records inputs and fails closed without them. */
+/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae input receipt. The full
+   formula is available through the callback-bound querydb owner; this narrow
+   receipt preserves inputs and remains fail-closed without that data path. */
 typedef struct {
     int valid;
     int blocked_missing_item_handle;
     int blocked_missing_gdat_path;
     uint16_t item_handle;
     uint8_t creature_type;
-    uint16_t item_word10;
+    uint16_t creature_word8;
     int32_t argl0;
     int32_t argl1_in;
     int32_t argl1_out;
@@ -5226,7 +5226,7 @@ typedef struct {
 int dm2_v1_skproject_query_48ae_05ae(
     uint16_t item_handle,
     uint8_t creature_type,
-    uint16_t item_word10,
+    uint16_t creature_word8,
     int32_t argl0,
     int32_t argl1,
     int32_t *out_result,
@@ -6231,6 +6231,15 @@ typedef int16_t (*DM2_V1_SkprojectAddItemChargeFn)(
     uint16_t item,
     int16_t delta,
     void *user);
+typedef int32_t (*DM2_V1_SkprojectQuery48ae05aeFn)(
+    uint16_t distinctive_type,
+    uint8_t creature_type,
+    uint16_t creature_word8,
+    int32_t argl0,
+    int32_t argl1,
+    int32_t charges,
+    int32_t *out_value,
+    void *user);
 
 typedef int32_t (*DM2_V1_SkprojectTileRecordLinkFn)(
     int16_t x,
@@ -6607,6 +6616,8 @@ typedef struct {
     DM2_V1_SkprojectCanHandleItFn can_handle_fn;
     DM2_V1_SkprojectAddItemChargeFn add_charge_fn;
     DM2_V1_SkprojectDistinctiveTypeFn type_fn;
+    DM2_V1_SkprojectQuery48ae05aeFn query_48ae_05ae_fn;
+    void *query_48ae_05ae_user; /* often the active DM2_V1_AssetLoader */
     DM2_V1_SkprojectCmd2165Fn cmd2165_fn;
     DM2_V1_SkprojectCreatureAtFn creature_at_fn;
     DM2_V1_SkprojectRecordAccessorFn record_fn;
