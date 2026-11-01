@@ -4,8 +4,9 @@
 
 An isolated authentic JP cold PCE Fast capture delivered RUN and Button I
 through physical host-key events. The trace confirms active-low RUN reads at
-the System Card `$E4C5` poll, and independent validators accept the bounded
-status, callback, I/O/RAM and decision records. The BIOS trace reaches
+the System Card `$E4C5` poll and 46 active-low Button I reads there across 33
+frames. Independent validators accept the bounded status, callback, I/O/RAM
+and decision records. The BIOS trace reaches
 `$E11B/$E14C/$E176`, while the decision and branch traces contain no `$E11D`
 launch branch. A separate `$4000` window is capped at 128 instructions but is
 not joined to that branch; LBA 3674 has zero data-port reads. The wrapper could
