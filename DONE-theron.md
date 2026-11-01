@@ -8,14 +8,13 @@
 - Added focused regression assertions for both event paths. The focused target
   built successfully; no real-media gameplay semantics were inferred or
   changed.
-- Extended the existing authentic US SDL runtime route with right-mouse plus
-  keypad 1/3 cases and source-backed expected poses. `bash -n` passes. A fresh
-  TRV2 native build against hash-verified US Track 02 observed Button II plus
-  keypad 1 turn to `(1, 0, 3)` before the `key:down` action crossed Theron's
-  200 ms input cadence. The test now waits 16 loop frames before turning and
-  retains the source-backed post-move expectation `(1, 1, 3)`. Rerun the full
-  native route before closing the keypad verification item in
-  [`TODO-theron.md`](TODO-theron.md).
+- Extended the authentic US SDL runtime route with right-mouse plus keypad
+  1/3 cases and source-backed expected poses. The script waits 16 loop frames
+  after movement so Theron's 200 ms gameplay cadence applies the move before
+  turning. On TRV2, the native build passed the complete real-media SDL CTest
+  three consecutive times against hash-verified US Track 02 (MD5
+  `f23601102138f87c33025877767ebf76`). Button II + keypad 1/3 turned in place;
+  the test verifies both expected poses. `bash -n` and `git diff --check` pass.
 
 ## 2026-11-01 — enumerate authentic T900 ground-item index candidates
 

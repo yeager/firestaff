@@ -2,15 +2,14 @@
 
 The native keyboard Button II chord maps keypad 1/3 to turns alongside the
 existing arrow and A/D bindings. Focused mapping assertions and authentic US
-SDL event-loop routes cover the keypad bindings. A fresh native build on TRV2
-with hash-verified US Track 02 observed Button II + keypad 1 turn in place to
-`(1, 0, 3)` before the preceding `key:down` action crossed Theron's 200 ms
-input cadence. The keypad routes now wait 16 loop frames after the move and
-retain the source-backed `(1, 1)` expected position. Rerun the complete native
-route before treating keypad 1/3 and the full chord matrix as verified. Keep
-authentic US/JP runtime input routes and original PCE interaction semantics as
-the parity gates; this host mapping is not a claim of broader retail input
-parity.
+SDL event-loop routes cover the keypad bindings. On TRV2, the native
+real-media SDL CTest passed three consecutive runs against hash-verified US
+Track 02 (MD5 `f23601102138f87c33025877767ebf76`). The routes wait 16 loop
+frames after `key:down`, allowing Theron's 200 ms gameplay cadence to apply the
+move before the chord; keypad 1/3 then turn in place at the source-backed
+`(1, 1)` position. Keep authentic US/JP runtime routes and original PCE
+interaction semantics as parity gates; this bounded host-input verification is
+not a claim of broader retail input parity.
 
 The authenticated pointer-to-zone source relationship is now documented for
 both regions: pointer records 0–4 resolve to the five regular-spawn zone
