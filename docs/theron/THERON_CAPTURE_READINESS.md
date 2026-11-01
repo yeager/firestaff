@@ -17,6 +17,8 @@ data-port trace is empty. Structural validators pass for the available bounded
 traces, but the capture wrapper did not complete because its isolated remote
 script directory lacked one code-follow verifier. See the [host-key
 handoff report](../source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md).
+The wrapper now preflights that verifier before a cold PCE Fast run; the
+historical run remains rejected and still provides no game handoff.
 
 **Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
 

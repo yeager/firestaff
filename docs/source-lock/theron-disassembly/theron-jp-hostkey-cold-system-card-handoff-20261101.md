@@ -64,6 +64,11 @@ checked directly with the current repository validators. These independent
 checks validate the available bounded records; they do not convert this run
 into a wrapper-accepted handoff.
 
+The capture script now checks that this code-follow verifier is present beside
+the script before starting a cold PCE Fast run. This prevents the same packaging
+failure from consuming another full capture interval; it does not change the
+missing `$E11D` handoff evidence above.
+
 ## Trace identities
 
 Raw traces and original media remain on TRV2 at
