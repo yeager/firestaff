@@ -61,6 +61,14 @@ physical data-read addresses, not instruction PCs.
 The JP active map is also still unbound. A scan of 106 retained 8 KiB BaseRAM
 snapshots found no contiguous copy of any authenticated Akutuba map tile array;
 this negative result does not cover other RAM, packed data, or a live consumer.
+The authenticated source descriptor and all four Akutuba tile arrays now map
+to one raw MODE1 sector: Track 02 file sector 308 / disc LBA 3674. Map 0 and
+map 2 discriminating `(2,3)` bytes are at raw BIN offsets `$B10E6` and
+`$B121F`. Use that sector as a capture filter only; source presence does not
+establish that the original read or selected it. The repeatable source mapping
+is reported in the [JP Akutuba sector trace plan](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+and can be recomputed with the
+[`identity-checked planner`](../../tools/plan_theron_jp_akutuba_map_trace.py).
 The next cold JP capture must preserve one shared event sequence from
 hash-verified Track 02 descriptor/map source reads, through System Card
 transfer and any `$23AD` decode, to the game-owned active selector and a tile

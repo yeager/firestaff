@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — derive authenticated JP Akutuba map trace addresses
+
+- Added an identity-gated planner for the authentic JP Rev. 1 Track 02 BIN.
+  It derives MODE1/2352 raw offsets, Track 02 relative LBAs, map dimensions,
+  tile array ranges and selected source tile bytes without modifying media.
+- Mapped the 68-byte Akutuba descriptor and all four tile arrays to raw
+  file-sector 308 / disc LBA 3674. The map 0/map 2 `(2,3)` discriminator
+  bytes are at raw offsets `$B10E6` and `$B121F`.
+- Ran the planner three times against the authenticated local BIN; all output
+  was identical. Python compilation and `git diff --check` passed. This is
+  static source provenance only; no authentic runtime read or map selection
+  has been observed.
+
 ## 2026-11-01 — refresh current Theron status references
 
 - Reconciled README, project status, documentation index, the cross-game work

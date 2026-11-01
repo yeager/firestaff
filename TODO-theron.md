@@ -15,6 +15,15 @@ join before they can inform row semantics or native spawning. See the
 [completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions)
 and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
+The authentic JP Akutuba source spans are now mapped to raw Track 02 sector
+308 (Track 02 LBA 84, disc LBA 3674). Its descriptor and all four map arrays
+fit in that one MODE1 sector; map 0 and map 2 tile `(2,3)` bytes are at raw
+offsets `$B10E6` and `$B121F`. This gives the next cold capture a concrete
+source-read filter, but does not prove that the original reads or consumes
+those bytes. Recompute the identity-checked target with
+[`plan_theron_jp_akutuba_map_trace.py`](tools/plan_theron_jp_akutuba_map_trace.py);
+see the [source-sector report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md).
+
 The fetched-code verifier now rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
 Its regression passed three loops. The next step remains an isolated
