@@ -188,9 +188,12 @@ work-log pages. The complete Mednafen 1.32.1 patch-only chain, including the
 new `$3879` window extension, applied in three consecutive isolated loops; a
 separate pass with PCE Fast enabled also passed. The instrumented PCE Fast
 emulator built against SDL2 2.32.10 and passed isolated startup/runtime
-version verification. No authentic `$C852`→`$C85E`→`$5039` trace has been
-produced. See the current
-[Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+version verification. A later authentic US cold replay records the ordered
+`$C852`→`$C85E`→`$5039` dispatch in a complete 129-instruction sidecar; live
+target bytes differ from the static candidate, and the capture package was
+rejected at `$45C3` source verification and trace caps. See the
+[US call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md)
+and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
 A rebuilt cold US replay
 reached Drator `left-event` and reentry, and captured 132 `$C852` fetches at physical
 `$0DC852`; the first five 512-byte windows exactly match Track 02 offset `$A3AD2`. The filtered
