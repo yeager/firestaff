@@ -1,6 +1,10 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-10-31.** Firestaff runs Theron's Quest in native
+> Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> This page is a technical reference; dated capture notes retain their
+> historical scope and do not supersede the current project-status page.
+
+> **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
 > and US routes. The Japanese fresh-start route reaches a loaded dungeon; the
 > US authentic BRAM Continue route reaches dungeon 2 and has bounded native
@@ -9,13 +13,48 @@
 > semantics. Native M11 rejects the authentic empty JP BRAM as Continue;
 > positive JP progress restoration remains unverified because no authentic
 > progressed JP BRAM is available. A cold Japanese emulator route visibly
-> reaches the Akutuba dungeon after a four-second System Card RUN hold and short
-> Button I menu/story presses; the reported 3–5 second hold on the selected
-> title-menu action itself remains untested. A separate US save-state replay
+> reaches the Akutuba dungeon after a four-second System Card RUN hold. A
+> separate authentic JP capture confirms that four-second Button I holds on
+> NEW GAME and FILE 1 advance into the story. Its `.mc0` snapshot is an
+> emulator state rather than BRAM; the capture does not join input to an
+> authenticated CD-to-RAM transition or establish native parity. A separate US save-state replay
 > records mouse reads and a candidate command consumer, but has no runtime CD
 > provenance and proves no semantic action, movement, pose, or viewport
 > change. Original presentation, later campaign progression, broader save
-> behavior, and full gameplay remain evidence-gated. Three JP PCE Fast
+> behavior, and full gameplay remain evidence-gated. A 2026-10-31 authentic US
+> Drator follow-up joins generated-row writes and reads for offsets 6–8 and a
+> later ten-byte TII copy to a work buffer. The first five 512-byte runtime
+> `$C852` windows exactly match US Track 02 raw offset `$A3AD2`. The runtime
+> source is mapped, while direct generated-row consumer attribution and
+> downstream row semantics remain open; the associated BIOS trace was
+> explicitly truncated and fails closed. A subsequent authentic JP state-only `$3879` trace reached its 8,192-row cap before `$C852`, recorded JP `$C85E` opcode `$A6` at physical `$0D285E`, and did not observe `$5039`; this does not validate the US call candidate. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> **US ordered runtime call window (2026-11-01):** a later authentic cold
+> Drator capture records `$C852` → `$C85E` `JSR $5039` → `$5039` dispatch
+> under MPR2 `$68`. The target bytes `44 05 86` differ from the static
+> stage-two candidate. The capture wrapper rejected the package because live
+> `$45C3` bytes did not match retail Track 02 and multiple traces reached
+> their caps. This is bounded disassembly evidence, not an accepted capture
+> package or a gameplay claim. Three identity-checked searches found no
+> contiguous 8 KiB page in raw US Track 02 or Track 19 matching the 102 unique
+> MPR2 `$68` instruction windows. Decoded, relocated, mixed-source, or
+> runtime-written code remains possible. A separate authentic `$23AD` output
+> matched 0/102 windows in a cross-capture comparison. The reference wrapper
+> already has an all-writer hook for physical `$0D0000–$0D1FFF`. C852 schema
+> v3 and the writer trace share a wrapper-generated capture ID; the wrapper
+> receipt binds both sidecar hashes, the full address range, and completeness
+> counts. The verifier checks each fetched byte against its latest preceding
+> write, but has only fixture coverage: no authentic same-session capture has
+> exercised it, and it does not identify the writer's source data. A new
+> accepted capture remains necessary for causal/source attribution. See the
+> [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
+> and the
+> [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
+> **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
+> four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
+> physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all
+> resident, and no active-map or pose-bound tile consumer is identified. See
+> the [US state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+> Three JP PCE Fast
 > reference UP runs bind scripted `up@61:120` to the same-frame guest read at
 > `$44C1` and the shared event order through `$D334` read, `$D349` write, and
 > `$D334` reread of `$2912`, absent in three neutral controls. The order does
@@ -32,6 +71,37 @@
 > `$E166->$E176`; no confirmed game-owned handoff was observed. See the
 > [dated source-lock supplement](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
+> **Drator capture tooling (2026-11-01):** an opt-in PCE Fast filter now
+> records only the observed US reads of generated-row offsets 6–8 at logical
+> PCs `$CBC9` and `$45C3` with physical data `$1F093B-$1F093D`. The parser
+> validates the versioned address receipt but assigns no row semantics. Its
+> focused tooling checks passed three loops. A later authentic run used the
+> filter; its package remained rejected at trace caps and live `$45C3` source
+> verification. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
+> **JP Akutuba source maps (2026-11-01):** the identity-checked planner maps
+> the 68-byte descriptor and four opaque tile arrays to raw MODE1 sector 308
+> (Track 02 LBA 84, disc LBA 3674). Its `--dump-grids` option prints the
+> authenticated descriptor values and raw bytes in coordinate order. The
+> fields named `unknown_1` and `unknown_2`, tile meanings, active-map selector,
+> and party-coordinate mapping remain unresolved. An offline scan found the
+> complete descriptor-and-map source span in an authentic JP `.mc0` state.
+> The source-locked [Mednafen 1.32.1 state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py)
+> maps it to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs do not
+> select that page. All four arrays are resident, so active selection and the
+> pose-bound tile consumer remain unknown. This is a source-analysis aid only;
+> it does not
+> authorize runtime rendering. See the [source-sector
+> report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
+> and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+
+> **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
+> record the same 128-instruction path into `$C1FC`, including `$C1D6`
+> call/return and conditional fall-through. Since `$C1FC` is also associated
+> with Track 02 teleporter destination copying, the repeated context does not
+> prove player movement or identify the active-map input object. See the
+> [control-flow report](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+
 > **Native direct launch (2026-10-31):** Firestaff enters Theron's native
 > title/startup path without its Run menu or a System Card. The US Debug
 > boot-probe receipt remains at `levelLoaded=0`; this does not add a dungeon
@@ -44,12 +114,66 @@
 > proof. This is not successful movement or rendering evidence. See the
 > [blocked-wall report](../source-lock/theron-disassembly/theron-jp-up-input-latch-blocked-wall-probe-20261031.md).
 
+> **Matched JP state-only comparison (2026-10-31):** Three Button II+UP runs
+> repeat TII transfers into candidate `$2040/$2041` bytes after guest reads;
+> three Button II-only controls retain the prior values. This is a
+> repeatable input-conditioned state transfer, not yet verified coordinates,
+> passability, visible movement, cold CD handoff or parity. See the
+> [comparison bundle](../../parity-evidence/verification/theron_v1_jp_state_movement_input_compare_20261031/README.md).
+
+> **TII control-flow boundary (2026-10-31):** three state-only replays now
+> record an identical 128-instruction context into `$C1FC`, including a
+> `$C1D6` call/return and conditional fall-through. This bounds the dynamic
+> instruction path but does not source-bind the tested fields, establish the
+> routine's gameplay purpose, or identify the active-map object. Since the
+> same TII is associated with teleporter destination copying, its transfer
+> cannot yet be assigned to player movement. See the
+> [control-flow capture](../source-lock/theron-disassembly/theron-pce-fast-tii-control-flow-20261031.md).
+
+> **Input-gated VRAM trace (2026-10-31):** a corrected PCE Fast callback
+> gates the bounded VRAM trace on the guest-visible controller value. An
+> authentic JP state-only run records the scripted `$44C1` read at shared
+> event 58758, followed by 4,096 contiguous commit rows beginning at event
+> 58761. The run reports `transition=missing`; it verifies the trace gate and
+> ordering only. It does not prove input causality, VRAM semantics, visible
+> gameplay, cold media handoff, or parity. See the [source-locked report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
+
+> **Track 02 spawn source records (2026-11-01):** authenticated US and JP full
+> ISO projections decode the same creature-pointer and regular-spawn zone
+> records as their raw BINs, and native ISO dungeon startup binds those source
+> records. In both regions the first five pointer offsets (`$0058`, `$00D7`,
+> `$0102`, `$0129`, `$0150`) resolve in order to the five zone records; the
+> remaining three offsets are zero. This static source-table join does not
+> establish runtime pointer selection, category semantics, RNG, creature
+> generation or combat. See the
+> [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
+
+> **Drator reader source-window verifier (2026-11-01):** the strict verifier
+> accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified
+> US retail BIN and reports four and three matching raw offsets, respectively.
+> This exercises the real-media byte matcher with constructed rows; it is not
+> a new emulator capture and does not bind the live fetched instructions to a
+> unique runtime LBA/source occurrence. A later authentic capture emitted live
+> windows: `$CBC6` matched retail candidates, while `$45C3` did not match the
+> retail image and caused wrapper rejection. Keep row fields and native spawn
+> behavior unassigned. See the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md)
+> and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
+> **System Card trace tooling (2026-11-01):** the reference capture wrapper
+> can restrict BIOS I/O/RAM rows to the source-locked run-path PCs `$EA4D`,
+> `$EA50`, `$E162`, and callback `$2259`. Focused instrumentation, verifier
+> and wrapper checks passed three loops. The later authentic US cold capture
+> used this filter; the package remained rejected at trace caps, and the tool
+> does not change runtime support. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 ## Door movement boundary
 
-Movement does not implicitly open a closed or locked door. The explicit
-door-use route performs the state transition and key validation; this keeps
-source-bound Track 02 object state transactional and fail-closed. A stair
-query likewise returns `STAIRS` only when the destination level is resident.
+Movement does not implicitly open a closed or locked door. Firestaff accepts
+a USE command for a facing door, but authentic Track 02 door effects remain
+fail-closed because the original T900 button/actuator consumer is not yet
+bound. Host-fixture state transitions and key validation do not establish
+retail behavior. A stair query likewise returns `STAIRS` only when the
+destination level is resident.
 
 ## Turn input receipt boundary
 
@@ -93,16 +217,17 @@ the production `theron_v1_vram_trace_real_capture` test. This admits only
 the captured BAT/tile/palette screen route; JP level/object publication and
 the HuC6280 consumer remain fail-closed.
 
-## Scripted replay transport boundary
+## Historical scripted replay transport boundary (2026-08-13)
 
-The latest authenticated external-disk replay uses the US Track 02/System
+This dated authenticated external-disk replay used the US Track 02/System
 Card identity and the scripted PCE sequence `run@1:1,run@480:30,i@900:30`.
 It proves CD transport and initialization: 240 raw-sector spans, 25 CD IRQ
 callbacks, 256 authenticated CD-RAM receipts, 32 game-owned `$E009`
 dispatches, and a parser-approved transition receipt.
 
-The Main-RAM consumer sidecar is still init-only. It has 65,536 reads and 512
-reads in `$2600-$27FF`, all zero-valued reads from `$CB22`; it has no runtime
+In that replay, the Main-RAM consumer sidecar was init-only. It had 65,536
+reads and 512 reads in `$2600-$27FF`, all zero-valued reads from `$CB22`; it
+had no runtime
 reads, no `$C3A0` reader, and no dynamic level/object publication. Therefore
 this replay does not open square/tile/HUD/T700/T900 semantics or production
 dungeon admission. The raw sidecars and instrumented emulator remain local on
@@ -222,19 +347,19 @@ receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
 ## Scope
 
-**Current capture boundary (reviewed 2026-10-31):** Original-emulator menu
-input remains an evidence gap. Earlier JP `pce_fast` captures advanced with
-ordinary Space/Button I after a four-second RUN hold; the operator reports
-that the selected menu action itself must be held for 3–5 seconds. The latest
-authentic JP cold RUN capture is still System Card-only: it records the device
-callback byte and BIOS branch `$E166->$E176`, but no confirmed game-owned
-handoff. It used `run@480:300` and does not test the stated multi-second hold
-on the selected title-menu action. See the current
-[capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
-[input notes](../theron/theron_input.md). DMWeb provides retail edition and manual
-references. Greatstone's Theron material covers a CSBWin custom-dungeon
-conversion, not retail PC Engine data. Neither reference establishes this
-input timing.
+**Current capture boundary (reviewed 2026-10-31):** An isolated authentic JP
+cold capture confirms that a four-second Button I hold on NEW GAME opens file
+selection and a second four-second hold on FILE 1 enters the Akutuba story.
+The later dungeon `.mc0` is an emulator snapshot, not BRAM. This visible result
+does not join guest input to a game-owned CD loader or establish native
+Firestaff timing/parity. The separate cold System Card RUN trace remains
+System Card-only: it records the device callback byte and BIOS branch
+`$E166->$E176`, but no confirmed game-owned handoff. See the
+[source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
+[capture readiness](../theron/THERON_CAPTURE_READINESS.md), and
+[input notes](../theron/theron_input.md). DMWeb provides retail edition and
+manual references. Greatstone's Theron material covers a CSBWin
+custom-dungeon conversion, not retail PC Engine data.
 
 Theron's Quest is a PC Engine CD target. Firestaff accepts original Track 02
 media through a strict CUE/BIN handoff and verifies known media identities. It

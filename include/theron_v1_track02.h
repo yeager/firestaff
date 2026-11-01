@@ -234,7 +234,8 @@ typedef struct {
      * three anchors in both US and JP raw Track 02 BINs.  Populated only for
      * raw BIN variants (THERON_TRACK02_VARIANT_US_BIN / JP_BIN); zeroed for
      * ISO profiles. The JP CUE ISO and retail US ISO anchors are byte-layout
-     * evidence only; the legacy JP Rev 1 ISO is a zero-filled stub.
+     * evidence only; the legacy JP Rev 1 ISO file is the authentic empty
+     * 149-sector suffix and is incomplete without its verified prefix.
      *
      * Source/evidence:
      *   src/theron/theron_v1_track02.c (this module, post-boundary span

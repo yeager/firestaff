@@ -69,7 +69,7 @@ static int check_rejected_rescan_clears_prior_diagnostic(void)
     return 0;
 }
 
-static int check_known_empty_jp_iso_is_not_launchable(void)
+static int check_authentic_empty_jp_suffix_is_not_launchable(void)
 {
 #if defined(_WIN32)
     puts("SKIP: authentic-media symlink probe requires POSIX");
@@ -109,7 +109,7 @@ static int check_known_empty_jp_iso_is_not_launchable(void)
         version = M12_AssetStatus_GetFirstMatchedVersion(&status, "theron");
         if (M12_AssetStatus_GameAvailable(&status, "theron") || version) {
             fprintf(stderr,
-                    "FAIL: known zero-filled JP Track 02 ISO remained launchable\n");
+                    "FAIL: authentic empty JP Track 02 suffix remained launchable\n");
             result = 4;
         }
     }
@@ -221,7 +221,7 @@ int main(void)
     if (result) return 10 + result;
     result = check_rejected_rescan_clears_prior_diagnostic();
     if (result) return 20 + result;
-    result = check_known_empty_jp_iso_is_not_launchable();
+    result = check_authentic_empty_jp_suffix_is_not_launchable();
     if (result) return 30 + result;
     result = check_authentic_cue_is_in_full_inventory();
     if (result) return 40 + result;

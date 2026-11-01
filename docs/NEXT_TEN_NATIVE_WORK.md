@@ -1,8 +1,11 @@
 # Next Ten Native Work Items
 
-Reviewed 2026-08-29. This is the current implementation queue after the
+Reviewed 2026-11-01. This is the current implementation queue after the
 archive/startup regression batch recorded in the per-game `DONE-*.md` files.
 It intentionally ranks source-owned work above synthetic presentation work.
+Theron runtime and capture status is summarized in
+[`THERON_CAPTURE_READINESS.md`](theron/THERON_CAPTURE_READINESS.md); this queue
+contains only the next cross-game work items, not a complete Theron inventory.
 
 1. **Nexus title-state capture bundle.** Capture one retail-JP revision that
    binds `TITLE.CG`, its active `MAPD` span, CRAM palette, VDP1/VDP2 register
@@ -20,13 +23,56 @@ It intentionally ranks source-owned work above synthetic presentation work.
 4. **Nexus dispatcher/event/save/audio contracts.** Add each native Saturn
    runtime behavior only after its original consumer and same-revision trace
    are hash-verified.
-5. **Theron JP CD-to-RAM transition trace.** Capture a real level transition
-   through the consumer that reads the verified Track 02 data; do not infer
-   it from the US image.
-6. **Theron JP presentation ownership.** Capture bitmap, palette, text and
-   audio binding needed for native surfaces; fallback visuals remain closed.
+5. **Theron US (Drator) generated-row consumer join.** The isolated cold
+   Drator reference records 132 runtime `$C852` fetches at physical `$0DC852`;
+   its first five 512-byte windows exactly match authenticated US Track 02 raw
+   offset `$A3AD2`. The route reached `left-event` and `reentered-event`, and
+   same-session writes/reads of generated-row offsets 6–8 plus a later ten-byte
+   work-buffer copy are proven. The consumer observer reached its cap after
+   these reads; the route subsequently reached reentry. The BIOS trace was
+   explicitly truncated, and its streaming verifier correctly rejected the
+   marker. A strict tooling verifier now matches constructed `$CBC6` and
+   `$45C3` instruction windows against US retail bytes, with four and three
+   possible raw offsets; the live `$CBC6` window now has retail matches, while the live `$45C3` window
+   failed the strict source check. A separate 129-dispatch trace proves the
+   ordered `$C852` → `$C85E` → `$5039` dispatch, but live target bytes differ
+   from the static candidate. Complete source binding and downstream work
+   buffer semantics remain open. Keep row bytes opaque. This reference
+   capture does not replace the native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join. Continue the separate `$C1FC` active-map and movement question:
+   its matched input-conditioned transfers may be teleporter destination
+   copying and do not prove movement, collision or visible effect. See the
+   [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md). The clean
+   base Mednafen 1.32.1 patch chain and isolated real-SDL2 2.33.0 runtime check
+   passed. The newer `$3879` window extension applies in three patch-only
+   loops, with a separate PCE Fast-enabled pass. Its instrumented PCE Fast
+   emulator also built against SDL2 2.32.10 and passed the isolated
+   startup/runtime version check. An authentic JP state-only run exercised the patch but reached its shared
+   8,192-row cap without `$C852` or `$5039`. A separate `<trace>.c852-runtime-window`
+   sidecar records a bounded first-hit window without consuming that cap; the
+   JP run reports `not_observed`. The ordered US `$C852`→`$C85E`→`$5039` path is now observed in a bounded
+authentic reference trace. A hash-gated scan of 102 unique MPR2 `$68` windows
+found no contiguous 8 KiB match in raw US Track 02 or Track 19. A separate
+authentic `$23AD` decoder capture matched 0/102 runtime instruction windows;
+this cross-capture result does not rule out another decode or runtime write.
+The existing all-writer `$0D0000–$0D1FFF` hook is ready for a same-session
+capture. C852 schema v3 adds a per-run capture ID, and the wrapper receipt binds
+both sidecar hashes, the full-page range and completeness counts. The new join
+verifier has fixture coverage; runtime output still needs an authentic capture. The full package is rejected and target source
+ownership remains open. See [the page source scan](source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
+[the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+   No Drator-positioned save or state artifact is checked into the repository,
+   so reproduce the route from hash-verified media in a fresh profile.
+6. **Theron JP cold data handoff and presentation ownership.** Capture a cold
+   Track 02 transition through its game-owned consumer. For the active map,
+   preserve one sequence from authenticated descriptor/map source reads through
+   System Card transfer and optional `$23AD` decoding, the active selector,
+   and a tile read at the captured party pose; pair this with atomic
+   VDC/VCE/VRAM and a no-input control. Save-state traces do not supply cold
+   CD-to-RAM provenance. See the [active-map acceptance chain](../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 7. **Theron JP/US save and later-dungeon matrix.** Verify each region
-   separately with authentic saves and level transitions.
+   separately with authentic progressed saves and level transitions. The
+   available JP BRAM is empty; the emulator `.mc0` is a device snapshot, not
+   an in-game save.
 8. **CSB authenticated DSA saves.** Add checksum-verified save corpora for
    Atari ST, Amiga, and FM Towns before extending timers and transactions.
 9. **CSB original capture comparisons.** Bind title, HUD, viewport, doors and

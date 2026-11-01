@@ -46,6 +46,18 @@ typedef struct {
     uint16_t stage2_dispatch_table_entries;
     uint32_t stage2_dispatch_table_file_offset;
     uint32_t stage2_dispatch_table_fnv1a;
+    /* The runtime-source-mapped US $C852 window contains JSR $5039. The
+     * bytes at $5039 also occur in authenticated US and JP stage-two
+     * payloads. This is a static candidate relationship; runtime MPR2
+     * mapping, execution at $5039 and routine semantics remain unverified. */
+    int c852_lookup_callsite_verified;
+    uint16_t c852_lookup_callsite_address;
+    uint32_t c852_lookup_callsite_file_offset;
+    int stage2_lookup_candidate_verified;
+    uint16_t stage2_lookup_candidate_address;
+    uint16_t stage2_lookup_candidate_bytes;
+    uint32_t stage2_lookup_candidate_file_offset;
+    uint32_t stage2_lookup_candidate_fnv1a;
     /* US raw-BIN regular-spawn helper at HuC6280 $4667.  This is a static
      * call-contract receipt only; its RAM-loaded $5d64/$5d6a callees and
      * runtime RNG state remain unresolved. */

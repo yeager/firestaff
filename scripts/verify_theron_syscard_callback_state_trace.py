@@ -11,7 +11,7 @@ from pathlib import Path
 HEADER = (
     "source=mednafen-pce-fast-system-card-callback-state-v1 "
     "event_sequence_source=TheronTraceCDSharedEventSequence "
-    "limit=131072 logical_ranges=f8-fb,2256-226b"
+    "limit=524288 logical_ranges=f8-fb,2256-226b"
 )
 ROW = re.compile(r"^callback_state (.+)$")
 FIELDS = (
@@ -33,8 +33,8 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
     rows = 0
     truncated = False
     for line_number, line in enumerate(lines[1:], 2):
-        if line == "callback_state_truncated cap=131072":
-            if truncated or rows != 131072:
+        if line == "callback_state_truncated cap=524288":
+            if truncated or rows != 524288:
                 raise ValueError("callback-state truncation marker disagrees with row count")
             truncated = True
             continue
@@ -85,7 +85,7 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
         else:
             writes += 1
         rows += 1
-        if rows > 131072:
+        if rows > 524288:
             raise ValueError("callback-state trace exceeds its configured cap")
     if not rows:
         raise ValueError("callback-state trace contains no memory accesses")

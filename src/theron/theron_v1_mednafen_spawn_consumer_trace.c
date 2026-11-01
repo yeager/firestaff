@@ -54,12 +54,24 @@ int theron_v1_mednafen_spawn_consumer_trace_parse_file(
     file = fopen(path, "rb");
     if (!file) return 0;
     if (!read_line(file, line, sizeof(line)) ||
-        strcmp(line, "source=mednafen-pce-instrumented-spawn-consumer") != 0) {
+        (strcmp(line, "source=mednafen-pce-instrumented-spawn-consumer") != 0 &&
+         strcmp(line, "source=mednafen-pce-instrumented-spawn-consumer-v2") != 0)) {
         fclose(file);
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;
     }
     out->source_header_verified = 1;
+    if (strcmp(line, "source=mednafen-pce-instrumented-spawn-consumer-v2") == 0) {
+        if (!read_line(file, line, sizeof(line)) ||
+            (strcmp(line, "spawn_consumer_pc_filter=none") != 0 &&
+             strcmp(line, "spawn_consumer_pc_filter=drator-row") != 0)) {
+            fclose(file);
+            out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+            return 0;
+        }
+        out->drator_row_pc_filter =
+            strcmp(line, "spawn_consumer_pc_filter=drator-row") == 0;
+    }
     out->sequence_verified = 1;
     out->bank_coordinates_verified = 1;
     out->boundary_flags_verified = 1;
@@ -83,16 +95,29 @@ int theron_v1_mednafen_spawn_consumer_trace_parse_file(
         target6a = logical == 0x5d6au;
         c96b_expected = c96b_window(reader);
         cc4c_expected = cc4c_window(reader);
+        {
+            int reader_pc_is_valid = huc6280_physical_address(reader_physical);
+            int row_reader_expected =
+                reader == 0xcbc9u && reader_physical == 0x0dabc9u;
+            int row_copy_expected =
+                reader == 0x45c3u && reader_physical == 0x0d05c3u;
+            int pc_filter_valid = out->drator_row_pc_filter
+                ? ((physical >= 0x1f093bu && physical <= 0x1f093du) &&
+                   logical >= 0x2000u && logical < 0x4000u &&
+                   (row_reader_expected || row_copy_expected))
+                : 1;
         if (sequence != expected_sequence || !main_ram_address(physical) ||
-            !main_ram_address(reader_physical) ||
+            !reader_pc_is_valid || !pc_filter_valid ||
             (target_5d64 != (unsigned int)target64) ||
             (target_5d6a != (unsigned int)target6a) ||
             (c96b != (unsigned int)c96b_expected) ||
             (cc4c != (unsigned int)cc4c_expected) ||
-            !(target64 || target6a || c96b_expected || cc4c_expected)) {
+            !(target64 || target6a || c96b_expected || cc4c_expected ||
+              (out->drator_row_pc_filter &&
+               (row_reader_expected || row_copy_expected)))) {
             out->sequence_verified = sequence == expected_sequence;
             out->bank_coordinates_verified =
-                main_ram_address(physical) && main_ram_address(reader_physical);
+                main_ram_address(physical) && reader_pc_is_valid && pc_filter_valid;
             out->boundary_flags_verified =
                 target_5d64 == (unsigned int)target64 &&
                 target_5d6a == (unsigned int)target6a &&
@@ -101,6 +126,7 @@ int theron_v1_mednafen_spawn_consumer_trace_parse_file(
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
             fclose(file);
             return 0;
+        }
         }
         if (!saw_record) {
             out->first_logical_address = logical;

@@ -301,6 +301,15 @@ run_case(
     expected_filtered_prefix_streams=["vram_commit"],
 )
 run_case(
+    "controller-read-triggered-vram-prefix",
+    "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-controller-read-pc-raw-match\nvram_commit sequence=0 event_sequence=19\n",
+    0,
+    expected_sequences=[2, 5, 19],
+    expected_filtered_prefix_streams=["vram_commit"],
+)
+run_case(
     "below-event-limits",
     "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",

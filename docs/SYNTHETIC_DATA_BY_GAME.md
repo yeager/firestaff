@@ -178,9 +178,12 @@ authentic US Track 02 BIN (`TQUS02.bin`, MD5
 (`TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a`), and a combined US/JP
 RAR with regional CUE and ISO/audio members. Real-data CTest coverage confirms
 the JP raw BIN loads all seven source dungeons; the US and JP raw media also
-reach their bounded startup routes. The supplied JP `TQJP02End.iso` is only a
-149-sector, zero-filled stub and is rejected as dungeon content. The US
-CloneCD ZIP and the authentic original-runtime transition/presentation
+reach their bounded startup routes. `TQJP02End.iso` is an authentic 149-sector
+empty suffix, not synthetic data, and is rejected as a standalone dungeon
+image. Its verified prefix `TQJP19.iso` plus this suffix reconstruct the
+complete JP Track 02 ISO projection, hash-locked against the authentic raw
+BIN. The US CloneCD ZIP and the authentic original-runtime
+transition/presentation
 captures are not present in this local corpus; tests requiring those external
 artifacts skip rather than falling back to fixtures. Production claims about
 levels, items, champions, and bitmaps must remain bound to authenticated

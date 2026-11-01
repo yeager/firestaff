@@ -15,6 +15,75 @@ if ! grep -Fq 'FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST must be 0 or 1' <<<"$invalid_b
     printf '%s\n' 'FAIL: Mednafen build did not validate the PCE Fast enable option' >&2
     exit 1
 fi
+if invalid_syscard_filter_output=$(env THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=unknown \
+    "$repo/scripts/capture_theron_mednafen_live_trace.sh" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an unknown System Card I/O/RAM PC filter' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' \
+   <<<"$invalid_syscard_filter_output"; then
+    printf '%s\n' 'FAIL: live capture did not explain the invalid System Card I/O/RAM PC filter' >&2
+    exit 1
+fi
+if invalid_spawn_filter_output=$(env THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=unknown \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an unknown spawn-consumer PC filter' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER must be none or drator-row' \
+   <<<"$invalid_spawn_filter_output"; then
+    printf '%s\n' 'FAIL: live capture did not explain the invalid spawn-consumer PC filter' >&2
+    exit 1
+fi
+if verify_value_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=invalid \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an invalid code-fetch source-verification value' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY must be 0 or 1' \
+    <<<"$verify_value_output"; then
+    printf '%s\n' 'FAIL: invalid code-fetch source-verification value lacked a precise diagnostic' >&2
+    exit 1
+fi
+if verify_without_trace_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    "$script" 2>&1); then
+    printf '%s\n' 'FAIL: code-fetch source verification did not require its trace' >&2
+    exit 1
+fi
+if ! grep -Fq 'code-fetch source verification requires THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1' \
+    <<<"$verify_without_trace_output"; then
+    printf '%s\n' 'FAIL: missing code-fetch trace lacked a precise diagnostic' >&2
+    exit 1
+fi
+if verify_wrong_module_output=$(env THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1 \
+    THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1 "$script" 2>&1); then
+    printf '%s\n' 'FAIL: code-fetch source verification accepted the standard PCE module' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE requires the pce_fast module' \
+    <<<"$verify_wrong_module_output"; then
+    printf '%s\n' 'FAIL: wrong code-fetch verification module lacked a precise diagnostic' >&2
+    exit 1
+fi
+if spawn_filter_module_output=$(env THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row "$script" 2>&1); then
+    printf '%s\n' 'FAIL: Drator row consumer filtering accepted the standard PCE module' >&2
+    exit 1
+fi
+if ! grep -Fq 'the Drator row consumer filter requires the PCE Fast module' \
+   <<<"$spawn_filter_module_output"; then
+    printf '%s\n' 'FAIL: invalid spawn-consumer module lacked a precise diagnostic' >&2
+    exit 1
+fi
+spawn_filter_valid_output=$(env THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid Drator row consumer filter was rejected' >&2
+    exit 1
+}
+if [[ "$spawn_filter_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid Drator row consumer filter did not reach the missing-media gate' >&2
+    exit 1
+fi
 huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
@@ -71,6 +140,44 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     printf '%s\n' 'FAIL: an unmatched key-down was counted as a complete host key press' >&2
     exit 1
 fi
+state_autoload_gate="$host_key_gate_dir/autoload-gate.sh"
+sed -n '/^validate_autoload_state_receipt() {/,/^}/p' "$script" \
+    >"$state_autoload_gate"
+state_autoload_stdout="$host_key_gate_dir/autoload.stdout"
+state_autoload_stderr="$host_key_gate_dir/autoload.stderr"
+state_autoload_path="$host_key_gate_dir/authentic-state.mc0"
+printf 'Theron autoload state loaded: %s\n' "$state_autoload_path" \
+    >"$state_autoload_stdout"
+: >"$state_autoload_stderr"
+if ! autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate"; then
+    printf '%s\n' 'FAIL: successful requested-state autoload receipt was rejected' >&2
+    exit 1
+fi
+printf 'Theron autoload state loaded: %s\n' "$host_key_gate_dir/other-state.mc0" \
+    >"$state_autoload_stdout"
+if autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate" \
+        2>/dev/null; then
+    printf '%s\n' 'FAIL: autoload receipt for a different state file was accepted' >&2
+    exit 1
+fi
+printf 'Theron autoload state failed: %s\n' "$state_autoload_path" \
+    >"$state_autoload_stdout"
+if autoload_state="$state_autoload_path" stdout_file="$state_autoload_stdout" \
+    stderr_file="$state_autoload_stderr" bash -c \
+        'source "$1"; validate_autoload_state_receipt' _ "$state_autoload_gate" \
+        2>/dev/null; then
+    printf '%s\n' 'FAIL: failed autoload receipt was accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'validate_autoload_state_receipt || exit 1' "$script" || \
+   ! grep -Fq 'autoload_state_load_status=verified' "$script"; then
+    printf '%s\n' 'FAIL: state-only mode must be gated by the successful autoload receipt' >&2
+    exit 1
+fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
 python3 "$repo/tests/test_theron_pce_fast_cd_ram_writer_pc_trace_patch.py"
@@ -84,6 +191,7 @@ python3 "$repo/tests/test_verify_theron_syscard_decision_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_decision_trace.py"
 python3 "$repo/tests/test_verify_theron_syscard_io_ram_trace.py"
 python3 "$repo/tests/test_instrument_mednafen_theron_syscard_io_ram_trace.py"
+python3 "$repo/tests/test_verify_theron_runtime_page_write_join.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -259,6 +367,25 @@ vram_commit_max_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" 
 }
 if [[ "$vram_commit_max_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
     printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit limit did not reach the missing-media gate' >&2
+    exit 1
+fi
+state_trace_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_STATE_TRACE_ONLY=2 "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: state-only trace mode accepted a value other than 0 or 1' >&2
+    exit 1
+}
+if [[ "$state_trace_invalid_output" != *'THERON_CAPTURE_STATE_TRACE_ONLY must be 0 or 1'* ]]; then
+    printf '%s\n' 'FAIL: invalid state-only trace mode lacked a precise diagnostic' >&2
+    exit 1
+fi
+state_trace_missing_state_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast THERON_CAPTURE_STATE_TRACE_ONLY=1 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: state-only trace mode accepted a missing autoload state' >&2
+    exit 1
+}
+if [[ "$state_trace_missing_state_output" != *'THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE'* ]]; then
+    printf '%s\n' 'FAIL: missing state-only autoload lacked a precise diagnostic' >&2
     exit 1
 fi
 code_ram_write_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
@@ -929,7 +1056,9 @@ if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
     exit 1
 fi
 if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
+   ! grep -Fq 'TQJP19.iso' "$script" ||
    ! grep -Fq 'TQJP02End.iso' "$script" ||
+   ! grep -Fq '62a39bbf43415c9739c41c2481080a49' "$script" ||
    ! grep -Fq '397039af02d50d15c70b74088eb8a1cb' "$script" ||
    ! grep -Fq 'THERON_US_CUE/THERON_CUE' "$script"; then
     printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
@@ -1166,7 +1295,8 @@ if [[ ! -x "$runtime_verifier" ]] ||
     exit 1
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
-   ! grep -Fq 'CXXFLAGS="${CXXFLAGS:--O2}" ./configure' "$build_script" ||
+   ! grep -Fq 'mednafen_cxxflags=${CXXFLAGS:--O2}' "$build_script" ||
+   ! grep -Fq 'CXXFLAGS="$mednafen_cxxflags" ./configure' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" init --quiet' "$build_script" ||
    ! grep -Fq 'git -C "$build_root/source" add --all --force' "$build_script" ||
    ! grep -Fq 'apply --recount --whitespace=nowarn' "$build_script" ||
@@ -1219,11 +1349,17 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'TheronPCEFastMovementTIICandidateStateTransfer' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'tii_candidate_state_transfer sequence=%u event_sequence=%u frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'destination_mpr=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'const uint8 stack_mpr = HuCPU.MPR[1];' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'const uint8 *stack_page = HuCPU.FastMap[stack_mpr];' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'stack_bytes[i] = stack_page[0x100 + stack_offset];' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'stack_mpr=%02x guest_stack=' "$pce_fast_movement_context_instrumenter" ||
+   grep -Fq 'PCERead[stack_logical >> 13]' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0xC1FC' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'HuCPU.in_block_move == IBM_TII' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x guest_sp=%02x stack_mpr=%02x guest_stack=' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementStateWrite' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'movement_state_write sequence=%u event_sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'opcode_mpr=%02x opcode_physical_pc=%06x' "$pce_fast_movement_context_instrumenter" ||
@@ -1619,7 +1755,7 @@ if ! grep -Fq 'capture_split_iso_cache=' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'MODE1/2048' "$script" ||
-   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da' "$script" ||
+   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|62a39bbf43415c9739c41c2481080a49|ceb02343868f80cec899e9b239aff2da' "$script" ||
    ! grep -Fq 'MODE1\/(2352|2048)' "$script" ||
    ! grep -Fq 'track02_mode=%s' "$script"; then
     printf 'FAIL: live capture must admit the authenticated MODE1/2048 ISO route separately from raw BIN\n' >&2
@@ -1761,6 +1897,7 @@ if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER="$spawn_consumer_pc_filter"' "$script" ||
    ! grep -Fq 'pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range"' "$script" ||
    ! grep -Fq 'range_last > 0x1FFFFF' "$script" ||
@@ -1849,10 +1986,14 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the source-scoped System Card I/O/RAM filter' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER="$system_card_io_ram_pc_filter"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' "$script" ||
    ! grep -Fq 'verify_theron_syscard_status_trace.py' "$script" ||
    ! grep -Fq 'verify_theron_syscard_decision_trace.py' "$script" ||
    ! grep -Fq 'verify_theron_syscard_io_ram_trace.py' "$script" ||
-   ! grep -Fq 'logical_ranges=1800-1803,224c-2255,2273-2280,22a4' "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" ||
+   ! grep -Fq 'logical_ranges=1800-1803,224c-2255,2259,2273-2280,22a4' "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_callback_state_trace.py' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE' "$script" ||
    ! grep -Fq 'verify_theron_syscard_callback_state_trace.py' "$script" ||
@@ -1946,7 +2087,7 @@ if [[ ! -f "$main_ram_target_write_patch" ]] ||
    grep -Fq 'HuCPU.Y' "$main_ram_target_write_patch" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch' "$build_script" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$script" ||
-   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range_receipt"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR' "$script" ||
    ! grep -Fq 'pce_fast_main_ram_target_writes=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded PCE Fast target-write tracing must retain MPRs, code bytes and the shared event sequence' >&2
@@ -2115,12 +2256,16 @@ if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
    ! grep -Fq 'autoload_state_magic=$(od -An -tx1 -N4 "$autoload_state"' "$script" ||
    ! grep -Fq 'autoload_state_md5=$(md5_file "$autoload_state")' "$script" ||
    ! grep -Fq 'autoload_state_md5=%s' "$script" ||
+   ! grep -Fq 'Theron autoload state loaded: $autoload_state' "$script" ||
+   ! grep -Fq 'Theron autoload state failed: $autoload_state' "$script" ||
+   ! grep -Fq 'state-only trace mode requires a successful save-state autoload receipt' "$script" ||
+   ! grep -Fq 'autoload_state_load_status=%s' "$script" ||
    ! grep -Fq 'points to HUBM SRAM, not a Mednafen savestate' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE' "$state_autoload_patch"; then
-    printf 'FAIL: capture script and Mednafen patch must retain authentic movie-replay provenance\n' >&2
+    printf 'FAIL: capture script must validate autoload receipts and retain authentic movie-replay provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'profile_sram_manifest="${trace}.profile-sram"' "$script" ||
@@ -2179,7 +2324,7 @@ if ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$party_ram_trace_patch" ||
    [[ $(grep -Fc '+ TheronTracePartyRAMWrite(A, V);' "$party_ram_trace_patch") -ne 2 ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace"' "$script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch' "$build_script" ||
+   ! grep -Fq 'instrument_mednafen_theron_pce_fast_party_trace_budget.py' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch' "$build_script"; then
     printf '%s\n' 'FAIL: Theron party-RAM writer tracing must cover mirrored BaseRAM writes with current HuC6280 PC' >&2
     exit 1
@@ -2218,6 +2363,16 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'char reader_code_bytes[17] = "unavailable"' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'for(unsigned i = 0; i < 8; i++)' "$party_ram_consumer_read_patch"; then
     printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample bounded reads with source-positioned instruction bytes' >&2
+    exit 1
+fi
+spawn_consumer_trace_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
+if ! grep -Fq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'reader_pc == 0xcbc9' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'reader_pc == 0x45c3' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'spawn_consumer_pc_filter=%s' "$spawn_consumer_trace_patch" ||
+   ! grep -Fq 'spawn_consumer_pc_filter=${THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER:-none}' "$script" ||
+   ! grep -Fq '"$spawn_consumer_pc_filter" == drator-row' "$script"; then
+    printf '%s\n' 'FAIL: source-scoped Drator row capture must bind the two observed consumer PCs' >&2
     exit 1
 fi
 if ! awk '
@@ -2393,5 +2548,7 @@ if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_
     printf '%s\n' "$output" >&2
     exit 1
 fi
+
+python3 "$repo/tests/test_verify_theron_pce_fast_code_fetch_source.py"
 
 printf 'PASS: live capture script requires explicit authentic inputs\n'

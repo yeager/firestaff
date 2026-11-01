@@ -98,8 +98,12 @@ git -C "$build_root/source" add --all --force
 # patches retain their original BSD-patch format.
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
+post_stage2_execution_patch="$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch"
+post_stage2_execution_rendered="$build_root/theron-post-stage2-execution.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    "$post_stage2_execution_patch" > "$post_stage2_execution_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch"
+    < "$post_stage2_execution_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -204,9 +208,11 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch"
 single_write_patch="$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
 single_write_rendered="$build_root/theron-single-logical-write.rendered.patch"
-sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$single_write_patch" > "$single_write_rendered"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$single_write_rendered"
+if [[ "$pce_fast_enabled" != 1 ]]; then
+    sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$single_write_patch" > "$single_write_rendered"
+    patch -d "$build_root/source" -p1 --batch --forward --fuzz=0 \
+        < "$single_write_rendered"
+fi
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
 vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
 sed \
@@ -237,6 +243,8 @@ sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' "$instruction_pc_patch" \
     > "$instruction_pc_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$instruction_pc_rendered"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_vdc_instruction_pc.py" \
+    "$build_root/source"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -245,6 +253,8 @@ pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_
 pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_instruction_pc.py" \
+    "$build_root/source"
 if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
     pce_fast_vram_commit_rendered="$build_root/theron-pce-fast-vram-commit.rendered.patch"
@@ -253,16 +263,17 @@ if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
     patch -d "$build_root/source" -p1 --batch --forward \
         < "$pce_fast_vram_commit_rendered"
 fi
-patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_stage2_mpr1_probe.py" \
+    "$build_root/source" \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_stage2_mpr1_probe.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_l4c46_mpr1_target_probe.patch"
 sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_snapshot_patch" \
     > "$pce_fast_snapshot_rendered"
 patch -d "$build_root/source" -p1 --batch --forward --fuzz=3 \
     < "$pce_fast_snapshot_rendered"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_party_trace_budget.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_party_trace_budget.py" \
+    "$build_root/source"
 pce_fast_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch"
 pce_fast_consumer_read_rendered="$build_root/theron-pce-fast-main-ram-consumer-read.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_consumer_read_patch" \
@@ -270,11 +281,8 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$pce_fast_consumer_read_patch" \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$pce_fast_consumer_read_rendered"
 bmt_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1b7_bmt_write_trace.patch"
-bmt_write_rendered="$build_root/theron-pce-fast-a1b7-bmt-write.rendered.patch"
-sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$bmt_write_patch" \
-    > "$bmt_write_rendered"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$bmt_write_rendered"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_a1b7_bmt_write_trace.py" \
+    "$build_root/source" "$bmt_write_patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_stage2_mpr1_probe.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
@@ -371,6 +379,8 @@ if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_c852_fetch_trace.py" \
+    "$build_root/source"
 if [[ "$pce_fast_huc6280_23ad_trace" == 1 ]]; then
     python3 "$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py" \
         "$build_root/source"
@@ -389,6 +399,20 @@ if ! awk '
     printf '%s\n' 'FAIL: A1A9 trace must sample the fetched opcode after existing trace calls and before dispatch' >&2
     exit 1
 fi
+if ! awk '
+    index($0, "b1 = RdAtPC();") { opcode_fetch = NR }
+    index($0, "const bool is_c852 = TheronTraceInstructionPC == 0xC852;") {
+        trace_record = NR
+    }
+    index($0, "ADDCYC(CycTable[b1]);") { dispatch_cycle = NR }
+    END {
+        if (!opcode_fetch || !dispatch_cycle || !trace_record ||
+            opcode_fetch >= trace_record || trace_record >= dispatch_cycle) exit 1
+    }
+' "$build_root/source/src/pce_fast/huc6280.cpp"; then
+    printf '%s\n' 'FAIL: C852 trace must sample the fetched opcode after fetch and before dispatch' >&2
+    exit 1
+fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" \
@@ -399,20 +423,25 @@ python3 "$repo/scripts/instrument_mednafen_theron_syscard_decision_trace.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" \
     "$build_root/source"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_code_ram_write_trace.py" \
+    "$build_root/source" \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_main_ram_target_write_trace.py" \
+    "$build_root/source" \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_transfer_trace.patch"
 if [[ "$pce_fast_tia_trace" == 1 ]]; then
     patch -d "$build_root/source" -p1 --batch --forward \
         < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch"
 fi
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_indirect_jump_trace.py" \
+    "$build_root/source" \
+    "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_indirect_jump_follow_declaration.py" \
+    "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_callback_state_trace.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_io_ram_trace.py" \
@@ -466,7 +495,11 @@ fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator
 # thread stack and faults in the stack probe on Apple Silicon. Keep an
 # explicit caller-provided CXXFLAGS, but make ordinary capture builds usable.
-CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
+mednafen_cxxflags=${CXXFLAGS:--O2}
+if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
+    mednafen_cxxflags="$mednafen_cxxflags -DFIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT"
+fi
+CXXFLAGS="$mednafen_cxxflags" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp \
     "${configure_pce_fast[@]}" \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \

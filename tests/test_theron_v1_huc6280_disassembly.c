@@ -394,8 +394,24 @@ static void verify(const char *env_name, const char *name,
                (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x2bee9du :
                                                            0x2be56du));
         assert(receipt.stage2_dispatch_table_fnv1a == 0x7f6a7f04u);
+        assert(receipt.stage2_lookup_candidate_verified);
+        assert(receipt.stage2_lookup_candidate_address == 0x5039u);
+        assert(receipt.stage2_lookup_candidate_bytes == 8u);
+        assert(receipt.stage2_lookup_candidate_file_offset ==
+               (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x2bfdc9u :
+                                                            0x2bf499u));
+        assert(receipt.stage2_lookup_candidate_fnv1a == 0x0bc3d6d9u);
+        if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+            assert(receipt.c852_lookup_callsite_verified);
+            assert(receipt.c852_lookup_callsite_address == 0xc85eu);
+            assert(receipt.c852_lookup_callsite_file_offset == 0xa3adeu);
+        } else {
+            assert(!receipt.c852_lookup_callsite_verified);
+        }
     } else {
         assert(!receipt.stage2_dispatch_table_verified);
+        assert(!receipt.stage2_lookup_candidate_verified);
+        assert(!receipt.c852_lookup_callsite_verified);
     }
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
         variant == THERON_TRACK02_VARIANT_JP_BIN) {
@@ -571,6 +587,10 @@ static void verify(const char *env_name, const char *name,
         printf(" dispatch=$410d/%u/%08x",
                (unsigned)receipt.stage2_dispatch_table_entries,
                (unsigned)receipt.stage2_dispatch_table_fnv1a);
+    }
+    if (receipt.stage2_lookup_candidate_verified) {
+        printf(" c852-target=$5039/%08x",
+               (unsigned)receipt.stage2_lookup_candidate_fnv1a);
     }
     putchar('\n');
 }

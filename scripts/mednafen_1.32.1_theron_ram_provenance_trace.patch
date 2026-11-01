@@ -302,7 +302,6 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +}
  static FILE *TheronPCECDGetE009DestinationConsumerTrace(void)
  {
-
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
@@ -310,4 +309,4 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
       TheronPCECDDataReadPending = true;
       TheronPCECDDataReadPC = HuCPU.GetRegister(HuC6280::GSREG_PC);
 +     TheronPCECDDataReadInstructionOpcode = TheronPCEVDCInstructionOpcode;
-      TheronPCECDDataReadValue = ret;
+      TheronPCECDDataReadPhysicalPC =

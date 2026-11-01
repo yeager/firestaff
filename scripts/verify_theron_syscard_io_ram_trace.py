@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate bounded System Card I/O/RAM events against the authentic BIOS."""
+"""Stream-validate bounded System Card I/O/RAM events against the authentic BIOS."""
 
 from __future__ import annotations
 
@@ -9,17 +9,21 @@ import sys
 from pathlib import Path
 
 
-CAP = 524288
+CAP = 8388608
 SYSTEM_CARD_MD5 = "ff1a674273fe3540ccef576376407d1d"
 PCE_HEADER_BYTES = 512
 BIOS_LOGICAL_BASE = 0xC000
-RANGES = ((0x1800, 0x1803), (0x224C, 0x2255), (0x2273, 0x2280), (0x22A4, 0x22A4))
+RANGES = ((0x1800, 0x1803), (0x224C, 0x2255), (0x2259, 0x2259),
+          (0x2273, 0x2280), (0x22A4, 0x22A4))
 ADDRESSES = {address for start, end in RANGES for address in range(start, end + 1)}
-HEADER = (
-    "source=mednafen-pce-fast-system-card-io-ram-v1 "
-    "event_sequence_source=TheronTraceCDSharedEventSequence limit=524288 "
-    "logical_ranges=1800-1803,224c-2255,2273-2280,22a4"
+HEADER_PREFIX = (
+    "source=mednafen-pce-fast-system-card-io-ram-v2 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence limit=8388608 "
 )
+HEADER_SUFFIX = " logical_ranges=1800-1803,224c-2255,2259,2273-2280,22a4"
+FILTERED_PCS = {0xEA4D, 0xEA50, 0xE162}
+HEADER = HEADER_PREFIX + "pc_filter=none" + HEADER_SUFFIX
+FILTERED_HEADER = HEADER_PREFIX + "pc_filter=run-path" + HEADER_SUFFIX
 FIELDS = (
     "access", "index", "event_sequence", "logical_address", "physical_address",
     "access_mpr", "value", "logical_pc", "physical_pc", "code_bytes",
@@ -39,8 +43,18 @@ def in_scope(address: int) -> bool:
     return any(start <= address <= end for start, end in RANGES)
 
 
-def verify_lines(lines: list[str], system_card_image: bytes) -> dict[str, int]:
-    if not lines or lines[0] != HEADER:
+def verify_lines(lines, system_card_image: bytes) -> dict[str, int]:
+    iterator = iter(lines)
+    try:
+        header = next(iterator)
+    except StopIteration:
+        raise ValueError("unexpected System Card I/O/RAM trace header") from None
+    header = header.rstrip("\r\n")
+    if header == HEADER:
+        allowed_pcs = None
+    elif header == FILTERED_HEADER:
+        allowed_pcs = FILTERED_PCS
+    else:
         raise ValueError("unexpected System Card I/O/RAM trace header")
     if len(system_card_image) <= PCE_HEADER_BYTES:
         raise ValueError("System Card image is shorter than its PCE header")
@@ -48,7 +62,8 @@ def verify_lines(lines: list[str], system_card_image: bytes) -> dict[str, int]:
     previous_event = -1
     truncated = False
     observed_addresses: set[int] = set()
-    for line_number, line in enumerate(lines[1:], start=2):
+    for line_number, raw_line in enumerate(iterator, start=2):
+        line = raw_line.rstrip("\r\n")
         if line == f"io_ram_truncated cap={CAP}":
             if truncated or rows != CAP:
                 raise ValueError("I/O/RAM truncation marker disagrees with row count")
@@ -94,6 +109,8 @@ def verify_lines(lines: list[str], system_card_image: bytes) -> dict[str, int]:
             raise ValueError(f"logical/physical data mapping mismatch at line {line_number}")
 
         pc = int(values["logical_pc"], 16)
+        if allowed_pcs is not None and pc not in allowed_pcs:
+            raise ValueError("logical PC is outside the declared source-locked filter")
         # System Card code can execute through either half of the HuC6280's
         # top 16 KiB window. In particular, callbacks at $C000-$DFFF are
         # backed by the physical bank selected in MPR6 (commonly bank $01),
@@ -164,7 +181,8 @@ def main() -> int:
         digest = hashlib.md5(system_card_image).hexdigest()
         if digest != SYSTEM_CARD_MD5:
             raise ValueError("System Card image does not match the authenticated BIOS MD5")
-        result = verify_lines(trace_path.read_text(encoding="ascii").splitlines(), system_card_image)
+        with trace_path.open("r", encoding="ascii", newline="") as trace_file:
+            result = verify_lines(trace_file, system_card_image)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1

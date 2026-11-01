@@ -190,6 +190,13 @@ if(BUILD_TESTING)
     )
     set_tests_properties(theron_39c0_disassembly PROPERTIES
         LABELS "theron;disassembly;source-lock")
+    add_test(
+        NAME theron_mednafen_pce_fast_state_inspector
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_inspect_theron_mednafen_pce_fast_state.py
+    )
+    set_tests_properties(theron_mednafen_pce_fast_state_inspector PROPERTIES
+        LABELS "theron;save-state;source-lock;tooling")
 endif()
 
 if(BUILD_TESTING)
@@ -4517,7 +4524,9 @@ if(BUILD_TESTING)
     foreach(_scan_localization_case IN ITEMS
             "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"
             "csb|fmtowns|fmtowns-en|csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
-            "dm2|fmtowns|fmtowns-ja|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
+            "dm2|fmtowns|fmtowns-ja|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+            "nexus|saturn|nexus-saturn-en-fan-v2|nexus/Dungeon Master Nexus (English).iso"
+            "theron|pce|pce-en|theron/TQUS02.bin")
         string(REPLACE "|" ";" _scan_localization_fields "${_scan_localization_case}")
         list(GET _scan_localization_fields 0 _scan_game)
         list(GET _scan_localization_fields 1 _scan_platform)
@@ -48049,7 +48058,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
             SKIP_RETURN_CODE 77
             LABELS "theron;real-media;runtime;source-only;regional"
             ENVIRONMENT
-                "FIRESTAFF_THERON_JP_TRACK02=${THERON_JP_TRACK02_TEST_PATH};FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin;FIRESTAFF_THERON_JP_TRACK02_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02-rebuilt.iso")
+                "FIRESTAFF_THERON_JP_TRACK02=${THERON_JP_TRACK02_TEST_PATH};FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin;FIRESTAFF_THERON_JP_TRACK02_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02End.iso")
     endif()
     add_test(
         NAME theron_v1_jp_raw_bin_startup
@@ -49080,6 +49089,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_mednafen_live_capture_script
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
+    )
+    add_test(
+        NAME theron_v1_runtime_page_write_join
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_runtime_page_write_join.py
+    )
+    set_tests_properties(theron_v1_runtime_page_write_join PROPERTIES
+        LABELS "theron;instrumentation;source-lock"
     )
     add_test(
         NAME theron_jp_syscard_bootstrap_follow_verifier

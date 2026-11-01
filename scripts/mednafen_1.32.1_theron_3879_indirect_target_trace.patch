@@ -1,6 +1,6 @@
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -42,0 +43,11 @@
+@@ -42,0 +43,12 @@
 +static unsigned Theron3879TargetStepsRemaining;
 +static FILE *Theron3879Trace;
 +static unsigned Theron3879TraceCount;
@@ -12,10 +12,16 @@
 +static unsigned Theron3879TargetPhysical;
 +static unsigned Theron3879TargetOpcode;
 +static unsigned Theron3879CallerWindowStarted;
-@@ -1254,1 +1254,50 @@
- FIRESTAFF_PATCH_TAB_CONTEXT TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop);
++static unsigned Theron3879C852WindowStarted;
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -1210,6 +1210,61 @@
+FIRESTAFF_PATCH_TAB_CONTEXT TheronPCEVDCInstructionFetchInProgress = false;
+FIRESTAFF_PATCH_TAB_CONTEXT TheronPCEVDCInstructionOpcode = lastop;
+FIRESTAFF_PATCH_TAB_CONTEXT TheronPCECDTraceOpcodeProvenance(PC, physical_pc, lastop);
 +	 if(Theron3879TargetStepsRemaining ||
 +	    (PC >= 0x4ef4 && PC <= 0x4ef6) ||
++	    (PC >= 0xc852 && PC <= 0xc85e) ||
 +	    (PC >= 0x3879 && PC <= 0x3918) ||
 +	    (PC >= 0x39c0 && PC <= 0x3a0f))
 +	 {
@@ -51,7 +57,12 @@
 +	            Theron3879TargetPhysical, Theron3879TargetOpcode,
 +	            Theron3879TargetStepsRemaining);
 +	    fflush(Theron3879Trace);
-+	    if(PC == 0x4ef6 && !Theron3879CallerWindowStarted)
++	    if(PC == 0xc852 && !Theron3879C852WindowStarted)
++	    {
++	     Theron3879C852WindowStarted = 1;
++	     Theron3879TargetStepsRemaining = 128;
++	    }
++	    else if(PC == 0x4ef6 && !Theron3879CallerWindowStarted)
 +	    {
 +	     Theron3879CallerWindowStarted = 1;
 +	     Theron3879TargetStepsRemaining = 128;
@@ -63,3 +74,6 @@
 +	   }
 +	  }
 +	 }
+FIRESTAFF_PATCH_TAB_CONTEXT if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)
+FIRESTAFF_PATCH_TAB_CONTEXT {
+FIRESTAFF_PATCH_TAB_CONTEXT  TheronPCECDTraceMainRAME009MainRAMStep(PC, physical_pc);

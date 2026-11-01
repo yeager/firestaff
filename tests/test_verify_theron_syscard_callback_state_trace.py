@@ -55,7 +55,7 @@ def test_rejects_bad_scope_mapping_and_order() -> None:
     else:
         raise AssertionError("non-increasing shared event sequence was accepted")
     try:
-        verifier.verify_lines([*valid, "callback_state_truncated cap=131072"])
+        verifier.verify_lines([*valid, "callback_state_truncated cap=524288"])
     except ValueError:
         pass
     else:

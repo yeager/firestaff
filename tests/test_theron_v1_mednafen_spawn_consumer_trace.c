@@ -20,6 +20,19 @@ static void write_fixture(const char *path, int bad_flags) {
     fclose(file);
 }
 
+static void write_drator_row_fixture(const char *path, int bad_reader_pc) {
+    FILE *file = fopen(path, "wb");
+    assert(file);
+    fputs("source=mednafen-pce-instrumented-spawn-consumer-v2\n"
+          "spawn_consumer_pc_filter=drator-row\n", file);
+    fprintf(file,
+            "spawn_consumer_read sequence=0 logical_address=293b physical_address=1f093b value=02 reader_pc=cbc9 reader_physical_pc=%s target_5d64=0 target_5d6a=0 c96b_window=0 cc4c_window=0\n",
+            bad_reader_pc ? "1f2bc9" : "0dabc9");
+    fputs("spawn_consumer_read sequence=1 logical_address=293b physical_address=1f093b value=02 reader_pc=45c3 reader_physical_pc=0d05c3 target_5d64=0 target_5d6a=0 c96b_window=0 cc4c_window=0\n",
+          file);
+    fclose(file);
+}
+
 static void write_register_fixture(const char *path, int bad_flags,
                                    int include_spawn_entry,
                                    unsigned int spawn_category) {
@@ -100,6 +113,18 @@ int main(void) {
     assert(receipt.target_5d64_seen && receipt.c96b_window_seen);
     assert(receipt.cc4c_window_seen && receipt.read_count == 2u);
     assert(!receipt.semantic_publication_allowed);
+    write_drator_row_fixture(path, 0);
+    assert(theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
+    assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
+    assert(receipt.source_header_verified && receipt.drator_row_pc_filter);
+    assert(receipt.bank_coordinates_verified && receipt.boundary_flags_verified);
+    assert(receipt.read_count == 2u && !receipt.c96b_window_seen);
+    assert(receipt.first_reader_physical_pc == 0x0dabc9u);
+    assert(receipt.last_reader_physical_pc == 0x0d05c3u);
+    assert(!receipt.semantic_publication_allowed);
+    write_drator_row_fixture(path, 1);
+    assert(!theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
+    assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
     write_fixture(path, 1);
     assert(!theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
     assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);

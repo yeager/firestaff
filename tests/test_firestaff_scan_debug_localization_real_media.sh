@@ -8,7 +8,7 @@ edition=${4:?edition id required}
 archive=${5:?authentic game archive required}
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
-if [[ ! -x "$app" || ! -f "$archive" ]]; then
+if [[ ! -x "$app" || ! -e "$archive" ]]; then
     echo "SKIP: authentic $game startup archive is required: $archive"
     exit 77
 fi
@@ -16,8 +16,18 @@ fi
 case "$platform" in
     pc) platform_label=PC ;;
     fmtowns) platform_label='FM Towns' ;;
+    saturn) platform_label=Saturn ;;
+    pce) platform_label='PC Engine' ;;
     *) echo "FAIL: unsupported localization-test platform: $platform" >&2; exit 2 ;;
 esac
+
+# Nexus and Theron use a source-bound direct-media route. Its CLI diagnostics
+# enumerate the matched candidates without the generic M12 root/edition task
+# pair; the no-game menu still reports the localized direct-launch task.
+direct_media_scan=0
+if [[ "$platform" == saturn || "$platform" == pce ]]; then
+    direct_media_scan=1
+fi
 
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
@@ -64,12 +74,18 @@ EOF
         return 1
     fi
 
-    if ! grep -Fq \
-        'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
-        "$log" ||
-       ! grep -Fq \
-        'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log"; then
-        echo "FAIL: Swedish $game $platform scan omitted a localized task label ($mode)" >&2
+    if [[ $direct_media_scan == 0 ]]; then
+        if ! grep -Fq \
+            'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
+            "$log" ||
+           ! grep -Fq \
+            'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log"; then
+            echo "FAIL: Swedish $game $platform scan omitted a localized task label ($mode)" >&2
+            cat "$log" >&2
+            return 1
+        fi
+    elif ! grep -Fq "platform=$platform_label edition=$edition matched source=" "$log"; then
+        echo "FAIL: $game $platform direct-media scan omitted its matched edition ($mode)" >&2
         cat "$log" >&2
         return 1
     fi
@@ -80,7 +96,7 @@ EOF
         cat "$log" >&2
         return 1
     fi
-    echo "PASS: $mode Swedish scan labels and authentic $game $edition selection"
+    echo "PASS: $mode Swedish scan diagnostics and authentic $game $edition selection"
 }
 
 run_scan_probe explicit-language
@@ -119,14 +135,25 @@ EOF
 
     if [[ $exit_status -ne 1 ]] ||
        ! grep -Fq 'startup game=none mode=menu' "$log" ||
-       ! grep -Fq \
-           'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
-           "$log" ||
-       ! grep -Fq \
-           'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log" ||
-       ! grep -Fq 'scan complete elapsed-ms=' "$log" ||
        grep -Fq 'launch phase=game-handoff' "$log"; then
         echo "FAIL: Swedish no-game menu scan did not stay localized and game-free ($mode)" >&2
+        cat "$log" >&2
+        return 1
+    fi
+    if [[ $direct_media_scan == 0 ]]; then
+        if ! grep -Fq \
+            'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
+            "$log" ||
+           ! grep -Fq \
+            'task=matching editions task-label="MATCHAR SPELVERSIONER"' "$log" ||
+           ! grep -Fq 'scan complete elapsed-ms=' "$log"; then
+            echo "FAIL: Swedish no-game menu omitted localized directory-scan progress ($mode)" >&2
+            cat "$log" >&2
+            return 1
+        fi
+    elif ! grep -Fq \
+        'task=checking direct launch path task-label="KONTROLLERAR DIREKT STARTSÖKVÄG"' "$log"; then
+        echo "FAIL: Swedish no-game menu omitted localized direct-media scan status ($mode)" >&2
         cat "$log" >&2
         return 1
     fi

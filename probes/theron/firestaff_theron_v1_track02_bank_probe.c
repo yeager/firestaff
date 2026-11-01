@@ -5,7 +5,7 @@
  *
  * This probe does not prove a dungeon map grid or promote runtime loading.
  * It regression-locks hash-gated JP/US Track 02 bank-stride anchors and keeps
- * the JP Rev 1 zero-filled ISO outcome explicit.
+ * the JP Rev 1 standalone empty-suffix outcome explicit.
  */
 
 #include "asset_status_m12.h"
@@ -1280,7 +1280,7 @@ static void probe_negative_fixture(void) {
               THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
 }
 
-static void probe_jp_zero_image_fixture(void) {
+static void probe_jp_empty_suffix_fixture(void) {
     uint8_t zeros[4096] = {0};
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus status =
@@ -1288,13 +1288,13 @@ static void probe_jp_zero_image_fixture(void) {
                                            sizeof(zeros),
                                            THERON_TRACK02_MD5_JP_REV1_ISO,
                                            &signal);
-    check_int("JP Rev 1 zero fixture is insufficient evidence",
+    check_int("JP Rev 1 empty suffix is insufficient evidence alone",
               status,
               THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE);
-    check_int("JP Rev 1 zero fixture is hash-gated",
+    check_int("JP Rev 1 empty suffix is hash-gated",
               signal.variant,
               THERON_TRACK02_VARIANT_JP_REV1_ISO);
-    check_no_reported_offset("JP Rev 1 zero fixture leaves no offset", &signal);
+    check_no_reported_offset("JP Rev 1 empty suffix leaves no offset", &signal);
 }
 
 static void probe_descriptor_only_negative_fixture(void) {
@@ -1745,8 +1745,8 @@ static void probe_audio_bank_marker_synthetic_fixture(void) {
 static void probe_audio_bank_marker_unsupported_variant_fixture(void) {
     /* US ISO and JP Rev 1 ISO are unsupported on the audio-bank marker:
      *   US ISO is a partial extract with no anchor;
-     *   JP Rev 1 ISO is hash-verified but zero-filled in the available
-     *   image so no offset is claimed. */
+     *   the standalone JP Rev 1 ISO is an empty suffix, so no offset is
+     *   claimed for that incomplete file. */
     static const uint8_t zeros[64] = {0};
     uint32_t got_id = 0xDEADBEEFu;
     size_t got_id_offset = 7u;
@@ -1898,7 +1898,7 @@ int main(void) {
 
     probe_negative_fixture();
     probe_cue_track02_mount();
-    probe_jp_zero_image_fixture();
+    probe_jp_empty_suffix_fixture();
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();
     probe_raw_user_data_synthetic_fixture();

@@ -1,9 +1,8 @@
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -299,6 +299,24 @@
- static unsigned TheronPCECDMainRAMLoaderWriteTraceCount;
- static FILE *TheronPCECDSpawnConsumerTrace;
- static unsigned TheronPCECDSpawnConsumerTraceCount;
+@@ -121,3 +121,21 @@
+  return text && *text ? text : "none";
+ }
 +static FILE *TheronPCECDE009DestinationConsumerTrace;
 +static unsigned TheronPCECDE009DestinationConsumerTraceCount;
 +static const unsigned TheronPCECDE009DestinationConsumerTraceLimit = 32768;
@@ -23,8 +22,6 @@
 + return TheronPCECDE009DestinationConsumerTrace;
 +}
  static unsigned TheronPCECDMainRAMConsumerTraceLimit(void)
- {
-  static unsigned limit;
 @@ -316,22 +334,42 @@
  void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
                                        uint8 accumulator, uint8 x, uint8 y)

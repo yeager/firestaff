@@ -26,6 +26,26 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+system_card_io_ram_pc_filter=${THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER:-none}
+state_trace_only=${THERON_CAPTURE_STATE_TRACE_ONLY:-0}
+if [[ "$system_card_io_ram_pc_filter" != none &&
+      "$system_card_io_ram_pc_filter" != run-path ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-path' >&2
+    exit 1
+fi
+if [[ "$system_card_io_ram_pc_filter" != none &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: the System Card I/O/RAM PC filter requires the PCE Fast module' >&2
+    exit 1
+fi
+if [[ "$state_trace_only" != 0 && "$state_trace_only" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE' >&2
+    exit 1
+fi
 huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
     if [[ -n ${THERON_CAPTURE_MEDNAFEN_MODULE:-} &&
@@ -44,6 +64,10 @@ if [[ -n "$huc6280_23ad_trace" ]]; then
         printf '%s\n' 'FAIL: HuC6280 $23AD trace requires a cold start from original media; save-state autoload bypasses loader provenance' >&2
         exit 1
     fi
+fi
+if [[ "$state_trace_only" == 1 && "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires the PCE Fast module' >&2
+    exit 1
 fi
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
@@ -127,7 +151,38 @@ replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+spawn_consumer_pc_filter=${THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER:-none}
+if [[ "$spawn_consumer_pc_filter" != none &&
+      "$spawn_consumer_pc_filter" != drator-row ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER must be none or drator-row' >&2
+    exit 1
+fi
+if [[ "$spawn_consumer_pc_filter" == drator-row &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: the Drator row consumer filter requires the PCE Fast module' >&2
+    exit 1
+fi
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
+pce_fast_c852_fetch_enabled=${THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE:-0}
+pce_fast_code_fetch_source_verify=${THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY:-0}
+if [[ "$pce_fast_c852_fetch_enabled" != 0 && "$pce_fast_c852_fetch_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_code_fetch_source_verify" != 0 &&
+      "$pce_fast_code_fetch_source_verify" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 &&
+      "$pce_fast_c852_fetch_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: code-fetch source verification requires THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_c852_fetch_enabled" == 1 && "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE requires the pce_fast module' >&2
+    exit 1
+fi
 pce_fast_main_ram_target_write_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE:-}
 pce_fast_main_ram_target_write_sample_limit=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT:-65536}
 pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}
@@ -170,6 +225,7 @@ vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
 pce_fast_vram_commit_start_at_track02=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02:-0}
+pce_fast_vram_commit_start_at_input=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_INPUT:-}
 pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-65536}
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
@@ -335,6 +391,7 @@ if (( target_write_sample_limit < 4096 || target_write_sample_limit > 1048576 ))
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
+pce_fast_main_ram_target_write_sample_limit=$target_write_sample_limit
 if [[ ! "$pce_fast_tia_trace_limit" =~ ^[0-9]+$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
@@ -398,6 +455,10 @@ if [[ -n "$pce_fast_main_ram_target_write_range" ]]; then
         printf '%s\n' 'FAIL: PCE Fast target-write range must be ordered and end at or below 1fffff' >&2
         exit 1
     fi
+    pce_fast_main_ram_target_write_range_receipt=$(printf '%06x-%06x' \
+        "$target_write_first" "$target_write_last")
+else
+    pce_fast_main_ram_target_write_range_receipt=none
 fi
 if [[ ! "$movement_data_read_sample_limit" =~ ^[0-9]+$ ]] ||
    (( movement_data_read_sample_limit < 1 || movement_data_read_sample_limit > 256 )); then
@@ -422,6 +483,17 @@ fi
 if [[ "$pce_fast_vram_commit_start_at_track02" == 1 &&
       "$capture_pce_fast_vram_commit_trace" != 1 ]]; then
     printf '%s\n' 'FAIL: starting VWR trace at Track 02 requires VRAM commit tracing' >&2
+    exit 1
+fi
+if [[ -n "$pce_fast_vram_commit_start_at_input" &&
+      ! "$pce_fast_vram_commit_start_at_input" =~ ^[[:xdigit:]]{4}:[[:xdigit:]]{4}$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_INPUT must be four-digit PC and raw input hex (PC:RAW)' >&2
+    exit 1
+fi
+if [[ -n "$pce_fast_vram_commit_start_at_input" &&
+      ( "$capture_pce_fast_vram_commit_trace" != 1 ||
+        "$pce_fast_vram_commit_start_at_track02" == 1 ) ]]; then
+    printf '%s\n' 'FAIL: input-gated VWR tracing requires VWR commits and cannot be combined with Track 02 gating' >&2
     exit 1
 fi
 if [[ "$capture_pointer_c1df_trace" != 0 &&
@@ -748,7 +820,8 @@ fi
 capture_cue="$cue"
 capture_cue_needs_split_iso=0
 capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
-capture_jp_iso_sibling="$(dirname -- "$cue")/TQJP02End.iso"
+capture_jp_iso_head="$(dirname -- "$cue")/TQJP19.iso"
+capture_jp_iso_tail="$(dirname -- "$cue")/TQJP02End.iso"
 if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
       ( "$track02_member" == 'TQUS02.iso' ||
         "$track02_member" == 'TQUS02End.iso' ) &&
@@ -766,16 +839,28 @@ if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
     fi
 fi
 if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
-      "$track02_member" == 'TQJP02.iso' &&
-      -f "$capture_jp_iso_sibling" ]]; then
-    split_iso_md5=$(md5_file "$capture_jp_iso_sibling") || split_iso_md5=
-    if [[ "$split_iso_md5" == 397039af02d50d15c70b74088eb8a1cb ]]; then
-        # The Japanese retail CUE names TQJP02.iso, while the supplied
-        # archive retains the complete authenticated payload as TQJP02End.iso.
-        # Keep the same private CUE normalization used by the US split route.
+      ( "$track02_member" == 'TQJP02.iso' ||
+        "$track02_member" == 'TQJP02End.iso' ) &&
+      -f "$capture_jp_iso_head" && -f "$capture_jp_iso_tail" ]]; then
+    jp_head_md5=$(md5_file "$capture_jp_iso_head") || jp_head_md5=
+    jp_tail_md5=$(md5_file "$capture_jp_iso_tail") || jp_tail_md5=
+    if [[ "$jp_head_md5" == f9f069a5e489b91207f3156059b756f1 &&
+          "$jp_tail_md5" == 397039af02d50d15c70b74088eb8a1cb ]]; then
+        capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQJP02-62a39bbf43415c9739c41c2481080a49.iso"
+        mkdir -p "$(dirname -- "$capture_split_iso_cache")"
+        if [[ ! -f "$capture_split_iso_cache" ]] ||
+           [[ "$(md5_file "$capture_split_iso_cache" || true)" != 62a39bbf43415c9739c41c2481080a49 ]]; then
+            capture_split_iso_tmp="$capture_split_iso_cache.tmp.$$"
+            cat -- "$capture_jp_iso_head" "$capture_jp_iso_tail" > "$capture_split_iso_tmp"
+            if [[ "$(md5_file "$capture_split_iso_tmp" || true)" != 62a39bbf43415c9739c41c2481080a49 ]]; then
+                rm -f -- "$capture_split_iso_tmp"
+                printf '%s\n' 'FAIL: JP split Track 02 projection hash mismatch' >&2
+                exit 1
+            fi
+            mv -f -- "$capture_split_iso_tmp" "$capture_split_iso_cache"
+        fi
         capture_cue_needs_split_iso=1
-        capture_split_iso_cache="$capture_jp_iso_sibling"
-        track02_path="$capture_jp_iso_sibling"
+        track02_path="$capture_split_iso_cache"
     fi
 fi
 if [[ ! -f "$track02_path" ]]; then
@@ -1297,6 +1382,11 @@ require_instrumented_mednafen_binary() {
             return 1
         fi
     done
+    if [[ "$spawn_consumer_pc_filter" == drator-row ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the Drator row consumer PC filter; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
     if [[ "$capture_mednafen_module" == pce_fast ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card code-follow hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
@@ -1320,6 +1410,11 @@ require_instrumented_mednafen_binary() {
     if [[ "$capture_mednafen_module" == pce_fast ]] &&
        ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast System Card I/O/RAM hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
+    if [[ "$system_card_io_ram_pc_filter" != none ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the source-scoped System Card I/O/RAM filter; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
     if [[ -n "$huc6280_23ad_trace" ]] &&
@@ -1432,6 +1527,14 @@ APPLESCRIPT
 }
 
 trace_dir=$(dirname -- "$trace")
+capture_id=$(python3 -c 'import uuid; print(uuid.uuid4().hex)') || {
+    printf '%s\n' 'FAIL: could not generate a unique capture identifier' >&2
+    exit 1
+}
+if [[ ! "$capture_id" =~ ^[[:xdigit:]]{32}$ ]]; then
+    printf '%s\n' 'FAIL: generated capture identifier has an unexpected format' >&2
+    exit 1
+fi
 capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -1441,6 +1544,7 @@ input_trace="${trace}.input"
 mouse_trace="${trace}.mouse"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
+c852_runtime_window_trace="${trace}.c852-runtime-window"
 cd_ram_target_write_trace="${trace}.cd-ram-target-write"
 cd_ram_writer_pc_trace="${trace}.cd-ram-writer-pc"
 cd_data_port_read_trace="${trace}.cd-data-port-read"
@@ -1495,6 +1599,14 @@ bram_snapshot="${trace}.bram"
 pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
 pce_fast_a1b7_bmt_write_trace="${trace}.a1b7-bmt-write"
 pce_fast_a1a9_init_trace="${trace}.a1a9-init"
+pce_fast_c852_fetch_trace=
+pce_fast_c852_fetch_source_report=
+if [[ "$pce_fast_c852_fetch_enabled" == 1 ]]; then
+    pce_fast_c852_fetch_trace="${trace}.c852-fetch"
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 ]]; then
+    pce_fast_c852_fetch_source_report="${trace}.c852-fetch-source-report"
+fi
 pce_fast_vram_snapshot="${trace}.pce-fast.vram"
 pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
@@ -1564,7 +1676,7 @@ for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
     fi
 done
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
-    "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
+    "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$c852_runtime_window_trace" \
     "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
@@ -1577,6 +1689,8 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" \
     "$pce_fast_pointer_ram_write_trace" \
     "$pce_fast_a1a9_init_trace" \
+    ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} \
+    ${pce_fast_c852_fetch_source_report:+"$pce_fast_c852_fetch_source_report"} \
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
@@ -1625,12 +1739,18 @@ else
     # complete canonical ISO identities admitted by the runtime intake; they
     # are not interchangeable with the raw BIN identities above.
     case "$track02_md5" in
-        397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da) ;;
+        397039af02d50d15c70b74088eb8a1cb|62a39bbf43415c9739c41c2481080a49|ceb02343868f80cec899e9b239aff2da) ;;
         *)
             printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US ISO' >&2
             exit 1
             ;;
     esac
+fi
+if [[ "$pce_fast_code_fetch_source_verify" == 1 &&
+      ( "$track02_mode" != 'MODE1/2352' ||
+        "$track02_md5" != f23601102138f87c33025877767ebf76 ) ]]; then
+    printf '%s\n' 'FAIL: code-fetch source verification requires authentic US raw Track 02 BIN' >&2
+    exit 1
 fi
 if [[ -n "$configured_home" ]]; then
     # The configured home is an input-map template, never the live capture
@@ -1766,6 +1886,21 @@ cleanup_capture() {
 }
 trap cleanup_capture EXIT INT TERM
 
+validate_autoload_state_receipt() {
+    local expected_receipt="Theron autoload state loaded: $autoload_state"
+    local failure_receipt="Theron autoload state failed: $autoload_state"
+
+    if grep -aFq -- "$failure_receipt" "$stdout_file" "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported that the requested autoload state failed' >&2
+        return 1
+    fi
+    if ! grep -aFq -- "$expected_receipt" "$stdout_file" "$stderr_file"; then
+        printf '%s\n' 'FAIL: state-only trace mode lacks a successful Mednafen autoload receipt for the requested state' >&2
+        return 1
+    fi
+    return 0
+}
+
 # The locally supplied SysCard3 dump is a 512-byte-headered image. Keep its
 # source hash above for provenance, but pass Mednafen the byte-exact ROM body;
 # the resulting image must match the canonical Japanese v3.0 firmware hash.
@@ -1813,6 +1948,8 @@ launch=(
     FIRESTAFF_THERON_MENU_ROUTE="$menu_route" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
+    FIRESTAFF_THERON_C852_RUNTIME_WINDOW_TRACE="$c852_runtime_window_trace" \
+    FIRESTAFF_THERON_CAPTURE_ID="$capture_id" \
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT="$cd_ram_target_write_trace_limit" \
@@ -1828,11 +1965,13 @@ launch=(
     FIRESTAFF_THERON_SYSTEM_CARD_CALLBACK_STATE_TRACE="$system_card_callback_state_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_DECISION_TRACE="$system_card_decision_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_TRACE="$system_card_io_ram_trace" \
+    FIRESTAFF_THERON_SYSTEM_CARD_IO_RAM_PC_FILTER="$system_card_io_ram_pc_filter" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_SPAWN_CONSUMER_PC_FILTER="$spawn_consumer_pc_filter" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
-    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range" \
+    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range_receipt" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT="$pce_fast_main_ram_target_write_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE="$pce_fast_main_ram_target_write_trace" \
     FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace" \
@@ -1877,10 +2016,12 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT="$pce_fast_vram_commit_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02="$pce_fast_vram_commit_start_at_track02" \
+    FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_INPUT="$pce_fast_vram_commit_start_at_input" \
     FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE="$pce_fast_vce_write_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_LIMIT="$pce_fast_vce_write_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace" \
+    FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE="$pce_fast_c852_fetch_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
@@ -2184,6 +2325,16 @@ wait "$mednafen_pid"
 status=$?
 set -e
 
+autoload_state_load_status=not_requested
+if [[ -n "$autoload_state" ]]; then
+    validate_autoload_state_receipt || exit 1
+    autoload_state_load_status=verified
+fi
+if [[ "$state_trace_only" == 1 && "$autoload_state_load_status" != verified ]]; then
+    printf '%s\n' 'FAIL: state-only trace mode requires a successful save-state autoload receipt' >&2
+    exit 1
+fi
+
 if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
     if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$stderr_file"; then
         printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast code-bank RAM trace' >&2
@@ -2202,8 +2353,19 @@ if [[ -n "$pce_fast_main_ram_target_write_trace" ]]; then
         exit 1
     fi
     if [[ ! -s "$pce_fast_main_ram_target_write_trace" ]] ||
-       ! grep -Fqx 'source=mednafen-pce-fast-main-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence' \
-           "$pce_fast_main_ram_target_write_trace"; then
+       ! awk -v capture_id="$capture_id" \
+           -v expected_range="$pce_fast_main_ram_target_write_range_receipt" \
+           -v expected_limit="$pce_fast_main_ram_target_write_sample_limit" '
+        NR == 1 {
+            if (NF != 5 || $1 != "source=mednafen-pce-fast-main-ram-target-write-v2" ||
+                $2 != "event_sequence_source=TheronTraceCDSharedEventSequence" ||
+                $3 != ("capture_id=" capture_id) || $4 != ("range=" expected_range) ||
+                $5 != ("sample_limit=" expected_limit)) exit 1
+            found = 1
+            exit
+        }
+        END { if (!found) exit 1 }
+    ' "$pce_fast_main_ram_target_write_trace"; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast main-RAM target-write trace' >&2
         exit 1
     fi
@@ -2226,6 +2388,26 @@ if [[ "$capture_mednafen_module" == pce_fast ]] &&
     printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast main-RAM consumer trace' >&2
     exit 1
 fi
+if [[ -n "$pce_fast_c852_fetch_trace" ]]; then
+    if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_C852_FETCH_TRACE_ERROR' "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported an error while writing the C852 opcode-fetch trace' >&2
+        exit 1
+    fi
+    if [[ ! -s "$pce_fast_c852_fetch_trace" ]] ||
+       ! grep -Fqx 'source=mednafen-pce-fast-c852-opcode-fetch event_sequence_source=TheronTraceCDSharedEventSequence' "$pce_fast_c852_fetch_trace"; then
+        printf '%s\n' 'FAIL: Mednafen did not produce a valid C852 opcode-fetch trace' >&2
+        exit 1
+    fi
+fi
+if [[ -n "$pce_fast_c852_fetch_source_report" ]]; then
+    if ! python3 "$script_dir/verify_theron_pce_fast_code_fetch_source.py" \
+            "$pce_fast_c852_fetch_trace" "$track02_path" \
+            > "$pce_fast_c852_fetch_source_report"; then
+        printf '%s\n' 'FAIL: C852/Drator fetched-code trace did not bind both reader PCs to authentic US Track 02' >&2
+        cat -- "$pce_fast_c852_fetch_source_report" >&2 || true
+        exit 1
+    fi
+fi
 if [[ "$capture_mednafen_module" == pce_fast ]] &&
    { [[ ! -s "$main_ram_consumer_trace" ]] ||
      ! grep -Fqx 'source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence' "$main_ram_consumer_trace"; }; then
@@ -2244,7 +2426,7 @@ pce_fast_indirect_jump_follow_trace_rows=0
 pce_fast_indirect_jump_follow_trace_windows=0
 pce_fast_indirect_jump_follow_trace_open_windows=0
 pce_fast_indirect_jump_follow_trace_truncated_windows=0
-if [[ "$capture_mednafen_module" == pce_fast ]]; then
+if [[ "$capture_mednafen_module" == pce_fast && "$state_trace_only" != 1 ]]; then
     if [[ ! -s "$system_card_code_follow_trace" ]] ||
        ! grep -Fqx 'source=mednafen-pce-fast-system-card-code-follow-v1 start_pc=6148 limit=256 terminal=next-instruction-fetch event_sequence_source=TheronTraceCDSharedEventSequence' \
            "$system_card_code_follow_trace"; then
@@ -2316,6 +2498,9 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     system_card_bootstrap_follow_status=${system_card_bootstrap_follow_status_field#status=}
     system_card_bootstrap_follow_rows=${system_card_bootstrap_follow_rows_field#bootstrap_rows=}
     system_card_target_follow_rows=${system_card_target_follow_rows_field#target_rows=}
+elif [[ "$capture_mednafen_module" == pce_fast ]]; then
+    system_card_code_follow_status=not_applicable_state_autoload
+    system_card_bootstrap_follow_status=not_applicable_state_autoload
 fi
 if [[ "$pce_fast_indirect_jump_trace_enabled" == 1 ]]; then
     if [[ ! -s "$pce_fast_indirect_jump_trace" ]]; then
@@ -2345,8 +2530,39 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$c852_runtime_window_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$system_card_code_follow_trace" "$system_card_bootstrap_follow_trace" "$system_card_status_trace" "$system_card_callback_state_trace" "$system_card_decision_trace" "$system_card_io_ram_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} ${pce_fast_indirect_jump_trace:+"$pce_fast_indirect_jump_trace"} ${pce_fast_indirect_jump_follow_trace:+"$pce_fast_indirect_jump_follow_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" ${pce_fast_c852_fetch_trace:+"$pce_fast_c852_fetch_trace"} "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
+    exit 1
+fi
+if [[ -s "$c852_runtime_window_trace" ]] && ! awk -v capture_id="$capture_id" '
+    NR == 1 {
+        if (NF != 3 || $1 != "source=mednafen-pce-fast-theron-c852-runtime-window-v3" ||
+            $2 != "event_sequence_source=TheronTraceCDSharedEventSequence" ||
+            $3 != ("capture_id=" capture_id)) exit 1
+        next
+    }
+    /^theron_c852_instruction / {
+        if (NF != 22) exit 1
+        if ($2 != "window=0" || $3 != ("step=" count)) exit 1
+        if ($4 !~ /^event_sequence=[0-9]+$/ ||
+            $5 !~ /^logical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ ||
+            $6 !~ /^physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+        event_sequence = substr($4, 16) + 0
+        if (have_event_sequence && event_sequence <= previous_event_sequence) exit 1
+        previous_event_sequence = event_sequence
+        have_event_sequence = 1
+        count++
+        next
+    }
+    /^theron_c852_window_end / {
+        if (NF != 4 || $2 != "window=0" || $3 != "rows=129" || $4 != "status=complete" || count != 129 || ended) exit 1
+        ended = 1
+        next
+    }
+    { exit 1 }
+    END { if (NR < 1) exit 1 }
+' "$c852_runtime_window_trace"; then
+    printf '%s\n' 'FAIL: PCE Fast $C852 runtime instruction window is malformed or incomplete' >&2
     exit 1
 fi
 if [[ -n "$huc6280_23ad_trace" ]]; then
@@ -2492,7 +2708,8 @@ else
     if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
         if [[ ! -s "$pce_fast_vram_commit_trace" ]] ||
            ! awk -v limit="$pce_fast_vram_commit_trace_limit" \
-               -v filtered_prefix="$pce_fast_vram_commit_start_at_track02" '
+               -v filtered_prefix="$pce_fast_vram_commit_start_at_track02" \
+               -v input_prefix="$(printf '%s' "$pce_fast_vram_commit_start_at_input" | tr '[:upper:]' '[:lower:]')" '
                function is_hex(value, length_expected) {
                    return length(value) == length_expected && value !~ /[^0-9a-f]/
                }
@@ -2505,13 +2722,13 @@ else
                    return result
                }
                NR == 1 {
-                   expected_version = filtered_prefix == 1 ? "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4" : "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3"
+                   expected_version = input_prefix != "" ? "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V5" : filtered_prefix == 1 ? "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4" : "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3"
                    if ($0 != expected_version) exit 1
                    next
                }
                NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window") exit 1; next }
                NR == 3 {
-                   expected_scope = filtered_prefix == 1 ? "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read" : "scope=cpu-port-vwr-commits-only;dma-writes-excluded"
+                   expected_scope = input_prefix != "" ? "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-controller-read-pc-raw-match" : filtered_prefix == 1 ? "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read" : "scope=cpu-port-vwr-commits-only;dma-writes-excluded"
                    if ($0 != expected_scope) exit 1
                    next
                }
@@ -2879,6 +3096,34 @@ transition_ram_2031=unavailable
 transition_ram_203f=unavailable
 transition_ram_2040=unavailable
 transition_ram_2041=unavailable
+transition_c852_runtime_window_rows=0
+transition_c852_runtime_window_complete=0
+if [[ -s "$c852_runtime_window_trace" ]]; then
+    transition_c852_runtime_window_rows=$(trace_count '^theron_c852_instruction ' "$c852_runtime_window_trace")
+    transition_c852_runtime_window_complete=$(trace_count '^theron_c852_window_end .*status=complete$' "$c852_runtime_window_trace")
+fi
+transition_main_ram_target_write_rows=0
+transition_main_ram_target_write_sha256=unavailable
+if [[ -n "$pce_fast_main_ram_target_write_trace" && -s "$pce_fast_main_ram_target_write_trace" ]]; then
+    transition_main_ram_target_write_rows=$(trace_count '^main_ram_target_write ' "$pce_fast_main_ram_target_write_trace")
+    transition_main_ram_target_write_sha256=$(sha256_file "$pce_fast_main_ram_target_write_trace") || {
+        printf '%s\n' 'FAIL: could not hash the all-writer RAM trace' >&2
+        exit 1
+    }
+fi
+transition_c852_runtime_window_sha256=unavailable
+if [[ -s "$c852_runtime_window_trace" ]]; then
+    transition_c852_runtime_window_sha256=$(sha256_file "$c852_runtime_window_trace") || {
+        printf '%s\n' 'FAIL: could not hash the C852 runtime-window trace' >&2
+        exit 1
+    }
+fi
+transition_c852_runtime_window_status=not_observed
+if [[ "$transition_c852_runtime_window_complete" -gt 0 ]]; then
+    transition_c852_runtime_window_status=complete
+elif [[ "$transition_c852_runtime_window_rows" -gt 0 ]]; then
+    transition_c852_runtime_window_status=incomplete
+fi
 transition_ram_snapshot=$main_ram_snapshot
 if [[ "$capture_mednafen_module" == pce_fast ]]; then
     transition_ram_snapshot=$pce_fast_main_ram_snapshot
@@ -2902,6 +3147,7 @@ if [[ -f "$transition_ram_snapshot" ]] &&
 fi
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'capture_id=%s\n' "$capture_id"
     printf 'mednafen_module=%s\n' "$capture_mednafen_module"
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
     printf 'track02_mode=%s\n' "$track02_mode"
@@ -2915,6 +3161,23 @@ fi
         sed 's/^/configured_profile_sram=/' "$profile_sram_manifest"
     fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
+    printf 'autoload_state_load_status=%s\n' "$autoload_state_load_status"
+    if [[ "$pce_fast_code_fetch_source_verify" == 1 ]]; then
+        printf 'pce_fast_code_fetch_source_verification=passed\n'
+        printf 'pce_fast_code_fetch_source_report=%s\n' \
+            "$pce_fast_c852_fetch_source_report"
+    else
+        printf 'pce_fast_code_fetch_source_verification=not_requested\n'
+    fi
+    printf 'c852_runtime_window_trace=%s\n' "$c852_runtime_window_trace"
+    printf 'c852_runtime_window_rows=%s\n' "$transition_c852_runtime_window_rows"
+    printf 'c852_runtime_window_complete=%s\n' "$transition_c852_runtime_window_complete"
+    printf 'c852_runtime_window_status=%s\n' "$transition_c852_runtime_window_status"
+    printf 'c852_runtime_window_sha256=%s\n' "$transition_c852_runtime_window_sha256"
+    printf 'pce_fast_main_ram_target_write_rows=%s\n' \
+        "$transition_main_ram_target_write_rows"
+    printf 'pce_fast_main_ram_target_write_sha256=%s\n' \
+        "$transition_main_ram_target_write_sha256"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"
@@ -2974,7 +3237,7 @@ fi
     printf 'pce_fast_code_ram_write_trace_enabled=%s\n' "$pce_fast_code_ram_write_trace_enabled"
     printf 'pce_fast_main_ram_target_writes=%s\n' "$transition_pce_fast_main_ram_target_write_count"
     printf 'pce_fast_main_ram_target_write_truncated=%s\n' "$transition_pce_fast_main_ram_target_write_truncated_count"
-    printf 'pce_fast_main_ram_target_write_range=%s\n' "$pce_fast_main_ram_target_write_range"
+    printf 'pce_fast_main_ram_target_write_range=%s\n' "$pce_fast_main_ram_target_write_range_receipt"
     printf 'pce_fast_main_ram_target_write_sample_limit=%s\n' "$pce_fast_main_ram_target_write_sample_limit"
     printf 'pce_fast_tia_trace_enabled=%s\n' "$pce_fast_tia_trace_enabled"
     printf 'pce_fast_tia_trace_rows=%s\n' "$transition_tia_byte_count"
@@ -2990,6 +3253,7 @@ fi
     printf 'pce_fast_indirect_jump_follow_trace_open_windows=%s\n' "$pce_fast_indirect_jump_follow_trace_open_windows"
     printf 'pce_fast_indirect_jump_follow_trace_truncated_windows=%s\n' "$pce_fast_indirect_jump_follow_trace_truncated_windows"
     printf 'pce_fast_system_card_code_follow_status=%s\n' "$system_card_code_follow_status"
+    printf 'state_trace_only=%s\n' "$state_trace_only"
     printf 'pce_fast_system_card_code_follow_rows=%s\n' "$system_card_code_follow_rows"
     printf 'pce_fast_system_card_bootstrap_follow_status=%s\n' "$system_card_bootstrap_follow_status"
     printf 'pce_fast_system_card_bootstrap_follow_rows=%s\n' "$system_card_bootstrap_follow_rows"
@@ -3003,6 +3267,7 @@ fi
     printf 'ram_provenance_direct_enabled=%s\n' "${THERON_CAPTURE_RAM_PROVENANCE_DIRECT:-0}"
     printf 'main_ram_target_writes=%s\n' "$transition_main_ram_target_write_count"
     printf 'spawn_consumer_reads=%s\n' "$transition_spawn_consumer_read_count"
+    printf 'spawn_consumer_pc_filter=%s\n' "$spawn_consumer_pc_filter"
     printf 'spawn_register_samples=%s\n' "$transition_spawn_register_sample_count"
     printf 'spawn_preconsumer_4644_samples=%s\n' "$transition_spawn_preconsumer_4644_count"
     printf 'spawn_helper_4667_samples=%s\n' "$transition_spawn_helper_4667_count"
@@ -3045,6 +3310,7 @@ fi
         printf 'pce_fast_vdc_state_sha256=%s\n' "$pce_fast_vdc_state_sha256"
         printf 'pce_fast_vram_commit_trace_requested=%s\n' "$capture_pce_fast_vram_commit_trace"
         printf 'pce_fast_vram_commit_start_at_track02=%s\n' "$pce_fast_vram_commit_start_at_track02"
+        printf 'pce_fast_vram_commit_start_at_input=%s\n' "$pce_fast_vram_commit_start_at_input"
         printf 'pce_fast_vram_commit_trace_limit=%s\n' "$pce_fast_vram_commit_trace_limit"
         printf 'pce_fast_vram_commit_trace_count=%s\n' "$pce_fast_vram_commit_trace_count"
         printf 'pce_fast_vram_commit_trace_sha256=%s\n' "$pce_fast_vram_commit_trace_sha256"
@@ -3139,6 +3405,7 @@ if [[ "$host_input_requested" == 1 && "$transition_host_key_count" -eq 0 ]]; the
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
     exit 1
 fi
+if [[ "$state_trace_only" != 1 ]]; then
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$trace" ||
@@ -3189,5 +3456,10 @@ if ! awk '
     printf 'BLOCKED: raw sector span lacks a following authenticated CD->RAM origin receipt (exit=%s)\n' "$status"
     exit 1
 fi
+fi
 
-printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"
+if [[ "$state_trace_only" == 1 ]]; then
+    printf 'PASS: bounded PCE Fast save-state reference traces validated; cold-start and CD handoff are not claimed (exit=%s)\n' "$status"
+else
+    printf 'PASS: live trace contains combined CD/controller/HuC6260 and raw-sector span receipts (exit=%s)\n' "$status"
+fi

@@ -91,7 +91,7 @@ fi
 # source KAOS.FTL C03_GAME; A31E instead uses APPB/BJELoad_R's direct
 # C03_GAME -> F0441 handoff. ReDMCSB COMPILE.H:199-213, 246-272; APPA.C:51-81.
 probe_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
-    --game csb --data-dir "$data_dir" --platform amiga --boot-probe 2>&1)" || {
+    --game csb --data-dir "$data_dir" --platform amiga --boot-probe --debug 2>&1)" || {
     printf '%s\n' "$probe_output" >&2
     exit 1
 }
@@ -106,6 +106,13 @@ case "$probe_output" in
         exit 1
         ;;
 esac
+
+if ! printf '%s\n' "$probe_output" | grep -Eq \
+    'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio='; then
+    echo "FAIL: native Amiga CSB CLI boot did not play its authenticated SWSH intro" >&2
+    printf '%s\n' "$probe_output" >&2
+    exit 1
+fi
 
 echo "PASS: native CSB Amiga CLI boot reaches its source startup phase"
 

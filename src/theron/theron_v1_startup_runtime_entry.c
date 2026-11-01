@@ -72,6 +72,12 @@ int theron_v1_startup_runtime_load_source_dungeon(
             !theron_v1_world_bind_track02_spawn_source(
                 world, &spawn_source, (int)variant)) return 0;
     } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
+        Theron_V1Track02Variant spawn_variant =
+            THERON_V1_TRACK02_VARIANT_US_BIN;
+        if (!theron_v1_track02_decode_spawn_source_iso(
+                track02, track02_size, spawn_variant, &spawn_source) ||
+            !theron_v1_world_bind_track02_spawn_source(
+                world, &spawn_source, (int)spawn_variant)) return 0;
         /* Retail US ISO is the byte-identical raw user-data stream after
          * raw Track 02's 225-sector pregap. The prefix below restores only
          * that absent raw-BIN coordinate space. */
@@ -85,11 +91,18 @@ int theron_v1_startup_runtime_load_source_dungeon(
         iso_pregap_normalized = 1;
         goto load_dungeon;
     } else if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        Theron_V1Track02Variant spawn_variant =
+            THERON_V1_TRACK02_VARIANT_JP_BIN;
+        if (!theron_v1_track02_decode_spawn_source_iso(
+                track02, track02_size, spawn_variant, &spawn_source) ||
+            !theron_v1_world_bind_track02_spawn_source(
+                world, &spawn_source, (int)spawn_variant)) return 0;
         /* The authenticated full JP CUE projection is byte-identical to
          * JP raw Track 02 after INDEX 01 at sector 224. Restore only that
          * omitted address prefix; source decoders then run as JP BIN against
          * the verified original bytes. This projection carries no raw-sector
-         * spawn witness, so do not manufacture or bind one here. */
+         * witness; the exact ISO hash and source marker authenticate the
+         * spawn-record projection above. */
         const size_t pregap_bytes = 224u * THERON_TRACK02_RAW_USER_DATA_BYTES;
         if (track02_size > SIZE_MAX - pregap_bytes) return 0;
         user_size = pregap_bytes + track02_size;

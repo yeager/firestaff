@@ -98,6 +98,73 @@ static bool TheronPCEFastMovementContextMainRAMRangeContains(uint32 physical_add
  }
  return enabled && physical_address >= first && physical_address <= last;
 }
+typedef struct {
+ unsigned sequence;
+ unsigned frame;
+ uint16 pc;
+ uint32 physical_pc;
+ uint8 mpr;
+ uint8 opcode;
+ uint8 bytes[4];
+} TheronPCEFastInstructionContextRecord;
+static TheronPCEFastInstructionContextRecord TheronPCEFastInstructionContextRing[128];
+static unsigned TheronPCEFastInstructionContextSequence;
+static unsigned TheronPCEFastInstructionContextNext;
+static unsigned TheronPCEFastInstructionContextCount;
+static bool TheronPCEFastInstructionContextDumped;
+static void TheronPCEFastMovementInstructionContext(uint16 pc, uint8 opcode)
+{
+ TheronPCEFastInstructionContextRecord *record =
+     &TheronPCEFastInstructionContextRing[TheronPCEFastInstructionContextNext];
+ const uint8 mpr = HuCPU.MPR[pc >> 13];
+ record->sequence = TheronPCEFastInstructionContextSequence++;
+ record->frame = TheronPCEFastScriptFrame;
+ record->pc = pc;
+ record->physical_pc = (mpr << 13) | (pc & 0x1fff);
+ record->mpr = mpr;
+ record->opcode = opcode;
+ for(unsigned i = 0; i < 4; i++)
+ {
+  const uint16 address = (uint16)(pc + i);
+  const unsigned slot = address >> 13;
+  record->bytes[i] = *(const uint8 *)(HuCPU.FastPageR[slot] + address);
+ }
+ TheronPCEFastInstructionContextNext =
+     (TheronPCEFastInstructionContextNext + 1) % 128;
+ if(TheronPCEFastInstructionContextCount < 128)
+  TheronPCEFastInstructionContextCount++;
+ if(pc != 0xC1FC || mpr != 0x6E || TheronPCEFastInstructionContextDumped)
+  return;
+ TheronPCEFastInstructionContextDumped = true;
+ if(!TheronPCEFastMovementContextTrace)
+ {
+  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE");
+  if(path && *path)
+  {
+   TheronPCEFastMovementContextTrace = fopen(path, "w");
+   if(TheronPCEFastMovementContextTrace)
+    fputs("source=mednafen-pce-fast-theron-movement-context-v3 event_sequence_source=TheronTraceCDSharedEventSequence\n", TheronPCEFastMovementContextTrace);
+  }
+ }
+ if(!TheronPCEFastMovementContextTrace)
+  return;
+ fprintf(TheronPCEFastMovementContextTrace,
+         "tii_instruction_context target_frame=%u target_pc=%04x target_mpr=%02x ring_count=%u\n",
+         record->frame, pc, mpr, TheronPCEFastInstructionContextCount);
+ const unsigned first = (TheronPCEFastInstructionContextNext + 128 -
+                         TheronPCEFastInstructionContextCount) % 128;
+ for(unsigned i = 0; i < TheronPCEFastInstructionContextCount; i++)
+ {
+  const TheronPCEFastInstructionContextRecord *row =
+      &TheronPCEFastInstructionContextRing[(first + i) % 128];
+  fprintf(TheronPCEFastMovementContextTrace,
+          "tii_instruction_context_record sequence=%u frame=%u pc=%04x mpr=%02x physical_pc=%06x opcode=%02x bytes=%02x%02x%02x%02x\n",
+          row->sequence, row->frame, row->pc, row->mpr,
+          row->physical_pc, row->opcode, row->bytes[0], row->bytes[1],
+          row->bytes[2], row->bytes[3]);
+ }
+ fflush(TheronPCEFastMovementContextTrace);
+}
 static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_address,
                                          unsigned int physical_address, uint8 value)
 {
@@ -170,6 +237,7 @@ static void TheronPCEFastMovementTIICandidateStateTransfer(unsigned int logical_
  if(TheronPCEFastTIICandidateStateTransferCount >= TheronPCEFastMovementContextLimit() ||
     TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
   return;
+ TheronPCEFastMovementInstructionContext(0xC1FC, 0);
  if(!TheronPCEFastMovementContextTrace)
  {
   const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE");
@@ -189,11 +257,45 @@ static void TheronPCEFastMovementTIICandidateStateTransfer(unsigned int logical_
   const uint16 pc = TheronTraceInstructionPC;
   const uint8 pc_mpr = HuCPU.MPR[pc >> 13];
   const unsigned int bmt_remaining = HuCPU.bmt_length;
+  const uint8 stack_sp = HuCPU.S;
+  const uint8 stack_mpr = HuCPU.MPR[1];
+  /* PCE Fast PUSH/POP use HU_Page1, which SET_MPR maps to FastMap[MPR1].
+   * Reading logical $0100 through PCERead would instead select MPR0. */
+  const uint8 *stack_page = HuCPU.FastMap[stack_mpr];
+  uint8 stack_bytes[16];
+  for(unsigned int i = 0; i < sizeof(stack_bytes); i++)
+  {
+   const unsigned int stack_offset = (stack_sp + 1 + i) & 0xFF;
+   stack_bytes[i] = stack_page[0x100 + stack_offset];
+  }
+  char stack_callsites[sizeof(stack_bytes) * 48] = { 0 };
+  unsigned int stack_callsites_length = 0;
+  for(unsigned int i = 0; i + 2 < sizeof(stack_bytes); i++)
+  {
+   const uint16 return_pc = stack_bytes[i] | (stack_bytes[i + 1] << 8);
+   const uint16 callsite_pc = return_pc - 3;
+   const unsigned int callsite_mpr = HuCPU.MPR[callsite_pc >> 13];
+   const uint8 *callsite = (const uint8 *)(HuCPU.FastPageR[
+       callsite_pc >> 13] + callsite_pc);
+   const int written = snprintf(stack_callsites + stack_callsites_length,
+       sizeof(stack_callsites) - stack_callsites_length,
+       "%s%02x:%04x:%02x%02x%02x:m%02x", i ? "," : "", i,
+       return_pc, callsite[0], callsite[1], callsite[2], callsite_mpr);
+   if(written < 0 || (unsigned int)written >=
+       sizeof(stack_callsites) - stack_callsites_length)
+    break;
+   stack_callsites_length += (unsigned int)written;
+  }
   fprintf(TheronPCEFastMovementContextTrace,
-          "tii_candidate_state_transfer sequence=%u event_sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x destination_logical_address=%04x destination_physical_address=%06x destination_mpr=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
+          "tii_candidate_state_transfer sequence=%u event_sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x guest_sp=%02x stack_mpr=%02x guest_stack=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x stack_callsites=%s source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x destination_logical_address=%04x destination_physical_address=%06x destination_mpr=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
           TheronPCEFastTIICandidateStateTransferCount++, event_sequence, TheronPCEFastScriptFrame,
           logical_address, physical_address, value, pc, pc_mpr,
-          (pc_mpr << 13) | (pc & 0x1FFF), bmt_remaining, source_logical,
+          (pc_mpr << 13) | (pc & 0x1FFF), bmt_remaining, stack_sp,
+          stack_mpr, stack_bytes[0], stack_bytes[1], stack_bytes[2],
+          stack_bytes[3], stack_bytes[4], stack_bytes[5], stack_bytes[6],
+          stack_bytes[7], stack_bytes[8], stack_bytes[9], stack_bytes[10],
+          stack_bytes[11], stack_bytes[12], stack_bytes[13], stack_bytes[14],
+          stack_bytes[15], stack_callsites, source_logical,
           source_physical, value, source_mpr,
           HuCPU.bmt_dest & 0xFFFF, physical_address,
           HuCPU.MPR[(HuCPU.bmt_dest & 0xFFFF) >> 13], HuCPU.MPR[0],
@@ -273,6 +375,12 @@ static void TheronPCEFastMovementStateWrite(const char *write_path,
     }
     for macro_name, (old, new) in direct_macros.items():
         replace_macro_once(huc, macro_name, old, new)
+
+    replace_once(
+        huc,
+        "\t  b1 = RdAtPC();\n",
+        "\t  b1 = RdAtPC();\n\t  TheronPCEFastMovementInstructionContext(TheronTraceInstructionPC, b1);\n",
+    )
 
 
 if __name__ == "__main__":
