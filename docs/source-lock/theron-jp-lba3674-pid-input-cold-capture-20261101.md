@@ -56,5 +56,20 @@ observed menu readiness before retrying; see the
 [capture-readiness summary](../theron/THERON_CAPTURE_READINESS.md) and the
 [exact-LBA filter note](theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
+## Visual follow-up with a PID-targeted RUN attempt
+
+A later cold diagnostic (capture ID
+`d841429462394da38f1de5259d0f276a`) opened the same authentic JP route and
+recorded a screenshot of the PC Engine Super CD-ROM System splash. A
+PID-targeted four-second RUN keypair was sent, but the PCE input trace contains
+only released-button samples (`value=3f`) and no RUN/I mask. The post-input
+window remained at the splash. The dispatcher sidecar recorded `$E0F3`,
+`$E109`, and `$C860` only; decision/status sidecars had headers but no rows,
+and the exact-LBA data-port sidecar did not produce evidence. The wrapper
+rejected this attempt with `status trace contains no observed $1800 reads`.
+This attempt therefore provides no evidence of accepted RUN input, title-menu
+readiness, game handoff, or LBA 3674 use. Keep it separate from the earlier
+15-press capture above, which did record RUN/I at `$E4C5`.
+
 Raw traces and emulator outputs remain outside Git. No media bytes or
 emulator-produced data were added to the repository.

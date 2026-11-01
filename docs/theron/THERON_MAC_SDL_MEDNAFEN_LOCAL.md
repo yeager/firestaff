@@ -29,12 +29,14 @@ saving remain unverified. See the
 [source-locked title-action capture](../source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [empty-BRAM boundary](../source-lock/theron-original-backup-ram-body-layout-2026-09-23.md).
 
-The latest PID-bound cold JP diagnostic reached only the System Card poll: all
-15 requested host presses were observed, including active-low RUN and Button I
-masks, but no game-owned poll, verified `$E11D` handoff, CD IRQ, or authenticated
-CD-to-RAM receipt was captured. Its exact-LBA 3674 sidecar contained only a
-header, and the wrapper rejected the run at timeout. This does not establish
-that the sector is absent from a successful load. See the
+The latest visual follow-up remained at the PC Engine Super CD-ROM System
+splash after a PID-targeted four-second RUN attempt. The PCE input trace
+contained only released-button samples, and the wrapper rejected the run
+because the System Card status trace had no `$1800` reads. An earlier cold
+attempt did record 15 PID-bound presses and active-low RUN/I at poll `$E4C5`,
+but no verified `$E11D` handoff, game-owned poll, CD IRQ, authenticated
+CD-to-RAM receipt, or LBA 3674 read. Neither capture establishes whether the
+sector is used by a successful game load. See the
 [capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md).
 
 ## Capture requirements

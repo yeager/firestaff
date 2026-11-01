@@ -4,18 +4,23 @@
 
 The r4 Mednafen 1.32.1 binary builds against standalone SDL 2.32.10. The
 host-input readiness gate now accepts its schema-qualified source header, and
-the wrapper regression passed three consecutive loops. A private cold JP run
-observed 15 PID-bound button presses and active-low RUN/I values at System Card
-poll `$E4C5`, but it did not verify the `$E11D` bootstrap branch or a game-owned
-poll. It recorded zero CD IRQs, zero authenticated CD-to-RAM receipts, and no
-LBA 3674 data-port rows before timing out. The dispatcher’s `$4000` entries
-remain BIOS-path evidence only.
+the wrapper regression passed three consecutive loops. The latest visual cold
+JP follow-up attempted a PID-targeted four-second RUN press, but the input
+trace recorded only released-button samples and the window remained at the PC
+Engine Super CD-ROM System splash. The wrapper rejected that run because the
+System Card status trace had no `$1800` reads. An earlier cold run recorded 15
+PID-bound presses and active-low RUN/I at BIOS poll `$E4C5`, but it did not
+verify the `$E11D` bootstrap branch or a game-owned poll; it recorded zero CD
+IRQs, zero authenticated CD-to-RAM receipts, and no LBA 3674 data-port rows
+before timing out.
 
-Next, establish the visible title/menu readiness for this exact cold route and
-send the documented 3–5 second actions only after each menu is ready. Capture a
-same-run authenticated LBA 3674 read through a game-owned consumer and pose-bound
-tile/render update. Do not treat BIOS polling or the state-only source match as
-that evidence. See the [PID-input capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
+Next, determine why PID-targeted Quartz input did not reach the controller
+trace in the visual follow-up. Require an active-low RUN sample before treating
+the action as delivered, then wait for a confirmed menu before sending the
+documented 3–5 second actions. Capture a same-run authenticated LBA 3674 read
+through a game-owned consumer and pose-bound tile/render update. Do not treat
+BIOS polling or the state-only source match as that evidence. See the
+[PID-input capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
 [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md), and
 [exact-LBA filter note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 

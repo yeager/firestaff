@@ -140,7 +140,7 @@ and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
-The latest cold Japanese System Card reference trace separately binds the
+A cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
 `$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese
 run confirms that holding Button I for four seconds on NEW GAME opens file
@@ -151,7 +151,7 @@ authenticated CD-to-RAM transition or establish native timing/parity. See the
 [source-locked title route](docs/source-lock/theron-jp-four-second-title-action-capture-20261031.md)
 and [System Card trace](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary).
 
-The latest reference-tooling follow-up rebuilt Mednafen 1.32.1 against standalone SDL 2.32.10. A PID-bound cold JP run delivered 15 host button presses, and the System Card poll recorded active-low RUN/I input, but the run did not verify the `$E11D` game handoff or any game-owned poll. It produced no LBA 3674 data-port rows and was rejected at timeout. The exact-LBA filter remains unexercised on an accepted game load. See the [capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md) and [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The latest visual cold JP follow-up used a PID-targeted four-second RUN attempt but recorded only released-button samples; the screen remained at the PC Engine Super CD-ROM System splash, and the wrapper rejected the run because the System Card status trace had no `$1800` reads. An earlier run delivered 15 PID-bound presses and recorded active-low RUN/I at BIOS poll `$E4C5`, but did not verify the `$E11D` game handoff or a game-owned poll; it produced no LBA 3674 data-port rows and timed out. The exact-LBA filter remains unexercised on an accepted game load. See the [capture report](docs/source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md) and [exact-LBA tool note](docs/source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 The [capture-readiness record](docs/theron/THERON_CAPTURE_READINESS.md) is the
 current summary of native runtime and original-reference evidence, including

@@ -33,22 +33,27 @@ See the [filter implementation and verification note](../source-lock/theron-jp-a
 
 The current Mednafen 1.32.1 r4 binary was rebuilt from patched source against
 standalone SDL 2.32.10; isolated startup and linked-runtime version checks
-passed. The latest cold JP run used authentic media and PID-bound Quartz input
-in a private profile. It recorded all 15 requested host presses and active-low
-RUN/I samples at System Card poll `$E4C5`, but did not verify the `$E11D`
-bootstrap branch or a game-owned poll. The dispatcher’s `$4000` rows remain
-System Card path evidence. The wrapper recorded zero CD IRQs, zero authenticated
-CD-to-RAM receipts, and no LBA 3674 data-port rows before rejecting the run at
-timeout. The exact-LBA filter remains unexercised on an accepted game load. See
-the [PID-input capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
+passed. The latest visual follow-up used authentic JP media and a
+PID-targeted four-second RUN attempt, but the PCE input trace recorded only
+released-button samples. The window remained at the PC Engine Super CD-ROM
+System splash, decision/status traces had no rows, and the wrapper rejected
+the attempt because the status trace contained no `$1800` reads. This run did
+not establish title-menu readiness or a game handoff. An earlier cold run
+recorded all 15 requested host presses and active-low RUN/I samples at System
+Card poll `$E4C5`, but did not verify the `$E11D` bootstrap branch or a
+game-owned poll. That run also recorded zero CD IRQs, zero authenticated
+CD-to-RAM receipts, and no LBA 3674 data-port rows before timing out. The
+exact-LBA filter remains unexercised on an accepted game load. See the
+[PID-input capture report](../source-lock/theron-jp-lba3674-pid-input-cold-capture-20261101.md),
 [current TODO](../../TODO-theron.md), and
 [exact-LBA tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 An earlier headless capture did hit the decision trace’s 2,048-row cap. The
-latest PID-input capture did not: its decision verifier accepted 88 rows across
-six BIOS PCs. The separate System Card status trace reached its 65,536-row cap
-and recorded an explicit truncation marker. Neither capture establishes a game
-handoff or an active-map source read.
+earlier PID-input capture did not: its decision verifier accepted 88 rows
+across six BIOS PCs, while its separate System Card status trace reached its
+65,536-row cap and recorded an explicit truncation marker. The visual
+follow-up's status trace had no rows. None of these cold attempts establishes
+a game handoff or an active-map source read.
 
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to

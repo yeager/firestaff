@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — record rejected visual cold-input follow-up
+
+- Opened a cold authentic JP diagnostic route and inspected the PC Engine
+  Super CD-ROM System splash before sending a PID-targeted four-second RUN
+  keypair. The PCE input trace recorded only released-button samples; the
+  post-input window remained at the splash.
+- The dispatcher sidecar recorded `$E0F3`, `$E109`, and `$C860` only. The
+  decision/status sidecars contained no rows, and the wrapper rejected the
+  package because the status trace contained no `$1800` reads. This attempt
+  provides no evidence of accepted input, a game handoff, or LBA 3674 use.
+- Added the failed follow-up boundary to the source-lock capture report and
+  synchronized the README, project status, documentation index, TODO, capture
+  readiness, exact-LBA note, technical reference, and capture runbook.
+- Gitleaks found no secrets in the documentation commit; whitespace and local
+  Markdown-link checks passed. The capture and its emulator output remain
+  outside Git.
+
 ## 2026-11-01 — unblock PID-bound host input and record the cold JP attempt
 
 - Fixed the host-input readiness gate: it now accepts the instrumented PCE Fast

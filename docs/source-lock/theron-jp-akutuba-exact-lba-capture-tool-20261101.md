@@ -57,3 +57,10 @@ trace passed with 88 rows; the separate status trace reached its 65,536-row
 cap. Neither attempt shows that the sector is absent from a successful game
 load. See the [PID-input capture report](theron-jp-lba3674-pid-input-cold-capture-20261101.md)
 and [capture-readiness summary](../theron/THERON_CAPTURE_READINESS.md).
+
+A later visual follow-up attempted a four-second RUN press after inspecting
+the cold-start window. The input trace still contained only released-button
+samples, the screen remained at the PC Engine Super CD-ROM System splash, and
+the wrapper rejected the capture because the status trace had no `$1800` reads.
+It did not exercise the exact-LBA filter or verify a game handoff; see the
+[visual follow-up record](theron-jp-lba3674-pid-input-cold-capture-20261101.md#visual-follow-up-with-a-pid-targeted-run-attempt).
