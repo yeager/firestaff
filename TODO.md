@@ -1,5 +1,11 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 CLI value validation: `--platform` now rejects a following option
+as a missing value while preserving the full supported-platform hint when no
+value is supplied. The option-form regression also checks an unknown platform
+value. The clean TRV2 app build and the real CLI option-form script pass; this
+is parser validation evidence, not a media-startup or gameplay result.
+
 2026-11-01 single-game CLI exit retest: the authentic-media
 `return_to_menu_rescans_dm1_csb_dm2_real_media` direct-exit matrix passed for
 DM1, CSB, DM2, Nexus, and Theron. After choosing Return to Menu from each
