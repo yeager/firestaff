@@ -170,8 +170,15 @@ def main() -> int:
     parser.add_argument("--vce-write-limit", type=int)
     parser.add_argument("--huc6280-23ad", type=Path)
     parser.add_argument("--huc6280-23ad-limit", type=int)
+    parser.add_argument("--exact-source-lba", default="none")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
+
+    if args.exact_source_lba != "none":
+        if not re.fullmatch(r"(?:0|[1-9][0-9]*)", args.exact_source_lba):
+            parser.error("--exact-source-lba must be none or a normalized unsigned decimal LBA")
+        if int(args.exact_source_lba) > 0xFFFFFFFF:
+            parser.error("--exact-source-lba must be at most 4294967295")
 
     inputs = [
         ("cd_data_port_read", args.cd_data_port),
@@ -240,6 +247,7 @@ def main() -> int:
                 "format": "firestaff-theron-source-graphics-order-v1",
                 "ordering": "shared_event_sequence",
                 "interpretation": "temporal_order_only_not_causal_dataflow",
+                "exact_source_lba_filter": args.exact_source_lba,
                 "streams": [event_type for event_type, _ in inputs],
                 "filtered_prefix_streams": filtered_prefix_streams,
                 "completeness": (

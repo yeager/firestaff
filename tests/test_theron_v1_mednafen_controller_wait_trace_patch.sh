@@ -662,6 +662,23 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
     printf '%s\n' 'FAIL: PCE Fast CD RAM target-write provenance trace is missing or not wired into live capture' >&2
     exit 1
 fi
+if ! awk '
+    /static void TheronTraceCDDataPortRead\(/ { in_reader = 1 }
+    in_reader && /TheronTracePCEFastVWRTraceGateOpen = true/ { gate = NR }
+    in_reader && /if\(exact_source_lba_requested &&/ {
+        if (!gate || gate >= NR) exit 1
+        exact_filter = NR
+    }
+    in_reader && /if\(count >= trace_limit\)/ {
+        if (!gate || gate >= NR) exit 1
+        count_limit = NR
+    }
+    in_reader && /^ static INLINE uint8 read_1808/ { in_reader = 0 }
+    END { if (!exact_filter || !count_limit) exit 1 }
+' "$cd_ram_target_write_patch_file"; then
+    printf '%s\n' 'FAIL: trace filters must not prevent the Track 02 VRAM gate from opening' >&2
+    exit 1
+fi
 if ! grep -Fq 'trace_files_are_line_delimited "$trace" "$cd_trace"' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: PCE Fast runtime window trace is not checked for line-delimited records' >&2

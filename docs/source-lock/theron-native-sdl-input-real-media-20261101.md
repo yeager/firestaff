@@ -25,7 +25,7 @@ through its regular SDL event loop and checks:
   does not advance the dungeon tick.
 
 All three runs passed. Their durations were 116.17, 116.36, and 115.60 seconds
-(348.18 seconds total). The exact command was:
+(348.13 seconds total). The exact command was:
 
 ```sh
 FIRESTAFF_TEST_SCRATCH_ROOT=/external/scratch/theron-input \
