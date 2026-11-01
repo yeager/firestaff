@@ -98,6 +98,15 @@ preserve these source-specific branches, RNG order, or all pending-injury and
 wake state. The named-symbol and active-source audits mark the reviewed rows
 `PARTIAL`; platform-specific player-wound parity remains open.
 
+2026-11-01 authentic Macintosh embedded SND resource coverage: the original
+English application Resource Manager fork contains 139 non-contiguous format-2
+`snd ` resources in the 6000–6540 ID range. The real-media sound test now
+resolves every source ID in that range and verifies its format, embedded PCM
+bounds, sample rate, and uncompressed encoding against the original ZIP.
+`dm2_v1_mac_sound_real` passes using the installed original game data. This
+proves resource parsing only: gameplay sound-event-to-resource mapping and
+native output from those gameplay events remain open.
+
 2026-11-01 skproject source inventory and legacy DOS shooter review:
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.

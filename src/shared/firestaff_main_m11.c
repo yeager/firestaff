@@ -1052,7 +1052,7 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--platform") == 0) {
-            if (i + 1 >= argc) {
+            if (i + 1 >= argc || is_option_token(argv[i + 1])) {
                 fprintf(stderr,
                         "firestaff: --platform requires a value: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
                 return 2;

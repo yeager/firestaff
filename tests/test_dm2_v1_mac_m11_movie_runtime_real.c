@@ -201,6 +201,7 @@ static int check_credits_audio_cancel(M11_GameViewState* state,
 {
     DM2_V1_BootProfile* profile = (DM2_V1_BootProfile*)state->dm2BootProfile;
     DM2_V1_MacSoundSample sample;
+    int8_t *sample_pcm;
     unsigned int hash = 2166136261u;
     size_t i;
     int before = 0;
@@ -237,17 +238,31 @@ static int check_credits_audio_cancel(M11_GameViewState* state,
          (state->audioState.movieStream &&
           SDL_GetAudioStreamQueued((SDL_AudioStream*)state->audioState.movieStream) > 0)),
         "credits authentic PCM decoded and transported");
-    AUDIO_CHECK(dm2_v1_mac_sound_find(profile->mac_sound_resource_fork[DM2_V1_MAC_SOUND_GENERAL],
-            profile->mac_sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL], 10001, &sample) == 0 &&
-        sample.valid && sample.sample_data_size, "original snd resource lookup");
+    if (dm2_v1_mac_sound_find(
+            profile->mac_sound_resource_fork[DM2_V1_MAC_SOUND_GENERAL],
+            profile->mac_sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL],
+            10001, &sample) != 0 &&
+        dm2_v1_mac_sound_find(profile->mac_application_resource,
+                              profile->mac_application_resource_size,
+                              6000, &sample) != 0)
+        return 0;
+    AUDIO_CHECK(sample.valid && sample.sample_data_size &&
+        sample.encode == 0u, "original snd resource lookup");
+    sample_pcm = (int8_t*)malloc(sample.sample_data_size);
+    AUDIO_CHECK(sample_pcm != NULL, "sample conversion allocation");
     for (i = 0; i < sample.sample_data_size; ++i) {
-        hash ^= sample.sample_data[i];
+        sample_pcm[i] = (int8_t)((int)sample.sample_data[i] - 128);
+        hash ^= (uint8_t)sample_pcm[i];
         hash *= 16777619u;
     }
-    AUDIO_CHECK(M11_Audio_PlayDm2MacSndPcm(&state->audioState,
-            (const int8_t*)sample.sample_data, (int)sample.sample_data_size,
-            (int)((sample.sample_rate_fixed + 0x8000u) >> 16), sample.resource_id,
-            hash ? hash : 1u), "original snd playback receipt");
+    {
+        int accepted = M11_Audio_PlayDm2MacSndPcm(
+            &state->audioState, sample_pcm, (int)sample.sample_data_size,
+            (int)((sample.sample_rate_fixed + 0x8000u) >> 16),
+            sample.resource_id, hash ? hash : 1u);
+        free(sample_pcm);
+        AUDIO_CHECK(accepted, "original snd playback receipt");
+    }
     AUDIO_CHECK(state->audioState.dm2MacSndAccepted &&
         state->audioState.dm2MacSndPcm.sampleCount > 0, "authentic snd resource accepted");
     if (!no_audio) {

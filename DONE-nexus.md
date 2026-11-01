@@ -1,5 +1,24 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-01 — Match an authentic gameplay VDP pass in Firestaff
+
+- Added an optional real-media test case with SHA-256-pinned VDP1 FBS, VDP2
+  VRAM/CRAM/registers and Ymir final RGBX input for Japanese retail gameplay
+  save-state frame 0.
+- On TRV2, the capture-only priority compositor reproduced every one of the
+  71,680 RGB pixels in the Ymir 320×224 final software-rendered framebuffer.
+  The resulting layer counts are 64,804 VDP1, 3,297 NBG0, 74 NBG1 and 3,505
+  NBG2 pixels, with no empty pixels or unsupported color-calculation/shadow
+  cases.
+- Ymir's NBG1 8bpp trace had 71,680 valid fetches; all dot bytes agreed with
+  the same-pass raw VDP2 VRAM snapshot. The existing test also passes without
+  external capture variables.
+- This is one state on Ymir and capture-only host composition. It does not
+  establish all-frame/hardware parity or authorize the live renderer. Details
+  and reproduction steps are in
+  [`docs/nexus_vdp2_gameplay_pass0_composition.md`](docs/nexus_vdp2_gameplay_pass0_composition.md);
+  raw evidence remains on the external disk.
+
 ## 2026-10-31 — Replay authentic NBG0 live-row scrolling
 
 - Added a capture-only NBG0 bitmap sampler that consumes verified Ymir
