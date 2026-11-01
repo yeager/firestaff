@@ -7866,6 +7866,7 @@ static int dm2_runtime_destroy_door_timer(void *user,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
     int map, x, y, raw;
     (void)source_index;
     (void)receipt;
@@ -7873,6 +7874,7 @@ static int dm2_runtime_destroy_door_timer(void *user,
     if (!timer || !rt || !rt->boot || !rt->boot->dungeon_data)
         return 1;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
 
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
     x = (int)(int8_t)(timer->value_a & 0xff);
@@ -7884,6 +7886,8 @@ static int dm2_runtime_destroy_door_timer(void *user,
     if (dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y,
                                     (uint16_t)raw) < 0)
         return 0;
+    if (game && map == game->current_level)
+        rt->light_check_pending = 1;
     return 1;
 }
 
