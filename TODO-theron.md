@@ -29,13 +29,19 @@ and the static eight-byte candidate at `$5039` matches in authentic US and JP
 stage-two payloads. A later authentic cold run records the ordered
 `$C852`→`$C85E`→`$5039` dispatch with MPR2 `$68`; the live target bytes are
 `44 05 86`, not the static candidate. Thus runtime dispatch is observed but
-the target source owner and row semantics remain unresolved. The same package
-was rejected because live `$45C3` did not match retail Track 02 and other
-traces reached their caps. The instrumented PCE Fast sidecar and complete
+the target source owner and row semantics remain unresolved. A new identity-
+checked scan compared 102 unique MPR2 `$68` code windows against full raw US
+Track 02 and Track 19; neither contains a single contiguous 8 KiB page matching
+the runtime bytes. This is a bounded raw-source search and does not rule out
+decoding, relocation, mixed source segments or runtime writes. Capture the
+source read, System Card copy/decode, destination span and later instruction
+fetches in one event sequence. The same package was rejected because live
+`$45C3` did not match retail Track 02 and other traces reached their caps. The instrumented PCE Fast sidecar and complete
 patch-only chain passed their focused checks. An authentic JP state-only run
 separately hit the shared 8,192-row cap before `$C852`, reported
 `not_observed` in its independent sidecar, and executed no `$5039`. See the
 [US runtime call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md),
+[MPR2 page source-scan report](docs/source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [static source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md),
 and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 

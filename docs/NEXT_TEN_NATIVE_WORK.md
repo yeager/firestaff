@@ -50,8 +50,12 @@ contains only the next cross-game work items, not a complete Theron inventory.
    8,192-row cap without `$C852` or `$5039`. A separate `<trace>.c852-runtime-window`
    sidecar records a bounded first-hit window without consuming that cap; the
    JP run reports `not_observed`. The ordered US `$C852`→`$C85E`→`$5039` path is now observed in a bounded
-   authentic reference trace; the full package is rejected and target source
-   ownership remains open. See [the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+authentic reference trace. A hash-gated scan of 102 unique MPR2 `$68` windows
+found no contiguous 8 KiB match in raw US Track 02 or Track 19; decoded,
+relocated, mixed-source or runtime-written code remains possible. The full
+package is rejected and target source ownership remains open. See [the page
+source scan](source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
+[the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
    No Drator-positioned save or state artifact is checked into the repository,
    so reproduce the route from hash-verified media in a fresh profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold

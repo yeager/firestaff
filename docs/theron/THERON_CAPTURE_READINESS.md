@@ -75,7 +75,12 @@ payloads. The earlier capture available when this static candidate was first
 reported had no MPR2 or instruction path for the call. The latest US trace records `$C85E` and the following `$5039` dispatch with
 ordered events and all MPRs, but the live target bytes do not match the static
 stage-two candidate. Binding the runtime target to authentic source bytes,
-then following the operand read and `$3879` path, remains open. See the
+then following the operand read and `$3879` path, remains open. An identity-
+checked scan compared all 102 unique MPR2 `$68` instruction windows with raw
+US Track 02 and Track 19 and found no contiguous 8 KiB source-page match. This
+bounded scan does not rule out decoded, relocated, mixed-source or runtime-
+written code. Capture the page's source read and destination writes before
+assigning ownership. See the [runtime page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md),
 [ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and the
 [static candidate report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 The PCE and PCE Fast `$3879` trace-hook extension starts a bounded

@@ -12,8 +12,13 @@
 ;
 ; The US caller bytes at $C85E are statically `JSR $5039`, and the caller
 ; window at raw offset $A3AD2 was matched to an authentic runtime fetch.
-; Runtime MPR2 at the call, execution at $5039, the $3879 callee mapping,
-; and gameplay meaning are not established by these static source bytes.
+; An authentic US cold trace later observed $C85E -> $5039 under MPR2=$68,
+; but live bytes at $5039 were 44 05 86, not the candidate bytes below.
+; A scan of the 102 unique MPR2=$68 fetch windows found no contiguous 8 KiB
+; page match in raw US Track 02 or Track 19. Runtime target source ownership,
+; the $3879 callee mapping, and gameplay meaning remain unresolved; see
+; theron-us-c852-runtime-call-capture-20261101.md and
+; theron-us-mpr2-68-runtime-page-source-scan-20261101.md.
 
         .setcpu "huc6280"
 

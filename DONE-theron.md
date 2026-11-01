@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — scan the authentic US runtime MPR2 page against retail source
+
+- Added `analyze_theron_runtime_mpr_page_source.py`, which validates the
+  complete 129-dispatch authentic runtime window, MPR-to-physical-PC mapping,
+  and ordered `$C85E` `JSR $5039` to the following `$5039` dispatch before
+  searching source bytes.
+- Checked the captured 102 unique MPR2 `$68` code windows against the full
+  identity-verified US raw Track 02 and Track 19 images. No single contiguous
+  8 KiB page in either raw image matches all observed windows. Live `$5039`
+  begins `44 05 86`, unlike the static Track 02 candidate `31 4F 20`.
+- Ran the analysis three consecutive times against the same authentic trace
+  and media; both runs' source candidate sets were identical and empty. This
+  does not rule out decoded, relocated, mixed-segment or runtime-written code,
+  and it assigns no gameplay semantics. See the
+  [source-scan report](docs/source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md).
+
 ## 2026-11-01 — isolate authentic `$C852` instruction windows from shared trace cap
 
 - Added a dedicated PCE Fast sidecar, `<trace>.c852-runtime-window`, that

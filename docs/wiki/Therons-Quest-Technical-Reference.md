@@ -34,7 +34,12 @@
 > stage-two candidate. The capture wrapper rejected the package because live
 > `$45C3` bytes did not match retail Track 02 and multiple traces reached
 > their caps. This is bounded disassembly evidence, not an accepted capture
-> package or a gameplay claim. See the
+> package or a gameplay claim. Three identity-checked searches found no
+> contiguous 8 KiB page in raw US Track 02 or Track 19 matching the 102 unique
+> MPR2 `$68` instruction windows. Decoded, relocated, mixed-source, or
+> runtime-written code remains possible; capture the page population path
+> before assigning ownership. See the [runtime-page scan](../source-lock/theron-disassembly/theron-us-mpr2-68-runtime-page-source-scan-20261101.md)
+> and the
 > [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
