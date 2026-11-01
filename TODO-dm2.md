@@ -2575,3 +2575,14 @@ path. The regression passes, as does the normal Amiga CLI/start-menu test; all
 or fallback draws. The captured 320x200 image passes the existing
 viewport/HUD region checks, but there is still no same-pose original Amiga
 capture for pixel-parity review, so the reported visual mismatch remains open.
+
+
+2026-11-02 skproject `ADD_ITEM_TO_PLAYER` DOS/SPX v4/v5: compared all three
+implementations and their slot tables. They share the five source groups
+(2..5, 10, type-5 hands, type-6 hands, 13..29) and first-fit/mode-0 behavior;
+Firestaff has this slot policy in a new-game receipt plus a SPX-v4 compatibility
+adapter. No live runtime owner binds it to cryocell revival/wall possessions.
+Source leaves the object on the tile chain when it equips it, then later cuts
+hero possessions from the tile during revival movement, so that owner must
+coordinate inventory bonuses, tile-chain links, hero/session snapshot, and
+platform dispatch. All DOS/SPX v4/v5 rows remain partial.
