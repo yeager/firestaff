@@ -142,7 +142,7 @@ def main() -> int:
     # the bitmap and CRAM bytes across the target-frame-to-snapshot interval.
     registers = (dumps / "vdp2-registers.bin").read_bytes()
     read_be16 = lambda offset: int.from_bytes(registers[offset:offset + 2], "big")
-    if read_be16(0x28) != 0x0013 or read_be16(0x2E) != 0 or read_be16(0xE4) != 0:
+    if read_be16(0x28) != 0x0013 or read_be16(0x2C) != 0 or read_be16(0xE4) != 0:
         raise ValueError("final snapshot does not match the base-zero 8bpp bitmap lane")
     palette_base = 0
 
