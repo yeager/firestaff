@@ -140,6 +140,12 @@ and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
+The bounded native `--debug` spawn-source receipt has also been verified in
+three headless JP loops against an independent extraction from the
+hash-verified Track 02 BIN; an authentic DM1 control emitted no Theron
+receipt. This confirms source-metadata reporting only, not original spawn
+selection, creature generation or visible rendering. See the
+[receipt evidence](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 The latest cold Japanese System Card reference trace separately binds the
 `$1800=$C8`, `$1801=$04` callback to `$2259=$04` and BIOS branch
 `$E166->$E176`; no game-owned handoff was observed. A separate cold Japanese
