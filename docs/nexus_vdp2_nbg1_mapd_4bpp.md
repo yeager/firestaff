@@ -22,6 +22,12 @@ unique cells and nonzero palette indices for all 71,680 output pixels. This is
 a plane-decode result; it does not establish that every pixel is visible in
 Ymir's rendered NBG1 layer.
 
+The captured `SCRCTL` value is zero. The bounded decoder now rejects all four
+NBG1 line-state controls in `SCRCTL` bits 8–11 (vertical cell scroll, line
+scroll X/Y, and line zoom), because this capture lane does not implement those
+modes. The authentic MAPD regression asserts each bit independently and
+requires the decoder to reject the altered register state.
+
 ## Reproduction
 
 From the Firestaff repository root, build the focused test, then point it at

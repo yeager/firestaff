@@ -384,6 +384,10 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
     uint8_t saved_scrctl[2], saved_bgon[2];
+    static const uint16_t unsupported_scrctl_flags[] = {
+        0x0100U, 0x0200U, 0x0400U, 0x0800U
+    };
+    unsigned int i;
     int ok = 0;
 
     if (!vram_path && !cram_path && !registers_path) return 1;
@@ -418,12 +422,18 @@ static int run_external_ymir_mapd_nbg1_pass(void)
         !write_capture_plane(output_path, plane))
         goto cleanup;
     memcpy(saved_scrctl, registers + 0x9aU, sizeof(saved_scrctl));
-    be16(registers + 0x9aU, 0x0200U);
-    if (nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
-            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
-            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
-            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
-            1, &receipt)) goto cleanup;
+    for (i = 0U; i < sizeof(unsupported_scrctl_flags) /
+                        sizeof(unsupported_scrctl_flags[0]); ++i) {
+        uint16_t original_scrctl =
+            (uint16_t)(((uint16_t)saved_scrctl[0] << 8U) | saved_scrctl[1]);
+        be16(registers + 0x9aU,
+            (uint16_t)(original_scrctl | unsupported_scrctl_flags[i]));
+        if (nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
+                plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+                cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+                registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+                1, &receipt)) goto cleanup;
+    }
     memcpy(registers + 0x9aU, saved_scrctl, sizeof(saved_scrctl));
     memcpy(saved_bgon, registers + 0x20U, sizeof(saved_bgon));
     be16(registers + 0x20U,
