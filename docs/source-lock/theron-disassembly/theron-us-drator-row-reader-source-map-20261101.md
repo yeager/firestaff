@@ -71,6 +71,23 @@ US BIN, at raw offsets `0x095a93`, `0x0df293`, `0x128a93`, `0x172293`,
 identical (SHA-256
 `d894062eb10eb85a6f3e6d24bb8ecb560f84b2130809198a9902ac35b2191b92`).
 
+## Retail-window verifier follow-up (2026-11-01)
+
+The strict fetched-code verifier was exercised with complete 512-byte windows
+read directly from the hash-verified retail BIN at candidate raw offsets. It
+accepted the `$CBC6` window at offsets `0x0A085A`, `0x13385A`,
+`0x21005A`, and `0x25985A`, and the `$45C3` window at
+`0x095A93`, `0x205293`, and `0x24EA93`. These are authentic source
+bytes supplied through a constructed verifier fixture; no emulator run produced
+these reader-window rows. The result validates the verifier's media-hash,
+window, opcode and MPR/physical-PC checks, but it does not identify which
+matching occurrence was active in the Drator capture.
+
+The next capture should retain both reader windows in the same authentic US
+run as the `$1F093B-$1F093D` data reads, then join the shared event sequence
+and preserve all duplicate retail offsets. Until that capture exists, runtime
+source occurrence, downstream buffer meaning and row semantics remain open.
+
 ## Evidence boundary
 
 Together, the capture and static source show that both observed PCs have

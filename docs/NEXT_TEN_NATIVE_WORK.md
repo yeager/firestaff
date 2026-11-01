@@ -31,8 +31,11 @@ contains only the next cross-game work items, not a complete Theron inventory.
    work-buffer copy are proven. The consumer observer reached its cap after
    these reads; the route subsequently reached reentry. The BIOS trace was
    explicitly truncated, and its streaming verifier correctly rejected the
-   marker. Source-map readers `$CBC9` and `$45C3`, trace the work buffer
-   downstream, and establish whether `$C852`
+   marker. A strict tooling verifier now matches constructed `$CBC6` and
+   `$45C3` instruction windows against US retail bytes, with four and three
+   possible raw offsets; capture both windows in a new authentic run to bind
+   the live source occurrence. Then trace the work buffer downstream and
+   establish whether `$C852`
    participates in this row lifecycle. Keep row bytes opaque. This reference
    capture does not replace the native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join. Continue the separate `$C1FC` active-map and movement question:
    its matched input-conditioned transfers may be teleporter destination

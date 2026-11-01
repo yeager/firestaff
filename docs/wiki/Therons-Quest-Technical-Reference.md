@@ -105,13 +105,14 @@
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-> **Drator row-reader source candidates (2026-11-01):** exact reader windows
-> from the authentic US trace match 14 static `$CBC9` load-loop occurrences
-> and seven `$45C3` `TII $2935,$2400,$000A` occurrences in US Track 02. These
-> byte candidates fit the observed workspace reads, but the live fetched
-> instructions are not source-LBA-bound. Do not infer row fields or native
-> spawn behavior. See the
-> [source-candidate report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
+> **Drator reader source-window verifier (2026-11-01):** the strict verifier
+> accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified
+> US retail BIN and reports four and three matching raw offsets, respectively.
+> This exercises the real-media byte matcher with constructed rows; it is not
+> a new emulator capture and does not bind the live fetched instructions to a
+> unique runtime LBA/source occurrence. Keep row fields and native spawn
+> behavior unassigned. See the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md)
+> and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 > **System Card trace tooling (2026-11-01):** the reference capture wrapper
 > can restrict BIOS I/O/RAM rows to the source-locked run-path PCs `$EA4D`,

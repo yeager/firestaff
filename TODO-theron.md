@@ -25,7 +25,7 @@ enable both `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
 an incomplete source join and records a sidecar report. The verifier fixtures
 are not gameplay evidence.
 
-## Next original-game analysis — join Drator reader PCs to fetched source bytes
+## Next original-game analysis — capture the Drator reader source occurrences
 
 An authentic US cold replay proves a same-session write/read match for row
 bytes 6–8. At events 10,644,901, 10,644,902 and 10,644,910, the original
@@ -34,14 +34,14 @@ reader PC `$CBC9` read the same addresses and values. Later, PC `$45C3` executed
 `TII $2935,$2400,$000A` and read the same offsets into a work buffer at events
 10,647,071–73. These observations establish byte-level row consumption, not
 field meanings or complete native creature behavior. Static source searches
-now find US Track 02 candidates for both PCs: `$CBC9` is consistent with a
-`LDA $2935,Y` load at `$CBC6`, and `$45C3` matches `TII $2935,$2400,$000A`.
-The first has 14 source occurrences and the second has seven. The current
-capture does not join fetched opcodes to a particular source LBA/raw offset, so
-runtime code ownership and row semantics remain open. Continue with a bounded
-same-session instruction-byte/source receipt; do not infer creature fields or
-authorize native spawning from the static matches. See the
-[source-candidate report](docs/source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
+find US Track 02 candidates for both PCs: `$CBC9` is consistent with a `LDA $2935,Y` load at `$CBC6`, and `$45C3` matches
+`TII $2935,$2400,$000A`. The strict verifier accepts constructed 512-byte
+windows read from the authenticated retail BIN and reports four `$CBC6` and
+three `$45C3` raw offsets. This validates real source bytes and tooling, but
+the current trace has not captured these windows during an authentic run;
+therefore no live code occurrence or LBA is bound. Keep row semantics open and
+do not infer creature fields or authorize native spawning from these matches.
+See the [source-candidate report](docs/source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
 The isolated cold run recorded 132 runtime `$C852` fetches at physical
 `$0DC852`; the first five 512-byte windows exactly match the authenticated US Track 02 source
@@ -52,8 +52,8 @@ at raw offset `$A3AD2` (SHA-256
 The runtime trace SHA-256 is
 `af0e870c3405700baf34b984bb26b9ef301d06f6ecb4f1b86d28058c7357b3d4`. Later windows vary with execution. The cold route reached `reentered-event` at level
 `$03`, position `$02,$03`. This identifies the code source for the captured
-window; the next analysis is to source-map readers `$CBC9` and `$45C3` and trace
-the buffer's downstream use. The filtered row trace reached its 1,048,576-row
+window; the next analysis is to capture reader windows at `$CBC6` and `$45C3`
+in a new authentic run and trace the buffer's downstream use. The filtered row trace reached its 1,048,576-row
 limit after the same-session byte joins. Keep row bytes opaque; do not label them as position,
 direction or creature fields without source and runtime proof.
 
