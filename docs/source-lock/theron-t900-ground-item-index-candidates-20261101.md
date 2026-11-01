@@ -52,7 +52,9 @@ region: dungeon 1 index 41, dungeon 2 index 63, dungeon 4 index 43 and dungeon
 5 index 44. Some of those indexes do match records in the category tables,
 but those records are not reached from a map cell's ground-reference chain.
 US and JP have the same five ground-linked locations; regional record offsets
-differ.
+differ. In dungeon order 1–7, the exact occurrence-count vector is
+`0,0,2,0,0,1,2` in both regions. The real-media regression asserts that vector
+so a missing or extra ground candidate fails the census.
 
 ## Next capture boundary
 

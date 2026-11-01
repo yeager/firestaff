@@ -27,10 +27,11 @@
   loaded user-data stream. Three direct runs against the identity-checked US
   and JP BINs produced identical output, and the focused CTest passed three
   consecutive runs.
-- Five same-index ground occurrences are shared across US and JP in dungeons
-  3, 6 and 7. The report and TODO make clear that these are capture targets,
-  not quest-item identities, T900 consumers, or permission to enable host
-  inventory/progression semantics.
+- Same-index ground occurrences are shared across US and JP in dungeons 3, 6
+  and 7. The exact per-dungeon counts are `0,0,2,0,0,1,2` in both regions, and
+  the real-media regression asserts them. The report and TODO make clear that
+  these are capture targets, not quest-item identities, T900 consumers, or
+  permission to enable host inventory/progression semantics.
 
 ## 2026-11-01 — bind runtime page joins to one capture
 

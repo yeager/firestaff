@@ -261,6 +261,9 @@ static void verify_variant(const char *path, int variant) {
     static const uint8_t jp_same_index_counts[7] = {
         0u, 11u, 2u, 2u, 0u, 3u, 2u
     };
+    static const uint8_t expected_ground_occurrences[7] = {
+        0u, 0u, 2u, 0u, 0u, 1u, 2u
+    };
     static const char *const us_names[7] = {
         "SHIELD DEFIANT", "TAZA BOOTS", "TAZA POLEYN", "SOUL CAGE",
         "TAZA ARMOR", "TAZAHELM", "THE RETALIATOR"
@@ -455,7 +458,8 @@ static void verify_variant(const char *path, int variant) {
             assert(record_matches ==
                    (variant == 1 ? jp_same_index_counts[dungeon - 1u] :
                                    us_same_index_counts[dungeon - 1u]));
-            assert(ground_matches <= record_matches);
+            assert(ground_matches ==
+                   expected_ground_occurrences[dungeon - 1u]);
             printf("  ground-index-candidate-count region=%s dungeon=%u "
                    "item_index=%u ground_occurrences=%u matching_records=%u\n",
                    variant == 1 ? "JP" : "US", dungeon,
