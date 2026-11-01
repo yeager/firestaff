@@ -2242,11 +2242,12 @@ now invokes the source conditional high-bit `CHANGE_PLAYER_POS` recompute when
 a formation drag is pending; transient source mode/map flags, cursor feedback,
 and other platform routes remain open.
 The M11 DM2 spell-panel path now enters `dm2_v1_runtime_enter_spell_mode`,
-which publishes the selected champion, clears source magical-map rune-mask and
-composed-cost state, and recomputes a pending formation drag. Firestaff retains
-the physical active hand separately for its cast transaction; the v5 source
-command-mask/rune-selection flow is not yet equivalent to the panel's stored
-hero rune sequence. Cursor feedback and non-M11 platform routes remain open.
+which publishes the selected champion, records the source spell-hand sentinel
+and panel-refresh flag, clears source magical-map rune-mask/composed-cost state,
+and recomputes a pending formation drag. The source sentinel is represented
+separately from Firestaff's physical active hand, which its cast transaction
+still consumes. The v5 source command-mask/rune-selection flow is not yet
+equivalent to the panel's stored hero rune sequence. Cursor feedback and non-M11 platform routes remain open.
 Keep the DOS, SPX v4, and SPX v5 source rows partial.
 
 2026-11-01 skproject `ACTUATE_PITFALL`: the live class-2 timer owner now

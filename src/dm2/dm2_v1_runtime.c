@@ -186,6 +186,10 @@ struct DM2_V1_RuntimeState {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
+    int16_t source_selected_hand_action;
+    int16_t source_selected_hand_2;
+    int16_t source_spell_panel_flag;
+    int16_t source_v1e0b6c;
     int16_t source_v1e0b62;
     int16_t source_v1e0b4e;
     int source_drag_in_progress;
@@ -3789,6 +3793,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_selected_hand_action = 0;
+    g_dm2_runtime.source_selected_hand_2 = 0;
+    g_dm2_runtime.source_spell_panel_flag = 0;
+    g_dm2_runtime.source_v1e0b6c = 0;
     g_dm2_runtime.source_v1e0b62 = 0;
     g_dm2_runtime.source_v1e0b4e = 0;
     g_dm2_runtime.source_drag_in_progress = 0;
@@ -20833,6 +20841,10 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         !activation_receipt.valid || !activation_receipt.result) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
+    rt->source_selected_hand_action = (int16_t)hand;
+    rt->source_selected_hand_2 = (int16_t)hand;
+    rt->source_spell_panel_flag = 1;
+    rt->source_v1e0b6c = 1;
     rt->source_v1e0b62 = 0;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
@@ -20883,18 +20895,21 @@ int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand)
     if (hero->curHP == 0) return 0;
     /* DOS/SPX SET_SPELLING_CHAMPION sets both selected-hand globals to the
      * spell sentinel (2), publishes champion+1, clears magical-map flags,
-     * and recomputes a pending formation drag.  Firestaff keeps the physical
-     * hand in party.curactmode for the live cast owner and tracks spell mode
-     * separately, while matching the remaining state transitions. */
+     * and recomputes a pending formation drag. Firestaff stores those UI
+     * selection globals separately because its cast owner still consumes
+     * party.curactmode as the physical hand. */
     rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_selected_hand_action = 2;
+    rt->source_selected_hand_2 = 2;
+    rt->source_spell_panel_flag = 1;
+    rt->source_v1e0b6c = 1;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_v1e0b62 = 0;
     rt->source_v1e0b4e = 0;
     if (rt->source_drag_in_progress)
         dm2_runtime_apply_change_player_pos(
             rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
-    rt->source_curactmode = (int16_t)spell_hand;
-    rt->source_party.curactmode = (int16_t)spell_hand;
+    (void)spell_hand;
     return 1;
 }
 
