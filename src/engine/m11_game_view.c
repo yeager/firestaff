@@ -35802,6 +35802,24 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_set_status(state,actionLabel,"DM1 MAP HANDOFF REJECTED");
         return 0;
     }
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        beforeParty.mapIndex != state->world.partyMapIndex) {
+        /* ReDMCSB NEWMAP.C F0003 selects the destination map's soundtrack.
+         * Stair and post-move callers do this in their own transition shim;
+         * this is the shared movement/teleporter handoff. */
+        if (state->dm1MusicSourceBound) {
+            DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
+            (void)dm1_v1_f0742_set_map_track_pc34(
+                &state->dm1MusicSource, &state->dm1MusicState,
+                state->world.party.mapIndex, &musicReceipt);
+        }
+        if (state->dm1FmtownsStartupReceiptValid) {
+            int cdTrack = dm1_v1_fmtowns_cd_track_for_map(
+                state->world.party.mapIndex);
+            if (cdTrack > 0 && cdTrack != state->dm1FmtownsCddaCurrentTrack)
+                m11_dm1_dispatch_fmtowns_cdda(state, cdTrack);
+        }
+    }
     /* GAMELOOP.C:124-126 burns native hand torches after GameTime++;
      * the source movement queue does not invoke the generic tick wrapper. */
     if (state->dm1IigsActive) {
