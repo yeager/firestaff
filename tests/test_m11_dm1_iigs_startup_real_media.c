@@ -523,6 +523,106 @@ cleanup:
 /* Route from the authentic IIGS stair arrival to the closest active map-one
  * creature. BFS uses the production movement planner for collision rules;
  * replay uses ordinary M11 inputs and never writes party coordinates. */
+static unsigned check_iigs_group_health(const M11_GameViewState *view,
+                                        int group_index) {
+    unsigned total=0u;
+    if (!view || !view->world.things || group_index<0 ||
+        group_index>=view->world.things->groupCount) return 0u;
+    for (unsigned i=0u;i<4u;++i)
+        total+=view->world.things->groups[group_index].health[i];
+    return total;
+}
+
+static int iigs_group_is_in_front(const M11_GameViewState *view,
+                                  int group_index) {
+    static const int dx[4]={0,1,0,-1};
+    static const int dy[4]={-1,0,1,0};
+    const struct DungeonThings_Compat *things;
+    int x,y;
+    unsigned short thing;
+    if (!view || !view->world.dungeon || !view->world.things ||
+        view->world.party.direction<0 || view->world.party.direction>3)
+        return 0;
+    things=view->world.things;
+    x=view->world.party.mapX+dx[view->world.party.direction];
+    y=view->world.party.mapY+dy[view->world.party.direction];
+    thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+        view->world.dungeon,things,view->world.party.mapIndex,x,y);
+    for (unsigned guard=0u;thing!=THING_ENDOFLIST && thing!=THING_NONE &&
+        guard<128u;++guard) {
+        if (THING_GET_TYPE(thing)==THING_TYPE_GROUP &&
+            THING_GET_INDEX(thing)==(unsigned)group_index) return 1;
+        thing=F0512_DUNGEON_GetThingNext_Compat(things,thing);
+    }
+    return 0;
+}
+
+static int check_iigs_player_attack(M11_GameViewState *view, int group_index) {
+    unsigned hp_before,attacks=0u;
+    if (!view || !view->world.things || group_index<0 ||
+        group_index>=view->world.things->groupCount) return 0;
+    hp_before=check_iigs_group_health(view,group_index);
+
+    /* The encounter was reached through ordinary M11 movement. Wait or
+     * turn using ordinary inputs until the authentic C04 occupies the front
+     * square; never send ACTION while a mirror or another object is there. */
+    for (unsigned step=0u;step<512u && attacks<24u;++step) {
+        const struct CreatureAIState_Compat *active=NULL;
+        int dx,dy,desired;
+        if (iigs_group_is_in_front(view,group_index)) {
+            uint32_t tick_before=view->world.gameTick;
+            M11_GameInputResult action_result=M11_GameView_HandleInput(
+                view,M12_MENU_INPUT_ACTION);
+            if (action_result==M11_GAME_INPUT_IGNORED ||
+                view->world.gameTick==tick_before) {
+                (void)M11_GameView_HandleInput(view,
+                    M12_MENU_INPUT_CYCLE_CHAMPION);
+                for (unsigned tick=0u;tick<8u;++tick)
+                    (void)M11_GameView_AdvanceIdleTick(view);
+                continue;
+            }
+            ++attacks;
+            if (check_iigs_group_health(view,group_index)<hp_before) {
+                printf("PASS: authentic IIGS ACTION reduced C04 %d health %u -> %u\n",
+                    group_index,hp_before,
+                    check_iigs_group_health(view,group_index));
+                return 1;
+            }
+            for (unsigned tick=0u;tick<8u;++tick)
+                (void)M11_GameView_AdvanceIdleTick(view);
+            (void)M11_GameView_HandleInput(view,
+                M12_MENU_INPUT_CYCLE_CHAMPION);
+            continue;
+        }
+        for (int i=0;i<view->world.creatureAICount;++i) {
+            const struct CreatureAIState_Compat *candidate=
+                &view->world.creatureAI[i];
+            if (candidate->reserved0==group_index &&
+                candidate->groupMapIndex==view->world.party.mapIndex) {
+                active=candidate;
+                break;
+            }
+        }
+        if (!active) return 0;
+        dx=active->groupMapX-view->world.party.mapX;
+        dy=active->groupMapY-view->world.party.mapY;
+        if (abs(dx)+abs(dy)==1) {
+            desired=dy<0 ? 0 : dx>0 ? 1 : dy>0 ? 2 : 3;
+            if (view->world.party.direction!=desired) {
+                if (M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT)==
+                    M11_GAME_INPUT_IGNORED) return 0;
+                for (unsigned tick=0u;tick<8u;++tick)
+                    (void)M11_GameView_AdvanceIdleTick(view);
+                continue;
+            }
+        }
+        (void)M11_GameView_AdvanceIdleTick(view);
+    }
+    fprintf(stderr,"FAIL: authentic IIGS ACTION caused no C04 %d health loss after %u attacks\n",
+        group_index,attacks);
+    return 0;
+}
+
 static int check_iigs_creature_combat(M11_GameViewState *view) {
     enum { MAX_NODES=32*32*4, MAX_ROUTE=MAX_NODES };
     static const int moves[6]={MOVE_FORWARD,MOVE_RIGHT,MOVE_BACKWARD,
@@ -672,6 +772,7 @@ static int check_iigs_creature_combat(M11_GameViewState *view) {
          * recurrence probe measures the original group timeline instead of
          * ending early through champion death. */
         view->world.magic.partyShieldDefense=100u;
+        if (!check_iigs_player_attack(view,targetGroup)) return 0;
         attackAfterFirst=view->world.lifecycle.lastCreatureAttackTime;
         for (unsigned tick=0u;tick<1500u;++tick) {
             (void)M11_GameView_AdvanceIdleTick(view);
