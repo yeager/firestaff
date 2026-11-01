@@ -45625,6 +45625,7 @@ add_test(NAME nexus_v1_vdp1_ymir_stepper_capture_real
     COMMAND test_nexus_v1_vdp1_ymir_stepper_capture_real)
 set_tests_properties(nexus_v1_vdp1_ymir_stepper_capture_real PROPERTIES
     SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;saturn;vdp1;ymir;frame13162;real-data;capture-only;skip-safe")
 
 add_executable(test_nexus_v1_title_mapd_tibg_admission

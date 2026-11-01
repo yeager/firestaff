@@ -79,28 +79,44 @@ the compositor verifies that the captured texture span is the word-normalized
 form of the retail DGN image, then reads texels from the original DGN byte
 order so nibble selection follows the actual Saturn texture stream.
 
-A separate real-data CTest runs the Ymir-stepper capture path against the
-complete frame-13162 Ymir VDP1 capture. It verifies the hash-pinned 168-row
-trace, command bytes, captured VRAM spans, clip/local-coordinate state,
-single-density register tuple, and capture receipt. It rasterizes 124 mode-1
-distorted sprites and 28 flat polygons in trace order. The other eight mode-5
-commands are checked by the companion frame-window test, which verifies their
-captured source pixels are fully transparent. Together these cover all 160
-draw commands in this frame's trace window.
+A real-data CTest now joins the DGN source resolver to the Ymir-stepper capture
+path for the complete frame-13162 VDP1 capture. It verifies the hash-pinned
+168-row trace, command bytes, clip/local-coordinate state, single-density
+register tuple, and capture receipt. All 113 uniquely source-bound mode-1
+draws use their hash-verified `LEV00.DGN` texels and CLUTs; 11 additional
+mode-1 draws use captured all-zero texels already verified as transparent
+no-ops. The stepper rasterizes all 124 mode-1 draws and 28 flat polygons in
+trace order. The other eight mode-5 commands are checked by the companion
+frame-window test, which verifies their captured source pixels are fully
+transparent. Together these cover all 160 draw commands in this frame's trace
+window.
 
 The resulting first 512x256 Ymir FBS draw buffer matches the capture-only
 replay at native 320x224 coordinates: all 71,680 RGB555 pixels and all 71,680
-opacity bits match exactly. This closes the previous 500-pixel residual for
-this captured VDP1 state. The stepper claims no DGN ownership for its command
-inputs and keeps `renderer_permitted=false`; exact replay of this single Ymir
-buffer does not establish original-Saturn, arbitrary-frame, VDP2-composition,
-or production-renderer parity. The capture data stays outside Git. Set
-`FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its profile directory (or
-`dumps/`) and run:
+opacity bits match exactly while the 113 joined draws are sourced from retail
+DGN data. This closes the previous 500-pixel residual for this captured VDP1
+state and validates the DGN-to-VRAM word normalization through the same-run
+framebuffer comparison. Structure3 face selection, transform and culling
+ownership remain unproven; 11 transparent no-op spans have no DGN image or CLUT
+owner. The stepper keeps `renderer_permitted=false`; this one-state result does
+not establish original-Saturn, arbitrary-frame, VDP2-composition, or
+production-renderer parity. The capture and retail game data stay outside Git.
+The reconstructed RGBA and hash-bound report are retained at
+`firestaff-evidence/nexus/nexus_vdp1_frame13162_retail_dgn_stepper_20261101/`
+on the external disk.
+Set `FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its profile directory (or
+`dumps/`). CTest sets `FIRESTAFF_NEXUS_DATA_DIR` from
+`${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus`; if the retail files are elsewhere,
+configure the build with `-DFIRESTAFF_WORKSPACE_DATA_DIR=/path/to/data` so that
+the `nexus/` subdirectory contains the authentic Japanese files. Then run:
 
 ```sh
 ctest --test-dir build -R '^nexus_v1_vdp1_ymir_stepper_capture_real$' --output-on-failure
 ```
+
+To use a separate data directory without reconfiguring CMake, invoke the test
+executable directly with `FIRESTAFF_NEXUS_DATA_DIR=/path/to/nexus` and the
+capture-directory variable set in the same environment.
 
 The Ymir stepper is a separate capture-only path; it does not enable the
 production renderer. The source references are Ymir
@@ -205,16 +221,16 @@ cmake --build build --target test_nexus_v1_vdp1_frame13162_dgn_window
 ctest --test-dir build -R '^nexus_v1_vdp1_frame13162_dgn_window$' --output-on-failure
 ```
 
-The focused check verifies source joins, executed-command membership, the
-captured user-clip/local-coordinate state, and the hash of the retained
-FBS+NBG0+row-171 composition reference. It does not rasterize rows 8–40 or
-compare their output pixels to the screenshot. A rasterization experiment
-failed that comparison; therefore these DGN draws are not admitted to a parity
-renderer. The eight mode-5 empty masks verify the captured direct-colour
-transparency behavior, not full geometry or scene parity. Gouraud table data
-is attested, but the compositor does not yet apply Ymir's per-pixel Gouraud
-interpolation. Exact polygon coverage, command-to-face ownership, and overlap
-ownership are also unresolved. The harness keeps `renderer_permitted=false`.
+The `nexus_v1_vdp1_frame13162_dgn113_replay` RGBA preview verifies its
+source joins and command state, but it does not rasterize rows 8–40 with the
+Ymir stepper or compare that preview to the Ymir framebuffer. Do not use that
+preview as parity evidence. The separate
+`nexus_v1_vdp1_ymir_stepper_capture_real` regression does use Ymir's per-pixel
+Gouraud interpolation and matches all RGB555 pixels and opacity bits while
+feeding retail DGN bytes for the 113 joined draws. The eight mode-5 empty masks
+verify captured direct-colour transparency, not general mode-5 geometry or
+scene parity. Structure3 face selection, transforms, culling, and overlap
+ownership remain unresolved. Both paths keep `renderer_permitted=false`.
 
 When the local capture files or `LEV00.DGN` are unavailable, CTest reports the
 case as skipped (`77`). No captured VRAM or commercial game data is stored in
