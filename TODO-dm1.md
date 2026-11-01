@@ -1,18 +1,17 @@
 # Firestaff TODO — DM1
 
-2026-11-01 ReDMCSB `DUNGEON.C:F0173` same-map behavior: both Firestaff
-adapters preserve the source early return when the selected map is already
-current. The metadata-aware adapter still lets F0174 refresh its separate
-metadata caches; live transition ownership and platform parity remain open.
-2026-11-01 Follow-up to ReDMCSB `DUNGEON.C:F0173/F0174`: source inspection
-showed F0173 refreshes only core map pointers, dimensions, door info and
-cumulative thing-column counts; F0174 owns allowed-creature and wall/floor/door
-ornament metadata. The descriptor adapter now leaves those metadata pointers
-untouched on F0173 and publishes them from F0174, including the inscription
-ornament ordinal. The simpler dungeon-data adapter still lacks these caches,
-and neither adapter owns a live transition caller, so both symbols remain
-partial across supported editions/platforms. Existing focused assertions were
-updated; CI is the verification path.
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` current-map gap: the active M11
+renderer lazily resolves map data by party-map index and caches F0174 wall,
+floor, and door ornament arrays from the DUNGEON.DAT metadata stream. It also
+wires the party map's wall list to the F0174 G0267 alcove-list consumer during
+render and click handling. The separate descriptor adapters model F0173's
+core pointer/dimension/door/column refresh and F0174's allowed-creature and
+ornament arrays, including the inscription ordinal, but they are not the live
+transition owner. Runtime still reads descriptors directly and updates party
+map state in separate movement code; it does not coordinate all F0173/F0174
+state in one transition route. Both symbols remain partial across supported
+editions/platforms. Existing focused assertions cover the isolated adapters;
+CI is the verification path.
 
 2026-11-01 Authentic PC34 save combat follow-up: `LOADSAVE.C:F0435` restores
 live C04 behavior when rebuilding the transient active-group AI mirror. An
