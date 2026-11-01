@@ -305,6 +305,7 @@ typedef struct {
     int source_items_cut;
     int continuation_timers_queued;
     int sound_queued;
+    int allocation_fallback_items_moved;
 } DM2_V1_ShooterReceipt;
 
 /* ── Item teleport receipt ────────────────────────────────────────── */

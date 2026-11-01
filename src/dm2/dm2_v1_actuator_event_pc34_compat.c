@@ -728,7 +728,7 @@ static void shooter_wr16(const DM2_V1_RecordPoolSet *pools,
  * SKWINSPX/src/v5/sktimprc.cpp:1611-1812 and bitem.cpp:1043-1138;
  * SKWINDOS/dm2byg.cpp:2765-2841 and dm2byc.cpp:359-424. The runtime wall
  * owner supplies its transaction snapshot, session RNG and source noise
- * callback. The DOS DB14-exhaustion MOVE_RECORD_TO fallback remains missing. */
+ * callback. */
 static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
                                  DM2_V1_DungeonData *dungeon,
                                  DM2_V1_SourceTimerQueue *queue,
@@ -845,11 +845,32 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
     for (int i = 0; i < object_count; ++i) {
         int projectile_dir = i == 0 ? launch_dir : ((launch_dir + 1) & 3);
         int16_t db14 = dm2_v1_record_pool_alloc_new_record(pools, 14u);
-        uint8_t *missile = dm2_v1_record_pool_address_mut(pools, db14);
+        uint8_t *missile = db14 >= 0
+            ? dm2_v1_record_pool_address_mut(pools, db14) : NULL;
         int16_t head;
         int tile_raw;
         DM2_V1_SourceTimer follow;
-        if (db14 < 0 || !missile || pools->pools[14].record_size < 8)
+        if (db14 < 0) {
+            /* SKULLWIN/c_item.cpp:1058-1068 and SPX v4 skgame.cpp:451-459:
+             * if the DB14 missile record cannot be allocated, ordinary
+             * items are placed on the launch tile facing the projectile
+             * direction. Cloud objects have no such fallback. The caller's
+             * wall-mecha snapshot owns rollback if MOVE_RECORD_TO cannot
+             * complete this source fallback. */
+            if (dm2_v1_record_handle_pool(objects[i]) != 0x0f) {
+                DM2_V1_MoveRecordToReceipt move;
+                memset(&move, 0, sizeof(move));
+                if (!dm2_v1_move_record_to(
+                        pools, dungeon, queue, objects[i], -1, 0,
+                        (int16_t)launch_x, (int16_t)launch_y,
+                        (int16_t)projectile_dir, map, game_tick, &move) ||
+                    move.fail_closed)
+                    return 0;
+                receipt->allocation_fallback_items_moved++;
+            }
+            continue;
+        }
+        if (!missile || pools->pools[14].record_size < 8)
             return 0;
         /* c_item.cpp:1097-1100 — DM2_SHOOT_ITEM requests GEN2 noise before
          * publishing the missile record/timer. Noise is best-effort: the
