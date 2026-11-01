@@ -1,12 +1,14 @@
-2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS mouse compositor review:
-`sub_min`/`sub_max`, `driver_drawmouse`, and `driver_drawmouse_clipped`
-(586-671, 887 onward) calculate overlapping dirty rectangles, restore and
-repaint the software cursor background, preserve mask/blit state, serialize
-draws, and gate redraws on source mouse/interrupt state. Firestaff delegates
-cursor composition to SDL/window-system paths; its mouse visibility/event
-helpers are not equivalent to this framebuffer compositor. The four DOS
-definitions are now `PARTIAL`; dirty-rectangle and background restoration
-parity have no Firestaff owner.
+2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS mouse path review:
+`driver_restoremousebackground`, `sub_min`/`sub_max`, `driver_drawmouse`,
+`driver_mouseblit`, `driver_drawmouse_clipped`, `driver_force_restoremousebkg`,
+and `driver_execmouseentry_T1` (569-671, 710-828, 887-1009) maintain and
+restore the software cursor, composite masked pixels during framebuffer blits,
+serialize cursor redraw, and dispatch source mouse-button transitions.
+Firestaff delegates cursor drawing to SDL/window-system paths and handles input
+through M11/UI owners; these do not reproduce the DOS framebuffer overlay,
+restore-counter, or interrupt-state contract. Eight DOS definitions are now
+`PARTIAL`; the source mouse compositor and exact event transition contract
+remain unmatched.
 
 2026-11-01 skproject `DM2_CREATURE_CAST_SPELL` source review:
 SKULLWIN and SPX v5 share direction/AI admission, item-ID-specific strength
