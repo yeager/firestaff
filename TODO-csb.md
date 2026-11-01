@@ -11,6 +11,14 @@ checks pass for A31E, A31M, A33 multilingual, A35E and A35M CTRaw. They confirm
 drivers; native display/audio playback and other platforms' independent intro
 paths are not covered. Published v3.0.422 predates this correction.
 
+The authentic `csb_v1_amiga_native_cli_boot` regression now also requires the
+selected Amiga SWSH startup receipt (`17` decoded frames and `30` source
+VBlanks) on direct CLI startup; it passed against the installed original A31
+archive. A separate `--debug --boot-probe` run selected A31M from that archive,
+reported the completed SWSH prelude, and entered its TITL animation. This
+verifies the host's headless startup path; native Amiga hardware playback and
+physical display timing remain unverified.
+
 2026-11-01 CSB Amiga intro missing in v3.0.422: the no-game picker can select
 the authentic A31M multilingual disk, but the FTL prelude previously rescanned
 the whole CSB data directory and could bind an A31E sibling instead. The
