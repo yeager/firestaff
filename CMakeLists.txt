@@ -19687,6 +19687,14 @@ endif()
         target_compile_options(test_dm2_v1_g1_record_graph_diagnostic PRIVATE
             -Wall -Wextra -O2)
     endif()
+    add_test(
+        NAME dm2_v1_g1_record_graph_diagnostic_real_media
+        COMMAND test_dm2_v1_g1_record_graph_diagnostic
+    )
+    set_tests_properties(dm2_v1_g1_record_graph_diagnostic_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "DM2_DUNGEON_DAT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/dos_extract/data/dungeon.dat"
+    )
 
     # Canonical-user-media proof for source tile/root scene classification.
     add_executable(test_dm2_v1_g1_direct_scene_classification_real_data

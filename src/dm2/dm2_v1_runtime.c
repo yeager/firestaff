@@ -8969,17 +8969,31 @@ static int dm2_runtime_queue_shooter_noise(
 {
     DM2_RuntimeShooterNoiseContext *noise =
         (DM2_RuntimeShooterNoiseContext *)context;
+    DM2_V1_RuntimeState *rt;
     DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SoundQueueState sound_queue_before;
+    DM2_V1_SourceTimerQueue timer_queue_before;
     uint8_t cls1 = 0xffu;
     uint8_t cls2 = (uint8_t)(item & 0x03ffu);
-    if (!noise || !noise->runtime || !noise->runtime->sound_queue_ready ||
+    if (!noise || !noise->runtime) return 0;
+    rt = noise->runtime;
+    if (!rt->sound_queue_ready ||
         !dm2_v1_skproject_query_cls1_from_record_ex(
-            item, &noise->runtime->record_pools, &cls1, &cls1_receipt) ||
+            item, &rt->record_pools, &cls1, &cls1_receipt) ||
         !cls1_receipt.valid)
         return 0;
-    return dm2_runtime_queue_door_collision_noise(
-        noise->runtime, map, x, y, cls1, cls2, 0x86, 0xfe, 0x6e, 0x80,
-        game_tick, noise->source_index);
+    /* c_item.cpp's source noise call cannot veto a projectile. Keep any
+     * delayed-slot reservation and type-0x15 timer atomic when best-effort
+     * audio admission fails, then let ACTIVATE_SHOOTER continue. */
+    sound_queue_before = rt->sound_queue;
+    timer_queue_before = rt->timer_queue;
+    if (dm2_runtime_queue_door_collision_noise(
+            rt, map, x, y, cls1, cls2, 0x86, 0xfe, 0x6e, 0x80,
+            game_tick, noise->source_index))
+        return 1;
+    rt->sound_queue = sound_queue_before;
+    rt->timer_queue = timer_queue_before;
+    return 0;
 }
 
 /*

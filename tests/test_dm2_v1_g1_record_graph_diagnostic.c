@@ -11,7 +11,10 @@
 
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_timeline.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -189,6 +192,179 @@ static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
     return 1;
 }
 
+/* Run one wall shooter from the retail DOS dungeon.  The actuator's w6
+ * bytes are projectile payload, while the timer's XcoordB/YcoordB identify
+ * the shooter tile; require those positions to differ so this check catches
+ * accidental use of the payload as map coordinates.  Source:
+ * SKWIN/SkWinCore.cpp ACTUATE_WALL_MECHA around 62036 and ACTIVATE_SHOOTER
+ * around 61938. */
+static int verify_real_wall_shooter(DM2_V1_DungeonData *d)
+{
+    DM2_V1_RecordPoolSet pools = {0};
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_DropRng rng;
+    DM2_V1_ActuatorEventReceipt event;
+    int found = 0;
+    int map = -1, x = -1, y = -1, direction = -1;
+    const uint8_t *actuator_record = NULL;
+
+    if (!d || !dm2_v1_record_pool_set_init_from_dungeon(&pools, d))
+        return 0;
+    /* Fresh GAME_LOAD allocates the source-reserved DB14/DB15 spans after
+     * copying the File_header's static pools. Reproduce those source-sized
+     * slots around the authenticated retail records; do not invent item or
+     * dungeon records. Source: c_savegame.cpp:395 and c_dballoc.cpp. */
+    for (int db = 14; db <= 15; ++db) {
+        DM2_V1_RecordPool *pool = &pools.pools[db];
+        const int source_count = pool->record_count;
+        const int reserve = dm2_v1_table_1d281c[db];
+        const int hard_limit = db == 15 ? 0x300 : 0x400;
+        int capacity;
+        size_t old_size;
+        size_t new_size;
+        uint8_t *expanded;
+        if (source_count < 0 || reserve <= 0 ||
+            source_count > hard_limit - reserve || pool->record_size <= 0 ||
+            pool->extension_count != 0 || pool->extension_bytes != NULL) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        capacity = source_count + reserve;
+        old_size = (size_t)source_count * (size_t)pool->record_size;
+        new_size = (size_t)capacity * (size_t)pool->record_size;
+        if (old_size != 0u && !pool->bytes) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        expanded = (uint8_t *)calloc(1u, new_size);
+        if (!expanded) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        if (old_size != 0u) memcpy(expanded, pool->bytes, old_size);
+        for (int index = pool->record_count; index < capacity; ++index) {
+            uint8_t *record = expanded +
+                (size_t)index * (size_t)pool->record_size;
+            record[0] = 0xffu;
+            record[1] = 0xffu;
+        }
+        free(pool->bytes);
+        pool->bytes = expanded;
+        pool->record_count = capacity;
+    }
+    /* Prefer the two trap-shooter types that do not allocate DB-items.
+     * Fall back to the other authentic shooter variants if needed. */
+    for (int pass = 0; pass < 2 && !found; ++pass) {
+        for (int m = 0; m < d->level_count && !found; ++m) {
+            for (int tx = 0; tx < d->level_widths[m] && !found; ++tx) {
+                for (int ty = 0; ty < d->level_heights[m] && !found; ++ty) {
+                    int link = dm2_v1_dungeon_get_first_thing(d, m, tx, ty);
+                    int db3_count = 0;
+                    int shooter_handle = -1;
+                    uint8_t shooter_type = 0;
+                    const uint8_t *shooter = NULL;
+                    int budget = 0;
+                    while (link >= 0 && link != (int)DM2_THING_END_MARKER &&
+                           link != (int)DM2_THING_NULL_MARKER && budget++ < 4096) {
+                        int type = -1;
+                        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                            d, (uint16_t)link, &type, NULL, NULL);
+                        if (!record) break;
+                        if (type == 3) {
+                            ++db3_count;
+                            shooter_type = dm2_actu_type(record);
+                            if (shooter_type == DM2_ACTU_SOME_SHOOTER ||
+                                shooter_type == DM2_ACTU_MISSILE_SHOOTER ||
+                                shooter_type == DM2_ACTU_WEAPON_SHOOTER ||
+                                shooter_type == DM2_ACTU_MISSILE_SHOOTER_2 ||
+                                shooter_type == DM2_ACTU_ITEM_SHOOTER ||
+                                shooter_type == DM2_ACTU_ITEM_SHOOTER_X2) {
+                                shooter_handle = link;
+                                shooter = record;
+                            }
+                        }
+                        link = dm2_v1_dungeon_get_next_thing(d,
+                                                              (uint16_t)link);
+                    }
+                    if (!shooter || db3_count != 1 ||
+                        (pass == 0 && shooter_type != DM2_ACTU_MISSILE_SHOOTER &&
+                         shooter_type != DM2_ACTU_MISSILE_SHOOTER_2))
+                        continue;
+                    direction = (int)(((uint16_t)shooter_handle >> 14) & 3u);
+                    if (tx + dm2_x_delta(direction) < 0 ||
+                        ty + dm2_y_delta(direction) < 0 ||
+                        tx + dm2_x_delta(direction) >= d->level_widths[m] ||
+                        ty + dm2_y_delta(direction) >= d->level_heights[m] ||
+                        ((int)dm2_actu_xcoord(shooter) == tx &&
+                         (int)dm2_actu_ycoord(shooter) == ty))
+                        continue;
+                    map = m;
+                    x = tx;
+                    y = ty;
+                    actuator_record = shooter;
+                    found = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (!found) {
+        dm2_v1_record_pool_set_free(&pools);
+        fputs("FAIL: authentic retail DOS dungeon has no isolated, in-bounds shooter probe\n",
+              stderr);
+        return 0;
+    }
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_drops_rng_init(&rng);
+    memset(&event, 0, sizeof(event));
+    {
+        int dispatch_result = dm2_v1_actuate_wall_mecha_with_rng(
+            &pools, d, NULL, NULL, &queue, map, x, y, 0, direction, 100,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &rng,
+            &event);
+        if (!dispatch_result || !event.valid || event.fail_closed ||
+            event.shooter_invoked != 1 || queue.count == 0u) {
+            fprintf(stderr,
+                "INFO: shooter probe map=%d tile=(%d,%d) dir=%d actuator-type=%u data=%u payload=(%d,%d) DB14=%d/%d result=%d valid=%d fail=%d dispatched=%d queue=%zu\n",
+                map, x, y, direction, dm2_actu_type(actuator_record),
+                dm2_actu_data(actuator_record),
+                dm2_actu_xcoord(actuator_record), dm2_actu_ycoord(actuator_record),
+                pools.pools[14].record_count, pools.pools[14].record_size,
+                dispatch_result, event.valid, event.fail_closed,
+                event.shooter_invoked, queue.count);
+            dm2_v1_record_pool_set_free(&pools);
+            fputs("FAIL: retail wall shooter did not publish its source event\n",
+                  stderr);
+            return 0;
+        }
+    }
+    {
+        int matched = 0;
+        int expected_x = x + dm2_x_delta(direction);
+        int expected_y = y + dm2_y_delta(direction);
+        for (size_t i = 0; i < queue.count; ++i) {
+            const DM2_V1_SourceTimer *timer = &queue.timers[i];
+            if (timer->type == 0x1eu &&
+                (timer->value_b & 0x1fu) == expected_x &&
+                ((timer->value_b >> 5) & 0x1fu) == expected_y) {
+                matched = 1;
+                break;
+            }
+        }
+        if (!matched) {
+            dm2_v1_record_pool_set_free(&pools);
+            fputs("FAIL: retail shooter missile timer did not use its wall tile\n",
+                  stderr);
+            return 0;
+        }
+    }
+    printf("PASS: retail wall shooter on map %d (%d,%d) publishes at timer position\n",
+           map, x, y);
+    dm2_v1_record_pool_set_free(&pools);
+    return 1;
+}
+
 int main(void) {
     const char *paths[] = {
         NULL,
@@ -220,7 +396,7 @@ int main(void) {
     }
     if (!dat) {
         printf("SKIP: no DM2 DUNGEON.DAT available\n");
-        return 0;
+        return 77;
     }
 
     memset(&d, 0, sizeof(d));
@@ -234,7 +410,6 @@ int main(void) {
         printf("FAIL: real PUSH_BUTTON_SWITCH direct-door atom was rejected\n");
         ++failures;
     }
-
     printf("G1 record graph: levels=%d, records=%d, graph_complete=%d\n",
            d.level_count, d.square_first_thing_count,
            d.record_graph_complete);
@@ -614,6 +789,7 @@ int main(void) {
         }
     }
 
+    if (!verify_real_wall_shooter(&d)) ++failures;
     dm2_v1_dungeon_free(&d);
     free(dat);
 

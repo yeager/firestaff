@@ -746,7 +746,6 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
     int budget = 0;
     int16_t cursor;
     if (!pools || !pools->valid || !dungeon || !queue || !rng ||
-        !queue_noise ||
         !actuator || !receipt || map < 0 || map >= dungeon->level_count ||
         timer_x < 0 || timer_y < 0 ||
         timer_x >= dungeon->level_widths[map] ||
@@ -852,12 +851,14 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
         DM2_V1_SourceTimer follow;
         if (db14 < 0 || !missile || pools->pools[14].record_size < 8)
             return 0;
-        /* c_item.cpp:1097-1100 — DM2_SHOOT_ITEM queues GEN2 noise for the
-         * selected object after DB14 allocation and before publishing the
-         * missile record/timer. The caller owns rollback for both queues. */
-        if (!queue_noise(shooter_sound_ctx, (uint16_t)objects[i], map,
-                         launch_x, launch_y, game_tick)) return 0;
-        receipt->sound_queued++;
+        /* c_item.cpp:1097-1100 — DM2_SHOOT_ITEM requests GEN2 noise before
+         * publishing the missile record/timer. Noise is best-effort: the
+         * source routine returns void and continues when sound admission is
+         * unavailable. A missing sound queue must not suppress the shot. */
+        if (queue_noise &&
+            queue_noise(shooter_sound_ctx, (uint16_t)objects[i], map,
+                        launch_x, launch_y, game_tick))
+            receipt->sound_queued++;
         shooter_wr16(pools, missile, 0xfffeu);
         shooter_wr16(pools, missile + 2, (uint16_t)objects[i]);
         missile[4] = (uint8_t)low;
@@ -1067,16 +1068,20 @@ static int wall_mecha_visitor(void *context,
         DM2_V1_ShooterReceipt sh_receipt;
         int shooter_ok;
         memset(&sh_receipt, 0, sizeof(sh_receipt));
+        /* SKWIN/SkWinCore.cpp ACTUATE_WALL_MECHA (around line 62036)
+         * passes Timer::XcoordB/YcoordB to ACTIVATE_SHOOTER (line 61938).
+         * These are the activated wall tile in ctx->x/y; Actuator::w6 is
+         * shooter payload and must not be decoded as a map position. */
         if (ctx->rng) {
             shooter_ok = activate_shooter_live(
                 ctx->pool_set, ctx->dungeon, ctx->queue, ctx->rng,
                 ctx->queue_shooter_noise, ctx->shooter_sound_ctx, record,
-                (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+                ctx->x, ctx->y,
                 ctx->direction, ctx->map, ctx->game_tick, &sh_receipt);
         } else {
             shooter_ok = dm2_v1_activate_shooter(
                 ctx->pool_set, ctx->dungeon, ctx->queue, record,
-                (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+                ctx->x, ctx->y,
                 ctx->direction, ctx->map, ctx->game_tick, &sh_receipt);
         }
         if (!shooter_ok) sh_receipt.fail_closed = 1;
