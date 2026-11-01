@@ -23,6 +23,16 @@ inspection. This check passed again against PR head `c1d2664`; the stack hash is
 are retained under
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c1d2664-validation/`.
 
+On 2026-11-01, the combined `nexus_v1_gameplay_frame300_composition_source_join_real`
+regression passed against code head
+`a05544775f8cf73b9ff4278b028ed0116cec57e2`, using this authentic capture and the hash-verified Japanese retail Nexus data.
+It compared all 71,680 composed RGB triplets with the pinned Ymir render, then
+verified the frame-300 VDP1 replay,
+all visible command owners, and retail DGN source joins. The standalone
+`nexus_v1_vdp1_frame300_dgn_stepper_real` also passed three consecutive runs
+on the same code head. The diagnostic VDP1 path remains capture-only and does
+not admit the production renderer.
+
 Run the real-capture regression after building the existing target:
 
 ```sh
