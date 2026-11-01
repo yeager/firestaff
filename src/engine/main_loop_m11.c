@@ -1034,6 +1034,7 @@ static void m11_debug_log_launch_selection(
         static const char* const modeNames[M12_PRESENTATION_MODE_COUNT] = {
             "v1", "v20", "v21", "v22"
         };
+        const char* fallbackReason = NULL;
         const int requestedIndex =
             menuState->gameOptions[slot].presentationModeIndex;
         const int resolved = gameView->presentationMode;
@@ -1045,8 +1046,31 @@ static void m11_debug_log_launch_selection(
             cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
             requested = modeNames[cliPresentationModeOverride];
         }
+        if ((cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+             cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT
+                 ? cliPresentationModeOverride : requestedIndex) != resolved) {
+            if (resolved == M12_PRESENTATION_V21_UPSCALED &&
+                (cliPresentationModeOverride == M12_PRESENTATION_V22_MODERN ||
+                 (cliPresentationModeOverride < M12_PRESENTATION_V1_ORIGINAL &&
+                  requestedIndex == M12_PRESENTATION_V22_MODERN))) {
+                if (strcmp(gameId, "dm1") == 0) {
+                    fallbackReason = "approved-dm1-modern-art-unavailable";
+                } else if (strcmp(gameId, "csb") == 0) {
+                    fallbackReason = "approved-csb-modern-art-unavailable";
+                } else if (strcmp(gameId, "dm2") == 0) {
+                    fallbackReason = "dm2-modern-art-runtime-unavailable";
+                } else if (strcmp(gameId, "theron") == 0) {
+                    fallbackReason = "theron-modern-art-runtime-unavailable";
+                } else if (strcmp(gameId, "nexus") == 0) {
+                    fallbackReason = "nexus-modern-presentation-unavailable";
+                }
+            }
+            if (!fallbackReason) {
+                fallbackReason = "requested-mode-not-admitted-by-runtime";
+            }
+        }
         fprintf(stderr,
-                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s\n",
+                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s%s%s\n",
                 gameId,
                 requested,
                 resolved >= M12_PRESENTATION_V1_ORIGINAL &&
@@ -1057,7 +1081,9 @@ static void m11_debug_log_launch_selection(
                 ((cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
                   cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT
                       ? cliPresentationModeOverride : requestedIndex) != resolved)
-                    ? " fallback=1" : "");
+                    ? " fallback=1" : "",
+                fallbackReason ? " fallback_reason=" : "",
+                fallbackReason ? fallbackReason : "");
     }
 }
 
