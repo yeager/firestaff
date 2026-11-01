@@ -12753,6 +12753,73 @@ int dm2_v1_skproject_calc_player_walk_delay(
     return 1;
 }
 
+/* SKWINDOS/dm2bya.cpp:2910.  The legacy DOS implementation has a distinct
+   normal-load test: wordrg11 is first set to 2, then tests 8*wordrg11 >
+   5*max_load.  Preserve that fixed source expression instead of applying
+   the SPX v4/v5 weight-relative expression. */
+int dm2_v1_skproject_calc_player_walk_delay_dos(
+    uint16_t max_load,
+    uint16_t player_weight,
+    uint8_t bodyflag,
+    int8_t walkspeed,
+    uint8_t savegames1_b_04,
+    int32_t *out_delay,
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt receipt;
+    int32_t base;
+    int32_t add;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.max_load = max_load;
+    receipt.player_weight = player_weight;
+    receipt.bodyflag = bodyflag;
+    receipt.walkspeed = walkspeed;
+    receipt.savegames1_b_04 = savegames1_b_04;
+
+    if (savegames1_b_04 != 0) {
+        receipt.final_delay = 1;
+        receipt.valid = 1;
+        if (out_delay) *out_delay = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (max_load == 0) {
+        /* The DOS source assumes MAX_LOAD is nonzero. */
+        if (out_delay) *out_delay = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (max_load <= player_weight) {
+        receipt.overburdened = 1;
+        base = 4 + (4 * (int32_t)(player_weight - max_load)) / max_load;
+        add = 2;
+    } else {
+        base = 2;
+        if (16u > 5u * (uint32_t)max_load) {
+            receipt.heavy_load = 1;
+            base = 3;
+        }
+        add = 1;
+    }
+    if ((bodyflag & 0x20u) != 0) {
+        receipt.bodyflag_slow = 1;
+        base += add;
+    }
+    base -= walkspeed;
+    if (base < 1) base = 1;
+    if (base > 2) base = (base + 1) & ~1;
+
+    receipt.base_delay = base;
+    receipt.final_delay = base;
+    receipt.valid = 1;
+    if (out_delay) *out_delay = base;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* SKULLWIN/c_querydb.cpp:2237 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH —
    source-locked receipt implementing the attack/throw strength formula. */
 int dm2_v1_skproject_compute_player_attack_or_throw_strength(

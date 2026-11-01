@@ -5061,6 +5061,18 @@ int dm2_v1_skproject_calc_player_walk_delay(
     int32_t *out_delay,
     DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt);
 
+/* SKWINDOS/dm2bya.cpp:2910 SKW_CALC_PLAYER_WALK_DELAY.  DOS retains its
+   source's fixed 16 > 5*max_load normal-load test; do not use the SPX
+   current-weight threshold above for this source variant. */
+int dm2_v1_skproject_calc_player_walk_delay_dos(
+    uint16_t max_load,
+    uint16_t player_weight,
+    uint8_t bodyflag,
+    int8_t walkspeed,
+    uint8_t savegames1_b_04,
+    int32_t *out_delay,
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:2237 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH —
    source-locked receipt implementing the attack/throw strength formula.  All
    hero/item/skill fields are caller-resolved. */
