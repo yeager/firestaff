@@ -171,8 +171,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,986 open rows: 3,656 unreviewed active-source
-definitions, 328 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,986 open rows: 3,653 unreviewed active-source
+definitions, 331 partial source or older-ledger rows, and 2 partial source-owner
 rows. Recounted with `python3 tools/symbol_backlog.py --game DM2 --reference skproject`. DOS, SPX v4/v5, and SKULLWIN `CHANGE_PLAYER_POS` definitions are now source-compared; the corrected two-stage drag adapter remains partial because M11 does not call it. DOS and SPX v5 `ADJUST_HAND_COOLDOWN` match the shared arithmetic helper, while SPX v4 has a separate source-faithful helper because it uses an already-computed delay and Aura of Speed. All three definitions remain partial because there is no production caller/platform binding. `ADJUST_SKILLS` now uses source random-bit masks, priest/wizard maxMP formulas, final-level-based maxHP rolls, and class-scaled stamina rolls for DOS/SPX v5/SKULLWIN; this corrected helper still has no production caller. SPX v4 now has a separate helper for its 25-tick combat-double window and current-stamina base; its map-header, RNG, UI and production platform bindings remain open, so all four source definitions stay partial. The expanded review now records separate SPX v4/v5 `CREATURE_CAN_HANDLE_IT`
 rows, the SPX v4 creature-shooter route, and source-matched partial rows for
 `DM2_CHECK_RECOMPUTE_LIGHT` across SKULLWIN and SPX v5; these remain partial because the live
