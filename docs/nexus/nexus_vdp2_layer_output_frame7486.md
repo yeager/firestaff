@@ -16,7 +16,7 @@ The full layer stream uses Ymir format `YMLYR001`; SHA-256 `6a0f43fcd1effe7d5c51
 
 Ymir's row-state trace shows NBG0 enabled, bitmap mode active, priority 4, and color calculation enabled at ratio 15. RBG1 is disabled for this pass. Layer-output slot 2 is shared by NBG0/RBG1; with the sampled state it is the NBG0 output.
 
-Using each row's captured scroll and increments, all 71,680 pixels map from the authentic 8bpp VRAM bitmap and big-endian CRAM words to Ymir's slot-2 color plane exactly. The computed priority also matches at all 71,680 positions: 21,455 nontransparent pixels have priority 4 and 50,225 transparent pixels have priority 0. Every active NBG0 pixel has the special-color-calculation flag.
+Using each row's captured scroll and increments, all 71,680 output positions map to the authentic 8bpp VRAM bitmap exactly. Each of the 21,455 nonzero indices selects an authentic big-endian CRAM word whose decoded color matches Ymir's slot-2 plane; all 50,225 zero indices produce matching transparent color and priority. The computed priority matches at every position, and every active NBG0 pixel has the special-color-calculation flag.
 
 The VDP2 memory-write receipt covers frame range `7486:7664`, reports a complete trace with zero dropped rows, and includes 14,364 writes. It shows no writes to the NBG0 bitmap range `0x00000..0x1ffff` or CRAM through snapshot frame 7663, binding those source bytes from the target frame to the snapshot. The final register snapshot reports the base-zero BMPNA/CRAOFA values, but it is not a frame-bound register-write history.
 
