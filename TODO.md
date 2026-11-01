@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 DM1 PC-34 original-media regression: CTest
+`dm1_v1_pc34_native_cli_boot` passed in 542.11 seconds with the installed
+retail archive. The regression covers M12 launch, clean host quit during SWSH
+and I34E, loose-file GRAPHICS.DAT/DUNGEON.DAT pairing, missing optional SWSH
+fallback, the authentic startup/HoC route, keyboard and mouse movement,
+portrait/champion interaction, V1/V2 mode receipts and full-redraw telemetry.
+This confirms the bounded PC-34 source/runtime interactions in the test; it
+does not establish pixel parity with a reference capture or physical Retina
+input and display behavior.
+
 2026-11-01 current-build original-media menu retest: CTest
 `m12_main_menu_game_selection_real_media` passed in 535.22 seconds with the
 installed collection, exercising the no-game picker and game/platform/custom
