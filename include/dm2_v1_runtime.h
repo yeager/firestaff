@@ -368,6 +368,15 @@ int dm2_v1_runtime_clear_spell_runes(int hero_index);
 /* Source events 0x97..0x9a toggle the four magical-map rune bits, charging
  * active-hero mana on selection and updating the composed-spell cost. */
 int dm2_v1_runtime_click_magical_map_rune(int rune_index);
+
+/* Execute the SPX-v5 `DM2_PROCEED_COMMAND_SLOT(-1)` hand-rune exit.
+ * The source writes the active champion selection into v1e0b62 and clears
+ * the command-map bit before refreshing the right panel. DOS/SPX-v4 variants
+ * use different flag semantics and must select their own owner. */
+int dm2_v1_runtime_cancel_hand_rune_v5(void);
+
+/* Execute the DOS/SPX-v4 `PROCEED_COMMAND_SLOT(-1)` flag reset. */
+int dm2_v1_runtime_cancel_hand_rune_legacy(void);
 int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
                                    int capacity, int *out_rune_count);
 

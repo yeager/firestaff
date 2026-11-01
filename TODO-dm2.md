@@ -1,3 +1,13 @@
+2026-11-01 skproject SPX v5 `DM2_PROCEED_COMMAND_SLOT(-1)`: M11 event 112
+uses the active profile: the authenticated PC-English event table follows
+DOS `SKW_PROCEED_COMMAND_SLOT` and clears v1e0b62, while the anchored FM Towns
+native table follows SPX v5's active-hero XOR and 0x0400 mask operation. Both
+replace the incorrect clearing of Firestaff's unrelated DM1 acting-champion
+state. SPX v4's source behavior is also a zero-mask reset but has no separate
+production owner. M11 command events 113-115 still lack v5 slot-state
+chance/RNG checks, charge consumption, depletion cleanup, and source panel
+rendering; retain all variant rows as partial.
+
 2026-11-01 skproject DOS/SPX v4/v5 `FIND_HAND_WITH_EMPTY_FLASK`: implemented
 the generic query owner with the source slot order (action hand 1, then ready
 hand 0), item type 8 gate, and record cls2 0x14 check from DOS

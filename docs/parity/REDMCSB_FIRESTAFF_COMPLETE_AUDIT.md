@@ -871,3 +871,7 @@ Compared DOS, SPX v4 and SPX v5 recursive item-value algorithms with Firestaffâ€
 ### DM2 FIND_HAND_WITH_EMPTY_FLASK review (2026-11-01)
 
 Skproject DOS `dm2bya.cpp:2332`, SPX v4 `skchamp.cpp:819`, and SPX v5 `skgdtqdb.cpp:1511` scan hand slots 1 then 0, accepting a type-8 record only when its cls2 is `0x14`. Firestaff now implements the generic query function with the same order and checks, resolving cls2 through the caller callback and preserving the unsigned 16-bit object reference. Missing hero or record callbacks return `-1`. The live DM2 spell runtime still supplies no flask state and does not transform or consume the record, so this function and the source variants remain partial.
+
+### DM2 PROCEED_COMMAND_SLOT review (2026-11-01)
+
+Skproject DOS `dm2bya.cpp:2273` and SPX v4 `skuievnt.cpp:839` clear the magical-map flags for command slot `-1`; SPX v5 `uiinput.cpp:392` routes the same event to `DM2_PROCEED_COMMAND_SLOT(-1)`, whose `skevents.cpp:2818` updates `v1e0b62`. M11 now dispatches by its authenticated input profile: PC English clears the mask like DOS, and the recovered FM Towns native table applies SPX v5's active-hero XOR and `0x0400` mask operation. Neither path alters Firestaff's unrelated DM1 acting-champion state. Command slots 0â€“2 still lack the v5 chance/RNG, charge and depletion flow; SPX v4 and other platform owners also remain open, so all source-function variants remain partial.

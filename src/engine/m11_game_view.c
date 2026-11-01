@@ -44015,10 +44015,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return M11_GAME_INPUT_REDRAW;
                 return M11_GAME_INPUT_IGNORED;
             case 112:
-                /* COMMAND.C event 0x70 closes the source hand/action panel
-                 * without committing an action. */
-                M11_GameView_ClearActingChampion(state);
-                return M11_GAME_INPUT_REDRAW;
+                /* The authenticated PC table follows DOS's flag reset;
+                 * Towns' recovered native table uses the SPX-v5 mask path.
+                 * Neither route owns Firestaff's separate DM1 panel state. */
+                if (profile &&
+                    (profile->platform == DM2_PLATFORM_FMTOWNS_JA
+                         ? dm2_v1_runtime_cancel_hand_rune_v5()
+                         : dm2_v1_runtime_cancel_hand_rune_legacy()))
+                    return M11_GAME_INPUT_REDRAW;
+                return M11_GAME_INPUT_IGNORED;
             case 11:
                 /* c_input.cpp panel event 11 is the source inventory-panel
                  * close lane.  Keep it distinct from the DM1 C011 table:

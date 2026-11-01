@@ -4414,6 +4414,40 @@ int dm2_v1_runtime_click_magical_map_rune(int rune_index)
     return old_mask != rt->source_v1e0b62;
 }
 
+int dm2_v1_runtime_cancel_hand_rune_v5(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int hero_index;
+
+    if (!rt->source_party_valid || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party)
+        return 0;
+
+    /* skproject SPX v5 skevents.cpp:2818: the -1 command slot XORs the
+     * active hero index into the 16-bit rune/map state, then clears bit
+     * 0x0400 when a nonzero selection remains. DOS and SPX v4 instead clear
+     * their magical-map flag to zero; this entry point is deliberately v5. */
+    hero_index = rt->source_party.curacthero - 1;
+    rt->source_v1e0b62 = (int16_t)(UINT16_MAX ^ (uint16_t)hero_index);
+    if (rt->source_v1e0b62 != 0)
+        rt->source_v1e0b62 = (int16_t)((uint16_t)rt->source_v1e0b62 &
+                                       (uint16_t)~0x0400u);
+    return 1;
+}
+
+int dm2_v1_runtime_cancel_hand_rune_legacy(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!rt->source_party_valid || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party)
+        return 0;
+
+    /* DOS dm2bya.cpp:2273 and SPX v4 skuievnt.cpp:839 clear the map mask. */
+    rt->source_v1e0b62 = 0;
+    return 1;
+}
+
 int dm2_v1_runtime_remove_spell_rune(int hero_index)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
