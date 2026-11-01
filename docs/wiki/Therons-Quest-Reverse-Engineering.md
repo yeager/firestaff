@@ -58,8 +58,10 @@ A static disassembly comparison maps the unique 256-byte `$50D2` reader
 window from the authentic JP state to one raw Track 02 offset. A bounded trace
 observes reads from a candidate four-list structure at the end of the
 unclassified `thing_list` region, but its role, active-map relationship and
-tile consumer remain unproven. No dynamic map-array read or renderer join has
-been captured. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+tile consumer remain unproven. Three later state-only captures observe reads
+from Map 0 and Map 3 whose values match authenticated Track 02, but they do not
+identify the active map or establish a renderer join. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md)
+and [map-array capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 The latest matched JP state-only pair verified a guest read of `up@61:120` at
 `$44C1`, then retained 256 identical, authentic-source-matched data reads in
 both the UP and neutral runs. These addresses precede the map arrays, no
@@ -67,12 +69,11 @@ movement-command write was observed, and the field semantics remain unknown.
 The captures report `transition=missing`; they do not establish movement,
 active-map selection, visible output or parity. See the
 [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
-The working-tree movement-context instrumenter now includes a separate
-`map_array_read` hook for physical `[0x0e8b03, 0x0e8e09)`. It has not been
-built or exercised, and the current 256-row instrumenter cap is below the
-323-byte Map 2 length. Treat it as pending capture tooling; the active-map and pose-to-render
-join remains open. See the
-[trace-tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+The `map_array_read` hook was exercised in three bounded JP state-only
+captures. They retained 1,677, 1,513 and 1,556 reads without reaching the
+4096-row cap; source-matched bytes appeared in Map 0 and Map 3. These reads do
+not identify the active map or prove a pose-to-render join. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+and [tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon

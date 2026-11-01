@@ -93,7 +93,7 @@ rendered response. See the [matched input/data-read report](theron-jp-state-only
 
 The source table and code bytes are authentic and uniquely matched as stated
 above. The relation between the reader, the pointer-like `thing_list` tail,
-and a map cell remains a candidate. A follow-up reference trace should record
+and a map cell remains a candidate. A later three-run state-only capture recorded reads in Map 0 and Map 3 from PCs `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`; the dynamic bytes match the authentic BIN source. The `$50FE` PC lies within the uniquely source-matched `$50D2` code window, and a code window at `$AE66` also has a unique source occurrence. These observations do not establish fetched runtime opcode bytes and register context at those PCs, nor connect either reader to the `$50D2` list. A follow-up reference trace should record
 CPU registers and zero-page `$2A..$33` at `$50D2`, the resolved address and
 registers at `$50E4`, subsequent reads within the real map spans, and any
 `$4FA7` consumer in shared event order. To support rendering, join that trace
