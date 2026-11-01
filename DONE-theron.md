@@ -20,8 +20,10 @@
   performed. The existing user-owned JP Mednafen session remains untouched;
   runtime output and source-receipt values therefore remain unobserved.
 - Updated the Theron TODO, capture-readiness summary, technical source note,
-  and wiki pages to reflect this compile result and its limits. No tests were
-  run.
+  and wiki pages to reflect this compile result and its limits. Refreshed the
+  generated startup-menu POT/PO source references after the `main_loop_m11.c`
+  insertion; `po/update.sh --check` passes and translation strings are
+  unchanged. No tests were run.
 
 ## 2026-11-01 — keep Button II turns consistent across keypad bindings
 
