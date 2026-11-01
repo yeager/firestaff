@@ -709,8 +709,9 @@ int32_t dm2_v1_creature_attacks_creature(
 
 /* ---- DM2_CREATURE_CAN_HANDLE_IT (c_creature.cpp:1344) ----
  * Check the item record against the class selector in flags (low six bits),
- * applying flag 0x80 as the source inversion bit. Classes 0x3e/0x3f are
- * sentinels. The v4 entry point preserves its direct-accept rule for opened
+ * applying flag 0x80 as the source inversion bit. Class 0x3e is a moneybox
+ * special case; 0x3f accepts all eligible items. The v4 entry point preserves
+ * its direct-accept rule for opened
  * class-0x29 moneyboxes; v5 checks the creature mask for opened moneyboxes. */
 typedef struct {
     /* bit N set => creature type can handle class N.
