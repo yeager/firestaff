@@ -24,6 +24,7 @@ require_capture_helpers() {
 require_capture_helpers 'capture startup' \
     theron_x11_keymap.sh \
     prepare_theron_authentic_bram.sh \
+    watch_theron_capture_output_budget.py \
     verify_theron_stage2_system_card_call_trace.sh || exit 1
 source "$script_dir/theron_x11_keymap.sh"
 source "$script_dir/prepare_theron_authentic_bram.sh"
@@ -33,6 +34,12 @@ cue=${THERON_US_CUE:-${THERON_CUE:-}}
 system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
+capture_output_budget_bytes=${THERON_CAPTURE_MAX_OUTPUT_BYTES:-1073741824}
+if [[ ! "$capture_output_budget_bytes" =~ ^[0-9]+$ ]] ||
+   (( capture_output_budget_bytes < 1048576 || capture_output_budget_bytes > 1099511627776 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAX_OUTPUT_BYTES must be an integer from 1048576 through 1099511627776' >&2
+    exit 1
+fi
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
 # Leave the default unset until the selected module is known.  PCE Fast
 # reaches CloseGame and flushes its reference snapshots on TERM, while its
@@ -1737,6 +1744,12 @@ scripted_input_consumption_receipt="${trace}.scripted-input-consumption"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
+capture_output_budget_marker="${trace}.output-budget-exceeded"
+if [[ -e "$capture_output_budget_marker" || -L "$capture_output_budget_marker" ]]; then
+    printf 'FAIL: refusing to overwrite existing output-budget receipt: %s\n' \
+        "$capture_output_budget_marker" >&2
+    exit 1
+fi
 
 require_instrumented_mednafen_binary "$mednafen_bin" || exit 1
 if [[ -n "$replay_input_script" ]] &&
@@ -1958,6 +1971,11 @@ cleanup_capture() {
     local exit_status=$?
 
     trap - EXIT INT TERM
+    if [[ "${capture_output_budget_watch_pid:-}" =~ ^[1-9][0-9]*$ ]] &&
+       kill -0 "$capture_output_budget_watch_pid" 2>/dev/null; then
+        kill -TERM "$capture_output_budget_watch_pid" 2>/dev/null || true
+        wait "$capture_output_budget_watch_pid" 2>/dev/null || true
+    fi
     if [[ "${mednafen_pid:-}" =~ ^[1-9][0-9]*$ ]] &&
        kill -0 "$mednafen_pid" 2>/dev/null; then
         # gtimeout owns a separate process group; terminate it as a group so
@@ -2143,6 +2161,21 @@ launch+=(
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
 mednafen_pid=$!
+capture_output_budget_watch_pid=
+capture_output_budget_args=(
+    --pid "$mednafen_pid"
+    --limit-bytes "$capture_output_budget_bytes"
+    --marker "$capture_output_budget_marker"
+    --directory "$trace_dir"
+    --prefix "$(basename -- "$trace")"
+    --path "$trace"
+)
+if [[ -n "$huc6280_23ad_trace" ]]; then
+    capture_output_budget_args+=(--path "$huc6280_23ad_trace")
+fi
+python3 "$script_dir/watch_theron_capture_output_budget.py" \
+    "${capture_output_budget_args[@]}" &
+capture_output_budget_watch_pid=$!
 mednafen_ui_pid=0
 if [[ "$host_input_requested" == 1 ]]; then
     host_key_previous_delay=0
@@ -2411,6 +2444,26 @@ if [[ "$host_input_requested" == 1 ]]; then
 fi
 wait "$mednafen_pid"
 status=$?
+if [[ -e "$capture_output_budget_marker" ]]; then
+    wait "$capture_output_budget_watch_pid" 2>/dev/null
+    capture_output_budget_watch_status=$?
+else
+    kill -TERM "$capture_output_budget_watch_pid" 2>/dev/null || true
+    wait "$capture_output_budget_watch_pid" 2>/dev/null
+    capture_output_budget_watch_status=$?
+fi
+capture_output_budget_watch_pid=
+if [[ -e "$capture_output_budget_marker" ]]; then
+    printf 'FAIL: capture output watchdog rejected the run; receipt: %s\n' \
+        "$capture_output_budget_marker" >&2
+    cat "$capture_output_budget_marker" >&2
+    exit 1
+fi
+if (( capture_output_budget_watch_status != 0 && capture_output_budget_watch_status != 143 )); then
+    printf 'FAIL: capture output budget watchdog exited unexpectedly with status %s\n' \
+        "$capture_output_budget_watch_status" >&2
+    exit 1
+fi
 set -e
 
 autoload_state_load_status=not_requested

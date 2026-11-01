@@ -1,5 +1,16 @@
 # Firestaff TODO — Theron's Quest
 
+## 2026-11-01 — aggregate capture-output budget enforced
+
+The live trace wrapper now watches all regular files under its configured trace
+prefix, plus an optional external `$23AD` trace, and stops its own process
+group if total output exceeds the default 1 GiB budget. A caller can set
+`THERON_CAPTURE_MAX_OUTPUT_BYTES` from 1 MiB to 1 TiB. The resulting receipt
+rejects the incomplete package. This makes resource use bounded; it provides
+no gameplay or loader evidence. Continue with a current instrumented binary,
+source-scoped traces, and an accepted `$E11D` handoff before making claims about
+game-owned reads or rendering.
+
 ## 2026-11-01 — cold-capture helper preflight is now enforced
 
 The live PCE Fast capture wrapper now preflights required verifier and helper

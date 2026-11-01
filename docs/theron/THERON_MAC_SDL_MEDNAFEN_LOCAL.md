@@ -63,6 +63,14 @@ dated reports linked from [capture readiness](THERON_CAPTURE_READINESS.md)
 for exact options, hashes and result scope; machine-specific retired paths
 are intentionally not reproduced here.
 
+The live-capture wrapper enforces an aggregate output budget of 1 GiB by
+default. `THERON_CAPTURE_MAX_OUTPUT_BYTES` can set a positive limit from 1 MiB
+through 1 TiB. The watchdog totals regular files with the configured trace
+prefix and any separately configured `$23AD` trace; if the budget is exceeded,
+it stops only that capture process group, leaves a `.output-budget-exceeded`
+receipt, and rejects the package. This byte cap complements the wall-clock and
+per-trace row limits; it does not make a truncated capture admissible.
+
 Greatstone's Theron material concerns CSBWin custom-dungeon conversion and is
 not PC Engine retail game data. DMWeb supplies edition and manual context.
 Neither reference substitutes for authentic PCE input, state or display

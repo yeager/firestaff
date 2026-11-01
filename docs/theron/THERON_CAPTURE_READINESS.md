@@ -38,6 +38,13 @@ their selected source-fetch verifier without requiring cold-boot helpers. This
 prevents late packaging failures; it does not establish a BIOS handoff or change
 the rejected capture's evidence.
 
+The wrapper also caps aggregate output at 1 GiB by default and supports a
+bounded `THERON_CAPTURE_MAX_OUTPUT_BYTES` override. Its live watchdog sums the
+configured trace-prefix files and optional external `$23AD` sidecar, terminates
+only the current capture process group after a limit breach, and writes a
+receipt that causes wrapper rejection. Wall-clock and individual trace limits
+remain separate controls.
+
 **Renderer boundary:** the runtime can present an authenticated captured screen, but this is not a state-driven dungeon renderer. The retail square/material-to-tile mapping and the same-run join from active map and party pose through tile consumption to BAT/VRAM, VCE/VDC state, and a retail frame are not established. Do not fill this gap with synthetic tiles or inferred material mappings.
 
 **Audio boundary:** authentic JP CDDA tracks are available and bounded track decoding is exercised by tests, but production gameplay does not yet route a verified game event to tracks 03–18. Track 01 is used for title playback; static `$E03F` references are candidates, not proof of event-to-track behavior. Trace the original game's accepted CD commands and join them to a concrete game event before implementing gameplay music routing. Audio playback and parity remain open.

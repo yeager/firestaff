@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — cap aggregate live-capture output
+
+- The live capture wrapper now enforces a 1 GiB aggregate output budget by
+  default. `THERON_CAPTURE_MAX_OUTPUT_BYTES` supports explicit limits from
+  1 MiB to 1 TiB.
+- A live watchdog totals regular files with the configured capture prefix and
+  any external `$23AD` trace, stops only the capture process group at the
+  limit, and leaves a machine-readable rejection receipt. A regression
+  verifies the receipt and process-group termination.
+- This bounds disk use; it does not make truncated traces acceptable or add
+  game-handoff evidence.
+
 ## 2026-11-01 — preflight isolated PCE Fast capture helpers
 
 - The live-trace wrapper now checks the required helper set for the selected

@@ -25,6 +25,15 @@ if ! grep -Fq 'THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER must be none or run-p
     printf '%s\n' 'FAIL: live capture did not explain the invalid System Card I/O/RAM PC filter' >&2
     exit 1
 fi
+if invalid_output_budget=$(env THERON_CAPTURE_MAX_OUTPUT_BYTES=1024 "$script" 2>&1); then
+    printf '%s\n' 'FAIL: live capture accepted an output budget below 1 MiB' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_MAX_OUTPUT_BYTES must be an integer from 1048576 through 1099511627776' \
+    <<<"$invalid_output_budget"; then
+    printf '%s\n' 'FAIL: invalid output budget lacked a precise diagnostic' >&2
+    exit 1
+fi
 if invalid_spawn_filter_output=$(env THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=unknown \
     "$script" 2>&1); then
     printf '%s\n' 'FAIL: live capture accepted an unknown spawn-consumer PC filter' >&2
@@ -2097,6 +2106,7 @@ helper_preflight_dir=$(mktemp -d "$repo/build/theron-capture-helper-preflight.XX
 cp -p "$script" \
     "$repo/scripts/theron_x11_keymap.sh" \
     "$repo/scripts/prepare_theron_authentic_bram.sh" \
+    "$repo/scripts/watch_theron_capture_output_budget.py" \
     "$repo/scripts/verify_theron_stage2_system_card_call_trace.sh" \
     "$repo/scripts/verify_theron_syscard_status_trace.py" \
     "$repo/scripts/verify_theron_syscard_callback_state_trace.py" \
@@ -2687,5 +2697,6 @@ if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_
 fi
 
 python3 "$repo/tests/test_verify_theron_pce_fast_code_fetch_source.py"
+python3 "$repo/tests/test_theron_capture_output_budget.py"
 
 printf 'PASS: live capture script requires explicit authentic inputs\n'
