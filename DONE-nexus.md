@@ -1,12 +1,11 @@
 # Firestaff DONE — Nexus
 
-## 2026-11-02 — Capture complete Ymir VDP2 layer output for Nexus
+## 2026-11-02 — Verify authentic NBG0 source and composition against Ymir
 
-- Captured authentic Japanese retail startup output at VDP1 frame 7486 / VDP2 serial 8199, rows 4–116. Ymir reports 113/113 NBG0 row samples and 791 complete layer records, with no layer-output truncation or write error.
-- The active NBG0 bitmap state accompanies layer slot 2 output: 21,209 of 36,160 color words are nonzero (58.653%). Slot 3 (NBG1/EXBG) and the other background/mesh slots contain only zero color words. Slot 3 is shared by NBG1/EXBG, so the capture does not establish whether NBG1 was enabled.
-- A same-pass 320×224 framebuffer was captured. This is a layer-output observation, not a retail pixel-parity or source-data join. The later frame-7663 snapshots do not establish frame-7486 memory state; SH-2 write history also dropped 1,660,912 master rows.
-- Added a standalone YMLYR001 analyzer and an evidence report with reproduction instructions. Raw captures and checksums remain on the external disk; firmware, profile, and save-state files are excluded. See [the frame-7486 layer-output report](docs/nexus/nexus_vdp2_layer_output_frame7486.md).
-
+- The complete Ymir layer trace covers 113 rows in VDP1 frame 7486 / VDP2 serial 8199. The per-row scroll and increments map authentic 8bpp VRAM and CRAM bytes to NBG0 layer slot 2 exactly at all 36,160 sampled pixels, including priorities and transparent indices.
+- Reconstructing those two-layer scanlines with Ymir's ratio-15 color calculation matches all 36,160 same-pass RGB framebuffer pixels. This covers 21,209 active NBG0 pixels and 14,951 transparent pixels for the captured rows only; it does not establish full-frame, NBG1, other-state, hardware, or production-renderer parity.
+- The frame-7663 memory snapshot is bound to frame 7486 for the NBG0 bitmap span and CRAM by the complete zero-drop VDP2 write trace, which records no writes to either region in the interval. Register history is not frame-bound and remains a limitation.
+- Added a reproducible analyzer and report. Raw captures and checksums remain on the external disk; firmware, profile, and save-state files are excluded. See [the frame-7486 layer-output report](docs/nexus/nexus_vdp2_layer_output_frame7486.md).
 ## 2026-11-02 — Verify authentic MAPD NBG1 4bpp pixel output
 
 - Added a real-data CTest that runs Firestaff's NBG1 4bpp tile decoder and
@@ -892,3 +891,4 @@ Reviewed 2026-08-26. Completed work only.
 - Ymir 0.4.2-dev `--debug` captures establish defaults (Music ON, Sound STEREO, Game Level NORMAL, Monster Gauge ON), keyboard row/value navigation, and Exit/B return to the title menu. Mouse row/value routing is covered by the runtime tests.
 - The production C renderer matches the captured 320x224 indexed foreground and all 256 palette entries for seven real capture states. Reproduce with `scripts/verify_nexus_english_configuration_page.py` and the captured evidence directory documented in `docs/nexus/nexus_startup.md`.
 - The 3D/DGN page background, cold-boot setting persistence, audio/difficulty/HUD effects, Japanese Configuration page, and New Game/Continue destination execution remain open. No synthetic game art was introduced.
+
