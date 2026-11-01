@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `INPUT.C:F1097-F1099` input-ring critical section: the
+64-slot FIFO now uses a process-wide C11 atomic critical section around key
+insert, read/advance, availability check, and discard/reset. This matches the
+source `Forbid/Permit` boundary for the shared ring state while keeping its
+source index and full-buffer behavior. The compatibility ring is not yet
+proven as the live Amiga device interrupt owner or as the live M11 input route
+across supported platforms; all three callable audit rows remain partial.
+
 2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` current-map gap: the active M11
 renderer lazily resolves map data by party-map index and caches F0174 wall,
 floor, and door ornament arrays from the DUNGEON.DAT metadata stream. It also

@@ -1,5 +1,25 @@
 #include "dm1_v1_input_poll_pc34_compat.h"
+#include <stdatomic.h>
 #include <string.h>
+
+/* ReDMCSB INPUT.C F1097 (822-834), F1098 (836-847), and F1099 (849-859)
+ * wrap each shared FIFO operation in Forbid()/Permit(). The key FIFO is one
+ * source-global queue, so use one process-wide C11 critical section for its
+ * Firestaff state models. */
+static atomic_flag g_dm1_v1_input_key_ring_lock = ATOMIC_FLAG_INIT;
+
+static void dm1_v1_input_key_ring_lock(void)
+{
+    while (atomic_flag_test_and_set_explicit(
+        &g_dm1_v1_input_key_ring_lock, memory_order_acquire)) {
+    }
+}
+
+static void dm1_v1_input_key_ring_unlock(void)
+{
+    atomic_flag_clear_explicit(&g_dm1_v1_input_key_ring_lock,
+                               memory_order_release);
+}
 
 /*
  * DM1 V1 Input Polling — implementation
@@ -65,14 +85,21 @@ int DM1_V1_Input_StoreKeyPc34Compat(DM1_V1_InputStatePc34 *state, uint16_t keyCo
      *   L2626 = (G3174 + 1) & 0x3F
      *   if L2626 != G3175: buffer[G3174] = key; G3174 = L2626
      */
-    DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
+    DM1_V1_InputKeyBufferPc34 *kb;
+    int accepted = 0;
+    if (!state) return 0;
+    dm1_v1_input_key_ring_lock();
+    kb = &state->keyBuffer;
     int nextWrite = (kb->writeIndex + 1) & (DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34 - 1);
     if (nextWrite == kb->readIndex) {
+        dm1_v1_input_key_ring_unlock();
         return 0; /* Buffer full */
     }
     kb->buffer[kb->writeIndex] = keyCode;
     kb->writeIndex = nextWrite;
-    return 1;
+    accepted = 1;
+    dm1_v1_input_key_ring_unlock();
+    return accepted;
 }
 
 uint16_t DM1_V1_Input_GetKeyPc34Compat(DM1_V1_InputStatePc34 *state)
@@ -81,30 +108,43 @@ uint16_t DM1_V1_Input_GetKeyPc34Compat(DM1_V1_InputStatePc34 *state)
      * F1098_GetFirstKeyFromBuffer:
      *   key = buffer[G3175]; G3175 = (G3175 + 1) & 0x3F
      */
-    DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
+    DM1_V1_InputKeyBufferPc34 *kb;
+    uint16_t key;
+    if (!state) return 0;
+    dm1_v1_input_key_ring_lock();
+    kb = &state->keyBuffer;
     if (kb->readIndex == kb->writeIndex) {
+        dm1_v1_input_key_ring_unlock();
         return 0; /* Buffer empty */
     }
-    uint16_t key = kb->buffer[kb->readIndex];
+    key = kb->buffer[kb->readIndex];
     kb->readIndex = (kb->readIndex + 1) & (DM1_V1_INPUT_KEY_BUFFER_SIZE_PC34 - 1);
+    dm1_v1_input_key_ring_unlock();
     return key;
 }
 
 int DM1_V1_Input_KeyAvailablePc34Compat(const DM1_V1_InputStatePc34 *state)
 {
     /* F1099: G3174 != G3175 */
-    const DM1_V1_InputKeyBufferPc34 *kb = &state->keyBuffer;
-    return kb->readIndex != kb->writeIndex;
+    int available;
+    if (!state) return 0;
+    dm1_v1_input_key_ring_lock();
+    available = state->keyBuffer.readIndex != state->keyBuffer.writeIndex;
+    dm1_v1_input_key_ring_unlock();
+    return available;
 }
 
 void DM1_V1_Input_DiscardAllPc34Compat(DM1_V1_InputStatePc34 *state)
 {
+    if (!state) return;
+    dm1_v1_input_key_ring_lock();
     state->keyBuffer.readIndex = 0;
     state->keyBuffer.writeIndex = 0;
     state->mouseButtons = 0;
     state->leftButtonDown = 0;
     state->rightButtonDown = 0;
     state->mouseOrKeyboardInput = 0;
+    dm1_v1_input_key_ring_unlock();
 }
 
 /* ── Mouse event processing ───────────────────────────────────────── */
