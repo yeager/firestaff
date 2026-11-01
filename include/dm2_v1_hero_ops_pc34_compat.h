@@ -374,6 +374,12 @@ int dm2_v1_add_item_to_player(
     const DM2_V1_SlotGroup *groups, int group_count,
     const DM2_V1_AddItemCallbacks *cb, void *ctx);
 
+/* SPX-v4 ADD_ITEM_TO_PLAYER uses the initialized _4976_404d slot groups. */
+int dm2_v1_add_item_to_player_spx_v4(
+    int hero_idx, int16_t *hero_items, int item_count,
+    uint16_t item_record, uint16_t item_db_type,
+    const DM2_V1_AddItemCallbacks *cb, void *ctx);
+
 /* ---- DM2_BURN_PLAYER_LIGHTING_ITEMS (c_hero.cpp:2262) ----
  * Decrement charges on lit torches/lanterns. Excludes the last party
  * hero from the burn loop when ddat.v1e0288 is set (c_hero.cpp:2271-2277:

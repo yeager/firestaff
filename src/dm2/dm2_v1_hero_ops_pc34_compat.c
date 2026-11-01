@@ -566,6 +566,27 @@ int dm2_v1_add_item_to_player(
     return 0;
 }
 
+int dm2_v1_add_item_to_player_spx_v4(
+    int hero_idx, int16_t *hero_items, int item_count,
+    uint16_t item_record, uint16_t item_db_type,
+    const DM2_V1_AddItemCallbacks *cb, void *ctx)
+{
+    /* SKWINSPX/src/v4/skchamp.cpp::ADD_ITEM_TO_PLAYER (643-663) scans
+     * the _4976_404d table initialized at kskval1.h:134 in this order. */
+    static const DM2_V1_SlotGroup spx_v4_groups[] = {
+        { 2, 5, -1 },
+        { 10, 10, -1 },
+        { 0, 1, 5 },
+        { 0, 1, 6 },
+        { 13, 29, -1 },
+    };
+    return dm2_v1_add_item_to_player(
+        hero_idx, hero_items, item_count, item_record, item_db_type,
+        spx_v4_groups,
+        (int)(sizeof(spx_v4_groups) / sizeof(spx_v4_groups[0])),
+        cb, ctx);
+}
+
 int dm2_v1_burn_player_lighting_items(
     const DM2_V1_BurnLightCallbacks *cb, void *ctx)
 {
