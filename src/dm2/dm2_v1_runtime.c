@@ -4556,22 +4556,32 @@ static void dm2_runtime_apply_spell_cooldown(
  * skevents.cpp POTION branch: hand 1 is inspected before hand 0; DB8/cls2
  * 0x14 is removed, changed to the produced potion type, assigned its
  * randomized power in record word 1, and equipped back into that hand. */
+static uint8_t dm2_runtime_spell_query_cls2(void *ctx, uint16_t item)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    uint8_t cls2 = 0xffu;
+    if (!rt || !rt->record_pools_valid ||
+        !dm2_v1_record_pool_address(&rt->record_pools, item) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item, &rt->record_pools, &cls2, NULL))
+        return 0xffu;
+    return cls2;
+}
+
 static int dm2_runtime_spell_find_empty_flask(
     DM2_V1_RuntimeState *rt, const DM2_V1_Hero *hero)
 {
+    uint16_t hand_items[2];
+    int16_t empty_hand = -1;
+
     if (!rt || !hero || !rt->record_pools_valid) return -1;
-    for (int hand = 1; hand >= 0; --hand) {
-        int16_t item = hero->item[hand];
-        uint8_t cls2;
-        if (item < 0 || dm2_v1_record_handle_pool(item) != 8 ||
-            !dm2_v1_record_pool_address(&rt->record_pools, item) ||
-            !dm2_v1_skproject_query_cls2_from_record(
-                (uint16_t)item, &rt->record_pools, &cls2, NULL) ||
-            cls2 != 0x14u)
-            continue;
-        return hand;
-    }
-    return -1;
+    hand_items[0] = (uint16_t)hero->item[0];
+    hand_items[1] = (uint16_t)hero->item[1];
+    if (!dm2_v1_skproject_find_hand_with_empty_flask(
+            hand_items, dm2_runtime_spell_query_cls2, rt,
+            &empty_hand, NULL))
+        return -1;
+    return empty_hand;
 }
 
 static void dm2_runtime_copy_source_hero_to_snapshot(
