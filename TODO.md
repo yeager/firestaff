@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-01 current-build original-media menu retest: CTest
+`m12_main_menu_game_selection_real_media` passed in 535.22 seconds with the
+installed collection, exercising the no-game picker and game/platform/custom
+selection paths for DM1, CSB, DM2, Nexus and Theron's Quest. The test is an
+SDL dummy-driver interaction check, not native display or physical-input
+evidence; Nexus still does not reach a playable dungeon runtime. The separate
+`m12_main_menu_runtime_real_media` test passed in 725.27 seconds for the
+source-owned DM1, CSB, DM2 and Theron runtime routes, including DM1 Amiga 3.6
+and DM2 Amiga. Nexus is not part of that runtime test because its title/menu
+consumer remains capture-gated. The unsupported game/platform CLI rejection
+test also passed. These results verify the current startup routes while
+leaving the documented Nexus and native-display/input gaps open.
+
 2026-11-01 V2.2 asset-root follow-up: all five authentic-media CLI probes
 reported that v22 resolved to v21. The profile stores modern packs in
 `~/.firestaff/assets/<game>/modern`, while the default `~/.firestaff/data`
