@@ -478,6 +478,8 @@ int dm2_v1_engage_command(
 
     /* Epilogue: stamina, skill experience, cooldown.
      * skengage.cpp:824-868 */
+    if (receipt->fail_closed)
+        receipt->success = 0;
     if (receipt->success && !request->cmd_flag_8000) {
         receipt->stamina_cost = request->cmd.power_random;
         receipt->skill_exp_gained = request->cmd.skill_exp;
