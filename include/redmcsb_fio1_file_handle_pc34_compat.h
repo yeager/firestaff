@@ -50,6 +50,8 @@ typedef int (*redmcsb_fio1_lock_and_get_size_compat)(
     void *context, const char *file_name, int32_t *out_size);
 typedef int (*redmcsb_fio1_trackdisk_is_open_compat)(
     void *context, int16_t drive_index);
+typedef const char *(*redmcsb_fio1_default_floppy_device_name_compat)(
+    void *context, int16_t drive_index);
 
 typedef struct RedmcsbFio1HostPc34Compat {
     void *context;
@@ -66,6 +68,7 @@ typedef struct RedmcsbFio1HostPc34Compat {
     redmcsb_fio1_enumerate_matches_pc34_compat enumerateMatches;
     redmcsb_fio1_lock_and_get_size_compat lockAndGetSize;
     redmcsb_fio1_trackdisk_is_open_compat trackdiskIsOpen;
+    redmcsb_fio1_default_floppy_device_name_compat defaultFloppyDeviceName;
 } RedmcsbFio1HostPc34Compat;
 
 void RedmcsbFio1FileHandleInitPc34Compat(
@@ -110,6 +113,10 @@ int F1337_FIO1_13_LockHostCompat(const RedmcsbFio1HostPc34Compat *host,
                                  int32_t *out_size);
 int16_t F1340_FIO1_09_CountOpenTrackdiskDevicesHostCompat(
     const RedmcsbFio1HostPc34Compat *host);
+int16_t F1343_FIO1_06_DeviceNameHostCompat(
+    const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
+    int16_t drive_index, const char *device_name, int16_t info_index,
+    const char **out_device_name);
 int F1338_FIO1_12_DeletePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                    const RedmcsbFio1FileHandlePc34Compat *file);
 int F1339_FIO1_11_RenamePc34Compat(const RedmcsbFio1HostPc34Compat *host,

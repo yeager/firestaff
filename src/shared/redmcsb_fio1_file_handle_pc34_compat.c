@@ -299,6 +299,31 @@ int16_t F1340_FIO1_09_CountOpenTrackdiskDevicesHostCompat(
     return open_count;
 }
 
+int16_t F1343_FIO1_06_DeviceNameHostCompat(
+    const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
+    int16_t drive_index, const char *device_name, int16_t info_index,
+    const char **out_device_name)
+{
+    const char *resolved_name;
+
+    if (!out_device_name || (use_default_drive_name != 0 &&
+                             use_default_drive_name != 1))
+        return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    if (info_index != 14) return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    if (use_default_drive_name) {
+        if (!host || !host->defaultFloppyDeviceName ||
+            drive_index < 0 || drive_index >= 4)
+            return REDMCSB_FIO1_RESULT_INVALID_PC34;
+        resolved_name = host->defaultFloppyDeviceName(host->context,
+                                                       drive_index);
+    } else {
+        resolved_name = device_name;
+    }
+    if (!resolved_name) return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    *out_device_name = resolved_name;
+    return REDMCSB_FIO1_RESULT_SUCCESS_PC34;
+}
+
 int F1341_FIO1_10_IsClosedPc34Compat(
     const RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -313,9 +338,9 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1340/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1328-F1343/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
            "Host callbacks abstract Amiga F1337 Lock/Info/UnLock and F1340 "
-           "Trackdisk open-state routes. "
+           "Trackdisk open-state routes, and F1343 device-name resolution. "
            "Floppy, format, and disk-change routes are excluded.";
 }
