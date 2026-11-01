@@ -4286,23 +4286,24 @@ int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
     return 1;
 }
 
-static void dm2_runtime_apply_spell_cooldown(
-    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks)
+static void dm2_runtime_apply_hand_cooldown(
+    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks,
+    int hand_index)
 {
     DM2_V1_HeroCooldownState cooldown;
 
     if (!rt || !hero || !rt->source_aura_of_speed_valid ||
-        cooldown_ticks <= 0 || cooldown_ticks > INT16_MAX)
+        cooldown_ticks == 0 || cooldown_ticks < INT16_MIN ||
+        cooldown_ticks > INT16_MAX || hand_index < -1 ||
+        hand_index >= DM2_V1_MAX_HANDS)
         return;
 
-    /* SKWINDOS dm2bye.cpp:4093 and SKWINSPX skevents.cpp:2669 route
-     * CAST_SPELL_PLAYER's nonzero delay through ADJUST_HAND_COOLDOWN on
-     * hand slot 2. That owner blends it with the existing spell cooldown and
-     * applies the authenticated savegames1.b_04 scale. */
+    /* DOS/v5 ADJUST_HAND_COOLDOWN blends the nonzero source delay into the
+     * selected hand(s) and applies authenticated savegames1.b_04. */
     for (int i = 0; i < DM2_V1_MAX_HANDS; ++i)
         cooldown.hand_cooldown[i] = (uint8_t)hero->handcooldown[i];
     dm2_v1_adjust_hand_cooldown(
-        &cooldown, (int16_t)cooldown_ticks, 2,
+        &cooldown, (int16_t)cooldown_ticks, hand_index,
         rt->source_aura_of_speed);
     for (int i = 0; i < DM2_V1_MAX_HANDS; ++i) {
         uint8_t bits = cooldown.hand_cooldown[i];
@@ -4310,6 +4311,16 @@ static void dm2_runtime_apply_spell_cooldown(
             ? (int16_t)bits : (int16_t)bits - 256;
         hero->handcooldown[i] = (int8_t)signed_value;
     }
+}
+
+static void dm2_runtime_apply_spell_cooldown(
+    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks)
+{
+    if (cooldown_ticks <= 0 || cooldown_ticks > INT16_MAX)
+        return;
+    /* SKWINDOS dm2bye.cpp:4093 and SKWINSPX skevents.cpp:2669 route
+     * CAST_SPELL_PLAYER's nonzero delay through slot 2. */
+    dm2_runtime_apply_hand_cooldown(rt, hero, cooldown_ticks, 2);
 }
 
 int dm2_v1_runtime_cast_spell_player(
@@ -21972,6 +21983,7 @@ int dm2_v1_runtime_proceed_hand_command(
 
     if (receipt) memset(receipt, 0, sizeof(*receipt));
     if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
+        !rt->source_aura_of_speed_valid ||
         !rt->session_snapshot_valid || !rt->record_pools_valid ||
         !rt->boot || !rt->boot->assets_verified ||
         !rt->boot->graphics_dat || !rt->source_party.curacthero ||
@@ -22105,6 +22117,12 @@ int dm2_v1_runtime_proceed_hand_command(
         if (receipt) receipt->fail_closed = 1;
         return 0;
     }
+    /* Common skproject ENGAGE_COMMAND epilogue: vol_20 (normally CMDSTR
+     * field 3, with source branch overrides) adjusts the active hand. */
+    if (receipt->hand_cooldown_delay != 0)
+        dm2_runtime_apply_hand_cooldown(
+            rt, hero, receipt->hand_cooldown_delay,
+            rt->source_party.curactmode);
     return 1;
 }
 

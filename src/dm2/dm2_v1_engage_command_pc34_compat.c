@@ -82,6 +82,10 @@ int dm2_v1_engage_command(
     receipt->action_type = (DM2_V1_EngageCommandType)action_case;
     receipt->action_dispatched = 1;
     receipt->success = 1;
+    /* skproject initializes vol_20 from CMDSTR field 3 and sends it to
+     * ADJUST_HAND_COOLDOWN in the common epilogue (skengage.cpp:154, 841-847).
+     * Keep this separate from field 5, which supplies action/timer delay. */
+    receipt->hand_cooldown_delay = request->cmd.power_base;
 
     switch (action_case) {
     /* No-op cases (0, 17-30, 36, 39-40, 42, 51-52) */
@@ -141,6 +145,8 @@ int dm2_v1_engage_command(
             int tile_sub = request->tile_value & 0x7;
             if (tile_type == 4 && tile_sub == 4) {
                 receipt->door_attacked = 1;
+                /* Source wield-on-door path replaces vol_20 with 6. */
+                receipt->hand_cooldown_delay = 6;
             } else if (request->creature_at_target != -1) {
                 int dir = request->party_dir & 3;
                 static const int dx[4] = { 0, 1, 0, -1 };

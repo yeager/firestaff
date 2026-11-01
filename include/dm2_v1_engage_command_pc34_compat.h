@@ -221,6 +221,7 @@ typedef struct {
     int creature_attacked;
 
     int16_t cooldown_applied;
+    int16_t hand_cooldown_delay; /* skengage.cpp vol_20; CMDSTR field 3 by default */
     int16_t stamina_cost;
     int16_t skill_exp_gained;
 } DM2_V1_EngageCommandReceipt;
