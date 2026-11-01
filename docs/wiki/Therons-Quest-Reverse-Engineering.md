@@ -8,7 +8,7 @@
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Current native and reference boundary (2026-10-31):** authentic Japanese
+**Current native and reference boundary (reviewed 2026-11-01):** authentic Japanese
 Track 02 reaches a loaded dungeon through Firestaff's native C/SDL fresh-start
 route. Authentic US Track 02 plus a matching Ak-Tu-Ba-complete BRAM reaches
 dungeon 2 through Continue, with bounded native movement and item

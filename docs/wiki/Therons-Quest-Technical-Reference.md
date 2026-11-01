@@ -95,6 +95,13 @@
 > generation and combat remain unverified. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
+> **System Card trace tooling (2026-11-01):** the reference capture wrapper
+> can restrict BIOS I/O/RAM rows to the source-locked run-path PCs `$EA4D`,
+> `$EA50`, `$E162`, and callback `$2259`. Focused instrumentation, verifier
+> and wrapper checks passed three loops. No original-game capture has used
+> this filter; the previous capped BIOS trace remains rejected, and the tool
+> does not change runtime support. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. Firestaff accepts

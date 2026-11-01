@@ -77,6 +77,7 @@ remain at the top of `docs/`.
 - [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
 - [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 - [Theron ISO spawn-record projection](source-lock/theron-track02-spawn-record-iso-projection-20261101.md) — hash-verified US/JP ISO offsets and raw-BIN record parity; no spawn semantics inferred
+- [Theron System Card run-path trace filter](../scripts/instrument_mednafen_theron_syscard_io_ram_trace.py) — optional `run-path` capture retains authenticated `$EA4D`, `$EA50`, `$E162` and callback `$2259` rows; three-loop tooling checks pass, but no game run has used it yet
 - [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — canonical current summary of native `--debug` evidence, reference captures, evidence limits, and open runtime joins; includes the cold JP emulator route and its byte-identical empty BRAM result
 - [Theron reference-capture runbook](theron/THERON_MAC_SDL_MEDNAFEN_LOCAL.md) — current diagnostic capture constraints; retired machine-specific build paths have been removed
 - [Theron native Debug direct launch](source-lock/theron-native-debug-direct-launch-20261031.md) — confirms the Firestaff Run menu is bypassed; the startup probe did not load a dungeon
@@ -192,10 +193,11 @@ remains bounded to its cited edition, route and test; it does not imply
 complete parity.
 
 The reference capture wrapper now offers a BIOS run-path PC filter for the
-source-locked `$EA4D`, `$EA50` and `$E162` accesses. Its instrumenter and
-streaming verifier passed three loops; no new original-game capture has used
-the filter, so this tooling change does not alter the current Theron evidence
-or support status. See [capture readiness](theron/THERON_CAPTURE_READINESS.md).
+source-locked `$EA4D`, `$EA50` and `$E162` accesses and callback target
+`$2259`. Its instrumenter, streaming verifier and wrapper regressions passed
+three loops; no original-game capture has used the filter yet, so this tooling
+change does not alter the current Theron evidence or support status. See
+[capture readiness](theron/THERON_CAPTURE_READINESS.md).
 
 The 2026-11-01 ISO projection receipt also binds the same eight creature-pointer
 and five regular-spawn zone records from the authenticated US and JP full ISO

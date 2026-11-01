@@ -41,6 +41,13 @@ records. This does not establish JP category semantics or a runtime spawn,
 RNG, creature-generation, or combat consumer. See the
 [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
+**Capture-tooling update (2026-11-01):** the reference wrapper supports an
+opt-in System Card `run-path` PC filter for `$EA4D`, `$EA50`, `$E162` and
+callback `$2259`. Instrumenter, streaming verifier and wrapper regressions
+passed three loops, but no original-game run has used this filter yet. The
+current BIOS capture remains truncated; this tooling update adds no gameplay
+or handoff evidence. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+
 **Current reference boundary (2026-10-31):** a separate authentic Japanese
 cold System Card RUN trace follows the `$1800=$C8`, `$1801=$04`, `$2259=$04`
 callback through BIOS branch `$E166->$E176`. It does not observe a confirmed

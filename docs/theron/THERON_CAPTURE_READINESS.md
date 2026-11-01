@@ -7,10 +7,11 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
 The latest original-game capture maps the runtime `$C852` code window to
-Track 02 raw offset `$A3AD2`. The cold Drator route reached start, left-event
-and reentry with 132 `$C852` fetches. Its wrapper completed but rejected the
-capture package because the exhaustive BIOS trace hit its row cap; the next useful capture should scope BIOS tracing to the
-source-locked decision/status path. The existing capture also joins generated-
+Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
+left-event and reentry, while the bounded consumer trace hit its row cap
+before reentry. The wrapper rejected the package because the exhaustive BIOS
+trace hit its row cap; the next useful capture should use the new source-scoped
+BIOS mode below. The existing capture also joins generated-
 row publication bytes to later reads and a work-buffer copy. Enable the bounded
 fetch hook with
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1`; it runs after `RdAtPC()` and
@@ -33,6 +34,12 @@ status-poll instructions by design. It reduces trace volume but does not prove
 a completed BIOS handoff or gameplay, and no new original-game capture has yet
 used this mode. The remaining cold route must still pass the independent
 callback, input and transition verifiers.
+
+Three consecutive loops passed the focused instrumenter, streaming-verifier
+and wrapper-script regressions for this mode. These loops exercise the
+instrumentation and fail-closed row validation; they do not represent a game
+capture. See the [capture-tooling work-log entry](../../DONE-theron.md#2026-11-01--add-source-scoped-system-card-ioram-capture-mode) and the
+[System Card RUN source lock](../source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 The isolated 2026-10-31 authentic US cold run reached Drator `start`,
 `left-event` and `reentered-event` at level `$03`, position `$02,$03`. The
