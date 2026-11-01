@@ -17,34 +17,27 @@ can support gameplay semantics. See the [state-map report](docs/source-lock/ther
 The current native regression build passed eight selected US/JP real-media,
 startup, later-dungeon and input CTests in three consecutive loops (24 total
 executions). This verifies those bounded paths only; full campaign, renderer,
-save, combat, audio and gameplay parity remain open. The new `$CBC6`/`$45C3`
-reader-code fetch windows still need an authentic Drator replay and source
-join before they can inform row semantics or native spawning. See the
-[completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions)
+save, combat, audio and gameplay parity remain open. A later authentic US
+Drator replay emitted live `$CBC6`/`$45C3` fetch windows: `$CBC6` matched
+retail candidates, but `$45C3` failed exact source verification and the wrapper
+rejected the package. See the [completed regression record](DONE-theron.md#2026-11-01--repeat-native-regional-gameplay-regressions),
+[ordered call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md)
 and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
-The US Drator `$C852` caller has a new static call-target candidate: its
-source-locked `$C85E` instruction is `JSR $5039`, and the eight bytes at that
-address match in authentic US and JP stage-two payloads. The current capture
-does not retain the `$C85E`/`$5039` instruction path or MPR2 at the call, so
-this does not prove target execution or row semantics. The next US trace must
-record ordered `$C852`→`$C85E`→`$5039` events, all MPRs and registers, the
-`($4f),Y` read, and the `$3879` callee before joining `$CBC6`/`$45C3` row
-reads. The Mednafen PCE and PCE Fast `$3879` trace extension is now applied
-successfully by the complete patch-only chain in three consecutive loops; a
-separate pass with PCE Fast enabled also succeeds. The instrumented PCE Fast
-emulator was built against SDL2 2.32.10 and passed the isolated startup/runtime
-version check. An authentic JP save-state-only trace exercised the patch but hit
-the shared 8,192-row cap before `$C852`; JP `$C85E` was opcode `$A6` at
-physical `$0D285E`, and `$5039` was not observed. Disabling optional `$44D2`
-detail did not prevent the broad cap. A new independent `<trace>.c852-runtime-window`
-sidecar records the first `$C852` hit plus 128 following instructions without
-using that shared budget; its authentic JP run correctly reported
-`not_observed`. The local cold-US attempt was rejected because the staged media
-lacks Track 03, and no regional audio was substituted. Next, use a complete
-authentic US disc set and the instrumented emulator to capture ordered
-`$C852`→`$C85E`→`$5039` events, all MPRs/registers, the `($4f),Y` read, and
-`$3879` entry. See the [source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
+The US Drator `$C852` source window contains a static `$C85E` `JSR $5039`,
+and the static eight-byte candidate at `$5039` matches in authentic US and JP
+stage-two payloads. A later authentic cold run records the ordered
+`$C852`→`$C85E`→`$5039` dispatch with MPR2 `$68`; the live target bytes are
+`44 05 86`, not the static candidate. Thus runtime dispatch is observed but
+the target source owner and row semantics remain unresolved. The same package
+was rejected because live `$45C3` did not match retail Track 02 and other
+traces reached their caps. The instrumented PCE Fast sidecar and complete
+patch-only chain passed their focused checks. An authentic JP state-only run
+separately hit the shared 8,192-row cap before `$C852`, reported
+`not_observed` in its independent sidecar, and executed no `$5039`. See the
+[US runtime call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md),
+[static source-lock report](docs/source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md),
+and [capture readiness](docs/theron/THERON_CAPTURE_READINESS.md).
 
 The authentic JP Akutuba source spans are now mapped to raw Track 02 sector
 308 (Track 02 LBA 84, disc LBA 3674). Its descriptor and all four map arrays
@@ -75,15 +68,14 @@ viewport behavior from static source offsets, retained RAM scans, or event
 ordering alone. The planner's disc LBA 3674 is a capture filter target, not
 evidence that the original read or selected the map.
 
-The fetched-code verifier now rejects missing `$CBC6`/`$45C3` matches,
+The fetched-code verifier rejects missing `$CBC6`/`$45C3` matches,
 non-increasing event sequences, per-PC sequence gaps and explicit truncation.
-Its regression passed three loops. The next step remains an isolated
-authentic replay that yields complete windows at both PCs and follows the
-copied work buffer to its downstream reader. For that US raw Track 02 replay,
-enable both `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
-`THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1`; the wrapper then rejects
-an incomplete source join and records a sidecar report. The verifier fixtures
-are not gameplay evidence.
+Its regression passed three loops. A later authentic US cold replay emitted
+live 512-byte windows: `$CBC6` matches retail candidates, while `$45C3` did
+not match the retail Track 02 image. The strict wrapper therefore rejected
+the source report. Follow the copied work buffer to its downstream reader and
+resolve the live `$45C3` code mapping before using this route to assign
+semantics. The verifier fixtures are not gameplay evidence.
 
 ## Next original-game analysis — capture the Drator reader source occurrences
 
@@ -97,9 +89,9 @@ field meanings or complete native creature behavior. Static source searches
 find US Track 02 candidates for both PCs: `$CBC9` is consistent with a `LDA $2935,Y` load at `$CBC6`, and `$45C3` matches
 `TII $2935,$2400,$000A`. The strict verifier accepts constructed 512-byte
 windows read from the authenticated retail BIN and reports four `$CBC6` and
-three `$45C3` raw offsets. This validates real source bytes and tooling, but
-the current trace has not captured these windows during an authentic run;
-therefore no live code occurrence or LBA is bound. Keep row semantics open and
+three `$45C3` raw offsets. This validates real source bytes and tooling, but the later live `$45C3`
+window contradicts the static candidate. `$CBC6` matches multiple possible
+raw offsets, so its live occurrence is ambiguous. Keep row semantics open and
 do not infer creature fields or authorize native spawning from these matches.
 See the [source-candidate report](docs/source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md).
 
@@ -112,8 +104,14 @@ at raw offset `$A3AD2` (SHA-256
 The runtime trace SHA-256 is
 `af0e870c3405700baf34b984bb26b9ef301d06f6ecb4f1b86d28058c7357b3d4`. Later windows vary with execution. The cold route reached `reentered-event` at level
 `$03`, position `$02,$03`. This identifies the code source for the captured
-window; the next analysis is to capture reader windows at `$CBC6` and `$45C3`
-in a new authentic run and trace the buffer's downstream use. The filtered row trace reached its 1,048,576-row
+window. A later cold US run captured a complete 129-dispatch instruction
+window: `$C85E` executed `JSR $5039`, followed by a dispatch at `$5039`
+under MPR2 `$68`. The live target bytes `44 05 86` differ from the static
+stage-two candidate, so source ownership remains unknown. The wrapper rejected
+this run because live `$45C3` bytes did not match retail Track 02, and other
+traces reached their caps. Capture and source-bind the live row readers and
+trace the downstream buffer use before assigning semantics. See the
+[runtime call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md). The filtered row trace reached its 1,048,576-row
 limit after the same-session byte joins. Keep row bytes opaque; do not label them as position,
 direction or creature fields without source and runtime proof.
 
@@ -129,8 +127,8 @@ The capture wrapper now offers the source-locked
 `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path` scope. It retains data
 reads at `$EA4D`, callback writes at `$EA50` and callback-result reads at
 `$E162`, while verifying their instruction bytes against the authentic System
-Card image. Use it when performing the separate US Drator reader-source replay
-to avoid logging the repeated `$1800` status-poll loop. The immediate capture
+Card image. The later US Drator reader-source replay used it to avoid logging the repeated
+`$1800` status-poll loop. The immediate capture
 priority remains the JP active-map source-to-consumer chain above. This is an
 instrumentation option only; it does not change the existing
 incomplete-capture result or prove a game handoff.
@@ -145,23 +143,25 @@ not map the bytes to coordinates, creature fields, or stats. Combine it with
 poll cap. A different bank mapping will intentionally produce no matching row
 and requires a new source-bound capture before changing the filter.
 
-The filtered observer and parser are tooling only. Their repeated contract
-checks do not constitute a new original-game capture; the prior package remains
-rejected because its BIOS trace was truncated. Keep generated-row semantics
+The filtered observer and parser are tooling. The later original-game capture
+used these filters but remained rejected because live `$45C3` failed source
+verification and other traces reached their caps. Keep generated-row semantics
 and complete wrapper verification open until a fresh authentic replay passes
 all independent receipts.
 
-The bounded `$C852` fetch trace now also records fetched instruction windows
-at `$CBC6` and `$45C3`, the static code candidates corresponding to reader PCs
-`$CBC9` and `$45C3`. Use it in the next isolated Drator replay alongside the
-`drator-row` data-read filter and System Card `run-path` scope. Match each
+The bounded `$C852` fetch trace records fetched instruction windows at
+`$CBC6` and `$45C3`, the static code candidates corresponding to reader PCs
+`$CBC9` and `$45C3`. The later isolated Drator replay used these hooks alongside
+the `drator-row` data-read filter and System Card `run-path` scope. Match each
 captured 512-byte code window with
 `scripts/verify_theron_pce_fast_code_fetch_source.py`; it checks the exact US
 Track 02 identity and MPR-to-physical-PC mapping, then records every matching
 raw offset. Retain multiple matches when the retail image contains duplicate
-code. This improves the runtime-to-source join but
-does not assign row-field or spawn semantics. The new fetch sites have tooling
-coverage only; no authentic run has used them.
+code. The live `$CBC6` window matched retail candidates; live `$45C3` failed source
+verification and caused wrapper rejection. The ordered `$C852` → `$C85E` →
+`$5039` dispatch is separately observed, but the target bytes differ from the
+static source candidate. These results do not assign row-field or spawn
+semantics. See the [US runtime call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 
 Raw traces and user media remain outside Git. No Drator-positioned save or
 state artifact is checked into the repository; reproduce the route from the

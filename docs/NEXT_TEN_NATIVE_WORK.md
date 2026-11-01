@@ -33,10 +33,11 @@ contains only the next cross-game work items, not a complete Theron inventory.
    explicitly truncated, and its streaming verifier correctly rejected the
    marker. A strict tooling verifier now matches constructed `$CBC6` and
    `$45C3` instruction windows against US retail bytes, with four and three
-   possible raw offsets; capture both windows in a new authentic run to bind
-   the live source occurrence. Then trace the work buffer downstream and
-   establish whether `$C852`
-   participates in this row lifecycle. Keep row bytes opaque. This reference
+   possible raw offsets; the live `$CBC6` window now has retail matches, while the live `$45C3` window
+   failed the strict source check. A separate 129-dispatch trace proves the
+   ordered `$C852` → `$C85E` → `$5039` dispatch, but live target bytes differ
+   from the static candidate. Complete source binding and downstream work
+   buffer semantics remain open. Keep row bytes opaque. This reference
    capture does not replace the native viewport's map/pose-to-VDC/VCE/VRAM-to-frame join. Continue the separate `$C1FC` active-map and movement question:
    its matched input-conditioned transfers may be teleporter destination
    copying and do not prove movement, collision or visible effect. See the
@@ -48,8 +49,9 @@ contains only the next cross-game work items, not a complete Theron inventory.
    startup/runtime version check. An authentic JP state-only run exercised the patch but reached its shared
    8,192-row cap without `$C852` or `$5039`. A separate `<trace>.c852-runtime-window`
    sidecar records a bounded first-hit window without consuming that cap; the
-   JP run reports `not_observed`. The ordered US
-   `$C852`→`$C85E`→`$5039` path still needs a complete authentic US disc capture. See [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
+   JP run reports `not_observed`. The ordered US `$C852`→`$C85E`→`$5039` path is now observed in a bounded
+   authentic reference trace; the full package is rejected and target source
+   ownership remains open. See [the call-window report](source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md).
    No Drator-positioned save or state artifact is checked into the repository,
    so reproduce the route from hash-verified media in a fresh profile.
 6. **Theron JP cold data handoff and presentation ownership.** Capture a cold

@@ -1,5 +1,12 @@
 # Theron US Drator `$C852` cold capture boundary (2026-10-31)
 
+> **Later follow-up (2026-11-01):** the cold US replay with the independent
+> 129-dispatch sidecar records `$C852` → `$C85E` `JSR $5039` → `$5039` under
+> MPR2 `$68`. The live target bytes differ from this static candidate; live
+> `$45C3` windows fail retail-source verification, and bounded traces reach
+> their caps. The package remains rejected. See the
+> [ordered call-window report](theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
+
 ## Purpose and provenance
 
 This reference-only capture tested whether authentic cold media can reach the

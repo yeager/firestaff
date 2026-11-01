@@ -21,8 +21,28 @@
 - A local attempt to cold-run US media used only the staged, hash-verified US
   Track 02 and Track 19 files; Mednafen rejected the incomplete CUE because
   Track 03 was absent. No JP audio or invented tracks were substituted. The
-  next source capture still requires a complete authentic US disc set and the
-  US Drator route, followed by source matching the new sidecar window.
+  follow-up cold US replay with complete archived track coverage now records
+  a complete 129-dispatch `$C852` window and ordered `$C85E` → `$5039`
+  dispatch. The full package was still rejected: live `$45C3` bytes did not
+  match retail Track 02 and bounded traces reached their caps. See the
+  [runtime call-window report](docs/source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
+
+## 2026-11-01 — document authentic US ordered `$C852` call-window capture
+
+- Replayed the authentic cold US Drator route with the complete archived US
+  CUE set. The route diagnostics reached `start`, `left-event`, and reentry.
+- The complete 129-dispatch sidecar records `$C85E` `JSR $5039` followed
+  immediately by a dispatch at `$5039`; MPR2 was `$68` at both records. The
+  target bytes were `44 05 86`, which do not match the static candidate
+  `31 4f 20 79 38 64 5b 60` previously mapped in the stage-two payload. The
+  `$C852` window remains source-matched to authenticated US Track 02 offset
+  `$A3AD2`.
+- The strict wrapper rejected the package because live `$45C3` instruction
+  windows did not match the retail image; status and main-RAM consumer traces
+  also reached their configured caps. This is bounded runtime disassembly
+  evidence, not an accepted full capture or gameplay/parity result. The report
+  records trace hashes and all evidence boundaries.
+- `git diff --check` passed for this documentation change; no tests were run.
 
 ## 2026-11-01 — document authentic JP state-only `$3879` trace and intake fix
 

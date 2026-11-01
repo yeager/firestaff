@@ -28,6 +28,14 @@
 > source is mapped, while direct generated-row consumer attribution and
 > downstream row semantics remain open; the associated BIOS trace was
 > explicitly truncated and fails closed. A subsequent authentic JP state-only `$3879` trace reached its 8,192-row cap before `$C852`, recorded JP `$C85E` opcode `$A6` at physical `$0D285E`, and did not observe `$5039`; this does not validate the US call candidate. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> **US ordered runtime call window (2026-11-01):** a later authentic cold
+> Drator capture records `$C852` → `$C85E` `JSR $5039` → `$5039` dispatch
+> under MPR2 `$68`. The target bytes `44 05 86` differ from the static
+> stage-two candidate. The capture wrapper rejected the package because live
+> `$45C3` bytes did not match retail Track 02 and multiple traces reached
+> their caps. This is bounded disassembly evidence, not an accepted capture
+> package or a gameplay claim. See the
+> [runtime call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
 > physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all
@@ -54,8 +62,9 @@
 > records only the observed US reads of generated-row offsets 6–8 at logical
 > PCs `$CBC9` and `$45C3` with physical data `$1F093B-$1F093D`. The parser
 > validates the versioned address receipt but assigns no row semantics. Its
-> focused tooling checks passed three loops; no new authentic run used it, and
-> the previous BIOS-truncated capture remains rejected. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> focused tooling checks passed three loops. A later authentic run used the
+> filter; its package remained rejected at trace caps and live `$45C3` source
+> verification. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 > **JP Akutuba source maps (2026-11-01):** the identity-checked planner maps
 > the 68-byte descriptor and four opaque tile arrays to raw MODE1 sector 308
@@ -131,15 +140,17 @@
 > US retail BIN and reports four and three matching raw offsets, respectively.
 > This exercises the real-media byte matcher with constructed rows; it is not
 > a new emulator capture and does not bind the live fetched instructions to a
-> unique runtime LBA/source occurrence. Keep row fields and native spawn
+> unique runtime LBA/source occurrence. A later authentic capture emitted live
+> windows: `$CBC6` matched retail candidates, while `$45C3` did not match the
+> retail image and caused wrapper rejection. Keep row fields and native spawn
 > behavior unassigned. See the [source-map report](../source-lock/theron-disassembly/theron-us-drator-row-reader-source-map-20261101.md)
 > and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 > **System Card trace tooling (2026-11-01):** the reference capture wrapper
 > can restrict BIOS I/O/RAM rows to the source-locked run-path PCs `$EA4D`,
 > `$EA50`, `$E162`, and callback `$2259`. Focused instrumentation, verifier
-> and wrapper checks passed three loops. No original-game capture has used
-> this filter; the previous capped BIOS trace remains rejected, and the tool
+> and wrapper checks passed three loops. The later authentic US cold capture
+> used this filter; the package remained rejected at trace caps, and the tool
 > does not change runtime support. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 ## Door movement boundary

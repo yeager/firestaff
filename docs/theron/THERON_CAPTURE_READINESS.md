@@ -26,9 +26,13 @@ regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
 later-dungeon runtime, and both regions' keyboard/SDL input routes. The longer
 SDL route includes mouse-panel and touch input, movement, wait, champion
 selection, and the US item interaction sequence. These tests establish those
-bounded routes only; they do not close the gameplay-parity gaps below. No
-authentic Drator replay has yet exercised the newly added reader-code fetch
-windows, so their source join remains pending. A separate authentic JP
+bounded routes only; they do not close the gameplay-parity gaps below. A newer authentic US cold Drator replay exercised the independent instruction
+window and observed `$C852` → `$C85E` `JSR $5039` → `$5039` in order. Its
+first five `$C852` 512-byte windows match US Track 02 at raw offset `$A3AD2`;
+the live `$5039` bytes (`44 05 86`) differ from the old static stage-two
+candidate. The wrapper rejected the package because live `$45C3` windows did
+not match retail Track 02 and multiple trace quotas were reached. See the
+[ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md). A separate authentic JP
 PCE Fast save-state-only run exercised the `$3879` trace patch after the
 wrapper accepted the JP MODE1/2048 Track 02 identity. The shared trace still
 reached 8,192 rows before recording `$C852`; it recorded JP `$C85E` as opcode
@@ -40,11 +44,11 @@ occurs. It records the first `$C852` plus 128 following instruction dispatches
 with PC/opcode/operands/register/MPR state, independent of the broad quota. The
 wrapper accepts the JP MODE1/2048 ISO identity `62a39bbf43415c9739c41c2481080a49`. Set
 `FIRESTAFF_THERON_DISABLE_44D2_TRACE=1` to omit that optional detail when
-reproducing the capture. This state-only result does not prove cold handoff,
-the US call path, or gameplay semantics. A local US cold-capture attempt was
-not run to completion: the staged US Track 02 and Track 19 files lack the
-intervening authentic audio track set, and Mednafen rejected a sparse CUE at
-missing Track 03. Use complete regional media for the US Drator route.
+reproducing the capture. This state-only JP result does not prove a cold handoff or gameplay semantics;
+the US call path is covered by the separate bounded trace described above. An earlier local US attempt lacked intervening authentic tracks and was
+rejected at Track 03. A later capture used the complete archived US track set
+and reached the Drator route; see the ordered call-window report for its
+source-validation failure and trace limits.
 
 The 2026-10-31 original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
@@ -67,10 +71,13 @@ Track 02 BIN to narrow repeated static occurrences; they do not prove source
 ownership until the bytes match and the physical mapping is accounted for.
 The `$C852` source bytes also contain a direct `JSR $5039` at `$C85E`; matching
 static target bytes occur at `$5039` in the authentic US and JP stage-two
-payloads. No captured MPR2 or instruction path proves that this candidate ran.
-The next US trace should record `$C85E`, `$5039`, the `$4F`-based read and
-`$3879` entry with ordered events and all MPRs. See the
-[stage-two call-target report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
+payloads. The earlier capture available when this static candidate was first
+reported had no MPR2 or instruction path for the call. The latest US trace records `$C85E` and the following `$5039` dispatch with
+ordered events and all MPRs, but the live target bytes do not match the static
+stage-two candidate. Binding the runtime target to authentic source bytes,
+then following the operand read and `$3879` path, remains open. See the
+[ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md) and the
+[static candidate report](../source-lock/theron-disassembly/theron-us-stage2-c852-call-target-5039-20261101.md).
 The PCE and PCE Fast `$3879` trace-hook extension starts a bounded
 128-instruction window at the first runtime `$C852` instruction and retains
 the caller range, MPRs and CPU registers through later instructions that may
@@ -83,9 +90,10 @@ cap without `$C852`; the sidecar remained header-only and the receipt reported
 `not_observed`. A clean rebuild after the sidecar's independent dispatch gate
 change passed isolated SDL2 2.32.10 startup validation, and a second authentic
 JP state-only run again reported zero rows and `not_observed`; no `$5039`
-execution was recorded. Therefore the ordered
-US runtime `$C852`→`$C85E`→`$5039` path, target execution and caller data
-semantics remain unproven.
+execution was recorded. Therefore the ordered US runtime `$C852`→`$C85E`→`$5039` dispatch is now
+observed in a bounded reference trace. Runtime target source ownership, data
+semantics, a complete accepted handoff package and native parity remain
+unproven.
 Use the [US Track 02 code-window verifier](../../scripts/verify_theron_pce_fast_code_fetch_source.py)
 to validate the exact media hash, opcode/window consistency, MPR-to-physical-PC
 relationship and all matching raw offsets. A complete verification requires
@@ -96,8 +104,9 @@ explicit rather than being collapsed to one source occurrence. The verifier's
 regression passed three loops, and a tooling fixture using 512-byte windows
 read from the hash-verified US retail BIN resolved all four `$CBC6` and three
 `$45C3` matching raw offsets. These are authentic source bytes but constructed
-execution rows, not a runtime capture; no authentic capture has exercised the
-reader windows yet.
+execution rows, not a runtime capture. A later authentic run emitted live
+reader windows: `$CBC6` matched retail candidates, while `$45C3` did not match
+the retail image and caused the strict wrapper to reject the source report.
 For an isolated US raw Track 02 replay, set both
 `THERON_CAPTURE_PCE_FAST_C852_FETCH_TRACE=1` and
 `THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY=1`. The capture wrapper
@@ -158,8 +167,10 @@ produces no accepted row until a new authentic source mapping is captured.
 Use this with the System Card `run-path` filter below to keep both traces
 bounded; neither filter alone establishes a complete capture or gameplay.
 The focused parser, wrapper and reference-patch contract checks passed three
-consecutive loops; see the [completed tooling entry](../../DONE-theron.md#2026-11-01--add-source-scoped-drator-row-consumer-trace-filter). No new game run used this spawn filter, so the previous
-truncated package remains rejected and generated-row semantics remain open.
+consecutive loops; the later authentic cold US capture used this spawn filter.
+The package remained rejected because the live `$45C3` source check failed and
+other traces reached their caps. See the [completed tooling entry](../../DONE-theron.md#2026-11-01--add-source-scoped-drator-row-consumer-trace-filter).
+Generated-row semantics remain open.
 
 The reference capture wrapper now supports
 `THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER=run-path`. This source-scoped mode
@@ -169,9 +180,10 @@ the captured instruction bytes against the hash-verified System Card image.
 It also admits the observed callback target `$2259`. The default `none` mode
 retains the broader trace. The filtered receipt excludes repeated `$1800`
 status-poll instructions by design. It reduces trace volume but does not prove
-a completed BIOS handoff or gameplay, and no new original-game capture has yet
-used this mode. The remaining cold route must still pass the independent
-callback, input and transition verifiers.
+a completed BIOS handoff or gameplay. The later authentic US capture used this
+mode; its package still failed at live `$45C3` source verification and trace
+caps. A future accepted cold handoff must pass the independent callback, input
+and transition verifiers.
 
 Three consecutive loops passed the focused instrumenter, streaming-verifier
 and wrapper-script regressions for this mode. These loops exercise the

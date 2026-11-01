@@ -73,31 +73,31 @@ identical (SHA-256
 
 ## Retail-window verifier follow-up (2026-11-01)
 
-The strict fetched-code verifier was exercised with complete 512-byte windows
-read directly from the hash-verified retail BIN at candidate raw offsets. It
-accepted the `$CBC6` window at offsets `0x0A085A`, `0x13385A`,
-`0x21005A`, and `0x25985A`, and the `$45C3` window at
-`0x095A93`, `0x205293`, and `0x24EA93`. These are authentic source
-bytes supplied through a constructed verifier fixture; no emulator run produced
-these reader-window rows. The result validates the verifier's media-hash,
-window, opcode and MPR/physical-PC checks, but it does not identify which
-matching occurrence was active in the Drator capture.
+The strict fetched-code verifier was first exercised with complete 512-byte
+windows read directly from the hash-verified retail BIN at candidate raw
+offsets. It accepted the `$CBC6` window at offsets `0x0A085A`, `0x13385A`,
+`0x21005A`, and `0x25985A`, and the `$45C3` window at `0x095A93`,
+`0x205293`, and `0x24EA93`. Those constructed rows validate the verifier but
+do not identify a live occurrence.
 
-The next capture should retain both reader windows in the same authentic US
-run as the `$1F093B-$1F093D` data reads, then join the shared event sequence
-and preserve all duplicate retail offsets. Until that capture exists, runtime
-source occurrence, downstream buffer meaning and row semantics remain open.
+A later authentic cold US capture did emit live code-fetch windows. Its
+`$CBC6` windows match the retail image at multiple candidate offsets, while
+the `$45C3` windows do not match the retail Track 02 BIN at any exact
+512-byte offset. The strict wrapper therefore rejected the source report; the
+live `$45C3` code remains source-unbound. The capture also reached the bounded
+consumer and System Card trace caps. See the
+[ordered `$C852` call-window report](theron-us-c852-runtime-call-capture-20261101.md)
+for the separate complete 129-dispatch sidecar and its rejection boundary.
 
 ## Evidence boundary
 
-Together, the capture and static source show that both observed PCs have
-byte-compatible code candidates that read or copy the row workspace. The
-runtime-to-source occurrence join is still missing: the available filtered
-trace does not bind either PC's fetched instruction bytes to a particular
-Track 02 LBA and raw offset in that same execution. Keep the candidate source
-occurrences distinct and row bytes semantically opaque. Do not use these
-matches to infer creature identity, position, stats, RNG behavior, AI, combat,
-or permission to create native creatures.
+Together, the row-byte trace and static source candidates remain consistent
+with the proposed read/copy loop, but the live `$45C3` bytes contradict the
+candidate for this execution. The `$CBC6` live source occurrence also remains
+ambiguous across duplicate offsets. Keep candidate occurrences distinct and
+row bytes semantically opaque. Do not use these matches to infer creature
+identity, position, stats, RNG behavior, AI, combat, or permission to create
+native creatures.
 
 See the [cold Drator capture boundary](../theron-us-drator-c852-cold-capture-20261031.md),
 the [generator/RNG state report](../theron-generator-rng-state-2026-08-21.md),

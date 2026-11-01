@@ -24,18 +24,19 @@ The target window SHA-256 is
 FNV-1a is `0x0bc3d6d9`. The byte listing is in
 [`theron-us-stage2-c852-call-target-5039-20261101.asm`](theron-us-stage2-c852-call-target-5039-20261101.asm).
 
-## Evidence boundary and next capture
+## Earlier evidence boundary
 
-This binds the caller instruction bytes and a same-address static target
-candidate to authentic regional media. It does not show that the captured
-runtime reached `$C85E` or `$5039`: the available capture retains repeated
-fetches at `$C852`, not the intervening callee PC. Nor does it show that MPR2
-mapped the stage-two source bytes at the call, or identify the data addressed
-by `($4f),Y` or the `$3879` routine.
+At the time this report was written, the available runtime capture retained
+repeated `$C852` fetches but did not show the intervening `$C85E` or `$5039`
+dispatch. A later authentic US cold capture has since recorded the ordered
+call and target-address dispatch. Its live `$5039` bytes (`44 05 86`) do not
+match this static candidate (`31 4f 20 79 38 64 5b 60`), so the candidate
+must not be assigned to the live runtime mapping. See the
+[later runtime call-window report](theron-us-c852-runtime-call-capture-20261101.md).
+The live target's source owner, data read through `($4f),Y`, and `$3879`
+semantics remain unresolved.
 
-The next Drator source trace should retain the ordered instruction path from
-`$C852` through `$C85E` to `$5039`, with all MPRs, A/X/Y and flags at each
-event. It should also retain the mapped read through `($4f),Y`, entry/return
-at `$3879`, and the later `$CBC6`/`$45C3` row reads in the same event sequence.
-Do not assign row, generator, coordinate, or creature semantics from this
-static call edge.
+Next, source-bind the live target bytes under its captured MPR mapping, then
+retain the mapped read through `($4f),Y`, entry/return at `$3879`, and later
+`$CBC6`/`$45C3` row reads in one event sequence. Do not assign row, generator,
+coordinate, or creature semantics from the static call edge.
