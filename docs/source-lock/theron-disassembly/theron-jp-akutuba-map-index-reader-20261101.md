@@ -38,10 +38,15 @@ occurs once in the authenticated raw BIN at byte offset `$95ED2`.
 50EC: 20 E7 44    JSR $44E7
 ```
 
-The visible instructions read a little-endian word through zero-page `$2A`,
-add zero-page `$33` to its low byte with carry into the high-byte index, load
-`$2C`, exchange A/Y with `SAY`, and call `$4FA7`. This describes the
-instruction sequence, not the routine's full semantics or its caller contract.
+The visible instructions use operand `$2A` for an indirect-indexed load, add
+operand `$33` to the loaded low byte with carry into the high-byte index, load
+`$2C`, exchange A/Y with `SAY`, and call `$4FA7`. In the isolated Mednafen
+1.32.1 PCE Fast core, `GetIY` obtains its 16-bit operand base from
+`HU_Page1[$2A..$2B]`; direct zero-page operations such as `ADC $33` use the
+same `HU_Page1` array. The saved state's MPR[1] is `$F8`. Keep that
+implementation-specific mapping explicit when tracing the operand bytes; this
+instruction sequence does not identify the routine's full semantics or caller
+contract.
 
 ## Pointer-like bytes before the map arrays
 
@@ -77,12 +82,13 @@ In an autoloaded state-only reference trace, the movement-context sidecar
 records execution at `$50D2/$50D6` reading logical `$6A9D/$6A9E` through MPR3
 `$74`, with values `$11,$6B`. Those bytes are the third 16-bit value in the
 first pointer-like list, and the containing 114-byte source span is unique in
-the authentic BIN. The pair by itself occurs 17 times. The trace proves those
-instruction PCs fetched those bytes; it does not capture Y, A, X, zero-page
-`$2A/$33`, or the subsequent effective read at `$4FA7`.
+the authentic BIN. The pair by itself occurs 17 times. The trace proves those instruction PCs fetched those bytes; it does not capture
+Y, A, X, the `Page1_local` operand values used at `$2A/$33`, or the subsequent
+effective read at `$4FA7`.
 
-The autoload state's initial BaseRAM has `$2A/$2B=$6A99` and `$33=3`, while
-its close-time snapshot has `$2A/$2B=$6A99` and `$33=4`. Neither snapshot is a
+The autoload state's initial BaseRAM has offsets `$2A/$2B=$6A99` and
+`$33=3`, while its close-time snapshot has offsets `$2A/$2B=$6A99` and
+`$33=4`. Those are Page1-backed values for this PCE Fast state, not a
 same-event register record. Therefore it is not established that `$6A99` was
 the pointer base or that either `$33` value applied during the observed read.
 The state-only UP/control traces also report `transition=missing` and do not
@@ -93,10 +99,13 @@ rendered response. See the [matched input/data-read report](theron-jp-state-only
 
 The source table and code bytes are authentic and uniquely matched as stated
 above. The relation between the reader, the pointer-like `thing_list` tail,
-and a map cell remains a candidate. A later three-run state-only capture recorded reads in Map 0 and Map 3 from PCs `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`; the dynamic bytes match the authentic BIN source. The `$50FE` PC lies within the uniquely source-matched `$50D2` code window, and a code window at `$AE66` also has a unique source occurrence. These observations do not establish fetched runtime opcode bytes and register context at those PCs, nor connect either reader to the `$50D2` list. A follow-up reference trace should record
-CPU registers and zero-page `$2A..$33` at `$50D2`, the resolved address and
-registers at `$50E4`, subsequent reads within the real map spans, and any
-`$4FA7` consumer in shared event order. To support rendering, join that trace
+and a map cell remains a candidate. A later three-run state-only capture recorded reads in Map 0 and Map 3 from PCs `$50FE`, `$4FFC`, `$4FD4`, and `$AE66`; the dynamic bytes match the authentic BIN source. The `$50FE` PC lies within the uniquely source-matched `$50D2` code window, and a code window at `$AE66` also has a unique source occurrence. These observations do not establish fetched runtime opcode bytes and register context at those PCs, nor connect either reader to the `$50D2` list. A follow-up reference trace should record pre-instruction A/X/Y/P and opcode
+bytes at `$50D2/$50D6`, plus the Page1-backed bytes `$2A..$33`, the resolved
+address and registers at `$50E4`,
+subsequent reads within the real map spans, and any `$4FA7` consumer in shared event order. PCE Fast's interpreter keeps X/Y/P in locals; capture
+those live locals and the `Page1_local` values instead of relying on potentially
+stale `HuCPU.X/Y/P` fields or calling them CPU `$00xx` reads. To support
+rendering, join that trace
 to input receipt, active-map/pose evidence, and atomic VDC/VCE/VRAM state. Until
 then, keep the list and fields opaque and do not use them to select or render
 a native map.

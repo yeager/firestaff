@@ -59,8 +59,12 @@ window from the authentic JP state to one raw Track 02 offset. A bounded trace
 observes reads from a candidate four-list structure at the end of the
 unclassified `thing_list` region, but its role, active-map relationship and
 tile consumer remain unproven. Three later state-only captures observe reads
-from Map 0 and Map 3 whose values match authenticated Track 02, but they do not
-identify the active map or establish a renderer join. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md)
+from Map 0 and Map 3 whose values match authenticated Track 02. Static
+source-matched windows decode the observed PCs `$50FE`, `$4FFC`, and `$4FD4`
+as `LDA ($14),Y`, and `$AE66` as `ADC $6DF6,X`. The state-only capture did
+not preserve contemporaneous registers or fetched opcode bytes, so the
+instructions do not identify the active map or establish a renderer join. See
+the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md)
 and [map-array capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 The latest matched JP state-only pair verified a guest read of `up@61:120` at
 `$44C1`, then retained 256 identical, authentic-source-matched data reads in

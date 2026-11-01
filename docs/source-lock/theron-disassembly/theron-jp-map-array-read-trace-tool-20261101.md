@@ -34,7 +34,8 @@ does not establish that unobserved bytes or maps are unused. See the
 ## Evidence still required
 
 The next authentic same-session trace must join the reader at `$50D2/$50D6`
-with contemporaneous A/X/Y and zero-page `$2A..$33`, the resolved read around
+with pre-instruction A/X/Y/P and opcode bytes, plus the Page1-backed operand
+bytes `$2A..$33` used by the PCE Fast interpreter, the resolved read around
 `$4FA7`, dynamic `map_array_read` rows, active-map selection, and the tile at
 the captured party pose. Join those events to authenticated Track 02 source
 reads and an atomic VDC/VCE/VRAM snapshot. Until that join is captured and
