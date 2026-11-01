@@ -3,6 +3,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_wall_ornament.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,12 +11,125 @@
 
 static int failures;
 
+static uint16_t read_source_word(const uint8_t *bytes, int big_endian)
+{
+    return big_endian
+        ? (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1])
+        : (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
 static void expect(int condition, const char *message)
 {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
         ++failures;
     }
+}
+
+static void verify_chained_wall_overlay(DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(profile);
+    DM2_V1_WallOrnamentReceipt receipt;
+    uint16_t *underlays = NULL;
+    uint8_t *seen = NULL;
+    uint8_t *pixels;
+    const uint8_t *underlay_pairs;
+    size_t underlay_bytes = 0u;
+    unsigned int mapped_images = 0u;
+    unsigned int decoded_images = 0u;
+    unsigned int max_chain = 0u;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+
+    /* The authentic Amiga entrance uses WALL_GFX/91 image 1. Its raw image
+     * 2590 overlays 2592, which itself overlays 2591 in dtRaw8/0/0/0. */
+    expect(loader != NULL && profile &&
+               strcmp(profile->graphics_md5,
+                      "1c940ea95703eaea0ecdf84d17e954b9") == 0,
+           "Amiga chained-overlay check uses the authenticated EN edition");
+    if (!loader || !profile ||
+        strcmp(profile->graphics_md5,
+               "1c940ea95703eaea0ecdf84d17e954b9") != 0)
+        return;
+
+    pixels = dm2_v1_asset_load_image_field(
+        loader, DM2_GDAT_CATEGORY_WALL_GFX, 91, 1,
+        &width, &height, &format);
+    expect(pixels != NULL && width == 116 && height == 128 &&
+               format == DM2_IMG_FMT_IMG3,
+           "Amiga WALL_GFX/91 image 1 composes both real underlay links");
+    dm2_v1_asset_free_pixels(pixels);
+    expect(dm2_v1_wall_ornament_material_receipt(
+               loader, 91, 1, &receipt) && receipt.valid &&
+               receipt.decoded_width == 116 &&
+               receipt.decoded_height == 128,
+           "Amiga entrance wall ornament has a complete source receipt");
+
+    /* Audit every mapped original Amiga image as these overlays are
+     * composed during play outside the entrance. This exercises the whole
+     * authentic dtRaw8/0/0/0 graph and prevents a first-frame-only fix. */
+    underlay_pairs = dm2_v1_asset_load_typed_sized(
+        loader, 0, 0, DM2_GDAT_ENTRY_TYPE_RAW8, 0, &underlay_bytes);
+    expect(underlay_pairs != NULL && underlay_bytes % 4u == 0u,
+           "Amiga source underlay table is present and word aligned");
+    if (!underlay_pairs || underlay_bytes % 4u != 0u) return;
+    underlays = (uint16_t *)malloc(
+        (size_t)loader->raw_data_count * sizeof(*underlays));
+    seen = (uint8_t *)calloc(loader->raw_data_count, sizeof(*seen));
+    expect(underlays != NULL && seen != NULL,
+           "Amiga underlay audit allocates bounded raw-index maps");
+    if (!underlays || !seen) goto done;
+    for (unsigned int raw = 0u; raw < loader->raw_data_count; ++raw)
+        underlays[raw] = UINT16_MAX;
+    for (size_t offset = 0u; offset < underlay_bytes; offset += 4u) {
+        uint16_t image_raw = read_source_word(
+            underlay_pairs + offset, loader->big_endian);
+        uint16_t underlay_raw = read_source_word(
+            underlay_pairs + offset + 2u, loader->big_endian);
+        if (image_raw >= loader->raw_data_count ||
+            underlay_raw >= loader->raw_data_count) {
+            expect(0, "Amiga underlay links stay within the authentic raw table");
+            goto done;
+        }
+        underlays[image_raw] = underlay_raw;
+    }
+    for (unsigned int entry = 0u; entry < loader->entry_count; ++entry) {
+        const DM2_V1_GdatEntry *image = &loader->entries[entry];
+        uint16_t raw;
+        uint16_t current;
+        unsigned int chain = 0u;
+        if (image->cls3 != DM2_GDAT_ENTRY_TYPE_IMAGE) continue;
+        raw = image->data_index;
+        if (raw >= loader->raw_data_count || underlays[raw] == UINT16_MAX ||
+            seen[raw]) continue;
+        seen[raw] = 1u;
+        current = raw;
+        while (underlays[current] != UINT16_MAX) {
+            current = underlays[current];
+            if (++chain > 32u) {
+                expect(0, "Amiga underlay graph is acyclic and bounded");
+                goto done;
+            }
+        }
+        if (chain > max_chain) max_chain = chain;
+        ++mapped_images;
+        pixels = dm2_v1_asset_load_raw_image(
+            loader, raw, NULL, NULL, NULL);
+        if (!pixels) {
+            expect(0, "every mapped authentic Amiga image decodes through its full underlay chain");
+            goto done;
+        }
+        ++decoded_images;
+        dm2_v1_asset_free_pixels(pixels);
+    }
+    expect(mapped_images == 1010u && decoded_images == 1010u &&
+               max_chain == 3u,
+           "all 1,010 Amiga underlay-linked images decode through chains up to three records");
+
+done:
+    free(underlays);
+    free(seen);
 }
 
 static int exercise_authentic_pit(
@@ -258,6 +372,7 @@ int main(void)
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
+    verify_chained_wall_overlay(profile);
     expect(dm2_v1_boot_prepare_new_game_world(profile) == 1,
            "Amiga materializes the source-owned NEW GAME candidate");
     expect(dm2_v1_boot_new_game_runtime_candidate_readonly(profile) != NULL,

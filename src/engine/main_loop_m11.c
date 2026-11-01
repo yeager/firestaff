@@ -4310,7 +4310,10 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
                                           int* outWaitForRuntime,
                                           int* outWaitForScan,
-                                          int* outWaitForDm2Title);
+                                          int* outWaitForDm2Title,
+                                          int* outWaitForDm2Menu,
+                                          const M11_GameViewState* gameView,
+                                          int debug);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
@@ -10957,6 +10960,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
     M11_BootProbeReceipt startupReceipt;
     int startupReceiptReady;
     int dm2Platform = -1;
+    int csbAmigaLanguageIndex = -1;
     const char *dm1FmtownsProgram = "";
     const char *dm1FmtownsProgramMd5 = "";
     int dm1FmtownsMenuSelectsProgram = 0;
@@ -10984,6 +10988,15 @@ static void m11_write_autotest_runtime_probe(const char* path,
         dm2Platform = ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform;
         (void)dm2_v1_runtime_last_frame_ownership(&dm2FrameOwnership);
         (void)dm2_v1_runtime_last_m11_frame_receipt(&dm2M11FrameReceipt);
+    }
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        gameView->csbBootProfile) {
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+        if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+            profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+            csbAmigaLanguageIndex = (int)profile->amiga_language_index;
+        }
     }
     if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
         dm1_v1_fmtowns_startup_receipt_is_native(
@@ -11044,6 +11057,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"active\": %d,\n"
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
+            "  \"csbAmigaLanguageIndex\": %d,\n"
             "  \"bootAssetMd5\": \"%s\",\n"
             "  \"dm1FmtownsStartup\": {\"program\": \"%s\", \"programMd5\": \"%s\", \"menuSelectsProgram\": %d},\n"
             "  \"dm2Startup\": {\"platform\": %d, \"movieActive\": %d, \"movieComplete\": %d, \"movieRejected\": %d, \"movieFrame\": %u},\n"
@@ -11069,6 +11083,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->active : 0,
             gameView ? gameView->title : "",
             gameView ? gameView->sourceId : "",
+            csbAmigaLanguageIndex,
             startupReceipt.bootAssetMd5,
             dm1FmtownsProgram,
             dm1FmtownsProgramMd5,
@@ -11811,6 +11826,12 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
     }
     memcpy(buffer, token, len);
     buffer[len] = '\0';
+    if (strcmp(buffer, "click:dm2-new-game") == 0) {
+        return 1;
+    }
+    if (strcmp(buffer, "wait-dm2-menu") == 0) {
+        return 1;
+    }
     if (strcmp(buffer, "touch-swipe-up") == 0 ||
         strcmp(buffer, "touch-swipe-left") == 0) {
         return 1;
@@ -12333,7 +12354,10 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
                                           int* outWaitForRuntime,
                                           int* outWaitForScan,
-                                          int* outWaitForDm2Title) {
+                                          int* outWaitForDm2Title,
+                                          int* outWaitForDm2Menu,
+                                          const M11_GameViewState* gameView,
+                                          int debug) {
     const char* start;
     const char* end;
     if (outWaitFrames) {
@@ -12347,6 +12371,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
     }
     if (outWaitForDm2Title) {
         *outWaitForDm2Title = 0;
+    }
+    if (outWaitForDm2Menu) {
+        *outWaitForDm2Menu = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -12378,6 +12405,13 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         }
         return M12_MENU_INPUT_NONE;
     }
+    if ((size_t)(end - start) == sizeof("wait-dm2-menu") - 1U &&
+        strncmp(start, "wait-dm2-menu", sizeof("wait-dm2-menu") - 1U) == 0) {
+        if (outWaitForDm2Menu) {
+            *outWaitForDm2Menu = 1;
+        }
+        return M12_MENU_INPUT_NONE;
+    }
     /* Startup selection tests must not send input against the deliberately
      * unavailable cards while authenticated collection discovery is active. */
     if ((size_t)(end - start) == sizeof("wait-scan-complete") - 1U &&
@@ -12397,6 +12431,33 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
             }
             return M12_MENU_INPUT_NONE;
         }
+    }
+    if ((size_t)(end - start) == sizeof("click:dm2-new-game") - 1U &&
+        strncmp(start, "click:dm2-new-game",
+                sizeof("click:dm2-new-game") - 1U) == 0) {
+        int x = 0;
+        int y = 0;
+        int w = 0;
+        int h = 0;
+        char event[64];
+        if (!M11_GameView_GetDm2FmtownsNewGameHitRect(
+                gameView, &x, &y, &w, &h)) {
+            /* Keep this command at the head of the script until the original
+             * TITLE -> SKULL menu and its GDAT hit rectangle are ready. */
+            *cursor = start;
+            if (outWaitForDm2Menu) *outWaitForDm2Menu = 1;
+            return M12_MENU_INPUT_NONE;
+        }
+        x += w / 2;
+        y += h / 2;
+        (void)snprintf(event, sizeof(event), "click:%d:%d", x, y);
+        if (debug) {
+            fprintf(stderr,
+                    "firestaff: autotest dm2-new-game source-rect=%d,%d %dx%d click=%d,%d\n",
+                    x - w / 2, y - h / 2, w, h, x, y);
+        }
+        (void)m11_push_script_event_token(event, strlen(event));
+        return M12_MENU_INPUT_NONE;
     }
     if (m11_push_script_event_token(start, (size_t)(end - start))) {
         return M12_MENU_INPUT_NONE;
@@ -14256,6 +14317,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int scriptWaitForRuntime = 0;
     int scriptWaitForScan = 0;
     int scriptWaitForDm2Title = 0;
+    int scriptWaitForDm2Menu = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -15444,6 +15506,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (scriptWaitForDm2Title && gameView.dm2FmtownsTitleFinished) {
             scriptWaitForDm2Title = 0;
         }
+        if (scriptWaitForDm2Menu) {
+            int x = 0, y = 0, w = 0, h = 0;
+            if (M11_GameView_GetDm2FmtownsNewGameHitRect(
+                    &gameView, &x, &y, &w, &h)) {
+                scriptWaitForDm2Menu = 0;
+                if (o->debug) {
+                    fprintf(stderr,
+                            "firestaff: autotest dm2-menu-ready source-rect=%d,%d %dx%d\n",
+                            x, y, w, h);
+                }
+            }
+        }
         if (scriptWaitForRuntime) {
             M11_BootProbeReceipt runtimeReceipt;
             memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
@@ -15458,6 +15532,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitForDm2Title) {
             input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitForDm2Menu) {
+            input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
@@ -15465,15 +15541,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int waitForRuntime = 0;
             int waitForScan = 0;
             int waitForDm2Title = 0;
+            int waitForDm2Menu = 0;
             input = m11_next_script_input(&scriptCursor,
                                           &waitFrames,
                                           &waitForRuntime,
                                           &waitForScan,
-                                          &waitForDm2Title);
+                                          &waitForDm2Title,
+                                          &waitForDm2Menu,
+                                          &gameView,
+                                          o->debug);
             scriptWaitFramesRemaining = waitFrames;
             scriptWaitForRuntime = waitForRuntime;
             scriptWaitForScan = waitForScan;
             scriptWaitForDm2Title = waitForDm2Title;
+            scriptWaitForDm2Menu = waitForDm2Menu;
         }
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&

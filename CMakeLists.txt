@@ -260,6 +260,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME dm1_v1_atari_st_10b_m12_no_game_menu_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_10b_m12_no_game_menu_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(dm1_v1_atari_st_10b_m12_no_game_menu_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;atari-st;st10b;main-menu;game-selection;runtime;real-media;skip-safe")
+
     add_test(NAME m12_main_menu_dm2_only_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
@@ -363,6 +371,16 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77 TIMEOUT 180
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga-multilingual;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    foreach(language IN ITEMS fr de)
+        add_test(NAME m12_main_menu_csb_amiga_multi_${language}_runtime_real_media
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga_multi_runtime_real_media.sh"
+                "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" "${language}")
+        set_tests_properties(m12_main_menu_csb_amiga_multi_${language}_runtime_real_media PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 180
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+            LABELS "m12;csb;amiga;amiga-multilingual;${language};main-menu;game-selection;runtime;real-media;skip-safe")
+    endforeach()
 
     add_test(NAME m12_main_menu_csb_amiga33_runtime_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga33_runtime_real_media.sh"

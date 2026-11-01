@@ -2798,6 +2798,38 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
            menu_raw_hash != 0u && menu_raw_byte_count != 0u;
 }
 
+int M11_GameView_GetDm2FmtownsNewGameHitRect(
+    const M11_GameViewState* state,
+    int* outX, int* outY, int* outW, int* outH)
+{
+    const DM2_V1_BootProfile* profile;
+    DM2_V1_StartupMenuPointerLayout layout;
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+    if (!state || !outX || !outY || !outW || !outH ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2FmtownsTitleFinished ||
+        !state->dm2State.startup_menu_active ||
+        !m11_dm2_fmtowns_skull_menu_ready(state) ||
+        !(profile = (const DM2_V1_BootProfile*)state->dm2BootProfile) ||
+        profile->platform != DM2_PLATFORM_FMTOWNS_JA) {
+        return 0;
+    }
+    memset(&layout, 0, sizeof(layout));
+    if (!dm2_v1_boot_startup_menu_pointer_layout(
+            (DM2_V1_BootProfile*)profile, &layout) || !layout.valid ||
+        layout.new_game.w <= 0 || layout.new_game.h <= 0) {
+        return 0;
+    }
+    *outX = layout.new_game.x;
+    *outY = layout.new_game.y;
+    *outW = layout.new_game.w;
+    *outH = layout.new_game.h;
+    return 1;
+}
+
 /* The HME-242 menu is an IMG2 surface with its own 16×4 IRGB record, rather
  * than the PC raw 64000-byte screen consumed by the generic M11 executor.
  * Present it only through the boot-owned GDAT query after its exact source
