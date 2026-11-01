@@ -1,5 +1,12 @@
 # Firestaff TODO — DM1
 
+2026-11-01 ReDMCSB `GAMELOOP.C:F0002` main loop: the callable inventory now
+maps the bounded tick adapter and live M11 DM1 loop instead of an unrelated
+DM2 numeric-token hit. They cover substantial per-tick source order, but the
+complete edition-specific map replay, VBlank/input wait, UI/pointer refresh,
+copy-protection watchdog, sound/damage ordering, platform drivers, and
+infinite-loop behavior still require per-edition/platform comparison.
+
 2026-11-01 ReDMCSB `NEWMAP.C:F0003` map transition: the callable inventory now
 maps the exact M11 route through `F0003_WORLD_TransitionPartyMap_Compat`
 instead of an unrelated DM2 numeric-token hit. The staged active-group removal,
