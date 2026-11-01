@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -344,6 +345,67 @@ static int append_authentic_c127_champion(
     return appended;
 }
 
+static int verify_authentic_player_melee_damage(
+    CSB_V1_RuntimeProfile *runtime,
+    int group_x, int group_y,
+    int party_x, int party_y)
+{
+    static const int melee_actions[] = {
+        DM1_ACTION_PUNCH, DM1_ACTION_KICK, DM1_ACTION_STAB_NINJA,
+        DM1_ACTION_STAB_FIGHTER, DM1_ACTION_THRUST, DM1_ACTION_JAB,
+        DM1_ACTION_MELEE, DM1_ACTION_SLASH, DM1_ACTION_CLEAVE,
+        DM1_ACTION_STUN
+    };
+    CSB_V1_RuntimeMeleeActionResult result;
+    int dx = group_x - party_x;
+    int dy = group_y - party_y;
+    int i;
+
+    if (!runtime || !runtime->party_state_valid ||
+        runtime->party_state.ChampionCount < 1) return 0;
+    if (dx == 0 && dy == -1) runtime->party_dir = 0;
+    else if (dx == 1 && dy == 0) runtime->party_dir = 1;
+    else if (dx == 0 && dy == 1) runtime->party_dir = 2;
+    else if (dx == -1 && dy == 0) runtime->party_dir = 3;
+    else {
+        fprintf(stderr,
+                "FAIL: authentic Atari combat probe party %d,%d is not adjacent to C04 %d,%d\n",
+                party_x, party_y, group_x, group_y);
+        return 0;
+    }
+
+    runtime->party_x = party_x;
+    runtime->party_y = party_y;
+    runtime->party_state.PartyMapX = party_x;
+    runtime->party_state.PartyMapY = party_y;
+    runtime->party_state.PartyDirection = (uint8_t)runtime->party_dir;
+
+    for (i = 0; i < (int)(sizeof(melee_actions) / sizeof(melee_actions[0]));
+         ++i) {
+        if (!csb_v1_runtime_perform_melee_action(
+                runtime, 0, melee_actions[i], &result)) {
+            fprintf(stderr,
+                    "FAIL: authentic C127 champion rejected CSB melee action %d\n",
+                    melee_actions[i]);
+            return 0;
+        }
+        if (result.hit_group && result.damage > 0 &&
+            result.creature_hp_after < result.creature_hp_before) {
+            printf("PASS: authentic Atari champion action %d reduced C04 0x%04x creature %d from %d to %d HP (damage=%d)\n",
+                   melee_actions[i], (unsigned int)result.group_thing,
+                   result.creature_index, result.creature_hp_before,
+                   result.creature_hp_after, result.damage);
+            return 1;
+        }
+    }
+
+    fprintf(stderr,
+            "FAIL: authentic Atari C127 champion's melee actions did not reduce adjacent C04 HP (last-action=%d hit=%d damage=%d HP=%d->%d)\n",
+            result.action_index, result.hit_group, result.damage,
+            result.creature_hp_before, result.creature_hp_after);
+    return 0;
+}
+
 int main(void)
 {
     const char *source = getenv("FIRESTAFF_CSB_ATARI_STX");
@@ -571,6 +633,17 @@ int main(void)
                 runtime->party_state.Champions[0].MaximumHealth,
                 c38_group_dispatches, last_c38_x, last_c38_y,
                 runtime->game_time);
+        csb_v1_boot_cleanup(&boot);
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0402 selects the front C04 and PROJEXPL.C F0231
+     * applies champion melee damage. Use the authentic map/group records and
+     * C127 champion already loaded above; this specifically covers the
+     * player-to-monster direction missing from the campaign attack check. */
+    if (!verify_authentic_player_melee_damage(
+            runtime, adjacent_group_x, adjacent_group_y,
+            adjacent_party_x, adjacent_party_y)) {
         csb_v1_boot_cleanup(&boot);
         return 1;
     }
