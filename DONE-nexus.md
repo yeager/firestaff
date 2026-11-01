@@ -1,5 +1,21 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-01 — Match 16-bpp VDP1 source alignment to Ymir
+
+- The VDP1 command parser now aligns mode-5 CMDSRCA down to a 16-byte
+  boundary, matching Ymir's `VDP1PlotTexturedLine` fetch behavior. This keeps
+  the captured VRAM span, source-range bounds, DGN material join, and replay
+  on the bytes the consumer actually reads.
+- The decoder boundary regression passed three runs. With hash-verified
+  Japanese retail Nexus data and authentic frame-300 Ymir dumps, the VDP1
+  stepper and combined VDP1/VDP2 composition/source-join checks each passed
+  three runs; the combined test compared all 71,680 pixels.
+- Frame 300's 15 mode-5 draws are already 16-byte aligned, so that capture
+  verifies no regression but does not exercise align-down. No odd-CMDSRCA
+  mode-5 draw was found in the 112 retained Nexus command-trace CSVs scanned.
+  The parser fixture is protocol coverage, not game data or a parity claim.
+  Details: [`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
+
 ## 2026-11-01 — Verify frame-300 visible pixel source classes
 
 - The authentic Japanese frame-300 composition joins all 65,991 visible VDP1

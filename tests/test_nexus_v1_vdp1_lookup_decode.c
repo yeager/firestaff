@@ -256,6 +256,31 @@ int main(void) {
                "VDP1 skipped jump does not decode a texture");
         wl16(command, 0U);
     }
+    {
+        Nexus_V1_Vdp1TextureCommand parsed;
+        /* Decoder-only command fixture for Ymir's mode-5 address alignment;
+         * it is not game data or a substitute for an authentic capture. */
+        memset(command, 0, sizeof(command));
+        wl16(command, 2U);
+        wl16(command + 4, 5U << 3);
+        wl16(command + 8, 1U);
+        wl16(command + 10, 0x0101U);
+        expect(nexus_v1_vdp1_texture_command_parse(
+                   command, sizeof(command), &parsed) == 0 &&
+               parsed.texture_byte_count == 16U &&
+               parsed.texture_source_byte_offset == 0U &&
+               parsed.texture_source_byte_end == 16U &&
+               parsed.texture_source_range_valid,
+               "16-bpp VDP1 fetch aligns odd eight-byte CMDSRCA down to 16 bytes");
+        wl16(command + 8, 0xffffU);
+        expect(nexus_v1_vdp1_texture_command_parse(
+                   command, sizeof(command), &parsed) == 0 &&
+               parsed.texture_source_byte_offset == 0x7fff0U &&
+               parsed.texture_source_byte_end == NEXUS_V1_VDP1_VRAM_BYTES &&
+               parsed.texture_source_range_valid,
+               "aligned 16-bpp VDP1 fetch ending at VRAM boundary remains in range");
+        memset(command, 0, sizeof(command));
+    }
     /* CMDPMOD mode 1, CMDCOLR table at 0x20, CMDSRCA texture at 0x40,
      * CMDSIZE = 8x1. Sega VDP1 User's Manual 6.3--6.6. */
     wl16(command + 4, 1U << 3);

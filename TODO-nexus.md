@@ -4,6 +4,17 @@ Reviewed 2026-11-02. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## Capture an authentic odd-address mode-5 draw
+
+Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now
+uses that effective source address. Scanning the 112 retained Japanese Nexus
+command-trace CSVs found no mode-5 textured draw with an odd CMDSRCA; frame
+300's 15 such draws use the already-aligned value `0xbdac`. The parser
+boundary test checks the hardware rule, but does not replace a real-game
+trace. If an authentic odd-address mode-5 command is found, verify its
+captured VRAM bytes, retail source join, and rendered output against Ymir. See
+[`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
+
 ## 2026-11-02 — gate champion diagnostic output
 
 Champion recruitment and automatic leader-promotion messages now follow the

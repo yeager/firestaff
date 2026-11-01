@@ -32,6 +32,22 @@ this as captured texture evidence and does not claim that row 80 is owned by
 the DGN. The polyline and sprite are both included in the exact framebuffer
 comparison.
 
+## 16-bpp source-address alignment
+
+Ymir decodes CMDSRCA as an eight-byte address, then aligns the fetched
+character address down to a 16-byte boundary for 16-bpp RGB mode in
+`VDP1PlotTexturedLine` (`libs/ymir-core/src/ymir/hw/vdp/renderer/vdp_renderer_sw.cpp`,
+line 1263). Firestaff's command parser now reports that effective VDP1-VRAM
+offset for mode 5, so source-range validation, material joins, and capture
+replay use the same starting bytes as Ymir. Other color modes retain the
+encoded eight-byte offset.
+
+The authenticated frame-300 mode-5 draws all use CMDSRCA `0xbdac`, which is
+already 16-byte aligned. They validate that the change preserves this capture;
+they do not exercise an odd CMDSRCA. The parser's boundary regression covers
+align-down semantics independently and is not presented as game data or as a
+substitute for an authentic odd-address capture.
+
 ## Reproduce
 
 Build the target and point it at the retained capture and authentic game data:
