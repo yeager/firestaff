@@ -58,6 +58,20 @@ main-RAM consumer-read trace, which identifies data reads by reader PC and
 physical mapping. `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` filters
 physical data-read addresses, not instruction PCs.
 
+The JP active map is also still unbound. A scan of 106 retained 8 KiB BaseRAM
+snapshots found no contiguous copy of any authenticated Akutuba map tile array;
+this negative result does not cover other RAM, packed data, or a live consumer.
+The next cold JP capture must preserve one shared event sequence from
+hash-verified Track 02 descriptor/map source reads, through System Card
+transfer and any `$23AD` decode, to the game-owned active selector and a tile
+read at the captured party pose. Include fetched instruction bytes, logical and
+physical PCs, MPRs, disc LBA/user offset, RAM destinations, and an atomic
+VDC/VCE/VRAM snapshot. At `(2,3)`, authenticated Akutuba map 0 has `0x20` and
+map 2 has `0x00`; use that as a map discriminator only after the runtime pose
+and tile consumer are independently bound. Compare an accepted input with a
+no-input control before changing movement or viewport behavior. See the
+[active-map evidence boundary](../../TODO-theron.md#2026-10-30--retained-baseram-snapshots-do-not-identify-the-active-jp-map).
+
 For a source-scoped Drator byte-consumer replay, the wrapper also supports
 `THERON_CAPTURE_SPAWN_CONSUMER_PC_FILTER=drator-row`. This PCE Fast-only mode
 records reads of physical `$1F093B-$1F093D` only at the observed US reader

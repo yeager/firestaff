@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — define the JP active-map capture acceptance chain
+
+- Updated the active Theron TODO and capture-readiness guide with a concrete
+  cold-capture chain: authenticated Track 02 descriptor/map reads, System Card
+  transfer and optional `$23AD` decode, active map selection, tile read at the
+  captured party pose, and an atomic VDC/VCE/VRAM state.
+- Recorded the authenticated Akutuba `(2,3)` map-0/map-2 difference as a
+  discriminator only after runtime pose and consumer binding. The 106-snapshot
+  BaseRAM scan remains a bounded negative result, not proof that the map was
+  absent.
+- `git diff --check` passed. This documentation update adds no runtime or
+  gameplay claim and did not run tests.
+
 ## 2026-11-01 — synchronize current Theron documentation
 
 - Updated README, project/platform status and platform matrix to record the

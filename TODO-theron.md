@@ -1368,9 +1368,18 @@ a dummy SDL display and produced no rendered-game frame.
 - This negative scan covers only contiguous copies in 8 KiB BaseRAM snapshots.
   It does not cover full physical RAM, VRAM, packed/decoded forms, or the live
   consumer, and does not prove that no map was loaded. The active-map identity
-  and movement parity remain open. Next capture a confirmed cold JP gameplay
-  route and follow authenticated Track 02 reads through their runtime
-  destinations to the active selector and a discriminating tile consumer.
+  and movement parity remain open. The next capture must use a cold JP route
+  without a save-state and keep one shared event sequence across: authenticated
+  Track 02 source reads for the Akutuba descriptor/map arrays; System Card
+  transfer and any `$23AD` decoder input/output; the active map selector/index;
+  and a game-owned read of a tile at the captured party pose. Retain reader and
+  writer logical/physical PCs, instruction bytes, MPRs, LBA/user offset, and
+  RAM addresses so each transfer can be traced to the source. The source maps
+  differ at `(2,3)` between map 0 (`0x20`) and map 2 (`0x00`), which can serve
+  as a discriminator only if the same run independently binds that coordinate
+  to the party pose and tile consumer. Pair the accepted input with a no-input
+  control and a same-session VDC/VCE/VRAM snapshot before making movement or
+  viewport changes. Do not promote contiguous RAM byte matches alone.
 
 ## 2026-10-30 — retry combined TIA and RAM-writer capture
 
