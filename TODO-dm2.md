@@ -1,3 +1,12 @@
+2026-11-01 skproject `DM2_WOUND_PLAYER` source review:
+`SKULLWIN/c_hero.cpp:1496-1740` performs ordered body-part and defense processing,
+with cases for armor/defense abilities, hand defense, conditional skill and
+random checks, injury flags, wake handling, and pending damage accumulation.
+Firestaff’s `dm2_v1_wound_player` has a similar guard and aggregate mitigation
+callback, but does not reproduce the source’s ordered defense cases and random
+consumption. The named-symbol audit now marks this as `PARTIAL`; player-wound
+parity remains open.
+
 2026-11-01 skproject source inventory and legacy DOS shooter review:
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
