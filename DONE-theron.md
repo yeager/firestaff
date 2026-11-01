@@ -1,6 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-11-01 — document pending JP map-array trace tooling
+## 2026-11-01 — build and capture JP map-array reads
+
+- Raised the bounded map-array trace limit to 4,096 samples and added an
+  explicit truncation marker when the quota is exhausted. Built the isolated
+  Mednafen 1.32.1 PCE Fast reference binary with the hook enabled.
+- Ran three authentic JP state-only autoload captures without scripted input.
+  They recorded 1,677, 1,513 and 1,556 reads, matching the same 17 authentic
+  source bytes in Map 0 and Map 3; none reached the sample limit. All runs
+  ended by timeout with `transition=missing`, so they do not establish cold
+  handoff, active-map selection, movement or rendering.
+- Matched the observed sparse bytes uniquely to their expected Track 02 source
+  occurrence and documented the trace hashes, counts and limits in the
+  [capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
+- Synchronized current status summaries, readiness notes, wiki pages and the
+  documentation index with the evidence boundary.
+- No game data, state files or raw trace sidecars were added to Git.
+
+## 2026-11-01 — document pending JP map-array trace tooling (historical status before the capture entry above)
 
 - Added a source-locked note for the working-tree `map_array_read` hook,
   including the authenticated physical range, separate sample counter, and

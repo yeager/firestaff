@@ -43,6 +43,7 @@ extern uint32 TheronTraceCDSharedEventSequence;
 static FILE *TheronPCEFastMovementContextTrace;
 static unsigned TheronPCEFastMovementDataReadCount;
 static unsigned TheronPCEFastMapArrayReadCount;
+static bool TheronPCEFastMapArrayReadTruncated;
 static unsigned TheronPCEFastMovementCommandWriteCount;
 static unsigned TheronPCEFastInputLatchWriteCount;
 static unsigned TheronPCEFastRuntimeStateWriteCount;
@@ -56,7 +57,7 @@ static unsigned TheronPCEFastMovementContextLimit(void)
  {
   const char *text = getenv("FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT");
   const unsigned long parsed = text && *text ? strtoul(text, NULL, 10) : 128;
-  limit = parsed >= 1 && parsed <= 256 ? (unsigned)parsed : 128;
+  limit = parsed >= 1 && parsed <= 4096 ? (unsigned)parsed : 128;
  }
  return limit;
 }
@@ -183,7 +184,18 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
  else if(!strcmp(kind, "main_ram_write"))
   count = &TheronPCEFastMainRAMWriteCount;
  if(*count >= TheronPCEFastMovementContextLimit())
+ {
+  if(!strcmp(kind, "map_array_read") && !TheronPCEFastMapArrayReadTruncated &&
+     TheronPCEFastMovementContextTrace)
+  {
+   TheronPCEFastMapArrayReadTruncated = true;
+   fprintf(TheronPCEFastMovementContextTrace,
+           "map_array_read_truncated=sample_limit count=%u limit=%u\n",
+           *count, TheronPCEFastMovementContextLimit());
+   fflush(TheronPCEFastMovementContextTrace);
+  }
   return;
+ }
  if(TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
   return;
  if(!TheronPCEFastMovementContextTrace)

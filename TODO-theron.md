@@ -14,17 +14,15 @@ verify the `$E11D` bootstrap branch or a game-owned poll; it recorded zero CD
 IRQs, zero authenticated CD-to-RAM receipts, and no LBA 3674 data-port rows
 before timing out.
 
-A new source-locked disassembly report maps the `$50D2` reader window to a unique authentic JP Track 02 occurrence and documents a candidate four-list index region. The list counts match the descriptor dimensions and their targets fall within the known map span, but no list role or runtime map-array consumer is established. Preserve those fields as opaque until a same-session trace joins reader inputs, a dynamic array read, active-map evidence, and output. See the [candidate reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+A source-locked disassembly maps the `$50D2` reader window to a unique authentic JP Track 02 occurrence and documents a candidate four-list index region. Three state-only captures now observe dynamic reads from 17 source-matched bytes in Map 0 and Map 3. The reader PCs are not yet source-disassembled; no list role, active-map selection or pose-bound tile consumer is established. Preserve the candidate fields as opaque. See the [reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [map-array capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 
-The working-tree movement-context instrumenter adds a separate `map_array_read`
-event for physical `[0x0e8b03, 0x0e8e09)`, covering all four parser-established
-JP Akutuba arrays. It is not yet built or exercised. The instrumenter clamps
-its per-kind limit at 256, below Map 2's 323 bytes; raise that ceiling and set
-the wrapper's pass-through value to at least 323 before a full sweep. Repeated
-reads also consume rows. Then capture contemporaneous reader
-registers and `$2A..$33`, the resolved `$4FA7` access, active-map selection,
-pose-bound tile consumption and atomic VDC/VCE/VRAM output in one authentic
-session. See the [trace-tool note](docs/source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+The instrumenter supports a 4096-row cap and now emits a truncation marker.
+The three runs did not hit that cap; the raw trace files remain outside Git.
+Next, source-disassemble observed PCs `$50FE`, `$4FFC`, `$4FD4` and `$AE66`,
+then capture contemporaneous `$50D2/$50D6` reader registers and `$2A..$33`, the
+resolved `$4FA7` access, active-map selection, pose-bound tile consumption,
+and atomic VDC/VCE/VRAM output in one session. See the
+[instrumentation note](docs/source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 
 A separate matched state-only UP/control replay now verifies the scripted UP
 read at `$44C1` and 256 identical source-matched reads before the map arrays;

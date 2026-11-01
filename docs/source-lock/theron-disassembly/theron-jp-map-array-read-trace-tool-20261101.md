@@ -11,7 +11,7 @@ authenticated source layout only; they do not assign tile semantics.
 
 ## Working-tree instrumentation
 
-The current working-tree version of
+The current version of
 [`instrument_mednafen_theron_pce_fast_movement_context_trace.py`](../../../scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py)
 adds `map_array_read` rows for that physical half-open range. The rows use the
 existing shared `event_sequence` and include the observed logical and physical
@@ -19,16 +19,17 @@ address, byte value, guest PC, physical PC, and MPRs. Map-array reads have a
 separate counter from the pre-array movement-data reads, so earlier reads do
 not consume the map-array quota.
 
-This change has not yet been built or exercised in an authentic capture. The
-instrumenter defaults to 128 rows and clamps configured values outside 1–256
-back to 128. The wrapper passes
+The instrumenter defaults to 128 rows and clamps configured values outside
+1–4096 back to 128. The wrapper passes
 `THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT` through, defaulting to
-128. Therefore a complete individual-array sweep of the 323-byte Map 2 needs
-both an instrumenter ceiling of at least 323 and a wrapper setting of at least
-323 (preferably 512). To retain 774 read events from all four arrays, use at
-least 774; this covers every array byte only if each is read once. Repeated
-reads consume rows too. A capped or partial trace cannot establish that unread
-arrays were unused.
+128. Rows beyond the configured sample limit now emit one
+`map_array_read_truncated=sample_limit` marker. Three authentic state-only
+captures ran with a limit of 4096, recorded 1,677, 1,513, and 1,556 map-array
+events, and did not reach the sample cap. Each run's bytes matched the
+hash-verified JP Track 02 source. They observed 17 distinct addresses across
+Map 0 and Map 3; maps 1 and 2 had no reads in these bounded captures. This
+does not establish that unobserved bytes or maps are unused. See the
+[capture report](theron-jp-state-only-map-array-read-capture-20261101.md).
 
 ## Evidence still required
 

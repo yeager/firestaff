@@ -8,15 +8,16 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 
 Static disassembly maps the `$50D2` code window uniquely to the authentic JP BIN, and a bounded trace observes reads from a candidate pointer-like structure at the end of the unclassified `thing_list` region. Its role, active-map relation and tile consumer remain unknown; no rendered result has been captured. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 
-The working-tree Mednafen movement-context instrumenter now has a separate
-`map_array_read` event for the authentic physical array range
-`[0x0e8b03, 0x0e8e09)`. This hook has not yet been built or used in an
-authentic capture. The instrumenter currently clamps its limit to 256 rows,
-while the wrapper passes a configurable value (default 128). A complete
-323-byte Map 2 sweep requires raising the instrumenter ceiling and setting the
-wrapper value to at least 323; repeated reads also consume rows. A read trace alone will not identify the
-active map or prove a pose-to-render join. See the
-[instrumentation note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+The Mednafen movement-context instrumenter now emits a separate
+`map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Its per-kind limit
+supports up to 4096 rows and emits an explicit marker if the cap is reached.
+Three authentic JP state-only runs at that limit retained 1,677, 1,513 and
+1,556 rows without truncation. Each read byte matches the hash-verified JP
+Track 02 BIN; the captures touch 17 distinct addresses in Map 0 and Map 3.
+Map 1 and Map 2 reads were not observed during these bounded runs. This does
+not identify the active map, and the party pose, tile consumer and video state
+remain unjoined. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+and [instrumentation note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 
 The latest matched JP state-only pair loaded the same authentic Mednafen state
 with and without `up@61:120`. The UP replay verified a guest controller read at
