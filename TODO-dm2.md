@@ -7,12 +7,15 @@ unreviewed, 162 partial, and 2 partial source-owner rows). Five definitions
 have mapped parity entries.
 
 2026-11-01 skproject `DM2_ENGAGE_COMMAND` hand-action epilogue:
-The accepted M11 attack and creature-wield routes now consume CMDSTR field 4
-plus the source RANDBIT, spend that stamina through `DM2_ADJUST_STAMINA`, and
-apply CMDSTR field 3 through `DM2_ADJUST_HAND_COOLDOWN`; the field-5 attack
-timer stays separate. Skill-experience adjustment, failed-action epilogue
-branches, throw and remaining action callers, SPX v4 formula selection, and
-DOS/Amiga/FM Towns/Macintosh runtime evidence remain open.
+The M11 hand-action route consumes CMDSTR field 4 plus the source RANDBIT,
+spends that stamina through `DM2_ADJUST_STAMINA`, and applies CMDSTR field 3
+through `DM2_ADJUST_HAND_COOLDOWN`; the field-5 attack timer stays separate.
+Ordinary source action failures still run the common cooldown/stamina epilogue,
+while attack timer/counter state is restored if route admission rejects the
+dispatch. Missing action owners remain fail-closed without gameplay side effects.
+Skill adjustment, throw and remaining action callers, source sound and hand-table
+updates, SPX v4 formula selection, and DOS/Amiga/FM Towns/Macintosh runtime
+evidence remain open.
 
 2026-11-01 skproject `DM2_CREATURE_CAN_HANDLE_IT` source review:
 `dm2_v1_creature_can_handle_it` currently implements only the supplied

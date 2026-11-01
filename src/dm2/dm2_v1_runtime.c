@@ -21973,6 +21973,9 @@ int dm2_v1_runtime_proceed_hand_command(
     DM2_V1_EngageCommandRequest request;
     DM2_RuntimeAttackQueueContext queue;
     DM2_RuntimeWieldContext wield;
+    DM2_V1_SourceTimerQueue timer_queue_before;
+    uint8_t attack_counter_before;
+    uint16_t attack_hero_flag_before = 0;
     uint16_t item;
     uint8_t cls1 = 0xffu;
     uint8_t cls2 = 0xffu;
@@ -22108,6 +22111,12 @@ int dm2_v1_runtime_proceed_hand_command(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    timer_queue_before = rt->timer_queue;
+    attack_counter_before = rt->source_attack_counter;
+    if (rt->source_party.curacthero > 0 &&
+        rt->source_party.curacthero <= rt->source_party.heros_in_party)
+        attack_hero_flag_before = (uint16_t)rt->source_party.hero[
+            rt->source_party.curacthero - 1].heroflag;
     /* skproject skengage.cpp:157 adds RANDBIT to CMDSTR field 4 before
      * dispatch. Consume the authenticated session stream at that source
      * boundary; the receipt epilogue later spends the resulting stamina. */
@@ -22125,8 +22134,19 @@ int dm2_v1_runtime_proceed_hand_command(
                         ? (!receipt || !receipt->creature_attacked)
                         : !queue.queued)) {
         hero->heroflag &= (int16_t)~0x0800;
-        if (receipt) receipt->fail_closed = 1;
-        return 0;
+        /* ATTACK's source callback enqueues before reaching L_fin. If the
+         * same dispatch is subsequently rejected as an unowned route,
+         * restore that source state along with the temporary hand flag. */
+        if (queue.queued) {
+            rt->timer_queue = timer_queue_before;
+            rt->source_attack_counter = attack_counter_before;
+            rt->source_hero_ench_countdown = attack_counter_before;
+            rt->source_savegames1[2] = attack_counter_before;
+            if (rt->source_party.curacthero > 0 &&
+                rt->source_party.curacthero <= rt->source_party.heros_in_party)
+                rt->source_party.hero[rt->source_party.curacthero - 1].heroflag =
+                    (int16_t)attack_hero_flag_before;
+        }
     }
     /* Common skproject ENGAGE_COMMAND epilogue: vol_20 (normally CMDSTR
      * field 3, with source branch overrides) adjusts the active hand. */

@@ -486,7 +486,11 @@ int dm2_v1_engage_command(
      * skengage.cpp:824-868 */
     if (receipt->fail_closed)
         receipt->success = 0;
-    if (receipt->success && !request->cmd_flag_8000) {
+    /* L_fin applies cooldown/stamina/skill adjustment after a source action
+     * reports either success or an ordinary game failure.  Missing owners
+     * and other fail-closed paths are adapter gaps, not source failures, so
+     * they must not acquire gameplay side effects here. */
+    if (!receipt->fail_closed && !request->cmd_flag_8000) {
         receipt->stamina_cost = request->cmd.power_random;
         receipt->skill_exp_gained = request->cmd.skill_exp;
     }
