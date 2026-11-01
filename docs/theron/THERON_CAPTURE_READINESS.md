@@ -6,6 +6,16 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+The current native regression build also passed eight selected US/JP
+real-media and input CTests in three consecutive loops (24 executions):
+regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
+later-dungeon runtime, and both regions' keyboard/SDL input routes. The longer
+SDL route includes mouse-panel and touch input, movement, wait, champion
+selection, and the US item interaction sequence. These tests establish those
+bounded routes only; they do not close the gameplay-parity gaps below. No
+authentic Drator replay has yet exercised the newly added reader-code fetch
+windows, so their source join remains pending.
+
 The latest original-game capture maps the runtime `$C852` code window to
 Track 02 raw offset `$A3AD2`. The cold Drator route diagnostic reached start,
 left-event and reentry, while the bounded consumer trace hit its row cap

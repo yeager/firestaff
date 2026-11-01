@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — repeat native regional gameplay regressions
+
+- Built the native Firestaff executable and the two previously missing startup
+  test targets in the existing local build tree.
+- Ran the eight selected authentic-media/native CTests in three consecutive
+  loops: US and JP Track 02 creature-source checks, JP fresh start, US BRAM
+  Continue, JP later-dungeon runtime, and US/JP keyboard plus SDL input routes.
+  All 24 test executions passed. The SDL route includes mouse-panel input,
+  touch, movement, wait, champion selection and the US item pickup/reselect/
+  drop sequence.
+- These results verify bounded routes and input regressions only. They do not
+  establish full campaign, rendering, save, combat, audio or overall Theron
+  parity. The live Drator code-fetch filter still has no authentic replay.
+
 ## 2026-11-01 — repeat regional source and native-load checks
 
 - The authentic US and JP creature-pointer/zone-source CTest cases passed
