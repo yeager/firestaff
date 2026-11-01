@@ -101,6 +101,13 @@ restricting the selected game set to those three titles. This verifies the
 bounded launcher routes only; it does not establish platform-wide runtime,
 native display/input, or visual parity.
 
+The same source baseline also passed `dm1_v1_m12_auto_multi_platform_menu`
+(85.12 s) with authentic FM Towns, PC 3.4 and Atari ST media. The test
+verified no-game AUTO selection, direct `--game dm1` discovery, explicit
+platform CLI startup, and M12 selection of Atari ST and PC from a mixed DM1
+library. It established the tested first-runtime receipts, not complete
+platform parity.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
