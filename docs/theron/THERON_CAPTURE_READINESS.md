@@ -9,10 +9,12 @@ summaries. Start with [project status](../PROJECT_STATUS.md), the
 The latest authenticated JP state-only replay used five scripted controller
 events and verified each event reached a controller read. It recorded zero
 spawn-consumer/register entries, zero RNG samples, and no dungeon transition;
-it does not establish movement or spawn semantics. The capture wrapper now
-skips cold System Card hook-presence checks only for explicitly state-only
-autoload captures, while still requiring the verified autoload receipt and
-trace schemas. The shell regression covers this distinction. See the
+it does not establish movement or spawn semantics. Explicit state-only PCE
+Fast autoload captures skip the cold-start System Card hook and trace checks,
+as well as the combined CD/controller/HuC6260, raw-sector, input/IRQ, and
+authenticated CD-to-RAM handoff checks. They still require a verified
+autoload receipt and the remaining applicable trace schemas. The shell
+regression checks the conditional System Card hook gates. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
 The new native `--debug` receipt's modified engine and decoder translation

@@ -55997,6 +55997,7 @@ if(BUILD_TESTING AND THERON_SOURCES AND
             "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
     set_tests_properties(theron_v1_position_tii_source_candidates PROPERTIES
         SKIP_RETURN_CODE 77
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         LABELS "theron;real-media;disassembly;source-lock;no-synthetic")
 endif()
 

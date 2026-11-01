@@ -31,13 +31,15 @@ this same input replay would not close that evidence gap.
 
 ## Capture-tool note — state-only traces and cold System Card hooks
 
-`capture_theron_mednafen_live_trace.sh` now skips the five PCE Fast cold-start
-System Card hook-presence checks when `THERON_CAPTURE_STATE_TRACE_ONLY=1`.
-Those hooks establish cold-start handoff evidence and do not apply to an
-autoloaded-state trace. State-only packaging remains gated by the verified
-autoload-state receipt and the required trace schemas; this bypass does not
-weaken cold-capture validation. The shell regression asserts the five
-conditional hook checks and the separate state-only output branch.
+`capture_theron_mednafen_live_trace.sh` skips the PCE Fast cold-start
+System Card hook and trace checks when `THERON_CAPTURE_STATE_TRACE_ONLY=1`.
+It also skips the combined cold-start CD/controller/HuC6260 and raw-sector
+validation, including input/IRQ and authenticated CD-to-RAM handoff receipts.
+These checks establish a cold media handoff and do not apply to an autoloaded
+state. State-only packaging still requires a verified autoload-state receipt
+and the remaining applicable trace schemas; its success is not cold-start
+evidence. The shell regression checks that the System Card hook gates are
+conditional; it does not reproduce a full reference capture.
 
 ## 2026-10-30 — JP System Card TIA reads consume preceding BaseRAM writes
 
