@@ -55,6 +55,11 @@
 > events cannot be treated as movement evidence. This negative observation
 > does not define runtime spawn semantics; see the
 > [spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+> **JP candidate map-index reader (2026-11-01):** a 256-byte `$50D2` code
+> window from the authentic JP state matches one raw Track 02 occurrence. A bounded trace observes reads from a candidate four-list structure at
+> the end of the unclassified `thing_list` region. Its relation to an active
+> map or tile consumer remains unproven. See the
+> [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 > **JP UP/control data-read comparison (2026-11-01):** a later matched
 > state-only pair verifies the scripted UP read at `$44C1` and records 256
 > identical authentic-source-matched data reads in each run. The addresses

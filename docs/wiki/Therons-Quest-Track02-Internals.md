@@ -48,6 +48,13 @@ does not join a cold CD handoff, decode VRAM semantics, prove a visible input
 effect, or establish native parity. See the
 [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
+**JP candidate map-index disassembly (2026-11-01):** the authentic state
+contains a unique code window at `$50D2`; a bounded trace observes reads from
+a candidate four-list structure at the end of the unclassified `thing_list`
+region. Its role, active-map relation and tile consumer are not established;
+no rendered result is established.
+See the [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+
 **Matched JP input/data-read update (2026-11-01):** a verified state-only UP
 replay read the scripted mask at `$44C1`; its matched no-input control and UP
 trace each retained 256 identical data-read rows, all matching authentic JP
@@ -88,15 +95,20 @@ spawning. Its raw-field contract and acceptance checks are recorded in the
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
 opt-in System Card `run-path` PC filter for `$EA4D`, `$EA50`, `$E162` and
 callback `$2259`. Instrumenter, streaming verifier and wrapper regressions
-passed three loops, but no original-game run has used this filter yet. The
-current BIOS capture remains truncated; this tooling update adds no gameplay
-or handoff evidence. See [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+passed three loops. A later authentic US cold capture used this filter, but
+the wrapper rejected the package because trace caps were reached and live
+`$45C3` windows failed source validation. This adds no accepted handoff or
+gameplay evidence. See the [ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md)
+and [capture readiness](../theron/THERON_CAPTURE_READINESS.md).
 
 An additional opt-in PCE Fast `drator-row` filter retains only the observed US
 consumer reads at `$CBC9`/`$0DABC9` and `$45C3`/`$0D05C3` for physical row bytes
 `$1F093B-$1F093D`. Its address-only receipt is parser-checked and does not
-identify row fields or semantics. Three focused tooling loops passed, but no
-authentic replay has used this filter; the truncated capture remains rejected.
+identify row fields or semantics. Three focused tooling loops passed; a later
+authentic US cold capture used this filter but was rejected because trace caps
+were reached and live `$45C3` windows failed source validation. The capture
+adds no accepted handoff or gameplay evidence. See the
+[ordered call-window report](../source-lock/theron-disassembly/theron-us-c852-runtime-call-capture-20261101.md).
 
 The source-sector planner maps JP Akutuba's descriptor and maps to disc LBA
 3674. The reference capture wrapper now accepts

@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document the JP Akutuba candidate map-index reader
+
+- Matched the authentic state's 256-byte `$50D2` reader window uniquely to
+  raw JP Track 02 offset `$95ED2` and recorded its bounded HuC6280 disassembly.
+- Documented the 114-byte pointer-like tail at `$6A91..$6B02` as part of the
+  unclassified `thing_list` region. Its four lists match descriptor `x_dim`
+  counts and point within the aggregate map span, while true map boundaries
+  remain those established by the source parser.
+- Recorded the bounded state-only observation at `$50D2/$50D6` reading
+  `$6A9D/$6A9E`, together with the missing same-event registers and unresolved
+  consumer. No movement, active-map or rendering claim follows.
+- Synchronized the README, TODO, capture readiness, project/platform status,
+  documentation index, Theron wiki and real-data inventory. Corrected stale
+  Track 02 internals text about use of the US `run-path` and `drator-row`
+  filters; the later cold package was rejected and did not verify a handoff.
+- No game data or emulator states were added to Git.
+
+
 ## 2026-11-01 — document matched JP state-only UP/control data reads
 
 - Captured an authentic JP Mednafen state-only pair, with and without

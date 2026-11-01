@@ -6,6 +6,8 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
+Static disassembly maps the `$50D2` code window uniquely to the authentic JP BIN, and a bounded trace observes reads from a candidate pointer-like structure at the end of the unclassified `thing_list` region. Its role, active-map relation and tile consumer remain unknown; no rendered result has been captured. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+
 The latest matched JP state-only pair loaded the same authentic Mednafen state
 with and without `up@61:120`. The UP replay verified a guest controller read at
 `$44C1` with `raw=0010`. Both movement-context captures retained 256 identical

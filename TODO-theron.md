@@ -14,6 +14,8 @@ verify the `$E11D` bootstrap branch or a game-owned poll; it recorded zero CD
 IRQs, zero authenticated CD-to-RAM receipts, and no LBA 3674 data-port rows
 before timing out.
 
+A new source-locked disassembly report maps the `$50D2` reader window to a unique authentic JP Track 02 occurrence and documents a candidate four-list index region. The list counts match the descriptor dimensions and their targets fall within the known map span, but no list role or runtime map-array consumer is established. Preserve those fields as opaque until a same-session trace joins reader inputs, a dynamic array read, active-map evidence, and output. See the [candidate reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+
 A separate matched state-only UP/control replay now verifies the scripted UP
 read at `$44C1` and 256 identical source-matched reads before the map arrays;
 neither trace records a movement-command write. These rows have no identified
