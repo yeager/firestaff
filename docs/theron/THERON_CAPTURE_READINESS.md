@@ -17,11 +17,15 @@ autoload receipt and the remaining applicable trace schemas. The shell
 regression checks the conditional System Card hook gates. See the
 [runtime spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
 
-The new native `--debug` receipt's modified engine and decoder translation
-units compiled in an isolated TRV2 Debug configuration. The full application
-has not been linked and no authentic runtime log has been captured, so this
-adds no gameplay evidence. Its planned fields and remaining acceptance checks
-are listed in the [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+The native `--debug` spawn-source receipt is implemented and has now been
+verified against authentic JP Rev. 1 Track 02 in three headless TRV2 Firestaff
+loops. All 14 table, pointer, and zone lines in every loop matched an
+independent MODE1/2352 extraction after authentic MD5 validation. Each launch
+loaded four native source dungeon levels; a separate authentic DM1 FM Towns
+control emitted no Theron receipt. This verifies the bounded source report and its
+game boundary, not original-game pointer selection, spawn/RNG behavior,
+creature creation, or visual/gameplay parity. See the
+[debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
@@ -185,8 +189,12 @@ pose. All four maps are present, so the active map remains unknown. See the
 The authenticated source descriptor and all four Akutuba tile arrays map
 to one raw MODE1 sector: Track 02 file sector 308 / disc LBA 3674. Map 0 and
 map 2 discriminating `(2,3)` bytes are at raw BIN offsets `$B10E6` and
-`$B121F`. Use that sector as a capture filter only; source presence does not
-establish that the original read or selected it. The repeatable source mapping
+`$B121F`. This is a capture target, but the current wrapper filters only to
+the whole Track 02 range; it has no exact-LBA option. The FIFO-origin RAM
+receipt path also lacks an exact-LBA filter and an end-to-end join that
+authenticates media bytes before following them through RAM to a consumer.
+Filtering rows after capture does not reduce trace volume or prevent cap
+truncation. The repeatable source mapping
 is reported in the [JP Akutuba sector trace plan](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and can be recomputed with the
 [`identity-checked planner`](../../tools/plan_theron_jp_akutuba_map_trace.py).

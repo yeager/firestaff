@@ -1,5 +1,43 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — reconcile Akutuba capture target with available LBA filters
+
+- Reviewed the JP Akutuba source report, capture wrapper, CD-port trace and
+  FIFO-origin receipt validators. The source bytes are at disc LBA 3674, but
+  the current CD data-port trace can filter only to the full Track 02 span;
+  post-capture `source_lba` filtering does not reduce trace volume. The
+  FIFO-origin receipt path also lacks an exact-LBA filter and an end-to-end
+  media-byte-authenticated consumer join.
+- Updated the Theron TODO, capture-readiness summary, source-sector report,
+  README, documentation index, project/platform/completion status, parity
+  definition matrix and Theron wiki pages to describe LBA 3674 as a target
+  rather than an available filter, and to state the next instrumentation and
+  verification requirements.
+- Documentation and source review only; no build, emulator capture or tests
+  were run. No native rendering or gameplay claim changed.
+
+## 2026-11-01 — verify native Theron spawn-source debug receipt against JP media
+
+- Built the full native `firestaff` target on TRV2 in Debug mode with `-j1`
+  from the current source snapshot. In three consecutive loops against
+  authentic JP Rev. 1 Track 02, each headless direct-launch boot probe loaded
+  four source dungeon levels and emitted one table header, eight pointer
+  records, and five zone records.
+- Independently extracted those fields from the same BIN on TRV2 after
+  checking its authenticated MD5 and MODE1/2352 framing. All 14 output lines
+  in each loop matched byte-for-byte, including source offsets and static
+  links. The existing ISO projection source lock agrees with the offsets and
+  links.
+- A headless native DM1 FM Towns boot probe against authentic data emitted no
+  Theron receipt lines. This verifies diagnostic scoping; the Theron probe
+  remained at `runtimeTick=0` and did not exercise the runtime spawn path.
+  Original consumer behavior, creature generation, gameplay parity, and visible
+  rendering remain unverified. No emulator or game
+  media was copied into the repository.
+- Added the TRV2 runtime evidence and limits to the Theron source-lock note,
+  capture-readiness summary, TODO, documentation index, and technical wiki.
+  No test suite was run.
+
 ## 2026-11-01 — document the pending native spawn-source debug receipt
 
 - Documented the planned bounded `--debug` receipt for authenticated Track 02
@@ -10,17 +48,20 @@
   no runtime-spawn or gameplay claim was added.
 - Documentation-only change; no tests or build were run.
 
-## 2026-11-01 — compile the spawn-source debug receipt translation units
+## 2026-11-01 — build the spawn-source debug receipt across CI platforms
 
 - Compiled `main_loop_m11.c` and both configured compile entries for
   `theron_v1_track02_creature_spawn_source.c` from the current working-tree
   sources in an isolated TRV2 Debug configuration. No compiler diagnostics
   were emitted for these translation units.
-- The full application was not linked, and no native `--debug` launch was
-  performed. The existing user-owned JP Mednafen session remains untouched;
-  runtime output and source-receipt values therefore remain unobserved.
-- Updated the Theron TODO, capture-readiness summary, technical source note,
-  and wiki pages to reflect this compile result and its limits. Refreshed the
+- PR #243 CI then linked the full application in Linux, macOS, and Windows
+  CMake builds; localization, warning, repository-policy, and deterministic
+  cross-platform checks passed. At the time of that CI run, no authentic native
+  `--debug` receipt log had yet been inspected; the later receipt evidence is
+  recorded above. The existing user-owned JP Mednafen session was left untouched.
+- Updated the Theron TODO, capture-readiness summary, documentation index,
+  technical source note, wiki pages, and receipt note to reflect CI evidence
+  and its limits. Refreshed the
   generated startup-menu POT/PO source references after the `main_loop_m11.c`
   insertion; `po/update.sh --check` passes and translation strings are
   unchanged. No tests were run.

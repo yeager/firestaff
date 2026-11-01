@@ -95,9 +95,11 @@
 > The source-locked [Mednafen 1.32.1 state inspector](../../tools/inspect_theron_mednafen_pce_fast_state.py)
 > maps it to HuC CD-RAM page `$74` (physical `$0E891D`); the saved MPRs do not
 > select that page. All four arrays are resident, so active selection and the
-> pose-bound tile consumer remain unknown. This is a source-analysis aid only;
-> it does not
-> authorize runtime rendering. See the [source-sector
+> pose-bound tile consumer remain unknown. Disc LBA 3674 is only a capture
+> target: the current wrapper filters to the whole Track 02 range, while
+> FIFO-origin RAM receipts have no exact-LBA gate or end-to-end media-byte-authenticated
+> consumer join. Filtering after capture cannot prevent trace-cap truncation. This is a
+> source-analysis aid only; it does not authorize runtime rendering. See the [source-sector
 > report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
 
@@ -154,14 +156,16 @@
 > generation or combat. See the
 > [ISO projection source lock](../source-lock/theron-track02-spawn-record-iso-projection-20261101.md).
 
-> **Planned native spawn-source debug receipt (2026-11-01):** a bounded
-> `--debug` report is planned for the already-authenticated pointer and zone
-> records, including source identity, offsets, raw fields, and static links.
-> Its engine and decoder translation units compiled in an isolated TRV2 Debug
-> configuration; the full application has not been linked and no native
-> output has been observed. It does not establish runtime selection or
-> spawning. See the
-> [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
+> **Native spawn-source debug receipt (2026-11-01):** Firestaff's bounded
+> `--debug` output includes authenticated Track 02 pointer and zone source
+> records. The engine and decoder translation units compiled in an isolated
+> TRV2 Debug configuration, and the full application linked in the successful
+> Linux, macOS, and Windows CI builds for PR #243. Three headless native TRV2
+> launches against hash-verified JP Rev. 1 Track 02 each emitted 14 receipt
+> lines; independent MODE1/2352 extraction reproduced all values in each
+> loop. An authentic DM1 control emitted no Theron receipt. This verifies
+> source metadata reporting, not original runtime selection or spawning. See the
+> [receipt contract and verification state](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier
 > accepts 512-byte windows at `$CBC6` and `$45C3` built from the hash-verified
