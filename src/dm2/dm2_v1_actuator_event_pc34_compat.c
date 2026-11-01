@@ -742,9 +742,9 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
         }
     }
 
-    /* SKWINSPX v4 skevent.cpp:1435 revives a matching champion token only
-     * when OnceOnlyActuator is clear. DOS and SPX v5 use their own actuator
-     * flag gate; those source-specific gates remain separately audited. */
+    /* SKWINDOS dm2byg.cpp:3390, SKWINSPX v4 skevent.cpp:1435 and v5
+     * bitem.cpp:862 all revive a matching champion token only when the
+     * actuator's once-only bit is clear. */
     if (exact_type_match && !ctx->recycler &&
         dm2_actu_once_only(ctx->actu_record) == 0) {
         uint8_t cls1 = 0xffu, cls2 = 0xffu;
