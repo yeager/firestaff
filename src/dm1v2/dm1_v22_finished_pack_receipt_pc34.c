@@ -82,23 +82,18 @@ void dm1_v22_fpr_set_receipt_path(const char* dataDir) {
     /* dataDir = <root>/data/dm1 -> modern-asset-root = <root>/assets/dm1/modern
      * The receipt lives at <modern-asset-root>/finish_receipt.json.
      * The manifest path mirrors dm1_v22_famg_set_manifest_path. */
-    char parent1[FSP_PATH_MAX];
-    char parent2[FSP_PATH_MAX];
-    char assets_root[FSP_PATH_MAX];
     char dm1_modern_dir[FSP_PATH_MAX];
-
-    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
-        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-        FSP_JoinPath(assets_root, sizeof(assets_root), dataDir, "assets");
-    } else {
-        FSP_JoinPath(assets_root, sizeof(assets_root), parent2, "assets");
+    if (!FSP_ResolveGameModernAssetDir(dm1_modern_dir,
+                                       sizeof(dm1_modern_dir), dataDir,
+                                       "dm1") ||
+        !FSP_JoinPath(g_receipt_path, sizeof(g_receipt_path),
+                      dm1_modern_dir, "finish_receipt.json") ||
+        !FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path),
+                      dm1_modern_dir, "modern_asset_manifest.json")) {
+        g_receipt_path[0] = '\0';
+        g_manifest_path[0] = '\0';
+        return;
     }
-    FSP_JoinPath(dm1_modern_dir, sizeof(dm1_modern_dir), assets_root, "dm1");
-    FSP_JoinPath(dm1_modern_dir, sizeof(dm1_modern_dir), dm1_modern_dir, "modern");
-    FSP_JoinPath(g_receipt_path, sizeof(g_receipt_path),
-                 dm1_modern_dir, "finish_receipt.json");
-    FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path),
-                 dm1_modern_dir, "modern_asset_manifest.json");
 
     /* Set the sibling gate's path too so the cross-check pulls
      * the same manifest content the gate would classify. */

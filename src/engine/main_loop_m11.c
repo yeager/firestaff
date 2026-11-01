@@ -1034,6 +1034,7 @@ static void m11_debug_log_launch_selection(
         static const char* const modeNames[M12_PRESENTATION_MODE_COUNT] = {
             "v1", "v20", "v21", "v22"
         };
+        const char* fallbackReason = NULL;
         const int requestedIndex =
             menuState->gameOptions[slot].presentationModeIndex;
         const int resolved = gameView->presentationMode;
@@ -1045,8 +1046,31 @@ static void m11_debug_log_launch_selection(
             cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
             requested = modeNames[cliPresentationModeOverride];
         }
+        if ((cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+             cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT
+                 ? cliPresentationModeOverride : requestedIndex) != resolved) {
+            if (resolved == M12_PRESENTATION_V21_UPSCALED &&
+                (cliPresentationModeOverride == M12_PRESENTATION_V22_MODERN ||
+                 (cliPresentationModeOverride < M12_PRESENTATION_V1_ORIGINAL &&
+                  requestedIndex == M12_PRESENTATION_V22_MODERN))) {
+                if (strcmp(gameId, "dm1") == 0) {
+                    fallbackReason = "approved-dm1-modern-art-unavailable";
+                } else if (strcmp(gameId, "csb") == 0) {
+                    fallbackReason = "approved-csb-modern-art-unavailable";
+                } else if (strcmp(gameId, "dm2") == 0) {
+                    fallbackReason = "dm2-modern-art-runtime-unavailable";
+                } else if (strcmp(gameId, "theron") == 0) {
+                    fallbackReason = "theron-modern-art-runtime-unavailable";
+                } else if (strcmp(gameId, "nexus") == 0) {
+                    fallbackReason = "nexus-modern-presentation-unavailable";
+                }
+            }
+            if (!fallbackReason) {
+                fallbackReason = "requested-mode-not-admitted-by-runtime";
+            }
+        }
         fprintf(stderr,
-                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s\n",
+                "firestaff: presentation phase=game-handoff game=%s requested=%s resolved=%s framebuffer=%dx%d%s%s%s\n",
                 gameId,
                 requested,
                 resolved >= M12_PRESENTATION_V1_ORIGINAL &&
@@ -1057,7 +1081,9 @@ static void m11_debug_log_launch_selection(
                 ((cliPresentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
                   cliPresentationModeOverride < M12_PRESENTATION_MODE_COUNT
                       ? cliPresentationModeOverride : requestedIndex) != resolved)
-                    ? " fallback=1" : "");
+                    ? " fallback=1" : "",
+                fallbackReason ? " fallback_reason=" : "",
+                fallbackReason ? fallbackReason : "");
     }
 }
 
@@ -6380,6 +6406,13 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
     g_m11_startup_intro_quit_requested = 0;
+    if (g_m11_debug_startup_detail && gameId &&
+        strcmp(gameId, "csb") == 0) {
+        fprintf(stderr,
+            "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl entry-data=%s menu-state=%d skip=%d\n",
+            dataDir && dataDir[0] ? dataDir : "(none)",
+            menuState != NULL, skipSwoosh);
+    }
     if (skipSwoosh) return 1;
     /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
      * Modern session can otherwise leave its target/palette state latched
@@ -6393,8 +6426,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&csbBoot, 0, sizeof(csbBoot));
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0] &&
-        menuState) {
+    if (gameId && strcmp(gameId, "csb") == 0 && menuState) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         int optionsSlot = M12_StartupMenu_GetGameOptionsSlot("csb");
         int versionIndex = intent.valid && intent.options.versionIndex >= 0
@@ -6427,20 +6459,40 @@ static int m11_play_ftl_swoosh_for_game_if_available(
 
         memset(&amigaAssets, 0, sizeof(amigaAssets));
         memset(&amigaAudio, 0, sizeof(amigaAudio));
-        /* APPA.C's SWSH.FTL prelude belongs to the selected Amiga program.
-         * A shared library may also contain an Amiga package when Atari ST
-         * or FM Towns is selected; discovering that sibling must not prepend
-         * another platform's logo to the selected startup sequence. Use the
-         * launch intent's matched graphics member directly: rescanning the
-         * broad data directory can select the A31E English disk before the
-         * menu's A31M choice, which silently skips this A31M/A33M prelude.
-         * ReDMCSB APPA.C F0904/F0907 resolves SWSH from the selected disk. */
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                "firestaff: startup-source-select game=csb phase=amiga-swsh-ftl index=%d matched=%d platform=%s edition=%s graphics-md5=%s\n",
+                versionIndex,
+                selectedVersion ? selectedVersion->matched : 0,
+                selectedIsAmiga ? "Amiga" : "non-amiga",
+                selectedVersion && selectedVersion->versionId
+                    ? selectedVersion->versionId : "unknown",
+                selectedVersion && selectedVersion->matchedMd5[0] != '\0'
+                    ? selectedVersion->matchedMd5 : "unknown");
+        }
+        /* The Amiga SWSH prelude is owned by the selected Amiga game disk.
+         * Greatstone's g_csb.html lists SWSH.FTL on the original A31E, A31M,
+         * A33M, and A35 disks; asset_status_m12.c pins the accepted SWSH bytes
+         * and each game's GRAPHICS.DAT separately. A shared library
+         * may also contain another Amiga package when Atari ST or FM Towns is
+         * selected, so bind to the launch intent's matched graphics member.
+         * Rescanning the broad data directory can choose the A31E sibling
+         * before A31M and silently skip its selected-disk prelude. */
         if (selectedIsAmiga &&
             selectedVersion && selectedVersion->matched &&
             selectedVersion->versionId &&
-            strcmp(selectedVersion->versionId, "amiga31-multi") == 0 &&
-            strcmp(selectedVersion->matchedMd5,
-                   "61fbfd56887c94adc26888a9491c6611") == 0) {
+            ((strcmp(selectedVersion->versionId, "amiga31-en") == 0 &&
+              strcmp(selectedVersion->matchedMd5,
+                     "21197b1d4994fd835c403d5a33dcac2b") == 0) ||
+             (strcmp(selectedVersion->versionId, "amiga31-multi") == 0 &&
+              strcmp(selectedVersion->matchedMd5,
+                     "61fbfd56887c94adc26888a9491c6611") == 0) ||
+             (strcmp(selectedVersion->versionId, "amiga35-en") == 0 &&
+              strcmp(selectedVersion->matchedMd5,
+                     "291e1bc6803e3dc4b974c60117ca5d68") == 0) ||
+             (strcmp(selectedVersion->versionId, "amiga35-multi") == 0 &&
+              strcmp(selectedVersion->matchedMd5,
+                     "cefaddfdf5651df2c91f61b5611a8362") == 0))) {
             amigaProfile = 1;
         }
         if (amigaProfile) {

@@ -16,7 +16,7 @@ scratch=$(mktemp -d "$scratch_root/m12-csb-amiga35.XXXXXX")
 cleanup() {
     rc=$?
     if [[ $rc != 0 && -f "$scratch/menu.log" ]]; then
-        grep -E 'startup game=|scan complete|CSB READY|game-handoff|FAIL:|error=' "$scratch/menu.log" | tail -n 80 >&2 || true
+        grep -E 'startup game=|scan complete|CSB READY|game-handoff|amiga-swsh-ftl|swsh-intro|FAIL:|error=' "$scratch/menu.log" | tail -n 80 >&2 || true
     fi
     if [[ ${FIRESTAFF_KEEP_TEST_SCRATCH:-0} == 1 ]]; then
         echo "TEST SCRATCH PRESERVED: $scratch"
@@ -52,9 +52,10 @@ expected_source="$menu_data/csb/$(basename "$archive")::ChaosStrikesBack_Disk1of
 if ! grep -Fq 'startup game=none mode=menu' "$log" ||
    ! grep -Fq 'scan complete' "$log" ||
    ! grep -Fq 'games=dm1:no,csb:yes,dm2:no,nexus:no,theron:no' "$log" ||
-   ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga35-en source=$expected_source" "$log"; then
-    echo 'FAIL: CSB Amiga 3.5 custom-edition picker did not hand off its authenticated original media' >&2
-    grep -E 'startup game=|scan complete|CSB READY|game-handoff|failed|error' "$log" >&2 || true
+   ! grep -Fq "launch phase=game-handoff mode=menu game=csb platform=Amiga edition=amiga35-en source=$expected_source" "$log" ||
+   ! grep -Eq 'startup-source-complete game=csb phase=amiga-swsh-ftl profile=ff3872baaed8ee4e83ee3c0684b2eeec frames=[1-9][0-9]* source-vblanks=30 audio=' "$log"; then
+    echo 'FAIL: CSB Amiga 3.5 custom-edition picker missed its authenticated SWSH intro or runtime' >&2
+    grep -E 'startup game=|scan complete|CSB READY|game-handoff|amiga-swsh-ftl|swsh-intro|failed|error' "$log" >&2 || true
     exit 1
 fi
 

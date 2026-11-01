@@ -1,5 +1,16 @@
 # Firestaff TODO — CSB
 
+2026-11-01 follow-up to the missing Amiga intro report: the A31E English
+no-game-menu launch also skipped SWSH because M11 incorrectly required the
+generic `dataDir` argument even though this menu route supplies the matched
+edition through its launch intent. The Amiga prelude now resolves the
+authenticated adjacent `SWSH.FTL` from that selected graphics member, with
+exact hashes for supported A31E/A31M/A35E/A35M media. Real-data menu/runtime
+checks pass for A31E, A31M, A33 multilingual, A35E and A35M CTRaw. They confirm
+17 decoded animation frames and 30 source VBlanks on the host's SDL dummy
+drivers; native display/audio playback and other platforms' independent intro
+paths are not covered. Published v3.0.422 predates this correction.
+
 2026-11-01 CSB Amiga intro missing in v3.0.422: the no-game picker can select
 the authentic A31M multilingual disk, but the FTL prelude previously rescanned
 the whole CSB data directory and could bind an A31E sibling instead. The
@@ -9,8 +20,8 @@ An SDL dummy-driver launch from the no-game menu on the original Amiga archive
 reported `amiga-swsh-ftl` complete (`source-vblanks=30`) and advanced the A31M
 title animation through frame 30. The debug build is not in v3.0.422. This
 confirms the headless A31M route only; other Amiga editions and native display
-playback remain unverified. Source inspection found separate PC, Atari ST and
-FM Towns intro paths, which this change does not alter.
+playback were not yet verified. Source inspection found separate PC, Atari ST
+and FM Towns intro paths, which this change does not alter.
 
 On 2026-11-01, after rebuilding current `main` at `93c644549`, the authentic
 `m12_main_menu_csb_amiga_multi_runtime_real_media` test passed (46.71 s). The
@@ -19,6 +30,14 @@ the `amiga-swsh-ftl` source-VBlank receipt and title animation, then reached
 the authentic first runtime. The test confirmed that the source archive stayed
 unchanged. This does not establish native-window playback or other Amiga
 editions.
+
+On current `main` at `0236f029a`, the authentic Amiga 3.3 English/French/German
+archive also completed the SWSH prelude (`frames=17`, `source-vblanks=30`) and
+advanced the A31 title animation through frame 30 before reaching its first
+runtime. The A33 real-media regression now requires both animation receipts,
+closing the earlier gap where that test checked only the handoff. The A31M
+and A33 menu/runtime tests both pass with SDL's dummy display; native-window
+playback and other Amiga editions remain unverified.
 
 2026-10-31 ReDMCSB `MOVESENS.C:F0275` C013 HOLD resolution: the source moves a
 stored object before resolving `EFFECT_HOLD`; pickup leaves the leader's hand

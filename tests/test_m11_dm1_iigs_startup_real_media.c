@@ -426,8 +426,34 @@ static int check_first_descent(M11_GameViewState *view, uint8_t *frame) {
                 M11_Audio_GetDm1IigsSnapshot(&view->audioState,&before),
                 "original exit pressure sensor is one audible party-enter trigger");
             (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+            if (!M11_Audio_GetDm1IigsSnapshot(&view->audioState,&after) ||
+                after.triggers<=before.triggers || after.latest_pair[1]<0 ||
+                after.latest_pair[1]==before.latest_pair[1] ||
+                (after.latest_pair[1]>=0 &&
+                 (after.left[after.latest_pair[1]]!=255u ||
+                  after.right[after.latest_pair[1]]!=255u)) ||
+                view->audioState.playedMarkerCount) {
+                const int pair = after.latest_pair[1];
+                fprintf(stderr,
+                    "DIAG: IIGS floor sensor sound after input map=%d party=%d,%d dir=%d audible=%d "
+                    "triggers=%llu->%llu C01-pair=%d->%d pair-state={sound:%d active:%u left:%u right:%u} "
+                    "markers=%u audio-ready=%d\n",
+                    view->world.party.mapIndex,view->world.party.mapX,
+                    view->world.party.mapY,view->world.party.direction,audible,
+                    (unsigned long long)before.triggers,
+                    (unsigned long long)after.triggers,
+                    before.latest_pair[1],pair,
+                    pair>=0 && pair<15 ? after.sound_index[pair] : -1,
+                    pair>=0 && pair<15 ? after.active[pair] : 0u,
+                    pair>=0 && pair<15 ? after.left[pair] : 0u,
+                    pair>=0 && pair<15 ? after.right[pair] : 0u,
+                    view->audioState.playedMarkerCount,
+                    view->audioState.iigsMixer != NULL);
+            }
             REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&after) &&
-                after.triggers==before.triggers+1u && after.latest_pair[1]>=0 &&
+                after.triggers>before.triggers && after.latest_pair[1]>=0 &&
+                after.latest_pair[1]!=before.latest_pair[1] &&
+                after.sound_index[after.latest_pair[1]]==1 &&
                 after.left[after.latest_pair[1]]==255u &&
                 after.right[after.latest_pair[1]]==255u &&
                 !view->audioState.playedMarkerCount,
