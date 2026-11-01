@@ -55,6 +55,13 @@ region. Its role, active-map relation and tile consumer are not established;
 no rendered result is established.
 See the [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 
+**Map-array trace tooling (2026-11-01):** a working-tree instrumenter change
+adds a separate event for reads in the physical range containing all four JP
+Akutuba arrays. It has not been built or captured, and its current 256-row
+instrumenter cap is too small for a complete Map 2 sweep. This is not evidence of dynamic map
+selection or rendering. See the
+[trace-tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+
 **Matched JP input/data-read update (2026-11-01):** a verified state-only UP
 replay read the scripted mask at `$44C1`; its matched no-input control and UP
 trace each retained 256 identical data-read rows, all matching authentic JP

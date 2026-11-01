@@ -16,6 +16,16 @@ before timing out.
 
 A new source-locked disassembly report maps the `$50D2` reader window to a unique authentic JP Track 02 occurrence and documents a candidate four-list index region. The list counts match the descriptor dimensions and their targets fall within the known map span, but no list role or runtime map-array consumer is established. Preserve those fields as opaque until a same-session trace joins reader inputs, a dynamic array read, active-map evidence, and output. See the [candidate reader report](docs/source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 
+The working-tree movement-context instrumenter adds a separate `map_array_read`
+event for physical `[0x0e8b03, 0x0e8e09)`, covering all four parser-established
+JP Akutuba arrays. It is not yet built or exercised. The instrumenter clamps
+its per-kind limit at 256, below Map 2's 323 bytes; raise that ceiling and set
+the wrapper's pass-through value to at least 323 before a full sweep. Repeated
+reads also consume rows. Then capture contemporaneous reader
+registers and `$2A..$33`, the resolved `$4FA7` access, active-map selection,
+pose-bound tile consumption and atomic VDC/VCE/VRAM output in one authentic
+session. See the [trace-tool note](docs/source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
+
 A separate matched state-only UP/control replay now verifies the scripted UP
 read at `$44C1` and 256 identical source-matched reads before the map arrays;
 neither trace records a movement-command write. These rows have no identified

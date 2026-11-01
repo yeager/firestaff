@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document pending JP map-array trace tooling
+
+- Added a source-locked note for the working-tree `map_array_read` hook,
+  including the authenticated physical range, separate sample counter, and
+  current build/capture status.
+- Recorded that the instrumenter's 256-row ceiling is too small for a complete
+  323-byte Map 2 sweep, and listed the same-session evidence still needed to
+  bind the `$50D2` reader, active map, pose-bound tile and rendered output.
+- Synchronized README, project/platform status, Theron TODO, capture readiness,
+  documentation index and both technical wiki pages. No gameplay or rendering
+  result is claimed.
+- This documentation sync did not run tests or builds; the trace hook remains
+  pending build and authentic-capture verification.
+
 ## 2026-11-01 — document the JP Akutuba candidate map-index reader
 
 - Matched the authentic state's 256-byte `$50D2` reader window uniquely to

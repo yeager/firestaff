@@ -67,6 +67,12 @@ movement-command write was observed, and the field semantics remain unknown.
 The captures report `transition=missing`; they do not establish movement,
 active-map selection, visible output or parity. See the
 [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+The working-tree movement-context instrumenter now includes a separate
+`map_array_read` hook for physical `[0x0e8b03, 0x0e8e09)`. It has not been
+built or exercised, and the current 256-row instrumenter cap is below the
+323-byte Map 2 length. Treat it as pending capture tooling; the active-map and pose-to-render
+join remains open. See the
+[trace-tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
