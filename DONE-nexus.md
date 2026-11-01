@@ -23,7 +23,7 @@
 - Added a reproducible analyzer for the complete Ymir SCU descriptor and bounded payload traces from an authentic Japanese retail cold boot.
 - Four complete 7,168-byte transfers to VDP2 bus address `0x05e5c000` match their captured WRAM source bytes and Ymir's recorded 16-bit bus writes. The last descriptor in the complete trace, transfer 6462, also matches the final VDP2 VRAM snapshot for all 7,168 bytes.
 - The same capture has 113 complete NBG0 live-row samples for frame 7486 and zero VDP2 VRAM/CRAM writes in that frame range. Final memory snapshots are at frame 7663 and are not used as frame-7486 pixel references.
-- The SH-2 VDP2-write ring dropped 1,660,912 master rows; exclusive final-writer attribution and CPU-write timing remain unproven. The DMA destination is not assigned to an NBG layer, and no pixel composition or renderer admission is claimed. See [the SCU DMA source-correlation report](docs/nexus/nexus_vdp2_scu_dma_source_correlation.md); raw evidence remains on the external disk.
+- The frame-7663 VDP2 register snapshot maps this interval to the NBG1 Plane A/B page base. SCU descriptors have no frame IDs, so the transfer-frame register binding and actual pixel fetch remain unproven. The SH-2 VDP2-write ring dropped 1,660,912 master rows; exclusive final-writer attribution and CPU-write timing remain unproven. No visible pixel composition or renderer admission is claimed. See [the SCU DMA source-correlation report](docs/nexus/nexus_vdp2_scu_dma_source_correlation.md); raw evidence remains on the external disk.
 
 ## 2026-11-01 — Match 16-bpp VDP1 source alignment to Ymir
 
