@@ -120,7 +120,7 @@ SKW_MONEY_BOX_SURVEY	SKWINDOS	SKWINDOS/dm2bya.cpp	1933	void SKW_MONEY_BOX_SURVEY
 SKW_24a5_0e82	SKWINDOS	SKWINDOS/dm2bya.cpp	1954	void SKW_24a5_0e82(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, bool argbool1)	0	UNREVIEWED
 SKW_24a5_1532	SKWINDOS	SKWINDOS/dm2bya.cpp	1995	void SKW_24a5_1532(void)	0	UNREVIEWED
 SKW_QUERY_GDAT_TEXT	SKWINDOS	SKWINDOS/dm2bya.cpp	2059	t_text* SKW_QUERY_GDAT_TEXT(x8 eaxb, x8 ebxb, t_text* ecxt, x8 edxb)	0	PARTIAL
-R_2F5DE	SKWINDOS	SKWINDOS/dm2bya.cpp	2086	void R_2F5DE(t_gfxdata* eaxp, t_gfxdata* edxp)	1	UNREVIEWED
+R_2F5DE	SKWINDOS	SKWINDOS/dm2bya.cpp	2086	void R_2F5DE(t_gfxdata* eaxp, t_gfxdata* edxp)	1	PARTIAL
 SKW_QUERY_GDAT_IMAGE_METRICS	SKWINDOS	SKWINDOS/dm2bya.cpp	2098	void SKW_QUERY_GDAT_IMAGE_METRICS(x8 eaxb, x8 ebxb, x16* ecxpw, x8 edxb, x16* argpw0)	0	UNREVIEWED
 SKW_QUERY_CMDSTR_TEXT	SKWINDOS	SKWINDOS/dm2bya.cpp	2114	ui16 SKW_QUERY_CMDSTR_TEXT(t_text* eaxt, const t_text* edxt)	0	UNREVIEWED
 SKW_QUERY_CMDSTR_ENTRY	SKWINDOS	SKWINDOS/dm2bya.cpp	2147	ui16 SKW_QUERY_CMDSTR_ENTRY(x8 eaxb, x8 ebxb, x16 ecxw, x8 edxb)	0	UNREVIEWED
@@ -3782,7 +3782,7 @@ DM2_GET_MOUSE_ENTRY_DATA	SKWINSPX	SKWINSPX/src/v5/uitmouse.cpp	609	void DM2_GET_
 DM2_unref_44c8_1e1a	SKWINSPX	SKWINSPX/src/v5/unref.cpp	21	bool DM2_unref_44c8_1e1a(i8* xeaxp, i16 edxw)	1	UNREVIEWED
 DM2_unref_3929_0826	SKWINSPX	SKWINSPX/src/v5/unref.cpp	26	i32 DM2_unref_3929_0826(void)	1	UNREVIEWED
 R_1FE74	SKWINSPX	SKWINSPX/src/v5/unref.cpp	54	i32 R_1FE74(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16 argw0)	1	UNREVIEWED
-R_2F5DE	SKWINSPX	SKWINSPX/src/v5/unref.cpp	93	void R_2F5DE(unk* xeaxp, unk* xedxp)	1	UNREVIEWED
+R_2F5DE	SKWINSPX	SKWINSPX/src/v5/unref.cpp	93	void R_2F5DE(unk* xeaxp, unk* xedxp)	1	PARTIAL
 R_3E39E	SKWINSPX	SKWINSPX/src/v5/unref.cpp	118	void R_3E39E(i8 eaxb, i8 edxb, i8 ebxb, c_pixel* destgfx)	1	UNREVIEWED
 DM2_TRANSFER_PLAYER	SKWINSPX	SKWINSPX/src/v5/unref.cpp	124	i32 DM2_TRANSFER_PLAYER(i32 eaxl, i32 edxl, i32 ebxl)	1	UNREVIEWED
 DM2_1539	SKWINSPX	SKWINSPX/src/v5/unref.cpp	166	bool DM2_1539(void)	1	UNREVIEWED
