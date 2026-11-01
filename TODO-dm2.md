@@ -1,3 +1,21 @@
+2026-11-01 authentic Macintosh music-resource ownership: retail `CODE(22)` at
+offsets `$1a28-$1a72` and `$1b3a-$1b84` resolves `SONG(track)`, reads its
+big-endian MIDI resource ID, then looks up `cmid`, `Midi`, or `MIDI`. Firestaff
+now follows this indirection and checks every original `SONG(1000..1027)` with
+the authentic application resource fork; all 28 mapped MIDI streams pass the
+SMF scheduler test. The original resource fork also contains 136 `INST` and
+139 `snd ` resources, and `CODE(14)` at `$09d6-$09fe` probes `snd `. Firestaff
+still sends MIDI events to the host MIDI backend and does not yet consume the
+original instrument/sample bank. Native Mac output and original timbre parity
+remain unverified; trace the `INST`/`snd ` lookup and SoundMusicSys playback
+path before choosing how to bind that bank.
+
+After the lookup change, `dm2_v1_mac_midi_real`,
+`dm2_v1_mac_m11_movie_runtime_real`, and `dm2_v1_mac_native_cli_boot` passed
+against installed original Macintosh media. The latter reached the first
+runtime from direct CLI and M12 menu paths and verified movement; its SDL dummy
+audio route does not establish audible Mac output.
+
 2026-11-01 authentic Macintosh embedded SND resource coverage: the original
 English application Resource Manager fork contains 139 non-contiguous format-2
 `snd ` resources in the 6000–6540 ID range. The real-media sound test now

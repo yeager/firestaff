@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void)
 {
@@ -12,6 +13,7 @@ int main(void)
     DM2_V1_MusicScheduleReceipt first_schedule;
     DM2_V1_MusicScheduleReceipt repeated_schedule;
     int result;
+    int song_id;
 
     if (dm2_v1_sound_scale_midi_channel_volume(100u, 128) != 100u ||
         dm2_v1_sound_scale_midi_channel_volume(100u, 64) != 50u ||
@@ -34,19 +36,39 @@ int main(void)
         fprintf(stderr, "authentic Mac application resource fork unavailable\n");
         return 1;
     }
-    result = dm2_v1_sound_queue_mac_midi(
-        media.application_resource, media.application_resource_size,
-        1000, 1, &receipt);
-    if ((result != DM2_V1_MUSIC_QUEUE_READY &&
-         result != DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE) ||
-        !receipt.asset_resolved || !receipt.decoder_proven ||
-        !receipt.schedule_handoff_ready || receipt.schedule_event_count == 0u) {
-        fprintf(stderr,
-                "authentic Mac Midi route failed: result=%d resolved=%d decoder=%d schedule=%d events=%u\n",
-                result, receipt.asset_resolved, receipt.decoder_proven,
-                receipt.schedule_handoff_ready, receipt.schedule_event_count);
-        dm2_v1_mac_media_free(&media);
-        return 1;
+    for (song_id = 1000; song_id < 1028; ++song_id) {
+        const uint8_t *song_data = NULL;
+        size_t song_size = 0u;
+        int midi_id;
+        char expected_path[256];
+        if (dm2_v1_mac_resource_find(
+                media.application_resource, media.application_resource_size,
+                "SONG", (int16_t)song_id, &song_data, &song_size, NULL) != 0 ||
+            !song_data || song_size < 2u) {
+            fprintf(stderr, "authentic Mac SONG(%d) mapping is unavailable\n",
+                    song_id);
+            dm2_v1_mac_media_free(&media);
+            return 1;
+        }
+        midi_id = ((int)song_data[0] << 8) | (int)song_data[1];
+        snprintf(expected_path, sizeof(expected_path),
+                 "Dungeon Master II::SONG(%d)->Midi(%d)", song_id, midi_id);
+        result = dm2_v1_sound_queue_mac_midi(
+            media.application_resource, media.application_resource_size,
+            song_id, 1, &receipt);
+        if ((result != DM2_V1_MUSIC_QUEUE_READY &&
+             result != DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE) ||
+            !receipt.asset_resolved || !receipt.decoder_proven ||
+            !receipt.schedule_handoff_ready || receipt.schedule_event_count == 0u ||
+            strcmp(receipt.asset_path, expected_path) != 0) {
+            fprintf(stderr,
+                    "authentic Mac SONG(%d) route failed: result=%d resolved=%d decoder=%d schedule=%d events=%u path=%s\n",
+                    song_id, result, receipt.asset_resolved,
+                    receipt.decoder_proven, receipt.schedule_handoff_ready,
+                    receipt.schedule_event_count, receipt.asset_path);
+            dm2_v1_mac_media_free(&media);
+            return 1;
+        }
     }
     if (!dm2_v1_sound_schedule_music(0u, &first_schedule) ||
         !dm2_v1_sound_schedule_music(0u, &repeated_schedule) ||
@@ -66,7 +88,7 @@ int main(void)
         return 1;
     }
     dm2_v1_mac_media_free(&media);
-    printf("PASS: authentic Mac Midi(1000) reached SMF scheduling: events=%u sent=%u backend=%s\n",
+    printf("PASS: authentic Mac SONG(1000..1027) mappings reached SMF scheduling; events=%u sent=%u backend=%s\n",
            receipt.schedule_event_count,
            first_schedule.event_count_sent,
            receipt.backend_proven ? "ready" : "unavailable");
