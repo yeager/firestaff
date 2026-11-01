@@ -196,8 +196,9 @@ static int run_external_ymir_priority_stack_capture(
             plane, vdp1_display, NEXUS_V1_SATURN_VDP1_VRAM_BYTES,
             vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
             cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES, registers, 512U,
-            NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG, 1, 1, &receipt) ||
-        !receipt.valid || !receipt.capture_only || receipt.renderer_permitted ||
+            NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG, 1, 1, &receipt))
+        goto cleanup;
+    if (!receipt.valid || !receipt.capture_only || receipt.renderer_permitted ||
         !receipt.registers_verified || !receipt.vdp1_framebuffer_verified ||
         !receipt.original_ymir_capture_verified ||
         !receipt.pixel_priority_stack_verified ||
@@ -235,6 +236,16 @@ cleanup:
 
 static int run_external_ymir_priority_stack(void)
 {
+    static const YmirPriorityStackCapture frame0 = {
+        NULL, NULL, NULL, NULL, NULL,
+        "e8757bb073a981ad3aaa95c32a0c657818c1264334e7c5fdea523b3f3085b2c0",
+        "13abf6999d4b2a06b8286954bd603bbc47181d0456c396c337cc45a92bd1c3d8",
+        "a6391dc71fd9e5d757b6648d17d4d8da8dc83755ba7eb48749cdfdd5b2a8c382",
+        "38991f55938600816730aa8c634771347790a13349236a5933e336e6861e08c4",
+        NULL,
+        "9dcb81a08e186aedf674ac72a89669715926f205e072322114c9ac5edc528ebb",
+        62471U, 2333U, 3297U, 74U, 3505U
+    };
     static const YmirPriorityStackCapture frame239 = {
         NULL, NULL, NULL, NULL, NULL,
         "82caef1162741e5baca99e3a8747abb62bd0568df84c75cc0a781176b6636f04",
@@ -271,6 +282,17 @@ static int run_external_ymir_priority_stack(void)
     };
     YmirPriorityStackCapture capture;
     int ran = 0;
+    if (getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS")) {
+        capture = frame0;
+        capture.vdp1_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS");
+        capture.vram_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_VRAM");
+        capture.cram_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_CRAM");
+        capture.registers_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP2_REGS");
+        capture.output_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_STACK_OUT");
+        capture.reference_path = getenv("FIRESTAFF_NEXUS_YMIR_PASS0_RENDERED");
+        if (!run_external_ymir_priority_stack_capture(&capture)) return 0;
+        ran = 1;
+    }
     if (getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS")) {
         capture = frame239;
         capture.vdp1_path = getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS");
@@ -819,6 +841,7 @@ int main(void)
     }
     if ((getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME397_VDP1_FBS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_PASS0_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME300_VDP1_FBS") ||
          getenv("FIRESTAFF_NEXUS_YMIR_FRAME2173_VDP1_FBS")) &&
         !run_external_ymir_priority_stack()) {
