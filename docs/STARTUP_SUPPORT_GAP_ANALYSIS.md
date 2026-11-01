@@ -108,6 +108,13 @@ platform CLI startup, and M12 selection of Atari ST and PC from a mixed DM1
 library. It established the tested first-runtime receipts, not complete
 platform parity.
 
+The same revision passed the Swedish scan-localization checks for DM1 PC,
+CSB FM Towns, and DM2 FM Towns (3/3, 48.41 s). Each route checked explicit
+`--lang sv` and saved Swedish preference for direct debug startup and the
+no-game launcher scan, including localized task labels and no unintended
+game handoff. These checks cover diagnostic labels and launcher state, not
+the rendered progress-bar appearance.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
