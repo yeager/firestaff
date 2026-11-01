@@ -1581,8 +1581,8 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
  * and subdispatches 0..6.  This receipt aggregates the bounded handlers:
  *   class 0 wall mecha  — consumed, CCM tail unbound (fail-closed counter)
  *   class 1 floor mecha — CAII animate activation (round 23)
- *   class 2 pitfall     — fail-closed until the floor-mecha/advance owner
- *                         is complete
+ *   class 2 pitfall     — close path dispatches FLOOR_MECHA; open remains
+ *                         fail-closed until ADVANCE_TILES_TIME is owned
  *   class 3             — source no-op
  *   class 4 door        — bounded one-step door toggle
  *   class 5 teleporter  — fail-closed until the floor-mecha/teleport owner
@@ -1602,7 +1602,7 @@ typedef struct {
     int timers;               /* total 0x04 timers consumed */
     int wall_mecha;           /* class 0 consumed */
     int floor_mecha;          /* class 1 consumed / CAII activations */
-    int pitfall;              /* class 2 consumed when a future owner binds */
+    int pitfall;              /* class 2 close path dispatched to FLOOR_MECHA */
     int door;                 /* class 4 consumed / door mutations */
     int teleporter;           /* class 5 consumed when a future owner binds */
     int trickwall;            /* class 6 consumed */

@@ -1969,3 +1969,14 @@ pending-position recompute, exact stat/right-panel refresh sequence, and
 full source-media behavior across every supported DM2 edition/platform still
 need implementation or direct source validation; this function remains
 partial.
+
+2026-11-01 skproject `ACTUATE_PITFALL`: the live class-2 timer owner now
+resolves ActionType 2 from tile bit 3, applies source close semantics by
+clearing bit 3, and always dispatches the original timer through the
+transactional `FLOOR_MECHA` owner. It restores the original tile if that
+downstream owner rejects. Opening still fails closed because the source calls
+`ADVANCE_TILES_TIME` before `FLOOR_MECHA`, and Firestaff has no complete live
+party/creature move owner for that call. GAME_LOAD remains limited to its
+admitted DB2-only floor chain. The source-matched SPX v4, SPX v5 and DOS rows
+remain partial; other edition/platform coverage and full open behavior are
+still required.

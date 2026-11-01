@@ -10014,6 +10014,64 @@ floor_mecha_reject:
     return 0;
 }
 
+/* The source PITFALL owner can close without moving occupants. Opening also
+ * calls ADVANCE_TILES_TIME before FLOOR_MECHA, whose party/creature owner is
+ * not available in this live dispatcher yet. Keep that half fail-closed. */
+static int dm2_runtime_actuate_pitfall_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int map, x, y, action, raw;
+
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        if (rt) rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    if (dungeon->square_bytes != 1 || map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map]) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0 || ((unsigned int)raw >> 5) != 2u) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+    /* Source action 2 derives 0=open / 1=close from tile bit 3. */
+    if (action == 2)
+        action = (raw & 0x08) != 0 ? 1 : 0;
+    if (action == 0) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+
+    /* SKW_ACTUATE_PITFALL clears bit 3 and always dispatches FLOOR_MECHA,
+     * including when the pit was already closed. Roll the tile back if that
+     * downstream source owner cannot admit its record chain. */
+    if (dm2_v1_dungeon_set_tile_raw(
+            dungeon, map, x, y, raw & ~0x08) != 0) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+    if (!dm2_runtime_actuate_floor_mecha_timer(
+            rt, timer, source_index, receipt)) {
+        (void)dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y, raw);
+        rt->actuator_tile_pitfall_rejected++;
+        return 0;
+    }
+    rt->actuator_tile_pitfall++;
+    return 1;
+}
+
 /* Source-owned class-4 door actuator.  This is the post-GAME_LOAD analogue
  * of the candidate owner in dm2_v1_game_load_world_owner.c: admission is by
  * the direct DB0 root and the complete ground-stack chain, then the source
@@ -12736,6 +12794,7 @@ void dm2_v1_runtime_tick(void) {
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
         dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
+        dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall_timer;
         dispatcher.actuator_tile[4] = dm2_runtime_actuate_door_mecha_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
