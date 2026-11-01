@@ -48,6 +48,6 @@ python3 scripts/analyze_nexus_scu_dma_payload.py /path/to/capture/dumps
 
 ## Limits
 
-The SH-2 VDP2-write trace dropped 1,660,912 master rows. The DMA/payload/final-snapshot match therefore does not prove SCU DMA was the exclusive final writer or establish exact write timing relative to CPU writes. This capture does not assign the destination to an NBG layer. The NBG0 row state is independently corroborated, but this is not a pixel-level NBG0 source join, complete VDP1+VDP2 composition, arbitrary-frame or original-Saturn parity, or renderer-admission proof.
+The SH-2 VDP2-write trace dropped 1,660,912 master rows. The DMA/payload/final-snapshot match therefore does not prove SCU DMA was the exclusive final writer or establish exact write timing relative to CPU writes. The final VDP2 register snapshot (frame 7663) has CHCTLA `0x0013`, PNCN1 `0`, PLSZ `0`, MPOFN `0`, and MPABN1/MPCDN1 `0x1717`. Ymir's `CalcPageBaseAddress` in `vdp2_defs.hpp` maps NBG1 Plane A/B to `(0x17 & 0x3f) << 14 = 0x5c000`, the captured DMA destination. The SCU descriptors have no frame IDs, so this final-register mapping does not bind each transfer to a specific frame or pixel fetch. The NBG0 row state is independently corroborated; this is not evidence of an NBG1 fetch or visible pixel contribution, complete VDP1+VDP2 composition, arbitrary-frame or original-Saturn parity, or renderer admission.
 
 Raw evidence, run log, screenshot, and checksums are retained outside Git under `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-vdp2-scu-dma-payload-20261101/`.
