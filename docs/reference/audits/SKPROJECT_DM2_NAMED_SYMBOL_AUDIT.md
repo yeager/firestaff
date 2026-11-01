@@ -44,11 +44,11 @@ runtime.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,087 |
-| `NOT_APPLICABLE_ARCH` | 560 |
+| `IMPLEMENTED_PARITY` | 1,085 |
+| `NOT_APPLICABLE_ARCH` | 559 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 32 |
+| `PARTIAL` | 35 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -154,8 +154,8 @@ definitions:
 python3 tools/symbol_backlog.py --game DM2 --reference skproject
 ```
 
-At this revision it reports 3,962 open rows: 3,816 unreviewed active-source
-definitions, 144 partial source or older-ledger rows, and 2 partial source-owner
+At this revision it reports 3,963 open rows: 3,816 unreviewed active-source
+definitions, 145 partial source or older-ledger rows, and 2 partial source-owner
 rows. `ACTIVATE_ACTION_HAND` and `SET_SPELLING_CHAMPION` are source-compared for
 DOS, SPX v4, and SPX v5; each
 variant remains partial because the Firestaff bridge does not map the legacy

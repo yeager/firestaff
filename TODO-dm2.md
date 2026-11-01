@@ -2,16 +2,25 @@
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
 The locked checkout yields 3,932 active definitions (2,725 SPX, 1,205 DOS and
-2 SKULLWIN); the generated open backlog currently has 3,962 rows (3,816
-unreviewed, 144 partial, and 2 partial source-owner rows). Five definitions
+2 SKULLWIN); the generated open backlog currently has 3,963 rows (3,816
+unreviewed, 145 partial, and 2 partial source-owner rows). Five definitions
 have mapped parity entries.
+
+2026-11-01 skproject `DM2_CREATURE_CAN_HANDLE_IT` source review:
+`dm2_v1_creature_can_handle_it` currently implements only the supplied
+class-mask membership check. The source function also obtains the
+creature-specific item mask from GDAT, decodes class-specific object
+fields and checks container/moneybox state. The mask-build and special
+object branches do not yet have a live CCM `SHOOT_ITEM` owner, so this
+symbol is now `PARTIAL` in the named audit and contributes one row to
+the 3,963-row open backlog.
 The DOS and SPX v4/v5 shooter definitions have now been compared individually:
 actuator selection, directional item cutting, single-shot random direction,
 launch offset, DB14 payload/tile append, noise, and 0x1d/0x1e continuation timer
 fields are recorded in the active-source audit. DOS also moves a non-cloud
 object directly when DB14 allocation fails. Firestaff still fails closed before
 projectile allocation, so these source and platform rows remain partial.
-The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,962 rows (3,816 unreviewed, 144 partial and 2 partial owners). DOS and SPX shooter behavior is source-compared: actuator types 7/8/14 fire one projectile; 9/A/F fire two, with item variants cutting direction-matched records from the shooter tile and random direction when only one projectile remains. Both source families launch one tile along timer direction with energy 100. The live wall-mecha path now selects/cuts source items, randomizes a single projectile through session RNG, creates DB14 records and queues 0x1E continuation timers. Throw noise and the DOS non-cloud MOVE_RECORD_TO fallback on DB14 exhaustion remain missing. Keep all DOS, Amiga, FM Towns, and Macintosh platform rows open until each runtime/data lane is independently evidenced.
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,963 rows (3,816 unreviewed, 145 partial and 2 partial owners). DOS and SPX shooter behavior is source-compared: actuator types 7/8/14 fire one projectile; 9/A/F fire two, with item variants cutting direction-matched records from the shooter tile and random direction when only one projectile remains. Both source families launch one tile along timer direction with energy 100. The live wall-mecha path now selects/cuts source items, randomizes a single projectile through session RNG, creates DB14 records and queues 0x1E continuation timers. Throw noise and the DOS non-cloud MOVE_RECORD_TO fallback on DB14 exhaustion remain missing. Keep all DOS, Amiga, FM Towns, and Macintosh platform rows open until each runtime/data lane is independently evidenced.
 
 2026-10-31 skproject `STEP_DOOR` timer direction source:
 The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
