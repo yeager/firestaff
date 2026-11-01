@@ -62,6 +62,18 @@ integration regression is PC34-only. Each other lane still needs runtime
 integration and original-media evidence. CSB's bounded PC34 C011/C012 routes
 are tracked separately and do not close its other platform lanes.
 
+Current DM1 map-transition finding (2026-11-01): ReDMCSB `DUNGEON.C:F0173`
+updates the current-map index, map/data pointers, dimensions, door-info cache,
+and cumulative thing-column pointer only when the map changes (`2724-2740`).
+`F0174` composes that transition with party-map ownership, publishes the
+allowed-creature metadata, copies wall/floor/door ornament lists, and writes
+the inscription ordinal (`2742-2762`). Firestaff's similarly named descriptor
+adapter has no production caller; the dungeon-data F0174 adapter updates the
+party-map index and dimensions but does not publish these metadata arrays. The
+live M11 renderer reads selected map data through separate paths. The two
+callable rows therefore remain `PARTIAL`: adapter tests prove only those
+bounded models, not live transition behavior, nor per-platform parity.
+
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
 claims must be made per game and per supported platform lane.
