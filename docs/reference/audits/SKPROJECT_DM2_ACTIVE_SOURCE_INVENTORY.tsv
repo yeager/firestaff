@@ -43,7 +43,7 @@ driver_getfilename	SKWINDOS	SKWINDOS/dm2D.cpp	1275	void driver_getfilename(i8 ar
 driver_execmouseclick	SKWINDOS	SKWINDOS/dm2D.cpp	1295	i16 driver_execmouseclick(i16 x, i16 y, i16 b)	0	UNREVIEWED
 driver_userint	SKWINDOS	SKWINDOS/dm2D.cpp	1309	void driver_userint(i16 a, i16 b)	0	UNREVIEWED
 SKW_44c8_2351	SKWINDOS	SKWINDOS/dm2bya.cpp	39	void SKW_44c8_2351(t_gfxdata* eaxpg, x16 ebxw, x16 ecxw, t_gfxdata* edxpg, x16 argw0, x16 argw1)	0	UNREVIEWED
-SKW_48ae_05ae	SKWINDOS	SKWINDOS/dm2bya.cpp	87	x16 SKW_48ae_05ae(x16 eaxw, x16 ebxw, x16 ecxw, x8 edxb, x16 argw0, x16 argw1)	0	UNREVIEWED
+SKW_48ae_05ae	SKWINDOS	SKWINDOS/dm2bya.cpp	87	x16 SKW_48ae_05ae(x16 eaxw, x16 ebxw, x16 ecxw, x8 edxb, x16 argw0, x16 argw1)	0	PARTIAL
 SKW_12b4_023f	SKWINDOS	SKWINDOS/dm2bya.cpp	129	void SKW_12b4_023f(x16 eaxw, x16* ebxpw, x16* ecxpw, x16 edxw, x16 argw0, x16 argw1)	0	UNREVIEWED
 SKW_12b4_0953	SKWINDOS	SKWINDOS/dm2bya.cpp	144	bool SKW_12b4_0953(c_record* eaxprec, x16 edxw)	0	UNREVIEWED
 SKW_LOAD_NEWMAP	SKWINDOS	SKWINDOS/dm2bya.cpp	153	void SKW_LOAD_NEWMAP(x16 eaxw, x16 ebxw, bool ecxbool, x16 edxw)	0	UNREVIEWED
@@ -1624,7 +1624,7 @@ QUERY_GDAT_ENTRY_DATA_BUFF	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3114	U8 *SkWinCor
 QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3135	U8 SkWinCore::QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE(U16 actuatorData)	0	UNREVIEWED
 ALLOC_NEW_DBITEM_DEEPLY	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3142	ObjectID SkWinCore::ALLOC_NEW_DBITEM_DEEPLY(U16 actuatorData)	0	UNREVIEWED
 IS_DISTINCTIVE_ITEM_ON_ACTUATOR	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3161	U16 SkWinCore::IS_DISTINCTIVE_ITEM_ON_ACTUATOR(Actuator *ref, U16 disit, U16 onTile)	0	UNREVIEWED
-_48ae_05ae_CREATURE	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3184	U16 SkWinCore::_48ae_05ae_CREATURE(i16 disit, U8 yy, U16 zz, U16 ss, U16 tt, i16 ww)	0	UNREVIEWED
+_48ae_05ae_CREATURE	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3184	U16 SkWinCore::_48ae_05ae_CREATURE(i16 disit, U8 yy, U16 zz, U16 ss, U16 tt, i16 ww)	0	PARTIAL
 _48ae_0767_MONEY_VALUE	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3262	U16 SkWinCore::_48ae_0767_MONEY_VALUE(i16 xx, i16 yy, U8 *zz, i16 *vv, i16 ww)	0	UNREVIEWED
 _32cb_35c1	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3287	U16 SkWinCore::_32cb_35c1(i16 *xx, i16 *yy, i16 zz, i16 ww)	0	UNREVIEWED
 ROTATE_5x5_POS	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	3327	i16 SkWinCore::ROTATE_5x5_POS(i16 iCurrentPos_5x5, U16 iDirRotation)	0	UNREVIEWED
@@ -3185,7 +3185,7 @@ DM2_query_1c9a_08bd	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2676	i32 DM2_query_1c9
 DM2_IS_CREATURE_FLOATING	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2701	i32 DM2_IS_CREATURE_FLOATING(i32 eaxl)	1	UNREVIEWED
 DM2_IS_OBJECT_FLOATING	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2720	i32 DM2_IS_OBJECT_FLOATING(i32 eaxl)	1	UNREVIEWED
 DM2_QUERY_OBJECT_5x5_POS	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2740	i32 DM2_QUERY_OBJECT_5x5_POS(i32 eaxl, i32 edxl)	1	UNREVIEWED
-DM2_query_48ae_05ae	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2803	i32 DM2_query_48ae_05ae(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1)	1	UNREVIEWED
+DM2_query_48ae_05ae	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2803	i32 DM2_query_48ae_05ae(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i32 argl0, i32 argl1)	1	PARTIAL
 DM2_query_4E26	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2938	i32 DM2_query_4E26(i16* eaxpw)	1	UNREVIEWED
 DM2_query_1c9a_02c3	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2978	i16* DM2_query_1c9a_02c3(unk* xeaxp, unk* xedxp)	1	UNREVIEWED
 DM2_query_4DA3	SKWINSPX	SKWINSPX/src/v5/skgdtqdb.cpp	2992	void DM2_query_4DA3(i32 eaxl, i32 edxl, i16* ebxpw, s_8bytearray* ecxp_s09)	1	UNREVIEWED
