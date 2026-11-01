@@ -45,6 +45,63 @@ static uint8_t *read_file(const char *path, size_t *size_out) {
     return bytes;
 }
 
+static void assert_pointer_zone_links(
+    const Theron_Track02SpawnSource *source) {
+    static const uint16_t expected_offsets[THERON_TRACK02_SPAWN_ZONE_COUNT] = {
+        0x0058u, 0x00d7u, 0x0102u, 0x0129u, 0x0150u
+    };
+    unsigned int zone_index;
+
+    assert(source != NULL && source->authenticated == 1);
+    for (unsigned int pointer_index = 0u;
+         pointer_index < THERON_TRACK02_SPAWN_ZONE_COUNT;
+         ++pointer_index) {
+        zone_index = THERON_TRACK02_SPAWN_ZONE_COUNT;
+        assert(source->pointers[pointer_index].spawn_data_offset ==
+               expected_offsets[pointer_index]);
+        assert(theron_v1_track02_spawn_zone_index_for_pointer(
+                   source, pointer_index, &zone_index) == 1);
+        assert(zone_index == pointer_index);
+    }
+    for (unsigned int pointer_index = THERON_TRACK02_SPAWN_ZONE_COUNT;
+         pointer_index < THERON_TRACK02_SPAWN_POINTER_COUNT;
+         ++pointer_index) {
+        zone_index = THERON_TRACK02_SPAWN_ZONE_COUNT;
+        assert(source->pointers[pointer_index].spawn_data_offset == 0u);
+        assert(theron_v1_track02_spawn_zone_index_for_pointer(
+                   source, pointer_index, &zone_index) == 0);
+        assert(zone_index == THERON_TRACK02_SPAWN_ZONE_COUNT);
+    }
+
+    zone_index = 0u;
+    assert(theron_v1_track02_spawn_zone_index_for_pointer(
+               source, THERON_TRACK02_SPAWN_POINTER_COUNT, &zone_index) == 0);
+    assert(zone_index == THERON_TRACK02_SPAWN_ZONE_COUNT);
+    assert(theron_v1_track02_spawn_zone_index_for_pointer(
+               source, 0u, NULL) == 0);
+    zone_index = 0u;
+    assert(theron_v1_track02_spawn_zone_index_for_pointer(
+               NULL, 0u, &zone_index) == 0);
+    assert(zone_index == THERON_TRACK02_SPAWN_ZONE_COUNT);
+
+    {
+        Theron_Track02SpawnSource unauthenticated = *source;
+        unauthenticated.authenticated = 0;
+        zone_index = 0u;
+        assert(theron_v1_track02_spawn_zone_index_for_pointer(
+                   &unauthenticated, 0u, &zone_index) == 0);
+        assert(zone_index == THERON_TRACK02_SPAWN_ZONE_COUNT);
+    }
+    {
+        Theron_Track02SpawnSource unknown_variant = *source;
+        unknown_variant.variant = 0;
+        zone_index = 0u;
+        assert(theron_v1_track02_spawn_zone_index_for_pointer(
+                   &unknown_variant, 0u, &zone_index) == 0);
+        assert(zone_index == THERON_TRACK02_SPAWN_ZONE_COUNT);
+    }
+}
+
 static void assert_decoded_real_bin(const char *path,
                                     Theron_V1Track02Variant variant,
                                     const char *expected_md5) {
@@ -73,6 +130,7 @@ static void assert_decoded_real_bin(const char *path,
                                                  &source) == 1);
     assert(source.authenticated == 1);
     assert(source.variant == (int)variant);
+    assert_pointer_zone_links(&source);
     assert_iso_matches_raw_source(
         variant == THERON_V1_TRACK02_VARIANT_US_BIN ? "US" : "JP", &source);
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
@@ -207,7 +265,8 @@ static void assert_iso_matches_raw_source(
     assert(theron_v1_track02_raw_bytes_match_md5(bytes, size, expected_md5));
     assert(theron_v1_track02_decode_spawn_source_iso(
         bytes, size, variant, &iso));
-    assert(iso.authenticated && iso.variant == variant);
+    assert(iso.authenticated && iso.variant == (int)variant);
+    assert_pointer_zone_links(&iso);
     for (unsigned int i = 0u; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
         assert(iso.pointers[i].sprite_desc_offset ==
                raw->pointers[i].sprite_desc_offset);

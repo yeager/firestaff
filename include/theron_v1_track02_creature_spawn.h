@@ -43,6 +43,15 @@ size_t theron_v1_track02_spawn_zone_count(void);
 
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
 
+/* Resolve a pointer record's source-relative spawn_data_offset to the
+ * authenticated regular-spawn zone record it names. This is a static
+ * pointer-table relationship only; it does not prove runtime creature
+ * selection, category semantics, or permission to spawn a creature. */
+int theron_v1_track02_spawn_zone_index_for_pointer(
+    const Theron_Track02SpawnSource *source,
+    unsigned int pointer_index,
+    unsigned int *out_zone_index);
+
 /* Authenticated source decode for the pointer/regular-spawn records.  The
  * input is a complete raw MODE1/2352 retail Track 02 BIN, not a host-generated
  * table or stripped user-data buffer.  The decoder verifies the exact regional

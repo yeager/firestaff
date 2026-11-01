@@ -23,6 +23,14 @@ static const uint32_t g_spawn_source_zone_iso_ud[THERON_TRACK02_SPAWN_ZONE_COUNT
     0x203858u, 0x2038d7u, 0x203902u, 0x203929u, 0x203950u
 };
 
+/* Relative to the authenticated regional spawn-table base: US $274000,
+ * JP $273800, or pregap-adjusted ISO $203800. In both retail regions, each
+ * of the first five pointer records names one of these exact zone offsets. */
+static const uint16_t g_spawn_source_zone_relative_offsets[
+    THERON_TRACK02_SPAWN_ZONE_COUNT] = {
+    0x0058u, 0x00d7u, 0x0102u, 0x0129u, 0x0150u
+};
+
 static int theron_track02_user_byte(const uint8_t *raw, size_t raw_bytes,
                                      uint32_t user_offset, int raw_mode,
                                      uint8_t *out) {
@@ -225,6 +233,31 @@ int theron_v1_track02_decode_spawn_source_iso(
     Theron_Track02SpawnSource *out) {
     return theron_track02_decode_spawn_source(iso_track02, iso_track02_bytes,
                                                variant, 0, out);
+}
+
+int theron_v1_track02_spawn_zone_index_for_pointer(
+    const Theron_Track02SpawnSource *source,
+    unsigned int pointer_index,
+    unsigned int *out_zone_index) {
+    unsigned int zone_index;
+
+    if (out_zone_index) *out_zone_index = THERON_TRACK02_SPAWN_ZONE_COUNT;
+    if (!source || !out_zone_index || !source->authenticated ||
+        (source->variant != THERON_V1_TRACK02_VARIANT_US_BIN &&
+         source->variant != THERON_V1_TRACK02_VARIANT_JP_BIN) ||
+        pointer_index >= THERON_TRACK02_SPAWN_POINTER_COUNT)
+        return 0;
+
+    for (zone_index = 0u;
+         zone_index < THERON_TRACK02_SPAWN_ZONE_COUNT;
+         ++zone_index) {
+        if (source->pointers[pointer_index].spawn_data_offset ==
+            g_spawn_source_zone_relative_offsets[zone_index]) {
+            *out_zone_index = zone_index;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int theron_v1_track02_bind_spawn_consumer_source(

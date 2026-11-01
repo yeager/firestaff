@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — verify the pointer-to-zone API against retail media
+
+- Exercised the source-only pointer-to-zone lookup for US and JP authentic raw
+  Track 02 BINs and matching complete ISO projections. Pointer records 0–4
+  resolve to their corresponding five zone records; records 5–7 and invalid
+  or unauthenticated inputs fail closed.
+- Built the focused C target and passed both regional real-media CTest cases
+  in three consecutive loops. The target uses the authenticated retail media
+  already configured in the local Firestaff data directory; no synthetic game
+  data was introduced.
+- This verifies a static source relationship only. Runtime pointer selection,
+  category semantics, RNG behavior, creature spawning, and gameplay parity
+  remain open.
+
 ## 2026-11-01 — disassemble US Drator row-reader source candidates
 
 - Verified the authentic US `TQUS02.bin` identity, then searched for the exact
