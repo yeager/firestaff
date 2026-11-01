@@ -9,6 +9,7 @@
  */
 
 #include "dm2_v1_querydb_pc34_compat.h"
+#include "dm2_v1_party.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -823,7 +824,25 @@ int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
 int32_t dm2_v1_querydb_get_player_at_position(int32_t pos,
                                               const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    (void)pos; (void)cb; (void)ctx;
+    int16_t hero_count;
+
+    /* SKProject DOS dm2bya.cpp:2734, SPX v4 skgame.cpp:2854, and
+     * SPX v5 skgdtqdb.cpp:1830 all scan the active party in hero order,
+     * returning the first living hero at the requested party position. */
+    if (!cb || !cb->get_heros_in_party || !cb->get_hero_partypos ||
+        !cb->get_hero_curHP || pos < 0 || pos > UINT8_MAX) {
+        return -1;
+    }
+    hero_count = cb->get_heros_in_party(ctx);
+    if (hero_count <= 0 || hero_count > DM2_MAX_HEROES) {
+        return -1;
+    }
+    for (int hero = 0; hero < hero_count; ++hero) {
+        if (cb->get_hero_partypos(ctx, hero) == (uint8_t)pos &&
+            cb->get_hero_curHP(ctx, hero) != 0) {
+            return hero;
+        }
+    }
     return -1;
 }
 
