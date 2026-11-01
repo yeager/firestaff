@@ -19,11 +19,13 @@ native creature spawning. See the [source lock](docs/source-lock/theron-track02-
 
 The planned native `--debug` spawn-source receipt should expose the
 authenticated source MD5, layout, user-data offsets, raw pointer/zone fields,
-and static pointer-to-zone links once per Theron launch. It has not been
-compiled or observed in a native log. Build on TRV2, compare one authentic US
-or JP receipt against the source-lock offsets, and confirm other games emit no
-Theron receipt. This diagnostic must remain opaque: it does not prove runtime
-selection or authorize RNG, placement, or creature creation. See the
+and static pointer-to-zone links once per Theron launch. The modified engine
+and decoder translation units compile in an isolated TRV2 Debug configuration;
+the full application has not been linked and no native log has been captured.
+Link the application, compare one authentic US or JP receipt against the
+source-lock offsets, and confirm other games emit no Theron receipt. This
+diagnostic must remain opaque: it does not prove runtime selection or authorize
+RNG, placement, or creature creation. See the
 [receipt contract and verification state](docs/source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 An authentic US standard-PCE state and hash-verified US Track 02 now bind all

@@ -36,6 +36,10 @@ typedef struct {
      * header cannot pull the large startup/runtime include graph into
      * world.h. */
     int variant;
+    int raw_mode1_2352;
+    char source_md5[33];
+    uint32_t pointer_user_data_offset;
+    uint32_t zone_user_data_offsets[THERON_TRACK02_SPAWN_ZONE_COUNT];
     Theron_CreaturePointerEntry pointers[THERON_TRACK02_SPAWN_POINTER_COUNT];
     Theron_SpawnZoneDesc zones[THERON_TRACK02_SPAWN_ZONE_COUNT];
 } Theron_Track02SpawnSource;

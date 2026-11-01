@@ -10,6 +10,19 @@
   no runtime-spawn or gameplay claim was added.
 - Documentation-only change; no tests or build were run.
 
+## 2026-11-01 — compile the spawn-source debug receipt translation units
+
+- Compiled `main_loop_m11.c` and both configured compile entries for
+  `theron_v1_track02_creature_spawn_source.c` from the current working-tree
+  sources in an isolated TRV2 Debug configuration. No compiler diagnostics
+  were emitted for these translation units.
+- The full application was not linked, and no native `--debug` launch was
+  performed. The existing user-owned JP Mednafen session remains untouched;
+  runtime output and source-receipt values therefore remain unobserved.
+- Updated the Theron TODO, capture-readiness summary, technical source note,
+  and wiki pages to reflect this compile result and its limits. No tests were
+  run.
+
 ## 2026-11-01 — keep Button II turns consistent across keypad bindings
 
 - Added keypad 1/3 to the Button II plus left/right chord in both scancode and

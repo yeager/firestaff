@@ -152,8 +152,10 @@
 > **Planned native spawn-source debug receipt (2026-11-01):** a bounded
 > `--debug` report is planned for the already-authenticated pointer and zone
 > records, including source identity, offsets, raw fields, and static links.
-> It has not been compiled or observed in a native run. It does not establish
-> runtime selection or spawning. See the
+> Its engine and decoder translation units compiled in an isolated TRV2 Debug
+> configuration; the full application has not been linked and no native
+> output has been observed. It does not establish runtime selection or
+> spawning. See the
 > [receipt contract and acceptance checks](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 > **Drator reader source-window verifier (2026-11-01):** the strict verifier

@@ -24,10 +24,12 @@ spawn failure or a semantic classification.
 
 ## Verification state
 
-The corresponding diagnostic is planned but has not yet been compiled or
-observed in a native `--debug` run. Treat the output format above as an
-implementation target, not as verified runtime evidence. Before relying on it,
-build on TRV2 and inspect one authentic US or JP launch log. Confirm that the printed MD5 and offsets match the
+The diagnostic's modified engine and decoder translation units compiled
+successfully in an isolated TRV2 Debug configuration. The full application has
+not been linked, and no native `--debug` output has been observed. Treat the
+output format above as an implementation target, not as verified runtime
+evidence. Before relying on it, link the full application on TRV2 and inspect
+one authentic US or JP launch log. Confirm that the printed MD5 and offsets match the
 [authenticated ISO projection report](theron-track02-spawn-record-iso-projection-20261101.md),
 and that a non-Theron launch emits no Theron receipt. Keep the output bounded
 to one receipt per launch.

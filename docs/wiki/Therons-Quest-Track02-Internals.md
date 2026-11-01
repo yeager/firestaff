@@ -71,9 +71,10 @@ creature generation, or combat. See the
 
 **Planned native debug receipt (2026-11-01):** Firestaff is planned to expose
 the already-bound pointer and zone records through bounded `--debug` output.
-The receipt has not been compiled or observed in a native run and does not
-prove runtime selection or creature spawning. Its raw-field contract and
-acceptance checks are recorded in the
+The engine and decoder translation units compile in an isolated TRV2 Debug
+configuration, but the full application has not been linked and no native
+receipt has been observed. It does not prove runtime selection or creature
+spawning. Its raw-field contract and acceptance checks are recorded in the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
 **Capture-tooling update (2026-11-01):** the reference wrapper supports an
