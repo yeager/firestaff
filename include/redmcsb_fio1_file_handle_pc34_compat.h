@@ -54,6 +54,10 @@ typedef const char *(*redmcsb_fio1_default_floppy_device_name_compat)(
     void *context, int16_t drive_index);
 typedef int (*redmcsb_fio1_is_disk_write_protected_compat)(
     void *context, int16_t drive_index);
+typedef int32_t (*redmcsb_fio1_get_disk_change_counter_compat)(
+    void *context, int16_t drive_index);
+typedef int (*redmcsb_fio1_is_floppy_drive_empty_compat)(
+    void *context, int16_t drive_index);
 
 typedef struct RedmcsbFio1HostPc34Compat {
     void *context;
@@ -72,6 +76,8 @@ typedef struct RedmcsbFio1HostPc34Compat {
     redmcsb_fio1_trackdisk_is_open_compat trackdiskIsOpen;
     redmcsb_fio1_default_floppy_device_name_compat defaultFloppyDeviceName;
     redmcsb_fio1_is_disk_write_protected_compat isDiskWriteProtected;
+    redmcsb_fio1_get_disk_change_counter_compat getDiskChangeCounter;
+    redmcsb_fio1_is_floppy_drive_empty_compat isFloppyDriveEmpty;
 } RedmcsbFio1HostPc34Compat;
 
 void RedmcsbFio1FileHandleInitPc34Compat(
@@ -124,6 +130,9 @@ int16_t F1343_FIO1_06_DeviceNameHostCompat(
 int F1325_FIO1_04_IsDiskWriteableHostCompat(
     const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
     int16_t drive_index);
+int F1322_FIO1_26_DiskChangedHostCompat(
+    const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
+    int16_t drive_index, int32_t source_disk_change_counters[4]);
 int F1338_FIO1_12_DeletePc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                    const RedmcsbFio1FileHandlePc34Compat *file);
 int F1339_FIO1_11_RenamePc34Compat(const RedmcsbFio1HostPc34Compat *host,

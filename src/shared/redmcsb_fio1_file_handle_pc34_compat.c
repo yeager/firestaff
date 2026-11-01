@@ -133,6 +133,28 @@ int F1325_FIO1_04_IsDiskWriteableHostCompat(
     return host->isDiskWriteProtected(host->context, drive_index) == 0;
 }
 
+int F1322_FIO1_26_DiskChangedHostCompat(
+    const RedmcsbFio1HostPc34Compat *host, int use_default_drive_name,
+    int16_t drive_index, int32_t source_disk_change_counters[4])
+{
+    int32_t current_counter;
+
+    if (use_default_drive_name != 1 || drive_index < 0 || drive_index >= 4 ||
+        !source_disk_change_counters || !host || !host->getDiskChangeCounter ||
+        !host->isFloppyDriveEmpty)
+        return 0;
+
+    /* FIO1.C F1322 first compares F1107 with G3322. Only on a mismatch does
+     * it query F1362; either condition refreshes G3322 with a second F1107. */
+    current_counter = host->getDiskChangeCounter(host->context, drive_index);
+    if (current_counter == source_disk_change_counters[drive_index] &&
+        !host->isFloppyDriveEmpty(host->context, drive_index))
+        return 0;
+    source_disk_change_counters[drive_index] =
+        host->getDiskChangeCounter(host->context, drive_index);
+    return 1;
+}
+
 int F1329_FIO1_21_OpenPc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                  RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -354,7 +376,7 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1323/F1325/F1328-F1343/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1322/F1323/F1325/F1328-F1343/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
            "Host callbacks abstract Amiga F1337 Lock/Info/UnLock and F1340 "
            "Trackdisk open-state routes, and F1343 device-name resolution. "
