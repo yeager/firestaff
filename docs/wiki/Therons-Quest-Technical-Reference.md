@@ -55,6 +55,13 @@
 > events cannot be treated as movement evidence. This negative observation
 > does not define runtime spawn semantics; see the
 > [spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+> **JP UP/control data-read comparison (2026-11-01):** a later matched
+> state-only pair verifies the scripted UP read at `$44C1` and records 256
+> identical authentic-source-matched data reads in each run. The addresses
+> are before the map arrays; the fields are unidentified and neither trace
+> records a movement-command write. This does not establish movement, map
+> selection, rendering, cold handoff or parity. See the
+> [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
 > physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all

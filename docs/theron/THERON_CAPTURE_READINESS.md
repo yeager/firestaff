@@ -1,12 +1,22 @@
 # Theron Capture Readiness
 
-**Current summary: 2026-11-01 (updated after the r4 cold reference attempt).** This is the maintained evidence overview for
+**Current summary: 2026-11-01 (updated after the matched JP state-only UP/control trace).** This is the maintained evidence overview for
 Theron native runtime and reference captures. Historical source-lock reports
 retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-The latest authenticated JP state-only replay used five scripted controller
+The latest matched JP state-only pair loaded the same authentic Mednafen state
+with and without `up@61:120`. The UP replay verified a guest controller read at
+`$44C1` with `raw=0010`. Both movement-context captures retained 256 identical
+`movement_data_read` rows after normalizing per-run event sequence; each byte
+matches authentic JP Track 02. Those reads are in the source span before the
+map arrays, their semantics remain unknown, and neither capture recorded a
+movement-command write. Both are state-only with `transition=missing`; they do
+not prove movement, active-map selection, a rendered effect, cold handoff, or
+native parity. See the [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+
+The preceding authenticated JP state-only replay used five scripted controller
 events and verified each event reached a controller read. It recorded zero
 spawn-consumer/register entries, zero RNG samples, and no dungeon transition;
 it does not establish movement or spawn semantics. Explicit state-only PCE
@@ -62,6 +72,12 @@ Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
 above or the linked project status and TODO pages.
+
+The matched trace also exposed a macOS `awk` portability error in the VCE
+write-trace validator. Replacing its multiline conditional expression with a
+standard `if/else` made the same state-only captures pass wrapper validation.
+This fixes capture acceptance on the tested macOS host; it adds no gameplay
+evidence.
 
 An authentic US standard-PCE save-state comparison maps all four US Akutuba
 arrays from the hash-verified Track 02 projection into `HuC.SysCardRAM`.

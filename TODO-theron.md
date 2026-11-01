@@ -14,6 +14,13 @@ verify the `$E11D` bootstrap branch or a game-owned poll; it recorded zero CD
 IRQs, zero authenticated CD-to-RAM receipts, and no LBA 3674 data-port rows
 before timing out.
 
+A separate matched state-only UP/control replay now verifies the scripted UP
+read at `$44C1` and 256 identical source-matched reads before the map arrays;
+neither trace records a movement-command write. These rows have no identified
+field semantics and the pair does not show movement or rendering. Continue the
+active-map/source-to-consumer work from disassembly, using the `$50D2/$50D6`
+reader context documented in the [trace report](docs/source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+
 Next, determine why PID-targeted Quartz input did not reach the controller
 trace in the visual follow-up. Require an active-low RUN sample before treating
 the action as delivered, then wait for a confirmed menu before sending the

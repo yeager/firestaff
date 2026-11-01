@@ -49,11 +49,18 @@ of 4,096 bounded VRAM commit rows (event 58761). The capture reports
 `transition=missing`; this checks instrumentation and event ordering only. It
 does not establish causality, VRAM meaning, a visible response, a cold media
 handoff, or Firestaff parity. See the [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
-The latest authenticated JP state-only control replay consumed five scripted
+An earlier authenticated JP state-only control replay consumed five scripted
 controller events but recorded no `$B0E5` spawn entry, spawn-register sample,
 RNG sample, or dungeon transition. This is evidence about that bounded
 state-only route only; it establishes neither movement nor runtime spawning.
 See the [spawn-consumer capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+The latest matched JP state-only pair verified a guest read of `up@61:120` at
+`$44C1`, then retained 256 identical, authentic-source-matched data reads in
+both the UP and neutral runs. These addresses precede the map arrays, no
+movement-command write was observed, and the field semantics remain unknown.
+The captures report `transition=missing`; they do not establish movement,
+active-map selection, visible output or parity. See the
+[matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon

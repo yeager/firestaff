@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — document matched JP state-only UP/control data reads
+
+- Captured an authentic JP Mednafen state-only pair, with and without
+  `up@61:120`. The UP receipt verifies the guest read at `$44C1` with
+  `raw=0010`.
+- Compared the two bounded movement-context traces: each retained 256 rows,
+  and their ordered read tuples are identical after normalizing per-run event
+  sequences. All 256 values match the authenticated JP Track 02 source mapping
+  before the map arrays. Neither trace contains a movement-command write;
+  both report `transition=missing`.
+- Recorded the evidence and its limits in the
+  [source-lock report](docs/source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md),
+  and synchronized Theron readiness, status, wiki and documentation indexes.
+- Fixed the macOS `awk` portability issue in VCE write-trace validation by
+  replacing the multiline conditional expression with `if/else`; subsequent
+  authentic state-only captures passed wrapper validation. This is a capture
+  tooling correction, not gameplay evidence.
+
 ## 2026-11-01 — verify native US input routes on authentic Track 02
 
 - Configured a separate native macOS Debug build with the workspace data

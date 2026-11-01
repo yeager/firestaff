@@ -48,6 +48,14 @@ does not join a cold CD handoff, decode VRAM semantics, prove a visible input
 effect, or establish native parity. See the
 [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
 
+**Matched JP input/data-read update (2026-11-01):** a verified state-only UP
+replay read the scripted mask at `$44C1`; its matched no-input control and UP
+trace each retained 256 identical data-read rows, all matching authentic JP
+Track 02 bytes. The reads are before the map arrays and no movement-command
+write was observed. This does not identify the reader's data, the active map,
+player movement, or a rendered result. Both traces report
+`transition=missing`. See the [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+
 Native direct launch enters the Theron title/startup path without Firestaff's
 Run menu or a System Card. The Debug boot-probe receipt remained at
 `levelLoaded=0`; it does not establish Track 02 dungeon loading or gameplay.
