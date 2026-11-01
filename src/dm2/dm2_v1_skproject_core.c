@@ -60,6 +60,47 @@ int16_t dm2_v1_skproject_abs(int16_t value)
     return (value >= 0) ? value : (int16_t)-value;
 }
 
+static int dm2_v1_skproject_r_1fe74_test(int16_t delta_x,
+                                         int16_t delta_y,
+                                         int16_t mode)
+{
+    if ((mode & 1) == 0) {
+        if (delta_x != 0) return 0;
+        return mode == 2 ? delta_y <= 0 : delta_y >= 0;
+    }
+    if (delta_y != 0) return 0;
+    return mode == 1 ? delta_x <= 0 : delta_x >= 0;
+}
+
+static int16_t dm2_v1_skproject_narrow_delta(int32_t a, int32_t b)
+{
+    return (int16_t)(uint16_t)((uint32_t)a - (uint32_t)b);
+}
+
+int dm2_v1_skproject_r_1fe74_dos(int32_t eaxl,
+                                  int32_t ebxl,
+                                  int32_t ecxl,
+                                  int32_t edxl,
+                                  int16_t mode)
+{
+    /* DOS computes CUTX16(eaxl-ebxl) and CUTX16(edxl-ecxl). */
+    return dm2_v1_skproject_r_1fe74_test(
+        dm2_v1_skproject_narrow_delta(eaxl, ebxl),
+        dm2_v1_skproject_narrow_delta(edxl, ecxl), mode);
+}
+
+int dm2_v1_skproject_r_1fe74_spx_v5(int32_t eaxl,
+                                    int32_t edxl,
+                                    int32_t ebxl,
+                                    int32_t ecxl,
+                                    int16_t mode)
+{
+    /* SPX v5 computes CUTX16(eaxl-ebxl) and CUTX16(edxl-ecxl). */
+    return dm2_v1_skproject_r_1fe74_test(
+        dm2_v1_skproject_narrow_delta(eaxl, ebxl),
+        dm2_v1_skproject_narrow_delta(edxl, ecxl), mode);
+}
+
 int16_t dm2_v1_skproject_calc_square_distance(int16_t from_x,
                                                int16_t from_y,
                                                int16_t to_x,

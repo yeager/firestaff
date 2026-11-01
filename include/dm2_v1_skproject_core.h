@@ -2790,6 +2790,18 @@ int16_t dm2_v1_skproject_calc_square_distance(int16_t from_x,
                                                int16_t from_y,
                                                int16_t to_x,
                                                int16_t to_y);
+/* Source-equivalent predicates for the unreferenced DOS and SPX-v5
+ * R_1FE74 variants. Coordinates are narrowed to signed 16-bit deltas. */
+int dm2_v1_skproject_r_1fe74_dos(int32_t eaxl,
+                                  int32_t ebxl,
+                                  int32_t ecxl,
+                                  int32_t edxl,
+                                  int16_t mode);
+int dm2_v1_skproject_r_1fe74_spx_v5(int32_t eaxl,
+                                    int32_t edxl,
+                                    int32_t ebxl,
+                                    int32_t ecxl,
+                                    int16_t mode);
 int dm2_v1_skproject_calc_vector_dir(
     DM2_V1_SkprojectRandomData *randdat,
     int16_t from_x,
