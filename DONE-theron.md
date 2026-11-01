@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — source-decode the observed JP map readers
+
+- Matched state-resident windows around all four map-array reader PCs to the
+  authenticated JP Track 02 MODE1/2048 projection. The 256-byte windows for
+  `$50FE`, `$4FFC`, and `$4FD4` each have one source occurrence; a 128-byte
+  `$AE66` window also has one.
+- Decoded the three `$B1 14` instructions as `LDA ($14),Y` and `$7D F6 6D`
+  as `ADC $6DF6,X`, cross-checking those opcodes against the isolated
+  Mednafen 1.32.1 HuC6280 implementation.
+- Added the window digests, projected BIN offsets and interpretation limits
+  to the [map-array capture report](docs/source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md),
+  and updated the current TODO, readiness page and technical wiki.
+- This is static state/source evidence. The prior captures did not preserve
+  contemporaneous A/X/Y/P, Page1-backed operands or fetched opcode bytes; active
+  map, pose, tile consumer and rendered effect remain unverified.
+
 ## 2026-11-01 — build and capture JP map-array reads
 
 - Raised the bounded map-array trace limit to 4,096 samples and added an

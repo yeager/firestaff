@@ -6,10 +6,13 @@ retain their original capture dates and are not additional current status
 summaries. Start with [project status](../PROJECT_STATUS.md), the
 [Theron TODO](../../TODO-theron.md), and the [documentation index](../DOCUMENTATION_INDEX.md).
 
-Static disassembly maps the `$50D2` code window uniquely to the authentic JP BIN, and a bounded trace observes reads from a candidate pointer-like structure at the end of the unclassified `thing_list` region. Its role, active-map relation and tile consumer remain unknown; no rendered result has been captured. See the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+Static disassembly maps the `$50D2` code window uniquely to the authentic JP BIN. The later map-array trace PCs also match unique state windows in authentic Track 02: `$50FE`, `$4FFC` and `$4FD4` decode as `LDA ($14),Y`; `$AE66` decodes as `ADC $6DF6,X`. The capture did not record contemporaneous registers or opcode bytes, so the candidate pointer-list role, active-map relation and tile consumer remain unknown; no rendered result has been captured. See the [reader and opcode report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md) and [three-run capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
 
 The Mednafen movement-context instrumenter now emits a separate
-`map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Its per-kind limit
+`map_array_read` event over physical `[0x0e8b03, 0x0e8e09)`. Those three
+state-only captures do not include pre-instruction registers, fetched opcodes,
+or the PCE Fast `Page1_local` operands at the observed reader PCs; that context
+is required for the next same-session reader capture. Its per-kind limit
 supports up to 4096 rows and emits an explicit marker if the cap is reached.
 Three authentic JP state-only runs at that limit retained 1,677, 1,513 and
 1,556 rows without truncation. Each read byte matches the hash-verified JP

@@ -58,8 +58,9 @@ See the [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba
 **JP map-array reads (2026-11-01):** three authentic state-only captures
 recorded 1,677, 1,513 and 1,556 reads from the parser-established arrays.
 They touched 17 source-matched byte addresses in Map 0 and Map 3 without
-reaching the 4096-row cap. The trace PCs remain unidentified and do not
-establish active-map selection or rendering. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+reaching the 4096-row cap. Static source windows decode the reader PCs as three `LDA ($14),Y` accesses
+and one `ADC $6DF6,X`; the captures lack same-event register values and fetched
+opcode bytes. This does not establish active-map selection or rendering. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
 and [tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 
 **Matched JP input/data-read update (2026-11-01):** a verified state-only UP
