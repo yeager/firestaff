@@ -155,6 +155,23 @@ int F1322_FIO1_26_DiskChangedHostCompat(
     return 1;
 }
 
+int F1326_FIO1_05_FormatSaveDiskHostCompat(
+    const RedmcsbFio1HostPc34Compat *host,
+    const RedmcsbFio1FileHandlePc34Compat *file,
+    int use_default_drive_name, int16_t drive_index)
+{
+    if (!valid_file(file) || use_default_drive_name != 1 ||
+        drive_index < 0 || drive_index >= 4 || !host ||
+        !host->formatSaveDisk)
+        return REDMCSB_FIO1_RESULT_INVALID_PC34;
+    /* ReDMCSB FIO1.C F1326 delegates to F0519 with the fixed source volume
+     * label and maps its result to C00/C08. The disk-format side effect is
+     * reachable only through this explicitly supplied host callback. */
+    return host->formatSaveDisk(host->context, drive_index, "DungeonSave") == 0
+               ? REDMCSB_FIO1_RESULT_SUCCESS_PC34
+               : REDMCSB_FIO1_RESULT_WRITE_FAILED_PC34;
+}
+
 int F1329_FIO1_21_OpenPc34Compat(const RedmcsbFio1HostPc34Compat *host,
                                  RedmcsbFio1FileHandlePc34Compat *file)
 {
@@ -376,7 +393,8 @@ void F1342_FIO1_08_SubstituteWildcardPc34Compat(
 
 const char *redmcsb_fio1_file_handle_source_evidence_pc34(void)
 {
-    return "ReDMCSB FIO1.C:125-840 F1321/F1322/F1323/F1325/F1328-F1343/"
+    return "ReDMCSB FIO1.C:125-840 F1321/F1322/F1323/F1325/F1326/"
+           "F1328-F1343/"
            "F1341-F1342; FILE.C PC34 F0770-F0779 callback primitives. "
            "Host callbacks abstract Amiga F1337 Lock/Info/UnLock and F1340 "
            "Trackdisk open-state routes, and F1343 device-name resolution. "
