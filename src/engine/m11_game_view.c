@@ -47508,7 +47508,12 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 rebirthEvent.mapIndex = state->world.party.mapIndex;
                                 rebirthEvent.mapX = frontCell.mapX;
                                 rebirthEvent.mapY = frontCell.mapY;
-                                rebirthEvent.cell = (int)THING_GET_CELL(dropThing);
+                                /* F0374 schedules the event with L1145, the
+                                 * destination cell after remapping the alcove
+                                 * click to C02_VIEW_CELL_BACK_RIGHT.  The
+                                 * held Thing's old cell is not the drop cell. */
+                                rebirthEvent.cell =
+                                    (state->world.party.direction + 2) & 3;
                                 rebirthEvent.kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
                                 rebirthEvent.aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
                                 rebirthEvent.aux1 = 2;
