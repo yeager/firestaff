@@ -1,3 +1,5 @@
+2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: mapped `strlen` within the source 16-bit length domain; marked `strchr` partial because ReDMCSB returns NULL for a NUL search while host `strchr` returns the terminator address.
+
 2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: corrected the Atari ST alias and callable row to `MISSING`. The source function computes DOS/Amiga copy-protection code checksums; Firestaff has no equivalent checksum route.
