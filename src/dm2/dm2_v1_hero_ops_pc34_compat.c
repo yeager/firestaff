@@ -736,13 +736,13 @@ void dm2_v1_party_set_hero_flags(
 /* ---- c_party::get_player_weight (c_hero.cpp:197) ---- */
 int16_t dm2_v1_get_player_weight(
     const DM2_V1_HeroState *hero,
-    int is_event_hero, int16_t hand_weight)
+    int16_t carried_weight, int is_event_hero, int16_t hand_weight)
 {
     if (!hero || hero->cur_hp == 0)
         return 0;
-    int16_t w = 0; /* hero->weight not in DM2_V1_HeroState; caller provides via hand_weight */
+    int16_t w = carried_weight;
     if (is_event_hero)
-        w = (int16_t)(w + hand_weight);
+        w = dm2_wrap_int16((int32_t)w + (int32_t)hand_weight);
     return w;
 }
 

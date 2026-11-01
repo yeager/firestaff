@@ -461,11 +461,13 @@ void dm2_v1_party_set_hero_flags(
     int hero_count,
     DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx);
 
-/* ---- c_party::get_player_weight (c_hero.cpp:197) ----
- * Get hero's carried weight; adds hand-held item weight if event hero. */
+/* ---- GET_PLAYER_WEIGHT (DOS dm2byb.cpp:1172, SPX v4 skchamp.cpp:2219,
+ * SPX v5 skhero.cpp:199) ----
+ * Return zero for a defeated hero; otherwise return stored carried weight,
+ * adding the active hand item's weight when this is the event hero. */
 int16_t dm2_v1_get_player_weight(
     const DM2_V1_HeroState *hero,
-    int is_event_hero, int16_t hand_weight);
+    int16_t carried_weight, int is_event_hero, int16_t hand_weight);
 
 /* ---- c_party::calc_player_weight (c_hero.cpp:208) ----
  * Sum weights of all items in hero's inventory slots. */
