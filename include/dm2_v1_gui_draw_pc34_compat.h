@@ -264,6 +264,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*query_gdat_summary_image)(void *ctx, void *image, int8_t cls,
                                      int8_t sub, int8_t idx);
     void (*query_picst_it)(void *ctx, void *image);
+    /* Map damage 0..40 to the edition's source-specific summary-image
+     * stretch fields (SPX v4 and DOS/SPX v5 use different dimensions). */
+    void (*set_attack_result_image_stretch)(void *ctx, void *image,
+                                            int16_t damage);
     void *(*set_image)(void *ctx, int16_t dbidx, void *imgdesc);
     void (*image_draw)(void *ctx, void *image, int32_t bg_id,
                        int16_t rectid, int16_t alpha);

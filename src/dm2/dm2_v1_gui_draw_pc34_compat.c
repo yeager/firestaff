@@ -855,6 +855,9 @@ void dm2_v1_show_attack_result(
         DM2_V1_ImageDesc image;
         memset(&image, 0, sizeof(image));
         cb->query_gdat_summary_image(ctx, &image, 1, img_cls, img_idx);
+        if (result_code >= 0 && result_code <= 40 &&
+            cb->set_attack_result_image_stretch)
+            cb->set_attack_result_image_stretch(ctx, &image, result_code);
         cb->query_picst_it(ctx, &image);
         cb->image_draw(ctx, &image, 2, 57, -1);
     }
