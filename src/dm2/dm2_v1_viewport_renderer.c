@@ -7119,50 +7119,6 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                         }
                         glyph_rect = (DM2_V1_ViewportRect){
                             draw_x, shop_item->shop_name_y, width, 6 };
-                        if (width > 0) {
-                            const uint8_t *raw_rects;
-                            size_t raw_rects_size = 0u;
-                            DM2_V1_RectTableNode source_rect;
-                            DM2_V1_ViewportRect source_clip;
-                            raw_rects = dm2_v1_query_gdat_entry_data_ptr(
-                                s->asset_loader,
-                                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-                                DM2_GDAT_ENTRY_TYPE_RAW4, 0x00,
-                                &raw_rects_size);
-                            if (!raw_rects ||
-                                !dm2_v1_wall_ornament_rect_table_query(
-                                    raw_rects, raw_rects_size, 3u,
-                                    &source_rect)) {
-                                width = 0;
-                            } else {
-                                source_clip = (DM2_V1_ViewportRect){
-                                    source_rect.x, source_rect.y,
-                                    source_rect.width, source_rect.height };
-                                {
-                                    int x0 = glyph_rect.x > source_clip.x
-                                        ? glyph_rect.x : source_clip.x;
-                                    int y0 = glyph_rect.y > source_clip.y
-                                        ? glyph_rect.y : source_clip.y;
-                                    int gx1 = glyph_rect.x + glyph_rect.w;
-                                    int gy1 = glyph_rect.y + glyph_rect.h;
-                                    int sx1 = source_clip.x + source_clip.w;
-                                    int sy1 = source_clip.y + source_clip.h;
-                                    int x1 = gx1 < sx1 ? gx1 : sx1;
-                                    int y1 = gy1 < sy1 ? gy1 : sy1;
-                                    if (source_clip.w <= 0 || source_clip.h <= 0 ||
-                                        x1 <= x0 || y1 <= y0) {
-                                        width = 0;
-                                    } else {
-                                        glyph_rect.x = x0;
-                                        glyph_rect.y = y0;
-                                        glyph_rect.w = x1 - x0;
-                                        glyph_rect.h = y1 - y0;
-                                    }
-                                }
-                            }
-                        } else {
-                            width = 0;
-                        }
                         if (width > 0 &&
                             dm2_v1_render_hud_source_font(
                                 s, &glyph_rect, text,

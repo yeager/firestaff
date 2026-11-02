@@ -15858,12 +15858,21 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 if (square == DM2_SQ_D1C) {
                     DM2_V1_GdatNameReceipt name;
                     DM2_V1_RectTableNode name_rect;
+                    DM2_V1_SkprojectItemdbOfItemspecReceipt name_itemdb;
+                    DM2_V1_SkprojectItemtypeOfItemspecReceipt name_itemtype;
                     const uint8_t *raw_rects;
                     size_t raw_rects_size = 0u;
                     uint16_t name_offset = 0u;
-                    if (dm2_v1_query_gdat_item_name_receipt(
-                            loader, DM2_GDAT_CATEGORY_WALL_GFX,
-                            (int)(pair.current_item & 0x01ffu), &name) &&
+                    uint16_t name_db = 0xffffu;
+                    uint16_t name_type = 0xffffu;
+                    if (dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+                            pair.current_item, &name_db, &name_itemdb) &&
+                        name_itemdb.valid && name_db <= 0xffu &&
+                        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+                            pair.current_item, &name_type, &name_itemtype) &&
+                        name_itemtype.valid && name_type <= 0xffu &&
+                        dm2_v1_query_gdat_item_name_receipt(
+                            loader, (int)name_db, (int)name_type, &name) &&
                         name.accepted &&
                         dm2_v1_asset_load_image_offset(
                             loader, DM2_GDAT_CATEGORY_WALL_GFX,
