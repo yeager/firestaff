@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_dungeon_loader.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,12 +60,28 @@ typedef struct {
     DM2_V1_Move2fcf0434Receipt gate;
 } DM2_V1_DB1TeleporterTransition;
 
+/* Narrow live DB1 view supplied by runtime, avoiding record-pool ownership
+ * in the source-shaped transition resolver. */
+typedef struct {
+    const uint8_t *record;
+    size_t record_size;
+    int source_words_big_endian;
+    int record_graph_complete;
+} DM2_V1_DB1TeleporterLiveRecord;
+
 /* Decode one enabled, first-link DB1 teleporter from the authenticated map
  * and admit it through the source movement gate. This is also the map-edge
  * input needed by FIND_WALK_PATH's later cross-map traversal. */
 int dm2_v1_db1_teleporter_transition(
     const DM2_V1_DungeonData *dungeon, int map, int x, int y,
     DM2_V1_DB1TeleporterTransition *out);
+
+/* Runtime form of the DB1 transition resolver. Tile/head state comes from
+ * the dungeon, while the mutable record body comes from the live pool owner. */
+int dm2_v1_db1_teleporter_transition_live(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_DB1TeleporterLiveRecord *live_record,
+    int map, int x, int y, DM2_V1_DB1TeleporterTransition *out);
 
 int dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
     const DM2_V1_DungeonData *dungeon,

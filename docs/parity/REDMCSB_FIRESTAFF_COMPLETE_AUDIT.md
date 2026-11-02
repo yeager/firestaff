@@ -120,10 +120,15 @@ and cumulative thing-column pointer only when the map changes (`2724-2740`).
 allowed-creature metadata, copies wall/floor/door ornament lists, and writes
 the inscription ordinal (`2742-2762`). Firestaff's similarly named descriptor
 adapter has no production caller; the dungeon-data F0174 adapter updates the
-party-map index and dimensions but does not publish these metadata arrays. The
-live M11 renderer reads selected map data through separate paths. The two
-callable rows therefore remain `PARTIAL`: adapter tests prove only those
-bounded models, not live transition behavior, nor per-platform parity.
+party-map index and dimensions but does not publish these metadata arrays. M11
+publishes through an ornament-cache-gated helper, so F0173/F0174 may remain
+unpublished when that cache is missing or invalid. Source map-transition
+owners invoke F0173/F0174 explicitly, while M11 usually passes explicit map
+indices and has no unified publisher at all matching source current-map
+read/write sites such as cross-map discard/group/projectile processing. The
+two callable rows therefore remain `PARTIAL`: bounded adapters do not prove
+all live current-map consumers and transition behavior, or per-platform
+parity.
 
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
@@ -977,4 +982,48 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,836 unreviewed, 1,016 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,957 open rows (2,836 unreviewed, 1,119 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,775 unreviewed, 1,046 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,952 open rows (2,775 unreviewed, 1,175 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+
+
+### DM2 distant environment drawing review (2026-11-02)
+
+Compared DOS `SKW_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`dm2byg.cpp:4925`), SPX v4 `ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`skbkgrnd.cpp:35`), SPX v5 `DM2_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`skguivwp.cpp:296`), and SKULLWIN. The source skips CD=0, maps four FW values to positional flips, applies 0x34 movement scaling and a special 6001 horizon offset, then queries and draws the selected environment image. DOS additionally requests rect CD|0x8000 and passes FW=0x20 as the flip kind; SPX v4/v5 pass rect CD directly. Firestaff models transforms and guards rendering with verified material receipts, but those edition-specific query details and complete runtime callers are not bound across all supported platforms. All source rows remain `PARTIAL`.
+
+
+### DM2 outdoor relative-distance review (2026-11-02)
+
+Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 `DM2_guivp_32cb_54ce`. Firestaff `dm2_v1_guivp_32cb_54ce` matches DOS and SPX v5 coordinate writes, forward-distance gate, 16-bit squared-distance behavior, and Newton integer square root. Firestaff now has a dedicated `dm2_v1_environment_compute_distance_v4` helper for SPX v4 heading 0, in addition to the DOS/v5 helper. The exact v4 outdoor-selection caller path is not yet bound, so v4 remains `PARTIAL`; DOS and v5 are `IMPLEMENTED_PARITY`.
+
+
+### DM2 distant environment selection review (2026-11-02)
+
+Compared DOS `SKW_ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v4 `ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v5 `DM2_ENVIRONMENT_SET_DISTANT_ELEMENT`, and SKULLWIN. The routines parse MV/X/Y/FD command values, add map offsets, compute viewer-relative Euclidean distance, reject invisible directions, and write projected offsets and distance-scaled output to the environment slot. Firestaff now computes the MV/distance/FD transform in a source-shaped helper, but the production enumeration still delegates to a callback and does not bind that plan to the live slot. All source rows remain `PARTIAL`.
+
+
+### DM2 outdoor environment enumeration review (2026-11-02)
+
+Compared DOS `SKW_ENVIRONMENT_DISPLAY_ELEMENTS`, SPX v4 `ENVIRONMENT_DISPLAY_ELEMENTS`, SPX v5 `DM2_ENVIRONMENT_DISPLAY_ELEMENTS`, and the SKULLWIN copy. The source optionally draws stored rain slots, caches up to 100 loadable environment images with nonempty command text per graphics set, then computes visibility and calls the set/draw routines for each admitted element. Firestaff's generic wrapper only forwards to a callback; weather receipts do not own the full discovery cache or production enumeration loop. All three source definitions remain `PARTIAL`.
+
+
+### DM2 compressed rectangle size review (2026-11-02)
+
+Compared DOS `SKW_CALC_SIZE_OF_COMPRESSED_RECT`, SPX v4 `CALC_SIZE_OF_COMPRESSED_RECT`, SPX v5 `DM2_CALC_SIZE_OF_COMPRESSED_RECT`, and SKULLWIN. Firestaff `dm2_v1_calc_size_of_compressed_rect` matches the 8-byte base and all mask-controlled reductions (bit 2 special case, bits 1/0 and 0x18). The function body is `IMPLEMENTED_PARITY` across variants.
+
+
+### DM2 compressed rectangle query review (2026-11-02)
+
+Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and SKULLWIN. Firestaff `dm2_v1_query_rect` preserves zero rejection, linked range lookup, the four-entry result ring and source mask encodings for common coordinates, compressed byte coordinates, signed/unsigned byte dimensions and word dimensions. DOS and SPX v5 are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL` because it accepts unsigned U16 rectangle IDs while Firestaff currently stores signed int16 query/range fields.
+
+### DM2 pending squad position recomputation (2026-11-02)
+
+Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v4 `CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skchamp.cpp:1975-1978`), SPX v5 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skhero.cpp:4143-4147`), and SKULLWIN (`c_hero.cpp:4141-4145`). All return when the pending-position flag is zero; otherwise they call `CHANGE_PLAYER_POS` with the saved target ORed with `0x8000`. Firestaff's callback helper has the same gate and packed argument. The live runtime applies that pending formation move after hand activation and spelling-champion selection. All four function bodies are `IMPLEMENTED_PARITY`; separate caller routes remain subject to their input/platform audits.
+
+### DM2 creature lifting weight check (2026-11-02)
+
+Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_CREATURE_12b4_099e` (`skchamp.cpp:2716-2754`), SPX v5 `DM2_move_12b4_099e` (`skmove.cpp:805-883`), and SKULLWIN (`c_move.cpp:805-883`). Firestaff's core receipt models the `0xfd` weight cap, living-hero strength calculation, event/leader bonus, random success check and stamina decrement decision. It has no production move-record caller resolving authenticated creature weight, hero attributes and RNG or applying `ADJUST_STAMINA`. Its request also treats zero `stamina_adjusted_strength` as absent and uses raw strength, so some source decisions differ; SPX v4's bonus uses `glbChampionLeader`, unlike the request's event-hero selector. All four source rows are `PARTIAL`.
+
+
+Compared ReDMCSB `BASE.C:F0019_MAIN_DisplayErrorAndStop` with Firestaff source mappings. Full callable inventory had marked it `MISSING` despite the CSB callback adapter and DM1 PC34 error-plan helper. The inventory now records it as `PARTIAL`: the text prefix, two digits, input wait, and endgame ordering are represented, but the adapter has no live DM1/CSB game caller, terminal behavior is delegated, and supported platform/edition behavior remains open.
+
+
+Compared ReDMCSB FILLBOX.C `F1128_IsLeftMouseButtonDown` with UTIO.C `F2008_IsLeftMouseButtonDown` and HINT001.C `F2024_IsLeftMouseButtonDown`. F2008 and F2024 delegate to F1128, whose Amiga implementation reads CIAA gameport bit 6. Firestaff has source-named bounded accessors over caller-owned button status, but they do not reproduce that Amiga hardware read; CSB PC34 source-boundary adapters explicitly have no live input owner. The three inventory rows now read `PARTIAL`, with platform and caller wiring still open.

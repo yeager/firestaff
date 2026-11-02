@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -315,6 +316,40 @@ void dm2_v1_environment_display_elements(
     const DM2_V1_GuiVpCallbacks *cb, void *ctx);
 int32_t dm2_v1_guivp_32cb_54ce(int32_t heading, int16_t *x_ptr,
                                 int16_t *y_ptr, int32_t dir, int32_t arg);
+/* SPX v4 skbkgrnd.cpp ENVIRONMENT_COMPUTE_DISTANCE has a distinct heading-0
+ * delta expression from the DOS/SPX v5 helper above. */
+int32_t dm2_v1_environment_compute_distance_v4(
+    int32_t heading, int16_t *x_ptr, int16_t *y_ptr,
+    int32_t target_x, int32_t target_y);
+typedef enum {
+    DM2_V1_ENVIRONMENT_SOURCE_DOS = 0,
+    DM2_V1_ENVIRONMENT_SOURCE_SPX_V4 = 1,
+    DM2_V1_ENVIRONMENT_SOURCE_SPX_V5 = 2
+} DM2_V1_EnvironmentSourceVersion;
+typedef struct {
+    int visible;
+    int16_t offset_x;
+    int16_t offset_y;
+    uint8_t scale_x;
+    uint8_t scale_y;
+    int32_t distance;
+} DM2_V1_EnvironmentElementPlan;
+typedef int32_t (*DM2_V1_EnvironmentCommandQuery)(
+    const char *text, const char *pattern, void *ctx);
+typedef struct {
+    DM2_V1_EnvironmentCommandQuery query_command;
+    void *context;
+} DM2_V1_EnvironmentCommandText;
+/* Computes the MV/XL/YL/FD source transform from one decoded ENVIRONMENT
+ * dtText record. The edition-specific command parser is passed by the caller;
+ * the production viewport still owns GDAT scanning and live-slot binding. */
+int dm2_v1_environment_set_distant_element_plan(
+    const uint8_t *text, size_t text_size,
+    const DM2_V1_EnvironmentCommandText *command_text,
+    DM2_V1_EnvironmentSourceVersion source_version,
+    int32_t heading, int16_t local_x, int16_t local_y,
+    int16_t map_offset_x, int16_t map_offset_y,
+    DM2_V1_EnvironmentElementPlan *out_plan);
 
 /* Wall ornament */
 void dm2_v1_guivp_32cb_3f0d(int32_t tile_idx,

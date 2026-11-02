@@ -665,6 +665,130 @@ int32_t dm2_v1_guivp_32cb_54ce(
     }
 }
 
+/* SPX v4 skbkgrnd.cpp:102-137. Its heading-0 branch uses *x_ptr for both
+ * deltas; DOS and SPX v5 use the second coordinate pointer for the first
+ * delta, so keep this edition-specific helper separate. */
+int32_t dm2_v1_environment_compute_distance_v4(
+    int32_t heading, int16_t *x_ptr, int16_t *y_ptr,
+    int32_t target_x, int32_t target_y)
+{
+    int16_t si;
+    int16_t di;
+    uint16_t squared;
+    uint16_t guess;
+    uint16_t target_x16 = (uint16_t)target_x;
+    uint16_t target_y16 = (uint16_t)target_y;
+
+    if (!x_ptr || !y_ptr || (uint16_t)heading > 3u) return 0;
+    switch ((uint16_t)heading) {
+    case 0:
+        si = (int16_t)((int32_t)*x_ptr - (int16_t)target_y16);
+        di = (int16_t)((int16_t)target_x16 - (int32_t)*x_ptr);
+        break;
+    case 1:
+        si = (int16_t)((int16_t)target_x16 - (int32_t)*x_ptr);
+        di = (int16_t)((int16_t)target_y16 - (int32_t)*y_ptr);
+        break;
+    case 2:
+        si = (int16_t)((int16_t)target_y16 - (int32_t)*y_ptr);
+        di = (int16_t)((int32_t)*x_ptr - (int16_t)target_x16);
+        break;
+    case 3:
+        si = (int16_t)((int32_t)*x_ptr - (int16_t)target_x16);
+        di = (int16_t)((int32_t)*y_ptr - (int16_t)target_y16);
+        break;
+    default:
+        return 0;
+    }
+
+    *x_ptr = di;
+    *y_ptr = si;
+    if (si < 1) return 0;
+    squared = (uint16_t)((int32_t)di * di + (int32_t)si * si);
+    if (squared <= 2u) return 1;
+    guess = squared >> 1;
+    for (;;) {
+        uint16_t previous = guess;
+        guess = (uint16_t)(((uint32_t)guess + squared / guess) >> 1);
+        if (guess >= previous) return previous;
+    }
+}
+
+int dm2_v1_environment_set_distant_element_plan(
+    const uint8_t *text, size_t text_size,
+    const DM2_V1_EnvironmentCommandText *command_text,
+    DM2_V1_EnvironmentSourceVersion source_version,
+    int32_t heading, int16_t local_x, int16_t local_y,
+    int16_t map_offset_x, int16_t map_offset_y,
+    DM2_V1_EnvironmentElementPlan *out_plan)
+{
+    char command[128];
+    int32_t move_mode;
+    int32_t target_x;
+    int32_t target_y;
+    int32_t falloff;
+    int16_t world_x;
+    int16_t world_y;
+    int32_t distance;
+    int32_t scale_base;
+    uint8_t scale;
+
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!text || !command_text || !command_text->query_command ||
+        !out_plan || text_size >= sizeof(command) ||
+        (source_version != DM2_V1_ENVIRONMENT_SOURCE_DOS &&
+         source_version != DM2_V1_ENVIRONMENT_SOURCE_SPX_V4 &&
+         source_version != DM2_V1_ENVIRONMENT_SOURCE_SPX_V5)) {
+        return 0;
+    }
+    memcpy(command, text, text_size);
+    command[text_size] = '\0';
+    move_mode = command_text->query_command(
+        command, "mv", command_text->context);
+    if (move_mode == 0) {
+        out_plan->visible = 1;
+        out_plan->scale_x = 0x40u;
+        out_plan->scale_y = 0x40u;
+        return 1;
+    }
+    if (move_mode != 1) return 0;
+
+    target_x = (int16_t)command_text->query_command(
+        command, "xl", command_text->context);
+    target_y = (int16_t)command_text->query_command(
+        command, "yl", command_text->context);
+    falloff = (int16_t)command_text->query_command(
+        command, "fd", command_text->context);
+
+    world_x = (int16_t)((uint16_t)local_x + (uint16_t)map_offset_x);
+    world_y = (int16_t)((uint16_t)local_y + (uint16_t)map_offset_y);
+    distance = source_version == DM2_V1_ENVIRONMENT_SOURCE_SPX_V4
+        ? dm2_v1_environment_compute_distance_v4(
+              heading, &world_x, &world_y, target_x, target_y)
+        : dm2_v1_guivp_32cb_54ce(
+              heading, &world_x, &world_y, target_x, target_y);
+    if (world_y < 1 || distance < 1) return 0;
+
+    scale_base = 64 - distance + falloff;
+    if (scale_base < 1) scale_base = 1;
+    if (source_version == DM2_V1_ENVIRONMENT_SOURCE_SPX_V4) {
+        /* v4's (((scale << 7) >> 6) + 1) >> 1 reduces to scale. */
+        scale = (uint8_t)scale_base;
+    } else {
+        /* DOS/v5 preserve their 32-bit subtract/shift before CUTX8. */
+        uint32_t scaled = (uint32_t)(uint16_t)scale_base << 7;
+        uint8_t source_byte = (uint8_t)((scaled - (scaled << 6)) >> 6);
+        scale = (uint8_t)((source_byte + 1u) / 2u);
+    }
+    out_plan->visible = 1;
+    out_plan->offset_x = (int16_t)(((int32_t)world_x * 210) / distance);
+    out_plan->offset_y = 0;
+    out_plan->scale_x = scale;
+    out_plan->scale_y = scale;
+    out_plan->distance = distance;
+    return 1;
+}
+
 /* ================================================================
  * 40. guivp_32cb_15b8 — draw wall ornament (public)
  *     c_gui_vp.cpp:6043

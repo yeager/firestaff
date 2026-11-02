@@ -61,6 +61,38 @@ int16_t dm2_v1_creature_can_handle_item_in(
     int16_t creature_type, int16_t first_record, uint8_t direction_filter,
     const DM2_V1_CreatureHandleCallbacks *cb, void *ctx);
 
+/* ---- CREATURE_CAN_HANDLE_IT (SKWINSPX v4 skcrture.cpp:1031, v5
+ * bcreatur.cpp:1351) ----
+ * Test one record against a creature's source item mask. `capability` is
+ * the source ItemToThrow/command byte. `mask_variant` is v4 iAnimSeq, or
+ * the v5 SPX_Creature word@8 selector used by the source expression. The
+ * callbacks resolve record identity and the source CREATURES mask text. */
+typedef struct {
+    uint16_t item_record;
+    uint16_t capability;
+    uint8_t creature_type;
+    uint16_t mask_variant;
+    uint8_t source_variant; /* 4 = SPX v4; 5 = SPX v5/SKULLWIN */
+} DM2_V1_CreatureCanHandleState;
+
+typedef struct {
+    /* Return 1 only for a source moneybox DB9 record. */
+    int (*is_moneybox)(void *ctx, uint16_t record);
+    /* Source DB9 byte@7 bit 2; nonzero means closed. */
+    int (*moneybox_is_closed)(void *ctx, uint16_t record);
+    /* Resolve the source mask bit index for DB4, DB3, or DB5..DB10. */
+    int (*get_mask_item_index)(void *ctx, uint16_t record,
+                              uint8_t db_type, uint16_t *out_index);
+    /* Fill the source 64-byte mask for (creature, mask, is_creature). */
+    int (*query_item_mask)(void *ctx, uint8_t creature_type,
+                           uint8_t mask_index, int is_creature,
+                           uint8_t out_mask[64]);
+} DM2_V1_CreatureCanHandleCallbacks;
+
+int dm2_v1_creature_can_handle_it_source_state(
+    const DM2_V1_CreatureCanHandleState *state,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
+
 /* ---- DM2_CONFUSE_CREATURE (c_creature.cpp:1308) ----
  * Confuse a creature: query AI spec confusion resistance (word@0x16
  * bits 4..7), roll rand16(power) against it. If roll > resistance and

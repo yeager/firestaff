@@ -213,13 +213,13 @@ if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
     if ! grep -Fq 'scan complete elapsed-ms=' <<<"$wrong_only_menu_output" ||
        ! grep -Fq 'games=dm1:no,csb:no,dm2:no,nexus:no,theron:no' <<<"$wrong_only_menu_output" ||
        ! grep -Fq "firestaff: dm1 available=no scan-owner=$wrong_only_root" <<<"$wrong_only_menu_output" ||
-       ! grep -Fq 'platform=PC edition=pc34-en not matched' <<<"$wrong_only_menu_output" ||
+       ! grep -Fq "firestaff: dm1 platform=PC edition=pc34-en matched source=$wrong_only_root/GRAPHICS.DAT" <<<"$wrong_only_menu_output" ||
        grep -Fq 'launch phase=game-handoff' <<<"$wrong_only_menu_output"; then
         printf '%s\n' "$wrong_only_menu_output" >&2
         echo 'FAIL: startup menu admitted PC34 graphics with only an original Atari dungeon' >&2
         exit 1
     fi
-    echo 'PASS: menu rejects original PC34 graphics paired only with an original Atari dungeon'
+    echo 'PASS: menu recognizes PC34 graphics but rejects them without the matching PC dungeon'
 
     wrong_only_cli_status=0
     wrong_only_cli_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \

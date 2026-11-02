@@ -43,6 +43,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_gfx_main_pc34_compat.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_wall_ornament.h"
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,6 +54,10 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
                                                     int width,
                                                     int height,
                                                     int stride);
+static int dm2_v1_render_hud_source_font(
+    DM2_V1_ViewportState *s, const DM2_V1_ViewportRect *rect,
+    const char *text, uint8_t foreground, uint8_t background,
+    int transparent_background);
 
 static int dm2_v1_viewport_graphics_flip_parity(
     const DM2_V1_ViewportState *s)
@@ -7027,6 +7032,79 @@ static int dm2_v1_draw_shop_image(
     return 1;
 }
 
+static int dm2_v1_draw_shop_coin_row(
+    DM2_V1_ViewportState *s, const DM2_V1_ShopCoinRow *row)
+{
+    uint8_t row_pixels[DM2_V1_SHOP_COIN_ROW_MAX * 8u * 7u];
+    uint8_t palette[16];
+    uint32_t palette_hash = 0u;
+    const uint8_t *atlas;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    int width = 0, height = 0;
+    int row_width;
+
+    if (!row || !row->valid) return 1;
+    if (!s || !s->asset_loader || row->coin_count == 0u ||
+        row->coin_count > DM2_V1_SHOP_COIN_ROW_MAX)
+        return 0;
+    row_width = (int)row->coin_count * 8;
+    atlas = dm2_v1_asset_load_image_field(
+        s->asset_loader, row->category, row->index, row->field,
+        &width, &height, &format);
+    if (!atlas || width != row->image_width || height != row->image_height ||
+        height < 7 ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
+         format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9) ||
+        !dm2_v1_asset_load_image_local_palette(
+            s->asset_loader, row->category, row->index, row->field,
+            palette, &palette_hash) || palette_hash == 0u ||
+        palette_hash != row->palette_hash ||
+        row->src_rect.x < 0 || row->src_rect.y < 0 ||
+        row->src_rect.w <= 0 || row->src_rect.h <= 0 ||
+        row->src_rect.x + row->src_rect.w > row_width ||
+        row->src_rect.y + row->src_rect.h > 7 ||
+        row->dst_rect.w != row->src_rect.w ||
+        row->dst_rect.h != row->src_rect.h || row->dst_rect.x < 0 ||
+        row->dst_rect.y < 0 ||
+        (unsigned)row->dst_rect.x + (unsigned)row->dst_rect.w >
+            (unsigned)dm2_v1_viewport_draw_width(s) ||
+        (unsigned)row->dst_rect.y + (unsigned)row->dst_rect.h >
+            (unsigned)dm2_v1_viewport_draw_height(s)) {
+        dm2_v1_asset_free_pixels((uint8_t *)atlas);
+        return 0;
+    }
+
+    for (uint8_t coin = 0u; coin < row->coin_count; ++coin) {
+        int source_x = (int)row->coin_index[coin] * 8;
+        if (source_x < 0 || source_x + 8 > width) {
+            dm2_v1_asset_free_pixels((uint8_t *)atlas);
+            return 0;
+        }
+        for (int y = 0; y < 7; ++y) {
+            memcpy(row_pixels + (size_t)y * (size_t)row_width +
+                       (size_t)coin * 8u,
+                   atlas + (size_t)y * (size_t)width + (size_t)source_x,
+                   8u);
+        }
+    }
+    memcpy(s->active_asset_palette16, palette,
+           sizeof(s->active_asset_palette16));
+    s->active_asset_palette_hash = palette_hash;
+    s->active_asset_palette_ready = 1;
+    dm2_v1_blit_scaled_material_bitmap_region_ex(
+        s, s->framebuffer, s->fb_stride,
+        row->dst_rect.x, row->dst_rect.y,
+        row->dst_rect.w, row->dst_rect.h,
+        row_pixels, row->src_rect.x, row->src_rect.y,
+        row->src_rect.w, row->src_rect.h, row_width,
+        row->colorkey ? (int)row->colorkey :
+            (s->gdat_scene_control_ready
+                ? (int)s->gdat_scene_colorkey : DM2_COLOR_TRANSPARENT),
+        0, &s->gdat_material_palette_wall_consumed_count);
+    dm2_v1_asset_free_pixels((uint8_t *)atlas);
+    return 1;
+}
+
 /* ── Wall ornaments ─────────────────────────────────────────────────
  * skproject/SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE (^32CB:15B8) selects a
  * WALL_GFX image from tblCellTilesRoom and materializes it through
@@ -7087,13 +7165,68 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                 }
             }
             if (shop_item) {
+                if (i == DM2_SQ_D1C && shop_item->shop_name_valid &&
+                    s->gdat_interface_font_rows &&
+                    s->gdat_interface_font_hash != 0u &&
+                    s->gdat_interface_palette_ready) {
+                    char text[sizeof(shop_item->shop_name)];
+                    size_t len = strlen(shop_item->shop_name);
+                    if (len < sizeof(text)) {
+                        int width;
+                        int draw_x;
+                        DM2_V1_ViewportRect glyph_rect;
+                        memcpy(text, shop_item->shop_name, len + 1u);
+                        for (size_t c = 0u; c < len; ++c) {
+                            unsigned char ch = (unsigned char)text[c];
+                            if (ch >= 'A' && ch <= 'Z') text[c] = (char)(ch - 0x40u);
+                            else if (ch >= 0x7bu) text[c] = (char)(ch - 0x60u);
+                        }
+                        width = (int)len * 3;
+                        draw_x = shop_item->shop_name_x - (width >> 1);
+                        if (s->source_materials_required &&
+                            (!s->gdat_c_light_receipt_ready ||
+                             s->gdat_c_light_receipt_hash == 0u ||
+                             !s->gdat_interface_text_palette_ready ||
+                             s->gdat_interface_text_palette_hash == 0u)) {
+                            width = 0;
+                        }
+                        glyph_rect = (DM2_V1_ViewportRect){
+                            draw_x, shop_item->shop_name_y, width, 6 };
+                        if (width > 0 &&
+                            dm2_v1_render_hud_source_font(
+                                s, &glyph_rect, text,
+                                s->gdat_interface_text_palette_ready
+                                    ? s->gdat_interface_text_palette16[15]
+                                    : s->gdat_interface_palette16[15],
+                                (uint8_t)((s->gdat_interface_text_palette_ready
+                                    ? s->gdat_interface_text_palette16[0]
+                                    : s->gdat_interface_palette16[0]) |
+                                    0x40u), 0)) {
+                            s->gdat_interface_font_consumed_count += (int)len;
+                            s->gdat_interface_action_palette_consumed_count++;
+                            ++s->asset_wall_ornament_drawn_count;
+                        }
+                    }
+                }
                 s->last_wall_ornament_material_required_mask |=
                     (uint16_t)(1u << (unsigned)i);
                 if (!dm2_v1_draw_shop_image(s, &shop_item->shop_item) ||
                     (shop_item->shop_soldout_icon_required &&
                      !dm2_v1_draw_shop_image(
                          s, &shop_item->shop_soldout)) ||
-                    !dm2_v1_draw_shop_image(s, &shop_item->shop_navigation)) {
+                    !dm2_v1_draw_shop_image(s, &shop_item->shop_navigation) ||
+                    (i == DM2_SQ_D1C &&
+                     ((!s->asset_loader ||
+                       (s->asset_loader->gdat_version != 4u &&
+                        s->asset_loader->gdat_version != 5u)) ||
+                      !dm2_v1_draw_shop_coin_row(
+                          s, s->asset_loader->gdat_version == 4u
+                              ? &shop_item->shop_buy_coins_v4
+                              : &shop_item->shop_buy_coins_v5) ||
+                      !dm2_v1_draw_shop_coin_row(
+                          s, s->asset_loader->gdat_version == 4u
+                              ? &shop_item->shop_sell_coins_v4
+                              : &shop_item->shop_sell_coins_v5)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
                     continue;
@@ -9135,6 +9268,7 @@ static int dm2_v1_render_hud_source_font(
     int transparent_background)
 {
     int glyph_count = 0;
+    int skip_glyphs = 0;
 
     if (!s || !s->framebuffer || !rect || !text ||
         !s->gdat_interface_font_rows || s->gdat_interface_font_hash == 0u) {
@@ -9156,8 +9290,13 @@ static int dm2_v1_render_hud_source_font(
      * into three pixels in the order 0x10, 0x04, 0x01 for six rows. */
     for (int glyph = 0; text[glyph] && glyph < 80; ++glyph) {
         unsigned char character = (unsigned char)text[glyph];
-        if (character >= 128u || rect->x + glyph * 3 >= rect->x + rect->w) {
+        if (character >= 128u) {
             break;
+        }
+        if (rect->x + glyph * 3 + 2 < 0 ||
+            rect->x + glyph * 3 >= dm2_v1_viewport_draw_width(s)) {
+            skip_glyphs++;
+            continue;
         }
         for (int row = 0; row < 6; ++row) {
             uint8_t bits = s->gdat_interface_font_rows[row * 128 + character];
@@ -9176,8 +9315,8 @@ static int dm2_v1_render_hud_source_font(
         }
         ++glyph_count;
     }
-    s->gdat_interface_font_consumed_count += glyph_count;
-    return glyph_count > 0;
+    s->gdat_interface_font_consumed_count += glyph_count + skip_glyphs;
+    return glyph_count + skip_glyphs > 0;
 }
 
 static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(

@@ -1106,6 +1106,17 @@ int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d,
     if (raw < 0) return 0;
     raw &= 0xff;
     tile_type = raw >> 5;
+    /* SKProject IS_TILE_PASSAGE rejects active teleporter tiles when the
+     * source teleporter record's byte 4 bit 0 is set. The byte-map class by
+     * itself is not enough to decide whether an edge is passable. */
+    if (tile_type == 5) {
+        int record_offset = -1;
+        const uint8_t *record = dm2_v1_dungeon_c_map_get_address_of_tile_record(
+            d, level, x, y, NULL, &record_offset);
+        if (record && record_offset >= 0 &&
+            record_offset <= d->raw_size - 5 &&
+            (record[4] & 0x01u) != 0) return 0;
+    }
     if (tile_type == 0 || tile_type == 7) return 0;
     return 1;
 }

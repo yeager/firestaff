@@ -10,6 +10,7 @@
  * dm2_v1_skproject_get_address_of_tile_record. */
 struct DM2_V1_RecordPoolSet;
 struct DM2_V1_DungeonData;
+struct DM2_V1_AssetLoader;
 
 typedef struct {
     int16_t x;
@@ -4844,9 +4845,8 @@ int dm2_v1_skproject_get_creature_at(
     int16_t *out_creature,
     DM2_V1_SkprojectGetCreatureAtReceipt *out_receipt);
 
-/* SKULLWIN/c_querydb.cpp:1645 DM2_FIND_LADDAR_AROUND — source-locked wrapper
-   around the existing ladder search; converts its receipt into the core
-   querydb receipt shape. */
+/* Legacy square-only ladder receipt. It is retained for existing consumers,
+   but does not implement the SKProject record-chain query below. */
 typedef struct {
     int valid;
     int found;
@@ -4866,6 +4866,49 @@ int dm2_v1_skproject_find_ladder_around(
     int x,
     int y,
     DM2_V1_SkprojectFindLadderAroundReceipt *out_receipt);
+
+/* DOS dm2byh.cpp:1982, SPX v4 skdungn.cpp:202, SPX v5 skgdtqdb.cpp:1647
+   FIND_LADDER_AROUND source query. Scans N/E/S/W record chains, validates
+   simple-ladder actuator altitude or DB2 ornament GDAT direction, and
+   returns the source direction. A supplied record-pool owner is preferred
+   so live record links and source-endian words are observed. */
+typedef struct {
+    int valid;
+    int found;
+    int level;
+    int origin_x;
+    int origin_y;
+    int isupper;
+    int direction;
+    int ladder_x;
+    int ladder_y;
+    uint16_t matched_record;
+    uint16_t actuator_record;
+    uint16_t ornament_index;
+    uint16_t gdat_ladder_up;
+    uint8_t matched_text_ornament;
+    uint8_t records_scanned;
+    uint8_t stopped_at_higher_db;
+    uint8_t blocked_malformed_chain;
+    uint32_t search_hash;
+} DM2_V1_SkprojectFindLadderSourceReceipt;
+
+typedef enum {
+    DM2_V1_SKPROJECT_LADDER_SOURCE_DOS = 0,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4 = 1,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5 = 2
+} DM2_V1_SkprojectLadderSourceVersion;
+
+int dm2_v1_skproject_find_ladder_around_source(
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *record_pools,
+    const struct DM2_V1_AssetLoader *asset_loader,
+    int level,
+    int x,
+    int y,
+    int isupper,
+    DM2_V1_SkprojectLadderSourceVersion source_version,
+    DM2_V1_SkprojectFindLadderSourceReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — party-position
    array lookup over caller-owned glbPlayerAtPosition[4]. */
@@ -5052,8 +5095,9 @@ int dm2_v1_skproject_find_distinctive_item_on_tile(
     DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:1576 DM2_FIND_TILE_ACTUATOR — source-locked receipt
-   that walks a tile chain looking for the first DB3 actuator whose ordinal
-   matches, optionally constrained by side (ObjectID bits 14-15). */
+   for the DOS/SKULLWIN/SPX v4/v5 tile-chain query. It stops above DB3,
+   applies the source's DB3 side-0xff exception, and compares word 2 low
+   seven bits on every admitted record. */
 typedef struct {
     int valid;
     int blocked_missing_dungeon;
