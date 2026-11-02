@@ -4893,6 +4893,12 @@ typedef struct {
     uint32_t search_hash;
 } DM2_V1_SkprojectFindLadderSourceReceipt;
 
+typedef enum {
+    DM2_V1_SKPROJECT_LADDER_SOURCE_DOS = 0,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4 = 1,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5 = 2
+} DM2_V1_SkprojectLadderSourceVersion;
+
 int dm2_v1_skproject_find_ladder_around_source(
     const struct DM2_V1_DungeonData *dungeon,
     const struct DM2_V1_RecordPoolSet *record_pools,
@@ -4901,6 +4907,7 @@ int dm2_v1_skproject_find_ladder_around_source(
     int x,
     int y,
     int isupper,
+    DM2_V1_SkprojectLadderSourceVersion source_version,
     DM2_V1_SkprojectFindLadderSourceReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — party-position
