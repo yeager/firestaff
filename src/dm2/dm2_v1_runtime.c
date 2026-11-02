@@ -22712,6 +22712,343 @@ static const DM2_RuntimeWieldCallbacks dm2_runtime_wield_callbacks = {
     dm2_runtime_wield_set_pending
 };
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    int map;
+    int spx_v4;
+    int failed;
+} DM2_RuntimeCreateMinionContext;
+
+/* SKULLWIN/c_dballoc.cpp::DM2_ALLOC_NEW_CREATURE and the DOS/SPX variants.
+ * This owns only the allocator operation. CAII activation and the caller's
+ * minion association remain with their respective source owners. */
+static int16_t dm2_runtime_alloc_new_creature(
+    DM2_RuntimeCreateMinionContext *context, uint16_t creature_type,
+    uint16_t health_multiplier, uint16_t direction, uint16_t x, uint16_t y)
+{
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_GameLoadRuntimeSessionCandidate *source;
+    const DM2_AIDefinition *ai = NULL;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *raw_backup = NULL;
+    uint8_t *record;
+    uint8_t *missile_record = NULL;
+    uint8_t *raw_record;
+    int raw_size = 0;
+    int map, hp_base, hp;
+    int16_t creature, missile = DM2_V1_RECORD_HANDLE_NULL;
+    uint16_t base_multiplier;
+    int has_missile = (creature_type & 0x8000u) != 0u;
+    int ok = 0;
+
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    if (!context || !(rt = context->runtime) || !rt->boot ||
+        !rt->record_pools_valid || !rt->record_pools.record_graph_complete ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !dungeon->raw_data || dungeon->raw_size <= 0)
+        return DM2_V1_RECORD_HANDLE_NULL;
+    map = context->map;
+    if (map != rt->dungeon_level || map < 0 || map >= dungeon->level_count ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map] ||
+        (direction & ~3u) != 0u ||
+        (dm2_v1_dungeon_get_square_type(dungeon, map, x, y) < 0) ||
+        rt->record_pools.pools[4].record_size < 16 ||
+        (has_missile && rt->record_pools.pools[14].record_size < 8))
+        return DM2_V1_RECORD_HANDLE_NULL;
+
+    source = rt->game_load_candidate;
+    if (source && source->caii_source.valid &&
+        dm2_v1_caii_source_owner_ai_spec_def(
+            &source->caii_source, (int)(creature_type & 0x7fffu), &ai) != 1)
+        return DM2_V1_RECORD_HANDLE_NULL;
+    if (!ai && dm2_v1_creature_ai_spec_def(
+                   (int)(creature_type & 0x7fffu), &ai) != 1)
+        return DM2_V1_RECORD_HANDLE_NULL;
+    if (!ai || ai->BaseHP == 0u) return DM2_V1_RECORD_HANDLE_NULL;
+
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        !(raw_backup = (uint8_t *)malloc((size_t)dungeon->raw_size)))
+        goto create_minion_done;
+    memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+    queue_backup = rt->timer_queue;
+
+    if (has_missile) {
+        missile = dm2_v1_record_pool_alloc_new_record(&rt->record_pools, 14u);
+        missile_record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                                        missile);
+        if (missile < 0 || !missile_record ||
+            rt->record_pools.pools[14].record_size < 8)
+            goto create_minion_rollback;
+    }
+    creature = dm2_v1_record_pool_alloc_new_record(&rt->record_pools, 4u);
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools, creature);
+    if (creature < 0 || !record) goto create_minion_rollback;
+
+    /* v4 skcrture.cpp multiplies by the capped value. DOS/v5 add one before
+     * shifting; never silently apply one edition's formula to the other. */
+    base_multiplier = health_multiplier > 31u ? 31u : health_multiplier;
+    hp_base = ((int)(base_multiplier + (context->spx_v4 ? 0u : 1u)) *
+               (int)ai->BaseHP) >> 3;
+    if (hp_base <= 0 || hp_base > 0xffff) goto create_minion_rollback;
+    hp = hp_base + (int)dm2_v1_drops_rand16(
+        &rt->session_rng, (uint16_t)((hp_base >> 3) + 1));
+    if (hp <= 0 || hp > 0xffff) goto create_minion_rollback;
+
+    dm2_runtime_record_wr16(rt, record, DM2_V1_RECORD_HANDLE_END);
+    dm2_runtime_record_wr16(rt, record + 2, DM2_V1_RECORD_HANDLE_END);
+    dm2_runtime_record_wr16(rt, record + 4,
+                            (uint16_t)(0xff00u | (creature_type & 0xffu)));
+    dm2_runtime_record_wr16(rt, record + 6, (uint16_t)hp);
+    dm2_runtime_record_wr16(rt, record + 8, DM2_V1_RECORD_HANDLE_END);
+    dm2_runtime_record_wr16(rt, record + 10, 0u);
+    dm2_runtime_record_wr16(rt, record + 12,
+        (uint16_t)((((unsigned)map & 0x3fu) << 10) |
+                   (((unsigned)y & 0x1fu) << 5) | ((unsigned)x & 0x1fu)));
+    if (context->spx_v4) {
+        record[15] = (uint8_t)(0xfcu | (direction & 3u));
+    } else {
+        dm2_runtime_record_wr16(rt, record + 14,
+            (uint16_t)(0xf8ffu | ((direction & 3u) << 8)));
+    }
+    if (has_missile) {
+        int16_t possession = DM2_V1_RECORD_HANDLE_END;
+        dm2_runtime_record_wr16(rt, missile_record,
+                                DM2_V1_RECORD_HANDLE_END);
+        if (!dm2_v1_record_pool_append_to_list(
+                &rt->record_pools, &possession, missile))
+            goto create_minion_rollback;
+        dm2_runtime_record_wr16(rt, record + 2, (uint16_t)possession);
+    }
+    raw_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)creature, NULL, NULL, &raw_size);
+    if (!raw_record || raw_size < 16) goto create_minion_rollback;
+    memcpy(raw_record, record, 16u);
+    if (has_missile) {
+        raw_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)missile, NULL, NULL, &raw_size);
+        if (!raw_record || raw_size < 8) goto create_minion_rollback;
+        memcpy(raw_record, missile_record, 8u);
+    }
+    {
+        DM2_V1_MoveRecordToReceipt move;
+        if (!dm2_v1_move_record_to(
+                &rt->record_pools, dungeon, &rt->timer_queue, creature,
+                -4, 0, (int16_t)x, (int16_t)y, -1, map,
+                (uint32_t)rt->tick_count, &move) ||
+            !move.valid || move.fail_closed || !move.record_appended)
+            goto create_minion_rollback;
+    }
+    ok = 1;
+    dm2_v1_record_pool_set_free(&pool_backup);
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    free(raw_backup);
+    return creature;
+
+create_minion_rollback:
+    memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+    rt->timer_queue = queue_backup;
+    dm2_v1_record_pool_set_free(&rt->record_pools);
+    rt->record_pools = pool_backup;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    /* Source RAND16 has already advanced before a late move/link failure. */
+create_minion_done:
+    if (pool_backup.valid) dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    context->failed = !ok;
+    return DM2_V1_RECORD_HANDLE_NULL;
+}
+
+static uint8_t dm2_runtime_minion_tile(int16_t x, int16_t y, void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    DM2_V1_DungeonData *dungeon;
+    int raw;
+    if (!context || !context->runtime || !context->runtime->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)
+            context->runtime->boot->dungeon_data) ||
+        context->map < 0 || context->map >= dungeon->level_count ||
+        context->map != context->runtime->dungeon_level || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[context->map] ||
+        y >= dungeon->level_heights[context->map])
+        return 0u;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, context->map, x, y);
+    return raw < 0 || raw > 0xff ? 0u : (uint8_t)raw;
+}
+
+static int dm2_runtime_minion_creature_at(int16_t x, int16_t y, void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    DM2_V1_DungeonData *dungeon;
+    if (!context || !context->runtime || !context->runtime->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)
+            context->runtime->boot->dungeon_data) || x < 0 || y < 0 ||
+        context->map < 0 || context->map >= dungeon->level_count ||
+        context->map != context->runtime->dungeon_level ||
+        x >= dungeon->level_widths[context->map] ||
+        y >= dungeon->level_heights[context->map])
+        return 0; /* invalid cells are occupied for this bounded search */
+    return dm2_v1_get_creature_at(&context->runtime->record_pools,
+                                  dungeon, context->map, x, y);
+}
+
+static int dm2_runtime_minion_randbit(void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    return context && context->runtime &&
+        dm2_v1_drops_randbit(&context->runtime->session_rng) != 0u;
+}
+
+static int dm2_runtime_minion_change_map(int16_t map, void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    if (!context || !context->runtime || !context->runtime->boot ||
+        !context->runtime->boot->dungeon_data || map < 0 ||
+        map >= ((DM2_V1_DungeonData *)
+            context->runtime->boot->dungeon_data)->level_count) {
+        if (context) context->failed = 1;
+        return 0;
+    }
+    if (map != context->map) {
+        context->failed = 1;
+        return 0;
+    }
+    return 1;
+}
+
+static int32_t dm2_runtime_minion_allocate(
+    uint16_t type, uint16_t multiplier, uint16_t direction,
+    uint16_t x, uint16_t y, void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    return (int32_t)dm2_runtime_alloc_new_creature(
+        context, type, multiplier, direction, x, y);
+}
+
+static int dm2_runtime_minion_associate(
+    uint16_t creature, uint16_t owner_item, void *user)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    DM2_V1_RuntimeState *rt;
+    uint8_t *record;
+    int16_t cursor;
+    int budget;
+    if (!context || !(rt = context->runtime) || owner_item == 0xffffu ||
+        dm2_v1_record_handle_pool((int16_t)creature) != 4 ||
+        !(record = dm2_v1_record_pool_address_mut(
+              &rt->record_pools, (int16_t)creature)) ||
+        rt->record_pools.pools[4].record_size < 16)
+        return 0;
+    cursor = (int16_t)dm2_runtime_record_rd16(rt, record + 2);
+    budget = rt->record_pools.pools[14].record_count;
+    for (int i = 0; cursor >= 0 && cursor != DM2_V1_RECORD_HANDLE_END &&
+                    i < budget; ++i) {
+        int16_t next;
+        uint8_t *missile;
+        if (dm2_v1_record_handle_pool(cursor) == 14 &&
+            (missile = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, cursor)) &&
+            rt->record_pools.pools[14].record_size >= 8) {
+            uint8_t *raw = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+                    (uint16_t)cursor, NULL, NULL, NULL);
+            dm2_runtime_record_wr16(rt, missile + 2, owner_item);
+            if (raw) dm2_runtime_record_wr16(rt, raw + 2, owner_item);
+            return 1;
+        }
+        if (!dm2_v1_record_pool_next_link(&rt->record_pools, cursor, &next))
+            return 0;
+        cursor = next;
+    }
+    return 0;
+}
+
+static int dm2_runtime_create_minion(
+    void *user, uint8_t type, int16_t power, int16_t direction,
+    int16_t x, int16_t y, int16_t map, uint16_t item, int8_t facing)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SkprojectCreateMinionContext request;
+    DM2_V1_SkprojectCreateMinionReceipt result;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *raw_backup = NULL;
+    int16_t created;
+    static const int16_t direction_dx[4] = {0, 1, 0, -1};
+    static const int16_t direction_dy[4] = {-1, 0, 1, 0};
+    if (!context || !(rt = context->runtime) || !rt->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        map < 0 || map >= dungeon->level_count || map != rt->dungeon_level ||
+        power < 0 || !rt->record_pools_valid ||
+        !rt->record_pools.record_graph_complete)
+        return 0;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        dungeon->raw_size <= 0 || !dungeon->raw_data ||
+        !(raw_backup = malloc((size_t)dungeon->raw_size))) {
+        if (pool_backup.valid) dm2_v1_record_pool_set_free(&pool_backup);
+        free(raw_backup);
+        return 0;
+    }
+    memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+    queue_backup = rt->timer_queue;
+    memset(&request, 0, sizeof(request));
+    request.user = context;
+    request.tile_fn = dm2_runtime_minion_tile;
+    request.creature_at_fn = dm2_runtime_minion_creature_at;
+    request.randbit_fn = dm2_runtime_minion_randbit;
+    request.change_map_fn = dm2_runtime_minion_change_map;
+    request.alloc_new_creature_fn = dm2_runtime_minion_allocate;
+    request.associate_missile_fn = dm2_runtime_minion_associate;
+    request.table1d27fc = direction_dx;
+    request.table1d2804 = direction_dy;
+    request.creature_type = type;
+    request.health_multiplier = (uint16_t)power;
+    request.creature_direction = (uint16_t)direction;
+    request.start_x = x;
+    request.start_y = y;
+    request.target_map = map;
+    request.current_map = map;
+    request.search_direction = facing;
+    request.missile_reference = item;
+    created = dm2_v1_skproject_create_minion(&request, &result);
+    if (context->failed && result.valid) {
+        /* This bounded runtime has no map switcher, but the source restore
+         * callback still runs. A failed restore invalidates the operation. */
+        memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+        rt->timer_queue = queue_backup;
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+        free(raw_backup);
+        return 0;
+    }
+    if (context->failed || !result.valid ||
+        result.missile_association_failed ||
+        (int16_t)created == DM2_V1_RECORD_HANDLE_NULL) {
+        /* A source allocation miss keeps its RNG consumption.  If an
+         * optional DB14 association failed after allocation, restore all
+         * record, map and timer mutations as one transaction. */
+        if (result.missile_association_failed) {
+            memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+            rt->timer_queue = queue_backup;
+            dm2_v1_record_pool_set_free(&rt->record_pools);
+            rt->record_pools = pool_backup;
+            memset(&pool_backup, 0, sizeof(pool_backup));
+        }
+        if (pool_backup.valid) dm2_v1_record_pool_set_free(&pool_backup);
+        free(raw_backup);
+        return 0;
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    return 1;
+}
+
 int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt)
@@ -22755,6 +23092,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     DM2_RuntimeHandActivationQuery hand_query;
     DM2_RuntimeAttackQueueContext queue;
     DM2_RuntimeWieldContext wield;
+    DM2_RuntimeCreateMinionContext minion_context;
     DM2_V1_SourceTimerQueue timer_queue_before;
     uint8_t attack_counter_before;
     uint16_t attack_hero_flag_before = 0;
@@ -22768,6 +23106,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     int result;
     int is_wield_action;
     int is_attack_action;
+    int is_create_minion_action;
     int action_postcondition;
 
     if (!receipt) receipt = &local_receipt;
@@ -22817,6 +23156,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     memset(&request, 0, sizeof(request));
     memset(&queue, 0, sizeof(queue));
     memset(&wield, 0, sizeof(wield));
+    memset(&minion_context, 0, sizeof(minion_context));
     memset(&hand_query, 0, sizeof(hand_query));
     hand_query.rt = rt;
     hand_query.hero_index = rt->source_party.curacthero - 1;
@@ -22828,6 +23168,11 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     is_wield_action = request.cmd.action_id == (DM2_ENGAGE_WIELD_WEAPON + 1) ||
                       request.cmd.action_id == 8;
     is_attack_action = request.cmd.action_id == (DM2_ENGAGE_ATTACK + 1);
+    is_create_minion_action =
+        request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_0 + 1) ||
+        request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_1 + 1) ||
+        request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_2 + 1) ||
+        request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_3 + 1);
     if ((!is_wield_action &&
          (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
           (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode))) ||
@@ -22835,7 +23180,8 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
          request.cmd.action_id != (DM2_ENGAGE_CAST_MISSILE + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_WIELD_WEAPON + 1) &&
          request.cmd.action_id != 8 &&
-         request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1)) ||
+         request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1) &&
+         !is_create_minion_action) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
                                      &request.cmd.skill_type) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
@@ -22912,6 +23258,13 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    if (is_create_minion_action) {
+        minion_context.runtime = rt;
+        minion_context.map = game->current_level;
+        minion_context.spx_v4 = variant == DM2_V1_COMMAND_SLOT_SPX_V4;
+        request.create_minion_cb = dm2_runtime_create_minion;
+        request.create_minion_ctx = &minion_context;
+    }
     if (request.cmd.action_id == (DM2_ENGAGE_RELEASE_MINION + 1)) {
         if (dm2_v1_record_handle_pool((int16_t)item) != 9 ||
             !dm2_runtime_hand_record_word(&hand_query, item, 2u,

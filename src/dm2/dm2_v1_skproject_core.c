@@ -20257,7 +20257,7 @@ int16_t dm2_v1_skproject_create_minion(
         uint8_t tile_type = (uint8_t)(tile >> 5);
         int tile_admitted = 1;
 
-        if (tile_type == 3u) {
+        if (tile_type == 0u || tile_type == 3u) {
             tile_admitted = 0;
         } else if (tile_type == 6u && (tile & 0x05u) == 0u) {
             tile_admitted = 0;
