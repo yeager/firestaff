@@ -6,7 +6,6 @@
  * from the entry points. */
 
 #include "dm2_v1_gui_vp_pc34_compat.h"
-#include "dm2_v1_querydb_pc34_compat.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -717,6 +716,7 @@ int32_t dm2_v1_environment_compute_distance_v4(
 
 int dm2_v1_environment_set_distant_element_plan(
     const uint8_t *text, size_t text_size,
+    const DM2_V1_EnvironmentCommandText *command_text,
     DM2_V1_EnvironmentSourceVersion source_version,
     int32_t heading, int16_t local_x, int16_t local_y,
     int16_t map_offset_x, int16_t map_offset_y,
@@ -734,7 +734,8 @@ int dm2_v1_environment_set_distant_element_plan(
     uint8_t scale;
 
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
-    if (!text || !out_plan || text_size >= sizeof(command) ||
+    if (!text || !command_text || !command_text->query_command ||
+        !out_plan || text_size >= sizeof(command) ||
         (source_version != DM2_V1_ENVIRONMENT_SOURCE_DOS &&
          source_version != DM2_V1_ENVIRONMENT_SOURCE_SPX_V4 &&
          source_version != DM2_V1_ENVIRONMENT_SOURCE_SPX_V5)) {
@@ -742,13 +743,8 @@ int dm2_v1_environment_set_distant_element_plan(
     }
     memcpy(command, text, text_size);
     command[text_size] = '\0';
-    if (source_version == DM2_V1_ENVIRONMENT_SOURCE_DOS) {
-        move_mode = dm2_v1_query_cmdstr_text_dos(command, "mv", NULL, NULL);
-    } else if (source_version == DM2_V1_ENVIRONMENT_SOURCE_SPX_V4) {
-        move_mode = dm2_v1_query_cmdstr_text_spx_v4(command, "mv", NULL, NULL);
-    } else {
-        move_mode = dm2_v1_query_cmdstr_text(command, "mv", NULL, NULL);
-    }
+    move_mode = command_text->query_command(
+        command, "mv", command_text->context);
     if (move_mode == 0) {
         out_plan->visible = 1;
         out_plan->scale_x = 0x40u;
@@ -757,28 +753,12 @@ int dm2_v1_environment_set_distant_element_plan(
     }
     if (move_mode != 1) return 0;
 
-    if (source_version == DM2_V1_ENVIRONMENT_SOURCE_DOS) {
-        target_x = (int16_t)dm2_v1_query_cmdstr_text_dos(
-            command, "xl", NULL, NULL);
-        target_y = (int16_t)dm2_v1_query_cmdstr_text_dos(
-            command, "yl", NULL, NULL);
-        falloff = (int16_t)dm2_v1_query_cmdstr_text_dos(
-            command, "fd", NULL, NULL);
-    } else if (source_version == DM2_V1_ENVIRONMENT_SOURCE_SPX_V4) {
-        target_x = (int16_t)dm2_v1_query_cmdstr_text_spx_v4(
-            command, "xl", NULL, NULL);
-        target_y = (int16_t)dm2_v1_query_cmdstr_text_spx_v4(
-            command, "yl", NULL, NULL);
-        falloff = (int16_t)dm2_v1_query_cmdstr_text_spx_v4(
-            command, "fd", NULL, NULL);
-    } else {
-        target_x = (int16_t)dm2_v1_query_cmdstr_text(
-            command, "xl", NULL, NULL);
-        target_y = (int16_t)dm2_v1_query_cmdstr_text(
-            command, "yl", NULL, NULL);
-        falloff = (int16_t)dm2_v1_query_cmdstr_text(
-            command, "fd", NULL, NULL);
-    }
+    target_x = (int16_t)command_text->query_command(
+        command, "xl", command_text->context);
+    target_y = (int16_t)command_text->query_command(
+        command, "yl", command_text->context);
+    falloff = (int16_t)command_text->query_command(
+        command, "fd", command_text->context);
 
     world_x = (int16_t)((uint16_t)local_x + (uint16_t)map_offset_x);
     world_y = (int16_t)((uint16_t)local_y + (uint16_t)map_offset_y);
