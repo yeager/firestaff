@@ -44073,7 +44073,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     const int position = (int)(event.event - 95u);
                     const int selected_hero = player_at_position[
                         (party_dir + position) & 3];
-                    if (dm2_v1_runtime_select_spell_champion(selected_hero))
+                    if (selected_hero < 0 ||
+                        selected_hero >= state->world.party.championCount)
+                        return M11_GAME_INPUT_IGNORED;
+                    state->dm1SpellCasting.magicCasterIndex = selected_hero;
+                    if (M11_GameView_OpenSpellPanel(state))
                         return M11_GAME_INPUT_REDRAW;
                 }
                 return M11_GAME_INPUT_IGNORED;
