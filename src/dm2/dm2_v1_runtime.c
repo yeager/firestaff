@@ -21902,6 +21902,580 @@ int dm2_v1_runtime_get_active_moneybox_coins(
     return 1;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    int hero;
+    int hand;
+    uint16_t moneybox;
+    uint8_t moneybox_cls2;
+    int16_t coin_order[10];
+    uint16_t money_item_ids[10];
+    int failed;
+} DM2_RuntimeMoneyboxClick;
+
+static int dm2_runtime_moneybox_sync_record(
+    DM2_RuntimeMoneyboxClick *click, int16_t record_handle)
+{
+    DM2_V1_DungeonData *dungeon;
+    const uint8_t *source;
+    const uint8_t *target_const;
+    uint8_t *target;
+    int raw_size = 0;
+    int record_size;
+    if (!click || !click->rt || !click->rt->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)click->rt->boot->dungeon_data) ||
+        !dungeon->raw_data ||
+        !(source = dm2_v1_record_pool_address(
+              &click->rt->record_pools, record_handle)) ||
+        (record_size = dm2_v1_record_pool_record_size(
+             dm2_v1_record_handle_pool(record_handle))) <= 0 ||
+        !(target_const = dm2_v1_dungeon_get_thing_record(
+              dungeon, (uint16_t)record_handle, NULL, NULL, &raw_size)) ||
+        raw_size < record_size) {
+        if (click) click->failed = 1;
+        return 0;
+    }
+    target = (uint8_t *)(uintptr_t)target_const;
+    memcpy(target, source, (size_t)record_size);
+    return 1;
+}
+
+static int16_t dm2_runtime_moneybox_get_v1d67bc(void *context)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    return click && !click->failed ? 4u : 0u;
+}
+
+static int16_t dm2_runtime_moneybox_get_hero_item(
+    void *context, int hero, int slot)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    if (!click || !click->rt || hero != click->hero || slot != click->hand ||
+        hero < 0 || hero >= click->rt->source_party.heros_in_party ||
+        slot < 0 || slot >= 2) {
+        if (click) click->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    return click->rt->source_party.hero[hero].item[slot];
+}
+
+static int16_t dm2_runtime_moneybox_get_held_item(void *context)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    uint32_t held;
+    if (!click || !click->rt) return DM2_V1_RECORD_HANDLE_NULL;
+    held = click->rt->leader_hand_object;
+    if (held == 0u || held == 0xffffu)
+        return DM2_V1_RECORD_HANDLE_NULL;
+    if (held > 0xffffu || !dm2_v1_record_pool_address(
+            &click->rt->record_pools, (int16_t)held)) {
+        click->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    return (int16_t)held;
+}
+
+static int16_t dm2_runtime_moneybox_get_item_order(
+    void *context, int16_t container, int16_t slot)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    if (!click || (uint16_t)container != click->moneybox ||
+        slot < 0 || slot >= 10 || click->coin_order[slot] < 0 ||
+        click->coin_order[slot] >= 10) {
+        if (click) click->failed = 1;
+        return -1;
+    }
+    return click->coin_order[slot];
+}
+
+static uint16_t dm2_runtime_moneybox_get_container_head(void *context,
+                                                         uint16_t container)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    const uint8_t *record;
+    if (!click || !click->rt || container != click->moneybox ||
+        !(record = dm2_v1_record_pool_address(
+              &click->rt->record_pools, (int16_t)container)) ||
+        dm2_v1_record_pool_record_size(9) < 4) {
+        if (click) click->failed = 1;
+        return DM2_V1_OBJECT_NULL;
+    }
+    return dm2_runtime_record_rd16(click->rt, record + 2u);
+}
+
+static uint16_t dm2_runtime_moneybox_get_item_db_type(void *context,
+                                                       uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    int16_t handle = (int16_t)item;
+    if (!click || item >= 0xff80u ||
+        !dm2_v1_record_pool_address(&click->rt->record_pools, handle)) {
+        if (click) click->failed = 1;
+        return 0xffffu;
+    }
+    return (uint16_t)dm2_v1_record_handle_pool(handle);
+}
+
+static uint16_t dm2_runtime_moneybox_get_distinctive_type(
+    void *context, uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    uint8_t cls2 = 0xffu;
+    uint16_t distinctive = 0xffffu;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+    if (!click || dm2_v1_record_handle_pool((int16_t)item) != 10 ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item, &click->rt->record_pools, &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu ||
+        !dm2_v1_skproject_get_distinctive_itemtype(
+            item, cls2, &distinctive, &type_receipt) ||
+        !type_receipt.valid) {
+        if (click) click->failed = 1;
+        return 0xffffu;
+    }
+    return distinctive;
+}
+
+static int dm2_runtime_moneybox_is_currency(void *context, uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    const DM2_V1_AssetLoader *loader;
+    uint8_t cls2 = 0xffu;
+    uint16_t flags = 0u;
+    DM2_V1_SkprojectQueryCls2Receipt receipt;
+    if (!click || dm2_v1_record_handle_pool((int16_t)item) != 10 ||
+        !click->rt->boot ||
+        !(loader = dm2_v1_boot_asset_loader(click->rt->boot)) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item, &click->rt->record_pools, &cls2, &receipt) ||
+        !receipt.valid || cls2 == 0xffu ||
+        !dm2_v1_asset_load_word_value(
+            loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, cls2, 0, &flags)) {
+        if (click) click->failed = 1;
+        return 0;
+    }
+    return (flags & 0x4000u) != 0u;
+}
+
+static uint16_t dm2_runtime_moneybox_get_next_item(void *context,
+                                                    uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    int16_t next;
+    if (!click || !dm2_v1_record_pool_next_link(
+            &click->rt->record_pools, (int16_t)item, &next)) {
+        if (click) click->failed = 1;
+        return DM2_V1_OBJECT_NULL;
+    }
+    return (uint16_t)next;
+}
+
+static uint8_t dm2_runtime_moneybox_get_charge(void *context, uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    const uint8_t *record;
+    if (!click || dm2_v1_record_handle_pool((int16_t)item) != 10 ||
+        !(record = dm2_v1_record_pool_address(
+              &click->rt->record_pools, (int16_t)item)) ||
+        dm2_v1_record_pool_record_size(10) < 4) {
+        if (click) click->failed = 1;
+        return 0;
+    }
+    return (uint8_t)((dm2_runtime_record_rd16(click->rt, record + 2u) >> 8)
+                     & 0x3fu);
+}
+
+static void dm2_runtime_moneybox_set_charge(void *context, uint16_t item,
+                                             uint8_t charge)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    uint8_t *record;
+    uint16_t word;
+    if (!click || charge > DM2_V1_COIN_CHARGE_MAX ||
+        dm2_v1_record_handle_pool((int16_t)item) != 10 ||
+        !(record = dm2_v1_record_pool_address_mut(
+              &click->rt->record_pools, (int16_t)item)) ||
+        dm2_v1_record_pool_record_size(10) < 4) {
+        if (click) click->failed = 1;
+        return;
+    }
+    word = dm2_runtime_record_rd16(click->rt, record + 2u);
+    word = (uint16_t)((word & 0xc0ffu) | ((uint16_t)charge << 8));
+    dm2_runtime_record_wr16(click->rt, record + 2u, word);
+    (void)dm2_runtime_moneybox_sync_record(click, (int16_t)item);
+}
+
+static int dm2_runtime_moneybox_append(void *context, uint16_t item,
+                                       uint16_t container)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    int16_t head, tail, cursor;
+    unsigned steps = 0u;
+    if (!click || container != click->moneybox ||
+        dm2_v1_record_handle_pool((int16_t)item) != 10) return 0;
+    head = (int16_t)dm2_runtime_moneybox_get_container_head(context, container);
+    tail = head;
+    while (tail != DM2_V1_RECORD_HANDLE_END) {
+        int16_t next;
+        if (tail == DM2_V1_RECORD_HANDLE_NULL || ++steps > 65536u ||
+            !dm2_v1_record_pool_next_link(&click->rt->record_pools,
+                                          tail, &next)) {
+            click->failed = 1;
+            return 0;
+        }
+        if (next == DM2_V1_RECORD_HANDLE_END) break;
+        tail = next;
+    }
+    cursor = head;
+    if (!dm2_v1_record_pool_append_to_list(
+            &click->rt->record_pools, &cursor, (int16_t)item) ||
+        !dm2_runtime_moneybox_sync_record(click, (int16_t)item) ||
+        (tail != DM2_V1_RECORD_HANDLE_END &&
+         !dm2_runtime_moneybox_sync_record(click, tail))) {
+        click->failed = 1;
+        return 0;
+    }
+    if (cursor != head) {
+        uint8_t *box = dm2_v1_record_pool_address_mut(
+            &click->rt->record_pools, (int16_t)container);
+        if (!box) {
+            click->failed = 1;
+            return 0;
+        }
+        dm2_runtime_record_wr16(click->rt, box + 2u, (uint16_t)cursor);
+    }
+    return dm2_runtime_moneybox_sync_record(click, (int16_t)container);
+}
+
+static void dm2_runtime_moneybox_cut(void *context, uint16_t item,
+                                     uint16_t container)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    int16_t head, cursor, predecessor = DM2_V1_RECORD_HANDLE_END;
+    unsigned steps = 0u;
+    if (!click || container != click->moneybox) return;
+    head = (int16_t)dm2_runtime_moneybox_get_container_head(context, container);
+    cursor = head;
+    while (cursor != DM2_V1_RECORD_HANDLE_END) {
+        int16_t next;
+        if (cursor == DM2_V1_RECORD_HANDLE_NULL || ++steps > 65536u ||
+            !dm2_v1_record_pool_next_link(&click->rt->record_pools,
+                                          cursor, &next)) {
+            click->failed = 1;
+            return;
+        }
+        if (cursor == (int16_t)item) break;
+        predecessor = cursor;
+        cursor = next;
+    }
+    if (cursor != (int16_t)item ||
+        !dm2_v1_record_pool_cut_from_list(
+            &click->rt->record_pools, &head, (int16_t)item) ||
+        !dm2_runtime_moneybox_sync_record(click, (int16_t)item) ||
+        (predecessor != DM2_V1_RECORD_HANDLE_END &&
+         !dm2_runtime_moneybox_sync_record(click, predecessor))) {
+        click->failed = 1;
+        return;
+    }
+    if (head != (int16_t)dm2_runtime_moneybox_get_container_head(
+                    context, container)) {
+        uint8_t *box = dm2_v1_record_pool_address_mut(
+            &click->rt->record_pools, (int16_t)container);
+        if (!box) {
+            click->failed = 1;
+            return;
+        }
+        dm2_runtime_record_wr16(click->rt, box + 2u, (uint16_t)head);
+    }
+    (void)dm2_runtime_moneybox_sync_record(click, (int16_t)container);
+}
+
+static void dm2_runtime_moneybox_dealloc(void *context, uint16_t item)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    if (!click || !dm2_v1_record_pool_dealloc_record(
+            &click->rt->record_pools, (int16_t)item) ||
+        !dm2_runtime_moneybox_sync_record(click, (int16_t)item)) {
+        if (click) click->failed = 1;
+    }
+}
+
+static uint16_t dm2_runtime_moneybox_alloc(void *context,
+                                           uint16_t denomination)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    int16_t record;
+    /* Currency IDs in ddata.v1e0394 are itemspecs, not ObjectIDs. */
+    record = click ? dm2_v1_alloc_new_dbitem(
+        &click->rt->record_pools, denomination) : DM2_V1_RECORD_HANDLE_NULL;
+    if (record == DM2_V1_RECORD_HANDLE_NULL ||
+        !dm2_runtime_moneybox_sync_record(click, record)) {
+        if (click) click->failed = 1;
+        return DM2_V1_OBJECT_NULL;
+    }
+    return (uint16_t)record;
+}
+
+static int dm2_runtime_moneybox_is_container(void *context,
+                                              uint16_t container)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    return click && container == click->moneybox;
+}
+
+static void dm2_runtime_moneybox_append_cb(void *context, uint16_t item,
+                                            uint16_t container)
+{
+    (void)dm2_runtime_moneybox_append(context, item, container);
+}
+
+static int dm2_runtime_moneybox_add_coin(void *context, int16_t container,
+                                          int16_t coin)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    DM2_V1_WalletCallbacks wallet;
+    if (!click || container < 0 || coin < 0) return 0;
+    memset(&wallet, 0, sizeof(wallet));
+    wallet.is_container_moneybox = dm2_runtime_moneybox_is_container;
+    wallet.is_item_currency = dm2_runtime_moneybox_is_currency;
+    wallet.get_item_db_type = dm2_runtime_moneybox_get_item_db_type;
+    wallet.get_distinctive_item_type = dm2_runtime_moneybox_get_distinctive_type;
+    wallet.get_container_head = dm2_runtime_moneybox_get_container_head;
+    wallet.get_next_item_in_list = dm2_runtime_moneybox_get_next_item;
+    wallet.get_item_charge = dm2_runtime_moneybox_get_charge;
+    wallet.set_item_charge = dm2_runtime_moneybox_set_charge;
+    wallet.append_item_to_container = dm2_runtime_moneybox_append_cb;
+    wallet.cut_item_from_container = dm2_runtime_moneybox_cut;
+    wallet.dealloc_record = dm2_runtime_moneybox_dealloc;
+    wallet.alloc_new_dbitem = dm2_runtime_moneybox_alloc;
+    wallet.coin_type_table = click->money_item_ids;
+    wallet.coin_type_table_size = 10;
+    if (click->rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA)
+        return dm2_v1_add_coin_to_wallet_spx(
+            (uint16_t)container, (uint16_t)coin, &wallet, click);
+    return dm2_v1_add_coin_to_wallet(
+        (uint16_t)container, (uint16_t)coin, &wallet, click);
+}
+
+static int16_t dm2_runtime_moneybox_take_coin(void *context,
+                                               int16_t container,
+                                               int16_t order)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    DM2_V1_WalletCallbacks wallet;
+    uint16_t record;
+    if (!click || container < 0 || order < 0) return DM2_V1_OBJECT_NULL;
+    memset(&wallet, 0, sizeof(wallet));
+    wallet.is_container_moneybox = dm2_runtime_moneybox_is_container;
+    wallet.is_item_currency = dm2_runtime_moneybox_is_currency;
+    wallet.get_item_db_type = dm2_runtime_moneybox_get_item_db_type;
+    wallet.get_distinctive_item_type = dm2_runtime_moneybox_get_distinctive_type;
+    wallet.get_container_head = dm2_runtime_moneybox_get_container_head;
+    wallet.get_next_item_in_list = dm2_runtime_moneybox_get_next_item;
+    wallet.get_item_charge = dm2_runtime_moneybox_get_charge;
+    wallet.set_item_charge = dm2_runtime_moneybox_set_charge;
+    wallet.append_item_to_container = dm2_runtime_moneybox_append_cb;
+    wallet.cut_item_from_container = dm2_runtime_moneybox_cut;
+    wallet.dealloc_record = dm2_runtime_moneybox_dealloc;
+    wallet.alloc_new_dbitem = dm2_runtime_moneybox_alloc;
+    wallet.coin_type_table = click->money_item_ids;
+    wallet.coin_type_table_size = 10;
+    record = dm2_v1_take_coin_from_wallet(
+        (uint16_t)container, order, &wallet, click);
+    return (int16_t)record;
+}
+
+static int dm2_runtime_moneybox_set_hand(DM2_RuntimeMoneyboxClick *click,
+                                          uint32_t object)
+{
+    if (!click || object > 0xffffu ||
+        (object != 0u && object != 0xffffu &&
+         !dm2_v1_record_pool_address(
+             &click->rt->record_pools, (int16_t)object))) {
+        if (click) click->failed = 1;
+        return 0;
+    }
+    /* c_events::DM2_TAKE_OBJECT mutates the transient leader/cursor hand.
+     * The selected hero hand is separately owned by champion_inventory_objects
+     * and remains the moneybox that supplies panel type 4. */
+    click->rt->leader_hand_object = object == 0u ? 0xffffu : object;
+    click->rt->session_snapshot.original_leader_hand_object =
+        click->rt->leader_hand_object;
+    return 1;
+}
+
+static void dm2_runtime_moneybox_take_object(void *context, int16_t item,
+                                             int mode)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    if (mode != 0 || item < 0 ||
+        !dm2_runtime_moneybox_set_hand(click, (uint16_t)item)) {
+        if (click) click->failed = 1;
+    }
+}
+
+static int dm2_runtime_moneybox_remove_hand(void *context)
+{
+    return dm2_runtime_moneybox_set_hand(context, 0xffffu);
+}
+
+static void dm2_runtime_moneybox_update_panel(void *context, int mode)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    if (!click || mode != 0) {
+        if (click) click->failed = 1;
+        return;
+    }
+    click->rt->source_v1e0b6c = 1;
+}
+
+static void dm2_runtime_moneybox_recompute_weight(void *context, int16_t hero_index)
+{
+    DM2_RuntimeMoneyboxClick *click = context;
+    DM2_V1_Hero *hero;
+    const DM2_V1_AssetLoader *loader;
+    uint32_t total = 0u;
+    if (!click || !click->rt || hero_index != click->hero ||
+        !(loader = dm2_v1_boot_asset_loader(click->rt->boot)) ||
+        hero_index < 0 || hero_index >= click->rt->source_party.heros_in_party) {
+        if (click) click->failed = 1;
+        return;
+    }
+    hero = &click->rt->source_party.hero[hero_index];
+    for (int slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+        int16_t handle = hero->item[slot];
+        int db;
+        DM2_V1_SourceItemWeightReceipt weight;
+        if (handle == DM2_V1_RECORD_HANDLE_NULL) continue;
+        if (handle == DM2_V1_RECORD_HANDLE_END ||
+            !dm2_v1_record_pool_address(&click->rt->record_pools, handle)) {
+            click->failed = 1;
+            return;
+        }
+        db = dm2_v1_record_handle_pool(handle);
+        if (db < 5 || db > 10) continue;
+        if (!dm2_v1_query_source_item_weight(
+                (uint16_t)handle, &click->rt->record_pools, loader, &weight) ||
+            !weight.valid || weight.blocked || weight.final_weight < 0 ||
+            total > (uint32_t)(INT16_MAX - weight.final_weight)) {
+            click->failed = 1;
+            return;
+        }
+        total += (uint32_t)weight.final_weight;
+    }
+    hero->weight = (int16_t)total;
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x1000u);
+    dm2_runtime_copy_source_hero_to_snapshot(
+        &click->rt->session_snapshot, hero_index, hero);
+}
+
+int dm2_v1_runtime_click_moneybox_slot(int slot_index)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet pools_before;
+    DM2_V1_Party party_before;
+    DM2_V1_SessionState *session_before = NULL;
+    uint32_t inventory_before[4][30];
+    uint32_t hand_before;
+    int16_t panel_dirty_before;
+    uint8_t *raw_before = NULL;
+    DM2_RuntimeMoneyboxClick click;
+    DM2_V1_ClickMoneyboxCallbacks callbacks;
+    DM2_V1_ClickMoneyboxReceipt receipt;
+    int16_t coin_counts[10];
+    uint16_t coin_values[10];
+    int hero, hand;
+    int committed = 0;
+
+    memset(&pools_before, 0, sizeof(pools_before));
+    memset(&click, 0, sizeof(click));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&receipt, 0, sizeof(receipt));
+    if (slot_index < 0 || slot_index >= 6 || !rt->boot ||
+        (rt->boot->platform != DM2_PLATFORM_PC_EN &&
+         rt->boot->platform != DM2_PLATFORM_FMTOWNS_JA) ||
+        !rt->source_party_valid || !rt->session_snapshot_valid ||
+        !rt->record_pools_valid || !rt->record_pools.valid ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !dungeon->raw_data || dungeon->raw_size <= 0) return 0;
+    hero = dm2_v1_runtime_get_active_champion_index();
+    hand = dm2_v1_runtime_get_active_hand();
+    if (hero < 0 || hero >= rt->source_party.heros_in_party || hand < 0 ||
+        hand > 1 || rt->source_party.hero[hero].curHP <= 0 ||
+        !dm2_v1_runtime_get_active_moneybox(&click.moneybox,
+                                             &click.moneybox_cls2) ||
+        !dm2_v1_runtime_get_active_moneybox_coins(
+            click.coin_order, coin_counts, coin_values,
+            click.money_item_ids)) return 0;
+
+    click.rt = rt;
+    click.hero = hero;
+    click.hand = hand;
+    if (!dm2_v1_record_pool_set_clone(&pools_before, &rt->record_pools) ||
+        !(raw_before = (uint8_t *)malloc((size_t)dungeon->raw_size)) ||
+        !(session_before = (DM2_V1_SessionState *)malloc(sizeof(*session_before)))) {
+        dm2_v1_record_pool_set_free(&pools_before);
+        free(raw_before);
+        free(session_before);
+        return 0;
+    }
+    memcpy(raw_before, dungeon->raw_data, (size_t)dungeon->raw_size);
+    party_before = rt->source_party;
+    memcpy(session_before, &rt->session_snapshot, sizeof(*session_before));
+    memcpy(inventory_before, rt->champion_inventory_objects,
+           sizeof(inventory_before));
+    hand_before = rt->leader_hand_object;
+    panel_dirty_before = rt->source_v1e0b6c;
+
+    callbacks.get_v1d67bc = dm2_runtime_moneybox_get_v1d67bc;
+    callbacks.curacthero = (int16_t)(hero + 1);
+    callbacks.curactmode = (int16_t)hand;
+    callbacks.get_hero_item = dm2_runtime_moneybox_get_hero_item;
+    callbacks.get_held_item = dm2_runtime_moneybox_get_held_item;
+    callbacks.get_item_order_in_container = dm2_runtime_moneybox_get_item_order;
+    callbacks.take_coin_from_wallet = dm2_runtime_moneybox_take_coin;
+    callbacks.add_coin_to_wallet = dm2_runtime_moneybox_add_coin;
+    callbacks.take_object = dm2_runtime_moneybox_take_object;
+    callbacks.remove_object_from_hand = dm2_runtime_moneybox_remove_hand;
+    callbacks.v1e0b6c = &rt->source_v1e0b6c;
+    callbacks.update_right_panel = dm2_runtime_moneybox_update_panel;
+    callbacks.calc_player_weight = dm2_runtime_moneybox_recompute_weight;
+    (void)coin_values;
+    dm2_v1_click_moneybox((int16_t)slot_index, &callbacks, &click, &receipt);
+    /* SKW_CLICK_MONEYBOX / CLICK_MONEYBOX / DM2_CLICK_MONEYBOX always
+     * recalculates carried weight after a valid panel click, including an
+     * empty withdrawal or a rejected held item. The source helper itself
+     * skips panel refresh for those no-op results; preserve the weight write
+     * while still rolling back malformed callback/runtime state. */
+    if (!click.failed && receipt.handled) {
+        committed = 1;
+    }
+
+    if (committed) {
+        dm2_v1_record_pool_set_free(&pools_before);
+        free(raw_before);
+        free(session_before);
+        return 1;
+    }
+    memcpy(dungeon->raw_data, raw_before, (size_t)dungeon->raw_size);
+    dm2_v1_record_pool_set_free(&rt->record_pools);
+    rt->record_pools = pools_before;
+    memset(&pools_before, 0, sizeof(pools_before));
+    rt->source_party = party_before;
+    memcpy(&rt->session_snapshot, session_before, sizeof(*session_before));
+    memcpy(rt->champion_inventory_objects, inventory_before,
+           sizeof(inventory_before));
+    rt->leader_hand_object = hand_before;
+    rt->source_v1e0b6c = panel_dirty_before;
+    free(raw_before);
+    free(session_before);
+    return 0;
+}
+
 int dm2_v1_runtime_get_champion_count(void) {
     const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     if (!rt->source_party_valid || !rt->session_snapshot_valid ||

@@ -155,6 +155,19 @@ int dm2_v1_dungeon_input_owner_route(
     void *sink_ctx,
     DM2_V1_DungeonInputReceipt *out_receipt);
 
+/* Explicit source UI-owner route for PC-English clicks.  Inventory events
+ * such as moneybox slots belong to this owner even while the dungeon scene
+ * remains visible; callers must establish the live panel/context first. */
+int dm2_v1_dungeon_input_owner_route_pc_view(
+    const DM2_V1_DungeonInputOwner *owner,
+    Dm2TouchClickViewPc34Compat view,
+    int16_t screen_x,
+    int16_t screen_y,
+    unsigned int button_mask,
+    DM2_V1_DungeonInputEventSink sink,
+    void *sink_ctx,
+    DM2_V1_DungeonInputReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif

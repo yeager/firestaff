@@ -67,6 +67,13 @@ static void cb_click_viewport(void *ctx, int16_t x, int16_t y)
     g_track.arg2 = y;
 }
 
+static void cb_click_moneybox(void *ctx, int16_t slot)
+{
+    (void)ctx;
+    g_track.called = 1;
+    g_track.arg1 = slot;
+}
+
 /* exec_event tracking */
 typedef struct {
     int set_delay_called;
@@ -152,6 +159,27 @@ static void test_handle_ui_event_item_slot(void)
     assert(receipt.dispatch_category == 3);
 
     printf("  PASS: handle_ui_event_item_slot\n");
+}
+
+static void test_handle_ui_event_moneybox_slots(void)
+{
+    DM2_V1_HandleUiEventCallbacks cb;
+    DM2_V1_HandleUiEventRequest req;
+    DM2_V1_HandleUiEventReceipt receipt;
+    memset(&cb, 0, sizeof(cb));
+    memset(&req, 0, sizeof(req));
+    cb.click_moneybox = cb_click_moneybox;
+    for (int slot = 0; slot < 6; ++slot) {
+        req.event_idx = (int16_t)(228 + slot);
+        reset_track();
+        dm2_v1_handle_ui_event(&cb, NULL, &req, &receipt);
+        assert(g_track.called == 1);
+        assert(g_track.arg1 == slot);
+        assert(receipt.handled == 1);
+        assert(receipt.dispatch_category == 6);
+        assert(receipt.dispatched_idx == 228 + slot);
+    }
+    printf("  PASS: handle_ui_event_moneybox_slots\n");
 }
 
 static void test_handle_ui_event_release_mouse(void)
@@ -324,6 +352,7 @@ int main(void)
     test_handle_ui_event_turn();
     test_handle_ui_event_move();
     test_handle_ui_event_item_slot();
+    test_handle_ui_event_moneybox_slots();
     test_handle_ui_event_release_mouse();
     test_handle_ui_event_null_safety();
     test_handle_ui_event_unknown();

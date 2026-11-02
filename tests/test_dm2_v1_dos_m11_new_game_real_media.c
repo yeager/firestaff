@@ -6,6 +6,7 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_dungeon_input_owner.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,8 @@ int main(void)
     M11_GameLaunchSpec spec;
     DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_BootRuntimeReceipt runtime;
+    DM2_V1_DungeonInputOwner input_owner;
+    DM2_V1_DungeonInputReceipt input_receipt;
     uint8_t framebuffer[M11_FB_WIDTH * M11_FB_HEIGHT];
     int draw_count;
 
@@ -138,6 +141,33 @@ int main(void)
         printf("PASS: DM2 DOS source hero receipt has identity and HP %d/%d\n",
                hero.cur_hp, hero.max_hp);
     }
+    if (!dm2_v1_dungeon_input_owner_init(
+            &input_owner,
+            ((DM2_V1_BootProfile *)view.dm2BootProfile)->graphics_md5)) {
+        fputs("FAIL: authentic PC-English dungeon input owner was not admitted\n",
+              stderr);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    for (int slot = 0; slot < 6; ++slot) {
+        const int x = 231 + (slot % 3) * 30 + 13;
+        const int y = 57 + (slot / 3) * 35 + 15;
+        memset(&input_receipt, 0, sizeof(input_receipt));
+        if (!dm2_v1_dungeon_input_owner_route_pc_view(
+                &input_owner, DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT,
+                (int16_t)x, (int16_t)y, DM1_V1_MOUSE_MASK_LEFT_PC34,
+                NULL, NULL, &input_receipt) ||
+            !input_receipt.accepted ||
+            input_receipt.event_index != (uint16_t)(228 + slot)) {
+            fprintf(stderr,
+                    "FAIL: PC-English moneybox slot %d did not retain its source event/rectangle (accepted=%d event=%u at %d,%d)\n",
+                    slot, input_receipt.accepted, input_receipt.event_index,
+                    x, y);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    puts("PASS: authentic PC-English moneybox hitboxes dispatch source events 228-233");
     {
         static const int formation_x[4] = { 263, 285, 285, 263 };
         static const int formation_y[4] = {  72,  72,  94,  94 };

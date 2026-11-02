@@ -416,6 +416,178 @@ static void test_click_moneybox_null_safety(void)
     printf("test_click_moneybox_null_safety OK\n");
 }
 
+typedef struct {
+    int16_t panel_type;
+    int16_t hero_item;
+    int16_t held_item;
+    int16_t coin_order;
+    int16_t returned_coin;
+    int deposit_result;
+    int deposited;
+    int withdrawn;
+    int panel_updates;
+    int weight_updates;
+    int16_t panel_dirty;
+} MoneyboxMock;
+
+static int16_t moneybox_mock_panel(void *ctx)
+{ return ((MoneyboxMock *)ctx)->panel_type; }
+static int16_t moneybox_mock_hero_item(void *ctx, int hero, int slot)
+{
+    (void)hero; (void)slot;
+    return ((MoneyboxMock *)ctx)->hero_item;
+}
+static int16_t moneybox_mock_held(void *ctx)
+{ return ((MoneyboxMock *)ctx)->held_item; }
+static int16_t moneybox_mock_order(void *ctx, int16_t box, int16_t slot)
+{
+    (void)box; (void)slot;
+    return ((MoneyboxMock *)ctx)->coin_order;
+}
+static int16_t moneybox_mock_take_coin(void *ctx, int16_t box, int16_t order)
+{
+    (void)box; (void)order;
+    return ((MoneyboxMock *)ctx)->returned_coin;
+}
+static int moneybox_mock_add_coin(void *ctx, int16_t box, int16_t coin)
+{
+    MoneyboxMock *mock = ctx;
+    (void)box; (void)coin;
+    mock->deposited++;
+    return mock->deposit_result;
+}
+static void moneybox_mock_take_object(void *ctx, int16_t coin, int mode)
+{
+    MoneyboxMock *mock = ctx;
+    (void)mode;
+    mock->held_item = coin;
+}
+static int moneybox_mock_remove_hand(void *ctx)
+{
+    ((MoneyboxMock *)ctx)->held_item = -1;
+    return 1;
+}
+static void moneybox_mock_update_panel(void *ctx, int mode)
+{
+    MoneyboxMock *mock = ctx;
+    (void)mode;
+    mock->panel_updates++;
+}
+static void moneybox_mock_weight(void *ctx, int16_t hero)
+{
+    MoneyboxMock *mock = ctx;
+    (void)hero;
+    mock->weight_updates++;
+}
+
+static void test_click_moneybox_source_flow(void)
+{
+    MoneyboxMock mock;
+    DM2_V1_ClickMoneyboxCallbacks callbacks;
+    DM2_V1_ClickMoneyboxReceipt receipt;
+    memset(&mock, 0, sizeof(mock));
+    memset(&callbacks, 0, sizeof(callbacks));
+    mock.panel_type = 4;
+    mock.hero_item = 12;
+    mock.held_item = -1;
+    mock.coin_order = 2;
+    mock.returned_coin = 41;
+    mock.deposit_result = 1;
+    callbacks.get_v1d67bc = moneybox_mock_panel;
+    callbacks.curacthero = 1;
+    callbacks.curactmode = 0;
+    callbacks.get_hero_item = moneybox_mock_hero_item;
+    callbacks.get_held_item = moneybox_mock_held;
+    callbacks.get_item_order_in_container = moneybox_mock_order;
+    callbacks.take_coin_from_wallet = moneybox_mock_take_coin;
+    callbacks.add_coin_to_wallet = moneybox_mock_add_coin;
+    callbacks.take_object = moneybox_mock_take_object;
+    callbacks.remove_object_from_hand = moneybox_mock_remove_hand;
+    callbacks.v1e0b6c = &mock.panel_dirty;
+    callbacks.update_right_panel = moneybox_mock_update_panel;
+    callbacks.calc_player_weight = moneybox_mock_weight;
+
+    dm2_v1_click_moneybox(4, &callbacks, &mock, &receipt);
+    assert(receipt.handled && receipt.withdrawn && !receipt.deposited);
+    assert(mock.held_item == 41 && mock.panel_dirty == 1);
+    assert(mock.panel_updates == 1 && mock.weight_updates == 1);
+
+    mock.held_item = 55;
+    mock.panel_dirty = 0;
+    memset(&receipt, 0, sizeof(receipt));
+    dm2_v1_click_moneybox(1, &callbacks, &mock, &receipt);
+    assert(receipt.handled && receipt.deposited && !receipt.withdrawn);
+    assert(mock.held_item == -1 && mock.deposited == 1);
+    assert(mock.panel_dirty == 1 && mock.panel_updates == 2 &&
+           mock.weight_updates == 2);
+    printf("test_click_moneybox_source_flow OK\n");
+}
+
+static void test_click_moneybox_empty_withdrawal_recomputes_weight(void)
+{
+    MoneyboxMock mock;
+    DM2_V1_ClickMoneyboxCallbacks callbacks;
+    DM2_V1_ClickMoneyboxReceipt receipt;
+    memset(&mock, 0, sizeof(mock));
+    memset(&callbacks, 0, sizeof(callbacks));
+    mock.panel_type = 4;
+    mock.hero_item = 12;
+    mock.held_item = -1;
+    mock.coin_order = 2;
+    mock.returned_coin = -1;
+    callbacks.get_v1d67bc = moneybox_mock_panel;
+    callbacks.curacthero = 1;
+    callbacks.get_hero_item = moneybox_mock_hero_item;
+    callbacks.get_held_item = moneybox_mock_held;
+    callbacks.get_item_order_in_container = moneybox_mock_order;
+    callbacks.take_coin_from_wallet = moneybox_mock_take_coin;
+    callbacks.add_coin_to_wallet = moneybox_mock_add_coin;
+    callbacks.take_object = moneybox_mock_take_object;
+    callbacks.remove_object_from_hand = moneybox_mock_remove_hand;
+    callbacks.v1e0b6c = &mock.panel_dirty;
+    callbacks.update_right_panel = moneybox_mock_update_panel;
+    callbacks.calc_player_weight = moneybox_mock_weight;
+
+    dm2_v1_click_moneybox(4, &callbacks, &mock, &receipt);
+    assert(receipt.handled && !receipt.withdrawn && !receipt.deposited);
+    assert(mock.held_item == -1);
+    assert(mock.weight_updates == 1);
+    assert(mock.panel_dirty == 0 && mock.panel_updates == 0);
+    printf("test_click_moneybox_empty_withdrawal_recomputes_weight OK\n");
+}
+
+static void test_click_moneybox_rejected_deposit_recomputes_weight(void)
+{
+    MoneyboxMock mock;
+    DM2_V1_ClickMoneyboxCallbacks callbacks;
+    DM2_V1_ClickMoneyboxReceipt receipt;
+    memset(&mock, 0, sizeof(mock));
+    memset(&callbacks, 0, sizeof(callbacks));
+    mock.panel_type = 4;
+    mock.hero_item = 12;
+    mock.held_item = 55;
+    mock.deposit_result = 0;
+    callbacks.get_v1d67bc = moneybox_mock_panel;
+    callbacks.curacthero = 1;
+    callbacks.get_hero_item = moneybox_mock_hero_item;
+    callbacks.get_held_item = moneybox_mock_held;
+    callbacks.get_item_order_in_container = moneybox_mock_order;
+    callbacks.take_coin_from_wallet = moneybox_mock_take_coin;
+    callbacks.add_coin_to_wallet = moneybox_mock_add_coin;
+    callbacks.take_object = moneybox_mock_take_object;
+    callbacks.remove_object_from_hand = moneybox_mock_remove_hand;
+    callbacks.v1e0b6c = &mock.panel_dirty;
+    callbacks.update_right_panel = moneybox_mock_update_panel;
+    callbacks.calc_player_weight = moneybox_mock_weight;
+
+    dm2_v1_click_moneybox(4, &callbacks, &mock, &receipt);
+    assert(receipt.handled && !receipt.withdrawn && !receipt.deposited);
+    assert(mock.held_item == 55);
+    assert(mock.weight_updates == 1);
+    assert(mock.panel_dirty == 0 && mock.panel_updates == 0);
+    printf("test_click_moneybox_rejected_deposit_recomputes_weight OK\n");
+}
+
 static void test_events_2e62_0cfa_null_safety(void)
 {
     dm2_v1_events_2e62_0cfa(0, NULL, NULL);
@@ -507,6 +679,9 @@ int main(void)
     test_events_38c8_0060_null_safety();
     test_remove_rune_from_tail();
     test_click_moneybox_null_safety();
+    test_click_moneybox_source_flow();
+    test_click_moneybox_empty_withdrawal_recomputes_weight();
+    test_click_moneybox_rejected_deposit_recomputes_weight();
     test_events_2e62_0cfa_null_safety();
     test_events_30dea_null_safety();
     test_events_443c_0434_null_safety();

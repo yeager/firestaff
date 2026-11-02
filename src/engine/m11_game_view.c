@@ -44033,13 +44033,58 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             /* SKProject routes a live DM2 click through c_tmouse/c_input's
              * active GDAT table.  PC-English uses its recovered PC matrix;
              * FM Towns uses only its authenticated RAW4 rectangle subset. */
-            if (!profile ||
-                ((strcmp(profile->graphics_md5,
-                         "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0) ?
-                     !dm2_v1_dungeon_input_owner_init_fmtowns(
-                         &input_owner, profile) :
-                     !dm2_v1_dungeon_input_owner_init(
-                         &input_owner, profile->graphics_md5)) ||
+            if (!profile) return M11_GAME_INPUT_IGNORED;
+            if (profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+                DM2_V1_FmtownsUiRouteReceipt inventory_route;
+                uint16_t moneybox_object;
+                uint8_t moneybox_cls2;
+                if (dm2_v1_runtime_get_active_moneybox(
+                        &moneybox_object, &moneybox_cls2) &&
+                    dm2_v1_dungeon_input_owner_init_fmtowns(
+                        &input_owner, profile) &&
+                    dm2_v1_dungeon_input_owner_fmtowns_route_context(
+                        &input_owner, DM2_V1_FMTOWNS_UI_INVENTORY,
+                        (int16_t)x, (int16_t)y, buttonMask,
+                        &inventory_route) && inventory_route.accepted &&
+                    inventory_route.candidate.event_index >= 228u &&
+                    inventory_route.candidate.event_index <= 233u) {
+                    if (dm2_v1_runtime_click_moneybox_slot(
+                            (int)(inventory_route.candidate.event_index - 228u))) {
+                        m11_sync_dm2_state_from_runtime(state);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            }
+            if (profile->platform == DM2_PLATFORM_PC_EN) {
+                DM2_V1_DungeonInputReceipt moneybox_route;
+                uint16_t moneybox_object;
+                uint8_t moneybox_cls2;
+                if (dm2_v1_runtime_get_active_moneybox(
+                        &moneybox_object, &moneybox_cls2) &&
+                    dm2_v1_dungeon_input_owner_init(
+                        &input_owner, profile->graphics_md5) &&
+                    dm2_v1_dungeon_input_owner_route_pc_view(
+                        &input_owner,
+                        DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT,
+                        (int16_t)x, (int16_t)y, buttonMask,
+                        NULL, NULL, &moneybox_route) &&
+                    moneybox_route.accepted &&
+                    moneybox_route.event_index >= 228u &&
+                    moneybox_route.event_index <= 233u) {
+                    if (dm2_v1_runtime_click_moneybox_slot(
+                            (int)(moneybox_route.event_index - 228u))) {
+                        m11_sync_dm2_state_from_runtime(state);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            }
+            if (!(profile->platform == DM2_PLATFORM_FMTOWNS_JA
+                      ? dm2_v1_dungeon_input_owner_init_fmtowns(
+                            &input_owner, profile)
+                      : dm2_v1_dungeon_input_owner_init(
+                            &input_owner, profile->graphics_md5)) ||
                 !dm2_v1_dungeon_input_owner_route(
                     &input_owner, (int16_t)x, (int16_t)y, buttonMask,
                     NULL, NULL, &input_receipt) ||
@@ -44055,6 +44100,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             case 6: routed_input = M12_MENU_INPUT_STRAFE_LEFT; break;
             case 80:
                 return m11_process_dm2_v1_c080_click(state, x, y);
+            case 228: case 229: case 230: case 231: case 232: case 233:
+                if (profile->platform == DM2_PLATFORM_PC_EN &&
+                    dm2_v1_runtime_click_moneybox_slot(
+                        (int)(input_receipt.event_index - 228u))) {
+                    m11_sync_dm2_state_from_runtime(state);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
             case 116: case 117: case 118: case 119:
             case 120: case 121: case 122: case 123:
                 if (dm2_v1_runtime_activate_action_hand_at_position(

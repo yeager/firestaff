@@ -3029,16 +3029,26 @@ champion's selected hand as the moneybox, deposit the held object or withdraw
 the denomination selected by one of six UI events, refresh the panel after a
 successful transaction, and recalculate the active champion's weight. Their
 input owners dispatch those events in DOS (`dm2byh.cpp:4309`), SPX v4
-(`skuievnt.cpp:798`) and SPX v5 (`uiinput.cpp:346-347`). Firestaff's generic
-`dm2_v1_handle_ui_event` maps indices 228-233 to its `click_moneybox` callback,
-but that dispatcher has no production caller; the M11 pointer route leaves
-those indices unhandled. FM Towns uses authenticated RAW4 candidates, while
-Macintosh and Amiga take separate pointer routes; none currently binds the
-moneybox transaction. Mega CD input ownership is unproven. No runtime callback
-synchronizes DB9 child-list heads, DB10 links and charge/allocation, the
-held-hand reference and `DungeonData` as one mutation. Keep the DOS and SPX
-v4/v5 rows partial until transaction and input/render ownership are bound and
-verified for all eight supported DM2 editions/platforms.
+(`skuievnt.cpp:798`) and SPX v5 (`uiinput.cpp:346-347`). Firestaff now routes
+the six source event indices (228-233) into a rollback-capable live runtime
+transaction for DOS PC English and FM Towns Japanese M11 inventory input. The
+transaction mirrors DB9 child-list heads and DB10 links/charge/allocation into
+the live record pools and `DungeonData`, keeps the selected champion's
+moneybox separate from the cursor-held object, refreshes panel state, and
+recalculates carried weight. PC-English integration coverage uses installed
+DOS media to authenticate the six source rectangles; Towns coverage uses
+installed Towns media and authentic RAW4 rectangle IDs DD-E2. These checks
+verify source input admission. The authentic DOS archive also contains a real
+moneybox fixture in `data/sksave2.bak`: hero record 3's second hand owns DB9
+`0x2401`, whose chain contains DB10 currency `0x2805` (class2 112). The corpus
+test now asserts that source record chain. A complete deposit/withdrawal has
+not yet been run through the live M11 runtime against this saved state, so
+end-to-end transaction behavior remains unverified. Macintosh and Amiga use
+separate pointer routes and are not wired; Mega CD input ownership is
+unproven. Therefore only the PC-English and Towns M11 input routes are closed
+at the routing level. Keep gameplay parity partial for DOS and SPX v4/v5, and
+keep Macintosh, Amiga and Mega CD partial, until their distinct input owners
+and original-media transaction state are verified.
 
 
 2026-11-02 SKProject `COUNT_BY_COIN_TYPES` live moneybox rendering:

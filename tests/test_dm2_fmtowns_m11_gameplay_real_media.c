@@ -1024,6 +1024,67 @@ int main(void)
               &input_owner, (DM2_V1_BootProfile *)view.dm2BootProfile),
           "FM Towns binds the native dungeon input owner");
     {
+        int slot;
+        for (slot = 0; slot < 6; ++slot) {
+            const uint16_t event_index = (uint16_t)(228 + slot);
+            const uint16_t rect_id = (uint16_t)(0x00ddu + slot);
+            unsigned int candidate_index;
+            int candidate_found = 0;
+            for (candidate_index = 0u;
+                 candidate_index <
+                    dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
+                        &input_owner);
+                 ++candidate_index) {
+                DM2_V1_FmtownsMouseInputCandidate candidate;
+                DM2_V1_FmtownsUiRouteReceipt route;
+                DM2_V1_BootExpandedRectReceipt rect;
+                if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                        &input_owner, candidate_index, &candidate) ||
+                    candidate.event_index != event_index ||
+                    candidate.rect_id != rect_id) continue;
+                candidate_found = 1;
+                check(dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
+                          &input_owner, candidate_index, &rect) && rect.valid &&
+                          rect.rect.w > 0 && rect.rect.h > 0,
+                      "FM Towns moneybox event retains its authenticated RAW4 rect");
+                if (!rect.valid || rect.rect.w <= 0 || rect.rect.h <= 0) break;
+                {
+                    int found_route = 0;
+                    int screen_y;
+                    int min_y = rect.rect.y / 2;
+                    int max_y = (rect.rect.y + rect.rect.h - 1) / 2;
+                    for (screen_y = min_y; screen_y <= max_y && !found_route;
+                         ++screen_y) {
+                        int screen_x;
+                        int min_x = rect.rect.x / 2;
+                        int max_x = (rect.rect.x + rect.rect.w - 1) / 2;
+                        for (screen_x = min_x;
+                             screen_x <= max_x && !found_route; ++screen_x) {
+                            memset(&route, 0, sizeof(route));
+                            if (dm2_v1_dungeon_input_owner_fmtowns_route_context(
+                                    &input_owner,
+                                    DM2_V1_FMTOWNS_UI_INVENTORY,
+                                    (int16_t)screen_x, (int16_t)screen_y,
+                                    DM1_V1_MOUSE_MASK_LEFT_PC34, &route) &&
+                                route.accepted &&
+                                route.candidate.event_index == event_index &&
+                                route.candidate.rect_id == rect_id &&
+                                route.native_rect.rect.x == rect.rect.x &&
+                                route.native_rect.rect.y == rect.rect.y) {
+                                found_route = 1;
+                            }
+                        }
+                    }
+                    check(found_route,
+                          "FM Towns moneybox click resolves through its source inventory context");
+                }
+                break;
+            }
+            check(candidate_found,
+                  "FM Towns SKULL.EXP contains the authentic moneybox event/rect pair");
+        }
+    }
+    {
         int exercised_m11_inventory_pointer = 0;
         int exercised_m11_inventory_eye = 0;
         int found_m11_inventory_eye_source = 0;

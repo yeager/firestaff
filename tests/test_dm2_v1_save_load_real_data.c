@@ -13,6 +13,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_game_load_world_owner.h"
@@ -1260,6 +1261,38 @@ static void test_real_raw_save(const char *path, const char *root,
             dm2_v1_sksave_game_load_owner_init(&game_load_owner,
                 bytes + 42u, byte_count - 42u, savegamew7,
                 &preflight_loader, inventory_query_creature_ai_flags, NULL);
+        if (owner_ok && strstr(path, "sksave2.bak") != NULL) {
+            int found_authentic_moneybox_coin = 0;
+            const int16_t box = game_load_owner.heroes[3].item[1];
+            const uint8_t *box_record = box >= 0 &&
+                dm2_v1_record_handle_pool(box) == 9
+                ? dm2_v1_record_pool_address(&game_load_owner.record_pools, box)
+                : NULL;
+            if (box_record) {
+                int16_t item = (int16_t)((uint16_t)box_record[2] |
+                    ((uint16_t)box_record[3] << 8));
+                unsigned int steps = 0u;
+                while (item != DM2_V1_RECORD_HANDLE_END && ++steps <= 32u) {
+                    int16_t next;
+                    uint8_t cls2 = 0xffu;
+                    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+                    if (!dm2_v1_record_pool_next_link(
+                            &game_load_owner.record_pools, item, &next)) break;
+                    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+                    if (dm2_v1_record_handle_pool(item) == 10 &&
+                        dm2_v1_skproject_query_cls2_from_record(
+                            (uint16_t)item, &game_load_owner.record_pools,
+                            &cls2, &cls2_receipt) && cls2_receipt.valid &&
+                        cls2 == 112u && item == (int16_t)0x2805u) {
+                        found_authentic_moneybox_coin = 1;
+                        break;
+                    }
+                    item = next;
+                }
+            }
+            CHECK(box == (int16_t)0x2401 && found_authentic_moneybox_coin,
+                  "authentic SKSave2 backup retains a DB9 hand moneybox with its DB10 currency record");
+        }
         const uint32_t static_caii_hash_before = owner_ok ?
             sksave_game_load_owner_mutable_hash(&game_load_owner) : 0u;
         const int static_caii_ok = owner_ok &&

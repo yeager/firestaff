@@ -301,6 +301,51 @@ int dm2_v1_dungeon_input_owner_fmtowns_route_context(
         !dm2_v1_fmtowns_skull_mouse_table_admitted(owner->boot_profile))
         return 0;
 
+    /* The six moneybox RAW4 rectangles overlap earlier container-slot
+     * records geometrically. Once the caller selects the inventory owner,
+     * resolve these typed source events first; M11 additionally admits this
+     * path only when the active champion hand actually contains a moneybox. */
+    if (context == DM2_V1_FMTOWNS_UI_INVENTORY) {
+        unsigned int moneybox_ordinal;
+        for (moneybox_ordinal = 0u;
+             moneybox_ordinal < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(owner);
+             ++moneybox_ordinal) {
+            DM2_V1_FmtownsMouseInputCandidate candidate;
+            DM2_V1_BootExpandedRectReceipt native_rect;
+            unsigned int context_count;
+            unsigned int context_ordinal;
+            if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                    owner, moneybox_ordinal, &candidate) ||
+                candidate.event_index < 228u || candidate.event_index > 233u ||
+                (candidate.button_mask & button_mask) == 0u)
+                continue;
+            context_count = dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
+                owner, moneybox_ordinal);
+            for (context_ordinal = 0u; context_ordinal < context_count;
+                 ++context_ordinal) {
+                Dm2TouchClickZonePc34Compat source_context;
+                if (!dm2_v1_dungeon_input_owner_fmtowns_candidate_context_at(
+                        owner, moneybox_ordinal, context_ordinal,
+                        &source_context) || source_context.view != source_view)
+                    continue;
+                memset(&native_rect, 0, sizeof(native_rect));
+                if (!dm2_v1_boot_query_expanded_rect_receipt(
+                        owner->boot_profile, candidate.rect_id, &native_rect) ||
+                    !native_rect.valid || !dm2_v1_rect_contains(
+                        &native_rect.rect, (int16_t)(screen_x * 2),
+                        (int16_t)(screen_y * 2)))
+                    continue;
+                out_receipt->accepted = 1;
+                out_receipt->context = context;
+                out_receipt->candidate = candidate;
+                out_receipt->source_context = source_context;
+                out_receipt->native_rect = native_rect;
+                out_receipt->source_table_hash = owner->source_table_hash;
+                return 1;
+            }
+        }
+    }
+
     for (ordinal = 0u;
          ordinal < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(owner);
          ++ordinal) {
@@ -377,6 +422,77 @@ int dm2_v1_fmtowns_inventory_slot_for_context(
     return 1;
 }
 
+int dm2_v1_dungeon_input_owner_route_pc_view(
+    const DM2_V1_DungeonInputOwner *owner,
+    Dm2TouchClickViewPc34Compat view,
+    int16_t screen_x,
+    int16_t screen_y,
+    unsigned int button_mask,
+    DM2_V1_DungeonInputEventSink sink,
+    void *sink_ctx,
+    DM2_V1_DungeonInputReceipt *out_receipt)
+{
+    Dm2TouchClickZonePc34Compat zone;
+    DM2_V1_DungeonInputReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!owner || !owner->active || owner->fmtowns ||
+        strcmp(owner->graphics_md5,
+               DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) != 0 ||
+        view < DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT ||
+        view > DM2_TOUCH_CLICK_VIEW_SAVEGAME_SLOTS_PC34_COMPAT) {
+        receipt.blocked_unverified_graphics = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_table_hash = owner->source_table_hash;
+    /* SKWIN stores the moneybox click rectangles in the inventory-owner
+     * table, but several older inventory hitboxes overlap their area. When
+     * the caller has already established the active moneybox context, resolve
+     * the six source event/rect rows before generic first-hit ordering. */
+    if (view == DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT) {
+        unsigned int ordinal;
+        for (ordinal = 0u; ordinal < DM2_TOUCHCLICK_Compat_GetViewZoneCount(view);
+             ++ordinal) {
+            if (!DM2_TOUCHCLICK_Compat_GetViewZone(view, ordinal, &zone) ||
+                zone.commandId < 228u || zone.commandId > 233u ||
+                (zone.buttonMask & button_mask) == 0u ||
+                screen_x < zone.x || screen_y < zone.y ||
+                screen_x >= zone.x + zone.w ||
+                screen_y >= zone.y + zone.h)
+                continue;
+            receipt.accepted = 1;
+            receipt.event_index = (uint16_t)zone.commandId;
+            receipt.source_zone_index = (uint16_t)zone.zoneIndex;
+            receipt.source_x = (int16_t)zone.x;
+            receipt.source_y = (int16_t)zone.y;
+            receipt.source_w = (int16_t)zone.w;
+            receipt.source_h = (int16_t)zone.h;
+            if (sink) sink(sink_ctx, (int16_t)zone.commandId,
+                           screen_x, screen_y);
+            *out_receipt = receipt;
+            return 1;
+        }
+    }
+    if (!DM2_TOUCHCLICK_Compat_HitTestInView(
+            view, screen_x, screen_y, button_mask, &zone)) {
+        receipt.blocked_no_source_zone = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.accepted = 1;
+    receipt.event_index = (uint16_t)zone.commandId;
+    receipt.source_zone_index = (uint16_t)zone.zoneIndex;
+    receipt.source_x = (int16_t)zone.x;
+    receipt.source_y = (int16_t)zone.y;
+    receipt.source_w = (int16_t)zone.w;
+    receipt.source_h = (int16_t)zone.h;
+    if (sink) sink(sink_ctx, (int16_t)zone.commandId, screen_x, screen_y);
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_dungeon_input_owner_route(
     const DM2_V1_DungeonInputOwner *owner,
     int16_t screen_x,
@@ -386,7 +502,6 @@ int dm2_v1_dungeon_input_owner_route(
     void *sink_ctx,
     DM2_V1_DungeonInputReceipt *out_receipt)
 {
-    Dm2TouchClickZonePc34Compat zone;
     DM2_V1_DungeonInputReceipt receipt;
     DM2_V1_BootExpandedRectReceipt fmtowns_rect;
 
@@ -486,22 +601,7 @@ int dm2_v1_dungeon_input_owner_route(
         *out_receipt = receipt;
         return 0;
     }
-    if (!DM2_TOUCHCLICK_Compat_HitTestInView(
-            DM2_TOUCH_CLICK_VIEW_DUNGEON_PC34_COMPAT,
-            screen_x, screen_y, button_mask, &zone)) {
-        receipt.blocked_no_source_zone = 1;
-        *out_receipt = receipt;
-        return 0;
-    }
-
-    receipt.accepted = 1;
-    receipt.event_index = (uint16_t)zone.commandId;
-    receipt.source_zone_index = (uint16_t)zone.zoneIndex;
-    receipt.source_x = (int16_t)zone.x;
-    receipt.source_y = (int16_t)zone.y;
-    receipt.source_w = (int16_t)zone.w;
-    receipt.source_h = (int16_t)zone.h;
-    if (sink) sink(sink_ctx, (int16_t)zone.commandId, screen_x, screen_y);
-    *out_receipt = receipt;
-    return 1;
+    return dm2_v1_dungeon_input_owner_route_pc_view(
+        owner, DM2_TOUCH_CLICK_VIEW_DUNGEON_PC34_COMPAT,
+        screen_x, screen_y, button_mask, sink, sink_ctx, out_receipt);
 }
