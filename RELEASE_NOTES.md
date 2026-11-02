@@ -1,3 +1,32 @@
+# Firestaff v3.0.424
+
+## User-facing changes
+
+- `Launcher game-data scanning`: change scan handling to retain the selected parent path when filesystem metadata access is denied, show localized access-denied diagnostics, and report priority-game progress while preserving sibling discoveries.
+- `Launcher platform selection`: add supported-platform documentation and reject unsupported aliases or a missing `--platform` value with a clear CLI error across all five games.
+- `DM2 DOS formation controls`: change pointer press, drag and release handling to use source-owned formation actions so champion positions update correctly.
+- `DM2 Amiga champion HUD`: change HUD arrow handling to select champions and compose chained image overlays for authentic menu and HUD presentation.
+- `DM2 Macintosh sound`: change embedded sound parsing and music selection to use authentic sound and SONG resources on supported Macintosh paths.
+- `DM2 platform startup`: add the selected platform to debug traces and change startup hitbox selection to use authentic platform assets.
+- `CSB Atari runtime`: add source-backed melee damage and campaign group-event coverage for the authenticated Atari route.
+- `DM1 Apple IIGS runtime`: add the native melee action path and verify potion use against authentic game data.
+- `Nexus diagnostics`: change champion-resource diagnostics to stay behind `--debug`; expand authenticated Ymir VDP composition evidence without enabling the gated Saturn gameplay route.
+
+## Developer changes
+
+- `Authentic launcher regressions`: add CLI, no-game menu, return-to-menu, rescan and platform-selection checks across DM1, CSB and DM2, including Atari ST, Amiga, Macintosh, FM Towns and Apple IIGS media routes.
+- `Startup scanner`: add access-denied and mixed sibling-data regressions, localized progress checks, and tests that preserve authentic discoveries when one path is inaccessible.
+- `DM2 source integration`: add regression tests for formation pointer actions, Amiga HUD arrows, image-overlay composition, Macintosh sound-resource parsing and music selection.
+- `Five-game documentation`: update platform status, startup support, parity ledgers and game TODO/DONE records to distinguish verified routes from remaining parity gaps.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `Nexus`: Saturn title/menu composition and playable gameplay remain gated; capture and composition checks do not establish a playable viewport or HUD.
+- `Theron's Quest`: verified startup and selected input/capture paths do not establish complete campaign or presentation parity.
+- `DM1, CSB and DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
+- Original game media, saves and firmware are not included in release packages.
+
 # Firestaff v3.0.423
 
 ## User-facing changes

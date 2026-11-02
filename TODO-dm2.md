@@ -2793,3 +2793,25 @@ production loop behind a host callback. All three source definitions are now
 `PARTIAL`; edition-bound dispatch and state ownership remain open.
 
 2026-11-02 SKProject `ADJUST_UI_EVENT` source recheck: `SKWINDOS/dm2byf.cpp:5884-5936` uses 0x5f-0x62 rectangle diagonals for spell versus leader clicks and handcooldown[2] on the leader half; SPX v4 `skuievnt.cpp:22-67` has the same diagonal split but gates that half on `herob44`; SPX v5 `uiinput.cpp:121-185` interprets 95-98 as movement arrows, with cooldown[2] gating the movement half and the other half rewritten to 16-19. Firestaff implements those helper variants, but M11's production hit tables do not dispatch 95-98 nor produce 16-19 from pointer input. The SKProject v4 cooldown helper is also confirmed source-only because M11's retail platform profiles do not identify that runtime version. Updated active-source review and named-symbol summary; remains partial pending edition-authentic panel/arrow hit routes, event dispatch, and platform validation.
+2026-11-02 status-pane geometry correction: the retail SKProject
+`SKW_DRAW_PLAYER_3STAT_PANE` selects `INTERFACE_GENERAL/2` and draws it at
+`RECT_0xA1 + champion`; the authentic images are 77x37 and the RAW4 table
+provides full destination rectangles. Firestaff was dividing these pane
+coordinates and dimensions by two in the PC/Mac, FM Towns and Amiga plans,
+then requiring the same incorrect half-size geometry in each renderer. The
+fix removes that division and makes the Mac, FM Towns and Amiga renderers
+validate against the full RAW4 rectangle. PC EN/FR and Mac EN/FR share the
+native PC/Mac renderer path. The authentic DOS English M11 test now inspects
+the consumed runtime HUD trace and confirms RECT 0xA1 is 77x37; the Mac
+real-media plan test checks all A1-A4 destinations against their RAW4 entries;
+the FM Towns gameplay test checks its full A1 rect; and the Amiga New Game
+test reaches runtime with its original archive. All four tests pass using the
+original DOS, Mac, FM Towns and Amiga archives. The updated code also passes C
+compilation, shell syntax, and `git diff --check`. PC French, Mac French, and
+the separate PC JewelCase edition still need runtime coverage: the PC German
+and French RAR paths are broken symlinks to missing external-disk files, and
+the available French-named Macintosh SIT is identified by the existing media
+test as an English runtime payload. The full app build and physical/native-
+display pixel comparison remain unverified because TRV2 timed out; portraits,
+bars, labels and panel interaction also remain open parts of the reported HUD
+issue.

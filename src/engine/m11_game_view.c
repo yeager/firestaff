@@ -3815,6 +3815,11 @@ static int m11_dm2_preselection_input_active(const M11_GameViewState *state)
     return dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL;
 }
 
+int M11_GameView_Dm2PreselectionReady(const M11_GameViewState *state)
+{
+    return m11_dm2_preselection_input_active(state);
+}
+
 static M11_GameInputResult m11_dm2_preselection_mirror_pointer(
     M11_GameViewState *state, int x, int y)
 {
@@ -67525,8 +67530,10 @@ static void m11_debug_trace_dm2_runtime_frame(
     static const M11_GameViewState *previous_state;
     static uint32_t previous_signature;
     const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_ViewportItemMaterialTrace item_trace;
     DM2_V1_RuntimeHudMaterialTrace hud_trace;
+    DM2_V1_GdatImageEntryBuffReceipt hud_image_receipt;
     DM2_V1_HudPartyState hud_party;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_handoff;
     int item_trace_count;
@@ -67547,6 +67554,7 @@ static void m11_debug_trace_dm2_runtime_frame(
         return;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    asset_loader = profile ? dm2_v1_boot_asset_loader(profile) : NULL;
     platform = profile ? (int)profile->platform : -1;
     item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
     hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
@@ -67717,8 +67725,31 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
     M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
     M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
+    if (asset_loader && asset_loader->loaded) {
+        M11_DM2_DEBUG_MIX(asset_loader->data_size);
+        M11_DM2_DEBUG_MIX(asset_loader->gdat_version);
+    }
+    if (profile) {
+        const unsigned char *hash_cursor =
+            (const unsigned char *)profile->graphics_md5;
+        while (*hash_cursor) M11_DM2_DEBUG_MIX(*hash_cursor++);
+    }
 #undef M11_DM2_DEBUG_MIX
     if (previous_state == state && previous_signature == signature) return;
+
+    if (asset_loader && asset_loader->loaded) {
+        fprintf(stderr,
+            "firestaff: dm2-render-source game=%s platform=%s gdat-md5=%s gdat-version=%u bytes=%zu endian=%s entries=%u raw-count=%u ent1-stride=%u\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform),
+            profile->graphics_md5[0] ? profile->graphics_md5 : "(unknown)",
+            (unsigned int)asset_loader->gdat_version,
+            asset_loader->data_size,
+            asset_loader->big_endian ? "big" : "little",
+            (unsigned int)asset_loader->entry_count,
+            (unsigned int)asset_loader->raw_data_count,
+            (unsigned int)asset_loader->ent1_entry_stride);
+    }
 
     fprintf(stderr,
         "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d render-failure-stage=%d v1={attempted:%d succeeded:%d runtime-ready:%d title-ready:%d} real-assets=%d no-core-fallbacks=%d blocked-materials=%d blocked-mask=%08x wall-ornament={status:%d square:%d gdat:%d field:%d detail:%d} map-token=%u g1-scene={valid:%d blocked:%d committed:%d incomplete-world:%d tile:%d root:%d level:%d pos:%d,%d raw:%02x nodes:%d first-record:%d/%d} scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
@@ -67819,10 +67850,18 @@ static void m11_debug_trace_dm2_runtime_frame(
     }
     for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
          ++hud_trace_index) {
+        int source_entry_present;
+
         if (!dm2_v1_runtime_last_hud_material_trace(
                 hud_trace_index, &hud_trace)) continue;
+        memset(&hud_image_receipt, 0, sizeof(hud_image_receipt));
+        source_entry_present = asset_loader && asset_loader->loaded &&
+            dm2_v1_query_gdat_image_entry_buff_receipt(
+                asset_loader, hud_trace.gdat_category,
+                hud_trace.gdat_index, hud_trace.gdat_field,
+                &hud_image_receipt);
         fprintf(stderr,
-            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
+            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x lookup={receipt:%d default:%d requested:%04x selected:%04x raw:%04x bpp:%u raw-bytes:%u image:%ux%u raw-hash:%08x}\n",
             state->sourceId[0] ? state->sourceId : "dm2",
             m11_dm2_debug_platform_label(platform), hud_trace_index,
             hud_trace.consumed, hud_trace.kind, hud_trace.viewport_gdat_index,
@@ -67834,7 +67873,17 @@ static void m11_debug_trace_dm2_runtime_frame(
             hud_trace.source_transparency_key,
             hud_trace.animation_direction, hud_trace.animation_frame,
             hud_trace.decoded_hash, hud_trace.palette_hash,
-            hud_trace.raw_hash, hud_trace.destination_table_hash);
+            hud_trace.raw_hash, hud_trace.destination_table_hash,
+            source_entry_present,
+            (unsigned int)hud_image_receipt.used_default_image,
+            (unsigned int)hud_image_receipt.requested_data_index,
+            (unsigned int)hud_image_receipt.selected_data_index,
+            (unsigned int)hud_image_receipt.selected_raw_index,
+            (unsigned int)hud_image_receipt.bits_per_pixel,
+            (unsigned int)hud_image_receipt.raw_length,
+            (unsigned int)hud_image_receipt.width,
+            (unsigned int)hud_image_receipt.height,
+            (unsigned int)hud_image_receipt.raw_hash);
     }
     if (hud_party_valid) {
         int slot;

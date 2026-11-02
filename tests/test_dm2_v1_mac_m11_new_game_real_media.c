@@ -152,10 +152,10 @@ static int mac_status_pane_real_media_plan_checks(
                 rect.rect.x != pane_x[slot] || rect.rect.y != 0 ||
                 rect.rect.w != 77 || rect.rect.h != 37 ||
                 command->viewport_gdat_index != 0x6500 + slot ||
-                command->destination.x != rect.rect.x / 2 ||
-                command->destination.y != rect.rect.y / 2 ||
-                command->destination.w != rect.rect.w / 2 ||
-                command->destination.h != rect.rect.h / 2 ||
+                command->destination.x != rect.rect.x ||
+                command->destination.y != rect.rect.y ||
+                command->destination.w != rect.rect.w ||
+                command->destination.h != rect.rect.h ||
                 command->destination_table_hash != rect.raw4_hash ||
                 command->gdat_category !=
                     DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||

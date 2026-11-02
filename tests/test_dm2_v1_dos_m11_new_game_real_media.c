@@ -3,12 +3,43 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int dos_status_pane_runtime_geometry_check(
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V1_BootExpandedRectReceipt rect;
+    const int trace_count = dm2_v1_runtime_last_hud_material_trace_count();
+    if (!profile || trace_count <= 0 ||
+        !dm2_v1_boot_query_expanded_rect_receipt(profile, 0xa1u, &rect) ||
+        !rect.valid || !rect.raw4_hash) return 0;
+    for (int i = 0; i < trace_count; ++i) {
+        DM2_V1_RuntimeHudMaterialTrace trace;
+        if (!dm2_v1_runtime_last_hud_material_trace(i, &trace) ||
+            trace.kind != DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE ||
+            trace.destination_rect_id != 0xa1u) continue;
+        if (!trace.consumed || trace.gdat_category !=
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL || trace.gdat_index != 2 ||
+            trace.destination_table_hash != rect.raw4_hash ||
+            trace.destination.x != rect.rect.x ||
+            trace.destination.y != rect.rect.y ||
+            trace.destination.w != rect.rect.w ||
+            trace.destination.h != rect.rect.h ||
+            trace.width != rect.rect.w || trace.height != rect.rect.h) return 0;
+        printf("PASS: authentic DOS runtime status pane uses full RAW4 rect %d,%d %dx%d\n",
+               rect.rect.x, rect.rect.y, rect.rect.w, rect.rect.h);
+        return 1;
+    }
+    fprintf(stderr, "DM2 DOS runtime did not consume status pane trace (count=%d)\n",
+            trace_count);
+    return 0;
+}
 
 int main(void)
 {
@@ -243,6 +274,13 @@ int main(void)
                 view.dm2LastRuntimeRealAssetsReady,
                 view.dm2LastRuntimeNoCoreFallbacks,
                 view.dm2LastRuntimeFallbackDrawCount);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    if (!dos_status_pane_runtime_geometry_check(
+            (DM2_V1_BootProfile *)view.dm2BootProfile)) {
+        fputs("FAIL: DM2 DOS runtime status pane does not use its full RAW4 rectangle\n",
+              stderr);
         M11_GameView_Shutdown(&view);
         return 1;
     }

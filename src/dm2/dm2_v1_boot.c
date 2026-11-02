@@ -8808,10 +8808,10 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                 return 0;
             status_pane_table_hash = pane_receipt.raw4_hash;
             status_pane_destinations[slot] = (DM2_V1_ViewportRect){
-                pane_receipt.rect.x / 2,
-                pane_receipt.rect.y / 2,
-                pane_receipt.rect.w / 2,
-                pane_receipt.rect.h / 2 };
+                pane_receipt.rect.x,
+                pane_receipt.rect.y,
+                pane_receipt.rect.w,
+                pane_receipt.rect.h };
             if (status_pane_destinations[slot].w <= 0 ||
                 status_pane_destinations[slot].h <= 0) return 0;
         }
@@ -8915,8 +8915,8 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             destination->status_pane_rect_raw4_hash = status_pane.raw4_hash;
             destination->status_pane_rect_id = status_pane.rect_id;
             destination->status_pane_rect = (DM2_V1_ViewportRect){
-                status_pane.rect.x / 2, status_pane.rect.y / 2,
-                status_pane.rect.w / 2, status_pane.rect.h / 2 };
+                status_pane.rect.x, status_pane.rect.y,
+                status_pane.rect.w, status_pane.rect.h };
             destination->mirror_flip = relative == 1 || relative == 2;
             if (party->towns_selected_hero_source_bound &&
                 party->towns_selected_hero_index == slot) {
@@ -9124,10 +9124,10 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                 }
                 amiga_status_pane_hash = pane_receipt.raw4_hash;
                 status_pane_destinations[slot] = (DM2_V1_ViewportRect){
-                    pane_receipt.rect.x / 2,
-                    pane_receipt.rect.y / 2,
-                    pane_receipt.rect.w / 2,
-                    pane_receipt.rect.h / 2 };
+                    pane_receipt.rect.x,
+                    pane_receipt.rect.y,
+                    pane_receipt.rect.w,
+                    pane_receipt.rect.h };
             }
             if (!amiga_status_pane_hash ||
                 !dm2_v1_gdat_hud_m11_command_plan_append_amiga_status_panes(

@@ -115,14 +115,15 @@ no-game launcher scan, including localized task labels and no unintended
 game handoff. These checks cover diagnostic labels and launcher state, not
 the rendered progress-bar appearance.
 
-`startup_scan_intro_capture_dm1_real_media` now captures the actual startup
-intro RGBA frame during an authentic DM1 PC 3.4 scan; it passed in 0.26 s,
-checked the 480×270 output and confirmed the original archive stayed unchanged.
-The inspected Swedish 0% frame places the status and 376×4 progress track at
-the lower center; the test checks the real unfilled track pixel at its right
-edge. This establishes the rendered startup surface and capture route only; it
-does not verify later fill animation, native-window scaling, or gameplay
-visual parity.
+`startup_scan_intro_capture_priority_games_real_media` captures the actual
+startup intro frame during authentic DM1 PC 3.4, CSB FM Towns, and DM2 FM Towns
+scans. The 2026-11-02 follow-up waits for the real scanner to report a nonzero
+percentage, then checks both a filled pixel and the unfilled right edge of the
+376×4 progress track in each 480×270 frame. All three cases passed on the
+current binary, and each original archive hash remained unchanged. This
+verifies a visible nonzero fill across the three priority games on these
+routes; monotonic progress animation, native-window scaling, other editions,
+and gameplay visual parity remain open.
 
 On current `main` at `faa1debce`, the CSB FMTowns default-selection tests passed
 with authentic Amiga and Atari media also installed (2/2, 122.12 s each).
