@@ -23092,7 +23092,7 @@ static int16_t dm2_runtime_light_charge(void *context, int16_t item, int mode)
         query->valid = 0;
         return 0;
     }
-    word = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    word = dm2_runtime_record_rd16(query->rt, record + 4);
     charge = dm2_v1_skproject_add_item_charge(
         (uint16_t)item, &word, 0, &receipt);
     if (!receipt.valid) {

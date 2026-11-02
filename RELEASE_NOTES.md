@@ -13,6 +13,7 @@
 - `DM2 shop display`: change the display to show source-selected stock, item names and prices from mounted game data; purchase and sale transactions remain incomplete.
 - `DM2 Mac and Amiga controls`: change input handling to route action-hand clicks and movement arrows through the authentic platform geometry.
 - `DM2 stairs and teleporters`: change movement transitions to resolve live dungeon records and honor impassable teleporter tiles.
+- `DM2 dynamic lighting`: change item-charge decoding to respect source byte order during light calculation.
 - `Startup-menu text`: change long scan and message label fitting to keep UTF-8 codepoints intact, including Swedish diacritics.
 
 ## Developer changes
@@ -30,6 +31,7 @@
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
 - `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, decode raw-SKSAVE words using source byte order, preserve version-specific text-ornament gates, and document production transition integration as open.
 - `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
+- `DM2 dynamic-light callback`: read item-charge words through the source-endian record helper before recalculating scene light.
 - `Nexus diagnostic-output verification`: compare authentic-media CLI startup with and without `--debug`; normal startup suppresses engine/UI/audio/font traces, while the explicit boot probe retains its startup summary.
 - `Apple IIGS nested 7z lookup`: fix cached solid-7z hash collection to retain every authentic ProDOS file owner.
 - `DM1 mouse-coordinate audit`: update the callable-symbol inventory for F2047/F2048, marking caller-owned accessors partial while Amiga window/event ownership remains unverified.
