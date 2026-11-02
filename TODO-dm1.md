@@ -11,10 +11,12 @@ callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
 projection-mask assets and fails closed when either is absent, but ReDMCSB
 calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw. Firestaff's
 live M11 PC34 route now consumes those values from the DM1 master RNG, in
-source order, after field and mask media are available. The secondary viewport
-helper still needs production phase-callback ownership. Pixel-mask sampling
-also does not reproduce F0133's source unit and temporary-bitmap path;
-edition-specific RNG and bitmap behavior remain open.
+source order, after field and mask media are available. Its mask sampler now
+consumes the sequential 16-pixel units from the source rectangle rather than
+scaling the mask to the destination. The secondary viewport helper still needs
+production phase-callback ownership. Indexed-pixel sampling does not reproduce
+the source planar temporary-bitmap compositor, and edition-specific RNG and
+bitmap behavior remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
 

@@ -147,6 +147,9 @@ int dm1_v1_field_bitmap_sample_with_phase_pc34(
     int sourceUnit;
     int sourcePixel;
     int sourceStride;
+    int maskUnitWidth;
+    int maskUnitOrdinal;
+    int maskSourcePixel;
 
     if (!plan || !outSample ||
         localX < 0 || localY < 0 ||
@@ -187,10 +190,17 @@ int dm1_v1_field_bitmap_sample_with_phase_pc34(
     outSample->transparentColor = plan->transparentColor;
 
     if (plan->maskIndexAndFlip != 0xff && maskWidth > 0 && maskHeight > 0) {
+        /* ReDMCSB Toolchains/Common/Source/BLITMASK.C:F0133 consumes one
+         * 8-byte (16-pixel) mask unit for each destination unit. It does not
+         * scale the mask to the destination rectangle. The decoded indexed
+         * mask uses the same sequential unit stream as the source bitmap. */
         outSample->maskPresent = 1;
         outSample->maskFlip = (plan->maskIndexAndFlip & 0x80) ? 1 : 0;
-        outSample->maskX = localX * maskWidth / plan->dstW;
-        outSample->maskY = localY * maskHeight / plan->dstH;
+        maskUnitWidth = (plan->dstW + 15) / 16;
+        maskUnitOrdinal = localY * maskUnitWidth + localX / 16;
+        maskSourcePixel = maskUnitOrdinal * 16 + (localX & 15);
+        outSample->maskX = maskSourcePixel % maskWidth;
+        outSample->maskY = maskSourcePixel / maskWidth;
         if (outSample->maskFlip) {
             outSample->maskX = maskWidth - 1 - outSample->maskX;
         }
@@ -250,11 +260,13 @@ int dm1_v1_field_bitmap_pixel_with_phase_pc34(
         return 0;
     }
 
-    if (sample.maskPresent &&
-        maskPixels &&
-        maskWidth > 0 &&
-        maskHeight > 0 &&
-        maskStride >= maskWidth) {
+    if (sample.maskPresent) {
+        if (!maskPixels || maskWidth <= 0 || maskHeight <= 0 ||
+            maskStride < maskWidth || sample.maskX < 0 ||
+            sample.maskX >= maskWidth || sample.maskY < 0 ||
+            sample.maskY >= maskHeight) {
+            return 0;
+        }
         uint8_t maskPixel =
             maskPixels[sample.maskY * maskStride + sample.maskX];
         if (maskPixel == 0) {
