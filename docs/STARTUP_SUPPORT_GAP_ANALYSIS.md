@@ -893,7 +893,8 @@ or complete gameplay.
 
 ### 2026-11-02 current-main launcher recheck
 
-On current `main` at `375cebdf`, the three singleton-media M12 startup tests
+On current `main` at `65c433a6` (runtime sources unchanged from the tested
+build at `375cebdf`), the three singleton-media M12 startup tests
 passed with authentic local data: `m12_main_menu_dm1_only_real_media`,
 `m12_main_menu_csb_only_real_media`, and
 `m12_main_menu_dm2_only_real_media` (3/3). The mixed-edition default-selection
@@ -903,6 +904,12 @@ Macintosh media present (4/4). The priority-only game picker passed its
 keyboard selection and launch matrix for DM1, CSB, and DM2 (1/1). Swedish
 real-media startup-scan localization passed again for DM1 PC, CSB FM Towns,
 and DM2 FM Towns (3/3).
+
+The current-source priority picker also passed its pointer-only selection
+matrix (30.76 s) and its scan-early selection matrix (31.89 s) against the
+installed authentic DM1, CSB, and DM2 collection. These tests verify that
+mouse platform choices and choices made before the asynchronous scan completes
+still select the intended game/source and reach the tested launch handoff.
 
 DM1's mixed-library AUTO/platform check passed (82.97 s), covering installed
 PC, FM Towns, Atari ST, and Amiga media, explicit CLI platform selection, and
