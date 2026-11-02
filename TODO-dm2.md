@@ -2285,7 +2285,9 @@ party direction and formation (`GET_PLAYER_AT_POSITION`), then calls
 `dm2_v1_IS_ITEM_HAND_ACTIVABLE` against that champion's source hand record,
 source-endian DB9/DB14 chains, boot GDAT loader, and mounted CMDSTR entries.
 The runtime hand owner also blocks an active hand cooldown and clears the
-magical-map rune/composed-cost masks on selection, matching the source gates. M11 now routes formation events 125-129 to
+source magical-map rune mask on selection. It preserves the separate
+`v1e0b4e` composed-cost accumulator, which the source hand-selection code
+does not reset. M11 now routes formation events 125-129 to
 the runtime-owned two-stage formation model. It retains source pending slots
 0..4, performs rotated occupied-slot swaps or empty-slot moves, preserves the
 high-bit direction rule, and synchronizes party/snapshot state. Both hand
@@ -2305,8 +2307,9 @@ a formation drag is pending; transient source mode/map flags, cursor feedback,
 and other platform routes remain open.
 The M11 DM2 spell-panel path now enters `dm2_v1_runtime_enter_spell_mode`,
 which publishes the selected champion, records the source spell-hand sentinel
-and panel-refresh flag, clears source magical-map rune-mask/composed-cost state,
-and recomputes a pending formation drag. The source sentinel is represented
+and panel-refresh flag, clears the source magical-map rune mask, leaves the
+separate `v1e0b4e` composed-cost accumulator untouched, and recomputes a
+pending formation drag. The source sentinel is represented
 separately from Firestaff's physical active hand, which its cast transaction
 still consumes. The v5 source command-mask/rune-selection flow is not yet
 equivalent to the panel's stored hero rune sequence. Cursor feedback and non-M11 platform routes remain open.
