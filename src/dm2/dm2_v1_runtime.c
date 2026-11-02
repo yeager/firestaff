@@ -23091,8 +23091,9 @@ static int dm2_runtime_create_minion(
 
 /* SKULLWIN/c_engage.cpp:579-614 and skengage.cpp:578-613. Existing DB14
  * missiles receive the source action byte followed by the 1c9a_0247 cache
- * flush. If absent, cases 44/45 create minion types 0x33/0x32 respectively. */
-static int dm2_runtime_minion_missile(void *user, int action_case,
+ * flush. If absent, both cases create minion type 0x32. */
+static int dm2_runtime_minion_missile(void *user, int *out_created,
+                                      int action_case,
                                       uint16_t minion_record,
                                       uint16_t missile_ref, int16_t power,
                                       int16_t x, int16_t y, int16_t map,
@@ -23112,6 +23113,7 @@ static int dm2_runtime_minion_missile(void *user, int action_case,
     int raw_size = 0;
     int action_byte;
 
+    if (out_created) *out_created = 0;
     if (!context || !(rt = context->runtime) || !rt->boot ||
         !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
         !rt->record_pools_valid || !rt->record_pools.record_graph_complete ||
@@ -23159,9 +23161,13 @@ static int dm2_runtime_minion_missile(void *user, int action_case,
     }
 
     context->map = map;
-    return dm2_runtime_create_minion(
-        context, action_case == 44 ? 0x33u : 0x32u, power, direction,
+    {
+        int created = dm2_runtime_create_minion(
+        context, 0x32u, power, direction,
         x, y, map, minion_record, facing);
+        if (created && out_created) *out_created = 1;
+        return created;
+    }
 }
 
 int dm2_v1_runtime_engage_command(
@@ -23381,6 +23387,9 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     request.set_minion_dest_cb = dm2_runtime_set_minion_destination;
     request.set_minion_dest_ctx = &hand_query;
     if (is_create_minion_action) {
+        request.minion_power = dm2_runtime_hand_skill_level(
+            &hand_query, (int16_t)request.hero_index,
+            request.cmd.skill_type, 1);
         minion_context.runtime = rt;
         minion_context.map = game->current_level;
         minion_context.spx_v4 = variant == DM2_V1_COMMAND_SLOT_SPX_V4;
@@ -23400,6 +23409,9 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
         minion_context.runtime = rt;
         minion_context.map = game->current_level;
         minion_context.spx_v4 = variant == DM2_V1_COMMAND_SLOT_SPX_V4;
+        request.minion_power = dm2_runtime_hand_skill_level(
+            &hand_query, (int16_t)request.hero_index,
+            request.cmd.skill_type, 1);
         request.minion_record = minion_record;
         request.minion_missile_cb = dm2_runtime_minion_missile;
         request.minion_missile_ctx = &minion_context;

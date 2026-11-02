@@ -178,9 +178,10 @@ typedef struct {
     int (*release_minion_cb)(void *ctx, uint16_t minion_record);
     void *release_minion_ctx;
     uint16_t minion_record;   /* word_at(item_record, 2) */
+    int16_t minion_power;     /* QUERY_PLAYER_SKILL_LV(hero, CMDSTR skill, 1) */
 
     /* cases 44/45: set a minion missile action, or create its missile. */
-    int (*minion_missile_cb)(void *ctx, int action_case,
+    int (*minion_missile_cb)(void *ctx, int *out_created, int action_case,
                              uint16_t minion_record, uint16_t missile_ref,
                              int16_t power, int16_t x, int16_t y,
                              int16_t map, int16_t direction, int8_t facing);

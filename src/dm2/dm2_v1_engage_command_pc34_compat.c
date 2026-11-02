@@ -426,16 +426,17 @@ int dm2_v1_engage_command(
     case 44: /* MINION missile type 0x33 — skengage.cpp:578-613 */
     case 45: /* MINION attack type 0x32 */
         if (request->minion_missile_cb) {
-            int16_t power = request->cmd.delay;
+            int created = 0;
             int r;
-            power = (int16_t)((power << 16) >> 19);
             r = request->minion_missile_cb(
-                request->minion_missile_ctx, action_case,
-                request->minion_record, request->item_handle, power,
+                request->minion_missile_ctx, &created, action_case,
+                request->minion_record, request->item_handle,
+                request->minion_power,
                 request->party_x, request->party_y, request->party_map,
                 (int16_t)((request->party_dir + 2) & 3),
-                (int8_t)(request->party_dir & 0xff));
+                (int8_t)(request->hero_abs_dir & 0xff));
             if (!r) receipt->success = 0;
+            else receipt->minion_created = created;
         } else {
             receipt->fail_closed = 1;
         }
@@ -449,19 +450,18 @@ int dm2_v1_engage_command(
         static const uint8_t minion_type_map[] = {
             [46] = 0x30, [48] = 0x31, [49] = 0x34, [50] = 0x35
         };
-        receipt->minion_created = 1;
         if (request->create_minion_cb) {
-            int16_t power = request->cmd.delay;
-            power = (int16_t)((power << 16) >> 19);
             int16_t dir = (int16_t)((request->party_dir + 2) & 0x3);
             int r = request->create_minion_cb(
                 request->create_minion_ctx,
-                minion_type_map[action_case], power, dir,
+                minion_type_map[action_case], request->minion_power, dir,
                 request->party_x, request->party_y,
                 request->party_map, request->item_handle,
                 (int8_t)(request->party_dir & 0xff));
             if (!r) {
                 receipt->success = 0;
+            } else {
+                receipt->minion_created = 1;
             }
         } else {
             receipt->fail_closed = 1;
