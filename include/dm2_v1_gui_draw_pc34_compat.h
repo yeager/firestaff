@@ -341,6 +341,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     bool (*is_player_sleeping)(void *ctx);
     void (*draw_gray_overlay)(void *ctx, int32_t buttongroup_id,
                               DM2_V1_Rect *rect, int16_t mode);
+    /* Edition adapter maps ExtendedPicture::mirrorFlip before image draw. */
+    void (*set_summary_image_mirror)(void *ctx, void *image, bool mirror);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

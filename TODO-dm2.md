@@ -3124,6 +3124,13 @@ icon and applies cooldown/sleep overlays when those callbacks are bound. The
 item-on-wood-panel image, edition-specific sprite/frame handling and all
 production input/runtime bindings remain open. Keep PARTIAL.
 
+2026-11-02 SKProject `DRAW_SQUAD_SPELL_AND_LEADER_ICON`:
+Firestaff now selects the spell/action and leader icon indices by direction,
+leader identity and flags, clears the source rect, and requests both summary
+images at their source rects. Edition-specific mirror handling and the differing
+DOS/SPX cooldown/active overlay conditions still need exact adapters and runtime
+bindings. Keep the source rows PARTIAL.
+
 2026-11-02 SKProject `MONEY_BOX_SURVEY` / `DRAW_MONEYBOX`:
 The source inventory marks the DOS/SPX moneybox functions PARTIAL, but the
 named-symbol audit incorrectly claimed parity. Firestaff has a callback renderer

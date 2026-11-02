@@ -905,32 +905,64 @@ void dm2_v1_draw_squad_spell_and_leader_icon(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
-    uint8_t partypos = cb->get_hero_partypos ?
-        cb->get_hero_partypos(ctx, hero_idx) : 0;
-    int16_t heading = cb->get_v1e0258 ? cb->get_v1e0258(ctx) : 0;
+    if (!cb->get_hero_partypos || !cb->get_v1e0258) return;
+    uint8_t partypos = cb->get_hero_partypos(ctx, hero_idx);
+    int16_t heading = cb->get_v1e0258(ctx);
     int32_t dir = ((int32_t)partypos + 4 - (int32_t)heading) & 0x3;
 
-    /* Fill background rect with E_COL00 */
-    uint8_t col00 = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+    /* SKProject clears the direction slot before checking hero state. */
     DM2_V1_Rect rc;
+    memset(&rc, 0, sizeof(rc));
     int16_t rect_id = (int16_t)(dir + 0x4f);
-    if (cb->query_expanded_rect)
-        cb->query_expanded_rect(ctx, rect_id, &rc);
+    if (!cb->query_expanded_rect ||
+        !cb->query_expanded_rect(ctx, rect_id, &rc))
+        return;
+    int32_t black = cb->palette_to_pixel ?
+        cb->palette_to_pixel(ctx, 0) : 0;
     if (cb->fill_rect_summary)
-        cb->fill_rect_summary(ctx, 2, &rc, (int32_t)col00);
+        cb->fill_rect_summary(ctx, 2, &rc, black);
 
-    int16_t hp = cb->get_hero_hp ? cb->get_hero_hp(ctx, hero_idx) : 0;
+    if (!cb->get_hero_hp) return;
+    int16_t hp = cb->get_hero_hp(ctx, hero_idx);
     if (hp == 0) return;
 
-    /* Draw leader and spell icons (simplified) */
-    int8_t icon_base = (dir > 1) ? 0x0c : 0x0a;
+    /* Source draws spell/action first, then leader status icon. */
+    const bool mirror = dir == 1 || dir == 2;
+    int8_t spell_icon = (dir > 1) ? 8 : 6;
+    int8_t leader_icon = (dir > 1) ? 0x0c : 0x0a;
+    if (flags != 0) ++spell_icon;
     int16_t evhero = cb->get_event_heroidx ? cb->get_event_heroidx(ctx) : -1;
-    if (hero_idx == evhero)
-        icon_base++;
+    if (hero_idx == evhero) ++leader_icon;
 
-    /* Two image draws for leader and spell indicators */
-    if (cb->query_gdat_summary_image && cb->image_draw) {
-        /* Simplified: handled through callbacks */
+    if (cb->query_gdat_summary_image && cb->query_picst_it && cb->image_draw) {
+        DM2_V1_ImageDesc icons[2];
+        const int8_t icon_indices[2] = {spell_icon, leader_icon};
+        const int16_t rect_ids[2] = {
+            (int16_t)(dir + 0x57), (int16_t)(dir + 0x53)
+        };
+        for (int i = 0; i < 2; ++i) {
+            memset(&icons[i], 0, sizeof(icons[i]));
+            cb->query_gdat_summary_image(ctx, &icons[i], 1, 4,
+                                         icon_indices[i]);
+            if (cb->set_summary_image_mirror)
+                cb->set_summary_image_mirror(ctx, &icons[i], mirror);
+            cb->query_picst_it(ctx, &icons[i]);
+            cb->image_draw(ctx, &icons[i], 2, rect_ids[i], 4);
+        }
+
+        const bool sleeping = cb->is_player_sleeping &&
+                              cb->is_player_sleeping(ctx);
+        const uint8_t hand_cooldown = cb->get_hero_handcooldown ?
+            cb->get_hero_handcooldown(ctx, hero_idx, 2) : 0;
+        const int16_t active_overlay = cb->get_v1e0238 ?
+            cb->get_v1e0238(ctx) : 0;
+        if ((sleeping || active_overlay != 0 || hand_cooldown != 0) &&
+            cb->draw_gray_overlay &&
+            cb->query_expanded_rect(ctx, rect_ids[0], &rc))
+            cb->draw_gray_overlay(ctx, 2, &rc, 0);
+        if ((sleeping || active_overlay != 0) && cb->draw_gray_overlay &&
+            cb->query_expanded_rect(ctx, rect_ids[1], &rc))
+            cb->draw_gray_overlay(ctx, 2, &rc, 0);
     }
 }
 
