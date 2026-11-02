@@ -38,6 +38,23 @@ and no CRAM palette span matches. The frame reports `BGON=0x0007`,
 base and the bundle has no VDP2 write rows, so it does not establish a FONT256
 upload, producer, text consumer or bitmap ownership. Source join stays unbound.
 
+## Reconcile MAPD frame-891 layer enable state
+
+The hash-pinned Ymir render-state trace has 224 target-pass rows for VDP1 frame
+891 / VDP2 serial 1280, each reporting `nbg0_enabled=1`, `layer_enabled=1`,
+and `rbg1_enabled=0`. The layer-composition audit now requires this row-local
+state before using layer 2 as NBG0, and rejects captures where it is disabled.
+The separately retained register snapshot with the same frame/serial label has
+big-endian `BGON=0x0002` at offset `0x20`, which disables NBG0; its SHA-256 is
+`774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`. Its
+receipt has no timing join to the render-state sample. Do not treat that
+snapshot as render-time enable evidence.
+The layer trace also lacks enabled flags for every output layer, so its exact
+RGB reconstruction remains candidate-layer evidence, not a full active-layer
+proof. Obtain or reproduce a same-pass per-layer enable trace and resolve the
+snapshot timing before treating this pass as a complete Ymir compositor oracle.
+See [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
 ## Capture an authentic odd-address mode-5 draw
 
 Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now
