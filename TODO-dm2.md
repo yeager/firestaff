@@ -2969,12 +2969,18 @@ inventory mutations on every supported edition/platform. Keep all source
 rows partial until those callers are wired and verified.
 
 2026-11-02 skproject wall-mecha `ITEM_GENERATOR` (actuator type 0x3c):
-DOS `dm2bya.cpp:5976-5988`, SPX v4 `skevent.cpp:1978-1996`, and SPX v5
-`sktimprc.cpp:2501-2515` allocate the actuator itemspec, set its DB-specific
-item type and optional importance, then call `MOVE_ITEM_TO` with actuator
-charge mode, direction, and once-only state. Firestaff currently fails closed
-for this visitor case. Bind the source edition gate and moverec insertion
-semantics before enabling it; keep the actuator path partial meanwhile.
+DOS `dm2bya.cpp:5976-5988` and SPX v5 `sktimprc.cpp:2501-2515` gate
+generation on `RevertEffect == timer ActionType`, then allocate from
+`ActuatorData`, set item type, set importance when actuator bits `0x18` are
+both set, and call `MOVE_ITEM_TO`. SPX v4 `skevent.cpp:1978-1996` has a
+different gate: it proceeds only for `ActionType == 0`, regardless of
+`RevertEffect`. Firestaff currently fails closed for this visitor case.
+`dm2_v1_move_record_to` supports from-nowhere insertion and the record
+allocator/item-type/importance helpers exist, but enabling the case still
+needs a platform-specific gate and a transactional wrapper for charge
+adjustment plus record allocation, importance, and tile insertion. Preserve
+the fail-closed behavior until those mutations can roll back together; keep
+all platform rows partial.
 
 
 2026-11-02 SKProject SPX v4 `ACTIVATE_ACTION_HAND` panel dispatch:
