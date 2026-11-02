@@ -184,11 +184,33 @@ The pass uses Ymir layer id 0 for sprites, 2 for NBG0/RBG1, and 3 for NBG1.
 There are 16,179 top NBG0 pixels with special color calculation. The pixel
 ownership and composition order match the current [Ymir compositor source](https://github.com/ymir-emu/Ymir/blob/main/libs/ymir-core/res/shaders/src/vdp/cs_vdp2_compose.hlsl).
 
-This result narrows the Firestaff gap to raw snapshot decoding: NBG0's 8-bit
-bitmap source, effective NBG1 row-time fetch source, VDP1 RGB/palette pixels,
-and their priority/color-calculation composition must still be produced by
-Firestaff and compared against this authentic oracle. The legacy stack remains
-a known mismatch and is not admitted for rendering.
+This result narrows the Firestaff gap to integrating verified candidate
+decoders into raw snapshot composition: the effective NBG1 row-time fetch
+source, VDP1 RGB/palette pixels, and their priority/color-calculation stack
+must still be produced by Firestaff and compared against this authentic oracle.
+The legacy stack remains a known mismatch and is not admitted for rendering.
+
+The NBG0 raw bitmap source has since been joined directly against the same
+authentic layer trace. For each row, the audit uses Ymir's captured 11.8 fixed
+point scroll state, reads an 8-bit index from VDP2 VRAM base `0x00000` with a
+512-byte pitch, and resolves the same index in CRAM. All 20,302 nonzero dots
+match Ymir's NBG0 candidate color, priority 4, and special-color-calculation
+flag; all 51,378 index-zero dots match Ymir transparency. This verifies the
+raw byte-to-layer mapping when the authenticated per-row scroll state is
+provided; Firestaff still needs to derive or carry that state in its capture
+path.
+
+Reproduce the raw NBG0 source join with:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031
+python3 scripts/audit_nexus_ymir_mapd_nbg0_bitmap_source.py \
+  --vram "$evidence/vdp-snapshots/vdp1-891-vdp2-1280-vdp2-vram.bin" \
+  --cram "$evidence/vdp-snapshots/vdp1-891-vdp2-1280-vdp2-cram.bin" \
+  --registers "$evidence/vdp-snapshots/vdp1-891-vdp2-1280-vdp2-registers.bin" \
+  --layers "$evidence/layer-trace-frame891-start60-20261101/layers.csv" \
+  --render-state "$evidence/layer-trace-frame891-start60-20261101/render-state.csv"
+```
 
 ## SH-2 register-write trace
 
