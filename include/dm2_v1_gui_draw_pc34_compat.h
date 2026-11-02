@@ -208,6 +208,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*count_by_coin_types)(void *ctx, int32_t record, int16_t *out);
     uint16_t (*get_money_item_id)(void *ctx, int32_t denomination_order);
     void *(*query_cmdstr_name)(void *ctx, int8_t a, int8_t b, int8_t c);
+    bool (*get_command_slot_fields)(void *ctx, int32_t slot,
+                                    uint8_t *category, uint8_t *index,
+                                    uint8_t *entry);
+    int8_t (*get_held_container_type)(void *ctx);
 
     /* ---- UI state ---- */
     int16_t (*get_v1e0976)(void *ctx);

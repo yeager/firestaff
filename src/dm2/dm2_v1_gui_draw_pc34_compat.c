@@ -357,6 +357,9 @@ void dm2_v1_draw_chip_of_magic_map(
     void *palette,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
+    /* Source: SKWINDOS/dm2bya.cpp:2601,
+     * SKWINSPX/src/v4/skguidrw.cpp:825, and
+     * SKWINSPX/src/v5/skguidr5.cpp:312. */
     if (!cb || !bmp) return;
 
     int16_t chip_w = cb->get_v1d274a ? cb->get_v1d274a(ctx) : 0;
@@ -370,12 +373,11 @@ void dm2_v1_draw_chip_of_magic_map(
     rc.h = chip_h;
 
     int16_t crop_x = 0, crop_y = 0;
-    if (cb->get_magic_map_clip_rect) {
-        DM2_V1_Rect clip;
-        if (!cb->get_magic_map_clip_rect(ctx, &clip) ||
-            !dm2_v1_rect_intersect(&rc, &clip, &crop_x, &crop_y))
-            return;
-    }
+    DM2_V1_Rect clip;
+    if (!cb->get_magic_map_clip_rect ||
+        !cb->get_magic_map_clip_rect(ctx, &clip) ||
+        !dm2_v1_rect_intersect(&rc, &clip, &crop_x, &crop_y))
+        return;
 
     /* SKProject clips the destination first. For a mirrored tile, a crop
      * at its leading edge takes pixels from the opposite source edge. */
@@ -706,20 +708,41 @@ void dm2_v1_draw_cmd_slot(
     int16_t slot_idx, int8_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb) return;
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_CMD_SLOT (694-711).
+     * DOS (SKWINDOS/dm2bya.cpp:2589) and SPX v4 (skguidrw.cpp:766) have
+     * edition-specific field order/index formulas. */
+    if (!cb || slot_idx < 0) return;
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
     int16_t v1e0b62 = cb->get_v1e0b62 ? cb->get_v1e0b62(ctx) : 0;
+    uint8_t category = 0, index = 0, entry = 0;
+    if (!cb->get_command_slot_fields ||
+        !cb->get_command_slot_fields(ctx, slot_idx, &category, &index, &entry))
+        return;
+
     if (v1e0b62 != 0) {
-        /* Enchanted mode: draw from GDAT class 20 */
-        dm2_v1_draw_icon_pict_entry(20, 0, (int8_t)(flags + 21),
-                                     2, (int16_t)(slot_idx + 0x3f), -1,
+        if (!cb->get_held_container_type) return;
+        int8_t held_type = cb->get_held_container_type(ctx);
+        int16_t image = (int16_t)(((int16_t)entry - 8) * 2 + 0x41 + flags);
+        dm2_v1_draw_icon_pict_entry(20, held_type, (int8_t)image,
+                                     2, (int16_t)(slot_idx + 0x6e), -1,
                                      cb, ctx);
-    } else {
-        dm2_v1_draw_icon_pict_entry(1, 4, (int8_t)(flags + 21),
-                                     2, (int16_t)(slot_idx + 0x3f), -1,
-                                     cb, ctx);
+        return;
+    }
+
+    dm2_v1_draw_icon_pict_entry(1, 4, (int8_t)(flags + 21),
+                                 2, (int16_t)(slot_idx + 0x3f), -1,
+                                 cb, ctx);
+    if (cb->query_cmdstr_name && cb->draw_name_str) {
+        void *name = cb->query_cmdstr_name(ctx, (int8_t)category,
+                                           (int8_t)index, (int8_t)entry);
+        uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 15) : 0;
+        uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+        if (name)
+            cb->draw_name_str(ctx, 2, (int32_t)(slot_idx + 0x42),
+                              (int16_t)fg,
+                              (int16_t)((uint16_t)bg | 0x4000), name);
     }
 }
 
