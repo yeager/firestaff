@@ -108,7 +108,7 @@ source-locked Mednafen 1.32.1 inspector maps it to HuC CD-RAM page `$74`
 (physical `$0E891D`); the saved MPRs do not select that page. Because all four
 arrays are present, this does not identify the active map or its consumer. See
 the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
-and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain). Disc LBA 3674 is a source target, but exact-LBA filtering is not implemented for the current CD-read and FIFO-origin receipt paths; the required media-byte-authenticated pose consumer join has not been captured.
 
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
