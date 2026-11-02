@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int passed;
@@ -115,6 +116,90 @@ static size_t build_3d93b_fixture(uint8_t *buf, size_t cap)
     buf[raw_map_base + 4u] = 0x10;
     buf[raw_map_base + 5u] = 0x20;
     return raw_map_base + 6u;
+}
+
+static void test_authentic_teleporter_passage(
+    const char *relative_path, const char *edition)
+{
+    const char *root = getenv("FIRESTAFF_DATA");
+    const char *home = getenv("HOME");
+    char path[1024];
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+    DM2_V1_DungeonData dungeon;
+    int teleporter_tiles = 0;
+    int blocked_teleporters = 0;
+    int open_teleporters = 0;
+    int mismatches = 0;
+
+    if (root && root[0]) {
+        snprintf(path, sizeof(path), "%s/%s", root, relative_path);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/%s",
+                 home, relative_path);
+    } else {
+        printf("  SKIP: authentic %s DM2 dungeon path is unavailable\n", edition);
+        return;
+    }
+
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0) {
+        if (file) fclose(file);
+        printf("  SKIP: authentic %s DM2 dungeon is unavailable\n", edition);
+        return;
+    }
+    rewind(file);
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        printf("  SKIP: authentic %s DM2 dungeon could not be read\n", edition);
+        return;
+    }
+    fclose(file);
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (dm2_v1_dungeon_load(&dungeon, bytes, (int)length) != 0) {
+        free(bytes);
+        printf("  FAIL: authentic %s DM2 dungeon did not load\n", edition);
+        ++failed;
+        return;
+    }
+    free(bytes);
+
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        for (int x = 0; x < dungeon.level_widths[level]; ++x) {
+            for (int y = 0; y < dungeon.level_heights[level]; ++y) {
+                int tile = dm2_v1_dungeon_c_map_get_tile_value(
+                    &dungeon, level, x, y);
+                const uint8_t *record;
+                int record_offset = -1;
+                if (tile < 0 || (((uint8_t)tile >> 5) & 7u) != 5u) continue;
+                ++teleporter_tiles;
+                record = dm2_v1_dungeon_c_map_get_address_of_tile_record(
+                    &dungeon, level, x, y, NULL, &record_offset);
+                if (!record || record_offset < 0 ||
+                    record_offset > dungeon.raw_size - 5) continue;
+                if ((record[4] & 0x01u) != 0) {
+                    ++blocked_teleporters;
+                    if (dm2_v1_dungeon_c_map_is_tile_passage(
+                            &dungeon, level, x, y) != 0) ++mismatches;
+                } else {
+                    ++open_teleporters;
+                    if (dm2_v1_dungeon_c_map_is_tile_passage(
+                            &dungeon, level, x, y) == 0) ++mismatches;
+                }
+            }
+        }
+    }
+    CHECK(teleporter_tiles > 0 && blocked_teleporters > 0 &&
+              open_teleporters > 0 && mismatches == 0,
+          "authentic DM2 teleporter passage follows tile-record flags");
+    printf("    %s: teleporter tiles=%d blocked=%d open=%d mismatches=%d\n",
+           edition, teleporter_tiles, blocked_teleporters,
+           open_teleporters, mismatches);
+    dm2_v1_dungeon_free(&dungeon);
 }
 
 static void test_skproject_3d93b_text_scan(void)
@@ -308,6 +393,12 @@ int main(void)
                   dungeon.square_first_thing_base,
           "CHANGE_CURRENT_MAP_TO retains the File_header map and first-thing views");
     test_skproject_3d93b_text_scan();
+    test_authentic_teleporter_passage(
+        "dm2/dos_extract/data/dungeon.dat", "DOS");
+    test_authentic_teleporter_passage(
+        "dm2/fmtowns_iso/DATA/DUNGEON.DAT", "FM Towns");
+    test_authentic_teleporter_passage(
+        "dm2/mac-en/Dungeon Master II/DMFiles/Dungeon.dat", "Mac");
     CHECK(dm2_v1_skproject_change_current_map_to(
               &dungeon, 0, -1, 4, 5, 0, 2, &change_map_receipt) == 0 &&
               change_map_receipt.blocked_negative_map,

@@ -21,6 +21,7 @@ static const char* const g_changelogLines[] = {
     "  - DM1 incomplete-data diagnostics retain the authenticated graphics edition when the matching dungeon file is missing, so the launcher can identify and report the required file.",
     "  - DM2 incomplete loose installations retain the authenticated graphics edition for missing-dungeon diagnostics while keeping launch blocked.",
     "  - DM2 New Game waits for the authentic mirror-selection screen before accepting champion selection input.",
+    "  - DM2 map passage rejects active teleporter tiles flagged impassable by the source record; authenticated DOS, FM Towns and Mac dungeon scans confirm the shared helper.",
     "  - DM2 player status panes draw at their authentic full 77x37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.",
     "  - DM2 health, stamina and mana fills now scale by height for authentic vertical RAW4 status bars, while horizontal fallback bars keep width scaling.",
     "  - DM2 tile-actuator lookup follows SKProject's database cutoff, direction exception and word-read behavior; authentic DOS, FM Towns and Macintosh dungeon data verifies the source comparison.",
