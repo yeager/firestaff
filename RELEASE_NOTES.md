@@ -19,7 +19,7 @@
 - `DM2 tile-actuator lookup`: match SKProject's DB0–DB3 record cutoff, direction exception, and endian-specific word reads; compare against authentic DOS EN/FR, FM Towns JA and Mac EN dungeon data.
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
 - `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, preserve their version-specific text-ornament gates, and document production transition integration as open.
-- `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons, and document environment discovery and distant-element selection as partial.
+- `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
 
 ## DM1
 

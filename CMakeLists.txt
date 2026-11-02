@@ -23999,6 +23999,7 @@ endif()
     add_executable(test_dm2_v1_gui_vp_pc34_compat
         tests/test_dm2_v1_gui_vp_pc34_compat.c
         src/dm2/dm2_v1_gui_vp_pc34_compat.c
+        src/dm2/dm2_v1_querydb_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_gui_vp_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
