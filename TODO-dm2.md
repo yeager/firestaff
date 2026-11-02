@@ -1,3 +1,11 @@
+2026-11-02 SKProject `DRAW_CONTAINER_PANEL` item slots:
+Firestaff's callback now obtains each occupied slot's item ID through an
+explicit callback and queries that item's animation frame and cls1/cls2, as
+DOS `dm2bya.cpp:2680-2705`, SPX v4 `skguidrw.cpp:487-515`, and SPX v5
+`skguidr5.cpp:1541-1570` do. The eight-slot hand-container state and this draw
+callback still have no production DM2 renderer binding, so inventory and
+right-panel parity remain incomplete across supported platforms.
+
 2026-11-02 skproject DOS/SPX v4/v5 `SKW_DRAW_DOOR` / `DRAW_DOOR`:
 The active source renderers select the DB0 door material from map DoorType and
 record state, then apply source stretch/light/color-key geometry. DOS and SPX

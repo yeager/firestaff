@@ -317,6 +317,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     int16_t (*get_strdat_strxplus)(void *ctx);
     int16_t (*get_strdat_gfxstrw1)(void *ctx);
     int16_t (*get_strdat_gfxstrw3)(void *ctx);
+    /* Returns the object ID in a container slot, or -1 when it is empty. */
+    int16_t (*get_container_item)(void *ctx, int32_t container, int32_t slot);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================
