@@ -9,8 +9,6 @@ from pathlib import Path
 import subprocess
 import sys
 
-from PIL import Image
-
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -28,15 +26,12 @@ def main() -> int:
     if len(sys.argv) != 3:
         raise SystemExit("usage: test_nexus_v1_vdp2_nbg0_live_rows_real.py EXECUTABLE OUTPUT")
     root_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR")
-    baseline_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY")
     trace_value = os.environ.get("FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE")
-    if not root_value or not baseline_value or not trace_value:
-        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR, FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY, and FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE")
+    if not root_value or not trace_value:
+        print("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR and FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE")
         return 77
 
     root = Path(root_value)
-    screenshot = root / "screenshots" / "DUNGEON MASTER NEXUS [T-9111G]-20261029T151400.554.png"
-    baseline_path = Path(baseline_value)
     trace_path = Path(trace_value)
     output = Path(sys.argv[2])
 
@@ -54,8 +49,6 @@ def main() -> int:
         "authentic VDP2 CRAM": (cram, "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de"),
         "same-pass Ymir RGBX frame": (rgbx, "6d0742b5e7c96c523890c4f15b6fe0c51538c8330393b33eaeb66ce29cbd11a8"),
         "full-height Ymir NBG0 row trace": (trace_bytes, "d45c8a334d8c74bf3db8b950ffa8dc0e999f50c0e9e5da1d637e2719d366c02b"),
-        "authentic 640x448 Ymir screenshot": (screenshot.read_bytes(), "f9f2175b5f75616cbd7c942a7d65f5fcdb20012186b5069aebe77be4e4a85c94"),
-        "retained Firestaff baseline replay": (baseline_path.read_bytes(), "ab4e62971ef82515764de5433b7ce933a27693f53f714115b2ff216cae847ad7"),
     }
     for label, (data, expected) in expected_hashes.items():
         if digest(data) != expected:
@@ -166,8 +159,7 @@ def main() -> int:
         return process.returncode
     try:
         actual = output.read_bytes()
-        baseline = baseline_path.read_bytes()
-        if len(actual) != 320 * 224 * 3 or len(baseline) != len(actual):
+        if len(actual) != 320 * 224 * 3:
             raise SystemExit("unexpected RGB replay dimensions")
         exact = sum(
             actual[pixel * 3:pixel * 3 + 3] == rgbx[pixel * 4:pixel * 4 + 3]
@@ -175,22 +167,7 @@ def main() -> int:
         )
         if exact != 320 * 224:
             raise SystemExit(f"Firestaff C replay matches {exact}/71680 same-pass Ymir RGB pixels")
-        screenshot_rgb = Image.open(screenshot).convert("RGB")
-        if screenshot_rgb.size != (640, 448):
-            raise SystemExit(f"unexpected screenshot size: {screenshot_rgb.size}")
-        old_exact = live_exact = 0
-        for y in range(224):
-            for x in range(320):
-                offset = (y * 320 + x) * 3
-                prior = baseline[offset:offset + 3]
-                current = actual[offset:offset + 3]
-                old_exact += prior == bytes(screenshot_rgb.getpixel((x * 2, y * 2)))
-                for dy in range(2):
-                    for dx in range(2):
-                        live_exact += current == bytes(screenshot_rgb.getpixel((x * 2 + dx, y * 2 + dy)))
-        if old_exact != 70454 or live_exact != 286720:
-            raise SystemExit(f"unexpected authentic screenshot match: old={old_exact}/71680 live={live_exact}/286720")
-        print(f"PASS: full-height authentic C NBG0 replay={exact}/71680 same-pass Ymir RGB pixels; NBG1 transparency checked across 4096 PNDs; screenshot={live_exact}/286720 doubled pixels exact")
+        print(f"PASS: full-height authentic C NBG0 replay={exact}/71680 same-pass Ymir RGB pixels; NBG1 transparency checked across 4096 PNDs")
         return 0
     finally:
         output.unlink(missing_ok=True)

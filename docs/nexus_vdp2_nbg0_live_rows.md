@@ -1,79 +1,76 @@
 # Nexus NBG0 live-row bitmap replay
 
-The capture-only NBG0 sampler accepts per-output-row Ymir scroll and 8.8
-coordinate increments. It uses the captured final register values on rows
-without a live render-state sample. This covers authentic Nexus intro frames
-where the end-of-frame NBG0 registers differ slightly from the values used to
-render visible rows.
+The capture-only NBG0 sampler uses Ymir's live per-output-row scroll and 8.8
+coordinate increments, with captured final register values only for rows
+without a live sample. It validates the frame's register profile before
+replaying enabled layers. This path remains outside production-renderer
+admission.
 
-## Authentic evidence
+## Full-height authentic capture
 
-Raw input and the original Ymir screenshot are retained outside Git at
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_cram_capture_20261029`.
-The GDB row trace and prior replay are retained at
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_live_row_state_20261029`
-and `../nexus_nbg0_ymir_replay_20261029`. These captures use the hash-verified
-Japanese retail disc and matching Saturn IPL; no synthetic game data is used.
-The row trace is `gdb-row-state.log` (SHA-256
-`1f1ddff055c5189e8b42db9b15936135601f43bc7320873c14e0269a323c40ff`). The
-real-data test verifies this hash, the single frame-counter marker `7486`, the
-complete row sequence 4–116, and each row's NBG0 transparency, scroll,
-increment, priority, and color-calculation fields before supplying row states
-to the C compositor. It also hash-pins the VDP2 register and VRAM dumps,
-checks the captured NBG1 register profile, and verifies all 4,096 PNDs in its
-64×64 map are `(attr=0, charno=0x1000)`. The corresponding 32-byte 4bpp
-character pattern at `0x20000` is all zero, proving transparent index-zero
-pixels for every visible NBG1 cell regardless of the live map scroll.
+The current real-data regression uses an authentic Japanese retail cold boot
+captured with the Yeager Ymir fork. Its external, hash-manifested evidence is
+at:
 
-The trace observes one consistent live row tuple over output rows 4–116:
-NBG0 H/V scroll `0x1f79/0x0bcd` and H/V increments `0xcd/0xcd` in 11.8/8.8
-fixed-point units. The captured final registers encode H/V scroll
-`0x1f65/0x0bc6`. The older snapshot-only Firestaff replay matches 70,454 of
-71,680 upper-left screenshot sample pixels; applying the live row state yields
-286,720 of 286,720 exact matches across all four samples in each 2×2 screenshot
-block. The test pins the VDP1 FBS, VDP2 VRAM, CRAM, register
-snapshot, baseline replay, and screenshot by SHA-256.
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-vdp2-full-frame7486-sameframe-20261102`
 
-A second Ymir 0.4.2-dev capture is retained at
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-nbg0-vdp2-write-capture-20261102`.
-It samples the same 113 NBG0 rows on VDP1 frame 7486; scroll, increments,
-priority, color-calculation enable, and ratio match the earlier GDB trace on
-all 113 rows. Its complete VDP2 VRAM/CRAM write trace contains zero writes
-inside frame range `7486:7487`, zero dropped rows, and 2,167,982 rows outside
-that selected range. This shows that VDP2 memory was stable during the sampled
-frame. Its final memory/register snapshots and screenshot are from frame 7663,
-so they are not used as frame-7486 pixel references. The new write capture is
-not consumed by the existing CTest; its checksums and receipts are recorded in
-the external evidence directory.
+The capture binds VDP1 frame 7486 to Ymir VDP2 serial 8199, with frame-matched
+registers (`BGON=0x0003`, `CHCTLA=0x0013`, `SPCTL=0x1536`, `PRINA=0x0404`,
+`CCCTL=0x0043`, `CCRNA=0x1010`) and 224 unique row samples. All rows use the
+observed scroll `0x1f79/0x0bcd`, increments `0xcd/0xcd`, priority 4, and
+ratio-15 color calculation. The VDP2 memory receipt is complete, with no
+VRAM/CRAM writes or dropped rows in the selected frame range.
 
-This compositor admits the observed profile only: `BGON=0x0003`,
-`CHCTLA=0x0013`, `SPCTL=0x1536`, `PRINA=0x0404`, `CCCTL=0x0043`, and
-`CCRNA=0x1010`, with the captured zero bitmap/CRAM offsets. NBG1 is enabled in
-this profile; the real-data harness verifies its register profile, all 4,096
-map entries, and the selected transparent character before passing the
-attestation to the compositor. Other enabled backgrounds or register profiles
-are rejected instead of being silently omitted.
+The regression pins the VDP1 framebuffer pair, VDP2 VRAM/CRAM/registers, row
+trace, and same-pass Ymir RGBX output by SHA-256. It also verifies the 4,096
+NBG1 PND entries in the authentic 64×64 map and the transparent character data
+at `0x20000` before permitting the NBG0-only capture replay. The CTest was
+built and run on TRV2 with the external evidence configured: Firestaff matched
+all 71,680 same-pass Ymir RGB pixels. Its capture-only receipt reports 21,455
+NBG0 pixels and 50,225 VDP1 underlay pixels.
 
-Run the authentic regression:
+The independent Ymir layer analyzer also matches source colors and priorities
+at all 71,680 positions and reconstructs the complete same-pass RGB image. See
+[`docs/nexus/nexus_vdp2_layer_output_frame7486.md`](nexus/nexus_vdp2_layer_output_frame7486.md)
+and the external capture's `README.md` and `SHA256SUMS.txt`.
+
+Run the authentic C regression:
 
 ```sh
-capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_cram_capture_20261029
-baseline=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_ymir_replay_20261029/firestaff-replay.rgb
-row_trace=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_live_row_state_20261029/gdb-row-state.log
+capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-vdp2-full-frame7486-sameframe-20261102
 FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR="$capture" \
-FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY="$baseline" \
-FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE="$row_trace" \
+FIRESTAFF_NEXUS_NBG0_LIVE_ROW_TRACE="$capture/dumps/nexus-nbg0-vdp2-render-state.csv" \
   ctest --test-dir /path/to/firestaff-build --output-on-failure \
   -R '^nexus_v1_vdp2_nbg0_live_rows_real$'
 ```
 
+This test returns skip code 77 when either evidence variable is missing. A CI
+pass without the external capture therefore does not prove that the real-data
+replay executed.
+
+## Earlier screenshot capture
+
+The earlier 2026-10-29 intro capture remains separate evidence at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_cram_capture_20261029`.
+Its GDB row trace at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_nbg0_live_row_state_20261029`
+covers rows 4–116 and uses the same observed row tuple. Applying that tuple
+previously matched all 286,720 samples across the 2× screenshot blocks; the
+snapshot-only output matched 70,454 upper-left samples. That historical
+screenshot comparison is not an input to the current full-height CTest.
+
+A separate 2026-11-02 write-trace capture at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-nbg0-vdp2-write-capture-20261102`
+also samples rows 4–116 and reports zero VDP2 VRAM/CRAM writes during frame
+7486. Its final snapshot is from frame 7663; it is not used as the full-height
+test's register input.
+
 ## Limits
 
-The regression harness authenticates the retained row trace before passing
-row-state values to the C API; the C API itself does not authenticate that
-trace. The original SH-2 read trace overflowed and has no frame IDs.
-The follow-up capture verifies zero VDP2 VRAM/CRAM writes during frame 7486,
-but it does not record the earlier transfer that populated VRAM. Therefore
-source-to-VRAM transfer timing and complete asset ownership remain unproven. This scanline compositor is capture-only and does not grant
-production renderer permission, prove Saturn hardware parity, or cover other
-register profiles.
+This verifies one authentic Ymir startup frame in a capture-only Firestaff
+compositor. It does not establish retail source ownership/update timing across
+other frames, NBG1 output, interactive menu transitions, dungeon/HUD states,
+other frames, Saturn hardware parity, or production-renderer permission. The
+retained SH-2 read/write traces are incomplete for exclusive final-writer
+attribution; continue joining authentic DMA/CPU writes to the on-screen frame
+before claiming source timing.
