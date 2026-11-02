@@ -104,20 +104,19 @@ int dm2_v1_db1_teleporter_transition(
 
 int dm2_v1_db1_teleporter_transition_live(
     const DM2_V1_DungeonData *dungeon,
-    const DM2_V1_RecordPoolSet *record_pools,
+    const DM2_V1_DB1TeleporterLiveRecord *live_record,
     int map, int x, int y, DM2_V1_DB1TeleporterTransition *out)
 {
     int raw;
     int first;
     int record_type;
-    int record_index;
     const uint8_t *record;
     uint16_t w2;
     uint16_t w4;
     DM2_V1_DB1TeleporterTransition candidate;
 
     if (out) memset(out, 0, sizeof(*out));
-    if (!dungeon || !record_pools || !record_pools->valid || !out)
+    if (!dungeon || !live_record || !live_record->record || !out)
         return 0;
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
     if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 5 ||
@@ -127,15 +126,12 @@ int dm2_v1_db1_teleporter_transition_live(
     if (first < 0 || (((unsigned)first >> 10) & 0x0fu) !=
                          DM2_V1_MOVE_2FCF_DB_TELEPORTER)
         return 0;
-    record_type = dm2_v1_record_handle_pool((int16_t)first);
-    record_index = dm2_v1_record_handle_index((int16_t)first);
+    record_type = (int)(((unsigned)first >> 10) & 0x0fu);
     if (record_type != DM2_V1_MOVE_2FCF_DB_TELEPORTER ||
-        record_index < 0 || record_index >=
-            record_pools->pools[record_type].record_count ||
-        record_pools->pools[record_type].record_size < 6 ||
-        !(record = dm2_v1_record_pool_address(record_pools, (int16_t)first)))
+        live_record->record_size < 6u)
         return 0;
-    if (record_pools->source_words_big_endian) {
+    record = live_record->record;
+    if (live_record->source_words_big_endian) {
         w2 = (uint16_t)(((uint16_t)record[2] << 8) | record[3]);
         w4 = (uint16_t)(((uint16_t)record[4] << 8) | record[5]);
     } else {
@@ -155,7 +151,7 @@ int dm2_v1_db1_teleporter_transition_live(
     candidate.record_id = (uint16_t)first;
     if (!dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
             dungeon, map, x, y, record_type, first,
-            record_pools->record_graph_complete, candidate.scope,
+            live_record->record_graph_complete, candidate.scope,
             candidate.destination_map, candidate.destination_x,
             candidate.destination_y, &candidate.gate) ||
         !candidate.gate.admitted)

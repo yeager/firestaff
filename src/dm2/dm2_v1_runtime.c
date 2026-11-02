@@ -655,13 +655,35 @@ static int dm2_runtime_apply_entered_db1_teleporter(
 {
     DM2_V1_DungeonData *dungeon;
     DM2_V1_DB1TeleporterTransition transition;
+    DM2_V1_DB1TeleporterLiveRecord live_record;
+    int first;
+    const uint8_t *record;
+    int record_type;
+    int record_index;
 
     if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
         return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    if (!rt->record_pools_valid ||
-        !dm2_v1_db1_teleporter_transition_live(
-            dungeon, &rt->record_pools, level, x, y, &transition))
+    if (!rt->record_pools_valid) return 0;
+    first = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (first < 0) return 0;
+    record_type = dm2_v1_record_handle_pool((int16_t)first);
+    record_index = dm2_v1_record_handle_index((int16_t)first);
+    if (record_type != 1 || record_index < 0 ||
+        record_index >= rt->record_pools.pools[record_type].record_count ||
+        rt->record_pools.pools[record_type].record_size < 6 ||
+        !(record = dm2_v1_record_pool_address(&rt->record_pools,
+                                               (int16_t)first)))
+        return 0;
+    live_record.record = record;
+    live_record.record_size =
+        (size_t)rt->record_pools.pools[record_type].record_size;
+    live_record.source_words_big_endian =
+        rt->record_pools.source_words_big_endian;
+    live_record.record_graph_complete =
+        rt->record_pools.record_graph_complete;
+    if (!dm2_v1_db1_teleporter_transition_live(
+            dungeon, &live_record, level, x, y, &transition))
         return 0;
     gs->current_level = transition.destination_map;
     gs->party_x = transition.destination_x;
