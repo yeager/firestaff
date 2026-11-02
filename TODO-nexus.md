@@ -30,6 +30,14 @@ the TITLE palette at offset `0x400` and a `LEV13.DGN` Structure2 palette at
 palette or bitmap owner. Source join and semantic admission remain blocked
 pending same-frame Ymir layer output and final RGBX capture.
 
+The authentic `FONT256.S2D` comparator also accepts the complete frame-1605
+Ymir memory bundle. Its 484-byte FONT256 attribute span exactly matches VDP2
+VRAM offset `0x0`; the Page, Character Generator and palette spans do not match,
+and no CRAM palette span matches. The frame reports `BGON=0x0007`,
+`CHCTLA=0x1013` and `PNCN1=0x0000`. The byte match overlaps the NBG0 bitmap
+base and the bundle has no VDP2 write rows, so it does not establish a FONT256
+upload, producer, text consumer or bitmap ownership. Source join stays unbound.
+
 ## Capture an authentic odd-address mode-5 draw
 
 Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now

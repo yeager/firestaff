@@ -24,6 +24,15 @@ palette or bitmap owner. The NBG0 source join remains unbound, and this
 snapshot does not supply same-run VDP2 layer output or a final RGBX reference.
 See the open frame-1605 capture item in [`TODO-nexus.md`](../../TODO-nexus.md).
 
+The retail `FONT256.S2D` source comparator accepts this same complete Ymir
+memory bundle. Its 484-byte attribute span matches VDP2 VRAM at offset `0x0`,
+while its Page, Character Generator and palette spans do not match; no CRAM
+palette span matches. The captured registers are `BGON=0x0007`,
+`CHCTLA=0x1013` and `PNCN1=0x0000`. This exact byte overlap is at the NBG0
+bitmap base, and the bundle has no VDP2 write rows. It therefore cannot prove
+that FONT256 was uploaded or consumed, identify the writer, or bind the active
+bitmap owner. The text consumer and NBG0 source remain unbound.
+
 ## Consecutive-frame SH-2 staging to VDP1 geometry — 2026-11-02
 
 The authentic Japanese retail Ymir `--debug` movement pair now verifies the
