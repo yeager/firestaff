@@ -7728,19 +7728,58 @@ int dm2_v1_skproject_1c9a_0fcb(
     void *user,
     DM2_V1_Skproject0fcbReceipt *out_receipt);
 
-/* SKULLWIN/c_1c9a.cpp:5960 DM2_CREATE_MINION — searches around a source
-   position (via table1d27fc/table1d2804 direction offset tables) for a
-   free tile to spawn a minion creature, allocating it through
-   dm2_dballochandler.DM2_ALLOC_NEW_CREATURE.  The tile/placement search
-   and creature allocator are caller-owned runtime state that Firestaff
-   does not yet bridge, so this helper stays fail-closed. */
+/* SKWINSPX v5 SK1C9A.cpp:5960 DM2_CREATE_MINION. The helper implements
+   the source tile gate, optional five-tile directional search, allocation,
+   missile association and current-map restore using runtime-owned callbacks. */
 typedef struct {
     int valid;
     int blocked_missing_state;
+    int found_spawn_tile;
+    int allocation_failed;
+    int missile_association_failed;
+    uint8_t attempts;
+    int16_t spawn_x;
+    int16_t spawn_y;
+    uint16_t created_record;
+    uint16_t associated_missile;
 } DM2_V1_SkprojectCreateMinionReceipt;
 
+typedef int32_t (*DM2_V1_SkprojectAllocNewCreatureFn)(
+    uint16_t creature_type,
+    uint16_t health_multiplier,
+    uint16_t creature_direction,
+    uint16_t x,
+    uint16_t y,
+    void *user); /* 0xffff on allocation failure */
+
+typedef int (*DM2_V1_SkprojectAssociateMinionMissileFn)(
+    uint16_t creature,
+    uint16_t missile_reference,
+    void *user);
+
+typedef struct {
+    void *user;
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn;
+    DM2_V1_SkprojectRandbitFn randbit_fn;
+    DM2_V1_SkprojectChangeMapFn change_map_fn;
+    DM2_V1_SkprojectAllocNewCreatureFn alloc_new_creature_fn;
+    DM2_V1_SkprojectAssociateMinionMissileFn associate_missile_fn;
+    const int16_t *table1d27fc;
+    const int16_t *table1d2804;
+    uint16_t creature_type;
+    uint16_t health_multiplier;
+    uint16_t creature_direction;
+    int16_t start_x;
+    int16_t start_y;
+    int16_t target_map;
+    int16_t current_map;
+    int16_t search_direction; /* negative: start tile only; else 5 candidates */
+    uint16_t missile_reference; /* OBJECT_NULL means ordinary creature */
+} DM2_V1_SkprojectCreateMinionContext;
+
 int16_t dm2_v1_skproject_create_minion(
-    void *state,
+    DM2_V1_SkprojectCreateMinionContext *context,
     DM2_V1_SkprojectCreateMinionReceipt *out_receipt);
 
 /* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to

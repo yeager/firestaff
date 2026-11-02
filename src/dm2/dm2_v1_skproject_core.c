@@ -10516,8 +10516,9 @@ int dm2_v1_skproject_add_cache_hash_with_mement(
     if (result < 0) return result;
     *out_cache_index = cache_index;
     if (result == 1) {
-        uint16_t mementi = dm2_v1_skproject_query_mementi_from(
-            mement_state, (uint16_t)(cache_index | 0x8000u));
+        uint16_t mementi = cache_index < DM2_V1_SKPROJECT_MEMENT_MAX
+            ? mement_state->cache_to_mement[cache_index]
+            : DM2_V1_SKPROJECT_MEMENT_NONE;
         if (mementi != DM2_V1_SKPROJECT_MEMENT_NONE &&
             !dm2_v1_skproject_3e74_48c9_touch_mement(
                 mement_state, mementi, 0)) {
@@ -20176,21 +20177,100 @@ int dm2_v1_skproject_1c9a_0fcb(
     return 1;
 }
 
-/* SKULLWIN/c_1c9a.cpp:5960 DM2_CREATE_MINION — fail-closed until the tile
-   search / creature allocator runtime state is bridged. */
 int16_t dm2_v1_skproject_create_minion(
-    void *state,
+    DM2_V1_SkprojectCreateMinionContext *context,
     DM2_V1_SkprojectCreateMinionReceipt *out_receipt)
 {
     DM2_V1_SkprojectCreateMinionReceipt receipt;
+    int16_t x, y;
+    int16_t search_direction;
+    int direction_step;
+    int candidate_count;
+    int32_t created = DM2_V1_SKPROJECT_OBJECT_NULL;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
 
-    (void)state;
-    receipt.blocked_missing_state = 1;
+    receipt.created_record = DM2_V1_SKPROJECT_OBJECT_NULL;
+    receipt.associated_missile = context
+        ? context->missile_reference : DM2_V1_SKPROJECT_OBJECT_NULL;
+    if (!context || !context->tile_fn || !context->creature_at_fn ||
+        !context->randbit_fn || !context->change_map_fn ||
+        !context->alloc_new_creature_fn || !context->table1d27fc ||
+        !context->table1d2804 || context->search_direction > 3) {
+        receipt.blocked_missing_state = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return (int16_t)DM2_V1_SKPROJECT_OBJECT_NULL;
+    }
+
+    context->change_map_fn(context->target_map, context->user);
+    x = context->start_x;
+    y = context->start_y;
+    search_direction = context->search_direction;
+    direction_step = context->randbit_fn(context->user) ? 1 : -1;
+    candidate_count = search_direction < 0 ? 1 : 5;
+
+    for (int attempt = 0; attempt < candidate_count; ++attempt) {
+        uint8_t tile = context->tile_fn(x, y, context->user);
+        uint8_t tile_type = (uint8_t)(tile >> 5);
+        int tile_admitted = 1;
+
+        if (tile_type == 3u) {
+            tile_admitted = 0;
+        } else if (tile_type == 6u && (tile & 0x05u) == 0u) {
+            tile_admitted = 0;
+        } else if (tile_type == 4u) {
+            uint8_t door_state = (uint8_t)(tile & 0x07u);
+            tile_admitted = door_state == 0u || door_state == 5u;
+        }
+
+        receipt.attempts++;
+        if (tile_admitted &&
+            context->creature_at_fn(x, y, context->user) < 0) {
+            uint16_t type = context->creature_type;
+            if (context->missile_reference !=
+                DM2_V1_SKPROJECT_OBJECT_NULL) {
+                type = (uint16_t)(type | 0x8000u);
+            }
+            created = context->alloc_new_creature_fn(
+                type, context->health_multiplier,
+                context->creature_direction,
+                (uint16_t)x, (uint16_t)y, context->user);
+            if ((uint16_t)created != DM2_V1_SKPROJECT_OBJECT_NULL) {
+                receipt.found_spawn_tile = 1;
+                receipt.spawn_x = x;
+                receipt.spawn_y = y;
+                break;
+            }
+        }
+
+        if (attempt + 1 < candidate_count) {
+            x = (int16_t)(context->start_x +
+                          context->table1d27fc[search_direction]);
+            y = (int16_t)(context->start_y +
+                          context->table1d2804[search_direction]);
+            search_direction = (int16_t)((search_direction +
+                direction_step + 4) & 0x03);
+        }
+    }
+
+    if ((uint16_t)created == DM2_V1_SKPROJECT_OBJECT_NULL) {
+        receipt.allocation_failed = receipt.found_spawn_tile;
+    } else {
+        receipt.created_record = (uint16_t)created;
+        if (context->missile_reference !=
+                DM2_V1_SKPROJECT_OBJECT_NULL &&
+            (!context->associate_missile_fn ||
+             !context->associate_missile_fn(
+                 (uint16_t)created, context->missile_reference,
+                 context->user))) {
+            receipt.missile_association_failed = 1;
+        }
+    }
+    context->change_map_fn(context->current_map, context->user);
+    receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
-    return -1;
+    return (int16_t)created;
 }
 
 /* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to
