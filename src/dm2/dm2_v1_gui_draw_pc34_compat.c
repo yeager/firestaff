@@ -804,14 +804,79 @@ void dm2_v1_draw_player_attack_dir(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_PLAYER_ATTACK_DIR
+     * (734-790). DOS and SPX v4 use edition-specific hero/jitter state. */
+    int16_t graphics_set = cb->get_v1d67d6 ? cb->get_v1d67d6(ctx) : -1;
+    if (graphics_set >= 0)
+        dm2_v1_draw_icon_pict_entry(8, (int8_t)graphics_set, -10,
+                                     2, 0x5d, -1, cb, ctx);
+
     int16_t cur = cb->get_cur_act_hero ? cb->get_cur_act_hero(ctx) : 0;
-    if (cur <= 0) return;
+    if (cur > 0) {
+        int32_t hero_idx = cur - 1;
+        int16_t width = cb->get_v1d272c ? cb->get_v1d272c(ctx) : 0;
+        int16_t height = cb->get_v1d272e ? cb->get_v1d272e(ctx) : 0;
+        void *bmp = width > 0 && height > 0 && cb->alloc_pict_buff ?
+            cb->alloc_pict_buff(ctx, width, height, 0, 4) : NULL;
+        bool jitter_enabled = cb->get_savegames_b04 &&
+                              cb->get_savegames_b04(ctx) != 0;
+        bool jitter_available = cb->get_savegames_b04 &&
+                                (!jitter_enabled || cb->randdir);
+        bool squad_icon_available = cb->get_hero_absdir &&
+            cb->get_v1e0258 && cb->get_savegames_b02 &&
+            cb->copy_small_palette && cb->query_gdat_palette &&
+            cb->query_gdat_image && cb->draw_dialogue_pict;
+        if (bmp && cb->query_blit_rect && cb->free_pict_buff) {
+            DM2_V1_Rect rect;
+            int16_t src_x = 0, src_y = 0;
+            if (jitter_available && squad_icon_available &&
+                cb->query_blit_rect(ctx, bmp, &rect, 0x5e,
+                                    &src_x, &src_y)) {
+                if (jitter_enabled) {
+                    int16_t jitter = cb->randdir(ctx);
+                    if (jitter != 0) {
+                        rect.y = (int16_t)(rect.y + jitter - 2);
+                        jitter = cb->randdir(ctx);
+                        if (jitter != 0)
+                            rect.x = (int16_t)(rect.x + jitter - 2);
+                    }
+                }
 
-    /* Draw directional attack indicator (simplified) */
-    dm2_v1_draw_icon_pict_entry(8, 0, -10, 2, 0x5d, -1, cb, ctx);
+                uint8_t palette[16] = {0};
+                dm2_v1_query_gdat_squad_icon(bmp, hero_idx, palette,
+                                               cb, ctx);
+                dm2_v1_draw_icon_pict_buff(bmp, 2, &rect, src_x, src_y,
+                                            0x0c, 0, palette, cb, ctx);
 
-    int32_t hero_idx = cur - 1;
-    /* Squad icon and enchantment aura handled through callbacks */
+                if (cb->get_hero_ench_power &&
+                    cb->get_hero_ench_power(ctx, hero_idx) != 0 &&
+                    cb->query_gdat_summary_image && cb->query_picst_it &&
+                    cb->image_draw && cb->get_hero_ench_aura &&
+                    cb->get_hero_absdir && cb->get_v1e0258 &&
+                    cb->get_gametick) {
+                    DM2_V1_ImageDesc aura;
+                    memset(&aura, 0, sizeof(aura));
+                    cb->query_gdat_summary_image(
+                        ctx, &aura, 1, 7,
+                        (int8_t)cb->get_hero_ench_aura(ctx, hero_idx));
+                    cb->query_picst_it(ctx, &aura);
+                    aura.mode |= 0x10;
+                    int32_t relative_dir =
+                        (cb->get_hero_absdir(ctx, hero_idx) + 4 -
+                         cb->get_v1e0258(ctx)) & 0x3;
+                    aura.width >>= 2;
+                    aura.x = (int16_t)(relative_dir * aura.width);
+                    aura.height >>= 2;
+                    aura.y = (int16_t)((cb->get_gametick(ctx) & 0x3) *
+                                       aura.height);
+                    cb->image_draw(ctx, &aura, 2, 0x5e, 0x0c);
+                }
+            }
+            cb->free_pict_buff(ctx, bmp);
+        } else if (bmp && cb->free_pict_buff) {
+            cb->free_pict_buff(ctx, bmp);
+        }
+    }
 
     dm2_v1_draw_icon_pict_entry(1, 4, 16, 2, 0x60, -1, cb, ctx);
     dm2_v1_draw_icon_pict_entry(1, 4, 18, 2, 0x61, -1, cb, ctx);

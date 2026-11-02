@@ -239,6 +239,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*set_v1d66fc)(void *ctx, int16_t val);
     int16_t (*get_v1d67bc)(void *ctx);
     void (*set_v1d67bc)(void *ctx, int16_t val);
+    int16_t (*get_v1d67d6)(void *ctx);
     int16_t (*get_v1d694a)(void *ctx);
     void (*set_v1d694a)(void *ctx, int16_t val);
     int32_t (*get_gametick)(void *ctx);
