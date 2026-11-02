@@ -2494,6 +2494,11 @@ int dm2_v1_boot_query_expanded_rect_receipt(
 int dm2_v1_boot_query_blit_rect_for_dimensions(
     const DM2_V1_BootProfile *profile, uint16_t rect_id,
     int source_width, int source_height, DM2_V1_InterfaceRect *out_rect);
+/* Full QUERY_BLIT_RECT result, including the clipped source-image origin. */
+int dm2_v1_boot_query_blit_rect_details(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    int source_width, int source_height, DM2_V1_InterfaceRect *out_rect,
+    int16_t *out_source_x, int16_t *out_source_y);
 
 int dm2_v1_boot_g1_static_object_material_receipt(
     const DM2_V1_BootProfile *profile,

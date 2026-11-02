@@ -85,16 +85,16 @@ through `GET_ITEM_ORDER_IN_CONTAINER`, and scatters up to 32 denomination
 GDAT sprites per slot using the source `table1d275a` offsets and clipping to
 `glbScreenBufferRightPanel.rc2`. The v5 path
 `SKWINSPX/src/v5/skguidr5.cpp::DM2_DRAW_MONEYBOX` has the same denomination,
-sprite, and scatter behavior. Firestaff has a matching compatibility draw
-routine and source offset table in `dm2_v1_gui_draw_pc34_compat.c`, and its
-container-order parser is in `dm2_v1_asset_loader.c`. However, repository
-reachability search finds no caller of `dm2_v1_draw_moneybox` outside its own
-definition, and M11's accepted runtime-frame path explicitly skips the
-compatibility HUD pass without a complete live GUI receipt. The drawing
-routine exists, but source-owned right-panel state does not reach it at
-runtime. Moneybox panel parity remains **open** across DOS, Amiga, FM Towns,
-and Macintosh; the Amiga movement-arrow result above does not cover this
-panel.
+sprite, and scatter behavior. Firestaff now resolves the active action-hand
+moneybox ObjectID, `LOAD_MISCITEM` denomination order, the container's `0x40`
+slot text and coin charges, then sends that state to the M11 screen-owned
+renderer. The renderer uses the source frame rect `0x5c`, denomination rects
+`0xdd + slot`, and expanded rect 11 for clipping. The scatter offsets match
+the source table. This closes the missing runtime draw owner. It does not
+establish interactive parity yet: SKProject `CLICK_MONEYBOX` and
+`TAKE_COIN_FROM_WALLET` still need to be traced through M11 for deposit and
+withdraw, and the render and pointer routes have not been verified on DOS,
+Amiga, FM Towns, and Macintosh. Full moneybox parity remains **open**.
 
 ## Interpretation boundary
 

@@ -16104,6 +16104,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t font_hash = 0u;
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
+    int16_t moneybox_coin_order[10];
+    int16_t moneybox_coin_counts[10];
+    uint16_t moneybox_item_ids[10];
+    uint16_t moneybox_object_id = 0xffffu;
+    uint8_t moneybox_container_cls2 = 0xffu;
     uint32_t hud_material_plan_hash = 0u;
     int hud_material_plan_command_count = 0;
     int hud_material_plan_required = 0;
@@ -16277,6 +16282,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (rt->boot && rt->boot->graphics_dat) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
+        viewport.asset_profile = rt->boot;
+        if (dm2_v1_runtime_get_active_moneybox(
+                &moneybox_object_id, &moneybox_container_cls2)) {
+            if (!dm2_v1_runtime_get_active_moneybox_coins(
+                    moneybox_coin_order, moneybox_coin_counts,
+                    moneybox_item_ids)) {
+                g_dm2_last_render_failure_stage = 7;
+                return -1;
+            }
+            dm2_v1_viewport_set_moneybox_panel(
+                &viewport, moneybox_object_id, moneybox_container_cls2,
+                moneybox_coin_order, moneybox_coin_counts,
+                moneybox_item_ids);
+        }
     }
     memset(&wall_ornament_render_plan, 0,
            sizeof(wall_ornament_render_plan));
@@ -21069,6 +21088,11 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
     if (out_container_cls2) *out_container_cls2 = 0xffu;
     if (!out_object_id || !out_container_cls2 || hero < 0 || hero >= 4 ||
         hand < 0 || hand >= 2 || !rt->record_pools_valid || !rt->boot)
+        return 0;
+    /* DISPLAY_RIGHT_PANEL_SQUAD_HANDS routes selected action 2 to the spell
+     * panel before it examines the physical hand's ObjectID. */
+    if (rt->source_selected_hand_action == 2 ||
+        rt->source_spell_panel_flag != 0)
         return 0;
     object_id = (uint16_t)rt->champion_inventory_objects[hero][hand];
     if (object_id == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
