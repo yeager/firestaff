@@ -123,7 +123,15 @@ def main() -> int:
                         help="emit bytes from this VRAM range at every scanline boundary; repeatable")
     parser.add_argument("--watch-cram", action="append", default=[], metavar="ADDRESS:LENGTH",
                         help="emit bytes from this CRAM range at every scanline boundary; repeatable")
+    parser.add_argument("--row-details", action="store_true",
+                        help="emit per-scanline hashes and requested byte ranges (can produce large output)")
+    parser.add_argument("--detail-frame", action="append", type=lambda value: int(value, 0), default=[],
+                        metavar="FRAME", help="with row details, limit output to this VDP1 frame; repeatable")
+    parser.add_argument("--detail-row", action="append", type=lambda value: int(value, 0), default=[],
+                        metavar="ROW", help="with row details, limit output to this rendered row; repeatable")
     args = parser.parse_args()
+    if (args.detail_frame or args.detail_row) and not args.row_details:
+        parser.error("--detail-frame and --detail-row require --row-details")
     dumps = args.capture / "dumps" if (args.capture / "dumps").is_dir() else args.capture
     receipt, events, vram, cram = validate_bundle(dumps)
     final_vram = (dumps / "vdp2-vram.bin").read_bytes()
@@ -131,6 +139,7 @@ def main() -> int:
     vram_watches = [parse_watch_range(value, VRAM_SIZE) for value in args.watch_vram]
     cram_watches = [parse_watch_range(value, CRAM_SIZE) for value in args.watch_cram]
     scanlines = 0
+    detailed_scanlines = 0
 
     for index, row in enumerate(events):
         if row["event"] == "write":
@@ -142,14 +151,19 @@ def main() -> int:
             continue
 
         frame = row["vdp1_frame"]
-        prefix = f"row_state sequence={row['sequence']} vdp1_frame={frame} row={row['row']}"
-        print(f"{prefix} vram_sha256={sha256(vram)} cram_sha256={sha256(cram)}")
-        for watch_index, (address, length) in enumerate(vram_watches):
-            value = vram[address : address + length].hex()
-            print(f"watch_vram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
-        for watch_index, (address, length) in enumerate(cram_watches):
-            value = cram[address : address + length].hex()
-            print(f"watch_cram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
+        selected_frame = not args.detail_frame or (frame != "unknown" and int(frame) in args.detail_frame)
+        selected_row = not args.detail_row or int(row["row"]) in args.detail_row
+        if (args.row_details or args.detail_frame or args.detail_row) and selected_frame and selected_row:
+            frame = row["vdp1_frame"]
+            prefix = f"row_state sequence={row['sequence']} vdp1_frame={frame} row={row['row']}"
+            print(f"{prefix} vram_sha256={sha256(vram)} cram_sha256={sha256(cram)}")
+            for watch_index, (address, length) in enumerate(vram_watches):
+                value = vram[address : address + length].hex()
+                print(f"watch_vram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
+            for watch_index, (address, length) in enumerate(cram_watches):
+                value = cram[address : address + length].hex()
+                print(f"watch_cram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
+            detailed_scanlines += 1
         scanlines += 1
 
     require(bytes(vram) == final_vram, "replayed VRAM does not match the export-time snapshot")
@@ -157,6 +171,7 @@ def main() -> int:
     print(f"vdp1_frame_range_enabled={receipt['trace_vdp1_frame_range_enabled']}")
     print(f"ordered_writes={receipt['trace_rows']}")
     print(f"ordered_scanline_markers={scanlines}")
+    print(f"detailed_scanline_markers={detailed_scanlines}")
     print(f"replayed_vram_sha256={sha256(vram)}")
     print(f"replayed_cram_sha256={sha256(cram)}")
     print("replay_vram_matches_final=1")
