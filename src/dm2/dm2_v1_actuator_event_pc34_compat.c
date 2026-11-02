@@ -1853,8 +1853,12 @@ int dm2_v1_actuate_wall_mecha_with_rng_and_revive(
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
-    dm2_v1_tile_record_walk(pool_set, dungeon, map, x, y,
-                            wall_mecha_visitor, &ctx, &walk_receipt);
+    if (!dm2_v1_tile_record_walk(pool_set, dungeon, map, x, y,
+                                 wall_mecha_visitor, &ctx, &walk_receipt) ||
+        !walk_receipt.valid || walk_receipt.fail_closed) {
+        receipt->fail_closed++;
+        return 0;
+    }
 
     receipt->valid = 1;
     return 1;
@@ -2280,8 +2284,12 @@ int dm2_v1_actuate_floor_mecha_with_revive(
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
-    dm2_v1_tile_record_walk(pool_set, dungeon, map, x, y,
-                            floor_mecha_visitor, &ctx, &walk_receipt);
+    if (!dm2_v1_tile_record_walk(pool_set, dungeon, map, x, y,
+                                 floor_mecha_visitor, &ctx, &walk_receipt) ||
+        !walk_receipt.valid || walk_receipt.fail_closed) {
+        receipt->fail_closed++;
+        return 0;
+    }
 
     receipt->valid = 1;
     return 1;
