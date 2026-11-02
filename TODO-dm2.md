@@ -1,3 +1,10 @@
+2026-11-02 SKProject `GET_ITEM_ORDER_IN_CONTAINER`:
+The asset-loader receipt reads edition GDAT container entry 0x40, parses the
+digit ranges and J-prefixed +0x100 IDs, then resolves them through the ordered
+currency table. The live M11 moneybox renderer calls it to build source-slot
+coin order. The generic click callback is not wired to that same transaction,
+and per-platform click behavior remains unverified. Keep source rows PARTIAL.
+
 2026-11-02 SKProject `DRAW_CONTAINER_PANEL` item slots:
 Firestaff's callback now obtains each occupied slot's item ID through an
 explicit callback, queries that item's animation frame and cls1/cls2, and
