@@ -1505,7 +1505,8 @@ void dm2_v1_draw_scroll_text(
 
 /* ================================================================
  * 41. DRAW_ITEM_SURVEY
- *     c_gui_draw.cpp:2072
+ *     SKWINDOS/dm2byf.cpp:716-815, SPX v4 skguidrw.cpp:2595-2738,
+ *     SPX v5 skguidr5.cpp:2073-2206
  * ================================================================ */
 
 int32_t dm2_v1_draw_item_survey(
@@ -1517,19 +1518,34 @@ int32_t dm2_v1_draw_item_survey(
         receipt->survey_drawn = false;
         receipt->result = 0;
     }
-    if (!cb) return 0;
-    if (record == -1) return 0;
+    if (!cb || record == -1) return 0;
 
-    /* Check for scroll type (7) */
-    /* Draws item name, weight, icon, and stat bars via callbacks */
-    if (flags == 0) {
-        if (receipt) receipt->result = 0;
-        return 0;
+    if (cb->draw_guided_str)
+        cb->draw_guided_str(ctx, (void *)dm2_guidraw_v1d10f0);
+
+    int32_t item_type = (record & 0x3c00) >> 10;
+    if (item_type == 7) {
+        dm2_v1_draw_scroll_text(record, cb, ctx);
+        if (receipt) {
+            receipt->survey_drawn = true;
+            receipt->result = 1;
+        }
+        return 1;
     }
 
     if (cb->set_v1d66fc) cb->set_v1d66fc(ctx, 3);
+    if (flags == 0) return 0;
+
     if (cb->draw_static_pic)
         cb->draw_static_pic(ctx, 7, 0, 1, 0x1ee, -1);
+
+    int8_t cls1 = cb->query_cls1 ? cb->query_cls1(ctx, record) : 0;
+    int8_t cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
+    if (cb->query_gdat_entry_loadable && cb->draw_static_pic &&
+        cb->query_gdat_entry_loadable(ctx, cls1, cls2, 1, 0x11))
+        cb->draw_static_pic(ctx, cls1, cls2, 0x11, 0x1ee, 0x0c);
+    if (cb->draw_static_pic)
+        cb->draw_static_pic(ctx, 7, 0, 5, 0x1f8, 0x0c);
 
     void *name = cb->get_item_name ? cb->get_item_name(ctx, record) : NULL;
     uint8_t col = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 13) : 0;
@@ -1537,6 +1553,74 @@ int32_t dm2_v1_draw_item_survey(
         cb->draw_vp_rc_str(ctx, 0x1fa, (int16_t)col, name);
 
     dm2_v1_draw_item_icon(record, 0x2e, 0, 0, 0, cb, ctx);
+
+    int16_t weight = cb->query_item_weight ?
+        cb->query_item_weight(ctx, (int16_t)record) : 0;
+    if (cb->set_item_weight_display)
+        cb->set_item_weight_display(ctx, (int16_t)(weight / 10),
+                                    (int16_t)(weight % 10));
+    char weight_text[0x80] = {0};
+    if (cb->query_gdat_text && cb->draw_guided_str) {
+        void *text = cb->query_gdat_text(ctx, 7, 0, 0x1f, weight_text);
+        if (text) cb->draw_guided_str(ctx, text);
+    }
+
+    if (item_type == 9) {
+        if (cb->is_container_chest && cb->is_container_chest(ctx,
+                                                              (int16_t)record)) {
+            void *container = cb->get_address_of_record ?
+                cb->get_address_of_record(ctx, (int16_t)record) : NULL;
+            if (container)
+                dm2_v1_draw_container_survey(container, cb, ctx);
+        } else if (cb->is_container_moneybox &&
+                   cb->is_container_moneybox(ctx, record)) {
+            dm2_v1_money_box_survey(record, cb, ctx);
+        }
+        if (receipt) {
+            receipt->survey_drawn = true;
+            receipt->result = 1;
+        }
+        return 1;
+    }
+
+    int32_t bar_index = 0;
+    if (cb->is_item_chargeable && cb->is_item_chargeable(ctx, record) &&
+        cb->add_item_charge && cb->get_max_charge &&
+        cb->get_item_stat_bar_rect_id) {
+        int16_t charge = cb->add_item_charge(ctx, record, 0);
+        if (charge != 0) {
+            int16_t rect = cb->get_item_stat_bar_rect_id(ctx, bar_index++);
+            int16_t maximum = cb->get_max_charge(ctx, record);
+            dm2_v1_draw_item_stats_bar(rect, charge, maximum, 0x71, 4,
+                                       cb, ctx);
+        }
+    }
+
+    int32_t value = 0;
+    int32_t maximum = 0;
+    int32_t rune = 0;
+    if (item_type == 5 && cb->query_gdat_dbspec_word) {
+        value = cb->query_gdat_dbspec_word(ctx, record, 8);
+        maximum = 0x50;
+        rune = 0x72;
+        if (value == 0) {
+            value = cb->query_gdat_dbspec_word(ctx, record, 9);
+            maximum = 0x64;
+            rune = 0x73;
+        }
+    } else if (item_type == 6 && cb->query_gdat_dbspec_word) {
+        value = cb->query_gdat_dbspec_word(ctx, record, 0x0b) & 0xff;
+        maximum = 0xc8;
+        rune = 0x72;
+    } else if (item_type == 8 && cb->get_item_potion_power) {
+        value = cb->get_item_potion_power(ctx, record);
+        maximum = 0xff;
+        rune = 0x75;
+    }
+    if (value != 0 && maximum > 0 && cb->get_item_stat_bar_rect_id) {
+        int16_t rect = cb->get_item_stat_bar_rect_id(ctx, bar_index);
+        dm2_v1_draw_item_stats_bar(rect, value, maximum, rune, 5, cb, ctx);
+    }
 
     if (receipt) {
         receipt->survey_drawn = true;

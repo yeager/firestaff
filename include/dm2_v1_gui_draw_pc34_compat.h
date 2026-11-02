@@ -330,6 +330,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     int16_t (*get_container_first_item)(void *ctx, void *container_record);
     int16_t (*get_inventory_slot_rect_id)(void *ctx, int32_t slot);
     int8_t (*get_empty_inventory_slot_icon)(void *ctx, int32_t slot);
+    bool (*is_item_chargeable)(void *ctx, int32_t record);
+    int16_t (*get_item_potion_power)(void *ctx, int32_t record);
+    int16_t (*get_item_stat_bar_rect_id)(void *ctx, int32_t bar_index);
+    void (*set_item_weight_display)(void *ctx, int16_t whole, int16_t tenth);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

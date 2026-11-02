@@ -3091,12 +3091,13 @@ callbacks are not bound across every supported edition/platform. Keep all
 variant rows PARTIAL.
 
 2026-11-02 SKProject `DRAW_ITEM_SURVEY`:
-The current Firestaff callback only draws a limited item name/icon path.
-SKProject additionally branches to scroll text, item class images and
-description, weight text/state, chest and moneybox contents, charges, and
-item-type-specific potion/weapon/armor/miscellaneous power bars. Update the
-source inventories to PARTIAL; implement and bind the remaining source branches
-for DOS and SPX before claiming item-survey parity.
+Firestaff now dispatches scrolls, draws item class images and description,
+updates weight display state/text, surveys chest/moneybox contents, and requests
+charge plus weapon/armor/potion stat bars when the corresponding callbacks are
+available. The callback API now exposes chargeability, potion power, stat-row
+rects, and weight display state. SPX-v4 extended-mode branches, source stat-row
+selection across variants, and production callback/platform bindings remain
+open. Keep the DOS/SPX source rows PARTIAL.
 
 2026-11-02 SKProject `DRAW_SCROLL_TEXT` / `DRAW_HAND_ACTION_ICONS`:
 The source inventory already marks DOS/SPX definitions PARTIAL. The named audit
