@@ -3919,10 +3919,10 @@ The source-symbol inventory maps `OBJECT.C:515-526`
 adapter. The focused regression checks all 46 fixed entries, adapter
 delegation, and invalid-index handling. ReDMCSB reads the current mutable
 `G0030.IconIndex`; `F0038_OBJECT_DrawIconInSlotBox` updates that field before
-its blit on supported media, and `F0295_CHAMPION_HasObjectIconInSlotBoxChanged`
+its blit on supported DM1 media, and `F0295_CHAMPION_HasObjectIconInSlotBoxChanged`
 uses it to decide whether action-hand icons must be redrawn. Firestaff's
 adapter reads a constant PC34 mirror, and its live draw route has no matching
-slot-icon state owner. The symbol remains narrow pending mutable icon-state
+slot-icon state owner. F0038 also remains partial because it does not update that state. The symbol remains partial pending mutable icon-state
 integration and Atari ST, Amiga, FM Towns, Apple IIGS, and other edition routes.
 
 # ReDMCSB F0619 — slot-box border rectangle
