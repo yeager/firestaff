@@ -1285,6 +1285,7 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
             receipt->source_items_cut++;
         }
     } else if (type == DM2_ACTU_MISSILE_SHOOTER ||
+               type == DM2_ACTU_WEAPON_SHOOTER ||
                type == DM2_ACTU_MISSILE_SHOOTER_2) {
         objects[0] = (int16_t)(0xff80u + (uint16_t)data);
         if (!single) {
