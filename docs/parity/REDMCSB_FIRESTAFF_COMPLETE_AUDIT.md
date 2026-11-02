@@ -977,7 +977,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,810 unreviewed, 1,029 partial, 0 missing, and 86 implemented-parity definitions. The generated combined skproject backlog is 3,957 open rows (2,810 unreviewed, 1,145 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,807 unreviewed, 1,032 partial, 0 missing, and 86 implemented-parity definitions. The generated combined skproject backlog is 3,961 open rows (2,807 unreviewed, 1,152 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
@@ -988,3 +988,8 @@ Compared DOS `SKW_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`dm2byg.cpp:4925`), SPX v4 
 ### DM2 outdoor relative-distance review (2026-11-02)
 
 Compared SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE` (`skbkgrnd.cpp:102`). It transforms coordinates by viewing direction, writes relative deltas back, rejects points behind the viewer, and computes an integer Euclidean distance using a 16-bit squared value and Newton iteration. Firestaff has no matching outdoor helper; its generic square-distance utility uses Manhattan distance. This gameplay visibility calculation remains `PARTIAL`.
+
+
+### DM2 distant environment selection review (2026-11-02)
+
+Compared DOS `SKW_ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v4 `ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v5 `DM2_ENVIRONMENT_SET_DISTANT_ELEMENT`, and SKULLWIN. The routines parse MV/X/Y/FD command values, add map offsets, compute viewer-relative Euclidean distance, reject invisible directions, and write projected offsets and distance-scaled output to the environment slot. Firestaff can validate the source-shaped slot after population, but its current callback wrapper does not implement this selection and mutation algorithm. All source rows remain `PARTIAL`.
