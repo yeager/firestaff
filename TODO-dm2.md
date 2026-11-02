@@ -2701,3 +2701,12 @@ success. SPX v4 instead reads its separate globals, writing b32, ItemToThrow and
 ccm3D_Explode command state. Firestaff computes a receipt for only the former
 field set and has no live XACT callback. The named-symbol disposition is now
 `IMPLEMENTED_NARROW`; all three active source definitions are `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_72_87_88` variant audit correction:
+DOS/SPX v5/SKULLWIN assign v1e0572 with the 0xff fallback to creature b1a.
+SPX v4 instead takes the current global command, replaces idle with its saved
+command, and writes CreatureInfoData::Command. Firestaff's helper models only
+the former values in a receipt and has no live write. All three active source
+rows are now `PARTIAL`; SPX-v4 state binding and production XACT callbacks remain
+open.
