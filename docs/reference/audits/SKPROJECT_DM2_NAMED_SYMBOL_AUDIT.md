@@ -181,8 +181,9 @@ its mask/whitelist/ownership transition in source byte order. Flagged stock
 now attempts the bounded world recycler and then fresh DB14 allocation, and
 the D1C name uses `QUERY_GDAT_ITEM_NAME`, RAW4 rectangle 3, WALL_GFX image
 offset 0xf2 and the shared source font's centered 3x6 glyph layout. The
-SPX v4 buy/sell query values are bound to the render plan, but coin rows are
-not drawn; nonzero-darkness name palette parity is also open. The separate
+SPX v4 and v5 buy/sell query values are now kept separately in the render
+plan so their distinct source formulas are not mixed, but coin rows are not
+drawn; nonzero-darkness name palette parity is also open. The separate
 `ddat.v1d67bc` hand-container owner, complete recycler, click-direction state,
 and buy/sell transactions remain open. The selected merchandise image,
 conditional sold-out icon and nav board use their source GDAT images,

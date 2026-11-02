@@ -540,9 +540,12 @@ typedef struct {
     uint16_t shop_wall_actuator;
     uint16_t shop_floor_actuator;
     uint16_t shop_current_item;
-    uint16_t shop_buy_price;
-    uint16_t shop_sell_price;
-    uint8_t shop_price_valid;
+    uint16_t shop_buy_price_v4;
+    uint16_t shop_sell_price_v4;
+    uint16_t shop_buy_price_v5;
+    uint16_t shop_sell_price_v5;
+    uint8_t shop_price_v4_valid;
+    uint8_t shop_price_v5_valid;
     uint8_t shop_name_valid;
     int16_t shop_name_x;
     int16_t shop_name_y;

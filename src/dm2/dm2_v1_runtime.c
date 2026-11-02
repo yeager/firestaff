@@ -113,7 +113,10 @@ extern int dm2_v1_wield_weapon(
     const DM2_RuntimeWieldCallbacks *cb, void *ctx);
 #include <string.h>
 
-enum { DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4 };
+enum {
+    DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4,
+    DM2_V1_QUERY_48AE_05AE_SPX_V5 = 5
+};
 extern int dm2_v1_query_48ae_05ae_asset_loader_variant(
     int variant, uint16_t itemspec,
     uint8_t creature_type, uint16_t creature_word8,
@@ -15906,8 +15909,10 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     }
                 }
                 {
-                    int32_t buy_price = 0;
-                    int32_t sell_price = 0;
+                    int32_t buy_price_v4 = 0;
+                    int32_t sell_price_v4 = 0;
+                    int32_t buy_price_v5 = 0;
+                    int32_t sell_price_v5 = 0;
                     uint8_t creature_type =
                         (uint8_t)((pair.wall_w2 >> 7) & 0x01ffu);
                     uint16_t pool_number =
@@ -15915,14 +15920,26 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     if (dm2_v1_query_48ae_05ae_asset_loader_variant(
                             DM2_V1_QUERY_48AE_05AE_SPX_V4,
                             pair.current_item, creature_type, pool_number,
-                            1, 1, -1, &buy_price, loader) &&
+                            1, 1, -1, &buy_price_v4, loader) &&
                         dm2_v1_query_48ae_05ae_asset_loader_variant(
                             DM2_V1_QUERY_48AE_05AE_SPX_V4,
                             pair.current_item, creature_type, pool_number,
-                            1, 0, -1, &sell_price, loader)) {
-                        entry->shop_buy_price = (uint16_t)buy_price;
-                        entry->shop_sell_price = (uint16_t)sell_price;
-                        entry->shop_price_valid = 1u;
+                            1, 0, -1, &sell_price_v4, loader)) {
+                        entry->shop_buy_price_v4 = (uint16_t)buy_price_v4;
+                        entry->shop_sell_price_v4 = (uint16_t)sell_price_v4;
+                        entry->shop_price_v4_valid = 1u;
+                    }
+                    if (dm2_v1_query_48ae_05ae_asset_loader_variant(
+                            DM2_V1_QUERY_48AE_05AE_SPX_V5,
+                            pair.current_item, creature_type, pool_number,
+                            1, 1, -1, &buy_price_v5, loader) &&
+                        dm2_v1_query_48ae_05ae_asset_loader_variant(
+                            DM2_V1_QUERY_48AE_05AE_SPX_V5,
+                            pair.current_item, creature_type, pool_number,
+                            1, 0, -1, &sell_price_v5, loader)) {
+                        entry->shop_buy_price_v5 = (uint16_t)buy_price_v5;
+                        entry->shop_sell_price_v5 = (uint16_t)sell_price_v5;
+                        entry->shop_price_v5_valid = 1u;
                     }
                 }
                 entry->shop_glass_pair_valid = 1u;
@@ -15955,9 +15972,14 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 }
                 plan_hash ^= pair.identity_hash;
                 plan_hash *= 16777619u;
-                if (entry->shop_price_valid) {
-                    plan_hash ^= ((uint32_t)entry->shop_buy_price << 16) |
-                        entry->shop_sell_price;
+                if (entry->shop_price_v4_valid) {
+                    plan_hash ^= ((uint32_t)entry->shop_buy_price_v4 << 16) |
+                        entry->shop_sell_price_v4;
+                    plan_hash *= 16777619u;
+                }
+                if (entry->shop_price_v5_valid) {
+                    plan_hash ^= ((uint32_t)entry->shop_buy_price_v5 << 16) |
+                        entry->shop_sell_price_v5;
                     plan_hash *= 16777619u;
                 }
                 if (entry->shop_name_valid) {
