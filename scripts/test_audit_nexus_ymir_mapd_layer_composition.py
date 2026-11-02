@@ -61,6 +61,23 @@ class RenderStateTests(unittest.TestCase):
             with self.assertRaisesRegex(audit.AuditError, "not an enabled NBG0 row at 84"):
                 audit.read_render_state(state_path, receipt_path)
 
+    def test_nbg0_counterfactual_removes_layer_two_candidate(self) -> None:
+        colors = (0x000000CC, 0, 0x00332211, 0x00665544, 0, 0)
+        priorities = (2, 0, 6, 5, 0, 0)
+        rows = {
+            (0, layer): ((color,), bytes((priorities[layer],)), bytes((0,)))
+            for layer, color in enumerate(colors)
+        }
+        with_nbg0, top_with_nbg0 = audit.compose_pixel(
+            rows, 0, 0, 18, nbg0_enabled=True
+        )
+        without_nbg0, top_without_nbg0 = audit.compose_pixel(
+            rows, 0, 0, 18, nbg0_enabled=True, exclude_nbg0=True
+        )
+
+        self.assertEqual((top_with_nbg0, with_nbg0), (2, (0x11, 0x22, 0x33)))
+        self.assertEqual((top_without_nbg0, without_nbg0), (3, (0x44, 0x55, 0x66)))
+
 
 if __name__ == "__main__":
     unittest.main()
