@@ -3938,3 +3938,4 @@ SK_StartGameLoop	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	297	SK_API int SK_StartGa
 SK_RegisterMouseProvider	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	311	SK_API void SK_RegisterMouseProvider(tSKWinContext* xSKWinContext, MouseProviderFunc func)	0	UNREVIEWED
 SK_RegisterVRAMProvider	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	316	SK_API void SK_RegisterVRAMProvider(tSKWinContext* xSKWinContext, RGBVRAMProviderFunc func)	0	UNREVIEWED
 SK_ForceRenderScreen	SKWINSPX	SKWINSPX/src/v6/xstartup.cpp	321	SK_API void SK_ForceRenderScreen(tSKWinContext* xSKWinContext)	0	UNREVIEWED
+QUERY_CLS2_FROM_RECORD	SKWINSPX	SKWINSPX/src/v4/skcore.cpp	9618	U8 SkWinCore::QUERY_CLS2_FROM_RECORD(ObjectID recordLink)	0	UNREVIEWED

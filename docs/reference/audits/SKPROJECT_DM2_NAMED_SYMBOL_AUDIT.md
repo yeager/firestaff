@@ -720,7 +720,7 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,782 as `UNREVIEWED`, 1,045 as `PARTIAL`, 0 as `MISSING`, and 98 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,780 as `UNREVIEWED`, 1,046 as `PARTIAL`, 0 as `MISSING`, and 100 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 
@@ -741,3 +741,7 @@ Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET
 ### DM2 creature weight query (2026-11-02)
 
 Compared DOS `SKW_GET_CREATURE_WEIGHT` (`SKWINDOS/dm2byb.cpp:181`), SPX v4 `GET_CREATURE_WEIGHT` (`SKWINSPX/src/v4/skcrture.cpp:1934`), SPX v5 `DM2_GET_CREATURE_WEIGHT` (`SKWINSPX/src/v5/skgdtqdb.cpp:984`), and SKULLWIN (`SKULLWIN/c_querydb.cpp:982`). Each resolves a creature AI spec and returns unsigned byte `0x1d` (DOS names the containing field at offset `0x1c`). Firestaff’s querydb callback can read that byte when given a creature type, but no production caller binds record/type resolution to the movement/lifting path; the source-shaped core receipt accepts an already resolved weight. All four definitions remain `PARTIAL`.
+
+### DM2 record subtype query across editions (2026-11-02)
+
+Compared DOS `SKW_QUERY_CLS2_FROM_RECORD` (`SKWINDOS/dm2bya.cpp:6677`), SPX v4 `QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v4/skcore.cpp:9618`), SPX v5 `DM2_QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v5/skrecord.cpp:206`), and SKULLWIN (`SKULLWIN/c_record.cpp:203`). The common helper covers special handles, text and actuator callbacks, per-DB subtype extraction, and DB14 missile-object recursion. V4 alone can return a DB7 scroll subtype when `bUseScrollIDType` is enabled; Firestaff’s helper currently returns zero for DB7 with no edition-mode input. DOS/v5/SKULLWIN bodies are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL`.
