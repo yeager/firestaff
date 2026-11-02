@@ -8733,23 +8733,74 @@ static int dm2_v1_boot_gdat_hud_source_move_arrow_plan(
 {
     DM2_V1_BootGraphicsDat *gfx;
     DM2_V1_ViewportRect destinations[6];
+    uint32_t raw4_hash = 2166136261u;
+    int built;
     if (!profile || !profile->graphics_dat || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     for (int arrow = 0; arrow < 6; ++arrow) {
         DM2_V1_InterfaceRect source_rect;
         if (!dm2_v1_boot_query_blit_rect_for_dimensions(
-                profile, (uint16_t)(40 + arrow), 29, 23, &source_rect))
+                profile, (uint16_t)(40 + arrow), 29, 23, &source_rect)) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_RECT;
+            profile->last_hud_m11_plan_failure_index = arrow;
             return 0;
+        }
         destinations[arrow] = (DM2_V1_ViewportRect){
             source_rect.x, source_rect.y, source_rect.w, source_rect.h };
     }
     if (profile->platform == DM2_PLATFORM_MAC_EN ||
         profile->platform == DM2_PLATFORM_MAC_FR) {
-        return dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+        built = dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+            &gfx->loader, destinations, out_plan);
+    } else {
+        built = dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
             &gfx->loader, destinations, out_plan);
     }
-    return dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
-        &gfx->loader, destinations, out_plan);
+    if (!built) {
+        profile->last_hud_m11_plan_failure_stage =
+            DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_ASSET;
+        profile->last_hud_m11_plan_failure_index = -1;
+        return 0;
+    }
+    /* DOS/Mac source-native and Amiga plans retain their existing receipts.
+     * Towns' HUD compositor uniquely requires a table hash on each appended
+     * command; its movement rows live in RAW4 QUERY_BLIT_RECT rather than the
+     * expanded-rectangle receipt set. */
+    if (profile->platform != DM2_PLATFORM_FMTOWNS_JA) return 1;
+    {
+        DM2_V1_BootExpandedRectReceipt table_identity;
+        if (!dm2_v1_boot_query_expanded_rect_receipt(
+                profile, 0x00a1u, &table_identity) ||
+            !table_identity.valid || !table_identity.raw4_hash) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_RAW4;
+            profile->last_hud_m11_plan_failure_index = -1;
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        raw4_hash = table_identity.raw4_hash;
+    }
+    for (int arrow = 0; arrow < 6; ++arrow) {
+        DM2_V1_GdatHudM11Command *command = &out_plan->commands[arrow];
+        if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW ||
+            command->destination_rect_id != (uint16_t)(40 + arrow)) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_RAW4;
+            profile->last_hud_m11_plan_failure_index = arrow;
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        command->destination_table_hash = raw4_hash;
+    }
+    out_plan->command_hash =
+        dm2_v1_gdat_hud_m11_command_plan_hash(out_plan);
+    out_plan->valid = out_plan->command_hash != 0u;
+    if (!out_plan->valid) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    return 1;
 }
 
 static int dm2_v1_boot_gdat_hud_source_native_platform(DM2_Platform platform)
@@ -8775,6 +8826,9 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
 
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !party || !out_plan) return 0;
+    profile->last_hud_m11_plan_failure_stage =
+        DM2_V1_BOOT_HUD_PLAN_FAILURE_NONE;
+    profile->last_hud_m11_plan_failure_index = -1;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     if (dm2_v1_boot_gdat_hud_source_native_platform(profile->platform)) {
         DM2_V1_ViewportRect arrow_destinations[6];
@@ -9040,8 +9094,46 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
                 queried_rect.x, queried_rect.y,
                 queried_rect.w, queried_rect.h };
         }
-        return dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
-            &gfx->loader, party, towns_slots, out_plan);
+        DM2_V1_GdatHudM11CommandPlan arrows;
+        memset(&arrows, 0, sizeof(arrows));
+        if (!dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
+                &gfx->loader, party, towns_slots, out_plan)) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_SQUAD;
+            profile->last_hud_m11_plan_failure_index = -1;
+            return 0;
+        }
+        if (!dm2_v1_boot_gdat_hud_source_move_arrow_plan(profile, &arrows)) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        if (arrows.command_count != 6 ||
+            out_plan->command_count + arrows.command_count >
+                DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_APPEND;
+            profile->last_hud_m11_plan_failure_index = arrows.command_count;
+            dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        for (int arrow = 0; arrow < arrows.command_count; ++arrow) {
+            out_plan->commands[out_plan->command_count++] =
+                arrows.commands[arrow];
+            arrows.commands[arrow].pixels = NULL;
+        }
+        dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+        out_plan->command_hash =
+            dm2_v1_gdat_hud_m11_command_plan_hash(out_plan);
+        out_plan->valid = out_plan->command_hash != 0u;
+        if (!out_plan->valid) {
+            profile->last_hud_m11_plan_failure_stage =
+                DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_HASH;
+            profile->last_hud_m11_plan_failure_index = -1;
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        return 1;
     }
     if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
             &gfx->loader, party, out_plan) ||

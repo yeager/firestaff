@@ -67614,6 +67614,66 @@ static const char *m11_dm2_debug_platform_label(int platform)
     }
 }
 
+typedef struct M11_Dm2DebugPixelRegion {
+    uint32_t non_black;
+    uint32_t hash;
+    uint32_t palette_mask[8];
+    int width;
+    int height;
+} M11_Dm2DebugPixelRegion;
+
+/* Record the pixels that reached the host framebuffer after the source
+ * renderer accepted its frame.  Asset receipts alone can say a command was
+ * consumed even when it covered only a small part of the visible HUD. */
+static void m11_dm2_debug_pixel_region(
+    const unsigned char *framebuffer, int stride, int framebuffer_width,
+    int framebuffer_height, int x, int y, int width, int height,
+    M11_Dm2DebugPixelRegion *out)
+{
+    int x0, y0, x1, y1;
+    if (!out) return;
+    memset(out, 0, sizeof(*out));
+    out->hash = 2166136261u;
+    if (!framebuffer || stride <= 0 || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || width <= 0 || height <= 0) return;
+    /* The runtime renders DM2's 320x200 source surface into the leading
+     * pixels of the M11 buffer; host-window scaling happens after this pass. */
+    x0 = x < 0 ? 0 : x;
+    y0 = y < 0 ? 0 : y;
+    x1 = x + width;
+    y1 = y + height;
+    if (x1 > 320) x1 = 320;
+    if (y1 > 200) y1 = 200;
+    if (x1 > framebuffer_width) x1 = framebuffer_width;
+    if (y1 > framebuffer_height) y1 = framebuffer_height;
+    if (x0 >= x1 || y0 >= y1) return;
+    out->width = x1 - x0;
+    out->height = y1 - y0;
+    for (int py = y0; py < y1; ++py) {
+        for (int px = x0; px < x1; ++px) {
+            const unsigned char pixel = framebuffer[py * stride + px];
+            if (pixel != M11_COLOR_BLACK) ++out->non_black;
+            out->palette_mask[pixel >> 5] |= 1u << (pixel & 31u);
+            out->hash = (out->hash ^ pixel) * 16777619u;
+        }
+    }
+}
+
+static int m11_dm2_debug_pixel_region_colors(
+    const M11_Dm2DebugPixelRegion *region)
+{
+    int colors = 0;
+    if (!region) return 0;
+    for (int word = 0; word < 8; ++word) {
+        uint32_t bits = region->palette_mask[word];
+        while (bits) {
+            bits &= bits - 1u;
+            ++colors;
+        }
+    }
+    return colors;
+}
+
 /* --debug must expose the source receipt that decided whether the DM2 frame
  * was drawn, not just the earlier startup handoff. Log only when a receipt
  * field or party pose changes so animation frames do not flood stderr. */
@@ -67622,7 +67682,9 @@ static void m11_debug_trace_dm2_runtime_frame(
     int render_result,
     int frame_accepted,
     const DM2_V1_BootRuntimeRenderReceipt *render,
-    const DM2_V1_ViewportM11FrameReceipt *frame)
+    const DM2_V1_ViewportM11FrameReceipt *frame,
+    const unsigned char *framebuffer, int framebuffer_width,
+    int framebuffer_height)
 {
     static const M11_GameViewState *previous_state;
     static uint32_t previous_signature;
@@ -67647,6 +67709,10 @@ static void m11_debug_trace_dm2_runtime_frame(
     const uint8_t *hud_font_rows = NULL;
     uint32_t hud_font_hash = 0u;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_handoff;
+    M11_Dm2DebugPixelRegion pixel_viewport;
+    M11_Dm2DebugPixelRegion pixel_right_hud;
+    M11_Dm2DebugPixelRegion pixel_top;
+    M11_Dm2DebugPixelRegion pixel_bottom;
     int item_trace_count;
     int item_trace_index;
     int hud_trace_count;
@@ -67672,6 +67738,18 @@ static void m11_debug_trace_dm2_runtime_frame(
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
     asset_loader = profile ? dm2_v1_boot_asset_loader(profile) : NULL;
     platform = profile ? (int)profile->platform : -1;
+    m11_dm2_debug_pixel_region(framebuffer, framebuffer_width,
+        framebuffer_width, framebuffer_height, 0, 40, 228, 120,
+        &pixel_viewport);
+    m11_dm2_debug_pixel_region(framebuffer, framebuffer_width,
+        framebuffer_width, framebuffer_height, 228, 0, 92, 200,
+        &pixel_right_hud);
+    m11_dm2_debug_pixel_region(framebuffer, framebuffer_width,
+        framebuffer_width, framebuffer_height, 0, 0, 228, 40,
+        &pixel_top);
+    m11_dm2_debug_pixel_region(framebuffer, framebuffer_width,
+        framebuffer_width, framebuffer_height, 0, 160, 320, 40,
+        &pixel_bottom);
     item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
     hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
     memset(&g1_scene_handoff, 0, sizeof(g1_scene_handoff));
@@ -67877,6 +67955,14 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_interface_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_raw_interface_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_frame_hash);
+    M11_DM2_DEBUG_MIX(pixel_viewport.non_black);
+    M11_DM2_DEBUG_MIX(pixel_viewport.hash);
+    M11_DM2_DEBUG_MIX(pixel_right_hud.non_black);
+    M11_DM2_DEBUG_MIX(pixel_right_hud.hash);
+    M11_DM2_DEBUG_MIX(pixel_top.non_black);
+    M11_DM2_DEBUG_MIX(pixel_top.hash);
+    M11_DM2_DEBUG_MIX(pixel_bottom.non_black);
+    M11_DM2_DEBUG_MIX(pixel_bottom.hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_map_load_token);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_control_hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_light_hash);
@@ -67893,6 +67979,10 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_command_count);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_consumed);
+    M11_DM2_DEBUG_MIX(profile
+        ? profile->last_hud_m11_plan_failure_stage : 0);
+    M11_DM2_DEBUG_MIX(profile
+        ? profile->last_hud_m11_plan_failure_index : -1);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_creature_material_plan_command_count);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_command_count);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_hash);
@@ -67970,7 +68060,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     }
 
     fprintf(stderr,
-        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d render-failure-stage=%d v1={attempted:%d succeeded:%d runtime-ready:%d title-ready:%d} real-assets=%d no-core-fallbacks=%d blocked-materials=%d blocked-mask=%08x wall-ornament={status:%d square:%d gdat:%d field:%d detail:%d} map-token=%u g1-scene={valid:%d blocked:%d committed:%d incomplete-world:%d tile:%d root:%d level:%d pos:%d,%d raw:%02x nodes:%d first-record:%d/%d} scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d render-failure-stage=%d v1={attempted:%d succeeded:%d runtime-ready:%d title-ready:%d} real-assets=%d no-core-fallbacks=%d blocked-materials=%d blocked-mask=%08x wall-ornament={status:%d square:%d gdat:%d field:%d detail:%d} map-token=%u g1-scene={valid:%d blocked:%d committed:%d incomplete-world:%d tile:%d root:%d level:%d pos:%d,%d raw:%02x nodes:%d first-record:%d/%d} scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d plan-failure:%d/%d} presented-pixels={viewport:%u/%dx%d/%d colors/%08x right-hud:%u/%dx%d/%d colors/%08x top:%u/%dx%d/%d colors/%08x bottom:%u/%dx%d/%d colors/%08x black-index:%u}\n",
         state->sourceId[0] ? state->sourceId : "dm2",
         m11_dm2_debug_platform_label(platform),
         state->dm2State.party_x,
@@ -68049,7 +68139,19 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_hud_frame_pixel_count,
         render->runtime_hud_frame_hash,
         frame->composition.hud_top_bar_command_consumed,
-        frame->composition.hud_status_panel_command_consumed);
+        frame->composition.hud_status_panel_command_consumed,
+        profile ? profile->last_hud_m11_plan_failure_stage : 0,
+        profile ? profile->last_hud_m11_plan_failure_index : -1,
+        pixel_viewport.non_black, pixel_viewport.width, pixel_viewport.height,
+        m11_dm2_debug_pixel_region_colors(&pixel_viewport), pixel_viewport.hash,
+        pixel_right_hud.non_black, pixel_right_hud.width,
+        pixel_right_hud.height,
+        m11_dm2_debug_pixel_region_colors(&pixel_right_hud),
+        pixel_right_hud.hash, pixel_top.non_black, pixel_top.width,
+        pixel_top.height, m11_dm2_debug_pixel_region_colors(&pixel_top),
+        pixel_top.hash, pixel_bottom.non_black, pixel_bottom.width,
+        pixel_bottom.height, m11_dm2_debug_pixel_region_colors(&pixel_bottom),
+        pixel_bottom.hash, (unsigned int)M11_COLOR_BLACK);
     for (item_trace_index = 0; item_trace_index < item_trace_count;
          ++item_trace_index) {
         if (!dm2_v1_runtime_last_item_material_trace(
@@ -79391,7 +79493,8 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         }
         m11_debug_trace_dm2_runtime_frame(
             state, rendered, runtime_frame_accepted,
-            &runtime_render_receipt, &runtime_frame_receipt);
+            &runtime_render_receipt, &runtime_frame_receipt,
+            framebuffer, framebufferWidth, framebufferHeight);
         if (rendered == -1) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,

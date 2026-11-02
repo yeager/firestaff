@@ -9832,6 +9832,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     int expected_count = 0;
     int formation_receipts = 0;
     int icons = 0;
+    unsigned int movement_arrows_seen = 0u;
     int gdat_counter_base;
 
     if (!s || !target || stride <= 0 || !s->hud_party_valid ||
@@ -9882,6 +9883,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     if (s->hud_party.towns_selected_hero_source_bound) {
         ++expected_count;
     }
+    expected_count += 6;
     if (plan->command_count != expected_count) {
         return 0;
     }
@@ -9909,6 +9911,50 @@ static int dm2_v1_render_fmtowns_squad_plan(
         int expected_field;
         int expected_rect;
 
+        if (command->kind == DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW) {
+            int arrow = (int)command->destination_rect_id - 40;
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)s->asset_profile;
+            DM2_V1_BootExpandedRectReceipt rect_receipt;
+            DM2_V1_InterfaceRect blit_rect;
+            uint16_t table_identity_rect_id = profile &&
+                profile->platform == DM2_PLATFORM_FMTOWNS_JA
+                    ? 0x00a1u : (uint16_t)(40 + arrow);
+            if (arrow < 0 || arrow >= 6 ||
+                (movement_arrows_seen & (1u << arrow)) != 0u ||
+                command->viewport_gdat_index != -1000 - arrow ||
+                command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 3 ||
+                command->gdat_field != 2 + arrow * 2 ||
+                !command->destination_table_hash ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, table_identity_rect_id, &rect_receipt) ||
+                !rect_receipt.valid ||
+                rect_receipt.raw4_hash != command->destination_table_hash ||
+                !dm2_v1_boot_query_blit_rect_for_dimensions(
+                    profile, (uint16_t)(40 + arrow),
+                    command->width, command->height, &blit_rect) ||
+                blit_rect.x != command->destination.x ||
+                blit_rect.y != command->destination.y ||
+                blit_rect.w != command->destination.w ||
+                blit_rect.h != command->destination.h ||
+                !dm2_v1_render_hud_plan_command(
+                    s, command->viewport_gdat_index,
+                    &command->destination,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW)) {
+                return 0;
+            }
+            movement_arrows_seen |= 1u << arrow;
+            ++s->asset_hud_core_drawn_count;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->width, command->height);
+            s->last_hud_core_pixel_count += (uint32_t)(
+                command->destination.w * command->destination.h);
+            ++icons;
+            continue;
+        }
         if (fill_command) hero_slot = command->viewport_gdat_index - 0x6200;
         else if (status_command) hero_slot = command->viewport_gdat_index - 0x6100;
         else if (figure_command) hero_slot = command->viewport_gdat_index - 0x6600;
@@ -10358,7 +10404,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
         s->last_hud_core_pixel_count +=
             (uint32_t)(command->destination.w * command->destination.h);
     }
-    return formation_receipts == s->hud_party.champion_count &&
+    return movement_arrows_seen == 0x3fu &&
+        formation_receipts == s->hud_party.champion_count &&
         icons == (expected_count - formation_receipts) &&
         s->gdat_hud_material_plan_consumed_count - gdat_counter_base ==
             expected_count;
