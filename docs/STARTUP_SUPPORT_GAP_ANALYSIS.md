@@ -959,6 +959,11 @@ focused real-media tests passed (669.20 seconds total):
   checked that returning from gameplay rescans the installed collection.
   Direct-CLI exit behavior was also checked for all five games, including
   Nexus and Theron, to ensure those routes do not reopen M12.
+- `m12_main_menu_runtime_real_media` passed (725.88 s) with authentic DM1,
+  CSB, and DM2 FM Towns media, DM1 and DM2 Amiga media, and Theron US and JP
+  Track 02 media. It reached the test's bounded runtime receipts through the
+  game menu or direct selection. Nexus remains at its title gate and is not
+  counted as a playable runtime route.
 
 The two unsupported-platform CLI tests also passed (2/2): invalid game and
 platform pairs were rejected before renderer startup. The shell tests stage
