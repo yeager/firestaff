@@ -145,7 +145,7 @@ static int dm2_runtime_attack_creature_at(
 static uint16_t dm2_runtime_record_rd16(const DM2_V1_RuntimeState *rt,
                                         const uint8_t *p);
 
-static void dm2_runtime_apply_entered_db1_teleporter(
+static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
 
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
@@ -650,18 +650,18 @@ int dm2_v1_runtime_light_source_identity(
     return dm2_v1_light_source_identity(&inputs, out);
 }
 
-static void dm2_runtime_apply_entered_db1_teleporter(
+static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y)
 {
     DM2_V1_DungeonData *dungeon;
     DM2_V1_DB1TeleporterTransition transition;
 
     if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
-        return;
+        return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     if (!dm2_v1_db1_teleporter_transition(
             dungeon, level, x, y, &transition))
-        return;
+        return 0;
     gs->current_level = transition.destination_map;
     gs->party_x = transition.destination_x;
     gs->party_y = transition.destination_y;
@@ -674,6 +674,7 @@ static void dm2_runtime_apply_entered_db1_teleporter(
     rt->outdoor = gs->outdoor;
     dm2_runtime_refresh_map_transition_context(rt);
     dm2_runtime_refresh_source_weather_zone(rt);
+    return 1;
 }
 
 /* SKProject's stair query resolves a map by shared world coordinates rather
@@ -756,6 +757,23 @@ static int dm2_runtime_build_locate_map_descriptors(
         }
     }
     return 1;
+}
+
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    int level;
+} DM2_RuntimeTurnTileContext;
+
+static uint8_t dm2_runtime_turn_tile_value(int16_t x, int16_t y,
+                                            void *user)
+{
+    const DM2_RuntimeTurnTileContext *context =
+        (const DM2_RuntimeTurnTileContext *)user;
+    int raw;
+    if (!context || !context->dungeon) return 0u;
+    raw = dm2_v1_dungeon_get_tile_raw(context->dungeon, context->level,
+                                      x, y);
+    return raw < 0 ? 0u : (uint8_t)raw;
 }
 
 static int dm2_runtime_resolve_entered_stairs(
@@ -20629,8 +20647,92 @@ int dm2_v1_runtime_turn(int delta) {
     if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
         return -1;
     }
+    if (delta == 0) return 0;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     old_dir = gs->party_dir & 3;
+    /* PERFORM_TURN_SQUAD begins with RESET_SQUAD_DIR on DOS, SPX v4/v5 and
+     * SKULLWIN. The live party owner holds each champion's source absdir. */
+    if (rt->source_party_valid &&
+        rt->source_party.heros_in_party <= DM2_MAX_HEROES) {
+        for (int hero = 0; hero < rt->source_party.heros_in_party; ++hero)
+            rt->source_party.hero[hero].absdir = (int8_t)old_dir;
+    }
+
+    /* SKWINSPX/skhero.cpp::DM2_PERFORM_TURN_SQUAD checks the party's current
+     * tile before rotating.  On a stair tile the requested turn operates the
+     * stair transition instead, then rotates to the direction encoded by the
+     * destination tile (c_move.cpp::DM2_move_12b4_00af). */
+    if (!rt->outdoor && rt->boot->dungeon_data) {
+        DM2_V1_DungeonData *dungeon =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        int level = gs->current_level;
+        int x = gs->party_x;
+        int y = gs->party_y;
+        int raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+        if (raw >= 0 && dm2_v1_dungeon_get_square_type(
+                dungeon, level, x, y) == 3) {
+            static const int16_t dx[4] = { 0, 1, 0, -1 };
+            static const int16_t dy[4] = { -1, 0, 1, 0 };
+            DM2_RuntimeTurnTileContext tile_context = { dungeon, -1 };
+            DM2_V1_SkprojectQuery0cee06dcReceipt direction_receipt;
+            int destination_map = -1;
+            int destination_x = -1;
+            int destination_y = -1;
+            uint8_t destination_direction = 0u;
+            int stair_status = dm2_runtime_resolve_entered_stairs(
+                dungeon, level, x, y,
+                &destination_map, &destination_x, &destination_y);
+
+            if (stair_status <= 0 || destination_map < 0 ||
+                destination_x < 0 || destination_y < 0)
+                return -1;
+            tile_context.level = destination_map;
+            if (!dm2_v1_skproject_query_0cee_06dc(
+                    (int16_t)destination_x, (int16_t)destination_y,
+                    dm2_runtime_turn_tile_value, &tile_context, dx, dy,
+                    &destination_direction,
+                    &direction_receipt) || !direction_receipt.valid ||
+                destination_direction > 3u)
+                return -1;
+
+            new_dir = destination_direction;
+            gs->current_level = destination_map;
+            gs->party_x = destination_x;
+            gs->party_y = destination_y;
+            gs->party_dir = new_dir;
+            rt->dungeon_level = destination_map;
+            rt->view_dir = new_dir;
+            rt->outdoor = dm2_v1_dungeon_is_outdoor(dungeon,
+                                                     destination_map);
+            gs->outdoor = rt->outdoor;
+            dm2_runtime_refresh_map_transition_context(rt);
+            dm2_runtime_refresh_source_weather_zone(rt);
+            if (rt->stairs_callback)
+                rt->stairs_callback(x, y, destination_x, destination_y,
+                    (float)(destination_map - level));
+            if (new_dir != old_dir && rt->turn_callback)
+                rt->turn_callback(old_dir, new_dir);
+            return 0;
+        }
+    }
+
+    /* All three source turn handlers inspect a teleporter before rotating.
+     * The runtime owner applies its authenticated DB1 transition in place. */
+    {
+        int old_level = gs->current_level;
+        int old_x = gs->party_x;
+        int old_y = gs->party_y;
+        if (dm2_runtime_apply_entered_db1_teleporter(
+                rt, gs, old_level, old_x, old_y)) {
+            if (rt->stairs_callback)
+                rt->stairs_callback(old_x, old_y, gs->party_x, gs->party_y,
+                    (float)(gs->current_level - old_level));
+            if (gs->party_dir != old_dir && rt->turn_callback)
+                rt->turn_callback(old_dir, gs->party_dir);
+            return 0;
+        }
+    }
+
     new_dir = (old_dir + (delta < 0 ? 3 : 1)) & 3;
 
     if (new_dir != old_dir && rt->turn_callback) {
