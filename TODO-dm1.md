@@ -3914,12 +3914,16 @@ platforms' source-specific startup checks.
 
 # ReDMCSB F0039 — slot-box icon index
 
-The source-symbol inventory now maps `OBJECT.C:515-526`
-`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff adapter over the DM1
-PC34 `G0030` slot-box table. The focused regression checks all 46 entries,
-adapter delegation, and invalid-index handling. This establishes only the
-bounded PC34 function mapping; Atari ST, Amiga, FM Towns, and other edition
-runtime integration and parity remain open.
+The source-symbol inventory maps `OBJECT.C:515-526`
+`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff PC34 `G0030` table
+adapter. The focused regression checks all 46 fixed entries, adapter
+delegation, and invalid-index handling. ReDMCSB reads the current mutable
+`G0030.IconIndex`; `F0038_OBJECT_DrawIconInSlotBox` updates that field before
+its blit on supported media, and `F0295_CHAMPION_HasObjectIconInSlotBoxChanged`
+uses it to decide whether action-hand icons must be redrawn. Firestaff's
+adapter reads a constant PC34 mirror, and its live draw route has no matching
+slot-icon state owner. The symbol remains narrow pending mutable icon-state
+integration and Atari ST, Amiga, FM Towns, Apple IIGS, and other edition routes.
 
 # ReDMCSB F0619 — slot-box border rectangle
 
