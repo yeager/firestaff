@@ -362,6 +362,133 @@ static void test_draw_scroll_text_null_cb(void) {
     dm2_v1_draw_scroll_text(0, NULL, NULL);
 }
 
+struct ScrollTextFixture {
+    const char *message;
+    char lines[8][0xc8];
+    int line_count;
+    int16_t y[8];
+};
+
+static void scroll_query_message(void *ctx, void *buf, int32_t id,
+                                 int32_t flags) {
+    struct ScrollTextFixture *fixture = (struct ScrollTextFixture *)ctx;
+    assert(id == 0 && flags == (int32_t)0xffff8002);
+    snprintf((char *)buf, 0xc8, "%s", fixture->message);
+}
+
+static void scroll_query_topleft(void *ctx, int32_t rectid,
+                                 int16_t *x, int16_t *y) {
+    (void)ctx;
+    assert(rectid == 0x230);
+    *x = 10;
+    *y = 20;
+}
+
+static DM2_V1_Rect *scroll_query_rect(void *ctx, int16_t id,
+                                      DM2_V1_Rect *out) {
+    (void)ctx;
+    assert(id == 0x1ee);
+    *out = (DM2_V1_Rect){ 0, 0, 80, 40 };
+    return out;
+}
+
+static void scroll_linebreak(void *ctx, void *src, void *dst,
+                             int16_t *position, int32_t width) {
+    const char *message = (const char *)src;
+    char *line = (char *)dst;
+    size_t out = 0;
+    (void)ctx;
+    (void)width;
+    while (message[*position] != '\0' && message[*position] != '\n')
+        line[out++] = message[(*position)++];
+    line[out] = '\0';
+}
+
+static void scroll_draw_line(void *ctx, int32_t x, int32_t y, void *text) {
+    struct ScrollTextFixture *fixture = (struct ScrollTextFixture *)ctx;
+    int i = fixture->line_count++;
+    assert(x == 10 && i < 8);
+    snprintf(fixture->lines[i], sizeof(fixture->lines[i]), "%s",
+             (const char *)text);
+    fixture->y[i] = (int16_t)y;
+}
+
+static int16_t scroll_line_height(void *ctx) {
+    (void)ctx;
+    return 10;
+}
+
+static int16_t scroll_gfxstrw1(void *ctx) {
+    (void)ctx;
+    return 6;
+}
+
+static int16_t scroll_gfxstrw3(void *ctx) {
+    (void)ctx;
+    return 1;
+}
+
+static bool scroll_is_mbcs(void *ctx, const char *message) {
+    (void)ctx;
+    (void)message;
+    return false;
+}
+
+static bool scroll_is_mbcs_true(void *ctx, const char *message) {
+    (void)ctx;
+    (void)message;
+    return true;
+}
+
+static void test_draw_scroll_text_renders_leading_and_consecutive_empty_lines(void) {
+    DM2_V1_GuiDrawCallbacks cb;
+    struct ScrollTextFixture fixture;
+    memset(&cb, 0, sizeof(cb));
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.message = "\nA\n\nB";
+    cb.query_message_text = scroll_query_message;
+    cb.query_topleft = scroll_query_topleft;
+    cb.query_expanded_rect = scroll_query_rect;
+    cb.gfxstr_linebreak = scroll_linebreak;
+    cb.gfxstr_draw_line = scroll_draw_line;
+    cb.get_strdat_strxplus = scroll_line_height;
+    cb.get_strdat_gfxstrw1 = scroll_gfxstrw1;
+    cb.get_strdat_gfxstrw3 = scroll_gfxstrw3;
+    cb.query_text_is_mbcs = scroll_is_mbcs;
+
+    dm2_v1_draw_scroll_text(0, &cb, &fixture);
+
+    assert(fixture.line_count == 4);
+    assert(strcmp(fixture.lines[0], "") == 0);
+    assert(strcmp(fixture.lines[1], "A") == 0);
+    assert(strcmp(fixture.lines[2], "") == 0);
+    assert(strcmp(fixture.lines[3], "B") == 0);
+    assert(fixture.y[0] == 7);
+    assert(fixture.y[0] < fixture.y[1] && fixture.y[1] < fixture.y[2] &&
+           fixture.y[2] < fixture.y[3]);
+}
+
+static void test_draw_scroll_text_uses_mbcs_centering_without_ascii_metrics(void) {
+    DM2_V1_GuiDrawCallbacks cb;
+    struct ScrollTextFixture fixture;
+    memset(&cb, 0, sizeof(cb));
+    memset(&fixture, 0, sizeof(fixture));
+    fixture.message = "\nA";
+    cb.query_message_text = scroll_query_message;
+    cb.query_topleft = scroll_query_topleft;
+    cb.query_expanded_rect = scroll_query_rect;
+    cb.gfxstr_linebreak = scroll_linebreak;
+    cb.gfxstr_draw_line = scroll_draw_line;
+    cb.query_text_is_mbcs = scroll_is_mbcs_true;
+
+    dm2_v1_draw_scroll_text(0, &cb, &fixture);
+
+    assert(fixture.line_count == 2);
+    assert(strcmp(fixture.lines[0], "") == 0);
+    assert(strcmp(fixture.lines[1], "A") == 0);
+    assert(fixture.y[0] == 20 && fixture.y[1] == 35);
+}
+
 static void test_draw_item_survey_null_cb(void) {
     DM2_V1_DrawItemSurveyReceipt r;
     memset(&r, 0xFF, sizeof(r));
@@ -603,6 +730,8 @@ int main(void) {
     RUN(test_draw_container_survey_null_cb);
     RUN(test_draw_eye_mouth_null_cb);
     RUN(test_draw_scroll_text_null_cb);
+    RUN(test_draw_scroll_text_renders_leading_and_consecutive_empty_lines);
+    RUN(test_draw_scroll_text_uses_mbcs_centering_without_ascii_metrics);
     RUN(test_draw_item_survey_null_cb);
     RUN(test_draw_hand_action_icons_null_cb);
     RUN(test_draw_map_chip_null_cb);

@@ -1488,6 +1488,19 @@ void dm2_v1_draw_scroll_text(
     int32_t record,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
+    char message[0xc8];
+    char line[0xc8];
+    size_t message_len;
+    int16_t lines = 0;
+    int16_t x = 0;
+    int16_t y = 0;
+    int16_t pos = 0;
+    DM2_V1_Rect text_rect;
+    bool mbcs;
+    int16_t line_height;
+    int16_t outer;
+    int16_t inner;
+
     if (!cb) return;
 
     if (cb->set_v1d66fc) cb->set_v1d66fc(ctx, 5);
@@ -1496,11 +1509,60 @@ void dm2_v1_draw_scroll_text(
     if (cb->draw_static_pic)
         cb->draw_static_pic(ctx, 18, 0, 0x10, 0x1ee, 0x0c);
 
-    /* Message text parsing and line-by-line rendering via callbacks */
-    char message[0xc8];
     memset(message, 0, sizeof(message));
     if (cb->query_message_text)
         cb->query_message_text(ctx, message, record, (int32_t)0xffff8002);
+    message[sizeof(message) - 1] = '\0';
+    message_len = strlen(message);
+    if (message_len == 0 || !cb->query_topleft || !cb->query_expanded_rect ||
+        !cb->gfxstr_linebreak || !cb->gfxstr_draw_line) {
+        return;
+    }
+
+    /* SKProject counts explicit newlines plus a final unterminated line,
+     * except that one trailing empty line is omitted after two newlines. */
+    for (size_t i = 0; i < message_len; ++i)
+        if (message[i] == '\n') ++lines;
+    if (message[message_len - 1] != '\n') ++lines;
+    else if (message_len > 1 && message[message_len - 2] == '\n') --lines;
+
+    memset(&text_rect, 0, sizeof(text_rect));
+    cb->query_topleft(ctx, 0x230, &x, &y);
+    if (!cb->query_expanded_rect(ctx, 0x1ee, &text_rect) || lines <= 0)
+        return;
+
+    mbcs = cb->query_text_is_mbcs && cb->query_text_is_mbcs(ctx, message);
+    if (mbcs) {
+        line_height = 0x0f;
+    } else {
+        if (!cb->get_strdat_strxplus || !cb->get_strdat_gfxstrw1 ||
+            !cb->get_strdat_gfxstrw3) {
+            return;
+        }
+        line_height = cb->get_strdat_strxplus(ctx);
+        outer = cb->get_strdat_gfxstrw3(ctx);
+        inner = cb->get_strdat_gfxstrw1(ctx);
+    }
+    if (mbcs) {
+        outer = 0;
+        inner = 0x0e;
+    }
+    if (line_height <= 0) return;
+    y = (int16_t)(y - (((line_height * lines - outer - 1) >> 1) - inner));
+
+    while ((size_t)pos < message_len) {
+        int16_t previous_pos = pos;
+        memset(line, 0, sizeof(line));
+        cb->gfxstr_linebreak(ctx, message, line, &pos, text_rect.w);
+        if (pos < previous_pos || (size_t)pos > message_len) return;
+        cb->gfxstr_draw_line(ctx, x, y, line);
+        y = (int16_t)(y + line_height);
+        /* SKProject renders empty lines and then consumes an explicit LF.
+         * Do this before the no-progress guard so leading/consecutive LFs
+         * cannot suppress all following text. */
+        if ((size_t)pos < message_len && message[pos] == '\n') ++pos;
+        if (pos <= previous_pos) return;
+    }
 }
 
 /* ================================================================

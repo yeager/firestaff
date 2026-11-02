@@ -336,6 +336,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*set_item_weight_display)(void *ctx, int16_t whole, int16_t tenth);
     /* Edition adapter handles DOS vs SPX image lookup parameter order. */
     void (*draw_item_survey_class_image)(void *ctx, int8_t cls1, int8_t cls2);
+    /* SKProject selects line height and centering constants by text encoding. */
+    bool (*query_text_is_mbcs)(void *ctx, const char *text);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

@@ -3111,13 +3111,17 @@ orders. SPX-v4 extended-mode branches, source stat-row selection across
 variants, and production callback/platform bindings remain open. Keep the
 DOS/SPX source rows PARTIAL.
 
-2026-11-02 SKProject `DRAW_SCROLL_TEXT` / `DRAW_HAND_ACTION_ICONS`:
-The source inventory already marks DOS/SPX definitions PARTIAL. The named audit
-was overclaiming parity: Firestaff's scroll helper queries a message but does
-not parse and lay out source lines, and its hand-action helper draws a single
-direction-selected icon without all source state, background and empty-hand
-branches. Corrected both named-symbol families to PARTIAL pending full source
-rendering and runtime ownership.
+2026-11-02 SKProject `DRAW_SCROLL_TEXT`:
+Firestaff now wraps and centers lines through the SKProject text callbacks.
+Regression coverage includes leading and consecutive empty lines, which the
+source renderer draws before continuing with later text. Production callback
+bindings, platform-specific font metrics and authenticated runtime captures
+remain open; keep the DOS/SPX source rows PARTIAL.
+
+2026-11-02 SKProject `DRAW_HAND_ACTION_ICONS`:
+The named audit remains PARTIAL. Firestaff draws a direction-selected icon but
+does not yet cover all source state, background, empty-hand, item-on-wood-panel
+and production runtime branches.
 
 2026-11-02 SKProject `MONEY_BOX_SURVEY` / `DRAW_MONEYBOX`:
 The source inventory marks the DOS/SPX moneybox functions PARTIAL, but the
