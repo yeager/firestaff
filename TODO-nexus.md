@@ -20,6 +20,16 @@ is available; use the shared installed Ymir when it is reachable. The existing
 frame-1605 VDP1-only result is documented in
 [`docs/nexus/nexus_vdp1_frame1605_dgn_composition.md`](docs/nexus/nexus_vdp1_frame1605_dgn_composition.md).
 
+The same-run VDP2 snapshot is now accepted by the bitmap/source analyzer even
+though its complete write trace has zero rows. It identifies a 512×256 8bpp
+NBG0 bitmap at VRAM offset zero. A scan against the authentic Japanese CUE
+(`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`) finds
+no exact bitmap source among 410 decoded retail surfaces. CRAM does contain
+the TITLE palette at offset `0x400` and a `LEV13.DGN` Structure2 palette at
+`0x7e0`. NBG0's `BMPNA` selector is zero, so neither span identifies its active
+palette or bitmap owner. Source join and semantic admission remain blocked
+pending same-frame Ymir layer output and final RGBX capture.
+
 ## Capture an authentic odd-address mode-5 draw
 
 Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now

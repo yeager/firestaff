@@ -12,6 +12,18 @@ This is VDP1-only emulator capture parity for one frame; VDP1+VDP2 output,
 hardware parity and production renderer admission remain unverified. See
 [`nexus_vdp1_frame1605_dgn_composition.md`](nexus_vdp1_frame1605_dgn_composition.md).
 
+The same run's complete VDP2 snapshot has zero memory-write trace rows, which
+is valid for this save-state capture: its frame-1605 receipt still binds the
+register, VRAM and CRAM snapshots. The bitmap/source analyzer now accepts that
+complete empty trace and compares the 512×256 8bpp NBG0 bitmap against the
+authentic Japanese retail corpus. It finds no exact bitmap source among 410
+decoded surfaces; the captured CRAM contains the TITLE palette at byte offset
+`0x400` and a retail `LEV13.DGN` Structure2 palette at `0x7e0`. NBG0's
+`BMPNA` selector is zero, so these spans are not evidence for its active
+palette or bitmap owner. The NBG0 source join remains unbound, and this
+snapshot does not supply same-run VDP2 layer output or a final RGBX reference.
+See the open frame-1605 capture item in [`TODO-nexus.md`](../../TODO-nexus.md).
+
 ## Consecutive-frame SH-2 staging to VDP1 geometry — 2026-11-02
 
 The authentic Japanese retail Ymir `--debug` movement pair now verifies the
