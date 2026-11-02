@@ -22,8 +22,11 @@ from analyze_nexus_vdp1_dgn_command_sequence_join import (
     command_material,
     dgn_match_index,
 )
-from analyze_nexus_vdp1_dgn_material_join import dgn_structure3_face_owners
-from analyze_nexus_vdp1_source_join import ymir_trace_prefix
+from analyze_nexus_vdp1_dgn_material_join import (
+    dgn_materials,
+    dgn_structure3_face_owners,
+)
+from analyze_nexus_vdp1_source_join import be16, be32, ymir_trace_prefix
 
 
 def relation_for_face_material(
@@ -42,6 +45,18 @@ def relation_for_face_material(
     if mode == 5:
         return "direct_colour_face_material_link_unproven"
     return "unsupported_colour_mode"
+
+
+def source_image_matches_command(
+    source_material: tuple[int, bytes, bytes, str] | None,
+    command_mode: int,
+    command_bytes: bytes,
+) -> bool:
+    expected_encoding = {1: 0x0008, 5: 0x0028}.get(command_mode)
+    return bool(
+        source_material and expected_encoding == source_material[0]
+        and source_material[1] == command_bytes
+    )
 
 
 def main() -> int:
@@ -63,6 +78,13 @@ def main() -> int:
     image_index, palette_index = dgn_match_index(
         args.retail_data, ymir_byte_order=True
     )
+    materials_by_id = {}
+    for name, encoding, image, palette in dgn_materials(args.retail_data):
+        match = re.match(r"LEV(\d\d)\.DGN\[Structure2=(\d+)", name)
+        if match:
+            materials_by_id[(int(match.group(1)), int(match.group(2)))] = (
+                encoding, image, palette, name
+            )
     command_by_address = {}
     for address, words in traced_commands:
         material = command_material(vram, Record(address, words))
@@ -73,9 +95,12 @@ def main() -> int:
 
     report_rows = []
     relationships: Counter[str] = Counter()
+    source_material_relationships: Counter[str] = Counter()
     matched_source_images = 0
     matched_indexed_palettes = 0
     matched_direct_colour_images = 0
+    source_face_image_matches = 0
+    source_face_palette_matches = 0
     for row in rows:
         matches = row["command_unordered"]
         if len(matches) != 1:
@@ -117,6 +142,48 @@ def main() -> int:
         source_face = ((source[0], source[1], source[2]) if source else None)
         relation = relation_for_face_material(mode, source_face, owners)
         relationships[relation] += 1
+
+        source_selector = None
+        source_material = None
+        source_image_matches = None
+        source_palette_matches = None
+        if source is None:
+            source_material_relation = "runtime_face_unresolved"
+        else:
+            level, entry, ordinal = source
+            level_name = f"LEV{level:02d}.DGN"
+            raw = (args.retail_data / level_name).read_bytes()
+            base = be16(raw, 0x1C) * 0x800
+            structure3_size = be16(raw, 0x1E) * 0x800
+            entry_count = be32(raw, base)
+            if entry >= entry_count:
+                raise ValueError(f"{level_name} Structure3 entry is out of range")
+            entry_offset = be32(raw, base + 4 + entry * 4)
+            entry_end = (be32(raw, base + 8 + entry * 4)
+                         if entry + 1 < entry_count else structure3_size)
+            if entry_offset + 24 > entry_end or entry_end > structure3_size:
+                raise ValueError(f"{level_name} Structure3 entry bounds are invalid")
+            face_count = be16(raw, base + entry_offset + 6)
+            face_offset = be32(raw, base + entry_offset + 16)
+            if ordinal >= face_count or face_offset + face_count * 12 > structure3_size:
+                raise ValueError(f"{level_name} Structure3 face bounds are invalid")
+            face_row = base + face_offset + ordinal * 12
+            source_selector = be16(raw, face_row + 10)
+            source_material = materials_by_id.get((level, source_selector))
+            source_image_matches = source_image_matches_command(
+                source_material, mode, material["source"]
+            )
+            source_palette_matches = bool(
+                mode == 1 and source_material and source_material[2]
+                and source_material[2] == material["palette"]
+            )
+            source_face_image_matches += source_image_matches
+            source_face_palette_matches += source_palette_matches
+            source_material_relation = (
+                "source_face_dgn_image_bytes_match" if source_image_matches else
+                "source_face_dgn_material_differs_from_command"
+            )
+        source_material_relationships[source_material_relation] += 1
         report_rows.append({
             "cpu": row["cpu"],
             "face_wram_address": f"0x{row['face_ptr']:08x}",
@@ -126,6 +193,10 @@ def main() -> int:
             "command_index": command_index,
             "command_address": f"0x{address:05x}",
             "colour_mode": mode,
+            "source_face_material_selector": source_selector,
+            "source_face_material_record": (source_material[3] if source_material else None),
+            "source_face_material_image_bytes_match": source_image_matches,
+            "source_face_material_palette_bytes_match": source_palette_matches,
             "image_candidates": image_candidates,
             "palette_candidates": palette_candidates,
             "candidate_structure3_owner_count": len(owners),
@@ -141,7 +212,10 @@ def main() -> int:
         "retail_image_byte_matches": matched_source_images,
         "indexed_palette_byte_matches": matched_indexed_palettes,
         "direct_colour_image_byte_matches": matched_direct_colour_images,
-        "face_material_relationships": dict(sorted(relationships.items())),
+        "candidate_image_structure3_owner_relationships": dict(sorted(relationships.items())),
+        "source_face_material_relationships": dict(sorted(source_material_relationships.items())),
+        "source_face_material_image_byte_matches": source_face_image_matches,
+        "source_face_material_palette_byte_matches": source_face_palette_matches,
         "limits": [
             "Only the retained authentic Ymir frame is covered.",
             "Repeated retail image bytes can have multiple candidate DGN owners.",
