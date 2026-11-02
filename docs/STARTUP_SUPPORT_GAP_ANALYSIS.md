@@ -148,6 +148,13 @@ checked that returning to the launcher rescans installed game availability,
 and verified that direct `--game` exit does not reopen the launcher. This is
 bounded return/rescan coverage, not all-edition or physical-input parity.
 
+At the same source revision, `return_to_menu_rescans_media_mutations_real_media`
+passed (1/1, 92.75 s) using authentic DM1, CSB, and DM2 archives. It removed
+the staged CSB archive while authentic DM1 gameplay was active and confirmed
+the return scan marked CSB unavailable; a second route added original CSB
+media during DM1 gameplay and confirmed the return scan discovered it. The
+original archives remain outside the staged mutation roots.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
