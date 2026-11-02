@@ -2375,7 +2375,7 @@ supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
 `ADD_CACHE_HASH` matches sorted lookup, duplicate cache-index selection and insertion ordering in Firestaff’s bounded state helper. SPX v4 and the older SKWIN source also run cache-maintenance when the game tick changes and touch/retrieve the mement entry on duplicate hits. Those effects and per-platform runtime cache ownership remain open; the source row is PARTIAL.
 
 2026-11-01 skproject UI-event variant comparison:
-`SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff’s shared core helper implements the v5 arrow branch, not the older spell/leader geometry and b44 gate. The DOS, SPX-v4, and SKWIN rows are now PARTIAL; the v5 algorithm matches but its live runtime/platform owner remains open.
+`SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff now exposes both the v5 arrow branch and an explicit older spell/leader rectangle branch with the source b44 leader gate. The DOS, SPX-v4, and SKWIN rows are now PARTIAL; the v5 algorithm matches but its live runtime/platform owner remains open.
 
 2026-11-01 skproject temporary-cache lifecycle comparison:
 SPX v4 and SKWIN `GET_TEMP_CACHE_HASH` advance the source counter per collision probe, while Firestaff uses a local probe and only advances once after allocation. `FREE_TEMP_CACHE_INDEX` also frees the cache entry when no mement is attached before freeing the indexed mement; Firestaff currently exits without that cache removal. Mark the three active SPX-v4 cache functions and the corresponding older SKWIN dispositions partial; live cache ownership remains open.
@@ -2628,3 +2628,14 @@ read current category/index/field globals in edition-specific order, then
 delegate to `QUERY_CMDSTR_ENTRY`. Firestaff has a receipt for an explicit
 current-context tuple but no owner that reads the selected source globals; all
 three rows remain partial until that state and production routes are bound.
+
+
+2026-11-02 skproject UI-event protocol implementation:
+`dm2_v1_skproject_adjust_ui_event_variant` now preserves the SPX v5/SKULLWIN
+movement-arrow default and adds an explicit DOS/SPX-v4/SKWIN spell/leader
+variant. The legacy variant uses the source rectangle diagonal and rewrites
+spell-triangle events by subtracting 0x4f; on the leader half it retains the
+event unless source `b44` is set. DOS, SPX v4 and SKWIN callers still need to
+select the legacy variant; SPX v4 action-hand cooldown indexing, live input
+owners and supported-platform runtime evidence remain open. The source rows
+remain `PARTIAL`.

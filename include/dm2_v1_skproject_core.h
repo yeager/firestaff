@@ -2249,7 +2249,15 @@ typedef struct {
     uint8_t present;
     uint8_t hand_cooldown[3];
     uint8_t hand_activable[2];
+    uint8_t leader_action_disabled;
 } DM2_V1_SkprojectUiChampionState;
+
+typedef enum {
+    /* SPX v5/SKULLWIN use the movement-arrow event protocol by default. */
+    DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 = 0,
+    /* DOS/SPX v4/SKWIN use spell/leader panel clicks for events 0x5f-0x62. */
+    DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER = 1
+} DM2_V1_SkprojectUiEventVariant;
 
 typedef struct {
     int valid;
@@ -2268,6 +2276,8 @@ typedef struct {
     int blocked_hand_cooldown;
     int blocked_hand_not_activable;
     int blocked_leader_hand_cooldown;
+    int blocked_leader_action;
+    int blocked_invalid_variant;
 } DM2_V1_SkprojectAdjustUiEventReceipt;
 
 typedef struct {
@@ -3961,6 +3971,14 @@ int dm2_v1_skproject_adjust_ui_event(
     const int16_t player_at_position[4],
     const DM2_V1_SkprojectUiChampionState *champions,
     uint16_t champion_count,
+    DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
+int dm2_v1_skproject_adjust_ui_event_variant(
+    DM2_V1_SkprojectUiEvent *event,
+    uint16_t player_dir,
+    const int16_t player_at_position[4],
+    const DM2_V1_SkprojectUiChampionState *champions,
+    uint16_t champion_count,
+    DM2_V1_SkprojectUiEventVariant variant,
     DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
 int dm2_v1_skproject_draw_charsheet_option_icon(
     uint8_t cls4,

@@ -8404,12 +8404,13 @@ int dm2_v1_skproject_boost_attribute(
     return 1;
 }
 
-int dm2_v1_skproject_adjust_ui_event(
+int dm2_v1_skproject_adjust_ui_event_variant(
     DM2_V1_SkprojectUiEvent *event,
     uint16_t player_dir,
     const int16_t player_at_position[4],
     const DM2_V1_SkprojectUiChampionState *champions,
     uint16_t champion_count,
+    DM2_V1_SkprojectUiEventVariant variant,
     DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt)
 {
     DM2_V1_SkprojectAdjustUiEventReceipt receipt;
@@ -8419,6 +8420,17 @@ int dm2_v1_skproject_adjust_ui_event(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     receipt.player_dir = (uint16_t)(player_dir & 3u);
+    if (variant != DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 &&
+        variant != DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER) {
+        receipt.blocked_invalid_variant = 1;
+        if (event) {
+            receipt.input_event = event->event;
+            event->event = 0u;
+            receipt.output_event = 0u;
+        }
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
     if (!event) {
         receipt.blocked_missing_event = 1;
         if (out_receipt) *out_receipt = receipt;
@@ -8480,7 +8492,19 @@ int dm2_v1_skproject_adjust_ui_event(
             receipt.diagonal_w2 = w2;
             receipt.diagonal_w3 = w3;
             if (w3 > w2) {
-                if (champions[player].hand_cooldown[2] == 0u) {
+                /* DOS dm2byf.cpp::SKW_ADJUST_UI_EVENT (5884-5936), SPX v4
+                 * skuievnt.cpp::ADJUST_UI_EVENT (22-67), and SKWIN
+                 * SkWinCore.cpp::ADJUST_UI_EVENT (12355-12400) keep the
+                 * leader-side event unless hero b44 disables it. SPX v5 and
+                 * SKULLWIN instead gate this half on handcooldown[2]. */
+                if (variant ==
+                    DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER) {
+                    if (champions[player].leader_action_disabled == 0u) {
+                        adjusted = 1;
+                    } else {
+                        receipt.blocked_leader_action = 1;
+                    }
+                } else if (champions[player].hand_cooldown[2] == 0u) {
                     adjusted = 1;
                 } else {
                     receipt.blocked_leader_hand_cooldown = 1;
@@ -8506,6 +8530,21 @@ int dm2_v1_skproject_adjust_ui_event(
     receipt.output_event = idx;
     if (out_receipt) *out_receipt = receipt;
     return adjusted ? 1 : 0;
+}
+
+int dm2_v1_skproject_adjust_ui_event(
+    DM2_V1_SkprojectUiEvent *event,
+    uint16_t player_dir,
+    const int16_t player_at_position[4],
+    const DM2_V1_SkprojectUiChampionState *champions,
+    uint16_t champion_count,
+    DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt)
+{
+    /* SKULLWIN c_input.cpp::DM2_ADJUST_UI_EVENT and SPX v5 uiinput.cpp use
+     * the movement-arrow protocol for 0x5f..0x62. */
+    return dm2_v1_skproject_adjust_ui_event_variant(
+        event, player_dir, player_at_position, champions, champion_count,
+        DM2_V1_SKPROJECT_UI_EVENT_SPX_V5, out_receipt);
 }
 
 int dm2_v1_skproject_draw_charsheet_option_icon(
