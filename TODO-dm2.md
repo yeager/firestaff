@@ -2669,3 +2669,17 @@ existing M11 event path remains on DOS/SPX-v5 semantics. `BootProfile.platform`
 identifies original media, not SPX source-code family, so it is not used to
 guess the variant. SPX-v4 input/panel ownership and an explicit source-family
 caller remain open; all three source rows stay `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_84` variant audit correction:
+The source variants do not share one consumability rule. DOS/SKULLWIN classify
+several item groups, consume qualifying records, and otherwise use two RNG
+gates before optionally issuing `19f0_2165` and mutating creature state. SPX v4
+instead removes unimportant cloth/weapons, miscellaneous items that are
+important or have nonzero GDAT food value, and potions with zero visible power;
+all other types attempt the source item-use command. Firestaff's core helper only
+captures the possession handle/category, and the XACT loop has no live callback.
+The named-symbol row is downgraded from `IMPLEMENTED_PARITY` to
+`IMPLEMENTED_NARROW`; the DOS, SPX-v4 and SPX-v5 active-source rows are now
+`PARTIAL`. Live callback, record unlink/deallocation, GDAT-bound food query,
+creature command mutation and supported-platform dispatch remain open.
