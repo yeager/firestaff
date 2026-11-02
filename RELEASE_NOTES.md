@@ -10,6 +10,7 @@
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
 - `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
 - `DM2 player status bars`: correct authentic narrow, vertical health, stamina and mana fills to scale by height; retain width scaling for horizontal fallback bars.
+- `Startup-menu text`: change long scan and message label fitting to keep UTF-8 codepoints intact, including Swedish diacritics.
 
 ## Developer changes
 
@@ -17,6 +18,7 @@
 - `Incomplete-data diagnostics`: change scan ownership rules to preserve DM1 and DM2 graphics-edition matches when paired dungeon files are missing; launch stays unavailable until all required data is present.
 - `Real-media regressions`: add checks for DM2 New Game mirror selection, full status-pane geometry and teleporter passage across DOS, FM Towns and Mac; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
 - `DM2 HUD geometry`: use the authentic RAW4 5×26 source status rectangles to verify vertical bar-fill orientation while retaining the horizontal fallback-bar contract.
+- `Startup-menu Unicode fallback`: change bitmap-font ellipsis fitting to preserve complete localized codepoints.
 - `DM2 tile-actuator lookup`: match SKProject's DB0–DB3 record cutoff, direction exception, and endian-specific word reads; compare against authentic DOS EN/FR, FM Towns JA and Mac EN dungeon data.
 - `DM2 teleporter passage`: reject active teleporter tiles whose source record marks them impassable; verify the common map helper against authentic DOS, FM Towns and Mac dungeon data. Live platform routing remains partial.
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.

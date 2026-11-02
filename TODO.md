@@ -1,5 +1,12 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-02 startup-menu Unicode fitting: the bitmap-font fallback now truncates
+long panel labels at UTF-8 codepoint boundaries and avoids starting the suffix
+on a continuation byte. The `m12_data_dir_cancel` menu-render integration test
+passes. This fixes malformed fallback glyphs when a localized scan or message
+label must be shortened; it does not change font coverage or native-window
+rendering.
+
 2026-11-02 current-main launcher recheck: the authentic-media
 `m12_main_menu_game_selection_real_media` CTest passed in 400.06 seconds
 against the installed collection after the scanner permission-recovery fix.

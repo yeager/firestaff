@@ -523,6 +523,41 @@ static int text_width_px(const char* s, const ModernTextStyle* st) {
     return w;
 }
 
+/* Return the longest UTF-8 prefix that ends at a codepoint boundary. This is
+ * used when bounding menu labels before measuring or inserting an ellipsis;
+ * snprintf's byte limit alone can split a multibyte character. Invalid lead
+ * bytes are kept as individual bytes so the renderer's existing replacement
+ * behavior remains deterministic. */
+static size_t utf8_prefix_boundary(const char* text, size_t maxBytes) {
+    const char* p = text;
+    size_t accepted = 0U;
+    if (!text) return 0U;
+    while (*p && accepted < maxBytes) {
+        const char* next = p;
+        size_t remaining = maxBytes - accepted;
+        (void)utf8_next_codepoint(&next);
+        if ((size_t)(next - p) > remaining) break;
+        accepted += (size_t)(next - p);
+        p = next;
+    }
+    return accepted;
+}
+
+/* A suffix byte count can also begin in a UTF-8 continuation byte. Move its
+ * start forward to the next lead byte before appending it after an ellipsis. */
+static size_t utf8_suffix_start(const char* text, size_t suffixBytes) {
+    size_t length;
+    size_t start;
+    if (!text) return 0U;
+    length = strlen(text);
+    start = suffixBytes < length ? length - suffixBytes : 0U;
+    while (start < length &&
+           (((unsigned char)text[start] & 0xC0U) == 0x80U)) {
+        ++start;
+    }
+    return start;
+}
+
 static void draw_glyph(M12_ModernCanvas* c, int x, int y,
                        const ModernGlyph* g, const ModernTextStyle* st) {
     int scale = st->scale;
@@ -615,25 +650,28 @@ static void draw_text_centered_fit(M12_ModernCanvas* c, int cx, int y,
     if (!s) {
         s = "";
     }
-    snprintf(fitted, sizeof(fitted), "%s", s);
-    if (text_width_px(fitted, st) <= maxW) {
-        draw_text_centered(c, cx, y, fitted, st);
-        return;
-    }
     sourceLen = strlen(s);
     if (sourceLen >= sizeof(fitted)) {
         sourceLen = sizeof(fitted) - 1U;
     }
+    sourceLen = utf8_prefix_boundary(s, sourceLen);
+    memcpy(fitted, s, sourceLen);
+    fitted[sourceLen] = '\0';
+    if (text_width_px(fitted, st) <= maxW) {
+        draw_text_centered(c, cx, y, fitted, st);
+        return;
+    }
     targetLen = sourceLen;
     while (targetLen > 8U) {
-        size_t front = (targetLen - 3U) / 2U;
+        size_t front = utf8_prefix_boundary(s, (targetLen - 3U) / 2U);
         size_t back = targetLen - 3U - front;
+        size_t suffixStart = utf8_suffix_start(s, back);
         snprintf(fitted,
                  sizeof(fitted),
                  "%.*s...%s",
                  (int)front,
                  s,
-                 s + strlen(s) - back);
+                 s + suffixStart);
         if (text_width_px(fitted, st) <= maxW) {
             draw_text_centered(c, cx, y, fitted, st);
             return;

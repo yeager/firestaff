@@ -8,6 +8,7 @@
 #include "menu_startup_m12.h"
 #include "menu_startup_state_access_m12.h"
 #include "menu_startup_render_modern_m12.h"
+#include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "menu_hit_m12.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
@@ -1268,6 +1269,53 @@ static void check_modern_scan_progress_standalone_render(void) {
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      0, "ZIP inventory incomplete"),
                  "SCANNING GAME DATA") == 0);
+
+    /* Long UTF-8 task labels must remain on codepoint boundaries when the
+     * bitmap fallback inserts an ellipsis. Repeated Å glyphs make the fit
+     * observable: 11 complete glyphs fit with the ellipsis in this 338px
+     * scan panel, while byte-based prefix/suffix cuts lose one glyph. */
+    {
+        const int smallWidth = 338;
+        const int smallHeight = 200;
+        const size_t smallBytes = (size_t)smallWidth *
+                                  (size_t)smallHeight * 4U;
+        const char repeatedRingA[] =
+            "ÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅÅ";
+        unsigned char* smallRgba =
+            (unsigned char*)calloc(1U, smallBytes);
+        size_t sourceBytes = strlen(repeatedRingA);
+        int topRowGlyphRuns = 0;
+        CHECK(smallRgba != NULL);
+        if (smallRgba && sourceBytes < sizeof(progress.currentTask)) {
+            m11_ttf_renderer_shutdown();
+            memset(&progress, 0, sizeof(progress));
+            progress.active = 1;
+            progress.totalSteps = 100U;
+            progress.completedSteps = 50U;
+            snprintf(progress.currentGameId, sizeof(progress.currentGameId),
+                     "dm1");
+            memcpy(progress.currentTask, repeatedRingA, sourceBytes + 1U);
+            M12_ModernMenu_RenderScanProgressLocalized(
+                &progress, 0, smallRgba, smallWidth, smallHeight);
+            for (int x = 169; x + 2 < 296; ++x) {
+                const size_t pixel = ((size_t)126U * (size_t)smallWidth +
+                                      (size_t)x) * 4U;
+                if (smallRgba[pixel + 0U] == 176U &&
+                    smallRgba[pixel + 1U] == 170U &&
+                    smallRgba[pixel + 2U] == 192U &&
+                    smallRgba[pixel + 4U] == 176U &&
+                    smallRgba[pixel + 5U] == 170U &&
+                    smallRgba[pixel + 6U] == 192U &&
+                    smallRgba[pixel + 8U] == 176U &&
+                    smallRgba[pixel + 9U] == 170U &&
+                    smallRgba[pixel + 10U] == 192U) {
+                    ++topRowGlyphRuns;
+                }
+            }
+            CHECK(topRowGlyphRuns == 11);
+        }
+        free(smallRgba);
+    }
     free(rgba);
 }
 
