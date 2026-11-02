@@ -23089,6 +23089,81 @@ static int dm2_runtime_create_minion(
     return 1;
 }
 
+/* SKULLWIN/c_engage.cpp:579-614 and skengage.cpp:578-613. Existing DB14
+ * missiles receive the source action byte followed by the 1c9a_0247 cache
+ * flush. If absent, cases 44/45 create minion types 0x33/0x32 respectively. */
+static int dm2_runtime_minion_missile(void *user, int action_case,
+                                      uint16_t minion_record,
+                                      uint16_t missile_ref, int16_t power,
+                                      int16_t x, int16_t y, int16_t map,
+                                      int16_t direction, int8_t facing)
+{
+    DM2_RuntimeCreateMinionContext *context = user;
+    DM2_RuntimeHandActivationQuery query;
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordChainAccess chain;
+    DM2_V1_ItemMissileReceipt query_receipt;
+    DM2_V1_Skproject1c9a0247Receipt flush_receipt;
+    uint16_t actual_missile;
+    uint16_t word4;
+    uint8_t *record;
+    uint8_t *raw;
+    int raw_size = 0;
+    int action_byte;
+
+    if (!context || !(rt = context->runtime) || !rt->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !rt->record_pools_valid || !rt->record_pools.record_graph_complete ||
+        map != rt->dungeon_level || map < 0 || map >= dungeon->level_count ||
+        minion_record == 0xffffu ||
+        dm2_v1_record_handle_pool((int16_t)minion_record) != 9 ||
+        (action_case != 44 && action_case != 45))
+        return 0;
+
+    memset(&query, 0, sizeof(query));
+    query.rt = rt;
+    memset(&chain, 0, sizeof(chain));
+    chain.record_word = dm2_runtime_hand_record_word;
+    chain.next_link = dm2_runtime_hand_next_link;
+    chain.context = &query;
+    actual_missile = dm2_v1_GET_MISSILE_REF_OF_MINION(
+        &chain, minion_record, missile_ref, &query_receipt);
+    if (query_receipt.blocked) return 0;
+    if (actual_missile != DM2_V1_ITEM_MISSILE_NULL_REF) {
+        if (dm2_v1_record_handle_pool((int16_t)actual_missile) != 14 ||
+            !dm2_runtime_hand_record_word(&query, actual_missile, 4u,
+                                          &word4) ||
+            !(record = dm2_v1_record_pool_address_mut(
+                  &rt->record_pools, (int16_t)actual_missile)) ||
+            rt->record_pools.pools[14].record_size < 8)
+            return 0;
+        raw = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, actual_missile, NULL, NULL, &raw_size);
+        if (!raw || raw_size < 8) return 0;
+        action_byte = action_case == 44 ? 0x32 : 0x33;
+        if ((record[4] == (uint8_t)action_byte &&
+             raw[4] == (uint8_t)action_byte))
+            return 1;
+        /* Firestaff has no ALLOCATION11/DBALLOC cache owner: the portable
+         * GDAT loader owns decoded assets and exposes no source tag-indexed
+         * allocations to free. Keep the exact SKProject helper fail-closed
+         * here instead of pretending the cache flush ran. */
+        memset(&flush_receipt, 0, sizeof(flush_receipt));
+        (void)dm2_v1_skproject_1c9a_0247(word4, 0u, NULL, NULL, NULL,
+                                          &flush_receipt);
+        if (flush_receipt.blocked_missing_callback) return 0;
+        record[4] = (uint8_t)action_byte;
+        raw[4] = (uint8_t)action_byte;
+        return 1;
+    }
+
+    context->map = map;
+    return dm2_runtime_create_minion(
+        context, action_case == 44 ? 0x33u : 0x32u, power, direction,
+        x, y, map, minion_record, facing);
+}
+
 int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt)
@@ -23147,6 +23222,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     int is_wield_action;
     int is_attack_action;
     int is_create_minion_action;
+    int is_minion_missile_action;
     int action_postcondition;
 
     if (!receipt) receipt = &local_receipt;
@@ -23213,6 +23289,9 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
         request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_1 + 1) ||
         request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_2 + 1) ||
         request.cmd.action_id == (DM2_ENGAGE_CREATE_MINION_3 + 1);
+    is_minion_missile_action =
+        request.cmd.action_id == (DM2_ENGAGE_MINION_MISSILE + 1) ||
+        request.cmd.action_id == (DM2_ENGAGE_MINION_ATTACK + 1);
     if ((!is_wield_action &&
          (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
           (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode))) ||
@@ -23222,7 +23301,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
          request.cmd.action_id != 8 &&
          request.cmd.action_id != (DM2_ENGAGE_SET_MINION_DEST + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1) &&
-         !is_create_minion_action) ||
+         (!is_create_minion_action && !is_minion_missile_action)) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
                                      &request.cmd.skill_type) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
@@ -23307,6 +23386,23 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
         minion_context.spx_v4 = variant == DM2_V1_COMMAND_SLOT_SPX_V4;
         request.create_minion_cb = dm2_runtime_create_minion;
         request.create_minion_ctx = &minion_context;
+    }
+    if (is_minion_missile_action) {
+        uint8_t item_type = 0xffu;
+        uint16_t minion_record = 0xffffu;
+        if (!dm2_runtime_hand_container_type(&hand_query, item, &item_type,
+                                              NULL, NULL, &minion_record) ||
+            item_type != 2u || minion_record == 0xffffu ||
+            dm2_v1_record_handle_pool((int16_t)minion_record) != 4) {
+            receipt->fail_closed = 1;
+            return 0;
+        }
+        minion_context.runtime = rt;
+        minion_context.map = game->current_level;
+        minion_context.spx_v4 = variant == DM2_V1_COMMAND_SLOT_SPX_V4;
+        request.minion_record = minion_record;
+        request.minion_missile_cb = dm2_runtime_minion_missile;
+        request.minion_missile_ctx = &minion_context;
     }
     if (request.cmd.action_id == (DM2_ENGAGE_RELEASE_MINION + 1)) {
         if (dm2_v1_record_handle_pool((int16_t)item) != 9 ||

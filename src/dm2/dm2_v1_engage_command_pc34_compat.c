@@ -423,10 +423,19 @@ int dm2_v1_engage_command(
         }
         break;
 
-    case 44: /* MINION missile — skengage.cpp:578-613 */
-    case 45: /* MINION attack */
-        if (request->create_minion_cb) {
-            receipt->minion_created = 1;
+    case 44: /* MINION missile type 0x33 — skengage.cpp:578-613 */
+    case 45: /* MINION attack type 0x32 */
+        if (request->minion_missile_cb) {
+            int16_t power = request->cmd.delay;
+            int r;
+            power = (int16_t)((power << 16) >> 19);
+            r = request->minion_missile_cb(
+                request->minion_missile_ctx, action_case,
+                request->minion_record, request->item_handle, power,
+                request->party_x, request->party_y, request->party_map,
+                (int16_t)((request->party_dir + 2) & 3),
+                (int8_t)(request->party_dir & 0xff));
+            if (!r) receipt->success = 0;
         } else {
             receipt->fail_closed = 1;
         }
