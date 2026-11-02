@@ -25,7 +25,7 @@ static const char* const g_changelogLines[] = {
     "  - DM2 health, stamina and mana fills now scale by height for authentic vertical RAW4 status bars, while horizontal fallback bars keep width scaling.",
     "  - DM2 tile-actuator lookup follows SKProject's database cutoff, direction exception and word-read behavior; authentic DOS, FM Towns and Macintosh dungeon data verifies the source comparison.",
     "  - DM2 save loading preserves signed empty inventory handles and retains post-load timer effects when item data is unavailable.",
-    "  - DM2 ladder-source analysis now distinguishes DOS and SPX v5 text-ornament gates; SPX v4 and production transition integration remain open.",
+    "  - DM2 ladder and distant-environment source helpers now cover DOS and SPX v4/v5 variants; production transition and environment-render integration remain open.",
     "  - Real-media regressions cover DM2 New Game selection and full pane geometry, CSB Amiga archive paths with spaces, refreshed startup-menu catalog references, and --debug traces for GDAT sources and HUD text.",
     "",
     "V3.0.424  (2026-11-02)",
