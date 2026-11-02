@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -49,7 +50,81 @@ def geometry_class(staged: tuple[tuple[int, int], ...], command: tuple[tuple[int
     return None
 
 
-def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
+def verify_register_pointer_link(dumps: Path, register_dumps: Path,
+                                staged: dict[tuple[int, int], dict[int, int]],
+                                stage_owners: dict[tuple[int, int], str],
+                                frame_min: int, frame_max: int) -> dict[str, object]:
+    receipt = read_receipt(register_dumps / "sh2-memory-read-trace-bundle.txt",
+                           "ymir-sh2-memory-read-trace-bundle-v3")
+    if receipt.get("bundle_complete") != "1" or receipt.get("register_snapshot_file_complete") != "1":
+        raise ValueError("register-read bundle or snapshots are incomplete")
+    if int(receipt.get("master_dropped", "-1")) or int(receipt.get("slave_dropped", "-1")):
+        raise ValueError("register-read trace rows were dropped")
+    if int(receipt["trace_rows"]) != int(receipt["register_snapshot_rows"]):
+        raise ValueError("register snapshot count does not cover every read-trace row")
+    read_path = register_dumps / receipt.get("register_snapshot_file", "")
+    with read_path.open(newline="", encoding="utf-8") as stream:
+        read_rows = list(csv.DictReader(stream))
+    if len(read_rows) != int(receipt["register_snapshot_rows"]):
+        raise ValueError("register snapshot row count does not match its receipt")
+
+    output_hashes = {}
+    for filename in ("vdp1-command-trace.csv", "vdp1-vram.bin"):
+        hashes = [hashlib.sha256((directory / filename).read_bytes()).hexdigest()
+                  for directory in (dumps, register_dumps)]
+        if hashes[0] != hashes[1]:
+            raise ValueError(f"register-read capture does not reproduce {filename}")
+        output_hashes[filename] = hashes[0]
+
+    read_rows_by_frame: dict[int, list[dict[str, str]]] = defaultdict(list)
+    for row in read_rows:
+        if row["pc"].lower() == "0x608f364":
+            frame = int(row["vdp1_frame"])
+            if frame_min <= frame <= frame_max:
+                if row["registers_available"] != "1":
+                    raise ValueError(f"registers unavailable for frame {frame} read row {row['read_row']}")
+                read_rows_by_frame[frame].append(row)
+
+    staged_keys_by_frame: dict[int, set[tuple[str, int]]] = defaultdict(set)
+    for (frame, base), slots in staged.items():
+        if set(slots) == {0, 1, 2, 3}:
+            staged_keys_by_frame[frame].add((stage_owners[(frame, base)], base))
+
+    register_memory = (register_dumps / "wram-hi.bin").read_bytes()
+    staging_memory = (dumps / "wram-hi.bin").read_bytes()
+    row_snapshot_matches = 0
+    face_pointers = set()
+    per_frame = []
+    for frame in range(frame_min, frame_max + 1):
+        observed = []
+        for row in read_rows_by_frame.get(frame, []):
+            cpu = row["sh2"]
+            base = int(row["r2"], 16)
+            if base & 0xF:
+                raise ValueError(f"unaligned r2 staging pointer in frame {frame}: {row['r2']}")
+            observed.append((cpu, base))
+            pointer = int(row["r9"], 16)
+            offset = pointer - 0x06000000
+            if offset < 0 or offset + 12 > min(len(register_memory), len(staging_memory)):
+                raise ValueError(f"r9 face row is outside captured WRAM-H: {row['r9']}")
+            if register_memory[offset:offset + 12] != staging_memory[offset:offset + 12]:
+                raise ValueError(f"face-row bytes differ between captures at {row['r9']}")
+            row_snapshot_matches += 1
+            face_pointers.add((cpu, pointer))
+        expected = staged_keys_by_frame.get(frame, set())
+        if len(observed) != len(set(observed)) or set(observed) != expected:
+            raise ValueError(f"frame {frame} r2 pointers do not uniquely match staged records")
+        per_frame.append({"frame": frame, "read_rows": len(observed),
+                          "staging_records": len(expected), "r2_pointer_matches": len(expected)})
+    return {"read_pc": "0x608f364", "command_trace_identical": True,
+            "vdp1_vram_identical": True, "matching_output_sha256": output_hashes,
+            "per_frame": per_frame,
+            "equal_final_face_row_snapshot_observations": row_snapshot_matches,
+            "unique_cpu_face_row_pointers": len(face_pointers),
+            "limit": "Face-row bytes are compared between final WRAM-H snapshots, not intermediate-frame snapshots."}
+
+
+def analyze(dumps: Path, run: str, register_dumps: Path | None = None) -> tuple[dict, list[dict[str, object]]]:
     write_receipt = read_receipt(dumps / "sh2-memory-write-trace-bundle.txt",
                                  "ymir-sh2-memory-write-trace-bundle-v1")
     command_receipt = read_receipt(dumps / "vdp1-capture-bundle.txt",
@@ -78,6 +153,7 @@ def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
         raise ValueError(f"{run}: retained SH-2 writes exceed the requested frame interval")
 
     staged: dict[tuple[int, int], dict[int, int]] = defaultdict(dict)
+    stage_owners: dict[tuple[int, int], str] = {}
     for row in write_rows:
         pc = row["pc"].lower()
         if pc not in WRITE_PCS:
@@ -91,6 +167,10 @@ def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
         if address != base + slot * 4:
             raise ValueError(f"{run}: unexpected staging write address: {row}")
         key = (frame, base)
+        cpu = row["sh2"]
+        if key in stage_owners and stage_owners[key] != cpu:
+            raise ValueError(f"{run}: staging record has writes from multiple CPUs at {base:#x}")
+        stage_owners[key] = cpu
         if slot in staged[key]:
             raise ValueError(f"{run}: duplicate staging slot at frame {frame}, {base:#x}")
         value = int(row["value"], 16)
@@ -150,6 +230,9 @@ def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
               "limits": ["This verifies SH-2 coordinate staging to VDP1 command geometry only.",
                          "It does not establish retail face ownership, material/pixel ownership, complete frame parity, or renderer admission.",
                          "Cyclic and unordered-only matches do not prove corner correspondence or winding."]}
+    if register_dumps:
+        result["register_pointer_link"] = verify_register_pointer_link(
+            dumps, register_dumps, staged, stage_owners, frame_min, frame_max)
     return result, details
 
 
@@ -174,12 +257,14 @@ def main() -> int:
     parser.add_argument("--paired-dumps", type=Path,
                         help="optional second authentic run for staging-coordinate comparison")
     parser.add_argument("--paired-run", help="label for --paired-dumps")
+    parser.add_argument("--register-dumps", type=Path,
+                        help="optional capture with SH-2 PC 0x608f364 register snapshots")
     parser.add_argument("--json-out", type=Path, required=True)
     parser.add_argument("--csv-out", type=Path, required=True)
     args = parser.parse_args()
     if bool(args.paired_dumps) != bool(args.paired_run):
         parser.error("--paired-dumps and --paired-run must be provided together")
-    summary, rows = analyze(args.dumps, args.run)
+    summary, rows = analyze(args.dumps, args.run, args.register_dumps)
     summaries = [summary]
     if args.paired_dumps:
         first_rows = rows
@@ -200,6 +285,15 @@ def main() -> int:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
+    register_link = summary.get("register_pointer_link")
+    pointer_summary = None
+    if register_link:
+        pointer_summary = {
+            "r2_pointer_matches": sum(row["r2_pointer_matches"]
+                                       for row in register_link["per_frame"]),
+            "equal_final_face_row_snapshot_observations":
+                register_link["equal_final_face_row_snapshot_observations"],
+            "unique_cpu_face_row_pointers": register_link["unique_cpu_face_row_pointers"]}
     print(json.dumps({"runs": [{"run": item["run"], "frames": len(item["per_frame"]),
                                "total_staging_records": sum(row["complete_staging_records"]
                                                              for row in item["per_frame"]),
@@ -209,7 +303,8 @@ def main() -> int:
                                "cyclic": sum(row["cyclic"] for row in item["per_frame"]),
                                "unordered_only": sum(row["unordered_only"]
                                                      for row in item["per_frame"])}
-                       for item in summaries], "paired_comparison": comparison}, indent=2))
+                       for item in summaries], "paired_comparison": comparison,
+                      "register_pointer_link": pointer_summary}, indent=2))
     return 0
 
 
