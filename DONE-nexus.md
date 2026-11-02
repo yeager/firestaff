@@ -1,5 +1,11 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-02 — Decode authentic MAPD NBG0 bitmap rows in C
+
+- Added a capture-only C decoder for the authentic frame-891 / VDP2 serial-1280 NBG0 8bpp bitmap profile. It consumes hash-pinned VDP2 VRAM, CRAM, registers, and all 224 Ymir per-row scroll states.
+- The real-data CTest compares the decoder's pixels to Ymir's NBG0 candidate layer: all 20,302 active pixels match RGB, priority, and special-color flags; all 51,378 index-zero pixels match transparency. The generated plane SHA-256 is `7a1e9053ab5cf14795828ad646c148cbd288a4b188599e8558b628c11255592a`.
+- This proves the capture-only source decoder when external row state is supplied. Runtime derivation of that state, full VDP1/VDP2 composition, and production-renderer admission remain open. Raw captures remain outside Git. See [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
 ## 2026-11-02 — Verify full-frame NBG0 replay against Ymir
 
 - Captured all 224 output rows in authentic Japanese retail VDP1 frame 7486 / VDP2 serial 8199. The same-frame register snapshot has `BGON=0x0003`; Ymir reports 224/224 row samples, 1,568 complete layer records, no truncation, and zero frame-scoped VDP2 VRAM/CRAM writes or dropped trace rows.

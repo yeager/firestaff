@@ -190,15 +190,17 @@ source, VDP1 RGB/palette pixels, and their priority/color-calculation stack
 must still be produced by Firestaff and compared against this authentic oracle.
 The legacy stack remains a known mismatch and is not admitted for rendering.
 
-The NBG0 raw bitmap source has since been joined directly against the same
-authentic layer trace. For each row, the audit uses Ymir's captured 11.8 fixed
-point scroll state, reads an 8-bit index from VDP2 VRAM base `0x00000` with a
-512-byte pitch, and resolves the same index in CRAM. All 20,302 nonzero dots
-match Ymir's NBG0 candidate color, priority 4, and special-color-calculation
-flag; all 51,378 index-zero dots match Ymir transparency. This verifies the
-raw byte-to-layer mapping when the authenticated per-row scroll state is
-provided; Firestaff still needs to derive or carry that state in its capture
-path.
+The NBG0 raw bitmap source is now decoded by Firestaff's capture-only C path
+and compared directly against the same authentic layer trace. For each row,
+the decoder consumes Ymir's captured 11.8 fixed-point scroll state, reads an
+8-bit index from VDP2 VRAM base `0x00000` with a 512-byte pitch, and resolves
+the same index in CRAM. All 20,302 nonzero dots match Ymir's NBG0 candidate
+color, priority 4, and special-color-calculation flag; all 51,378 index-zero
+dots match Ymir transparency. The output plane hash is
+`7a1e9053ab5cf14795828ad646c148cbd288a4b188599e8558b628c11255592a`. This
+verifies the C raw byte-to-layer decoder for the captured MAPD profile. The
+per-row state remains an explicit external capture input; extracting that
+state from Firestaff's own runtime remains open.
 
 Reproduce the raw NBG0 source join with:
 
@@ -210,6 +212,14 @@ python3 scripts/audit_nexus_ymir_mapd_nbg0_bitmap_source.py \
   --registers "$evidence/vdp-snapshots/vdp1-891-vdp2-1280-vdp2-registers.bin" \
   --layers "$evidence/layer-trace-frame891-start60-20261101/layers.csv" \
   --render-state "$evidence/layer-trace-frame891-start60-20261101/render-state.csv"
+```
+
+Run Firestaff's C decoder and compare all output pixels against the authentic
+Ymir layer candidate with:
+
+```sh
+FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_EVIDENCE_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031 \
+ctest --test-dir build -R '^nexus_v1_vdp2_mapd_nbg0_bitmap_source_real$' --output-on-failure
 ```
 
 ## SH-2 register-write trace
