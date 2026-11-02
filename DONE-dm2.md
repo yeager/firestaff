@@ -1,3 +1,12 @@
+- 2026-11-02: Rebuilt the current release candidate and passed the authentic
+  DM2 New Game selection tests for DOS, Amiga, FM Towns and Macintosh (4/4).
+  These cover the DOS GDAT mirror selection and the corresponding platform
+  startup routes; they do not establish full viewport, HUD, audio or native
+  display parity. An isolated partial install containing only authentic DOS
+  PC-English `GRAPHICS.DAT` also verified the incomplete-data diagnostic:
+  `--menu --debug --verbose` identified `pc-en`, reported `DUNGEON.DAT`
+  missing, and kept DM2 unavailable. This is not a gameplay-start result.
+
 - 2026-10-30: The complete `dm2_v1_fmtowns_native_cli_boot` CTest passed on
   the current M4 build in 286.31 seconds against the installed original
   Japanese FM Towns archive. It covered the bare `--game dm2` AUTO route,

@@ -1,3 +1,10 @@
+- 2026-11-02: Verified the incomplete DM1 PC34 diagnostic with authentic
+  `GRAPHICS.DAT` from the original DOS v3.4 archive in an isolated partial
+  data root. `--menu --debug --verbose` identified `pc34-en`, reported the
+  graphics file present and `DUNGEON.DAT` missing, and kept DM1 unavailable.
+  This verifies the incomplete-data diagnostic and fail-closed gate only.
+  The authentic shared-catalog CTest also passed for installed DM1 editions.
+
 - 2026-11-01: Fixed PC 3.4 save restoration so source C04 ATTACK, APPROACH and
   FLEE behavior rebuilds the active-group AI state instead of defaulting every
   restored monster to WANDER. The focused group-state test and the authentic

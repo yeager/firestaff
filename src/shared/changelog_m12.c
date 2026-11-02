@@ -18,6 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-11-02)",
     "  - DM1 incomplete-data diagnostics retain the authenticated graphics edition when the matching dungeon file is missing, so the launcher can identify and report the required file.",
+    "  - DM2 incomplete loose installations retain the authenticated graphics edition for missing-dungeon diagnostics while keeping launch blocked.",
     "  - DM2 New Game waits for the authentic mirror-selection screen before accepting champion selection input.",
     "  - DM2 player status panes draw at their authentic full 77x37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.",
     "  - Real-media regressions cover DM2 New Game selection and full pane geometry, CSB Amiga archive paths with spaces, refreshed startup-menu catalog references, and --debug traces for GDAT sources and HUD text.",
