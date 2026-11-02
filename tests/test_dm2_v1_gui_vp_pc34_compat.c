@@ -1,5 +1,4 @@
 #include "dm2_v1_gui_vp_pc34_compat.h"
-#include "dm2_v1_querydb_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -217,28 +216,31 @@ static void test_trim_blit_rect_callback(void) {
     assert(mock_blit_h == 130);  /* 200 - (20+50) */
 }
 
-static int32_t query_environment_command(
-    const char *text, const char *pattern, void *ctx)
-{
-    const DM2_V1_EnvironmentSourceVersion *source_version = ctx;
-    if (!source_version) return 0;
-    if (*source_version == DM2_V1_ENVIRONMENT_SOURCE_DOS) {
-        return dm2_v1_query_cmdstr_text_dos(text, pattern, NULL, NULL);
-    }
-    if (*source_version == DM2_V1_ENVIRONMENT_SOURCE_SPX_V4) {
-        return dm2_v1_query_cmdstr_text_spx_v4(text, pattern, NULL, NULL);
-    }
-    return dm2_v1_query_cmdstr_text(text, pattern, NULL, NULL);
+typedef struct {
+    int32_t move_mode;
+    int32_t target_x;
+    int32_t target_y;
+    int32_t falloff;
+} EnvironmentCommandFixture;
+
+static int32_t mock_environment_command_query(
+    const char *text, const char *pattern, void *ctx) {
+    const EnvironmentCommandFixture *fixture = ctx;
+    (void)text;
+    if (!fixture) return 0;
+    if (strcmp(pattern, "mv") == 0) return fixture->move_mode;
+    if (strcmp(pattern, "xl") == 0) return fixture->target_x;
+    if (strcmp(pattern, "yl") == 0) return fixture->target_y;
+    if (strcmp(pattern, "fd") == 0) return fixture->falloff;
+    return 0;
 }
 
 static void test_environment_distant_element_plan(void) {
-    static const uint8_t distant[] = "mv=1 xl=12 yl=24 fd=0";
-    static const uint8_t fixed[] = "mv=0";
+    static const uint8_t distant[] = "fixture";
     DM2_V1_EnvironmentElementPlan plan;
-    DM2_V1_EnvironmentSourceVersion source_version =
-        DM2_V1_ENVIRONMENT_SOURCE_DOS;
-    DM2_V1_EnvironmentCommandText command_text = {
-        query_environment_command, &source_version
+    EnvironmentCommandFixture fixture = {1, 12, 24, 0};
+    const DM2_V1_EnvironmentCommandText command_text = {
+        mock_environment_command_query, &fixture
     };
 
     memset(&plan, 0, sizeof(plan));
@@ -250,21 +252,31 @@ static void test_environment_distant_element_plan(void) {
     assert(plan.offset_x == 210 && plan.offset_y == 0);
     assert(plan.scale_x == 60 && plan.scale_y == 60);
 
+    fixture.target_y = 5;
     memset(&plan, 0, sizeof(plan));
-    source_version = DM2_V1_ENVIRONMENT_SOURCE_SPX_V5;
     assert(dm2_v1_environment_set_distant_element_plan(
-        fixed, sizeof(fixed), &command_text,
+        distant, sizeof(distant), &command_text,
+        DM2_V1_ENVIRONMENT_SOURCE_SPX_V4,
+        0, 10, 20, 0, 0, &plan));
+    assert(plan.visible && plan.distance == 5);
+    assert(plan.offset_x == 84 && plan.offset_y == 0);
+    assert(plan.scale_x == 59 && plan.scale_y == 59);
+
+    fixture.move_mode = 0;
+    memset(&plan, 0, sizeof(plan));
+    assert(dm2_v1_environment_set_distant_element_plan(
+        distant, sizeof(distant), &command_text,
         DM2_V1_ENVIRONMENT_SOURCE_SPX_V5,
         0, 0, 0, 0, 0, &plan));
     assert(plan.visible && plan.distance == 0);
     assert(plan.scale_x == 0x40 && plan.scale_y == 0x40);
 
+    fixture.move_mode = 1;
     memset(&plan, 0xFF, sizeof(plan));
-    source_version = DM2_V1_ENVIRONMENT_SOURCE_SPX_V4;
     assert(!dm2_v1_environment_set_distant_element_plan(
-        distant, sizeof(distant) - 1u, &command_text,
+        distant, sizeof(distant), &command_text,
         DM2_V1_ENVIRONMENT_SOURCE_SPX_V4,
-        0, 10, 20, 0, 0, &plan));
+        4, 10, 20, 0, 0, &plan));
     assert(!plan.visible && plan.scale_x == 0);
 }
 
