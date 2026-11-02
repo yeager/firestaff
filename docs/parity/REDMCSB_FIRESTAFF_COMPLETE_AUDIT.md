@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,879 unreviewed, 973 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,879 unreviewed, 1,054 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,878 unreviewed, 974 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,878 unreviewed, 1,055 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
@@ -958,3 +958,8 @@ DOS and SPX v5 accept the encoded action byte and subtract 63; SPX v4 takes the 
 ### DM2 door timer SPX v5 comparison (2026-11-02)
 
 SKProject `DM2_STEP_DOOR` (`SKWINSPX/src/v5/sktimprc.cpp:128-421`) and DOS `SKW_STEP_DOOR` both halve creature door damage when AIDefinition w24 bit 12 is set, with a minimum of one; Firestaff's live door-step owner already applies that rule. Do not count it as a v5 gap. The v5 variant remains partial because exact sound/resource and door-graphics selection, G1 mapping away from the current map, and independent supported-platform runtime evidence remain open.
+
+
+### DM2 SPX v4 self-enchantment payment comparison (2026-11-02)
+
+SKProject `CALL_ENCHANTMENT_SELF` (`SKWINSPX/src/v4/skchamp.cpp:1041-1060`) applies the matching 0x0f party mask, aura type, adjusted power and duration through Firestaff's enchantment/timer helper. With MP required, the source rejects zero MP and halves power when MP is below 4, setting MP to zero. At 4 or more, it sets MP to exactly 4; Firestaff's shared helper subtracts 4. The helper lacks a production-bound v4 cast route, so this remains partial, including supported-platform behavior.
