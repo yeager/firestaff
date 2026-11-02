@@ -540,6 +540,9 @@ typedef struct {
     uint16_t shop_wall_actuator;
     uint16_t shop_floor_actuator;
     uint16_t shop_current_item;
+    uint16_t shop_buy_price;
+    uint16_t shop_sell_price;
+    uint8_t shop_price_valid;
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
     uint8_t shop_soldout_icon_required;
