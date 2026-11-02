@@ -622,6 +622,8 @@ WorkRAMH and frame-8037 VRAM both retain the exact span. Reproduce with
 `firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/`, and the
 hash-verified Japanese CUE. The event trace SHA-256 is
 `2829b136bff432ea4ec5be0abefd4952c39667145c69940a25b436dce02acee7`.
+The endpoint registers confirm the 512×256, 8bpp NBG0 bitmap at base zero
+(`TVMD=0x8000`, `BGON=1`, `CHCTLA=0x0013`, `PLSZ=2`, `BMPNA=0`).
 
 This proves one row's storage and write values across the captured run. It does
 not identify the complete NBG0 bitmap producer, prove the SH-2 read values at

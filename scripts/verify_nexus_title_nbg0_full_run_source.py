@@ -63,6 +63,18 @@ def main() -> int:
         regions, snapshot_frame, byte_order = ymir_bundle_frame(dumps)
         require(snapshot_frame == SNAPSHOT_FRAME,
                 f"expected the authentic endpoint at frame {SNAPSHOT_FRAME}")
+        registers = regions["vdp2-regs"]
+        require(byte_order == "big", "VDP2 register snapshot is not big-endian")
+        observed_registers = {
+            offset: int.from_bytes(registers[offset:offset + 2], "big")
+            for offset in (0x00, 0x20, 0x28, 0x2A, 0x2C, 0x3C, 0xE4, 0xE6)
+        }
+        expected_registers = {
+            0x00: 0x8000, 0x20: 0x0001, 0x28: 0x0013, 0x2A: 0x0002,
+            0x2C: 0x0000, 0x3C: 0x0000, 0xE4: 0x0000, 0xE6: 0x0000,
+        }
+        require(observed_registers == expected_registers,
+                "frame-8037 VDP2 registers do not select the captured NBG0 bitmap lane")
         wram_hi = (dumps / "wram-hi.bin").read_bytes()
         require(len(wram_hi) == 0x100000, "WorkRAMH snapshot has an unexpected size")
         require(wram_hi[WRAM_HI_OFFSET:WRAM_HI_OFFSET + SPAN_BYTES] == source,
@@ -71,6 +83,8 @@ def main() -> int:
         current = bytearray((dumps / "vdp2-vram-start.bin").read_bytes()[
             VRAM_OFFSET:VRAM_OFFSET + SPAN_BYTES])
         require(len(current) == SPAN_BYTES, "initial VRAM does not cover the source span")
+        require(current != source,
+                "initial VRAM already equals the retail span, so first-write provenance is ambiguous")
         first_exact: tuple[int, str] | None = None
         frame_copy_values: dict[int, int] = {}
         frame_copy_addresses: set[int] = set()
@@ -145,6 +159,8 @@ def main() -> int:
     print(f"first_exact_source_event_sequence={first_exact[0]}")
     print(f"snapshot_frame={snapshot_frame}")
     print(f"snapshot_register_byte_order={byte_order}")
+    print("TVMD=0x8000 BGON=0x0001 CHCTLA=0x0013 PLSZ=0x0002")
+    print("BMPNA=0x0000 MPOFN=0x0000 CRAOFA=0x0000 CRAOFB=0x0000")
     print("vdp2_event_replay_matches_final_snapshots=1")
     print("full_bitmap_source_ownership=unverified")
     print("visible_layer_output=unverified")
