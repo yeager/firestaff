@@ -1,3 +1,27 @@
+# Firestaff v3.0.426
+
+## User-facing changes
+
+- `DM2 moneybox`: change the DOS PC-English panel to display source-derived coin stacks and route supported deposit and withdrawal actions through the selected moneybox. Other editions and complete transaction parity remain open.
+- `DM2 lighting recalculation`: update shared dynamic-light state on supported item and inventory transitions.
+
+## Developer changes
+
+- `DM2 container rendering helpers`: change slot and held-item drawing to resolve authentic item IDs, classes, frames and icon layers, and block guessed placeholder icons when source data is missing. A production game-view caller remains unimplemented.
+- `DM2 container and moneybox regressions`: add source-callback, record-pool, held-item, carried-weight, save/load, real-media and FM Towns checks for supported survey and inventory paths.
+- `Nexus VDP1 capture tools`: change source-bound frame replay to validate unique DGN material joins for authentic Saturn captures, and keep retail frame evidence external to the repository.
+- `Theron's Quest verification records`: update the native spawn receipt and Japanese Akutuba capture documentation to separate verified source evidence from unverified campaign and presentation behavior.
+- `DM2 parity documentation`: update source inventories, named-symbol audits and active TODO records to mark renderer bindings, non-DOS transactions and platform parity as incomplete.
+- `Release metadata`: update the CMake project version, embedded launcher changelog and reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `DM2 viewport and HUD`: complete viewport composition, portraits, labels, panel interactions and physical-display parity remain open.
+- `DM2 containers and moneybox`: container drawing helpers do not yet have a production game-view caller; DOS PC-English moneybox actions do not establish parity across supported editions.
+- `Nexus`: Saturn title/menu composition and playable gameplay remain gated; capture and composition checks do not establish a playable viewport or HUD.
+- `Theron's Quest`: verified startup and selected input/capture paths do not establish complete campaign or presentation parity.
+- Original game media, saves and firmware are not included in release packages.
+
 # Firestaff v3.0.425
 
 ## User-facing changes
