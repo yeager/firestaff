@@ -16,10 +16,11 @@
 
 /* table1d275a: coin scatter positions (32 entries x 2 bytes) */
 const int8_t dm2_guidraw_table1d275a[32][2] = {
-    {0,0}, {1,0}, {2,0}, {3,0}, {0,1}, {1,1}, {2,1}, {3,1},
-    {0,2}, {1,2}, {2,2}, {3,2}, {0,3}, {1,3}, {2,3}, {3,3},
-    {4,0}, {5,0}, {6,0}, {7,0}, {4,1}, {5,1}, {6,1}, {7,1},
-    {4,2}, {5,2}, {6,2}, {7,2}, {4,3}, {5,3}, {6,3}, {7,3}
+    {-2,10}, {-8,3}, {7,-3}, {-6,10}, {8,-7}, {-8,11}, {2,-2},
+    {8,-11}, {0,0}, {4,8}, {-8,-10}, {6,7}, {2,2}, {-6,9}, {-3,-11},
+    {2,11}, {0,-11}, {-5,-7}, {-3,3}, {8,11}, {0,-5}, {6,-9},
+    {-7,3}, {5,1}, {4,-7}, {-8,-3}, {8,3}, {-3,-2}, {0,7}, {-3,-4},
+    {-4,0}, {2,-11}
 };
 
 /* table1d69d0: hero stat bar color palette indices */
@@ -523,13 +524,76 @@ void dm2_v1_draw_moneybox(
     if (cb->count_by_coin_types)
         cb->count_by_coin_types(ctx, (int32_t)record, counts);
 
-    for (int i = 0; i < 10; i++) {
+    DM2_V1_Rect panel_clip;
+    DM2_V1_Rect *clip = cb->get_right_panel_clip_rect ?
+        cb->get_right_panel_clip_rect(ctx, &panel_clip) : NULL;
+    if (!clip || !cb->get_money_item_id ||
+        !cb->get_item_order_in_container || !cb->count_by_coin_types ||
+        !cb->get_itemtype_of_itemspec ||
+        !cb->query_itemdb_from_distinctive || !cb->query_gdat_image ||
+        !cb->query_gdat_palette || !cb->query_blit_rect || !cb->blit)
+        return;
+
+    /* SKProject DRAW_MONEYBOX (skguidrw.cpp:442) draws each denomination's
+     * own GDAT sprite, scattered through the slot.  The slot order is
+     * resolved through the container's money ordering, while the coin count
+     * array is indexed by denomination order. */
+    for (int slot = 0; slot < 10; slot++) {
         int32_t order = cb->get_item_order_in_container ?
-            cb->get_item_order_in_container(ctx, (int32_t)record, i) : -1;
-        if (order >= 0 && counts[order] > 0) {
-            /* Draw coins for this denomination (simplified) */
-            int16_t rect_id = (int16_t)(i + 0xdd);
-            dm2_v1_draw_icon_pict_entry(20, cls2, 0x10, 2, rect_id, -1, cb, ctx);
+            cb->get_item_order_in_container(ctx, (int32_t)record, slot) : -1;
+        if (order < 0 || order >= 10 || counts[order] <= 0)
+            continue;
+
+        uint16_t item_spec = cb->get_money_item_id(ctx, order);
+        int8_t item_class = cb->query_itemdb_from_distinctive(
+            ctx, (int32_t)item_spec);
+        int8_t item_subclass = (int8_t)cb->get_itemtype_of_itemspec(
+            ctx, (int32_t)item_spec);
+        void *coin_bmp = cb->query_gdat_image(ctx, item_class,
+                                               item_subclass, 0x18);
+        void *coin_palette = cb->query_gdat_palette(ctx, item_class,
+                                                      item_subclass, 0x18);
+        if (!coin_bmp)
+            continue;
+
+        DM2_V1_Rect slot_rect;
+        int16_t src_x = 0;
+        int16_t src_y = 0;
+        DM2_V1_Rect *base = cb->query_blit_rect(
+            ctx, coin_bmp, &slot_rect, (int16_t)(slot + 0xdd),
+            &src_x, &src_y);
+        if (!base)
+            continue;
+
+        DM2_V1_Rect coin_rect = *base;
+        int coin_count = counts[order];
+        int position = (slot << 3) + (coin_count > 32 ? coin_count - 32 : 0);
+        if (coin_count > 32)
+            coin_count = 32;
+        for (int coin = 0; coin < coin_count; ++coin) {
+            position = (position + 1) & 31;
+            coin_rect.x = (int16_t)(base->x +
+                dm2_guidraw_table1d275a[position][0]);
+            coin_rect.y = (int16_t)(base->y +
+                dm2_guidraw_table1d275a[position][1]);
+
+            int left = coin_rect.x > clip->x ? coin_rect.x : clip->x;
+            int top = coin_rect.y > clip->y ? coin_rect.y : clip->y;
+            int right = coin_rect.x + coin_rect.w < clip->x + clip->w ?
+                coin_rect.x + coin_rect.w : clip->x + clip->w;
+            int bottom = coin_rect.y + coin_rect.h < clip->y + clip->h ?
+                coin_rect.y + coin_rect.h : clip->y + clip->h;
+            if (left < right && top < bottom) {
+                DM2_V1_Rect clipped = {
+                    (int16_t)left, (int16_t)top,
+                    (int16_t)(right - left), (int16_t)(bottom - top)
+                };
+                dm2_v1_draw_icon_pict_buff(
+                    coin_bmp, 2, &clipped,
+                    (int16_t)(src_x + left - coin_rect.x),
+                    (int16_t)(src_y + top - coin_rect.y),
+                    12, 0, coin_palette, cb, ctx);
+            }
         }
     }
 }
