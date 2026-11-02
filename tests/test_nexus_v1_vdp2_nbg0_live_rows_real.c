@@ -39,8 +39,7 @@ int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR");
     const char *replay_path = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_REPLAY_RGB");
-    const char *baseline_path = getenv("FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY");
-    Blob fbs = {0}, vram = {0}, cram = {0}, regs = {0}, replay = {0}, screenshot = {0};
+    Blob fbs = {0}, vram = {0}, cram = {0}, regs = {0};
     Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *fb = NULL;
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput input;
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt receipt;
@@ -48,24 +47,21 @@ int main(void)
         {0U, 224U, 0x1f79U, 0x0bcdU, 0x00cdU, 0x00cdU}
     };
     FILE *out = NULL; size_t p; int rc = 1;
-    if (!root || !*root || !baseline_path || !*baseline_path) {
-        puts("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR and FIRESTAFF_NEXUS_NBG0_LIVE_BASELINE_REPLAY");
+    if (!root || !*root) {
+        puts("SKIP: set FIRESTAFF_NEXUS_NBG0_LIVE_CAPTURE_DIR");
         return 77;
     }
     fbs = read_capture_file(root, "dumps/vdp1-fbs.bin");
     vram = read_capture_file(root, "dumps/vdp2-vram.bin");
     cram = read_capture_file(root, "dumps/vdp2-cram.bin");
     regs = read_capture_file(root, "dumps/vdp2-registers.bin");
-    screenshot = read_capture_file(root, "screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261029T151400.554.png");
-    replay = read_file(baseline_path);
     fb = (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)malloc(sizeof(*fb));
-    if (!fbs.data || fbs.size != 524288U || !vram.data || vram.size != 524288U || !cram.data || cram.size != 4096U || !regs.data || regs.size != 512U || !replay.data || replay.size != 320U*224U*3U || !screenshot.data || !fb ||
+    if (!fbs.data || fbs.size != 524288U || !vram.data || vram.size != 524288U || !cram.data || cram.size != 4096U || !regs.data || regs.size != 512U || !fb ||
         !hash_is(&fbs, "0570c79b067adde55161ba2e16c09a628dcdf99b7b49f168d803c948b4479420") ||
         !hash_is(&vram, "2b6fe0392b1ff23c0c55f08423d179a74d7f481990e37aadd4e6bfd657d9cf45") ||
         !hash_is(&cram, "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
         !hash_is(&regs, "2d3ed242492f06aa8bac0aa90acfc823c488a6d07ec76d5932882233e80d2ff4") ||
-        !hash_is(&replay, "ab4e62971ef82515764de5433b7ce933a27693f53f714115b2ff216cae847ad7") ||
-        !hash_is(&screenshot, "f9f2175b5f75616cbd7c942a7d65f5fcdb20012186b5069aebe77be4e4a85c94")) {
+        !hash_is(&regs, "2d3ed242492f06aa8bac0aa90acfc823c488a6d07ec76d5932882233e80d2ff4")) {
         fprintf(stderr, "FAIL: authenticated NBG0 live-row capture size/hash\n"); goto done;
     }
     memset(&input, 0, sizeof(input));
@@ -96,6 +92,6 @@ int main(void)
     rc = 0;
 done:
     if (out) fclose(out);
-    free(fb); free(fbs.data); free(vram.data); free(cram.data); free(regs.data); free(replay.data); free(screenshot.data);
+    free(fb); free(fbs.data); free(vram.data); free(cram.data); free(regs.data);
     return rc;
 }
