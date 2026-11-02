@@ -38,6 +38,25 @@ and no CRAM palette span matches. The frame reports `BGON=0x0007`,
 base and the bundle has no VDP2 write rows, so it does not establish a FONT256
 upload, producer, text consumer or bitmap ownership. Source join stays unbound.
 
+The authentic Japanese title-menu capture from a cold boot (Ymir VDP1 frame
+8037) is also accepted from its full-run VDP2 render-event bundle. Replaying
+2,195,061 ordered writes from the initial VRAM/CRAM snapshots reproduces both
+export-time snapshots exactly, including writes whose frame label is `unknown`
+before frame indexing begins. The retail bitmap scan finds zero exact matches
+among 410 decoded surfaces; the TITLE palette bytes occur at CRAM `0x400`, but
+the active NBG0 palette and bitmap owner remain unbound. Reproduce with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/dumps \
+  --cue "/Volumes/Extern-disk/FirestaffUserData/data/nexus/Dungeon Master Nexus (Japan).cue" \
+  --exact-only
+```
+
+The capture proves the memory timeline and snapshot association for this menu
+run. It does not establish retail source ownership, layer output, or composed
+pixel parity; keep semantic admission blocked.
+
 ## Reconcile MAPD frame-891 layer enable state
 
 The hash-pinned Ymir render-state trace has 224 target-pass rows for VDP1 frame

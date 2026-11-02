@@ -288,18 +288,81 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
                 capture.get("vdp2_vram_file_complete") != "1" or
                 capture.get("vdp2_cram_file_complete") != "1"):
             raise ValueError("Ymir VDP2 receipt does not identify one complete frame snapshot")
-        try:
-            with (bundle / "vdp2-memory-write-trace.csv").open(
-                    encoding="ascii", newline="") as stream:
-                reader = csv.DictReader(stream)
-                if reader.fieldnames != ["vdp1_frame", "memory", "address", "width", "value"]:
-                    raise ValueError("Ymir VDP2 trace header is invalid")
-                rows = list(reader)
-        except (OSError, UnicodeError) as error:
-            raise ValueError("Ymir VDP2 write trace is unreadable") from error
-        if len(rows) != expected_rows:
-            raise ValueError("Ymir VDP2 write trace row count does not match its receipt")
-        if rows:
+        event_trace = bundle / "vdp2-render-event-trace.csv"
+        if event_trace.is_file():
+            # A full-run event trace can begin with writes from before Ymir
+            # assigned a VDP1 frame index. Replay it from the initial snapshots
+            # and bind the resulting state to the export-time snapshots instead
+            # of rejecting those authentic, explicitly unfiltered events.
+            required = (
+                "render_event_trace_file_complete", "initial_vram_file_complete",
+                "initial_cram_file_complete", "row_state_reconstruction_complete",
+                "vdp2_register_file_complete",
+            )
+            if (any(capture.get(key) != "1" for key in required) or
+                    capture.get("trace_vram") != "1" or capture.get("trace_cram") != "1" or
+                    capture.get("trace_vdp1_frame_range_enabled") != "0" or
+                    int(capture.get("address_begin", "-1"), 16) != 0 or
+                    int(capture.get("address_end_exclusive", "0"), 16) < 512 * 1024):
+                raise ValueError("Ymir event bundle is incomplete, filtered, or lacks full VDP2 coverage")
+            try:
+                replay_vram = bytearray((bundle / "vdp2-vram-start.bin").read_bytes())
+                replay_cram = bytearray((bundle / "vdp2-cram-start.bin").read_bytes())
+                if len(replay_vram) != 512 * 1024 or len(replay_cram) != 4096:
+                    raise ValueError("Ymir initial VDP2 snapshots have invalid sizes")
+                with event_trace.open(encoding="ascii", newline="") as stream:
+                    reader = csv.DictReader(stream)
+                    if reader.fieldnames != ["sequence", "event", "vdp1_frame", "row", "memory", "address", "width", "value"]:
+                        raise ValueError("Ymir VDP2 render-event trace header is invalid")
+                    previous_sequence = -1
+                    writes = 0
+                    events = 0
+                    scanlines = 0
+                    for row_number, row in enumerate(reader, 2):
+                        events += 1
+                        sequence = int(row["sequence"])
+                        if sequence <= previous_sequence:
+                            raise ValueError("Ymir render-event sequence is not strictly increasing")
+                        previous_sequence = sequence
+                        if row["vdp1_frame"] != "unknown" and not row["vdp1_frame"].isdigit():
+                            raise ValueError(f"invalid Ymir VDP1 frame at row {row_number}")
+                        if row["event"] == "scanline":
+                            if (not row["row"].isdigit() or
+                                    any(row[field] for field in ("memory", "address", "width", "value"))):
+                                raise ValueError(f"invalid Ymir scanline marker at row {row_number}")
+                            scanlines += 1
+                            continue
+                        if (row["event"] != "write" or row["row"] or
+                                row["memory"] not in ("VRAM", "CRAM")):
+                            raise ValueError(f"invalid Ymir render event at row {row_number}")
+                        memory = replay_vram if row["memory"] == "VRAM" else replay_cram
+                        address, width, value = int(row["address"], 16), int(row["width"]), int(row["value"], 16)
+                        if (width not in (1, 2) or address < 0 or address + width > len(memory) or
+                                value < 0 or value >= 1 << (width * 8)):
+                            raise ValueError(f"invalid Ymir VDP2 memory write at row {row_number}")
+                        memory[address:address + width] = value.to_bytes(width, "big")
+                        writes += 1
+                if (events != int(capture["render_event_rows"]) or writes != expected_rows or
+                        events == 0 or scanlines == 0):
+                    raise ValueError("Ymir render-event counts do not match the bundle receipt")
+                if (bytes(replay_vram) != (bundle / "vdp2-vram.bin").read_bytes() or
+                        bytes(replay_cram) != (bundle / "vdp2-cram.bin").read_bytes()):
+                    raise ValueError("Ymir event replay does not match export-time VDP2 snapshots")
+            except (KeyError, OSError, UnicodeError, TypeError, ValueError) as error:
+                raise ValueError("Ymir VDP2 event trace does not verify against its receipt and snapshots") from error
+        else:
+            try:
+                with (bundle / "vdp2-memory-write-trace.csv").open(
+                        encoding="ascii", newline="") as stream:
+                    reader = csv.DictReader(stream)
+                    if reader.fieldnames != ["vdp1_frame", "memory", "address", "width", "value"]:
+                        raise ValueError("Ymir VDP2 trace header is invalid")
+                    rows = list(reader)
+            except (OSError, UnicodeError) as error:
+                raise ValueError("Ymir VDP2 write trace is unreadable") from error
+            if len(rows) != expected_rows:
+                raise ValueError("Ymir VDP2 write trace row count does not match its receipt")
+        if expected_rows and not event_trace.is_file():
             try:
                 first_frame = int(capture["first_vdp1_frame_index"])
                 last_frame = int(capture["last_vdp1_frame_index"])
