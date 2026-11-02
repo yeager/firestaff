@@ -3122,3 +3122,11 @@ spell-icon helper has a closer source mapping, but live spell state and panel
 ownership are not bound on every supported platform. Updated the named audits
 to PARTIAL; finish the icon overlays and runtime/platform bindings before
 claiming parity.
+
+2026-11-02 SKProject `DRAW_PLAYER_ATTACK_DIR` / `DRAW_SPELL_PANEL` /
+`SHOW_ATTACK_RESULT`:
+The current attack-direction helper uses fixed icon entries and omits source
+party/weapon/aura overlays; the spell panel omits source spell-state variants;
+and attack-result rendering formats positive damage text but does not draw the
+source result-image branch. Updated the DOS/SPX inventory and named audit to
+PARTIAL until those source behaviors and live platform owners are implemented.
