@@ -1027,3 +1027,6 @@ Compared ReDMCSB `BASE.C:F0019_MAIN_DisplayErrorAndStop` with Firestaff source m
 
 
 Compared ReDMCSB FILLBOX.C `F1128_IsLeftMouseButtonDown` with UTIO.C `F2008_IsLeftMouseButtonDown` and HINT001.C `F2024_IsLeftMouseButtonDown`. F2008 and F2024 delegate to F1128, whose Amiga implementation reads CIAA gameport bit 6. Firestaff has source-named bounded accessors over caller-owned button status, but they do not reproduce that Amiga hardware read; CSB PC34 source-boundary adapters explicitly have no live input owner. The three inventory rows now read `PARTIAL`, with platform and caller wiring still open.
+
+
+The same ReDMCSB/FIREFSTAFF inventory correction applies to `F2047_GetMouseX` and `F2048_GetMouseY`: both source-named accessors exist over caller-owned mouse state, but ReDMCSB Amiga reads `MouseX`/`MouseY` from its Intuition window. The inventory changes both from `MISSING` to `PARTIAL`; native event/window ownership and CSB callers are not proven.
