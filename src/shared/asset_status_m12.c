@@ -6588,7 +6588,11 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     m12_copy_string(rootMatchedPaths[rootIndex][i],
                                     sizeof(rootMatchedPaths[rootIndex][i]), graphics);
                     rootMatched[rootIndex][i] = 1;
-                } else if (found < 0 || (rootMatched[rootIndex][i] &&
+                /* A loose hash match with no same-directory dungeon is still
+                 * useful intake evidence. Keep it for the required-file
+                 * report; that pass binds DUNGEON.DAT to this graphics owner
+                 * and keeps the incomplete game unavailable. */
+                } else if (found < 0 || (found != 0 && rootMatched[rootIndex][i] &&
                            !m12_path_is_virtual_asset(rootMatchedPaths[rootIndex][i]))) {
                     rootMatched[rootIndex][i] = 0;
                     rootMatchedPaths[rootIndex][i][0] = '\0';
