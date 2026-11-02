@@ -6625,10 +6625,11 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     }
                 }
                 free(candidates);
-                if (!found) {
-                    rootMatched[rootIndex][i] = 0;
-                    rootMatchedPaths[rootIndex][i][0] = '\0';
-                }
+                /* Keep the hash-verified graphics candidate when no
+                 * complete same-directory owner exists. The required-file
+                 * pass binds DUNGEON.DAT to this owner and blocks launch, but
+                 * retaining the graphics receipt lets the launcher identify
+                 * the edition and report the file that is actually missing. */
                 if (count < 0) fprintf(stderr,
                     "firestaff: media-discovery-incomplete game=dm1 path=%s reason=%s\n",
                     roots[rootIndex], count == -2 ? "candidate-limit" : "allocation");
