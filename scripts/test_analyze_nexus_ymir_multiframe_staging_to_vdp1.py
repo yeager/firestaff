@@ -37,6 +37,8 @@ def write_capture(dumps: Path, duplicate_slot: bool = False) -> None:
                                                     *[f"word{index}" for index in range(16)]])
         writer.writeheader()
         writer.writerow(command)
+    (dumps / "wram-hi.bin").write_bytes(bytes(1024 * 1024))
+    (dumps / "vdp1-vram.bin").write_bytes(bytes(4))
     (dumps / "sh2-memory-write-trace-bundle.txt").write_text(
         "format=ymir-sh2-memory-write-trace-bundle-v1\n"
         f"trace_file_complete=1\ntrace_rows={len(write_rows)}\nmaster_dropped=0\nslave_dropped=0\n"
@@ -47,6 +49,25 @@ def write_capture(dumps: Path, duplicate_slot: bool = False) -> None:
         "format=ymir-vdp1-capture-bundle-v1\ntrace_file_complete=1\n"
         "trace_rows=1\ntrace_dropped_total=0\ntrace_first_frame=0\ntrace_last_frame=1598\n",
         encoding="utf-8")
+
+
+def write_register_capture(dumps: Path, source_dumps: Path) -> None:
+    dumps.mkdir(parents=True)
+    for name in ("vdp1-command-trace.csv", "vdp1-vram.bin", "wram-hi.bin"):
+        (dumps / name).write_bytes((source_dumps / name).read_bytes())
+    row = {"sh2": "master", "read_row": "0", "vdp1_frame": "1598",
+           "pc": "0x608f364", "registers_available": "1",
+           "r2": "0x0604e690", "r9": "0x0606ee60"}
+    with (dumps / "sh2-memory-read-register-snapshots.csv").open(
+            "w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(row))
+        writer.writeheader()
+        writer.writerow(row)
+    (dumps / "sh2-memory-read-trace-bundle.txt").write_text(
+        "format=ymir-sh2-memory-read-trace-bundle-v3\ntrace_file_complete=1\n"
+        "trace_rows=1\nmaster_dropped=0\nslave_dropped=0\nbundle_complete=1\n"
+        "register_snapshot_file=sh2-memory-read-register-snapshots.csv\n"
+        "register_snapshot_file_complete=1\nregister_snapshot_rows=1\n", encoding="utf-8")
 
 
 class MultiframeStagingJoinTests(unittest.TestCase):
@@ -69,6 +90,18 @@ class MultiframeStagingJoinTests(unittest.TestCase):
         self.assertEqual(summary["per_frame"][0]["unique_geometry_joins"], 1)
         self.assertEqual(summary["per_frame"][0]["ordered"], 1)
         self.assertEqual(rows[0]["geometry_match"], "ordered")
+
+    def test_links_register_pointer_to_frame_local_staging_record(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ymir-multiframe-register-link-") as directory:
+            root = Path(directory)
+            dumps = root / "staging"
+            registers = root / "registers"
+            write_capture(dumps)
+            write_register_capture(registers, dumps)
+            summary, _ = analyzer.analyze(dumps, "fixture", registers)
+        link = summary["register_pointer_link"]
+        self.assertEqual(link["per_frame"][0]["r2_pointer_matches"], 1)
+        self.assertEqual(link["equal_final_face_row_snapshot_observations"], 1)
 
     def test_rejects_duplicate_staging_slot(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ymir-multiframe-duplicate-") as directory:

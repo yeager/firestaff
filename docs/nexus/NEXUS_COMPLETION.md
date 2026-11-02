@@ -10,6 +10,12 @@ paired Up-input capture joins all 132 records in each frame (1,056/1,056).
 Both trace receipts are complete with zero dropped rows. Across the eight
 frames, all 1,056 shared frame/address records contain different XY words after
 the Up input; 48 additional control records are absent from the Up trace.
+For the control run, a separate SH-2 PC `0x608f364` register capture has
+identical full VDP1 command-trace and VDP1 VRAM hashes. Its 138 `r2` pointers
+per frame all match the control staging writes (1,104/1,104). Face-row bytes at
+the corresponding `r9` pointers also match in both final WRAM-H snapshots for
+all 1,104 observations. The face-row comparison is not an intermediate-frame
+memory snapshot.
 
 This establishes input-sensitive projected XY values reaching VDP1 command
 records for this state and window. It does not bind every row to a retail DGN

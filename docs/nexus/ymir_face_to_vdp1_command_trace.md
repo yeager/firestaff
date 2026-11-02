@@ -55,6 +55,7 @@ python3 scripts/analyze_nexus_ymir_multiframe_staging_to_vdp1.py \
   --run control \
   --paired-dumps /path/to/nexus_movement_staging_writer_capture_20261030/up/dumps \
   --paired-run up \
+  --register-dumps /path/to/ymir-sh2-face-selection-20261102/f364-correlation/dumps \
   --json-out /path/to/output/control-summary.json \
   --csv-out /path/to/output/control-joins.csv
 ```
@@ -64,6 +65,16 @@ groups the four observed coordinate writes into each staging record, then
 requires a unique frame-local VDP1 geometry match and one-to-one reverse
 ownership. Its paired comparison counts shared staging addresses whose XY words
 changed between runs and records present in only one run.
+
+The optional `--register-dumps` input cross-links the control capture to a
+separate SH-2 register-read run. It requires identical full VDP1 command-trace
+and VDP1 VRAM hashes, then checks each frame's PC `0x608f364` `r2` staging
+pointer against the captured writes. The read run contains 138 such pointers
+per frame; all 1,104 pointers match the control writes. The two final WRAM-H
+snapshots also contain identical 12-byte face rows at all 1,104 observed
+`r9` events (120 distinct CPU/pointer pairs). These are end-of-capture memory
+snapshots, so this check does not prove the face-row bytes at intermediate
+frames.
 
 | Run | Frames | Staging records | Unique geometry joins | Ordered | Cyclic | Unordered only |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
