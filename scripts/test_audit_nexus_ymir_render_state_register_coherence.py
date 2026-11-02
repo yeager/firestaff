@@ -30,7 +30,7 @@ class CoherenceAuditTests(unittest.TestCase):
                 writer.writerows((
                     {"frame_index": 7, "vdp2_frame_serial": 11,
                      "row_vcnt": y, "nbg0_enabled": 1}
-                    for y in range(2)
+                    for y in range(audit.EXPECTED_ROWS)
                 ))
             with index.open("w", newline="", encoding="utf-8") as stream:
                 writer = csv.DictWriter(stream, fieldnames=(
@@ -66,6 +66,28 @@ class CoherenceAuditTests(unittest.TestCase):
             index.write_text("vdp1_frame,vdp2_frame_serial,file_prefix\n", encoding="utf-8")
 
             with self.assertRaisesRegex(audit.AuditError, "missing indexed snapshots"):
+                audit.audit(state, index, dump_dir)
+
+    def test_rejects_incomplete_row_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            state = root / "render-state.csv"
+            index = root / "index.csv"
+            dump_dir = root / "registers"
+            dump_dir.mkdir()
+            state.write_text(
+                "frame_index,vdp2_frame_serial,row_vcnt,nbg0_enabled\n7,11,0,1\n",
+                encoding="utf-8",
+            )
+            index.write_text(
+                "vdp1_frame,vdp2_frame_serial,file_prefix\n7,11,vdp1-7-vdp2-11\n",
+                encoding="utf-8",
+            )
+            registers = bytearray(512)
+            registers[0x20:0x22] = b"\x00\x01"
+            (dump_dir / "vdp1-7-vdp2-11-vdp2-registers.bin").write_bytes(registers)
+
+            with self.assertRaisesRegex(audit.AuditError, "complete 0:224 row coverage"):
                 audit.audit(state, index, dump_dir)
 
 
