@@ -215,16 +215,16 @@ int main(void) {
     menuOptions.skipScreenshotGalleryScan = 1;
     M12_StartupMenu_InitWithOptions(&menu, NULL, NULL, &menuOptions);
     menu.languageExplicit = 1;
-    menu.settings.languageIndex = 0;
+    menu.settings.languageIndex = 1;
     if (M12_StartupMenu_SetDataDirectory(&menu, blockedRoot) != 0 ||
         menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
-        strcmp(menu.messageLine1, "1 FOLDER REQUIRES ACCESS") != 0 ||
+        strcmp(menu.messageLine1, "ÅTKOMST NEKADES TILL 1 MAPP") != 0 ||
         !menu.messageLine2 || !strstr(menu.messageLine2, blockedRoot) ||
         !menu.messageLine3 ||
         strcmp(menu.messageLine3,
-               "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN") != 0) {
+               "TILLÅT MAPPÅTKOMST I SYSTEMINSTÄLLNINGAR OCH SKANNA IGEN") != 0) {
         fprintf(stderr,
-                "FAIL: inaccessible selected root was not reported as denied\n");
+                "FAIL: inaccessible selected root was not reported in Swedish\n");
         M12_StartupMenu_Destroy(&menu);
         chmod(blockedParent, 0700);
         rmdir(blockedRoot);
