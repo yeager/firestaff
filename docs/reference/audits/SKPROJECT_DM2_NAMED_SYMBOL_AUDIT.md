@@ -699,7 +699,7 @@ Compared SKWINSPX `DM2_STEP_DOOR` (`src/v5/sktimprc.cpp:128-421`) with Firestaff
 Compared SKWINSPX `CALL_ENCHANTMENT_SELF` (`src/v4/skchamp.cpp:1041-1060`) and its spell/game callers with Firestaff's `dm2_v1_hero_cast_enchantment_spx_v4` and `dm2_v1_proceed_enchantment_self`. The enchantment mask, aura type, power scaling and duration path correspond. With MP required, the source rejects zero, halves power and sets MP to zero below four, and assigns MP exactly four at four or more. Firestaff's bounded dispatcher now provides those rules through a v4-specific helper and carries the explicit variant selector, while its runtime still leaves hero/enchantment callbacks unbound, so that command fails closed before reaching the helper. M11 still routes DOS/v5; the v4 production edition selector and spell/game callers remain open. This source definition remains `PARTIAL` for production callers and supported-platform integration.
 
 
-With active-source review overrides applied, the inventory currently maps 2,833 as `UNREVIEWED`, 1,019 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,833 as `UNREVIEWED`, 1,020 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
 
 
 Historical generated DM2 backlog after recording the separate DOS, SPX v4 and SPX v5 message-text definitions: 3,952 open rows (2,854 unreviewed, 1,096 partial source or older-ledger rows, 0 missing, 2 partial source owners). This snapshot predates subsequent source reviews.
