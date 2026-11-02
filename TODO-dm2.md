@@ -2840,3 +2840,15 @@ the group and refresh mode 5/6. Firestaff's M11 HUD plan draws the normal six
 arrows but does not bind the push/pull state or render yellow fields 14-24.
 The active source review now records the correct function and remaining gap;
 all four rows remain `PARTIAL` pending complete mode and platform redraw parity.
+
+2026-11-02 SKProject DOS/SPX v4/v5/SKULLWIN `13e4_0982` audit correction:
+The legacy named-symbol ledger marked SKULLWIN `DM2_13e4_0982` as
+`IMPLEMENTED_PARITY` by mapping it to `dm2_v1_skproject_13e4_0982_classify`,
+which only reports pre-check fields and queue intent. The active runtime does
+run the bounded `dm2_v1_ccm_message_loop` from `dm2_runtime_think_body` for
+0x21/0x22 timers, but bypasses the outer `dm2_v1_creature_ccm_dispatch`
+wrapper and has no production owner for the source `m_157BC` AI bitmap save.
+SPX v4 also splits command 0x55 into spell commands 0x27/0x28 using source
+randomness. Unsupported animation/action branches still fail closed. DOS,
+v4, v5 and SKULLWIN rows are now `PARTIAL`; the classifier is not feature
+parity and the supported platform routes remain incomplete.

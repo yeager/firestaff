@@ -153,7 +153,7 @@ DM2_14cd_0067	SKULLWIN	SKULLWIN/c_ai.cpp	4495	src/dm2/dm2_v1_skproject_core.c:DM
 DM2_SELECT_CREATURE_37FC	SKULLWIN	SKULLWIN/c_ai.cpp	4723	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_select_creature_37fc	IMPLEMENTED_PARITY	-
 DM2_14cd_09e2	SKULLWIN	SKULLWIN/c_ai.cpp	4743	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_09e2	IMPLEMENTED_PARITY	-
 DM2_50CB	SKULLWIN	SKULLWIN/c_ai.cpp	5275	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_50cb	IMPLEMENTED_PARITY	-
-DM2_13e4_0982	SKULLWIN	SKULLWIN/c_ai.cpp	5341	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_13e4_0982	IMPLEMENTED_PARITY	-
+DM2_13e4_0982	SKULLWIN	SKULLWIN/c_ai.cpp	5341	src/dm2/dm2_v1_ccm_loop_pc34_compat.c:dm2_v1_ccm_message_loop; src/dm2/dm2_v1_runtime.c:dm2_runtime_think_body	PARTIAL	The runtime calls the bounded CCM message loop for timer 0x21/0x22 from the think body, but bypasses the dm2_v1_creature_ccm_dispatch wrapper and has no production owner for the source m_157BC AI bitmap save. Unsupported animation/action branches remain fail-closed; do not count the classifier as implementation parity.
 DM2_THINK_CREATURE	SKULLWIN	SKULLWIN/c_ai.cpp	5649	src/dm2/dm2_v1_creature.c:396	IMPLEMENTED_PARITY	-
 DM2_4EA8	SKULLWIN	SKULLWIN/c_ai.cpp	5786	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_4ea8	IMPLEMENTED_PARITY	-
 DM2_PREPARE_LOCAL_CREATURE_VAR	SKULLWIN	SKULLWIN/c_ai.cpp	5817	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_prepare_local_creature_var	IMPLEMENTED_PARITY	-
