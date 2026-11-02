@@ -360,6 +360,16 @@ static void test_dos_and_spx_text_usage(void)
         DM2_V1_SKPROJECT_LADDER_SOURCE_DOS, &receipt);
     CHECK(result == 0 && receipt.valid && receipt.found,
           "actuator lookup decodes source-format big-endian records");
+
+    fixture.pools.words_big_endian = 0;
+    fixture.pools.source_words_big_endian = 1;
+    memset(fixture.db3, 0, sizeof(fixture.db3));
+    set_db3_actuator(&fixture, 0u, 1u);
+    result = dm2_v1_skproject_find_ladder_around_source(
+        &fixture.dungeon, &fixture.pools, NULL, 0, 1, 1, 1,
+        DM2_V1_SKPROJECT_LADDER_SOURCE_DOS, &receipt);
+    CHECK(result == 0 && receipt.valid && receipt.found,
+          "ladder source words use their byte order independently of dungeon words");
 }
 
 int main(void)
