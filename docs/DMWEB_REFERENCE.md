@@ -203,6 +203,16 @@ The most relevant for Firestaff:
 - `db_data/dm2_pc10_en/graphics.dat/graphics.dat.html` — DM2 PC 1.0 EN graphics
 - `db_data/dm2_segacd_10_en/stry.dat/stry.dat.html` — DM2 Sega CD 1.0 EN story animation
 
+Fetched the current DM1 and CSB indexes and representative catalogs from
+Greatstone on 2026-11-02. The indexes expose 26 DM1 and 19 CSB variant
+collections; these are extraction-catalog coverage counts, not Firestaff
+support counts. The DM PC 3.4 English `GRAPHICS.DAT` page lists 713 catalog
+items, while the CSB Atari ST 2.0 English `GRAPHICS.DAT` page lists 563.
+Greatstone's matching CSB `SWITCH.DAT` page lists seven utility-disk menu and
+resource entries, including Introduction, Champion Editor, and Hint Oracle
+selections. These are useful labels and index cross-checks; they do not
+establish runtime action semantics or replace ReDMCSB source comparison.
+
 These can be used as **golden references** for asset validation once the probes use the current `db_data/` paths and respect the local cache/licensing boundary. When a user puts DM, CSB or DM2 data in `~/.firestaff/data/`, Firestaff can compare extracted item/hash metadata against known Greatstone outputs to verify that the data is from a known version. Greatstone remains the broadest public extraction index for this.
 
 ---
@@ -357,8 +367,8 @@ fetched in detail and incorporated into this reference:
 - [ ] Per-edition pages for the 5 games (atari-st, amiga, pc, etc.)
 - [ ] Custom dungeons deep-dive pages (esp. Conflux III — uses CSBWin extensions)
 - [x] ~~Greatstone articles deep-dive~~ — klar 2026-06-25: Mac QuickTime, SNES multi-palettes and dungeon XML/HTML article pages summarized above.
-- [ ] Greatstone current `db_data/` DM/CSB item lists from `g_dm.html` and `g_csb.html`
-- [ ] greatstone's CSB switch.dat support (item type 0x07 in CSB)
+- [x] ~~Greatstone current `db_data/` DM/CSB item lists from `g_dm.html` and `g_csb.html`~~ — fetched 2026-11-02; see the variant/catalog counts and CSB `SWITCH.DAT` entry summary above.
+- [x] ~~Greatstone's CSB `switch.dat` support (item type 0x07 in CSB)~~ — fetched the Atari ST 2.0 EN catalog and confirmed the seven listed utility-disk entries; this is catalog evidence, not a complete runtime format spec.
 - [ ] greatstone's sck source code (Java, on the t_download.html page)
 
 When a new external resource is added to this list, append a

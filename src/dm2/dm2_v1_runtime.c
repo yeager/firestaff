@@ -23089,6 +23089,24 @@ static int dm2_runtime_create_minion(
     return 1;
 }
 
+/* No source preserved-GFX table is populated by the production runtime.
+ * Therefore ALLOCATION11's two 1c9a_0247 lookups are cache misses. */
+static int dm2_runtime_dballoc_lookup_empty(uint32_t key,
+                                             uint16_t *out_index,
+                                             void *ctx)
+{
+    (void)key;
+    (void)ctx;
+    if (out_index) *out_index = 0xffffu;
+    return 0;
+}
+
+static void dm2_runtime_dballoc_free_empty(uint16_t index, void *ctx)
+{
+    (void)index;
+    (void)ctx;
+}
+
 /* SKULLWIN/c_engage.cpp:579-614 and skengage.cpp:578-613. Existing DB14
  * missiles receive the source action byte followed by the 1c9a_0247 cache
  * flush. If absent, both cases create minion type 0x32. */
@@ -23143,18 +23161,17 @@ static int dm2_runtime_minion_missile(void *user, int *out_created,
         raw = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
             dungeon, actual_missile, NULL, NULL, &raw_size);
         if (!raw || raw_size < 8) return 0;
-        action_byte = action_case == 44 ? 0x32 : 0x33;
+        action_byte = action_case == 44 ? 0x33 : 0x32;
         if ((record[4] == (uint8_t)action_byte &&
              raw[4] == (uint8_t)action_byte))
             return 1;
-        /* Firestaff has no ALLOCATION11/DBALLOC cache owner: the portable
-         * GDAT loader owns decoded assets and exposes no source tag-indexed
-         * allocations to free. Keep the exact SKProject helper fail-closed
-         * here instead of pretending the cache flush ran. */
         memset(&flush_receipt, 0, sizeof(flush_receipt));
-        (void)dm2_v1_skproject_1c9a_0247(word4, 0u, NULL, NULL, NULL,
-                                          &flush_receipt);
-        if (flush_receipt.blocked_missing_callback) return 0;
+        if (!dm2_v1_skproject_1c9a_0247(
+                word4, 0u, dm2_runtime_dballoc_lookup_empty,
+                dm2_runtime_dballoc_free_empty, NULL, &flush_receipt) ||
+            !flush_receipt.valid ||
+            flush_receipt.blocked_missing_callback)
+            return 0;
         record[4] = (uint8_t)action_byte;
         raw[4] = (uint8_t)action_byte;
         return 1;
