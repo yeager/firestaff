@@ -12,9 +12,9 @@ The authentic trace contains 138 face/staging observations (79 master SH-2 and 5
 - Each four-corner coordinate multiset maps to exactly one captured VDP1 command geometry; the reverse mapping is also one-to-one across this captured set.
 - 123 records match in exact corner order; 133 match by cyclic rotation. Five remaining records match only as unordered corner sets, so winding and corner correspondence are not claimed for those five.
 - The retail-data scan covers 1,144 Structure3 entries and 18,478 faces after verifying the SHA-256 hashes of all 16 `LEVxx.DGN` files against Firestaff's retail hash fixture.
-- 64 observations map to a unique face row directly. Unique contiguous face-row sequences resolve another 23 distinct runtime pointers.
-- A further six runtime pointers resolve by table offset: each candidate must agree with at least two already-resolved face rows from the same CPU and DGN entry within 96 bytes, with the observed 12-byte pointer stride matching the DGN face-ordinal stride. The analyzer verifies this invariant across all 425 nearby same-entry anchor pairs and rejects any conflict.
-- Overall, 93 of 120 distinct runtime face-row pointers resolve to retail rows; those pointers account for 111 of 138 capture records. The remaining 27 pointers (27 records) are unresolved. This does not show that those faces are absent from retail data.
+- 64 observations map to a unique face row directly. Four more pointers map to a unique DGN row after a cyclic rotation of the four indices, which preserves winding. Exact contiguous face-row sequences resolve another 23 distinct runtime pointers.
+- A further eight runtime pointers resolve by table offset: each candidate must agree with at least two already-resolved face rows from the same CPU and DGN entry within 96 bytes, with the observed 12-byte pointer stride matching the DGN face-ordinal stride. The analyzer verifies this invariant across all 425 nearby same-entry anchor pairs and rejects any conflict.
+- Overall, 97 of 120 distinct runtime face-row pointers resolve to retail rows; those pointers account for 115 of 138 capture records. The remaining 23 pointers (23 records) are unresolved. This does not show that those faces are absent from retail data.
 
 ## Reproduce
 
@@ -35,7 +35,7 @@ The external evidence bundle includes `SHA256SUMS.txt`, the analyzer outputs, th
 
 ## Limits
 
-This verifies a source-face → projected-coordinate staging → VDP1 command geometry join for a subset of one authentic Ymir frame. It does not resolve every face row, prove winding for unordered-only matches, establish material or pixel ownership, verify complete VDP1+VDP2 frame composition, establish original-Saturn parity, or enable production renderer admission. It does not establish arbitrary-frame Nexus support.
+This verifies a source-face → projected-coordinate staging → VDP1 command geometry join for a subset of one authentic Ymir frame. A unique cyclic index-row match preserves polygon winding but does not determine which source vertex corresponds to each projected coordinate. The report does not resolve every face row, prove winding for unordered-only command matches, establish material or pixel ownership, verify complete VDP1+VDP2 frame composition, establish original-Saturn parity, or enable production renderer admission. It does not establish arbitrary-frame Nexus support.
 
 ## Consecutive-frame staging-to-command verification
 

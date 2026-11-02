@@ -25,6 +25,13 @@ pixel ownership, verify complete VDP1+VDP2 composition, or enable production
 renderer admission. The analysis command and per-frame match counts are in
 [`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md).
 
+The frame-1605 retail face join now includes four unique cyclic DGN index-row
+matches that preserve winding. With the existing exact-row, contiguous-run,
+and two-anchor pointer-stride evidence, 97/120 distinct runtime face pointers
+map to hash-verified retail rows (115/138 observations); 23 pointers remain
+unresolved. This does not infer projected-coordinate corner correspondence
+from a cyclic row match.
+
 ## Row-80 SCU-DMA source join — 2026-11-02
 
 A complete cold-boot Ymir capture records SCU transfer 3303 writing 1,312
