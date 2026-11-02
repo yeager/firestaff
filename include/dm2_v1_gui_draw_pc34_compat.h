@@ -328,6 +328,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
                                    int8_t cls1, int8_t cls2, int8_t icon,
                                    void **palette_out);
     int16_t (*get_container_first_item)(void *ctx, void *container_record);
+    int16_t (*get_inventory_slot_rect_id)(void *ctx, int32_t slot);
+    int8_t (*get_empty_inventory_slot_icon)(void *ctx, int32_t slot);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

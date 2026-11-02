@@ -1313,7 +1313,8 @@ void dm2_v1_guidraw_2405_00ec(
 
 /* ================================================================
  * 36. DRAW_ITEM_ICON
- *     c_gui_draw.cpp:1656
+ *     SKWINDOS/dm2bya.cpp:1657-1717, SPX v4 skguidrw.cpp:2421-2500,
+ *     SPX v5 skguidr5.cpp:1657-1793
  * ================================================================ */
 
 void dm2_v1_draw_item_icon(
@@ -1323,31 +1324,81 @@ void dm2_v1_draw_item_icon(
 {
     if (!cb) return;
 
+    if (!cb->get_inventory_slot_rect_id) return;
+    int16_t rect_id = cb->get_inventory_slot_rect_id(ctx, slot);
+    if (rect_id < 0) return;
+
     int8_t cls1, cls2, icon;
 
     if (record != -1) {
-        cls1 = cb->query_cls1 ? cb->query_cls1(ctx, record) : 7;
-        cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
+        if (!cb->query_cls1 || !cb->query_cls2) return;
+        cls1 = cb->query_cls1(ctx, record);
+        cls2 = cb->query_cls2(ctx, record);
         int32_t adj_slot = (slot >= 8) ? slot - 8 : (slot & 1);
         icon = dm2_v1_guidraw_2405_014a(record, adj_slot, 1, cb, ctx);
     } else {
+        if (!cb->get_empty_inventory_slot_icon) return;
         cls1 = 7;
         cls2 = 0;
-        icon = 0; /* from ddat slot table */
+        icon = (int8_t)(cb->get_empty_inventory_slot_icon(ctx, slot) + body_flag);
     }
 
-    /* Background and item blitting (simplified) */
     if (slot < 0x26 && cb->query_expanded_rect) {
         DM2_V1_Rect rc;
-        cb->query_expanded_rect(ctx, (int16_t)slot, &rc);
+        if (cb->query_expanded_rect(ctx, rect_id, &rc)) {
+            void *backbuf = cb->get_backbuffer_ptr ?
+                cb->get_backbuffer_ptr(ctx) : NULL;
+            if (slot < 8) {
+                void *bmp = cb->query_gdat_image ?
+                    cb->query_gdat_image(ctx, 1, 2, 0) : NULL;
+                void *palette = cb->query_gdat_palette ?
+                    cb->query_gdat_palette(ctx, 1, 2, 0) : NULL;
+                DM2_V1_Rect group_rect;
+                DM2_V1_Rect *group = cb->offset_rect ?
+                    cb->offset_rect(ctx, 2, &group_rect, &rc) : NULL;
+                if (bmp && group)
+                    dm2_v1_draw_icon_pict_buff(
+                        bmp, 2, &rc, (int16_t)(rc.x - group->x),
+                        (int16_t)(rc.y - group->y), -1, 0, palette, cb, ctx);
+            } else if (backbuf && cb->query_gdat_image &&
+                       cb->query_gdat_palette) {
+                void *bmp = cb->query_gdat_image(ctx, 7, 0, 0);
+                void *palette = cb->query_gdat_palette(ctx, 7, 0, 0);
+                if (bmp)
+                    dm2_v1_draw_dialogue_pict(bmp, backbuf, &rc,
+                                               rc.x, rc.y, -1, palette,
+                                               cb, ctx);
+            }
+        }
+    }
+
+    if (redraw_flag && slot < 14 && cb->query_expanded_rect) {
+        DM2_V1_Rect rc;
+        dm2_v1_guidraw_2405_011f(rect_id, &rc, cb, ctx);
+        int8_t slab = active_flag ? 6 : (body_flag ? 5 : 4);
+        void *bmp = cb->query_gdat_image ?
+            cb->query_gdat_image(ctx, 1, 2, slab) : NULL;
+        void *palette = cb->query_gdat_palette ?
+            cb->query_gdat_palette(ctx, 1, 2, slab) : NULL;
+        if (bmp && slot < 8) {
+            DM2_V1_Rect group_rect;
+            DM2_V1_Rect *group = cb->offset_rect ?
+                cb->offset_rect(ctx, 2, &group_rect, &rc) : NULL;
+            if (group)
+                dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, 0, 0, 0x0c, 0,
+                                           palette, cb, ctx);
+        } else if (bmp) {
+            dm2_v1_draw_dialogue_parts_pict(bmp, &rc, 0x0c, palette,
+                                             cb, ctx);
+        }
     }
 
     if (icon != -1) {
         if (slot < 8)
             dm2_v1_draw_icon_pict_entry(cls1, cls2, icon, 1,
-                                         (int16_t)slot, 0x0c, cb, ctx);
+                                         rect_id, 0x0c, cb, ctx);
         else if (cb->draw_static_pic)
-            cb->draw_static_pic(ctx, cls1, cls2, icon, (int16_t)slot, 0x0c);
+            cb->draw_static_pic(ctx, cls1, cls2, icon, rect_id, 0x0c);
     }
 }
 

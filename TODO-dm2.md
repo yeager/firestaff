@@ -3079,3 +3079,13 @@ the value rune and omitted two labels. The callback now follows source order
 and draws all labels when font height is available; the rightmost rune is
 omitted without that metric. Production panel bindings and platform coverage
 remain unverified; keep all source rows PARTIAL.
+
+2026-11-02 SKProject `DRAW_ITEM_ICON`:
+The callback now uses source slot-to-rect and empty-slot-frame callbacks, draws
+the champion-hand or inventory backing art, applies the grey/red/blue slab
+branch for redrawable champion slots, and then draws the selected item frame.
+Missing item-class or slot callbacks fail closed instead of substituting
+placeholder graphics. The shared icon-buffer helper still simplifies source
+button-group destination width/offset behavior, and production slot-table
+callbacks are not bound across every supported edition/platform. Keep all
+variant rows PARTIAL.
