@@ -164,9 +164,21 @@ bytes, sorts active candidates by descending priority and ascending layer id,
 and applies NBG0's per-pixel special color calculation using the captured
 ratio. Its equation follows Ymir's software compositor:
 `lower + (((upper - lower) * ratio) >> 5)`. The reconstructed output hash is
-identical to Ymir's final pass hash. This verifies the Ymir layer trace and
-composition model; it does not yet show that Firestaff can decode the same
-candidates from raw VDP1/VDP2 snapshots.
+identical to Ymir's final pass hash. The audit now requires all 224 target-pass
+render-state rows to report `nbg0_enabled=1`, `layer_enabled=1`, and
+`rbg1_enabled=0` before it uses layer 2 as NBG0. This verifies a candidate-layer
+reconstruction consistent with the row-local NBG0 state; it does not verify
+the active-layer set for every Ymir layer or show that Firestaff can decode the
+same candidates from raw VDP1/VDP2 snapshots.
+
+The separately retained VDP2 register snapshot carrying the same frame/serial
+label has big-endian `BGON=0x0002` at offset `0x20` (snapshot SHA-256
+`774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`), while
+the render-state rows say NBG0 was enabled before each row was drawn. The
+snapshot is therefore not used as render-time NBG0 enable evidence. The
+differing state has no timing join in the retained receipts, so this remains an
+open provenance discrepancy rather than proof that the register dump and row
+trace describe the same instant.
 
 Reproduce the authentic Ymir layer-to-final comparison with:
 

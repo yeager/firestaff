@@ -80,7 +80,7 @@ def read_layer_dump(path: Path) -> dict[tuple[int, int], tuple[tuple[int, ...], 
     return rows
 
 
-def read_ratio(path: Path, receipt: Path) -> tuple[list[int], list[int]]:
+def read_render_state(path: Path, receipt: Path) -> tuple[list[int], list[bool], list[int]]:
     text = receipt.read_text(encoding="utf-8")
     required_receipt_fields = (
         "frame_range_half_open=891:892",
@@ -91,6 +91,7 @@ def read_ratio(path: Path, receipt: Path) -> tuple[list[int], list[int]]:
     if any(field not in text for field in required_receipt_fields):
         raise AuditError("Ymir render-state receipt lacks the expected complete target-pass bounds")
     ratios: list[int | None] = [None] * HEIGHT
+    nbg0_enabled: list[bool | None] = [None] * HEIGHT
     with path.open(newline="", encoding="utf-8") as stream:
         for row in csv.DictReader(stream):
             if (row.get("frame_index"), row.get("vdp2_frame_serial")) != (
@@ -99,12 +100,38 @@ def read_ratio(path: Path, receipt: Path) -> tuple[list[int], list[int]]:
                 continue
             y = int(row["row_vcnt"])
             ratio = int(row["color_calculation_ratio"])
+            try:
+                bg_enabled = {
+                    key: int(row[key])
+                    for key in ("nbg0_enabled", "layer_enabled", "rbg1_enabled")
+                }
+            except (KeyError, ValueError) as error:
+                raise AuditError("target render-state row lacks valid NBG0 enable flags") from error
+            if any(value not in (0, 1) for value in bg_enabled.values()):
+                raise AuditError(f"invalid target NBG0 enable flags at row {y}")
             if not 0 <= y < HEIGHT or ratios[y] is not None:
                 raise AuditError(f"duplicate or out-of-range render-state row {y}")
+            # Ymir's layer 2 aliases NBG0 and RBG1. The render-state trace is
+            # sampled immediately before NBG0 drawing, so use it to reject a
+            # stale layer-2 buffer when the hardware layer is disabled. This
+            # MAPD audit is specifically for NBG0, not the RBG1 path.
+            if (bg_enabled["nbg0_enabled"] != 1 or
+                    bg_enabled["layer_enabled"] != 1 or
+                    bg_enabled["rbg1_enabled"] != 0):
+                raise AuditError(f"target pass is not an enabled NBG0 row at {y}")
             ratios[y] = ratio
+            nbg0_enabled[y] = bool(
+                bg_enabled["layer_enabled"] and bg_enabled["nbg0_enabled"]
+            )
     if any(value is None for value in ratios):
         raise AuditError("target render-state pass is missing rows")
-    return [int(value) for value in ratios], [y for y, value in enumerate(ratios) if value != 18]
+    if any(value is None for value in nbg0_enabled):
+        raise AuditError("target render-state pass is missing NBG0 enable state")
+    return (
+        [int(value) for value in ratios],
+        [bool(value) for value in nbg0_enabled],
+        [y for y, value in enumerate(ratios) if value != 18],
+    )
 
 
 def rgb_from_layer_color(color: int) -> tuple[int, int, int]:
@@ -118,7 +145,9 @@ def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
                       ("render_state_receipt", receipt_path), ("reference", reference_path)):
         require_hash(path, key)
     rows = read_layer_dump(layers_path)
-    ratios, unexpected_ratio_rows = read_ratio(render_state_path, receipt_path)
+    ratios, nbg0_enabled, unexpected_ratio_rows = read_render_state(
+        render_state_path, receipt_path
+    )
     if unexpected_ratio_rows:
         raise AuditError(f"unexpected NBG0 color-calculation ratio on rows {unexpected_ratio_rows[:8]}")
     reference = reference_path.read_bytes()
@@ -133,6 +162,8 @@ def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
         for x in range(WIDTH):
             candidates: list[tuple[int, int, int, int]] = []
             for layer in range(6):
+                if layer == 2 and not nbg0_enabled[y]:
+                    continue
                 colors, priorities, special = rows[y, layer]
                 priority = priorities[x]
                 if priority:
@@ -169,14 +200,18 @@ def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
         "exact_rgb_pixels": exact,
         "rgb_mismatches": PIXELS - exact,
         "special_color_calculation_pixels": special_calculation_pixels,
+        "nbg0_enabled_rows": sum(nbg0_enabled),
+        "rbg1_enabled_rows": 0,
         "top_layer_pixels_by_id": top_counts,
         "top_under_layer_pairs": pair_counts,
         "layer_trace_sha256": EXPECTED_HASHES["layers"],
         "render_state_sha256": EXPECTED_HASHES["render_state"],
         "reference_sha256": EXPECTED_HASHES["reference"],
         "interpretation": (
-            "authentic Ymir layer candidates reconstruct this Ymir MAPD pass; "
-            "this capture oracle does not prove Firestaff raw-snapshot composition"
+            "authentic Ymir layer candidates reconstruct this Ymir MAPD pass "
+            "with row-local NBG0 enablement checked; candidate rows do not "
+            "prove the active-layer set for every Ymir layer or Firestaff "
+            "raw-snapshot composition"
         ),
     }
     if output_path:
