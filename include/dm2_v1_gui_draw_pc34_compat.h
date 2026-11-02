@@ -334,6 +334,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     int16_t (*get_item_potion_power)(void *ctx, int32_t record);
     int16_t (*get_item_stat_bar_rect_id)(void *ctx, int32_t bar_index);
     void (*set_item_weight_display)(void *ctx, int16_t whole, int16_t tenth);
+    /* Edition adapter handles DOS vs SPX image lookup parameter order. */
+    void (*draw_item_survey_class_image)(void *ctx, int8_t cls1, int8_t cls2);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

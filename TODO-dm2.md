@@ -3095,9 +3095,11 @@ Firestaff now dispatches scrolls, draws item class images and description,
 updates weight display state/text, surveys chest/moneybox contents, and requests
 charge plus weapon/armor/potion stat bars when the corresponding callbacks are
 available. The callback API now exposes chargeability, potion power, stat-row
-rects, and weight display state. SPX-v4 extended-mode branches, source stat-row
-selection across variants, and production callback/platform bindings remain
-open. Keep the DOS/SPX source rows PARTIAL.
+rects, and weight display state. Class-image rendering now goes through an
+edition-aware callback because DOS and SPX use different image-lookup argument
+orders. SPX-v4 extended-mode branches, source stat-row selection across
+variants, and production callback/platform bindings remain open. Keep the
+DOS/SPX source rows PARTIAL.
 
 2026-11-02 SKProject `DRAW_SCROLL_TEXT` / `DRAW_HAND_ACTION_ICONS`:
 The source inventory already marks DOS/SPX definitions PARTIAL. The named audit

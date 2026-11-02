@@ -1541,9 +1541,8 @@ int32_t dm2_v1_draw_item_survey(
 
     int8_t cls1 = cb->query_cls1 ? cb->query_cls1(ctx, record) : 0;
     int8_t cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
-    if (cb->query_gdat_entry_loadable && cb->draw_static_pic &&
-        cb->query_gdat_entry_loadable(ctx, cls1, cls2, 1, 0x11))
-        cb->draw_static_pic(ctx, cls1, cls2, 0x11, 0x1ee, 0x0c);
+    if (cb->draw_item_survey_class_image)
+        cb->draw_item_survey_class_image(ctx, cls1, cls2);
     if (cb->draw_static_pic)
         cb->draw_static_pic(ctx, 7, 0, 5, 0x1f8, 0x0c);
 
