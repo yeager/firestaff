@@ -799,9 +799,18 @@ int main(void)
               "FM Towns M11 presents the exact GRAPHICSSET stripe selected by c_light");
         {
             DM2_V1_ViewportM11FrameReceipt live_receipt;
+            DM2_V1_BootExpandedRectReceipt backdrop_rect;
+            DM2_ImageFormat backdrop_format = DM2_IMG_FMT_UNKNOWN;
+            int backdrop_width = 0;
+            int backdrop_height = 0;
+            uint8_t *backdrop_pixels = NULL;
             size_t right_panel_pixels = 0u;
             size_t squad_icon_pixels = 0u;
+            size_t backdrop_matches = 0u;
+            size_t backdrop_source_black = 0u;
+            size_t backdrop_sample_count = 0u;
             memset(&live_receipt, 0, sizeof(live_receipt));
+            memset(&backdrop_rect, 0, sizeof(backdrop_rect));
             int live_ok = dm2_v1_runtime_last_m11_frame_receipt(&live_receipt);
             for (int py = 0; py < M11_FB_HEIGHT; ++py) {
                 for (int px = 224; px < M11_FB_WIDTH; ++px) {
@@ -812,16 +821,55 @@ int main(void)
                         ++squad_icon_pixels;
                 }
             }
+            if (loader && scene.ready &&
+                dm2_v1_boot_query_expanded_rect_receipt(
+                    (DM2_V1_BootProfile *)view.dm2BootProfile, 47u,
+                    &backdrop_rect) && backdrop_rect.valid &&
+                backdrop_rect.rect.x >= 0 && backdrop_rect.rect.y >= 0) {
+                backdrop_pixels = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    scene.map_graphics_style, 0xf5, &backdrop_width,
+                    &backdrop_height, &backdrop_format);
+            }
+            if (backdrop_pixels && backdrop_format == DM2_IMG_FMT_U4 &&
+                backdrop_width == backdrop_rect.rect.w &&
+                backdrop_height == backdrop_rect.rect.h &&
+                backdrop_rect.rect.x / 2 + backdrop_width <= M11_FB_WIDTH &&
+                backdrop_rect.rect.y / 2 + backdrop_height <= M11_FB_HEIGHT) {
+                backdrop_sample_count =
+                    (size_t)backdrop_width * (size_t)backdrop_height;
+                for (int py = 0; py < backdrop_height; ++py) {
+                    for (int px = 0; px < backdrop_width; ++px) {
+                        uint8_t source =
+                            backdrop_pixels[py * backdrop_width + px];
+                        uint8_t presented = framebuffer[
+                            (backdrop_rect.rect.y / 2 + py) * M11_FB_WIDTH +
+                            backdrop_rect.rect.x / 2 + px];
+                        if (source == 0u) ++backdrop_source_black;
+                        if (source == presented) ++backdrop_matches;
+                    }
+                }
+                printf("DM2 FM Towns authentic F5 backdrop: rect47=%d,%d,%d,%d "
+                       "image=%dx%d palette-index-0=%zu/%zu exact-pixels=%zu/%zu\n",
+                       backdrop_rect.rect.x, backdrop_rect.rect.y,
+                       backdrop_rect.rect.w, backdrop_rect.rect.h,
+                       backdrop_width, backdrop_height, backdrop_source_black,
+                       backdrop_sample_count, backdrop_matches,
+                       backdrop_sample_count);
+            }
             check(live_ok && live_receipt.valid &&
                       dm2_v1_runtime_get_active_champion_index() == -1 &&
                       live_receipt.hud_material_plan_required &&
                       live_receipt.hud_material_plan_command_count == 5 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
+                      backdrop_sample_count > 0u &&
+                      backdrop_matches == backdrop_sample_count &&
                       right_panel_pixels > 1000u && squad_icon_pixels > 0u &&
                       dm2_v1_runtime_last_asset_hud_portrait_count() > 0 &&
                       dm2_v1_runtime_last_fallback_hud_portrait_count() == 0,
-                  "FM Towns post-confirm M11 frame consumes the source squad panel and authentic champion portraits");
+                  "FM Towns post-confirm M11 frame presents the authentic F5 backdrop and squad icons");
+            dm2_v1_asset_free_pixels(backdrop_pixels);
         }
     }
     {
@@ -1289,11 +1337,15 @@ int main(void)
     }
     memset(&action_rect, 0, sizeof(action_rect));
     check(dm2_v1_boot_query_expanded_rect_receipt(
-              (DM2_V1_BootProfile *)view.dm2BootProfile, 0x004Au,
+              (DM2_V1_BootProfile *)view.dm2BootProfile, 0x004Du,
               &action_rect) && action_rect.valid && action_rect.rect.w > 0 &&
               action_rect.rect.h > 0,
-          "FM Towns exposes the source champion-1 action-hand RAW4 rectangle");
+          "FM Towns exposes the champion-1 action-hand RAW4 rectangle at its party-relative slot");
     if (action_rect.valid) {
+        DM2_V1_RuntimeSourceHeroStateReceipt action_hero;
+        M11_GameInputResult action_result;
+        memset(&action_hero, 0, sizeof(action_hero));
+        (void)dm2_v1_runtime_get_source_hero_state(0u, &action_hero);
         memset(&input_receipt, 0, sizeof(input_receipt));
         {
             int route_ok = dm2_v1_dungeon_input_owner_route(
@@ -1301,13 +1353,24 @@ int main(void)
                   action_rect.rect.y / 2, DM1_V1_MOUSE_MASK_LEFT_PC34,
                   NULL, NULL, &input_receipt);
             check(route_ok && input_receipt.accepted &&
-                  input_receipt.event_index == 116u,
-                  "FM Towns native action-hand rect resolves to event 116");
+                  input_receipt.event_index == 122u,
+                  "FM Towns native action-hand rect resolves to event 122 for party-relative slot 3");
         }
-        check(M11_GameView_HandlePointerButton(
-                  &view, (action_rect.rect.x + action_rect.rect.w / 2) / 2,
-                  (action_rect.rect.y + action_rect.rect.h / 2) / 2,
-                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
+        action_result = M11_GameView_HandlePointerButton(
+            &view, (action_rect.rect.x + action_rect.rect.w / 2) / 2,
+            (action_rect.rect.y + action_rect.rect.h / 2) / 2,
+            DM1_V1_MOUSE_MASK_LEFT_PC34);
+        if (action_result != M11_GAME_INPUT_REDRAW) {
+            fprintf(stderr, "DM2 FM Towns action-hand click: result=%d rect="
+                    "%d,%d,%d,%d party-direction=%d hero={hp:%d "
+                    "position:%d} active=%d\n",
+                    (int)action_result, action_rect.rect.x,
+                    action_rect.rect.y, action_rect.rect.w,
+                    action_rect.rect.h, dm2_v1_runtime_get_party_dir(),
+                    action_hero.cur_hp, action_hero.party_position,
+                    dm2_v1_runtime_get_active_champion_index());
+        }
+        check(action_result == M11_GAME_INPUT_REDRAW,
               "FM Towns native action-hand click reaches the source event route");
     }
     memset(&command_rect, 0, sizeof(command_rect));

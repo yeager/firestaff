@@ -2935,6 +2935,18 @@ for the Towns HUD report. It is not yet proof that the Towns frame should use
 the DOS text path: verify the Towns name/stat presentation against a same-pose
 original Towns capture and its native source path before changing rendering.
 
+2026-11-02 FM Towns F5/action-hand regression check: the authentic gameplay
+test now decodes GRAPHICSSET/<style>/0xF5 and confirms all 1,849 presented
+pixels match the source image at RECT_47. This proves that F5 is a 43x43
+formation panel; it does not establish what should occupy the surrounding
+right-panel area. The action-hand click check now targets RECT_4D/event 122
+for a champion at party position 0 when the party faces direction 1, matching
+SPX v4 `DRAW_HAND_ACTION_ICONS`'s `(playerPos + 4 - glbPlayerDir) & 3`
+mapping. The earlier RECT_4A/event 116 test used relative slot 0 and was
+invalid for that champion pose. Neither check establishes full FM Towns HUD
+parity; same-pose original execution evidence remains required before filling
+the black panel area or changing the source-native text path.
+
 2026-11-02 RAW4 player status-bar orientation correction: the authentic RAW4
 layout records Health/Stamina/Mana rectangles as 5x26 at 640x400, which become
 2x13 vertical bars on Firestaff's 320x200 surface. `DM2_DRAW_PLAYER_3STAT_HEALTH_BAR`

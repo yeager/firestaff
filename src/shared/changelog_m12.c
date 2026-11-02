@@ -19,6 +19,7 @@ static const char* const g_changelogLines[] = {
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-11-02)",
     "  - Selected DM1 and CSB field, inventory, input, movement and interaction paths, and DM2 movement, item, spell, command, timer, weather, save/load and combat paths, now follow additional ReDMCSB and SKProject source behavior; platform parity gaps remain documented.",
     "  - DM1 incomplete-data diagnostics retain the authenticated graphics edition when the matching dungeon file is missing, so the launcher can identify and report the required file.",
+    "  - DM1 Apple IIGS scanning retains every authentic ProDOS file owner when collecting hash matches from a cached solid 7z archive.",
     "  - DM2 incomplete loose installations retain the authenticated graphics edition for missing-dungeon diagnostics while keeping launch blocked.",
     "  - DM2 New Game waits for the authentic mirror-selection screen before accepting champion selection input.",
     "  - DM2 map passage rejects active teleporter tiles flagged impassable by the source record; authenticated DOS, FM Towns and Mac dungeon scans confirm the shared helper.",

@@ -202,8 +202,9 @@ if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
     cp "$runtime_data_root/GRAPHICS.DAT" "$wrong_only_root/GRAPHICS.DAT"
     cp "$wrong_dungeon" "$wrong_only_root/DUNGEON.DAT"
 
-    # The menu must not mark an authenticated PC graphics file ready when
-    # the only adjacent dungeon belongs to another original edition.
+    # Keep the authentic PC graphics receipt available for diagnostics, but
+    # do not mark the game ready or allow a handoff when the adjacent dungeon
+    # belongs to another original edition.
     wrong_only_menu_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --menu --data-dir "$wrong_only_root" \
         --script wait-scan-complete --duration 8000 --debug --verbose 2>&1)" || {
@@ -213,13 +214,14 @@ if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
     if ! grep -Fq 'scan complete elapsed-ms=' <<<"$wrong_only_menu_output" ||
        ! grep -Fq 'games=dm1:no,csb:no,dm2:no,nexus:no,theron:no' <<<"$wrong_only_menu_output" ||
        ! grep -Fq "firestaff: dm1 available=no scan-owner=$wrong_only_root" <<<"$wrong_only_menu_output" ||
-       ! grep -Fq 'platform=PC edition=pc34-en not matched' <<<"$wrong_only_menu_output" ||
+       ! grep -Fq 'dm1 edition=pc34-en candidate-file=GRAPHICS.DAT edition-result=matched' <<<"$wrong_only_menu_output" ||
+       ! grep -Fq "platform=PC edition=pc34-en matched source=$wrong_only_root/GRAPHICS.DAT" <<<"$wrong_only_menu_output" ||
        grep -Fq 'launch phase=game-handoff' <<<"$wrong_only_menu_output"; then
         printf '%s\n' "$wrong_only_menu_output" >&2
         echo 'FAIL: startup menu admitted PC34 graphics with only an original Atari dungeon' >&2
         exit 1
     fi
-    echo 'PASS: menu rejects original PC34 graphics paired only with an original Atari dungeon'
+    echo 'PASS: menu retains original PC34 graphics diagnostics and blocks the mismatched Atari dungeon handoff'
 
     wrong_only_cli_status=0
     wrong_only_cli_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \

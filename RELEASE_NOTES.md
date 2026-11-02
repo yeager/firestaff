@@ -5,6 +5,7 @@
 - `DM1 and CSB gameplay`: correct selected field, inventory and input behavior against ReDMCSB source paths.
 - `DM2 gameplay`: correct selected movement, item, spell, command, timer, weather, save/load and combat paths against SKProject source behavior.
 - `DM1 incomplete game-data diagnostics`: retain a hash-verified graphics candidate when its matching dungeon file is missing, so the launcher can identify the edition and report the missing required file while continuing to block launch.
+- `DM1 Apple IIGS data discovery`: fix scanning to retain every authentic ProDOS file owner when collecting hash matches from a cached solid 7z archive.
 - `DM2 incomplete game-data diagnostics`: retain a hash-verified loose graphics edition when its same-directory dungeon file is missing, so diagnostics can report the absent file while launch remains blocked.
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
 - `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
@@ -22,6 +23,7 @@
 - `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, decode raw-SKSAVE words using source byte order, preserve version-specific text-ornament gates, and document production transition integration as open.
 - `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
 - `Nexus diagnostic-output verification`: compare authentic-media CLI startup with and without `--debug`; normal startup suppresses engine/UI/audio/font traces, while the explicit boot probe retains its startup summary.
+- `Apple IIGS nested 7z lookup`: fix cached solid-7z hash collection to retain every authentic ProDOS file owner.
 
 ## DM1
 

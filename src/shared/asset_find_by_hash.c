@@ -775,24 +775,13 @@ static __declspec(thread) AssetPathCollection *s_path_collection;
 static _Thread_local AssetPathCollection *s_path_collection;
 #endif
 
-static void collect_matching_path(const char *hex, const char *owner,
-                                   const char *member, const char *inner) {
+static void collect_matching_virtual_path(const char *hex, const char *path) {
     AssetPathCollection *collection = s_path_collection;
-    char path[ASSET_PATH_MAX];
-    int length;
     size_t i;
     if (!collection || collection->error || !hex ||
         strcmp(hex, collection->md5) != 0) return;
-    if (!owner) { collection->error = -1; return; }
-    if (inner) {
-        if (!member) { collection->error = -1; return; }
-        length = snprintf(path, sizeof(path), "%s::%s::%s", owner, member, inner);
-    } else if (member) {
-        length = snprintf(path, sizeof(path), "%s::%s", owner, member);
-    } else {
-        length = snprintf(path, sizeof(path), "%s", owner);
-    }
-    if (length < 0 || length >= (int)sizeof(path)) {
+    if (!path) { collection->error = -1; return; }
+    if (strlen(path) >= ASSET_PATH_MAX) {
         collection->error = -1;
         return;
     }
@@ -803,7 +792,29 @@ static void collect_matching_path(const char *hex, const char *owner,
         collection->error = -2;
         return;
     }
-    memcpy(collection->paths[collection->count++], path, (size_t)length + 1u);
+    memcpy(collection->paths[collection->count++], path, strlen(path) + 1u);
+}
+
+static void collect_matching_path(const char *hex, const char *owner,
+                                  const char *member, const char *inner) {
+    char path[ASSET_PATH_MAX];
+    int length;
+    if (!s_path_collection || s_path_collection->error || !hex ||
+        strcmp(hex, s_path_collection->md5) != 0) return;
+    if (!owner) { s_path_collection->error = -1; return; }
+    if (inner) {
+        if (!member) { s_path_collection->error = -1; return; }
+        length = snprintf(path, sizeof(path), "%s::%s::%s", owner, member, inner);
+    } else if (member) {
+        length = snprintf(path, sizeof(path), "%s::%s", owner, member);
+    } else {
+        length = snprintf(path, sizeof(path), "%s", owner);
+    }
+    if (length < 0 || length >= (int)sizeof(path)) {
+        s_path_collection->error = -1;
+        return;
+    }
+    collect_matching_virtual_path(hex, path);
 }
 
 static int copy_match_path(const char *path, char *outPath, int outPathLen) {
@@ -5729,6 +5740,10 @@ static int native_7z_cache_collect_matches(
         suffix_len = strlen(suffix);
         if (path_len >= suffix_len &&
             strcmp(entry->path + path_len - suffix_len, suffix) == 0) {
+            continue;
+        }
+        if (s_path_collection) {
+            collect_matching_virtual_path(entry->md5, entry->path);
             continue;
         }
         index = md5_list_match_index(entry->md5, md5_list, matched,

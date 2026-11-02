@@ -192,13 +192,15 @@ static int write_two_file_synthetic_iso(const char* path,
                                         const unsigned char* graphicsPayload,
                                         size_t graphicsSize,
                                         const unsigned char* dungeonPayload,
-                                        size_t dungeonSize) {
+                                        size_t dungeonSize,
+                                        int nestedDataDirectory) {
     static const unsigned char dot = 0;
     static const unsigned char dotdot = 1;
     FILE* fp = fopen(path, "wb");
     unsigned char zero[2048] = {0};
     unsigned char pvd[2048] = {0};
     unsigned char dir[2048] = {0};
+    unsigned char dataDir[2048] = {0};
     unsigned char graphicsSector[2048] = {0};
     unsigned char dungeonSector[2048] = {0};
     int offset = 0;
@@ -233,27 +235,33 @@ static int write_two_file_synthetic_iso(const char* path,
             return 0;
         }
     }
-    /* Root directory: dot, dotdot, GRAPHICS.DAT;1, DUNGEON.DAT;1. */
+    /* Root directory: flat DM1/CSB files, or the authentic DM2 `data/`
+     * directory which owns GRAPHICS.DAT and DUNGEON.DAT. */
     recLen = write_iso_dir_record(dir, offset, 20U, 2048U, 1, &dot, 1);
     if (!recLen) { fclose(fp); return 0; }
     offset += recLen;
     recLen = write_iso_dir_record(dir, offset, 20U, 2048U, 1, &dotdot, 1);
     if (!recLen) { fclose(fp); return 0; }
     offset += recLen;
-    {
+    if (nestedDataDirectory) {
+        static const unsigned char dataName[] = "data";
+        recLen = write_iso_dir_record(dir, offset, 21U, 2048U, 1,
+                                      dataName, (int)strlen((const char*)dataName));
+        if (!recLen) { fclose(fp); return 0; }
+        offset += recLen;
+    }
+    if (!nestedDataDirectory) {
         const unsigned char* graphicsName =
             (const unsigned char*)"GRAPHICS.DAT;1";
-        recLen = write_iso_dir_record(dir, offset, 21U,
+        recLen = write_iso_dir_record(dir, offset, nestedDataDirectory ? 22U : 21U,
                                       (unsigned int)graphicsSize, 0,
                                       graphicsName,
                                       (int)strlen((const char*)graphicsName));
         if (!recLen) { fclose(fp); return 0; }
         offset += recLen;
-    }
-    {
         const unsigned char* dungeonName =
             (const unsigned char*)"DUNGEON.DAT;1";
-        recLen = write_iso_dir_record(dir, offset, 22U,
+        recLen = write_iso_dir_record(dir, offset, nestedDataDirectory ? 23U : 22U,
                                       (unsigned int)dungeonSize, 0,
                                       dungeonName,
                                       (int)strlen((const char*)dungeonName));
@@ -263,6 +271,28 @@ static int write_two_file_synthetic_iso(const char* path,
     if (fwrite(dir, 1U, sizeof(dir), fp) != sizeof(dir)) {
         fclose(fp);
         return 0;
+    }
+    if (nestedDataDirectory) {
+        offset = 0;
+        recLen = write_iso_dir_record(dataDir, offset, 21U, 2048U, 1, &dot, 1);
+        if (!recLen) { fclose(fp); return 0; }
+        offset += recLen;
+        recLen = write_iso_dir_record(dataDir, offset, 20U, 2048U, 1, &dotdot, 1);
+        if (!recLen) { fclose(fp); return 0; }
+        offset += recLen;
+        recLen = write_iso_dir_record(dataDir, offset, 22U,
+                                      (unsigned int)graphicsSize, 0,
+                                      (const unsigned char*)"GRAPHICS.DAT;1", 14);
+        if (!recLen) { fclose(fp); return 0; }
+        offset += recLen;
+        recLen = write_iso_dir_record(dataDir, offset, 23U,
+                                      (unsigned int)dungeonSize, 0,
+                                      (const unsigned char*)"DUNGEON.DAT;1", 13);
+        if (!recLen) { fclose(fp); return 0; }
+        if (fwrite(dataDir, 1U, sizeof(dataDir), fp) != sizeof(dataDir)) {
+            fclose(fp);
+            return 0;
+        }
     }
     /* File payload sectors. */
     memcpy(graphicsSector, graphicsPayload, graphicsSize);
@@ -322,8 +352,15 @@ static void check_required_path_reads_in_memory(
     if (!file || !file->matched) return;
     check_int(strstr(file->matchedPath, "::") != NULL,
               "matched ISO game data must retain its virtual source path");
-    check_int(asset_read_path_alloc(file->matchedPath, &bytes, &byteCount),
-              label);
+    {
+        int readable = asset_read_path_alloc(file->matchedPath, &bytes,
+                                             &byteCount);
+        if (!readable) {
+            fprintf(stderr, "ISO runtime source read failed: path=%s\n",
+                    file->matchedPath);
+        }
+        check_int(readable, label);
+    }
     check_int(bytes && byteCount == expectedSize &&
               memcmp(bytes, expected, expectedSize) == 0,
               "runtime bytes must match the original ISO entry");
@@ -375,7 +412,8 @@ static void check_flat_dat_iso_no_extraction(
     }
     check_int(write_two_file_synthetic_iso(isoPath,
                                            graphicsPayload, graphicsSize,
-                                           dungeonPayload, dungeonSize),
+                                           dungeonPayload, dungeonSize,
+                                           strcmp(gameId, "dm2") == 0),
               "synthetic two-file ISO 9660 fixture should be written");
     check_int(m12_hex_md5_of_bytes(graphicsPayload, graphicsSize, graphicsMd5),
               "graphics payload MD5 should be computable from the entry bytes");
@@ -469,7 +507,8 @@ static void check_flat_dat_iso_no_extraction(
               "CUE fixture paths should fit");
     check_int(write_two_file_synthetic_iso(cuePayloadPath,
                                            graphicsPayload, graphicsSize,
-                                           dungeonPayload, dungeonSize) &&
+                                           dungeonPayload, dungeonSize,
+                                           strcmp(gameId, "dm2") == 0) &&
               write_single_data_track_cue(cuePath, cuePayloadName),
               "CUE fixture should be written with a suffixless payload image");
     memset(foundGraphics, 0, sizeof(foundGraphics));

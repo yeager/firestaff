@@ -3954,3 +3954,9 @@ owners and supported edition/platform bindings remain open, so both audit rows
 stay partial.
 
 2026-11-02 ReDMCSB `DUNGEON.C:F0174` fixed-buffer behavior: the descriptor adapter now copies wall, floor, and door ornament bytes into source-sized runtime storage (16, 16, and 17 bytes), then writes `C0_WALL_ORNAMENT_INSCRIPTION` at the wall ornament count. It rejects overflowing metadata before mutating F0173/F0174 state. Focused assertions check bytes, sentinel, and fail-closed behavior. Production edition/platform ownership remains open; F0173/F0174 stay partial.
+2026-11-02 Apple IIGS 7z asset collection: hash collection from the authentic
+`Game,Dungeon_Master,Apple_IIGS,Software.7z` archive now returns every sorted
+ProDOS file owner after a cached solid-archive scan. The original IIGS
+2.0/2.1 disks and nested ZIP ownership regressions pass. This validates media
+discovery provenance; it does not establish full IIGS campaign or visual
+parity.

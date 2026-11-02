@@ -239,7 +239,13 @@ static int check_native_archive(const char *archive) {
      * historical modified disks. Those matches do not establish game readiness. */
     for (size_t file=0; file<3u; ++file) {
         int count=file==2u ? 2 : 6;
-        CHECK(asset_collect_paths_by_md5(archive,hashes[file],collected,16u,0)==count,
+        int collected_count = asset_collect_paths_by_md5(
+            archive,hashes[file],collected,16u,0);
+        if (collected_count != count) {
+            fprintf(stderr, "7z member match count for %s: expected=%d actual=%d\n",
+                    names[file], count, collected_count);
+        }
+        CHECK(collected_count==count,
             "native 7z collection retains every observed matching member owner");
         for (int i=0; i<count; ++i) {
             size_t member=file==2u ? (i==0 ? 3u : 5u) : (size_t)i;
