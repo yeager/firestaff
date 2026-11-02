@@ -1275,7 +1275,15 @@ static DM2_V1_ViewportRect dm2_v1_hud_bar_fill(
         return fill;
     }
     fill = *bar;
-    fill.w = (bar->w * (int)dm2_v1_hud_clamp_pct((int)pct)) / 100;
+    /* The authenticated DM2 status table uses 5x26 source rectangles for
+     * Health/Stamina/Mana. At the 320-wide render scale these are 2x13
+     * vertical bars, so their fill level is represented by height. Keep the
+     * horizontal fallback bars width-scaled. */
+    if (bar->h > bar->w) {
+        fill.h = (bar->h * (int)dm2_v1_hud_clamp_pct((int)pct)) / 100;
+    } else {
+        fill.w = (bar->w * (int)dm2_v1_hud_clamp_pct((int)pct)) / 100;
+    }
     return fill;
 }
 

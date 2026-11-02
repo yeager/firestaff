@@ -6,11 +6,13 @@
 - `DM2 incomplete game-data diagnostics`: retain a hash-verified loose graphics edition when its same-directory dungeon file is missing, so diagnostics can report the absent file while launch remains blocked.
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
 - `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
+- `DM2 player status bars`: correct authentic narrow, vertical health, stamina and mana fills to scale by height; retain width scaling for horizontal fallback bars.
 
 ## Developer changes
 
 - `Incomplete-data diagnostics`: change scan ownership rules to preserve DM1 and DM2 graphics-edition matches when paired dungeon files are missing; launch stays unavailable until all required data is present.
 - `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
+- `DM2 HUD geometry`: use the authentic RAW4 5×26 source status rectangles to verify vertical bar-fill orientation while retaining the horizontal fallback-bar contract.
 
 ## DM1
 
@@ -28,6 +30,7 @@
 
 - `DM2 New Game selection`: correct the input flow so it waits for the authentic mirror-selection state before accepting champion-selection input.
 - `DM2 player status panes`: restore the authentic 77×37 drawing bounds on supported DOS, Macintosh, Amiga and FM Towns rendering paths.
+- `DM2 player status bars`: correct authentic RAW4 health, stamina and mana fills to scale by height while horizontal fallback bars continue to scale by width.
 
 ### Known limitations
 

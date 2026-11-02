@@ -1209,6 +1209,19 @@ static void test_sprite_asset_provider(void)
                   framebuffer[44 * 320 + 294] == palette16[0] &&
                   framebuffer[49 * 320 + 272] == palette16[7] &&
                   framebuffer[49 * 320 + 274] == palette16[0]);
+
+        /* Authenticated DM2 RAW4 status rects are 5x26 at 640x400;
+         * after the game's half-resolution mapping they are 2x13. */
+        layout.status[0][0] = (DM2_V1_InterfaceRect){ 100, 10, 5, 26 };
+        layout.status[0][1] = (DM2_V1_InterfaceRect){ 116, 10, 5, 26 };
+        layout.status[0][2] = (DM2_V1_InterfaceRect){ 132, 10, 5, 26 };
+        dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &layout);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 source status-bar fill scales along the vertical axis",
+              framebuffer[10 * 320 + 50] == palette16[7] &&
+                  framebuffer[10 * 320 + 51] == palette16[7] &&
+                  framebuffer[11 * 320 + 50] == palette16[0]);
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

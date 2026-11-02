@@ -2935,3 +2935,13 @@ for the Towns HUD report. It is not yet proof that the Towns frame should use
 the DOS text path: verify the Towns name/stat presentation against a same-pose
 original Towns capture and its native source path before changing rendering.
 
+2026-11-02 RAW4 player status-bar orientation correction: the authentic RAW4
+layout records Health/Stamina/Mana rectangles as 5x26 at 640x400, which become
+2x13 vertical bars on Firestaff's 320x200 surface. `DM2_DRAW_PLAYER_3STAT_HEALTH_BAR`
+scales the source rectangle's height by current/max; the shared Firestaff HUD
+helper had scaled width for every bar, leaving vertical source bars effectively
+unfilled. It now scales height for tall rectangles and preserves width scaling
+for horizontal fallback bars. The lighting/palette runtime gate checks both
+the authentic vertical dimensions and the existing horizontal behavior. This
+source geometry fix has no per-platform original-media capture yet; verify the
+reported HUD at matching gameplay poses across DOS, Mac, Amiga and FM Towns.

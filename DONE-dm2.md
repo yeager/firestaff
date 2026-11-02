@@ -1095,3 +1095,8 @@ Reviewed 2026-08-29. Completed work only.
   This closes the panel half-size error only. PC French, Mac French, PC
   JewelCase, native-display parity and the remaining HUD elements remain open
   in `TODO-dm2.md`.
+- 2026-11-02: corrected dynamic DM2 RAW4 health, stamina and mana fill geometry
+  to scale along the vertical axis for the authenticated 5x26 source bars;
+  horizontal fallback bars retain width scaling. The focused HUD render gate
+  passes both geometries. Per-platform original-media visual verification
+  remains open in `TODO-dm2.md`.
