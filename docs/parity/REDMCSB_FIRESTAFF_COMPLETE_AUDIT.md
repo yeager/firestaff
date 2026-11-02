@@ -953,3 +953,8 @@ DOS and SPX v5 XACT 89 build a projectile command from low-byte `w6 | 0x80`, use
 ### DM2 `PROCEED_XACT` dispatcher variants (2026-11-02)
 
 DOS and SPX v5 accept the encoded action byte and subtract 63; SPX v4 takes the XACT number directly. The dispatchers share the 56-91 action family but have source-specific inline command changes (notably 58, 60 and 76), no-op behavior for 61, and grouped handling for 72/87/88. Firestaff's dispatcher only maps the encoded action to a handler ID and requires a host callback for its loop; it does not perform the per-action command mutations or bind the source edition dispatcher. All three definitions remain `PARTIAL`.
+
+
+### DM2 door timer SPX v5 comparison (2026-11-02)
+
+SKProject `DM2_STEP_DOOR` (`SKWINSPX/src/v5/sktimprc.cpp:128-421`) and DOS `SKW_STEP_DOOR` both halve creature door damage when AIDefinition w24 bit 12 is set, with a minimum of one; Firestaff's live door-step owner already applies that rule. Do not count it as a v5 gap. The v5 variant remains partial because exact sound/resource and door-graphics selection, G1 mapping away from the current map, and independent supported-platform runtime evidence remain open.
