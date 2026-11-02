@@ -27,6 +27,8 @@ STATUSES = {
     "Verified bounded route",
     "Verified bounded routes",
     "Verified bounded title route",
+    "Verified bounded title-asset route; not playable through Firestaff",
+    "Verified bounded native route",
     "Data path",
     "Preservation",
     "Unsupported",
@@ -36,6 +38,8 @@ BASE_STATUS = {
     "Verified bounded route": "Verified route",
     "Verified bounded routes": "Verified route",
     "Verified bounded title route": "Verified route",
+    "Verified bounded title-asset route; not playable through Firestaff": "Verified route",
+    "Verified bounded native route": "Verified route",
 }
 TABLE_HEADER = ("Platform", "Status", "Current scope", "Open boundary")
 GAP_GAMES = ("DM1", "DM2", "CSB", "Nexus", "Theron")
