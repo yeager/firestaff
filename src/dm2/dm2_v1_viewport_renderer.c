@@ -9664,14 +9664,20 @@ static int dm2_v1_render_hud_hand_action_asset(
         source->destination_rect.h != source->source_rect.h) {
         return 0;
     }
-    dm2_v1_blit_scaled_material_bitmap(
-        s, s->framebuffer, s->fb_stride, source->destination_rect.x,
-        source->destination_rect.y, source->destination_rect.w,
-        source->destination_rect.h,
-        pixels + source->source_rect.y * stride + source->source_rect.x,
-        source->source_rect.w, source->source_rect.h, stride,
-        DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
-    if (source->item_present && source->item_gdat_index != 0) {
+    if (source->black_fill_required) {
+        dm2_v1_fill_rect(s, &source->destination_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_BLACK));
+    } else {
+        dm2_v1_blit_scaled_material_bitmap(
+            s, s->framebuffer, s->fb_stride, source->destination_rect.x,
+            source->destination_rect.y, source->destination_rect.w,
+            source->destination_rect.h,
+            pixels + source->source_rect.y * stride + source->source_rect.x,
+            source->source_rect.w, source->source_rect.h, stride,
+            DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
+    }
+    if (!source->black_fill_required && source->item_present &&
+        source->item_gdat_index != 0) {
         const uint8_t *item_pixels = NULL;
         int item_width = 0;
         int item_height = 0;
@@ -9714,7 +9720,7 @@ static int dm2_v1_render_hud_hand_action_asset(
              * presentation is reported by the HUD command receipt. */
         }
     }
-    if (source->gray_overlay_required) {
+    if (!source->black_fill_required && source->gray_overlay_required) {
         dm2_v1_apply_source_gray_overlay(s, &source->destination_rect);
     }
     memset(&request, 0, sizeof(request));
@@ -9742,6 +9748,7 @@ static int dm2_v1_render_hud_hand_action_asset(
     command.indexed_pixels = request.indexed_pixels;
     command.palette16 = request.palette16;
     command.transparent_color = request.transparent_color;
+    command.black_fill_required = source->black_fill_required;
     command.source_rect = request.source_rect;
     command.destination_rect = request.destination_rect;
     s->last_hud_hand_action_material_request = request;

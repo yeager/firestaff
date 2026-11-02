@@ -14980,8 +14980,7 @@ static void dm2_runtime_bind_source_squad_hands(
             rt->session_snapshot.original_champion_records[player];
         uint8_t party_position = raw[0x1d];
         if (party_position > 3u ||
-            !viewport->hud_party.champions[player].current_hp_source_bound ||
-            viewport->hud_party.champions[player].current_hp <= 0) {
+            !viewport->hud_party.champions[player].current_hp_source_bound) {
             continue;
         }
         for (int hand = 0; hand < 2; ++hand) {
@@ -15015,8 +15014,10 @@ static void dm2_runtime_bind_source_squad_hands(
             source.gdat_entry = (uint8_t)(2 + hand * 2 + side);
             source.rectno = (uint8_t)rectno;
             source.hand_cooldown = raw[0x2a + hand];
-            source.gray_overlay_required = source.hand_cooldown != 0u ||
-                rt->source_sleeping;
+            source.black_fill_required = viewport->hud_party
+                .champions[player].current_hp == 0;
+            source.gray_overlay_required = !source.black_fill_required &&
+                (source.hand_cooldown != 0u || rt->source_sleeping);
             source.map_load_token = viewport->gdat_scene_map_load_token;
             source.scene_control_hash = viewport->gdat_scene_control_hash;
             source.palette_hash = viewport->gdat_interface_palette_hash;
@@ -16417,8 +16418,12 @@ static void dm2_runtime_bind_source_hand_action(
      * for non-zero here; retain the byte as a receipt and let the viewport
      * apply the original checker overlay. */
     source.hand_cooldown = raw[0x2a + rt->source_curactmode];
-    source.gray_overlay_required = source.hand_cooldown != 0u ||
-        rt->source_sleeping;
+    source.black_fill_required = viewport->hud_party_valid &&
+        player_index < viewport->hud_party.champion_count &&
+        viewport->hud_party.champions[player_index].current_hp_source_bound &&
+        viewport->hud_party.champions[player_index].current_hp == 0;
+    source.gray_overlay_required = !source.black_fill_required &&
+        (source.hand_cooldown != 0u || rt->source_sleeping);
     source.map_load_token = viewport->gdat_scene_map_load_token;
     source.scene_control_hash = viewport->gdat_scene_control_hash;
     source.palette_hash = viewport->gdat_interface_palette_hash;
@@ -16434,7 +16439,7 @@ static void dm2_runtime_bind_source_hand_action(
      * image only when that link, its GDAT class, and a source command entry
      * all resolve. Charge-consuming commands remain no-draw until the live
      * charge owner is available; showing them would be an invented state. */
-    if (rt->record_pools_valid) {
+    if (!source.black_fill_required && rt->record_pools_valid) {
         const uint8_t *item_bytes = raw + 0xc3u +
             (size_t)rt->source_curactmode * sizeof(int16_t);
         uint16_t item_word = (uint16_t)item_bytes[0] |
