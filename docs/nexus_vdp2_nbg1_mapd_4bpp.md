@@ -132,14 +132,14 @@ The output hash is
 `cc6c926860104797078645bb3fd784c78fc6ad0f768aa2556cfa4fecdc68cddc`; the
 matching Ymir render has hash
 `24cc53361cf3b6e0456bc9b48fddc362d6865ac491376fb203181f3108469f17`.
-Comparing their RGB bytes finds exact equality on all 44,800 active NBG1 pixels
-in rows 84–223. In rows 0–83, Ymir reports zero NBG1 priority and zero dots,
-while the saved Firestaff stack marks every pixel as NBG1; 26,869 of those
-26,880 RGB pixels differ (11 happen to have equal RGB values). This output
-therefore does not establish full-frame composition for MAPD. It documents a
-capture-only limitation, not a production-renderer result. The stack artifact
-was generated at code head `8f3b5841`; the later source changes in the NBG1
-decoder do not address this row-time VRAM-source mismatch.
+Comparing their RGB bytes finds exact equality on all 44,800 pixels where the
+authentic per-pixel Ymir trace reports active NBG1 priority 5. The other 26,880
+pixels have NBG1 priority 0 and dot 0, while the saved Firestaff NBG1-only
+stack still marks every pixel as NBG1. The row-effective NBG1 plane can be
+reproduced from the authenticated current/previous VRAM snapshots, and matches
+the active NBG1 RGB at all 44,800 pixels. This is a single-layer result; it
+does not establish whole-frame VDP1+VDP2 composition. The stack artifact was
+generated at code head `8f3b5841` and is retained only as a negative audit.
 
 Reproduce the pinned negative audit with:
 
@@ -149,16 +149,18 @@ python3 scripts/audit_nexus_mapd_frame891_priority_stack.py \
   --stack "$evidence/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-8f3b5841-validation/frame891-display-stack.raw" \
   --reference "$evidence/nexus_mapd_ymir_vdp_snapshots_20261031/layer-trace-frame891-start60-20261101/vdp1-891-vdp2-1280-320x224.rgbx8888le" \
   --trace "$evidence/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/nexus-mapd-frame891-vdp2-pixels.csv" \
-  --receipt "$evidence/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/nexus-mapd-frame891-vdp2-pixels.csv.receipt.json"
+  --receipt "$evidence/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/nexus-mapd-frame891-vdp2-pixels.csv.receipt.json" \
+  --row-source-plane "$evidence/nexus_mapd_ymir_vdp_snapshots_20261031/pr252-row-source-replay/firestaff-nbg1-row-source-composed-plane.rgba"
 ```
 
 The report returns `KNOWN_CAPTURE_ONLY_MISMATCH` on success: success means the
-hash-pinned mismatch was reproduced, not that frame parity passed.
+hash-pinned limitation was reproduced, not that frame parity passed. It reads
+priority, dot and coordinates from every target-pass trace row; it does not
+encode a fixed vertical cutoff.
 
-The next requirement is to bind the renderer's per-scanline source version or
-effective pixel fetch to the VDP2 memory-update history. A fixed row clip is
-not a valid repair. VDP1, other layer ownership, and full color-calculation
-composition remain separate parity work.
+The remaining work is to reconstruct VDP1 and all active VDP2 owners for this
+pass, then compare the complete output against Ymir. VDP1 ownership and full
+color-calculation composition remain unverified.
 
 ## SH-2 register-write trace
 
