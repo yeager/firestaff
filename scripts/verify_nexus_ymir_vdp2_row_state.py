@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 from pathlib import Path
+from typing import Iterator
 
 
 VRAM_SIZE = 0x80000
@@ -45,18 +46,16 @@ def sha256(data: bytes | bytearray) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def write_count(events: list[dict[str, str]]) -> int:
-    return sum(row["event"] == "write" for row in events)
-
-
-def load_events(path: Path) -> list[dict[str, str]]:
+def load_events(path: Path) -> Iterator[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         require(reader.fieldnames == EVENT_FIELDS, "render event CSV has an unexpected schema")
-        return list(reader)
+        yield from reader
 
 
-def validate_bundle(dumps: Path) -> tuple[dict[str, str], list[dict[str, str]], bytearray, bytearray]:
+def validate_bundle(
+    dumps: Path,
+) -> tuple[dict[str, str], Path, bytearray, bytearray, bytes, bytes]:
     receipt = parse_receipt(dumps / "vdp2-memory-write-bundle.txt")
     require(receipt.get("format") == "ymir-vdp2-memory-write-bundle-v1", "unsupported Ymir bundle format")
     for key in (
@@ -85,25 +84,26 @@ def validate_bundle(dumps: Path) -> tuple[dict[str, str], list[dict[str, str]], 
     require(len(start_vram) == len(final_vram) == VRAM_SIZE, "VDP2 VRAM snapshot size is unexpected")
     require(len(start_cram) == len(final_cram) == CRAM_SIZE, "VDP2 CRAM snapshot size is unexpected")
 
-    events = load_events(dumps / "vdp2-render-event-trace.csv")
-    require(len(events) == int(receipt["render_event_rows"]), "render event count differs from the receipt")
-    require(write_count(events) == int(receipt["trace_rows"]), "write count differs from the legacy receipt field")
-    require(events, "render event trace is empty")
-    require(any(row["event"] == "scanline" for row in events), "render event trace has no scanline markers")
-
+    event_path = dumps / "vdp2-render-event-trace.csv"
     previous_sequence = -1
-    for index, row in enumerate(events):
+    event_count = 0
+    writes = 0
+    scanlines = 0
+    for index, row in enumerate(load_events(event_path)):
+        event_count += 1
         sequence = int(row["sequence"])
         require(sequence > previous_sequence, f"event sequence is not strictly increasing at row {index + 2}")
         previous_sequence = sequence
         require(row["vdp1_frame"] == "unknown" or row["vdp1_frame"].isdigit(),
                 f"invalid VDP1 frame at event row {index + 2}")
         if row["event"] == "scanline":
+            scanlines += 1
             require(row["row"].isdigit(), f"scanline event has no row at event row {index + 2}")
             require(not any(row[field] for field in ("memory", "address", "width", "value")),
                     f"scanline event contains write fields at row {index + 2}")
         else:
             require(row["event"] == "write", f"unknown event type at row {index + 2}")
+            writes += 1
             require(not row["row"], f"write event unexpectedly has a row at event row {index + 2}")
             require(row["memory"] in ("VRAM", "CRAM"), f"unknown memory type at event row {index + 2}")
             width = int(row["width"])
@@ -113,7 +113,11 @@ def validate_bundle(dumps: Path) -> tuple[dict[str, str], list[dict[str, str]], 
             memory_size = VRAM_SIZE if row["memory"] == "VRAM" else CRAM_SIZE
             require(0 <= address <= memory_size - width, f"write exceeds {row['memory']} at event row {index + 2}")
             require(0 <= value < 1 << (width * 8), f"write value exceeds width at event row {index + 2}")
-    return receipt, events, start_vram, start_cram
+    require(event_count == int(receipt["render_event_rows"]), "render event count differs from the receipt")
+    require(writes == int(receipt["trace_rows"]), "write count differs from the legacy receipt field")
+    require(event_count > 0, "render event trace is empty")
+    require(scanlines > 0, "render event trace has no scanline markers")
+    return receipt, event_path, start_vram, start_cram, final_vram, final_cram
 
 
 def main() -> int:
@@ -133,15 +137,13 @@ def main() -> int:
     if (args.detail_frame or args.detail_row) and not args.row_details:
         parser.error("--detail-frame and --detail-row require --row-details")
     dumps = args.capture / "dumps" if (args.capture / "dumps").is_dir() else args.capture
-    receipt, events, vram, cram = validate_bundle(dumps)
-    final_vram = (dumps / "vdp2-vram.bin").read_bytes()
-    final_cram = (dumps / "vdp2-cram.bin").read_bytes()
+    receipt, event_path, vram, cram, final_vram, final_cram = validate_bundle(dumps)
     vram_watches = [parse_watch_range(value, VRAM_SIZE) for value in args.watch_vram]
     cram_watches = [parse_watch_range(value, CRAM_SIZE) for value in args.watch_cram]
     scanlines = 0
     detailed_scanlines = 0
 
-    for index, row in enumerate(events):
+    for row in load_events(event_path):
         if row["event"] == "write":
             memory = vram if row["memory"] == "VRAM" else cram
             address = int(row["address"], 16)
@@ -168,6 +170,8 @@ def main() -> int:
 
     require(bytes(vram) == final_vram, "replayed VRAM does not match the export-time snapshot")
     require(bytes(cram) == final_cram, "replayed CRAM does not match the export-time snapshot")
+    require(not (args.detail_frame or args.detail_row) or detailed_scanlines > 0,
+            "row-detail selectors matched no scanline markers")
     print(f"vdp1_frame_range_enabled={receipt['trace_vdp1_frame_range_enabled']}")
     print(f"ordered_writes={receipt['trace_rows']}")
     print(f"ordered_scanline_markers={scanlines}")
