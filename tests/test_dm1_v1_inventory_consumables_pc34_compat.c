@@ -83,6 +83,38 @@ int main(void)
                      dm1_inventory_statistic_rules_for_graphics_md5_pc34(
                          "9ce2eaf7a9e78620e3f17594437caffa"),
                      DM1_CONSUMABLE_STAT_RULES_PC34_PLUS);
+    {
+        /* ReDMCSB PANEL.C:1703-1738 selects MEDIA240 for these supported
+         * FM Towns, PC, Atari, Amiga, Apple IIGS, PC-98 and X68000 media
+         * identities. Check each identity independently so a newly
+         * supported platform cannot silently use an Atari-era rule. */
+        static const char *const media240_graphics_md5[] = {
+            "c10c512f63461ebe79b5ac365115b61b", /* FM Towns English */
+            "edf47d7da5de8184604d6d80477ef01f", /* FM Towns Japanese */
+            "fa6b1aa29e191418713bf2cda93d962e", /* PC 3.4 English */
+            "f934d97e43e1ba6e5159839acbcd0611", /* PC 3.4 Multilanguage */
+            "9ce2eaf7a9e78620e3f17594437caffa", /* Atari ST 1.2 English */
+            "2bdc5f431f84c0ece738f54dbd787c3b", /* Atari ST 1.2 German */
+            "0d7af44dd14f383464288abdcec76afc", /* Atari ST 1.3 French */
+            "6a2f135b53c2220f0251fa103e2a6e7e", /* Amiga 2.0 English */
+            "dd373954b3fb127db7387946131ea322", /* Amiga 2.0 French */
+            "0679e39da9dcc2e855cb33c6c64ddcb5", /* Amiga 2.0/2.2 German */
+            "b35931b55db649a1bd2d415b61b29801", /* Amiga 2.1/2.2 English */
+            "7f9458e4a3972d06e649a6fa85a7f34b", /* Amiga 3.6 Multi */
+            "491ca939f9abb33ceeb26619b841fe91", /* Amiga demo / G14ED */
+            "1045a36952e64eb2bc7b4c7b2965b112", /* Apple IIGS */
+            "eaec2131541573658da99c13865c2e67", /* PC-98 2.0a */
+            "3e3b9b1800c67b4ce850e087813c325d", /* PC-98 2.0b */
+            "fe08a97c64766614b71164fa06eda545"  /* X68000 */
+        };
+        for (size_t i = 0; i < sizeof(media240_graphics_md5) /
+                                sizeof(media240_graphics_md5[0]); ++i) {
+            ok &= expect_int("MEDIA240 edition uses 120/150 and cap 170",
+                             dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                                 media240_graphics_md5[i]),
+                             DM1_CONSUMABLE_STAT_RULES_PC34_PLUS);
+        }
+    }
 
     ok &= expect_int("apple amount", dm1_inventory_food_amount_from_icon_pc34(168), 500);
     ok &= expect_int("dragon steak amount", dm1_inventory_food_amount_from_icon_pc34(175), 1400);

@@ -955,8 +955,11 @@ GRAPHICS.DAT identities now select the edition's ReDMCSB PANEL.C:1695-1741
 behavior. Atari 1.0a/1.0b use the original 255 cap without diminishing gains;
 1.1 uses strict 120/180 thresholds and cap 250; 1.2+ keeps the 120/150 and
 170 rules. The live M11 mouth transaction supplies the selected graphics MD5
-to the consumable calculation. The focused unit test passes with threshold
-and cap cases. A natural Atari 1.0/1.1 campaign route from potion discovery to
+to the consumable calculation. The rule selector now explicitly covers all 20
+DM1 GRAPHICS.DAT/GRAPHICS.GAME identities in the checksum catalog, including
+PC-98 2.0a/2.0b and X68000 as MEDIA240 editions; the focused regression checks
+every MEDIA240 identity as well as the Atari threshold and cap cases. A
+natural Atari 1.0/1.1 campaign route from potion discovery to
 use remains unverified; authenticated real-media runtime transactions now
 cover both mouth-click and active-hand potion use. This does not claim complete
 early-edition gameplay parity.
