@@ -1111,7 +1111,7 @@ F1110_DrawFormatProgressBar	F	DrawFormatProgressBar	AMIGA.H:399	-	MISSING	No exa
 F1111_CPSX	F	CPSX	AMIGINIT.C:551	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1114_CloseTrackdiskDevice	F	CloseTrackdiskDevice	CNFG.C:10	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1127_TransitionFromPaletteToPalette	F	TransitionFromPaletteToPalette	PALETTE.C:136	src/dm1/dm1_v1_palette_font_pc34_compat.c:145	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F1128_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	FILLBOX.C:6	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1128_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	FILLBOX.C:6	src/dm1/dm1_v1_input_command_queue_pc34_compat.c:F1128_IsLeftMouseButtonDown; F2008_IsLeftMouseButtonDown; F2024_IsLeftMouseButtonDown	PARTIAL	Firestaff exposes all three mouse-button accessors over explicit caller-owned button status. ReDMCSB F1128 directly reads Amiga CIAA bit 6; F2008/F2024 alias that accessor. The PC34 input model is not the Amiga hardware route, and CSB PC34 has no authenticated caller owner; supported-platform wiring remains open.
 F1131_InvertBox	F	InvertBox	FILLBOX.C:736-751;CEDTINCN.C:42;DEFS.H:175-177	include/redmcsb_f1131_invert_box_amiga_compat.h	IMPLEMENTED_NARROW	Amiga A31/A35 source adapter preserves XYWH zone semantics and raster order: COMPLEMENT mode, pen -1, mask 0x0f, wait through bottom scanline, RectFill to x+w-1/y+h-1, then WaitBlit. Other platform routines remain separate source symbols.
 F1132_ConvertBoxCoordinates	F	ConvertBoxCoordinates	BLIT.C:2036	src/dm1/dm1_v1_blit_fill_pc34_compat.c:149	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1133_AddCopperInterrupt	F	AddCopperInterrupt	AMIGINIT.C:550	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
@@ -1485,14 +1485,14 @@ F1998_PrintSpacePaddedText_Unreferenced	F	PrintSpacePaddedText	CEDTINCK.C:5	-	MI
 F1999_FILE_Read	F	FILE	CEDTINC6.C:6	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2000_FILE_Write	F	FILE	CEDTINC6.C:23	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2007_SetFloppyDriveIndex	F	SetFloppyDriveIndex	UTIO.C:171	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F2008_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	CEDT006.C:1323	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F2008_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	CEDT006.C:1323	src/dm1/dm1_v1_input_command_queue_pc34_compat.c:F2008_IsLeftMouseButtonDown	PARTIAL	ReDMCSB UTIO.C F2008 delegates to F1128. Firestaff has a bounded caller-owned mouse-status accessor, but no CSB PC34 owner or cross-platform caller proof.
 F2009_GetMouseX	F	GetMouseX	CEDT006.C:1324	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2010_GetMouseY	F	GetMouseY	CEDT006.C:1324	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2011_ProcessClicksAndKeyPresses	F	ProcessClicksAndKeyPresses	COMMAND.C:3112	src/dm1/dm1_v1_click_routing_pc34_compat.c:128	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F2014_ConvertStringToLowerCase	F	ConvertStringToLowerCase	HINT001.C:8	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2022_F1889_SubForInit	F	F1889	HINT001.C:74	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2023_F1889_SubForUninit	F	F1889	HINT001.C:197	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F2024_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	HINT001.C:219	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F2024_IsLeftMouseButtonDown	F	IsLeftMouseButtonDown	HINT001.C:219	src/dm1/dm1_v1_input_command_queue_pc34_compat.c:F2024_IsLeftMouseButtonDown	PARTIAL	ReDMCSB HINT001.C F2024 delegates to F1128. Firestaff has a bounded caller-owned mouse-status accessor, but no CSB PC34 owner or cross-platform caller proof.
 F2026_GetGraphicByteCount	F	GetGraphicByteCount	HINTGRAP.C:266	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2028_LoadHintOracleTexts	F	LoadHintOracleTexts	HINT001.C:158	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2029_GetHintOracleText_Unreferenced	F	GetHintOracleText	HINTGTXT.C:79	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

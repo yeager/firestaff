@@ -1024,3 +1024,6 @@ Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_C
 
 
 Compared ReDMCSB `BASE.C:F0019_MAIN_DisplayErrorAndStop` with Firestaff source mappings. Full callable inventory had marked it `MISSING` despite the CSB callback adapter and DM1 PC34 error-plan helper. The inventory now records it as `PARTIAL`: the text prefix, two digits, input wait, and endgame ordering are represented, but the adapter has no live DM1/CSB game caller, terminal behavior is delegated, and supported platform/edition behavior remains open.
+
+
+Compared ReDMCSB FILLBOX.C `F1128_IsLeftMouseButtonDown` with UTIO.C `F2008_IsLeftMouseButtonDown` and HINT001.C `F2024_IsLeftMouseButtonDown`. F2008 and F2024 delegate to F1128, whose Amiga implementation reads CIAA gameport bit 6. Firestaff has source-named bounded accessors over caller-owned button status, but they do not reproduce that Amiga hardware read; CSB PC34 source-boundary adapters explicitly have no live input owner. The three inventory rows now read `PARTIAL`, with platform and caller wiring still open.
