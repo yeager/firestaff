@@ -27,10 +27,10 @@ outside that ledger. The supplemental
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,936 location-specific rows,
 3,633 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,951 `UNREVIEWED`, 903 `PARTIAL`, 0 `MISSING`,
+source-review overrides yields 2,949 `UNREVIEWED`, 905 `PARTIAL`, 0 `MISSING`,
 72 `IMPLEMENTED_PARITY`, 8 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
 rows. By source tree, SKWINDOS has 1,205 rows (853 unreviewed, 326 partial,
-26 implemented); SKWINSPX has 2,729 rows (2,096 unreviewed, 577 partial, 46
+26 implemented); SKWINSPX has 2,729 rows (2,094 unreviewed, 579 partial, 46
 implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
 cross-variant rows are partial. The review ledger contains 981 rows (898
 partial, 73 implemented, 8 architecture-specific, and 2 outside-game),
@@ -52,7 +52,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,936 (2,729 SPX, 1,205 DOS, 2 SKULLWIN) | 2,951 `UNREVIEWED`; 903 `PARTIAL`; 0 `MISSING`; 72 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,936 (2,729 SPX, 1,205 DOS, 2 SKULLWIN) | 2,949 `UNREVIEWED`; 905 `PARTIAL`; 0 `MISSING`; 72 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -80,7 +80,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,936-row inventory currently has 2,951 `UNREVIEWED`, 903 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 75 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,931 (2,963 unreviewed, 966 partial, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
+With active-source review overrides, the 3,936-row inventory currently has 2,949 `UNREVIEWED`, 905 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. Including 75 partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,931 (2,963 unreviewed, 966 partial, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
 
 DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
@@ -637,7 +637,7 @@ Compared DOS `SKW_QUERY_PLAYER_SKILL_LV`, SPX v4 `QUERY_PLAYER_SKILL_LV`, SPX v5
 
 DOS `SKW_PUSH_PULL_RIGID_BODY`, SPX v4 `PUSH_PULL_RIGID_BODY` and SPX v5 `DM2_PUSH_PULL_RIGID_BODY` are compared against their SKProject bodies and Firestaff's `dm2_v1_push_pull_rigid_body` helper. All six click-zone direction and turn-mode choices match. The source first admits the target with `IS_CREATURE_MOVABLE_THERE`, checks the edition's rigid-body weight predicate, and uses the full `PERFORM_MOVE` transaction; when that predicate fails it emits variant-specific noise for live heroes/champions. Firestaff instead directly moves any record returned by its callback, checks only destination blocking, and queues unconditional generic noise. Its helper has no production caller. All three definitions remain `PARTIAL`; movement admission, object class, transaction, source feedback, and supported-platform routes remain open.
 
-With active-source review overrides applied, the inventory currently maps 2,951 as `UNREVIEWED`, 903 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,949 as `UNREVIEWED`, 905 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
 
 ## Latest source review: REMOVE_OBJECT_FROM_HAND (2026-11-02)
 
@@ -646,3 +646,9 @@ DOS `SKW_REMOVE_OBJECT_FROM_HAND`, SPX v4 `REMOVE_OBJECT_FROM_HAND` and SPX v5 `
 ## Latest source review: TRY_PUSH_OBJECT_TO (2026-11-02)
 
 DOS `SKW_TRY_PUSH_OBJECT_TO`, SPX v4 `TRY_PUSH_OBJECT_TO` and SPX v5 `DM2_TRY_PUSH_OBJECT_TO` use RNG-selected candidate orders, party-facing-relative versus absolute direction tables, and tile/occupancy/object-class gates. Firestaff's `dm2_v1_try_push_object_to` checks a fixed N/E/S/W order through a generic free-tile callback and moves the record immediately. It omits source randomization, party/object distinction, blocked/stairs/pit/teleporter and creature-AI checks, and has no production caller. All three definitions remain `PARTIAL`.
+
+## Latest source review: SPX v4 wall interactions (2026-11-02)
+
+SPX v4 `MOVE_RECORD_AT_WALL` is compared with Firestaff's wall interaction helpers. The source handles ordered wall-side alcove records, item placement/removal, spring/fountain use, actuator behavior, optional custom scripting, and DM1-mode top-actuator/multi-actuator compatibility. Firestaff only has narrow callback-based alcove/lever/keyhole fragments and a separate partial wall event helper, neither production-bound to this v4 source function. The source function remains `PARTIAL`.
+
+SPX v4 `CLEAR_TRY_PUSH_PULL_OBJECT` clears the transient push/pull flag and redraws the arrow panel only when needed; the source calls it on UI event 0xE1 and during a scene transition. Firestaff has arrow-panel drawing helpers but no matching state clear or source event binding. This definition remains `PARTIAL`.
