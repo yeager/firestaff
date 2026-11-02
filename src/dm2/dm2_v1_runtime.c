@@ -23219,6 +23219,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
          request.cmd.action_id != (DM2_ENGAGE_CAST_MISSILE + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_WIELD_WEAPON + 1) &&
          request.cmd.action_id != 8 &&
+         request.cmd.action_id != (DM2_ENGAGE_SET_MINION_DEST + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1) &&
          !is_create_minion_action) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
