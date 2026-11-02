@@ -100,10 +100,17 @@ complete seven-layer trace and matches all 71,680 final RGB pixels exactly.
 The verified priority order and NBG0 ratio-18 special-color calculation are
 documented in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
-Firestaff still needs to decode NBG0's bitmap pixels, the effective NBG1
-row-time fetch source, and VDP1 RGB/palette pixels from authentic raw snapshots,
-then apply the verified priority and color-calculation rules. That full raw
-snapshot replay and production-renderer admission remain open.
+The NBG0 8-bit bitmap source has now been joined directly from authentic VRAM
+and CRAM to Ymir's candidate layer using captured per-row scroll state: all
+20,302 active RGB pixels, priority values and special-color flags match, and
+all 51,378 index-zero pixels are transparent. This raw-source audit is
+reproducible with `scripts/audit_nexus_ymir_mapd_nbg0_bitmap_source.py`; the
+capture-only C compositor does not yet consume that row state.
+
+Firestaff still needs to integrate NBG0 row state, the effective NBG1 row-time
+fetch source, and VDP1 RGB/palette pixels into one priority stack, then apply
+the verified color-calculation rules. That full raw snapshot replay and
+production-renderer admission remain open.
 
 ## 2026-11-02 — Full-height NBG0 live-row replay
 
