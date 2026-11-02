@@ -18,6 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-11-03)",
     "  - DM1 creature-group updates reject malformed negative indices before changing state or consuming RNG.",
+    "  - DM2 scroll text now has source-style line centering, blank-line rendering and MBCS layout helpers; production bindings remain incomplete.",
     "  - The DOS PC-English DM2 moneybox displays source-derived coin stacks and routes supported deposits and withdrawals through the selected moneybox; other editions remain unverified.",
     "  - DM2 inventory, container and moneybox transitions now allow shared dynamic-light recalculation; authentic-media regressions cover supported source-bound paths.",
     "  - DM2 source inventories, TODO records and Theron/Nexus capture documentation clarify verified evidence and remaining runtime or parity gaps.",

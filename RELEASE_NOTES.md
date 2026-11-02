@@ -8,6 +8,7 @@
 ## Developer changes
 
 - `DM1 creature-group input validation`: reject malformed negative creature indices before changing live aspect state or consuming RNG; the valid source sentinel remains supported.
+- `DM2 scroll-text rendering helper`: calculate source-style line spacing and centering, render explicit empty lines, and select the MBCS layout path. Production game-view bindings remain incomplete.
 - `DM2 item survey helpers`: add source-derived scroll, class-image, weight, container/moneybox and stat-bar branches, and resolve container slots from authentic records instead of guessed icons. Production platform callbacks and complete game-view bindings remain open.
 - `DM1/DM2 regression coverage`: add authentic-media checks for Apple IIGS startup versions and DM2 record pools, held items, carried weight, save/load, moneybox paths and FM Towns behavior.
 - `Nexus VDP1 capture tools`: change source-bound frame replay to validate unique DGN material joins for authentic Saturn captures, and keep retail frame evidence external to the repository.
@@ -19,6 +20,7 @@
 
 - `DM2 viewport and HUD`: complete viewport composition, portraits, labels, panel interactions and physical-display parity remain open.
 - `DM2 containers and moneybox`: container drawing helpers do not yet have a production game-view caller; DOS PC-English moneybox actions do not establish parity across supported editions.
+- `DM2 scroll text`: the line-layout helper has no production game-view caller, so playable platform scrolls remain unverified.
 - `Nexus`: Saturn title/menu composition and playable gameplay remain gated; capture and composition checks do not establish a playable viewport or HUD.
 - `Theron's Quest`: verified startup and selected input/capture paths do not establish complete campaign or presentation parity.
 - Original game media, saves and firmware are not included in release packages.
