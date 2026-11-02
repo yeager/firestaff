@@ -720,8 +720,12 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,793 as `UNREVIEWED`, 1,036 as `PARTIAL`, 0 as `MISSING`, and 96 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,790 as `UNREVIEWED`, 1,039 as `PARTIAL`, 0 as `MISSING`, and 96 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 
 Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v4 `CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skchamp.cpp:1975-1978`), SPX v5 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skhero.cpp:4143-4147`), and SKULLWIN (`c_hero.cpp:4141-4145`). All return when the pending-position flag is zero; otherwise they call `CHANGE_PLAYER_POS` with the saved target ORed with `0x8000`. Firestaff's callback helper has the same gate and packed argument. The live runtime applies that pending formation move after hand activation and spelling-champion selection. All four function bodies are `IMPLEMENTED_PARITY`; separate caller routes remain subject to their input/platform audits.
+
+### DM2 creature lifting weight check (2026-11-02)
+
+Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_CREATURE_12b4_099e` (`skchamp.cpp:2716-2754`), SPX v5 `DM2_move_12b4_099e` (`skmove.cpp:805-883`), and SKULLWIN (`c_move.cpp:805-883`). Firestaff's core receipt models the `0xfd` weight cap, living-hero strength calculation, event/leader bonus, random success check and stamina decrement decision. It has no production move-record caller resolving authenticated creature weight, hero attributes and RNG or applying `ADJUST_STAMINA`. Its request also treats zero `stamina_adjusted_strength` as absent and uses raw strength, so some source decisions differ; SPX v4's bonus uses `glbChampionLeader`, unlike the request's event-hero selector. All four source rows are `PARTIAL`.

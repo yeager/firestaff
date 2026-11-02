@@ -977,7 +977,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,793 unreviewed, 1,036 partial, 0 missing, and 96 implemented-parity definitions. The generated combined skproject backlog is 3,957 open rows (2,793 unreviewed, 1,162 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,790 unreviewed, 1,039 partial, 0 missing, and 96 implemented-parity definitions. The generated combined skproject backlog is 3,958 open rows (2,790 unreviewed, 1,166 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
@@ -1012,3 +1012,7 @@ Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and
 ### DM2 pending squad position recomputation (2026-11-02)
 
 Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v4 `CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skchamp.cpp:1975-1978`), SPX v5 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skhero.cpp:4143-4147`), and SKULLWIN (`c_hero.cpp:4141-4145`). All return when the pending-position flag is zero; otherwise they call `CHANGE_PLAYER_POS` with the saved target ORed with `0x8000`. Firestaff's callback helper has the same gate and packed argument. The live runtime applies that pending formation move after hand activation and spelling-champion selection. All four function bodies are `IMPLEMENTED_PARITY`; separate caller routes remain subject to their input/platform audits.
+
+### DM2 creature lifting weight check (2026-11-02)
+
+Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_CREATURE_12b4_099e` (`skchamp.cpp:2716-2754`), SPX v5 `DM2_move_12b4_099e` (`skmove.cpp:805-883`), and SKULLWIN (`c_move.cpp:805-883`). Firestaff's core receipt models the `0xfd` weight cap, living-hero strength calculation, event/leader bonus, random success check and stamina decrement decision. It has no production move-record caller resolving authenticated creature weight, hero attributes and RNG or applying `ADJUST_STAMINA`. Its request also treats zero `stamina_adjusted_strength` as absent and uses raw strength, so some source decisions differ; SPX v4's bonus uses `glbChampionLeader`, unlike the request's event-hero selector. All four source rows are `PARTIAL`.
