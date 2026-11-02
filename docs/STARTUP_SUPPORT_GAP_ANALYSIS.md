@@ -124,6 +124,14 @@ edge. This establishes the rendered startup surface and capture route only; it
 does not verify later fill animation, native-window scaling, or gameplay
 visual parity.
 
+On current `main` at `faa1debce`, the CSB FMTowns default-selection tests passed
+with authentic Amiga and Atari media also installed (2/2, 122.12 s each).
+Both routes kept FMTowns as the menu default. The DM2 mixed Mac/FMTowns menu test
+also passed with authentic Macintosh media present (161.10 s); separate
+authentic DM2 PC and Amiga menu-to-runtime tests passed in 91.32 s and 90.31 s.
+These checks exercise game discovery, platform choice, and bounded first-runtime
+handoffs; they do not establish physical input or complete platform parity.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
