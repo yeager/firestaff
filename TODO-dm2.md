@@ -11,6 +11,19 @@ and does not fill this gap. Keep the three source rows `PARTIAL`; source GDAT
 selection, animation tables, overlays and platform routes need end-to-end
 binding.
 
+2026-11-02 skproject DOS/SPX v4/v5 `SET_SPELLING_CHAMPION`:
+All three source variants reject a dead champion, publish the selected
+champion and spell-mode state, clear the magical-map mask, recompute the squad
+position, and update the right panel. Firestaff's live M11 rune panel restores
+the selected champion's rune buffer and resets its composed cost/mask, while
+keeping the physical hand in the cast owner. It also stores source spell-mode
+and panel-refresh fields, but no source-state reader or right-panel update
+consumes those fields, so they currently have no observable source-state
+effect. The source hand sentinel and M11 physical-hand split need one bound
+owner that supports both spell selection and subsequent casts. Keep all three
+variant rows `PARTIAL`; native panel, hand-state and supported-platform routes
+remain incomplete.
+
 2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
 113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
 field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
