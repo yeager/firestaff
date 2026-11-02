@@ -46,16 +46,24 @@ void dm2_v1_draw_icon_pict_buff(
     void *palette,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !blitrect) return;
-    if (!cb->blit) return;
+    /* Source: SKWINSPX/src/v5/skguidrw.cpp, DM2_DRAW_ICON_PICT_BUFF (32-58).
+     * The blit destination is offset into the button group and uses the
+     * group's width, not the source image width. */
+    if (!cb || !srcbmp || !blitrect || !cb->blit || !cb->offset_rect ||
+        !cb->get_button_group_width || !cb->get_bmp || !cb->get_bmp_width ||
+        !cb->get_bmp_bpp)
+        return;
 
-    int16_t srcw = cb->get_bmp_width ? cb->get_bmp_width(ctx, srcbmp) : 0;
-    void *dstbmp = cb->get_bmp ? cb->get_bmp(ctx, (int16_t)bg_id) : NULL;
-    int16_t dstw = srcw; /* simplified; real impl uses buttongroup width */
+    int16_t srcw = cb->get_bmp_width(ctx, srcbmp);
+    void *dstbmp = cb->get_bmp(ctx, (int16_t)bg_id);
+    int16_t dstw = cb->get_button_group_width(ctx, bg_id);
+    DM2_V1_Rect offset;
+    DM2_V1_Rect *dstrect = cb->offset_rect(ctx, bg_id, &offset, blitrect);
+    if (!dstbmp || srcw <= 0 || dstw <= 0 || !dstrect) return;
 
-    cb->blit(ctx, srcbmp, dstbmp, blitrect, srcx, srcy,
+    cb->blit(ctx, srcbmp, dstbmp, dstrect, srcx, srcy,
              srcw, dstw, alphamask, blitmode,
-             cb->get_bmp_bpp ? cb->get_bmp_bpp(ctx, srcbmp) : 0,
+             cb->get_bmp_bpp(ctx, srcbmp),
              8, palette);
 
     if (cb->adjust_buttongroup_rects)

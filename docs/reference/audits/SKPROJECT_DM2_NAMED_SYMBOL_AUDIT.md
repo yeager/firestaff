@@ -62,11 +62,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,049 |
+| `IMPLEMENTED_PARITY` | 1,047 |
 | `NOT_APPLICABLE_ARCH` | 558 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 80 |
+| `PARTIAL` | 82 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |

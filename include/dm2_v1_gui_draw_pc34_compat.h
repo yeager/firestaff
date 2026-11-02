@@ -135,6 +135,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void *(*get_bmp)(void *ctx, int16_t dbidx);
     int16_t (*get_bmp_width)(void *ctx, void *bmp);
     int16_t (*get_bmp_height)(void *ctx, void *bmp);
+    int16_t (*get_button_group_width)(void *ctx, int32_t buttongroup_id);
     int16_t (*get_font_height)(void *ctx);
     int32_t (*get_bmp_bpp)(void *ctx, void *bmp);
     void *(*get_bmp_pixels)(void *ctx, void *bmp);
