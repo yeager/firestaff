@@ -19516,6 +19516,21 @@ static int dm2_runtime_source_move_admitted(const DM2_V1_RuntimeState *rt,
         rt->source_movement.move_event_direction != (direction & 3);
 }
 
+/* The three PC retail profiles use the DOS SKW_CALC_PLAYER_WALK_DELAY
+ * normal-load expression. FM Towns, Macintosh and Amiga stay on the shared
+ * SKProject SPX formula until their native caller variants are individually
+ * traced. */
+static int dm2_runtime_platform_uses_dos_walk_delay(
+    const DM2_V1_RuntimeState *rt)
+{
+    DM2_Platform platform;
+    if (!rt || !rt->boot) return 0;
+    platform = rt->boot->platform;
+    return platform == DM2_PLATFORM_PC_EN ||
+           platform == DM2_PLATFORM_PC_FR ||
+           platform == DM2_PLATFORM_PC_JEWEL;
+}
+
 /* c_move.cpp::DM2_PERFORM_MOVE obtains the walk delay before it resolves the
  * target square.  The loaded c_party/c_hero state is therefore the owner of
  * this calculation, including the one source RNG draw made by a strength
@@ -19596,12 +19611,20 @@ static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
         }
         if (hero->curHP != 0) {
             int32_t delay = 1;
-            if (!dm2_v1_skproject_calc_player_walk_delay(
+            int calc_ok = dm2_runtime_platform_uses_dos_walk_delay(rt)
+                ? dm2_v1_skproject_calc_player_walk_delay_dos(
                     (uint16_t)max_load,
                     (uint16_t)(hero->weight +
                                (i == event_hero ? hand_weight : 0)),
                     (uint8_t)hero->bodyflag, hero->walkspeed,
-                    rt->source_aura_of_speed, &delay, NULL) || delay < 1) {
+                    rt->source_aura_of_speed, &delay, NULL)
+                : dm2_v1_skproject_calc_player_walk_delay(
+                    (uint16_t)max_load,
+                    (uint16_t)(hero->weight +
+                               (i == event_hero ? hand_weight : 0)),
+                    (uint8_t)hero->bodyflag, hero->walkspeed,
+                    rt->source_aura_of_speed, &delay, NULL);
+            if (!calc_ok || delay < 1) {
                 return 0;
             }
             if (delay > party_delay) party_delay = (int)delay;
