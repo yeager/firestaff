@@ -1,3 +1,16 @@
+2026-11-02 skproject DOS/SPX v4/v5 `SKW_DRAW_DOOR` / `DRAW_DOOR`:
+The active source renderers select the DB0 door material from map DoorType and
+record state, then apply source stretch/light/color-key geometry. DOS and SPX
+v4 also have destroyed and see-through overlay branches; the horizontal
+opening state renders two independently placed door halves. SPX v5 keeps the
+animated split but omits the v4 extended overlays. Firestaff's live M11 route
+has source-bound material/panel/frame/button plans, but no door-leaf body or
+split animation renderer, and no full edition-specific overlay sequence.
+The source-shaped `DRAW_DOOR` callback wrapper has no production M11 consumer
+and does not fill this gap. Keep the three source rows `PARTIAL`; source GDAT
+selection, animation tables, overlays and platform routes need end-to-end
+binding.
+
 2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
 113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
 field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
