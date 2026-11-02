@@ -1,3 +1,12 @@
+2026-11-02 SKProject `DRAW_CONTAINER_PANEL` item slots:
+Firestaff's callback now obtains each occupied slot's item ID through an
+explicit callback, queries that item's animation frame and cls1/cls2, and
+blits the inventory frame into occupied slots relative to rect 0x5c, as
+DOS `dm2bya.cpp:2680-2705`, SPX v4 `skguidrw.cpp:487-515`, and SPX v5
+`skguidr5.cpp:1541-1570` do. The eight-slot hand-container state and this draw
+callback still have no production DM2 renderer binding, so inventory and
+right-panel parity remain incomplete across supported platforms.
+
 2026-11-02 skproject DOS/SPX v4/v5 `SKW_DRAW_DOOR` / `DRAW_DOOR`:
 The active source renderers select the DB0 door material from map DoorType and
 record state, then apply source stretch/light/color-key geometry. DOS and SPX
@@ -2967,3 +2976,70 @@ matches the serialized fields described by the SKProject variant bodies.
 Remaining work is to bind the callback to live timer-created items and hero
 inventory mutations on every supported edition/platform. Keep all source
 rows partial until those callers are wired and verified.
+
+2026-11-02 skproject wall-mecha `ITEM_GENERATOR` (actuator type 0x3c):
+DOS `dm2bya.cpp:5976-5988` and SPX v5 `sktimprc.cpp:2501-2515` gate
+generation on `RevertEffect == timer ActionType`, then allocate from
+`ActuatorData`, set item type, set importance when actuator bits `0x18` are
+both set, and call `MOVE_ITEM_TO`. SPX v4 `skevent.cpp:1978-1996` has a
+different gate: it proceeds only for `ActionType == 0`, regardless of
+`RevertEffect`. Firestaff currently fails closed for this visitor case.
+`dm2_v1_move_record_to` supports from-nowhere insertion and the record
+allocator/item-type/importance helpers exist, but enabling the case still
+needs a platform-specific gate and a transactional wrapper for charge
+adjustment plus record allocation, importance, and tile insertion. Preserve
+the fail-closed behavior until those mutations can roll back together; keep
+all platform rows partial.
+
+
+2026-11-02 SKProject SPX v4 `ACTIVATE_ACTION_HAND` panel dispatch:
+`SKWINSPX/src/v4/skgame.cpp:1345-1360` synchronously calls
+`DISPLAY_RIGHT_PANEL_SQUAD_HANDS`, `UPDATE_RIGHT_PANEL(0)`, and
+`REFRESH_PLAYER_STAT_DISP` after passing the hand activation gate and
+publishing selection. Firestaff's live M11 route validates the source hand
+predicate, publishes selection, and rebuilds the visible hand/HUD next frame,
+but `dm2_v1_UPDATE_RIGHT_PANEL` only creates a bounded panel-mode receipt;
+it is not bound to this input owner or to a live panel flush. The HUD stat
+bridge reads session snapshot data during render and does not consume an
+active stat-pane refresh. Keep the DOS, SPX v4/v5 and shared symbol rows
+partial until panel, cursor and supported non-M11 callers are covered.
+
+2026-11-02 SKProject `CLICK_MONEYBOX` / `SKW_CLICK_MONEYBOX`:
+DOS (`dm2byh.cpp:1015-1044`), SPX v4 (`skuievnt.cpp:329-355`) and SPX v5
+(`skevents.cpp:1941-1987`) gate on right-panel type 4, use the active
+champion's selected hand as the moneybox, deposit the held object or withdraw
+the denomination selected by one of six UI events, refresh the panel after a
+successful transaction, and recalculate the active champion's weight. Their
+input owners dispatch those events in DOS (`dm2byh.cpp:4309`), SPX v4
+(`skuievnt.cpp:798`) and SPX v5 (`uiinput.cpp:346-347`). Firestaff's generic
+`dm2_v1_handle_ui_event` maps indices 228-233 to its `click_moneybox` callback,
+but that dispatcher has no production caller; the M11 pointer route leaves
+those indices unhandled. FM Towns uses authenticated RAW4 candidates, while
+Macintosh and Amiga take separate pointer routes; none currently binds the
+moneybox transaction. Mega CD input ownership is unproven. No runtime callback
+synchronizes DB9 child-list heads, DB10 links and charge/allocation, the
+held-hand reference and `DungeonData` as one mutation. Keep the DOS and SPX
+v4/v5 rows partial until transaction and input/render ownership are bound and
+verified for all eight supported DM2 editions/platforms.
+
+
+2026-11-02 SKProject `COUNT_BY_COIN_TYPES` live moneybox rendering:
+DOS `dm2byh.cpp:1490-1507`, SPX v4 `skitem.cpp:253-273`, and SPX v5
+`skgdtqdb.cpp:2090-2137` all add the DB10 coin stack's six-bit charge from
+word2 bits 8-13 plus one. The live M11 renderer had been adding the full
+word2 value; `dm2_v1_runtime_get_active_moneybox_coins` now extracts bits 8-13
+from source-endian record words before drawing the count. The generic
+source-shaped accumulator remains useful for caller-supplied receipts. Native
+moneybox render and input ownership across all supported editions/platforms
+remains partial; the separate click transaction still lacks live DB9/DB10,
+held-hand and weight callbacks.
+
+2026-11-02 SKProject moneybox panel-selection gate:
+DOS `dm2bye.cpp:2614-2632,2648-2681`, SPX v4 `skguidrw.cpp:7012-7021`, and
+SPX v5 `skguidr5.cpp:5650-5754` select panel 4 from the selected physical
+hand's DB9 moneybox, while the spell sentinel selects panel 2. Firestaff's
+`dm2_v1_runtime_get_active_moneybox` also rejected the separate panel update
+flag, which ordinary `ACTIVATE_ACTION_HAND` sets. It now blocks only the spell
+sentinel, allowing the existing live renderer and coin-count path to consume
+the selected moneybox. This does not bind input events 228-233 or implement
+the live wallet transaction; all platform click routes remain partial.

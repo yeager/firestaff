@@ -2304,7 +2304,7 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
 void dm2_v1_viewport_set_moneybox_panel(
     DM2_V1_ViewportState *s, uint16_t object_id, uint8_t container_cls2,
     const int16_t coin_order[10], const int16_t coin_counts[10],
-    const uint16_t money_item_ids[10])
+    const uint16_t coin_values[10], const uint16_t money_item_ids[10])
 {
     if (!s) return;
     s->moneybox_panel_active = 0;
@@ -2313,15 +2313,18 @@ void dm2_v1_viewport_set_moneybox_panel(
     memset(s->moneybox_coin_order, 0xff,
            sizeof(s->moneybox_coin_order));
     memset(s->moneybox_coin_counts, 0, sizeof(s->moneybox_coin_counts));
+    memset(s->moneybox_coin_values, 0, sizeof(s->moneybox_coin_values));
     memset(s->moneybox_item_ids, 0, sizeof(s->moneybox_item_ids));
     s->moneybox_panel_draw_hash = 0u;
     s->moneybox_panel_draw_count = 0;
     if (object_id == 0xffffu || container_cls2 == 0xffu || !coin_order ||
-        !coin_counts || !money_item_ids) return;
+        !coin_counts || !coin_values || !money_item_ids) return;
     memcpy(s->moneybox_coin_order, coin_order,
            sizeof(s->moneybox_coin_order));
     memcpy(s->moneybox_coin_counts, coin_counts,
            sizeof(s->moneybox_coin_counts));
+    memcpy(s->moneybox_coin_values, coin_values,
+           sizeof(s->moneybox_coin_values));
     memcpy(s->moneybox_item_ids, money_item_ids,
            sizeof(s->moneybox_item_ids));
     s->moneybox_object_id = object_id;
@@ -12211,6 +12214,10 @@ static void dm2_v1_render_moneybox_panel(DM2_V1_ViewportState *s)
     hash = dm2_v1_moneybox_hash_step(hash, s->moneybox_object_id);
     hash = dm2_v1_moneybox_hash_step(hash, s->moneybox_container_cls2);
     hash = dm2_v1_moneybox_hash_step(hash, clip_receipt.receipt_hash);
+    for (int denomination = 0; denomination < 10; ++denomination) {
+        hash = dm2_v1_moneybox_hash_step(
+            hash, s->moneybox_coin_values[denomination]);
+    }
     if (!dm2_v1_render_moneybox_image(
             s, DM2_GDAT_CATEGORY_CONTAINERS,
             s->moneybox_container_cls2, 0x10, 0x5c,

@@ -1801,10 +1801,11 @@ static int wall_mecha_visitor(void *context,
     /* ── ITEM_GENERATOR (0x3c) skevent.cpp:1978-1997 ────────────── */
     case DM2_ACTU_ITEM_GENERATOR: {
         r->item_generator_invoked++;
-        /* ReDMCSB's ITEM_GENERATOR reaches ALLOC_NEW_DBITEM with a live
-         * dballoc handler and source-owned item state.  `actu_data` alone
-         * cannot prove an item record, quantity or placement, so do not
-         * create the former generic record here. */
+        /* SKProject's DOS dm2bya.cpp:5976, SPX v4 skevent.cpp:1978-1996,
+         * and SPX v5 sktimprc.cpp:2501-2515 allocate the actuator's item
+         * spec, set its type/importance, and route it through MOVE_ITEM_TO.
+         * Keep this fail-closed until the source-specific wall-mecha owner
+         * binds those record and placement mutations. */
         r->fail_closed++;
         break;
     }

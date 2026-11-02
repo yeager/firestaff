@@ -2263,6 +2263,7 @@ typedef struct {
     uint8_t moneybox_container_cls2;
     int16_t moneybox_coin_order[10];
     int16_t moneybox_coin_counts[10];
+    uint16_t moneybox_coin_values[10];
     uint16_t moneybox_item_ids[10];
     uint32_t moneybox_panel_draw_hash;
     int moneybox_panel_draw_count;
@@ -2409,7 +2410,7 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
 void dm2_v1_viewport_set_moneybox_panel(
     DM2_V1_ViewportState *s, uint16_t object_id, uint8_t container_cls2,
     const int16_t coin_order[10], const int16_t coin_counts[10],
-    const uint16_t money_item_ids[10]);
+    const uint16_t coin_values[10], const uint16_t money_item_ids[10]);
 void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
     DM2_V1_ViewportState *s,
     const DM2_V1_DialogueBoxHostCommand *command,

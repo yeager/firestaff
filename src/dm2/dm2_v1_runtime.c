@@ -16670,6 +16670,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
     int16_t moneybox_coin_order[10];
     int16_t moneybox_coin_counts[10];
+    uint16_t moneybox_coin_values[10];
     uint16_t moneybox_item_ids[10];
     uint16_t moneybox_object_id = 0xffffu;
     uint8_t moneybox_container_cls2 = 0xffu;
@@ -16851,14 +16852,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 &moneybox_object_id, &moneybox_container_cls2)) {
             if (!dm2_v1_runtime_get_active_moneybox_coins(
                     moneybox_coin_order, moneybox_coin_counts,
-                    moneybox_item_ids)) {
+                    moneybox_coin_values, moneybox_item_ids)) {
                 g_dm2_last_render_failure_stage = 7;
                 return -1;
             }
             dm2_v1_viewport_set_moneybox_panel(
                 &viewport, moneybox_object_id, moneybox_container_cls2,
                 moneybox_coin_order, moneybox_coin_counts,
-                moneybox_item_ids);
+                moneybox_coin_values, moneybox_item_ids);
         }
     }
     memset(&wall_ornament_render_plan, 0,
@@ -21762,10 +21763,12 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
     if (!out_object_id || !out_container_cls2 || hero < 0 || hero >= 4 ||
         hand < 0 || hand >= 2 || !rt->record_pools_valid || !rt->boot)
         return 0;
-    /* DISPLAY_RIGHT_PANEL_SQUAD_HANDS routes selected action 2 to the spell
-     * panel before it examines the physical hand's ObjectID. */
-    if (rt->source_selected_hand_action == 2 ||
-        rt->source_spell_panel_flag != 0)
+    /* DOS dm2bye.cpp:2614-2632,2648-2681, SPX v4 skguidrw.cpp:7012-7021,
+     * and v5 skguidr5.cpp:5650-5754 derive panel 4 from a selected hand's
+     * moneybox after handling the spell sentinel. The separate panel
+     * dirty/update flag is set by ordinary ACTIVATE_ACTION_HAND and must not
+     * suppress a DB9 moneybox. */
+    if (rt->source_selected_hand_action == 2)
         return 0;
     object_id = (uint16_t)rt->champion_inventory_objects[hero][hand];
     if (object_id == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
@@ -21787,7 +21790,7 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
 
 int dm2_v1_runtime_get_active_moneybox_coins(
     int16_t coin_order[10], int16_t coin_counts[10],
-    uint16_t money_item_ids[10])
+    uint16_t coin_values[10], uint16_t money_item_ids[10])
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_RuntimeHandActivationQuery query;
@@ -21803,8 +21806,9 @@ int dm2_v1_runtime_get_active_moneybox_coins(
 
     if (coin_order) for (int i = 0; i < 10; ++i) coin_order[i] = -1;
     if (coin_counts) memset(coin_counts, 0, sizeof(int16_t) * 10u);
+    if (coin_values) memset(coin_values, 0, sizeof(uint16_t) * 10u);
     if (money_item_ids) memset(money_item_ids, 0, sizeof(uint16_t) * 10u);
-    if (!coin_order || !coin_counts || !money_item_ids || !rt->boot ||
+    if (!coin_order || !coin_counts || !coin_values || !money_item_ids || !rt->boot ||
         !rt->record_pools_valid ||
         !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
         !dm2_v1_runtime_get_active_moneybox(&moneybox, &container_cls2))
@@ -21874,8 +21878,14 @@ int dm2_v1_runtime_get_active_moneybox_coins(
             const uint8_t *record = dm2_v1_record_pool_address(
                 &rt->record_pools, link);
             if (!record) return 0;
-            charge = dm2_runtime_hand_query_word(
-                &rt->record_pools, record, 2u);
+            /* DOS SKW_COUNT_BY_COIN_TYPES (dm2byh.cpp:1490-1507), SPX v4
+             * COUNT_BY_COIN_TYPES (skitem.cpp:253-273) and SPX v5
+             * DM2_COUNT_BY_COIN_TYPES (skgdtqdb.cpp:2090-2137) add the
+             * six-bit coin stack charge plus one. It is word2 bits 8-13
+             * (SPX-v4 dme.h:941-943); word2 also holds the distinctive
+             * item type and other flags. */
+            charge = (uint16_t)((dm2_runtime_hand_query_word(
+                &rt->record_pools, record, 2u) >> 8) & 0x3fu);
             for (uint16_t denomination = 0u;
                  denomination < money_count; ++denomination) {
                 if (money_ids[denomination] == distinctive) {
@@ -21888,6 +21898,7 @@ int dm2_v1_runtime_get_active_moneybox_coins(
         link = next;
     }
     memcpy(money_item_ids, money_ids, sizeof(money_ids));
+    memcpy(coin_values, money_values, sizeof(money_values));
     return 1;
 }
 
@@ -23134,8 +23145,10 @@ static int dm2_runtime_recalc_dynamic_light(
     int16_t light_table[21];
     int16_t v1e0974 = 0, v1e0978 = 0;
     uint32_t visibility_hash = 0u;
-    if (!rt || !rt->boot || rt->boot->platform != DM2_PLATFORM_FMTOWNS_JA ||
-        !rt->c_light_map_descriptor.valid ||
+    /* The bounded source light walk is shared by the SKProject SKULLWIN,
+     * SPX v4/v5 and DOS branches. Do not restrict the admitted edition to
+     * FM Towns; source inputs and map descriptors still gate every caller. */
+    if (!rt || !rt->boot || !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light ||
         !rt->source_party_valid || !rt->record_pools_valid ||
         !rt->source_weather_light_valid ||

@@ -1174,7 +1174,8 @@ void dm2_v1_draw_item_in_hand(
 
 /* ================================================================
  * 33. DRAW_CONTAINER_PANEL
- *     c_gui_draw.cpp:1540
+ *     SKWINDOS/dm2bya.cpp:2680-2705, SPX v4 skguidrw.cpp:487-515,
+ *     SPX v5 skguidr5.cpp:1541-1570
  * ================================================================ */
 
 void dm2_v1_draw_container_panel(
@@ -1190,14 +1191,37 @@ void dm2_v1_draw_container_panel(
         dm2_v1_draw_icon_pict_entry(20, cls2, 0x12, 2, 0xe3, 0x0a, cb, ctx);
     }
 
-    /* Iterate container slots (simplified) */
+    /* Source draws only occupied slots, using each contained object's
+     * animation and cls1/cls2 rather than the container's class. */
+    if (!cb->get_container_item) return;
+    DM2_V1_Rect container_rect;
+    bool have_container_rect = flags == 0 && cb->query_expanded_rect &&
+        cb->query_expanded_rect(ctx, 0x5c, &container_rect) != NULL;
     for (int i = 0; i < 8; i++) {
-        /* Each slot queries the contained item and draws it */
+        int16_t item = cb->get_container_item(ctx, record, i);
+        if (item == -1) continue;
+
         int16_t rect_id = (int16_t)(i + 0xe5);
 
-        int8_t icon = dm2_v1_guidraw_2405_014a(record, i + 0x1e, 1, cb, ctx);
-        int8_t item_cls1 = cb->query_cls1 ? cb->query_cls1(ctx, record) : 0;
-        int8_t item_cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
+        if (have_container_rect && cb->query_gdat_image) {
+            DM2_V1_Rect slot_rect;
+            if (cb->query_expanded_rect(ctx, rect_id, &slot_rect)) {
+                void *frame = cb->query_gdat_image(ctx, 20, 0x10, cls2);
+                void *palette = cb->query_gdat_palette ?
+                    cb->query_gdat_palette(ctx, 20, 0x10, cls2) : NULL;
+                if (frame) {
+                    dm2_v1_draw_icon_pict_buff(
+                        frame, 2, &slot_rect,
+                        (int16_t)(slot_rect.x - container_rect.x),
+                        (int16_t)(slot_rect.y - container_rect.y),
+                        -1, 0, palette, cb, ctx);
+                }
+            }
+        }
+
+        int8_t icon = dm2_v1_guidraw_2405_014a(item, i + 0x1e, 1, cb, ctx);
+        int8_t item_cls1 = cb->query_cls1 ? cb->query_cls1(ctx, item) : 0;
+        int8_t item_cls2 = cb->query_cls2 ? cb->query_cls2(ctx, item) : 0;
 
         dm2_v1_draw_icon_pict_entry(item_cls1, item_cls2, icon,
                                      2, rect_id, 0x0c, cb, ctx);

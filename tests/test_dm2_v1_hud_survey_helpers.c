@@ -19,6 +19,8 @@ static void test_money_box_survey(void)
         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     int16_t coin_counts[DM2_V1_HUD_SURVEY_COIN_SLOTS] =
         {0, 2, 0, 40, 0, 1, 0, 0, 0, 0};
+    uint16_t coin_values[DM2_V1_HUD_SURVEY_COIN_SLOTS] =
+        {1, 5, 10, 20, 50, 100, 200, 500, 1000, 2000};
     uint16_t money_item_ids[DM2_V1_HUD_SURVEY_COIN_SLOTS] =
         {0x0301u, 0x0302u, 0x0303u, 0x0304u, 0x0305u,
          0x0306u, 0x0307u, 0x0308u, 0x0309u, 0x030au};
@@ -32,6 +34,7 @@ static void test_money_box_survey(void)
         6u,
         coin_order,
         coin_counts,
+        coin_values,
         money_item_ids,
         chain,
         9u
@@ -60,6 +63,9 @@ static void test_money_box_survey(void)
                     receipt.survey.first_button_id == 0x2fu &&
                     receipt.survey.last_button_id == 0x36u,
                 "MONEY_BOX_SURVEY delegates contents to container survey receipt");
+    expect_true(receipt.total_coin_value_valid &&
+                    receipt.total_coin_value == 910,
+                "MONEY_BOX_SURVEY multiplies each count by its denomination value");
 
     input.coin_order = 0;
     expect_true(dm2_v1_MONEY_BOX_SURVEY(&input, &receipt) == 0,
@@ -70,6 +76,11 @@ static void test_money_box_survey(void)
                 "MONEY_BOX_SURVEY fail-closed path does not synthesize coins");
 
     input.coin_order = coin_order;
+    input.coin_values = 0;
+    expect_true(dm2_v1_MONEY_BOX_SURVEY(&input, &receipt) == 0 &&
+                    receipt.blocked && !receipt.total_coin_value_valid,
+                "MONEY_BOX_SURVEY blocks when source denomination values are absent");
+    input.coin_values = coin_values;
     input.record_chain = 0;
     input.record_count = 0u;
     expect_true(dm2_v1_DM2_MONEY_BOX_SURVEY(&input, &receipt) == 0,

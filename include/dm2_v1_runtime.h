@@ -1703,7 +1703,7 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
  * denomination rows; coin_order uses -1 for source slots with no currency. */
 int dm2_v1_runtime_get_active_moneybox_coins(
     int16_t coin_order[10], int16_t coin_counts[10],
-    uint16_t money_item_ids[10]);
+    uint16_t coin_values[10], uint16_t money_item_ids[10]);
 /* Copy the authenticated GAME_LOAD party snapshot for presentation owners;
  * this never creates heroes or fills missing inventory records. */
 int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session);
