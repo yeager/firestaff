@@ -2893,3 +2893,5 @@ selection semantics are not represented. The legacy named-symbol ledger's
 IMPLEMENTED_PARITY disposition overstated completion; it and the active
 DOS/SPX definitions are now PARTIAL pending exact variant behavior and
 supported-platform route coverage.
+
+2026-11-02 SKProject magical-map rendering recheck: DOS `SKW_DRAW_MAJIC_MAP`/`SKW_29ee_1946`/`SKW_DRAW_MAP_CHIP`, SPX v4 `DRAW_MAJIC_MAP`/`_29ee_1946`/`DRAW_MAP_CHIP`, and both SPX v5 map renderer units establish panel flags, map origin/direction/destination markers, and render visible tiles. Firestaff's mapped GUI helpers are incomplete stubs: the grid only fills a background rectangle, map-chip drawing has placeholder comments, and the panel never calls the grid renderer. The SKProject-core receipt only describes requested side effects and has no production caller. Keep all source definitions partial pending a source-backed live panel/grid/chip renderer joined to the click transaction and supported platform routes.
