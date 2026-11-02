@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_game.h"
+#include "dm2_v1_runtime_parity_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_sksave_game_load_owner.h"
@@ -190,6 +191,7 @@ struct DM2_V1_RuntimeState {
     int16_t source_selected_hand_2;
     int16_t source_spell_panel_flag;
     int16_t source_v1e0b6c;
+    int16_t source_v1e0b7c;
     int16_t source_v1e0b62;
     int16_t source_v1e0b4e;
     int source_drag_in_progress;
@@ -3823,6 +3825,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.source_selected_hand_2 = 0;
     g_dm2_runtime.source_spell_panel_flag = 0;
     g_dm2_runtime.source_v1e0b6c = 0;
+    g_dm2_runtime.source_v1e0b7c = 0;
     g_dm2_runtime.source_v1e0b62 = 0;
     g_dm2_runtime.source_v1e0b4e = 0;
     g_dm2_runtime.source_drag_in_progress = 0;
@@ -4729,6 +4732,40 @@ int dm2_v1_runtime_cast_spell_player(
             hero->nrunes = 0;
             dm2_runtime_copy_source_hero_to_snapshot(
                 &rt->session_snapshot, hero_index, hero);
+        }
+        if (receipt.cast.valid && receipt.cast.failure.handled) {
+            DM2_V1_SpellCastApplyReceipt failure_apply;
+            DM2_V1_GameState *game = rt->boot && rt->boot->dm2_state
+                ? (DM2_V1_GameState *)rt->boot->dm2_state : NULL;
+            int32_t updated_glob = 0;
+
+            if (receipt.cast.failure.status_written)
+                rt->source_v1e0b7c =
+                    (int16_t)receipt.cast.failure.status;
+            if (game && receipt.cast.failure.glob_update_index >= 0x40 &&
+                receipt.cast.failure.glob_update_index <= 0xbfu) {
+                (void)dm2_v1_update_glob_var_direct(
+                    (DM2_V1_GlobVarState *)&game->glob_vars,
+                    (int16_t)receipt.cast.failure.glob_update_index,
+                    (int16_t)receipt.cast.failure.glob_update_op,
+                    (int16_t)receipt.cast.failure.glob_update_operand);
+                updated_glob = dm2_v1_get_glob_var(
+                    (const DM2_V1_GlobVarState *)&game->glob_vars,
+                    (uint16_t)receipt.cast.failure.glob_update_index);
+                receipt.cast.failure.glob_update_bound = 1;
+                rt->source_v1e0b6c = (int16_t)(
+                    receipt.cast.failure.display_window_base - updated_glob);
+                if (rt->source_v1e0b6c <
+                    receipt.cast.failure.display_window_min)
+                    rt->source_v1e0b6c = (int16_t)
+                        receipt.cast.failure.display_window_min;
+            }
+            memset(&failure_apply, 0, sizeof(failure_apply));
+            failure_apply.valid = 1;
+            failure_apply.failure_feedback = 1;
+            failure_apply.failure_class =
+                receipt.cast.failure.failure_class;
+            dm2_v1_runtime_note_spell_cast_apply_receipt(&failure_apply);
         }
         if (out_receipt) *out_receipt = receipt;
         return 1;
