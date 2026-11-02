@@ -2,6 +2,8 @@
 
 ## User-facing changes
 
+- `DM1 and CSB gameplay`: correct selected field, inventory and input behavior against ReDMCSB source paths.
+- `DM2 gameplay`: correct selected movement, item, spell, command, timer, weather, save/load and combat paths against SKProject source behavior.
 - `DM1 incomplete game-data diagnostics`: retain a hash-verified graphics candidate when its matching dungeon file is missing, so the launcher can identify the edition and report the missing required file while continuing to block launch.
 - `DM2 incomplete game-data diagnostics`: retain a hash-verified loose graphics edition when its same-directory dungeon file is missing, so diagnostics can report the absent file while launch remains blocked.
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
@@ -10,6 +12,7 @@
 
 ## Developer changes
 
+- `DM1, CSB and DM2 source parity`: add and connect source-derived behavior across runtime paths, and expand the ReDMCSB and SKProject function inventories with explicit partial-platform gaps.
 - `Incomplete-data diagnostics`: change scan ownership rules to preserve DM1 and DM2 graphics-edition matches when paired dungeon files are missing; launch stays unavailable until all required data is present.
 - `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
 - `DM2 HUD geometry`: use the authentic RAW4 5×26 source status rectangles to verify vertical bar-fill orientation while retaining the horizontal fallback-bar contract.
