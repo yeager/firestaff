@@ -2400,6 +2400,43 @@ static int m11_dm2_is_mac_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_MAC_EN;
 }
 
+/* SKWINSPX/src/v4/skguidrw.cpp::DRAW_HAND_ACTION_ICONS selects hand zones
+ * 0x70..0x73 (left) and 0x74..0x77 (right), indexed by formation position
+ * relative to party direction. Resolve those RAW4 zones for Mac and Amiga,
+ * whose pointer input does not pass through the PC MOUSE_INPUT table. Return
+ * -1 for a miss, 0 for a hit rejected by the source action gate, and 1 when
+ * ACTIVATE_ACTION_HAND accepted the click. */
+static int m11_dm2_activate_action_hand_at_pointer(
+    const DM2_V1_BootProfile *profile, int x, int y)
+{
+    int party_dir;
+    int hand;
+    int position;
+
+    if (!profile || (!m11_dm2_is_mac_profile(profile) &&
+                     !m11_dm2_is_amiga_profile(profile))) return -1;
+    party_dir = dm2_v1_runtime_get_party_dir();
+    if (party_dir < 0 || party_dir > 3) return -1;
+
+    for (hand = 0; hand < 2; ++hand) {
+        uint16_t rect_base = hand == 1 ? 0x70u : 0x74u;
+        for (position = 0; position < 4; ++position) {
+            DM2_V1_BootExpandedRectReceipt rect;
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(rect_base + position), &rect) ||
+                !rect.valid || rect.rect.w <= 0 || rect.rect.h <= 0 ||
+                x < rect.rect.x || y < rect.rect.y ||
+                x >= rect.rect.x + rect.rect.w ||
+                y >= rect.rect.y + rect.rect.h) {
+                continue;
+            }
+            return dm2_v1_runtime_activate_action_hand_at_position(
+                position, hand) ? 1 : 0;
+        }
+    }
+    return -1;
+}
+
 static unsigned m11_dm2_mac_source_word(const uint8_t *p)
 {
     return ((unsigned)p[0] << 8u) | p[1];
@@ -43973,6 +44010,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     M12_MENU_INPUT_STRAFE_LEFT
                 };
                 int arrow;
+                int hand_action = m11_dm2_activate_action_hand_at_pointer(
+                    profile, x, y);
+                if (hand_action >= 0) {
+                    return hand_action
+                        ? M11_GAME_INPUT_REDRAW
+                        : M11_GAME_INPUT_IGNORED;
+                }
                 for (arrow = 0; arrow < 6; ++arrow) {
                     DM2_V1_InterfaceRect rect;
                     if (dm2_v1_boot_query_blit_rect_for_dimensions(
