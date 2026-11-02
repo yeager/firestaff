@@ -349,8 +349,8 @@ static void test_dos_and_spx_text_usage(void)
               receipt.matched_text_ornament,
           "DOS accepts usage-7 text when GDAT marks an upward ladder");
 
-    fixture.dungeon.words_big_endian = 1;
-    fixture.pools.words_big_endian = 1;
+    fixture.dungeon.words_big_endian = 0;
+    fixture.pools.words_big_endian = 0;
     fixture.pools.source_words_big_endian = 1;
     memset(fixture.db3, 0, sizeof(fixture.db3));
     set_db3_actuator(&fixture, 0u, 1u);
@@ -359,7 +359,7 @@ static void test_dos_and_spx_text_usage(void)
         &fixture.dungeon, &fixture.pools, NULL, 0, 1, 1, 1,
         DM2_V1_SKPROJECT_LADDER_SOURCE_DOS, &receipt);
     CHECK(result == 0 && receipt.valid && receipt.found,
-          "actuator lookup decodes source-format big-endian records");
+          "actuator lookup uses source-word byte order independently of dungeon words");
 }
 
 int main(void)

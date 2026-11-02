@@ -12114,7 +12114,7 @@ static uint16_t dm2_v1_skproject_ladder_record_word(
     int word_offset)
 {
     if (record_pools && record_pools->valid) {
-        if (record_pools->words_big_endian)
+        if (record_pools->source_words_big_endian)
             return (uint16_t)(((uint16_t)record[word_offset] << 8) |
                               record[word_offset + 1]);
         return (uint16_t)(record[word_offset] |
