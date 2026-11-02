@@ -729,3 +729,7 @@ Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v
 ### DM2 creature lifting weight check (2026-11-02)
 
 Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_CREATURE_12b4_099e` (`skchamp.cpp:2716-2754`), SPX v5 `DM2_move_12b4_099e` (`skmove.cpp:805-883`), and SKULLWIN (`c_move.cpp:805-883`). Firestaff's core receipt models the `0xfd` weight cap, living-hero strength calculation, event/leader bonus, random success check and stamina decrement decision. It has no production move-record caller resolving authenticated creature weight, hero attributes and RNG or applying `ADJUST_STAMINA`. Its request also treats zero `stamina_adjusted_strength` as absent and uses raw strength, so some source decisions differ; SPX v4's bonus uses `glbChampionLeader`, unlike the request's event-hero selector. All four source rows are `PARTIAL`.
+
+### DM2 item subtype mutation across editions (2026-11-02)
+
+Compared DOS `SKW_SET_ITEMTYPE` (`SKWINDOS/dm2bya.cpp:6736`), SPX v4 `SET_ITEMTYPE` (`SKWINSPX/src/v4/skitem.cpp:497`), SPX v5 `DM2_SET_ITEMTYPE` (`SKWINSPX/src/v5/skrecord.cpp:287`), and SKULLWIN `DM2_SET_ITEMTYPE` (`SKULLWIN/c_record.cpp:284`). Their DB4..DB10 record-byte mutations match Firestaff's generic callback helper and active record-pool mutator, including DB7 no-op and DB9 split subtype/charge reset. The four function bodies are `IMPLEMENTED_PARITY`; this does not establish every source caller or supported platform route. See the active-source ledger for per-edition entries.
