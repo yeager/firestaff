@@ -102,6 +102,11 @@ is a Sega Saturn 3D polygon remake of DM1.
   remain open. See
   [`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md)
   and [`ymir_face_material_cross_join.md`](ymir_face_material_cross_join.md).
+  A separate frame-1605 replay now matches all 71,680 RGB555 pixels and
+  opacity bits in the authentic VDP1 FBS using all 138 retail DGN image joins
+  and 131 indexed palette joins. This is one-frame, VDP1-only capture parity;
+  VDP1+VDP2 and production admission remain open. See
+  [`nexus_vdp1_frame1605_dgn_composition.md`](nexus_vdp1_frame1605_dgn_composition.md).
 
 ### 3.2 V1: Saturn faithful — requires a source-owned Saturn scene witness
 - Original 320x224 resolution

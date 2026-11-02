@@ -1,5 +1,17 @@
 # Nexus: verified completion status
 
+## Authentic frame-1605 retail VDP1 composition replay — 2026-11-02
+
+The capture-only Ymir stepper now reproduces the complete native 320×224 VDP1
+FBS for authentic Japanese retail frame 1605. It joins all 138 textured draws
+to hash-verified `LEV01.DGN` image bytes, including 131 indexed CLUT joins and
+seven direct-colour spans, then matches all 71,680 RGB555 pixels and opacity
+bits against the captured FBS. The replay also covers the captured flat
+polygon, clipping/local-origin state, skipped commands and command trace.
+This is VDP1-only emulator capture parity for one frame; VDP1+VDP2 output,
+hardware parity and production renderer admission remain unverified. See
+[`nexus_vdp1_frame1605_dgn_composition.md`](nexus_vdp1_frame1605_dgn_composition.md).
+
 ## Consecutive-frame SH-2 staging to VDP1 geometry — 2026-11-02
 
 The authentic Japanese retail Ymir `--debug` movement pair now verifies the
