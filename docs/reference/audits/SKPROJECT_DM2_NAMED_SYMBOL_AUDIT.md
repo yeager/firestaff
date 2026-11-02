@@ -177,11 +177,17 @@ the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
 then wrap to 2), and the cell-3-only clickable zone. The next work is to
 consume that root with the source facing gate, this wall-specific placement,
 and the corresponding clipping. The shop-glass routine now resolves the live wall/floor actuator pair and begins
-its mask/whitelist/ownership transition in source byte order. The separate
-`ddat.v1d67bc` hand-container owner, item name/prices, DB14 allocation and
-buy/sell remain open. The selected merchandise image, conditional sold-out
-icon and nav board use their source GDAT images, palettes, offsets and clipped
-rectangles on the live render route; incomplete ownership still fails closed.
+its mask/whitelist/ownership transition in source byte order. Flagged stock
+now attempts the bounded world recycler and then fresh DB14 allocation, and
+the D1C name uses `QUERY_GDAT_ITEM_NAME`, RAW4 rectangle 3, WALL_GFX image
+offset 0xf2 and the shared source font's centered 3x6 glyph layout. The
+SPX v4 buy/sell query values are bound to the render plan, but coin rows are
+not drawn; nonzero-darkness name palette parity is also open. The separate
+`ddat.v1d67bc` hand-container owner, complete recycler, click-direction state,
+and buy/sell transactions remain open. The selected merchandise image,
+conditional sold-out icon and nav board use their source GDAT images,
+palettes, offsets and clipped rectangles on the live render route; incomplete
+ownership still fails closed.
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /

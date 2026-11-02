@@ -43,6 +43,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_gfx_main_pc34_compat.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_wall_ornament.h"
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,6 +54,10 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
                                                     int width,
                                                     int height,
                                                     int stride);
+static int dm2_v1_render_hud_source_font(
+    DM2_V1_ViewportState *s, const DM2_V1_ViewportRect *rect,
+    const char *text, uint8_t foreground, uint8_t background,
+    int transparent_background);
 
 static int dm2_v1_viewport_graphics_flip_parity(
     const DM2_V1_ViewportState *s)
@@ -7087,6 +7092,93 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                 }
             }
             if (shop_item) {
+                if (i == DM2_SQ_D1C && shop_item->shop_name_valid &&
+                    s->gdat_interface_font_rows &&
+                    s->gdat_interface_font_hash != 0u &&
+                    s->gdat_interface_palette_ready) {
+                    char text[sizeof(shop_item->shop_name)];
+                    size_t len = strlen(shop_item->shop_name);
+                    if (len < sizeof(text)) {
+                        int width;
+                        int draw_x;
+                        DM2_V1_ViewportRect glyph_rect;
+                        memcpy(text, shop_item->shop_name, len + 1u);
+                        for (size_t c = 0u; c < len; ++c) {
+                            unsigned char ch = (unsigned char)text[c];
+                            if (ch >= 'A' && ch <= 'Z') text[c] = (char)(ch - 0x40u);
+                            else if (ch >= 0x7bu) text[c] = (char)(ch - 0x60u);
+                        }
+                        width = (int)len * 3;
+                        draw_x = shop_item->shop_name_x - (width >> 1);
+                        if (s->source_materials_required &&
+                            (!s->gdat_c_light_receipt_ready ||
+                             s->gdat_c_light_receipt_hash == 0u ||
+                             !s->gdat_interface_text_palette_ready ||
+                             s->gdat_interface_text_palette_hash == 0u)) {
+                            width = 0;
+                        }
+                        glyph_rect = (DM2_V1_ViewportRect){
+                            draw_x, shop_item->shop_name_y, width, 6 };
+                        if (width > 0) {
+                            const uint8_t *raw_rects;
+                            size_t raw_rects_size = 0u;
+                            DM2_V1_RectTableNode source_rect;
+                            DM2_V1_ViewportRect source_clip;
+                            raw_rects = dm2_v1_query_gdat_entry_data_ptr(
+                                s->asset_loader,
+                                DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                                DM2_GDAT_ENTRY_TYPE_RAW4, 0x00,
+                                &raw_rects_size);
+                            if (!raw_rects ||
+                                !dm2_v1_wall_ornament_rect_table_query(
+                                    raw_rects, raw_rects_size, 3u,
+                                    &source_rect)) {
+                                width = 0;
+                            } else {
+                                source_clip = (DM2_V1_ViewportRect){
+                                    source_rect.x, source_rect.y,
+                                    source_rect.width, source_rect.height };
+                                {
+                                    int x0 = glyph_rect.x > source_clip.x
+                                        ? glyph_rect.x : source_clip.x;
+                                    int y0 = glyph_rect.y > source_clip.y
+                                        ? glyph_rect.y : source_clip.y;
+                                    int gx1 = glyph_rect.x + glyph_rect.w;
+                                    int gy1 = glyph_rect.y + glyph_rect.h;
+                                    int sx1 = source_clip.x + source_clip.w;
+                                    int sy1 = source_clip.y + source_clip.h;
+                                    int x1 = gx1 < sx1 ? gx1 : sx1;
+                                    int y1 = gy1 < sy1 ? gy1 : sy1;
+                                    if (source_clip.w <= 0 || source_clip.h <= 0 ||
+                                        x1 <= x0 || y1 <= y0) {
+                                        width = 0;
+                                    } else {
+                                        glyph_rect.x = x0;
+                                        glyph_rect.y = y0;
+                                        glyph_rect.w = x1 - x0;
+                                        glyph_rect.h = y1 - y0;
+                                    }
+                                }
+                            }
+                        } else {
+                            width = 0;
+                        }
+                        if (width > 0 &&
+                            dm2_v1_render_hud_source_font(
+                                s, &glyph_rect, text,
+                                s->gdat_interface_text_palette_ready
+                                    ? s->gdat_interface_text_palette16[15]
+                                    : s->gdat_interface_palette16[15],
+                                (uint8_t)((s->gdat_interface_text_palette_ready
+                                    ? s->gdat_interface_text_palette16[0]
+                                    : s->gdat_interface_palette16[0]) |
+                                    0x40u), 0)) {
+                            s->gdat_interface_font_consumed_count += (int)len;
+                            s->gdat_interface_action_palette_consumed_count++;
+                            ++s->asset_wall_ornament_drawn_count;
+                        }
+                    }
+                }
                 s->last_wall_ornament_material_required_mask |=
                     (uint16_t)(1u << (unsigned)i);
                 if (!dm2_v1_draw_shop_image(s, &shop_item->shop_item) ||
@@ -9135,6 +9227,7 @@ static int dm2_v1_render_hud_source_font(
     int transparent_background)
 {
     int glyph_count = 0;
+    int skip_glyphs = 0;
 
     if (!s || !s->framebuffer || !rect || !text ||
         !s->gdat_interface_font_rows || s->gdat_interface_font_hash == 0u) {
@@ -9156,8 +9249,13 @@ static int dm2_v1_render_hud_source_font(
      * into three pixels in the order 0x10, 0x04, 0x01 for six rows. */
     for (int glyph = 0; text[glyph] && glyph < 80; ++glyph) {
         unsigned char character = (unsigned char)text[glyph];
-        if (character >= 128u || rect->x + glyph * 3 >= rect->x + rect->w) {
+        if (character >= 128u) {
             break;
+        }
+        if (rect->x + glyph * 3 + 2 < 0 ||
+            rect->x + glyph * 3 >= dm2_v1_viewport_draw_width(s)) {
+            skip_glyphs++;
+            continue;
         }
         for (int row = 0; row < 6; ++row) {
             uint8_t bits = s->gdat_interface_font_rows[row * 128 + character];
@@ -9176,8 +9274,8 @@ static int dm2_v1_render_hud_source_font(
         }
         ++glyph_count;
     }
-    s->gdat_interface_font_consumed_count += glyph_count;
-    return glyph_count > 0;
+    s->gdat_interface_font_consumed_count += glyph_count + skip_glyphs;
+    return glyph_count + skip_glyphs > 0;
 }
 
 static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(

@@ -28,7 +28,6 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_pressure_plate.h"
-#include "dm2_v1_querydb_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
@@ -113,6 +112,13 @@ extern int dm2_v1_wield_weapon(
     int16_t action_strength, int require_melee,
     const DM2_RuntimeWieldCallbacks *cb, void *ctx);
 #include <string.h>
+
+enum { DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4 };
+extern int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    int variant, uint16_t itemspec,
+    uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges,
+    int32_t *out_value, const DM2_V1_AssetLoader *loader);
 
 static void dm2_v1_runtime_append_mac_wall_targets(
     const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game);
@@ -15846,6 +15852,50 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->shop_wall_actuator = pair.wall_object;
                 entry->shop_floor_actuator = pair.floor_object;
                 entry->shop_current_item = pair.current_item;
+                /* SKWINSPX v4 DRAW_TEXT_TO_BACKBUFF runs only in cellPos 3
+                 * (front D1C). It centers QUERY_GDAT_ITEM_NAME over the
+                 * source rectangle and uses WALL_GFX image offset 0xf2. */
+                if (square == DM2_SQ_D1C) {
+                    DM2_V1_GdatNameReceipt name;
+                    DM2_V1_RectTableNode name_rect;
+                    const uint8_t *raw_rects;
+                    size_t raw_rects_size = 0u;
+                    uint16_t name_offset = 0u;
+                    if (dm2_v1_query_gdat_item_name_receipt(
+                            loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                            (int)(pair.current_item & 0x01ffu), &name) &&
+                        name.accepted &&
+                        dm2_v1_asset_load_image_offset(
+                            loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                            surface->wall_ornate_gfx_index, 0xf2,
+                            &name_offset)) {
+                        raw_rects = dm2_v1_query_gdat_entry_data_ptr(
+                            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                            DM2_GDAT_ENTRY_TYPE_RAW4, 0x00,
+                            &raw_rects_size);
+                        if (raw_rects &&
+                            dm2_v1_wall_ornament_rect_table_query(
+                                raw_rects, raw_rects_size, 3u, &name_rect)) {
+                            size_t name_length = strlen(name.text);
+                            if (name_length <= sizeof(entry->shop_name) - 1u &&
+                                name_rect.x + (int8_t)(name_offset >> 8) >=
+                                    INT16_MIN &&
+                                name_rect.x + (int8_t)(name_offset >> 8) <=
+                                    INT16_MAX &&
+                                name_rect.y + (int8_t)name_offset >= INT16_MIN &&
+                                name_rect.y + (int8_t)name_offset <= INT16_MAX) {
+                                memcpy(entry->shop_name, name.text,
+                                       name_length + 1u);
+                                entry->shop_name_x = (int16_t)(name_rect.x +
+                                    (int8_t)(name_offset >> 8));
+                                entry->shop_name_y = (int16_t)(name_rect.y +
+                                    (int8_t)name_offset);
+                                entry->shop_name_hash = name.receipt_hash;
+                                entry->shop_name_valid = 1u;
+                            }
+                        }
+                    }
+                }
                 {
                     int32_t buy_price = 0;
                     int32_t sell_price = 0;
@@ -15899,6 +15949,14 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 if (entry->shop_price_valid) {
                     plan_hash ^= ((uint32_t)entry->shop_buy_price << 16) |
                         entry->shop_sell_price;
+                    plan_hash *= 16777619u;
+                }
+                if (entry->shop_name_valid) {
+                    plan_hash ^= entry->shop_name_hash;
+                    plan_hash *= 16777619u;
+                    plan_hash ^= (uint16_t)entry->shop_name_x;
+                    plan_hash *= 16777619u;
+                    plan_hash ^= (uint16_t)entry->shop_name_y;
                     plan_hash *= 16777619u;
                 }
                 plan_hash ^= entry->shop_item.summary_hash;

@@ -543,6 +543,11 @@ typedef struct {
     uint16_t shop_buy_price;
     uint16_t shop_sell_price;
     uint8_t shop_price_valid;
+    uint8_t shop_name_valid;
+    int16_t shop_name_x;
+    int16_t shop_name_y;
+    uint32_t shop_name_hash;
+    char shop_name[128];
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
     uint8_t shop_soldout_icon_required;
