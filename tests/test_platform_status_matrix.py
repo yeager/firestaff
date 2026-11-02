@@ -17,6 +17,10 @@ SPEC.loader.exec_module(MODULE)
 def main() -> int:
     actual = MODULE.DOC.read_text(encoding="utf-8")
     assert MODULE.inspect_document(actual) == []
+    assert MODULE.BASE_STATUS[
+        "Verified bounded title-asset route; not playable through Firestaff"
+    ] == "Verified route"
+    assert MODULE.BASE_STATUS["Verified bounded native route"] == "Verified route"
     gap_review = MODULE.GAP_DOC.read_text(encoding="utf-8")
     assert MODULE.inspect_gap_review(gap_review) == []
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
