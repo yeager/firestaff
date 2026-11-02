@@ -86,6 +86,12 @@ if not any("dm2-platform-intro={platform:amiga-en " in line
            for line in trace_lines):
     raise SystemExit(
         "FAIL: DM2 Amiga --debug did not identify its own intro owner")
+if not any(re.search(
+        r"firestaff: dm2-render-source game=dm2 platform=amiga-en "
+        r"gdat-md5=[0-9a-f]{32} gdat-version=[0-9]+ bytes=[0-9]+",
+        line) for line in trace_lines):
+    raise SystemExit(
+        "FAIL: DM2 Amiga --debug did not identify its loaded GRAPHICS.DAT")
 complete_hud = re.compile(
     r"firestaff: dm2-render-debug game=dm2 platform=amiga-en .*"
     r"hud=\{required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ")
@@ -93,7 +99,10 @@ status_pane = re.compile(
     r"firestaff: dm2-render-hud-plan game=dm2 platform=amiga-en .*"
     r"consumed=1 .*viewport=6500 gdat=1/2/[019] rect-id=0a1 .*"
     r"size=77x37 .*hashes=[0-9a-f]{8}/[0-9a-f]{8}/[0-9a-f]{8} "
-    r"table=[0-9a-f]{8}$")
+    r"table=[0-9a-f]{8} lookup=\{receipt:1 default:[01] "
+    r"requested:[0-9a-f]{4} selected:[0-9a-f]{4} "
+    r"raw:[0-9a-f]{4} bpp:(4|8) raw-bytes:[1-9][0-9]* "
+    r"image:[1-9][0-9]*x[1-9][0-9]* raw-hash:[0-9a-f]{8}\}$")
 status_pane_consumed = False
 for index, line in enumerate(trace_lines):
     if not complete_hud.search(line):
@@ -145,7 +154,7 @@ if sum(pixel != b"\0\0\0" for pixel in floor_pixels) < 5000:
 # RECT_0xA1+champion. The one-champion startup must show that authentic
 # IMG3 slab in the top-left status area, behind its live portrait/stat data.
 status_pane_pixels = [pixels[y * width + x]
-                      for y in range(19) for x in range(39)]
+                      for y in range(37) for x in range(77)]
 if sum(pixel != b"\0\0\0" for pixel in status_pane_pixels) < 500:
     raise SystemExit(
         "FAIL: authentic DM2 Amiga INTERFACE_GENERAL/2 status pane "
@@ -203,6 +212,11 @@ for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
                  strafe-left:1,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
+# DRAW_ARROW_PANEL binds the visible forward arrow to RECT_042 (the third
+# arrow, source point 274,140). The boot probe's 960x600 window presents the
+# 320x200 game surface at 3x, so the center of this arrow is host point
+# 822,420. A pointer click must use the same movement route as key:up.
+probe_input 'click:822:420' '1,7,0'
 if [ "$archive_hash_before" != "$(firestaff_sha256_file "$archive")" ]; then
     echo 'FAIL: DM2 Amiga archive changed during native launch' >&2
     exit 1

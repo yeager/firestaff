@@ -2798,7 +2798,46 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
            menu_raw_hash != 0u && menu_raw_byte_count != 0u;
 }
 
-int M11_GameView_GetDm2FmtownsNewGameHitRect(
+static int m11_dm2_amiga_startup_menu_ready(const M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    const uint8_t *palette;
+    size_t palette_size = 0u;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    int color;
+
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_amiga_profile(profile) ||
+        !profile->amiga_animation_media_verified ||
+        !(loader = dm2_v1_boot_asset_loader((DM2_V1_BootProfile *)profile))) {
+        return 0;
+    }
+    memset(&image, 0, sizeof(image));
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 4, &image) ||
+        !image.accepted || image.metadata.width != 320u ||
+        image.metadata.height != 200u || image.metadata.bits_per_pixel != 4u ||
+        image.colors != 16u || image.palette_hash == 0u ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            (DM2_V1_BootProfile *)profile, DM2_GDAT_CATEGORY_TITLE, 0, 4,
+            0x414d4d45u, &raw_hash, &raw_byte_count) ||
+        raw_hash == 0u || raw_byte_count == 0u) {
+        return 0;
+    }
+    palette = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_TITLE, 0, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+        4, &palette_size);
+    if (!palette || palette_size != 16u * 4u) return 0;
+    for (color = 0; color < 16; ++color) {
+        if (palette[(size_t)color * 4u] != (uint8_t)color) return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_GetDm2StartupMenuNewGameHitRect(
     const M11_GameViewState* state,
     int* outX, int* outY, int* outW, int* outH)
 {
@@ -2812,9 +2851,11 @@ int M11_GameView_GetDm2FmtownsNewGameHitRect(
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
         !state->dm2FmtownsTitleFinished ||
         !state->dm2State.startup_menu_active ||
-        !m11_dm2_fmtowns_skull_menu_ready(state) ||
         !(profile = (const DM2_V1_BootProfile*)state->dm2BootProfile) ||
-        profile->platform != DM2_PLATFORM_FMTOWNS_JA) {
+        (!(m11_dm2_is_fmtowns_profile(profile) &&
+           m11_dm2_fmtowns_skull_menu_ready(state)) &&
+         !(m11_dm2_is_amiga_profile(profile) &&
+           m11_dm2_amiga_startup_menu_ready(state)))) {
         return 0;
     }
     memset(&layout, 0, sizeof(layout));
@@ -3769,6 +3810,11 @@ static int m11_dm2_preselection_input_active(const M11_GameViewState *state)
         return 0;
     }
     return dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL;
+}
+
+int M11_GameView_Dm2PreselectionReady(const M11_GameViewState *state)
+{
+    return m11_dm2_preselection_input_active(state);
 }
 
 static M11_GameInputResult m11_dm2_preselection_mirror_pointer(
@@ -42094,6 +42140,14 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    /* SKProject IBMIO_USER_INPUT_CHECK maps the left-button release to
+     * source event 129; c_input.cpp then recomputes the champion squad only
+     * when CHANGE_PLAYER_POS has an active drag. */
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        dm2_v1_runtime_recompute_player_pos()) {
+        m11_sync_dm2_state_from_runtime(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
     /* PANEL.C F0353 is dispatched when the button is released after C071.
      * It redraws the normal action-hand panel, which first closes G0426 and
      * then (for a container action hand) reopens it through non-eye F0333.
@@ -43880,13 +43934,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * target list first, then dispatches the recovered Mac action
              * owner.  Bypass the PC admission gate here or this path can
              * never reach m11_process_dm2_v1_c080_click. */
-            if (profile && m11_dm2_is_mac_profile(profile)) {
-                /* The retail Mac HUD draws six independent movement
-                 * buttons in RAW4 RECT_40..RECT_45. They sit outside the
-                 * 224x136 dungeon viewport, so C080's viewport hit list can
-                 * never receive their clicks. Resolve the source rectangles
-                 * first and feed the same movement pipeline as keyboard
-                 * input. */
+            if (profile && (m11_dm2_is_mac_profile(profile) ||
+                            m11_dm2_is_amiga_profile(profile))) {
+                /* The retail Mac and Amiga HUDs draw six independent
+                 * movement buttons in RAW4 RECT_40..RECT_45. They sit
+                 * outside the 224x136 dungeon viewport, so C080's viewport
+                 * hit list can never receive their clicks. Resolve the
+                 * source rectangles first and feed the same movement
+                 * pipeline as keyboard input. SKProject
+                 * DRAW_ARROW_PANEL confirms this RECT order for Amiga. */
                 static const M12_MenuInput mac_arrow_inputs[6] = {
                     M12_MENU_INPUT_TURN_LEFT,
                     M12_MENU_INPUT_TURN_RIGHT,
@@ -43940,6 +43996,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                         (input_receipt.event_index - 116u) / 2u,
                         (input_receipt.event_index - 116u) % 2u))
                     return M11_GAME_INPUT_REDRAW;
+                return M11_GAME_INPUT_IGNORED;
+            case 125: case 126: case 127: case 128:
+                if (dm2_v1_runtime_change_player_pos(
+                        (int)(input_receipt.event_index - 125u))) {
+                    m11_sync_dm2_state_from_runtime(state);
+                    return M11_GAME_INPUT_REDRAW;
+                }
                 return M11_GAME_INPUT_IGNORED;
             case 112:
                 /* COMMAND.C event 0x70 closes the source hand/action panel
@@ -67143,8 +67206,10 @@ static void m11_debug_trace_dm2_runtime_frame(
     static const M11_GameViewState *previous_state;
     static uint32_t previous_signature;
     const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_ViewportItemMaterialTrace item_trace;
     DM2_V1_RuntimeHudMaterialTrace hud_trace;
+    DM2_V1_GdatImageEntryBuffReceipt hud_image_receipt;
     DM2_V1_HudPartyState hud_party;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_handoff;
     int item_trace_count;
@@ -67165,6 +67230,7 @@ static void m11_debug_trace_dm2_runtime_frame(
         return;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    asset_loader = profile ? dm2_v1_boot_asset_loader(profile) : NULL;
     platform = profile ? (int)profile->platform : -1;
     item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
     hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
@@ -67335,8 +67401,31 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
     M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
     M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
+    if (asset_loader && asset_loader->loaded) {
+        M11_DM2_DEBUG_MIX(asset_loader->data_size);
+        M11_DM2_DEBUG_MIX(asset_loader->gdat_version);
+    }
+    if (profile) {
+        const unsigned char *hash_cursor =
+            (const unsigned char *)profile->graphics_md5;
+        while (*hash_cursor) M11_DM2_DEBUG_MIX(*hash_cursor++);
+    }
 #undef M11_DM2_DEBUG_MIX
     if (previous_state == state && previous_signature == signature) return;
+
+    if (asset_loader && asset_loader->loaded) {
+        fprintf(stderr,
+            "firestaff: dm2-render-source game=%s platform=%s gdat-md5=%s gdat-version=%u bytes=%zu endian=%s entries=%u raw-count=%u ent1-stride=%u\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform),
+            profile->graphics_md5[0] ? profile->graphics_md5 : "(unknown)",
+            (unsigned int)asset_loader->gdat_version,
+            asset_loader->data_size,
+            asset_loader->big_endian ? "big" : "little",
+            (unsigned int)asset_loader->entry_count,
+            (unsigned int)asset_loader->raw_data_count,
+            (unsigned int)asset_loader->ent1_entry_stride);
+    }
 
     fprintf(stderr,
         "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d render-failure-stage=%d v1={attempted:%d succeeded:%d runtime-ready:%d title-ready:%d} real-assets=%d no-core-fallbacks=%d blocked-materials=%d blocked-mask=%08x wall-ornament={status:%d square:%d gdat:%d field:%d detail:%d} map-token=%u g1-scene={valid:%d blocked:%d committed:%d incomplete-world:%d tile:%d root:%d level:%d pos:%d,%d raw:%02x nodes:%d first-record:%d/%d} scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
@@ -67437,10 +67526,18 @@ static void m11_debug_trace_dm2_runtime_frame(
     }
     for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
          ++hud_trace_index) {
+        int source_entry_present;
+
         if (!dm2_v1_runtime_last_hud_material_trace(
                 hud_trace_index, &hud_trace)) continue;
+        memset(&hud_image_receipt, 0, sizeof(hud_image_receipt));
+        source_entry_present = asset_loader && asset_loader->loaded &&
+            dm2_v1_query_gdat_image_entry_buff_receipt(
+                asset_loader, hud_trace.gdat_category,
+                hud_trace.gdat_index, hud_trace.gdat_field,
+                &hud_image_receipt);
         fprintf(stderr,
-            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
+            "firestaff: dm2-render-hud-plan game=%s platform=%s index=%d consumed=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x lookup={receipt:%d default:%d requested:%04x selected:%04x raw:%04x bpp:%u raw-bytes:%u image:%ux%u raw-hash:%08x}\n",
             state->sourceId[0] ? state->sourceId : "dm2",
             m11_dm2_debug_platform_label(platform), hud_trace_index,
             hud_trace.consumed, hud_trace.kind, hud_trace.viewport_gdat_index,
@@ -67452,7 +67549,17 @@ static void m11_debug_trace_dm2_runtime_frame(
             hud_trace.source_transparency_key,
             hud_trace.animation_direction, hud_trace.animation_frame,
             hud_trace.decoded_hash, hud_trace.palette_hash,
-            hud_trace.raw_hash, hud_trace.destination_table_hash);
+            hud_trace.raw_hash, hud_trace.destination_table_hash,
+            source_entry_present,
+            (unsigned int)hud_image_receipt.used_default_image,
+            (unsigned int)hud_image_receipt.requested_data_index,
+            (unsigned int)hud_image_receipt.selected_data_index,
+            (unsigned int)hud_image_receipt.selected_raw_index,
+            (unsigned int)hud_image_receipt.bits_per_pixel,
+            (unsigned int)hud_image_receipt.raw_length,
+            (unsigned int)hud_image_receipt.width,
+            (unsigned int)hud_image_receipt.height,
+            (unsigned int)hud_image_receipt.raw_hash);
     }
     if (hud_party_valid) {
         int slot;

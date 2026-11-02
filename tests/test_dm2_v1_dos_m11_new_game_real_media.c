@@ -3,12 +3,43 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int dos_status_pane_runtime_geometry_check(
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V1_BootExpandedRectReceipt rect;
+    const int trace_count = dm2_v1_runtime_last_hud_material_trace_count();
+    if (!profile || trace_count <= 0 ||
+        !dm2_v1_boot_query_expanded_rect_receipt(profile, 0xa1u, &rect) ||
+        !rect.valid || !rect.raw4_hash) return 0;
+    for (int i = 0; i < trace_count; ++i) {
+        DM2_V1_RuntimeHudMaterialTrace trace;
+        if (!dm2_v1_runtime_last_hud_material_trace(i, &trace) ||
+            trace.kind != DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE ||
+            trace.destination_rect_id != 0xa1u) continue;
+        if (!trace.consumed || trace.gdat_category !=
+                DM2_GDAT_CATEGORY_INTERFACE_GENERAL || trace.gdat_index != 2 ||
+            trace.destination_table_hash != rect.raw4_hash ||
+            trace.destination.x != rect.rect.x ||
+            trace.destination.y != rect.rect.y ||
+            trace.destination.w != rect.rect.w ||
+            trace.destination.h != rect.rect.h ||
+            trace.width != rect.rect.w || trace.height != rect.rect.h) return 0;
+        printf("PASS: authentic DOS runtime status pane uses full RAW4 rect %d,%d %dx%d\n",
+               rect.rect.x, rect.rect.y, rect.rect.w, rect.rect.h);
+        return 1;
+    }
+    fprintf(stderr, "DM2 DOS runtime did not consume status pane trace (count=%d)\n",
+            trace_count);
+    return 0;
+}
 
 int main(void)
 {
@@ -107,6 +138,118 @@ int main(void)
         printf("PASS: DM2 DOS source hero receipt has identity and HP %d/%d\n",
                hero.cur_hp, hero.max_hp);
     }
+    {
+        static const int formation_x[4] = { 263, 285, 285, 263 };
+        static const int formation_y[4] = {  72,  72,  94,  94 };
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_after;
+        int facing = dm2_v1_runtime_get_party_dir();
+        int hero_count = dm2_v1_runtime_get_champion_count();
+        int source_relative;
+        int target_relative = -1;
+        int hero_index = -1;
+        int slot;
+
+        for (int i = 0; i < hero_count && i < DM2_MAX_HEROES; ++i) {
+            DM2_V1_RuntimeSourceHeroStateReceipt candidate;
+            if (dm2_v1_runtime_get_source_hero_state((uint8_t)i,
+                                                       &candidate) &&
+                candidate.cur_hp > 0) {
+                hero_index = i;
+                hero_before = candidate;
+                break;
+            }
+        }
+        if (hero_index < 0 || facing < 0 || facing > 3) {
+            fputs("FAIL: DM2 DOS formation has no live source champion/facing\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        source_relative = (hero_before.party_position - facing) & 3;
+        for (slot = 1; slot <= 4; ++slot) {
+            int candidate_relative = (source_relative + slot) & 3;
+            int candidate_absolute = (candidate_relative + facing) & 3;
+            int occupied = 0;
+            for (int i = 0; i < hero_count && i < DM2_MAX_HEROES; ++i) {
+                DM2_V1_RuntimeSourceHeroStateReceipt candidate;
+                if (dm2_v1_runtime_get_source_hero_state((uint8_t)i,
+                                                           &candidate) &&
+                    candidate.cur_hp > 0 &&
+                    candidate.party_position == candidate_absolute) {
+                    occupied = 1;
+                    break;
+                }
+            }
+            if (!occupied) {
+                target_relative = candidate_relative;
+                break;
+            }
+        }
+        if (target_relative < 0) {
+            fputs("FAIL: DM2 DOS formation has no empty destination slot\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[source_relative],
+                formation_y[source_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: first retail formation click changed the party position\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButtonRelease(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position ||
+            hero_after.absolute_direction != hero_before.absolute_direction ||
+            M11_GameView_HandlePointerButton(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: DM2 recompute event moved or reoriented the pending champion\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[source_relative],
+                formation_y[source_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != hero_before.party_position) {
+            fputs("FAIL: formation drag did not restart after source recompute\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        if (M11_GameView_HandlePointerButton(
+                &view, formation_x[target_relative],
+                formation_y[target_relative], DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_REDRAW ||
+            !dm2_v1_runtime_get_source_hero_state((uint8_t)hero_index,
+                                                   &hero_after) ||
+            hero_after.party_position != ((target_relative + facing) & 3)) {
+            fputs("FAIL: retail DM2 formation clicks did not move the source champion\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        puts("PASS: DM2 DOS formation pickup, recompute, and empty-slot drop use retail hitboxes");
+    }
     memset(&runtime, 0, sizeof(runtime));
     if (!dm2_v1_runtime_weather_chain_started() ||
         !dm2_v1_boot_runtime_capture(
@@ -131,6 +274,13 @@ int main(void)
                 view.dm2LastRuntimeRealAssetsReady,
                 view.dm2LastRuntimeNoCoreFallbacks,
                 view.dm2LastRuntimeFallbackDrawCount);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    if (!dos_status_pane_runtime_geometry_check(
+            (DM2_V1_BootProfile *)view.dm2BootProfile)) {
+        fputs("FAIL: DM2 DOS runtime status pane does not use its full RAW4 rectangle\n",
+              stderr);
         M11_GameView_Shutdown(&view);
         return 1;
     }

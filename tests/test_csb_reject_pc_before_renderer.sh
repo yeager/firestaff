@@ -38,8 +38,26 @@ check_rejected_platform() {
 check_rejected_platform csb pc \
     1 \
     'firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns'
+check_rejected_platform csb mac \
+    2 \
+    "firestaff: game 'csb' has no launchable version for --platform Macintosh"
+check_rejected_platform dm1 mac \
+    2 \
+    "firestaff: game 'dm1' has no launchable version for --platform Macintosh"
 check_rejected_platform dm2 atari-st \
     2 \
     "firestaff: game 'dm2' has no launchable version for --platform Atari ST"
+check_rejected_platform nexus pc \
+    2 \
+    "firestaff: game 'nexus' has no launchable version for --platform PC"
+check_rejected_platform theron amiga \
+    2 \
+    "firestaff: game 'theron' has no launchable version for --platform Amiga"
+check_rejected_platform dm1 pc-98 \
+    2 \
+    'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)'
+check_rejected_platform dm1 pc98 \
+    2 \
+    'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)'
 
-echo "PASS: unsupported CSB PC and DM2 Atari ST requests fail before renderer initialization and media scanning"
+echo "PASS: unsupported DM1, CSB, DM2, Nexus, and Theron platform requests fail before renderer initialization and media scanning"

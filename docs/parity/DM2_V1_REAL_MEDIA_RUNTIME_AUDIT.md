@@ -43,12 +43,39 @@ continuing to read the archive in memory and leaving its hash unchanged.
 
 | Platform / route | Verified boundary | Test |
 |---|---|---|
-| DOS English | archive identity, native menu, MVE → SKULL → New Game, and observed directional/action input matrix | `dm2_v1_real_media_hash_lock`, `dm2_v1_dos_native_cli_boot` |
+| DOS English | archive identity, native menu, MVE → SKULL → New Game, observed directional/action input matrix, and retail-GDAT formation pickup/drop | `dm2_v1_real_media_hash_lock`, `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_m11_new_game_real_media` |
 | DOS French | native CLI/start-menu admission | `dm2_v1_dos_fr_native_cli_boot` |
 | Amiga | native CLI/start-menu, LZX admission, boot, and New Game | `dm2_v1_amiga_native_cli_boot`, `test_dm2_v1_amiga_lzx_real_media`, `test_dm2_v1_amiga_boot_real_media`, `test_dm2_v1_amiga_new_game_real_media` |
 | FM Towns | native CLI/start-menu and runtime admission | `dm2_v1_fmtowns_native_cli_boot` |
 | Cross-platform | admitted real-media catalogue and G1 world-model handoff | `dm2_v1_four_platform_catalog_real_media`, `dm2_v1_world_model_g1_handoff_real_data` |
 | DOS runtime | authentic pit transition, all available archive `SKSAVE` resumes, restored `GAME_LOAD` clock/RNG/serialized weather state, source WIELD miss fail-closed behaviour, and M11 spell cast after resume | `test_dm2_v1_dos_pit_runtime_real_media`, `test_dm2_v1_dos_sksave_archive_resume_real_media`, `dm2_v1_save_load_real_data`, `test_dm2_v1_dos_sksave1_wield_drop_real_media`, `test_dm2_v1_dos_m11_spell_cast_real_media` |
+
+### DOS PC formation pointer actions (2026-11-02)
+
+The live DOS pointer route dispatches SKProject's source formation events
+125–128 to the authenticated `GAME_LOAD` party. A first click on an occupied
+slot records the pending source row; a second click moves its champion into an
+empty slot or swaps with the occupied champion. Relative rows are resolved
+using the current party facing, and the party snapshot is updated with the
+source party. The source maps left-button release to event 129, which follows
+`DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION`: it clears a pending drag at its
+original slot and suppresses a facing update. M11 now sends SDL mouse-up
+through that source route. The DM2 DOS real-media New Game test exercises
+retail GDAT hitboxes, pickup, mouse-up recompute, and an empty-slot drop. This
+evidence covers the DOS PC route only; Amiga, FM Towns, and Macintosh formation
+pointer routes remain open.
+
+### Amiga HUD movement-arrow pointer input (2026-11-02)
+
+SKProject `SKWINSPX/src/v4/skguidrw.cpp::DRAW_ARROW_PANEL` draws the six
+movement controls through `RECT_040..RECT_045`. M11 now resolves those native
+Amiga rectangles before the viewport input owner and maps each click to the
+same movement pipeline used by keyboard input. The authentic Amiga archive
+CLI regression clicks the center of the forward arrow and verifies the party
+moves from map 0 `(1,8)` to `(1,7)` while retaining direction 0. The complete
+`dm2_v1_amiga_native_cli_boot` CTest passed with the original archive, including
+this pointer route. This evidence covers movement arrows only; Amiga formation
+pointer actions and other Amiga HUD interactions remain open.
 
 ## Interpretation boundary
 

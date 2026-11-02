@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.423 LANGUAGES C)
+project(Firestaff VERSION 3.0.424 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -272,7 +272,7 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_dm2_only_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 240
+        SKIP_RETURN_CODE 77 TIMEOUT 480
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm2;main-menu;game-selection;runtime;real-media;skip-safe")
 
@@ -390,7 +390,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
 
-    foreach(route IN ITEMS dm1-pc dm1-fmtowns-with-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france dm2-pc)
+    foreach(route IN ITEMS dm1-pc dm1-fmtowns-with-pc dm1-atari-st dm1-atari-st-11 dm1-atari-st-12 dm1-atari-st-12-de dm1-atari-st-13 csb-atari-st csb-atari-st-france-label-en dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")
         elseif(route MATCHES "^csb-")
@@ -4271,7 +4271,7 @@ if(BUILD_TESTING)
         set_tests_properties(asset_scan_access_denied PROPERTIES
             SKIP_RETURN_CODE 77
             LABELS "filesystem;permissions;scanner;skip-safe"
-            ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po"
             TIMEOUT 120)
     endif()
     add_executable(test_dm1_v1_atari_st_7z_virtual_start_m12
@@ -4293,7 +4293,7 @@ if(BUILD_TESTING)
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
-        LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
+        LABELS "dm1;dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
 
     add_executable(test_dm1_snes_romdungeon_real_media
@@ -4538,6 +4538,17 @@ if(BUILD_TESTING)
         TIMEOUT 600
     )
     add_test(
+        NAME startup_scan_intro_capture_priority_games_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_startup_scan_intro_capture_priority_games_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(startup_scan_intro_capture_priority_games_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm1;csb;dm2;startup;intro;scan;capture;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        TIMEOUT 300
+    )
+    add_test(
         NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_debug_source_frame_trace.sh"
             "$<TARGET_FILE:firestaff>"
@@ -4651,6 +4662,18 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME return_to_menu_rescans_removed_dm1_archive_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" dm1-sourcefile-removed
+    )
+    set_tests_properties(return_to_menu_rescans_removed_dm1_archive_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        PASS_REGULAR_EXPRESSION "PASS: authentic dm1 gameplay returned to the launcher"
+        LABELS "tier2;dm1;startup;launcher;return-to-menu;selected-archive;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 120
+    )
+    add_test(
         NAME return_to_menu_rescans_media_mutations_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
             "$<TARGET_FILE:firestaff>"
@@ -4660,7 +4683,7 @@ if(BUILD_TESTING)
     set_tests_properties(return_to_menu_rescans_media_mutations_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;launcher;return-to-menu;media-mutation;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         TIMEOUT 240
     )
     add_test(

@@ -67,7 +67,7 @@ case "$route" in
         width=960; height=600; duration=120000
         game_input='wait-game-runtime,key:up'
         ;;
-    csb-atari-st-france)
+    csb-atari-st-france-label-en)
         selected_game=csb; game_down=1; platform_down=0
         selected_archive=$csb_atari_france; edition=st20-21-en; platform='Atari ST'
         width=960; height=600; duration=120000
@@ -136,7 +136,7 @@ if [[ "$route" == dm1-atari-st-11 ]]; then
     fi
 fi
 for game_id in dm1 csb dm2; do
-    if [[ "$route" == csb-atari-st-france && "$game_id" != csb ]]; then
+    if [[ "$route" == csb-atari-st-france-label-en && "$game_id" != csb ]]; then
         continue
     fi
     source_game_dir="$data_root/$game_id"
@@ -153,7 +153,7 @@ for game_id in dm1 csb dm2; do
               "$(basename "$archive")" != "$(basename "$dm1_pc")" ]]; then
             continue
         fi
-        if [[ "$route" == csb-atari-st-france && "$game_id" == csb &&
+        if [[ "$route" == csb-atari-st-france-label-en && "$game_id" == csb &&
               "$(basename "$archive")" != "$(basename "$selected_archive")" ]]; then
             continue
         fi
@@ -173,7 +173,7 @@ PY
     done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
         \( -iname '*.zip' -o -iname '*.stx' \) -print0)
     if [[ "$game_id" == csb ]]; then
-        if [[ "$route" == csb-atari-st-france ]]; then
+        if [[ "$route" == csb-atari-st-france-label-en ]]; then
             continue
         fi
         while IFS= read -r -d '' archive; do

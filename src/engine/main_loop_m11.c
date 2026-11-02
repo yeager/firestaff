@@ -736,11 +736,28 @@ static void m11_rescan_launcher_asset_status(
                 "firestaff: return-menu rescan-complete data=%s\n",
                 dataDir && dataDir[0] ? dataDir : "(unknown)");
         for (i = 0U; i < sizeof(gameIds) / sizeof(gameIds[0]); ++i) {
+            size_t versionIndex;
             fprintf(stderr,
                     "firestaff: return-menu rescan game=%s available=%d\n",
                     gameIds[i],
                     M12_AssetStatus_GameAvailable(&menuState->assetStatus,
                                                   gameIds[i]));
+            for (versionIndex = 0U;
+                 versionIndex < M12_AssetStatus_GetVersionCount(gameIds[i]);
+                 ++versionIndex) {
+                const M12_AssetVersionStatus* version =
+                    M12_AssetStatus_GetVersion(&menuState->assetStatus,
+                                               gameIds[i], versionIndex);
+                if (!version || !version->matched) continue;
+                fprintf(stderr,
+                        "firestaff: return-menu rescan-version game=%s platform=%s edition=%s matched=1 source=%s\n",
+                        gameIds[i],
+                        M12_Architecture_Label(
+                            M12_AssetStatus_GetVersionArchitecture(
+                                gameIds[i], versionIndex)),
+                        version->versionId ? version->versionId : "unknown",
+                        version->matchedPath[0] ? version->matchedPath : "(unknown)");
+            }
         }
     }
 }
@@ -1260,6 +1277,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     Uint64 started;
     int scanActive = 0;
     int autotestQuitInjected = 0;
+    int scanCaptureWritten = 0;
 
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
@@ -1335,6 +1353,34 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
             m11_debug_log_scan_progress(
                 &snap, menuState ? menuState->settings.languageIndex : 0);
             {
+                const char* captureDir = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR");
+                const char* captureAfterProgress = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_AFTER_PROGRESS");
+                const size_t percent = snap.totalSteps > 0U
+                    ? (snap.completedSteps * 100U +
+                       snap.currentStepPercent) / snap.totalSteps
+                    : 0U;
+                const int progressCaptureReady =
+                    !captureAfterProgress ||
+                    strcmp(captureAfterProgress, "1") != 0 || percent > 0U;
+                if (!scanCaptureWritten && getenv("FIRESTAFF_AUTOTEST") &&
+                    captureDir && captureDir[0] && !snap.complete &&
+                    !snap.cancelled && percent < 100U &&
+                    progressCaptureReady) {
+                    char capturePath[1024];
+                    if (M11_Screenshot_CaptureRGBA(
+                            rgba, M12_STARTUP_INTRO_WIDTH,
+                            M12_STARTUP_INTRO_HEIGHT, captureDir,
+                            capturePath, (int)sizeof(capturePath))) {
+                        scanCaptureWritten = 1;
+                        fprintf(stderr,
+                                "firestaff: autotest startup scan capture progress=%zu%% path=%s\n",
+                                percent, capturePath);
+                    }
+                }
+            }
+            {
                 const char* quitAny =
                     getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN");
                 const char* quitDm2 =
@@ -1345,7 +1391,11 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                     strcmp(snap.currentTask,
                            "reading original DM2 disc image") == 0 &&
                     snap.currentStepPercent > 0U;
+                const char* captureDir = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR");
+                const int capturePending = captureDir && captureDir[0];
                 if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+                    (!capturePending || scanCaptureWritten) &&
                     (requestAny || requestDm2)) {
                     SDL_Event event;
                     SDL_Window* window = M11_Render_GetWindow();
@@ -4312,6 +4362,7 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitForScan,
                                           int* outWaitForDm2Title,
                                           int* outWaitForDm2Menu,
+                                          int* outWaitForDm2Preselection,
                                           const M11_GameViewState* gameView,
                                           int debug);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
@@ -11832,6 +11883,9 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
     if (strcmp(buffer, "wait-dm2-menu") == 0) {
         return 1;
     }
+    if (strcmp(buffer, "wait-dm2-preselection") == 0) {
+        return 1;
+    }
     if (strcmp(buffer, "touch-swipe-up") == 0 ||
         strcmp(buffer, "touch-swipe-left") == 0) {
         return 1;
@@ -12356,6 +12410,7 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitForScan,
                                           int* outWaitForDm2Title,
                                           int* outWaitForDm2Menu,
+                                          int* outWaitForDm2Preselection,
                                           const M11_GameViewState* gameView,
                                           int debug) {
     const char* start;
@@ -12374,6 +12429,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
     }
     if (outWaitForDm2Menu) {
         *outWaitForDm2Menu = 0;
+    }
+    if (outWaitForDm2Preselection) {
+        *outWaitForDm2Preselection = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -12412,6 +12470,12 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         }
         return M12_MENU_INPUT_NONE;
     }
+    if ((size_t)(end - start) == sizeof("wait-dm2-preselection") - 1U &&
+        strncmp(start, "wait-dm2-preselection",
+                sizeof("wait-dm2-preselection") - 1U) == 0) {
+        if (outWaitForDm2Preselection) *outWaitForDm2Preselection = 1;
+        return M12_MENU_INPUT_NONE;
+    }
     /* Startup selection tests must not send input against the deliberately
      * unavailable cards while authenticated collection discovery is active. */
     if ((size_t)(end - start) == sizeof("wait-scan-complete") - 1U &&
@@ -12440,10 +12504,10 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         int w = 0;
         int h = 0;
         char event[64];
-        if (!M11_GameView_GetDm2FmtownsNewGameHitRect(
+        if (!M11_GameView_GetDm2StartupMenuNewGameHitRect(
                 gameView, &x, &y, &w, &h)) {
             /* Keep this command at the head of the script until the original
-             * TITLE -> SKULL menu and its GDAT hit rectangle are ready. */
+             * platform title/menu handoff and GDAT hit rectangle are ready. */
             *cursor = start;
             if (outWaitForDm2Menu) *outWaitForDm2Menu = 1;
             return M12_MENU_INPUT_NONE;
@@ -14318,6 +14382,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int scriptWaitForScan = 0;
     int scriptWaitForDm2Title = 0;
     int scriptWaitForDm2Menu = 0;
+    int scriptWaitForDm2Preselection = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -15508,7 +15573,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (scriptWaitForDm2Menu) {
             int x = 0, y = 0, w = 0, h = 0;
-            if (M11_GameView_GetDm2FmtownsNewGameHitRect(
+            if (M11_GameView_GetDm2StartupMenuNewGameHitRect(
                     &gameView, &x, &y, &w, &h)) {
                 scriptWaitForDm2Menu = 0;
                 if (o->debug) {
@@ -15516,6 +15581,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: autotest dm2-menu-ready source-rect=%d,%d %dx%d\n",
                             x, y, w, h);
                 }
+            }
+        }
+        if (scriptWaitForDm2Preselection &&
+            M11_GameView_Dm2PreselectionReady(&gameView)) {
+            scriptWaitForDm2Preselection = 0;
+            if (o->debug) {
+                fprintf(stderr,
+                        "firestaff: autotest dm2-preselection-ready\n");
             }
         }
         if (scriptWaitForRuntime) {
@@ -15534,6 +15607,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitForDm2Menu) {
             input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitForDm2Preselection) {
+            input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
@@ -15542,12 +15617,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int waitForScan = 0;
             int waitForDm2Title = 0;
             int waitForDm2Menu = 0;
+            int waitForDm2Preselection = 0;
             input = m11_next_script_input(&scriptCursor,
                                           &waitFrames,
                                           &waitForRuntime,
                                           &waitForScan,
                                           &waitForDm2Title,
                                           &waitForDm2Menu,
+                                          &waitForDm2Preselection,
                                           &gameView,
                                           o->debug);
             scriptWaitFramesRemaining = waitFrames;
@@ -15555,6 +15632,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             scriptWaitForScan = waitForScan;
             scriptWaitForDm2Title = waitForDm2Title;
             scriptWaitForDm2Menu = waitForDm2Menu;
+            scriptWaitForDm2Preselection = waitForDm2Preselection;
         }
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&

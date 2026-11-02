@@ -1496,8 +1496,8 @@ int main(void)
                       plan.commands[4].destination_rect_id == 0xa1 &&
                       plan.commands[4].destination.x == 0 &&
                       plan.commands[4].destination.y == 0 &&
-                      plan.commands[4].destination.w == 38 &&
-                      plan.commands[4].destination.h == 18 &&
+                      plan.commands[4].destination.w == 77 &&
+                      plan.commands[4].destination.h == 37 &&
                       (plan.commands[1].source_state_flags &
                        DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4) != 0u &&
                       (plan.commands[2].source_state_flags &

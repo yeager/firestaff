@@ -46,7 +46,7 @@ elif route in {
             startup.get("dm1StartupHoCFirstFrameReady") != 1 or
             party_state != (0, 1, 3, 2, 0)):
         fail("DM1 Atari ST picker route missed its first Hall runtime", probe)
-elif route in {"csb-atari-st", "csb-atari-st-france"}:
+elif route in {"csb-atari-st", "csb-atari-st-france-label-en"}:
     if (probe.get("sourceId") != "csb" or startup.get("receiptReady") != 1 or
             startup.get("phase") != "inactive" or
             startup.get("startupActive") != 0 or

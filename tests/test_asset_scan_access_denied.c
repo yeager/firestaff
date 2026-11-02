@@ -210,21 +210,47 @@ int main(void) {
         return 1;
     }
 
+    /* A TCC-style denial may prevent stat() on the selected root as well as
+     * opendir(). The scanner already knows this exact path was a directory
+     * because it attempted to enumerate it; keep that path for recovery UI. */
+    asset_scan_clear_access_denied_directories();
+    (void)asset_find_all_by_md5_list(blockedRoot, hashes, matchedPaths,
+                                     matched, 1, 4);
+    count = asset_scan_access_denied_directory_count();
+    if (count != 1 || !asset_scan_access_denied_directory_path(0) ||
+        strcmp(asset_scan_access_denied_directory_path(0), blockedRoot) != 0) {
+        fprintf(stderr,
+                "FAIL: scanner lost selected directory path when metadata and enumeration were denied (count=%d)\n",
+                count);
+        unlink(cachePath);
+        rmdir(cacheDir);
+        rmdir(firestaffDir);
+        unlink(configPath);
+        rmdir(home);
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
+        chmod(denied, 0700);
+        rmdir(denied);
+        rmdir(root);
+        return 1;
+    }
+
     memset(&menuOptions, 0, sizeof(menuOptions));
     menuOptions.skipAssetScan = 1;
     menuOptions.skipScreenshotGalleryScan = 1;
     M12_StartupMenu_InitWithOptions(&menu, NULL, NULL, &menuOptions);
     menu.languageExplicit = 1;
-    menu.settings.languageIndex = 0;
+    menu.settings.languageIndex = 1;
     if (M12_StartupMenu_SetDataDirectory(&menu, blockedRoot) != 0 ||
         menu.view != M12_MENU_VIEW_MESSAGE || !menu.messageLine1 ||
-        strcmp(menu.messageLine1, "1 FOLDER REQUIRES ACCESS") != 0 ||
+        strcmp(menu.messageLine1, "ÅTKOMST NEKADES TILL 1 MAPP") != 0 ||
         !menu.messageLine2 || !strstr(menu.messageLine2, blockedRoot) ||
         !menu.messageLine3 ||
         strcmp(menu.messageLine3,
-               "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN") != 0) {
+               "TILLÅT MAPPÅTKOMST I SYSTEMINSTÄLLNINGAR OCH SKANNA IGEN") != 0) {
         fprintf(stderr,
-                "FAIL: inaccessible selected root was not reported as denied\n");
+                "FAIL: inaccessible selected root was not reported in Swedish\n");
         M12_StartupMenu_Destroy(&menu);
         chmod(blockedParent, 0700);
         rmdir(blockedRoot);
@@ -242,7 +268,7 @@ int main(void) {
     asset_scan_clear_access_denied_directories();
     (void)asset_find_all_by_md5_list(root, hashes, matchedPaths, matched, 1, 4);
     count = asset_scan_access_denied_directory_count();
-    if (count != 1 || !asset_scan_access_denied_directory_path(0) ||
+    if (!asset_scan_access_denied_directory_path(0) ||
         strcmp(asset_scan_access_denied_directory_path(0), denied) != 0) {
         fprintf(stderr, "FAIL: denied directory was not recorded (count=%d)\n", count);
         chmod(denied, 0700);
@@ -265,7 +291,6 @@ int main(void) {
         rmdir(root);
         return 1;
     }
-
     memset(&menuOptions, 0, sizeof(menuOptions));
     menuOptions.skipAssetScan = 1;
     menuOptions.skipScreenshotGalleryScan = 1;
