@@ -694,8 +694,12 @@ static int dm2_runtime_build_locate_map_descriptors(
         maps[map].level = dungeon->map_level_number[map];
         maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
         maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
-        maps[map].width = (int16_t)dungeon->level_widths[map];
-        maps[map].height = (int16_t)dungeon->level_heights[map];
+        /* SKProject's DM_LOCATE_OTHER_LEVEL bounds local coordinates at
+         * RawColumn/RawRow + 1 (SKULLWIN/c_map.cpp:423-444). These raw
+         * dimensions are the decoded counts minus one, matching the source
+         * map header fields. */
+        maps[map].width = (int16_t)(dungeon->level_widths[map] - 1);
+        maps[map].height = (int16_t)(dungeon->level_heights[map] - 1);
         if (tile < 0) {
             maps[map].tile_type_at_local = tile_type;
             continue;
