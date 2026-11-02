@@ -2852,3 +2852,17 @@ SPX v4 also splits command 0x55 into spell commands 0x27/0x28 using source
 randomness. Unsupported animation/action branches still fail closed. DOS,
 v4, v5 and SKULLWIN rows are now `PARTIAL`; the classifier is not feature
 parity and the supported platform routes remain incomplete.
+
+2026-11-02 SKProject `FILL_CAII_CUR_MAP` / `FILL_ORPHAN_CAII` audit correction:
+DOS, SPX v4, SPX v5 and SKULLWIN source scan map tiles in order, walk each
+object chain to the first creature, allocate CAII to dynamic creatures, and
+update static creature animation-frame state. Map loading calls the current-map
+fill; save/load and map lifecycle paths call the all-map orphan fill and restore
+the active map. Firestaff's SKProject core callback model covers only a bounded
+part of the scan, while the legacy current-map wrapper is a stub and the orphan
+wrapper is a no-op. Save/load materialization is separate and not the full
+all-map caller path. The named-symbol ledger's previous `IMPLEMENTED_PARITY`
+labels overstated feature parity; both functions are now `PARTIAL`, with DOS
+and SPX v4/v5 active-source rows recorded separately. Static animation side
+effects, production callback ownership, lifecycle integration and all supported
+platform routes remain open.
