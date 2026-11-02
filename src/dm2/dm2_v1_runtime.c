@@ -23134,8 +23134,10 @@ static int dm2_runtime_recalc_dynamic_light(
     int16_t light_table[21];
     int16_t v1e0974 = 0, v1e0978 = 0;
     uint32_t visibility_hash = 0u;
-    if (!rt || !rt->boot || rt->boot->platform != DM2_PLATFORM_FMTOWNS_JA ||
-        !rt->c_light_map_descriptor.valid ||
+    /* The bounded source light walk is shared by the SKProject SKULLWIN,
+     * SPX v4/v5 and DOS branches. Do not restrict the admitted edition to
+     * FM Towns; source inputs and map descriptors still gate every caller. */
+    if (!rt || !rt->boot || !rt->c_light_map_descriptor.valid ||
         !rt->c_light_map_descriptor.dynamic_light ||
         !rt->source_party_valid || !rt->record_pools_valid ||
         !rt->source_weather_light_valid ||
