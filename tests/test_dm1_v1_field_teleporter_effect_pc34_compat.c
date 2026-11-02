@@ -108,7 +108,7 @@ int main(void)
     {
         DM1_FieldBitmapSamplePc34 sample;
         uint8_t fieldPixels[256 * 128];
-        uint8_t maskPixels[32 * 16];
+        uint8_t maskPixels[64 * 64];
         uint8_t pixel = 0;
         int i;
         for (i = 0; i < (int)sizeof(fieldPixels); ++i) {
@@ -131,8 +131,8 @@ int main(void)
         expect_int("sample.d2r2.fieldY", sample.fieldY, 3);
         expect_int("sample.d2r2.maskPresent", sample.maskPresent, 1);
         expect_int("sample.d2r2.maskFlip", sample.maskFlip, 1);
-        expect_int("sample.d2r2.maskX", sample.maskX, 3);
-        expect_int("sample.d2r2.maskY", sample.maskY, 15);
+        expect_int("sample.d2r2.maskX", sample.maskX, 8);
+        expect_int("sample.d2r2.maskY", sample.maskY, 12);
         expect_int("sample.d2r2.transparent", sample.transparentColor, 0x0a);
         expect_int("sample.d2r2.tick3", dm1_v1_field_bitmap_sample_pc34(&plan, 3, 0, 0, 256, 128, 32, 16, &sample), 1);
         expect_int("sample.d2r2.tick3.fieldX", sample.fieldX, 80);
@@ -141,13 +141,13 @@ int main(void)
         expect_int("sample.bad.field_size", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 0, 0, 0, 128, 32, 16, &sample), 0);
         expect_int("pixel.d2r2.opaque", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
-                   maskPixels, 32, 16, 32, &pixel), 1);
+                   maskPixels, 64, 64, 64, &pixel), 1);
         expect_int("pixel.d2r2.value", pixel, fieldPixels[3 * 256 + 55]);
-        maskPixels[15 * 32 + 3] = 0;
+        maskPixels[12 * 64 + 8] = 0;
         expect_int("pixel.d2r2.masked", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
-                   maskPixels, 32, 16, 32, &pixel), 0);
-        maskPixels[15 * 32 + 3] = 1;
+                   maskPixels, 64, 64, 64, &pixel), 0);
+        maskPixels[12 * 64 + 8] = 1;
         fieldPixels[3 * 256 + 55] = 0x0a;
         expect_int("pixel.d2r2.transparent", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
