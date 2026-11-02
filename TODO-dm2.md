@@ -2975,3 +2975,16 @@ item type and optional importance, then call `MOVE_ITEM_TO` with actuator
 charge mode, direction, and once-only state. Firestaff currently fails closed
 for this visitor case. Bind the source edition gate and moverec insertion
 semantics before enabling it; keep the actuator path partial meanwhile.
+
+
+2026-11-02 SKProject SPX v4 `ACTIVATE_ACTION_HAND` panel dispatch:
+`SKWINSPX/src/v4/skgame.cpp:1345-1360` synchronously calls
+`DISPLAY_RIGHT_PANEL_SQUAD_HANDS`, `UPDATE_RIGHT_PANEL(0)`, and
+`REFRESH_PLAYER_STAT_DISP` after passing the hand activation gate and
+publishing selection. Firestaff's live M11 route validates the source hand
+predicate, publishes selection, and rebuilds the visible hand/HUD next frame,
+but `dm2_v1_UPDATE_RIGHT_PANEL` only creates a bounded panel-mode receipt;
+it is not bound to this input owner or to a live panel flush. The HUD stat
+bridge reads session snapshot data during render and does not consume an
+active stat-pane refresh. Keep the DOS, SPX v4/v5 and shared symbol rows
+partial until panel, cursor and supported non-M11 callers are covered.
