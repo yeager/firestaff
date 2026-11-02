@@ -182,6 +182,10 @@ int32_t dm2_v1_query_gdat_creature_word_value(int32_t creature_type, int32_t val
 
 int32_t dm2_v1_query_gdat_food_value_from_record(int16_t record,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int16_t dm2_v1_query_gdat_food_value_from_record_dos(int16_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_query_gdat_food_value_from_record_spx_v5(int16_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 const char *dm2_v1_query_gdat_item_name(int32_t a, int32_t b,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);

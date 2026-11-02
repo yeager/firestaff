@@ -507,11 +507,33 @@ int32_t dm2_v1_is_miscitem_currency(int32_t record,
     return (v & 0x4000) ? 1 : 0;
 }
 
-int32_t dm2_v1_querydb_food_value_from_record(int32_t record,
-                                              const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+int32_t dm2_v1_query_gdat_food_value_from_record(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
     if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
-    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 3);
+    /* SPX v4 skitem.cpp:420-423 returns U16. */
+    return (uint16_t)cb->query_gdat_dbspec_word_value(
+        ctx, (uint16_t)record, 3);
+}
+
+int16_t dm2_v1_query_gdat_food_value_from_record_dos(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
+    /* DOS dm2byb.cpp:136-138 returns signed x16. */
+    int32_t value = (uint16_t)cb->query_gdat_dbspec_word_value(
+        ctx, (uint16_t)record, 3);
+    return value < 0x8000
+        ? (int16_t)value
+        : (int16_t)(value - 0x10000);
+}
+
+int32_t dm2_v1_query_gdat_food_value_from_record_spx_v5(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
+    /* V5 skgdtqdb.cpp:1040-1044 preserves the i32 result. */
+    return cb->query_gdat_dbspec_word_value(ctx, (uint16_t)record, 3);
 }
 
 int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,

@@ -2595,3 +2595,12 @@ Source leaves the object on the tile chain when it equips it, then later cuts
 hero possessions from the tile during revival movement, so that owner must
 coordinate inventory bonuses, tile-chain links, hero/session snapshot, and
 platform dispatch. All DOS/SPX v4/v5 rows remain partial.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 food-value query review: all three
+`QUERY_GDAT_FOOD_VALUE_FROM_RECORD` variants read DBSPEC field 3, but DOS
+returns signed x16, SPX v4 returns U16 and SPX v5 preserves i32. Firestaff's
+previous implementation did not define its declared public symbol; it now
+exports that helper and edition-specific width wrappers. No production caller
+binds the source record/GDAT owner or the supported platform routes, so all
+three source rows remain partial.
