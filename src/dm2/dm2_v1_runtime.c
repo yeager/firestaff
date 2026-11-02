@@ -10684,8 +10684,8 @@ floor_mecha_reject:
 
 /* Prove the no-op subset of ADVANCE_TILES_TIME: the party marker and active
  * creature are elsewhere, and the cell has no DB5+ wall item whose position
- * or timer bytes the source routine would move. Any malformed/incomplete
- * chain rejects the proof. */
+ * or timer bytes the source routine would move. An incomplete dungeon record
+ * graph or malformed tile chain rejects the proof. */
 static int dm2_runtime_advance_tiles_time_is_noop(
     DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
     int map, int x, int y)
@@ -10695,6 +10695,7 @@ static int dm2_runtime_advance_tiles_time_is_noop(
     int16_t cursor;
 
     if (!rt || !dungeon || !rt->record_pools_valid ||
+        !dungeon->record_graph_complete ||
         dungeon->square_bytes != 1 || map < 0 || map >= dungeon->level_count ||
         x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
         y >= dungeon->level_heights[map])
