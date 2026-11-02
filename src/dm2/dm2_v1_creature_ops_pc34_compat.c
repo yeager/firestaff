@@ -100,6 +100,95 @@ int16_t dm2_v1_creature_can_handle_item_in(
     }
 }
 
+int dm2_v1_creature_can_handle_it(
+    const DM2_V1_CreatureCanHandleState *state,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
+{
+    uint16_t capability;
+    uint16_t mask_item_index = 0u;
+    uint8_t mask_index;
+    uint8_t mask[64];
+    uint8_t db_type;
+    int invert;
+    int is_moneybox = 0;
+    int moneybox_closed = 0;
+    int matches;
+
+    if (!state || (state->source_variant != 4u &&
+                   state->source_variant != 5u))
+        return 0;
+    capability = state->capability;
+    invert = (capability & 0x80u) != 0u;
+    capability &= 0x3fu;
+    if (capability == 0x3fu)
+        return !invert;
+
+    if (!cb)
+        return 0;
+    if ((capability == 0x3eu || capability == 0x29u ||
+         capability == 0x28u) && !cb->is_moneybox)
+        return 0;
+
+    if (cb->is_moneybox)
+        is_moneybox = cb->is_moneybox(ctx, state->item_record) != 0;
+    if (is_moneybox) {
+        if (!cb->moneybox_is_closed)
+            return 0;
+        moneybox_closed = cb->moneybox_is_closed(
+            ctx, state->item_record) != 0;
+    }
+
+    if (capability == 0x3eu) {
+        /* Both SPX versions accept an open moneybox and reject every other
+         * record, with the source 0x80 inversion applied to that result. */
+        return (is_moneybox && !moneybox_closed) ? !invert : invert;
+    }
+    if (capability == 0x29u && is_moneybox) {
+        if (state->source_variant == 4u) {
+            /* v4 returns immediately for either moneybox state. */
+            return moneybox_closed ? !invert : invert;
+        }
+        /* v5 only returns immediately for an open moneybox. A closed
+         * moneybox continues through mask 0x29 below. */
+        if (!moneybox_closed)
+            return invert;
+    } else if (capability == 0x29u) {
+        capability = 7u;
+    }
+
+    mask_index = (uint8_t)capability;
+    if (capability >= 0x10u && capability <= 0x12u) {
+        mask_index = (uint8_t)(state->animation_sequence * 3u + capability);
+    } else if (capability == 0x28u) {
+        if (state->source_variant == 4u && is_moneybox && !moneybox_closed)
+            return !invert;
+        if (state->source_variant == 5u && is_moneybox && !moneybox_closed) {
+            /* v5 keeps 0x28 for an open moneybox; closed/non-moneybox
+             * records use the ordinary 0x10 animation-mask family. */
+            mask_index = (uint8_t)(state->animation_sequence * 3u + 0x28u);
+        } else {
+            mask_index = (uint8_t)(state->animation_sequence * 3u + 0x10u);
+        }
+    }
+
+    db_type = (uint8_t)((state->item_record >> 10) & 0x0fu);
+    if (db_type != 3u && db_type != 4u &&
+        (db_type < 5u || db_type > 10u))
+        return 0;
+    if (!cb->get_mask_item_index || !cb->query_item_mask ||
+        !cb->get_mask_item_index(ctx, state->item_record, db_type,
+                                 &mask_item_index) ||
+        mask_item_index >= sizeof(mask) * 8u)
+        return 0;
+    memset(mask, 0, sizeof(mask));
+    if (!cb->query_item_mask(ctx, state->creature_type, mask_index,
+                             db_type == 4u, mask))
+        return 0;
+    matches = (mask[mask_item_index >> 3] &
+               (uint8_t)(1u << (mask_item_index & 7u))) != 0u;
+    return matches ? !invert : invert;
+}
+
 int dm2_v1_confuse_creature_simple(
     int16_t power, int16_t x, int16_t y, int32_t damage,
     const DM2_V1_ConfuseCreatureSimpleCallbacks *cb, void *ctx)
