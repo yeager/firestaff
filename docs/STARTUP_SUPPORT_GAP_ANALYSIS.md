@@ -140,6 +140,14 @@ mixed-media follow-up confirmed PC 3.4 selects its matching original dungeon.
 This proves the exercised edition-pair admission boundary; it does not cover
 wrong-edition rejection for every DM1 platform.
 
+On current `main` at `dcbc64811`,
+`return_to_menu_rescans_dm1_csb_dm2_real_media` passed against the installed
+authentic-media corpus (1/1, 1,588.63 s). It exercised DM1, CSB, and DM2 return
+routes across available PC, FM Towns, Atari ST, Amiga, and Macintosh editions,
+checked that returning to the launcher rescans installed game availability,
+and verified that direct `--game` exit does not reopen the launcher. This is
+bounded return/rescan coverage, not all-edition or physical-input parity.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
