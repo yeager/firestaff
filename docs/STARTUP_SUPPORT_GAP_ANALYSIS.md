@@ -904,6 +904,16 @@ keyboard selection and launch matrix for DM1, CSB, and DM2 (1/1). Swedish
 real-media startup-scan localization passed again for DM1 PC, CSB FM Towns,
 and DM2 FM Towns (3/3).
 
+DM1's mixed-library AUTO/platform check passed (82.97 s), covering installed
+PC, FM Towns, Atari ST, and Amiga media, explicit CLI platform selection, and
+menu selection from the mixed collection. CSB's full FM Towns mixed-library
+test passed (464.77 s): AUTO chose FM Towns, Atari ST and Amiga were selectable
+from the M12 platform cards, and the explicit FM Towns, Atari ST, and Amiga
+routes reached their source-owned first runtime receipts. The Amiga card also
+passed keyboard and mouse-only selection. The test confirmed the authentic
+Atari utility archive remained unchanged. These extend the named first-runtime
+routes only.
+
 The return-to-launcher archive-removal checks also passed against authentic
 DM1 PC-34 and DM2 PC media. The DM1 case removes only the staged selected-file
 link after its source runtime receipt; on return, the rescan reports DM1
