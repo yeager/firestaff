@@ -953,6 +953,12 @@ focused real-media tests passed (669.20 seconds total):
 - The five `firestaff_*_scan_debug_localization_real_media` tests passed for
   DM1, CSB, DM2, Nexus, and Theron, including Swedish scan labels and saved or
   explicit locale settings.
+- `return_to_menu_rescans_dm1_csb_dm2_real_media` passed (1593.82 s) for
+  DM1 PC, FM Towns, Atari ST, and Amiga; CSB FM Towns, Atari ST, and Amiga;
+  and DM2 DOS, Macintosh, Amiga, and FM Towns selected through AUTO. It
+  checked that returning from gameplay rescans the installed collection.
+  Direct-CLI exit behavior was also checked for all five games, including
+  Nexus and Theron, to ensure those routes do not reopen M12.
 
 The two unsupported-platform CLI tests also passed (2/2): invalid game and
 platform pairs were rejected before renderer startup. The shell tests stage
