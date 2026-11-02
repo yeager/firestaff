@@ -1717,14 +1717,13 @@ void dm2_v1_draw_hand_action_icons(
 
     DM2_V1_Rect rect;
     memset(&rect, 0, sizeof(rect));
-    if (!cb->query_expanded_rect ||
-        !cb->query_expanded_rect(ctx, rect_id, &rect))
-        return;
+    const bool have_rect = cb->query_expanded_rect &&
+        cb->query_expanded_rect(ctx, rect_id, &rect) != NULL;
 
     if (hp == 0) {
         int32_t black = cb->palette_to_pixel ?
             cb->palette_to_pixel(ctx, 0) : 0;
-        if (cb->fill_rect_summary)
+        if (have_rect && cb->fill_rect_summary)
             cb->fill_rect_summary(ctx, 2, &rect, black);
         return;
     }
@@ -1739,7 +1738,7 @@ void dm2_v1_draw_hand_action_icons(
         cb->get_hero_handcooldown(ctx, hero_idx, hand) : 0;
     const bool sleeping = cb->is_player_sleeping &&
                           cb->is_player_sleeping(ctx);
-    if ((cooldown != 0 || sleeping) && cb->draw_gray_overlay)
+    if (have_rect && (cooldown != 0 || sleeping) && cb->draw_gray_overlay)
         cb->draw_gray_overlay(ctx, 2, &rect, 0);
 }
 
