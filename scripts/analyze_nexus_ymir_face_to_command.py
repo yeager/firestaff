@@ -24,6 +24,14 @@ def be16(data: bytes, off: int) -> int:
 def be32(data: bytes, off: int) -> int:
     return int.from_bytes(data[off:off + 4], "big")
 
+
+def face_indices_match_cyclically(runtime: tuple[int, ...], source: tuple[int, ...]) -> bool:
+    """Match a four-index face up to rotation while preserving winding."""
+    return len(runtime) == len(source) == 4 and any(
+        runtime == source[offset:] + source[:offset] for offset in range(4)
+    )
+
+
 def load_hashes(repo: Path) -> dict[str, str]:
     path = repo / "scripts/fixtures/nexus_v1_disc_file_hashes.py"
     spec = importlib.util.spec_from_file_location("nexus_disc_hashes", path)
@@ -122,22 +130,35 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
             if Counter(corners) == Counter(command_corners):
                 unordered.append((index, address))
         candidates = []
+        cyclic_candidates = []
         for level, entry, tag, faces in models:
-            candidates.extend((level, entry, ordinal) for ordinal, source_face in enumerate(faces) if source_face == face)
+            for ordinal, source_face in enumerate(faces):
+                match = (level, entry, ordinal)
+                if source_face == face:
+                    candidates.append(match)
+                if face_indices_match_cyclically(face, source_face):
+                    cyclic_candidates.append(match)
         rows.append({"cpu": cpu, "face_ptr": face_addr, "stage_ptr": stage_addr, "face": face,
-                     "corners": corners, "dgn_candidates": candidates, "command_exact": exact,
+                     "corners": corners, "dgn_candidates": candidates,
+                     "cyclic_dgn_candidates": cyclic_candidates, "command_exact": exact,
                      "command_cyclic": cyclic, "command_unordered": unordered})
     # Resolve rows whose topology is duplicated in the retail corpus by using
-    # contiguous captured runs as initial independent source anchors.
+    # exact contiguous captured runs as initial independent source anchors.
     resolved: dict[tuple[str, int], tuple[int, int, int]] = {}
     resolution_basis: dict[tuple[str, int], str] = {}
     direct_unique = 0
+    direct_cyclic_unique = 0
     for row in rows:
         if len(row["dgn_candidates"]) == 1:
             direct_unique += 1
             key = (row["cpu"], row["face_ptr"])
             resolved[key] = row["dgn_candidates"][0]
             resolution_basis[key] = "unique-face-row"
+        elif len(row["cyclic_dgn_candidates"]) == 1:
+            direct_cyclic_unique += 1
+            key = (row["cpu"], row["face_ptr"])
+            resolved[key] = row["cyclic_dgn_candidates"][0]
+            resolution_basis[key] = "unique-cyclic-face-row"
     runs = []
     for cpu in ("master", "slave"):
         cpu_rows = [row for row in rows if row["cpu"] == cpu]
@@ -151,6 +172,7 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
         if len(current) >= 2:
             runs.append(current)
     unique_runs = []
+    unique_cyclic_runs = []
     for run in runs:
         sequence = [row["face"] for row in run]
         matches = []
@@ -250,8 +272,9 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
         reverse[row["command_unordered"][0]].append(row)
     if any(len(value) != 1 for value in reverse.values()):
         raise ValueError("a captured VDP1 command geometry maps to multiple staging records")
-    return (rows, resolved, resolution_basis, direct_unique, runs, unique_runs,
-            len(cmds), context_added, pointer_stride_anchor_pairs)
+    return (rows, resolved, resolution_basis, direct_unique, direct_cyclic_unique,
+            runs, unique_runs, unique_cyclic_runs, len(cmds), context_added,
+            pointer_stride_anchor_pairs)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -262,8 +285,8 @@ def main():
     parser.add_argument("--csv-out", type=Path, required=True)
     parser.add_argument("--json-out", type=Path, required=True)
     args = parser.parse_args()
-    (rows, resolved, resolution_basis, direct, runs, unique_runs, command_count,
-     context_added, pointer_stride_anchor_pairs) = analyze(
+    (rows, resolved, resolution_basis, direct, direct_cyclic, runs, unique_runs,
+     unique_cyclic_runs, command_count, context_added, pointer_stride_anchor_pairs) = analyze(
         args.evidence, args.retail_data, args.firestaff_repo, args.frame
     )
     with args.csv_out.open("w", newline="") as stream:
@@ -294,8 +317,10 @@ def main():
         "ordered_coordinate_matches": sum(bool(row["command_exact"]) for row in rows),
         "cyclic_coordinate_matches": sum(bool(row["command_cyclic"]) for row in rows),
         "unique_single_face_retail_matches": direct,
+        "unique_cyclic_face_retail_matches": direct_cyclic,
         "contiguous_face_runs": len(runs),
         "unique_contiguous_face_run_matches": len(unique_runs),
+        "unique_contiguous_cyclic_face_run_matches": len(unique_cyclic_runs),
         "unique_pointer_stride_context_matches": context_added,
         "verified_same_entry_pointer_stride_anchor_pairs": pointer_stride_anchor_pairs,
         "unique_runtime_face_row_pointers": len({(row["cpu"], row["face_ptr"]) for row in rows}),
