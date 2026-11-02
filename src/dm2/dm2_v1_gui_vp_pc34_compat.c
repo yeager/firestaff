@@ -665,6 +665,55 @@ int32_t dm2_v1_guivp_32cb_54ce(
     }
 }
 
+/* SPX v4 skbkgrnd.cpp:102-137. Its heading-0 branch uses *x_ptr for both
+ * deltas; DOS and SPX v5 use the second coordinate pointer for the first
+ * delta, so keep this edition-specific helper separate. */
+int32_t dm2_v1_environment_compute_distance_v4(
+    int32_t heading, int16_t *x_ptr, int16_t *y_ptr,
+    int32_t target_x, int32_t target_y)
+{
+    int16_t si;
+    int16_t di;
+    uint16_t squared;
+    uint16_t guess;
+    uint16_t target_x16 = (uint16_t)target_x;
+    uint16_t target_y16 = (uint16_t)target_y;
+
+    if (!x_ptr || !y_ptr || (uint16_t)heading > 3u) return 0;
+    switch ((uint16_t)heading) {
+    case 0:
+        si = (int16_t)((int32_t)*x_ptr - (int16_t)target_y16);
+        di = (int16_t)((int16_t)target_x16 - (int32_t)*x_ptr);
+        break;
+    case 1:
+        si = (int16_t)((int16_t)target_x16 - (int32_t)*x_ptr);
+        di = (int16_t)((int16_t)target_y16 - (int32_t)*y_ptr);
+        break;
+    case 2:
+        si = (int16_t)((int16_t)target_y16 - (int32_t)*y_ptr);
+        di = (int16_t)((int32_t)*x_ptr - (int16_t)target_x16);
+        break;
+    case 3:
+        si = (int16_t)((int32_t)*x_ptr - (int16_t)target_x16);
+        di = (int16_t)((int32_t)*y_ptr - (int16_t)target_y16);
+        break;
+    default:
+        return 0;
+    }
+
+    *x_ptr = di;
+    *y_ptr = si;
+    if (si < 1) return 0;
+    squared = (uint16_t)((int32_t)di * di + (int32_t)si * si);
+    if (squared <= 2u) return 1;
+    guess = squared >> 1;
+    for (;;) {
+        uint16_t previous = guess;
+        guess = (uint16_t)(((uint32_t)guess + squared / guess) >> 1);
+        if (guess >= previous) return previous;
+    }
+}
+
 /* ================================================================
  * 40. guivp_32cb_15b8 — draw wall ornament (public)
  *     c_gui_vp.cpp:6043

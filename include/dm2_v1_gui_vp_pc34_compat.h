@@ -315,6 +315,11 @@ void dm2_v1_environment_display_elements(
     const DM2_V1_GuiVpCallbacks *cb, void *ctx);
 int32_t dm2_v1_guivp_32cb_54ce(int32_t heading, int16_t *x_ptr,
                                 int16_t *y_ptr, int32_t dir, int32_t arg);
+/* SPX v4 skbkgrnd.cpp ENVIRONMENT_COMPUTE_DISTANCE has a distinct heading-0
+ * delta expression from the DOS/SPX v5 helper above. */
+int32_t dm2_v1_environment_compute_distance_v4(
+    int32_t heading, int16_t *x_ptr, int16_t *y_ptr,
+    int32_t target_x, int32_t target_y);
 
 /* Wall ornament */
 void dm2_v1_guivp_32cb_3f0d(int32_t tile_idx,

@@ -987,7 +987,7 @@ Compared DOS `SKW_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`dm2byg.cpp:4925`), SPX v4 
 
 ### DM2 outdoor relative-distance review (2026-11-02)
 
-Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 `DM2_guivp_32cb_54ce`. Firestaff `dm2_v1_guivp_32cb_54ce` matches DOS and SPX v5 coordinate writes, forward-distance gate, 16-bit squared-distance behavior, and Newton integer square root. SPX v4 heading 0 computes its first delta from `*xx` while DOS/v5 use the other coordinate pointer, so v4 remains `PARTIAL`; DOS and v5 are `IMPLEMENTED_PARITY`. Callers remain tracked separately.
+Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 `DM2_guivp_32cb_54ce`. Firestaff `dm2_v1_guivp_32cb_54ce` matches DOS and SPX v5 coordinate writes, forward-distance gate, 16-bit squared-distance behavior, and Newton integer square root. Firestaff now has a dedicated `dm2_v1_environment_compute_distance_v4` helper for SPX v4 heading 0, in addition to the DOS/v5 helper. The exact v4 outdoor-selection caller path is not yet bound, so v4 remains `PARTIAL`; DOS and v5 are `IMPLEMENTED_PARITY`.
 
 
 ### DM2 distant environment selection review (2026-11-02)
