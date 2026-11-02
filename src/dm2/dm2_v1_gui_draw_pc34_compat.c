@@ -931,8 +931,10 @@ void dm2_v1_draw_squad_spell_and_leader_icon(
     int8_t spell_icon = (dir > 1) ? 8 : 6;
     int8_t leader_icon = (dir > 1) ? 0x0c : 0x0a;
     if (flags != 0) ++spell_icon;
-    int16_t evhero = cb->get_event_heroidx ? cb->get_event_heroidx(ctx) : -1;
-    if (hero_idx == evhero) ++leader_icon;
+    int16_t leader_idx = cb->get_squad_leader_hero_idx ?
+        cb->get_squad_leader_hero_idx(ctx) :
+        (cb->get_event_heroidx ? cb->get_event_heroidx(ctx) : -1);
+    if (hero_idx == leader_idx) ++leader_icon;
 
     if (cb->query_gdat_summary_image && cb->query_picst_it && cb->image_draw) {
         DM2_V1_ImageDesc icons[2];

@@ -343,6 +343,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
                               DM2_V1_Rect *rect, int16_t mode);
     /* Edition adapter maps ExtendedPicture::mirrorFlip before image draw. */
     void (*set_summary_image_mirror)(void *ctx, void *image, bool mirror);
+    /* SKWIN uses squad leader; DOS/SPX v5 select the active/event hero. */
+    int16_t (*get_squad_leader_hero_idx)(void *ctx);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================
