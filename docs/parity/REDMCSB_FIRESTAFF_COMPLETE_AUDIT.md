@@ -977,7 +977,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,796 unreviewed, 1,036 partial, 0 missing, and 93 implemented-parity definitions. The generated combined skproject backlog is 3,960 open rows (2,796 unreviewed, 1,162 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,793 unreviewed, 1,036 partial, 0 missing, and 96 implemented-parity definitions. The generated combined skproject backlog is 3,957 open rows (2,793 unreviewed, 1,162 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
@@ -1008,3 +1008,7 @@ Compared DOS `SKW_CALC_SIZE_OF_COMPRESSED_RECT`, SPX v4 `CALC_SIZE_OF_COMPRESSED
 ### DM2 compressed rectangle query review (2026-11-02)
 
 Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and SKULLWIN. Firestaff `dm2_v1_query_rect` preserves zero rejection, linked range lookup, the four-entry result ring and source mask encodings for common coordinates, compressed byte coordinates, signed/unsigned byte dimensions and word dimensions. DOS and SPX v5 are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL` because it accepts unsigned U16 rectangle IDs while Firestaff currently stores signed int16 query/range fields.
+
+### DM2 pending squad position recomputation (2026-11-02)
+
+Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v4 `CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skchamp.cpp:1975-1978`), SPX v5 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skhero.cpp:4143-4147`), and SKULLWIN (`c_hero.cpp:4141-4145`). All return when the pending-position flag is zero; otherwise they call `CHANGE_PLAYER_POS` with the saved target ORed with `0x8000`. Firestaff's callback helper has the same gate and packed argument. The live runtime applies that pending formation move after hand activation and spelling-champion selection. All four function bodies are `IMPLEMENTED_PARITY`; separate caller routes remain subject to their input/platform audits.
