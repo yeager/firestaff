@@ -48368,7 +48368,7 @@ if(BUILD_TESTING)
     )
 endif()
 
-# ── DM2 original-archive cancellation during ZIP inflation ────────────
+# ── DM2 FM Towns disc-image cancellation during ZIP inflation ────────
 if(BUILD_TESTING AND TARGET firestaff_m12)
     add_executable(test_m12_dm2_archive_scan_cancel_real_media
         tests/test_m12_dm2_archive_scan_cancel_real_media.c)
@@ -48386,7 +48386,7 @@ if(BUILD_TESTING AND TARGET firestaff_m12)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;m12;startup;cancel;real-media;skip-safe"
         ENVIRONMENT
-            "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}")
+            "FIRESTAFF_DM2_FMTOWNS_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
 endif()
 
 # ── Theron V1 Phase 7 — Track 02 Bank Probe ───────────────────────

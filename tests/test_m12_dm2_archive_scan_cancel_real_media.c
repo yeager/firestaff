@@ -26,7 +26,7 @@ static int cancel_during_dm2_disc_image(
 }
 
 int main(void) {
-    const char* archive = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
+    const char* archive = getenv("FIRESTAFF_DM2_FMTOWNS_ZIP");
     M12_AssetStatus status;
     M12_AssetStatusScanOptions options;
     CancelOnDm2Image probe;
