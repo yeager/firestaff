@@ -992,7 +992,7 @@ Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 
 
 ### DM2 distant environment selection review (2026-11-02)
 
-Compared DOS `SKW_ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v4 `ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v5 `DM2_ENVIRONMENT_SET_DISTANT_ELEMENT`, and SKULLWIN. The routines parse MV/X/Y/FD command values, add map offsets, compute viewer-relative Euclidean distance, reject invisible directions, and write projected offsets and distance-scaled output to the environment slot. Firestaff can validate the source-shaped slot after population, but its current callback wrapper does not implement this selection and mutation algorithm. All source rows remain `PARTIAL`.
+Compared DOS `SKW_ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v4 `ENVIRONMENT_SET_DISTANT_ELEMENT`, SPX v5 `DM2_ENVIRONMENT_SET_DISTANT_ELEMENT`, and SKULLWIN. The routines parse MV/X/Y/FD command values, add map offsets, compute viewer-relative Euclidean distance, reject invisible directions, and write projected offsets and distance-scaled output to the environment slot. Firestaff now computes the MV/distance/FD transform in a source-shaped helper, but the production enumeration still delegates to a callback and does not bind that plan to the live slot. All source rows remain `PARTIAL`.
 
 
 ### DM2 outdoor environment enumeration review (2026-11-02)
