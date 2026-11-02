@@ -326,6 +326,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void *(*query_item_hand_image)(void *ctx, uint16_t object_id,
                                    int8_t cls1, int8_t cls2, int8_t icon,
                                    void **palette_out);
+    int16_t (*get_container_first_item)(void *ctx, void *container_record);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

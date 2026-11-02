@@ -3059,3 +3059,12 @@ flag, which ordinary `ACTIVATE_ACTION_HAND` sets. It now blocks only the spell
 sentinel, allowing the existing live renderer and coin-count path to consume
 the selected moneybox. This does not bind input events 228-233 or implement
 the live wallet transaction; all platform click routes remain partial.
+
+2026-11-02 SKProject `DRAW_CONTAINER_SURVEY`:
+DOS and SPX v4/v5 iterate the container chain, draw at most eight items in
+slots 0x2f through 0x36, and stop at the end-link sentinel. Firestaff's GUI
+callback now requests the first item and follows record links with the same
+limit and slot range. The generic item-icon renderer still lacks complete
+source backgrounds/selection layers, and no production DM2 container renderer
+binds this callback to live state. Keep all four source rows PARTIAL; full
+visual and supported-platform parity remains open.

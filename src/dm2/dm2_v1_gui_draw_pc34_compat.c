@@ -1345,15 +1345,23 @@ void dm2_v1_draw_item_icon(
 
 /* ================================================================
  * 37. DRAW_CONTAINER_SURVEY
- *     c_gui_draw.cpp:1795
+ *     SKWINDOS/dm2byb.cpp:872-879, SPX v4 skguidrw.cpp:2526-2536,
+ *     SPX v5 skguidr5.cpp:1796-1818
  * ================================================================ */
 
 void dm2_v1_draw_container_survey(
     void *record_addr,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !record_addr) return;
-    /* Iterates items in container, calling draw_item_icon for each */
+    if (!cb || !record_addr || !cb->get_container_first_item ||
+        !cb->get_next_record_link)
+        return;
+
+    int16_t item = cb->get_container_first_item(ctx, record_addr);
+    for (int slot = 0; slot < 8 && item != (int16_t)0xfffeu; ++slot) {
+        dm2_v1_draw_item_icon(item, slot + 0x2f, 0, 0, 0, cb, ctx);
+        item = cb->get_next_record_link(ctx, item);
+    }
 }
 
 /* ================================================================
