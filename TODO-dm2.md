@@ -2830,3 +2830,13 @@ said the helper had no production caller at all; corrected to distinguish the
 live strategy entry from the missing dynamic-action loop binding. Keep all
 source rows `PARTIAL` until the table data, command dispatch, mutations and
 platform runtime routes are implemented and verified.
+
+2026-11-02 SKProject `DRAW_ARROW_PANEL` source-inventory correction:
+The active DOS review row `SKW_29ee_000f` had inherited a potion-casting note,
+although `SKWINDOS/dm2bya.cpp:2406-2424` is the arrow-panel renderer. DOS,
+SPX v4, and both active SPX v5 copies select icon base 2 or 14 from the
+source push/pull state, draw six category-3 fields at rects 40-45, then restore
+the group and refresh mode 5/6. Firestaff's M11 HUD plan draws the normal six
+arrows but does not bind the push/pull state or render yellow fields 14-24.
+The active source review now records the correct function and remaining gap;
+all four rows remain `PARTIAL` pending complete mode and platform redraw parity.
