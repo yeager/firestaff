@@ -977,7 +977,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,799 unreviewed, 1,035 partial, 0 missing, and 91 implemented-parity definitions. The generated combined skproject backlog is 3,960 open rows (2,799 unreviewed, 1,159 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,796 unreviewed, 1,036 partial, 0 missing, and 93 implemented-parity definitions. The generated combined skproject backlog is 3,959 open rows (2,796 unreviewed, 1,161 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
@@ -1003,3 +1003,8 @@ Compared DOS `SKW_ENVIRONMENT_DISPLAY_ELEMENTS`, SPX v4 `ENVIRONMENT_DISPLAY_ELE
 ### DM2 compressed rectangle size review (2026-11-02)
 
 Compared DOS `SKW_CALC_SIZE_OF_COMPRESSED_RECT`, SPX v4 `CALC_SIZE_OF_COMPRESSED_RECT`, SPX v5 `DM2_CALC_SIZE_OF_COMPRESSED_RECT`, and SKULLWIN. Firestaff `dm2_v1_calc_size_of_compressed_rect` matches the 8-byte base and all mask-controlled reductions (bit 2 special case, bits 1/0 and 0x18). The function body is `IMPLEMENTED_PARITY` across variants.
+
+
+### DM2 compressed rectangle query review (2026-11-02)
+
+Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and SKULLWIN. Firestaff `dm2_v1_query_rect` preserves zero rejection, linked range lookup, the four-entry result ring and source mask encodings for common coordinates, compressed byte coordinates, signed/unsigned byte dimensions and word dimensions. DOS and SPX v5 are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL` because it accepts unsigned U16 rectangle IDs while Firestaff currently stores signed int16 query/range fields.
