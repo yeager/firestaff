@@ -77,6 +77,25 @@ moves from map 0 `(1,8)` to `(1,7)` while retaining direction 0. The complete
 this pointer route. This evidence covers movement arrows only; Amiga formation
 pointer actions and other Amiga HUD interactions remain open.
 
+### Right-panel moneybox draw ownership (2026-11-02)
+
+SKProject `SKWINSPX/src/v4/skguidrw.cpp::DRAW_MONEYBOX` draws the container
+frame from `CONTAINERS/cls2/0x10`, resolves up to ten slot denominations
+through `GET_ITEM_ORDER_IN_CONTAINER`, and scatters up to 32 denomination
+GDAT sprites per slot using the source `table1d275a` offsets and clipping to
+`glbScreenBufferRightPanel.rc2`. The v5 path
+`SKWINSPX/src/v5/skguidr5.cpp::DM2_DRAW_MONEYBOX` has the same denomination,
+sprite, and scatter behavior. Firestaff has a matching compatibility draw
+routine and source offset table in `dm2_v1_gui_draw_pc34_compat.c`, and its
+container-order parser is in `dm2_v1_asset_loader.c`. However, repository
+reachability search finds no caller of `dm2_v1_draw_moneybox` outside its own
+definition, and M11's accepted runtime-frame path explicitly skips the
+compatibility HUD pass without a complete live GUI receipt. The drawing
+routine exists, but source-owned right-panel state does not reach it at
+runtime. Moneybox panel parity remains **open** across DOS, Amiga, FM Towns,
+and Macintosh; the Amiga movement-arrow result above does not cover this
+panel.
+
 ## Interpretation boundary
 
 These results prove the listed boot, handoff, save, and focused runtime paths.
