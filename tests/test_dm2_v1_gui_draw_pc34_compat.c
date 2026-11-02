@@ -133,9 +133,17 @@ static void test_draw_container_panel_null_cb(void) {
 typedef struct ContainerPanelFixture {
     int image_queries;
     int blits;
+    int blit_rect_queries;
+    int container_item_queries;
+    int cls1_queries;
+    int cls2_queries;
+    int dbspec_queries;
     int8_t classes[2];
     int8_t subs[2];
     int8_t indices[2];
+    int16_t blit_rect_ids[2];
+    int32_t last_cls1_record;
+    int32_t last_cls2_record;
 } ContainerPanelFixture;
 
 static void *container_panel_image(void *ctx, int8_t cls, int8_t sub,
@@ -154,13 +162,45 @@ static DM2_V1_Rect *container_panel_blit_rect(void *ctx, void *bmp,
                                                DM2_V1_Rect *out,
                                                int16_t id, int16_t *srcx,
                                                int16_t *srcy) {
-    (void)ctx;
+    ContainerPanelFixture *fixture = ctx;
     (void)bmp;
-    (void)id;
+    int slot = fixture->blit_rect_queries++;
+    if (slot < 2) fixture->blit_rect_ids[slot] = id;
     *srcx = 0;
     *srcy = 0;
     *out = (DM2_V1_Rect){0, 0, 16, 16};
     return out;
+}
+
+static int16_t container_panel_item(void *ctx, int32_t container,
+                                    int32_t slot) {
+    ContainerPanelFixture *fixture = ctx;
+    (void)container;
+    fixture->container_item_queries++;
+    return slot == 0 ? 42 : -1;
+}
+
+static int8_t container_panel_cls1(void *ctx, int32_t record) {
+    ContainerPanelFixture *fixture = ctx;
+    fixture->cls1_queries++;
+    fixture->last_cls1_record = record;
+    return 3;
+}
+
+static int8_t container_panel_cls2(void *ctx, int32_t record) {
+    ContainerPanelFixture *fixture = ctx;
+    fixture->cls2_queries++;
+    fixture->last_cls2_record = record;
+    return record == 42 ? 4 : 2;
+}
+
+static int32_t container_panel_dbspec(void *ctx, int32_t record,
+                                      int32_t field) {
+    ContainerPanelFixture *fixture = ctx;
+    (void)record;
+    (void)field;
+    fixture->dbspec_queries++;
+    return 0;
 }
 
 static int16_t container_panel_bmp_width(void *ctx, void *bmp) {
@@ -195,6 +235,19 @@ static void container_panel_blit(void *ctx, void *src, void *dst,
     fixture->blits++;
 }
 
+static void setup_container_panel_callbacks(DM2_V1_GuiDrawCallbacks *cb) {
+    memset(cb, 0, sizeof(*cb));
+    cb->query_gdat_image = container_panel_image;
+    cb->query_blit_rect = container_panel_blit_rect;
+    cb->get_bmp_width = container_panel_bmp_width;
+    cb->get_bmp = container_panel_bmp;
+    cb->blit = container_panel_blit;
+    cb->get_container_item = container_panel_item;
+    cb->query_cls1 = container_panel_cls1;
+    cb->query_cls2 = container_panel_cls2;
+    cb->query_gdat_dbspec_word = container_panel_dbspec;
+}
+
 static void test_draw_container_panel_keeps_frame_without_cls2_query(void) {
     ContainerPanelFixture fixture = {0};
     DM2_V1_GuiDrawCallbacks cb;
@@ -212,6 +265,42 @@ static void test_draw_container_panel_keeps_frame_without_cls2_query(void) {
     assert(fixture.classes[0] == 20 && fixture.classes[1] == 20);
     assert(fixture.subs[0] == 0 && fixture.subs[1] == 0);
     assert(fixture.indices[0] == 0x10 && fixture.indices[1] == 0x12);
+}
+
+static void test_draw_container_panel_renders_occupied_item_from_source(void) {
+    ContainerPanelFixture fixture = {0};
+    DM2_V1_GuiDrawCallbacks cb;
+    setup_container_panel_callbacks(&cb);
+
+    dm2_v1_draw_container_panel(7, 0, &cb, &fixture);
+
+    assert(fixture.container_item_queries == 8);
+    assert(fixture.cls1_queries == 1 && fixture.last_cls1_record == 42);
+    assert(fixture.cls2_queries == 2 && fixture.last_cls2_record == 42);
+    assert(fixture.dbspec_queries == 1);
+    assert(fixture.image_queries == 1 && fixture.blits == 1);
+    assert(fixture.classes[0] == 3 && fixture.subs[0] == 4);
+    assert(fixture.indices[0] == 0x18);
+    assert(fixture.blit_rect_queries == 1 && fixture.blit_rect_ids[0] == 0xe5);
+}
+
+static void test_draw_container_panel_requires_slot_callbacks(void) {
+    for (int missing = 0; missing < 4; ++missing) {
+        ContainerPanelFixture fixture = {0};
+        DM2_V1_GuiDrawCallbacks cb;
+        setup_container_panel_callbacks(&cb);
+        switch (missing) {
+        case 0: cb.get_container_item = NULL; break;
+        case 1: cb.query_cls1 = NULL; break;
+        case 2: cb.query_cls2 = NULL; break;
+        case 3: cb.query_gdat_dbspec_word = NULL; break;
+        }
+
+        dm2_v1_draw_container_panel(7, 0, &cb, &fixture);
+
+        assert(fixture.container_item_queries == 0);
+        assert(fixture.image_queries == 0 && fixture.blits == 0);
+    }
 }
 
 typedef struct ItemStatsBarFixture {
@@ -507,6 +596,8 @@ int main(void) {
     RUN(test_draw_item_in_hand_null_cb);
     RUN(test_draw_container_panel_null_cb);
     RUN(test_draw_container_panel_keeps_frame_without_cls2_query);
+    RUN(test_draw_container_panel_renders_occupied_item_from_source);
+    RUN(test_draw_container_panel_requires_slot_callbacks);
     RUN(test_draw_item_stats_bar_maps_helper_arguments);
     RUN(test_draw_item_icon_null_cb);
     RUN(test_draw_container_survey_null_cb);
