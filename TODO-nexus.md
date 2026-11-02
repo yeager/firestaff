@@ -15,6 +15,14 @@ stdout message was removed. The champion, engine and launcher translation
 units compile with AppleClang. This is source/compile evidence only; authentic
 runtime output for recruitment and leader promotion remains unverified.
 
+An authentic-media CLI A/B check on macOS used `--game nexus --platform saturn`
+against the installed Nexus collection with a 250 ms run. Without `--debug`,
+the run emitted none of the Nexus engine, UI-surface, sound, font or launcher
+diagnostic lines; adding `--debug` emitted those records. The check used a
+Debug-configured binary with the CLI flag absent, so it confirms the runtime
+flag gate independently of build type. It did not recruit a champion or
+promote a leader, and therefore does not replace those interaction checks.
+
 ## 2026-10-31 — NBG0 live-row replay
 
 The capture-only compositor now accepts Ymir live per-row scroll and

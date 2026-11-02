@@ -21,6 +21,7 @@
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
 - `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, decode raw-SKSAVE words using source byte order, preserve version-specific text-ornament gates, and document production transition integration as open.
 - `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
+- `Nexus diagnostic-output verification`: compare authentic-media CLI startup with and without `--debug`; normal startup suppresses engine/UI/audio/font traces, while the explicit boot probe retains its startup summary.
 
 ## DM1
 
