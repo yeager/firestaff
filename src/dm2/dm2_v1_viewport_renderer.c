@@ -7710,10 +7710,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                       &panel_stride) == 0 &&
                   panel_pixels && panel_w > 0 && panel_h > 0))) {
                 DM2_V1_DoorAssetBlit blit;
-                /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
-                 * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
-                 * with image 0 for D0/D1 and image 1 for D2. Door type
-                 * decoding is still boot-defaulted to index 0 here. */
+                /* SKProject SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_DOOR
+                 * (4861-4878) selects the map-local DOORS image from the
+                 * door record's DoorType. The render plan carries the image
+                 * selected from an authenticated DB0 root in
+                 * panel_gdat_index; unrecorded compatibility panels use the
+                 * square-specific source field. */
                 if (dm2_v1_viewport_door_panel_asset_blit(render_door,
                                                           panel_w,
                                                           panel_h,

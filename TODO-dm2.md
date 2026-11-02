@@ -8,11 +8,12 @@ does render source-bound door panels. Its material plan applies the source RAW4
 placement for intermediate vertical openings and submits the two source half
 panels at their separate RAW4 positions for intermediate horizontal openings;
 the panel's decoded palette and color key are also bound from GDAT. Remaining
-gaps include exact door-type image selection (the active path still documents a
-type-0 fallback), the complete DOS/v4 ornate, destroyed and see-through layer
-gates and ordering, and exact source frame geometry and platform binding. The
-source-shaped `DRAW_DOOR` callback wrapper is still not the production M11
-consumer. Keep the three source rows `PARTIAL` until those gaps are closed.
+gaps include proving that the authenticated DB0 DoorType-to-GDAT mapping
+covers every supported edition, the complete DOS/v4 ornate, destroyed and
+see-through layer gates and ordering, and exact source frame geometry and
+platform binding. The source-shaped `DRAW_DOOR` callback wrapper is still not
+the production M11 consumer. Keep the three source rows `PARTIAL` until those
+gaps are closed.
 
 2026-11-02 skproject DOS/SPX v4/v5 `SET_SPELLING_CHAMPION`:
 All three source variants reject a dead champion, publish the selected
