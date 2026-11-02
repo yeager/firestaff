@@ -130,6 +130,90 @@ static void test_draw_container_panel_null_cb(void) {
     dm2_v1_draw_container_panel(0, 0, NULL, NULL);
 }
 
+typedef struct ContainerPanelFixture {
+    int image_queries;
+    int blits;
+    int8_t classes[2];
+    int8_t subs[2];
+    int8_t indices[2];
+} ContainerPanelFixture;
+
+static void *container_panel_image(void *ctx, int8_t cls, int8_t sub,
+                                   int8_t idx) {
+    ContainerPanelFixture *fixture = ctx;
+    int slot = fixture->image_queries++;
+    if (slot < 2) {
+        fixture->classes[slot] = cls;
+        fixture->subs[slot] = sub;
+        fixture->indices[slot] = idx;
+    }
+    return fixture;
+}
+
+static DM2_V1_Rect *container_panel_blit_rect(void *ctx, void *bmp,
+                                               DM2_V1_Rect *out,
+                                               int16_t id, int16_t *srcx,
+                                               int16_t *srcy) {
+    (void)ctx;
+    (void)bmp;
+    (void)id;
+    *srcx = 0;
+    *srcy = 0;
+    *out = (DM2_V1_Rect){0, 0, 16, 16};
+    return out;
+}
+
+static int16_t container_panel_bmp_width(void *ctx, void *bmp) {
+    (void)ctx;
+    (void)bmp;
+    return 16;
+}
+
+static void *container_panel_bmp(void *ctx, int16_t dbidx) {
+    (void)dbidx;
+    return ctx;
+}
+
+static void container_panel_blit(void *ctx, void *src, void *dst,
+                                 DM2_V1_Rect *rect, int16_t srcx,
+                                 int16_t srcy, int16_t srcw, int16_t dstw,
+                                 int16_t alpha, int32_t mode, int32_t srcbpp,
+                                 int32_t dstbpp, void *palette) {
+    ContainerPanelFixture *fixture = ctx;
+    (void)src;
+    (void)dst;
+    (void)rect;
+    (void)srcx;
+    (void)srcy;
+    (void)srcw;
+    (void)dstw;
+    (void)alpha;
+    (void)mode;
+    (void)srcbpp;
+    (void)dstbpp;
+    (void)palette;
+    fixture->blits++;
+}
+
+static void test_draw_container_panel_keeps_frame_without_cls2_query(void) {
+    ContainerPanelFixture fixture = {0};
+    DM2_V1_GuiDrawCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.query_gdat_image = container_panel_image;
+    cb.query_blit_rect = container_panel_blit_rect;
+    cb.get_bmp_width = container_panel_bmp_width;
+    cb.get_bmp = container_panel_bmp;
+    cb.blit = container_panel_blit;
+
+    dm2_v1_draw_container_panel(0, 1, &cb, &fixture);
+
+    assert(fixture.image_queries == 2);
+    assert(fixture.blits == 2);
+    assert(fixture.classes[0] == 20 && fixture.classes[1] == 20);
+    assert(fixture.subs[0] == 0 && fixture.subs[1] == 0);
+    assert(fixture.indices[0] == 0x10 && fixture.indices[1] == 0x12);
+}
+
 static void test_draw_item_icon_null_cb(void) {
     dm2_v1_draw_item_icon(0, 0, 0, 0, 0, NULL, NULL);
 }
@@ -265,10 +349,10 @@ static void test_guidraw_29ee_1946_null_cb(void) {
 /* ── Data table verification ───────────────────────────────────────── */
 
 static void test_table1d275a_entries(void) {
-    assert(dm2_guidraw_table1d275a[0][0] == 0);
-    assert(dm2_guidraw_table1d275a[0][1] == 0);
-    assert(dm2_guidraw_table1d275a[16][0] == 4);
-    assert(dm2_guidraw_table1d275a[16][1] == 0);
+    assert(dm2_guidraw_table1d275a[0][0] == -2);
+    assert(dm2_guidraw_table1d275a[0][1] == 10);
+    assert(dm2_guidraw_table1d275a[16][0] == 0);
+    assert(dm2_guidraw_table1d275a[16][1] == -11);
 }
 
 static void test_table1d69d0_entries(void) {
@@ -380,6 +464,7 @@ int main(void) {
     RUN(test_draw_item_stats_bar_null_cb);
     RUN(test_draw_item_in_hand_null_cb);
     RUN(test_draw_container_panel_null_cb);
+    RUN(test_draw_container_panel_keeps_frame_without_cls2_query);
     RUN(test_draw_item_icon_null_cb);
     RUN(test_draw_container_survey_null_cb);
     RUN(test_draw_eye_mouth_null_cb);

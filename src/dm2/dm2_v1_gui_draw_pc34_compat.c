@@ -1227,8 +1227,7 @@ void dm2_v1_draw_container_panel(
 {
     if (!cb) return;
 
-    if (!cb->query_cls2) return;
-    int8_t cls2 = cb->query_cls2(ctx, record);
+    int8_t cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
 
     if (flags != 0) {
         dm2_v1_draw_icon_pict_entry(20, cls2, 0x10, 2, 0x5c, -1, cb, ctx);
@@ -1237,7 +1236,7 @@ void dm2_v1_draw_container_panel(
 
     /* Source draws only occupied slots, using each contained object's
      * animation and cls1/cls2 rather than the container's class. */
-    if (!cb->get_container_item || !cb->query_cls1 ||
+    if (!cb->get_container_item || !cb->query_cls1 || !cb->query_cls2 ||
         !cb->query_gdat_dbspec_word)
         return;
     DM2_V1_Rect container_rect;

@@ -20,8 +20,10 @@ blits the inventory frame into occupied slots relative to rect 0x5c, as
 DOS `dm2bya.cpp:2680-2705`, SPX v4 `skguidrw.cpp:487-515`, and SPX v5
 `skguidr5.cpp:1541-1570` do. The eight-slot hand-container state and this draw
 callback still have no production DM2 renderer binding. Missing class/GDAT
-queries now fail closed instead of drawing placeholder item graphics. Inventory
-and right-panel parity remain incomplete across supported platforms.
+queries now fail closed instead of drawing placeholder item graphics, while
+the static container frames retain their source class-0 fallback when the
+container class callback is absent. Inventory and right-panel parity remain
+incomplete across supported platforms.
 
 2026-11-02 skproject DOS/SPX v4/v5 `SKW_DRAW_DOOR` / `DRAW_DOOR`:
 The active source renderers select the DB0 door material from map DoorType and
