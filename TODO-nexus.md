@@ -62,7 +62,9 @@ offset `0xb8a2` across that same complete event timeline. In frame 7716, all
 608 writes within the 921-byte destination span match their retail source byte,
 including every one of its 295 nonzero bytes. The span first becomes an exact
 retail-source match after event sequence 4,075,865; its final WorkRAMH and
-frame-8037 VRAM snapshots also match. Reproduce with:
+frame-8037 VRAM snapshots also match. The endpoint registers confirm the active
+512×256, 8bpp NBG0 bitmap at base zero (`TVMD=0x8000`, `BGON=1`,
+`CHCTLA=0x0013`, `PLSZ=2`, `BMPNA=0`). Reproduce with:
 
 ```sh
 python3 scripts/verify_nexus_title_nbg0_full_run_source.py \
