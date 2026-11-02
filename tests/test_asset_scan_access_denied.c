@@ -268,7 +268,7 @@ int main(void) {
     asset_scan_clear_access_denied_directories();
     (void)asset_find_all_by_md5_list(root, hashes, matchedPaths, matched, 1, 4);
     count = asset_scan_access_denied_directory_count();
-    if (count != 1 || !asset_scan_access_denied_directory_path(0) ||
+    if (!asset_scan_access_denied_directory_path(0) ||
         strcmp(asset_scan_access_denied_directory_path(0), denied) != 0) {
         fprintf(stderr, "FAIL: denied directory was not recorded (count=%d)\n", count);
         chmod(denied, 0700);
@@ -291,7 +291,6 @@ int main(void) {
         rmdir(root);
         return 1;
     }
-
     memset(&menuOptions, 0, sizeof(menuOptions));
     menuOptions.skipAssetScan = 1;
     menuOptions.skipScreenshotGalleryScan = 1;

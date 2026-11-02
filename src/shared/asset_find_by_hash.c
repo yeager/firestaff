@@ -4971,7 +4971,17 @@ static void record_access_denied_directory_if_unreadable(const char *path) {
     {
         struct stat st;
         DIR *directory;
-        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) return;
+        if (stat(path, &st) != 0) {
+            /* If a readable parent exposed an entry but metadata lookup on
+             * that entry is denied, report the containing folder. That is
+             * the actionable directory grant and remains available even
+             * when TCC also denies stat() on the child. */
+            if (asset_scan_access_denied_errno(errno)) {
+                record_access_denied_file_parent(path);
+            }
+            return;
+        }
+        if (!S_ISDIR(st.st_mode)) return;
         directory = opendir(path);
         if (directory) {
             closedir(directory);
