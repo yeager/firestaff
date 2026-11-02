@@ -923,9 +923,14 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,904 unreviewed, 952 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,904 unreviewed, 1,033 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,901 unreviewed, 955 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,901 unreviewed, 1,036 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
 
 DOS/SKULLWIN XACT 84 classifies possession DB types 5..10, checks item flags for cloth, weapons, potions and miscellaneous items, and uses the miscellaneous-item GDAT food value. When an item is not consumable, it draws RAND low bits before optionally issuing `19f0_2165` and mutating creature state. SPX v4 has a distinct rule: it consumes unimportant cloth/weapons, miscellaneous items that are important or have nonzero food value, and potions with zero visible power; other types attempt `19f0_2165`. Firestaff has no live XACT loop callback, and its `xact_consume_item` remains fail-closed while the SKULLWIN core receipt only records possession/category. The three active-source definitions are now `PARTIAL`; supported platform routes, record ownership, RNG, effect dispatch and creature-state mutation remain open.
+
+
+### DM2 XACT 85 variant review (2026-11-02)
+
+DOS/SKULLWIN and SPX v5 scan the current creature timer tile for DB2 actuator records with the source mask/subtype, set creature byte b1e and command 0x22 on a match, and otherwise schedule the source command 0x33. SPX v4 instead scans text records for TextMode 1 plus SimpleTextExtUsage 1, copies the TextIndex low byte into ItemToThrow and sets ccm3B_Transform1; its no-match path uses CREATURE_SET_NEW_COMMAND with ccm13_Destroy before setting ccm33. Firestaff's `DM2_PROCEED_XACT_85` receipt only represents the not-found default and does not perform any scan or mutation. All three active source definitions are `PARTIAL`.

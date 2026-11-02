@@ -2683,3 +2683,13 @@ The named-symbol row is downgraded from `IMPLEMENTED_PARITY` to
 `IMPLEMENTED_NARROW`; the DOS, SPX-v4 and SPX-v5 active-source rows are now
 `PARTIAL`. Live callback, record unlink/deallocation, GDAT-bound food query,
 creature command mutation and supported-platform dispatch remain open.
+
+
+2026-11-02 skproject `PROCEED_XACT_85` variant audit correction:
+DOS/SKULLWIN and SPX v5 inspect tile actuator records and set creature b1e/command
+0x22 when they find the requested subtype; on no match they use command 0x33.
+SPX v4 instead searches text records, sets ItemToThrow and ccm3B_Transform1,
+then has a distinct ccm13_Destroy no-match transition. Firestaff's core receipt
+models only the default not-found values and has no live XACT callback. Its
+named-symbol disposition is now `IMPLEMENTED_NARROW`, while all three active
+source definitions are `PARTIAL`.
