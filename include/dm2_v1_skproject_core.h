@@ -5052,8 +5052,9 @@ int dm2_v1_skproject_find_distinctive_item_on_tile(
     DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:1576 DM2_FIND_TILE_ACTUATOR — source-locked receipt
-   that walks a tile chain looking for the first DB3 actuator whose ordinal
-   matches, optionally constrained by side (ObjectID bits 14-15). */
+   for the DOS/SKULLWIN/SPX v4/v5 tile-chain query. It stops above DB3,
+   applies the source's DB3 side-0xff exception, and compares word 2 low
+   seven bits on every admitted record. */
 typedef struct {
     int valid;
     int blocked_missing_dungeon;

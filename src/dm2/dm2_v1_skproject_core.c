@@ -12712,15 +12712,19 @@ int dm2_v1_skproject_find_distinctive_item_on_tile(
 }
 
 /* SKULLWIN/c_querydb.cpp:1576 DM2_FIND_TILE_ACTUATOR — source-locked receipt.
-   Walks the tile chain and returns the first DB3 actuator whose ordinal
-   matches; side -1 matches any side. */
+   DOS dm2bye.cpp:2363 and SPX v4 skdungn.cpp:3248 share this record scan:
+   stop above DB3; DB3 bypasses side matching only for side 0xff, while
+   DB0..DB2 still compare ObjectID.Dir() to the low byte of the side input;
+   compare word 2's low seven bits on every admitted DB type. */
 typedef struct {
+    const struct DM2_V1_DungeonData *dungeon;
     uint8_t actuator_ordinal;
     int16_t side;
     uint16_t found_object_id;
     uint8_t found;
     uint8_t actuator_count;
     uint8_t skipped_non_actuator;
+    uint8_t source_stopped;
 } dm2_v1_skproject_find_actuator_ctx;
 
 static int dm2_v1_skproject_find_actuator_visitor(
@@ -12737,29 +12741,34 @@ static int dm2_v1_skproject_find_actuator_visitor(
     dm2_v1_skproject_find_actuator_ctx *ctx =
         (dm2_v1_skproject_find_actuator_ctx *)user;
     uint8_t ordinal;
-    int16_t side;
+    uint8_t side;
+    uint16_t word2;
     (void)index;
     (void)level;
     (void)x;
     (void)y;
 
     if (!ctx || !record) return -1;
+    if (type > 3) {
+        ctx->source_stopped = 1;
+        return -1;
+    }
     if (type != 3) {
         ctx->skipped_non_actuator = 1;
-        return 0;
+    } else {
+        ctx->actuator_count++;
     }
-    ctx->actuator_count++;
     if (record_size < 4) return 0;
-    ordinal = (uint8_t)(record[2] & 0x7fu);
-    side = (int16_t)((thing >> 14) & 0x03u);
+    word2 = dm2_v1_dungeon_read_record_u16(ctx->dungeon, record + 2);
+    ordinal = (uint8_t)(word2 & 0x7fu);
+    side = (uint8_t)((uint16_t)thing >> 14);
+    if ((type != 3 || (uint8_t)ctx->side != 0xffu) &&
+        side != (uint8_t)ctx->side) return 0;
     if (ordinal != ctx->actuator_ordinal) return 0;
-    if (ctx->side >= 0 && side != ctx->side) return 0;
 
-    if (!ctx->found) {
-        ctx->found_object_id = thing;
-        ctx->found = 1;
-    }
-    return 0;
+    ctx->found_object_id = thing;
+    ctx->found = 1;
+    return -1;
 }
 
 int dm2_v1_skproject_find_tile_actuator(
@@ -12779,6 +12788,7 @@ int dm2_v1_skproject_find_tile_actuator(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     memset(&ctx, 0, sizeof(ctx));
+    ctx.found_object_id = 0xffffu;
     receipt.input_x = (int16_t)x;
     receipt.input_y = (int16_t)y;
     receipt.actuator_ordinal = actuator_ordinal;
@@ -12791,6 +12801,7 @@ int dm2_v1_skproject_find_tile_actuator(
         return 0;
     }
 
+    ctx.dungeon = dungeon;
     ctx.actuator_ordinal = actuator_ordinal;
     ctx.side = side;
     result = dm2_v1_dungeon_walk_square_things(
@@ -12801,7 +12812,9 @@ int dm2_v1_skproject_find_tile_actuator(
     receipt.found_object_id = ctx.found_object_id;
     receipt.actuator_count = ctx.actuator_count;
     receipt.skipped_non_actuator = ctx.skipped_non_actuator;
-    receipt.valid = (result >= 0) ? 1 : 0;
+    /* Negative visitor returns are source-ordered early exits after a match
+     * or the DB3 chain barrier, not malformed record data. */
+    receipt.valid = (result >= 0 || ctx.found || ctx.source_stopped) ? 1 : 0;
     if (out_object_id) *out_object_id = ctx.found_object_id;
     if (out_receipt) *out_receipt = receipt;
     return ctx.found;
