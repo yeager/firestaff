@@ -4719,6 +4719,17 @@ int dm2_v1_runtime_cast_spell_player(
     receipt.light_before = rt->source_light_level;
     receipt.light_after = rt->source_light_level;
     if (!receipt.cast.valid || !receipt.cast.cast_success) {
+        /* SKProject SKWINSPX/src/v5/skevents.cpp::DM2_TRY_CAST_SPELL clears
+         * c_hero::rune/nrunes for every failed cast except failure class
+         * 0x30 (the empty-flask prompt). Keep the live source hero and its
+         * save/load snapshot in sync; M11's spell buffer is only a view of
+         * this state and cannot stand in for the runtime mutation. */
+        if (receipt.cast.valid && receipt.cast.failure.clears_runes) {
+            memset(hero->rune, 0, sizeof(hero->rune));
+            hero->nrunes = 0;
+            dm2_runtime_copy_source_hero_to_snapshot(
+                &rt->session_snapshot, hero_index, hero);
+        }
         if (out_receipt) *out_receipt = receipt;
         return 1;
     }
