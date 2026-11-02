@@ -104,9 +104,13 @@ The frame-1605 analyzer now uses the observed 12-byte WRAM-H face-row stride
 to resolve duplicated face tuples when at least two independently resolved
 rows from the same CPU and retail DGN entry anchor the candidate ordinal within
 96 bytes. It verifies 425 nearby same-entry anchor pairs with no conflicts.
-This adds six distinct face-row pointers (ten command observations): 93 of
-120 pointers and 111 of 138 records now join to retail Structure3 rows. The
-other 27 pointers remain unresolved. This is one authentic capture and does
+This adds six distinct face-row pointers (ten command observations): 97 of
+120 pointers and 115 of 138 records now join to retail Structure3 rows. The
+other 23 pointers remain unresolved. Re-running the hash-verified analyzer
+against the retained Ymir capture and all 16 canonical retail DGN files
+reproduced these counts. Testing cyclic-rotation candidates against the
+captured pointer-stride anchors did not uniquely resolve any additional row.
+This is one authentic capture and does
 not prove material ownership, all-frame face selection, pixel ownership, or
 production renderer admission. See
 [`docs/nexus/ymir_face_to_vdp1_command_trace.md`](docs/nexus/ymir_face_to_vdp1_command_trace.md).
