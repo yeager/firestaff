@@ -8,6 +8,8 @@ import csv
 import json
 from pathlib import Path
 
+EXPECTED_ROWS = 224
+
 
 class AuditError(ValueError):
     pass
@@ -64,6 +66,8 @@ def audit(render_state_path: Path, snapshot_index_path: Path,
         ys = [sample[0] for sample in samples]
         if len(set(ys)) != len(ys):
             raise AuditError(f"duplicate row samples for pass {key}")
+        if ys != list(range(EXPECTED_ROWS)):
+            raise AuditError(f"pass {key} lacks complete 0:{EXPECTED_ROWS} row coverage")
         values = {enabled for _, enabled in samples}
         if len(values) != 1 or next(iter(values)) != snapshot_enabled:
             disagreements.append({
@@ -78,6 +82,9 @@ def audit(render_state_path: Path, snapshot_index_path: Path,
 
     if missing:
         raise AuditError(f"render-state passes missing indexed snapshots: {missing[:8]}")
+    unobserved = sorted(set(snapshots) - set(rows_by_pass))
+    if unobserved:
+        raise AuditError(f"indexed snapshots missing render-state passes: {unobserved[:8]}")
     return {
         "result": "PASS" if not disagreements else "MISMATCH",
         "render_state_passes": len(rows_by_pass),
