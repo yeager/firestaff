@@ -626,14 +626,42 @@ The endpoint registers confirm the 512×256, 8bpp NBG0 bitmap at base zero
 (`TVMD=0x8000`, `BGON=1`, `CHCTLA=0x0013`, `PLSZ=2`, `BMPNA=0`).
 
 This proves one row's storage and write values across the captured run. It does
-not identify the complete NBG0 bitmap producer, prove the SH-2 read values at
-transfer time, or bind the row to visible NBG0 layer pixels. The frame-8037
-layer-output receipt remains incomplete, so title composition parity is still
-unverified.
+not identify the complete NBG0 bitmap producer or prove the SH-2 read values at
+transfer time. A follow-up same-run composition replay is recorded below.
 
-It does not identify the full title background or prove which pixels survive
-VDP1/VDP2 composition on the screen. Full native title presentation and
-Firestaff renderer parity remain unproven.
+### 2026-11-02 — Cold-boot rendered title composition
+
+A second isolated authentic Japanese cold boot captured Ymir's composed
+software-renderer output for VDP1 frame 8037. It used the same hash-verified
+Japanese CUE and IPL, no save state or game save, and the documented BIOS/date
+and title-input schedule. Ymir produced two 320×224 RGBX8888LE buffers at VDP2
+serials 9118 and 9119. Both passes contain 224 main-field row samples, rows
+0–223, with NBG0 enabled; their rendered RGB buffers are byte-identical at
+SHA-256
+`0a37fe5d4c31821001f0b6973e8c768150ef3a35429b581ebd8131fa34802602`. The
+640×448 Ymir screenshot is an exact 2× nearest-neighbor expansion of the
+composed buffer across all 286,720 RGB pixels. It shows the retail Japanese
+title and New Game / Continue / Configuration menu.
+
+Firestaff's existing capture-only frame-8037 compositor was run with the new
+cold-boot dumps and both Ymir pass buffers. It matched all 71,680 RGB pixels
+in each pass with zero differences (`direct=70,185`, `palette=1,495`,
+`NBG0-overlay=18,513`). The fresh capture's VDP1 trace, VDP1 framebuffer and
+registers, and VDP2 VRAM, CRAM, and registers are byte-identical to the
+previously retained frame-8037 capture. Evidence, original receipts, the
+rendered buffers, and their SHA-256 manifest are retained at
+`firestaff-evidence/nexus/nexus-title-menu-render-20261102/` on Extern-disk.
+
+The row-state receipt intentionally remains `capture_status=incomplete`:
+its VDP1-frame contract expects 224 samples but receives 448 because two full
+VDP2 passes share this VDP1 frame label. Each pass independently has complete
+224-row coverage, and the separate rendered-frame receipt is complete. The
+incomplete row receipt is preserved; it is not used as a substitute for the
+direct pixel comparison. This verifies Firestaff's bounded capture-only
+composition against Ymir for this title frame, not hardware parity, full
+retail source ownership, or production-renderer admission. The complete title
+background producer and live display consumer remain unbound, so the
+production title gate stays closed.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
