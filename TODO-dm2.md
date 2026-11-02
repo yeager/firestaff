@@ -3097,3 +3097,11 @@ description, weight text/state, chest and moneybox contents, charges, and
 item-type-specific potion/weapon/armor/miscellaneous power bars. Update the
 source inventories to PARTIAL; implement and bind the remaining source branches
 for DOS and SPX before claiming item-survey parity.
+
+2026-11-02 SKProject `DRAW_SCROLL_TEXT` / `DRAW_HAND_ACTION_ICONS`:
+The source inventory already marks DOS/SPX definitions PARTIAL. The named audit
+was overclaiming parity: Firestaff's scroll helper queries a message but does
+not parse and lay out source lines, and its hand-action helper draws a single
+direction-selected icon without all source state, background and empty-hand
+branches. Corrected both named-symbol families to PARTIAL pending full source
+rendering and runtime ownership.
