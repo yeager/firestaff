@@ -280,12 +280,9 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
             frame = int(capture["current_vdp1_frame_index"])
             expected_rows = int(capture["trace_rows"])
             dropped = int(capture["trace_dropped_total"])
-            first_frame = int(capture["first_vdp1_frame_index"])
-            last_frame = int(capture["last_vdp1_frame_index"])
         except (KeyError, ValueError) as error:
             raise ValueError("Ymir VDP2 memory receipt is incomplete or malformed") from error
-        if (frame < 0 or first_frame < 0 or first_frame > last_frame or
-                last_frame > frame or expected_rows < 1 or dropped != 0 or
+        if (frame < 0 or expected_rows < 0 or dropped != 0 or
                 capture.get("bundle_complete") != "1" or
                 capture.get("trace_file_complete") != "1" or
                 capture.get("vdp2_vram_file_complete") != "1" or
@@ -294,31 +291,37 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
         try:
             with (bundle / "vdp2-memory-write-trace.csv").open(
                     encoding="ascii", newline="") as stream:
-                rows = list(csv.DictReader(stream))
+                reader = csv.DictReader(stream)
+                if reader.fieldnames != ["vdp1_frame", "memory", "address", "width", "value"]:
+                    raise ValueError("Ymir VDP2 trace header is invalid")
+                rows = list(reader)
         except (OSError, UnicodeError) as error:
             raise ValueError("Ymir VDP2 write trace is unreadable") from error
-        if len(rows) != expected_rows or not rows:
+        if len(rows) != expected_rows:
             raise ValueError("Ymir VDP2 write trace row count does not match its receipt")
-        if any(row.get("vdp1_frame") == "unknown" for row in rows):
-            raise ValueError("Ymir VDP2 trace contains writes without frame identity")
-        try:
-            frame_indexes = [int(row["vdp1_frame"]) for row in rows]
-            if (min(frame_indexes) != first_frame or
-                    max(frame_indexes) != last_frame or last_frame > frame):
-                raise ValueError("Ymir VDP2 trace frame range does not match its receipt")
-            for row in rows:
-                space = row["memory"]
-                address = int(row["address"], 16)
-                width = int(row["width"])
-                value = int(row["value"], 16)
-                limit = (512 * 1024 if space == "VRAM" else
-                         4096 if space == "CRAM" else 0)
-                if (limit == 0 or width not in (1, 2) or address < 0 or
-                        address + width > limit or value < 0 or
-                        value >= 1 << (width * 8)):
-                    raise ValueError("Ymir VDP2 trace contains an invalid memory write")
-        except (KeyError, TypeError, ValueError) as error:
-            raise ValueError("Ymir VDP2 trace does not match its frame receipt") from error
+        if rows:
+            try:
+                first_frame = int(capture["first_vdp1_frame_index"])
+                last_frame = int(capture["last_vdp1_frame_index"])
+                frame_indexes = [int(row["vdp1_frame"]) for row in rows]
+                if (any(row.get("vdp1_frame") == "unknown" for row in rows) or
+                        first_frame < 0 or first_frame > last_frame or
+                        last_frame > frame or min(frame_indexes) != first_frame or
+                        max(frame_indexes) != last_frame):
+                    raise ValueError("Ymir VDP2 trace frame range does not match its receipt")
+                for row in rows:
+                    space = row["memory"]
+                    address = int(row["address"], 16)
+                    width = int(row["width"])
+                    value = int(row["value"], 16)
+                    limit = (512 * 1024 if space == "VRAM" else
+                             4096 if space == "CRAM" else 0)
+                    if (limit == 0 or width not in (1, 2) or address < 0 or
+                            address + width > limit or value < 0 or
+                            value >= 1 << (width * 8)):
+                        raise ValueError("Ymir VDP2 trace contains an invalid memory write")
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError("Ymir VDP2 trace does not match its frame receipt") from error
     else:
         capture = receipt(bundle / "vdp1-capture-bundle.txt",
                           "ymir-vdp1-capture-bundle-v1")
