@@ -11940,7 +11940,16 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->dirty = 0;
 }
 
-extern const int8_t dm2_guidraw_table1d275a[32][2];
+/* SKProject c_gui_draw.cpp::table1d275a. Keep the active M11 renderer's
+ * source scatter data in its production translation unit; the legacy
+ * callback transcription carrying the original public symbol is test-only. */
+static const int8_t dm2_v1_moneybox_scatter_offsets[32][2] = {
+    {-2,10}, {-8,3}, {7,-3}, {-6,10}, {8,-7}, {-8,11}, {2,-2},
+    {8,-11}, {0,0}, {4,8}, {-8,-10}, {6,7}, {2,2}, {-6,9}, {-3,-11},
+    {2,11}, {0,-11}, {-5,-7}, {-3,3}, {8,11}, {0,-5}, {6,-9},
+    {-7,3}, {5,1}, {4,-7}, {-8,-3}, {8,3}, {-3,-2}, {0,7}, {-3,-4},
+    {-4,0}, {2,-11}
+};
 
 static uint32_t dm2_v1_moneybox_hash_step(uint32_t hash, uint32_t value)
 {
@@ -12082,8 +12091,8 @@ static void dm2_v1_render_moneybox_panel(DM2_V1_ViewportState *s)
         if (count > 32) count = 32;
         for (int coin = 0; coin < count; ++coin) {
             position = (position + 1) & 31;
-            offsets[coin][0] = dm2_guidraw_table1d275a[position][0];
-            offsets[coin][1] = dm2_guidraw_table1d275a[position][1];
+            offsets[coin][0] = dm2_v1_moneybox_scatter_offsets[position][0];
+            offsets[coin][1] = dm2_v1_moneybox_scatter_offsets[position][1];
         }
         if (!dm2_v1_render_moneybox_image(
                 s, DM2_GDAT_CATEGORY_MISCELLANEOUS, item & 0xffu,
