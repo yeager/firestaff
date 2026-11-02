@@ -93,7 +93,13 @@ renderer. The renderer uses the source frame rect `0x5c`, denomination rects
 the source table. This closes the missing runtime draw owner. It does not
 establish interactive parity yet: SKProject `CLICK_MONEYBOX` and
 `TAKE_COIN_FROM_WALLET` still need to be traced through M11 for deposit and
-withdraw, and the render and pointer routes have not been verified on DOS,
+withdraw. The existing wallet transcription is callback-driven; a live owner
+must keep both `DM2_V1_RecordPoolSet` and the corresponding `DungeonData`
+records/parent links coherent. Deposit can merge and deallocate a held DB10
+coin, while withdrawal can decrement a DB10 charge or detach its final coin;
+the source allocation/deallocation queue and leader-hand publication must be
+part of that same transaction. M11 currently has no such owner bound to
+events 228–233. The render and pointer routes have not been verified on DOS,
 Amiga, FM Towns, and Macintosh. Full moneybox parity remains **open**.
 
 ## Interpretation boundary
