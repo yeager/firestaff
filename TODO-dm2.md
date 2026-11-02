@@ -36,6 +36,18 @@ still lacks the source moverec `3CE7D` side effects and preserved-GFX cache
 cleanup, plus platform caller coverage. Keep all three rows `PARTIAL` and
 track SPX-v4 compatibility mode separately from the shared mechanics.
 
+2026-11-02 skproject DOS/v5 `COMPACT_TIMERLIST` save-path review:
+Both save writers call the operation after writing record arrays and running
+`1c9a_3bab`/`DM2_1c9a_3bab`, then serialize the compacted timer array and its
+count. The Firestaff orchestrator extracts timer links for record-checkcode
+handling but never mutates the live timer array or invokes this helper; its
+load-side sort/rearrange routines are not a substitute for the save-time
+compact, sort and `3a15_020f` sequence. The helper also scans forward without
+a caller-provided capacity until a nonempty source entry appears, matching
+the source's valid-empty-tail assumption but leaving corrupt/missing sentinel
+behavior unbounded. Keep DOS and v5 partial until a transactional live-save
+owner binds the ordered operation and bounds its source array.
+
 2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
 113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
 field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
