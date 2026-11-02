@@ -2878,3 +2878,15 @@ SKWIN/SKULLWIN `NOT_APPLICABLE_ARCH` dispositions were too broad because this
 routine owns gameplay UI behavior; both are now `PARTIAL`. All four active
 DOS/SPX definitions also remain `PARTIAL` until their source state gates,
 remaining panels, callbacks, and supported platform routes are covered.
+
+2026-11-02 SKProject 14cd_102e audit correction:
+Compared DOS, SPX v4, SPX v5 and SKULLWIN recursive creature item counters.
+SPX/SKULLWIN recurse into creature possessions and optionally chests, then
+count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT.
+DOS recurses similarly but applies its distinct SKW_1c9a_0006 class predicate.
+Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count,
+but no production XACT/AI caller binds source item/action state, and DOS
+selection semantics are not represented. The legacy named-symbol ledger's
+IMPLEMENTED_PARITY disposition overstated completion; it and the active
+DOS/SPX definitions are now PARTIAL pending exact variant behavior and
+supported-platform route coverage.
