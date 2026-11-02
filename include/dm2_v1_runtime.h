@@ -1672,6 +1672,10 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Activate the source hand event for a party-relative screen slot (0..3).
+ * The runtime resolves it through party direction and current formation,
+ * matching SKProject's GET_PLAYER_AT_POSITION remap. */
+int dm2_v1_runtime_activate_action_hand_at_position(int position, int hand);
 /* Source UI events 125..128 start/commit a formation drag; event 129
  * recomputes at the pending source slot without updating facing. Both use
  * the source CHANGE_PLAYER_POS owner and authenticated GAME_LOAD party. */

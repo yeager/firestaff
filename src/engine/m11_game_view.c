@@ -44007,7 +44007,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 return m11_process_dm2_v1_c080_click(state, x, y);
             case 116: case 117: case 118: case 119:
             case 120: case 121: case 122: case 123:
-                if (dm2_v1_runtime_activate_action_hand(
+                if (dm2_v1_runtime_activate_action_hand_at_position(
                         (input_receipt.event_index - 116u) / 2u,
                         (input_receipt.event_index - 116u) % 2u))
                     return M11_GAME_INPUT_REDRAW;

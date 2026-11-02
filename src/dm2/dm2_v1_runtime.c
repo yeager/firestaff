@@ -20853,7 +20853,11 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         return 0;
     }
     hero = &rt->source_party.hero[hero_index];
-    if (hero->curHP == 0) return 0;
+    /* SKWINSPX/src/v5/uiinput.cpp::DM2_ADJUST_UI_EVENT rejects hand-click
+     * events while that hand's cooldown is active, before dispatching
+     * ACTIVATE_ACTION_HAND. Keep this guard in the runtime owner as well so
+     * every authenticated platform input route observes the same gate. */
+    if (hero->curHP == 0 || hero->handcooldown[hand] != 0) return 0;
     memset(&callbacks, 0, sizeof(callbacks));
     memset(&activation_receipt, 0, sizeof(activation_receipt));
     memset(&query, 0, sizeof(query));
@@ -20896,6 +20900,16 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
             rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
     }
     return 1;
+}
+
+int dm2_v1_runtime_activate_action_hand_at_position(int position, int hand) {
+    int hero_index;
+    if (position < 0 || position > 3 || hand < 0 || hand > 1) return 0;
+    hero_index = dm2_runtime_formation_get_player_at_position(
+        &g_dm2_runtime,
+        (dm2_v1_runtime_get_party_dir() + position) & 3);
+    if (hero_index < 0) return 0;
+    return dm2_v1_runtime_activate_action_hand(hero_index, hand);
 }
 
 int dm2_v1_runtime_select_spell_champion(int hero_index) {
