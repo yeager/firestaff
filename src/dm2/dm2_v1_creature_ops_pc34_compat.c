@@ -2,6 +2,7 @@
 
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include <stddef.h>
+#include <string.h>
 
 #define OBJECT_END_WORD 0xFFFEu
 
