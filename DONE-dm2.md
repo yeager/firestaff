@@ -1,3 +1,10 @@
+- 2026-11-02: Fixed DM2 post-load inventory-weight handling for signed empty
+  item handles and retained-state-only owners without materialized item data.
+  The post-load global-effects executable passed; authentic DOS New Game,
+  lighting and DOS/Amiga/FM Towns pit runtime checks also passed. The broader
+  SKProject helper executable still reports two unrelated pre-existing
+  failures (temporary cache allocation and SPX v4 diagonal spell mapping).
+
 - 2026-11-02: Rebuilt the current release candidate and passed the authentic
   DM2 New Game selection tests for DOS, Amiga, FM Towns and Macintosh (4/4).
   These cover the DOS GDAT mirror selection and the corresponding platform

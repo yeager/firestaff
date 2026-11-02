@@ -16,6 +16,8 @@
 - `Incomplete-data diagnostics`: change scan ownership rules to preserve DM1 and DM2 graphics-edition matches when paired dungeon files are missing; launch stays unavailable until all required data is present.
 - `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
 - `DM2 HUD geometry`: use the authentic RAW4 5×26 source status rectangles to verify vertical bar-fill orientation while retaining the horizontal fallback-bar contract.
+- `DM2 tile-actuator lookup`: match SKProject's DB0–DB3 record cutoff, direction exception, and endian-specific word reads; compare against authentic DOS EN/FR, FM Towns JA and Mac EN dungeon data.
+- `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
 
 ## DM1
 

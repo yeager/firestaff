@@ -202,9 +202,12 @@ static int dm2_v1_sksave_owner_recompute_inventory_weights(
 {
     uint16_t hero_index;
 
-    if (!owner || !owner->record_pools.valid || !owner->asset_loader ||
-        !owner->asset_loader->loaded ||
-        owner->state.champion_count > DM2_MAX_HEROES) return 0;
+    if (!owner || owner->state.champion_count > DM2_MAX_HEROES) return 0;
+    /* The post-load timer pass is also used with retained-state-only owners.
+     * Keep that pass usable when item records are not materialized; callers
+     * retain the blocked marker and leave the saved weights untouched. */
+    if (!owner->record_pools.valid || !owner->asset_loader ||
+        !owner->asset_loader->loaded) return 1;
     for (hero_index = 0u; hero_index < owner->state.champion_count;
          ++hero_index) {
         DM2_V1_Hero *hero = &owner->heroes[hero_index];
@@ -212,15 +215,17 @@ static int dm2_v1_sksave_owner_recompute_inventory_weights(
         uint16_t slot;
 
         for (slot = 0u; slot < DM2_NUM_ITEMS; ++slot) {
-            uint16_t item = (uint16_t)hero->item[slot];
+            int16_t item_handle = hero->item[slot];
+            uint16_t item;
             DM2_V1_SourceItemWeightReceipt weight;
             int db_type;
 
-            if (item == DM2_V1_RECORD_HANDLE_NULL) continue;
-            if (item == DM2_V1_RECORD_HANDLE_END ||
+            if (item_handle == DM2_V1_RECORD_HANDLE_NULL) continue;
+            if (item_handle == DM2_V1_RECORD_HANDLE_END ||
                 !dm2_v1_record_pool_address(&owner->record_pools,
-                                             (int16_t)item)) return 0;
-            db_type = dm2_v1_record_handle_pool((int16_t)item);
+                                             item_handle)) return 0;
+            item = (uint16_t)item_handle;
+            db_type = dm2_v1_record_handle_pool(item_handle);
             /* Source item-weight queries are zero for non-item DB records.
              * The inventory root still has to be an authenticated record. */
             if (db_type < 5 || db_type > 10) continue;
