@@ -32,6 +32,7 @@
 - `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
 - `Nexus diagnostic-output verification`: compare authentic-media CLI startup with and without `--debug`; normal startup suppresses engine/UI/audio/font traces, while the explicit boot probe retains its startup summary.
 - `Apple IIGS nested 7z lookup`: fix cached solid-7z hash collection to retain every authentic ProDOS file owner.
+- `DM1 mouse-coordinate audit`: update the callable-symbol inventory for F2047/F2048, marking caller-owned accessors partial while Amiga window/event ownership remains unverified.
 
 ## DM1
 

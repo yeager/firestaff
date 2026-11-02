@@ -1500,8 +1500,8 @@ F2030_FreeHintOracleTexts	F	FreeHintOracleTexts	HINT001.C:204	-	MISSING	No exact
 F2042_InitializeScreen	F	InitializeScreen	HINT001.C:60	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2043_UninitializeScreen	F	UninitializeScreen	HINT001.C:70	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2045_FadeToPalette	F	FadeToPalette	CEDTINCI.C:315	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F2047_GetMouseX	F	GetMouseX	FILLBOX.C:837	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F2048_GetMouseY	F	GetMouseY	FILLBOX.C:843	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F2047_GetMouseX	F	GetMouseX	FILLBOX.C:837	src/dm1/dm1_v1_input_command_queue_pc34_compat.c:F2047_GetMouseX; F2009_GetMouseX	PARTIAL	Firestaff returns X from explicit caller-owned mouse status. ReDMCSB Amiga F2047 reads MouseX from the FTL DRIA Intuition window; equivalent Amiga event/window ownership and CSB callers remain unverified.
+F2048_GetMouseY	F	GetMouseY	FILLBOX.C:843	src/dm1/dm1_v1_input_command_queue_pc34_compat.c:F2048_GetMouseY; F2010_GetMouseY	PARTIAL	Firestaff returns Y from explicit caller-owned mouse status. ReDMCSB Amiga F2048 reads MouseY from the FTL DRIA Intuition window; equivalent Amiga event/window ownership and CSB callers remain unverified.
 F2060_ShowPointer	F	ShowPointer	CEDT018.C:822	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2065_Checksum	F	Checksum	CEDT018.C:6	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F2072_HidePointer	F	HidePointer	CEDT018.C:955	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
