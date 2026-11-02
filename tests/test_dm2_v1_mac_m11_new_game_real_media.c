@@ -11,6 +11,7 @@
 #include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_mac_input.h"
 #include "render_sdl_m11.h"
+#include "dm2_v1_action_hand_pointer_real_media_check.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1572,6 +1573,10 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
+    }
+    if (!dm2_v1_test_action_hand_pointer_real_media(&view, "Macintosh")) {
+        M11_GameView_Shutdown(&view);
+        return 1;
     }
     puts("PASS: authentic Mac M11 NEW GAME reaches active runtime");
     M11_GameView_Shutdown(&view);
