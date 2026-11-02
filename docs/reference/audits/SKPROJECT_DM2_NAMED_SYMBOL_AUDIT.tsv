@@ -1080,6 +1080,9 @@ DEBUG_DUMP_ULP	SKULLWIN	SKULLWIN/dm2debug.cpp	178		NOT_APPLICABLE_ARCH	-
 DEBUG_SKLOADENT	SKULLWIN	SKULLWIN/dm2debug.cpp	246		NOT_APPLICABLE_ARCH	-
 DEBUG_SKGDATENT	SKULLWIN	SKULLWIN/dm2debug.cpp	266		NOT_APPLICABLE_ARCH	-
 DM2_UPDATE_GLOB_VAR	SKULLWIN	SKULLWIN/dm2global.cpp	21	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_update_glob_var; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_UPDATE_GLOB_VAR
+SKW_UPDATE_GLOB_VAR	SKWINDOS	SKWINDOS/dm2bya.cpp	4664	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_update_glob_var; src/dm2/dm2_v1_glob_var.c:dm2_v1_update_glob_var_direct	IMPLEMENTED_PARITY	Matches operations 0-6 and source bit/byte/word index ranges, including byte clamp and source-width arithmetic.
+UPDATE_GLOB_VAR	SKWINSPX	SKWINSPX/src/v4/skgame.cpp	521	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_update_glob_var; src/dm2/dm2_v1_glob_var.c:dm2_v1_update_glob_var_direct	IMPLEMENTED_PARITY	Matches source operation switch, bit/byte/word storage ranges, byte clamp, and 16-bit result behavior.
+DM2_UPDATE_GLOB_VAR	SKWINSPX	SKWINSPX/src/v5/dm2globl.cpp	21	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_update_glob_var; src/dm2/dm2_v1_glob_var.c:dm2_v1_update_glob_var_direct	IMPLEMENTED_PARITY	Matches the operation switch and bit/byte/word storage classes, including unsupported-index no-write behavior and source-width arithmetic.
 bpeek	SKULLWIN	SKULLWIN/emu.cpp	10		NOT_APPLICABLE_ARCH	-
 wpeek	SKULLWIN	SKULLWIN/emu.cpp	11		NOT_APPLICABLE_ARCH	-
 lpeek	SKULLWIN	SKULLWIN/emu.cpp	12		NOT_APPLICABLE_ARCH	-

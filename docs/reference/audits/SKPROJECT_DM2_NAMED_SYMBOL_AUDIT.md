@@ -720,4 +720,4 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,820 as `UNREVIEWED`, 1,022 as `PARTIAL`, 0 as `MISSING`, and 83 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,817 as `UNREVIEWED`, 1,022 as `PARTIAL`, 0 as `MISSING`, and 86 as `IMPLEMENTED_PARITY`.
