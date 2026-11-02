@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,877 unreviewed, 975 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,877 unreviewed, 1,056 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,876 unreviewed, 976 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,876 unreviewed, 1,057 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
@@ -967,3 +967,7 @@ SKProject `CALL_ENCHANTMENT_SELF` (`SKWINSPX/src/v4/skchamp.cpp:1041-1060`) appl
 ### DM2 SPX v4 CD.DAT music trigger coordinates (2026-11-02)
 
 Compared SKProject `CHECK_TRIGGER_MUSIC_FROM_PLAYER_POSITION` (`SKWINSPX/src/v4/skgame.cpp:3236-3268`) and its movement caller (`skgame.cpp:2512`) with Firestaff's CDDA route. SKProject scans ten triggers after adding the selected map's `MapOffsetX`/`MapOffsetY` to the local party square and uses `Map::Level()` as the trigger's floor key. Firestaff previously passed the raw map index and local coordinates into the DMWeb format-1 40-byte CD.DAT parser. The live FM Towns route now resolves the loaded map offsets and floor number before lookup, and rejects coordinates outside the byte key domain instead of truncating them. The Mega CD route remains unavailable in `dm2_v1_boot_music_track_for_level`, and independent supported-platform runtime/cue evidence remains open; retain `PARTIAL`.
+
+### DM2 SPX v4 dynamic-light recalculation (2026-11-02)
+
+Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-2227`) with Firestaff's runtime light pass. V4 queries graphics-set word 0x6d, clears the request and current/previous light accumulators when the result is zero, otherwise caps the radius at 8, performs one mode-7 `FIND_WALK_PATH`, compares precomputed light and modifier accumulators, conditionally calls `RECALC_LIGHT_LEVEL`, and clears `glbDoLightCheck`. Firestaff's current runtime pass includes mode 8 and mode 7 for its v5/SKULLWIN contract, and the generic dirty-flag helper is not this v4 function. Edition selection, exact recalculation, deferred frame ordering, and platform runtime evidence remain open; keep `PARTIAL`.
