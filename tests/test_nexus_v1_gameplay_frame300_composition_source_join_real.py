@@ -24,6 +24,7 @@ VDP1_LAYER = 0
 RETAIL_SOURCE_KINDS = {
     "retail-dgn-indexed",
     "retail-dgn-direct-rgb",
+    "retail-menu-bpk-mode4",
 }
 CAPTURE_SOURCE_KINDS = {
     "captured-mode4-vram",
@@ -141,7 +142,7 @@ def main() -> int:
             return 1
         expected_source_owner_counts = Counter({
             "retail-dgn-indexed": 65500,
-            "captured-mode4-vram": 431,
+            "retail-menu-bpk-mode4": 431,
             "captured-polyline": 60,
         })
         if source_owner_counts != expected_source_owner_counts:
@@ -162,7 +163,7 @@ def main() -> int:
         sys.stderr.write(join.stderr)
         if join.returncode != 0:
             return join.returncode
-        print("PASS: the authentic frame-300 capture passed VDP1 command/source ownership, VDP2 pixel composition, and retail DGN source-join checks")
+        print("PASS: the authentic frame-300 capture passed VDP1 command/source ownership, VDP2 pixel composition, retail DGN joins, and retail MENU.BPK sprite/palette joins")
     return 0
 
 

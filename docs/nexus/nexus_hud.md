@@ -128,8 +128,19 @@ to DGN bytes, but does not bind the visible status bars to STABG, HUD widgets,
 or live champion state. HUD placement, CLUT ownership, and runtime value
 binding therefore remain gated.
 
+The same frame's normal 8bpp sprite at command row 80 is now joined to Japanese
+retail `MENU.BPK` entry 144: its decoded 16x41 indexed surface matches all 656
+captured VDP1 VRAM bytes at offset `0x643c0`, and each nontransparent palette
+index used by the sprite matches the same-frame VDP2 CRAM entry. This accounts
+for the row's 431 visible pixels as a retail menu-archive sprite. The DMA
+writer's source bytes at transfer time have not yet been captured, and this
+single sprite join does not identify the whole-screen HUD or bind it to live
+champion state. The capture-only regression verifies the source and palette
+join while keeping runtime renderer admission closed.
+
 ## Next Steps
-1. Bind HUD widget ownership and placement from an authenticated Saturn capture.
+1. Bind the remaining HUD widget ownership and placement from authenticated
+   Saturn captures, including status values and their original-data sources.
 2. Bind FACE.BIN palette/VDP1 command ownership before portrait blit.
 3. Bind FONT256/SLEV text and attribute consumers before message rendering.
 4. Bind SMAP00-15 VDP2 placement and explored-state writes.

@@ -67,13 +67,19 @@
   65,500 visible VDP1 pixels map to retail indexed `LEV01.DGN` rows. The 15
   direct-RGB DGN draws join retail data but own no final visible pixels in
   this capture. The remaining 491 CRAM pixels map to captured polyline row 79
-  (60) and mode-4 sprite row 80 (431).
+  (60) and Japanese retail `MENU.BPK` entry 144 at sprite row 80 (431).
 - The combined real-data regression now asserts this exact source-class
   distribution alongside the full VDP2 RGB match and command/source joins. It
   also checks that each visible VDP1 pixel matches between the replay and
   display framebuffer planes before counting command owners.
-  It does not establish selected Structure3 face ownership or production
-  renderer admission. Details are in
+- Sprite row 80's 431 visible pixels are now additionally joined to Japanese
+  retail `MENU.BPK` entry 144: decoded indexed bytes match the captured 16x41
+  VDP1 texture, and every used nontransparent PALT word matches same-frame
+  VDP2 CRAM. The DMA-time source payload remains unobserved; this is a
+  capture-only source/palette join, not renderer admission or whole-HUD state
+  ownership.
+- This still does not establish selected Structure3 face ownership or
+  production renderer admission. Details are in
   [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).
 
 ## 2026-11-01 — Match an authentic gameplay VDP pass in Firestaff
