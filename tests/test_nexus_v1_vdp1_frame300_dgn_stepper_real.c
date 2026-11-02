@@ -28,9 +28,8 @@ typedef enum {
     ROW_DGN_INDEXED,
     ROW_DGN_DIRECT_RGB,
     ROW_CAPTURED_TRANSPARENT,
-    ROW_CAPTURED_POLYLINE,
+    ROW_RETAIL_VDP1_POLYLINE,
     ROW_CAPTURED_POLYGON,
-    ROW_CAPTURED_MODE4,
     ROW_RETAIL_MENU_BPK_MODE4
 } RowSourceKind;
 
@@ -44,9 +43,8 @@ static const char *row_source_kind_name(RowSourceKind kind)
     case ROW_DGN_INDEXED: return "retail-dgn-indexed";
     case ROW_DGN_DIRECT_RGB: return "retail-dgn-direct-rgb";
     case ROW_CAPTURED_TRANSPARENT: return "captured-transparent";
-    case ROW_CAPTURED_POLYLINE: return "captured-polyline";
+    case ROW_RETAIL_VDP1_POLYLINE: return "ymir-retail-vdp1-polyline-command";
     case ROW_CAPTURED_POLYGON: return "captured-polygon";
-    case ROW_CAPTURED_MODE4: return "captured-mode4-vram";
     case ROW_RETAIL_MENU_BPK_MODE4: return "retail-menu-bpk-mode4";
     case ROW_UNSET: default: return "unset";
     }
@@ -553,14 +551,33 @@ int main(int argc, char **argv)
                     input.user_clip_x1 = user_x1;
                     input.user_clip_y1 = user_y1;
                     input.single_density_verified = 1;
-                    if (parsed.command_type != 5U ||
+                    if (parsed.command_type != 5U || parsed.texture_command ||
+                        parsed.texture_byte_count != 0U ||
+                        parsed.draw_mode != 0x00e0U ||
+                        parsed.colour_control != 0x7083U ||
+                        read_le16(command + 6U) != 0x7083U ||
+                        ((parsed.colour_control >> 12U) & 7U) != 7U ||
+                        (parsed.colour_control & 0x03ffU) != 0x0083U ||
+                        read_be16(cram.bytes + 0x0083U * 2U) != 0xe73fU ||
+                        parsed.xa != 272 || parsed.ya != 8 ||
+                        parsed.xb != 287 || parsed.yb != 8 ||
+                        parsed.xc != 287 || parsed.yc != 23 ||
+                        parsed.xd != 272 || parsed.yd != 23 ||
                         !nexus_v1_vdp1_ymir_capture_rasterize_polyline(
                             surface, &input, &receipt) || !receipt.valid ||
-                        receipt.renderer_permitted || !receipt.capture_only) {
-                        fprintf(stderr, "stepper rejected authentic frame-300 polyline row %lu\n", index);
+                        receipt.renderer_permitted || !receipt.capture_only ||
+                        receipt.pixels_written != 64U) {
+                        fprintf(stderr, "stepper rejected frame-300 polyline row %lu: type=%u texture=%d bytes=%u pmod=%04x cmdcolr=%04x cram83=%04x xy=(%d,%d)-(%d,%d)-(%d,%d)-(%d,%d) valid=%d writes=%u\n",
+                            index, parsed.command_type, parsed.texture_command,
+                            parsed.texture_byte_count, parsed.draw_mode,
+                            parsed.colour_control, read_be16(cram.bytes + 0x0083U * 2U),
+                            parsed.xa, parsed.ya,
+                            parsed.xb, parsed.yb, parsed.xc, parsed.yc,
+                            parsed.xd, parsed.yd, receipt.valid,
+                            receipt.pixels_written);
                         goto done;
                     }
-                    row_sources[index] = ROW_CAPTURED_POLYLINE;
+                    row_sources[index] = ROW_RETAIL_VDP1_POLYLINE;
                     continue;
                 }
                 if (index == 80U) {

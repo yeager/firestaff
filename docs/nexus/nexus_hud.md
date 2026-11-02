@@ -138,6 +138,16 @@ single sprite join does not identify the whole-screen HUD or bind it to live
 champion state. The capture-only regression verifies the source and palette
 join while keeping runtime renderer admission closed.
 
+The other 60 previously capture-classified pixels come from command row 79, an
+authenticated untextured VDP1 polyline from the Ymir-captured Japanese retail
+execution. Its four vertices form a 16x16 outline at `(272,8)`–`(287,23)`;
+PMOD is `0x00e0` and CMDCOLR `0x7083` selects VDP2 CRAM entry `0x83` with
+priority index 7. That same-frame CRAM word is `0xe73f`. The integer line
+replay records 64 edge writes; four corners are written twice, so the command
+owns 60 unique pixels in the composed frame. The captured execution binds the
+pixels and palette entry to that VDP1 command, but the outline's HUD meaning
+and state owner remain unverified.
+
 ## Next Steps
 1. Bind the remaining HUD widget ownership and placement from authenticated
    Saturn captures, including status values and their original-data sources.

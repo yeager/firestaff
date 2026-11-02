@@ -89,11 +89,13 @@ records the last VDP1 command that wrote each replay pixel and joins that row
 to its source receipt. Before assigning owners, it verifies that every
 selected visible VDP1 pixel is identical in the replayed FBS buffer and the
 display FBS buffer. All 65,991 VDP1 pixels selected as the top VDP2 layer
-map to rows backed by retail DGN or authentic capture data. The 491 CRAM pixels
-split exactly into 60 pixels from captured polyline row 79 and 431 pixels from
-row 80, whose captured mode-4 texture is byte-joined to decoded Japanese
-retail `MENU.BPK` entry 144. Its used nontransparent PALT words also match
-same-frame VDP2 CRAM. The remaining 65,500 selected VDP1 pixels map
+map to rows backed by retail DGN, retail `MENU.BPK`, or the authentic Ymir
+command trace. The 491 CRAM pixels split into 60 pixels from Ymir-captured
+Japanese retail polyline command row 79, whose CMDCOLR selects same-frame CRAM
+entry `0x83` (`0xe73f`), and 431 pixels from row 80, whose captured mode-4
+texture is byte-joined to decoded Japanese retail `MENU.BPK` entry 144. Its
+used nontransparent PALT words also match same-frame VDP2 CRAM. The remaining
+65,500 selected VDP1 pixels map
 to retail indexed DGN rows. Fifteen direct-RGB DGN draws join retail data,
 but none owns a final visible pixel in this captured frame;
 the regression pins this per-pixel class distribution explicitly. Set the
@@ -109,7 +111,9 @@ The pixel ownership link identifies the last command and source class for
 visible VDP1 pixels; it does not establish a selected Structure3 face for each
 pixel. Only 66 of 68 textured commands have retail DGN material matches; the
 431 mode-4 pixels are MENU.BPK-backed and still replayed from the matching
-capture texture, while the 60 polyline pixels remain capture-backed. Active
+capture texture. The 60 polyline pixels are derived from the hash-pinned
+authentic command and same-frame CRAM entry `0x83`, though their UI meaning
+remains unknown. Active
 face selection and transform/culling remain unverified, so renderer admission
 remains blocked.
 
