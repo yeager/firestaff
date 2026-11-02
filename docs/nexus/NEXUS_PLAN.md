@@ -88,6 +88,11 @@ is a Sega Saturn 3D polygon remake of DM1.
 - Perspective-correct texture mapping
 - Z-buffer or painter's algorithm
 - 320x224 native, then EPX upscale
+- Authentic Ymir `--debug` traces now join SH-2 projected-coordinate staging
+  to frame-local VDP1 commands for eight consecutive frames in paired control
+  and Up-input captures. Retail face ownership, material/pixel ownership, full
+  VDP1+VDP2 parity, and production admission remain unresolved; see
+  [`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md).
 
 ### 3.2 V1: Saturn faithful — requires a source-owned Saturn scene witness
 - Original 320x224 resolution

@@ -1,5 +1,23 @@
 # Nexus: verified completion status
 
+## Consecutive-frame SH-2 staging to VDP1 geometry — 2026-11-02
+
+The authentic Japanese retail Ymir `--debug` movement pair now verifies the
+four SH-2 coordinate staging writes against frame-local VDP1 command geometry
+for eight consecutive frames, 1598–1605. The control capture joins all 138
+staging records in each frame to unique commands (1,104/1,104 overall); the
+paired Up-input capture joins all 132 records in each frame (1,056/1,056).
+Both trace receipts are complete with zero dropped rows. Across the eight
+frames, all 1,056 shared frame/address records contain different XY words after
+the Up input; 48 additional control records are absent from the Up trace.
+
+This establishes input-sensitive projected XY values reaching VDP1 command
+records for this state and window. It does not bind every row to a retail DGN
+face, prove winding for cyclic or unordered matches, establish material or
+pixel ownership, verify complete VDP1+VDP2 composition, or enable production
+renderer admission. The analysis command and per-frame match counts are in
+[`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md).
+
 ## Row-80 SCU-DMA source join — 2026-11-02
 
 A complete cold-boot Ymir capture records SCU transfer 3303 writing 1,312
