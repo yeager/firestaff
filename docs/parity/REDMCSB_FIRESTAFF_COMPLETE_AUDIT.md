@@ -971,3 +971,10 @@ Compared SKProject `CHECK_TRIGGER_MUSIC_FROM_PLAYER_POSITION` (`SKWINSPX/src/v4/
 ### DM2 SPX v4 dynamic-light recalculation (2026-11-02)
 
 Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-2230`) with Firestaff's runtime light pass. V4 queries graphics-set word 0x6d, clears the request and current/previous light accumulators when the result is zero, otherwise caps the radius at 8, performs one mode-7 `FIND_WALK_PATH`, compares precomputed light and modifier accumulators, conditionally calls `RECALC_LIGHT_LEVEL`, and clears `glbDoLightCheck`. Firestaff's current runtime pass includes mode 8 and mode 7 for its v5/SKULLWIN contract, and the generic dirty-flag helper is not this v4 function. Edition selection, exact recalculation, deferred frame ordering, and platform runtime evidence remain open; keep `PARTIAL`.
+
+
+### DM2 CLICK_MONEYBOX review (2026-11-02)
+
+Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
+
+Applying the active-source review overrides gives 2,851 unreviewed, 1,001 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,953 open rows (2,851 unreviewed, 1,100 partial source or older-ledger rows, 0 missing, 2 partial source owners).

@@ -328,7 +328,7 @@ DM2_CLICK_VWPT	SKULLWIN	SKULLWIN/c_events.cpp	1404		NOT_APPLICABLE_ARCH	DOS GUI 
 DM2_CLICK_INVENTORY_EYE	SKULLWIN	SKULLWIN/c_events.cpp	1846		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_ADD_RUNE_TO_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1871		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_REMOVE_RUNE_FROM_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1931		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
-DM2_CLICK_MONEYBOX	SKULLWIN	SKULLWIN/c_events.cpp	1941		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_CLICK_MONEYBOX	SKULLWIN	SKULLWIN/c_events.cpp	1941	src/dm2/dm2_v1_event_handlers_pc34_compat.c:dm2_v1_click_moneybox	PARTIAL	The SKULLWIN tree does not define this DOS UI event routine, but DOS dm2byh.cpp::SKW_CLICK_MONEYBOX and SPX v4/v5 define the same moneybox deposit/withdraw action. Firestaff has a callback helper, yet M11 leaves supported input events 228-233 unhandled and no live record/panel callbacks are bound; see the three platform-specific active-source review rows.
 DM2_events_2f3f_04ea	SKULLWIN	SKULLWIN/c_events.cpp	1996		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_events_2e62_0cfa	SKULLWIN	SKULLWIN/c_events.cpp	2153		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_FIND_SPELL_BY_RUNES	SKULLWIN	SKULLWIN/c_events.cpp	2211	dm2_v1_spell_cast_player.c:155	IMPLEMENTED_PARITY	-
