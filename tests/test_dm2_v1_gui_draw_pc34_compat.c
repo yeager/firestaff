@@ -214,6 +214,48 @@ static void test_draw_container_panel_keeps_frame_without_cls2_query(void) {
     assert(fixture.indices[0] == 0x10 && fixture.indices[1] == 0x12);
 }
 
+typedef struct ItemStatsBarFixture {
+    int16_t rect_id;
+    int16_t scale_num;
+    int16_t scale_den;
+    int scale_calls;
+} ItemStatsBarFixture;
+
+static DM2_V1_Rect *item_stats_bar_rect(void *ctx, int16_t id,
+                                       DM2_V1_Rect *out) {
+    (void)ctx;
+    (void)id;
+    *out = (DM2_V1_Rect){10, 20, 40, 5};
+    return out;
+}
+
+static DM2_V1_Rect *item_stats_bar_scale(void *ctx, int16_t id,
+                                         int16_t num, int16_t den,
+                                         DM2_V1_Rect *out) {
+    ItemStatsBarFixture *fixture = ctx;
+    fixture->rect_id = id;
+    fixture->scale_num = num;
+    fixture->scale_den = den;
+    fixture->scale_calls++;
+    *out = (DM2_V1_Rect){10, 20, 30, 5};
+    return out;
+}
+
+static void test_draw_item_stats_bar_maps_helper_arguments(void) {
+    ItemStatsBarFixture fixture = {0};
+    DM2_V1_GuiDrawCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.query_expanded_rect = item_stats_bar_rect;
+    cb.scale_rect = item_stats_bar_scale;
+
+    dm2_v1_draw_item_stats_bar(0x1f0, 75, 100, 'K', 5, &cb, &fixture);
+
+    assert(fixture.scale_calls == 1);
+    assert(fixture.rect_id == 0x1f0);
+    assert(fixture.scale_num == 7500);
+    assert(fixture.scale_den == 10000);
+}
+
 static void test_draw_item_icon_null_cb(void) {
     dm2_v1_draw_item_icon(0, 0, 0, 0, 0, NULL, NULL);
 }
@@ -465,6 +507,7 @@ int main(void) {
     RUN(test_draw_item_in_hand_null_cb);
     RUN(test_draw_container_panel_null_cb);
     RUN(test_draw_container_panel_keeps_frame_without_cls2_query);
+    RUN(test_draw_item_stats_bar_maps_helper_arguments);
     RUN(test_draw_item_icon_null_cb);
     RUN(test_draw_container_survey_null_cb);
     RUN(test_draw_eye_mouth_null_cb);

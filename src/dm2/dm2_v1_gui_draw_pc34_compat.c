@@ -1070,8 +1070,9 @@ void dm2_v1_draw_item_stats_bar(
         cb->query_expanded_rect(ctx, (int16_t)rectid, &rc) : NULL;
     if (!expanded) return;
 
-    /* Source order: value, color, min, rect, max, extra-color. */
-    dm2_v1_guidraw_24a5_0e82(value, color_idx, 0, rectid,
+    /* Map source arguments to the helper's value, rect, color, min,
+     * max, extra-color signature. */
+    dm2_v1_guidraw_24a5_0e82(value, rectid, color_idx, 0,
                               (int16_t)max_value, 1, cb, ctx);
 
     if (!cb->draw_strong_text) return;
