@@ -20938,6 +20938,7 @@ endif()
         tests/test_dm2_v1_glob_var_pc34_compat.c
         src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_runtime_parity_pc34_compat.c
+        src/dm2/dm2_v1_skproject_cutlx8_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_glob_var PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -20955,6 +20956,7 @@ endif()
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_runtime_parity_pc34_compat.c
+        src/dm2/dm2_v1_skproject_cutlx8_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_game_glob_var_integration PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
