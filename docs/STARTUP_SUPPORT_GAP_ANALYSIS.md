@@ -90,6 +90,56 @@ background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
 
+### 2026-11-02 DM1/CSB/DM2 focused picker recheck
+
+On current `main` at `12ecef6c`,
+`FIRESTAFF_PICKER_PRIORITY_DM1_CSB_DM2_ONLY=1 ctest -R
+^m12_main_menu_game_selection_real_media$` passed (198.53 s) against the
+installed original-media corpus. The focused mode exercised the DM1, CSB, and
+DM2 no-game main-menu selection and authenticated handoff routes while
+restricting the selected game set to those three titles. This verifies the
+bounded launcher routes only; it does not establish platform-wide runtime,
+native display/input, or visual parity.
+
+The same source baseline also passed `dm1_v1_m12_auto_multi_platform_menu`
+(85.12 s) with authentic FM Towns, PC 3.4 and Atari ST media. The test
+verified no-game AUTO selection, direct `--game dm1` discovery, explicit
+platform CLI startup, and M12 selection of Atari ST and PC from a mixed DM1
+library. It established the tested first-runtime receipts, not complete
+platform parity.
+
+The same revision passed the Swedish scan-localization checks for DM1 PC,
+CSB FM Towns, and DM2 FM Towns (3/3, 48.41 s). Each route checked explicit
+`--lang sv` and saved Swedish preference for direct debug startup and the
+no-game launcher scan, including localized task labels and no unintended
+game handoff. These checks cover diagnostic labels and launcher state, not
+the rendered progress-bar appearance.
+
+`startup_scan_intro_capture_dm1_real_media` now captures the actual startup
+intro RGBA frame during an authentic DM1 PC 3.4 scan; it passed in 0.26 s,
+checked the 480×270 output and confirmed the original archive stayed unchanged.
+The inspected Swedish 0% frame places the status and 376×4 progress track at
+the lower center; the test checks the real unfilled track pixel at its right
+edge. This establishes the rendered startup surface and capture route only; it
+does not verify later fill animation, native-window scaling, or gameplay
+visual parity.
+
+On current `main` at `faa1debce`, the CSB FMTowns default-selection tests passed
+with authentic Amiga and Atari media also installed (2/2, 122.12 s each).
+Both routes kept FMTowns as the menu default. The DM2 mixed Mac/FMTowns menu test
+also passed with authentic Macintosh media present (161.10 s); separate
+authentic DM2 PC and Amiga menu-to-runtime tests passed in 91.32 s and 90.31 s.
+These checks exercise game discovery, platform choice, and bounded first-runtime
+handoffs; they do not establish physical input or complete platform parity.
+
+The authentic `dm1_v1_pc34_native_cli_boot` test also passed on this revision
+(511.90 s) with the Atari STX decoder target built. It decoded and identity-
+checked the original Atari ST 1.2 dungeon, then confirmed that the M12 scan and
+direct PC CLI reject PC 3.4 graphics paired only with that Atari dungeon. A
+mixed-media follow-up confirmed PC 3.4 selects its matching original dungeon.
+This proves the exercised edition-pair admission boundary; it does not cover
+wrong-edition rejection for every DM1 platform.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:

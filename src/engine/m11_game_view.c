@@ -43949,13 +43949,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * target list first, then dispatches the recovered Mac action
              * owner.  Bypass the PC admission gate here or this path can
              * never reach m11_process_dm2_v1_c080_click. */
-            if (profile && m11_dm2_is_mac_profile(profile)) {
-                /* The retail Mac HUD draws six independent movement
-                 * buttons in RAW4 RECT_40..RECT_45. They sit outside the
-                 * 224x136 dungeon viewport, so C080's viewport hit list can
-                 * never receive their clicks. Resolve the source rectangles
-                 * first and feed the same movement pipeline as keyboard
-                 * input. */
+            if (profile && (m11_dm2_is_mac_profile(profile) ||
+                            m11_dm2_is_amiga_profile(profile))) {
+                /* The retail Mac and Amiga HUDs draw six independent
+                 * movement buttons in RAW4 RECT_40..RECT_45. They sit
+                 * outside the 224x136 dungeon viewport, so C080's viewport
+                 * hit list can never receive their clicks. Resolve the
+                 * source rectangles first and feed the same movement
+                 * pipeline as keyboard input. SKProject
+                 * DRAW_ARROW_PANEL confirms this RECT order for Amiga. */
                 static const M12_MenuInput mac_arrow_inputs[6] = {
                     M12_MENU_INPUT_TURN_LEFT,
                     M12_MENU_INPUT_TURN_RIGHT,

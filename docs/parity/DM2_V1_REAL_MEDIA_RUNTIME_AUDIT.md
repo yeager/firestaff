@@ -65,6 +65,18 @@ retail GDAT hitboxes, pickup, mouse-up recompute, and an empty-slot drop. This
 evidence covers the DOS PC route only; Amiga, FM Towns, and Macintosh formation
 pointer routes remain open.
 
+### Amiga HUD movement-arrow pointer input (2026-11-02)
+
+SKProject `SKWINSPX/src/v4/skguidrw.cpp::DRAW_ARROW_PANEL` draws the six
+movement controls through `RECT_040..RECT_045`. M11 now resolves those native
+Amiga rectangles before the viewport input owner and maps each click to the
+same movement pipeline used by keyboard input. The authentic Amiga archive
+CLI regression clicks the center of the forward arrow and verifies the party
+moves from map 0 `(1,8)` to `(1,7)` while retaining direction 0. The complete
+`dm2_v1_amiga_native_cli_boot` CTest passed with the original archive, including
+this pointer route. This evidence covers movement arrows only; Amiga formation
+pointer actions and other Amiga HUD interactions remain open.
+
 ## Interpretation boundary
 
 These results prove the listed boot, handoff, save, and focused runtime paths.

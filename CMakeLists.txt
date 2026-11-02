@@ -4538,6 +4538,17 @@ if(BUILD_TESTING)
         TIMEOUT 600
     )
     add_test(
+        NAME startup_scan_intro_capture_dm1_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_startup_scan_intro_capture_dm1_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(startup_scan_intro_capture_dm1_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm1;startup;intro;scan;capture;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        TIMEOUT 35
+    )
+    add_test(
         NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_debug_source_frame_trace.sh"
             "$<TARGET_FILE:firestaff>"

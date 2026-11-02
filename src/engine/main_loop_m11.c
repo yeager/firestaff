@@ -1260,6 +1260,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     Uint64 started;
     int scanActive = 0;
     int autotestQuitInjected = 0;
+    int scanCaptureWritten = 0;
 
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
@@ -1335,6 +1336,28 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
             m11_debug_log_scan_progress(
                 &snap, menuState ? menuState->settings.languageIndex : 0);
             {
+                const char* captureDir = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR");
+                const size_t percent = snap.totalSteps > 0U
+                    ? (snap.completedSteps * 100U +
+                       snap.currentStepPercent) / snap.totalSteps
+                    : 0U;
+                if (!scanCaptureWritten && getenv("FIRESTAFF_AUTOTEST") &&
+                    captureDir && captureDir[0] && !snap.complete &&
+                    !snap.cancelled && percent < 100U) {
+                    char capturePath[1024];
+                    if (M11_Screenshot_CaptureRGBA(
+                            rgba, M12_STARTUP_INTRO_WIDTH,
+                            M12_STARTUP_INTRO_HEIGHT, captureDir,
+                            capturePath, (int)sizeof(capturePath))) {
+                        scanCaptureWritten = 1;
+                        fprintf(stderr,
+                                "firestaff: autotest startup scan capture progress=%zu%% path=%s\n",
+                                percent, capturePath);
+                    }
+                }
+            }
+            {
                 const char* quitAny =
                     getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN");
                 const char* quitDm2 =
@@ -1345,7 +1368,11 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                     strcmp(snap.currentTask,
                            "reading original DM2 disc image") == 0 &&
                     snap.currentStepPercent > 0U;
+                const char* captureDir = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR");
+                const int capturePending = captureDir && captureDir[0];
                 if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+                    (!capturePending || scanCaptureWritten) &&
                     (requestAny || requestDm2)) {
                     SDL_Event event;
                     SDL_Window* window = M11_Render_GetWindow();
