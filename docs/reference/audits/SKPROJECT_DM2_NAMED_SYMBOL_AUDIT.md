@@ -700,3 +700,6 @@ Compared SKWINSPX `CALL_ENCHANTMENT_SELF` (`src/v4/skchamp.cpp:1041-1060`) and i
 
 
 With active-source review overrides applied, the inventory currently maps 2,876 as `UNREVIEWED`, 976 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+
+
+Current generated DM2 backlog after recording the separate DOS, SPX v4 and SPX v5 message-text definitions: 3,945 open rows (2,876 unreviewed, 1,067 partial source or older-ledger rows, 0 missing, 2 partial source owners). Applying active-source review overrides gives 2,876 unreviewed, 976 partial, 0 missing and 72 implemented-parity definitions.
