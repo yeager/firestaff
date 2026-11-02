@@ -1,6 +1,6 @@
 # Theron original Akutuba completion capture — 2026-08-21
 
-## 2026-11-02 — stair-capture state eligibility
+## 2026-11-01 — stair-capture state eligibility
 
 The current authentic US Track 02 source-map census contains no stair-class
 tile on Akutuba map 0. The first Akutuba stairs occur on map 1 at `(8,1)` and

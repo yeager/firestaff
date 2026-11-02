@@ -127,33 +127,42 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
                 + "writer_physical_pc=000a9c mpr2=68\n",
                 encoding="ascii",
             )
-            movement_path.write_text(
-                "source=mednafen-pce-fast-theron-movement-context-v3 "
-                "event_sequence_source=TheronTraceCDSharedEventSequence\n"
-                "main_ram_write event_sequence=41 physical_address=0d04d2 "
-                "value=ad pc=ea9c\n",
-                encoding="ascii",
-            )
-            with mock.patch(
-                "verify_theron_cd_ram_source_join.verify_data_port_trace",
-                return_value=(b"unused", self.reads),
-            ) as verify_data_port_trace:
-                joined = verify(
-                    write_path,
-                    read_path,
-                    track02_path,
-                    0x0D04D2,
-                    0x0D04E6,
-                    0x68,
-                    0xEA9C,
-                    movement_path,
+            for version in ("v3", "v4"):
+                instruction_context = (
+                    "map_array_instruction_context event_sequence=40 pc=50fe "
+                    "opcode=b1 code_window_peek=b11460a9 a=00 x=07 y=0b "
+                    "p_raw=00 znflags=00000000 page1_14=03 page1_15=6b\n"
+                    if version == "v4"
+                    else ""
                 )
+                movement_path.write_text(
+                    f"source=mednafen-pce-fast-theron-movement-context-{version} "
+                    "event_sequence_source=TheronTraceCDSharedEventSequence\n"
+                    + instruction_context
+                    + "main_ram_write event_sequence=41 physical_address=0d04d2 "
+                    "value=ad pc=ea9c\n",
+                    encoding="ascii",
+                )
+                with mock.patch(
+                    "verify_theron_cd_ram_source_join.verify_data_port_trace",
+                    return_value=(b"unused", self.reads),
+                ) as verify_data_port_trace:
+                    joined = verify(
+                        write_path,
+                        read_path,
+                        track02_path,
+                        0x0D04D2,
+                        0x0D04E6,
+                        0x68,
+                        0xEA9C,
+                        movement_path,
+                    )
 
-        self.assertEqual(len(joined), 1)
-        self.assertEqual(joined[0][0]["event_sequence"], 40)
-        verify_data_port_trace.assert_called_once_with(
-            read_path, track02_path, allow_other_sources=True
-        )
+                self.assertEqual(len(joined), 1)
+                self.assertEqual(joined[0][0]["event_sequence"], 40)
+                verify_data_port_trace.assert_called_once_with(
+                    read_path, track02_path, allow_other_sources=True
+                )
 
     def test_accepts_shared_sequence_headers(self) -> None:
         scratch_root = Path(__file__).resolve().parents[1] / ".codex-scratch"

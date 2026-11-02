@@ -133,7 +133,7 @@ class Stage2FetchSourceTests(unittest.TestCase):
             verifier.verify_source_span_before_fetch(writes, joined, 40)
 
     def test_requires_cd_sidecars_to_identify_shared_sequence_source(self) -> None:
-        with tempfile.TemporaryDirectory(dir=repo / ".codex-scratch") as scratch:
+        with tempfile.TemporaryDirectory() as scratch:
             write = Path(scratch) / "capture.cd-ram-target-write"
             read = Path(scratch) / "capture.cd-data-port-read"
             write.write_text(verifier.cd_ram_join.WRITE_HEADER + "\n", encoding="ascii")

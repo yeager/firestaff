@@ -190,10 +190,13 @@ def verify(
         ):
             raise ValueError("movement-context trace is not paired with the CD read/write capture")
         movement_lines = movement_context_path.read_text(encoding="ascii").splitlines()
-        if not movement_lines or movement_lines[0] != (
+        movement_headers = {
             "source=mednafen-pce-fast-theron-movement-context-v3 "
-            "event_sequence_source=TheronTraceCDSharedEventSequence"
-        ):
+            "event_sequence_source=TheronTraceCDSharedEventSequence",
+            "source=mednafen-pce-fast-theron-movement-context-v4 "
+            "event_sequence_source=TheronTraceCDSharedEventSequence",
+        }
+        if not movement_lines or movement_lines[0] not in movement_headers:
             raise ValueError("unexpected movement-context trace header")
         movement_rows = []
         for number, line in enumerate(movement_lines[1:], 2):

@@ -1150,3 +1150,21 @@ bootstrap-follow
 `6e4938ff28a97ae564cbd1915a3fd5cdd324481f939ed83d5c77e38665965618`, and
 scripted-input consumption
 `39d4b61bb9297401284da45a6383459aa5cf4b8fb3bd1933dc24d310f931c1c9`.
+
+## 2026-11-01 host-key cold-route comparison
+
+A separate authentic JP cold run used physical Mednafen RUN and Button I
+events rather than the scripted replay producer. Its input trace proves that
+active-low RUN reached the System Card `$E4C5` poll. The independent bounded
+traces again show `$E11B/$E14C/$E176`, but no `$E11D` branch. A capped 128-row
+`$4000` target window exists without a trace-contiguous branch from `$E11D`,
+and the exact-LBA 3674 CD data-port trace has no reads. The run therefore does
+not establish a BIOS-to-game transfer or game-owned controller poll.
+
+The wrapper did not emit a final acceptance receipt because its isolated
+remote script directory lacked `verify_theron_jp_code_follow_trace.py` during
+post-capture validation. The available bounded traces were subsequently
+checked with the current repository validators; the launch-branch verifier
+still fails closed on the missing `$E11D` branch. See the complete
+[host-key handoff capture report](theron-jp-hostkey-cold-system-card-handoff-20261101.md)
+for trace hashes, row counts, and the next evidence gate.

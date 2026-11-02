@@ -1,3 +1,10 @@
+# Unreleased changes
+
+- `Theron's Quest startup input`: require a three-second hold for native title
+  accept/action inputs from keyboard, left mouse or mapped gamepad, committed
+  on release. This is host policy; exact timing parity with the original JP
+  title route remains unverified.
+
 # Firestaff v3.0.423
 
 ## User-facing changes

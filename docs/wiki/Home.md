@@ -5,7 +5,9 @@
 > [current platform status](../PLATFORM_STATUS.md). Theron's Quest runs in
 > Firestaff's native C/SDL runtime: authentic JP fresh start and US Continue
 > routes reach loaded dungeons, while full gameplay and visual parity remain
-> open. Emulator traces are reference evidence, not Firestaff runtime support.
+> open. An authentic JP state-only pointer trace branches around `$D588` and
+> does not establish world-click semantics. Emulator traces are reference
+> evidence, not Firestaff runtime support.
 > A source-bound comparison maps all four US Akutuba arrays into an authentic
 > standard-PCE save state's selected CD-RAM page, but does not identify the
 > active map.

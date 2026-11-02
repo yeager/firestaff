@@ -43,12 +43,12 @@
 @@ -2882,0 +2922,2 @@
 +     {
 +      TheronSCSIQueueDataOrigin(SectorAddr, 24, 2048);
-@@ -2883,0 +2925 @@
+@@ -2883,0 +2925,1 @@
 +     }
 @@ -2884,0 +2927,2 @@
 +     {
 +      TheronSCSIQueueDataOrigin(SectorAddr, 16, 2048);
-@@ -2885,0 +2930 @@
+@@ -2885,0 +2930,1 @@
 +     }
 @@ -3148,0 +3194,9 @@
 +      if(TheronSCSIDataOriginCount)
@@ -67,20 +67,43 @@
 +                              uint64 *fifo_sequence);
 --- a/src/pce/pce.cpp
 +++ b/src/pce/pce.cpp
-@@ -114 +114,3 @@
+@@ -114,1 +114,25 @@
 -extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value);
++static bool TheronPCECDExactLBAAllowed(uint32 source_lba)
++{
++ static bool initialized = false;
++ static bool requested = false;
++ static bool valid = false;
++ static uint32 exact_lba = 0;
++ if(!initialized)
++ {
++  const char *text = getenv("FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA");
++  requested = text && *text;
++  if(requested)
++  {
++   char *end = NULL;
++   const unsigned long parsed = strtoul(text, &end, 10);
++   valid = end && end != text && *end == 0 && parsed <= 0xFFFFFFFFUL;
++   if(valid)
++    exact_lba = (uint32)parsed;
++  }
++  initialized = true;
++ }
++ return !requested || (valid && source_lba == exact_lba);
++}
 +extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
 +                                         uint8 *value, uint32 *source_lba,
 +                                         uint16 *source_offset, uint64 *fifo_sequence);
-@@ -124,0 +127,3 @@
+@@ -124,0 +149,3 @@
 + uint32 source_lba;
 + uint16 source_offset;
 + uint64 fifo_sequence;
-@@ -126 +131,2 @@
+@@ -126,1 +153,3 @@
 - if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value) || trace_count >= 256)
 + if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value,
-+                                  &source_lba, &source_offset, &fifo_sequence) || trace_count >= 256)
-@@ -145 +151,2 @@
++                                  &source_lba, &source_offset, &fifo_sequence) ||
++    !TheronPCECDExactLBAAllowed(source_lba) || trace_count >= 256)
+@@ -145,1 +174,2 @@
 -         "pce_cd_data_destination_candidate reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
 +         "pce_cd_origin_ram_receipt source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
 +         source_lba, source_offset, (unsigned long long)fifo_sequence,
@@ -91,12 +114,12 @@
 +static uint32 TheronPCECDDataReadLBA;
 +static uint16 TheronPCECDDataReadOffset;
 +static uint64 TheronPCECDDataReadFifoSequence;
-@@ -180 +184,3 @@
+@@ -180,1 +184,3 @@
 -bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value)
 +bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
 +                                  uint8 *value, uint32 *source_lba,
 +                                  uint16 *source_offset, uint64 *fifo_sequence)
-@@ -188 +194,4 @@
+@@ -188,1 +194,4 @@
 - return true;
 + *source_lba = TheronPCECDDataReadLBA;
 + *source_offset = TheronPCECDDataReadOffset;

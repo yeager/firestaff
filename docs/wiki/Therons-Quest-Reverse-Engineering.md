@@ -4,6 +4,15 @@
 > and [Theron TODO](../../TODO-theron.md). Older dated sections below record
 > evidence as it was available and must not be read as current support claims.
 
+**Latest JP cold-capture update (2026-11-01):** the authentic cold map-byte route did not reach the `$E11D` handoff or read LBA 3674. The corrected input verifier fixes serial-index versus controller-slot validation, but at least one scripted event still lacks a matching guest read. The rejected capture establishes no loader provenance or gameplay input; see the [cold JP map-byte capture](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md).
+
+**Latest pointer-path update (2026-11-01):** an authentic JP state-only trace
+enters `$D515`, reads `$FF` at the indexed comparison, and branches around the
+`$D530` call to `$D588`. The single controller event is observed at `$44D2`;
+the trace has no mouse-coordinate receipt or cold CD-to-RAM provenance. It
+does not identify pointer records, hitboxes, or Button-I click semantics. See
+the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
+
 **Startup update (2026-08-08):** authenticated US Track 02 media proves the
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
@@ -49,11 +58,40 @@ of 4,096 bounded VRAM commit rows (event 58761). The capture reports
 `transition=missing`; this checks instrumentation and event ordering only. It
 does not establish causality, VRAM meaning, a visible response, a cold media
 handoff, or Firestaff parity. See the [source-locked trace report](../source-lock/theron-disassembly/theron-jp-pce-fast-input-gated-vram-trace-20261031.md).
-The latest authenticated JP state-only control replay consumed five scripted
+An earlier authenticated JP state-only control replay consumed five scripted
 controller events but recorded no `$B0E5` spawn entry, spawn-register sample,
 RNG sample, or dungeon transition. This is evidence about that bounded
 state-only route only; it establishes neither movement nor runtime spawning.
 See the [spawn-consumer capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+A static disassembly comparison maps the unique 256-byte `$50D2` reader
+window from the authentic JP state to one raw Track 02 offset. A bounded trace
+observes reads from a candidate four-list structure at the end of the
+unclassified `thing_list` region, but its role, active-map relationship and
+tile consumer remain unproven. Three later state-only captures observe reads
+from Map 0 and Map 3 whose values match authenticated Track 02. Static
+source-matched windows decode the observed PCs `$50FE`, `$4FFC`, and `$4FD4`
+as `LDA ($14),Y`, and `$AE66` as `ADC $6DF6,X`. The earlier state-only
+captures did not preserve contemporaneous registers or fetched opcode bytes.
+The compiled v4 hook now records opcode/register context, page-1 operands and
+MPRs in accepted state-only captures. A separate audit found that the original
+target-write allowlist omitted `$0E8B14`, so its zero-row result cannot rule out
+a write. An isolated instrumenter now includes that address, but no cold loader
+capture has used it yet. See the [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md). The instructions do not
+identify the active map or establish a renderer join. See
+the [candidate reader report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md)
+and [map-array capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md).
+The latest matched JP state-only pair verified a guest read of `up@61:120` at
+`$44C1`, then retained 256 identical, authentic-source-matched data reads in
+both the UP and neutral runs. These addresses precede the map arrays, no
+movement-command write was observed, and the field semantics remain unknown.
+The captures report `transition=missing`; they do not establish movement,
+active-map selection, visible output or parity. See the
+[matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
+The `map_array_read` hook was exercised in three bounded JP state-only
+captures. They retained 1,677, 1,513 and 1,556 reads without reaching the
+4096-row cap; source-matched bytes appeared in Map 0 and Map 3. These reads do
+not identify the active map or prove a pose-to-render join. See the [capture report](../source-lock/theron-disassembly/theron-jp-state-only-map-array-read-capture-20261101.md)
+and [tool note](../source-lock/theron-disassembly/theron-jp-map-array-read-trace-tool-20261101.md).
 Native M11 also rejects the authentic empty JP BRAM as Continue; positive JP
 progress restoration remains unverified because no authentic progressed JP
 BRAM is available. A cold Japanese emulator route reaches the Akutuba dungeon
@@ -109,6 +147,14 @@ source-locked Mednafen 1.32.1 inspector maps it to HuC CD-RAM page `$74`
 arrays are present, this does not identify the active map or its consumer. See
 the [source-sector report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 and [capture chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+
+The PCE Fast capture wrapper now accepts
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` to reduce the CD data-port and
+FIFO-origin RAM receipt sidecars before their quotas. FIFO provenance remains
+tracked for all sectors, so intervening reads retain their source offsets. No
+accepted authentic run has used this filter; the same-session active-map and
+pose-bound tile-consumer joins remain open. See the
+[capture-tool note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 The black presented capture mentioned in older dated reports is historical;
 it is superseded by the current nonblack snapshot observation above. Neither
