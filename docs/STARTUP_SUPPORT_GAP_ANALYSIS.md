@@ -891,6 +891,27 @@ editions in the same root may legitimately be discovered. This verifies the
 headless CLI and scanner routes only, not native display, audio, physical input,
 or complete gameplay.
 
+### 2026-11-02 current-main launcher recheck
+
+On current `main` at `375cebdf`, the three singleton-media M12 startup tests
+passed with authentic local data: `m12_main_menu_dm1_only_real_media`,
+`m12_main_menu_csb_only_real_media`, and
+`m12_main_menu_dm2_only_real_media` (3/3). The mixed-edition default-selection
+tests also passed: DM1 FM Towns with PC media present, CSB FM Towns with Amiga
+media present, CSB FM Towns with Atari media present, and DM2 FM Towns with
+Macintosh media present (4/4). The priority-only game picker passed its
+keyboard selection and launch matrix for DM1, CSB, and DM2 (1/1). Swedish
+real-media startup-scan localization passed again for DM1 PC, CSB FM Towns,
+and DM2 FM Towns (3/3).
+
+The return-to-launcher archive-removal checks also passed against authentic
+DM1 PC-34 and DM2 PC media. The DM1 case removes only the staged selected-file
+link after its source runtime receipt; on return, the rescan reports DM1
+unavailable while retaining the other discovered games. The original media
+archives remain unchanged. These are bounded launcher, CLI, and first-runtime
+checks; they do not establish native display or input parity, complete
+gameplay, or visual parity.
+
 ### 2026-10-27 five-game picker check
 
 The Firestaff executable was rebuilt from the working tree based on source
