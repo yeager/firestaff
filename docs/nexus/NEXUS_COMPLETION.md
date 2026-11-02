@@ -1,5 +1,18 @@
 # Nexus: verified completion status
 
+## Row-80 SCU-DMA source join — 2026-11-02
+
+A complete cold-boot Ymir capture records SCU transfer 3303 writing 1,312
+bytes to VDP1 byte address `0x643c0`. All 656 captured 16-bit writes match
+the same run's final VDP1 VRAM snapshot; the first 656 bytes match decoded
+Japanese retail `MENU.BPK[144]` exactly. The separate authenticated frame-300
+command row 80 reads the same address and its 656 texture bytes match the same
+retail entry. The cold-boot trace has no command reads from CMDSRCA `0xc878`,
+so this cross-run source join does not establish DMA timing or consumption by
+that command. It also does not identify the sprite's semantic UI role or
+enable production rendering. Reproduce with
+[`nexus_vdp1_row80_scu_dma_source_join.md`](../nexus_vdp1_row80_scu_dma_source_join.md).
+
 ## Authentic Ymir gameplay pass-0 VDP composition — 2026-11-01
 
 The capture-only Firestaff VDP priority compositor now matches the complete

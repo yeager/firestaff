@@ -45,6 +45,13 @@ captured texture bytes, while the real-data test separately verifies this
 retail source and palette join. The polyline command and sprite are both
 included in the exact framebuffer comparison.
 
+A separate complete cold-boot run records SCU transfer 3303 writing 1,312
+bytes to VDP1 offset `0x643c0`. Its first 656 bytes match this retail archive
+entry, and the complete payload matches that run's final VDP1 VRAM snapshot.
+The DMA and frame-300 command evidence are from different runs; the cold-boot
+command trace contains no reads from CMDSRCA `0xc878`. See the
+[`row-80 DMA source-join report`](nexus_vdp1_row80_scu_dma_source_join.md).
+
 ## 16-bpp source-address alignment
 
 Ymir decodes CMDSRCA as an eight-byte address, then aligns the fetched

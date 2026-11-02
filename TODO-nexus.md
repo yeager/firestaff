@@ -67,9 +67,11 @@ combined real-data regression pins these source-class counts
 with the complete VDP2 RGB match and DGN joins. Sprite row 80 is further bound
 to decoded Japanese `MENU.BPK` entry 144 and same-frame CRAM for every used
 nontransparent palette index. This proves the retail archive source for that
-sprite's 431 visible pixels; its DMA-time
-payload remains uncaptured, and it does not establish whole-HUD state
-ownership. Row 79 is pinned as a 16x16 outline with same-frame CRAM entry
+sprite's 431 visible pixels. A separate complete cold-boot run captures SCU
+transfer 3303 to VDP1 offset `0x643c0`; its first 656 payload bytes match the
+archive entry and its full payload matches that run's final VDP1 VRAM. This is
+a cross-run address/byte join, not same-run timing or command consumption, and
+it does not establish whole-HUD state ownership. Row 79 is pinned as a 16x16 outline with same-frame CRAM entry
 `0x83`; Ymir records 64 edge writes with four duplicated corners, leaving 60 uniquely owned visible
 pixels. Its UI meaning remains unknown.
 Pixel-to-command/source-class ownership is verified for this

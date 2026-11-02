@@ -73,12 +73,15 @@
   distribution alongside the full VDP2 RGB match and command/source joins. It
   also checks that each visible VDP1 pixel matches between the replay and
   display framebuffer planes before counting command owners.
-- Sprite row 80's 431 visible pixels are now additionally joined to Japanese
-  retail `MENU.BPK` entry 144: decoded indexed bytes match the captured 16x41
-  VDP1 texture, and every used nontransparent PALT word matches same-frame
-  VDP2 CRAM. The DMA-time source payload remains unobserved; this is a
-  capture-only source/palette join, not renderer admission or whole-HUD state
-  ownership.
+- Sprite row 80's 431 visible pixels are joined to Japanese retail
+  `MENU.BPK` entry 144: decoded indexed bytes match the captured 16x41 VDP1
+  texture, and every used nontransparent PALT word matches same-frame VDP2
+  CRAM. A separate complete cold-boot trace captures SCU transfer 3303 writing
+  1,312 bytes to VDP1 offset `0x643c0`; its first 656 bytes match the retail
+  entry and its full payload matches same-run final VDP1 VRAM. This is a
+  cross-run join; it does not bind DMA timing to row 80. It remains capture-only
+  evidence, not renderer admission or whole-HUD state ownership. See
+  [`docs/nexus_vdp1_row80_scu_dma_source_join.md`](docs/nexus_vdp1_row80_scu_dma_source_join.md).
 - The remaining 60 visible pixels are rasterized from command row 79 in the
   authentic Ymir trace of the Japanese retail execution, pinned as an
   untextured 16x16 outline with PMOD `0x00e0` and CMDCOLR `0x7083`, selecting

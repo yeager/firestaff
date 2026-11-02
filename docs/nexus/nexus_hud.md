@@ -128,15 +128,21 @@ to DGN bytes, but does not bind the visible status bars to STABG, HUD widgets,
 or live champion state. HUD placement, CLUT ownership, and runtime value
 binding therefore remain gated.
 
-The same frame's normal 8bpp sprite at command row 80 is now joined to Japanese
+The same frame's normal 8bpp sprite at command row 80 is joined to Japanese
 retail `MENU.BPK` entry 144: its decoded 16x41 indexed surface matches all 656
 captured VDP1 VRAM bytes at offset `0x643c0`, and each nontransparent palette
 index used by the sprite matches the same-frame VDP2 CRAM entry. This accounts
-for the row's 431 visible pixels as a retail menu-archive sprite. The DMA
-writer's source bytes at transfer time have not yet been captured, and this
-single sprite join does not identify the whole-screen HUD or bind it to live
-champion state. The capture-only regression verifies the source and palette
-join while keeping runtime renderer admission closed.
+for the row's 431 visible pixels as a retail menu-archive sprite. A separate,
+complete cold-boot SCU-DMA capture records transfer 3303 writing 1,312 bytes
+to VDP1 offset `0x643c0`; its first 656 payload bytes match the same retail
+entry exactly and the full payload matches that run's final VRAM snapshot.
+These DMA and gameplay command observations come from separate emulator runs;
+the cold-boot trace has no command reads from CMDSRCA `0xc878`, so timing and
+consumption are not joined. The sprite's UI meaning and live champion-state
+binding also remain unknown. See
+[`../nexus_vdp1_row80_scu_dma_source_join.md`](../nexus_vdp1_row80_scu_dma_source_join.md).
+The capture-only regression verifies the source and palette join while
+keeping runtime renderer admission closed.
 
 The other 60 previously capture-classified pixels come from command row 79, an
 authenticated untextured VDP1 polyline from the Ymir-captured Japanese retail
