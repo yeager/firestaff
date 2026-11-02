@@ -683,7 +683,7 @@ SKW_ADVANCE_TILES_TIME	SKWINDOS	SKWINDOS/dm2byg.cpp	2845	void SKW_ADVANCE_TILES_
 SKW_476d_030a	SKWINDOS	SKWINDOS/dm2byg.cpp	2929	x16 SKW_476d_030a(x16 eaxw)	0	UNREVIEWED
 SKW_GET_ITEM_ORDER_IN_CONTAINER	SKWINDOS	SKWINDOS/dm2byg.cpp	3019	x16 SKW_GET_ITEM_ORDER_IN_CONTAINER(x16 eaxw, x16 edxw)	0	UNREVIEWED
 SKW_075f_0182	SKWINDOS	SKWINDOS/dm2byg.cpp	3091	x16 SKW_075f_0182(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw)	0	UNREVIEWED
-SKW_32cb_54ce	SKWINDOS	SKWINDOS/dm2byg.cpp	3149	ui16 SKW_32cb_54ce(x16 eaxw, x16* ebxpw, x16 ecxw, x16* edxpw, x16 argw0)	0	UNREVIEWED
+SKW_32cb_54ce	SKWINDOS	SKWINDOS/dm2byg.cpp	3149	ui16 SKW_32cb_54ce(x16 eaxw, x16* ebxpw, x16 ecxw, x16* edxpw, x16 argw0)	0	IMPLEMENTED_PARITY
 SKW_3a15_38b6	SKWINDOS	SKWINDOS/dm2byg.cpp	3201	void SKW_3a15_38b6(bool eaxbool)	0	UNREVIEWED
 SKW_ACTIVATE_ITEM_TELEPORT	SKWINDOS	SKWINDOS/dm2byg.cpp	3299	void SKW_ACTIVATE_ITEM_TELEPORT(c_tim* eaxptim, x16 ebxw, bool ecxbool, c_record* edxprec, bool argbool0, x16* argp1, bool argbool2, bool argbool3)	0	PARTIAL
 SKW_MOVE_ITEM_TO	SKWINDOS	SKWINDOS/dm2byg.cpp	3413	void SKW_MOVE_ITEM_TO(x16 eaxw, x16 ebxw, x16 ecxw, c_record* edxprec, x16 argw0, x16 argw1, x16 argw2, bool argbool3, x16 argw4)	0	PARTIAL
@@ -1385,7 +1385,7 @@ _47eb_02c3_AUDIO	SKWINSPX	SKWINSPX/src/v4/skaudio.cpp	142	void SkWinCore::_47eb_
 _47eb_00d9_AUDIO	SKWINSPX	SKWINSPX/src/v4/skaudio.cpp	151	void SkWinCore::_47eb_00d9_AUDIO(SoundShelfChained *pRefChainedSound)	0	UNREVIEWED
 RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	18	X16 SkWinCore::RETRIEVE_ENVIRONMENT_CMD_CD_FW(DistantEnvironment *pDistEnv)	0	PARTIAL
 ENVIRONMENT_DRAW_DISTANT_ELEMENT	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	35	void SkWinCore::ENVIRONMENT_DRAW_DISTANT_ELEMENT(DistantEnvironment *ref, X16 dir, X16 xx, X16 yy)	0	PARTIAL
-ENVIRONMENT_COMPUTE_DISTANCE	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	102	i16 SkWinCore::ENVIRONMENT_COMPUTE_DISTANCE(X16 dir, i16 *xx, i16 *yy, X16 xl, X16 yl)	0	PARTIAL
+ENVIRONMENT_COMPUTE_DISTANCE	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	102	i16 SkWinCore::ENVIRONMENT_COMPUTE_DISTANCE(X16 dir, i16 *xx, i16 *yy, X16 xl, X16 yl)	0	IMPLEMENTED_PARITY
 ENVIRONMENT_SET_DISTANT_ELEMENT	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	143	X16 SkWinCore::ENVIRONMENT_SET_DISTANT_ELEMENT(DistantEnvironment *ref, U8 *str, X16 dir, X16 xx, X16 yy)	0	PARTIAL
 ENVIRONMENT_DISPLAY_ELEMENTS	SKWINSPX	SKWINSPX/src/v4/skbkgrnd.cpp	173	void SkWinCore::ENVIRONMENT_DISPLAY_ELEMENTS(X16 dir, X16 xx, X16 yy)	0	PARTIAL
 ANIM_FILL_SEQ_4BPP	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	18	void SkWinCore::ANIM_FILL_SEQ_4BPP(U16 offDst, i16 clr, U16 cnt)	1	PARTIAL
@@ -3364,7 +3364,7 @@ DM2_guivp_32cb_2d8c	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1091	static i32 DM2_gu
 DM2_guivp_32cb_35c1	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1408	static i32 DM2_guivp_32cb_35c1(i16* eaxpw, i16* edxpw, i32 ebxl, i32 ecxl)	1	UNREVIEWED
 DM2_guivp_32cb_4069	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1495	static void DM2_guivp_32cb_4069(i32 eaxl, i32 edxl, i32 ebxl, i16* ecxpw, i16* argpw0)	1	UNREVIEWED
 DM2_guivp_32cb_48d5	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1599	static i32 DM2_guivp_32cb_48d5(i32 eaxl, i32 edxl)	1	UNREVIEWED
-DM2_guivp_32cb_54ce	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1621	static i32 DM2_guivp_32cb_54ce(i32 eaxl, i16* edxpw, i16* ebxpw, i32 ecxl, i32 argl0)	1	UNREVIEWED
+DM2_guivp_32cb_54ce	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1621	static i32 DM2_guivp_32cb_54ce(i32 eaxl, i16* edxpw, i16* ebxpw, i32 ecxl, i32 argl0)	1	IMPLEMENTED_PARITY
 DM2_guivp_32cb_5a8f	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1705	static void DM2_guivp_32cb_5a8f(void)	1	UNREVIEWED
 DM2_guivp_32cb_5c67	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1850	static i32 DM2_guivp_32cb_5c67(void)	1	UNREVIEWED
 DM2_DRAW_DEFAULT_DOOR_BUTTON	SKWINSPX	SKWINSPX/src/v5/skguivwp.cpp	1904	static void DM2_DRAW_DEFAULT_DOOR_BUTTON(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl)	1	UNREVIEWED
