@@ -328,7 +328,7 @@ Compared DOS `SKW_12b4_0953`, SPX v4 `CREATURE_12b4_0953`, and SPX v5 `DM2_12b4_
 
 ## Latest DM2 new-map loader source pass (2026-11-01)
 
-Compared DOS `SKW_LOAD_NEWMAP`, SPX v4 `LOAD_NEWMAP`, and SPX v5 `DM2_LOAD_NEWMAP` with Firestaff's `dm2_v1_load_newmap`. The adapter mirrors the top-level callback ordering but is not called in production; its dynamic-level loader intentionally refuses because the live map/record/GDAT transaction is not implemented. All three platform definitions are therefore `PARTIAL`. Historical active-source counts at the recorded review point: 3,519 unreviewed, 356 partial, 49 implemented-parity, 8 architecture-specific and 2 outside-game. The combined DM2 backlog is 3,950 (3,519 unreviewed, 429 partial source/older-ledger rows, 2 partial source owners).
+Compared DOS `SKW_LOAD_NEWMAP`, SPX v4 `LOAD_NEWMAP`, and SPX v5 `DM2_LOAD_NEWMAP` with Firestaff's `dm2_v1_load_newmap`. The callback adapter mirrors the top-level ordering but has no production caller, and its direct dynamic-level loader still refuses. A separate private GAME_LOAD candidate now captures the fixed resource prefix, validates and walks the candidate map/record chains, and derives text/creature/mirror selector marks. Cross-map selector lists, GDAT/DYN4 resource realization, weather/light side effects and live session installation remain incomplete. All three platform definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,519 unreviewed, 356 partial, 49 implemented-parity, 8 architecture-specific and 2 outside-game. The combined DM2 backlog is 3,950 (3,519 unreviewed, 429 partial source/older-ledger rows, 2 partial source owners).
 
 
 ## Latest DM2 local-creature-context source pass (2026-11-01)
