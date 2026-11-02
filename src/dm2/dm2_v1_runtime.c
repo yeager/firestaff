@@ -12496,10 +12496,11 @@ static int dm2_runtime_ench_power_timer(
  * DM2_PROCESS_TIMER_0x4B / DM2_PROCESS_POISON
  * (c_tim_proc.cpp:4164-4178, c_hero.cpp:3397).
  *
- * The timer's signed counter is removed first, one wound is applied, and the
- * remaining counter is restored with the source 0x24-tick continuation.  The
- * source global v1e0288 is carried by source_next_champion_number; it is not
- * interchangeable with the party count or a host-selected active hero.
+ * The scheduler removes one poison count/value before PROCESS_POISON checks
+ * the source global v1e0288. That counter is carried by
+ * source_next_champion_number; it is not interchangeable with the party
+ * count or a host-selected active hero. For that special hero the decrements
+ * still happen, but the wound/flags/continuation do not.
  */
 static int dm2_runtime_poison_timer(
     void *context, const DM2_V1_SourceTimer *timer,
@@ -12527,8 +12528,7 @@ static int dm2_runtime_poison_timer(
         map != rt->dungeon_level || actor < 0 ||
         actor >= rt->source_party.heros_in_party ||
         rt->source_next_champion_number <= 0 ||
-        rt->source_next_champion_number > DM2_MAX_HEROES ||
-        actor + 1 == rt->source_next_champion_number)
+        rt->source_next_champion_number > DM2_MAX_HEROES)
         return 0;
     hero = &rt->source_party.hero[actor];
     if (hero->poisoned <= 0)
@@ -12539,6 +12539,8 @@ static int dm2_runtime_poison_timer(
     counters = timer->value_a;
     hero->poisoned = (int8_t)(hero->poisoned - 1);
     hero->poison = (int16_t)(hero->poison - counters);
+    if (actor + 1 == rt->source_next_champion_number)
+        return 1;
     wound = ((int32_t)counters + 0x1e) >> 6;
     if (wound < 1) wound = 1;
     if (hero->curHP != 0) {
