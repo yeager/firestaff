@@ -98,8 +98,18 @@ used nontransparent PALT words also match same-frame VDP2 CRAM. The remaining
 65,500 selected VDP1 pixels map
 to retail indexed DGN rows. Fifteen direct-RGB DGN draws join retail data,
 but none owns a final visible pixel in this captured frame;
-the regression pins this per-pixel class distribution explicitly. Set the
-evidence root and retail data directory before running it:
+the regression pins this per-pixel class distribution explicitly.
+
+A separate, complete cold-boot capture records SCU transfer 3303 writing 1,312
+bytes to VDP1 offset `0x643c0`; the first 656 bytes match `MENU.BPK[144]` and
+the complete transfer matches that run's final VDP1 VRAM snapshot. This
+extends the archive source evidence across the DMA path but is a cross-run
+join: the cold-boot trace has no command reads from CMDSRCA `0xc878`, and does
+not prove same-run DMA timing or row-80 consumption. See the
+[`row-80 DMA source-join report`](nexus_vdp1_row80_scu_dma_source_join.md).
+
+Set the evidence root and retail data directory before running the combined
+frame-300 check:
 
 ```sh
 export FIRESTAFF_NEXUS_FRAME300_EVIDENCE_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_face_vdp2_hud_join_20261030
