@@ -76,6 +76,7 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/return-rescan.XXXXXX")
 mutation_scratch=
 addition_scratch=
+swap_scratch=
 removal_pid=
 cleanup() {
     if [ -n "$removal_pid" ]; then
@@ -92,6 +93,9 @@ cleanup() {
     fi
     if [ -n "$addition_scratch" ]; then
         rm -rf "$addition_scratch"
+    fi
+    if [ -n "$swap_scratch" ]; then
+        rm -rf "$swap_scratch"
     fi
 }
 trap cleanup EXIT HUP INT TERM
@@ -873,4 +877,113 @@ print("PASS: returning from authentic DM1 discovers newly added authentic CSB me
 PY
 rm -rf "$addition_scratch"
 addition_scratch=
+
+# Keep the CSB path stable while switching its authentic archive target from
+# FM Towns to Atari ST during DM1 gameplay. Availability remains true, so the
+# detailed post-return edition receipt is needed to prove the scanner refreshed
+# its candidate rather than retaining the prior edition.
+swap_scratch=$(mktemp -d "$scratch_root/return-rescan-edition-swap.XXXXXX")
+swap_data_root="$swap_scratch/data"
+swap_home="$swap_scratch/home"
+swap_log="$swap_scratch/firestaff.log"
+swap_probe="$swap_scratch/runtime.json"
+swap_csb_path="$swap_data_root/csb/Selected-CSB.zip"
+mkdir -p "$swap_data_root/dm1" "$swap_data_root/csb" \
+    "$swap_data_root/dm2" "$swap_home"
+for media_pair in \
+    "$dm1_archive|$swap_data_root/dm1/$(basename "$dm1_archive")" \
+    "$dm2_archive|$swap_data_root/dm2/$(basename "$dm2_archive")"; do
+    source_archive=${media_pair%%|*}
+    staged_archive=${media_pair#*|}
+    if ! ln "$source_archive" "$staged_archive" 2>/dev/null; then
+        ln -s "$source_archive" "$staged_archive"
+    fi
+done
+if [ ! -f "$csb_atari_archive" ]; then
+    echo "SKIP: authentic CSB Atari ST archive unavailable: $csb_atari_archive"
+    exit 77
+fi
+ln -s "$csb_archive" "$swap_csb_path"
+swap_runtime_pattern='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
+FIRESTAFF_CONFIG_PATH="$swap_home/config.toml" \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$swap_probe" \
+HOME="$swap_home" XDG_CONFIG_HOME="$swap_home" \
+APPDATA="$swap_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 320 --height 200 --menu --game dm1 --platform pc \
+    --data-dir "$swap_data_root" --debug \
+    --script 'key:enter,key:enter,key:enter,wait-game-runtime,wait:120,key:escape,wait-scan-complete,key:enter' \
+    --duration 180000 >"$swap_log" 2>&1 &
+swap_pid=$!
+poll=0
+while ! grep -Eq "$swap_runtime_pattern" "$swap_log" 2>/dev/null; do
+    if ! kill -0 "$swap_pid" 2>/dev/null; then
+        wait "$swap_pid" || true
+        echo 'FAIL: authentic DM1 did not reach gameplay before the CSB edition swap' >&2
+        cat "$swap_log" >&2
+        exit 1
+    fi
+    poll=$((poll + 1))
+    if [ "$poll" -ge 1200 ]; then
+        kill "$swap_pid" 2>/dev/null || true
+        wait "$swap_pid" || true
+        echo 'FAIL: timed out waiting for authentic DM1 gameplay before the CSB edition swap' >&2
+        cat "$swap_log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+rm "$swap_csb_path"
+ln -s "$csb_atari_archive" "$swap_csb_path"
+poll=0
+while ! grep -Fq \
+    'return-menu rescan-version game=csb platform=Atari ST edition=st20-21-en matched=1 source=' \
+    "$swap_log" 2>/dev/null; do
+    if ! kill -0 "$swap_pid" 2>/dev/null; then
+        wait "$swap_pid" || true
+        echo 'FAIL: return scan did not select the replacement authentic CSB Atari ST edition' >&2
+        cat "$swap_log" >&2
+        exit 1
+    fi
+    poll=$((poll + 1))
+    if [ "$poll" -ge 2400 ]; then
+        kill "$swap_pid" 2>/dev/null || true
+        wait "$swap_pid" || true
+        echo 'FAIL: timed out waiting for the replacement CSB Atari ST edition after return' >&2
+        cat "$swap_log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+kill -TERM "$swap_pid" 2>/dev/null || true
+wait "$swap_pid" 2>/dev/null || true
+python3 - "$swap_log" "$swap_probe" "$swap_runtime_pattern" "$swap_csb_path" <<'PY'
+import json
+import re
+import sys
+
+log_path, probe_path, runtime_pattern, selected_path = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+with open(probe_path, encoding="utf-8") as stream:
+    probe = json.load(stream)
+runtime = re.search(runtime_pattern, trace)
+complete = re.search(r"return-menu rescan-complete data=", trace)
+replacement = re.search(
+    r"return-menu rescan-version game=csb platform=Atari ST "
+    r"edition=st20-21-en matched=1 source=(.+)", trace)
+if (runtime is None or complete is None or replacement is None or
+        not runtime.start() < complete.start() < replacement.start()):
+    raise SystemExit("FAIL: return scan did not publish CSB's replacement edition after DM1")
+if not replacement.group(1).startswith(selected_path + "::"):
+    raise SystemExit(
+        f"FAIL: CSB replacement resolved to {replacement.group(1)!r}, "
+        f"expected a nested source under the unchanged staged path {selected_path!r}")
+if "Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT" \
+        not in replacement.group(1):
+    raise SystemExit("FAIL: CSB Atari receipt did not resolve the authentic nested graphics member")
+if probe.get("launchedEver") != 1 or probe.get("active") != 0:
+    raise SystemExit(f"FAIL: DM1 did not finish back at the launcher: {probe}")
+print("PASS: returning from authentic DM1 rescans the same CSB path and selects its replacement Atari ST edition")
+PY
+swap_scratch=
 fi

@@ -736,11 +736,28 @@ static void m11_rescan_launcher_asset_status(
                 "firestaff: return-menu rescan-complete data=%s\n",
                 dataDir && dataDir[0] ? dataDir : "(unknown)");
         for (i = 0U; i < sizeof(gameIds) / sizeof(gameIds[0]); ++i) {
+            size_t versionIndex;
             fprintf(stderr,
                     "firestaff: return-menu rescan game=%s available=%d\n",
                     gameIds[i],
                     M12_AssetStatus_GameAvailable(&menuState->assetStatus,
                                                   gameIds[i]));
+            for (versionIndex = 0U;
+                 versionIndex < M12_AssetStatus_GetVersionCount(gameIds[i]);
+                 ++versionIndex) {
+                const M12_AssetVersionStatus* version =
+                    M12_AssetStatus_GetVersion(&menuState->assetStatus,
+                                               gameIds[i], versionIndex);
+                if (!version || !version->matched) continue;
+                fprintf(stderr,
+                        "firestaff: return-menu rescan-version game=%s platform=%s edition=%s matched=1 source=%s\n",
+                        gameIds[i],
+                        M12_Architecture_Label(
+                            M12_AssetStatus_GetVersionArchitecture(
+                                gameIds[i], versionIndex)),
+                        version->versionId ? version->versionId : "unknown",
+                        version->matchedPath[0] ? version->matchedPath : "(unknown)");
+            }
         }
     }
 }
