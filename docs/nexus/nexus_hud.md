@@ -102,6 +102,32 @@ the engine handoff. It still lacks authenticated pixel/CLUT ownership for
 stat bars, portraits, spell symbols, inventory art, status effects, VDP2
 minimap placement, and Saturn-owned message text binding.
 
+### Authentic frame-300 composition audit
+
+The retained Japanese retail gameplay capture
+`nexus_face_vdp2_hud_join_20261030/capture-301` provides one same-frame audit
+point (VDP1 frame 300, VDP2 serial 301). All 224 VDP2 row records identify an
+enabled NBG0 512x256 8-bit bitmap at byte offset zero. Its rendered 320x224
+RGB output matches the corresponding Ymir output at all 71,680 pixels. This
+proves output parity for that captured frame, not source ownership or a
+general-purpose compositor.
+
+The authenticated source scan decoded 410 retail resources, including
+`STABG.BIN` (SHA-256
+`7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913`), and
+found no exact NBG0 bitmap source match. The STABG palette also has no exact
+match in captured VDP2 CRAM. A raw-byte scan of captured VDP1 VRAM found exact
+bytes for only 3 of STABG's 791 8x8 source tiles; one is the all-zero tile.
+These are bounded negative byte-join results: they do not rule out decoded,
+repacked, or transformed STABG data.
+
+The frame's VDP1 trace contains 68 textured draws, of which 66 have exact
+retail DGN image matches and 51 also have palette matches (15 use direct
+colour). Two textured commands remain unmatched. This binds many scene draws
+to DGN bytes, but does not bind the visible status bars to STABG, HUD widgets,
+or live champion state. HUD placement, CLUT ownership, and runtime value
+binding therefore remain gated.
+
 ## Next Steps
 1. Bind HUD widget ownership and placement from an authenticated Saturn capture.
 2. Bind FACE.BIN palette/VDP1 command ownership before portrait blit.
