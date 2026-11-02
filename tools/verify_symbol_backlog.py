@@ -107,6 +107,7 @@ def verify_documented_dm2_counts() -> None:
     backlog_result = run([
         sys.executable, str(BACKLOG), "--reference", "skproject", "--game", "DM2",
         "--format", "json", "--limit", "0",
+        "--dispositions", str(ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv"),
     ])
     backlog = json.loads(backlog_result.stdout)["summary"]
     backlog_summary = (
