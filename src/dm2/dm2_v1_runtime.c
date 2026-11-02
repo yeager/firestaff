@@ -28,6 +28,10 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_pressure_plate.h"
+#include "dm2_v1_shop_price.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_change_player_pos_pc34_compat.h"
@@ -112,6 +116,16 @@ extern int dm2_v1_wield_weapon(
     const DM2_RuntimeWieldCallbacks *cb, void *ctx);
 #include <string.h>
 
+enum {
+    DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4,
+    DM2_V1_QUERY_48AE_05AE_SPX_V5 = 5
+};
+extern int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    int variant, uint16_t itemspec,
+    uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges,
+    int32_t *out_value, const DM2_V1_AssetLoader *loader);
+
 static void dm2_v1_runtime_append_mac_wall_targets(
     const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game);
 typedef struct DM2_V1_RuntimeState DM2_V1_RuntimeState;
@@ -131,7 +145,7 @@ static int dm2_runtime_attack_creature_at(
 static uint16_t dm2_runtime_record_rd16(const DM2_V1_RuntimeState *rt,
                                         const uint8_t *p);
 
-static void dm2_runtime_apply_entered_db1_teleporter(
+static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
 
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
@@ -636,18 +650,41 @@ int dm2_v1_runtime_light_source_identity(
     return dm2_v1_light_source_identity(&inputs, out);
 }
 
-static void dm2_runtime_apply_entered_db1_teleporter(
+static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y)
 {
     DM2_V1_DungeonData *dungeon;
     DM2_V1_DB1TeleporterTransition transition;
+    DM2_V1_DB1TeleporterLiveRecord live_record;
+    int first;
+    const uint8_t *record;
+    int record_type;
+    int record_index;
 
     if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
-        return;
+        return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    if (!dm2_v1_db1_teleporter_transition(
-            dungeon, level, x, y, &transition))
-        return;
+    if (!rt->record_pools_valid) return 0;
+    first = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (first < 0) return 0;
+    record_type = dm2_v1_record_handle_pool((int16_t)first);
+    record_index = dm2_v1_record_handle_index((int16_t)first);
+    if (record_type != 1 || record_index < 0 ||
+        record_index >= rt->record_pools.pools[record_type].record_count ||
+        rt->record_pools.pools[record_type].record_size < 6 ||
+        !(record = dm2_v1_record_pool_address(&rt->record_pools,
+                                               (int16_t)first)))
+        return 0;
+    live_record.record = record;
+    live_record.record_size =
+        (size_t)rt->record_pools.pools[record_type].record_size;
+    live_record.source_words_big_endian =
+        rt->record_pools.source_words_big_endian;
+    live_record.record_graph_complete =
+        rt->record_pools.record_graph_complete;
+    if (!dm2_v1_db1_teleporter_transition_live(
+            dungeon, &live_record, level, x, y, &transition))
+        return 0;
     gs->current_level = transition.destination_map;
     gs->party_x = transition.destination_x;
     gs->party_y = transition.destination_y;
@@ -660,6 +697,7 @@ static void dm2_runtime_apply_entered_db1_teleporter(
     rt->outdoor = gs->outdoor;
     dm2_runtime_refresh_map_transition_context(rt);
     dm2_runtime_refresh_source_weather_zone(rt);
+    return 1;
 }
 
 /* SKProject's stair query resolves a map by shared world coordinates rather
@@ -742,6 +780,23 @@ static int dm2_runtime_build_locate_map_descriptors(
         }
     }
     return 1;
+}
+
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    int level;
+} DM2_RuntimeTurnTileContext;
+
+static uint8_t dm2_runtime_turn_tile_value(int16_t x, int16_t y,
+                                            void *user)
+{
+    const DM2_RuntimeTurnTileContext *context =
+        (const DM2_RuntimeTurnTileContext *)user;
+    int raw;
+    if (!context || !context->dungeon) return 0u;
+    raw = dm2_v1_dungeon_get_tile_raw(context->dungeon, context->level,
+                                      x, y);
+    return raw < 0 ? 0u : (uint8_t)raw;
 }
 
 static int dm2_runtime_resolve_entered_stairs(
@@ -14743,20 +14798,38 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     {
         DM2_V1_ChampionStatInput stat_inputs[DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES];
         DM2_V1_ChampionStatBridgeReceipt stat_receipt;
-        int stat_inputs_valid = rt->session_snapshot.original_champion_records_valid &&
+        int live_party_stats_valid = rt->source_party_valid &&
+            rt->source_party.heros_in_party == hud.champion_count;
+        int stat_inputs_valid = (live_party_stats_valid ||
+            rt->session_snapshot.original_champion_records_valid) &&
             hud.champion_count > 0 &&
             hud.champion_count <= DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES;
 
         memset(stat_inputs, 0, sizeof(stat_inputs));
         memset(&stat_receipt, 0, sizeof(stat_receipt));
         for (int slot = 0; slot < hud.champion_count; ++slot) {
-            const uint8_t *raw = rt->session_snapshot.original_champion_records[slot];
-            stat_inputs[slot].cur_hp = dm2_runtime_read_i16_le(raw + 54);
-            stat_inputs[slot].max_hp = dm2_runtime_read_u16_le(raw + 56);
-            stat_inputs[slot].cur_stamina = dm2_runtime_read_u16_le(raw + 58);
-            stat_inputs[slot].max_stamina = dm2_runtime_read_u16_le(raw + 60);
-            stat_inputs[slot].cur_mp = dm2_runtime_read_u16_le(raw + 62);
-            stat_inputs[slot].max_mp = dm2_runtime_read_u16_le(raw + 64);
+            if (live_party_stats_valid) {
+                const DM2_V1_Hero *hero = &rt->source_party.hero[slot];
+                stat_inputs[slot].cur_hp = hero->curHP;
+                stat_inputs[slot].max_hp = (uint16_t)hero->maxHP;
+                stat_inputs[slot].cur_stamina = (uint16_t)hero->curStamina;
+                stat_inputs[slot].max_stamina = (uint16_t)hero->maxStamina;
+                stat_inputs[slot].cur_mp = (uint16_t)hero->curMP;
+                stat_inputs[slot].max_mp = (uint16_t)hero->maxMP;
+                stat_inputs[slot].food = hero->food;
+                stat_inputs[slot].water = hero->water;
+                stat_inputs[slot].poison = hero->poison;
+                stat_inputs[slot].poisoned = (uint8_t)(hero->poisoned != 0);
+            } else if (rt->session_snapshot.original_champion_records_valid) {
+                const uint8_t *raw =
+                    rt->session_snapshot.original_champion_records[slot];
+                stat_inputs[slot].cur_hp = dm2_runtime_read_i16_le(raw + 54);
+                stat_inputs[slot].max_hp = dm2_runtime_read_u16_le(raw + 56);
+                stat_inputs[slot].cur_stamina = dm2_runtime_read_u16_le(raw + 58);
+                stat_inputs[slot].max_stamina = dm2_runtime_read_u16_le(raw + 60);
+                stat_inputs[slot].cur_mp = dm2_runtime_read_u16_le(raw + 62);
+                stat_inputs[slot].max_mp = dm2_runtime_read_u16_le(raw + 64);
+            }
             stat_inputs[slot].is_leader = (uint8_t)(slot == hud.leader_index);
         }
         if (stat_inputs_valid) {
@@ -15154,6 +15227,8 @@ static int dm2_runtime_shop_stock_is_eligible(
     int on_tile;
     int in_party;
 
+    (void)raw_entry;
+
     if (!context || !context->runtime || !context->dungeon ||
         !context->loader) return -1;
     if (!dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
@@ -15166,7 +15241,7 @@ static int dm2_runtime_shop_stock_is_eligible(
     (void)dm2_v1_asset_load_word_value(
         context->loader, (int)itemdb, (int)itemtype, 0, &subtype_word);
     on_tile = -1;
-    if ((subtype_word & 0x1000u) != 0u || (raw_entry & 0x8000u) != 0u) {
+    if ((subtype_word & 0x1000u) != 0u) {
         on_tile = dm2_runtime_shop_tile_has_item(
             context->runtime, context->dungeon, context->level,
             context->x, context->y, item);
@@ -15176,18 +15251,110 @@ static int dm2_runtime_shop_stock_is_eligible(
         in_party = dm2_runtime_shop_party_has_item(context->runtime, item);
         if (in_party <= 0) return in_party;
     }
-    /* The source allocates/appends a DB14 for this whitelist bit when the
-     * item is not already on the shop tile. Do not mutate stock until that
-     * source allocation and tile-append transaction is wired. */
-    if ((raw_entry & 0x8000u) != 0u && !on_tile) return -1;
     return 1;
+}
+
+/* SPX v4 SkWinCore::ALLOC_NEW_DBITEM_DEEPLY followed by APPEND_RECORD_TO in
+ * SHOP_GLASS. Allocation exhaustion is a source no-op; failed Firestaff
+ * synchronization restores both record and dungeon mirrors. */
+static void dm2_runtime_shop_materialize_flagged_stock(
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
+    const DM2_V1_AssetLoader *loader, int level, int x, int y,
+    uint8_t wall_gfx_index, uint16_t item)
+{
+    DM2_V1_RecordPoolSet pools_before;
+    uint8_t *raw_before = NULL;
+    const uint8_t *item_list;
+    size_t item_list_size = 0u;
+    uint16_t raw_entry = 0u;
+    int found = 0;
+    int present;
+    int16_t record;
+    int16_t head;
+    int tile_raw;
+
+    if (!rt || !dungeon || !loader || !rt->record_pools_valid ||
+        !rt->record_pools.valid || !dungeon->raw_data ||
+        dungeon->raw_size <= 0) return;
+    item_list = dm2_v1_query_gdat_entry_data_ptr(
+        loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+        DM2_GDAT_ENTRY_TYPE_RAW8, 0x13, &item_list_size);
+    if (!item_list || (item_list_size & 1u) != 0u) return;
+    for (size_t i = 0u; i < item_list_size / 2u; ++i) {
+        const uint8_t *word = item_list + i * 2u;
+        raw_entry = loader->big_endian
+            ? (uint16_t)(((uint16_t)word[0] << 8) | word[1])
+            : (uint16_t)(word[0] | ((uint16_t)word[1] << 8));
+        if ((raw_entry & 0x01ffu) == (item & 0x01ffu)) {
+            found = 1;
+            break;
+        }
+    }
+    if (!found || (raw_entry & 0x8000u) == 0u) return;
+    present = dm2_runtime_shop_tile_has_item(rt, dungeon, level, x, y, item);
+    if (present != 0) return;
+    memset(&pools_before, 0, sizeof(pools_before));
+    if (!dm2_v1_record_pool_set_clone(&pools_before, &rt->record_pools) ||
+        !(raw_before = (uint8_t *)malloc((size_t)dungeon->raw_size))) {
+        dm2_v1_record_pool_set_free(&pools_before);
+        free(raw_before);
+        return;
+    }
+    memcpy(raw_before, dungeon->raw_data, (size_t)dungeon->raw_size);
+    record = dm2_v1_alloc_new_dbitem_from_world(
+        &rt->record_pools, dungeon, level, item);
+    if (record == DM2_V1_RECORD_HANDLE_NULL) {
+        /* ALLOC_NEW_DBITEM_DEEPLY falls back to ALLOC_NEW_RECORD after the
+         * world recycler misses. Restore any bounded recycler side effects
+         * before taking the fresh-slot path. */
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pools_before;
+        memset(&pools_before, 0, sizeof(pools_before));
+        memcpy(dungeon->raw_data, raw_before, (size_t)dungeon->raw_size);
+        if (!dm2_v1_record_pool_set_clone(
+                &pools_before, &rt->record_pools)) {
+            free(raw_before);
+            return;
+        }
+        record = dm2_v1_alloc_new_dbitem(&rt->record_pools, item);
+        if (record == DM2_V1_RECORD_HANDLE_NULL) goto rollback;
+    }
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, level, x, y);
+    tile_raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+    if (tile_raw < 0) goto rollback;
+    if (head < 0 && (tile_raw & 0x10) == 0) {
+        if (dm2_v1_dungeon_insert_first_thing_empty_tile(
+                dungeon, level, x, y, (uint16_t)record) != 0)
+            goto rollback;
+    } else if (head < 0) {
+        if (dm2_v1_dungeon_set_first_thing(
+                dungeon, level, x, y, (uint16_t)record) != 0)
+            goto rollback;
+    } else {
+        if (!dm2_v1_record_pool_append_to_list(
+                &rt->record_pools, &head, record) ||
+            dm2_v1_dungeon_set_first_thing(
+                dungeon, level, x, y, (uint16_t)head) != 0)
+            goto rollback;
+    }
+    dm2_v1_record_pool_set_free(&pools_before);
+    free(raw_before);
+    return;
+
+rollback:
+    memcpy(dungeon->raw_data, raw_before, (size_t)dungeon->raw_size);
+    dm2_v1_record_pool_set_free(&rt->record_pools);
+    rt->record_pools = pools_before;
+    memset(&pools_before, 0, sizeof(pools_before));
+    free(raw_before);
 }
 
 /* SkWinCore.cpp::_32cb_0f82_SHOP_GLASS source-order item transition. The
  * draw route owns this mutation; a party stepping onto a coordinate does not
  * manufacture a shop session. */
 static int dm2_runtime_shop_glass_transition(
-    DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
     const DM2_V1_AssetLoader *loader, int level, int x, int y,
     uint8_t wall_gfx_index, DM2_V1_ShopGlassActuatorPair *pair)
 {
@@ -15269,6 +15436,8 @@ static int dm2_runtime_shop_glass_transition(
     item_list = dm2_v1_query_gdat_entry_data_ptr(
         loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
         DM2_GDAT_ENTRY_TYPE_RAW8, 0x13, &item_list_size);
+    dm2_runtime_shop_materialize_flagged_stock(
+        rt, dungeon, loader, level, x, y, wall_gfx_index, current_item);
     pair->soldout_icon_required = 0u;
     if (!item_list) {
         int item_present = dm2_runtime_shop_tile_has_item(
@@ -15510,13 +15679,126 @@ static int dm2_runtime_bind_shop_image_render(
     return 1;
 }
 
+static int dm2_runtime_shop_currency_values(
+    const DM2_V1_AssetLoader *loader, uint16_t values[10],
+    uint8_t *out_count)
+{
+    uint8_t count = 0u;
+    if (out_count) *out_count = 0u;
+    if (!loader || !values || !out_count) return 0;
+    memset(values, 0, sizeof(uint16_t) * 10u);
+    /* SKWINSPX/src/v4/skitem.cpp::LOAD_MISCITEM scans MISCELLANEOUS IDs
+     * 0..0x7f and inserts before equal values into an ascending table. */
+    for (uint16_t item = 0u; item < 0x80u; ++item) {
+        uint16_t flags = 0u, value = 0u;
+        uint8_t pos;
+        /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent entry. */
+        (void)dm2_v1_asset_load_word_value(
+            loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 0, &flags);
+        if ((flags & 0x4000u) == 0u) continue;
+        if (count >= 10u || !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 2, &value))
+            return 0;
+        pos = count;
+        while (pos > 0u && values[pos - 1u] >= value) {
+            values[pos] = values[pos - 1u];
+            --pos;
+        }
+        values[pos] = value;
+        ++count;
+    }
+    *out_count = count;
+    return count > 0u;
+}
+
+static int dm2_runtime_shop_money_value(
+    uint16_t value, const uint16_t money_values[10], uint8_t money_count,
+    uint8_t coin_indices[DM2_V1_SHOP_COIN_ROW_MAX], uint8_t *out_count)
+{
+    int32_t remaining = value;
+    int index = (int)money_count - 1;
+    uint8_t count = 0u;
+    if (out_count) *out_count = 0u;
+    if (!money_values || !coin_indices || !out_count || money_count > 10u)
+        return 0;
+    while (count < DM2_V1_SHOP_COIN_ROW_MAX && remaining > 0 && index >= 0) {
+        uint16_t coin_value = money_values[index];
+        if (coin_value == 0u) break;
+        if ((uint32_t)remaining >= coin_value) {
+            coin_indices[count++] = (uint8_t)index;
+            remaining -= coin_value;
+        } else {
+            --index;
+        }
+    }
+    *out_count = count;
+    return count > 0u;
+}
+
+static int dm2_runtime_bind_shop_coin_row(
+    const DM2_V1_AssetLoader *loader, uint8_t wall_gfx_index,
+    uint16_t rect_number, uint8_t ref_point, uint8_t image_offset_field,
+    uint16_t price, const uint16_t money_values[10], uint8_t money_count,
+    uint16_t colorkey, DM2_V1_ShopCoinRow *row)
+{
+    DM2_V1_QueryGdatSummaryImageReceipt atlas;
+    DM2_V1_WallOrnamentBlitRect blit;
+    uint16_t offset_word = 0u;
+    uint8_t coin_count = 0u;
+    int row_width;
+
+    if (row) memset(row, 0, sizeof(*row));
+    if (!row) return 0;
+    if (price == 0u) return 1;
+    if (!loader || !rect_number || image_offset_field < 0xf0u ||
+        image_offset_field > 0xf1u)
+        return 0;
+    if (!dm2_runtime_shop_money_value(
+            price, money_values, money_count, row->coin_index, &coin_count))
+        return 1; /* Source skips the price row when no coin fits. */
+    row_width = (int)coin_count * 8;
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x10,
+            &atlas) || !atlas.accepted || atlas.metadata.width < row_width ||
+        atlas.metadata.height < 7u || atlas.palette_hash == 0u ||
+        !dm2_v1_asset_load_image_offset(
+            loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+            image_offset_field, &offset_word) ||
+        !dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
+            loader, (uint16_t)(rect_number | 0x8000u), ref_point,
+            row_width, 7, (int8_t)(offset_word >> 8),
+            (int8_t)offset_word, &blit))
+        return 0;
+    for (uint8_t coin = 0u; coin < coin_count; ++coin) {
+        if ((uint16_t)(row->coin_index[coin] * 8u + 8u) >
+            atlas.metadata.width)
+            return 0;
+    }
+    row->valid = 1u;
+    row->coin_count = coin_count;
+    row->category = DM2_GDAT_CATEGORY_WALL_GFX;
+    row->index = wall_gfx_index;
+    row->field = 0x10u;
+    row->colorkey = colorkey;
+    row->image_width = atlas.metadata.width;
+    row->image_height = atlas.metadata.height;
+    row->palette_hash = atlas.palette_hash;
+    row->dst_rect = (DM2_V1_ViewportRect){
+        blit.destination_x, blit.destination_y,
+        blit.destination_width, blit.destination_height };
+    row->src_rect = (DM2_V1_ViewportRect){
+        blit.source_x, blit.source_y,
+        blit.source_width, blit.source_height };
+    return 1;
+}
+
 /* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
  * Build placements from the active map's source-owned WALL_GFX fields and
  * INTERFACE_GENERAL RAW4 rectangle graph. */
 static void dm2_runtime_bind_wall_ornament_plan(
     DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
     const DM2_V1_AssetLoader *loader,
-    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_DungeonData *dungeon,
     DM2_V1_WallOrnamentRenderPlan *plan)
 {
     static const int stretch_by_distance[5] = { 0x60, 0x40, 0x2b, 0x1c, 0x13 };
@@ -15730,6 +16012,134 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 entry->shop_wall_actuator = pair.wall_object;
                 entry->shop_floor_actuator = pair.floor_object;
                 entry->shop_current_item = pair.current_item;
+                /* SKWINSPX v4 DRAW_TEXT_TO_BACKBUFF runs only in cellPos 3
+                 * (front D1C). It centers QUERY_GDAT_ITEM_NAME over the
+                 * source rectangle and uses WALL_GFX image offset 0xf2. */
+                if (square == DM2_SQ_D1C) {
+                    DM2_V1_GdatNameReceipt name;
+                    DM2_V1_RectTableNode name_rect;
+                    DM2_V1_SkprojectItemdbOfItemspecReceipt name_itemdb;
+                    DM2_V1_SkprojectItemtypeOfItemspecReceipt name_itemtype;
+                    const uint8_t *raw_rects;
+                    size_t raw_rects_size = 0u;
+                    uint16_t name_offset = 0u;
+                    uint16_t name_db = 0xffffu;
+                    uint16_t name_type = 0xffffu;
+                    if (dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+                            pair.current_item, &name_db, &name_itemdb) &&
+                        name_itemdb.valid && name_db <= 0xffu &&
+                        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+                            pair.current_item, &name_type, &name_itemtype) &&
+                        name_itemtype.valid && name_type <= 0xffu &&
+                        dm2_v1_query_gdat_item_name_receipt(
+                            loader, (int)name_db, (int)name_type, &name) &&
+                        name.accepted &&
+                        dm2_v1_asset_load_image_offset(
+                            loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                            surface->wall_ornate_gfx_index, 0xf2,
+                            &name_offset)) {
+                        raw_rects = dm2_v1_query_gdat_entry_data_ptr(
+                            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                            DM2_GDAT_ENTRY_TYPE_RAW4, 0x00,
+                            &raw_rects_size);
+                        if (raw_rects &&
+                            dm2_v1_wall_ornament_rect_table_query(
+                                raw_rects, raw_rects_size, 3u, &name_rect)) {
+                            size_t name_length = strlen(name.text);
+                            if (name_length <= sizeof(entry->shop_name) - 1u &&
+                                name_rect.x + (int8_t)(name_offset >> 8) >=
+                                    INT16_MIN &&
+                                name_rect.x + (int8_t)(name_offset >> 8) <=
+                                    INT16_MAX &&
+                                name_rect.y + (int8_t)name_offset >= INT16_MIN &&
+                                name_rect.y + (int8_t)name_offset <= INT16_MAX) {
+                                memcpy(entry->shop_name, name.text,
+                                       name_length + 1u);
+                                entry->shop_name_x = (int16_t)(name_rect.x +
+                                    (int8_t)(name_offset >> 8));
+                                entry->shop_name_y = (int16_t)(name_rect.y +
+                                    (int8_t)name_offset);
+                                entry->shop_name_hash = name.receipt_hash;
+                                entry->shop_name_valid = 1u;
+                            }
+                        }
+                    }
+                }
+                {
+                    uint16_t buy_price_v4 = 0u;
+                    uint16_t sell_price_v4 = 0u;
+                    uint16_t buy_price_v5 = 0u;
+                    uint16_t sell_price_v5 = 0u;
+                    uint8_t creature_type =
+                        (uint8_t)((pair.wall_w2 >> 7) & 0x01ffu);
+                    uint16_t pool_number =
+                        (uint16_t)((pair.wall_w4 >> 7) & 0x000fu);
+                    if (dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V4,
+                            1, 1, &buy_price_v4) &&
+                        dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V4,
+                            1, 0, &sell_price_v4)) {
+                        entry->shop_buy_price_v4 = buy_price_v4;
+                        entry->shop_sell_price_v4 = sell_price_v4;
+                        entry->shop_price_v4_valid = 1u;
+                    }
+                    if (dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V5,
+                            1, 1, &buy_price_v5) &&
+                        dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V5,
+                            1, 0, &sell_price_v5)) {
+                        entry->shop_buy_price_v5 = buy_price_v5;
+                        entry->shop_sell_price_v5 = sell_price_v5;
+                        entry->shop_price_v5_valid = 1u;
+                    }
+                    if (square == DM2_SQ_D1C &&
+                        (entry->shop_price_v4_valid ||
+                         entry->shop_price_v5_valid)) {
+                        uint16_t money_values[10];
+                        uint8_t money_count = 0u;
+                        if (!dm2_runtime_shop_currency_values(
+                                loader, money_values, &money_count) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf0u,
+                                entry->shop_buy_price_v4, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_buy_coins_v4) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf1u,
+                                entry->shop_sell_price_v4, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_sell_coins_v4) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf0u,
+                                entry->shop_buy_price_v5, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_buy_coins_v5) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf1u,
+                                entry->shop_sell_price_v5, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_sell_coins_v5)) {
+                            viewport->wall_ornament_plan_status_code = 15u;
+                            viewport->wall_ornament_plan_status_square =
+                                (int8_t)square;
+                            continue;
+                        }
+                    }
+                }
                 entry->shop_glass_pair_valid = 1u;
                 entry->shop_glass_render_pending = 1u;
                 entry->shop_soldout_icon_required =
@@ -15760,6 +16170,48 @@ static void dm2_runtime_bind_wall_ornament_plan(
                 }
                 plan_hash ^= pair.identity_hash;
                 plan_hash *= 16777619u;
+                if (entry->shop_price_v4_valid) {
+                    plan_hash ^= ((uint32_t)entry->shop_buy_price_v4 << 16) |
+                        entry->shop_sell_price_v4;
+                    plan_hash *= 16777619u;
+                }
+                if (entry->shop_price_v5_valid) {
+                    plan_hash ^= ((uint32_t)entry->shop_buy_price_v5 << 16) |
+                        entry->shop_sell_price_v5;
+                    plan_hash *= 16777619u;
+                }
+                {
+                    const DM2_V1_ShopCoinRow *rows[] = {
+                        &entry->shop_buy_coins_v4,
+                        &entry->shop_sell_coins_v4,
+                        &entry->shop_buy_coins_v5,
+                        &entry->shop_sell_coins_v5 };
+                    for (size_t row = 0u;
+                         row < sizeof(rows) / sizeof(rows[0]); ++row) {
+                        if (!rows[row]->valid) continue;
+                        plan_hash ^= rows[row]->palette_hash;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= rows[row]->coin_count;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= (uint16_t)rows[row]->dst_rect.x;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= (uint16_t)rows[row]->dst_rect.y;
+                        plan_hash *= 16777619u;
+                        for (uint8_t coin = 0u;
+                             coin < rows[row]->coin_count; ++coin) {
+                            plan_hash ^= rows[row]->coin_index[coin];
+                            plan_hash *= 16777619u;
+                        }
+                    }
+                }
+                if (entry->shop_name_valid) {
+                    plan_hash ^= entry->shop_name_hash;
+                    plan_hash *= 16777619u;
+                    plan_hash ^= (uint16_t)entry->shop_name_x;
+                    plan_hash *= 16777619u;
+                    plan_hash ^= (uint16_t)entry->shop_name_y;
+                    plan_hash *= 16777619u;
+                }
                 plan_hash ^= entry->shop_item.summary_hash;
                 plan_hash *= 16777619u;
                 plan_hash ^= entry->shop_item.palette_hash;
@@ -16414,7 +16866,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (viewport.asset_loader && !rt->outdoor) {
         dm2_runtime_bind_wall_ornament_plan(
             rt, &viewport, viewport.asset_loader,
-            (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data,
             &wall_ornament_render_plan);
     }
     dm2_v1_viewport_set_source_materials_required(
@@ -20220,8 +20672,92 @@ int dm2_v1_runtime_turn(int delta) {
     if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
         return -1;
     }
+    if (delta == 0) return 0;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     old_dir = gs->party_dir & 3;
+    /* PERFORM_TURN_SQUAD begins with RESET_SQUAD_DIR on DOS, SPX v4/v5 and
+     * SKULLWIN. The live party owner holds each champion's source absdir. */
+    if (rt->source_party_valid &&
+        rt->source_party.heros_in_party <= DM2_MAX_HEROES) {
+        for (int hero = 0; hero < rt->source_party.heros_in_party; ++hero)
+            rt->source_party.hero[hero].absdir = (int8_t)old_dir;
+    }
+
+    /* SKWINSPX/skhero.cpp::DM2_PERFORM_TURN_SQUAD checks the party's current
+     * tile before rotating.  On a stair tile the requested turn operates the
+     * stair transition instead, then rotates to the direction encoded by the
+     * destination tile (c_move.cpp::DM2_move_12b4_00af). */
+    if (!rt->outdoor && rt->boot->dungeon_data) {
+        DM2_V1_DungeonData *dungeon =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        int level = gs->current_level;
+        int x = gs->party_x;
+        int y = gs->party_y;
+        int raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+        if (raw >= 0 && dm2_v1_dungeon_get_square_type(
+                dungeon, level, x, y) == 3) {
+            static const int16_t dx[4] = { 0, 1, 0, -1 };
+            static const int16_t dy[4] = { -1, 0, 1, 0 };
+            DM2_RuntimeTurnTileContext tile_context = { dungeon, -1 };
+            DM2_V1_SkprojectQuery0cee06dcReceipt direction_receipt;
+            int destination_map = -1;
+            int destination_x = -1;
+            int destination_y = -1;
+            uint8_t destination_direction = 0u;
+            int stair_status = dm2_runtime_resolve_entered_stairs(
+                dungeon, level, x, y,
+                &destination_map, &destination_x, &destination_y);
+
+            if (stair_status <= 0 || destination_map < 0 ||
+                destination_x < 0 || destination_y < 0)
+                return -1;
+            tile_context.level = destination_map;
+            if (!dm2_v1_skproject_query_0cee_06dc(
+                    (int16_t)destination_x, (int16_t)destination_y,
+                    dm2_runtime_turn_tile_value, &tile_context, dx, dy,
+                    &destination_direction,
+                    &direction_receipt) || !direction_receipt.valid ||
+                destination_direction > 3u)
+                return -1;
+
+            new_dir = destination_direction;
+            gs->current_level = destination_map;
+            gs->party_x = destination_x;
+            gs->party_y = destination_y;
+            gs->party_dir = new_dir;
+            rt->dungeon_level = destination_map;
+            rt->view_dir = new_dir;
+            rt->outdoor = dm2_v1_dungeon_is_outdoor(dungeon,
+                                                     destination_map);
+            gs->outdoor = rt->outdoor;
+            dm2_runtime_refresh_map_transition_context(rt);
+            dm2_runtime_refresh_source_weather_zone(rt);
+            if (rt->stairs_callback)
+                rt->stairs_callback(x, y, destination_x, destination_y,
+                    (float)(destination_map - level));
+            if (new_dir != old_dir && rt->turn_callback)
+                rt->turn_callback(old_dir, new_dir);
+            return 0;
+        }
+    }
+
+    /* All three source turn handlers inspect a teleporter before rotating.
+     * The runtime owner applies its authenticated DB1 transition in place. */
+    {
+        int old_level = gs->current_level;
+        int old_x = gs->party_x;
+        int old_y = gs->party_y;
+        if (dm2_runtime_apply_entered_db1_teleporter(
+                rt, gs, old_level, old_x, old_y)) {
+            if (rt->stairs_callback)
+                rt->stairs_callback(old_x, old_y, gs->party_x, gs->party_y,
+                    (float)(gs->current_level - old_level));
+            if (gs->party_dir != old_dir && rt->turn_callback)
+                rt->turn_callback(old_dir, gs->party_dir);
+            return 0;
+        }
+    }
+
     new_dir = (old_dir + (delta < 0 ? 3 : 1)) & 3;
 
     if (new_dir != old_dir && rt->turn_callback) {

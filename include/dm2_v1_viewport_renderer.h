@@ -520,6 +520,23 @@ typedef struct {
     DM2_V1_ViewportRect src_rect;
 } DM2_V1_ShopImageRender;
 
+#define DM2_V1_SHOP_COIN_ROW_MAX 6
+
+typedef struct {
+    uint8_t valid;
+    uint8_t coin_count;
+    uint8_t coin_index[DM2_V1_SHOP_COIN_ROW_MAX];
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t colorkey;
+    uint16_t image_width;
+    uint16_t image_height;
+    uint32_t palette_hash;
+    DM2_V1_ViewportRect dst_rect;
+    DM2_V1_ViewportRect src_rect;
+} DM2_V1_ShopCoinRow;
+
 typedef struct {
     int view_square;
     int gdat_index;
@@ -540,6 +557,21 @@ typedef struct {
     uint16_t shop_wall_actuator;
     uint16_t shop_floor_actuator;
     uint16_t shop_current_item;
+    uint16_t shop_buy_price_v4;
+    uint16_t shop_sell_price_v4;
+    uint16_t shop_buy_price_v5;
+    uint16_t shop_sell_price_v5;
+    uint8_t shop_price_v4_valid;
+    uint8_t shop_price_v5_valid;
+    DM2_V1_ShopCoinRow shop_buy_coins_v4;
+    DM2_V1_ShopCoinRow shop_sell_coins_v4;
+    DM2_V1_ShopCoinRow shop_buy_coins_v5;
+    DM2_V1_ShopCoinRow shop_sell_coins_v5;
+    uint8_t shop_name_valid;
+    int16_t shop_name_x;
+    int16_t shop_name_y;
+    uint32_t shop_name_hash;
+    char shop_name[128];
     uint8_t shop_glass_pair_valid;
     uint8_t shop_glass_render_pending;
     uint8_t shop_soldout_icon_required;

@@ -26,15 +26,13 @@ outside that ledger. The supplemental
 `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,938 location-specific rows,
-3,635 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,839 `UNREVIEWED`, 1,013 `PARTIAL`, 0 `MISSING`,
-72 `IMPLEMENTED_PARITY`, 12 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
-rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (818 unreviewed, 357 partial,
-26 implemented, 4 architecture-specific); SKWINSPX has 2,731 rows (2,021 unreviewed, 654 partial, 46
-implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
-cross-variant rows are partial. The review ledger contains 1,108 rows (1,021
-partial, 73 implemented, 12 architecture-specific, and 2 outside-game),
-including eight cross-variant rows not present in the supplemental inventory.
+3,635 distinct names, and 303 repeated-name definitions. The separate
+source-review ledger currently overrides locations within that inventory; the
+machine-readable backlog and verifier below are authoritative for current
+status counts. Three supplemental/manual source rows are not represented in
+the 3,938-row backlog, and eight cross-variant review rows are not in the
+supplemental inventory. The review ledger contains 1,108 rows; these counts
+must not be added directly to the location inventory.
 
 DOS `SKW_RETRIEVE_ITEM_BONUS` and SPX v5 `DM2_RETRIEVE_ITEM_BONUS` use the
 conditional gate and low-byte signed result; SPX v4 `RETRIEVE_ITEM_BONUS`
@@ -52,7 +50,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,938 (2,731 SPX, 1,205 DOS, 2 SKULLWIN) | active source review: 2,841 `UNREVIEWED`; 1,011 `PARTIAL`; 72 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,769 `UNREVIEWED`; 1,052 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,938 open tasks (2,769 unreviewed, 1,167 partial incl. older-ledger rows, 2 partial source owners). |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -179,11 +177,20 @@ the DB-type check, the DB5..DB10-only draw-slot advancement (2 through 13,
 then wrap to 2), and the cell-3-only clickable zone. The next work is to
 consume that root with the source facing gate, this wall-specific placement,
 and the corresponding clipping. The shop-glass routine now resolves the live wall/floor actuator pair and begins
-its mask/whitelist/ownership transition in source byte order. The separate
-`ddat.v1d67bc` hand-container owner, item name/prices, DB14 allocation and
-buy/sell remain open. The selected merchandise image, conditional sold-out
-icon and nav board use their source GDAT images, palettes, offsets and clipped
-rectangles on the live render route; incomplete ownership still fails closed.
+its mask/whitelist/ownership transition in source byte order. Flagged stock
+now attempts the bounded world recycler and then fresh DB14 allocation, and
+the D1C name uses `QUERY_GDAT_ITEM_NAME`, RAW4 rectangle 3, WALL_GFX image
+offset 0xf2 and the shared source font's centered 3x6 glyph layout. The
+SPX v4 and v5 buy/sell query values are now kept separately in the render
+plan so their distinct source formulas are not mixed. SPX v4 coin rows now
+use the source currency order, WALL_GFX 0x10 atlas, F0/F1 offsets and clipped
+RAW4 target. SPX v5 rows are bound separately, but edition selection and v5
+row drawing are still open; nonzero-darkness name palette parity is open. The separate
+`ddat.v1d67bc` hand-container owner, complete recycler, click-direction state,
+and buy/sell transactions remain open. The selected merchandise image,
+conditional sold-out icon and nav board use their source GDAT images,
+palettes, offsets and clipped rectangles on the live render route; incomplete
+ownership still fails closed.
 
 Open source-owned behavior includes the
 `DM2_ALLOC_NEW_RECORD` / `DM2_ALLOC_NEW_DBITEM` /
@@ -657,7 +664,23 @@ Compared DOS `SKW_QUERY_PLAYER_SKILL_LV`, SPX v4 `QUERY_PLAYER_SKILL_LV`, SPX v5
 
 DOS `SKW_PUSH_PULL_RIGID_BODY`, SPX v4 `PUSH_PULL_RIGID_BODY` and SPX v5 `DM2_PUSH_PULL_RIGID_BODY` are compared against their SKProject bodies and Firestaff's `dm2_v1_push_pull_rigid_body` helper. All six click-zone direction and turn-mode choices match. The source first admits the target with `IS_CREATURE_MOVABLE_THERE`, checks the edition's rigid-body weight predicate, and uses the full `PERFORM_MOVE` transaction; when that predicate fails it emits variant-specific noise for live heroes/champions. Firestaff instead directly moves any record returned by its callback, checks only destination blocking, and queues unconditional generic noise. Its helper has no production caller. All three definitions remain `PARTIAL`; movement admission, object class, transaction, source feedback, and supported-platform routes remain open.
 
-With active-source review overrides applied, the inventory currently maps 2,884 as `UNREVIEWED`, 968 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
+
+## Latest source review: PERFORM_TURN_SQUAD (2026-11-02)
+
+## Teleporter transition source review
+
+`DM2_move_2fcf_0434` now resolves the DB1 destination and rotation from the live mutable runtime record pool when movement or turning enters an enabled party teleporter. The decoder uses the authenticated source word byte order. Keep the symbol `PARTIAL`: Firestaff still lacks the complete source map-owner/record-link transaction, teleporter sound behavior and native platform callers.
+
+Compared DOS `SKW_PERFORM_TURN_SQUAD`, SPX v4 `PERFORM_TURN_SQUAD`, SPX v5 `DM2_PERFORM_TURN_SQUAD`, and the SKULLWIN callback helper. Firestaff now binds turning to the live DM2 runtime: zero input is a no-op, champion facing directions reset, stair tiles resolve the other level and destination facing, and an active DB1 teleporter transitions before an ordinary turn. The source also removes and reinserts the party record around rotation; v4 has a turn Lua hook; its extra stair-direction argument is unused in the retail DM2 body, and v5 uses `map_3BF83`. Those source state effects and complete DOS/SPX runtime and platform routes remain open, so all four source rows remain `PARTIAL`.
+
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
+
+## Latest source review: STAIRS TRANSITION (2026-11-02)
+
+Compared DOS `SKW_12b4_00af`, SPX v4 `_12b4_00af`, SPX v5 `DM2_move_12b4_00af`, and SKULLWIN `DM2_move_12b4_00af`. All resolve the destination map from the stair lead bit, rotate the party using the destination tile direction, and restore their source map owner. Firestaff now binds its destination and direction queries to the live movement and turn paths; source party-record relocation and source map-switch/global side effects remain incomplete. SPX v4's extra stair-direction parameter is unused in the retail DM2 body; its Bloodwych-only special-direction branch is outside scope. All four source rows remain `PARTIAL`.
+
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
 
 ## Latest source review: REMOVE_OBJECT_FROM_HAND (2026-11-02)
 
@@ -720,4 +743,36 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,796 as `UNREVIEWED`, 1,036 as `PARTIAL`, 0 as `MISSING`, and 93 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
+
+### DM2 pending squad position recomputation (2026-11-02)
+
+Compared DOS `SKW_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`dm2byb.cpp:51-55`), SPX v4 `CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skchamp.cpp:1975-1978`), SPX v5 `DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION` (`skhero.cpp:4143-4147`), and SKULLWIN (`c_hero.cpp:4141-4145`). All return when the pending-position flag is zero; otherwise they call `CHANGE_PLAYER_POS` with the saved target ORed with `0x8000`. Firestaff's callback helper has the same gate and packed argument. The live runtime applies that pending formation move after hand activation and spelling-champion selection. All four function bodies are `IMPLEMENTED_PARITY`; separate caller routes remain subject to their input/platform audits.
+
+### DM2 creature lifting weight check (2026-11-02)
+
+Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_CREATURE_12b4_099e` (`skchamp.cpp:2716-2754`), SPX v5 `DM2_move_12b4_099e` (`skmove.cpp:805-883`), and SKULLWIN (`c_move.cpp:805-883`). Firestaff's core receipt models the `0xfd` weight cap, living-hero strength calculation, event/leader bonus, random success check and stamina decrement decision. It has no production move-record caller resolving authenticated creature weight, hero attributes and RNG or applying `ADJUST_STAMINA`. Its request also treats zero `stamina_adjusted_strength` as absent and uses raw strength, so some source decisions differ; SPX v4's bonus uses `glbChampionLeader`, unlike the request's event-hero selector. All four source rows are `PARTIAL`.
+
+### DM2 item subtype mutation across editions (2026-11-02)
+
+Compared DOS `SKW_SET_ITEMTYPE` (`SKWINDOS/dm2bya.cpp:6736`), SPX v4 `SET_ITEMTYPE` (`SKWINSPX/src/v4/skitem.cpp:497`), SPX v5 `DM2_SET_ITEMTYPE` (`SKWINSPX/src/v5/skrecord.cpp:287`), and SKULLWIN `DM2_SET_ITEMTYPE` (`SKULLWIN/c_record.cpp:284`). Their DB4..DB10 record-byte mutations match Firestaff's generic callback helper and active record-pool mutator, including DB7 no-op and DB9 split subtype/charge reset. The four function bodies are `IMPLEMENTED_PARITY`; this does not establish every source caller or supported platform route. See the active-source ledger for per-edition entries.
+
+### DM2 item importance flags across editions (2026-11-02)
+
+Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v4/skgame.cpp:3172`), SPX v5 `DM2_SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v5/skrecord.cpp:501`), and SKULLWIN (`SKULLWIN/c_record.cpp:498`). The sources use different DB-specific flags/typed fields, with DB7 and selected container/scroll types as no-ops. Firestaff’s legacy callback writes byte@1 for all record types, unlike those layouts. A separate SKULLWIN-shaped bounded helper exists but is not the live hero callback. Source timer tick-generators also set importance for actuator-created items when flags 0x18 are present, and Firestaff has no bound per-DB live timer/actuator mutator for that route. All four source definitions remain `PARTIAL`; see the active-source ledger.
+
+### DM2 creature weight query (2026-11-02)
+
+Compared DOS `SKW_GET_CREATURE_WEIGHT` (`SKWINDOS/dm2byb.cpp:181`), SPX v4 `GET_CREATURE_WEIGHT` (`SKWINSPX/src/v4/skcrture.cpp:1934`), SPX v5 `DM2_GET_CREATURE_WEIGHT` (`SKWINSPX/src/v5/skgdtqdb.cpp:984`), and SKULLWIN (`SKULLWIN/c_querydb.cpp:982`). Each resolves a creature AI spec and returns unsigned byte `0x1d` (DOS names the containing field at offset `0x1c`). Firestaff’s querydb callback can read that byte when given a creature type, but no production caller binds record/type resolution to the movement/lifting path; the source-shaped core receipt accepts an already resolved weight. All four definitions remain `PARTIAL`.
+
+### DM2 record subtype query across editions (2026-11-02)
+
+Compared DOS `SKW_QUERY_CLS2_FROM_RECORD` (`SKWINDOS/dm2bya.cpp:6677`), SPX v4 `QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v4/skcore.cpp:9618`), SPX v5 `DM2_QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v5/skrecord.cpp:206`), and SKULLWIN (`SKULLWIN/c_record.cpp:203`). The common helper covers special handles, text and actuator callbacks, per-DB subtype extraction, and DB14 missile-object recursion. V4 alone can return a DB7 scroll subtype when `bUseScrollIDType` is enabled; Firestaff’s helper currently returns zero for DB7 with no edition-mode input. DOS/v5/SKULLWIN bodies are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL`.
+
+### DM2 record category query across editions (2026-11-02)
+
+Compared DOS `SKW_QUERY_CLS1_FROM_RECORD` (`SKWINDOS/dm2byc.cpp:1136`), SPX v4 `QUERY_CLS1_FROM_RECORD` (`SKWINSPX/src/v4/skcore.cpp:9680`), SPX v5 `DM2_QUERY_CLS1_FROM_RECORD` (`SKWINSPX/src/v5/skrecord.cpp:457`), and SKULLWIN (`SKULLWIN/c_record.cpp:454`). Each follows DB14 missile next-links, returns `table1d3298` for the first non-DB14 record, and returns `0xff` at OBJECT_NULL. Firestaff’s bounded `_ex` helper matches the walk with source-endian pool access and is used by live runtime paths; the separate one-record callback helper is narrower. All four definitions are `IMPLEMENTED_PARITY` at function-body level.
+
+### DM2 actuator itemspec subtype mapping (2026-11-02)
+
+Compared DOS `SKW_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINDOS/dm2byc.cpp:1101`), SPX v4 `GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINSPX/src/v4/skdungn.cpp:1564`), SPX v5 `DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINSPX/src/v5/skrecord.cpp:406`), and SKULLWIN (`SKULLWIN/c_record.cpp:403`). All mask the low nine bits, subtract the same quadrant bases at `0x80`, `0x100`, `0x180`, `0x1b0`, and `0x1e0`, and map quadrant-3 values at/above `0x1fc` to zero. Firestaff’s helper matches and is used in item allocation/runtime routes. All four definitions are `IMPLEMENTED_PARITY` at function-body level.

@@ -12,6 +12,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 #include "asset_status_m12.h"
+#include "dm2_v1_action_hand_pointer_real_media_check.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -291,6 +292,8 @@ int main(void)
                    M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
                "Amiga closes inventory through the source panel boundary");
     }
+    expect(dm2_v1_test_action_hand_pointer_real_media(&view, "Amiga"),
+           "Amiga RAW4 hand-zone clicks route every actionable source action");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 Amiga M11 title reaches the source startup menu");

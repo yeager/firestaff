@@ -10,6 +10,9 @@
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
 - `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
 - `DM2 player status bars`: correct authentic narrow, vertical health, stamina and mana fills to scale by height; retain width scaling for horizontal fallback bars.
+- `DM2 shop display`: change the display to show source-selected stock, item names and prices from mounted game data; purchase and sale transactions remain incomplete.
+- `DM2 Mac and Amiga controls`: change input handling to route action-hand clicks and movement arrows through the authentic platform geometry.
+- `DM2 stairs and teleporters`: change movement transitions to resolve live dungeon records and honor impassable teleporter tiles.
 - `Startup-menu text`: change long scan and message label fitting to keep UTF-8 codepoints intact, including Swedish diacritics.
 
 ## Developer changes
@@ -21,6 +24,9 @@
 - `Startup-menu Unicode fallback`: change bitmap-font ellipsis fitting to preserve complete localized codepoints.
 - `DM2 tile-actuator lookup`: match SKProject's DB0–DB3 record cutoff, direction exception, and endian-specific word reads; compare against authentic DOS EN/FR, FM Towns JA and Mac EN dungeon data.
 - `DM2 teleporter passage`: reject active teleporter tiles whose source record marks them impassable; verify the common map helper against authentic DOS, FM Towns and Mac dungeon data. Live platform routing remains partial.
+- `DM2 shop display`: bind source stock selection, item-name lookup and v4/v5 price calculation to mounted GDAT and live records; render the SPX v4 coin rows. The v5 coin-row route and purchase/sale transactions remain open.
+- `DM2 platform input`: bind Mac and Amiga action-hand clicks and movement arrows to their authenticated source rectangles; verify both routes with original media.
+- `DM2 live transitions`: change transition handling to route stairs and DB1 teleporters through source map lookups and live tile records; platform-wide parity remains open.
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
 - `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, decode raw-SKSAVE words using source byte order, preserve version-specific text-ornament gates, and document production transition integration as open.
 - `DM2 outdoor environment audit`: add DOS and SPX v4/v5 distance-source comparisons and a bounded distant-element selection helper; document environment discovery and production integration as partial.
@@ -38,6 +44,8 @@
 ### Changed
 
 - `Incomplete loose installations`: preserve the authenticated graphics-edition match when the corresponding dungeon data is absent. Diagnostics identify the missing requirement, while launch remains blocked.
+- `Shop display`: change the DM2 display to show merchandise and source-derived prices for mounted media; purchase and sale transactions are still incomplete.
+- `Mac and Amiga input`: change input handling to recognize source action-hand and movement-arrow rectangles during gameplay.
 
 ### Fixed
 
@@ -48,6 +56,7 @@
 ### Known limitations
 
 - `DM2 viewport and HUD`: portrait rendering, bars, labels, panel interaction, viewport composition and native-display parity remain open outside the verified status-pane bounds.
+- `DM2 shop transactions`: purchase/sale processing, the SPX v5 coin-row route and complete shop-container behavior remain open.
 
 # Firestaff v3.0.424
 

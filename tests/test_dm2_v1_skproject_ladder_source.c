@@ -163,7 +163,7 @@ static void test_authentic_dungeon(void)
     DM2_V1_AssetLoader assets;
     DM2_V1_SkprojectFindLadderSourceReceipt receipt;
     int searches = 0;
-    int found = 0;
+    int found[2] = {0, 0};
     int malformed = 0;
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -197,19 +197,28 @@ static void test_authentic_dungeon(void)
             for (int x = 0; x < dungeon.level_widths[level]; ++x) {
                 for (int y = 0; y < dungeon.level_heights[level]; ++y) {
                     for (int isupper = -1; isupper <= 1; isupper += 2) {
-                        int result = dm2_v1_skproject_find_ladder_around_source(
-                            &dungeon, NULL, assets.loaded ? &assets : NULL,
-                            level, x, y, isupper,
-                            DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4, &receipt);
-                        ++searches;
-                        if (result >= 0 && receipt.valid && receipt.found) {
-                            ++found;
-                            if (receipt.direction != result ||
-                                receipt.ladder_x < 0 || receipt.ladder_y < 0)
+                        for (int source = 0; source < 2; ++source) {
+                            DM2_V1_SkprojectLadderSourceVersion version =
+                                source == 0
+                                    ? DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4
+                                    : DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5;
+                            int result =
+                                dm2_v1_skproject_find_ladder_around_source(
+                                    &dungeon, NULL,
+                                    assets.loaded ? &assets : NULL,
+                                    level, x, y, isupper, version, &receipt);
+                            ++searches;
+                            if (result >= 0 && receipt.valid &&
+                                receipt.found) {
+                                ++found[source];
+                                if (receipt.direction != result ||
+                                    receipt.ladder_x < 0 ||
+                                    receipt.ladder_y < 0)
+                                    ++malformed;
+                            } else if (!receipt.valid ||
+                                       receipt.blocked_malformed_chain) {
                                 ++malformed;
-                        } else if (!receipt.valid ||
-                                   receipt.blocked_malformed_chain) {
-                            ++malformed;
+                            }
                         }
                     }
                 }
@@ -217,8 +226,10 @@ static void test_authentic_dungeon(void)
         }
         CHECK(searches > 0,
               "authentic dungeon exposes bounded ladder search origins");
-        CHECK(found > 0,
-              "authentic dungeon yields at least one source ladder match");
+        CHECK(found[0] > 0,
+              "authentic dungeon yields an SPX v4 ladder match");
+        CHECK(found[1] > 0,
+              "authentic dungeon yields an SPX v5 ladder match");
         CHECK(malformed == 0,
               "authentic ladder scan does not reject valid empty roots or chains");
     }
@@ -341,6 +352,13 @@ static void test_dos_and_spx_text_usage(void)
               receipt.matched_text_ornament,
           "SPX v4 accepts usage-6 text when GDAT marks an upward ladder");
 
+    result = dm2_v1_skproject_find_ladder_around_source(
+        &fixture.dungeon, &fixture.pools, &fixture.assets, 0, 1, 1, -1,
+        DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5, &receipt);
+    CHECK(result == 0 && receipt.valid && receipt.found &&
+              receipt.matched_text_ornament,
+          "SPX v5 accepts usage-6 text when GDAT marks an upward ladder");
+
     set_text_record(&fixture, 7u, 5u);
     result = dm2_v1_skproject_find_ladder_around_source(
         &fixture.dungeon, &fixture.pools, &fixture.assets, 0, 1, 1, -1,
@@ -349,8 +367,15 @@ static void test_dos_and_spx_text_usage(void)
               receipt.matched_text_ornament,
           "DOS accepts usage-7 text when GDAT marks an upward ladder");
 
-    fixture.dungeon.words_big_endian = 1;
-    fixture.pools.words_big_endian = 1;
+    result = dm2_v1_skproject_find_ladder_around_source(
+        &fixture.dungeon, &fixture.pools, &fixture.assets, 0, 1, 1, -1,
+        DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5, &receipt);
+    CHECK(result == 0 && receipt.valid && receipt.found &&
+              receipt.matched_text_ornament,
+          "SPX v5 accepts usage-7 text when GDAT marks an upward ladder");
+
+    fixture.dungeon.words_big_endian = 0;
+    fixture.pools.words_big_endian = 0;
     fixture.pools.source_words_big_endian = 1;
     memset(fixture.db3, 0, sizeof(fixture.db3));
     set_db3_actuator(&fixture, 0u, 1u);
@@ -359,17 +384,19 @@ static void test_dos_and_spx_text_usage(void)
         &fixture.dungeon, &fixture.pools, NULL, 0, 1, 1, 1,
         DM2_V1_SKPROJECT_LADDER_SOURCE_DOS, &receipt);
     CHECK(result == 0 && receipt.valid && receipt.found,
-          "actuator lookup decodes source-format big-endian records");
+          "actuator lookup uses source-word byte order independently of dungeon words");
 
+    fixture.dungeon.words_big_endian = 1;
     fixture.pools.words_big_endian = 0;
     fixture.pools.source_words_big_endian = 1;
     memset(fixture.db3, 0, sizeof(fixture.db3));
     set_db3_actuator(&fixture, 0u, 1u);
+    set_square_root(&fixture, 0, 1, 0, 0u, 0x0c00u);
     result = dm2_v1_skproject_find_ladder_around_source(
         &fixture.dungeon, &fixture.pools, NULL, 0, 1, 1, 1,
         DM2_V1_SKPROJECT_LADDER_SOURCE_DOS, &receipt);
     CHECK(result == 0 && receipt.valid && receipt.found,
-          "ladder source words use their byte order independently of dungeon words");
+          "ladder source words decode independently of dungeon word order");
 }
 
 int main(void)
