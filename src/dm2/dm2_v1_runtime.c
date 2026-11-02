@@ -16670,6 +16670,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
     int16_t moneybox_coin_order[10];
     int16_t moneybox_coin_counts[10];
+    uint16_t moneybox_coin_values[10];
     uint16_t moneybox_item_ids[10];
     uint16_t moneybox_object_id = 0xffffu;
     uint8_t moneybox_container_cls2 = 0xffu;
@@ -16851,14 +16852,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 &moneybox_object_id, &moneybox_container_cls2)) {
             if (!dm2_v1_runtime_get_active_moneybox_coins(
                     moneybox_coin_order, moneybox_coin_counts,
-                    moneybox_item_ids)) {
+                    moneybox_coin_values, moneybox_item_ids)) {
                 g_dm2_last_render_failure_stage = 7;
                 return -1;
             }
             dm2_v1_viewport_set_moneybox_panel(
                 &viewport, moneybox_object_id, moneybox_container_cls2,
                 moneybox_coin_order, moneybox_coin_counts,
-                moneybox_item_ids);
+                moneybox_coin_values, moneybox_item_ids);
         }
     }
     memset(&wall_ornament_render_plan, 0,
@@ -21789,7 +21790,7 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
 
 int dm2_v1_runtime_get_active_moneybox_coins(
     int16_t coin_order[10], int16_t coin_counts[10],
-    uint16_t money_item_ids[10])
+    uint16_t coin_values[10], uint16_t money_item_ids[10])
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_RuntimeHandActivationQuery query;
@@ -21805,8 +21806,9 @@ int dm2_v1_runtime_get_active_moneybox_coins(
 
     if (coin_order) for (int i = 0; i < 10; ++i) coin_order[i] = -1;
     if (coin_counts) memset(coin_counts, 0, sizeof(int16_t) * 10u);
+    if (coin_values) memset(coin_values, 0, sizeof(uint16_t) * 10u);
     if (money_item_ids) memset(money_item_ids, 0, sizeof(uint16_t) * 10u);
-    if (!coin_order || !coin_counts || !money_item_ids || !rt->boot ||
+    if (!coin_order || !coin_counts || !coin_values || !money_item_ids || !rt->boot ||
         !rt->record_pools_valid ||
         !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
         !dm2_v1_runtime_get_active_moneybox(&moneybox, &container_cls2))
@@ -21896,6 +21898,7 @@ int dm2_v1_runtime_get_active_moneybox_coins(
         link = next;
     }
     memcpy(money_item_ids, money_ids, sizeof(money_ids));
+    memcpy(coin_values, money_values, sizeof(money_values));
     return 1;
 }
 

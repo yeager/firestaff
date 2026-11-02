@@ -17,6 +17,7 @@ typedef struct {
     uint8_t container_cls2;
     const int16_t *coin_order;
     const int16_t *coin_counts;
+    const uint16_t *coin_values;
     const uint16_t *money_item_ids;
     const uint16_t *record_chain;
     uint16_t record_count;
@@ -32,6 +33,8 @@ typedef struct {
     uint8_t used_synthetic_gdat;
     uint16_t moneybox_object_id;
     uint8_t container_cls2;
+    int32_t total_coin_value;
+    int total_coin_value_valid;
     DM2_V1_SkprojectDrawMoneyboxReceipt moneybox;
     DM2_V1_SkprojectDrawContainerSurveyReceipt survey;
     const char *symbol;

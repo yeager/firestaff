@@ -68,6 +68,37 @@ static int dm2_money_box_survey_impl(
         }
         return 0;
     }
+    if (!input->coin_order || !input->coin_counts || !input->coin_values ||
+        !input->money_item_ids) {
+        if (out_receipt) out_receipt->blocked = 1;
+        return 0;
+    }
+    {
+        int32_t total = 0;
+        int valid_total = 1;
+        /* SKW_MONEY_BOX_SURVEY multiplies each source count by its ordered
+         * denomination value before displaying the total (DOS dm2bya.cpp:
+         * 1940-1951; SPX v4 skitem.cpp:347-363; SPX v5 skguidrw.cpp:475-487). */
+        for (unsigned slot = 0; slot < DM2_V1_HUD_SURVEY_COIN_SLOTS; ++slot) {
+            int index = input->coin_order[slot];
+            if (index < 0) continue;
+            if (index >= (int)DM2_V1_HUD_SURVEY_COIN_SLOTS ||
+                input->coin_counts[index] < 0) {
+                valid_total = 0;
+                break;
+            }
+            total += (int32_t)input->coin_counts[index] *
+                     (int32_t)input->coin_values[index];
+        }
+        if (out_receipt) {
+            out_receipt->total_coin_value = valid_total ? total : 0;
+            out_receipt->total_coin_value_valid = valid_total;
+        }
+        if (!valid_total) {
+            if (out_receipt) out_receipt->blocked = 1;
+            return 0;
+        }
+    }
     moneybox_ok = dm2_v1_skproject_draw_moneybox(
         input->moneybox_object_id,
         input->container_cls2,
