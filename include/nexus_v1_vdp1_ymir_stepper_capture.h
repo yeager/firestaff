@@ -6,11 +6,14 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_rasterizer.h"
 
+#define NEXUS_V1_VDP1_YMIR_CAPTURE_NO_OWNER UINT16_MAX
+
 /* This is a standalone, capture-only port of Ymir's integer VDP1 quad,
  * line, texture, and Gouraud steppers. It is intentionally not linked to
  * Firestaff's production renderer and never grants renderer admission. */
 typedef struct {
     uint32_t rgba[NEXUS_FB_W * NEXUS_FB_H];
+    uint16_t command_owner[NEXUS_FB_W * NEXUS_FB_H];
 } Nexus_V1_Vdp1YmirCaptureSurface;
 
 typedef struct {
@@ -23,7 +26,10 @@ typedef struct {
     const uint8_t *vdp1_vram;
     int vdp1_vram_size;
     int command_capture_verified;
+    int texture_capture_verified;
+    uint16_t command_index;
     int source_image_join_verified;
+    int direct_source_join_verified;
     int palette_join_verified;
     int vdp1_vram_hash_verified;
     int local_origin_verified;
@@ -48,6 +54,7 @@ typedef struct {
     int capture_only;
     int renderer_permitted;
     int command_verified;
+    int texture_capture_verified;
     int source_image_join_verified;
     int palette_join_verified;
     int local_origin_verified;
@@ -80,6 +87,37 @@ typedef struct {
  * Unsupported command features (mesh rendering, double density, malformed
  * user clipping, unavailable Gouraud/VRAM facts) are rejected. */
 int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
+
+/* Replay one authenticated colour-mode-5 direct-RGB distorted sprite. The
+ * source bytes must be a hash-verified retail DGN Structure2 encoding 28h
+ * image, not a copy taken from captured VDP1 VRAM. */
+int nexus_v1_vdp1_ymir_capture_rasterize_mode5_distorted(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
+
+/* Replay one authenticated type-0 normal sprite through the same direct-RGB
+ * texel and quad steppers as Ymir. The retail DGN source join is still
+ * required by the caller. */
+int nexus_v1_vdp1_ymir_capture_rasterize_mode5_normal(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
+
+/* Replay a type-0 mode-4 normal sprite using the exact captured 8-bit
+ * character span. This reports capture evidence separately from a retail
+ * DGN source join: captured bytes never imply DGN ownership. */
+int nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);
+
+/* Replay the four non-antialiased edges of one authenticated type-5 VDP1
+ * polyline command. */
+int nexus_v1_vdp1_ymir_capture_rasterize_polyline(
     Nexus_V1_Vdp1YmirCaptureSurface *surface,
     const Nexus_V1_Vdp1YmirCaptureInput *input,
     Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt);

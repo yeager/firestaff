@@ -23,6 +23,16 @@ inspection. This check passed again against PR head `c1d2664`; the stack hash is
 are retained under
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c1d2664-validation/`.
 
+On 2026-11-01, the combined `nexus_v1_gameplay_frame300_composition_source_join_real`
+regression passed against code head
+`a05544775f8cf73b9ff4278b028ed0116cec57e2`, using this authentic capture and the hash-verified Japanese retail Nexus data.
+It compared all 71,680 composed RGB triplets with the pinned Ymir render, then
+verified the frame-300 VDP1 replay,
+all visible command owners, and retail DGN source joins. The standalone
+`nexus_v1_vdp1_frame300_dgn_stepper_real` also passed three consecutive runs
+on the same code head. The diagnostic VDP1 path remains capture-only and does
+not admit the production renderer.
+
 Run the real-capture regression after building the existing target:
 
 ```sh
@@ -74,8 +84,32 @@ ctest --test-dir build -R '^nexus_v1_vdp1_gameplay_frame300_source_join_real$' -
 `nexus_v1_gameplay_frame300_composition_source_join_real` runs both bounded
 checks against this same frame-300 evidence package: the C priority compositor
 must match Ymir's complete rendered frame, and the VDP1 command trace must
-match the hash-pinned Japanese `LEV01.DGN` materials. Set the evidence root and
-retail data directory before running it:
+match the hash-pinned Japanese `LEV01.DGN` materials. The combined check also
+records the last VDP1 command that wrote each replay pixel and joins that row
+to its source receipt. Before assigning owners, it verifies that every
+selected visible VDP1 pixel is identical in the replayed FBS buffer and the
+display FBS buffer. All 65,991 VDP1 pixels selected as the top VDP2 layer
+map to rows backed by retail DGN, retail `MENU.BPK`, or the authentic Ymir
+command trace. The 491 CRAM pixels split into 60 pixels from Ymir-captured
+Japanese retail polyline command row 79, whose CMDCOLR selects same-frame CRAM
+entry `0x83` (`0xe73f`), and 431 pixels from row 80, whose captured mode-4
+texture is byte-joined to decoded Japanese retail `MENU.BPK` entry 144. Its
+used nontransparent PALT words also match same-frame VDP2 CRAM. The remaining
+65,500 selected VDP1 pixels map
+to retail indexed DGN rows. Fifteen direct-RGB DGN draws join retail data,
+but none owns a final visible pixel in this captured frame;
+the regression pins this per-pixel class distribution explicitly.
+
+A separate, complete cold-boot capture records SCU transfer 3303 writing 1,312
+bytes to VDP1 offset `0x643c0`; the first 656 bytes match `MENU.BPK[144]` and
+the complete transfer matches that run's final VDP1 VRAM snapshot. This
+extends the archive source evidence across the DMA path but is a cross-run
+join: the cold-boot trace has no command reads from CMDSRCA `0xc878`, and does
+not prove same-run DMA timing or row-80 consumption. See the
+[`row-80 DMA source-join report`](nexus_vdp1_row80_scu_dma_source_join.md).
+
+Set the evidence root and retail data directory before running the combined
+frame-300 check:
 
 ```sh
 export FIRESTAFF_NEXUS_FRAME300_EVIDENCE_DIR=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_face_vdp2_hud_join_20261030
@@ -83,8 +117,32 @@ export FIRESTAFF_NEXUS_DATA_DIR=/path/to/authentic/Japanese/Nexus/data
 ctest --test-dir build -R '^nexus_v1_gameplay_frame300_composition_source_join_real$' --output-on-failure
 ```
 
-The paired check confirms that both verifiers consume one captured gameplay
-state. It does not join each composed pixel to a retail DGN source: only 66 of
-68 textured commands have material matches, active face selection remains
-unknown, and transform/culling are not verified. Renderer admission remains
-blocked.
+The pixel ownership link identifies the last command and source class for
+visible VDP1 pixels; it does not establish a selected Structure3 face for each
+pixel. Only 66 of 68 textured commands have retail DGN material matches; the
+431 mode-4 pixels are MENU.BPK-backed and still replayed from the matching
+capture texture. The 60 polyline pixels are derived from the hash-pinned
+authentic command and same-frame CRAM entry `0x83`, though their UI meaning
+remains unknown. Active
+face selection and transform/culling remain unverified, so renderer admission
+remains blocked.
+
+### Why projected-quad fitting does not identify a DGN face
+
+The retained retail `LEV01.DGN` data provides Structure3 local 16.16 vertex
+positions, face vertex indexes, material selectors, and per-face normal rows.
+It does not provide per-corner UV coordinates in the parsed face records. The
+VDP1 command instead records a source rectangle and four already-projected
+screen-space corners. A candidate face's local vertices therefore cannot be
+compared directly with the command's screen-space quad. Fitting a projection
+to one quad would be underconstrained and would not prove that the game selected
+that face or runtime instance.
+
+Some material selectors have only one candidate face in this level's inventory,
+but selector uniqueness alone does not establish which instance was drawn. The
+next required evidence is a same-invocation retail trace binding a VDP1 command
+VRAM offset to a Structure3 entry and face ordinal, together with the selected
+runtime instance, projected vertex tuple, coordinate origin, clip state, and
+texture-corner correspondence. Until that binding is captured, the source join
+establishes only texture-material matches and a bounded candidate-owner set; it
+does not establish active face ownership or enable production rendering.

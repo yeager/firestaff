@@ -57,6 +57,13 @@ static uint32_t to_rgba(uint16_t word)
         ((uint32_t)expand5(word, 5U) << 8U) | expand5(word, 10U);
 }
 
+static uint32_t to_rgba_with_msb(uint16_t word)
+{
+    return ((word & UINT16_C(0x8000)) ? UINT32_C(0xff000000) : 0U) |
+        ((uint32_t)expand5(word, 0U) << 16U) |
+        ((uint32_t)expand5(word, 5U) << 8U) | expand5(word, 10U);
+}
+
 static uint32_t from_555(uint16_t word)
 {
     return UINT32_C(0xff000000) | ((uint32_t)(((word & 31U) << 3U) | ((word & 31U) >> 2U)) << 16U) |
@@ -284,6 +291,7 @@ static int line_step(Line *l)
 
 static uint32_t color_calc(uint32_t src,uint32_t dst,int calc)
 {
+    if (calc == 0) return src;
     uint16_t s=to_555(src),d=to_555(dst),o=s;
     if(calc==1) { if(dst>>24U) { d=(uint16_t)(((d&31U)>>1U)|((((d>>5U)&31U)>>1U)<<5U)|((((d>>10U)&31U)>>1U)<<10U)|0x8000U); return from_555(d); } return dst; }
     if(calc==2) o=(uint16_t)(((s&31U)>>1U)|(((((s>>5U)&31U)>>1U)<<5U))|(((((s>>10U)&31U)>>1U)<<10U))|0x8000U);
@@ -295,25 +303,47 @@ typedef struct { uint32_t u; uint8_t texel; uint16_t word; int transparent, end_
 
 static int read_texel(const TextureStepper *us,int32_t v,int width,int height,
                       const uint8_t *texture,size_t texture_size,
-                      const uint8_t *palette,uint16_t draw_mode,Texel *out)
+                      const uint8_t *palette,uint16_t draw_mode,
+                      uint16_t colour_control, unsigned int colour_mode,
+                      Texel *out)
 {
     Texel t; uint32_t u=(uint32_t)us->value; uint32_t index;
     if (!out || us->value < 0 || v < 0 || us->value >= width || v >= height)
         return 0;
     index=u+(uint32_t)v*(uint32_t)width;
-    if ((size_t)(index >> 1U) >= texture_size) return 0;
-    uint8_t packed=texture[index>>1U];
-    t.u=u; t.texel=(uint8_t)((packed>>((~u&1U)*4U))&15U);
-    t.end_code=t.texel==15U && !(draw_mode&0x80U);
-    t.transparent=t.texel==0U && !(draw_mode&0x40U);
-    t.word=le16(palette+(size_t)t.texel*2U);
+    t.u=u;
+    if (colour_mode == 5U) {
+        if ((size_t)index > (texture_size / 2U) ||
+            (size_t)index * 2U > texture_size - 2U) return 0;
+        t.texel = 1U;
+        t.word = (uint16_t)(((uint16_t)texture[(size_t)index * 2U] << 8U) |
+                            texture[(size_t)index * 2U + 1U]);
+        t.end_code=t.word==UINT16_C(0x7fff) && !(draw_mode&0x80U);
+        t.transparent=(t.word&UINT16_C(0x8000))==0U && !(draw_mode&0x40U);
+    } else if (colour_mode == 4U) {
+        if ((size_t)index >= texture_size) return 0;
+        t.texel = texture[index];
+        t.end_code = t.texel == 0xffU && !(draw_mode & 0x80U);
+        t.transparent = t.texel == 0U && !(draw_mode & 0x40U);
+        t.word = (uint16_t)((colour_control & UINT16_C(0xff00)) | t.texel);
+    } else {
+        if ((size_t)(index >> 1U) >= texture_size) return 0;
+        {
+            uint8_t packed=texture[index>>1U];
+            t.texel=(uint8_t)((packed>>((~u&1U)*4U))&15U);
+        }
+        t.end_code=t.texel==15U && !(draw_mode&0x80U);
+        t.transparent=t.texel==0U && !(draw_mode&0x40U);
+        t.word=le16(palette+(size_t)t.texel*2U);
+    }
     *out=t;
     return 1;
 }
 
 static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
                        const Nexus_V1_Vdp1YmirCaptureInput *in,
-                       int x,int y,int userclip_enabled,int clip_mode,int calc,uint32_t rgba,
+                       int x,int y,int userclip_enabled,int clip_mode,int calc,
+                       int mesh,int msb_only,uint32_t rgba,
                        int *sysclip,int *userclip)
 {
     if(x<0||y<0||x>in->sys_clip_h||y>in->sys_clip_v||x>=NEXUS_FB_W||y>=NEXUS_FB_H) { ++*sysclip; return 0; }
@@ -321,38 +351,60 @@ static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
         int outside=x<in->user_clip_x0||x>in->user_clip_x1||y<in->user_clip_y0||y>in->user_clip_y1;
         if(outside!=clip_mode) { ++*userclip; return 0; }
     }
-    { size_t p=(size_t)y*NEXUS_FB_W+(size_t)x; working->rgba[p]=color_calc(rgba,working->rgba[p],calc); }
+    /* Ymir vdp_renderer_sw.cpp::VDP1PlotPixel skips alternating mesh pixels
+     * when transparent-mesh enhancement is disabled. */
+    if (mesh && ((x ^ y) & 1)) return 0;
+    {
+        size_t p=(size_t)y*NEXUS_FB_W+(size_t)x;
+        if (msb_only) {
+            /* Ymir's MSB-on path preserves RGB and sets only the pixel MSB. */
+            working->rgba[p] |= UINT32_C(0xff000000);
+            working->command_owner[p]=in->command_index;
+            return 1;
+        }
+        /* Shadow calculation leaves a transparent destination untouched. */
+        if (calc == 1 && (working->rgba[p] >> 24U) == 0U) return 0;
+        working->rgba[p]=color_calc(rgba,working->rgba[p],calc);
+        working->command_owner[p]=in->command_index;
+    }
     return 1;
 }
 
 static void gouraud_get(const Edge *e,int32_t *r,int32_t *g,int32_t *b)
 { *r=e->gouraud.r.value; *g=e->gouraud.g.value; *b=e->gouraud.b.value; }
 
-int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
+static int rasterize_distorted(
     Nexus_V1_Vdp1YmirCaptureSurface *surface,
     const Nexus_V1_Vdp1YmirCaptureInput *in,
-    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+    Nexus_V1_Vdp1YmirCaptureReceipt *out,
+    unsigned int expected_color_mode)
 {
     Nexus_V1_Vdp1YmirCaptureReceipt rec; Nexus_V1_Vdp1TextureCommand cmd;
     Nexus_V1_Vdp1YmirCaptureSurface *tmp=NULL; Point p[4]; Quad q;
     uint16_t shade[4]={0}; int gouraud,hss,calc,clipmode,userclip,mesh,flip_h,flip_v;
     uint32_t yline; int ok=0;
     memset(&rec,0,sizeof(rec)); rec.capture_only=1; if(!out) return 0; *out=rec;
-    if(!surface||!in||!in->command||!in->texture_bytes||!in->palette_bytes||
+    if(!surface||!in||!in->command||!in->texture_bytes||
+       (expected_color_mode == 1U && !in->palette_bytes)||
        in->command_size!=NEXUS_V1_VDP1_COMMAND_BYTES||in->texture_size<=0||
-       in->palette_size!=32||!in->command_capture_verified||!in->source_image_join_verified||
-       !in->palette_join_verified||!in->local_origin_verified||!in->system_clip_verified||
+       (expected_color_mode == 1U && in->palette_size!=32)||
+       (expected_color_mode == 5U && in->texture_size % 2 != 0)||
+       (expected_color_mode == 4U && !in->texture_capture_verified)||
+       !in->command_capture_verified||
+       (expected_color_mode == 1U && (!in->source_image_join_verified||!in->palette_join_verified))||
+       (expected_color_mode == 5U && !in->direct_source_join_verified)||
+       !in->local_origin_verified||!in->system_clip_verified||
        !in->single_density_verified||in->sys_clip_h<0||in->sys_clip_h>511||
        in->sys_clip_v<0||in->sys_clip_v>511||
        nexus_v1_vdp1_texture_command_parse(in->command,in->command_size,&cmd)!=0||
-       !cmd.texture_command||cmd.command_type!=2U||cmd.colour_mode!=1U||
+       !cmd.texture_command||cmd.command_type!=2U||cmd.colour_mode!=expected_color_mode||
        !cmd.texture_source_range_valid||cmd.texture_byte_count!=(uint32_t)in->texture_size||
        cmd.texture_width==0U||cmd.texture_height==0U) return 0;
     gouraud=(cmd.draw_mode&0x0004U)!=0U; hss=(cmd.draw_mode&0x1000U)!=0U;
     calc=cmd.draw_mode&3U; mesh=(cmd.draw_mode&0x0100U)!=0U;
     clipmode=(cmd.draw_mode&0x0200U)!=0U; userclip=(cmd.draw_mode&0x0400U)!=0U;
     flip_h=(cmd.control&0x0010U)!=0U; flip_v=(cmd.control&0x0020U)!=0U;
-    if(mesh || (userclip && (!in->user_clip_verified||
+    if((userclip && (!in->user_clip_verified||
        in->user_clip_x0<0||in->user_clip_y0<0||
        in->user_clip_x1<in->user_clip_x0||in->user_clip_y1<in->user_clip_y0)) ||
        (hss&&!in->even_odd_coord_select_verified)||
@@ -378,7 +430,10 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
     tmp=(Nexus_V1_Vdp1YmirCaptureSurface *)malloc(sizeof(*tmp));
     if(!tmp) return 0;
     *tmp=*surface;
-    rec.command_verified=rec.source_image_join_verified=rec.palette_join_verified=1;
+    rec.command_verified=1;
+    rec.texture_capture_verified = expected_color_mode == 4U;
+    rec.source_image_join_verified = expected_color_mode == 1U || expected_color_mode == 5U;
+    rec.palette_join_verified=expected_color_mode == 1U;
     rec.local_origin_verified=rec.system_clip_verified=1;
     rec.user_clip_verified=userclip?1:0; rec.single_density_verified=1;
     rec.gouraud_verified=gouraud?1:0; rec.gouraud_applied=gouraud?1:0;
@@ -417,14 +472,14 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
             /* Initial texel fetch precedes the first line.Step() in Ymir. */
             if(!read_texel(&us,vs.value,(int)cmd.texture_width,(int)cmd.texture_height,
                            in->texture_bytes,(size_t)in->texture_size,in->palette_bytes,
-                           cmd.draw_mode,&tex)) goto cleanup;
+                           cmd.draw_mode,cmd.colour_control,expected_color_mode,&tex)) goto cleanup;
             if(tex.end_code) ++end_count;
             for((void)line_step(&line);line_can_step(&line);aa=line_step(&line)) {
                 while(texture_should_step(&us)) {
                     texture_step_texel(&us);
                     if(!read_texel(&us,vs.value,(int)cmd.texture_width,(int)cmd.texture_height,
                                    in->texture_bytes,(size_t)in->texture_size,in->palette_bytes,
-                                   cmd.draw_mode,&tex)) goto cleanup;
+                                   cmd.draw_mode,cmd.colour_control,expected_color_mode,&tex)) goto cleanup;
                     if(tex.end_code) ++end_count;
                     if(end_count==2U) { stop=1; break; }
                 }
@@ -438,12 +493,14 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
                 {
                     uint16_t word=tex.word; uint32_t rgba;
                     if(gouraud) word=gouraud_blend(word,gs.r.value,gs.g.value,gs.b.value);
-                    rgba=to_rgba(word);
-                    if(paint_pixel(tmp,in,line.x,line.y,userclip,clipmode,calc,rgba,
+                    rgba=expected_color_mode == 4U
+                        ? to_rgba_with_msb(word) : to_rgba(word);
+                    if(paint_pixel(tmp,in,line.x,line.y,userclip,clipmode,calc,
+                                   mesh,(cmd.draw_mode&0x8000U)!=0U,rgba,
                                    &rec.system_or_host_clipped_pixels,&rec.user_clipped_pixels))
                         ++rec.pixels_written;
                     if(aa && paint_pixel(tmp,in,line.x+line.aa_x_inc,line.y+line.aa_y_inc,
-                                   userclip,clipmode,calc,rgba,&rec.system_or_host_clipped_pixels,
+                                   userclip,clipmode,calc,mesh,(cmd.draw_mode&0x8000U)!=0U,rgba,&rec.system_or_host_clipped_pixels,
                                    &rec.user_clipped_pixels)) ++rec.pixels_written;
                     if(gouraud) gouraud_step(&gs);
                 }
@@ -457,6 +514,22 @@ cleanup:
     if(!ok) { rec.valid=0; rec.renderer_permitted=0; }
     *out=rec;
     return ok;
+}
+
+int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt)
+{
+    return rasterize_distorted(surface, input, out_receipt, 1U);
+}
+
+int nexus_v1_vdp1_ymir_capture_rasterize_mode5_distorted(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *input,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out_receipt)
+{
+    return rasterize_distorted(surface, input, out_receipt, 5U);
 }
 
 int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
@@ -541,13 +614,13 @@ int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
             uint32_t rgba = to_rgba(color);
             if ((color & 0x8000U) == 0U) rgba &= UINT32_C(0x00ffffff);
             if (paint_pixel(tmp, in, line.x, line.y, user_clip_enabled,
-                            clip_mode, calc, rgba,
+                            clip_mode, calc, 0, 0, rgba,
                             &rec.system_or_host_clipped_pixels,
                             &rec.user_clipped_pixels))
                 ++rec.pixels_written;
             if (aa && paint_pixel(tmp, in, line.x + line.aa_x_inc,
                                   line.y + line.aa_y_inc, user_clip_enabled,
-                                  clip_mode, calc, rgba,
+                                  clip_mode, calc, 0, 0, rgba,
                                   &rec.system_or_host_clipped_pixels,
                                   &rec.user_clipped_pixels))
                 ++rec.pixels_written;
@@ -563,6 +636,200 @@ int nexus_v1_vdp1_ymir_capture_rasterize_polygon(
         rec.valid = 0;
         rec.renderer_permitted = 0;
     }
+    *out = rec;
+    return ok;
+}
+
+static void write_le16(uint8_t *p, uint16_t value)
+{
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8U);
+}
+
+int nexus_v1_vdp1_ymir_capture_rasterize_mode5_normal(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *in,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    Nexus_V1_Vdp1YmirCaptureInput adapted;
+    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES];
+    int32_t x0, y0, x1, y1;
+    uint16_t control;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!surface || !in || !in->command ||
+        in->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        !in->command_capture_verified || !in->direct_source_join_verified ||
+        !in->local_origin_verified || !in->system_clip_verified ||
+        !in->single_density_verified || in->sys_clip_h < 0 ||
+        in->sys_clip_h > 511 || in->sys_clip_v < 0 || in->sys_clip_v > 511 ||
+        nexus_v1_vdp1_texture_command_parse(in->command, in->command_size,
+                                             &parsed) != 0 ||
+        !parsed.texture_command || parsed.command_type != 0U ||
+        parsed.colour_mode != 5U || !parsed.texture_source_range_valid ||
+        parsed.texture_byte_count != (uint32_t)in->texture_size ||
+        parsed.texture_width == 0U || parsed.texture_height == 0U ||
+        !in->texture_bytes || in->texture_size <= 0 ||
+        (in->texture_size & 1) != 0 ||
+        (parsed.draw_mode & 0x0100U) != 0U ||
+        in->local_origin_x < -4096 || in->local_origin_x > 4095 ||
+        in->local_origin_y < -4096 || in->local_origin_y > 4095)
+        return 0;
+
+    /* Ymir's normal-sprite command expands its origin and size to the same
+     * A-B-C-D quad consumed by the distorted-sprite rasterizer. */
+    x0 = parsed.xa;
+    y0 = parsed.ya;
+    x1 = x0 + (int32_t)parsed.texture_width - 1;
+    y1 = y0 + (int32_t)parsed.texture_height - 1;
+    if (x1 < -4096 || x1 > 4095 || y1 < -4096 || y1 > 4095)
+        return 0;
+    memcpy(command, in->command, sizeof(command));
+    control = (uint16_t)((le16(command) & (uint16_t)~0x000fU) | 2U);
+    write_le16(command, control);
+    write_le16(command + 12U, (uint16_t)x0);
+    write_le16(command + 14U, (uint16_t)y0);
+    write_le16(command + 16U, (uint16_t)x1);
+    write_le16(command + 18U, (uint16_t)y0);
+    write_le16(command + 20U, (uint16_t)x1);
+    write_le16(command + 22U, (uint16_t)y1);
+    write_le16(command + 24U, (uint16_t)x0);
+    write_le16(command + 26U, (uint16_t)y1);
+    adapted = *in;
+    adapted.command = command;
+    return rasterize_distorted(surface, &adapted, out, 5U);
+}
+
+int nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *in,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    Nexus_V1_Vdp1YmirCaptureInput adapted;
+    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES];
+    int32_t x0, y0, x1, y1;
+    uint16_t control;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!surface || !in || !in->command || !in->texture_bytes ||
+        in->texture_size <= 0 || !in->texture_capture_verified ||
+        !in->command_capture_verified || !in->local_origin_verified ||
+        !in->system_clip_verified || !in->single_density_verified ||
+        nexus_v1_vdp1_texture_command_parse(in->command, in->command_size,
+                                             &parsed) != 0 ||
+        !parsed.texture_command || parsed.command_type != 0U ||
+        parsed.colour_mode != 4U || !parsed.texture_source_range_valid ||
+        parsed.texture_byte_count != (uint32_t)in->texture_size ||
+        parsed.texture_width == 0U || parsed.texture_height == 0U ||
+        in->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        in->sys_clip_h < 0 || in->sys_clip_h > 511 ||
+        in->sys_clip_v < 0 || in->sys_clip_v > 511 ||
+        (parsed.draw_mode & 0x0100U) != 0U ||
+        in->local_origin_x < -4096 || in->local_origin_x > 4095 ||
+        in->local_origin_y < -4096 || in->local_origin_y > 4095)
+        return 0;
+    x0 = parsed.xa;
+    y0 = parsed.ya;
+    x1 = x0 + (int32_t)parsed.texture_width - 1;
+    y1 = y0 + (int32_t)parsed.texture_height - 1;
+    if (x1 < -4096 || x1 > 4095 || y1 < -4096 || y1 > 4095)
+        return 0;
+    memcpy(command, in->command, sizeof(command));
+    control = (uint16_t)((le16(command) & (uint16_t)~0x000fU) | 2U);
+    write_le16(command, control);
+    write_le16(command + 12U, (uint16_t)x0);
+    write_le16(command + 14U, (uint16_t)y0);
+    write_le16(command + 16U, (uint16_t)x1);
+    write_le16(command + 18U, (uint16_t)y0);
+    write_le16(command + 20U, (uint16_t)x1);
+    write_le16(command + 22U, (uint16_t)y1);
+    write_le16(command + 24U, (uint16_t)x0);
+    write_le16(command + 26U, (uint16_t)y1);
+    adapted = *in;
+    adapted.command = command;
+    return rasterize_distorted(surface, &adapted, out, 4U);
+}
+
+int nexus_v1_vdp1_ymir_capture_rasterize_polyline(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *in,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+{
+    Nexus_V1_Vdp1YmirCaptureReceipt rec;
+    Nexus_V1_Vdp1TextureCommand cmd;
+    Nexus_V1_Vdp1YmirCaptureSurface *tmp;
+    Point points[4];
+    unsigned int segment;
+    int userclip, clipmode, calc, ok = 0;
+    uint32_t rgba;
+    uint16_t color;
+    memset(&rec, 0, sizeof(rec));
+    rec.capture_only = 1;
+    if (!out) return 0;
+    *out = rec;
+    if (!surface || !in || !in->command ||
+        in->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        !in->command_capture_verified || !in->local_origin_verified ||
+        !in->system_clip_verified || !in->single_density_verified ||
+        in->sys_clip_h < 0 || in->sys_clip_h > 511 ||
+        in->sys_clip_v < 0 || in->sys_clip_v > 511 ||
+        in->local_origin_x < -4096 || in->local_origin_x > 4095 ||
+        in->local_origin_y < -4096 || in->local_origin_y > 4095 ||
+        nexus_v1_vdp1_texture_command_parse(in->command, in->command_size,
+                                             &cmd) != 0 ||
+        cmd.command_type != 5U || (cmd.control & 0xc000U) != 0U)
+        return 0;
+    userclip = (cmd.draw_mode & 0x0400U) != 0U;
+    clipmode = (cmd.draw_mode & 0x0200U) != 0U;
+    calc = cmd.draw_mode & 3U;
+    if ((cmd.draw_mode & (0x0100U | 0x0004U)) != 0U ||
+        (userclip && (!in->user_clip_verified || in->user_clip_x0 < 0 ||
+         in->user_clip_y0 < 0 || in->user_clip_x1 < in->user_clip_x0 ||
+         in->user_clip_y1 < in->user_clip_y0))) return 0;
+
+    points[0] = (Point){cmd.xa + in->local_origin_x,
+                        cmd.ya + in->local_origin_y};
+    points[1] = (Point){cmd.xb + in->local_origin_x,
+                        cmd.yb + in->local_origin_y};
+    points[2] = (Point){cmd.xc + in->local_origin_x,
+                        cmd.yc + in->local_origin_y};
+    points[3] = (Point){cmd.xd + in->local_origin_x,
+                        cmd.yd + in->local_origin_y};
+    color = le16(in->command + 6U);
+    rgba = to_rgba_with_msb(color);
+    if ((color & 0x8000U) == 0U) rgba &= UINT32_C(0x00ffffff);
+    tmp = (Nexus_V1_Vdp1YmirCaptureSurface *)malloc(sizeof(*tmp));
+    if (!tmp) return 0;
+    *tmp = *surface;
+    rec.command_verified = rec.local_origin_verified = 1;
+    rec.system_clip_verified = 1;
+    rec.user_clip_verified = userclip ? 1 : 0;
+    rec.single_density_verified = 1;
+    for (segment = 0U; segment < 4U; ++segment) {
+        Line line;
+        uint32_t clipped;
+        Point a = points[segment];
+        Point b = points[(segment + 1U) & 3U];
+        line_setup(&line, a, b, 0);
+        clipped = line_system_clip(&line, in->sys_clip_h, in->sys_clip_v);
+        rec.system_clip_prefix_steps_skipped += (int)clipped;
+        for ((void)line_step(&line); line_can_step(&line);
+             (void)line_step(&line)) {
+            if (paint_pixel(tmp, in, line.x, line.y, userclip, clipmode,
+                            calc, 0, (cmd.draw_mode & 0x8000U) != 0U, rgba,
+                            &rec.system_or_host_clipped_pixels,
+                            &rec.user_clipped_pixels))
+                ++rec.pixels_written;
+        }
+    }
+    rec.valid = 1;
+    rec.renderer_permitted = 0;
+    *surface = *tmp;
+    ok = 1;
+    free(tmp);
+    if (!ok) rec.valid = 0;
     *out = rec;
     return ok;
 }

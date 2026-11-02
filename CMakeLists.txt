@@ -42244,9 +42244,19 @@ add_executable(test_nexus_v1_dgn_material_raster
             COMMAND ${Python3_EXECUTABLE}
                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_gameplay_frame300_composition_source_join_real.py
                 $<TARGET_FILE:test_nexus_v1_vdp2_runtime_tilemap>
+                $<TARGET_FILE:test_nexus_v1_vdp1_frame300_dgn_stepper_real>
         )
         set_tests_properties(nexus_v1_gameplay_frame300_composition_source_join_real PROPERTIES
             LABELS "nexus;saturn;ymir;gameplay;frame300;real-data;composition;source-join;skip-safe"
+            SKIP_RETURN_CODE 77
+        )
+        add_test(
+            NAME nexus_v1_vdp1_row80_scu_dma_bpk_join_real
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_row80_scu_dma_bpk_join_real.py
+        )
+        set_tests_properties(nexus_v1_vdp1_row80_scu_dma_bpk_join_real PROPERTIES
+            LABELS "nexus;saturn;ymir;vdp1;scu-dma;menu-bpk;real-data;source-join;skip-safe"
             SKIP_RETURN_CODE 77
         )
     endif()
@@ -42293,6 +42303,18 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(
         NAME nexus_v1_vdp2_runtime_tilemap
         COMMAND test_nexus_v1_vdp2_runtime_tilemap
+    )
+    add_test(
+        NAME nexus_v1_vdp2_mapd_pixel_fetch_composition_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_mapd_pixel_fetch_composition_real.py
+            $<TARGET_FILE:test_nexus_v1_vdp2_runtime_tilemap>
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-mapd-frame891-1280-nbg1.rgba
+            ${CMAKE_CURRENT_BINARY_DIR}/nexus-mapd-frame891-1280-nbg1-verification.json
+    )
+    set_tests_properties(nexus_v1_vdp2_mapd_pixel_fetch_composition_real PROPERTIES
+        LABELS "nexus;saturn;ymir;mapd;vdp2;nbg1;4bpp;real-data;composition;capture-only;skip-safe"
+        SKIP_RETURN_CODE 77
     )
 
     add_executable(test_nexus_v1_font256_vdp2_capture_join
@@ -45667,6 +45689,25 @@ add_test(NAME nexus_v1_vdp1_ymir_stepper_capture_real
 set_tests_properties(nexus_v1_vdp1_ymir_stepper_capture_real PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "nexus;saturn;vdp1;ymir;frame13162;real-data;capture-only;skip-safe")
+
+add_executable(test_nexus_v1_vdp1_frame300_dgn_stepper_real
+    tests/test_nexus_v1_vdp1_frame300_dgn_stepper_real.c
+    src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c)
+target_include_directories(test_nexus_v1_vdp1_frame300_dgn_stepper_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_frame300_dgn_stepper_real PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_frame300_dgn_stepper_real PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_frame300_dgn_stepper_real
+    COMMAND test_nexus_v1_vdp1_frame300_dgn_stepper_real)
+set_tests_properties(nexus_v1_vdp1_frame300_dgn_stepper_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;ymir;gameplay;frame300;dgn;real-data;capture-only;skip-safe")
 
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)

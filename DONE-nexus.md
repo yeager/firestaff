@@ -1,5 +1,97 @@
 # Firestaff DONE — Nexus
 
+## 2026-11-02 — Verify full-frame NBG0 replay against Ymir
+
+- Captured all 224 output rows in authentic Japanese retail VDP1 frame 7486 / VDP2 serial 8199. The same-frame register snapshot has `BGON=0x0003`; Ymir reports 224/224 row samples, 1,568 complete layer records, no truncation, and zero frame-scoped VDP2 VRAM/CRAM writes or dropped trace rows.
+- The independent Ymir analyzer maps authentic 8bpp VRAM and CRAM to NBG0 layer-slot-2 colors and priorities exactly at all 71,680 pixels. It reconstructs the same-pass full RGB frame exactly; there are 21,455 active priority-4 pixels and 50,225 transparent pixels.
+- Built and ran `nexus_v1_vdp2_nbg0_live_rows_real` on TRV2 with the real frame-matched capture configured. The CTest executed rather than skipped: Firestaff's capture-only C compositor matched all 71,680 same-pass Ymir RGB pixels. The wrapper also verified all 4,096 authentic NBG1 map entries and the transparent character bytes before accepting NBG0 replay.
+- This verifies one captured startup state only. It does not establish interactive menu or gameplay/HUD parity, arbitrary-frame source timing, NBG1 output, Saturn hardware parity, or production-renderer admission.
+- Added the capture analyzer, full-height real-data test and report. Hash-pinned raw inputs remain outside Git at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-vdp2-full-frame7486-sameframe-20261102`; IPL, profile, backup RAM and save-state files are excluded. See [the frame-7486 composition report](docs/nexus/nexus_vdp2_layer_output_frame7486.md).
+## 2026-11-02 — Verify authentic MAPD NBG1 4bpp pixel output
+
+- Added a real-data CTest that runs Firestaff's NBG1 4bpp tile decoder and
+  validates Ymir's complete per-pixel fetch trace against the adjacent
+  authentic VRAM snapshots.
+- For VDP1 frame 891 / VDP2 serial 1280, all 71,680 traced NBG1 pixels have
+  valid source provenance and exact 4bpp nibble matches. PND sources switch
+  from the preceding VRAM snapshot to the target snapshot between rows 83 and
+  84. Firestaff's decoded dot and RGB match Ymir's final RGBX output on all
+  44,800 pixels where NBG1 has nonzero priority; 26,880 zero-priority pixels
+  are excluded from the NBG1 contribution.
+- This verifies one authentic layer contribution only. It does not verify the
+  complete VDP1+VDP2 frame composition, all MAPD transition frames, Saturn
+  hardware parity, or production renderer admission. Details and replay
+  instructions are in
+  [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md); raw inputs remain
+  outside Git.
+
+## 2026-11-01 — Correlate authentic SCU DMA payloads with VDP2 VRAM
+
+- Added a reproducible analyzer for the complete Ymir SCU descriptor and bounded payload traces from an authentic Japanese retail cold boot.
+- Four complete 7,168-byte transfers to VDP2 bus address `0x05e5c000` match their captured WRAM source bytes and Ymir's recorded 16-bit bus writes. The last descriptor in the complete trace, transfer 6462, also matches the final VDP2 VRAM snapshot for all 7,168 bytes.
+- The same capture has 113 complete NBG0 live-row samples for frame 7486 and zero VDP2 VRAM/CRAM writes in that frame range. Final memory snapshots are at frame 7663 and are not used as frame-7486 pixel references.
+- The frame-7663 VDP2 register snapshot maps this interval to the NBG1 Plane A/B page base. SCU descriptors have no frame IDs, so the transfer-frame register binding and actual pixel fetch remain unproven. The SH-2 VDP2-write ring dropped 1,660,912 master rows; exclusive final-writer attribution and CPU-write timing remain unproven. No visible pixel composition or renderer admission is claimed. See [the SCU DMA source-correlation report](docs/nexus/nexus_vdp2_scu_dma_source_correlation.md); raw evidence remains on the external disk.
+
+## 2026-11-01 — Match 16-bpp VDP1 source alignment to Ymir
+
+- The VDP1 command parser now aligns mode-5 CMDSRCA down to a 16-byte
+  boundary, matching Ymir's `VDP1PlotTexturedLine` fetch behavior. This keeps
+  the captured VRAM span, source-range bounds, DGN material join, and replay
+  on the bytes the consumer actually reads.
+- The decoder boundary regression passed three runs. With hash-verified
+  Japanese retail Nexus data and authentic frame-300 Ymir dumps, the VDP1
+  stepper and combined VDP1/VDP2 composition/source-join checks each passed
+  three runs; the combined test compared all 71,680 pixels.
+- Frame 300's 15 mode-5 draws are already 16-byte aligned, so that capture
+  verifies no regression but does not exercise align-down. No odd-CMDSRCA
+  mode-5 draw was found in the 112 retained Nexus command-trace CSVs scanned.
+  The parser fixture is protocol coverage, not game data or a parity claim.
+  Details: [`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
+
+## 2026-11-01 — Re-verify the authentic frame-8037 VDP composition
+
+- On the current parser head, the frame-8037 VDP2 composition and retail
+  source-join tests each passed three consecutive runs on TRV2. The display
+  output matched both pinned Ymir passes across all 71,680 RGB pixels; source
+  matching reproduced the existing Japanese retail receipt.
+- This is a second, title-menu capture state after gameplay frame 300. It
+  remains capture-only and does not prove menu input, dungeon/HUD states,
+  original-Saturn parity, selected Structure3 face ownership, or production
+  renderer admission. Details are in
+  [`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
+
+## 2026-11-01 — Verify frame-300 visible pixel source classes
+
+- The authentic Japanese frame-300 composition joins all 65,991 visible VDP1
+  pixels to their last-writing command and verified source receipt. Of these,
+  65,500 visible VDP1 pixels map to retail indexed `LEV01.DGN` rows. The 15
+  direct-RGB DGN draws join retail data but own no final visible pixels in
+  this capture. The remaining 491 CRAM pixels map to Ymir-captured Japanese
+  retail polyline command row 79 (60) using same-frame VDP2 CRAM entry `0x83`, and Japanese retail
+  `MENU.BPK` entry 144 at sprite row 80 (431).
+- The combined real-data regression now asserts this exact source-class
+  distribution alongside the full VDP2 RGB match and command/source joins. It
+  also checks that each visible VDP1 pixel matches between the replay and
+  display framebuffer planes before counting command owners.
+- Sprite row 80's 431 visible pixels are joined to Japanese retail
+  `MENU.BPK` entry 144: decoded indexed bytes match the captured 16x41 VDP1
+  texture, and every used nontransparent PALT word matches same-frame VDP2
+  CRAM. A separate complete cold-boot trace captures SCU transfer 3303 writing
+  1,312 bytes to VDP1 offset `0x643c0`; its first 656 bytes match the retail
+  entry and its full payload matches same-run final VDP1 VRAM. This is a
+  cross-run join; it does not bind DMA timing to row 80. It remains capture-only
+  evidence, not renderer admission or whole-HUD state ownership. See
+  [`docs/nexus_vdp1_row80_scu_dma_source_join.md`](docs/nexus_vdp1_row80_scu_dma_source_join.md).
+- The remaining 60 visible pixels are rasterized from command row 79 in the
+  authentic Ymir trace of the Japanese retail execution, pinned as an
+  untextured 16x16 outline with PMOD `0x00e0` and CMDCOLR `0x7083`, selecting
+  same-frame CRAM entry `0x83` (`0xe73f`); Ymir line stepping records 64 writes, including four duplicate
+  corner writes, for 60 unique visible pixels. Its
+  original UI meaning remains unknown.
+- This still does not establish selected Structure3 face ownership or
+  production renderer admission. Details are in
+  [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).
+
 ## 2026-11-01 — Match an authentic gameplay VDP pass in Firestaff
 
 - Added an optional real-media test case with SHA-256-pinned VDP1 FBS, VDP2
@@ -816,3 +908,5 @@ Reviewed 2026-08-26. Completed work only.
 - Ymir 0.4.2-dev `--debug` captures establish defaults (Music ON, Sound STEREO, Game Level NORMAL, Monster Gauge ON), keyboard row/value navigation, and Exit/B return to the title menu. Mouse row/value routing is covered by the runtime tests.
 - The production C renderer matches the captured 320x224 indexed foreground and all 256 palette entries for seven real capture states. Reproduce with `scripts/verify_nexus_english_configuration_page.py` and the captured evidence directory documented in `docs/nexus/nexus_startup.md`.
 - The 3D/DGN page background, cold-boot setting persistence, audio/difficulty/HUD effects, Japanese Configuration page, and New Game/Continue destination execution remain open. No synthetic game art was introduced.
+
+

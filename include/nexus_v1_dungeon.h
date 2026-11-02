@@ -1888,6 +1888,7 @@ typedef struct {
     uint8_t texture_bits_per_pixel;
     uint32_t texture_byte_count;
     uint32_t link_byte_offset;
+    /* Effective VRAM fetch range; mode 5 aligns its base down to 16 bytes. */
     uint32_t texture_source_byte_offset;
     uint32_t texture_source_byte_end;
     int end_command;
