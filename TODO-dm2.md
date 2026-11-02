@@ -24,6 +24,18 @@ owner that supports both spell selection and subsequent casts. Keep all three
 variant rows `PARTIAL`; native panel, hand-state and supported-platform routes
 remain incomplete.
 
+2026-11-02 skproject DOS/SPX v4/v5 `DELETE_CREATURE_RECORD`:
+The three source implementations share the AI-spec and CREATURES word/table
+gates, tile-record removal, possession handling and deallocation. SPX v4
+alone suppresses the cross-map trigger-message operation while
+`SkCodeParam::bDM1Mode` is set; DOS and v5 do not have this compatibility-mode
+gate. Firestaff has no corresponding DM1Mode owner in its DM2 delete
+composition, which always considers the trigger branch from AI/GDAT state.
+The live lethal-damage route covers one caller, but the broader source API
+still lacks the source moverec `3CE7D` side effects and preserved-GFX cache
+cleanup, plus platform caller coverage. Keep all three rows `PARTIAL` and
+track SPX-v4 compatibility mode separately from the shared mechanics.
+
 2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
 113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
 field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
