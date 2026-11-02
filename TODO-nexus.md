@@ -4,6 +4,22 @@ Reviewed 2026-11-02. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-11-02 — Capture VDP2 output for the authentic frame-1605 VDP1 replay
+
+An inventory of retained Ymir `nexus-vdp2-layer-outputs.bin` receipts found
+three layer-output bundles; all target VDP1 frame 7486 / VDP2 serial 8199.
+The full-frame bundle covers rows 0–223 and the other two are shorter captures
+of that same pass. None contains frame 1605. The authentic frame-1605 VDP1 FBS
+replay therefore still lacks same-run Ymir VDP2 layer output and a final RGBX
+reference. Capture frame 1605 with Ymir `--debug`, full-height VDP2 layer
+outputs and rendered-frame capture, then hash-join the memory snapshots before
+using the existing Firestaff compositor for a whole-frame comparison. Do not
+combine frame-1605 VDP1 state with frame-7486 VDP2 state as a parity result. The
+current TRV2 host did not answer SSH during this check, and no local Ymir binary
+is available; use the shared installed Ymir when it is reachable. The existing
+frame-1605 VDP1-only result is documented in
+[`docs/nexus/nexus_vdp1_frame1605_dgn_composition.md`](docs/nexus/nexus_vdp1_frame1605_dgn_composition.md).
+
 ## Capture an authentic odd-address mode-5 draw
 
 Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now
