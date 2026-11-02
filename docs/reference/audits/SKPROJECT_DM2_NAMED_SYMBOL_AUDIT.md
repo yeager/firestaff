@@ -720,7 +720,7 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,788 as `UNREVIEWED`, 1,039 as `PARTIAL`, 0 as `MISSING`, and 98 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,785 as `UNREVIEWED`, 1,042 as `PARTIAL`, 0 as `MISSING`, and 98 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 
@@ -733,3 +733,7 @@ Compared DOS `SKW_12b4_099e` (`dm2bya.cpp:7188-7230`), SPX v4 `CHAMPION_WEIGHT_C
 ### DM2 item subtype mutation across editions (2026-11-02)
 
 Compared DOS `SKW_SET_ITEMTYPE` (`SKWINDOS/dm2bya.cpp:6736`), SPX v4 `SET_ITEMTYPE` (`SKWINSPX/src/v4/skitem.cpp:497`), SPX v5 `DM2_SET_ITEMTYPE` (`SKWINSPX/src/v5/skrecord.cpp:287`), and SKULLWIN `DM2_SET_ITEMTYPE` (`SKULLWIN/c_record.cpp:284`). Their DB4..DB10 record-byte mutations match Firestaff's generic callback helper and active record-pool mutator, including DB7 no-op and DB9 split subtype/charge reset. The four function bodies are `IMPLEMENTED_PARITY`; this does not establish every source caller or supported platform route. See the active-source ledger for per-edition entries.
+
+### DM2 item importance flags across editions (2026-11-02)
+
+Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v4/skgame.cpp:3172`), SPX v5 `DM2_SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v5/skrecord.cpp:501`), and SKULLWIN (`SKULLWIN/c_record.cpp:498`). The sources use different DB-specific flags/typed fields, with DB7 and selected container/scroll types as no-ops. Firestaff’s legacy callback writes byte@1 for all record types, unlike those layouts. A separate SKULLWIN-shaped bounded helper exists but is not the live hero callback. All four source definitions remain `PARTIAL`; see the active-source ledger.
