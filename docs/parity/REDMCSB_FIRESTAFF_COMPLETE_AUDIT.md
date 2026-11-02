@@ -977,7 +977,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,802 unreviewed, 1,034 partial, 0 missing, and 89 implemented-parity definitions. The generated combined skproject backlog is 3,960 open rows (2,802 unreviewed, 1,156 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,802 unreviewed, 1,035 partial, 0 missing, and 88 implemented-parity definitions. The generated combined skproject backlog is 3,962 open rows (2,802 unreviewed, 1,158 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
@@ -987,7 +987,7 @@ Compared DOS `SKW_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`dm2byg.cpp:4925`), SPX v4 
 
 ### DM2 outdoor relative-distance review (2026-11-02)
 
-Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 `DM2_guivp_32cb_54ce`. Firestaff already has `dm2_v1_guivp_32cb_54ce`, which matches their direction-relative coordinate writes, forward-distance gate, 16-bit squared-distance behavior, and Newton integer square root. All three function bodies are `IMPLEMENTED_PARITY`; their callers remain tracked separately.
+Compared DOS `SKW_32cb_54ce`, SPX v4 `ENVIRONMENT_COMPUTE_DISTANCE`, and SPX v5 `DM2_guivp_32cb_54ce`. Firestaff `dm2_v1_guivp_32cb_54ce` matches DOS and SPX v5 coordinate writes, forward-distance gate, 16-bit squared-distance behavior, and Newton integer square root. SPX v4 heading 0 computes its first delta from `*xx` while DOS/v5 use the other coordinate pointer, so v4 remains `PARTIAL`; DOS and v5 are `IMPLEMENTED_PARITY`. Callers remain tracked separately.
 
 
 ### DM2 distant environment selection review (2026-11-02)
