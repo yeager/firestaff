@@ -18,7 +18,7 @@
 - `DM2 HUD geometry`: use the authentic RAW4 5×26 source status rectangles to verify vertical bar-fill orientation while retaining the horizontal fallback-bar contract.
 - `DM2 tile-actuator lookup`: match SKProject's DB0–DB3 record cutoff, direction exception, and endian-specific word reads; compare against authentic DOS EN/FR, FM Towns JA and Mac EN dungeon data.
 - `DM2 save loading`: preserve signed empty handles during post-load inventory-weight recalculation and keep retained-state post-load effects available when item data is not materialized.
-- `DM2 ladder-source audit`: add a source helper for verified DOS and SPX v5 record-chain variants, keep their different text-ornament gates explicit, and leave SPX v4 and production transition integration documented as open.
+- `DM2 ladder-source audit`: add a source helper for DOS and SPX v4/v5 record-chain variants, preserve their version-specific text-ornament gates, and document production transition integration as open.
 
 ## DM1
 
