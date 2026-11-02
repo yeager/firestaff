@@ -41823,6 +41823,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     # authenticated direct-face capture and remains no-draw.
     add_executable(test_nexus_v1_vdp1_lookup_decode
         tests/test_nexus_v1_vdp1_lookup_decode.c
+        src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c
     )
     target_include_directories(test_nexus_v1_vdp1_lookup_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -493,7 +493,8 @@ static int rasterize_distorted(
                 {
                     uint16_t word=tex.word; uint32_t rgba;
                     if(gouraud) word=gouraud_blend(word,gs.r.value,gs.g.value,gs.b.value);
-                    rgba=expected_color_mode == 4U
+                    rgba=(expected_color_mode == 4U ||
+                          (expected_color_mode == 5U && calc == 0))
                         ? to_rgba_with_msb(word) : to_rgba(word);
                     if(paint_pixel(tmp,in,line.x,line.y,userclip,clipmode,calc,
                                    mesh,(cmd.draw_mode&0x8000U)!=0U,rgba,
