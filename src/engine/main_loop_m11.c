@@ -4362,6 +4362,7 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitForScan,
                                           int* outWaitForDm2Title,
                                           int* outWaitForDm2Menu,
+                                          int* outWaitForDm2Preselection,
                                           const M11_GameViewState* gameView,
                                           int debug);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
@@ -11882,6 +11883,9 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
     if (strcmp(buffer, "wait-dm2-menu") == 0) {
         return 1;
     }
+    if (strcmp(buffer, "wait-dm2-preselection") == 0) {
+        return 1;
+    }
     if (strcmp(buffer, "touch-swipe-up") == 0 ||
         strcmp(buffer, "touch-swipe-left") == 0) {
         return 1;
@@ -12406,6 +12410,7 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitForScan,
                                           int* outWaitForDm2Title,
                                           int* outWaitForDm2Menu,
+                                          int* outWaitForDm2Preselection,
                                           const M11_GameViewState* gameView,
                                           int debug) {
     const char* start;
@@ -12424,6 +12429,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
     }
     if (outWaitForDm2Menu) {
         *outWaitForDm2Menu = 0;
+    }
+    if (outWaitForDm2Preselection) {
+        *outWaitForDm2Preselection = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -12460,6 +12468,12 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         if (outWaitForDm2Menu) {
             *outWaitForDm2Menu = 1;
         }
+        return M12_MENU_INPUT_NONE;
+    }
+    if ((size_t)(end - start) == sizeof("wait-dm2-preselection") - 1U &&
+        strncmp(start, "wait-dm2-preselection",
+                sizeof("wait-dm2-preselection") - 1U) == 0) {
+        if (outWaitForDm2Preselection) *outWaitForDm2Preselection = 1;
         return M12_MENU_INPUT_NONE;
     }
     /* Startup selection tests must not send input against the deliberately
@@ -14368,6 +14382,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int scriptWaitForScan = 0;
     int scriptWaitForDm2Title = 0;
     int scriptWaitForDm2Menu = 0;
+    int scriptWaitForDm2Preselection = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -15568,6 +15583,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 }
             }
         }
+        if (scriptWaitForDm2Preselection &&
+            M11_GameView_Dm2PreselectionReady(&gameView)) {
+            scriptWaitForDm2Preselection = 0;
+            if (o->debug) {
+                fprintf(stderr,
+                        "firestaff: autotest dm2-preselection-ready\n");
+            }
+        }
         if (scriptWaitForRuntime) {
             M11_BootProbeReceipt runtimeReceipt;
             memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
@@ -15584,6 +15607,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitForDm2Menu) {
             input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitForDm2Preselection) {
+            input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
@@ -15592,12 +15617,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int waitForScan = 0;
             int waitForDm2Title = 0;
             int waitForDm2Menu = 0;
+            int waitForDm2Preselection = 0;
             input = m11_next_script_input(&scriptCursor,
                                           &waitFrames,
                                           &waitForRuntime,
                                           &waitForScan,
                                           &waitForDm2Title,
                                           &waitForDm2Menu,
+                                          &waitForDm2Preselection,
                                           &gameView,
                                           o->debug);
             scriptWaitFramesRemaining = waitFrames;
@@ -15605,6 +15632,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             scriptWaitForScan = waitForScan;
             scriptWaitForDm2Title = waitForDm2Title;
             scriptWaitForDm2Menu = waitForDm2Menu;
+            scriptWaitForDm2Preselection = waitForDm2Preselection;
         }
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&

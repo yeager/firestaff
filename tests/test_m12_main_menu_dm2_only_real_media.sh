@@ -54,8 +54,8 @@ log="$scratch/firestaff.log"
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
-        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' \
-        --duration 75000
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,wait-dm2-preselection,click:100:60' \
+        --duration 180000
 ) >"$log" 2>&1 || {
     cat "$log" >&2
     exit 1
@@ -68,7 +68,8 @@ for required in \
     'games=dm1:no,csb:no,dm2:yes,nexus:no,theron:no original-candidate=yes' \
     "launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=$expected_source" \
     'autotest dm2-menu-ready source-rect=' \
-    'autotest dm2-new-game source-rect='; do
+    'autotest dm2-new-game source-rect=' \
+    'autotest dm2-preselection-ready'; do
     if ! grep -Fq "$required" "$log"; then
         printf 'FAIL: DM2-only no-game menu is missing %s\n' "$required" >&2
         grep -E 'startup game=|scan complete|game-handoff|error|failed' "$log" >&2 || true
@@ -133,8 +134,8 @@ back_log="$scratch/back-firestaff.log"
     HOME="$back_home" XDG_CONFIG_HOME="$back_home" APPDATA="$back_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
-        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,click:100:60' \
-        --duration 85000
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-menu,click:dm2-new-game,wait-dm2-preselection,click:100:60' \
+        --duration 180000
 ) >"$back_log" 2>&1 || {
     cat "$back_log" >&2
     exit 1
@@ -143,7 +144,8 @@ back_log="$scratch/back-firestaff.log"
 if [[ $(grep -Fc 'launch phase=game-handoff' "$back_log") != 1 ]] ||
    ! grep -Fq "launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=$back_dm2_root/$(basename "$archive")" "$back_log" ||
    ! grep -Fq 'autotest dm2-menu-ready source-rect=' "$back_log" ||
-   ! grep -Fq 'autotest dm2-new-game source-rect=' "$back_log"; then
+   ! grep -Fq 'autotest dm2-new-game source-rect=' "$back_log" ||
+   ! grep -Fq 'autotest dm2-preselection-ready' "$back_log"; then
     echo 'FAIL: backing out of DM2 platform selection did not return cleanly to the game list and launch FM Towns after reselection' >&2
     grep -E 'startup game=|game-handoff|error|failed' "$back_log" >&2 || true
     exit 1

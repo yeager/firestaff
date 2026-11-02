@@ -86,6 +86,12 @@ if not any("dm2-platform-intro={platform:amiga-en " in line
            for line in trace_lines):
     raise SystemExit(
         "FAIL: DM2 Amiga --debug did not identify its own intro owner")
+if not any(re.search(
+        r"firestaff: dm2-render-source game=dm2 platform=amiga-en "
+        r"gdat-md5=[0-9a-f]{32} gdat-version=[0-9]+ bytes=[0-9]+",
+        line) for line in trace_lines):
+    raise SystemExit(
+        "FAIL: DM2 Amiga --debug did not identify its loaded GRAPHICS.DAT")
 complete_hud = re.compile(
     r"firestaff: dm2-render-debug game=dm2 platform=amiga-en .*"
     r"hud=\{required:1 hash:[0-9a-f]{8} commands:[1-9][0-9]* complete:1 ")
@@ -93,7 +99,10 @@ status_pane = re.compile(
     r"firestaff: dm2-render-hud-plan game=dm2 platform=amiga-en .*"
     r"consumed=1 .*viewport=6500 gdat=1/2/[019] rect-id=0a1 .*"
     r"size=77x37 .*hashes=[0-9a-f]{8}/[0-9a-f]{8}/[0-9a-f]{8} "
-    r"table=[0-9a-f]{8}$")
+    r"table=[0-9a-f]{8} lookup=\{receipt:1 default:[01] "
+    r"requested:[0-9a-f]{4} selected:[0-9a-f]{4} "
+    r"raw:[0-9a-f]{4} bpp:(4|8) raw-bytes:[1-9][0-9]* "
+    r"image:[1-9][0-9]*x[1-9][0-9]* raw-hash:[0-9a-f]{8}\}$")
 status_pane_consumed = False
 for index, line in enumerate(trace_lines):
     if not complete_hud.search(line):

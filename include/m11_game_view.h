@@ -3224,6 +3224,10 @@ uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
 int M11_GameView_GetDm2StartupMenuNewGameHitRect(
     const M11_GameViewState* state,
     int* outX, int* outY, int* outW, int* outH);
+/* True once the source GAME_LOAD New Game world is prepared for the
+ * authenticated mirror-selection input. Intended for deterministic
+ * automation; ordinary input remains driven by the game. */
+int M11_GameView_Dm2PreselectionReady(const M11_GameViewState* state);
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state);
 int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
