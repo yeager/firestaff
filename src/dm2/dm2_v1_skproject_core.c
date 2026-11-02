@@ -20225,8 +20225,12 @@ int16_t dm2_v1_skproject_create_minion(
         }
 
         receipt.attempts++;
+        /* SKProject compares GET_CREATURE_AT with OBJECT_NULL (-1), not
+           with a generic negative/error range. Preserve that distinction so
+           an unavailable or corrupt spatial lookup cannot be admitted as an
+           empty spawn tile. */
         if (tile_admitted &&
-            context->creature_at_fn(x, y, context->user) < 0) {
+            context->creature_at_fn(x, y, context->user) == -1) {
             uint16_t type = context->creature_type;
             if (context->missile_reference !=
                 DM2_V1_SKPROJECT_OBJECT_NULL) {
