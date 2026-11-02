@@ -1078,3 +1078,11 @@ Reviewed 2026-08-29. Completed work only.
   FM Towns AUTO selected the authentic edition with DOS, Amiga, and Mac media
   also installed, then reached the first runtime through the normal loop. These
   SDL dummy-display checks do not establish native-display refresh parity.
+- 2026-11-02: corrected DM2 champion status-pane placement to use the full
+  authentic RAW4 rectangle (`77x37`) on PC/Mac, FM Towns and Amiga. Retail
+  DOS, Macintosh, FM Towns and Amiga real-media M11 tests pass; the DOS test
+  checks the consumed runtime trace against `RECT_0xA1`, Mac checks all four
+  pane plans against RAW4, and FM Towns checks its full source rectangle.
+  This closes the panel half-size error only. PC French, Mac French, PC
+  JewelCase, native-display parity and the remaining HUD elements remain open
+  in `TODO-dm2.md`.

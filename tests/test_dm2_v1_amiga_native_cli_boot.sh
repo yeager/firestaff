@@ -154,7 +154,7 @@ if sum(pixel != b"\0\0\0" for pixel in floor_pixels) < 5000:
 # RECT_0xA1+champion. The one-champion startup must show that authentic
 # IMG3 slab in the top-left status area, behind its live portrait/stat data.
 status_pane_pixels = [pixels[y * width + x]
-                      for y in range(19) for x in range(39)]
+                      for y in range(37) for x in range(77)]
 if sum(pixel != b"\0\0\0" for pixel in status_pane_pixels) < 500:
     raise SystemExit(
         "FAIL: authentic DM2 Amiga INTERFACE_GENERAL/2 status pane "

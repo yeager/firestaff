@@ -9896,10 +9896,10 @@ static int dm2_v1_render_fmtowns_squad_plan(
                     (uint16_t)(0xa1 + hero_slot), &rect_receipt) ||
                 !rect_receipt.valid ||
                 rect_receipt.raw4_hash != command->destination_table_hash ||
-                command->destination.x != rect_receipt.rect.x / 2 ||
-                command->destination.y != rect_receipt.rect.y / 2 ||
-                command->destination.w != rect_receipt.rect.w / 2 ||
-                command->destination.h != rect_receipt.rect.h / 2) {
+                command->destination.x != rect_receipt.rect.x ||
+                command->destination.y != rect_receipt.rect.y ||
+                command->destination.w != rect_receipt.rect.w ||
+                command->destination.h != rect_receipt.rect.h) {
                 return 0;
             }
             memcpy(s->active_asset_palette16, command->palette16,
@@ -10323,10 +10323,10 @@ static int dm2_v1_render_amiga_status_panes(
                 (uint16_t)(0xa1 + hero_slot), &rect_receipt) ||
             !rect_receipt.valid ||
             rect_receipt.raw4_hash != command->destination_table_hash ||
-            command->destination.x != rect_receipt.rect.x / 2 ||
-            command->destination.y != rect_receipt.rect.y / 2 ||
-            command->destination.w != rect_receipt.rect.w / 2 ||
-            command->destination.h != rect_receipt.rect.h / 2 ||
+            command->destination.x != rect_receipt.rect.x ||
+            command->destination.y != rect_receipt.rect.y ||
+            command->destination.w != rect_receipt.rect.w ||
+            command->destination.h != rect_receipt.rect.h ||
             command->width != rect_receipt.rect.w ||
             command->height != rect_receipt.rect.h) return 0;
         memcpy(palette16, interface_palette.palette16, sizeof(palette16));
@@ -10755,10 +10755,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     (uint16_t)(0xa1 + hero_slot), &rect_receipt) ||
                 !rect_receipt.valid ||
                 rect_receipt.raw4_hash != command->destination_table_hash ||
-                command->destination.x != rect_receipt.rect.x / 2 ||
-                command->destination.y != rect_receipt.rect.y / 2 ||
-                command->destination.w != rect_receipt.rect.w / 2 ||
-                command->destination.h != rect_receipt.rect.h / 2 ||
+                command->destination.x != rect_receipt.rect.x ||
+                command->destination.y != rect_receipt.rect.y ||
+                command->destination.w != rect_receipt.rect.w ||
+                command->destination.h != rect_receipt.rect.h ||
                 command->width != rect_receipt.rect.w ||
                 command->height != rect_receipt.rect.h) {
                 dm2_v1_block_source_material(

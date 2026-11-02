@@ -2184,3 +2184,23 @@ path. The regression passes, as does the normal Amiga CLI/start-menu test; all
 or fallback draws. The captured 320x200 image passes the existing
 viewport/HUD region checks, but there is still no same-pose original Amiga
 capture for pixel-parity review, so the reported visual mismatch remains open.
+
+2026-11-02 status-pane geometry correction: the retail SKProject
+`SKW_DRAW_PLAYER_3STAT_PANE` selects `INTERFACE_GENERAL/2` and draws it at
+`RECT_0xA1 + champion`; the authentic images are 77x37 and the RAW4 table
+provides full destination rectangles. Firestaff was dividing these pane
+coordinates and dimensions by two in the PC/Mac, FM Towns and Amiga plans,
+then requiring the same incorrect half-size geometry in each renderer. The
+fix removes that division and makes the Mac, FM Towns and Amiga renderers
+validate against the full RAW4 rectangle. PC EN/FR and Mac EN/FR share the
+native PC/Mac renderer path. The authentic DOS English M11 test now inspects
+the consumed runtime HUD trace and confirms RECT 0xA1 is 77x37; the Mac
+real-media plan test checks all A1-A4 destinations against their RAW4 entries;
+the FM Towns gameplay test checks its full A1 rect; and the Amiga New Game
+test reaches runtime with its original archive. All four tests pass using the
+original DOS, Mac, FM Towns and Amiga archives. The candidate also passes C
+compilation, shell syntax and `git diff --check`. PC French, Mac French and
+the separate PC JewelCase edition still need runtime coverage. The full app
+build and physical/native-display pixel comparison remain unverified because
+TRV2 timed out; portraits, bars, labels and panel interaction also remain
+open parts of the reported HUD issue.
