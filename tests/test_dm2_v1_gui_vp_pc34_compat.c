@@ -216,6 +216,34 @@ static void test_trim_blit_rect_callback(void) {
     assert(mock_blit_h == 130);  /* 200 - (20+50) */
 }
 
+static void test_environment_distant_element_plan(void) {
+    static const uint8_t distant[] = "mv=1 xl=12 yl=24 fd=0";
+    static const uint8_t fixed[] = "mv=0";
+    DM2_V1_EnvironmentElementPlan plan;
+
+    memset(&plan, 0, sizeof(plan));
+    assert(dm2_v1_environment_set_distant_element_plan(
+        distant, sizeof(distant), DM2_V1_ENVIRONMENT_SOURCE_DOS,
+        1, 10, 20, 0, 0, &plan));
+    assert(plan.visible && plan.distance == 4);
+    assert(plan.offset_x == 210 && plan.offset_y == 0);
+    assert(plan.scale_x == 60 && plan.scale_y == 60);
+
+    memset(&plan, 0, sizeof(plan));
+    assert(dm2_v1_environment_set_distant_element_plan(
+        fixed, sizeof(fixed), DM2_V1_ENVIRONMENT_SOURCE_SPX_V5,
+        0, 0, 0, 0, 0, &plan));
+    assert(plan.visible && plan.distance == 0);
+    assert(plan.scale_x == 0x40 && plan.scale_y == 0x40);
+
+    memset(&plan, 0xFF, sizeof(plan));
+    assert(!dm2_v1_environment_set_distant_element_plan(
+        distant, sizeof(distant) - 1u,
+        DM2_V1_ENVIRONMENT_SOURCE_SPX_V4,
+        0, 10, 20, 0, 0, &plan));
+    assert(!plan.visible && plan.scale_x == 0);
+}
+
 int main(void) {
     printf("test_dm2_v1_gui_vp_pc34_compat\n");
 
@@ -247,6 +275,7 @@ int main(void) {
     RUN(test_guivp_00f1_callback_dispatch);
     RUN(test_guivp_0c7d_callback_dispatch);
     RUN(test_trim_blit_rect_callback);
+    RUN(test_environment_distant_element_plan);
 
     printf("\n%d / %d tests passed\n", tests_passed, tests_total);
     return (tests_passed == tests_total) ? 0 : 1;
