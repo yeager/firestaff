@@ -21874,8 +21874,14 @@ int dm2_v1_runtime_get_active_moneybox_coins(
             const uint8_t *record = dm2_v1_record_pool_address(
                 &rt->record_pools, link);
             if (!record) return 0;
-            charge = dm2_runtime_hand_query_word(
-                &rt->record_pools, record, 2u);
+            /* DOS SKW_COUNT_BY_COIN_TYPES (dm2byh.cpp:1490-1507), SPX v4
+             * COUNT_BY_COIN_TYPES (skitem.cpp:253-273) and SPX v5
+             * DM2_COUNT_BY_COIN_TYPES (skgdtqdb.cpp:2090-2137) add the
+             * six-bit coin stack charge plus one. It is word2 bits 8-13
+             * (SPX-v4 dme.h:941-943); word2 also holds the distinctive
+             * item type and other flags. */
+            charge = (uint16_t)((dm2_runtime_hand_query_word(
+                &rt->record_pools, record, 2u) >> 8) & 0x3fu);
             for (uint16_t denomination = 0u;
                  denomination < money_count; ++denomination) {
                 if (money_ids[denomination] == distinctive) {

@@ -3006,3 +3006,15 @@ and charge/allocation, the held-hand reference and `DungeonData` as one
 mutation. Keep the DOS and SPX v4/v5 rows partial until transaction and
 input/render ownership are bound and verified for all eight supported DM2
 editions/platforms.
+
+
+2026-11-02 SKProject `COUNT_BY_COIN_TYPES` live moneybox rendering:
+DOS `dm2byh.cpp:1490-1507`, SPX v4 `skitem.cpp:253-273`, and SPX v5
+`skgdtqdb.cpp:2090-2137` all add the DB10 coin stack's six-bit charge from
+word2 bits 8-13 plus one. The live M11 renderer had been adding the full
+word2 value; `dm2_v1_runtime_get_active_moneybox_coins` now extracts bits 8-13
+from source-endian record words before drawing the count. The generic
+source-shaped accumulator remains useful for caller-supplied receipts. Native
+moneybox render and input ownership across all supported editions/platforms
+remains partial; the separate click transaction still lacks live DB9/DB10,
+held-hand and weight callbacks.
