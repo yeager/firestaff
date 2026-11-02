@@ -7,7 +7,7 @@
 
 ## Developer changes
 
-- `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
+- `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
 
 ## DM2
 
