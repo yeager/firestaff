@@ -19,7 +19,7 @@
  */
 
 #include "dm2_v1_game.h"
-#include "dm2_v1_runtime_parity_pc34_compat.h"
+#include "dm2_v1_glob_var_state_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_sksave_game_load_owner.h"
@@ -4743,7 +4743,7 @@ int dm2_v1_runtime_cast_spell_player(
                 rt->source_v1e0b7c =
                     (int16_t)receipt.cast.failure.status;
             if (game && receipt.cast.failure.glob_update_index >= 0x40 &&
-                receipt.cast.failure.glob_update_index <= 0xbfu) {
+                receipt.cast.failure.glob_update_index <= 0xbf) {
                 (void)dm2_v1_update_glob_var_direct(
                     (DM2_V1_GlobVarState *)&game->glob_vars,
                     (int16_t)receipt.cast.failure.glob_update_index,
