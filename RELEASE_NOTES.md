@@ -2,12 +2,19 @@
 
 ## User-facing changes
 
+- `DM1 incomplete game-data diagnostics`: retain a hash-verified graphics candidate when its matching dungeon file is missing, so the launcher can identify the edition and report the missing required file while continuing to block launch.
 - `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
 - `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
 
 ## Developer changes
 
-- `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
+- `Launcher and real-media regressions`: retain DM1 edition diagnostics when dungeon data is missing; add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; use authentic FM Towns media for DM2 scan-cancellation coverage; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
+
+## DM1
+
+### Changed
+
+- `Incomplete game-data diagnostics`: preserve the hash-matched graphics receipt when the corresponding dungeon file is absent. The launcher can now identify the edition and report the missing dungeon file, while launch remains blocked until required data is present.
 
 ## DM2
 
