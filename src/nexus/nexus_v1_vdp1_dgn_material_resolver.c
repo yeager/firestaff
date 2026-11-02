@@ -329,6 +329,10 @@ int nexus_v1_vdp1_dgn_material_resolver(
     out_input->dgn_palette = matched_palette;
     out_input->dgn_palette_size = 32;
     out_input->dgn_source_hash_verified = 1;
+    out_input->dgn_image_match_count = image_matches;
+    out_input->dgn_palette_match_count = palette_matches;
+    out_input->dgn_unique_join_verified = image_palette_matches == 1;
+    out_input->dgn_palette_only_fallback = image_palette_matches == 0;
     out_input->dgn_structure3_face_owner_count = matched_image_id_verified
         ? structure3_face_owner_count(data, input->dgn_byte_count,
                                       matched_image_id)

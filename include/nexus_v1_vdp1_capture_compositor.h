@@ -27,6 +27,12 @@ typedef struct {
     const uint8_t *dgn_palette;
     int dgn_palette_size;
     int dgn_source_hash_verified;
+    /* Resolver evidence for the material lookup. A byte match alone does not
+     * establish unique source ownership when a DGN repeats image or CLUT data. */
+    int dgn_image_match_count;
+    int dgn_palette_match_count;
+    int dgn_unique_join_verified;
+    int dgn_palette_only_fallback;
     int dgn_structure3_face_owner_count;
     int dgn_structure3_face_owner_verified;
     /* Separate ITEM.IBS source; never relabel an item as a DGN material. */
