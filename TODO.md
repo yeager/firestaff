@@ -11,13 +11,14 @@ they do not make Nexus playable or verify native display/input and complete
 gameplay parity. GitHub Actions for commit `cfadf47d0` passed on Linux, macOS,
 and Windows.
 
-2026-11-02 startup progress-bar coverage: the authentic DM1 PC 3.4 intro
-capture now waits until the real scanner reports a nonzero percentage, then
-checks both a filled progress pixel and an unfilled track pixel in the
-captured frame. `startup_scan_intro_capture_dm1_real_media` passed in 0.72
-seconds and verified the original archive hash was unchanged. This covers a
-visible nonzero fill on that route; it does not prove monotonic animation,
-native-window scaling, or other editions' presentation.
+2026-11-02 startup progress-bar coverage: the authentic-media intro capture
+now waits until the real scanner reports a nonzero percentage, then checks a
+filled pixel and an unfilled track pixel for DM1 PC 3.4, CSB FM Towns, and DM2
+FM Towns. `startup_scan_intro_capture_priority_games_real_media` passed on
+the current binary; all three original archive hashes stayed unchanged. This
+covers the shared 480x270 startup intro under three authentic media routes; it
+does not prove monotonic animation, native-window scaling, or other editions'
+presentation.
 
 2026-11-01 CLI value validation: `--platform` now rejects a following option
 as a missing value while preserving the full supported-platform hint when no
