@@ -4293,7 +4293,7 @@ if(BUILD_TESTING)
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
-        LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
+        LABELS "dm1;dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
 
     add_executable(test_dm1_snes_romdungeon_real_media

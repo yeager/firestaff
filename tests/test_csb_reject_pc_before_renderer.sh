@@ -41,5 +41,11 @@ check_rejected_platform csb pc \
 check_rejected_platform dm2 atari-st \
     2 \
     "firestaff: game 'dm2' has no launchable version for --platform Atari ST"
+check_rejected_platform dm1 pc-98 \
+    2 \
+    'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)'
+check_rejected_platform dm1 pc98 \
+    2 \
+    'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)'
 
-echo "PASS: unsupported CSB PC and DM2 Atari ST requests fail before renderer initialization and media scanning"
+echo "PASS: unsupported CSB PC, DM2 Atari ST, and DM1 PC-98 requests fail before renderer initialization and media scanning"
