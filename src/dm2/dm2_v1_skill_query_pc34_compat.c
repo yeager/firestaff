@@ -38,21 +38,21 @@ int16_t dm2_v1_query_player_skill_lv(
     if (skill_index < 0 || skill_index >= DM2_V1_SKILL_ARRAY_SIZE)
         return 1;
 
-    uint16_t xp = (uint16_t)hero->skill[skill_index];
+    uint32_t xp = (uint32_t)hero->skill[skill_index];
 
     if (skill_index >= 4) {
         int16_t parent_class;
-        int16_t multiplier;
+        int32_t multiplier;
 
         if (use_bonus) {
             parent_class = (skill_index - 4) >> 2;
-            multiplier = (int16_t)(hero->sbonus[parent_class] + 1);
+            multiplier = (int32_t)hero->sbonus[parent_class] + 1;
         } else {
             multiplier = 1;
         }
 
         int16_t parent_skill_idx = skill_index / 4 - 1;
-        xp += (uint16_t)(hero->skill[parent_skill_idx] * multiplier);
+        xp += (uint32_t)hero->skill[parent_skill_idx] * (uint32_t)multiplier;
         xp >>= 1;
     }
 

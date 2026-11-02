@@ -19,6 +19,7 @@
  */
 
 #include <stdint.h>
+#include "dm2_v1_change_player_pos_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,8 +82,9 @@ void dm2_v1_activate_shooter_narrow(
     int timer_idx, int16_t x, int16_t y, uint16_t item, int direction,
     const DM2_V1_ActivateShooterCallbacks *cb, void *ctx);
 
-/* ---- DM2_TRY_ORNATE_NOISE (c_tim_proc.cpp:4591) ----
- * Roll a chance-based ornament noise and queue a timer if it triggers. */
+/* Legacy chance-based ornament helper. This is not SKProject
+ * DM2_TRY_ORNATE_NOISE (c_tim_proc.cpp:4591), which schedules its animation
+ * cadence and GDAT-derived activation sound in the live runtime owner. */
 typedef struct {
     int (*random)(void *ctx, int max);
     void (*queue_timer)(void *ctx, int16_t x, int16_t y, uint32_t delay);
@@ -101,6 +103,55 @@ typedef struct {
 
 void dm2_v1_animate_creature(
     DM2_V1_CreatureAnimState *anim, int16_t direction, int16_t step);
+
+typedef enum {
+    DM2_V1_ANIMATE_CREATURE_DOS = 0,
+    DM2_V1_ANIMATE_CREATURE_SPX_V4 = 1,
+    DM2_V1_ANIMATE_CREATURE_SPX_V5 = 2
+} DM2_V1_AnimateCreatureVariant;
+
+typedef struct {
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    uint16_t (*query_ai_spec_flags)(void *ctx, uint16_t creature);
+    /* Return -1 or 0xff when the creature record has no CAII slot. */
+    int16_t (*get_creature_ai_index)(void *ctx, uint16_t creature);
+    void (*allocate_caii_to_creature)(void *ctx, uint16_t creature,
+                                      int16_t x, int16_t y,
+                                      DM2_V1_AnimateCreatureVariant variant);
+    void *(*prepare_local_creature)(void *ctx, uint16_t creature,
+                                    int16_t x, int16_t y,
+                                    uint8_t state_id,
+                                    DM2_V1_AnimateCreatureVariant variant);
+    int (*has_current_creature_state)(void *ctx);
+    void (*think_creature_0806)(void *ctx);
+    void (*think_creature_071b)(void *ctx);
+    void (*unprepare_local_creature)(void *ctx, void *local_state);
+} DM2_V1_AnimateCreatureCallbacks;
+
+typedef struct {
+    int valid;
+    int blocked_missing_callbacks;
+    int blocked_invalid_variant;
+    int found_creature;
+    uint16_t creature;
+    uint8_t allocated_caii;
+    uint8_t prepared_local_state;
+    uint8_t thinking_state_available;
+    uint8_t dispatched_0806;
+    uint8_t dispatched_071b;
+    uint8_t unprepared_local_state;
+} DM2_V1_AnimateCreatureReceipt;
+
+/* SKProject DOS dm2bya.cpp::SKW_ANIMATE_CREATURE (350-367), SPX v4
+ * skcrture.cpp::ANIMATE_CREATURE (5544-5565), and SPX v5
+ * sktimprc.cpp::DM2_ANIMATE_CREATURE (2860-2900). `direction != 0` selects
+ * AI_0806; `direction == 0` selects AI_071B. DOS and v5 always unprepare,
+ * while v4 performs that cleanup only when thinking state exists. */
+int dm2_v1_animate_creature_source(
+    int16_t x, int16_t y, int16_t direction,
+    DM2_V1_AnimateCreatureVariant variant,
+    const DM2_V1_AnimateCreatureCallbacks *cb, void *ctx,
+    DM2_V1_AnimateCreatureReceipt *out_receipt);
 
 /* ---- DM2_ADVANCE_TILES_TIME (c_tim_proc.cpp:3533) ----
  * Advance a tile's own timer/animation state by delta ticks. */
@@ -217,7 +268,7 @@ int32_t dm2_v1_hero_2c1d_135d(
  * sub-skill and (if a sub-skill) the parent skill-group, then looping
  * "level up" passes while the new level exceeds the loop count: each
  * pass rolls ability/HP/stamina/MP gains (varying by skill group 0-3:
- * fighter/ninja/wizard/priest) and clamps maxHP<=999, maxStamina<=9999,
+ * fighter/ninja/priest/wizard) and clamps maxHP<=999, maxStamina<=9999,
  * maxMP<=900. Returns the resulting skill level. */
 typedef struct {
     int16_t (*get_gametick)(void *ctx);
@@ -240,9 +291,18 @@ typedef struct {
     void (*add_ability_max)(void *ctx, int hero_idx, int ability, int16_t delta);
     void (*mark_hero_dirty)(void *ctx, int hero_idx);
     void (*display_level_up_hint)(void *ctx, int hero_idx, int skill_group);
+    /* DM2_RAND16(max): source range is [0, max). */
+    uint16_t (*rand16)(void *ctx, uint16_t max);
+    int16_t (*get_current_stamina)(void *ctx, int hero_idx);
 } DM2_V1_AdjustSkillsCallbacks;
 
 int32_t dm2_v1_adjust_skills(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx);
+
+/* SPX v4 variant (skchamp.cpp:843): the combat-double window is 25 ticks
+ * and stamina growth is based on current stamina. */
+int32_t dm2_v1_adjust_skills_spx_v4(
     int hero_idx, int32_t skill_id, int32_t exp_gain,
     const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx);
 
@@ -411,45 +471,38 @@ int dm2_v1_player_consume_object(
     int hero_idx, uint16_t item,
     const DM2_V1_PlayerConsumeObjectCallbacks *cb, void *ctx);
 
-/* ---- DM2_CHANGE_PLAYER_POS (c_hero.cpp:4037) ----
- * Reorder party formation: the low byte packs a source slot, the high
- * bit selects "swap absolute direction too". If a drag-in-progress flag
- * (ddat.v1e00b8) is set, it swaps the dragged hero and the target-slot
- * hero's partypos (and absdir when the high bit was set); otherwise (no
- * drag) it performs the UI icon-swap animation path, which the narrow
- * form represents as a plain position swap. */
-typedef struct {
-    int drag_in_progress;      /* ddat.v1e00b8 != 0 */
-    int drag_source_position;  /* (ddat.v1e00b8 - 1 + rotation) & 3 */
-    int also_swap_direction;   /* packed_pos high bit */
-} DM2_V1_ChangePlayerPosState;
-
-typedef struct {
-    int (*get_player_at_position)(void *ctx, int position);
-    void (*swap_positions)(void *ctx, int hero_a, int hero_b);
-    void (*set_direction)(void *ctx, int hero_idx, int8_t direction);
-    int8_t (*get_party_facing)(void *ctx);
-} DM2_V1_ChangePlayerPosCallbacks;
-
-void dm2_v1_change_player_pos(
-    int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
-    const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx);
-
-/* ---- DM2_hero_2c1d_1de2 (c_hero.cpp:3903) ----
- * Throw an item held by a hero: if throwing directly from the mouse
- * "hand" (hand_slot < 0), first swaps it into inventory slot 1;
- * otherwise removes the item from the given inventory slot. Computes
- * the throw strength via the attack/throw strength formula, queues the
- * launch noise, and shoots the item as a missile from the party's tile.
- * Returns 1 if an item was actually thrown. */
+/* ---- DM2_hero_2c1d_1de2 (SKULLWIN/c_hero.cpp:3903;
+ * SPX v5/skhero.cpp:3905; SPX v4/skchamp.cpp:1234;
+ * DOS/dm2byh.cpp:423) ----
+ * Throw an item held by a hero. A mouse-hand item is placed in inventory
+ * slot 1 only while throw strength is computed, then the prior slot value
+ * is restored. The callbacks provide the source GDAT, skill, RNG, projectile
+ * and throw-state owners so the source transaction can be reproduced. */
 typedef struct {
     int16_t (*remove_from_hand)(void *ctx);
     int16_t (*remove_possession)(void *ctx, int hero_idx, int slot);
+    int16_t (*get_hand_slot1)(void *ctx, int hero_idx);
     void (*set_hand_slot1)(void *ctx, int hero_idx, int16_t item);
+    int (*hand_throw_allowed)(void *ctx);
     int16_t (*compute_throw_strength)(void *ctx, int hero_idx, int slot);
     void (*queue_launch_noise)(void *ctx, uint16_t item, int16_t x, int16_t y);
+    uint16_t (*query_item_weight)(void *ctx, uint16_t item);
+    void (*adjust_stamina)(void *ctx, int hero_idx, int16_t amount);
+    void (*adjust_hand_cooldown)(void *ctx, int hero_idx,
+                                 int16_t cooldown_ticks, int hand_idx);
+    uint16_t (*query_throw_power)(void *ctx, uint16_t item);
+    void (*adjust_throw_skill)(void *ctx, int hero_idx, int16_t amount);
+    int16_t (*query_throw_skill_level)(void *ctx, int hero_idx);
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int32_t (*rand_raw)(void *ctx);
+    uint16_t (*query_projectile_range)(void *ctx, uint16_t item);
+    int (*get_party_facing)(void *ctx);
     void (*shoot_item)(void *ctx, uint16_t item, int16_t x, int16_t y,
-                       int direction, int16_t strength);
+                       int launch_direction, int party_facing,
+                       uint8_t kinetic_energy, uint8_t attack,
+                       uint8_t step_energy);
+    void (*set_throw_state)(void *ctx, int16_t disabled_movement_ticks,
+                            int party_facing);
 } DM2_V1_ThrowItemCallbacks;
 
 int32_t dm2_v1_hero_2c1d_1de2(
@@ -681,15 +734,14 @@ int32_t dm2_v1_creature_attacks_creature(
     const DM2_V1_CreatureAttacksCreatureCallbacks *cb, void *ctx);
 
 /* ---- DM2_CREATURE_CAN_HANDLE_IT (c_creature.cpp:1344) ----
- * Check whether a creature type can pick up/handle an item's class.
- * item classes 0x3e/0x3f are sentinels (empty slot / illegal) and never
- * handled. Class 0x29 (container) gets special moneybox handling: a
- * moneybox creatures cannot loot is only takeable once already opened
- * (flags & 0x80, i.e. a forced pickpocket/steal), otherwise the regular
- * per-type handle_mask bit for the item's class decides. */
+ * Check the item record against the class selector in flags (low six bits),
+ * applying flag 0x80 as the source inversion bit. Class 0x3e is a moneybox
+ * special case; 0x3f accepts all eligible items. The v4 entry point preserves
+ * its direct-accept rule for opened
+ * class-0x29 moneyboxes; v5 checks the creature mask for opened moneyboxes. */
 typedef struct {
     /* bit N set => creature type can handle class N.
-     * 64-bit because item_class is (item & 0x3f), i.e. 0..0x3d: classes 32
+     * 64-bit because item_class is (flags & 0x3f), i.e. 0..0x3d: classes 32
      * and above -- including the moneybox class 0x29 -- are not
      * representable in a 32-bit mask, and shifting by them is undefined. */
     uint64_t handle_mask;
@@ -701,6 +753,9 @@ typedef struct {
 } DM2_V1_CreatureCanHandleCallbacks;
 
 int32_t dm2_v1_creature_can_handle_it(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
+int32_t dm2_v1_creature_can_handle_it_v4(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
 

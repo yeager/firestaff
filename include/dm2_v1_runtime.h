@@ -38,6 +38,8 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_ccm_loop_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -366,6 +368,18 @@ int dm2_v1_runtime_set_spell_runes(int hero_index,
 int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index);
 int dm2_v1_runtime_remove_spell_rune(int hero_index);
 int dm2_v1_runtime_clear_spell_runes(int hero_index);
+/* Source events 0x97..0x9a toggle the four magical-map rune bits, charging
+ * active-hero mana on selection and updating the composed-spell cost. */
+int dm2_v1_runtime_click_magical_map_rune(int rune_index);
+
+/* Execute the SPX-v5 `DM2_PROCEED_COMMAND_SLOT(-1)` hand-rune exit.
+ * The source writes the active champion selection into v1e0b62 and clears
+ * the command-map bit before refreshing the right panel. DOS/SPX-v4 variants
+ * use different flag semantics and must select their own owner. */
+int dm2_v1_runtime_cancel_hand_rune_v5(void);
+
+/* Execute the DOS/SPX-v4 `PROCEED_COMMAND_SLOT(-1)` flag reset. */
+int dm2_v1_runtime_cancel_hand_rune_legacy(void);
 int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
                                    int capacity, int *out_rune_count);
 
@@ -1654,21 +1668,21 @@ void dm2_v1_runtime_set_sleeping(int sleeping);
  * heroes retained by GAME_LOAD; an incomplete or empty source formation is a
  * no-op rather than a host-created champion selection. */
 int dm2_v1_runtime_cycle_action_champion(void);
-/* Source c_hero.cpp::DM2_CHANGE_PLAYER_POS. Consecutive source formation
- * clicks pick up and move a live champion; relative slots are transformed by
- * the party's current facing. Returns 0 until an authenticated GAME_LOAD
- * party is available or when the source slot is invalid. */
-int dm2_v1_runtime_change_player_pos(int relative_position);
-/* Source DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION (event 129): complete the
- * current formation drag at its original slot without changing facing. */
-int dm2_v1_runtime_recompute_player_pos(void);
 /* Source UI event 116..123 selects a live champion's action hand.  The
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Source UI events 125..128 start/commit a formation drag; event 129
+ * recomputes at the pending source slot without updating facing. Both use
+ * the source CHANGE_PLAYER_POS owner and authenticated GAME_LOAD party. */
+int dm2_v1_runtime_change_player_pos(int slot);
+int dm2_v1_runtime_recompute_player_pos(void);
 /* Select the living DM2 champion that owns an M11 rune-cast request without
  * routing the operation through ACTIVATE_ACTION_HAND's item-action gate. */
 int dm2_v1_runtime_select_spell_champion(int hero_index);
+/* SPX/DOS SET_SPELLING_CHAMPION publishes spell mode while preserving the
+ * physical active hand used by CAST_SPELL_PLAYER. */
+int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);
@@ -1996,6 +2010,11 @@ int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt);
 
+typedef enum {
+    DM2_V1_COMMAND_SLOT_DOS_SPX_V5 = 0,
+    DM2_V1_COMMAND_SLOT_SPX_V4 = 1
+} DM2_V1_CommandSlotVariant;
+
 /* Execute one source command-menu slot for the currently selected hand.
  * The command is resolved from the mounted item's authentic CMDSTR entry;
  * the only currently admitted mutation is ATTACK (action id 2), which queues
@@ -2003,6 +2022,10 @@ int dm2_v1_runtime_engage_command(
  * authenticated command types remain fail-closed until their source owners
  * are wired. `slot_index` is the original 0..2 command-menu index. */
 int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt);
+/* SPX v4 PROCEED_COMMAND_SLOT has no DOS/SPX-v5 field-14/RAND16 gate; it
+ * consumes the source CMDSTR field-8 charge after every non-cancel command. */
+int dm2_v1_runtime_proceed_hand_command_spx_v4(
     int slot_index, DM2_V1_EngageCommandReceipt *receipt);
 
 /* ── Special squares ──────────────────────────────────────────────── */

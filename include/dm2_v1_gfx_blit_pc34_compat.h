@@ -321,6 +321,13 @@ void dm2_v1_blit_stretch256(DM2_V1_BlitterState *st,
                             int16_t width, int16_t height,
                             int16_t argw0, int16_t argw1);
 
+/* Source: DOS dm2D.cpp::driver_stretched_hblit (678) and SPX v5
+ * uitmouse.cpp::c_mblitter::blit_hline_stretched (507). Copies 13 source
+ * pixels to 16 destination pixels, repeated 14 times. */
+bool dm2_v1_blit_hline_stretched(const uint8_t *src, size_t src_size,
+                                size_t src_offset, uint8_t *dst,
+                                size_t dst_size, size_t dst_offset);
+
 /* ========================================================================
  * Within-screen blit (was sub_25AF)
  * ======================================================================== */

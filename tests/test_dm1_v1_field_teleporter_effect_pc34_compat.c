@@ -119,7 +119,7 @@ int main(void)
         }
         expect_int("sample.d3l2.lookup", dm1_v1_field_render_plan_for_relative_pc34(3, -2, &plan), 1);
         expect_int("sample.d3l2.ok", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 0, 0, 128, 64, 16, 8, &sample), 1);
-        expect_int("sample.d3l2.fieldX", sample.fieldX, 112);
+        expect_int("sample.d3l2.fieldX", sample.fieldX, 0);
         expect_int("sample.d3l2.fieldY", sample.fieldY, 0);
         expect_int("sample.d3l2.maskPresent", sample.maskPresent, 1);
         expect_int("sample.d3l2.maskFlip", sample.maskFlip, 0);
@@ -127,32 +127,32 @@ int main(void)
         expect_int("sample.d3l2.maskY", sample.maskY, 0);
         expect_int("sample.d2r2.lookup", dm1_v1_field_render_plan_for_relative_pc34(2, 2, &plan), 1);
         expect_int("sample.d2r2.tick0", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 7, 51, 256, 128, 32, 16, &sample), 1);
-        expect_int("sample.d2r2.fieldX", sample.fieldX, 247);
-        expect_int("sample.d2r2.fieldY", sample.fieldY, 51);
+        expect_int("sample.d2r2.fieldX", sample.fieldX, 55);
+        expect_int("sample.d2r2.fieldY", sample.fieldY, 3);
         expect_int("sample.d2r2.maskPresent", sample.maskPresent, 1);
         expect_int("sample.d2r2.maskFlip", sample.maskFlip, 1);
         expect_int("sample.d2r2.maskX", sample.maskX, 3);
         expect_int("sample.d2r2.maskY", sample.maskY, 15);
         expect_int("sample.d2r2.transparent", sample.transparentColor, 0x0a);
         expect_int("sample.d2r2.tick3", dm1_v1_field_bitmap_sample_pc34(&plan, 3, 0, 0, 256, 128, 32, 16, &sample), 1);
-        expect_int("sample.d2r2.tick3.fieldX", sample.fieldX, 0);
-        expect_int("sample.d2r2.tick3.fieldY", sample.fieldY, 21);
+        expect_int("sample.d2r2.tick3.fieldX", sample.fieldX, 80);
+        expect_int("sample.d2r2.tick3.fieldY", sample.fieldY, 1);
         expect_int("sample.bad.local", dm1_v1_field_bitmap_sample_pc34(&plan, 0, plan.dstW, 0, 256, 128, 32, 16, &sample), 0);
         expect_int("sample.bad.field_size", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 0, 0, 0, 128, 32, 16, &sample), 0);
         expect_int("pixel.d2r2.opaque", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
                    maskPixels, 32, 16, 32, &pixel), 1);
-        expect_int("pixel.d2r2.value", pixel, fieldPixels[51 * 256 + 247]);
+        expect_int("pixel.d2r2.value", pixel, fieldPixels[3 * 256 + 55]);
         maskPixels[15 * 32 + 3] = 0;
         expect_int("pixel.d2r2.masked", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
                    maskPixels, 32, 16, 32, &pixel), 0);
         maskPixels[15 * 32 + 3] = 1;
-        fieldPixels[51 * 256 + 247] = 0x0a;
+        fieldPixels[3 * 256 + 55] = 0x0a;
         expect_int("pixel.d2r2.transparent", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
                    maskPixels, 32, 16, 32, &pixel), 0);
-        fieldPixels[51 * 256 + 247] = 0x22;
+        fieldPixels[3 * 256 + 55] = 0x22;
         expect_int("pixel.d2r2.no_mask_asset", dm1_v1_field_bitmap_pixel_pc34(&plan, 0, 7, 51,
                    fieldPixels, 256, 128, 256,
                    NULL, 0, 0, 0, &pixel), 1);

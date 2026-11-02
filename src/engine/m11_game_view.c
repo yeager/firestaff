@@ -918,6 +918,8 @@ static void m11_log_event(M11_GameViewState* state,
                           unsigned char color,
                           const char* fmt,
                            ...);
+static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
+                                                 int mapIndex);
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex);
 static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state);
 enum {
@@ -21319,6 +21321,8 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
             state->world.party = before;
             return 0;
         }
+        if (m11_is_dm1_source_kind(state->sourceKind))
+            m11_dm1_wire_current_map_alcove_list(state, stairs.toMapIndex);
     }
 
     if (state->dm1MusicSourceBound) {
@@ -21405,6 +21409,9 @@ static int m11_apply_post_move_environment_from_compat(M11_GameViewState* state)
     state->world.party.mapY = resolution.finalMapY;
     state->world.party.direction = resolution.finalDirection;
     state->world.party.mapIndex = resolution.finalMapIndex;
+    if (m11_is_dm1_source_kind(state->sourceKind))
+        m11_dm1_wire_current_map_alcove_list(state,
+                                             resolution.finalMapIndex);
     if (state->dm1MusicSourceBound) {
         DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
         (void)dm1_v1_f0742_set_map_track_pc34(
@@ -23591,7 +23598,8 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
         int rune_count = 0;
         uint8_t runes[4] = {0, 0, 0, 0};
         if (caster < 0 || caster >= DM2_MAX_HEROES ||
-            !dm2_v1_runtime_select_spell_champion(caster) ||
+            !dm2_v1_runtime_enter_spell_mode(
+                caster, dm2_v1_runtime_get_active_hand()) ||
             !dm2_v1_runtime_get_spell_runes(
                 caster, runes, (int)sizeof(runes), &rune_count)) return 0;
         memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
@@ -28635,6 +28643,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    /* These caches belong to one loaded dungeon owner. A reused M11 state
+     * may launch another edition or game with the same numeric map indices. */
+    memset(state->ornamentCacheLoaded, 0,
+           sizeof(state->ornamentCacheLoaded));
+    memset(state->ornamentCacheSourceValid, 0,
+           sizeof(state->ornamentCacheSourceValid));
+    state->dm1CurrentMapDungeonOwner = NULL;
+    DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(
+        &state->dm1CurrentMapF0173F0174);
+    dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
     state->dm1V1MovementOutcomeSerial = 0;
     state->dm1V1MovementOutcomeCounter = 0;
     /* A fresh launch cannot retain a derived generation from an old loader. */
@@ -35878,6 +35896,8 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
     if (m11_is_dm1_source_kind(state->sourceKind) &&
         beforeParty.mapIndex != state->world.partyMapIndex) {
+        m11_dm1_wire_current_map_alcove_list(
+            state, state->world.party.mapIndex);
         /* ReDMCSB NEWMAP.C F0003 selects the destination map's soundtrack.
          * Stair and post-move callers do this in their own transition shim;
          * this is the shared movement/teleporter handoff. */
@@ -43992,6 +44012,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                         (input_receipt.event_index - 116u) % 2u))
                     return M11_GAME_INPUT_REDRAW;
                 return M11_GAME_INPUT_IGNORED;
+            case 151: case 152: case 153: case 154:
+                if (dm2_v1_runtime_click_magical_map_rune(
+                        (int)(input_receipt.event_index - 151u))) {
+                    m11_dm2_sync_spell_mana_to_view(
+                        state, dm2_v1_runtime_get_active_champion_index());
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
             case 125: case 126: case 127: case 128:
                 if (dm2_v1_runtime_change_player_pos(
                         (int)(input_receipt.event_index - 125u))) {
@@ -44000,10 +44028,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 }
                 return M11_GAME_INPUT_IGNORED;
             case 112:
-                /* COMMAND.C event 0x70 closes the source hand/action panel
-                 * without committing an action. */
-                M11_GameView_ClearActingChampion(state);
-                return M11_GAME_INPUT_REDRAW;
+                /* The authenticated PC table follows DOS's flag reset;
+                 * Towns' recovered native table uses the SPX-v5 mask path.
+                 * Neither route owns Firestaff's separate DM1 panel state. */
+                if (profile &&
+                    (profile->platform == DM2_PLATFORM_FMTOWNS_JA
+                         ? dm2_v1_runtime_cancel_hand_rune_v5()
+                         : dm2_v1_runtime_cancel_hand_rune_legacy()))
+                    return M11_GAME_INPUT_REDRAW;
+                return M11_GAME_INPUT_IGNORED;
             case 11:
                 /* c_input.cpp panel event 11 is the source inventory-panel
                  * close lane.  Keep it distinct from the DM1 C011 table:
@@ -45802,7 +45835,7 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
      * G0261[WallOrnamentCount] = C0_WALL_ORNAMENT_INSCRIPTION. */
     metaSize = (int)m->creatureTypeCount + (int)m->wallOrnamentCount +
                (int)m->floorOrnamentCount + (int)m->doorOrnamentCount;
-    if (metaSize <= 0 || metaSize > (int)sizeof(metaBuf)) {
+    if (metaSize < 0 || metaSize > (int)sizeof(metaBuf)) {
         state->ornamentCacheLoaded[mapIndex] = 1;
         return;
     }
@@ -45907,7 +45940,99 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         }
     }
 
+    state->ornamentCacheSourceValid[mapIndex] = 1;
     state->ornamentCacheLoaded[mapIndex] = 1;
+}
+
+/* Source: ReDMCSB DUNGEON.C:F0173_DUNGEON_SetCurrentMap (2724-2740) and
+ * F0174_DUNGEON_SetCurrentMapAndPartyMap (2742-2762); LOADSAVE.C:1970-1980
+ * builds each map's first-column index from preceding decoded map widths.
+ * F0173 refreshes only on a dungeon owner change or map transition; F0174
+ * republishes the party-map metadata each time this M11 consumer requests it. */
+static int m11_dm1_publish_current_map_f0174(M11_GameViewState* state,
+                                             int mapIndex) {
+    static const uint16_t doorInfoByType[4][2] = {
+        { 0x0003u, 110u }, /* DUNGEON.C:560 portcullis */
+        { 0x0000u, 42u },  /* wooden */
+        { 0x0000u, 230u }, /* iron */
+        { 0x0005u, 255u }  /* animated RA */
+    };
+    const struct DungeonDatState_Compat* dun;
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    DM1_V1_MapDescriptorF0173F0174Pc34 descriptor;
+    DM1_V1_CurrentMapResultF0173F0174Pc34 result;
+    int columnBase = 0;
+
+    if (!state || !(dun = state->world.dungeon) || !dun->loaded ||
+        !dun->maps || !dun->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dun->header.mapCount ||
+        mapIndex >= 32 || !dun->columnsCumulativeSquareFirstThingCount) {
+        return 0;
+    }
+    map = &dun->maps[mapIndex];
+    tiles = &dun->tiles[mapIndex];
+    if (!tiles->squareData || map->width == 0u || map->height == 0u ||
+        map->wallOrnamentCount > 16u || map->floorOrnamentCount > 16u ||
+        map->doorOrnamentCount > 16u || map->creatureTypeCount > 16u ||
+        map->doorSet0 >= 4u || map->doorSet1 >= 4u ||
+        !state->ornamentCacheSourceValid[mapIndex]) {
+        return 0;
+    }
+    for (int i = 0; i < mapIndex; ++i) {
+        if (columnBase > dun->dungeonColumnCount ||
+            (int)dun->maps[i].width > dun->dungeonColumnCount - columnBase)
+            return 0;
+        columnBase += (int)dun->maps[i].width;
+    }
+    if (columnBase < 0 || columnBase > dun->dungeonColumnCount ||
+        (int)map->width > dun->dungeonColumnCount - columnBase ||
+        tiles->squareCount != (int)map->width * (int)map->height)
+        return 0;
+
+    memset(&descriptor, 0, sizeof(descriptor));
+    descriptor.mapIndex = mapIndex;
+    descriptor.width = (int)map->width;
+    descriptor.height = (int)map->height;
+    descriptor.mapBytes = tiles->squareData;
+    descriptor.mapByteCount = (size_t)tiles->squareCount;
+    descriptor.columnCumulativeSquareFirstThingCounts =
+        dun->columnsCumulativeSquareFirstThingCount + columnBase;
+    descriptor.columnCount = (size_t)map->width;
+    for (int i = 0; i < 2; ++i) {
+        const unsigned int type = i == 0 ? map->doorSet0 : map->doorSet1;
+        state->dm1CurrentMapDoorInfo[i * 2] = doorInfoByType[type][0];
+        state->dm1CurrentMapDoorInfo[i * 2 + 1] = doorInfoByType[type][1];
+    }
+    descriptor.doorInfo = state->dm1CurrentMapDoorInfo;
+    descriptor.doorInfoCount = 2u;
+    descriptor.allowedCreatureTypes = map->allowedCreatureTypes;
+    descriptor.allowedCreatureTypeCount = (size_t)map->creatureTypeCount;
+    for (int i = 0; i < 16; ++i) {
+        const int wall = state->wallOrnamentIndices[mapIndex][i];
+        const int floor = state->floorOrnamentIndices[mapIndex][i];
+        const int door = state->doorOrnamentIndices[mapIndex][i];
+        state->dm1CurrentMapWallOrnamentBytes[i] =
+            wall >= 0 && wall <= UINT8_MAX ? (uint8_t)wall : 0u;
+        state->dm1CurrentMapFloorOrnamentBytes[i] =
+            floor >= 0 && floor <= UINT8_MAX ? (uint8_t)floor : 0u;
+        state->dm1CurrentMapDoorOrnamentBytes[i] =
+            door >= 0 && door <= UINT8_MAX ? (uint8_t)door : 0u;
+    }
+    descriptor.wallOrnamentIndices = state->dm1CurrentMapWallOrnamentBytes;
+    descriptor.wallOrnamentCount = (size_t)map->wallOrnamentCount;
+    descriptor.floorOrnamentIndices = state->dm1CurrentMapFloorOrnamentBytes;
+    descriptor.floorOrnamentCount = (size_t)map->floorOrnamentCount;
+    descriptor.doorOrnamentIndices = state->dm1CurrentMapDoorOrnamentBytes;
+    descriptor.doorOrnamentCount = (size_t)map->doorOrnamentCount;
+
+    if (state->dm1CurrentMapDungeonOwner != dun) {
+        DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(
+            &state->dm1CurrentMapF0173F0174);
+        state->dm1CurrentMapDungeonOwner = dun;
+    }
+    return F0174_DUNGEON_SetCurrentMapAndPartyMap(
+        &state->dm1CurrentMapF0173F0174, &descriptor, 1u, mapIndex, &result);
 }
 
 /* ReDMCSB DUNGEON.C F0174 keeps G0267 (the current-map alcove ornament
@@ -45924,7 +46049,14 @@ static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
         return;
     }
     m11_ensure_ornament_cache(state, mapIndex);
-    if (!state->ornamentCacheLoaded[mapIndex]) {
+    if (!state->ornamentCacheLoaded[mapIndex] ||
+        !state->ornamentCacheSourceValid[mapIndex]) {
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+        return;
+    }
+    if (state->dm1CurrentMapDungeonOwner != state->world.dungeon)
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+    if (!m11_dm1_publish_current_map_f0174(state, mapIndex)) {
         dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
         return;
     }
@@ -46009,11 +46141,34 @@ static int m11_dm1_front_wall_is_vi_altar(
 /* Apply the source-locked CLIKVIEW.C fountain path to the actual loaded
  * Thing record.  This deliberately does not infer a fountain from a graphic
  * id or a generic ornament fallback. */
+static int m11_dm1_apply_fountain_weight_delta(
+    M11_GameViewState* state, unsigned short handThing, int weightBefore) {
+    int leaderIndex;
+    int weightAfter;
+
+    if (!state || !state->world.things) return 0;
+    leaderIndex = state->world.party.activeChampionIndex;
+    if (leaderIndex < 0 || leaderIndex >= CHAMPION_MAX_PARTY ||
+        leaderIndex >= state->world.party.championCount ||
+        !state->world.party.champions[leaderIndex].present ||
+        !dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            state->world.things, handThing, &weightAfter)) {
+        return 0;
+    }
+    /* CLIKVIEW.C F0377 captures F0140 before filling, then adds the new
+     * F0140 weight minus the old weight to the leader's Load. */
+    state->world.party.champions[leaderIndex].load = (unsigned short)(
+        state->world.party.champions[leaderIndex].load +
+        (weightAfter - weightBefore));
+    return 1;
+}
+
 static int m11_dm1_apply_fountain_click(
     M11_GameViewState* state,
     const M11_ViewportCell* frontCell) {
     unsigned short handThing;
     int icon;
+    int weightBefore;
 
     if (!state || !frontCell || !m11_dm1_front_wall_is_fountain(state, frontCell) ||
         !state->world.things) {
@@ -46038,16 +46193,27 @@ static int m11_dm1_apply_fountain_click(
 
     icon = m11_object_icon_index_for_thing(state, state->world.things,
                                            handThing);
+    if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            state->world.things, handThing, &weightBefore)) {
+        return 0;
+    }
     if (THING_GET_TYPE(handThing) == THING_TYPE_JUNK &&
         icon >= DM1_V1_ICON_JUNK_WATER &&
         icon <= DM1_V1_ICON_JUNK_WATERSKIN) {
         int index = THING_GET_INDEX(handThing);
+        unsigned char previousCharges;
         if (!state->world.things->junks || index < 0 ||
             index >= state->world.things->junkCount) {
             return 0;
         }
+        previousCharges = state->world.things->junks[index].chargeCount;
         state->world.things->junks[index].chargeCount =
             DM1_V1_FOUNTAIN_FULL_CHARGES;
+        if (!m11_dm1_apply_fountain_weight_delta(state, handThing,
+                                                  weightBefore)) {
+            state->world.things->junks[index].chargeCount = previousCharges;
+            return 0;
+        }
         m11_set_status(state, M11_DM1_PRESENTED("FOUNTAIN"),
                        M11_DM1_PRESENTED("CONTAINER FILLED"));
         m11_refresh_hash(state);
@@ -46056,11 +46222,18 @@ static int m11_dm1_apply_fountain_click(
     if (THING_GET_TYPE(handThing) == THING_TYPE_POTION && icon ==
         DM1_V1_ICON_POTION_EMPTY_FLASK) {
         int index = THING_GET_INDEX(handThing);
+        unsigned char previousType;
         if (!state->world.things->potions || index < 0 ||
             index >= state->world.things->potionCount) {
             return 0;
         }
+        previousType = state->world.things->potions[index].type;
         state->world.things->potions[index].type = 15;
+        if (!m11_dm1_apply_fountain_weight_delta(state, handThing,
+                                                  weightBefore)) {
+            state->world.things->potions[index].type = previousType;
+            return 0;
+        }
         m11_set_status(state, M11_DM1_PRESENTED("FOUNTAIN"),
                        M11_DM1_PRESENTED("FLASK FILLED WITH WATER"));
         m11_refresh_hash(state);
@@ -46753,6 +46926,54 @@ static int m11_csb_runtime_object_name_for_thing(
 
 /* Grab the first floor item from the front cell into the leader hand.
  * Mirrors ReDMCSB CLIKVIEW.C F0373. */
+static int m11_c080_front_item_blocked_by_creature(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    int viewCell) {
+    unsigned short groupThing;
+    unsigned short attributes;
+    unsigned int groupCells;
+    unsigned int groupDirections;
+    int groupIndex;
+    unsigned int clickedCell;
+
+    if (viewCell < 2) return 0;
+    if (!state || !cell || !cell->valid || !state->world.dungeon ||
+        !state->world.things) {
+        return 1;
+    }
+    groupThing = dm1_v1_group_get_thing_f0175_pc34(
+        state->world.dungeon, state->world.things,
+        state->world.party.mapIndex, cell->mapX, cell->mapY);
+    if (groupThing == THING_ENDOFLIST) return 0;
+    groupIndex = THING_GET_INDEX(groupThing);
+    if (THING_GET_TYPE(groupThing) != THING_TYPE_GROUP || groupIndex < 0 ||
+        !state->world.things->groups ||
+        groupIndex >= state->world.things->groupCount ||
+        !dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+            state->world.things, groupThing, &attributes) ||
+        !dm1_v1_dungeon_get_group_cells_f0145_pc34(
+            state->world.things, state->world.creatureAI,
+            state->world.creatureAICount, state->world.party.mapIndex,
+            state->world.party.mapIndex, groupIndex, &groupCells) ||
+        !dm1_v1_dungeon_get_group_directions_f0147_pc34(
+            state->world.things, state->world.creatureAI,
+            state->world.creatureAICount, state->world.party.mapIndex,
+            state->world.party.mapIndex, groupIndex, &groupDirections)) {
+        /* F0373 cannot prove this group is levitating or misses the clicked
+         * cell, so fail closed and leave the floor object in place. */
+        return 1;
+    }
+    if (F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_GROUP, attributes)) {
+        return 0;
+    }
+    clickedCell = ((unsigned int)state->world.party.direction +
+                   (unsigned int)viewCell) & 3u;
+    return dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+        state->world.things, groupThing, groupCells, groupDirections,
+        clickedCell) != 0;
+}
+
 static int m11_c080_grab_leader_hand(M11_GameViewState* state,
                                      int viewCell) {
     M11_ViewportCell cell;
@@ -46778,6 +46999,12 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     }
     targetMapX = cell.mapX;
     targetMapY = cell.mapY;
+
+    /* ReDMCSB CLIKVIEW.C F0373:117-123 rejects a front-square pile click
+     * when a non-levitating F0175 group occupies the clicked F0176 cell. */
+    if (m11_c080_front_item_blocked_by_creature(state, &cell, viewCell)) {
+        return 0;
+    }
 
     item = m11_find_pile_top_item_on_square(
         &state->world,
@@ -47079,234 +47306,13 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     return M11_GAME_INPUT_REDRAW;
 }
 
-static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
-                                                       int x,
-                                                       int y) {
+static M11_GameInputResult m11_c080_process_front_wall_sensor_click(
+    M11_GameViewState* state, const M11_ViewportCell* frontCellPtr) {
     M11_ViewportCell frontCell;
-    int localX;
-    int localY;
-    int facingAlcove;
-    int facingViAltar;
-    int facingWall;
-    int alcoveItemHit;
-
-    if (!state || !state->active) {
+    if (!state || !frontCellPtr || !frontCellPtr->valid) {
         return M11_GAME_INPUT_IGNORED;
     }
-
-    localX = x - M11_VIEWPORT_X;
-    localY = y - M11_VIEWPORT_Y;
-
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        const CSB_V1_BootProfile *profile =
-            (const CSB_V1_BootProfile *)state->csbBootProfile;
-        if (m11_csb_is_fmtowns_profile(profile)) {
-            int viewport_x, viewport_y;
-            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
-            localX = x - viewport_x;
-            localY = y - viewport_y;
-        } else if (profile &&
-                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-                    profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
-            int viewport_x, viewport_y;
-            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
-            localX = x - viewport_x;
-            localY = y - viewport_y;
-        }
-        return m11_process_csb_v1_c080_click(state, localX, localY);
-    }
-
-    /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
-     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
-    memset(&frontCell, 0, sizeof(frontCell));
-    (void)m11_get_front_cell(state, &frontCell);
-
-    /* The source's G0286_B_FacingAlcove is the render-time F0149 result
-     * (DUNVIEW.C:3726); classifying here through the same F0174-wired
-     * current-map alcove list keeps the click route in agreement. */
-    m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);
-    facingAlcove = frontCell.valid &&
-                   frontCell.elementType == DUNGEON_ELEMENT_WALL &&
-                   frontCell.wallOrnamentOrdinal >= 0 &&
-                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
-                       frontCell.wallOrnamentOrdinal);
-    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
-    facingWall = frontCell.valid &&
-                 frontCell.elementType == DUNGEON_ELEMENT_WALL;
-    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(state, x, y);
-
-    /* ── Door button (CLIKVIEW.C:356-390) ── */
-    if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
-        frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
-        int doorIdx = THING_GET_INDEX(frontCell.firstThing);
-        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
-            state->world.things->doors[doorIdx].button) {
-            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
-                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
-                /* ReDMCSB DUNVIEW.C lines 4207-4212 copies the rendered
-                 * D1C door-button zone (C1950 + C3_VIEW_DOOR_BUTTON_D1C)
-                 * into G2210[C05], then CLIKVIEW.C lines 356-390 tests
-                 * C080 clicks against that zone before scheduling C10
-                 * EVENT_DOOR.  The D1C bitmap zone is 160..175,44..52;
-                 * the wall-ornament box is only for front-wall ornaments. */
-                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
-                    if (!m11_toggle_front_door(state)) {
-                        return M11_GAME_INPUT_IGNORED;
-                    }
-                    return M11_GAME_INPUT_REDRAW;
-                }
-            } else {
-                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
-                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
-                 * the empty-hand door-button route; occupied-hand clicks
-                 * outside F0375's throw lane must not fall through. */
-                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
-                    /* F0377 sends occupied-hand door clicks to F0375. The
-                     * button box overlaps F0375's valid door throw lane at
-                     * screen x=160..163, y=77..85 (local y=44..52); only
-                     * the remainder is outside the source throw zone. */
-                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
-                        return M11_GAME_INPUT_IGNORED;
-                    }
-                }
-            }
-        }
-    }
-
-    /* C127/D1C mirror clicks use the current C026 receipt's actual
-     * destination. A generic HoC rectangle cannot select a placeholder. */
-    {
-        int mirrorOrdinal = -1;
-        if (m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
-            m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-    }
-
-    /* ═══ ReDMCSB CLIKVIEW.C F0375 — throw object ═══
-     * If leader hand holds an item and click is in the upper viewport
-     * (y < 102 in source coords), attempt to throw left or right based
-     * on x position relative to center.  F0329_CHAMPION_IsLeaderHandObjectThrown
-     * in the original places the thrown object as a projectile. */
-    if (!facingWall &&
-        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
-        y >= 47 && y <= 102 &&
-        ((frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
-          x >= 64 && x <= 163) ||
-         (frontCell.elementType != DUNGEON_ELEMENT_DOOR &&
-          x >= 32 && x <= 191))) {
-        /* CLIKVIEW.C F0375 receives C080's screen coordinates before
-         * F0377 subtracts the viewport origin for clickable boxes.  The
-         * PC34 throw lane is therefore screen y=47..102. Its
-         * horizontal admission narrows for a door ahead (64..163) and is
-         * otherwise 32..191. Crucially, F0377 reaches F0375 only when the
-         * front square is not a wall; treating every upper click as a throw
-         * stole held objects from alcove/sensor drops. */
-        int throwSide = (x <= 111) ? 0 : 1; /* 0=left, 1=right */
-        unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
-        int championIndex = state->world.party.activeChampionIndex;
-        struct ChampionState_Compat* champ;
-        unsigned short actionHandThing;
-        int spawned;
-        DM1_LeaderHandThrowAdmissionInputF0329Pc34 throwAdmission;
-        DM1_LeaderHandThrowAdmissionReceiptF0329Pc34 throwReceipt;
-
-        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
-            championIndex >= state->world.party.championCount ||
-            !state->world.party.champions[championIndex].present) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-
-        champ = &state->world.party.champions[championIndex];
-        memset(&throwAdmission, 0, sizeof(throwAdmission));
-        memset(&throwReceipt, 0, sizeof(throwReceipt));
-        throwAdmission.things = state->world.things;
-        throwAdmission.party = &state->world.party;
-        throwAdmission.leaderIndex = championIndex;
-        throwAdmission.leaderHandThing = throwThing;
-        throwAdmission.throwSide = throwSide;
-        if (!dm1_v1_leader_hand_throw_admit_f0329_pc34(
-                &throwAdmission, &throwReceipt) || !throwReceipt.valid) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
-        /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
-         * 2196-2208: a leader-hand throw temporarily places the leader
-         * object in the champion action hand for F0312 strength, then
-         * restores the original action hand before F0212 creates the
-         * projectile.  Firestaff clears the leader hand only after F0328
-         * accepts the throw, preserving inventory on pre-F0328 failure;
-         * PJE-05 full-list overflow is an accepted throw with no new slot. */
-        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
-        spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
-                                                   champ, throwThing,
-                                                   throwSide);
-        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionHandThing;
-        if (!spawned) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-
-        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-        m11_set_status(state, "THROW",
-                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
-        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285 (PC34 CHANGE8_11_FIX)
-         * sets G0321_B_StopWaitingForPlayerInput after an accepted
-         * F0329/F0328 leader-hand throw.  Mirror that by consuming a real
-         * source tick immediately; this advances the first C48/C49
-         * projectile move and ages the F0328 cooldowns just like other
-         * meaningful player actions. */
-        (void)m11_apply_tick(state, CMD_NONE, "THROW");
-        m11_set_status(state, "THROW",
-                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
-        m11_refresh_hash(state);
-        return M11_GAME_INPUT_REDRAW;
-    }
-
-    /* ═══ ReDMCSB CLIKVIEW.C F0377 — item interaction ═══ */
-
-    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
-        /* ── Empty hand: grab floor items or touch wall sensor ──
-         * F0377 iterates view cells 0..5 and grabs from the first
-         * matching pile box.  Cell 5 = wall ornament/door button
-         * (alcove or wall sensor). */
-        if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (facingWall &&
-            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
-            m11_dm1_apply_fountain_click(state, &frontCell)) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        /* DM1 production has real F0115 rectangles above. Retain the
-         * historical fixed boxes only for non-source diagnostic sessions;
-         * otherwise an unavailable/occluded bitmap could still be picked. */
-        if (!m11_is_dm1_source_kind(state->sourceKind)) {
-            int vc;
-            for (vc = 0; vc < 4; ++vc) {
-                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
-                    if (m11_c080_grab_leader_hand(state, vc)) {
-                        return M11_GAME_INPUT_REDRAW;
-                    }
-                    break; /* No item to grab at this cell */
-                }
-            }
-        }
-        /* Wall ornament zone: alcove grab or wall sensor trigger */
-        if (alcoveItemHit ||
-            m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-            if (facingAlcove) {
-                /* Grab from alcove (front cell, view cell 2 = back-right
-                 * for front square in DM1's cell numbering) */
-                if (m11_c080_grab_leader_hand(state, 2)) {
-                    return M11_GAME_INPUT_REDRAW;
-                }
-            }
-            /* Wall sensor trigger (F0372: TouchFrontWallSensor).
-             * ReDMCSB F0275: walk the sensor thing list on the front
-             * wall square, check sensorType for wall click types (1-18),
-             * and fire the matching sensor.  We call the sensor pipeline
-             * directly with a wall-click context. */
+    frontCell = *frontCellPtr;
             if (frontCell.valid && frontCell.summary.sensors > 0 &&
                 state->world.things && state->world.things->sensors) {
                 /* ReDMCSB F0275/F0726: enumerate sensors on the front
@@ -47543,10 +47549,246 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             m11_audio_emit_source_sound(state, 1,
                                                       M11_AUDIO_MARKER_DOOR);
                         }
+                        m11_set_status(state, "WALL", "SENSOR ACTIVATED");
+                        return M11_GAME_INPUT_REDRAW;
                     }
-                    m11_set_status(state, "WALL", "SENSOR ACTIVATED");
+                }
+            }
+    return M11_GAME_INPUT_IGNORED;
+}
+
+static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
+                                                       int x,
+                                                       int y) {
+    M11_ViewportCell frontCell;
+    int localX;
+    int localY;
+    int facingAlcove;
+    int facingViAltar;
+    int facingWall;
+    int alcoveItemHit;
+
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    localX = x - M11_VIEWPORT_X;
+    localY = y - M11_VIEWPORT_Y;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        } else if (profile &&
+                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        }
+        return m11_process_csb_v1_c080_click(state, localX, localY);
+    }
+
+    /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
+     * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
+    memset(&frontCell, 0, sizeof(frontCell));
+    (void)m11_get_front_cell(state, &frontCell);
+
+    /* The source's G0286_B_FacingAlcove is the render-time F0149 result
+     * (DUNVIEW.C:3726); classifying here through the same F0174-wired
+     * current-map alcove list keeps the click route in agreement. */
+    m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);
+    facingAlcove = frontCell.valid &&
+                   frontCell.elementType == DUNGEON_ELEMENT_WALL &&
+                   frontCell.wallOrnamentOrdinal >= 0 &&
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
+                       frontCell.wallOrnamentOrdinal);
+    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
+    facingWall = frontCell.valid &&
+                 frontCell.elementType == DUNGEON_ELEMENT_WALL;
+    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(state, x, y);
+
+    /* ── Door button (CLIKVIEW.C:356-390) ── */
+    if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+        frontCell.hasDoorThing && state->world.things && state->world.things->doors) {
+        int doorIdx = THING_GET_INDEX(frontCell.firstThing);
+        if (doorIdx >= 0 && doorIdx < state->world.things->doorCount &&
+            state->world.things->doors[doorIdx].button) {
+            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB DUNVIEW.C lines 4207-4212 copies the rendered
+                 * D1C door-button zone (C1950 + C3_VIEW_DOOR_BUTTON_D1C)
+                 * into G2210[C05], then CLIKVIEW.C lines 356-390 tests
+                 * C080 clicks against that zone before scheduling C10
+                 * EVENT_DOOR.  The D1C bitmap zone is 160..175,44..52;
+                 * the wall-ornament box is only for front-wall ornaments. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+                    if (!m11_toggle_front_door(state)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
                     return M11_GAME_INPUT_REDRAW;
                 }
+            } else {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
+                 * the empty-hand door-button route; occupied-hand clicks
+                 * outside F0375's throw lane must not fall through. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    /* F0377 sends occupied-hand door clicks to F0375. The
+                     * button box overlaps F0375's valid door throw lane at
+                     * screen x=160..163, y=77..85 (local y=44..52); only
+                     * the remainder is outside the source throw zone. */
+                    if (!(x >= 64 && x <= 163 && y >= 47 && y <= 102)) {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
+                }
+            }
+        }
+    }
+
+    /* C127/D1C mirror clicks use the current C026 receipt's actual
+     * destination. A generic HoC rectangle cannot select a placeholder. */
+    {
+        int mirrorOrdinal = -1;
+        if (m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
+            m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
+
+    /* ═══ ReDMCSB CLIKVIEW.C F0375 — throw object ═══
+     * If leader hand holds an item and click is in the upper viewport
+     * (y < 102 in source coords), attempt to throw left or right based
+     * on x position relative to center.  F0329_CHAMPION_IsLeaderHandObjectThrown
+     * in the original places the thrown object as a projectile. */
+    if (!facingWall &&
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
+        y >= 47 && y <= 102 &&
+        ((frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+          x >= 64 && x <= 163) ||
+         (frontCell.elementType != DUNGEON_ELEMENT_DOOR &&
+          x >= 32 && x <= 191))) {
+        /* CLIKVIEW.C F0375 receives C080's screen coordinates before
+         * F0377 subtracts the viewport origin for clickable boxes.  The
+         * PC34 throw lane is therefore screen y=47..102. Its
+         * horizontal admission narrows for a door ahead (64..163) and is
+         * otherwise 32..191. Crucially, F0377 reaches F0375 only when the
+         * front square is not a wall; treating every upper click as a throw
+         * stole held objects from alcove/sensor drops. */
+        int throwSide = (x <= 111) ? 0 : 1; /* 0=left, 1=right */
+        unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+        int championIndex = state->world.party.activeChampionIndex;
+        struct ChampionState_Compat* champ;
+        unsigned short actionHandThing;
+        int spawned;
+        DM1_LeaderHandThrowAdmissionInputF0329Pc34 throwAdmission;
+        DM1_LeaderHandThrowAdmissionReceiptF0329Pc34 throwReceipt;
+
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+            championIndex >= state->world.party.championCount ||
+            !state->world.party.champions[championIndex].present) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        champ = &state->world.party.champions[championIndex];
+        memset(&throwAdmission, 0, sizeof(throwAdmission));
+        memset(&throwReceipt, 0, sizeof(throwReceipt));
+        throwAdmission.things = state->world.things;
+        throwAdmission.party = &state->world.party;
+        throwAdmission.leaderIndex = championIndex;
+        throwAdmission.leaderHandThing = throwThing;
+        throwAdmission.throwSide = throwSide;
+        if (!dm1_v1_leader_hand_throw_admit_f0329_pc34(
+                &throwAdmission, &throwReceipt) || !throwReceipt.valid) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+        /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
+         * 2196-2208: a leader-hand throw temporarily places the leader
+         * object in the champion action hand for F0312 strength, then
+         * restores the original action hand before F0212 creates the
+         * projectile.  Firestaff clears the leader hand only after F0328
+         * accepts the throw, preserving inventory on pre-F0328 failure;
+         * PJE-05 full-list overflow is an accepted throw with no new slot. */
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
+        spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
+                                                   champ, throwThing,
+                                                   throwSide);
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionHandThing;
+        if (!spawned) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+        m11_set_status(state, "THROW",
+                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285 (PC34 CHANGE8_11_FIX)
+         * sets G0321_B_StopWaitingForPlayerInput after an accepted
+         * F0329/F0328 leader-hand throw.  Mirror that by consuming a real
+         * source tick immediately; this advances the first C48/C49
+         * projectile move and ages the F0328 cooldowns just like other
+         * meaningful player actions. */
+        (void)m11_apply_tick(state, CMD_NONE, "THROW");
+        m11_set_status(state, "THROW",
+                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        m11_refresh_hash(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* ═══ ReDMCSB CLIKVIEW.C F0377 — item interaction ═══ */
+
+    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
+        /* ── Empty hand: grab floor items or touch wall sensor ──
+         * F0377 iterates view cells 0..5 and grabs from the first
+         * matching pile box.  Cell 5 = wall ornament/door button
+         * (alcove or wall sensor). */
+        if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (facingWall &&
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
+            m11_dm1_apply_fountain_click(state, &frontCell)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        /* DM1 production has real F0115 rectangles above. Retain the
+         * historical fixed boxes only for non-source diagnostic sessions;
+         * otherwise an unavailable/occluded bitmap could still be picked. */
+        if (!m11_is_dm1_source_kind(state->sourceKind)) {
+            int vc;
+            for (vc = 0; vc < 4; ++vc) {
+                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                    if (m11_c080_grab_leader_hand(state, vc)) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    break; /* No item to grab at this cell */
+                }
+            }
+        }
+        /* Wall ornament zone: alcove grab or wall sensor trigger */
+        if (alcoveItemHit ||
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+            if (facingAlcove) {
+                /* Grab from alcove (front cell, view cell 2 = back-right
+                 * for front square in DM1's cell numbering) */
+                if (m11_c080_grab_leader_hand(state, 2)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
+            /* Wall sensor trigger (F0372: TouchFrontWallSensor).
+             * ReDMCSB F0275: walk the sensor thing list on the front
+             * wall square, check sensorType for wall click types (1-18),
+             * and fire the matching sensor.  We call the sensor pipeline
+             * directly with a wall-click context. */
+            if (!facingAlcove) {
+                M11_GameInputResult sensorResult =
+                    m11_c080_process_front_wall_sensor_click(state, &frontCell);
+                if (sensorResult != M11_GAME_INPUT_IGNORED) return sensorResult;
             }
         }
     } else {
@@ -47574,7 +47816,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             /* Wall ornament zone → wall sensor touch */
             if (alcoveItemHit ||
                 m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-                /* Sensor click pass-through handled by existing system */
+                M11_GameInputResult sensorResult =
+                    m11_c080_process_front_wall_sensor_click(state, &frontCell);
+                if (sensorResult != M11_GAME_INPUT_IGNORED) return sensorResult;
             }
         } else if (facingWall && frontCell.wallOrnamentOrdinal >= 0 &&
                    !facingAlcove) {
@@ -47631,7 +47875,12 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 rebirthEvent.mapIndex = state->world.party.mapIndex;
                                 rebirthEvent.mapX = frontCell.mapX;
                                 rebirthEvent.mapY = frontCell.mapY;
-                                rebirthEvent.cell = (int)THING_GET_CELL(dropThing);
+                                /* F0374 schedules the event with L1145, the
+                                 * destination cell after remapping the alcove
+                                 * click to C02_VIEW_CELL_BACK_RIGHT.  The
+                                 * held Thing's old cell is not the drop cell. */
+                                rebirthEvent.cell =
+                                    (state->world.party.direction + 2) & 3;
                                 rebirthEvent.kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
                                 rebirthEvent.aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
                                 rebirthEvent.aux1 = 2;
@@ -50208,7 +50457,7 @@ static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
     return 1;
 }
 
-static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
+static int m11_draw_dm1_field_zone(M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int fbW,
                                    int fbH,
@@ -50221,6 +50470,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     int dstY;
     int dstW;
     int dstH;
+    int fieldStartUnitDelta;
+    int fieldYPhase;
     if (!state || !state->assetsAvailable || !framebuffer || !plan ||
         plan->dstW <= 0 || plan->dstH <= 0) {
         return 0;
@@ -50247,6 +50498,13 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             return 0;
         }
     }
+    /* ReDMCSB DUNVIEW.C:F0113 evaluates M005_RANDOM(2), then
+     * M003_RANDOM(32), immediately before F0133's field blit.  Both draws
+     * use the DM1 master generator and happen once per admitted field. */
+    fieldStartUnitDelta = F0732_COMBAT_RngRandom_Compat(
+        &state->world.masterRng, 2);
+    fieldYPhase = F0732_COMBAT_RngRandom_Compat(
+        &state->world.masterRng, 32);
     for (y = 0; y < dstH; ++y) {
         int fbY = M11_VIEWPORT_Y + dstY + y;
         int x;
@@ -50261,8 +50519,8 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             if (fbX < 0 || fbX >= fbW) {
                 continue;
             }
-            if (!dm1_v1_field_bitmap_pixel_pc34(
-                    plan, state->animTick, x, y,
+            if (!dm1_v1_field_bitmap_pixel_with_phase_pc34(
+                    plan, fieldStartUnitDelta, fieldYPhase, x, y,
                     field->pixels, (int)field->width, (int)field->height,
                     (int)field->width,
                     mask ? mask->pixels : NULL,
@@ -53138,7 +53396,7 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
+static void m11_draw_dm1_teleporter_fields(M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
                                            int fbH,
@@ -53181,7 +53439,7 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
  * the D0 terminal pass, but D3..D1 must be admitted from the F0128 square
  * plan: DUNVIEW.C calls F0113 after that square's F0115 route, rather than
  * collecting every teleporter into one global pre-object batch. */
-static void m11_draw_dm1_teleporter_field_at(const M11_GameViewState* state,
+static void m11_draw_dm1_teleporter_field_at(M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
                                              int fbH,
@@ -64049,6 +64307,10 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state,
     state->world.party.mapIndex = postMove.finalMapIndex;
     state->world.partyMapIndex = postMove.finalMapIndex;
     state->world.newPartyMapIndex = -1;
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        movedParty.mapIndex != postMove.finalMapIndex)
+        m11_dm1_wire_current_map_alcove_list(state,
+                                             postMove.finalMapIndex);
     /* MOVESENS.C F0267:579-606 keeps G0402 active across the pit transfer.
      * Its rope branch does not apply the generic 20-point fall damage; every
      * living champion instead pays ((Load * 25) / F0309(MaxLoad)) + 1
@@ -70281,7 +70543,7 @@ static void m11_dm1_f0128_execute_source_step(
             break;
         case DM1_V1_F0128_STEP_F0113_FIELD:
             m11_draw_dm1_teleporter_field_at(
-                dispatch->state, dispatch->framebuffer,
+                dispatch->mutableState, dispatch->framebuffer,
                 dispatch->framebufferWidth, dispatch->framebufferHeight,
                 relForward, relSide);
             break;
@@ -70415,7 +70677,7 @@ static void m11_dm1_f0128_execute_source_step(
         }
         if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
             m11_draw_dm1_teleporter_field_at(
-                dispatch->state, dispatch->framebuffer,
+                dispatch->mutableState, dispatch->framebuffer,
                 dispatch->framebufferWidth, dispatch->framebufferHeight,
                 0, relSide);
             ++dispatch->rasterStepCount;
@@ -70431,7 +70693,7 @@ static void m11_dm1_f0128_execute_source_step(
             return;
         }
         m11_draw_dm1_teleporter_field_at(
-            dispatch->state, dispatch->framebuffer,
+            dispatch->mutableState, dispatch->framebuffer,
             dispatch->framebufferWidth, dispatch->framebufferHeight,
             0, relSide);
         ++dispatch->rasterStepCount;

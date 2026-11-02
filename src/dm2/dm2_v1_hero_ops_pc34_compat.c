@@ -6,20 +6,29 @@
 
 static int16_t dm2_abs16(int16_t v)
 {
+    if (v == INT16_MIN) return INT16_MIN;
     return v < 0 ? (int16_t)-v : v;
+}
+
+static int16_t dm2_wrap_int16(int32_t value)
+{
+    uint16_t bits = (uint16_t)value;
+    int32_t signed_value = bits <= INT16_MAX
+        ? (int32_t)bits : (int32_t)bits - 65536;
+    return (int16_t)signed_value;
 }
 
 int16_t dm2_v1_adjust_stamina(
     int hero_idx, int16_t stamina_cost,
     const DM2_V1_StaminaCallbacks *cb, void *ctx)
 {
-    if (!cb || hero_idx == -1)
+    if (!cb || !cb->get_hero || !cb->wound_player || hero_idx == -1)
         return -1;
     DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
     if (!hero)
         return -1;
-    int16_t cur = hero->cur_stamina;
-    cur = (int16_t)(cur - stamina_cost);
+    int16_t cur = dm2_wrap_int16(
+        (int32_t)hero->cur_stamina - (int32_t)stamina_cost);
     if (cur > 0) {
         if (cur > hero->max_stamina)
             cur = hero->max_stamina;
@@ -30,7 +39,7 @@ int16_t dm2_v1_adjust_stamina(
         cb->wound_player(ctx, hero_idx, wound, 0, 0);
     }
     int16_t abs_cost = dm2_abs16(stamina_cost);
-    if (abs_cost >= 10)
+    if (stamina_cost == INT16_MIN || abs_cost >= 10)
         hero->hero_flag |= DM2_V1_HERO_FLAG_0800;
     return abs_cost;
 }
@@ -536,7 +545,8 @@ int dm2_v1_add_item_to_player(
     const DM2_V1_AddItemCallbacks *cb, void *ctx)
 {
     (void)item_db_type;
-    if (!cb || !hero_items || !groups)
+    if (!cb || !cb->is_item_fit || !cb->equip_item ||
+        !hero_items || !groups || item_count <= 0 || group_count <= 0)
         return 0;
     for (int g = 0; g < group_count; g++) {
         for (uint16_t s = groups[g].slot_start; s <= groups[g].slot_end && s < (uint16_t)item_count; s++) {
@@ -554,6 +564,27 @@ int dm2_v1_add_item_to_player(
         }
     }
     return 0;
+}
+
+int dm2_v1_add_item_to_player_spx_v4(
+    int hero_idx, int16_t *hero_items, int item_count,
+    uint16_t item_record, uint16_t item_db_type,
+    const DM2_V1_AddItemCallbacks *cb, void *ctx)
+{
+    /* SKWINSPX/src/v4/skchamp.cpp::ADD_ITEM_TO_PLAYER (643-663) scans
+     * the _4976_404d table initialized at kskval1.h:134 in this order. */
+    static const DM2_V1_SlotGroup spx_v4_groups[] = {
+        { 2, 5, -1 },
+        { 10, 10, -1 },
+        { 0, 1, 5 },
+        { 0, 1, 6 },
+        { 13, 29, -1 },
+    };
+    return dm2_v1_add_item_to_player(
+        hero_idx, hero_items, item_count, item_record, item_db_type,
+        spx_v4_groups,
+        (int)(sizeof(spx_v4_groups) / sizeof(spx_v4_groups[0])),
+        cb, ctx);
 }
 
 int dm2_v1_burn_player_lighting_items(
@@ -705,13 +736,13 @@ void dm2_v1_party_set_hero_flags(
 /* ---- c_party::get_player_weight (c_hero.cpp:197) ---- */
 int16_t dm2_v1_get_player_weight(
     const DM2_V1_HeroState *hero,
-    int is_event_hero, int16_t hand_weight)
+    int16_t carried_weight, int is_event_hero, int16_t hand_weight)
 {
     if (!hero || hero->cur_hp == 0)
         return 0;
-    int16_t w = 0; /* hero->weight not in DM2_V1_HeroState; caller provides via hand_weight */
+    int16_t w = carried_weight;
     if (is_event_hero)
-        w = (int16_t)(w + hand_weight);
+        w = dm2_wrap_int16((int32_t)w + (int32_t)hand_weight);
     return w;
 }
 
@@ -866,13 +897,19 @@ int dm2_v1_get_party_special_force(
 void dm2_v1_adjust_hand_cooldown(
     DM2_V1_HeroCooldownState *hero,
     int16_t cooldown_ticks, int hand_idx,
-    int easy_mode)
+    int source_savegames1_b04)
 {
-    if (!hero)
-        return;
-    /* cooldown_ticks + cooldown_ticks/4 */
-    int16_t cd = (int16_t)(cooldown_ticks + cooldown_ticks / 4);
+    uint16_t adjusted;
     int start, count;
+
+    if (!hero || hand_idx < -1 || hand_idx >= DM2_V1_MAX_HANDS)
+        return;
+    adjusted = (uint16_t)cooldown_ticks;
+    adjusted = (uint16_t)(adjusted + adjusted / 4u);
+    if (source_savegames1_b04)
+        adjusted >>= 2;
+    adjusted = (uint16_t)(adjusted + 2u);
+
     if (hand_idx != -1) {
         start = hand_idx;
         count = 1;
@@ -880,22 +917,50 @@ void dm2_v1_adjust_hand_cooldown(
         start = 0;
         count = 3;
     }
-    if (easy_mode)
-        cd = (int16_t)((uint16_t)cd >> 2);
-    cd = (int16_t)(cd + 2);
-    for (int i = start; i < start + count && i < DM2_V1_MAX_HANDS; i++) {
-        int16_t cur = (int16_t)hero->hand_cooldown[i];
-        int16_t half_new, half_old;
-        if ((uint16_t)cd <= (uint16_t)cur) {
-            half_new = (int16_t)((uint16_t)cd / 2);
-            half_old = cur;
-        } else {
-            half_new = cd;
-            half_old = (int16_t)(cur / 2);
-        }
-        int16_t result = (int16_t)(half_old + half_new);
-        if ((uint16_t)result > 0xFF)
-            result = 0xFF;
+    for (int i = start; i < start + count; ++i) {
+        uint16_t current = hero->hand_cooldown[i];
+        uint16_t result;
+        if (adjusted <= current)
+            result = current + adjusted / 2u;
+        else
+            result = adjusted + current / 2u;
+        if (result > 0xffu)
+            result = 0xffu;
+        hero->hand_cooldown[i] = (uint8_t)result;
+    }
+}
+
+/* ---- SPX v4 ADJUST_HAND_COOLDOWN (skchamp.cpp:1064) ---- */
+void dm2_v1_adjust_hand_cooldown_spx_v4(
+    DM2_V1_HeroCooldownState *hero,
+    uint16_t delay, int hand_idx,
+    int aura_of_speed)
+{
+    int start;
+    int count;
+
+    if (!hero || hand_idx < -1 || hand_idx >= DM2_V1_MAX_HANDS)
+        return;
+    if (hand_idx == -1) {
+        start = 0;
+        count = 3;
+    } else {
+        start = hand_idx;
+        count = 1;
+    }
+    if (aura_of_speed)
+        delay >>= 2;
+    delay = (uint16_t)(delay + 2u);
+
+    for (int i = start; i < start + count; ++i) {
+        uint16_t current = hero->hand_cooldown[i];
+        uint16_t result;
+        if (current < delay)
+            result = (uint16_t)((current >> 1) + delay);
+        else
+            result = (uint16_t)(current + (delay >> 1));
+        if (result > 0xffu)
+            result = 0xffu;
         hero->hand_cooldown[i] = (uint8_t)result;
     }
 }

@@ -1942,7 +1942,9 @@ typedef struct {
     uint16_t cache_index;
     uint8_t requested_temp_pin_clear;
     uint8_t requested_free_indexed_mement;
+    uint8_t freed_cache_without_mement;
     DM2_V1_SkprojectFreeIndexedMementReceipt indexed;
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt free_cache;
 } DM2_V1_SkprojectFreeTempCacheIndexReceipt;
 
 typedef struct {
@@ -2249,7 +2251,15 @@ typedef struct {
     uint8_t present;
     uint8_t hand_cooldown[3];
     uint8_t hand_activable[2];
+    uint8_t leader_action_disabled;
 } DM2_V1_SkprojectUiChampionState;
+
+typedef enum {
+    /* SPX v5/SKULLWIN use the movement-arrow event protocol by default. */
+    DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 = 0,
+    /* DOS/SPX v4/SKWIN use spell/leader panel clicks for events 0x5f-0x62. */
+    DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER = 1
+} DM2_V1_SkprojectUiEventVariant;
 
 typedef struct {
     int valid;
@@ -2268,6 +2278,8 @@ typedef struct {
     int blocked_hand_cooldown;
     int blocked_hand_not_activable;
     int blocked_leader_hand_cooldown;
+    int blocked_leader_action;
+    int blocked_invalid_variant;
 } DM2_V1_SkprojectAdjustUiEventReceipt;
 
 typedef struct {
@@ -2779,6 +2791,8 @@ typedef struct {
 
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
+/* DOS and SPX v5 CUTLX8 retain the low byte and sign-extend it to i8. */
+int16_t dm2_v1_skproject_cutlx8(int32_t value);
 int16_t dm2_v1_skproject_between_value(int16_t minv,
                                        int16_t newv,
                                        int16_t maxv);
@@ -2790,6 +2804,18 @@ int16_t dm2_v1_skproject_calc_square_distance(int16_t from_x,
                                                int16_t from_y,
                                                int16_t to_x,
                                                int16_t to_y);
+/* Source-equivalent predicates for the unreferenced DOS and SPX-v5
+ * R_1FE74 variants. Coordinates are narrowed to signed 16-bit deltas. */
+int dm2_v1_skproject_r_1fe74_dos(int32_t eaxl,
+                                  int32_t ebxl,
+                                  int32_t ecxl,
+                                  int32_t edxl,
+                                  int16_t mode);
+int dm2_v1_skproject_r_1fe74_spx_v5(int32_t eaxl,
+                                    int32_t edxl,
+                                    int32_t ebxl,
+                                    int32_t ecxl,
+                                    int16_t mode);
 int dm2_v1_skproject_calc_vector_dir(
     DM2_V1_SkprojectRandomData *randdat,
     int16_t from_x,
@@ -3487,7 +3513,22 @@ int dm2_v1_skproject_fill_halftone_rectv(
     uint16_t stride,
     const DM2_V1_SkprojectRect *rect,
     DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+/* SKULLWIN/SKWINSPX v5 and DOS driver_showscreenrectdisabled stop before
+ * the final row and column; SKWIN's IBMIO helper uses the full rectangle. */
+int dm2_v1_skproject_fill_halftone_rectv_exclusive(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
 int dm2_v1_skproject_fill_halftone_recti(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+int dm2_v1_skproject_fill_halftone_recti_exclusive(
     uint8_t *pixels,
     uint16_t pixel_capacity,
     uint16_t stride,
@@ -3707,12 +3748,14 @@ uint8_t *dm2_v1_skproject_query_mement_buff_from_cache_index(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_index);
 uint32_t dm2_v1_skproject_get_temp_cache_hash(
-    const DM2_V1_SkprojectCacheState *state);
+    DM2_V1_SkprojectCacheState *state);
 uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     DM2_V1_SkprojectCacheState *state);
 #if defined(FIRESTAFF_DM2_SKPROJECT_CORE_TESTING)
 int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len);
 #endif
+/* SPX v4 skmemcch.cpp:298 AJ32 debug-only 32-bit mement size adjustment. */
+int dm2_v1_skproject_aj32(int size_val);
 int dm2_v1_skproject_recycle_mementi(
     DM2_V1_SkprojectCacheState *state,
     uint16_t mementi,
@@ -3866,11 +3909,42 @@ int32_t dm2_v1_skproject_query_item_value(
     uint16_t object_id,
     uint8_t cls4,
     DM2_V1_SkprojectItemValueReceipt *out_receipt);
+/* DOS keeps recursive value and moneybox accumulators at source x16 width. */
+int32_t dm2_v1_skproject_query_item_value_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t cls4,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
+/* SPX v5 returns i16 from every recursive value call, while accumulating in
+   32-bit registers; nested calls are promoted through unsignedlong(i16). */
+int32_t dm2_v1_skproject_query_item_value_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t cls4,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
+int32_t dm2_v1_skproject_query_item_weight_spx_v5(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
 int32_t dm2_v1_skproject_query_item_weight(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,
     DM2_V1_SkprojectItemValueReceipt *out_receipt);
+int32_t dm2_v1_skproject_query_item_weight_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
 int dm2_v1_skproject_calc_player_weight(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_calc_player_weight_dos(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_calc_player_weight_spx_v5(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t player,
     const DM2_V1_SkprojectPlayerWeightRequest *request,
@@ -3899,6 +3973,14 @@ int dm2_v1_skproject_adjust_ui_event(
     const int16_t player_at_position[4],
     const DM2_V1_SkprojectUiChampionState *champions,
     uint16_t champion_count,
+    DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
+int dm2_v1_skproject_adjust_ui_event_variant(
+    DM2_V1_SkprojectUiEvent *event,
+    uint16_t player_dir,
+    const int16_t player_at_position[4],
+    const DM2_V1_SkprojectUiChampionState *champions,
+    uint16_t champion_count,
+    DM2_V1_SkprojectUiEventVariant variant,
     DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
 int dm2_v1_skproject_draw_charsheet_option_icon(
     uint8_t cls4,
@@ -4402,6 +4484,20 @@ int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
     DM2_V1_SkprojectMementState *state,
     uint32_t tick,
     DM2_V1_SkprojectResetUsageCountersReceipt *out_receipt);
+typedef int (*DM2_V1_SkprojectMementTickMaintenanceFn)(
+    DM2_V1_SkprojectMementState *state,
+    uint32_t game_tick,
+    void *context);
+
+/* SKWINSPX v4 ADD_CACHE_HASH: tick maintenance plus duplicate-hit MEMENT touch. */
+int dm2_v1_skproject_add_cache_hash_with_mement(
+    DM2_V1_SkprojectCacheState *cache_state,
+    DM2_V1_SkprojectMementState *mement_state,
+    uint32_t cache_hash,
+    uint32_t game_tick,
+    DM2_V1_SkprojectMementTickMaintenanceFn tick_maintenance,
+    void *tick_maintenance_context,
+    uint16_t *out_cache_index);
 
 /* SKWIN/SkWinCore.cpp:^1C9A creature AI pointer / animation family (cycle 6) */
 typedef struct {
@@ -4999,6 +5095,18 @@ int dm2_v1_skproject_calc_player_walk_delay(
     int32_t *out_delay,
     DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt);
 
+/* SKWINDOS/dm2bya.cpp:2910 SKW_CALC_PLAYER_WALK_DELAY.  DOS retains its
+   source's fixed 16 > 5*max_load normal-load test; do not use the SPX
+   current-weight threshold above for this source variant. */
+int dm2_v1_skproject_calc_player_walk_delay_dos(
+    uint16_t max_load,
+    uint16_t player_weight,
+    uint8_t bodyflag,
+    int8_t walkspeed,
+    uint8_t savegames1_b_04,
+    int32_t *out_delay,
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:2237 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH —
    source-locked receipt implementing the attack/throw strength formula.  All
    hero/item/skill fields are caller-resolved. */
@@ -5190,16 +5298,16 @@ int dm2_v1_skproject_query_object_5x5_pos(
     uint8_t *out_pos,
     DM2_V1_SkprojectQueryObject5x5PosReceipt *out_receipt);
 
-/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item-versus-creature
-   damage/value formula.  Full evaluation needs GDAT creature-word and item
-   DBSPEC lookups; the helper records inputs and fails closed without them. */
+/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae input receipt. The full
+   formula is available through the callback-bound querydb owner; this narrow
+   receipt preserves inputs and remains fail-closed without that data path. */
 typedef struct {
     int valid;
     int blocked_missing_item_handle;
     int blocked_missing_gdat_path;
     uint16_t item_handle;
     uint8_t creature_type;
-    uint16_t item_word10;
+    uint16_t creature_word8;
     int32_t argl0;
     int32_t argl1_in;
     int32_t argl1_out;
@@ -5209,7 +5317,7 @@ typedef struct {
 int dm2_v1_skproject_query_48ae_05ae(
     uint16_t item_handle,
     uint8_t creature_type,
-    uint16_t item_word10,
+    uint16_t creature_word8,
     int32_t argl0,
     int32_t argl1,
     int32_t *out_result,
@@ -6214,6 +6322,15 @@ typedef int16_t (*DM2_V1_SkprojectAddItemChargeFn)(
     uint16_t item,
     int16_t delta,
     void *user);
+typedef int32_t (*DM2_V1_SkprojectQuery48ae05aeFn)(
+    uint16_t distinctive_type,
+    uint8_t creature_type,
+    uint16_t creature_word8,
+    int32_t argl0,
+    int32_t argl1,
+    int32_t charges,
+    int32_t *out_value,
+    void *user);
 
 typedef int32_t (*DM2_V1_SkprojectTileRecordLinkFn)(
     int16_t x,
@@ -6590,6 +6707,8 @@ typedef struct {
     DM2_V1_SkprojectCanHandleItFn can_handle_fn;
     DM2_V1_SkprojectAddItemChargeFn add_charge_fn;
     DM2_V1_SkprojectDistinctiveTypeFn type_fn;
+    DM2_V1_SkprojectQuery48ae05aeFn query_48ae_05ae_fn;
+    void *query_48ae_05ae_user; /* often the active DM2_V1_AssetLoader */
     DM2_V1_SkprojectCmd2165Fn cmd2165_fn;
     DM2_V1_SkprojectCreatureAtFn creature_at_fn;
     DM2_V1_SkprojectRecordAccessorFn record_fn;
@@ -7629,24 +7748,63 @@ int dm2_v1_skproject_1c9a_0fcb(
     void *user,
     DM2_V1_Skproject0fcbReceipt *out_receipt);
 
-/* SKULLWIN/c_1c9a.cpp:5960 DM2_CREATE_MINION — searches around a source
-   position (via table1d27fc/table1d2804 direction offset tables) for a
-   free tile to spawn a minion creature, allocating it through
-   dm2_dballochandler.DM2_ALLOC_NEW_CREATURE.  The tile/placement search
-   and creature allocator are caller-owned runtime state that Firestaff
-   does not yet bridge, so this helper stays fail-closed. */
+/* SKWINSPX v5 SK1C9A.cpp:5960 DM2_CREATE_MINION. The helper implements
+   the source tile gate, optional five-tile directional search, allocation,
+   missile association and current-map restore using runtime-owned callbacks. */
 typedef struct {
     int valid;
     int blocked_missing_state;
+    int found_spawn_tile;
+    int allocation_failed;
+    int missile_association_failed;
+    uint8_t attempts;
+    int16_t spawn_x;
+    int16_t spawn_y;
+    uint16_t created_record;
+    uint16_t associated_missile;
 } DM2_V1_SkprojectCreateMinionReceipt;
 
+typedef int32_t (*DM2_V1_SkprojectAllocNewCreatureFn)(
+    uint16_t creature_type,
+    uint16_t health_multiplier,
+    uint16_t creature_direction,
+    uint16_t x,
+    uint16_t y,
+    void *user); /* 0xffff on allocation failure */
+
+typedef int (*DM2_V1_SkprojectAssociateMinionMissileFn)(
+    uint16_t creature,
+    uint16_t missile_reference,
+    void *user);
+
+typedef struct {
+    void *user;
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn;
+    DM2_V1_SkprojectRandbitFn randbit_fn;
+    DM2_V1_SkprojectChangeMapFn change_map_fn;
+    DM2_V1_SkprojectAllocNewCreatureFn alloc_new_creature_fn;
+    DM2_V1_SkprojectAssociateMinionMissileFn associate_missile_fn;
+    const int16_t *table1d27fc;
+    const int16_t *table1d2804;
+    uint16_t creature_type;
+    uint16_t health_multiplier;
+    uint16_t creature_direction;
+    int16_t start_x;
+    int16_t start_y;
+    int16_t target_map;
+    int16_t current_map;
+    int16_t search_direction; /* negative: start tile only; else 5 candidates */
+    uint16_t missile_reference; /* OBJECT_NULL means ordinary creature */
+} DM2_V1_SkprojectCreateMinionContext;
+
 int16_t dm2_v1_skproject_create_minion(
-    void *state,
+    DM2_V1_SkprojectCreateMinionContext *context,
     DM2_V1_SkprojectCreateMinionReceipt *out_receipt);
 
 /* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to
    DM2_ENGAGE_COMMAND; when the creature has a live missile reference,
-   switches to the missile's map, computes its direction/distance words,
+   switches to the missile's map, extracts its packed map/x/y position,
    dispatches DM2_ai_13e4_0360 with reason 0x13, then restores the
    previous current map. */
 typedef struct {

@@ -1,8 +1,20 @@
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
+
 2026-11-01 ReDMCSB `BLITFILL.C:F0136` screen hatch: the ledger marks Firestaff’s bounded PC34 checkerboard hatch `PARTIAL`; color/pattern and platform-specific box/backend behavior remain open. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
 
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0113` teleporter field rendering: downgraded the
+callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
+projection-mask assets and fails closed when either is absent, but ReDMCSB
+calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw. Firestaff's
+live M11 PC34 route now consumes those values from the DM1 master RNG, in
+source order, after field and mask media are available. The secondary viewport
+helper still needs production phase-callback ownership. Pixel-mask sampling
+also does not reproduce F0133's source unit and temporary-bitmap path;
+edition-specific RNG and bitmap behavior remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
 
@@ -12,7 +24,7 @@
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0095` wall-set loading: the callable ledger now marks the active-map PC/I34 wall-set resolver as `PARTIAL`; Firestaff loads graphics lazily and does not reproduce each source edition's preload/cache sequence.
 
-2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: mapped `strlen` within the source 16-bit length domain; marked `strchr` partial because ReDMCSB returns NULL for a NUL search while host `strchr` returns the terminator address.
+2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: added a bounded F0091 helper matching the source `strchr` result, including NULL when searching for NUL; F0090 remains mapped within the source 16-bit length domain. Both remain partial pending production source-call-site integration and target ABI evidence.
 
 2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
 
@@ -3919,3 +3931,15 @@ its focused regression covers those transformations. Platform-specific F0635
 zone data/resolvers and live slot-border rendering remain unintegrated, so this
 is partial coverage and does not establish F0619 parity across supported
 editions.
+
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` M11 integration: stair, F0003
+map-handoff, post-move, and rope-pit transitions now synchronize the live DM1
+map owner; alcove, render, and click consumers also request source publication.
+The source descriptor uses loaded square bytes,
+map-column cumulative SFT data, the selected map's door sets, and authenticated
+metadata bytes, then publishes it through the F0174 owner. The helper owns the
+current/party map pointer and metadata snapshot when M11 enters a map or a
+map-dependent consumer requests state. This
+closes the adapter-only gap for the PC34-backed M11 path; other production map
+owners and supported edition/platform bindings remain open, so both audit rows
+stay partial.

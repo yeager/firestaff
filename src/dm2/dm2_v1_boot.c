@@ -1237,8 +1237,11 @@ static int dm2_v1_boot_materialize_source_hero(
         (int16_t)(source->stamina_base * 10u);
     hero.curMP = hero.maxMP = (int16_t)(source->mana_base * 10u);
     for (i = 0; i < DM2_NUM_ABILITIES; ++i) {
+        /* DOS SKW_REVIVE_PLAYER, SPX v4 REVIVE_PLAYER and SPX v5
+         * DM2_REVIVE_PLAYER all clamp the seven source abilities to 30. */
         hero.ability[i][DM2_CUR] = hero.ability[i][DM2_MAX] =
-            (int8_t)source->ability_base[i];
+            (int8_t)(source->ability_base[i] < 30u ? 30u :
+                     source->ability_base[i]);
     }
     for (i = 0; i < 16; ++i) {
         uint8_t level = source->skill_level[i];

@@ -53,9 +53,11 @@ typedef struct {
 
 /* ---- DM2_ADJUST_STAMINA (c_hero.cpp:1722) ----
  * Subtract stamina_cost from hero's current stamina.
- * If stamina drops below 0, wounds the hero for half the deficit.
- * If abs(stamina_cost) >= 10, sets HERO_FLAG_0800.
- * Returns abs(stamina_cost). -1 if hero_idx == -1. */
+ * The current-stamina subtraction wraps to the source's signed 16-bit width.
+ * If the wrapped value is <= 0, stamina becomes zero and the hero is wounded
+ * for half the deficit. If the source-width absolute cost is at least 10,
+ * sets HERO_FLAG_0800. Missing state/wound callbacks fail without mutation.
+ * Returns the source-width absolute cost. -1 if the request cannot run. */
 typedef struct {
     DM2_V1_HeroState *(*get_hero)(void *ctx, int hero_idx);
     void (*wound_player)(void *ctx, int hero_idx, int damage,
@@ -372,6 +374,12 @@ int dm2_v1_add_item_to_player(
     const DM2_V1_SlotGroup *groups, int group_count,
     const DM2_V1_AddItemCallbacks *cb, void *ctx);
 
+/* SPX-v4 ADD_ITEM_TO_PLAYER uses the initialized _4976_404d slot groups. */
+int dm2_v1_add_item_to_player_spx_v4(
+    int hero_idx, int16_t *hero_items, int item_count,
+    uint16_t item_record, uint16_t item_db_type,
+    const DM2_V1_AddItemCallbacks *cb, void *ctx);
+
 /* ---- DM2_BURN_PLAYER_LIGHTING_ITEMS (c_hero.cpp:2262) ----
  * Decrement charges on lit torches/lanterns. Excludes the last party
  * hero from the burn loop when ddat.v1e0288 is set (c_hero.cpp:2271-2277:
@@ -453,11 +461,13 @@ void dm2_v1_party_set_hero_flags(
     int hero_count,
     DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx);
 
-/* ---- c_party::get_player_weight (c_hero.cpp:197) ----
- * Get hero's carried weight; adds hand-held item weight if event hero. */
+/* ---- GET_PLAYER_WEIGHT (DOS dm2byb.cpp:1172, SPX v4 skchamp.cpp:2219,
+ * SPX v5 skhero.cpp:199) ----
+ * Return zero for a defeated hero; otherwise return stored carried weight,
+ * adding the active hand item's weight when this is the event hero. */
 int16_t dm2_v1_get_player_weight(
     const DM2_V1_HeroState *hero,
-    int is_event_hero, int16_t hand_weight);
+    int16_t carried_weight, int is_event_hero, int16_t hand_weight);
 
 /* ---- c_party::calc_player_weight (c_hero.cpp:208) ----
  * Sum weights of all items in hero's inventory slots. */
@@ -540,7 +550,9 @@ int dm2_v1_get_party_special_force(
     const DM2_V1_SpecialForceCallbacks *cb, void *ctx);
 
 /* ---- DM2_ADJUST_HAND_COOLDOWN (c_hero.cpp:2432) ----
- * Set hand cooldown timers after an action. */
+ * Add a source delay to one hand cooldown, or slots 0..2 when hand_idx is
+ * -1. A nonzero source_savegames1.b_04 quarters the base+25% delay before
+ * the +2 tick floor; blend against the prior unsigned byte and cap at 0xff. */
 #define DM2_V1_MAX_HANDS 4
 
 typedef struct {
@@ -550,7 +562,15 @@ typedef struct {
 void dm2_v1_adjust_hand_cooldown(
     DM2_V1_HeroCooldownState *hero,
     int16_t cooldown_ticks, int hand_idx,
-    int easy_mode);
+    int source_savegames1_b04);
+
+/* SPX v4 variant (SKWINSPX/src/v4/skchamp.cpp:1064). Its delay is already
+ * supplied by the caller and Aura of Speed quarters it; it does not apply
+ * the DOS/SPX-v5 +25% adjustment or savegames1.b_04 gate. */
+void dm2_v1_adjust_hand_cooldown_spx_v4(
+    DM2_V1_HeroCooldownState *hero,
+    uint16_t delay, int hand_idx,
+    int aura_of_speed);
 
 /* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ----
  * Creature attacks all party members. Returns bitmask of wounded heroes. */

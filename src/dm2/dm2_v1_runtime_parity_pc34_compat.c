@@ -4,6 +4,7 @@
 
 #include "dm2_v1_runtime_parity_pc34_compat.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -329,20 +330,20 @@ static int8_t dm2_v1_query_cls2_from_record_rp(
         case 3:
             return (int8_t)cb->get_wall_decoration(ctx, cb->get_record_address(ctx, (uint16_t)rw));
         case 4:
-            return (int8_t)rec[4];
+            return (int8_t)dm2_v1_skproject_cutlx8(rec[4]);
         case 5: case 6: case 10: case 15:
             return (int8_t)(rec[2] & 0x7F);
         case 7:
             return 0;
         case 8: {
             uint16_t w2 = (uint16_t)(rec[2] | (rec[3] << 8));
-            return (int8_t)((w2 * 2) >> 9);
+            return (int8_t)dm2_v1_skproject_cutlx8((int32_t)((w2 * 2) >> 9));
         }
         case 9: {
             uint16_t w4 = (uint16_t)(rec[4] | (rec[5] << 8));
             uint8_t hi = (uint8_t)(((w4 << 13) >> 14) * 8);
             uint8_t lo = (uint8_t)(w4 >> 13);
-            return (int8_t)(lo | hi);
+            return (int8_t)dm2_v1_skproject_cutlx8((int32_t)(lo | hi));
         }
         case 14: {
             uint16_t w2 = (uint16_t)(rec[2] | (rec[3] << 8));

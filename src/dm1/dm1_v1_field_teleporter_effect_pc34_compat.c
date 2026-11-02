@@ -141,8 +141,12 @@ int dm1_v1_field_bitmap_sample_with_phase_pc34(
     int maskHeight,
     DM1_FieldBitmapSamplePc34* outSample)
 {
-    int fieldStartUnit;
-    int fieldYPhase;
+    int firstUnit;
+    int lastUnit;
+    int unitOrdinal;
+    int sourceUnit;
+    int sourcePixel;
+    int sourceStride;
 
     if (!plan || !outSample ||
         localX < 0 || localY < 0 ||
@@ -152,10 +156,34 @@ int dm1_v1_field_bitmap_sample_with_phase_pc34(
     }
 
     memset(outSample, 0, sizeof(*outSample));
-    fieldStartUnit = plan->baseStartUnit + (startUnitDelta & 1);
-    fieldYPhase = yPhase & 31;
-    outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;
-    outSample->fieldY = (localY + fieldYPhase) % fieldHeight;
+    /* ReDMCSB DUNVIEW.C:F0113 passes M005_RANDOM(2)+M729 as F0133's
+     * last unit, then M003_RANDOM(32) as its first unit. F0133 advances
+     * through 16-pixel (8-byte) source units and wraps to unit zero when
+     * it reaches the last-unit boundary. The previous pixel-modulo sampler
+     * incorrectly treated those random values as horizontal and vertical
+     * pixel phases. */
+    lastUnit = plan->baseStartUnit + (startUnitDelta & 1);
+    firstUnit = yPhase & 31;
+    /* GRAPHICS.DAT rows have a 16-pixel unit stream, with a byte boundary
+     * per source row; odd pixel widths use the padded 4bpp byte stride. */
+    sourceStride = (fieldWidth + 1) & ~1;
+    unitOrdinal = localY * ((plan->dstW + 15) / 16) + localX / 16;
+    sourceUnit = firstUnit + unitOrdinal;
+    if (lastUnit <= 0 || firstUnit >= lastUnit) {
+        return 0;
+    }
+    if (sourceUnit >= lastUnit) {
+        sourceUnit = (sourceUnit - lastUnit) % lastUnit;
+    }
+    sourcePixel = sourceUnit * 16 + (localX & 15);
+    if (sourcePixel >= sourceStride * fieldHeight) {
+        return 0;
+    }
+    outSample->fieldX = sourcePixel % sourceStride;
+    outSample->fieldY = sourcePixel / sourceStride;
+    if (outSample->fieldX >= fieldWidth) {
+        return 0;
+    }
     outSample->transparentColor = plan->transparentColor;
 
     if (plan->maskIndexAndFlip != 0xff && maskWidth > 0 && maskHeight > 0) {

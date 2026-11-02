@@ -1,9 +1,12 @@
 #include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_save_suppress_masks_pc34_compat.h"
 #include "dm2_v1_creature_something_pc34_compat.h"
 #include "dm2_v1_fmtowns_graphics_dat.h"
+#include "dm2_v1_timer_ops_pc34_compat.h"
 
 #include <stdlib.h>
 #include <limits.h>
@@ -22,10 +25,17 @@ static int dm2_v1_sksave_game_load_owner_is_initialized(
     return tag == DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
 }
 
+typedef struct {
+    DM2_V1_SksaveGameLoadOwner *owner;
+    int failed;
+} DM2_V1_SksavePostLoadContext;
+
 static int dm2_v1_sksave_owner_hero_alive(void *ctx, int hero_index)
 {
+    const DM2_V1_SksavePostLoadContext *context =
+        (const DM2_V1_SksavePostLoadContext *)ctx;
     const DM2_V1_SksaveGameLoadOwner *owner =
-        (const DM2_V1_SksaveGameLoadOwner *)ctx;
+        context ? context->owner : NULL;
     return owner && hero_index >= 0 &&
         hero_index < (int)owner->state.champion_count &&
         owner->heroes[hero_index].curHP != 0;
@@ -34,7 +44,9 @@ static int dm2_v1_sksave_owner_hero_alive(void *ctx, int hero_index)
 static void dm2_v1_sksave_owner_add_ench_power(void *ctx, int hero_index,
                                                  int16_t amount)
 {
-    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    DM2_V1_SksaveGameLoadOwner *owner = context ? context->owner : NULL;
     if (owner && hero_index >= 0 &&
         hero_index < (int)owner->state.champion_count)
         owner->heroes[hero_index].ench_power = (int16_t)(
@@ -43,7 +55,9 @@ static void dm2_v1_sksave_owner_add_ench_power(void *ctx, int hero_index,
 
 static void dm2_v1_sksave_owner_increment_poisoned(void *ctx, int hero_index)
 {
-    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    DM2_V1_SksaveGameLoadOwner *owner = context ? context->owner : NULL;
     if (owner && hero_index >= 0 &&
         hero_index < (int)owner->state.champion_count)
         owner->heroes[hero_index].poisoned = (int8_t)(
@@ -53,11 +67,172 @@ static void dm2_v1_sksave_owner_increment_poisoned(void *ctx, int hero_index)
 static void dm2_v1_sksave_owner_add_poison(void *ctx, int hero_index,
                                              int16_t amount)
 {
-    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    DM2_V1_SksaveGameLoadOwner *owner = context ? context->owner : NULL;
     if (owner && hero_index >= 0 &&
         hero_index < (int)owner->state.champion_count)
         owner->heroes[hero_index].poison = (int16_t)(
             owner->heroes[hero_index].poison + amount);
+}
+
+static uint8_t *dm2_v1_sksave_owner_timer_record(void *ctx,
+                                                 uint16_t record_word)
+{
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    uint8_t *record = context && context->owner
+        ? dm2_v1_record_pool_address_mut(&context->owner->record_pools,
+                                         (int16_t)record_word)
+        : NULL;
+    if (!record && context) context->failed = 1;
+    return record;
+}
+
+static void *dm2_v1_sksave_owner_timer_alloc(void *ctx, int32_t size)
+{
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    void *memory = size > 0 ? malloc((size_t)size) : NULL;
+    if (!memory && context) context->failed = 1;
+    return memory;
+}
+
+static void dm2_v1_sksave_owner_timer_dealloc(void *ctx, void *memory,
+                                               int32_t size)
+{
+    (void)ctx;
+    (void)size;
+    free(memory);
+}
+
+static void dm2_v1_sksave_owner_timer_set_itemtype(void *ctx,
+                                                    uint16_t record_word,
+                                                    uint16_t itemtype)
+{
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    if (!context || !context->owner ||
+        !dm2_v1_record_pool_set_itemtype(&context->owner->record_pools,
+                                         (int16_t)record_word,
+                                         (uint8_t)itemtype)) {
+        if (context) context->failed = 1;
+    }
+}
+
+static void dm2_v1_sksave_owner_timer_process_item_bonus(
+    void *ctx, uint8_t actor, uint16_t record_word, int slot,
+    uint16_t bonus_mode)
+{
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    DM2_V1_SksaveGameLoadOwner *owner = context ? context->owner : NULL;
+    DM2_V1_ProcessItemBonusReceipt receipt;
+
+    if (!owner || actor >= owner->state.champion_count ||
+        actor >= DM2_MAX_HEROES || !owner->asset_loader ||
+        !owner->asset_loader->loaded ||
+        !dm2_v1_process_source_item_bonus_for_timer(
+            &owner->heroes[actor], (int16_t)actor, record_word,
+            (int16_t)slot, (int16_t)bonus_mode, &owner->record_pools,
+            owner->asset_loader, &receipt)) {
+        if (context) context->failed = 1;
+    }
+}
+
+static void dm2_v1_sksave_owner_timer_copy(void *dst, const void *src,
+                                            int32_t size)
+{
+    if (dst && src && size > 0) memcpy(dst, src, (size_t)size);
+}
+
+static int32_t dm2_v1_sksave_owner_timer_item_size(uint16_t db_type)
+{
+    return (db_type <= 15u)
+        ? (int32_t)dm2_v1_record_pool_record_size((int)db_type)
+        : 0;
+}
+
+static int dm2_v1_sksave_owner_process_timer_0e(void *ctx,
+                                                const uint8_t *timer)
+{
+    DM2_V1_SksavePostLoadContext *context =
+        (DM2_V1_SksavePostLoadContext *)ctx;
+    DM2_V1_SksaveGameLoadOwner *owner = context ? context->owner : NULL;
+    DM2_V1_Timer0ECallbacks callbacks;
+    uint16_t db_type;
+    uint16_t record_word;
+    int32_t record_size;
+
+    if (!context || !owner || !timer || timer[4] != 0x0eu ||
+        !owner->record_pools.valid || !owner->asset_loader ||
+        !owner->asset_loader->loaded) {
+        if (context) context->failed = 1;
+        return 0;
+    }
+    db_type = (uint16_t)(((uint16_t)timer[6] |
+                          ((uint16_t)timer[7] << 8)) & 0x03ffu);
+    record_word = (uint16_t)(db_type << 10);
+    record_size = dm2_v1_sksave_owner_timer_item_size(db_type);
+    if (timer[5] >= owner->state.champion_count ||
+        timer[5] >= DM2_MAX_HEROES || record_size <= 0 ||
+        !dm2_v1_record_pool_address(&owner->record_pools,
+                                     (int16_t)record_word)) {
+        context->failed = 1;
+        return 0;
+    }
+
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.get_record_address = dm2_v1_sksave_owner_timer_record;
+    callbacks.alloc_memory = dm2_v1_sksave_owner_timer_alloc;
+    callbacks.dealloc_memory = dm2_v1_sksave_owner_timer_dealloc;
+    callbacks.set_itemtype = dm2_v1_sksave_owner_timer_set_itemtype;
+    callbacks.process_item_bonus =
+        dm2_v1_sksave_owner_timer_process_item_bonus;
+    callbacks.copy_memory = dm2_v1_sksave_owner_timer_copy;
+    callbacks.get_item_size = dm2_v1_sksave_owner_timer_item_size;
+    dm2_v1_process_timer_0e(
+        db_type, (uint16_t)(timer[8] | ((uint16_t)timer[9] << 8)),
+        timer[5], 3u, &callbacks, context);
+    return !context->failed;
+}
+
+static int dm2_v1_sksave_owner_recompute_inventory_weights(
+    DM2_V1_SksaveGameLoadOwner *owner)
+{
+    uint16_t hero_index;
+
+    if (!owner || !owner->record_pools.valid || !owner->asset_loader ||
+        !owner->asset_loader->loaded ||
+        owner->state.champion_count > DM2_MAX_HEROES) return 0;
+    for (hero_index = 0u; hero_index < owner->state.champion_count;
+         ++hero_index) {
+        DM2_V1_Hero *hero = &owner->heroes[hero_index];
+        uint32_t total_weight = 0u;
+        uint16_t slot;
+
+        for (slot = 0u; slot < DM2_NUM_ITEMS; ++slot) {
+            uint16_t item = (uint16_t)hero->item[slot];
+            DM2_V1_SourceItemWeightReceipt weight;
+            int db_type;
+
+            if (item == DM2_V1_RECORD_HANDLE_NULL) continue;
+            if (item == DM2_V1_RECORD_HANDLE_END ||
+                !dm2_v1_record_pool_address(&owner->record_pools,
+                                             (int16_t)item)) return 0;
+            db_type = dm2_v1_record_handle_pool((int16_t)item);
+            /* Source item-weight queries are zero for non-item DB records.
+             * The inventory root still has to be an authenticated record. */
+            if (db_type < 5 || db_type > 10) continue;
+            if (!dm2_v1_query_source_item_weight(
+                    item, &owner->record_pools, owner->asset_loader,
+                    &weight) || !weight.valid || weight.blocked) return 0;
+            total_weight += (uint32_t)weight.final_weight;
+        }
+        hero->weight = (int16_t)(uint16_t)total_weight;
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x1000u);
+    }
+    return 1;
 }
 
 typedef struct {
@@ -192,6 +367,7 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
 {
     DM2_V1_SaveGlobalEffectCallbacks callbacks;
     DM2_V1_GlobalEffectReceipt receipt;
+    DM2_V1_SksavePostLoadContext context;
     DM2_V1_Hero heroes_before[DM2_MAX_HEROES];
     uint8_t savegames1_before[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
 
@@ -202,15 +378,19 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     memcpy(savegames1_before, owner->savegames1, sizeof(savegames1_before));
     memset(&callbacks, 0, sizeof(callbacks));
     memset(&receipt, 0, sizeof(receipt));
-    callbacks.ctx = owner;
+    memset(&context, 0, sizeof(context));
+    context.owner = owner;
+    callbacks.ctx = &context;
+    callbacks.process_timer_0e = dm2_v1_sksave_owner_process_timer_0e;
     callbacks.hero_is_alive = dm2_v1_sksave_owner_hero_alive;
     callbacks.add_hero_ench_power = dm2_v1_sksave_owner_add_ench_power;
     callbacks.increment_hero_poisoned = dm2_v1_sksave_owner_increment_poisoned;
     callbacks.add_hero_poison = dm2_v1_sksave_owner_add_poison;
 
     /* sksvgame.cpp:1047 clears exactly c_wbbb/savegames1 before it walks
-     * c_tim.  No 0x0e callback is supplied: spell effects need a complete
-     * dungeon/CCM/runtime owner and thus reject this private transaction. */
+     * c_tim.  PROCESS_TIMER_0E(timer, 3) is source-complete in this private
+     * owner: it temporarily changes the retained record, applies the
+     * source-owned hero bonus, and restores the original record bytes. */
     memset(owner->savegames1, 0, sizeof(owner->savegames1));
     if (dm2_v1_post_load_global_effects(
             (const uint8_t *)owner->timers, owner->state.timer_count,
@@ -224,11 +404,19 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     owner->savegames1[0] = (uint8_t)((uint16_t)receipt.light_accumulator);
     owner->savegames1[1] = (uint8_t)((uint16_t)receipt.light_accumulator >> 8);
     owner->savegames1[2] = (uint8_t)receipt.attack_count;
+    if (!dm2_v1_sksave_owner_recompute_inventory_weights(owner)) {
+        memcpy(owner->heroes, heroes_before, sizeof(heroes_before));
+        memcpy(owner->savegames1, savegames1_before, sizeof(savegames1_before));
+        owner->global_effect_receipt = receipt;
+        owner->global_effects_complete = 0;
+        owner->weight_recompute_blocked = 1;
+        return 0;
+    }
     owner->global_effect_receipt = receipt;
     owner->global_effects_complete = 1;
-    /* c_party::calc_player_weight also consults curacthero/curactmode and
-     * hand_container for an open chest.  This owner retains neither active
-     * eventqueue nor c_party hand state, so recomputation cannot be proven. */
+    /* The 30 hero inventory slots now follow QUERY_ITEM_WEIGHT. An open chest
+     * adds eight active hand-container slots in c_party::calc_player_weight;
+     * this private owner does not retain the eventqueue/hand-container state. */
     owner->weight_recompute_blocked = 1;
     return 1;
 }
@@ -1096,6 +1284,9 @@ int dm2_v1_sksave_game_load_owner_init_ordered(
         memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
     candidate.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
+    /* Post-load item weight reconstruction needs the same authenticated
+     * GDAT loader used while the SKSAVE records are materialized. */
+    candidate.asset_loader = asset_loader;
     candidate.timer_queue_count = -1;
     candidate.timer_free_head = -1;
     candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;

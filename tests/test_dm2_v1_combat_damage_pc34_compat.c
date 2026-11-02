@@ -73,7 +73,7 @@ static void test_calc_damage_valid(void)
     req.rand_defense = 0;
     req.rand_armor = 0;
     req.party_power_level = 3;
-    req.creature_armor_mult = 4;
+    req.creature_skill_exp_factor = 4;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.valid == 1);
@@ -184,7 +184,7 @@ static void test_calc_damage_skill_exp(void)
     req.item_weight = 20;
     req.stamina_adj = 60;
     req.creature_armor = 0;
-    req.creature_armor_mult = 8;
+    req.creature_skill_exp_factor = 8;
     req.rand_hit = 8;
     req.party_power_level = 3;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);

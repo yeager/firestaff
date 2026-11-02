@@ -58,7 +58,8 @@ static void test_attack(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(2); /* action_id 2 -> case 1 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.attack_queued == 1);
     assert(receipt.action_type == DM2_ENGAGE_ATTACK);
     assert(receipt.cooldown_applied == 64);
@@ -72,7 +73,8 @@ static void test_attack_min_delay(void)
     DM2_V1_EngageCommandRequest req = make_request(2);
     req.cmd.delay = 10; /* below min 32 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.cooldown_applied == 32);
 
     printf("  PASS: attack_min_delay\n");
@@ -83,7 +85,7 @@ static void test_cast_missile(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(3); /* action_id 3 -> case 2 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
     assert(receipt.spell_cast == 1);
     assert(receipt.fail_closed == 1);
 
@@ -95,7 +97,8 @@ static void test_wield_weapon(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(4); /* case 3 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.weapon_wielded == 1);
 
     printf("  PASS: wield_weapon\n");
@@ -106,7 +109,8 @@ static void test_confuse(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(5); /* case 4 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.creature_confused == 1);
 
     printf("  PASS: confuse\n");
@@ -117,7 +121,8 @@ static void test_light(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(6); /* case 5 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.light_toggled == 1);
 
     printf("  PASS: light\n");
@@ -128,7 +133,8 @@ static void test_consume(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(16); /* case 15 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.consumed == 1);
 
     printf("  PASS: consume\n");
@@ -173,7 +179,8 @@ static void test_release_minion(void)
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(48); /* case 47 */
     int r = dm2_v1_engage_command(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
+    assert(receipt.fail_closed == 1);
     assert(receipt.minion_released == 1);
 
     printf("  PASS: release_minion\n");
@@ -349,6 +356,7 @@ static void test_ability_enchantment(void)
     req.hero = &hero;
     req.enchant_cb = NULL;
     r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 0);
     assert(receipt.fail_closed);
 
     printf("  PASS: ability_enchantment\n");
@@ -571,31 +579,45 @@ static void test_step_forward_with_callback(void)
     printf("  PASS: step_forward_with_callback\n");
 }
 
-static int g_turn_called;
+static int g_throw_called;
+static int g_throw_direction;
 
-static int mock_turn(void *ctx, int hero_idx, int hand, int16_t swap_dir)
+static int mock_throw(void *ctx, int hero_idx, int hand,
+                      int16_t party_x, int16_t party_y,
+                      int throw_direction)
 {
-    (void)ctx; (void)hero_idx; (void)hand; (void)swap_dir;
-    g_turn_called = 1;
+    (void)ctx; (void)hero_idx; (void)hand; (void)party_x; (void)party_y;
+    g_throw_called = 1;
+    g_throw_direction = throw_direction;
     return 1;
 }
 
-static void test_turn_with_callback(void)
+static void test_throw_action_with_callback(void)
 {
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(42); /* case 41 */
-    req.turn_cb = mock_turn;
-    req.turn_ctx = NULL;
+    req.throw_item_cb = mock_throw;
+    req.throw_item_ctx = NULL;
     req.party_dir = 0;
     req.hero_party_pos = 1;
-    g_turn_called = 0;
+    g_throw_called = 0;
 
     int r = dm2_v1_engage_command(&req, &receipt);
     assert(r == 1);
-    assert(receipt.position_swapped == 1);
+    assert(receipt.item_thrown == 1);
     assert(!receipt.fail_closed);
-    assert(g_turn_called);
-    printf("  PASS: turn_with_callback\n");
+    assert(g_throw_called);
+    assert(g_throw_direction == 1);
+
+    req.hero_party_pos = 0;
+    g_throw_called = 0;
+    g_throw_direction = -1;
+    r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.item_thrown == 1);
+    assert(g_throw_called);
+    assert(g_throw_direction == 0);
+    printf("  PASS: throw_action_with_callback\n");
 }
 
 static int g_release_called;
@@ -651,7 +673,7 @@ int main(void)
     test_consume_with_callback();
     test_cloud_with_callback();
     test_step_forward_with_callback();
-    test_turn_with_callback();
+    test_throw_action_with_callback();
     test_release_minion_with_callback();
     printf("All engage command tests passed.\n");
     return 0;

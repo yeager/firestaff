@@ -64,6 +64,8 @@ static int16_t as_get_skill_exp(void *ctx, int hi, int sid)
 static void as_add_skill_exp(void *ctx, int hi, int sid, int32_t amount)
 { (void)ctx; (void)hi; (void)sid; g_added_exp += amount; }
 static int as_random_bit(void *ctx) { (void)ctx; return 0; }
+static uint16_t as_rand16(void *ctx, uint16_t max)
+{ (void)ctx; (void)max; return 0; }
 static int g_random_dir_values[2];
 static int g_random_dir_pos;
 static int as_random_dir(void *ctx)
@@ -75,6 +77,7 @@ static int as_random_dir(void *ctx)
 static int16_t as_get_max_hp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
 static void as_set_max_hp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
 static int16_t as_get_max_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
+static int16_t as_get_current_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 80; }
 static void as_set_max_stamina(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
 static int16_t g_max_mp;
 static int16_t as_get_max_mp(void *ctx, int hi) { (void)ctx; (void)hi; return g_max_mp; }
@@ -98,7 +101,8 @@ static void test_adjust_skills(void)
         as_random_bit, as_random_dir, as_get_max_hp, as_set_max_hp,
         as_get_max_stamina, as_set_max_stamina,
         as_get_max_mp, as_set_max_mp,
-        as_add_ability_max, as_mark_dirty, as_display_level_up
+        as_add_ability_max, as_mark_dirty, as_display_level_up,
+        as_rand16, as_get_current_stamina
     };
 
     g_added_exp = 0;
@@ -122,7 +126,7 @@ static void test_adjust_skills(void)
     g_last_antimagic_delta = -1;
     lvl = dm2_v1_adjust_skills(0, 12, 15, &cb, NULL);
     assert(lvl == 2);
-    assert(g_max_mp == 104); /* +1 class gain, then RANDDIR() == 3 */
+    assert(g_max_mp == 103); /* priest gains +level, capped RANDDIR jitter */
     assert(g_last_antimagic_delta == 2);
     assert(g_random_dir_pos == 2);
 
@@ -370,29 +374,28 @@ static void test_creature_can_handle_it_class_above_31(void)
 {
     DM2_V1_CreatureHandleCaps caps;
 
-    /* Class 41 (0x29) set, nothing else. */
-    caps.handle_mask = (uint64_t)1 << 41;
-    /* item low six bits select the class; 0x1429 & 0x3f == 0x29. */
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) != 0);
+    /* Class 42 set, nothing else. The source selector comes from flags. */
+    caps.handle_mask = (uint64_t)1 << 42;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0x2a, NULL, NULL) != 0);
 
-    /* Bit 9 must NOT answer for class 41: that is exactly the aliasing the
-     * old 32-bit shift produced on x86-64 (1u << 41 == 1u << 9). */
+    /* Bit 9 must NOT answer for class 42: that is exactly the aliasing the
+     * old 32-bit shift produced on x86-64 (1u << 42 == 1u << 10). */
     caps.handle_mask = (uint64_t)1 << 9;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0x2a, NULL, NULL) == 0);
 
     /* Highest reachable class, 0x3d == 61. */
     caps.handle_mask = (uint64_t)1 << 61;
     assert(dm2_v1_creature_can_handle_it(&caps, 0x143d, 0, NULL, NULL) != 0);
 
-    /* 0x3e and 0x3f stay rejected outright. */
+    /* 0x3e follows the moneybox sentinel rule; 0x3f is the all-items rule. */
     caps.handle_mask = ~(uint64_t)0;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x143e, 0, NULL, NULL) == 0);
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x143f, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143e, 0x3e, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143f, 0x3f, NULL, NULL) != 0);
 
     /* A low class still works. */
     caps.handle_mask = (uint64_t)1 << 3;
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1403, 0, NULL, NULL) != 0);
-    assert(dm2_v1_creature_can_handle_it(&caps, 0x1404, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1403, 3, NULL, NULL) != 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1404, 4, NULL, NULL) == 0);
 
     printf("test_creature_can_handle_it_class_above_31 OK\n");
 }

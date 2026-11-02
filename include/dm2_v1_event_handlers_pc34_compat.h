@@ -127,9 +127,10 @@ void dm2_v1_click_vwpt(
 
 /* c_hero::heroflag bit set when a rune is placed (c_events.cpp:417). */
 #define DM2_HEROFLAG_RUNE_PLACED 0x800
+#define DM2_V1_MAGICAL_MAP_RUNE_COUNT 4
 
 typedef struct {
-    const int16_t *rune_table;   /* table1d67fe[9] */
+    const int16_t *rune_table;   /* table1d67fe[4] */
     int16_t *v1e0b62;           /* current rune mask */
     void (*add_rune)(void *ctx, int16_t rune_mask);
     void (*remove_rune)(void *ctx, int16_t rune_mask);

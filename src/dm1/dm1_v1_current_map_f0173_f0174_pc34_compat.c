@@ -6,7 +6,7 @@ const char *DM1_V1_F0173_F0174_SourceEvidencePc34(void)
 {
     return
         "DUNGEON.C:2724 F0173_DUNGEON_SetCurrentMap selects "
-        "G0271_i_CurrentMapIndex and current map metadata\n"
+        "G0272_i_CurrentMapIndex and current map metadata\n"
         "DUNGEON.C:2728-2740 refreshes current map width, height, raw map "
         "pointer, column cumulative SquareFirstThing counts, door info, and "
         "does not refresh the F0174-owned metadata arrays\n"

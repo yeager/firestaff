@@ -1,6 +1,6 @@
 # Parity Reference Sources
 
-Last updated: 2026-10-31
+Last updated: 2026-11-01
 
 This file inventories all known local reference sources and artifacts available for 1:1 parity verification work.
 
@@ -37,9 +37,9 @@ the applicable source code and original data before claiming parity.
 
 | Game | Greatstone reference | DMWeb reference collection |
 |---|---|---|
-| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
-| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): Dungeon Master/CSB and file formats |
-| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local index](../../reference/dmweb-community-docs/INDEX.md): DM2 data-file notes and Nexus |
+| DM1 | [Dungeon Master](http://greatstone.free.fr/dm/g_dm.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): Dungeon Master/CSB and file formats |
+| CSB | [Chaos Strikes Back](http://greatstone.free.fr/dm/g_csb.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): Dungeon Master/CSB and file formats |
+| DM2 | [Dungeon Master II](http://greatstone.free.fr/dm/g_dm2.html) | [DMWeb local reference](../DMWEB_REFERENCE.md): DM2 data-file notes and Nexus |
 
 The Greatstone game pages report different catalogued variant counts (26 DM1,
 19 CSB, and 15 DM2 when checked on 2026-10-31). These counts describe the
@@ -65,7 +65,7 @@ DM2, retain the more detailed [PC English Greatstone cross-check](../reference/a
 
 ### A2. ReDMCSB WIP archive (fresh task-local refetch)
 - **Current local path:** `work/redmcsb-refetched-latest/extracted/` (untracked reference material; do not commit or redistribute the upstream archive)
-- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes; SHA-256 `58de16a34476a1ac2349ca01a4768cdecbadc9929fed0b69e8b9698f996159d1`). The 2026-10-31 refetch matches this checksum.
+- **Source archive:** `ReDMCSB_WIP20210206.7z` (25,807,091 bytes; SHA-256 `58de16a34476a1ac2349ca01a4768cdecbadc9929fed0b69e8b9698f996159d1`). The 2026-11-01 refetch was verified against this checksum and matches the same upstream archive.
 - **Key contents:**
   - `Reference/Original/I34E/` — DM PC 3.4 English executables (11 LZEXE-compressed DOS files): `DM.EXE`, `FIRES` (94,779 bytes, main game), `VGA`, `ANIM`, `SWOOSH`, `SELECTOR`, etc.
   - `Reference/Original/G14ED/` — Amiga 1.4 English Demo: `DUNGEON.MASTER` (233,777 bytes), `START`

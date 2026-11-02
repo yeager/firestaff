@@ -9,10 +9,25 @@
  */
 
 #include "dm2_v1_querydb_pc34_compat.h"
+#include "dm2_v1_party.h"
+#include "dm2_v1_skill_query_pc34_compat.h"
 
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+
+int16_t dm2_v1_get_itemdb_of_itemspec_actuator(uint16_t itemspec);
+struct DM2_V1_AssetLoader;
+int dm2_v1_asset_load_word_value(
+    const struct DM2_V1_AssetLoader *loader, int category, int index,
+    int field, uint16_t *out_value);
+int dm2_v1_query_creatures_item_mask_bytes(
+    const struct DM2_V1_AssetLoader *loader, int creature_index,
+    int text_field_base, int is_creature, uint8_t out_mask[64]);
+int16_t dm2_v1_get_max_charge(uint16_t record_word);
+static int32_t dm2_v1_querydb_cls1_from_record(
+    int32_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int16_t dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec);
 
 /* The AI specification is a packed PC-DOS structure.  Its 16-bit fields
  * must retain their source little-endian order on every Firestaff host; do
@@ -492,11 +507,165 @@ int32_t dm2_v1_is_miscitem_currency(int32_t record,
     return (v & 0x4000) ? 1 : 0;
 }
 
-int32_t dm2_v1_querydb_food_value_from_record(int32_t record,
-                                              const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+int32_t dm2_v1_query_gdat_food_value_from_record(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
     if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
-    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 3);
+    /* SPX v4 skitem.cpp:420-423 returns U16. */
+    return (uint16_t)cb->query_gdat_dbspec_word_value(
+        ctx, (uint16_t)record, 3);
+}
+
+int16_t dm2_v1_query_gdat_food_value_from_record_dos(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
+    /* DOS dm2byb.cpp:136-138 returns signed x16. */
+    int32_t value = (uint16_t)cb->query_gdat_dbspec_word_value(
+        ctx, (uint16_t)record, 3);
+    return value < 0x8000
+        ? (int16_t)value
+        : (int16_t)(value - 0x10000);
+}
+
+int32_t dm2_v1_query_gdat_food_value_from_record_spx_v5(
+    int16_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
+    /* V5 skgdtqdb.cpp:1040-1044 preserves the i32 result. */
+    return cb->query_gdat_dbspec_word_value(ctx, (uint16_t)record, 3);
+}
+
+static uint32_t dm2_v1_query_cmdstr_text_bits(
+    const char *text, const char *pattern, unsigned width)
+{
+    const char *cursor = text;
+    uint32_t value = 0;
+    size_t pattern_len;
+    uint32_t mask = width == 16u ? 0xffffu : UINT32_MAX;
+
+    if (!text || !pattern || pattern[0] == '\0') return 0;
+    pattern_len = strlen(pattern);
+    while ((cursor = strstr(cursor, pattern)) != NULL) {
+        const unsigned char *p = (const unsigned char *)(cursor + pattern_len);
+        int negative = 0;
+
+        if (*p == '=') ++p;
+        if (*p == '-') {
+            negative = 1;
+            ++p;
+        }
+        while (*p >= '0' && *p <= '9') {
+            value = (value * 10u) + (uint32_t)(*p - '0');
+            value &= mask;
+            ++p;
+        }
+        if (negative) value = (0u - value) & mask;
+        cursor = (const char *)p;
+    }
+    return value;
+}
+
+static int32_t dm2_v1_query_cmdstr_i32_from_bits(uint32_t value)
+{
+    return value <= INT32_MAX
+        ? (int32_t)value
+        : -1 - (int32_t)(UINT32_MAX - value);
+}
+
+int32_t dm2_v1_query_cmdstr_text(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* SPX v5 DM2_QUERY_CMDSTR_TEXT (skgdtqdb.cpp:275-310) accumulates in i32. */
+    return dm2_v1_query_cmdstr_i32_from_bits(
+        dm2_v1_query_cmdstr_text_bits(text, pattern, 32u));
+}
+
+uint16_t dm2_v1_query_cmdstr_text_dos(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* DOS SKW_QUERY_CMDSTR_TEXT (dm2bya.cpp:2114-2143) returns ui16. */
+    return (uint16_t)dm2_v1_query_cmdstr_text_bits(text, pattern, 16u);
+}
+
+uint16_t dm2_v1_query_cmdstr_text_spx_v4(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* SPX v4 QUERY_CMDSTR_TEXT (sktext.cpp:755-786) returns Bit16u. */
+    return (uint16_t)dm2_v1_query_cmdstr_text_bits(text, pattern, 16u);
+}
+
+static const char *dm2_v1_query_cmdstr_key(uint16_t key_index)
+{
+    static const char *const keys[18] = {
+        "SK", "LV", "CM", "BZ", "TR", "ST", "PA", "TA", "NC",
+        "EX", "PB", "DM", "MS", "SD", "RP", "HN", "AT", "WH"
+    };
+    return key_index < 18u ? keys[key_index] : NULL;
+}
+
+static int32_t dm2_v1_query_cmdstr_entry_value(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx, unsigned width)
+{
+    char text[128] = {0};
+    const char *key;
+    char *result;
+    size_t offset = 0u;
+
+    if (!cb || !cb->query_gdat_text ||
+        category < 0 || category > 0xff || index < 0 || index > 0xff ||
+        field < 0 || field > 0xff || key_index < 0 || key_index >= 18)
+        return 0;
+    key = dm2_v1_query_cmdstr_key((uint16_t)key_index);
+    if (!key) return 0;
+    result = cb->query_gdat_text(
+        ctx, (int8_t)(uint8_t)category, (int8_t)(uint8_t)index,
+        (int8_t)(uint8_t)field, text);
+    while (offset < sizeof(text) && result != &text[offset]) ++offset;
+    if (offset == sizeof(text) ||
+        !memchr(result, '\0', sizeof(text) - offset) || result[0] == '\0')
+        return 0;
+    return width == 16u
+        ? (int32_t)(uint16_t)dm2_v1_query_cmdstr_text_bits(result, key, 16u)
+        : dm2_v1_query_cmdstr_i32_from_bits(
+              dm2_v1_query_cmdstr_text_bits(result, key, 32u));
+}
+
+int32_t dm2_v1_query_cmdstr_entry(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* SPX v4 QUERY_CMDSTR_ENTRY (sktext.cpp:792-802) argument order. */
+    return dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 16u);
+}
+
+uint16_t dm2_v1_query_cmdstr_entry_dos(
+    int32_t category, int32_t index, int32_t key_index, int32_t field,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* DOS SKW_QUERY_CMDSTR_ENTRY (dm2bya.cpp:2147-2157) puts key before field. */
+    return (uint16_t)dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 16u);
+}
+
+int32_t dm2_v1_query_cmdstr_entry_spx_v5(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* SPX v5 DM2_QUERY_CMDSTR_ENTRY (skgdtqdb.cpp:345-358). */
+    return dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 32u);
 }
 
 int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,
@@ -530,6 +699,250 @@ int32_t dm2_v1_query_gdat_item_weight(int32_t record,
     return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 1);
 }
 
+/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item-versus-creature
+   value calculation. Arithmetic narrows at the same U16 destinations as the
+   source; GDAT and mask data come only from source-owned callbacks. */
+int32_t dm2_v1_query_48ae_05ae_variant(
+    int32_t itemspec, int32_t creature_type, int32_t slot,
+    int32_t adjust_percent, int32_t increase, int32_t charges,
+    DM2_V1_Query48ae05aeVariant variant,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    uint8_t item_mask[64];
+    uint16_t item_word = (uint16_t)itemspec;
+    uint16_t item_type;
+    uint16_t value;
+    int item_db;
+    int item_cls;
+    int item_index;
+    uint16_t slot_word;
+    uint8_t slot_byte;
+    uint8_t first_word_index;
+    uint8_t second_word_index;
+    uint8_t adjust_word_index;
+    int32_t first_mask_index;
+    int32_t second_mask_index;
+    int32_t second_mask_creature;
+    int32_t field;
+
+    if (!cb || !cb->query_gdat_entry_data_index ||
+        !cb->query_cls1_from_record || slot < 0 || slot > 0xffff ||
+        creature_type < 0 || creature_type > 0xff ||
+        (variant != DM2_V1_QUERY_48AE_05AE_DOS &&
+         variant != DM2_V1_QUERY_48AE_05AE_SPX_V4 &&
+         variant != DM2_V1_QUERY_48AE_05AE_SPX_V5))
+        return 0;
+
+    item_type = (uint16_t)dm2_v1_get_itemtype_of_itemspec_actuator(item_word);
+    item_db = dm2_v1_get_itemdb_of_itemspec_actuator(item_word);
+    if (item_db < 0 || item_db > 0x0f) return 0;
+    item_cls = cb->query_cls1_from_record(ctx, (int32_t)((uint16_t)item_db << 10));
+    if (item_cls == 0xff) return 0;
+    item_index = (int)(item_word >> 3);
+    if (item_index >= (int)sizeof(item_mask)) return 0;
+    slot_word = (uint16_t)slot;
+    slot_byte = (uint8_t)slot_word;
+    second_mask_creature = creature_type;
+    if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V4) {
+        uint16_t v4_first_mask_word = (uint16_t)(slot_word * 3u + 18u);
+        first_word_index = (uint8_t)(v4_first_mask_word * 3u + 0xa2u);
+        first_mask_index = (uint8_t)v4_first_mask_word;
+        second_word_index = (uint8_t)(slot_word * 3u + 0xa1u);
+        second_mask_index = (uint8_t)(slot_word * 3u + 17u);
+        adjust_word_index = (uint8_t)((uint8_t)(slot_word * 3u) + 0xa0u);
+    } else if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V5) {
+        first_word_index = (uint8_t)(slot_byte * 3u + 0xa2u);
+        first_mask_index = (int16_t)(uint16_t)(slot_word * 3u + 0x12u);
+        second_word_index = (uint8_t)(slot_byte * 3u + 0xa1u);
+        second_mask_index = (int16_t)(uint16_t)(slot_word * 3u + 0x11u);
+        /* The source has an unresolved TODO for this literal mask owner. */
+        second_mask_creature = 0x64;
+        adjust_word_index = (uint8_t)(slot_byte * 3u + 0xa0u);
+    } else {
+        first_word_index = (uint8_t)(slot_byte * 3u + 0xa2u);
+        first_mask_index = (uint8_t)(slot_word * 3u + 0x12u);
+        second_word_index = (uint8_t)(slot_byte * 3u + 0xa1u);
+        second_mask_index = (uint8_t)(slot_word * 3u + 0x11u);
+        adjust_word_index = (uint8_t)(slot_byte * 3u + 0xa0u);
+    }
+
+    value = (uint16_t)cb->query_gdat_entry_data_index(
+        ctx, (int8_t)item_cls, (int8_t)item_type, 11, 2);
+
+    /* Source fields and mask identifiers are narrowed to bytes. */
+    field = first_word_index;
+    {
+        uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
+            ctx, 0x0f, (int8_t)creature_type, 11, (int8_t)field);
+        if (percent != 0u) {
+            if (!cb->query_creatures_item_mask) return 0;
+            memset(item_mask, 0, sizeof(item_mask));
+            if (cb->query_creatures_item_mask(ctx, creature_type,
+                                               first_mask_index,
+                                               item_mask, 0) != 0 &&
+                (item_mask[item_index] & (uint8_t)(1u << (item_word & 7u))) != 0u)
+                value = (uint16_t)(((uint32_t)value * percent) / 100u);
+        }
+    }
+
+    field = second_word_index;
+    {
+        uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
+            ctx, 0x0f, (int8_t)creature_type, 11, (int8_t)field);
+        if (percent != 0u) {
+            if (!cb->query_creatures_item_mask) return 0;
+            memset(item_mask, 0, sizeof(item_mask));
+            if (cb->query_creatures_item_mask(ctx, second_mask_creature,
+                                               second_mask_index,
+                                               item_mask, 0) != 0 &&
+                (item_mask[item_index] & (uint8_t)(1u << (item_word & 7u))) != 0u)
+                value = (uint16_t)(((uint32_t)value * percent) / 100u);
+        }
+    }
+
+    if (charges < 0) {
+        int max_charge;
+        if (!cb->get_max_charge) return 0;
+        max_charge = cb->get_max_charge(
+            ctx, (int16_t)(((uint16_t)item_db << 10) & 0xffffu));
+        charges = (uint16_t)max_charge;
+    }
+    value = (uint16_t)(value + (uint16_t)(
+        (uint16_t)cb->query_gdat_entry_data_index(
+            ctx, (int8_t)item_cls, (int8_t)item_type, 11, 0x35) *
+        (uint16_t)charges));
+
+    if (adjust_percent != 0) {
+        uint16_t percent = (uint16_t)cb->query_gdat_entry_data_index(
+            ctx, 0x0f, (int8_t)creature_type, 11,
+            (int8_t)adjust_word_index);
+        uint16_t delta;
+        if (percent == 0u) percent = 10u;
+        delta = (uint16_t)(((uint32_t)value * percent) / 100u);
+        if (increase != 0) {
+            value = (uint16_t)(value + delta);
+        } else if (variant == DM2_V1_QUERY_48AE_05AE_SPX_V4) {
+            /* SPX v4 subtracts the U16 delta without the DOS floor/minimum. */
+            value = (uint16_t)(value - delta);
+        } else if (value > 1u) {
+            if (delta < 1u) delta = 1u;
+            value = (uint16_t)(value - delta);
+        }
+    }
+    return (int32_t)value;
+}
+
+int32_t dm2_v1_query_48ae_05ae(
+    int32_t itemspec, int32_t creature_type, int32_t slot,
+    int32_t adjust_percent, int32_t increase, int32_t charges,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    return dm2_v1_query_48ae_05ae_variant(
+        itemspec, creature_type, slot, adjust_percent, increase, charges,
+        DM2_V1_QUERY_48AE_05AE_DOS, cb, ctx);
+}
+
+typedef struct {
+    const struct DM2_V1_AssetLoader *loader;
+    int missing_data;
+} DM2_V1_Query48ae05aeLoaderContext;
+
+static uint8_t dm2_query48ae05ae_cls1(void *ctx, int32_t record)
+{
+    DM2_V1_Query48ae05aeLoaderContext *loader_ctx =
+        (DM2_V1_Query48ae05aeLoaderContext *)ctx;
+    uint8_t cls1 = (uint8_t)dm2_v1_querydb_cls1_from_record(record, NULL, NULL);
+    if (cls1 == 0xffu && loader_ctx) loader_ctx->missing_data = 1;
+    return cls1;
+}
+
+static int16_t dm2_query48ae05ae_data_index(
+    void *userdata, int8_t cls1, int8_t cls2, int8_t entry_type, int8_t field)
+{
+    DM2_V1_Query48ae05aeLoaderContext *ctx =
+        (DM2_V1_Query48ae05aeLoaderContext *)userdata;
+    uint16_t value = 0u;
+    if (!ctx || entry_type != 11 ||
+        !dm2_v1_asset_load_word_value(ctx->loader, (uint8_t)cls1,
+                                      (uint8_t)cls2, (uint8_t)field, &value)) {
+        if (ctx) ctx->missing_data = 1;
+        return 0;
+    }
+    return (int16_t)value;
+}
+
+static int32_t dm2_query48ae05ae_item_mask(
+    void *userdata, int32_t creature_type, int32_t mask_idx,
+    uint8_t mask_out[64], int32_t flag)
+{
+    DM2_V1_Query48ae05aeLoaderContext *ctx =
+        (DM2_V1_Query48ae05aeLoaderContext *)userdata;
+    if (!ctx || !mask_out || creature_type < 0 || creature_type > 0xff ||
+        mask_idx < -0x8000 || mask_idx > 0x7fff || flag < 0 || flag > 1 ||
+        !dm2_v1_query_creatures_item_mask_bytes(
+            ctx->loader, creature_type, mask_idx, flag, mask_out)) {
+        if (ctx) ctx->missing_data = 1;
+        return 0;
+    }
+    return 1;
+}
+
+static int16_t dm2_query48ae05ae_max_charge(void *ctx, int16_t item_class)
+{
+    (void)ctx;
+    return dm2_v1_get_max_charge((uint16_t)item_class);
+}
+
+int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    DM2_V1_Query48ae05aeVariant variant,
+    uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader)
+{
+    DM2_V1_Query48ae05aeLoaderContext ctx;
+    DM2_V1_QueryDbCallbacks cb;
+    int item_db;
+    if (out_value) *out_value = 0;
+    if (!out_value || !loader) return 0;
+    if (variant != DM2_V1_QUERY_48AE_05AE_DOS &&
+        variant != DM2_V1_QUERY_48AE_05AE_SPX_V4 &&
+        variant != DM2_V1_QUERY_48AE_05AE_SPX_V5)
+        return 0;
+    item_db = dm2_v1_get_itemdb_of_itemspec_actuator(itemspec);
+    if (item_db < 0 || item_db > 0x0f || (itemspec >> 3) >= 64u) return 0;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.loader = loader;
+    memset(&cb, 0, sizeof(cb));
+    cb.query_gdat_entry_data_index = dm2_query48ae05ae_data_index;
+    cb.query_cls1_from_record = dm2_query48ae05ae_cls1;
+    cb.query_creatures_item_mask = dm2_query48ae05ae_item_mask;
+    cb.get_max_charge = dm2_query48ae05ae_max_charge;
+    *out_value = dm2_v1_query_48ae_05ae_variant(
+        itemspec, creature_type, creature_word8, argl0, argl1, charges,
+        variant, &cb, &ctx);
+    return ctx.missing_data == 0;
+}
+
+int dm2_v1_query_48ae_05ae_asset_loader(
+    uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader)
+{
+    return dm2_v1_query_48ae_05ae_asset_loader_variant(
+        DM2_V1_QUERY_48AE_05AE_DOS, itemspec, creature_type, creature_word8,
+        argl0, argl1, charges, out_value, loader);
+}
+
+int32_t dm2_v1_query_48ae_05ae_skproject_callback(
+    uint16_t distinctive_type, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    void *loader)
+{
+    return dm2_v1_query_48ae_05ae_asset_loader(
+        distinctive_type, creature_type, creature_word8, argl0, argl1,
+        charges, out_value, (const struct DM2_V1_AssetLoader *)loader);
+}
+
 int32_t dm2_v1_query_gdat_item_strength(int32_t record,
                                         const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
@@ -557,24 +970,90 @@ int32_t dm2_v1_querydb_item_name(int32_t record, char *buf, int32_t buf_len,
 /* ── Section 7: Player queries ────────────────────────────────────── */
 
 int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
+                                       int32_t include_bonus,
                                        const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    (void)player_idx; (void)skill; (void)cb; (void)ctx;
-    return 0;
+    DM2_V1_HeroSkills hero_skills;
+    int16_t hero_count;
+    int override_mode = 0;
+
+    if (!cb || !cb->get_heros_in_party || !cb->get_hero_skill ||
+        (include_bonus && !cb->get_hero_sbonus) ||
+        !cb->is_player_skill_query_overridden || player_idx < 0 ||
+        player_idx >= DM2_MAX_HEROES || skill < 0 || skill >= 20) {
+        return 0;
+    }
+    hero_count = cb->get_heros_in_party(ctx);
+    if (hero_count <= 0 || hero_count > DM2_MAX_HEROES ||
+        player_idx >= hero_count) {
+        return 0;
+    }
+
+    memset(&hero_skills, 0, sizeof(hero_skills));
+    for (int index = 0; index < DM2_V1_SKILL_ARRAY_SIZE; ++index) {
+        int major = index / 4;
+        int minor = index % 4;
+        hero_skills.skill[index] = cb->get_hero_skill(
+            ctx, player_idx, major, minor);
+        if (include_bonus) {
+            hero_skills.sbonus[index] = cb->get_hero_sbonus(
+                ctx, player_idx, major, minor);
+        }
+    }
+    override_mode = cb->is_player_skill_query_overridden(ctx) != 0;
+    return dm2_v1_query_player_skill_lv(
+        &hero_skills, (int16_t)skill, include_bonus != 0, override_mode);
 }
 
 int32_t dm2_v1_querydb_get_player_at_position(int32_t pos,
                                               const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    (void)pos; (void)cb; (void)ctx;
+    int16_t hero_count;
+
+    /* SKProject DOS dm2bya.cpp:2734, SPX v4 skgame.cpp:2854, and
+     * SPX v5 skgdtqdb.cpp:1830 all scan the active party in hero order,
+     * returning the first living hero at the requested party position. */
+    if (!cb || !cb->get_heros_in_party || !cb->get_hero_partypos ||
+        !cb->get_hero_curHP || pos < 0 || pos > UINT8_MAX) {
+        return -1;
+    }
+    hero_count = cb->get_heros_in_party(ctx);
+    if (hero_count <= 0 || hero_count > DM2_MAX_HEROES) {
+        return -1;
+    }
+    for (int hero = 0; hero < hero_count; ++hero) {
+        if (cb->get_hero_partypos(ctx, hero) == (uint8_t)pos &&
+            cb->get_hero_curHP(ctx, hero) != 0) {
+            return hero;
+        }
+    }
     return -1;
 }
 
 int32_t dm2_v1_find_hand_with_empty_flask(int32_t player_idx,
                                           const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:1400 */
-    (void)player_idx; (void)cb; (void)ctx;
+    int hand;
+
+    /* SKWINDOS dm2bya.cpp:2332, SPX v4 skchamp.cpp:819 and SPX v5
+     * skgdtqdb.cpp:1511 all scan action hand before ready hand, accepting
+     * only a DB type-8 item whose authenticated record class-2 is 0x14. */
+    if (!cb || !cb->get_hero_item || !cb->query_cls2_from_record ||
+        !cb->get_heros_in_party || player_idx < 0 ||
+        player_idx >= cb->get_heros_in_party(ctx))
+        return -1;
+
+    for (hand = 1; hand >= 0; --hand) {
+        int16_t item = cb->get_hero_item(ctx, player_idx, hand);
+        uint16_t item_bits;
+
+        item_bits = (uint16_t)item;
+        if (((item_bits >> 10) & 0x0fu) != 8u)
+            continue;
+        if (cb->query_cls2_from_record(ctx, (int32_t)item_bits) == 0x14u)
+            return hand;
+    }
+
     return -1;
 }
 
@@ -777,12 +1256,27 @@ int32_t dm2_v1_query_turn_left(int32_t dir,
 
 /* ── Section 11: Record classification helpers ────────────────────── */
 
-int32_t dm2_v1_query_cls1_from_record(int32_t record,
+static int32_t dm2_v1_querydb_cls1_from_record(int32_t record,
                                       const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:2100 */
-    (void)cb; (void)ctx;
-    return (record >> 10) & 0x0f;
+    static const uint8_t table1d3298[16] = {
+        0x0e, 0x18, 0xff, 0xff, 0x0f, 0x10, 0x11, 0x12,
+        0x13, 0x14, 0x15, 0xff, 0xff, 0xff, 0xff, 0x0d
+    };
+    uint16_t rw = (uint16_t)record;
+    unsigned guard = 0u;
+    while (rw != 0xffffu && guard++ < 64u) {
+        uint8_t db_type = (uint8_t)((rw >> 10) & 0x0fu);
+        if (db_type != 0x0eu) return table1d3298[db_type];
+        if (!cb || !cb->get_address_of_record) return 0xff;
+        {
+            const uint8_t *record_bytes =
+                (const uint8_t *)cb->get_address_of_record(ctx, rw);
+            if (!record_bytes) return 0xff;
+            rw = (uint16_t)(record_bytes[2] | ((uint16_t)record_bytes[3] << 8));
+        }
+    }
+    return 0xff;
 }
 
 int32_t dm2_v1_query_cls2_from_record(int32_t record,

@@ -8,6 +8,7 @@
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_current_map_f0173_f0174_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 
 #include <stddef.h>
@@ -992,6 +993,15 @@ typedef struct {
     int floorOrnamentIndices[32][16];  /* [mapIndex][ordinal] -> graphic index */
     int doorOrnamentIndices[32][16];
     int ornamentCacheLoaded[32];       /* 1 if loaded for this map */
+    int ornamentCacheSourceValid[32];  /* metadata bytes read and bounded */
+    /* ReDMCSB DUNGEON.C F0173/F0174 current-map owner used by the live DM1
+     * renderer. Byte tables below back the source-shaped pointer cache. */
+    DM1_V1_CurrentMapRuntimeF0173F0174Pc34 dm1CurrentMapF0173F0174;
+    const struct DungeonDatState_Compat* dm1CurrentMapDungeonOwner;
+    uint8_t dm1CurrentMapWallOrnamentBytes[16];
+    uint8_t dm1CurrentMapFloorOrnamentBytes[16];
+    uint8_t dm1CurrentMapDoorOrnamentBytes[16];
+    uint16_t dm1CurrentMapDoorInfo[4];
 
     /* Spell casting UI state */
     int spellPanelOpen;          /* 1 when rune entry panel is visible */

@@ -1,3 +1,125 @@
+2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
+113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
+field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
+deallocate exhausted important items when DBSPEC0 has bit 0x0800. DOS and SPX
+v5 both return true when charge reaches zero; the Firestaff `events_30dea`
+helper now matches that return so the caller resets the slot state. Event 112
+retains its profile-specific PC-English DOS reset and FM Towns SPX v5 XOR/mask
+behavior. SPX v4 `PROCEED_COMMAND_SLOT` has no probability gate, so its runtime
+policy is still unmatched. Periodic command repeats, source-native panel
+rendering, and complete input/source ownership on every supported platform
+remain open; all reviewed variant rows stay partial.
+
+2026-11-01 skproject DOS/SPX v4/v5 `FIND_HAND_WITH_EMPTY_FLASK`: implemented
+the generic query owner with the source slot order (action hand 1, then ready
+hand 0), item type 8 gate, and record cls2 0x14 check from DOS
+`dm2bya.cpp:2332`, SPX v4 `skchamp.cpp:819`, and SPX v5
+`skgdtqdb.cpp:1511`. Missing hero/record callbacks fail closed. The DOS/v5 DM2 runtime now passes live flask state and transforms the held record
+with the source itemtype and power roll before committing mana, cooldown, and
+rune clearing. Its record/RNG transaction fails closed and rolls back on
+admission failure. SPX v4 cast routing and platform-specific hand/record
+ownership still need end-to-end source binding; all source variants remain
+partial.
+
+2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS keyboard driver review:
+`driver_keyboardint_T1`, `driver_kbdqueue_pop`, `driver_forceint2d`, and
+`driver_requestkeycode` (840-882) were compared with Firestaff's bounded
+SPX-v4 keyboard helper. Queue capacity and shifted/Ctrl table selection have
+nearby helpers, but Firestaff translates a different input stream, lacks the
+timer-1/interrupt-2D state gate, and returns safely on an empty queue where DOS
+decrements its raw counter. It also misses the source 0x1000 forced-zero
+request flag. All four DOS definitions are now `PARTIAL`; no DOS keyboard
+driver owner binds those semantics into the live SDL/M11 input path.
+
+2026-11-01 skproject `SKWINDOS/dm2D.cpp` DOS mouse path review:
+`driver_restoremousebackground`, `sub_min`/`sub_max`, `driver_drawmouse`,
+`driver_mouseblit`, `driver_drawmouse_clipped`, `driver_force_restoremousebkg`,
+and `driver_execmouseentry_T1` (569-671, 710-828, 887-1009) maintain and
+restore the software cursor, composite masked pixels during framebuffer blits,
+serialize cursor redraw, and dispatch source mouse-button transitions.
+Firestaff delegates cursor drawing to SDL/window-system paths and handles input
+through M11/UI owners; these do not reproduce the DOS framebuffer overlay,
+restore-counter, or interrupt-state contract. Eight DOS definitions are now
+`PARTIAL`; the source mouse compositor and exact event transition contract
+remain unmatched.
+
+2026-11-01 skproject `DM2_CREATURE_CAST_SPELL` source review:
+SKULLWIN and SPX v5 share direction/AI admission, item-ID-specific strength
+multipliers, projectile dispatch and conditional WOUND_CREATURE recoil; SPX v4
+has its own AI shoot-strength and consume-HP rules. Firestaff's helper uses an
+item-parity multiplier and no-recoil flag, has no production caller, and omits
+those source branches. V4/v5 and SKULLWIN entries remain `PARTIAL`.
+
+2026-11-01 skproject `DM2_CONFUSE_CREATURE` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN use the AI-spec resistance nibble plus
+RAND16, then dispatch a special ATTACK_CREATURE command on success. The scalar
+receipt matches the decision, but Firestaff has no production caller or
+authoritative selected-creature owner, and nested attack behavior remains
+partial. All reviewed variants are marked `PARTIAL`.
+
+2026-11-01 skproject `DM2_CREATURE_ATTACKS_CREATURE` source review:
+A source-shaped combat receipt exists, but it has no production caller. The
+older narrow helper identified by the named audit uses a different hit/damage
+formula. DOS, SPX v4, SPX v5 and SKULLWIN rows now remain `PARTIAL`; live target
+lookup, RNG ownership and nested attack/wound effects are not integrated.
+
+2026-11-01 skproject `DM2_ATTACK_CREATURE` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN definitions were checked against
+`dm2_v1_attack_creature`. The helper currently applies armor subtraction and
+random variance only; source also consumes attack flags, allocates and updates
+CAII damage, runs threshold/RNG response branches, and delegates to
+source-specific creature-wound behavior. The helper has no production caller,
+so all reviewed variants are `PARTIAL`.
+
+2026-11-01 skproject `DM2_WOUND_CREATURE` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN definitions were compared with Firestaff's
+HP helper. The source routines also invoke GDAT/map trigger messages, branch
+between minion command changes and generated-creature deletion, and apply
+variant-specific flee, debug and random-noise behavior. Firestaff has no
+production caller for `dm2_v1_wound_creature`; all reviewed rows remain
+`PARTIAL`.
+
+2026-11-01 skproject `DM2_CREATURE_ATTACKS_PLAYER` source review:
+The source attack roll is represented by a receipt, but the live WOUND_PLAYER
+callback ignores both wound type and attack type and accumulates raw damage.
+Runtime hit noise, poison, adjusted-ability and wake callbacks are also unset.
+SPX v4 has a separate difficulty/light/parry-XP formula. DOS, SPX v4, SPX v5
+and SKULLWIN review rows remain `PARTIAL`.
+
+2026-11-01 skproject `DM2_CREATURE_ATTACKS_PARTY` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN definitions were compared with the full
+Firestaff receipt and active CCM caller. The runtime wrapper omits source
+off-map door and creature attacks, weight-gated party pushing, and writeback of
+the receipt's creature target and champion hit direction/damage fields. Its
+nested WOUND_PLAYER call also depends on incomplete source behavior. All reviewed
+variant rows now remain `PARTIAL`.
+
+2026-11-01 skproject `DM2_ATTACK_PARTY` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN use the same damage-spread formula, per-hero
+RAND16 roll, minimum-one clamp and wounded-hero mask. Firestaff's
+`dm2_v1_hero_attack_party` matches that arithmetic and is bound to selected
+door-collision paths. Overall behavior remains `PARTIAL` because its nested
+`WOUND_PLAYER` behavior is not source-equivalent and generic per-platform
+callers/RNG ownership are still incomplete.
+
+2026-11-01 skproject `DM2_PROCESS_PLAYERS_DAMAGE` source review:
+DOS, SPX v4, SPX v5 and SKULLWIN definitions were compared with
+`dm2_v1_process_players_damage`. The helper models queued body-status and damage
+application, defeated-hero dispatch, and the five-tick damage timer, but no
+production caller binds authoritative party, pending-array, timer, or map/tick
+state. SPX v4 additionally has a champion-immunity early exit that Firestaff
+does not model. The named-symbol and per-source audit rows now remain `PARTIAL`.
+
+2026-11-01 skproject `DM2_WOUND_PLAYER` source review:
+The DM2 wound routine is now compared across DOS `dm2byf.cpp:880-1022`, SPX v4
+`skchamp.cpp:2091-2177`, SPX v5 `skhero.cpp:1498-1740`, and SKULLWIN
+`c_hero.cpp:1496-1740`. DOS and SKULLWIN share the multi-stage body-defense,
+hand-defense, skill-mitigation, wound-status and wake flow; SPX v4 has its own
+attack-type cases; SPX v5 follows the SKULLWIN-style cases. Firestaff's
+`dm2_v1_wound_player` collapses defense into one aggregate callback and does not
+preserve these source-specific branches, RNG order, or all pending-injury and
+wake state. The named-symbol and active-source audits mark the reviewed rows
+`PARTIAL`; platform-specific player-wound parity remains open.
 2026-11-02 DM2 DOS PC formation pointer route: the live M11 path admits
 source events 125–128 into the authenticated GAME_LOAD party. The first click
 records an occupied source slot; the next click moves its champion into an
@@ -41,25 +163,99 @@ native output from those gameplay events remain open.
 The active-source inventory generator now includes all C/C++ definitions in
 legacy top-level `SKWINDOS/` as well as `SKWINDOS/src` and `SKWINSPX/src`.
 The locked checkout yields 3,932 active definitions (2,725 SPX, 1,205 DOS and
-2 SKULLWIN); the generated open backlog currently has 3,969 rows (3,805
-unreviewed, 162 partial, and 2 partial source-owner rows). Five definitions
-have mapped parity entries.
+2 SKULLWIN); the generated open backlog currently has 3,964 rows (3,656
+unreviewed, 355 partial, and 2 partial source-owner rows). Active-source review
+overrides currently identify 255 partial and 21 implemented-parity definitions;
+these definition statuses do not establish whole-feature platform parity.
+
+2026-11-01 skproject SPX v4 audio initialization:
+`ALLOC_AUDIO_TABLES` creates the source sound shelf, GDAT short-info table, 20 active-sound structures, zeroed eight-entry sound list and six additional structures; it then calls `ALLOC_AUDIO_RAM_BUFFER`. Firestaff loads bounded sound/sample bindings and has SDL3 U8/6000 Hz playback with up to 16 voices, but initializes the device lazily on first playback and does not reproduce those tables or the source RAM buffer/card gates. Both source functions remain partial. Current backlog: 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+2026-11-01 skproject `ALLOC_NEW_PICT` and button-group picture initialization:
+SKWIN and SPX v4 allocate CPX heap bytes, write width/height/bpp headers before the pixel pointer, and return the picture buffer. DOS also masks the size product to 16 bits and uses its own pre-buffer header. Firestaff only produces a sizing/header receipt; it has no backing pixel allocation or cache ownership. The SKWIN `ALLOC_NEW_PICT` and `_0b36_0c52` dispositions are now partial, as are the SPX-v4 and DOS source variants and their button-group initializer paths. The open backlog is 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+2026-11-01 skproject `ALLOC_NEW_DBITEM` source variants:
+DOS and SPX v4/v5 resolve the source DB and item type from item-spec bits, preserve the 0x8000 allocation flag, then initialize the fresh DB record. Their deep variants first try `RECYCLE_A_RECORD_FROM_THE_WORLD`, allocate on miss, clear the DB-sized record, write the end marker and initialize type. Firestaff has the direct bounded pool helper and partial world-recycler coverage for selected ground/creature candidates plus DB7/DB9 direct-return cases. Full source scanning and generic deep-allocation runtime ownership remain open; all six rows are partial. Current open backlog: 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+2026-11-01 skproject SKWINSPX v6 `ADD_PARTY_CHAMPION` review:
+The command selects a requested GDAT champion, revives it at the current party, sets alive flag 0x4000, assigns party-facing position/direction, and selects slot 0 as leader. Its selector rejects a held hand item or full roster, but the outer function ignores selection failure. Firestaff has bounded source-mirror, revival, and leader helpers without a production owner for the v6 roster/UI mutation. The function remains partial; the open backlog now has 3,964 rows (3,585 unreviewed, 366 partial, and 2 partial source-owner rows).
+
+2026-11-01 skproject creature allocator variants:
+DOS `SKW_ALLOC_NEW_CREATURE`, SPX v4 `ALLOC_NEW_CREATURE`, SPX v5 and SKULLWIN `DM2_ALLOC_NEW_CREATURE`, and older SKWIN `ALLOC_NEW_CREATURE` now have separate source records. They initialize DB4 creature records, derive randomized HP from AI BaseHP, optionally append a DB14 missile for the high-bit minion form, and move the creature onto the requested tile. DOS/v5/SKULLWIN scale with `(min(multiplier, 31) + 1)`; SPX v4/SKWIN omit that increment. Firestaff only owns timer 0x5e fixed-input creation in production; the general spawn helper is test-only. All five variants remain partial because generic invocation, source-specific failure cleanup, and runtime ownership across DOS, Amiga, FM Towns, and Macintosh remain open. The combined open backlog is 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+2026-11-01 skproject combat skill-XP source trace:
+`SKULLWIN/c_hero.cpp::DM2_CALC_PLAYER_ATTACK_DAMAGE` awards skill XP only on
+the successful positive-damage path, using damage after poison-resistance
+adjustment. The
+gain uses the attacker's AI-spec word `w22` at offset `0x16`, taking its
+high byte's low nibble, multiplying by final damage, shifting right four,
+then adding three; it calls
+`DM2_ADJUST_SKILLS` for the wielding hero and selected skill. Firestaff now
+reads the source `w22` factor in its receipt, but it still only records a
+poison-applied flag instead of the source resistance adjustment, and the
+runtime does not apply the receipt through `dm2_v1_adjust_skills`.
+Skproject's `ddat.v1d26a4` starts at `0xffffff38`, is restored from save field
+`l_16`, and is advanced by creature AI paths; its combat-window halving and
+doubling affect skill IDs 4-11. Firestaff has no authoritative live owner for
+that field, XP scale, skill mutation, or level-up RNG/UI effects. Therefore
+combat skill XP and level-up effects remain an open parity gap; do not treat
+the existing helper or receipt as production coverage. Source anchors:
+`SKULLWIN/c_hero.cpp:232-430,1166-1360`,
+`SKULLWIN/dm2data.cpp:1105`, `SKULLWIN/c_creature.cpp:1088,1880`, and
+`SKULLWIN/c_savegame.cpp:1494`.
+
+2026-11-01 skproject `DM2_ENGAGE_COMMAND` hand-action epilogue:
+The M11 hand-action route consumes CMDSTR field 4 plus the source RANDBIT,
+spends that stamina through `DM2_ADJUST_STAMINA`, and applies CMDSTR field 3
+through `DM2_ADJUST_HAND_COOLDOWN`; the field-5 attack timer stays separate.
+Ordinary source action failures still run the common cooldown/stamina epilogue,
+while attack timer/counter state is restored if route admission rejects the
+dispatch. Missing action owners remain fail-closed without gameplay side effects.
+Skill adjustment, throw and remaining action callers, source sound and hand-table
+updates, SPX v4 formula selection, and DOS/Amiga/FM Towns/Macintosh runtime
+evidence remain open.
+
+2026-11-01 skproject `RELEASE_MINION` source review:
+DOS `SKW_RELEASE_MINION`, SPX v4 `RELEASE_MINION`, and SPX v5/SKULLWIN
+`DM2_RELEASE_MINION` were compared. All resolve the minion's missile reference,
+switch to the missile map, dispatch the source destroy-command update at the
+missile position, and restore the previous map. Firestaff now binds case 47 in the live hand-command owner, resolves the DB14
+missile through the endian-aware record chain, and dispatches
+`ai_13e4_0360` at the missile map and coordinates. It preserves the source
+no-op for missing CAII slots and stopping/dying guards. DOS, Amiga, FM Towns,
+and Macintosh runtime/data lanes still lack independent evidence, so the
+named-symbol and active-source rows remain `PARTIAL`.
+
+2026-11-01 skproject `CREATE_MINION` source review:
+DOS `SKW_CREATE_MINION`, SPX v4 `CREATE_MINION`, SPX v5
+`DM2_CREATE_MINION`, and SKULLWIN `DM2_CREATE_MINION` all search the requested
+tile plus up to four source-selected neighbors, allocate a creature, and
+optionally attach a missile association. Firestaff's only helper returns -1
+with `blocked_missing_state`; the live hand-command route has no create-minion
+owner and rejects the source create cases. The four source rows now remain
+`PARTIAL`.
 
 2026-11-01 skproject `DM2_CREATURE_CAN_HANDLE_IT` source review:
-`dm2_v1_creature_can_handle_it` currently implements only the supplied
-class-mask membership check. The source function also obtains the
-creature-specific item mask from GDAT, decodes class-specific object
-fields and checks container/moneybox state. The mask-build and special
-object branches do not yet have a live CCM `SHOOT_ITEM` owner, so this
-symbol is now `PARTIAL` in the named audit and contributes one row to
-the 3,969-row open backlog.
+`dm2_v1_creature_can_handle_it` now reads the class selector from flags,
+applies skproject's flag-0x80 inversion and 0x3e/0x3f behavior, and keeps
+the SPX v4 opened-moneybox shortcut separate from the v5 mask check. These
+scalar branches operate over the supplied mask. The source function still obtains the creature-specific
+item mask from GDAT and decodes class-specific object fields before mask
+membership. Those live source owners do not yet join current creature state,
+mask selection, record decoding and moneybox state into CCM `SHOOT_ITEM`, so
+this symbol remains `PARTIAL` in the named audit and contributes one row to
+the 3,983-row open backlog.
 The DOS and SPX v4/v5 shooter definitions have now been compared individually:
 actuator selection, directional item cutting, single-shot random direction,
 launch offset, DB14 payload/tile append, noise, and 0x1d/0x1e continuation timer
-fields are recorded in the active-source audit. DOS also moves a non-cloud
-object directly when DB14 allocation fails. Firestaff still fails closed before
-projectile allocation, so these source and platform rows remain partial.
-The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,969 rows (3,805 unreviewed, 162 partial and 2 partial owners). DOS and SPX shooter behavior is source-compared: actuator types 7/8/14 fire one projectile; 9/A/F fire two, with item variants cutting direction-matched records from the shooter tile and random direction when only one projectile remains. Both source families launch one tile along timer direction with energy 100. The live wall-mecha path now selects/cuts source items, randomizes a single projectile through session RNG, creates DB14 records and queues 0x1E continuation timers. Wall-shooter noise is requested before missile publication when audio is available; sound admission is best-effort and does not suppress the projectile. The DOS non-cloud MOVE_RECORD_TO fallback on DB14 exhaustion remains missing. The authentic DOS `dm2/dos_extract/data/dungeon.dat` regression finds the retail missile shooter at map 3, tile `(13,0)`, and verifies that its 0x1E continuation timer uses the activated tile and launch offset rather than `Actuator::w6` payload bytes; the test also requires the shot to publish without a sound callback. This covers one DOS record-graph case only. Keep all DOS, Amiga, FM Towns, and Macintosh platform rows open until each runtime/data lane is independently evidenced.
+fields are recorded in the active-source audit. DOS, SPX v4/v5, and SKULLWIN
+move an ordinary object with MOVE_RECORD_TO when DB14 allocation fails; Firestaff
+now follows that fallback and leaves DB15 cloud objects in place. Creature shooter
+binding and platform runtime/data coverage remain open, so the rows stay partial.
+2026-11-01 skproject `ACTIVATE_ITEM_TELEPORT` possession-chain review:
+DOS and SPX v4/v5 recurse into DB4 creature possession lists when recycler mode is off, preserving each next-link before item mutation. Their `MOVE_ITEM_TO` path applies the actuator charge mode and relocates through the source tile to the destination; the champion-item cut/deallocate/revive case has variant-specific gating. Firestaff visits tile DB5-DB10 records and applies source `ActionType` charge modes 0/1/2 to DB5/DB6/DB10 records using platform byte order and the live session RNG; modes above 2 leave charges unchanged. It applies source `RAND16(4)` when the destination tile value selects randomized direction, reads item direction from ObjectID bits 14-15, and moves items through a source cut followed by a destination append and synchronizes changed record-link words into the live pool view. Non-recycler teleporters now recursively traverse bounded DB4 possession chains, cut matching items from the owning creature list, and append them to the destination tile while synchronizing link words across the live pool and dungeon views. The matching champion-token branch now cuts/deallocates the token and invokes the skproject `bring_to_life` owner through the live wall/floor mecha paths, including party/inventory rollback on rejected transactions. Source comparison confirms the same once-only-clear gate in DOS (`dm2byg.cpp:3390`), SPX v4 (`skevent.cpp:1435`) and SPX v5 (`bitem.cpp:862`); independent supported-platform runtime/data evidence remains open. All three source rows stay `PARTIAL`.
+
+The DOS `SKW_IS_REBIRTH_ALTAR` predicate maps to a Firestaff helper, while authenticated header decoding and platform caller parity remain open. The DOS and SPX v5 door-strength field-0x11/fallback sequence and neighboring fields are source-mapped; Firestaff receipt queries were corrected to those fields. SPX v4 differs: strength reads field 0x0f, resistance reads 0x0e, and door graphics come from the map header. Firestaff already resolves map door sets through header enable flags and door-record type, but the v4 `0xff` no-door caller behavior, complete consumer coverage, and per-platform runtime/data checks remain open. DOS/SPX v5 `ATTACK_DOOR` cloud callers now use the skproject spell flag, altar-derived field-0x0e threshold, and closed-to-destroyed tile transition in both active and GAME_LOAD candidate owners. Ordinary move/creature callers, delayed timer dispatch, SPX v4's weak-door and resistance behavior, and per-platform evidence remain incomplete. The DOS `SKW_ADD_COIN_TO_WALLET`/`SKW_TAKE_COIN_FROM_WALLET` and SPX v4/v5 variants are now tracked separately: Firestaff keeps the DOS non-currency return and exposes an SPX/SKULLWIN helper that returns zero, while live platform callback binding remains open. The combined skproject backlog is 3,964 rows (3,626 unreviewed, 355 partial and 2 partial owners). SPX-v4 `ADD_ITEM_TO_PLAYER` tries inventory slots 2–5 and 10 for any item, slots 0–1 for DB types 5 then 6, and slots 13–29 for any item, taking the first empty slot accepted by `IS_ITEM_FIT_FOR_EQUIP(..., 0)`; a dedicated Firestaff adapter now supplies the exact source groups to the matching generic helper, but it has no live runtime caller. `PUT_ITEM_TO_PLAYER` moves the held object to the first empty backpack slot 13–29 for a living champion. Firestaff has the matching narrow helper and input-event dispatcher, but the supported runtime owner remains unverified. DOS, SPX v4 and SPX v5 `SELECT_CHAMPION_LEADER` match Firestaff's leader-state helper for dead-target rejection, the old/new flags, and the `v1e0288` last-hero exclusion; live platform owner binding remains open. SPX-v4 `ADD_MINION_ASSOC`/`RECOVER_MINION_ASSOC` save and rebuild temporary DB9/DB14 object links; Firestaff's persistent original-minion table is a different feature and does not yet restore those serialized links. DOS, SPX v4 and SPX v5 `APPEND_RECORD_TO` share the parent-list, existing-tile tail and new ground-root insertion paths; Firestaff has separate bounded pool and dungeon-data helpers, but runtime ownership and source failure semantics are not complete. DOS and SPX shooter behavior is source-compared: actuator types 7/8/14 fire one projectile; 9/A/F fire two, with item variants cutting direction-matched records from the shooter tile and random direction when only one projectile remains. Both source families launch one tile along timer direction with energy 100. The live wall-mecha path now selects/cuts source items, randomizes a single projectile through session RNG, creates DB14 records and queues 0x1E continuation timers. Wall-shooter noise is requested before missile publication when audio is available; sound admission is best-effort and does not suppress the projectile. When DB14 allocation fails, the live wall-mecha shooter now applies the source MOVE_RECORD_TO fallback for ordinary objects and preserves the DB15-cloud no-fallback branch; the standalone creature shooter owner and platform runtime/data evidence remain open. The authentic DOS `dm2/dos_extract/data/dungeon.dat` regression finds the retail missile shooter at map 3, tile `(13,0)`, and verifies that its 0x1E continuation timer uses the activated tile and launch offset rather than `Actuator::w6` payload bytes; the test also requires the shot to publish without a sound callback. This covers one DOS record-graph case only. Keep all DOS, Amiga, FM Towns, and Macintosh platform rows open until each runtime/data lane is independently evidenced.
 
 2026-10-31 skproject `STEP_DOOR` timer direction source:
 The direct GAME_LOAD world-owner no longer treats the timer actor byte as a
@@ -2032,28 +2228,36 @@ destination transforms before drawing.
 
 2026-10-31 skproject class-4 light roots: Rechecked `c_gui_vp.cpp:2672-2707`, `c_querydb.cpp:3296-3700`, and `c_light.cpp:231-435`. The side-mismatch route invokes `query_0cee_1a46`, whose side-decoration writes do not change the three summary fields consumed by the light calculation. Firestaff now admits class-0..3 adjacent roots only after a complete bounded record-list walk validates every record and end marker; higher classes preserve the query's source early return. The focused `dm2_v1_light_ops` test passes for a valid DB3 root and rejects an unresolved root. This closes the class-0..3 light-input admission gap only; full side-decoration query behavior, actuator animation, and platform/runtime coverage remain open.
 
-2026-10-31 skproject `ACTIVATE_ACTION_HAND`: the live DM2 click bridge now calls
-`dm2_v1_IS_ITEM_HAND_ACTIVABLE` against the selected champion's source hand
-record, source-endian DB9/DB14 chains, the boot GDAT loader, and the mounted
-CMDSTR entries. Its minion-map action filter uses the existing
-`dm2_v1_skproject_2759_01fe_command_valid` source model. M11 rune-cast
-selection has a separate champion-only bridge so it does not incorrectly
-require an item action in the casting hand. The source global panel/map flags,
-pending-position recompute, exact stat/right-panel refresh sequence, and
-full source-media behavior across every supported DM2 edition/platform still
-need implementation or direct source validation; this function remains
-partial.
+2026-10-31/2026-11-01 skproject `ACTIVATE_ACTION_HAND` and
+`CHANGE_PLAYER_POS`: the live DM2 click bridge routes source hand events
+116-123 and calls `dm2_v1_IS_ITEM_HAND_ACTIVABLE` against the selected
+champion's source hand record, source-endian DB9/DB14 chains, boot GDAT loader,
+and mounted CMDSTR entries. M11 now also routes formation events 125-129 to
+the runtime-owned two-stage formation model. It retains source pending slots
+0..4, performs rotated occupied-slot swaps or empty-slot moves, preserves the
+high-bit direction rule, and synchronizes party/snapshot state. Both hand
+activation and the separate M11 spell-champion bridge invoke the source
+conditional high-bit recompute path. The original platform cursor-icon
+painting/feedback, transient UI consumers, and non-M11 platform/edition routes
+remain open, so both function families stay partial.
 
 2026-11-01 skproject `SET_SPELLING_CHAMPION` variants: DOS and SPX v4/v5 all
 select a live champion, enter source spell mode, clear the magical-map flags,
 recompute any pending squad position, and refresh the right panel. Firestaff's
-`M11_GameView_OpenSpellPanel` instead selects the DM2 runtime champion and
-restores its rune buffer into the separate M11 spell panel while preserving
-`party.curactmode` as the active physical hand required by the cast owner.
-This is the architectural spell-mode equivalent; the source pending-position
-callback and magical-map transient clearing have no separate M11 owner, and
-source UI behavior is not validated across all DM2 editions/platforms. Keep
-the DOS, SPX v4, and SPX v5 source rows partial.
+`M11_GameView_OpenSpellPanel` selects the DM2 runtime champion and restores
+its rune buffer into the separate M11 spell panel while preserving
+`party.curactmode` as the active physical hand required by the cast owner. It
+now invokes the source conditional high-bit `CHANGE_PLAYER_POS` recompute when
+a formation drag is pending; transient source mode/map flags, cursor feedback,
+and other platform routes remain open.
+The M11 DM2 spell-panel path now enters `dm2_v1_runtime_enter_spell_mode`,
+which publishes the selected champion, records the source spell-hand sentinel
+and panel-refresh flag, clears source magical-map rune-mask/composed-cost state,
+and recomputes a pending formation drag. The source sentinel is represented
+separately from Firestaff's physical active hand, which its cast transaction
+still consumes. The v5 source command-mask/rune-selection flow is not yet
+equivalent to the panel's stored hero rune sequence. Cursor feedback and non-M11 platform routes remain open.
+Keep the DOS, SPX v4, and SPX v5 source rows partial.
 
 2026-11-01 skproject `ACTUATE_PITFALL`: the live class-2 timer owner now
 resolves ActionType 2 from tile bit 3, applies source close semantics by
@@ -2167,6 +2371,202 @@ charge. The existing shared Firestaff helper and item-charge boundary
 regression implement this mutation. All source rows remain partial pending
 supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
 
+2026-11-01 skproject cache hash source comparison:
+`ADD_CACHE_HASH` matches sorted lookup, duplicate cache-index selection and insertion ordering in Firestaff’s bounded state helper. SPX v4 and the older SKWIN source also run cache-maintenance when the game tick changes and touch/retrieve the mement entry on duplicate hits. Those effects and per-platform runtime cache ownership remain open; the source row is PARTIAL.
+
+2026-11-01 skproject UI-event variant comparison:
+`SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff now exposes both the v5 arrow branch and an explicit older spell/leader rectangle branch with the source b44 leader gate. The DOS, SPX-v4, and SKWIN rows are now PARTIAL; the v5 algorithm matches but its live runtime/platform owner remains open.
+
+2026-11-01 skproject temporary-cache lifecycle comparison:
+SPX v4 and SKWIN `GET_TEMP_CACHE_HASH` advance the source counter per collision probe, while Firestaff uses a local probe and only advances once after allocation. `FREE_TEMP_CACHE_INDEX` frees the cache entry when no mement is attached before the no-op indexed-mement release. Firestaff now models that branch with a cache-free receipt; live cache ownership remains open. The active SPX-v4 cache functions and older SKWIN dispositions remain partial pending runtime ownership.
+
+
+2026-11-01 skproject `ANIMATE_CREATURE` runtime dispatch review:
+The DOS, SPX v4, and SPX v5 source functions find the creature at the requested map tile, conditionally allocate CAII, prepare local creature state, and invoke one of two AI routines when thinking state exists. DOS always releases the prepared context after preparation, while SPX v4/v5 release it inside the thinking-state branch. Firestaff’s previously mapped `dm2_v1_animate_creature` only advances a bounded animation-frame counter; it does not implement these source operations or have a production timer/AI owner. All three active variants and the older SKULLWIN named-symbol row are partial. The open backlog is 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_blit_hline` review:
+`driver_blit_hline` copies exactly `numpixels` contiguous bytes between the currently selected bitmap pointers at source/destination offsets; `driver_blit` uses it for each unmasked rectangle row. Firestaff exposes an MBlitter rectangle callback for its DM2 backbuffer, but no DOS offset-based row primitive or supported DOS framebuffer owner is established. The M11 hline helper writes a solid color and is not equivalent. Keep the DOS function partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_blit_hline_masked` review:
+The DOS row helper advances source and destination for every pixel, copying only source bytes different from the transparent mask. Firestaff’s 8bpp `dm2_v1_blit_blitline_88_masked` matches that pixel operation, but remains part of the SKWIN/SPX blitter and is not wired into the DOS driver bitmap/offset owner. Keep this variant partial. The open backlog remains 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_blit` review:
+The DOS rectangle blitter installs source/destination bitmap pointers, rejects nonpositive extents, waits for drawing and disables video when targeting DMSCREEN, computes row offsets from source/destination strides, then dispatches plain or masked row copies before reenabling video. Firestaff has format-aware 4/8bpp blitters and backbuffer rectangle callbacks, but no DOS driver-global/stride owner or matching screen synchronization route. Keep DOS parity partial. The open backlog remains 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX-v5 vertical-sync functions:
+DOS `driver_vsync` calls a host wait function for fade timing; Firestaff has configurable SDL renderer VSync and presents in the main loop but no active DM2 per-call wait callback, so that driver function remains partial. SPX v5 `wait_for_vsync` only increments `vsynccounter`, rather than waiting for display hardware; Firestaff’s `dm2_v1_skproject_wait_for_vsync` increments the caller-owned counter and matches that function’s body. Caller scheduling is still audited separately. The open backlog is 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DM2 halftone bounds review:
+DOS `driver_showscreenrectdisabled`, SKULLWIN `DM2_FILL_HALFTONE_RECTV`, and SPX v5 `DM2_FILL_HALFTONE_RECTV` iterate only while x < rect.x+rect.w-1 and y < rect.y+rect.h-1, while SKWIN/SPX v4 IBMIO halftone loops include the final row and column. Firestaff previously used the full-rectangle helper for all three; it now retains that helper for SKWIN/SPX v4 and adds source-specific exclusive-bounds vector/index helpers for SKULLWIN and SPX v5. The DOS pixel region is mapped but its DMSCREEN driver owner remains partial. The open backlog is 3,964 rows (3,585 unreviewed, 366 partial, and 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX-v5 `driver_setcolors` review:
+Both sources convert 256 RGB triplets, write 1000 palette levels from 0/1000 through 999/1000, then wait for vsync after each palette write. Firestaff previously used 1/1000 through 1000/1000 and waited before writing; its shared helper now matches the source step range/order and fails closed unless both screen-color and wait callbacks exist. The DOS and SPX-v5 runtime palette owners are not bound, so both rows remain partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX-v5 alpha-palette conversion:
+Both source variants skip each alpha byte, shift the 256 RGB triplets right by two into DMPAL, and invoke `driver_setcolors` only when immediate colors are enabled. Firestaff’s converter matches the byte transformation and conditional fade call, but no DOS or SPX-v5 runtime DMPAL/palette owner is established. Both source rows remain partial. The open backlog is 3,964 rows (3,585 unreviewed, 377 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX-v5 palette-set dispatch:
+DOS and SPX v5 mode 0 backs up the current palette, fades factors 1000/1000 down through 1/1000, and waits twice after each step; mode 1 restores via `driver_setcolors`; other byte modes do not restore and clear the immediate-colors flag. Firestaff now truncates the mode to signed byte, preserves the two-mode dispatch and two-vsync fade order, and fails closed without the palette state/callbacks. Its native DOS/SPX screen-palette owners remain unbound, so DOS, SPX v5 and the older SKULLWIN row are partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_init` review:
+The source assigns `DMSCREEN` and initializes graphics flags, mouse geometry/background, click and mouse queues, cursor state, keyboard queue, transfer map and related driver globals. Firestaff has separate bounded mouse, cursor and keyboard initializers, but no unified DOS driver-state owner or mouse-background framebuffer binding. Treat those components as partial counterparts and keep DOS `driver_init` partial until all source fields and runtime ownership are accounted for. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject screen-row blit review:
+DOS `driver_blitfromscreen` and SPX v5/SKULLWIN `blit_within_screen` copy `rect.w` bytes per 320-byte row from `(wi-yofs)` to `wi`, over `rect.y+yofs` through `rect.y+rect.h-1`. Firestaff `dm2_v1_blit_within_screen` matches the pixel operation; the DOS driver-interface/DMSCREEN owner and SPX-v5 live screen callback remain unbound, so those active rows stay partial. Correct the older SKULLWIN mapping to this helper. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject stretched-blit review:
+DOS `driver_stretched_hblit` and SPX v5 `c_mblitter::blit_hline_stretched` repeat the same 14 groups, expanding 13 source pixels to 16 destination pixels. Firestaff now exposes a bounds-checked helper with the exact 182-byte input/224-byte output pattern. DOS global bitmap routing and the SPX-v5 MBlitter binding remain open, so both primitive rows stay partial. SPX v5 `_specialblit` is also partial: Firestaff still uses `rect.h`/centered variable-width callback rows rather than the source's fixed 136-row offset sequence, and does not block/unblock mouse input around the operation. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_memcpy` review:
+`driver_memcpy` directly invokes `memcpy(dest, src, bytes)` with no additional behavior. Firestaff’s matching source-row copy uses the same C11 primitive with equivalent pointer and length roles, so this low-level copy function is IMPLEMENTED_PARITY; bounds and DOS driver-pointer ownership remain separate partial functions. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_blockmouseinput` review:
+The DOS CLI macro is empty, so this function only increments the signed 16-bit blocked-input counter. Firestaff’s `dm2_v1_tmouse_block_mouse_input` performs the same increment and the event-queue path checks that counter. Mark the counter primitive implemented parity; DOS interrupt integration remains a separate platform concern. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_execmousefifo` review:
+The Firestaff Tmouse interpreter drains mouse records and dispatches button transitions, but its previous-button state is a static local that initialization cannot reset. DOS `driver_init` resets the corresponding `DRVW_oldmb`; DOS `driver_execmousefifo` also decrements the blocked-input counter after draining. Those DOS-specific reset/unblock semantics and runtime ownership are missing, so the row remains partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_setmousecaptured` review:
+The DOS function only increments its signed 16-bit capture counter because its CLI macro is disabled. Firestaff's Tmouse command 5 performs the same counter increment. Mark the counter operation implemented parity; DOS driver-interface routing remains separate. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_setmouse` review:
+Both DOS and Firestaff decrement the mouse-capture counter and request a pointer warp by (+5,+15) on release. DOS gates the warp through `DRVb_enablesetmouse`; Firestaff's command-2 path has no corresponding flag and always invokes the optional pointer callback. Keep the source function partial pending that conditional owner behavior. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_init_clickhandler` review:
+The active source sets `DRVW_clickhandler_installed` to 1; its old far-pointer installation code is disabled. Firestaff has a click-event callback route but no equivalent installed-state flag or source gate, so the DOS entry remains partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_mouseint_T1` review:
+The source masks button bits, honors captured coordinates, dispatches synchronously when unblocked/non-reentrant, queues otherwise, drops on overflow, and coalesces the pending tail for unchanged button state. Firestaff's SPX input handler rejects blocked input and lacks the DOS direct-dispatch/reentry/coalescing behavior. The DOS handler remains partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_showmouse` review:
+On the visible transition 1-to-0, DOS blocks mouse input, draws the software cursor, records the shown coordinates, then drains the FIFO and unblocks. Firestaff's show operation queues Tmouse command 1 and delegates drawing/input processing to separate paths, with no DOS mouse-background framebuffer owner. Keep the source driver partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_hidemouse` review:
+On the 0-to-1 visibility transition, DOS blocks input, restores the saved software-cursor background rectangle, and drains/unblocks the FIFO. Firestaff hide only increments its invisibility counter and has no DOS framebuffer restore owner or matching FIFO flush. Keep the DOS driver partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_setcursorparams` review:
+Firestaff's cursor conversion matches DOS 4bpp nibble extraction, even-width row stride, palette conversion, mask lookup and signed-byte descriptor fields. DOS non-4bpp mode copies one byte beyond w*h; it also blocks input and drains the FIFO, unlike the bounded cursor helper. Keep the DOS route partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_setcindex` review:
+The DOS function blocks input, assigns the requested cursor index, redraws the clipped cursor when background restoration is pending, then drains/unblocks the FIFO. Firestaff has no general DOS cursor-index setter, restore-pending counter, or clipped framebuffer redraw owner; its cursor changes occur through narrower Tmouse commands/hit tests. Keep the source row partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_setrect2` review:
+DOS safely disables rect2 while replacing its bounds and entry mask, re-enables it, then drains the mouse FIFO. Firestaff has rect2 storage but no setter or hit-test consumer for its bounds/mask. Keep the DOS setter partial pending complete state and call-path behavior. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_copymouseentry` review:
+Firestaff can copy the current entry x/y/button tuple. DOS's alternate `source=1` branch copies delta x/y plus `cursorh`; those values and the selector are absent from Firestaff Tmouse state. Keep this two-mode source function partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_timerint_T1` review:
+The active handler queues DOS INT 2Dh every fourth tick while timer and interrupt gates are enabled; its hardware 8253 programming is disabled in the source. Firestaff's host scheduler has no matching DOS timer gates or queued INT 2Dh route. Keep the source row partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_getfilename` review:
+The source uses an undocumented DOS `SYS_findfirst`/transfer-address contract and copies an 8.3-style name from offset 8 while skipping spaces and periods. Firestaff has no equivalent DOS owner, and the source itself labels the operation unknown. Keep this platform row partial until its caller contract and applicable runtime behavior are understood. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_execmouseclick` review:
+The source serializes shared mouse-entry updates, calls the thread-safe `queue_int2e` dispatcher, and returns its status. Firestaff has Tmouse event callbacks with comparable coordinate/button routing but no DOS shared-entry adapter, cross-thread semaphore, or integer dispatcher-result contract. Keep the DOS wrapper partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `driver_userint` review:
+The DOS callback ABI dispatches low-byte and bit-0x100 command spaces through a shared interface buffer, covering mouse, keyboard, cursor, palette, screen/blit, and transfer-map operations. Firestaff has separate underlying helpers but no matching command-number ABI, interface buffer, or complete dispatcher, and some source commands are unresolved. The DOS platform dispatcher remains partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS `SKW_44c8_2351` stretch review:
+The DOS 8bpp stretch variant initializes each source row at `vw_18 * width`, while SKULLWIN and Firestaff add the ratio high byte (`vw_04 >> 8`) before fixed-point stepping. That changes first-pixel selection for non-integral horizontal ratios. The Firestaff helper follows SKULLWIN, not the DOS body, and no DOS picture-blit owner is bound; keep the DOS source row partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `FSUBSAVE` review:
+DOS and SPX v5 share failure-file close/delete and error display, release the three optional save buffers, fill orphan CAII, conditionally end the game, restore event state, and show the mouse. Firestaff models the save serialization and has the CAII map walker, but no unified caller-bound finalizer owns partial-file rollback, temporary-buffer cleanup, game-end policy, event unblocking, and platform mouse/UI restoration. The SKULLWIN body matches this cleanup core; DOS and SPX wrappers differ. Keep the platform rows partial. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `2066_062b` review:
+The DOS, SPX v5 and SKULLWIN sources decode a 10-bit possession continuation only for DB9 and DB14 records, apply 0x1000/0x2400 type markers, and consume no bits for other record types. Firestaff’s helper matches the type gates and marker values and is bound into staged save/load after map chains and before timer reconstruction. Both active DOS and SPX v5 source rows are implemented parity. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `2066_0b44` review:
+Both sources walk timers in order and serialize valueB as a record chain only for timer types 0x3c/0x3d, aborting on the first writer failure. Firestaff performs that filter and write at the start of `dm2_v1_store_extra_dungeon_data`; its save orchestrator stops before map serialization when the writer fails. Mark both active variants implemented parity. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `2066_197c` review:
+The sources read one non-following valueB record chain for each timer type 0x3c/0x3d, reject when savegamew7 is zero, and initialize the timer owner to OBJECT_END_MARKER before the read. Firestaff applies the same timer filter, gate, marker and reader flags in the staged record-pool load before map chains; it publishes the owner only after successful parsing and rejects the transaction on error. Mark both active variants implemented parity. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `COMPACT_TIMERLIST` review:
+Firestaff has the same copy-next-nonempty and clear-source primitive, but no save orchestrator calls it. Both source variants sort timers and run `3a15_020f` after compaction; Firestaff sort/rearrange ownership is currently load-side. The inner scan relies on a valid empty-tail sentinel and is not count-bounded in either source or Firestaff helper. Keep both active rows partial pending caller binding and domain validation. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `GAME_LOAD` review:
+Firestaff restores the authenticated SKSAVE data through a staged record-pool/world candidate, preserving source order for records, timers, maps and possession links. The DOS/SPX top-level functions also own file selection/open fallback, resume/new-dungeon mode branches, dialogue/error codes, file-handle cleanup, and final event/UI/exit ordering; those are not bound as one source-equivalent Firestaff entry route. Keep both active platform variants partial pending full entry-flow and platform media ownership. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `GAME_SAVE_MENU` review:
+Firestaff has a source-ordered save serializer and a generic input callback, but no runtime owner binds them into the source menu/file transaction. DOS and SPX v5 own slot selection, backup rename/create/open, carried header, save admission/state changes, serializer execution and FSUBSAVE rollback/resource/UI cleanup. Their platform-specific event, cursor and error-code behavior also differs. Keep both active variants partial until the full menu-to-file save path is connected. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v4/v5 `LOAD_NEW_DUNGEON` review:
+Firestaff has a source-shaped atomic DUNGEON reload that rechecks the selected asset, clears prior party/leader ownership and applies the parsed start pose. DOS/SPX v5 select alternate dungeon files from savegamew1; SPX v4 has dungeonB/default and custom-filename variants. Those source file-choice/fallback and active-handle routes are absent from Firestaff. Keep the DOS, SPX v4 current/original, and SPX v5 rows partial until each edition/platform selection path is bound. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v4/v5 `PROCEED_GLOBAL_EFFECT_TIMERS` review:
+Firestaff stages the DOS/SPX v5 post-load timer effects 0x0e, 0x46, 0x47, 0x48 and 0x4b into the save-load candidate, with rollback if an unsupported effect cannot be applied. The source also recalculates party weight, which the candidate cannot do without active party/eventqueue/hand state. SPX v4 additionally has conditional 0x49 SeeThruWalls handling and a different 0x4b poison effect. Mark all three platform variants partial; full runtime and edition parity remain open. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `SUPPRESS_INIT` review:
+Firestaff initializes isolated bit-reader/writer contexts with zero pending byte/bit state. The save orchestrator initializes once before the ordered compressed sections; the staged loader initializes its reader at the encoded offset, retaining carry between sections without stale state crossing operations. This matches DOS and SPX v5 reset semantics. Mark both source rows implemented parity; SPX v4 has no matching standalone definition and its save/load route remains open. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `SUPPRESS_READER`, `SUPPRESS_WRITER`, and `SUPPRESS_FLUSH` review:
+Firestaff reproduces MSB-first masked bit reads/writes, carry between fields/sections, preservation of unmasked record and tile bytes, zero-fill reads, underflow/capacity errors, and zero-padded final-byte flush. Its staged load and ordered save owners bind the primitives to the source stream. The source selected-bit accounting field has no consumers. Mark the six DOS/SPX v5 primitive rows implemented parity; top-level file/menu/UI routes remain open. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v4/v5 `READ_1BIT` and `WRITE_1BIT` review:
+All three indexed DOS/SPX reader/writer variants mask or decode the low bit through the shared stateful SUPPRESS stream; Firestaff’s one-bit helpers preserve the 0x01 source mask, cross-call carry, zero-fill read and output/read error propagation. SPX v4 `READ_1BIT` in skcore.cpp was missing from the active-source inventory; add the source definition and mark all six indexed wrappers implemented parity. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v4/v5 `SKLOAD_READ`/`SKSAVE_WRITE` review:
+The source wrappers transfer the requested byte count through the active save file handle and preserve version-specific zero-length and return-status behavior. Firestaff reads complete save files into memory and writes a serialized payload through path-level atomic replacement; it has no corresponding current-handle cursor and per-call read/write adapter. Mark the six DOS, SPX v4, and SPX v5 wrappers partial; the higher-level save parser and serializer remain reviewed separately. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX v5 `WRITE_POSSESSION_INDICES` review:
+Both variants walk the ordered savegamep3 links, emit the 10-bit v1e08e4/v1e08f0 continuation for DB9/DB14 only, and abort on SUPPRESS write failure. Firestaff preserves source order and filters but its unresolved eligible-link case previously skipped the continuation; the helper now fails closed. The save orchestrator has no production runtime caller, so both source rows remain partial pending active save-owner/platform binding. Open backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+### Record-chain checkcode restore review (2026-11-01)
+
+DOS `SKW_READ_RECORD_CHECKCODE` and SPX v5 `DM2_READ_RECORD_CHECKCODE` are now marked implemented parity at the chain-decoding function level. Firestaff’s staged decoder matches continuation/type/direction fields, per-database record masks, recursive possession and timer chains, and fail-closed stream/owner handling. This does not close the outer file selection or UI entry functions. SPX v4 `READ_RECORD_CHECKCODE` is added to the inventory and remains partial: its `ADD_MINION_ASSOC` calls rebuild temporary DB9 container and DB14 missile associations that Firestaff does not currently reconstruct; its inventory, timer, and map-root caller routes also lack v4 binding. Current generated backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject SPX v4 `AJ32`: implemented the debug-only integer adjustment used by `ValidateMements` output. It subtracts 8 under `__LINUX__` and otherwise returns its argument unchanged. This closes the helper definition only; MEMENT buffer allocation, validation, and cache ownership remain separate open functions. Current generated backlog: 3,962 rows (3,579 unreviewed, 381 partial, 2 partial source-owner rows).
+
+
+2026-11-01 skproject DOS/SPX-v4/SPX-v5 `ALLOC_CAII_TO_CREATURE`: reviewed all three active definitions against Firestaff’s bounded CAII allocator. The free-slot allocation and base initialization have a counterpart, but table-full recycling fails closed; source local-creature-variable, v4 think-flush/queue and AI animation effects, and remaining spawn/map/platform callers are incomplete. Keep all three rows partial. The standalone `dm2_v1_runtime_alloc_caii_at` wrapper has no production caller. Current generated backlog remains open; recount with `python3 tools/symbol_backlog.py --game DM2 --reference skproject`.
+
 2026-11-01 Amiga V1 chained-overlay follow-up: expanded `--debug` receipts on
 the authentic Amiga English archive exposed a repeated first-frame rejection
 at the entrance. `WALL_GFX/91` image field 1 resolves to raw 2590, whose
@@ -2184,3 +2584,129 @@ path. The regression passes, as does the normal Amiga CLI/start-menu test; all
 or fallback draws. The captured 320x200 image passes the existing
 viewport/HUD region checks, but there is still no same-pose original Amiga
 capture for pixel-parity review, so the reported visual mismatch remains open.
+
+
+2026-11-02 skproject `ADD_ITEM_TO_PLAYER` DOS/SPX v4/v5: compared all three
+implementations and their slot tables. They share the five source groups
+(2..5, 10, type-5 hands, type-6 hands, 13..29) and first-fit/mode-0 behavior;
+Firestaff has this slot policy in a new-game receipt plus a SPX-v4 compatibility
+adapter. No live runtime owner binds it to cryocell revival/wall possessions.
+Source leaves the object on the tile chain when it equips it, then later cuts
+hero possessions from the tile during revival movement, so that owner must
+coordinate inventory bonuses, tile-chain links, hero/session snapshot, and
+platform dispatch. All DOS/SPX v4/v5 rows remain partial.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 food-value query review: all three
+`QUERY_GDAT_FOOD_VALUE_FROM_RECORD` variants read DBSPEC field 3, but DOS
+returns signed x16, SPX v4 returns U16 and SPX v5 preserves i32. Firestaff's
+previous implementation did not define its declared public symbol; it now
+exports that helper and edition-specific width wrappers. No production caller
+binds the source record/GDAT owner or the supported platform routes, so all
+three source rows remain partial.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 `QUERY_CMDSTR_TEXT`: Firestaff now
+exports the previously missing generic repeated-key parser with source-width
+wrappers. DOS and v4 preserve 16-bit result bits; v5 uses modulo-2^32
+accumulation. Source key-table dispatch and production callers on supported
+platforms remain open, so all three rows stay partial. The v4 method at
+`sktext.cpp:755` was missing from the active-source inventory and is now
+tracked as a separate location-specific row.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 `QUERY_CMDSTR_ENTRY`: Firestaff now
+exports generic wrappers with the source argument ordering, key-table bound,
+GDAT-text callback and matching 16-bit DOS/v4 or 32-bit v5 result width. The
+v4 definition at `sktext.cpp:792` was also missing from the active-source
+inventory and is now a location-specific row. Production caller and source
+record/GDAT ownership on supported platforms remain open.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 `QUERY_CUR_CMDSTR_ENTRY`: the wrappers
+read current category/index/field globals in edition-specific order, then
+delegate to `QUERY_CMDSTR_ENTRY`. Firestaff has a receipt for an explicit
+current-context tuple but no owner that reads the selected source globals; all
+three rows remain partial until that state and production routes are bound.
+
+
+2026-11-02 skproject UI-event protocol implementation:
+`dm2_v1_skproject_adjust_ui_event_variant` now preserves the SPX v5/SKULLWIN
+movement-arrow default and adds an explicit DOS/SPX-v4/SKWIN spell/leader
+variant. The legacy variant uses the source rectangle diagonal and rewrites
+spell-triangle events by subtracting 0x4f; on the leader half it retains the
+event unless source `b44` is set. DOS, SPX v4 and SKWIN callers still need to
+select the legacy variant; SPX v4 action-hand cooldown indexing, live input
+owners and supported-platform runtime evidence remain open. The source rows
+remain `PARTIAL`.
+
+
+2026-11-02 skproject `ANIMATE_CREATURE` callback owner:
+Firestaff now exposes `dm2_v1_animate_creature_source` for DOS, SPX v4 and SPX
+v5. It resolves the creature at the tile, performs the AI-spec/CAII allocation
+gate, prepares local creature state with ID 0x21, selects AI_0806 or AI_071B
+from the source direction flag, and preserves DOS/v5 unconditional cleanup
+versus SPX-v4 cleanup under the thinking-state guard. The older frame-counter
+helper remains separate. Production timer/AI callers, source-specific callback
+bindings and supported-platform runtime evidence remain open; all source rows
+stay `PARTIAL`.
+
+
+2026-11-02 skproject `FREE_TEMP_CACHE_INDEX` no-mement branch:
+Firestaff now calls the bounded `FREE_CACHE_INDEX` path when the indexed mement
+lookup returns the source 0xffff sentinel, clearing the sorted hash entry and
+releasing the cache slot before preserving the subsequent no-mement free as a
+no-op. Attached-mement cleanup continues through the existing indexed-free
+owner, which clears the cache link and recycles the mement. Runtime cache
+ownership and platform/edition callers remain open; source rows stay `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_COMMAND_SLOT` edition route:
+Firestaff now has an explicit `dm2_v1_runtime_proceed_hand_command_spx_v4`
+entry point. It performs CMDSTR field-8 charge/depletion handling after each
+non-cancel command and skips the DOS/SPX-v5 field-14 probability state. The
+existing M11 event path remains on DOS/SPX-v5 semantics. `BootProfile.platform`
+identifies original media, not SPX source-code family, so it is not used to
+guess the variant. SPX-v4 input/panel ownership and an explicit source-family
+caller remain open; all three source rows stay `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_84` variant audit correction:
+The source variants do not share one consumability rule. DOS/SKULLWIN classify
+several item groups, consume qualifying records, and otherwise use two RNG
+gates before optionally issuing `19f0_2165` and mutating creature state. SPX v4
+instead removes unimportant cloth/weapons, miscellaneous items that are
+important or have nonzero GDAT food value, and potions with zero visible power;
+all other types attempt the source item-use command. Firestaff's core helper only
+captures the possession handle/category, and the XACT loop has no live callback.
+The named-symbol row is downgraded from `IMPLEMENTED_PARITY` to
+`IMPLEMENTED_NARROW`; the DOS, SPX-v4 and SPX-v5 active-source rows are now
+`PARTIAL`. Live callback, record unlink/deallocation, GDAT-bound food query,
+creature command mutation and supported-platform dispatch remain open.
+
+
+2026-11-02 skproject `PROCEED_XACT_85` variant audit correction:
+DOS/SKULLWIN and SPX v5 inspect tile actuator records and set creature b1e/command
+0x22 when they find the requested subtype; on no match they use command 0x33.
+SPX v4 instead searches text records, sets ItemToThrow and ccm3B_Transform1,
+then has a distinct ccm13_Destroy no-match transition. Firestaff's core receipt
+models only the default not-found values and has no live XACT callback. Its
+named-symbol disposition is now `IMPLEMENTED_NARROW`, while all three active
+source definitions are `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_86` variant audit correction:
+DOS/SKULLWIN/SPX v5 truncate AI-state words into creature b20/b1e/b1a and return
+success. SPX v4 instead reads its separate globals, writing b32, ItemToThrow and
+ccm3D_Explode command state. Firestaff computes a receipt for only the former
+field set and has no live XACT callback. The named-symbol disposition is now
+`IMPLEMENTED_NARROW`; all three active source definitions are `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_72_87_88` variant audit correction:
+DOS/SPX v5/SKULLWIN assign v1e0572 with the 0xff fallback to creature b1a.
+SPX v4 instead takes the current global command, replaces idle with its saved
+command, and writes CreatureInfoData::Command. Firestaff's helper models only
+the former values in a receipt and has no live write. All three active source
+rows are now `PARTIAL`; SPX-v4 state binding and production XACT callbacks remain
+open.

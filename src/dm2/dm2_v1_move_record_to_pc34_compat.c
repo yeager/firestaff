@@ -33,6 +33,24 @@
 
 #define MOVE_DB_CREATURE 4
 
+/* The record pool is the live runtime view while DungeonData holds the
+ * ground-stack structure. SKProject's link word is shared between those
+ * views, so every record-link write made by the raw dungeon helpers must be
+ * reflected in the live pool before another runtime walk. */
+static int move_sync_record_link(DM2_V1_RecordPoolSet *pool_set,
+                                 DM2_V1_DungeonData *dungeon,
+                                 uint16_t object_id)
+{
+    uint16_t record_id = (uint16_t)(object_id & 0x3fffu);
+    uint8_t *dungeon_record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        dungeon, record_id, NULL, NULL, NULL);
+    uint8_t *pool_record = dm2_v1_record_pool_address_mut(
+        pool_set, (int16_t)object_id);
+    if (!dungeon_record || !pool_record) return 0;
+    memcpy(pool_record, dungeon_record, 2u);
+    return 1;
+}
+
 int dm2_v1_move_record_to(
     DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_DungeonData *dungeon,
@@ -96,6 +114,13 @@ int dm2_v1_move_record_to(
                 dungeon, (uint16_t)record_handle, NULL,
                 current_map, from_x, from_y, &cut_rc)) {
             receipt->record_cut = 1;
+            if (!move_sync_record_link(pool_set, dungeon,
+                                       (uint16_t)record_handle) ||
+                (cut_rc.tile_chain_unlink_route &&
+                 !move_sync_record_link(pool_set, dungeon,
+                                        cut_rc.preceding_object_id))) {
+                receipt->fail_closed = 1;
+            }
         } else {
             receipt->fail_closed = 1;
         }
@@ -104,11 +129,30 @@ int dm2_v1_move_record_to(
     /* APPEND to destination tile (unless to-nowhere). */
     if (!receipt->is_to_nowhere && !receipt->fail_closed) {
         DM2_V1_SkprojectAppendRecordReceipt app_rc;
+        uint16_t destination_handle = (uint16_t)record_handle;
+
+        /* SKULLWIN/c_move.cpp:2152 and c_moverec.cpp:392 preserve the
+         * destination ObjectID's direction bits when inserting the record.
+         * A negative direction means the caller did not request a change;
+         * otherwise the low two direction bits replace the packed ObjectID
+         * orientation before APPEND_RECORD_TO links it into the tile chain. */
+        if (dest_direction >= 0) {
+            destination_handle = (uint16_t)(
+                ((uint16_t)record_handle & 0x3fffu) |
+                (((uint16_t)dest_direction & 0x3u) << 14));
+        }
         memset(&app_rc, 0, sizeof(app_rc));
         if (dm2_v1_skproject_append_record_to(
-                dungeon, (uint16_t)record_handle, NULL,
+                dungeon, destination_handle, NULL,
                 current_map, dest_x, dest_y, &app_rc)) {
             receipt->record_appended = 1;
+            if (!move_sync_record_link(pool_set, dungeon,
+                                       destination_handle) ||
+                (app_rc.existing_tile_chain_route &&
+                 !move_sync_record_link(pool_set, dungeon,
+                                        app_rc.tail_object_id))) {
+                receipt->fail_closed = 1;
+            }
         } else {
             receipt->fail_closed = 1;
         }

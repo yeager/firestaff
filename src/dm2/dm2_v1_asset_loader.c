@@ -3860,6 +3860,24 @@ int dm2_v1_query_creatures_item_mask_receipt(
     return 1;
 }
 
+int dm2_v1_query_creatures_item_mask_bytes(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int text_field_base,
+    int is_creature,
+    uint8_t out_mask[64])
+{
+    DM2_V1_CreaturesItemMaskReceipt receipt;
+    if (!out_mask) return 0;
+    memset(out_mask, 0, 64u);
+    if (!dm2_v1_query_creatures_item_mask_receipt(
+            loader, creature_index, text_field_base, is_creature, &receipt) ||
+        !receipt.accepted)
+        return 0;
+    memcpy(out_mask, receipt.mask, 64u);
+    return 1;
+}
+
 static uint16_t dm2_equip_slot_mask(int slot)
 {
     static const uint16_t table1d2670[13] = {

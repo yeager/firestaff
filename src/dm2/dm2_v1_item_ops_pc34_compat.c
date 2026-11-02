@@ -33,9 +33,49 @@ int16_t dm2_v1_retrieve_item_bonus(
         if (context != (int16_t)0xFFFE && context != 2 && context != 3)
             return 0;
     }
-    int8_t signed_val = (int8_t)(val & 0xFF);
-    int16_t result = (int16_t)signed_val;
+    int16_t result = dm2_v1_skproject_cutlx8((int32_t)val);
     return (context >= 0) ? result : -result;
+}
+
+/* SPX v4 skitem.cpp:56 keeps the entire signed GDAT word. DOS and SPX v5
+ * use CUTLX8, so those edition paths continue through the function above. */
+int16_t dm2_v1_retrieve_item_bonus_spx_v4(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word) return 0;
+    int16_t value = cb->query_gdat_dbspec_word(ctx, record_word, bonus_idx);
+    if (value == 0) return 0;
+    if ((value & 0x4000) != 0) {
+        if (context != (int16_t)0xfffe && context != 2 && context != 3)
+            return 0;
+    } else if (equipped == 0 && (((uint16_t)value & 0x8000u) == 0u)) {
+        return 0;
+    }
+    if (context >= 0) return value;
+    uint16_t negated = (uint16_t)(0u - (uint16_t)value);
+    return negated < 0x8000u
+        ? (int16_t)negated
+        : (int16_t)((int32_t)negated - 0x10000);
+}
+
+/* DOS dm2byg.cpp:1536 has a distinct conditional-bonus context gate. */
+int16_t dm2_v1_retrieve_item_bonus_dos(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word) return 0;
+    int16_t value = cb->query_gdat_dbspec_word(ctx, record_word, bonus_idx);
+    if (value == 0) return 0;
+    if ((value & 0x4000) != 0) {
+        if (context == 3) return 0;
+    } else if (equipped == 0 && (((uint16_t)value & 0x8000u) == 0u)) {
+        return 0;
+    }
+    int16_t result = dm2_v1_skproject_cutlx8((int32_t)value);
+    return context < 0 ? (int16_t)-result : result;
 }
 
 /* ---- DM2_IS_MISCITEM_DRINK_WATER (c_item.cpp:528) ---- */
@@ -558,8 +598,12 @@ static uint8_t dm2_v1_sksave_item_bonus_query_cls2(void *ctx,
     return cls2;
 }
 
+static void dm2_v1_new_game_apply_item_bonus_receipt(DM2_V1_Hero *hero,
+    const DM2_V1_ProcessItemBonusReceipt *bonus);
+
 static int dm2_v1_sksave_process_one_item_bonus_root(
-    DM2_V1_SksaveItemBonusContext *context, uint16_t *root,
+    DM2_V1_SksaveItemBonusContext *context, DM2_V1_Hero *hero,
+    uint16_t *root,
     int16_t hero_index, int16_t slot, DM2_V1_SksaveItemBonusReceipt *receipt,
     int leader_hand)
 {
@@ -588,6 +632,10 @@ static int dm2_v1_sksave_process_one_item_bonus_root(
     input.mode = 0;
     dm2_v1_PROCESS_ITEM_BONUS(&input, &callbacks, &bonus);
     if (context->invalid || !bonus.valid || bonus.blocked) return 0;
+    /* DM2_READ_SKSAVE_DUNGEON invokes PROCESS_ITEM_BONUS in mode 0 after
+     * restoring each hero item.  This mode rebuilds skill and walk-speed
+     * bonuses from source records; its MP/ability deltas are zero. */
+    dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
     if (leader_hand) ++receipt->processed_leader_hand;
     else ++receipt->processed_item_roots;
     return 1;
@@ -829,7 +877,8 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
             receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
                 receipt.source_hash, (uint16_t)heroes[hero_index].item[slot]);
             if (!dm2_v1_sksave_process_one_item_bonus_root(
-                    &context, (uint16_t *)&heroes[hero_index].item[slot],
+                    &context, &heroes[hero_index],
+                    (uint16_t *)&heroes[hero_index].item[slot],
                     (int16_t)hero_index, (int16_t)slot, &receipt, 0)) {
                 receipt.blocked = 1;
                 receipt.failed_hero_index = (int16_t)hero_index;
@@ -844,7 +893,8 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
     receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
         receipt.source_hash, *leader_hand_root);
     if (!dm2_v1_sksave_process_one_item_bonus_root(
-            &context, leader_hand_root, leader_hero_index, -1, &receipt, 1)) {
+            &context, &heroes[leader_hero_index], leader_hand_root,
+            leader_hero_index, -1, &receipt, 1)) {
         receipt.blocked = 1;
         receipt.failed_hero_index = leader_hero_index;
         receipt.failed_item_slot = -1;

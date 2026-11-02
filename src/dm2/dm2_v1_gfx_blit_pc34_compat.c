@@ -1158,6 +1158,53 @@ void dm2_v1_blit_within_screen(DM2_V1_BlitterState *st,
 }
 
 /* ========================================================================
+ * Fixed 13-to-16 stretched scanline (DOS driver_stretched_hblit)
+ * ======================================================================== */
+
+bool dm2_v1_blit_hline_stretched(const uint8_t *src, size_t src_size,
+                                size_t src_offset, uint8_t *dst,
+                                size_t dst_size, size_t dst_offset)
+{
+    const size_t source_length = 14u * 13u;
+    const size_t destination_length = 14u * 16u;
+    const uint8_t *source;
+    uint8_t *destination;
+    size_t group;
+
+    if (!src || !dst || src_offset > src_size || dst_offset > dst_size ||
+        source_length > src_size - src_offset ||
+        destination_length > dst_size - dst_offset)
+        return false;
+
+    source = src + src_offset;
+    destination = dst + dst_offset;
+    for (group = 0; group < 14u; ++group) {
+        uint8_t pixel;
+
+        *destination++ = *source++;
+        *destination++ = *source++;
+        pixel = *source++;
+        *destination++ = pixel;
+        *destination++ = pixel;
+        *destination++ = *source++;
+        *destination++ = *source++;
+        *destination++ = *source++;
+        *destination++ = *source++;
+        pixel = *source++;
+        *destination++ = pixel;
+        *destination++ = pixel;
+        *destination++ = *source++;
+        *destination++ = *source++;
+        *destination++ = *source++;
+        pixel = *source++;
+        *destination++ = pixel;
+        *destination++ = pixel;
+        *destination++ = *source++;
+    }
+    return true;
+}
+
+/* ========================================================================
  * Special effects blit
  * ======================================================================== */
 

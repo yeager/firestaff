@@ -29,6 +29,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_change_player_pos_pc34_compat.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
@@ -51,6 +52,7 @@
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_drops.h"
 #include "dm2_v1_projectile_impact_attack.h"
 #include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
@@ -68,6 +70,7 @@
 #include "dm2_v1_light_terminal_receipt.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_item_missile_helpers.h"
+#include "dm2_v1_event_handlers_pc34_compat.h"
 #include "dm2_v1_skill_query_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
@@ -163,6 +166,15 @@ struct DM2_V1_RuntimeState {
     uint8_t source_hero_ench_countdown;
     int16_t source_hero_ench_target;
     uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
+    /* SKWINDOS/dm2bya.cpp::SKW_PROCEED_COMMAND_SLOT and
+     * SKWINSPX/src/v5/skevents.cpp::DM2_PROCEED_COMMAND_SLOT use one
+     * eight-byte v1e0adc record per hero and hand. Keep the fields consumed
+     * by that transaction as values instead of depending on host layout. */
+    struct {
+        uint16_t random_range;
+        uint16_t remaining;
+        uint8_t consume_chance;
+    } source_command_hand[DM2_MAX_HEROES][2];
     /* c_events.cpp/startend.cpp savegames1.b_04: Aura of Speed. */
     uint8_t source_aura_of_speed;
     int source_aura_of_speed_valid;
@@ -174,10 +186,14 @@ struct DM2_V1_RuntimeState {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
-    /* c_hero.cpp::DM2_CHANGE_PLAYER_POS drag globals. The position is the
-     * raw source row, before applying party facing. */
-    int source_formation_drag_active;
-    int16_t source_formation_drag_position;
+    int16_t source_selected_hand_action;
+    int16_t source_selected_hand_2;
+    int16_t source_spell_panel_flag;
+    int16_t source_v1e0b6c;
+    int16_t source_v1e0b62;
+    int16_t source_v1e0b4e;
+    int source_drag_in_progress;
+    int16_t source_drag_position;
     int16_t source_event_hero_index;
     /* c_move globals restored by GAME_LOAD.  Their delayed-pose consumers
      * are not all bound yet, but a resume must retain the source values
@@ -433,6 +449,114 @@ struct DM2_V1_RuntimeState {
     void (*cdda_stop_cb)(void *ctx);
     void *cdda_cb_ctx;
 };
+
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    DM2_V1_HeroState heroes[DM2_MAX_HEROES];
+} DM2_RuntimeResurrectContext;
+
+static DM2_V1_HeroState *dm2_runtime_resurrect_get_hero(
+    void *context, int hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || !ctx->runtime || !ctx->runtime->source_party_valid ||
+        hero_index < 0 || hero_index >= ctx->runtime->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES)
+        return NULL;
+    return &ctx->heroes[hero_index];
+}
+
+static int16_t dm2_runtime_resurrect_player_at_position(
+    void *context, uint8_t position)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || position > 3u) return -1;
+    for (int i = 0; i < ctx->runtime->source_party.heros_in_party; ++i) {
+        const DM2_V1_HeroState *hero = &ctx->heroes[i];
+        if (hero->cur_hp != 0 && hero->party_pos == position)
+            return (int16_t)i;
+    }
+    return -1;
+}
+
+static void dm2_runtime_resurrect_clear_items(void *context, int hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    if (!ctx || !ctx->runtime || hero_index < 0 ||
+        hero_index >= DM2_MAX_HEROES) return;
+    for (int i = 0; i < DM2_NUM_ITEMS; ++i)
+        ctx->runtime->source_party.hero[hero_index].item[i] = -1;
+    memset(ctx->runtime->champion_inventory_objects[hero_index], 0,
+           sizeof(ctx->runtime->champion_inventory_objects[hero_index]));
+}
+
+static void dm2_runtime_prepare_resurrect_callbacks(
+    DM2_V1_RuntimeState *rt, DM2_V1_ResurrectCallbacks *callbacks,
+    DM2_RuntimeResurrectContext *context)
+{
+    memset(callbacks, 0, sizeof(*callbacks));
+    memset(context, 0, sizeof(*context));
+    context->runtime = rt;
+    callbacks->hero_count = rt->source_party.heros_in_party;
+    callbacks->get_hero = dm2_runtime_resurrect_get_hero;
+    callbacks->get_player_at_position =
+        dm2_runtime_resurrect_player_at_position;
+    callbacks->formation_start = (uint8_t)(rt->source_party.absdir & 3);
+    callbacks->clear_hero_items = dm2_runtime_resurrect_clear_items;
+    for (int i = 0; i < DM2_MAX_HEROES; ++i) {
+        const DM2_V1_Hero *source = &rt->source_party.hero[i];
+        DM2_V1_HeroState *target = &context->heroes[i];
+        target->cur_hp = source->curHP;
+        target->max_hp = source->maxHP;
+        target->hero_flag = (uint16_t)source->heroflag;
+        target->party_pos = (uint8_t)source->partypos;
+        target->absdir = (uint8_t)source->absdir;
+        target->ench_aura = (uint8_t)source->ench_aura;
+        target->ench_power = (uint8_t)source->ench_power;
+    }
+}
+
+static int dm2_runtime_revive_champion(void *context, int16_t hero_index)
+{
+    DM2_RuntimeResurrectContext *ctx = context;
+    DM2_V1_ResurrectCallbacks callbacks;
+    DM2_V1_HeroState *hero;
+    DM2_V1_Hero *target;
+    DM2_V1_Party party_before;
+    uint32_t inventory_before[30];
+    int16_t hero_count;
+    if (!ctx || !ctx->runtime || !ctx->runtime->source_party_valid ||
+        hero_index < 0 || hero_index >= ctx->runtime->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES ||
+        ctx->runtime->source_party.heros_in_party <= 0 ||
+        ctx->runtime->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    party_before = ctx->runtime->source_party;
+    memcpy(inventory_before,
+           ctx->runtime->champion_inventory_objects[hero_index],
+           sizeof(inventory_before));
+    hero_count = ctx->runtime->source_party.heros_in_party;
+    dm2_runtime_prepare_resurrect_callbacks(ctx->runtime, &callbacks, ctx);
+    dm2_v1_hero_bring_to_life(hero_index, &callbacks, ctx);
+    hero = &ctx->heroes[hero_index];
+    target = &ctx->runtime->source_party.hero[hero_index];
+    target->curHP = hero->cur_hp;
+    target->maxHP = hero->max_hp;
+    target->heroflag = (int16_t)hero->hero_flag;
+    target->partypos = (int8_t)hero->party_pos;
+    target->absdir = (int8_t)hero->absdir;
+    target->ench_aura = (int8_t)hero->ench_aura;
+    target->ench_power = hero->ench_power;
+    target->weight = 0;
+    if (hero->cur_hp <= 0) {
+        ctx->runtime->source_party = party_before;
+        ctx->runtime->source_party.heros_in_party = hero_count;
+        memcpy(ctx->runtime->champion_inventory_objects[hero_index],
+               inventory_before, sizeof(inventory_before));
+        return 0;
+    }
+    return 1;
+}
 
 static int32_t __attribute__((unused)) dm2_runtime_mac_key_can_handle(
     uint16_t actuator, int16_t expected_item_type, void *user)
@@ -2249,7 +2373,7 @@ static int dm2_runtime_mode7_flags3_evidence(
     unsigned length = 0u;
     uint16_t light_word = 0u;
     uint16_t weather_word = 0u;
-    int32_t record_darkness = 0;
+    uint16_t record_darkness = 0u;
     int class1_ornament;
     if (!rt || !rt->boot || !room || !room->valid || !evidence ||
         !rt->record_pools_valid ||
@@ -2301,14 +2425,16 @@ static int dm2_runtime_mode7_flags3_evidence(
             if (!dm2_v1_mode7_record_darkness_term(
                     (uint8_t)type, word_2,
                     type == 14u ? record[4] : 0u, &term)) return 0;
-            record_darkness += term;
-            if (record_darkness < INT16_MIN ||
-                record_darkness > INT16_MAX) return 0;
+            /* skgame.cpp::ADD_BACKGROUND_LIGHT_FROM_TILE keeps bp14 as an
+             * i16 and wraps each cloud/fireball contribution at 16 bits. */
+            record_darkness = (uint16_t)(record_darkness + (uint16_t)term);
         }
         link = next;
     }
     evidence->record_chain_known = 1u;
-    evidence->record_darkness = (int16_t)record_darkness;
+    evidence->record_darkness = record_darkness <= (uint16_t)INT16_MAX
+        ? (int16_t)record_darkness
+        : (int16_t)(-1 - (int32_t)(0xffffu - record_darkness));
     evidence->record_chain_known_no_darkness = record_darkness == 0;
     evidence->creature_query_known = 1u;
     if (creature != (int16_t)0xffff) {
@@ -3669,8 +3795,14 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
-    g_dm2_runtime.source_formation_drag_active = 0;
-    g_dm2_runtime.source_formation_drag_position = 0;
+    g_dm2_runtime.source_selected_hand_action = 0;
+    g_dm2_runtime.source_selected_hand_2 = 0;
+    g_dm2_runtime.source_spell_panel_flag = 0;
+    g_dm2_runtime.source_v1e0b6c = 0;
+    g_dm2_runtime.source_v1e0b62 = 0;
+    g_dm2_runtime.source_v1e0b4e = 0;
+    g_dm2_runtime.source_drag_in_progress = 0;
+    g_dm2_runtime.source_drag_position = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
@@ -4243,6 +4375,99 @@ int dm2_v1_runtime_add_spell_rune(int hero_index, int symbol_index)
     return 1;
 }
 
+static DM2_V1_Hero *dm2_runtime_get_magical_map_active_hero(
+    DM2_V1_RuntimeState *rt)
+{
+    int hero_index;
+    if (!rt || !rt->source_party_valid) return NULL;
+    hero_index = rt->source_party.curacthero - 1;
+    if (hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return NULL;
+    return &rt->source_party.hero[hero_index];
+}
+
+static int16_t dm2_runtime_magical_map_get_active_hero_mp(void *ctx)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    return hero ? hero->curMP : 0;
+}
+
+static void dm2_runtime_magical_map_set_active_hero_mp(void *ctx, int16_t mp)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    if (hero) hero->curMP = mp;
+}
+
+static void dm2_runtime_magical_map_set_active_hero_flag(
+    void *ctx, int16_t flag_bits)
+{
+    DM2_V1_Hero *hero = dm2_runtime_get_magical_map_active_hero(ctx);
+    if (hero) {
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                                   (uint16_t)flag_bits);
+    }
+}
+
+int dm2_v1_runtime_click_magical_map_rune(int rune_index)
+{
+    static const int16_t rune_mana[DM2_V1_MAGICAL_MAP_RUNE_COUNT] = {
+        2, 3, 1, 1
+    };
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_ClickMagicalMapRuneCallbacks callbacks;
+    int16_t old_mask;
+
+    if (rune_index < 0 || rune_index >= DM2_V1_MAGICAL_MAP_RUNE_COUNT ||
+        !dm2_runtime_get_magical_map_active_hero(rt)) return 0;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.rune_table = rune_mana;
+    callbacks.v1e0b62 = &rt->source_v1e0b62;
+    callbacks.get_active_hero_mp =
+        dm2_runtime_magical_map_get_active_hero_mp;
+    callbacks.set_active_hero_mp =
+        dm2_runtime_magical_map_set_active_hero_mp;
+    callbacks.set_active_hero_flag =
+        dm2_runtime_magical_map_set_active_hero_flag;
+    callbacks.v1e0b4e = &rt->source_v1e0b4e;
+    old_mask = rt->source_v1e0b62;
+    dm2_v1_click_magical_map_rune((int16_t)rune_index, &callbacks, rt);
+    return old_mask != rt->source_v1e0b62;
+}
+
+int dm2_v1_runtime_cancel_hand_rune_v5(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int hero_index;
+
+    if (!rt->source_party_valid || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party)
+        return 0;
+
+    /* skproject SPX v5 skevents.cpp:2818: the -1 command slot XORs the
+     * active hero index into the 16-bit rune/map state, then clears bit
+     * 0x0400 when a nonzero selection remains. DOS and SPX v4 instead clear
+     * their magical-map flag to zero; this entry point is deliberately v5. */
+    hero_index = rt->source_party.curacthero - 1;
+    rt->source_v1e0b62 = (int16_t)(UINT16_MAX ^ (uint16_t)hero_index);
+    if (rt->source_v1e0b62 != 0)
+        rt->source_v1e0b62 = (int16_t)((uint16_t)rt->source_v1e0b62 &
+                                       (uint16_t)~0x0400u);
+    return 1;
+}
+
+int dm2_v1_runtime_cancel_hand_rune_legacy(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!rt->source_party_valid || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party)
+        return 0;
+
+    /* DOS dm2bya.cpp:2273 and SPX v4 skuievnt.cpp:839 clear the map mask. */
+    rt->source_v1e0b62 = 0;
+    return 1;
+}
+
 int dm2_v1_runtime_remove_spell_rune(int hero_index)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
@@ -4292,6 +4517,123 @@ int dm2_v1_runtime_get_spell_runes(int hero_index, uint8_t *out_runes,
     return 1;
 }
 
+static void dm2_runtime_apply_hand_cooldown(
+    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks,
+    int hand_index)
+{
+    DM2_V1_HeroCooldownState cooldown;
+
+    if (!rt || !hero || !rt->source_aura_of_speed_valid ||
+        cooldown_ticks == 0 || cooldown_ticks < INT16_MIN ||
+        cooldown_ticks > INT16_MAX || hand_index < -1 ||
+        hand_index >= DM2_V1_MAX_HANDS)
+        return;
+
+    /* DOS/v5 ADJUST_HAND_COOLDOWN blends the nonzero source delay into the
+     * selected hand(s) and applies authenticated savegames1.b_04. */
+    for (int i = 0; i < DM2_V1_MAX_HANDS; ++i)
+        cooldown.hand_cooldown[i] = (uint8_t)hero->handcooldown[i];
+    dm2_v1_adjust_hand_cooldown(
+        &cooldown, (int16_t)cooldown_ticks, hand_index,
+        rt->source_aura_of_speed);
+    for (int i = 0; i < DM2_V1_MAX_HANDS; ++i) {
+        uint8_t bits = cooldown.hand_cooldown[i];
+        int16_t signed_value = bits <= INT8_MAX
+            ? (int16_t)bits : (int16_t)bits - 256;
+        hero->handcooldown[i] = (int8_t)signed_value;
+    }
+}
+
+static void dm2_runtime_apply_spell_cooldown(
+    DM2_V1_RuntimeState *rt, DM2_V1_Hero *hero, int cooldown_ticks)
+{
+    if (cooldown_ticks <= 0 || cooldown_ticks > INT16_MAX)
+        return;
+    /* SKWINDOS dm2bye.cpp:4093 and SKWINSPX skevents.cpp:2669 route
+     * CAST_SPELL_PLAYER's nonzero delay through slot 2. */
+    dm2_runtime_apply_hand_cooldown(rt, hero, cooldown_ticks, 2);
+}
+
+/* SKProject source: SKWINSPX v4 skchamp.cpp::FIND_HAND_WITH_EMPTY_FLASK /
+ * skspell.cpp POTION case, and v5 skgdtqdb.cpp::DM2_FIND_HAND_WITH_EMPTY_FLASK /
+ * skevents.cpp POTION branch. Both scan hand 1 before hand 0 for DB8/cls2
+ * 0x14; the successful cast mutates that record to the produced potion type,
+ * assigns randomized power, and equips the same record back into that hand.
+ * Firestaff currently binds this shared scan only through its DOS/v5 runtime. */
+static uint8_t dm2_runtime_spell_query_cls2(uint16_t item, void *ctx)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    uint8_t cls2 = 0xffu;
+    if (!rt || !rt->record_pools_valid ||
+        !dm2_v1_record_pool_address(&rt->record_pools, item) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item, &rt->record_pools, &cls2, NULL))
+        return 0xffu;
+    return cls2;
+}
+
+static int dm2_runtime_spell_find_empty_flask(
+    DM2_V1_RuntimeState *rt, const DM2_V1_Hero *hero)
+{
+    uint16_t hand_items[2];
+    int16_t empty_hand = -1;
+
+    if (!rt || !hero || !rt->record_pools_valid) return -1;
+    hand_items[0] = (uint16_t)hero->item[0];
+    hand_items[1] = (uint16_t)hero->item[1];
+    if (!dm2_v1_skproject_find_hand_with_empty_flask(
+            hand_items, dm2_runtime_spell_query_cls2, rt,
+            &empty_hand, NULL))
+        return -1;
+    return empty_hand;
+}
+
+static void dm2_runtime_copy_source_hero_to_snapshot(
+    DM2_V1_SessionState *session, int slot, const DM2_V1_Hero *hero);
+
+static int dm2_runtime_spell_make_potion(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand, int spell_value,
+    const DM2_V1_SpellCastPlayerReceipt *cast)
+{
+    DM2_V1_Hero *hero;
+    int16_t item;
+    uint8_t *record;
+    uint16_t power_word;
+    uint16_t random_low;
+    int potion_power;
+    if (!rt || !cast || !rt->source_party_valid ||
+        !rt->record_pools_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hand < 0 || hand > 1)
+        return 0;
+    hero = &rt->source_party.hero[hero_index];
+    item = hero->item[hand];
+    if (item < 0 || dm2_runtime_spell_find_empty_flask(rt, hero) != hand ||
+        !(record = dm2_v1_record_pool_address_mut(&rt->record_pools, item)) ||
+        rt->record_pools.pools[8].record_size < 4)
+        return 0;
+    /* DM2_RAND() is consumed once; source uses CUTX16(RAND()) & 15. */
+    random_low = (uint16_t)dm2_v1_drops_rand24(&rt->session_rng);
+    potion_power = cast->cast_power * 40 + (random_low & 0x0fu);
+    power_word = (uint16_t)potion_power;
+    if (!dm2_v1_record_pool_set_itemtype(&rt->record_pools, item,
+                                        (uint8_t)(spell_value & 0x3f)))
+        return 0;
+    if (rt->record_pools.words_big_endian) {
+        record[2] = (uint8_t)(power_word >> 8);
+        record[3] = (uint8_t)power_word;
+    } else {
+        record[2] = (uint8_t)power_word;
+        record[3] = (uint8_t)(power_word >> 8);
+    }
+    /* The hand slot remains the same record throughout the source operation;
+     * refresh snapshot ownership after the record mutation. */
+    rt->champion_inventory_objects[hero_index][hand] = (uint16_t)item & 0x3fffu;
+    dm2_runtime_copy_source_hero_to_snapshot(
+        &rt->session_snapshot, hero_index, hero);
+    return 1;
+}
+
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt)
@@ -4314,6 +4656,7 @@ int dm2_v1_runtime_cast_spell_player(
     int light_type;
     int enchant_type;
     uint8_t enchant_mask;
+    int empty_flask_hand = -1;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.hand_index = hand_index;
@@ -4321,6 +4664,7 @@ int dm2_v1_runtime_cast_spell_player(
 
     if (!rt->boot || !rt->source_party_valid ||
         !rt->boot->source_game_load_session_ready ||
+        !rt->source_aura_of_speed_valid ||
         rt->source_party.heros_in_party <= 0 ||
         rt->source_party.heros_in_party > DM2_MAX_HEROES ||
         hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
@@ -4339,9 +4683,11 @@ int dm2_v1_runtime_cast_spell_player(
      * the only admissible runtime table until those records are transferred
      * as a source-owned table rather than reconstructed from a hash. */
     dm2_v1_spell_cast_player_build_table(&extended, &table);
+    empty_flask_hand = dm2_runtime_spell_find_empty_flask(rt, hero);
     receipt.cast = dm2_v1_spell_cast_player(
         &table, (const uint8_t *)hero->rune,
-        hero->ability[DM2_ABILITY_WIZARDRY][0], hero->curMP, 0);
+        hero->ability[DM2_ABILITY_WIZARDRY][0], hero->curMP,
+        empty_flask_hand >= 0);
     receipt.valid = receipt.cast.valid;
     receipt.source_owner_available = 0;
     receipt.mana_before = hero->curMP;
@@ -4349,6 +4695,41 @@ int dm2_v1_runtime_cast_spell_player(
     receipt.light_before = rt->source_light_level;
     receipt.light_after = rt->source_light_level;
     if (!receipt.cast.valid || !receipt.cast.cast_success) {
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.cast.execution_class == DM2_V1_SPELL_EXEC_POTION) {
+        DM2_V1_DropRng rng_before = rt->session_rng;
+        uint8_t *item_record;
+        int16_t item = hero->item[empty_flask_hand];
+        if (item < 0 || !(item_record = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, item))) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        uint8_t record_before[4];
+        if (rt->record_pools.pools[8].record_size < (int)sizeof(record_before)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        memcpy(record_before, item_record, sizeof(record_before));
+        if (!dm2_runtime_spell_make_potion(rt, hero_index, empty_flask_hand,
+                                           table.records[receipt.cast.spell_index].spell_value,
+                                           &receipt.cast)) {
+            memcpy(item_record, record_before, sizeof(record_before));
+            rt->session_rng = rng_before;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index, hero);
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.mana_after = hero->curMP;
         if (out_receipt) *out_receipt = receipt;
         return 1;
     }
@@ -4363,7 +4744,7 @@ int dm2_v1_runtime_cast_spell_player(
             return 1;
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4388,7 +4769,7 @@ int dm2_v1_runtime_cast_spell_player(
             return 1;
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4444,8 +4825,7 @@ int dm2_v1_runtime_cast_spell_player(
         rt->source_hero_ench_countdown = rt->source_attack_counter;
         rt->source_savegames1[2] = rt->source_attack_counter;
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] =
-            (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4474,7 +4854,7 @@ int dm2_v1_runtime_cast_spell_player(
             if (next > 0xff) next = 0xff;
             rt->source_aura_of_speed = (uint8_t)next;
             hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-            hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+            dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
             memset(hero->rune, 0, sizeof(hero->rune));
             hero->nrunes = 0;
             receipt.aura_of_speed_after = rt->source_aura_of_speed;
@@ -4574,7 +4954,7 @@ int dm2_v1_runtime_cast_spell_player(
             }
         }
         hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
         memset(hero->rune, 0, sizeof(hero->rune));
         hero->nrunes = 0;
         receipt.source_owner_available = 1;
@@ -4616,7 +4996,7 @@ int dm2_v1_runtime_cast_spell_player(
     }
 
     hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
-    hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+    dm2_runtime_apply_spell_cooldown(rt, hero, receipt.cast.cooldown_ticks);
     memset(hero->rune, 0, sizeof(hero->rune));
     hero->nrunes = 0;
     receipt.source_owner_available = 1;
@@ -4863,6 +5243,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
 
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
     rt->source_party = candidate->party;
+    memset(rt->source_command_hand, 0, sizeof(rt->source_command_hand));
     rt->source_party_valid = 1;
     rt->source_next_champion_number = candidate->source_next_champion_number;
     rt->source_hero_ench_countdown = candidate->source_savegames1_valid &&
@@ -4898,8 +5279,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->session_snapshot.original_champion_records_valid = 1u;
     rt->source_curacthero = candidate->party.curacthero;
     rt->source_curactmode = candidate->party.curactmode;
-    rt->source_formation_drag_active = 0;
-    rt->source_formation_drag_position = 0;
+    rt->source_drag_in_progress = 0;
+    rt->source_drag_position = 0;
     rt->source_event_hero_index = candidate->source_event_hero_index;
     rt->source_movement = candidate->movement;
     rt->source_movement_valid = candidate->movement.valid;
@@ -7145,7 +7526,7 @@ static int16_t dm2_runtime_ccm_get_player_at_position(void *context,
     party = &goal->runtime->source_party;
     for (int i = 0; i < party->heros_in_party && i < DM2_MAX_HEROES; ++i) {
         if (party->hero[i].partypos == (int8_t)party_position &&
-            party->hero[i].curHP > 0)
+            party->hero[i].curHP != 0)
             return (int16_t)i;
     }
     return -1;
@@ -8463,12 +8844,17 @@ static int dm2_runtime_process_moverec_timer(
     sound_env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
     sound_env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
     sound_env.gametick = rt->tick_count;
-    if (!dm2_v1_sound_queue_noise_gen1(
-            &rt->sound_queue, 3, 0, (int8_t)0x89, 0x61, 0x80,
-            (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt) &&
-        !sound_receipt.rejected_map_gate) {
-        moverec_failure_stage = 9;
-        goto moverec_rollback;
+    /* SKPROJECT's PROCESS_TIMER_3D queues teleport noise when the move
+     * succeeds and the timer is 0x3D.  This runtime admits only successful
+     * MOVE_RECORD_TO receipts, so accepted 0x3C timers stay silent. */
+    if (timer->type == 0x3du) {
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &rt->sound_queue, 3, 0, (int8_t)0x89, 0x61, 0x80,
+                (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt) &&
+            !sound_receipt.rejected_map_gate) {
+            moverec_failure_stage = 9;
+            goto moverec_rollback;
+        }
     }
 
     dm2_v1_record_pool_set_free(&pool_backup);
@@ -9820,6 +10206,26 @@ static void dm2_runtime_queue_ornate_activation_sound(
         dm2_actu_set_data(record,
             (uint16_t)(dm2_actu_data(record) | 0x100u));
         if (phase == 0u && rt->sound_queue_ready) {
+            int16_t noise_x = (int16_t)x;
+            int16_t noise_y = (int16_t)y;
+            /* SKWINDOS/dm2bya.cpp::SKW_TRY_ORNATE_NOISE and
+             * SKWINSPX/src/v5/sktimprc.cpp::DM2_TRY_ORNATE_NOISE move a
+             * wall's phase-zero sound one tile along the actuator's record
+             * direction when the party is elsewhere. The timer keeps the
+             * original actuator tile; only the immediate sound origin moves. */
+            if (is_wall) {
+                const unsigned direction = ((uint16_t)handle >> 14) & 3u;
+                const int16_t adjacent_x = (int16_t)(x +
+                    dm2_v1_ccm_dir_dx[direction]);
+                const int16_t adjacent_y = (int16_t)(y +
+                    dm2_v1_ccm_dir_dy[direction]);
+                if (map != rt->dungeon_level ||
+                    adjacent_x != dm2_v1_runtime_get_party_x() ||
+                    adjacent_y != dm2_v1_runtime_get_party_y()) {
+                    noise_x = adjacent_x;
+                    noise_y = adjacent_y;
+                }
+            }
             memset(&env, 0, sizeof(env));
             env.current_map = (int16_t)map;
             env.gate_map_a = rt->sound_env.gate_map_a;
@@ -9831,7 +10237,7 @@ static void dm2_runtime_queue_ornate_activation_sound(
             memset(&sound, 0, sizeof(sound));
             (void)dm2_v1_sound_queue_noise_gen2(
                 &rt->sound_queue, (int8_t)category, (int8_t)decoration,
-                (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+                (int8_t)0x88, (int8_t)0xfe, noise_x, noise_y,
                 1, (int16_t)0x8c, (int16_t)0x80, &env, &sound);
         }
     }
@@ -9932,6 +10338,10 @@ static int dm2_runtime_actuate_wall_mecha_timer(
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_ResurrectCallbacks resurrect_cb;
+    DM2_RuntimeResurrectContext resurrect_ctx;
+    DM2_V1_Party party_backup;
+    uint32_t inventory_backup[4][30];
     DM2_RuntimeShooterNoiseContext shooter_noise_ctx;
     DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
@@ -9984,6 +10394,9 @@ static int dm2_runtime_actuate_wall_mecha_timer(
                sizeof(global_state.word_vars));
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
+    party_backup = rt->source_party;
+    memcpy(inventory_backup, rt->champion_inventory_objects,
+           sizeof(inventory_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
@@ -10015,7 +10428,9 @@ static int dm2_runtime_actuate_wall_mecha_timer(
            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
     backup_ready = 1;
     memset(&event, 0, sizeof(event));
-    (void)dm2_v1_actuate_wall_mecha_with_rng(
+    dm2_runtime_prepare_resurrect_callbacks(rt, &resurrect_cb,
+                                             &resurrect_ctx);
+    (void)dm2_v1_actuate_wall_mecha_with_rng_and_revive(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
         dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
@@ -10026,6 +10441,7 @@ static int dm2_runtime_actuate_wall_mecha_timer(
         dm2_runtime_queue_ornate_activation_sound, rt,
         dm2_runtime_queue_shooter_noise, &shooter_noise_ctx,
         &rt->session_rng,
+        dm2_runtime_revive_champion, &resurrect_ctx,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -10065,6 +10481,9 @@ wall_mecha_reject:
         if (caii_backup && rt->caii.slots)
             memcpy(rt->caii.slots, caii_backup, caii_backup_size);
         rt->session_rng = rng_backup;
+        rt->source_party = party_backup;
+        memcpy(rt->champion_inventory_objects, inventory_backup,
+               sizeof(inventory_backup));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(sound_entries_backup);
@@ -10087,6 +10506,10 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_V1_GlobVarState global_state;
     DM2_V1_CreatureKillerCallbacks creature_killer_cb;
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
+    DM2_V1_ResurrectCallbacks resurrect_cb;
+    DM2_RuntimeResurrectContext resurrect_ctx;
+    DM2_V1_Party party_backup;
+    uint32_t inventory_backup[4][30];
     DM2_V1_DropRng rng_backup;
     DM2_V1_GameState *game;
     uint8_t *raw_backup = NULL;
@@ -10137,6 +10560,9 @@ static int dm2_runtime_actuate_floor_mecha_timer(
                sizeof(global_state.word_vars));
     }
     memset(&pool_backup, 0, sizeof(pool_backup));
+    party_backup = rt->source_party;
+    memcpy(inventory_backup, rt->champion_inventory_objects,
+           sizeof(inventory_backup));
     queue_backup = rt->timer_queue;
     sound_queue_backup = rt->sound_queue;
     if (rt->sound_queue_ready && rt->sound_queue.ssound_entries &&
@@ -10168,7 +10594,9 @@ static int dm2_runtime_actuate_floor_mecha_timer(
            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
     backup_ready = 1;
     memset(&event, 0, sizeof(event));
-    (void)dm2_v1_actuate_floor_mecha(
+    dm2_runtime_prepare_resurrect_callbacks(rt, &resurrect_cb,
+                                             &resurrect_ctx);
+    (void)dm2_v1_actuate_floor_mecha_with_revive(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
         dm2_v1_boot_asset_loader(rt->boot), &rt->timer_queue,
@@ -10177,6 +10605,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         rt->caii_ready ? &creature_killer_cb : NULL,
         dm2_runtime_get_ornate_anim_len, rt,
         dm2_runtime_queue_ornate_activation_sound, rt,
+        &rt->session_rng,
+        dm2_runtime_revive_champion, &resurrect_ctx,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -10216,6 +10646,9 @@ floor_mecha_reject:
         if (caii_backup && rt->caii.slots)
             memcpy(rt->caii.slots, caii_backup, caii_backup_size);
         rt->session_rng = rng_backup;
+        rt->source_party = party_backup;
+        memcpy(rt->champion_inventory_objects, inventory_backup,
+               sizeof(inventory_backup));
     }
     dm2_v1_record_pool_set_free(&pool_backup);
     free(sound_entries_backup);
@@ -19148,6 +19581,37 @@ static int dm2_runtime_mac_overlap_step(const DM2_V1_DungeonData *dd,
     return -1;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    DM2_V1_HeroState hero_state;
+    int hero_index;
+} DM2_RuntimeStaminaContext;
+
+static DM2_V1_HeroState *dm2_runtime_stamina_get_hero(
+    void *context, int hero_index)
+{
+    DM2_RuntimeStaminaContext *stamina = context;
+    if (!stamina || hero_index != stamina->hero_index) return NULL;
+    return &stamina->hero_state;
+}
+
+static void dm2_runtime_stamina_wound_player(
+    void *context, int hero_index, int damage, int body_parts,
+    int damage_type)
+{
+    DM2_RuntimeStaminaContext *stamina = context;
+    if (!stamina || !stamina->runtime ||
+        hero_index != stamina->hero_index || damage < INT16_MIN ||
+        damage > INT16_MAX) return;
+    (void)dm2_runtime_cloud_wound_party(
+        stamina->runtime, (int16_t)hero_index, (int16_t)damage,
+        body_parts, damage_type);
+    if (damage > 0) {
+        stamina->hero_state.hero_flag = (uint16_t)(
+            stamina->hero_state.hero_flag | DM2_V1_HERO_FLAG_0800);
+    }
+}
+
 int dm2_v1_runtime_move(int dir) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
@@ -19220,8 +19684,9 @@ int dm2_v1_runtime_move(int dir) {
             uint32_t cost;
             uint16_t cost_bits;
             int16_t stamina_cost;
-            uint16_t stamina_bits;
-            int32_t stamina;
+            int16_t stamina_result;
+            DM2_RuntimeStaminaContext stamina_context;
+            DM2_V1_StaminaCallbacks stamina_callbacks;
             if (hero->curHP == 0) continue;
             if (movement_max_load[i] <= 0 ||
                 movement_player_weight[i] < 0) return -1;
@@ -19232,32 +19697,26 @@ int dm2_v1_runtime_move(int dir) {
             stamina_cost = cost_bits <= INT16_MAX
                 ? (int16_t)cost_bits
                 : (int16_t)((int32_t)cost_bits - 65536);
-            stamina_bits = (uint16_t)((uint16_t)hero->curStamina -
-                                      cost_bits);
-            stamina = stamina_bits <= INT16_MAX
-                ? (int32_t)stamina_bits
-                : (int32_t)stamina_bits - 65536;
-            if (stamina > 0) {
-                if (stamina > hero->maxStamina)
-                    stamina = hero->maxStamina;
-                hero->curStamina = (int16_t)stamina;
-            } else {
-                int32_t wound = -stamina / 2;
-                int32_t pending;
-                hero->curStamina = 0;
-                if (wound > 0) {
-                    pending = (int32_t)hero->damagesuffered + wound;
-                    if (pending > INT16_MAX) pending = INT16_MAX;
-                    hero->damagesuffered = (int16_t)pending;
-                    hero->heroflag = (int16_t)(
-                        (uint16_t)hero->heroflag |
-                        DM2_V1_HERO_FLAG_0800);
-                }
+            memset(&stamina_context, 0, sizeof(stamina_context));
+            stamina_context.runtime = rt;
+            stamina_context.hero_index = i;
+            stamina_context.hero_state.cur_stamina = hero->curStamina;
+            stamina_context.hero_state.max_stamina = hero->maxStamina;
+            stamina_context.hero_state.hero_flag =
+                (uint16_t)hero->heroflag;
+            stamina_callbacks.get_hero = dm2_runtime_stamina_get_hero;
+            stamina_callbacks.wound_player =
+                dm2_runtime_stamina_wound_player;
+            stamina_result = dm2_v1_adjust_stamina(
+                i, stamina_cost, &stamina_callbacks, &stamina_context);
+            if (stamina_result < 0 && stamina_cost != INT16_MIN) return -1;
+            hero->curStamina = stamina_context.hero_state.cur_stamina;
+            {
+                uint16_t flag_bits = stamina_context.hero_state.hero_flag;
+                int32_t signed_flag = flag_bits <= INT16_MAX
+                    ? (int32_t)flag_bits : (int32_t)flag_bits - 65536;
+                hero->heroflag = (int16_t)signed_flag;
             }
-            if (stamina_cost == INT16_MIN ||
-                (stamina_cost < 0 ? -stamina_cost : stamina_cost) >= 10)
-                hero->heroflag = (int16_t)(
-                    (uint16_t)hero->heroflag | DM2_V1_HERO_FLAG_0800);
         }
     }
 
@@ -19940,111 +20399,6 @@ int dm2_v1_runtime_cycle_action_champion(void) {
     return 0;
 }
 
-static int dm2_runtime_formation_hero_at_position(
-    const DM2_V1_RuntimeState *rt, int absolute_position)
-{
-    int i;
-    if (!rt || !rt->source_party_valid || absolute_position < 0 ||
-        absolute_position > 3 || rt->source_party.heros_in_party < 0 ||
-        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
-        return -1;
-    }
-    for (i = 0; i < rt->source_party.heros_in_party; ++i) {
-        if (rt->source_party.hero[i].partypos == absolute_position) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-int dm2_v1_runtime_change_player_pos(int relative_position)
-{
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    int facing;
-    int source_relative_position;
-    int source_position;
-    int target_position;
-    int source_hero;
-    int target_hero;
-
-    if (relative_position < 0 || relative_position > 4 ||
-        !rt->source_party_valid || !rt->session_snapshot_valid ||
-        rt->source_party.heros_in_party < 1 ||
-        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
-        return 0;
-    }
-    facing = rt->source_party.absdir;
-    if (facing < 0 || facing > 3) return 0;
-    target_position = (relative_position + facing) & 3;
-    target_hero = dm2_runtime_formation_hero_at_position(rt, target_position);
-
-    if (!rt->source_formation_drag_active) {
-        /* The first source click only picks up the occupied portrait. */
-        if (target_hero >= 0) {
-            rt->source_formation_drag_position = (int16_t)relative_position;
-            rt->source_formation_drag_active = 1;
-        }
-        return 1;
-    }
-
-    source_relative_position = rt->source_formation_drag_position;
-    source_position = (source_relative_position + facing) & 3;
-    source_hero = dm2_runtime_formation_hero_at_position(rt, source_position);
-    /* The source clears v1e00b8 before it mutates the formation. */
-    rt->source_formation_drag_active = 0;
-    rt->source_formation_drag_position = 0;
-    if (source_hero < 0) return 1;
-
-    /* DM2_CHANGE_PLAYER_POS updates the dragged champion's absolute facing
-     * to the party direction for a normal drop. The packed 0x8000 path used
-     * by CHAMPION_SQUAD_RECOMPUTE_POSITION deliberately skips that update. */
-    rt->source_party.hero[source_hero].absdir = (int8_t)facing;
-    if (rt->session_snapshot_valid) {
-        dm2_runtime_copy_source_hero_to_snapshot(
-            &rt->session_snapshot, source_hero,
-            &rt->source_party.hero[source_hero]);
-    }
-
-    if (source_relative_position != relative_position) {
-        int8_t old_position = (int8_t)source_position;
-        if (target_hero >= 0 && target_hero != source_hero) {
-            rt->source_party.hero[target_hero].partypos = old_position;
-            if (rt->session_snapshot_valid) {
-                dm2_runtime_copy_source_hero_to_snapshot(
-                    &rt->session_snapshot, target_hero,
-                    &rt->source_party.hero[target_hero]);
-            }
-        }
-        rt->source_party.hero[source_hero].partypos = (int8_t)target_position;
-        if (rt->session_snapshot_valid) {
-            dm2_runtime_copy_source_hero_to_snapshot(
-                &rt->session_snapshot, source_hero,
-                &rt->source_party.hero[source_hero]);
-        }
-    }
-    return 1;
-}
-
-int dm2_v1_runtime_recompute_player_pos(void)
-{
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-
-    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
-        rt->source_party.heros_in_party < 1 ||
-        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
-        return 0;
-    }
-    if (!rt->source_formation_drag_active) return 0;
-
-    /* c_input.cpp dispatches event 129 to
-     * DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION, which calls
-     * DM2_CHANGE_PLAYER_POS(v1e00b0 | 0x8000) only while a drag is active.
-     * That packed call clears the pending drag without changing the party
-     * formation or the dragged hero's facing. */
-    rt->source_formation_drag_active = 0;
-    rt->source_formation_drag_position = 0;
-    return 1;
-}
 
 typedef struct {
     DM2_V1_RuntimeState *rt;
@@ -20094,6 +20448,61 @@ static int dm2_runtime_hand_next_link(void *context, uint16_t ref,
             &query->rt->record_pools, (int16_t)ref, &next)) return 0;
     *out_next = (uint16_t)next;
     return 1;
+}
+
+/* skproject SKWINDOS/dm2byb.cpp::SKW_RELEASE_MINION:719,
+ * SKWINSPX/src/v4/skcrture.cpp::RELEASE_MINION:449,
+ * SKWINSPX/src/v5/SK1C9A.cpp::DM2_RELEASE_MINION:6148, and
+ * SKULLWIN/c_1c9a.cpp::DM2_RELEASE_MINION:6148 resolve the minion's
+ * missile, then dispatch the source 0x13 creature command at its map and
+ * coordinates. The source callers are dm2bye.cpp:4491, skgame.cpp:1214,
+ * skengage.cpp:624, and c_engage.cpp:625 respectively. */
+static int dm2_runtime_release_minion(void *context, uint16_t minion_record)
+{
+    DM2_RuntimeHandActivationQuery *query =
+        (DM2_RuntimeHandActivationQuery *)context;
+    DM2_V1_RuntimeState *rt;
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordChainAccess chain;
+    DM2_V1_ItemMissileReceipt missile_receipt;
+    DM2_V1_CaiiAiTurnReceipt ai_receipt;
+    uint16_t missile_ref;
+    uint16_t missile_position;
+    int map_id;
+    int x;
+    int y;
+
+    if (!query || !(rt = query->rt) || !rt->boot ||
+        !(dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !rt->caii_ready)
+        return 0;
+
+    memset(&chain, 0, sizeof(chain));
+    chain.record_word = dm2_runtime_hand_record_word;
+    chain.next_link = dm2_runtime_hand_next_link;
+    chain.context = query;
+    missile_ref = dm2_v1_GET_MISSILE_REF_OF_MINION(
+        &chain, minion_record, 0xffffu, &missile_receipt);
+    if (missile_receipt.blocked) return 0;
+    if (missile_ref == DM2_V1_ITEM_MISSILE_NULL_REF) return 1;
+    if (dm2_v1_record_handle_pool((int16_t)missile_ref) != 14 ||
+        !dm2_runtime_hand_record_word(query, missile_ref, 4u,
+                                      &missile_position))
+        return 0;
+
+    map_id = (missile_position >> 10) & 0x3f;
+    y = (missile_position >> 5) & 0x1f;
+    x = missile_position & 0x1f;
+    memset(&ai_receipt, 0, sizeof(ai_receipt));
+    if (dm2_v1_caii_ai_13e4_0360(
+            &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+            map_id, (unsigned long)rt->tick_count,
+            (int16_t)minion_record, x, y, 0x13, 1, &ai_receipt))
+        return 1;
+
+    /* The source helper is void: an absent CAII slot or an already
+     * stopping/dying minion is a no-op, not a failed hand action. */
+    return ai_receipt.no_slot || ai_receipt.guard_denied;
 }
 
 static int dm2_runtime_hand_container_type(
@@ -20314,6 +20723,120 @@ static int16_t dm2_runtime_hand_skill_level(void *context,
         &skills, skill, 1, query->rt->source_sleeping != 0);
 }
 
+static int dm2_runtime_formation_get_player_at_position(
+    void *context, int position)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || position < 0 || position > 3 ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return -1;
+    for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+        const DM2_V1_Hero *hero = &rt->source_party.hero[i];
+        if (hero->partypos == position && hero->curHP != 0) return i;
+    }
+    return -1;
+}
+
+static void dm2_runtime_formation_begin_drag(void *context, int source_slot)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || source_slot < 0 || source_slot > 4) return;
+    rt->source_drag_position = (int16_t)source_slot;
+    rt->source_drag_in_progress = 1;
+}
+
+static void dm2_runtime_formation_clear_drag(void *context)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt) return;
+    rt->source_drag_position = 0;
+    rt->source_drag_in_progress = 0;
+}
+
+static void dm2_runtime_formation_set_position(
+    void *context, int hero_index, int8_t position)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || position < 0 || position > 3)
+        return;
+    rt->source_party.hero[hero_index].partypos = position;
+    if (rt->session_snapshot_valid)
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index,
+            &rt->source_party.hero[hero_index]);
+}
+
+static void dm2_runtime_formation_set_direction(
+    void *context, int hero_index, int8_t direction)
+{
+    DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || hero_index < 0 ||
+        hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || direction < 0 || direction > 3)
+        return;
+    rt->source_party.hero[hero_index].absdir = direction;
+    if (rt->session_snapshot_valid)
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, hero_index,
+            &rt->source_party.hero[hero_index]);
+}
+
+static int8_t dm2_runtime_formation_get_facing(void *context)
+{
+    const DM2_V1_RuntimeState *rt = context;
+    if (!rt || !rt->source_party_valid || rt->source_party.absdir < 0 ||
+        rt->source_party.absdir > 3) return -1;
+    return (int8_t)rt->source_party.absdir;
+}
+
+static void dm2_runtime_apply_change_player_pos(
+    DM2_V1_RuntimeState *rt, int16_t packed_pos)
+{
+    DM2_V1_ChangePlayerPosState state;
+    DM2_V1_ChangePlayerPosCallbacks callbacks;
+    if (!rt || !rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return;
+    memset(&state, 0, sizeof(state));
+    memset(&callbacks, 0, sizeof(callbacks));
+    state.drag_in_progress = rt->source_drag_in_progress;
+    state.drag_source_position = rt->source_drag_position;
+    callbacks.get_player_at_position =
+        dm2_runtime_formation_get_player_at_position;
+    callbacks.begin_drag = dm2_runtime_formation_begin_drag;
+    callbacks.clear_drag = dm2_runtime_formation_clear_drag;
+    callbacks.set_position = dm2_runtime_formation_set_position;
+    callbacks.set_direction = dm2_runtime_formation_set_direction;
+    callbacks.get_party_facing = dm2_runtime_formation_get_facing;
+    dm2_v1_change_player_pos(packed_pos, &state, &callbacks, rt);
+}
+
+int dm2_v1_runtime_change_player_pos(int slot)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (slot < 0 || slot > 4 || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid) return 0;
+    dm2_runtime_apply_change_player_pos(rt, (int16_t)slot);
+    return 1;
+}
+
+int dm2_v1_runtime_recompute_player_pos(void)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        !rt->record_pools_valid || rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) return 0;
+    /* CHAMPION_SQUAD_RECOMPUTE_POSITION feeds the pending source slot to
+     * CHANGE_PLAYER_POS with bit 15 set, which clears the drag without the
+     * normal drop's direction writeback. */
+    if (rt->source_drag_in_progress)
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    return 1;
+}
+
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
@@ -20358,8 +20881,20 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         !activation_receipt.valid || !activation_receipt.result) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
+    rt->source_selected_hand_action = (int16_t)hand;
+    rt->source_selected_hand_2 = (int16_t)hand;
+    rt->source_spell_panel_flag = 1;
+    rt->source_v1e0b6c = 1;
+    rt->source_v1e0b62 = 0;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
+    /* ACTIVATE_ACTION_HAND calls CHAMPION_SQUAD_RECOMPUTE_POSITION after
+     * publishing its selection. That source helper feeds the pending slot
+     * back through CHANGE_PLAYER_POS with the direction-update bit clear. */
+    if (rt->source_drag_in_progress) {
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    }
     return 1;
 }
 
@@ -20376,7 +20911,45 @@ int dm2_v1_runtime_select_spell_champion(int hero_index) {
      * selection mode. Keep party.curactmode as the active hand used by the
      * DM2 cast owner; only transfer the source champion selection here. */
     rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_v1e0b62 = 0;
     rt->source_party.curacthero = rt->source_curacthero;
+    /* DOS and SPX SET_SPELLING_CHAMPION also recompute a pending formation
+     * drag after publishing the new champion selection. */
+    if (rt->source_drag_in_progress) {
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    }
+    return 1;
+}
+
+int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    if (spell_hand < 0 || spell_hand > 1 || hero_index < 0 ||
+        hero_index >= DM2_MAX_HEROES || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        hero_index >= rt->source_party.heros_in_party)
+        return 0;
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP == 0) return 0;
+    /* DOS/SPX SET_SPELLING_CHAMPION sets both selected-hand globals to the
+     * spell sentinel (2), publishes champion+1, clears magical-map flags,
+     * and recomputes a pending formation drag. Firestaff stores those UI
+     * selection globals separately because its cast owner still consumes
+     * party.curactmode as the physical hand. */
+    rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_selected_hand_action = 2;
+    rt->source_selected_hand_2 = 2;
+    rt->source_spell_panel_flag = 1;
+    rt->source_v1e0b6c = 1;
+    rt->source_party.curacthero = rt->source_curacthero;
+    rt->source_v1e0b62 = 0;
+    rt->source_v1e0b4e = 0;
+    if (rt->source_drag_in_progress)
+        dm2_runtime_apply_change_player_pos(
+            rt, (int16_t)(rt->source_drag_position | (int16_t)0x8000));
+    (void)spell_hand;
     return 1;
 }
 
@@ -20475,8 +21048,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
-    g_dm2_runtime.source_formation_drag_active = 0;
-    g_dm2_runtime.source_formation_drag_position = 0;
+    g_dm2_runtime.source_v1e0b62 = 0;
+    g_dm2_runtime.source_v1e0b4e = 0;
     g_dm2_runtime.source_event_hero_index = 0;
     memset(&g_dm2_runtime.source_movement, 0,
            sizeof(g_dm2_runtime.source_movement));
@@ -21339,6 +21912,94 @@ static int dm2_runtime_query_cmd_field(
     return 1;
 }
 
+/* Apply the charge half of SKW_PROCEED_COMMAND_SLOT /
+ * DM2_PROCEED_COMMAND_SLOT after its source-owned chance gate. The charge
+ * transaction is DM2_events_30DEA: c_events.cpp:2903 (SKULLWIN),
+ * SKWINSPX/src/v5/map.cpp:3203, and SKWINDOS/dm2bya.cpp:2273. */
+static int dm2_runtime_consume_hand_command_charge(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand, uint16_t item,
+    uint8_t cls1, uint8_t cls2, int16_t charge_type,
+    int *out_depleted)
+{
+    DM2_V1_Hero *hero;
+    const DM2_V1_AssetLoader *loader;
+    uint8_t *record;
+    uint16_t w2_before;
+    uint16_t w2;
+    uint16_t remaining;
+    uint16_t dbspec;
+    uint16_t charge_delta;
+    int16_t charge_delta_signed;
+    int db_type;
+    DM2_V1_SkprojectItemChargeReceipt charge_receipt;
+
+    if (out_depleted) *out_depleted = 0;
+    if (!rt || !rt->source_party_valid || !rt->record_pools_valid ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hand < 0 || hand > 1 || item == 0xffffu ||
+        (uint16_t)rt->source_party.hero[hero_index].item[hand] != item ||
+        !(loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL) ||
+        !(record = dm2_v1_record_pool_address_mut(&rt->record_pools, item)))
+        return 0;
+    db_type = dm2_v1_record_handle_pool((int16_t)item);
+    if (db_type < 0 || db_type > 0xff ||
+        dm2_v1_record_pool_record_size(db_type) < 6)
+        return 0;
+
+    if (charge_type == 0x10) charge_type = 0x0f;
+    w2_before = dm2_runtime_record_rd16(rt, record + 4);
+    w2 = w2_before;
+    if (charge_type != 0x11 && charge_type != 0x12) {
+        /* The source negates this field at 16-bit width. */
+        charge_delta = (uint16_t)(0u - (uint16_t)charge_type);
+        charge_delta_signed = charge_delta <= INT16_MAX
+            ? (int16_t)charge_delta
+            : (int16_t)((int32_t)charge_delta - 65536);
+        (void)dm2_v1_skproject_add_item_charge(
+            item, &w2, charge_delta_signed, &charge_receipt);
+        if (!charge_receipt.valid) return 0;
+        dm2_runtime_record_wr16(rt, record + 4, w2);
+    }
+    (void)dm2_v1_skproject_add_item_charge(item, &w2, 0,
+                                           &charge_receipt);
+    if (!charge_receipt.valid) {
+        dm2_runtime_record_wr16(rt, record + 4, w2_before);
+        return 0;
+    }
+    remaining = charge_receipt.new_charge;
+    if (remaining != 0u) return 1;
+    if (out_depleted) *out_depleted = 1;
+
+    /* QUERY_GDAT_DBSPEC_WORD_VALUE(item, 0) controls source destruction.
+     * Validate the live GDAT lookup separately because zero is a valid word. */
+    if (!dm2_v1_query_gdat_entry_data_index(
+            loader, cls1, cls2, 11, 0, &dbspec)) {
+        dm2_runtime_record_wr16(rt, record + 4, w2_before);
+        return 0;
+    }
+    if ((dbspec & 0x0800u) == 0u) return 1;
+
+    hero = &rt->source_party.hero[hero_index];
+    {
+        DM2_V1_Hero hero_before = *hero;
+        DM2_V1_ProcessItemBonusReceipt bonus_receipt;
+        hero->item[hand] = (int16_t)-1;
+        if (!dm2_v1_process_source_item_bonus_for_timer(
+                hero, (int16_t)hero_index, item, (int16_t)hand, -1,
+                &rt->record_pools, loader, &bonus_receipt) ||
+            !dm2_v1_record_pool_dealloc_record(
+                &rt->record_pools, (int16_t)item)) {
+            *hero = hero_before;
+            dm2_runtime_record_wr16(rt, record + 4, w2_before);
+            return 0;
+        }
+    }
+    rt->champion_inventory_objects[hero_index][hand] = 0xffffu;
+    dm2_runtime_copy_source_hero_to_snapshot(
+        &rt->session_snapshot, hero_index, hero);
+    return 1;
+}
+
 static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record);
 static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record);
 static int16_t dm2_runtime_attack_dbspec_index(
@@ -21859,7 +22520,7 @@ static int dm2_runtime_attack_creature_at(
         request.stamina_adj = dm2_v1_hero_get_stamina_adj_raw(
             hero, (int16_t)pre_strength);
     }
-    request.creature_armor_mult = ai->ArmorClass;
+    request.creature_skill_exp_factor = (uint8_t)((ai->w22 >> 8) & 0x0fu);
     /* DM2_CALC_PLAYER_ATTACK_DAMAGE receives a map descriptor difficulty
      * and ddat.v1e0286 party power, not the current map ordinal.  Both are
      * derivable from the already authenticated source state: the map
@@ -22015,8 +22676,9 @@ int dm2_v1_runtime_engage_command(
     return dm2_v1_engage_command(&patched, receipt);
 }
 
-int dm2_v1_runtime_proceed_hand_command(
-    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+static int dm2_v1_runtime_proceed_hand_command_variant(
+    int slot_index, DM2_V1_CommandSlotVariant variant,
+    DM2_V1_EngageCommandReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
@@ -22025,18 +22687,31 @@ int dm2_v1_runtime_proceed_hand_command(
     DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
     DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
     DM2_V1_EngageCommandRequest request;
+    DM2_V1_EngageCommandReceipt local_receipt;
+    DM2_RuntimeHandActivationQuery hand_query;
     DM2_RuntimeAttackQueueContext queue;
     DM2_RuntimeWieldContext wield;
+    DM2_V1_SourceTimerQueue timer_queue_before;
+    uint8_t attack_counter_before;
+    uint16_t attack_hero_flag_before = 0;
     uint16_t item;
     uint8_t cls1 = 0xffu;
     uint8_t cls2 = 0xffu;
     int16_t where;
+    int16_t charge_type;
+    int16_t repeat_count;
     int entry;
     int result;
     int is_wield_action;
+    int is_attack_action;
+    int action_postcondition;
 
-    if (receipt) memset(receipt, 0, sizeof(*receipt));
-    if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
+    if (!receipt) receipt = &local_receipt;
+    memset(receipt, 0, sizeof(*receipt));
+    if ((variant != DM2_V1_COMMAND_SLOT_DOS_SPX_V5 &&
+         variant != DM2_V1_COMMAND_SLOT_SPX_V4) ||
+        slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
+        !rt->source_aura_of_speed_valid ||
         !rt->session_snapshot_valid || !rt->record_pools_valid ||
         !rt->boot || !rt->boot->assets_verified ||
         !rt->boot->graphics_dat || !rt->source_party.curacthero ||
@@ -22078,6 +22753,9 @@ int dm2_v1_runtime_proceed_hand_command(
     memset(&request, 0, sizeof(request));
     memset(&queue, 0, sizeof(queue));
     memset(&wield, 0, sizeof(wield));
+    memset(&hand_query, 0, sizeof(hand_query));
+    hand_query.rt = rt;
+    hand_query.hero_index = rt->source_party.curacthero - 1;
     if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
                                      &request.cmd.action_id)) {
         if (receipt) receipt->fail_closed = 1;
@@ -22085,13 +22763,15 @@ int dm2_v1_runtime_proceed_hand_command(
     }
     is_wield_action = request.cmd.action_id == (DM2_ENGAGE_WIELD_WEAPON + 1) ||
                       request.cmd.action_id == 8;
+    is_attack_action = request.cmd.action_id == (DM2_ENGAGE_ATTACK + 1);
     if ((!is_wield_action &&
          (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
           (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode))) ||
-        (request.cmd.action_id != (DM2_ENGAGE_ATTACK + 1) &&
+        (!is_attack_action &&
          request.cmd.action_id != (DM2_ENGAGE_CAST_MISSILE + 1) &&
          request.cmd.action_id != (DM2_ENGAGE_WIELD_WEAPON + 1) &&
-         request.cmd.action_id != 8) ||
+         request.cmd.action_id != 8 &&
+         request.cmd.action_id != (DM2_ENGAGE_RELEASE_MINION + 1)) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
                                      &request.cmd.skill_type) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
@@ -22105,6 +22785,11 @@ int dm2_v1_runtime_proceed_hand_command(
                                      &request.cmd.defense_class) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 9,
                                      &request.cmd.skill_exp) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 8,
+                                     &charge_type) ||
+        (variant == DM2_V1_COMMAND_SLOT_DOS_SPX_V5 &&
+         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 14,
+                                      &repeat_count)) ||
         ((!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
                                        &request.cmd.damage_type)) &&
          request.cmd.action_id != 8)) {
@@ -22161,16 +22846,169 @@ int dm2_v1_runtime_proceed_hand_command(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    if (request.cmd.action_id == (DM2_ENGAGE_RELEASE_MINION + 1)) {
+        if (dm2_v1_record_handle_pool((int16_t)item) != 9 ||
+            !dm2_runtime_hand_record_word(&hand_query, item, 2u,
+                                          &request.minion_record)) {
+            receipt->fail_closed = 1;
+            return 0;
+        }
+        request.release_minion_cb = dm2_runtime_release_minion;
+        request.release_minion_ctx = &hand_query;
+    }
+    timer_queue_before = rt->timer_queue;
+    attack_counter_before = rt->source_attack_counter;
+    if (rt->source_party.curacthero > 0 &&
+        rt->source_party.curacthero <= rt->source_party.heros_in_party)
+        attack_hero_flag_before = (uint16_t)rt->source_party.hero[
+            rt->source_party.curacthero - 1].heroflag;
+    /* skproject skengage.cpp:157 adds RANDBIT to CMDSTR field 4 before
+     * dispatch. Consume the authenticated session stream at that source
+     * boundary; the receipt epilogue later spends the resulting stamina. */
+    {
+        int32_t power_bits = (uint16_t)request.cmd.power_random +
+            (int32_t)dm2_v1_drops_randbit(&rt->session_rng);
+        uint16_t narrowed = (uint16_t)power_bits;
+        request.cmd.power_random = narrowed <= INT16_MAX
+            ? (int16_t)narrowed
+            : (int16_t)((int32_t)narrowed - 65536);
+    }
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
-    if (!result || (is_wield_action
-                        ? (!receipt || !receipt->creature_attacked)
-                        : !queue.queued)) {
-        hero->heroflag &= (int16_t)~0x0800;
-        if (receipt) receipt->fail_closed = 1;
-        return 0;
+    {
+        int active_hero = rt->source_party.curacthero - 1;
+        int hand = rt->source_party.curactmode;
+        int depleted = 0;
+        int consume_charge;
+        /* c_engage.cpp writes field 14 to v1e0adc[hero][hand].w2 after a
+         * successful command, and seeds w0/b4 only for a nonzero value.
+         * DOS R_30DEA and SPX v5 DM2_events_30DEA then consume on w2 == 0,
+         * or on RAND16(w0 + 1) == 0 when b4 is set. */
+        if (variant == DM2_V1_COMMAND_SLOT_SPX_V4) {
+            /* SPX v4 skgame.cpp::PROCEED_COMMAND_SLOT performs field-8
+             * charge processing unconditionally and has no v1e0adc field-14
+             * probability gate. */
+            consume_charge = 1;
+        } else {
+            if (result) {
+                rt->source_command_hand[active_hero][hand].remaining =
+                    (uint16_t)repeat_count;
+                if (repeat_count != 0) {
+                    rt->source_command_hand[active_hero][hand].random_range =
+                        (uint16_t)repeat_count;
+                    rt->source_command_hand[active_hero][hand].consume_chance = 1u;
+                }
+            }
+            consume_charge =
+                rt->source_command_hand[active_hero][hand].remaining == 0u;
+            if (!consume_charge &&
+                rt->source_command_hand[active_hero][hand].consume_chance) {
+                uint16_t range = rt->source_command_hand[active_hero][hand]
+                                     .random_range;
+                consume_charge = dm2_v1_drops_rand16(
+                    &rt->session_rng, (uint16_t)(range + 1u)) == 0u;
+            }
+        }
+        if (consume_charge) {
+            if (!dm2_runtime_consume_hand_command_charge(
+                    rt, active_hero, hand, item, cls1, cls2,
+                    charge_type, &depleted)) {
+                receipt->fail_closed = 1;
+            } else if (depleted &&
+                       variant == DM2_V1_COMMAND_SLOT_DOS_SPX_V5) {
+                memset(&rt->source_command_hand[active_hero][hand], 0,
+                       sizeof(rt->source_command_hand[active_hero][hand]));
+            }
+        }
+        /* The source event keeps the magical-map hand bit only while a map
+         * flag is active; M11 redraw owns the corresponding panel refresh. */
+        if (rt->source_v1e0b62 != 0)
+            rt->source_v1e0b62 &= (int16_t)~0x0400;
     }
-    return 1;
+    action_postcondition =
+        (!is_wield_action || receipt->creature_attacked ||
+         receipt->door_attacked) &&
+        (!is_attack_action || queue.queued);
+    if (!result || !action_postcondition) {
+        hero->heroflag &= (int16_t)~0x0800;
+        /* ATTACK's source callback enqueues before reaching L_fin. If the
+         * same dispatch is subsequently rejected as an unowned route,
+         * restore that source state along with the temporary hand flag. */
+        if (queue.queued) {
+            rt->timer_queue = timer_queue_before;
+            rt->source_attack_counter = attack_counter_before;
+            rt->source_hero_ench_countdown = attack_counter_before;
+            rt->source_savegames1[2] = attack_counter_before;
+            if (rt->source_party.curacthero > 0 &&
+                rt->source_party.curacthero <= rt->source_party.heros_in_party)
+                rt->source_party.hero[rt->source_party.curacthero - 1].heroflag =
+                    (int16_t)attack_hero_flag_before;
+        }
+    }
+    /* A source-successful command whose runtime callback failed its
+     * postcondition is an adapter gap. Do not charge the hero for a command
+     * the owner could not actually perform. Ordinary source failures keep
+     * their source-defined L_fin cooldown/stamina behavior below. */
+    if (result && !action_postcondition) {
+        receipt->fail_closed = 1;
+        receipt->hand_cooldown_delay = 0;
+        receipt->stamina_cost = 0;
+        receipt->skill_exp_gained = 0;
+    }
+    /* Common skproject ENGAGE_COMMAND epilogue: vol_20 (normally CMDSTR
+     * field 3, with source branch overrides) adjusts the active hand. */
+    if (receipt->hand_cooldown_delay != 0)
+        dm2_runtime_apply_hand_cooldown(
+            rt, hero, receipt->hand_cooldown_delay,
+            rt->source_party.curactmode);
+    if (receipt->stamina_cost != 0) {
+        DM2_RuntimeStaminaContext stamina_context;
+        DM2_V1_StaminaCallbacks stamina_callbacks;
+        int stamina_result;
+        memset(&stamina_context, 0, sizeof(stamina_context));
+        stamina_context.runtime = rt;
+        stamina_context.hero_index = request.hero_index;
+        stamina_context.hero_state.cur_stamina = hero->curStamina;
+        stamina_context.hero_state.max_stamina = hero->maxStamina;
+        stamina_context.hero_state.hero_flag = (uint16_t)hero->heroflag;
+        stamina_callbacks.get_hero = dm2_runtime_stamina_get_hero;
+        stamina_callbacks.wound_player = dm2_runtime_stamina_wound_player;
+        stamina_result = dm2_v1_adjust_stamina(
+            request.hero_index, receipt->stamina_cost,
+            &stamina_callbacks, &stamina_context);
+        if (stamina_result < 0 && receipt->stamina_cost != INT16_MIN) {
+            if (receipt) receipt->fail_closed = 1;
+            return 0;
+        }
+        hero->curStamina = stamina_context.hero_state.cur_stamina;
+        {
+            uint16_t flag_bits = stamina_context.hero_state.hero_flag;
+            int32_t signed_flag = flag_bits <= INT16_MAX
+                ? (int32_t)flag_bits : (int32_t)flag_bits - 65536;
+            hero->heroflag = (int16_t)signed_flag;
+        }
+    }
+    /* SKULLWIN/c_engage.cpp::DM2_ENGAGE_COMMAND returns RG61l after its
+     * common L_fin epilogue (lines 825-870). Preserve that result while still
+     * running source cooldown/stamina updates on ordinary command failures. */
+    return result && action_postcondition;
+}
+
+int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+{
+    /* M11's currently admitted event route follows DOS/SPX v5 semantics. */
+    return dm2_v1_runtime_proceed_hand_command_variant(
+        slot_index, DM2_V1_COMMAND_SLOT_DOS_SPX_V5, receipt);
+}
+
+int dm2_v1_runtime_proceed_hand_command_spx_v4(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+{
+    /* Exposed for source callers that explicitly select SPX v4 behavior; the
+     * original-media platform label is not a source-code-version selector. */
+    return dm2_v1_runtime_proceed_hand_command_variant(
+        slot_index, DM2_V1_COMMAND_SLOT_SPX_V4, receipt);
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

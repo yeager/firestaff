@@ -318,10 +318,15 @@ typedef struct {
     int items_counted;    /* source items passing direction and type filters */
     int items_moved;      /* items successfully moved to destination */
     int creatures_checked;/* creature possession chains walked */
+    int champions_revived;/* matching champion tokens consumed and revived */
+    int16_t last_champion_index;
     int recycler_mask_missing; /* 1 = GDAT mask unavailable; source zero-mask no-op */
     int item_type_lookup_failed;
+    int charged_items;    /* source MOVE_ITEM_TO charge update applied */
     int fail_closed;
 } DM2_V1_ItemTeleportReceipt;
+
+typedef int (*DM2_V1_ReviveChampionFn)(void *ctx, int16_t champion_index);
 
 /* ── Creature generator receipt ───────────────────────────────────── */
 
@@ -394,6 +399,30 @@ int dm2_v1_actuate_wall_mecha_with_rng(
                               DM2_V1_DropRng *rng,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
+/* Runtime-owned wall-mecha variant that binds champion resurrection to the
+ * live party owner for the source item-teleporter champion-token branch. */
+int dm2_v1_actuate_wall_mecha_with_rng_and_revive(
+                              DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
+                              const DM2_V1_AssetLoader *asset_loader,
+                              DM2_V1_SourceTimerQueue *queue,
+                              int map, int x, int y,
+                              int action_type, int direction,
+                              uint32_t game_tick,
+                              DM2_V1_GlobVarState *global_state,
+                              const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
+                              DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                              void *ornate_sound_ctx,
+                              DM2_V1_QueueShooterNoiseFn queue_shooter_noise,
+                              void *shooter_sound_ctx,
+                              DM2_V1_DropRng *rng,
+                              DM2_V1_ReviveChampionFn revive_champion,
+                              void *revive_ctx,
+                              DM2_V1_ActuatorEventReceipt *receipt);
+
 /* Full ACTUATE_FLOOR_MECHA dispatch.
  * Source: skevent.cpp:2072-2232 ACTUATE_FLOOR_MECHA */
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
@@ -410,6 +439,27 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                void *ornate_ctx,
                                DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
                                void *ornate_sound_ctx,
+                               DM2_V1_DropRng *rng,
+                               DM2_V1_ActuatorEventReceipt *receipt);
+
+int dm2_v1_actuate_floor_mecha_with_revive(
+                               DM2_V1_RecordPoolSet *pool_set,
+                               DM2_V1_DungeonData *dungeon,
+                               DM2_V1_CaiiArray *caii,
+                               const DM2_V1_AssetLoader *asset_loader,
+                               DM2_V1_SourceTimerQueue *queue,
+                               int map, int x, int y,
+                               int action_type, int direction,
+                               uint32_t game_tick,
+                               DM2_V1_GlobVarState *global_state,
+                               const DM2_V1_CreatureKillerCallbacks *creature_killer_cb,
+                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                               void *ornate_ctx,
+                               DM2_V1_QueueOrnateActivationSoundFn queue_ornate_sound,
+                               void *ornate_sound_ctx,
+                               DM2_V1_DropRng *rng,
+                               DM2_V1_ReviveChampionFn revive_champion,
+                               void *revive_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.
@@ -471,6 +521,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   int is_floor, int recycler,
                                   int capture, int only_first_item,
                                   int map, uint32_t game_tick,
+                                  DM2_V1_DropRng *rng,
                                   DM2_V1_ItemTeleportReceipt *receipt);
 
 /* PUSH_BUTTON_SWITCH — set/clear/toggle the directly addressed Door bit 13.

@@ -20,7 +20,7 @@
  *   31      SHOOT:   DM2_SHOOT_CHAMPION_MISSILE from launcher
  *   32-34   ACT:     DM2_hero_2c1d_0186 (type 0/1/2)
  *   35      HEAL_HP: convert MP to HP (loop)
- *   41      TURN:    DM2_hero_2c1d_1de2 (position swap)
+ *   41      THROW:   DM2_hero_2c1d_1de2 from the active hand
  *   43      MINION:  DM2_SET_DESTINATION_OF_MINION_MAP
  *   44,45   MINION:  set minion missile ref action
  *   46      MINION:  DM2_CREATE_MINION (type 0x30)
@@ -82,6 +82,10 @@ int dm2_v1_engage_command(
     receipt->action_type = (DM2_V1_EngageCommandType)action_case;
     receipt->action_dispatched = 1;
     receipt->success = 1;
+    /* skproject initializes vol_20 from CMDSTR field 3 and sends it to
+     * ADJUST_HAND_COOLDOWN in the common epilogue (skengage.cpp:154, 841-847).
+     * Keep this separate from field 5, which supplies action/timer delay. */
+    receipt->hand_cooldown_delay = request->cmd.power_base;
 
     switch (action_case) {
     /* No-op cases (0, 17-30, 36, 39-40, 42, 51-52) */
@@ -141,6 +145,8 @@ int dm2_v1_engage_command(
             int tile_sub = request->tile_value & 0x7;
             if (tile_type == 4 && tile_sub == 4) {
                 receipt->door_attacked = 1;
+                /* Source wield-on-door path replaces vol_20 with 6. */
+                receipt->hand_cooldown_delay = 6;
             } else if (request->creature_at_target != -1) {
                 int dir = request->party_dir & 3;
                 static const int dx[4] = { 0, 1, 0, -1 };
@@ -373,24 +379,24 @@ int dm2_v1_engage_command(
         break;
     }
 
-    case 41: /* TURN/POSITION swap — skengage.cpp:547-565 */
-        receipt->position_swapped = 1;
-        if (request->turn_cb) {
-            int16_t swap_dir;
-            int16_t hero_pos = request->hero_party_pos;
-            int16_t fwd = (request->party_dir + 1) & 0x3;
-            int16_t back = (request->party_dir + 2) & 0x3;
-            if (hero_pos == fwd) {
-                swap_dir = back;
-            } else if (hero_pos == back) {
-                swap_dir = fwd;
-            } else {
-                swap_dir = 0;
-            }
-            receipt->success = request->turn_cb(request->turn_ctx,
-                                                request->hero_index,
-                                                request->hand, swap_dir);
+    case 41: /* THROW — skengage.cpp:546-565 */
+        if (request->throw_item_cb) {
+            int throw_direction = 0;
+            int hero_pos = request->hero_party_pos & 0x3;
+            int clockwise = ((request->party_dir & 0x3) + 1) & 0x3;
+            int opposite = ((request->party_dir & 0x3) + 2) & 0x3;
+
+            /* Source calls DM2_hero_2c1d_1de2 with direction 0 unless the
+             * active champion occupies party-facing +1 or +2, when the
+             * deferred path calls it with direction 1. */
+            if (hero_pos == clockwise || hero_pos == opposite)
+                throw_direction = 1;
+            receipt->item_thrown = request->throw_item_cb(
+                request->throw_item_ctx, request->hero_index, request->hand,
+                request->party_x, request->party_y, throw_direction);
+            receipt->success = receipt->item_thrown;
         } else {
+            receipt->success = 0;
             receipt->fail_closed = 1;
         }
         break;
@@ -452,8 +458,9 @@ int dm2_v1_engage_command(
     case 47: /* RELEASE_MINION — skengage.cpp:622-625 */
         receipt->minion_released = 1;
         if (request->release_minion_cb) {
-            request->release_minion_cb(request->release_minion_ctx,
-                                       request->minion_record);
+            if (!request->release_minion_cb(request->release_minion_ctx,
+                                            request->minion_record))
+                receipt->fail_closed = 1;
         } else {
             receipt->fail_closed = 1;
         }
@@ -478,7 +485,13 @@ int dm2_v1_engage_command(
 
     /* Epilogue: stamina, skill experience, cooldown.
      * skengage.cpp:824-868 */
-    if (receipt->success && !request->cmd_flag_8000) {
+    if (receipt->fail_closed)
+        receipt->success = 0;
+    /* L_fin applies cooldown/stamina/skill adjustment after a source action
+     * reports either success or an ordinary game failure.  Missing owners
+     * and other fail-closed paths are adapter gaps, not source failures, so
+     * they must not acquire gameplay side effects here. */
+    if (!receipt->fail_closed && !request->cmd_flag_8000) {
         receipt->stamina_cost = request->cmd.power_random;
         receipt->skill_exp_gained = request->cmd.skill_exp;
     }
