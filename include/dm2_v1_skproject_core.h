@@ -1942,7 +1942,9 @@ typedef struct {
     uint16_t cache_index;
     uint8_t requested_temp_pin_clear;
     uint8_t requested_free_indexed_mement;
+    uint8_t freed_cache_without_mement;
     DM2_V1_SkprojectFreeIndexedMementReceipt indexed;
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt free_cache;
 } DM2_V1_SkprojectFreeTempCacheIndexReceipt;
 
 typedef struct {

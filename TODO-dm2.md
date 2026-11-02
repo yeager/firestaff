@@ -2378,7 +2378,7 @@ supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
 `SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff now exposes both the v5 arrow branch and an explicit older spell/leader rectangle branch with the source b44 leader gate. The DOS, SPX-v4, and SKWIN rows are now PARTIAL; the v5 algorithm matches but its live runtime/platform owner remains open.
 
 2026-11-01 skproject temporary-cache lifecycle comparison:
-SPX v4 and SKWIN `GET_TEMP_CACHE_HASH` advance the source counter per collision probe, while Firestaff uses a local probe and only advances once after allocation. `FREE_TEMP_CACHE_INDEX` also frees the cache entry when no mement is attached before freeing the indexed mement; Firestaff currently exits without that cache removal. Mark the three active SPX-v4 cache functions and the corresponding older SKWIN dispositions partial; live cache ownership remains open.
+SPX v4 and SKWIN `GET_TEMP_CACHE_HASH` advance the source counter per collision probe, while Firestaff uses a local probe and only advances once after allocation. `FREE_TEMP_CACHE_INDEX` frees the cache entry when no mement is attached before the no-op indexed-mement release. Firestaff now models that branch with a cache-free receipt; live cache ownership remains open. The active SPX-v4 cache functions and older SKWIN dispositions remain partial pending runtime ownership.
 
 
 2026-11-01 skproject `ANIMATE_CREATURE` runtime dispatch review:
@@ -2650,3 +2650,12 @@ versus SPX-v4 cleanup under the thinking-state guard. The older frame-counter
 helper remains separate. Production timer/AI callers, source-specific callback
 bindings and supported-platform runtime evidence remain open; all source rows
 stay `PARTIAL`.
+
+
+2026-11-02 skproject `FREE_TEMP_CACHE_INDEX` no-mement branch:
+Firestaff now calls the bounded `FREE_CACHE_INDEX` path when the indexed mement
+lookup returns the source 0xffff sentinel, clearing the sorted hash entry and
+releasing the cache slot before preserving the subsequent no-mement free as a
+no-op. Attached-mement cleanup continues through the existing indexed-free
+owner, which clears the cache link and recycles the mement. Runtime cache
+ownership and platform/edition callers remain open; source rows stay `PARTIAL`.

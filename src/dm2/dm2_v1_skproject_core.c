@@ -6750,9 +6750,20 @@ int dm2_v1_skproject_free_temp_cache_index(
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
+    /* SKWIN _3e74_585a and SPX v4 _3e74_585a_CACHE free the cache slot
+     * directly when QUERY_MEMENTI_FROM(cache|0x8000) returns 0xffff, then
+     * FREE_TEMP_CACHE_INDEX still calls FREE_INDEXED_MEMENT (a no-op for the
+     * absent mement). The combined helper below handles the attached case;
+     * this branch preserves the source's otherwise-missed cache removal. */
     receipt.valid = dm2_v1_skproject_free_indexed_mement(
         state, (uint16_t)(cache_index | 0x8000u), 1,
         current_mementi, &receipt.indexed);
+    if (!receipt.valid && receipt.indexed.blocked_no_mement) {
+        receipt.valid = dm2_v1_skproject_free_cache_index(
+            state, cache_index, &receipt.free_cache);
+        receipt.freed_cache_without_mement =
+            (uint8_t)(receipt.valid ? 1u : 0u);
+    }
     if (out_receipt) *out_receipt = receipt;
     return receipt.valid;
 }
