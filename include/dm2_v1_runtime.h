@@ -1692,6 +1692,11 @@ int dm2_v1_runtime_enter_spell_mode(int hero_index, int spell_hand);
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);
 int dm2_v1_runtime_get_active_hand(void);
+/* DISPLAY_RIGHT_PANEL_SQUAD_HANDS source query: return the ObjectID in the
+ * active champion's selected action hand only when it is a source-classified
+ * moneybox. Outputs are cleared on a missing or non-moneybox hand. */
+int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
+                                      uint8_t *out_container_cls2);
 /* Copy the authenticated GAME_LOAD party snapshot for presentation owners;
  * this never creates heroes or fills missing inventory records. */
 int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session);

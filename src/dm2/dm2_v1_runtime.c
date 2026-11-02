@@ -21054,6 +21054,40 @@ int dm2_v1_runtime_get_active_hand(void)
     return rt->source_party.curactmode;
 }
 
+int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
+                                      uint8_t *out_container_cls2)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_RuntimeHandActivationQuery query;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    uint8_t cls2 = 0xffu;
+    int hero = dm2_v1_runtime_get_active_champion_index();
+    int hand = dm2_v1_runtime_get_active_hand();
+    uint16_t object_id;
+
+    if (out_object_id) *out_object_id = 0xffffu;
+    if (out_container_cls2) *out_container_cls2 = 0xffu;
+    if (!out_object_id || !out_container_cls2 || hero < 0 || hero >= 4 ||
+        hand < 0 || hand >= 2 || !rt->record_pools_valid || !rt->boot)
+        return 0;
+    object_id = (uint16_t)rt->champion_inventory_objects[hero][hand];
+    if (object_id == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
+        object_id == (uint16_t)DM2_V1_RECORD_HANDLE_END)
+        return 0;
+
+    query.rt = rt;
+    query.hero_index = hero;
+    if (!dm2_runtime_hand_is_moneybox(&query, object_id) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            object_id, &rt->record_pools, &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu)
+        return 0;
+
+    *out_object_id = object_id;
+    *out_container_cls2 = cls2;
+    return 1;
+}
+
 int dm2_v1_runtime_get_champion_count(void) {
     const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     if (!rt->source_party_valid || !rt->session_snapshot_valid ||
