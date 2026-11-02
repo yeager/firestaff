@@ -142,7 +142,7 @@ typedef enum {
 
 /* ── Asset Loader Context ─────────────────────────────────────────── */
 
-typedef struct DM2_V1_GdatEntry {
+typedef struct {
     uint8_t cls1;
     uint8_t cls2;
     uint8_t cls3;

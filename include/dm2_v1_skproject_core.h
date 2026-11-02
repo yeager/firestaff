@@ -4867,14 +4867,11 @@ int dm2_v1_skproject_find_ladder_around(
     int y,
     DM2_V1_SkprojectFindLadderAroundReceipt *out_receipt);
 
-/* Verified FIND_LADDER_AROUND source variants. DOS and SPX v5 differ in the
-   accepted DB2 text-ornament usage values; SPX v4 is not exposed until its
-   matching source implementation is available for comparison. */
-typedef enum {
-    DM2_V1_SKPROJECT_LADDER_SOURCE_DOS = 0,
-    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5 = 1
-} DM2_V1_SkprojectLadderSource;
-
+/* DOS dm2byh.cpp:1982, SPX v4 skdungn.cpp:202, SPX v5 skgdtqdb.cpp:1647
+   FIND_LADDER_AROUND source query. Scans N/E/S/W record chains, validates
+   simple-ladder actuator altitude or DB2 ornament GDAT direction, and
+   returns the source direction. A supplied record-pool owner is preferred
+   so live record links and source-endian words are observed. */
 typedef struct {
     int valid;
     int found;
@@ -4893,20 +4890,24 @@ typedef struct {
     uint8_t records_scanned;
     uint8_t stopped_at_higher_db;
     uint8_t blocked_malformed_chain;
-    uint8_t blocked_unsupported_source;
-    uint8_t source_variant;
     uint32_t search_hash;
 } DM2_V1_SkprojectFindLadderSourceReceipt;
+
+typedef enum {
+    DM2_V1_SKPROJECT_LADDER_SOURCE_DOS = 0,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4 = 1,
+    DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5 = 2
+} DM2_V1_SkprojectLadderSourceVersion;
 
 int dm2_v1_skproject_find_ladder_around_source(
     const struct DM2_V1_DungeonData *dungeon,
     const struct DM2_V1_RecordPoolSet *record_pools,
     const struct DM2_V1_AssetLoader *asset_loader,
-    DM2_V1_SkprojectLadderSource source_variant,
     int level,
     int x,
     int y,
     int isupper,
+    DM2_V1_SkprojectLadderSourceVersion source_version,
     DM2_V1_SkprojectFindLadderSourceReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — party-position

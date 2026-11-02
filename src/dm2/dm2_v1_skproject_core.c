@@ -12072,6 +12072,7 @@ static int dm2_v1_skproject_ladder_record(
     int index = (int)(link & 0x03ffu);
     const uint8_t *record;
     int record_size;
+    int next_raw;
     int16_t next;
 
     if (out_type) *out_type = -1;
@@ -12094,8 +12095,10 @@ static int dm2_v1_skproject_ladder_record(
         if (!record || raw_type != type || raw_index != index ||
             record_size < 4)
             return 0;
-        next = (int16_t)dm2_v1_dungeon_get_next_thing(dungeon, link);
-        if (next < 0 && next != DM2_V1_RECORD_HANDLE_END) return 0;
+        next_raw = dm2_v1_dungeon_get_next_thing(dungeon, link);
+        if ((next_raw < 0 && next_raw != DM2_V1_RECORD_HANDLE_END) ||
+            next_raw > UINT16_MAX) return 0;
+        next = (int16_t)(uint16_t)next_raw;
     }
     if (out_type) *out_type = type;
     if (out_record) *out_record = record;
@@ -12120,18 +12123,18 @@ static uint16_t dm2_v1_skproject_ladder_record_word(
     return dm2_v1_dungeon_read_record_u16(dungeon, record + word_offset);
 }
 
-/* DOS dm2byh.cpp:1982 and SPX v5 skgdtqdb.cpp:1647 share the cardinal record
-   walk, but not the accepted DB2 text-ornament usage values. SPX v4 is omitted
-   until its source body is available for direct comparison. */
+/* DOS dm2byh.cpp:1982, SPX v4 skdungn.cpp:202 and SPX v5 skgdtqdb.cpp:1647
+   share this four-cardinal record query. DOS accepts SimpleTextExtUsage 7;
+   both SPX versions also accept usage 6. */
 int dm2_v1_skproject_find_ladder_around_source(
-    const DM2_V1_DungeonData *dungeon,
-    const DM2_V1_RecordPoolSet *record_pools,
-    const DM2_V1_AssetLoader *asset_loader,
-    DM2_V1_SkprojectLadderSource source_variant,
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *record_pools,
+    const struct DM2_V1_AssetLoader *asset_loader,
     int level,
     int x,
     int y,
     int isupper,
+    DM2_V1_SkprojectLadderSourceVersion source_version,
     DM2_V1_SkprojectFindLadderSourceReceipt *out_receipt)
 {
     static const int dx[4] = {0, 1, 0, -1};
@@ -12145,23 +12148,20 @@ int dm2_v1_skproject_find_ladder_around_source(
     receipt.origin_x = x;
     receipt.origin_y = y;
     receipt.isupper = isupper;
-    receipt.source_variant = (uint8_t)source_variant;
     receipt.direction = -1;
     receipt.ladder_x = -1;
     receipt.ladder_y = -1;
     receipt.matched_record = DM2_V1_RECORD_HANDLE_NULL;
     receipt.actuator_record = DM2_V1_RECORD_HANDLE_NULL;
 
-    if (source_variant != DM2_V1_SKPROJECT_LADDER_SOURCE_DOS &&
-        source_variant != DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5) {
-        receipt.blocked_unsupported_source = 1;
-        if (out_receipt) *out_receipt = receipt;
-        return -1;
-    }
     if (!dungeon || !dungeon->raw_data || level < 0 ||
         level >= dungeon->level_count || x < 0 || y < 0 ||
         x >= dungeon->level_widths[level] ||
-        y >= dungeon->level_heights[level]) {
+        y >= dungeon->level_heights[level] ||
+        (isupper != -1 && isupper != 1) ||
+        (source_version != DM2_V1_SKPROJECT_LADDER_SOURCE_DOS &&
+         source_version != DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V4 &&
+         source_version != DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5)) {
         receipt.blocked_malformed_chain = 1;
         if (out_receipt) *out_receipt = receipt;
         return -1;
@@ -12182,7 +12182,8 @@ int dm2_v1_skproject_find_ladder_around_source(
             continue;
         }
         first = dm2_v1_dungeon_get_first_thing(dungeon, level, sx, sy);
-        if (first < 0 || first == DM2_V1_RECORD_HANDLE_END) {
+        if (first < 0 || first == (int)DM2_THING_END_MARKER ||
+            first == (int)DM2_THING_NULL_MARKER) {
             hash = dm2_v1_skproject_ladder_hash_step(hash, 0xfffeu);
             continue;
         }
@@ -12236,20 +12237,17 @@ int dm2_v1_skproject_find_ladder_around_source(
                 }
             } else if (type == DM2_DB_TEXT &&
                        (word2 & 0x0006u) == 0x0002u &&
-                       ((source_variant ==
+                       (((word2 >> 11) & 0x001fu) == 7u ||
+                        (source_version !=
                              DM2_V1_SKPROJECT_LADDER_SOURCE_DOS &&
-                         ((word2 >> 11) & 0x001fu) == 7u) ||
-                        (source_variant ==
-                             DM2_V1_SKPROJECT_LADDER_SOURCE_SPX_V5 &&
-                         ((word2 >> 11) & 0x001fu) >= 6u &&
-                         ((word2 >> 11) & 0x001fu) <= 7u))) {
+                         ((word2 >> 11) & 0x001fu) == 6u))) {
                 uint16_t ladder_up = 0u;
                 uint16_t ornament = (uint16_t)((word2 >> 3) & 0x00ffu);
                 if (asset_loader && asset_loader->loaded &&
                     dm2_v1_query_gdat_entry_data_index(
                         asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
                         ornament, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
-                        0x11, &ladder_up) == 0 &&
+                        0x11, &ladder_up) == 1 &&
                     ((isupper == -1 && ladder_up != 0u) ||
                      (isupper == 1 && ladder_up == 0u))) {
                     receipt.found = 1;
