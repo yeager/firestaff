@@ -1,6 +1,7 @@
 #include "dm2_v1_skproject_core.h"
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_find_ladder_around.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -12019,9 +12020,9 @@ int dm2_v1_skproject_get_creature_at(
     return (record != DM2_V1_RECORD_HANDLE_NULL) ? 1 : 0;
 }
 
-/* SKULLWIN/c_querydb.cpp:1645 DM2_FIND_LADDAR_AROUND — source-locked wrapper
-   around the existing ladder search.  The wrapper forwards to the proven
-   implementation and copies the fields the skproject caller expects. */
+/* Legacy square-only ladder receipt retained for its existing callers.
+   It is not the source implementation; use
+   dm2_v1_skproject_find_ladder_around_source for SKProject semantics. */
 int dm2_v1_skproject_find_ladder_around(
     const DM2_V1_DungeonData *dungeon,
     int level,
@@ -12050,6 +12051,223 @@ int dm2_v1_skproject_find_ladder_around(
     }
     if (out_receipt) *out_receipt = receipt;
     return result;
+}
+
+static uint32_t dm2_v1_skproject_ladder_hash_step(uint32_t hash,
+                                                  uint32_t value)
+{
+    return (hash ^ value) * 16777619u;
+}
+
+static int dm2_v1_skproject_ladder_record(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *record_pools,
+    uint16_t link,
+    int *out_type,
+    const uint8_t **out_record,
+    int *out_record_size,
+    int16_t *out_next)
+{
+    int type = (int)((link >> 10) & 0x0fu);
+    int index = (int)(link & 0x03ffu);
+    const uint8_t *record;
+    int record_size;
+    int16_t next;
+
+    if (out_type) *out_type = -1;
+    if (out_record) *out_record = NULL;
+    if (out_record_size) *out_record_size = 0;
+    if (!dungeon || type < 0 || type >= DM2_V1_RECORD_POOL_COUNT)
+        return 0;
+    if (record_pools && record_pools->valid) {
+        record = dm2_v1_record_pool_address(record_pools, (int16_t)link);
+        record_size = record_pools->pools[type].record_size;
+        if (!record || record_size < 4 ||
+            !dm2_v1_record_pool_next_link(record_pools, (int16_t)link,
+                                           &next))
+            return 0;
+    } else {
+        int raw_type = -1;
+        int raw_index = -1;
+        record = dm2_v1_dungeon_get_thing_record(
+            dungeon, link, &raw_type, &raw_index, &record_size);
+        if (!record || raw_type != type || raw_index != index ||
+            record_size < 4)
+            return 0;
+        next = (int16_t)dm2_v1_dungeon_get_next_thing(dungeon, link);
+        if (next < 0 && next != DM2_V1_RECORD_HANDLE_END) return 0;
+    }
+    if (out_type) *out_type = type;
+    if (out_record) *out_record = record;
+    if (out_record_size) *out_record_size = record_size;
+    if (out_next) *out_next = next;
+    return 1;
+}
+
+static uint16_t dm2_v1_skproject_ladder_record_word(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *record_pools,
+    const uint8_t *record,
+    int word_offset)
+{
+    if (record_pools && record_pools->valid) {
+        if (record_pools->words_big_endian)
+            return (uint16_t)(((uint16_t)record[word_offset] << 8) |
+                              record[word_offset + 1]);
+        return (uint16_t)(record[word_offset] |
+                          ((uint16_t)record[word_offset + 1] << 8));
+    }
+    return dm2_v1_dungeon_read_record_u16(dungeon, record + word_offset);
+}
+
+/* DOS dm2byh.cpp:1982, SPX v4 skdungn.cpp:202 and SPX v5 skgdtqdb.cpp:1647
+   share this four-cardinal record query. The only text-ornament distinction
+   between v4 and the DOS/v5 bodies is the source type naming; the extracted
+   word and GDAT predicates are identical. */
+int dm2_v1_skproject_find_ladder_around_source(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *record_pools,
+    const DM2_V1_AssetLoader *asset_loader,
+    int level,
+    int x,
+    int y,
+    int isupper,
+    DM2_V1_SkprojectFindLadderSourceReceipt *out_receipt)
+{
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    DM2_V1_SkprojectFindLadderSourceReceipt receipt;
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level = level;
+    receipt.origin_x = x;
+    receipt.origin_y = y;
+    receipt.isupper = isupper;
+    receipt.direction = -1;
+    receipt.ladder_x = -1;
+    receipt.ladder_y = -1;
+    receipt.matched_record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.actuator_record = DM2_V1_RECORD_HANDLE_NULL;
+
+    if (!dungeon || !dungeon->raw_data || level < 0 ||
+        level >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[level] ||
+        y >= dungeon->level_heights[level]) {
+        receipt.blocked_malformed_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    for (int direction = 0; direction < 4; ++direction) {
+        int sx = x + dx[direction];
+        int sy = y + dy[direction];
+        int first;
+        int16_t link;
+        unsigned steps = 0u;
+
+        hash = dm2_v1_skproject_ladder_hash_step(hash,
+                                                 (uint32_t)direction);
+        if (sx < 0 || sy < 0 || sx >= dungeon->level_widths[level] ||
+            sy >= dungeon->level_heights[level]) {
+            hash = dm2_v1_skproject_ladder_hash_step(hash, 0xffffu);
+            continue;
+        }
+        first = dm2_v1_dungeon_get_first_thing(dungeon, level, sx, sy);
+        if (first < 0 || first == DM2_V1_RECORD_HANDLE_END) {
+            hash = dm2_v1_skproject_ladder_hash_step(hash, 0xfffeu);
+            continue;
+        }
+        link = (int16_t)first;
+        while (link != DM2_V1_RECORD_HANDLE_END) {
+            const uint8_t *record = NULL;
+            uint16_t word2;
+            int type = -1;
+            int16_t next = DM2_V1_RECORD_HANDLE_NULL;
+
+            if (++steps > 16384u || link == DM2_V1_RECORD_HANDLE_NULL) {
+                receipt.blocked_malformed_chain = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return -1;
+            }
+            type = (int)(((uint16_t)link >> 10) & 0x0fu);
+            if (type > 3) {
+                receipt.stopped_at_higher_db = 1;
+                hash = dm2_v1_skproject_ladder_hash_step(hash,
+                                                         (uint16_t)link);
+                break;
+            }
+            if (!dm2_v1_skproject_ladder_record(
+                    dungeon, record_pools, (uint16_t)link, &type, &record,
+                    NULL, &next)) {
+                receipt.blocked_malformed_chain = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return -1;
+            }
+            if (receipt.records_scanned < UINT8_MAX)
+                receipt.records_scanned++;
+            hash = dm2_v1_skproject_ladder_hash_step(hash,
+                                                     (uint16_t)link);
+            word2 = dm2_v1_skproject_ladder_record_word(
+                dungeon, record_pools, record, 2);
+            hash = dm2_v1_skproject_ladder_hash_step(hash, word2);
+
+            if (type == DM2_DB_ACTUATOR &&
+                (word2 & 0x7fu) == 0x1cu) {
+                uint16_t target_map = (uint16_t)((word2 >> 7) & 0x01ffu);
+                if (target_map < (uint16_t)dungeon->level_count &&
+                    ((int)dungeon->map_level_number[target_map] -
+                     (int)dungeon->map_level_number[level]) == isupper) {
+                    receipt.found = 1;
+                    receipt.direction = direction;
+                    receipt.ladder_x = sx;
+                    receipt.ladder_y = sy;
+                    receipt.matched_record = (uint16_t)link;
+                    receipt.actuator_record = (uint16_t)link;
+                    goto found_ladder;
+                }
+            } else if (type == DM2_DB_TEXT &&
+                       (word2 & 0x0006u) == 0x0002u &&
+                       (((word2 >> 11) & 0x001fu) == 6u ||
+                        ((word2 >> 11) & 0x001fu) == 7u)) {
+                uint16_t ladder_up = 0u;
+                uint16_t ornament = (uint16_t)((word2 >> 3) & 0x00ffu);
+                if (asset_loader && asset_loader->loaded &&
+                    dm2_v1_query_gdat_entry_data_index(
+                        asset_loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                        ornament, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+                        0x11, &ladder_up) == 0 &&
+                    ((isupper == -1 && ladder_up != 0u) ||
+                     (isupper == 1 && ladder_up == 0u))) {
+                    receipt.found = 1;
+                    receipt.direction = direction;
+                    receipt.ladder_x = sx;
+                    receipt.ladder_y = sy;
+                    receipt.matched_record = (uint16_t)link;
+                    receipt.matched_text_ornament = 1u;
+                    receipt.ornament_index = ornament;
+                    receipt.gdat_ladder_up = ladder_up;
+                    hash = dm2_v1_skproject_ladder_hash_step(hash,
+                                                             ladder_up);
+                    goto found_ladder;
+                }
+                hash = dm2_v1_skproject_ladder_hash_step(hash, ornament);
+            }
+            link = next;
+        }
+    }
+
+    receipt.valid = 1;
+    receipt.search_hash = hash ? hash : 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+
+found_ladder:
+    receipt.valid = 1;
+    receipt.search_hash = hash ? hash : 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.direction;
 }
 
 /* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — returns the
