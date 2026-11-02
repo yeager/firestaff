@@ -3737,17 +3737,17 @@ int dm2_v1_skproject_1031_07d6_remap_ui_tables(
     return 1;
 }
 
-/* SKULLWIN/c_1031.cpp:834 DM2_CLICK_MAGICAL_MAP_AT — source-locked receipt
-   for the magical-map click route.  Validates the UI code (0x55), the map-chip
-   item in the active hero's hand, and the owned minion record; computes the
-   source map-cell math; and records the requested map/minion/destination
-   operations without mutating global runtime state. */
+/* SKULLWIN/c_1031.cpp:834 DM2_CLICK_MAGICAL_MAP_AT — bounded source receipt.
+   This covers active-hand validation, map-cell selection, direction-relative
+   target coordinates, and destination-tile admission. Other-level lookup and
+   the live record/map transaction still belong to the runtime owner. */
 int dm2_v1_skproject_click_magical_map_at(
     int16_t click_x,
     int16_t click_y,
     uint16_t ui_code,
     uint8_t current_hero,
     uint8_t current_actmode,
+    uint8_t party_dir,
     uint16_t item_in_hand,
     const uint8_t *item_record,
     size_t item_record_size,
@@ -3755,34 +3755,28 @@ int dm2_v1_skproject_click_magical_map_at(
     size_t minion_record_size,
     int16_t map_origin_x,
     int16_t map_origin_y,
-    int16_t cell_stride_x,
-    int16_t cell_stride_y,
+    int16_t cell_width_x,
+    int16_t cell_gap_x,
+    int16_t cell_width_y,
+    int16_t cell_gap_y,
     int16_t map_offset_x,
     int16_t map_offset_y,
-    int16_t current_map,
+    int16_t resolved_map,
     int16_t party_x,
     int16_t party_y,
-    int16_t party_map,
-    int16_t teleport_map,
-    int16_t teleport_x,
-    int16_t teleport_y,
     const uint8_t *tiles,
+    size_t tiles_size,
     int16_t map_width,
     int16_t map_height,
     const uint8_t *passage,
     DM2_V1_SkprojectUiMagicalMapClickReceipt *out_receipt)
 {
     DM2_V1_SkprojectUiMagicalMapClickReceipt receipt;
-    int32_t rx, ry, mod, div, cell_x, cell_y;
+    int32_t rx, ry, mod_x, mod_y, div, cell_x, cell_y;
+    int16_t tile_x, tile_y;
+    uint8_t tile, tile_type;
+    size_t tile_index;
 
-    (void)current_actmode;
-    (void)party_map;
-    (void)teleport_map;
-    (void)teleport_x;
-    (void)teleport_y;
-    (void)tiles;
-    (void)map_width;
-    (void)map_height;
     (void)passage;
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!out_receipt) return 0;
@@ -3791,8 +3785,19 @@ int dm2_v1_skproject_click_magical_map_at(
     receipt.input_y = click_y;
     receipt.input_code = ui_code;
     receipt.item_in_hand = item_in_hand;
+    receipt.party_dir = party_dir;
     if (current_hero == 0u) {
         receipt.blocked_missing_hero = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (current_actmode > 1u) {
+        receipt.blocked_invalid_hand = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (party_dir > 3u) {
+        receipt.blocked_invalid_direction = 1u;
         *out_receipt = receipt;
         return 0;
     }
@@ -3821,41 +3826,83 @@ int dm2_v1_skproject_click_magical_map_at(
     ry = (int32_t)click_y - ((int32_t)map_origin_y - (int32_t)map_offset_y);
     receipt.map_origin_x = map_origin_x;
     receipt.map_origin_y = map_origin_y;
-    receipt.cell_stride_x = cell_stride_x;
-    receipt.cell_stride_y = cell_stride_y;
+    receipt.cell_width_x = cell_width_x;
+    receipt.cell_gap_x = cell_gap_x;
+    receipt.cell_width_y = cell_width_y;
+    receipt.cell_gap_y = cell_gap_y;
     receipt.map_offset_x = map_offset_x;
     receipt.map_offset_y = map_offset_y;
 
-    mod = (int32_t)cell_stride_x + (int32_t)cell_stride_y;
-    if (mod <= 0) mod = 1;
-    div = (int32_t)((rx % mod + mod) % mod);
-    if (div < cell_stride_y) {
+    mod_x = (int32_t)cell_width_x + (int32_t)cell_gap_x;
+    mod_y = (int32_t)cell_width_y + (int32_t)cell_gap_y;
+    if (cell_width_x <= 0 || cell_gap_x < 0 || cell_width_y <= 0 ||
+        cell_gap_y < 0 || mod_x <= 0 || mod_y <= 0 ||
+        rx < 0 || ry < 0) {
         receipt.blocked_invalid_tile = 1u;
         *out_receipt = receipt;
         return 0;
     }
-    cell_x = rx / mod;
-
-    div = (int32_t)((ry % mod + mod) % mod);
-    if (div < cell_stride_y) {
+    div = rx % mod_x;
+    if (div < cell_gap_x) {
         receipt.blocked_invalid_tile = 1u;
         *out_receipt = receipt;
         return 0;
     }
-    cell_y = ry / mod;
+    cell_x = rx / mod_x;
 
-    /* Source: cell_x -= 3; vector_x = 3 - cell_y; vector_y = cell_x. */
-    cell_x -= 3;
-    receipt.target_map = current_map;
-    receipt.target_x = (int16_t)(party_x + (3 - cell_y));
-    receipt.target_y = (int16_t)(party_y + cell_x);
-
-    /* Caller-owned teleport destination override is recorded when it matches
-       the computed cell; real map mutation remains with the runtime owner. */
-    if (teleport_map >= 0 && teleport_x == receipt.target_x &&
-        teleport_y == receipt.target_y) {
-        receipt.target_map = teleport_map;
+    div = ry % mod_y;
+    if (div < cell_gap_y) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
     }
+    cell_y = ry / mod_y;
+
+    /* SKULLWIN/SKWINSPX v5 calculate the displayed cell through
+     * CALC_VECTOR_W_DIR before LOCATE_OTHER_LEVEL. Keep the cardinal
+     * facing transform here; map-level resolution remains a caller input. */
+    tile_x = party_x;
+    tile_y = party_y;
+    if (!dm2_v1_skproject_calc_vector_w_dir(
+            (int16_t)party_dir, (int16_t)(cell_x - 3),
+            (int16_t)(3 - cell_y), &tile_x, &tile_y, NULL)) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!tiles || tiles_size == 0u || map_width <= 0 || map_height <= 0) {
+        receipt.blocked_missing_tiles = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (tile_x < 0 || tile_y < 0 || tile_x >= map_width ||
+        tile_y >= map_height) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    tile_index = (size_t)tile_y * (size_t)map_width + (size_t)tile_x;
+    if (tile_index >= tiles_size) {
+        receipt.blocked_missing_tiles = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (resolved_map < 0 || resolved_map >= 64) {
+        receipt.blocked_missing_map = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    tile = tiles[tile_index];
+    tile_type = (uint8_t)(tile >> 5);
+    if (tile_type == 0u || tile_type == 7u ||
+        (tile_type == 6u && (tile & 0x05u) == 0u)) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.target_map = resolved_map;
+    receipt.target_x = (int16_t)tile_x;
+    receipt.target_y = (int16_t)tile_y;
 
     receipt.requested_change_map = 1u;
     receipt.requested_set_destination = 1u;

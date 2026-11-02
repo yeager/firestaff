@@ -766,14 +766,21 @@ typedef struct {
     uint8_t blocked_not_magical_map;
     uint8_t blocked_not_map_chip;
     uint8_t blocked_missing_minion;
+    uint8_t blocked_missing_map;
+    uint8_t blocked_missing_tiles;
     uint8_t blocked_invalid_tile;
+    uint8_t blocked_invalid_hand;
+    uint8_t blocked_invalid_direction;
     uint8_t blocked_same_position;
     int16_t map_origin_x;
     int16_t map_origin_y;
-    int16_t cell_stride_x;
-    int16_t cell_stride_y;
+    int16_t cell_width_x;
+    int16_t cell_gap_x;
+    int16_t cell_width_y;
+    int16_t cell_gap_y;
     int16_t map_offset_x;
     int16_t map_offset_y;
+    uint8_t party_dir;
     int16_t target_map;
     int16_t target_x;
     int16_t target_y;
@@ -3326,6 +3333,7 @@ int dm2_v1_skproject_click_magical_map_at(
     uint16_t ui_code,
     uint8_t current_hero,
     uint8_t current_actmode,
+    uint8_t party_dir,
     uint16_t item_in_hand,
     const uint8_t *item_record,
     size_t item_record_size,
@@ -3333,18 +3341,17 @@ int dm2_v1_skproject_click_magical_map_at(
     size_t minion_record_size,
     int16_t map_origin_x,
     int16_t map_origin_y,
-    int16_t cell_stride_x,
-    int16_t cell_stride_y,
+    int16_t cell_width_x,
+    int16_t cell_gap_x,
+    int16_t cell_width_y,
+    int16_t cell_gap_y,
     int16_t map_offset_x,
     int16_t map_offset_y,
-    int16_t current_map,
+    int16_t resolved_map,
     int16_t party_x,
     int16_t party_y,
-    int16_t party_map,
-    int16_t teleport_map,
-    int16_t teleport_x,
-    int16_t teleport_y,
     const uint8_t *tiles,
+    size_t tiles_size,
     int16_t map_width,
     int16_t map_height,
     const uint8_t *passage,
