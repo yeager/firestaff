@@ -3113,3 +3113,12 @@ for the source container frame and scattered coin sprites, plus coin-order/count
 receipts, but neither source function is bound to a production DM2 GUI caller.
 Corrected the four SKULLWIN/SKWIN named rows to PARTIAL pending end-to-end
 live-state and supported-platform ownership.
+
+2026-11-02 SKProject `DRAW_SQUAD_SPELL_AND_LEADER_ICON` /
+`DRAW_SPELL_TO_BE_CAST`:
+The current squad/leader callback only selects and clears the direction slot;
+it does not draw the source summary images or cooldown overlays. The rune and
+spell-icon helper has a closer source mapping, but live spell state and panel
+ownership are not bound on every supported platform. Updated the named audits
+to PARTIAL; finish the icon overlays and runtime/platform bindings before
+claiming parity.
