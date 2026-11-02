@@ -13183,6 +13183,7 @@ static int dm2_runtime_step_missile_timer(
     uint16_t packed_b, energy_step;
     uint8_t record_energy;
     int move_dir;
+    int record_direction;
     int next_x, next_y;
     int cloned = 0;
     int caii_cloned = 0;
@@ -13214,6 +13215,11 @@ static int dm2_runtime_step_missile_timer(
          source_index)) {
         goto missile_reject;
     }
+    /* c_moverec.cpp:520-535 carries the timer direction separately from the
+     * ObjectID direction used by DM2_ADVANCE_TILES_TIME. Retain that source
+     * timer direction before any teleporter adjustment below. */
+    move_dir = (int)((packed_b >> 10) & 0x3u);
+    record_direction = (int)(((uint16_t)missile >> 14) & 0x3u);
 
     dungeon_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
         dungeon, (uint16_t)missile, NULL, NULL, &size_dungeon);
@@ -13492,6 +13498,12 @@ static int dm2_runtime_step_missile_timer(
                 }
                 if (teleporter_route < 0)
                     goto missile_rollback;
+                /* c_move.cpp:2152-2793 DM2_move_2fcf_0434 sets v1e1026
+                 * only after it has selected a destination. A blocked
+                 * passage leaves the missile on its current tile and keeps
+                 * both source directions unchanged. */
+                next_x = x;
+                next_y = y;
                 if (teleporter_route > 0) {
                     /* This is the source's map_3BF83/MOVE_RECORD_TO handoff,
                      * not a coordinate-only teleport: both raw chains and
@@ -13507,6 +13519,7 @@ static int dm2_runtime_step_missile_timer(
                     next_y = teleporter_y;
                     missile = teleporter_missile;
                     move_dir = (int)(((uint16_t)missile >> 14) & 3u);
+                    record_direction = move_dir;
                     packed_b = (uint16_t)((packed_b & ~0x3ffu) |
                         (uint16_t)next_x | ((uint16_t)next_y << 5) |
                         (uint16_t)(move_dir << 10));
@@ -13527,6 +13540,16 @@ static int dm2_runtime_step_missile_timer(
                     (uint16_t)next_x | ((uint16_t)next_y << 5));
                 }
             }
+            /* c_tim_proc.cpp:3593-3665 updates the source DB14 timer slot
+             * after DM2_MOVE_RECORD_TO, including its packed location and
+             * ObjectID orientation. The dispatcher removed this exact slot
+             * before entering us, so the continuation below is its live
+             * replacement and receives the source-normalized payload. */
+            packed_b = (uint16_t)((packed_b & 0xf000u) |
+                (uint16_t)next_x | ((uint16_t)next_y << 5) |
+                ((uint16_t)move_dir << 10));
+            missile = (int16_t)(((uint16_t)missile & 0x3fffu) |
+                ((uint16_t)record_direction << 14));
             DM2_V1_SourceTimer continuation = *timer;
             uint32_t tick = receipt ? receipt->game_tick :
                 (uint32_t)rt->tick_count;
