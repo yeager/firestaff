@@ -12,7 +12,9 @@ The authentic trace contains 138 face/staging observations (79 master SH-2 and 5
 - Each four-corner coordinate multiset maps to exactly one captured VDP1 command geometry; the reverse mapping is also one-to-one across this captured set.
 - 123 records match in exact corner order; 133 match by cyclic rotation. Five remaining records match only as unordered corner sets, so winding and corner correspondence are not claimed for those five.
 - The retail-data scan covers 1,144 Structure3 entries and 18,478 faces after verifying the SHA-256 hashes of all 16 `LEVxx.DGN` files against Firestaff's retail hash fixture.
-- 64 observations map to a unique face row directly. Unique contiguous face-row sequences resolve another 23 distinct runtime pointers. Overall, 87 of 120 distinct runtime face-row pointers resolve to retail rows; those pointers account for 101 of 138 capture records. The remaining 33 pointers (37 records) are unresolved. This does not show that those faces are absent from retail data.
+- 64 observations map to a unique face row directly. Unique contiguous face-row sequences resolve another 23 distinct runtime pointers.
+- A further six runtime pointers resolve by table offset: each candidate must agree with at least two already-resolved face rows from the same CPU and DGN entry within 96 bytes, with the observed 12-byte pointer stride matching the DGN face-ordinal stride. The analyzer verifies this invariant across all 425 nearby same-entry anchor pairs and rejects any conflict.
+- Overall, 93 of 120 distinct runtime face-row pointers resolve to retail rows; those pointers account for 111 of 138 capture records. The remaining 27 pointers (27 records) are unresolved. This does not show that those faces are absent from retail data.
 
 ## Reproduce
 
@@ -25,8 +27,8 @@ python3 scripts/analyze_nexus_ymir_face_to_command.py \
   --evidence /path/to/ymir-sh2-face-selection-20261102 \
   --retail-data /path/to/retail-source \
   --firestaff-repo /path/to/firestaff-checkout \
-  --csv-out /tmp/face-to-command.csv \
-  --json-out /tmp/face-to-command.json
+  --csv-out /path/to/output/face-to-command.csv \
+  --json-out /path/to/output/face-to-command.json
 ```
 
 The external evidence bundle includes `SHA256SUMS.txt`, the analyzer outputs, the Ymir command and run logs, and the exact successful capture invocation. It also contains the hash-verified retail inputs. No game data or emulator memory dumps are committed.

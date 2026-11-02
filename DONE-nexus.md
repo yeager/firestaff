@@ -98,6 +98,20 @@
   production renderer admission. Details are in
   [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).
 
+## 2026-11-02 — Resolve additional authentic face-row owners
+
+- The frame-1605 SH-2 face-to-command analyzer now uses nearby, independently
+  resolved face rows as source anchors when duplicate vertex-index tuples
+  occur in the retail corpus. Candidate DGN ordinals must match the observed
+  12-byte WRAM-H row stride for at least two anchors within 96 bytes.
+- The hash-verified authentic capture resolves six additional distinct face
+  pointers (ten command records), increasing source joins to 93 of 120 face
+  pointers and 111 of 138 capture records. It verifies 425 same-entry anchor
+  pairs with no stride conflicts. Twenty-seven pointers remain unresolved.
+- This is a single-frame source-owner join; it does not establish pixel
+  ownership, complete VDP1+VDP2 parity, or renderer admission. See
+  [`docs/nexus/ymir_face_to_vdp1_command_trace.md`](docs/nexus/ymir_face_to_vdp1_command_trace.md).
+
 ## 2026-11-01 — Match an authentic gameplay VDP pass in Firestaff
 
 - Added an optional real-media test case with SHA-256-pinned VDP1 FBS, VDP2

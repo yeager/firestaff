@@ -82,6 +82,19 @@ remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
 and PR [#252](https://github.com/yeager/firestaff/pull/252).
 
+## 2026-11-02 — Extend authentic SH-2 face-to-command ownership
+
+The frame-1605 analyzer now uses the observed 12-byte WRAM-H face-row stride
+to resolve duplicated face tuples when at least two independently resolved
+rows from the same CPU and retail DGN entry anchor the candidate ordinal within
+96 bytes. It verifies 425 nearby same-entry anchor pairs with no conflicts.
+This adds six distinct face-row pointers (ten command observations): 93 of
+120 pointers and 111 of 138 records now join to retail Structure3 rows. The
+other 27 pointers remain unresolved. This is one authentic capture and does
+not prove material ownership, all-frame face selection, pixel ownership, or
+production renderer admission. See
+[`docs/nexus/ymir_face_to_vdp1_command_trace.md`](docs/nexus/ymir_face_to_vdp1_command_trace.md).
+
 ## MAPD frame-891 Ymir layer composition verified; Firestaff replay remains open
 
 The capture-only NBG1 layer now replays the authentic Ymir fetch source per
