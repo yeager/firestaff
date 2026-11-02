@@ -10519,6 +10519,7 @@ wall_mecha_reject:
 typedef struct {
     DM2_V1_RuntimeState *runtime;
     int map;
+    int failed;
 } DM2_RuntimeFloorCreatureGeneratorContext;
 
 static int16_t dm2_runtime_floor_generator_allocate(
@@ -10635,6 +10636,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
                                              &resurrect_ctx);
     generator_ctx.runtime = rt;
     generator_ctx.map = map;
+    generator_ctx.failed = 0;
     generator_cb.context = &generator_ctx;
     generator_cb.allocate = dm2_runtime_floor_generator_allocate;
     generator_cb.queue_teleport_noise = dm2_runtime_floor_generator_noise;
@@ -10651,7 +10653,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         dm2_runtime_revive_champion, &resurrect_ctx,
         &generator_cb,
         &event);
-    if (!event.valid || event.fail_closed != 0 ||
+    if (!event.valid || event.fail_closed != 0 || generator_ctx.failed ||
         creature_killer_ctx.failed) {
         goto floor_mecha_reject;
     }
@@ -22926,14 +22928,98 @@ static int16_t dm2_runtime_floor_generator_allocate(
     DM2_RuntimeFloorCreatureGeneratorContext *generator =
         (DM2_RuntimeFloorCreatureGeneratorContext *)context;
     DM2_RuntimeCreateMinionContext allocation;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_GameLoadRuntimeSessionCandidate *source;
+    const DM2_AIDefinition *ai = NULL;
+    const DM2_V1_AssetLoader *asset_loader;
+    DM2_V1_CaiiMoverecActivationReceipt caii_receipt;
+    DM2_V1_CreatureSomethingReceipt something;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    const uint8_t *animation = NULL;
+    int16_t adj[2] = {0, 0};
+    uint8_t *record;
+    int16_t creature;
+    int result;
     if (!generator || !generator->runtime) return DM2_V1_RECORD_HANDLE_NULL;
+    dungeon = generator->runtime->boot
+        ? (DM2_V1_DungeonData *)generator->runtime->boot->dungeon_data : NULL;
+    if (!dungeon || !generator->runtime->caii_ready ||
+        !generator->runtime->sound_queue_ready) {
+        generator->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
     memset(&allocation, 0, sizeof(allocation));
     allocation.runtime = generator->runtime;
     allocation.map = generator->map;
     /* This callback owns the SPX v4 ACTUATE_FLOOR_MECHA source route. */
     allocation.spx_v4 = 1;
-    return dm2_runtime_alloc_new_creature(
+    creature = dm2_runtime_alloc_new_creature(
         &allocation, creature_type, health_multiplier, direction, x, y);
+    if (creature == DM2_V1_RECORD_HANDLE_NULL) return creature;
+
+    source = generator->runtime->game_load_candidate;
+    asset_loader = source && source->asset_loader
+        ? source->asset_loader
+        : dm2_v1_boot_asset_loader(generator->runtime->boot);
+    if (source && source->caii_source.valid &&
+        dm2_v1_caii_source_owner_ai_spec_def(
+            &source->caii_source, (int)(creature_type & 0x7fffu), &ai) != 1) {
+        generator->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    if (!ai && dm2_v1_creature_ai_spec_def(
+            (int)(creature_type & 0x7fffu), &ai) != 1) {
+        generator->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    memset(&caii_receipt, 0, sizeof(caii_receipt));
+    if (!dm2_v1_caii_moverec_activation(
+            &generator->runtime->record_pools, dungeon,
+            &generator->runtime->caii, &generator->runtime->timer_queue,
+            generator->map, (unsigned long)generator->runtime->tick_count,
+            creature, (int16_t)x, (int16_t)y, &caii_receipt) ||
+        !caii_receipt.valid ||
+        !(record = dm2_v1_record_pool_address_mut(
+              &generator->runtime->record_pools, creature))) {
+        generator->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    if (record[5] != 0xffu &&
+        (int)record[5] < generator->runtime->caii.capacity) {
+        const uint8_t *slot = generator->runtime->caii.slots +
+            (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+        adj[0] = (int16_t)((uint16_t)slot[8] | ((uint16_t)slot[9] << 8));
+        adj[1] = (int16_t)((uint16_t)slot[10] | ((uint16_t)slot[11] << 8));
+    }
+    memset(&something, 0, sizeof(something));
+    result = dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+        &generator->runtime->record_pools, &generator->runtime->caii,
+        asset_loader, ai, &generator->runtime->session_rng, creature, adj,
+        &animation, generator->map,
+        source ? source->source_party_map : generator->map,
+        0, 0, 0, (int16_t)x, (int16_t)y,
+        (unsigned long)generator->runtime->tick_count, &something);
+    if (result < 0 || !something.valid) {
+        generator->failed = 1;
+        return DM2_V1_RECORD_HANDLE_NULL;
+    }
+    if (something.noise_would_queue) {
+        sound_env = generator->runtime->sound_env;
+        sound_env.current_map = (int16_t)generator->map;
+        sound_env.gametick = (int32_t)generator->runtime->tick_count;
+        memset(&sound_receipt, 0, sizeof(sound_receipt));
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &generator->runtime->sound_queue, 0x0f,
+                (int8_t)record[4], (int8_t)something.noise_index,
+                0x46, 0x80, (int16_t)x, (int16_t)y, 1,
+                &sound_env, &sound_receipt) &&
+            !sound_receipt.rejected_map_gate) {
+            generator->failed = 1;
+            return DM2_V1_RECORD_HANDLE_NULL;
+        }
+    }
+    return creature;
 }
 
 static int dm2_runtime_floor_generator_noise(

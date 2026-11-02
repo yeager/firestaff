@@ -454,7 +454,7 @@ static int dm2_v1_dm1_creature_generator(
         if (dm2_v1_record_handle_pool(creature) != 4 ||
             !(creature_record = dm2_v1_record_pool_address_mut(
                   pool_set, creature)) ||
-            pool_set->pools[4].record_size < 10u ||
+            pool_set->pools[4].record_size < 10 ||
             !(raw_creature_record = (uint8_t *)(uintptr_t)
                 dm2_v1_dungeon_get_thing_record(
                     dungeon, (uint16_t)creature, NULL, NULL,
