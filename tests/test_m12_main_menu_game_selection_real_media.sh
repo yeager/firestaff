@@ -620,6 +620,69 @@ if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ]]; then
     run_alternate_platform_picker_case dm2 \
         "$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" 1 PC pc-en
 fi
+dm2_jewelcase_archive=${FIRESTAFF_DM2_PC_JEWEL_ARCHIVE:-}
+dm2_jewelcase_probe=''
+probe_dm2_jewelcase() {
+    local candidate=$1
+    local output
+    local status=0
+    local probe_home="$scratch/dm2-jewelcase-probe-home"
+    mkdir -p "$probe_home"
+    output=$(HOME="$probe_home" XDG_CONFIG_HOME="$probe_home" \
+        APPDATA="$probe_home" \
+        FIRESTAFF_CONFIG_PATH="$probe_home/config.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --platform pc --data-dir "$candidate" \
+        --boot-probe --duration 0 --debug --verbose 2>&1) || status=$?
+    dm2_jewelcase_probe=$output
+    if [[ $status != 0 ]]; then
+        return 1
+    fi
+    if ! grep -Fq 'selected game=dm2 platform=PC edition=pc-jewel source=' \
+            <<<"$output" ||
+       ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm2' <<<"$output"; then
+        return 1
+    fi
+}
+if [[ -n "$dm2_jewelcase_archive" ]]; then
+    if [[ ! -f "$dm2_jewelcase_archive" ]]; then
+        printf 'FAIL: configured authentic DM2 JewelCase archive is missing: %s\n' \
+            "$dm2_jewelcase_archive" >&2
+        exit 1
+    fi
+    if ! probe_dm2_jewelcase "$dm2_jewelcase_archive"; then
+        printf 'FAIL: configured DM2 archive is not an authenticated pc-jewel source\n%s\n' \
+            "$dm2_jewelcase_probe" >&2
+        exit 1
+    fi
+else
+    for candidate in "$data_root"/dm2/*[Jj]ewel*.zip \
+                    "$data_root"/dm2/*[Gg]erman*.zip; do
+        if [[ -f "$candidate" ]] && probe_dm2_jewelcase "$candidate"; then
+            dm2_jewelcase_archive=$candidate
+            break
+        fi
+    done
+fi
+if [[ -n "$dm2_jewelcase_archive" ]]; then
+    dm2_jewelcase_archive=$(python3 - "$dm2_jewelcase_archive" <<'PY'
+import os
+import sys
+
+print(os.path.realpath(sys.argv[1]))
+PY
+)
+    dm2_jewelcase_overlay="$archive_data_root/dm2/$(basename "$dm2_jewelcase_archive")"
+    if [[ ! -e "$dm2_jewelcase_overlay" ]]; then
+        ln -s "$dm2_jewelcase_archive" "$dm2_jewelcase_overlay"
+        original_sources+=("$dm2_jewelcase_archive")
+        original_source_hashes+=("$(firestaff_sha256_file "$dm2_jewelcase_archive")")
+    fi
+    run_alternate_platform_picker_case dm2 \
+        "$dm2_jewelcase_overlay" 1 PC pc-jewel
+else
+    echo 'SKIP: authentic DM2 PC JewelCase media is not staged; pc-jewel CLI/menu handoff remains unverified'
+fi
 if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ]]; then
     run_alternate_platform_picker_case dm2 \
         "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" 2 Amiga amiga-en
