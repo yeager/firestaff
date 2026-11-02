@@ -25,10 +25,7 @@ RETAIL_SOURCE_KINDS = {
     "retail-dgn-indexed",
     "retail-dgn-direct-rgb",
     "retail-menu-bpk-mode4",
-}
-CAPTURE_SOURCE_KINDS = {
-    "captured-mode4-vram",
-    "captured-polyline",
+    "ymir-retail-vdp1-polyline-command",
 }
 
 
@@ -124,13 +121,16 @@ def main() -> int:
             if cram_sprite:
                 cram_pixels += 1
                 cram_owner_counts[owner] += 1
+                if owner == 79 and sprite != 0x7083:
+                    print(f"FAIL: row-79 pixel {pixel} does not carry CMDCOLR 0x7083")
+                    return 1
             if top_layer == VDP1_LAYER and sprite != 0:
                 vdp1_top_pixels += 1
                 if owner == NO_OWNER or owner not in source_by_row:
                     print(f"FAIL: visible VDP1 pixel {pixel} has no command owner")
                     return 1
                 source_kind = source_by_row[owner]
-                if source_kind not in RETAIL_SOURCE_KINDS | CAPTURE_SOURCE_KINDS:
+                if source_kind not in RETAIL_SOURCE_KINDS:
                     print(f"FAIL: VDP1 pixel {pixel} maps to unbound command row {owner} ({source_kind})")
                     return 1
                 source_owner_counts[source_kind] += 1
@@ -143,7 +143,7 @@ def main() -> int:
         expected_source_owner_counts = Counter({
             "retail-dgn-indexed": 65500,
             "retail-menu-bpk-mode4": 431,
-            "captured-polyline": 60,
+            "ymir-retail-vdp1-polyline-command": 60,
         })
         if source_owner_counts != expected_source_owner_counts:
             print(f"FAIL: visible VDP1 pixel source classes differ from the authenticated frame: {dict(source_owner_counts)}")

@@ -25,14 +25,25 @@ retail `LEV01.DGN` is separately pinned to SHA-256
 
 The replay admits 51 indexed texture spans through unique retail DGN image
 and palette joins and 15 direct-RGB texture spans through retail DGN image
-joins. Two mode-0 commands are verified clipped no-ops. Row 79 is a polyline;
-row 80 is a 16-by-41, 8-bit, 256-colour bank-mode normal sprite. Its 656-byte
-texture is taken from the hash-pinned VDP1 VRAM snapshot and exactly matches
+joins. Two mode-0 commands are verified clipped no-ops. Row 79 is a direct-color
+polyline command from the hash-pinned Ymir trace of the Japanese retail
+execution: it draws the four edges of a 16-by-16 outline at `(272,8)`–`(287,23)`
+with PMOD `0x00e0` and CMDCOLR `0x7083`. In the VDP1 framebuffer this carries
+priority index 7 and VDP2 CRAM color index `0x83`; same-frame CRAM entry `0x83`
+is `0xe73f`.
+The field placement and quad vertices agree with Ymir's
+`SoftwareVDPRenderer::VDP1Cmd_DrawPolylines` implementation in
+[`vdp_renderer_sw.cpp`](https://github.com/ymir-emu/Ymir/blob/main/libs/ymir-core/src/ymir/hw/vdp/renderer/vdp_renderer_sw.cpp).
+Ymir's integer line replay records 64 edge-pixel writes; the four corners are
+written twice, leaving 60 unique pixels owned by the command in the composed
+framebuffer. Row 79's semantic UI meaning remains
+unknown. Row 80 is a 16-by-41, 8-bit, 256-colour bank-mode normal sprite. Its
+656-byte texture is taken from the hash-pinned VDP1 VRAM snapshot and exactly matches
 decoded Japanese retail `MENU.BPK` entry 144. Every used nontransparent PALT
 word matches same-frame VDP2 CRAM. The capture-only replay still consumes the
 captured texture bytes, while the real-data test separately verifies this
-retail source and palette join. The polyline and sprite are both included in
-the exact framebuffer comparison.
+retail source and palette join. The polyline command and sprite are both
+included in the exact framebuffer comparison.
 
 ## 16-bpp source-address alignment
 

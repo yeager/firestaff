@@ -66,8 +66,9 @@
   pixels to their last-writing command and verified source receipt. Of these,
   65,500 visible VDP1 pixels map to retail indexed `LEV01.DGN` rows. The 15
   direct-RGB DGN draws join retail data but own no final visible pixels in
-  this capture. The remaining 491 CRAM pixels map to captured polyline row 79
-  (60) and Japanese retail `MENU.BPK` entry 144 at sprite row 80 (431).
+  this capture. The remaining 491 CRAM pixels map to Ymir-captured Japanese
+  retail polyline command row 79 (60) using same-frame VDP2 CRAM entry `0x83`, and Japanese retail
+  `MENU.BPK` entry 144 at sprite row 80 (431).
 - The combined real-data regression now asserts this exact source-class
   distribution alongside the full VDP2 RGB match and command/source joins. It
   also checks that each visible VDP1 pixel matches between the replay and
@@ -78,6 +79,12 @@
   VDP2 CRAM. The DMA-time source payload remains unobserved; this is a
   capture-only source/palette join, not renderer admission or whole-HUD state
   ownership.
+- The remaining 60 visible pixels are rasterized from command row 79 in the
+  authentic Ymir trace of the Japanese retail execution, pinned as an
+  untextured 16x16 outline with PMOD `0x00e0` and CMDCOLR `0x7083`, selecting
+  same-frame CRAM entry `0x83` (`0xe73f`); Ymir line stepping records 64 writes, including four duplicate
+  corner writes, for 60 unique visible pixels. Its
+  original UI meaning remains unknown.
 - This still does not establish selected Structure3 face ownership or
   production renderer admission. Details are in
   [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md).
