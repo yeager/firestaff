@@ -1073,6 +1073,46 @@ typedef struct {
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
+/* SKProject skevent.cpp floor and wall mecha handlers share this DB2
+ * visibility rule. */
+static int dm2_v1_actuate_mecha_text(DM2_V1_RecordPoolSet *pool_set,
+                                      uint8_t *record, int action_type,
+                                      int is_floor)
+{
+    uint16_t w2, text_index;
+    uint8_t mode, visible, next_visible;
+
+    if (!pool_set || !record) return -1;
+    w2 = pool_set->source_words_big_endian
+        ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+        : (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+    mode = (uint8_t)((w2 >> 1) & 3u);
+    text_index = (uint16_t)(w2 >> 3);
+    if (is_floor) {
+        if (mode != 0u &&
+            !(mode == 1u && ((text_index >> 8) & 0x1fu) == 5u) &&
+            !(mode == 2u && ((w2 >> 12) & 0x0fu) == 2u))
+            return 0;
+    } else {
+        uint8_t ext_usage = (uint8_t)((text_index >> 8) & 0x1fu);
+        if (mode > 1u || (mode == 1u && ext_usage != 5u && ext_usage != 7u))
+            return 0;
+    }
+    visible = (uint8_t)(w2 & 1u);
+    next_visible = action_type == 2 ? (uint8_t)!visible :
+                   (action_type == 0 ? 1u : 0u);
+    if (next_visible == visible) return 0;
+    w2 = (uint16_t)((w2 & (uint16_t)~1u) | next_visible);
+    if (pool_set->source_words_big_endian) {
+        record[2] = (uint8_t)(w2 >> 8);
+        record[3] = (uint8_t)w2;
+    } else {
+        record[2] = (uint8_t)w2;
+        record[3] = (uint8_t)(w2 >> 8);
+    }
+    return 1;
+}
+
 static void shooter_wr16(const DM2_V1_RecordPoolSet *pools,
                          uint8_t *p, uint16_t value)
 {
@@ -1299,10 +1339,15 @@ static int wall_mecha_visitor(void *context,
 
     db_type = dm2_v1_record_handle_pool(handle);
 
-    /* Text records (dbText = 1): toggle visibility (skevent.cpp:1646-1688) */
+    /* Text records (dbText = 2): update visibility (skevent.cpp:1646-1688). */
     if (db_type == DM2_DB_TEXT) {
         if (dm2_handle_dir(handle) == ctx->direction) {
-            r->text_records_toggled++;
+            int changed = dm2_v1_actuate_mecha_text(
+                ctx->pool_set,
+                dm2_v1_record_pool_address_mut(ctx->pool_set, handle),
+                ctx->action_type, 0);
+            if (changed < 0) r->fail_closed++;
+            else if (changed) r->text_records_toggled++;
         }
         return 0; /* continue */
     }
@@ -1883,7 +1928,12 @@ static int floor_mecha_visitor(void *context,
 
     /* Text records: toggle visibility (skevent.cpp:2085-2102) */
     if (db_type == DM2_DB_TEXT) {
-        r->text_records_toggled++;
+        int changed = dm2_v1_actuate_mecha_text(
+            ctx->pool_set,
+            dm2_v1_record_pool_address_mut(ctx->pool_set, handle),
+            ctx->action_type, 1);
+        if (changed < 0) r->fail_closed++;
+        else if (changed) r->text_records_toggled++;
         return 0;
     }
 
