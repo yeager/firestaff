@@ -380,6 +380,9 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM");
     const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS");
     const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT");
+    const char *source_version = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_SOURCE_VERSION");
+    const int previous_source = source_version &&
+        strcmp(source_version, "previous") == 0;
     uint8_t *vram = NULL, *cram = NULL, *registers = NULL;
     Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
@@ -391,13 +394,18 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     int ok = 0;
 
     if (!vram_path && !cram_path && !registers_path) return 1;
+    if (source_version && strcmp(source_version, "current") != 0 &&
+        strcmp(source_version, "previous") != 0)
+        goto cleanup;
     vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
     cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
     registers = read_exact_bytes(registers_path, 512U);
     plane = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*plane));
     if (!vram || !cram || !registers || !plane ||
         !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
-            "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
+            previous_source ?
+                "2b6fe0392b1ff23c0c55f08423d179a74d7f481990e37aadd4e6bfd657d9cf45" :
+                "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
         !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
             "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
         !bytes_have_sha256(registers, 512U,
@@ -415,10 +423,11 @@ static int run_external_ymir_mapd_nbg1_pass(void)
         receipt.name_table_vram_offset != 0x5c000 ||
         receipt.map_page_columns != 64 || receipt.map_page_rows != 64 ||
         receipt.visible_columns != 40 || receipt.visible_rows != 28 ||
-        receipt.tiles_decoded != 1120 || receipt.written_pixels != 71680 ||
-        receipt.transparent_pixels != 0 ||
-        !capture_plane_have_sha256(plane,
-            "a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea") ||
+        receipt.tiles_decoded != 1120 ||
+        (!previous_source &&
+         (receipt.written_pixels != 71680 || receipt.transparent_pixels != 0 ||
+          !capture_plane_have_sha256(plane,
+              "a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea"))) ||
         !write_capture_plane(output_path, plane))
         goto cleanup;
     memcpy(saved_scrctl, registers + 0x9aU, sizeof(saved_scrctl));

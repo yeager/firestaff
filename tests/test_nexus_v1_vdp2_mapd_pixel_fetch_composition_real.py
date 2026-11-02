@@ -73,9 +73,10 @@ def verify_trace(
     receipt_path: Path,
     previous_vram: bytes,
     current_vram: bytes,
-    plane: bytes,
+    previous_plane: bytes,
+    current_plane: bytes,
     reference: bytes,
-) -> tuple[int, int, int, dict[str, int]]:
+) -> tuple[int, int, int, dict[str, int], bytes, list[int]]:
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     if (
         receipt.get("format") != "ymir-vdp2-pixel-fetch-receipt-v1"
@@ -129,6 +130,8 @@ def verify_trace(
     visible = 0
     inactive = 0
     target_source_counts = {"previous": 0, "current": 0}
+    active_rows: set[int] = set()
+    composed_plane = bytearray(PIXELS * 4)
     for frame, serial in ((1278, 1279), (1279, 1280)):
         for y in range(HEIGHT):
             for x in range(WIDTH):
@@ -170,14 +173,20 @@ def verify_trace(
                 if serial == 1280:
                     active = priority != 0
                     plane_offset = (y * WIDTH + x) * 4
+                    selected_plane = (
+                        previous_plane if source_matches[0] == "previous"
+                        else current_plane
+                    )
+                    composed_plane[plane_offset : plane_offset + 4] = \
+                        selected_plane[plane_offset : plane_offset + 4]
+                    if selected_plane[plane_offset] != dot:
+                        raise VerificationError(
+                            f"Firestaff row-source dot mismatch at ({x},{y})"
+                        )
                     if active:
                         visible += 1
-                        if plane[plane_offset] != dot:
-                            raise VerificationError(
-                                f"Firestaff dot mismatch at ({x},{y}): "
-                                f"{plane[plane_offset]} != {dot}"
-                            )
-                        if plane[plane_offset + 1 : plane_offset + 4] != \
+                        active_rows.add(y)
+                        if selected_plane[plane_offset + 1 : plane_offset + 4] != \
                                 reference[plane_offset : plane_offset + 3]:
                             raise VerificationError(
                                 f"Firestaff NBG1 RGB mismatch at ({x},{y})"
@@ -187,6 +196,10 @@ def verify_trace(
                         if dot != 0:
                             raise VerificationError(
                                 f"zero-priority target pixel has a nonzero dot at ({x},{y})"
+                            )
+                        if selected_plane[plane_offset : plane_offset + 4] != b"\0\0\0\0":
+                            raise VerificationError(
+                                f"zero-priority row source is not transparent at ({x},{y})"
                             )
                 if len(source_matches) != 1:
                     raise VerificationError(
@@ -205,7 +218,8 @@ def verify_trace(
         raise VerificationError(
             f"unexpected target pass-source counts: {target_source_counts}"
         )
-    return visible, inactive, rows_written, target_source_counts
+    return (visible, inactive, rows_written, target_source_counts,
+            bytes(composed_plane), sorted(active_rows))
 
 
 def main() -> int:
@@ -235,6 +249,8 @@ def main() -> int:
         return 77
     reference_path = Path(reference_path_text)
     plane_path = Path(sys.argv[2])
+    current_plane_path = plane_path.with_name(plane_path.stem + ".current" + plane_path.suffix)
+    previous_plane_path = plane_path.with_name(plane_path.stem + ".previous" + plane_path.suffix)
     report_path = Path(sys.argv[3])
 
     try:
@@ -255,18 +271,30 @@ def main() -> int:
             "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_VRAM": str(current_path),
             "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM": str(cram_path),
             "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS": str(registers_path),
-            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT": str(plane_path),
+            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT": str(current_plane_path),
+            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_SOURCE_VERSION": "current",
         })
         result = subprocess.run([sys.argv[1]], env=env, check=False)
         if result.returncode != 0:
             raise VerificationError("Firestaff's authentic NBG1 4bpp decode failed")
 
-        plane = require_sha256(plane_path, PLANE_SHA256)
-        if len(plane) != PIXELS * 4:
-            raise VerificationError("Firestaff NBG1 plane must cover 320x224")
-        visible, inactive, rows, target_sources = verify_trace(
-            trace_path, receipt_path, previous, current, plane, reference
+        current_plane = require_sha256(current_plane_path, PLANE_SHA256)
+        env.update({
+            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_VRAM": str(previous_path),
+            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT": str(previous_plane_path),
+            "FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_SOURCE_VERSION": "previous",
+        })
+        result = subprocess.run([sys.argv[1]], env=env, check=False)
+        if result.returncode != 0:
+            raise VerificationError("Firestaff's authentic previous-pass NBG1 decode failed")
+        previous_plane = previous_plane_path.read_bytes()
+        if len(previous_plane) != PIXELS * 4:
+            raise VerificationError("Firestaff previous-pass NBG1 plane must cover 320x224")
+        visible, inactive, rows, target_sources, composed_plane, active_rows = verify_trace(
+            trace_path, receipt_path, previous, current,
+            previous_plane, current_plane, reference
         )
+        plane_path.write_bytes(composed_plane)
         report = {
             "disc_sha256": "878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699",
             "save_state_sha256": "79b53c785456ddc8d4d19a5a510ecc008cc14bf08c0464ecfebb0d5849a40a52",
@@ -277,7 +305,9 @@ def main() -> int:
             "target_vram_sha256": sha256(current_path),
             "cram_sha256": sha256(cram_path),
             "registers_sha256": sha256(registers_path),
-            "firestaff_nbg1_plane_sha256": sha256(plane_path),
+            "firestaff_nbg1_current_snapshot_plane_sha256": sha256(current_plane_path),
+            "firestaff_nbg1_previous_snapshot_plane_sha256": sha256(previous_plane_path),
+            "firestaff_nbg1_row_source_composed_plane_sha256": sha256(plane_path),
             "ymir_same_pass_rgbx_sha256": sha256(reference_path),
             "vdp1_frame": 891,
             "vdp2_frame_index": 1279,
@@ -288,9 +318,10 @@ def main() -> int:
             "zero_priority_nbg1_pixels": inactive,
             "active_nbg1_dot_and_rgb_matches": visible,
             "target_pass_pnd_source_matches": target_sources,
-            "active_nbg1_row_range_inclusive": [84, 223],
+            "active_nbg1_rows": active_rows,
             "interpretation": (
-                "authentic NBG1 layer contribution matches Ymir at visible pixels; "
+                "authentic per-pixel prior/current VRAM source selection reconstructs "
+                "the NBG1 layer and matches Ymir at visible pixels; "
                 "not a full-frame composition or hardware-parity claim"
             ),
         }

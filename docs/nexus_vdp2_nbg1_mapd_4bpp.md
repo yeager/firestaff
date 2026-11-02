@@ -96,12 +96,32 @@ nonzero priority, and separately reports the 249/26,880 matches in zero-
 priority pixels. Its layer-to-final RGB count compares against the full frame
 and must not be used as an isolated-layer parity score.
 
-The upper-row discrepancy remains unresolved: Firestaff's isolated plane has
-nonzero palette indices in those rows while Ymir's traced NBG1 layer is fully
-transparent. The captured WCTLA–WCTLD window controls are zero, and the PND and
-character bytes checked at the map origin are nonzero. Do not apply a fixed
-84-row clip or enable this decoder as a full-screen compositor until a
-same-frame source or per-scanline state trace explains the difference.
+## Row-effective VRAM source replay
+
+The complete pixel-fetch trace resolves the earlier upper-row discrepancy:
+Ymir fetches each NBG1 PND and 4bpp character byte from exactly one of the
+adjacent authentic VRAM snapshots. Firestaff now runs the same C tile decoder
+against both snapshots, then selects the decoded pixel only when both its PND
+and fetched nibble uniquely match that pixel's Ymir trace record. It does not
+choose a source by a fixed row number.
+
+For all 71,680 target-pass pixels, the selected Firestaff dot matches Ymir.
+The selected output is transparent at all 26,880 zero-priority pixels; its
+RGB matches Ymir at all 44,800 visible NBG1 pixels. The source distribution is
+derived from the fetch records: 26,880 pixels use the preceding VRAM snapshot
+and 44,800 use the target snapshot. The resulting NBG1-only plane has
+SHA-256 `359f0ce1a93298f3117cf9c9b6c27550ed3b68ed0c3f65fd4d3e31aa7a42cf9d`.
+The standalone current-snapshot plane remains available for comparison at
+`a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea`.
+The current plane, previous plane, row-source-composed plane, verification
+JSON, and checksums are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr252-row-source-replay/`.
+
+This repairs the capture-only NBG1 layer replay for this authentic pass. It
+does not yet feed the row-effective layer into Firestaff's whole-frame VDP
+priority stack, and it does not enable production rendering or establish
+hardware parity. Do not replace the observed per-pixel source map with a fixed
+84-row clip.
 
 ## Whole-frame priority stack audit
 
