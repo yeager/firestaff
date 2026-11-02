@@ -158,16 +158,16 @@ int dm2_v1_creature_can_handle_it(
 
     mask_index = (uint8_t)capability;
     if (capability >= 0x10u && capability <= 0x12u) {
-        mask_index = (uint8_t)(state->animation_sequence * 3u + capability);
+        mask_index = (uint8_t)(state->mask_variant * 3u + capability);
     } else if (capability == 0x28u) {
         if (state->source_variant == 4u && is_moneybox && !moneybox_closed)
             return !invert;
         if (state->source_variant == 5u && is_moneybox && !moneybox_closed) {
             /* v5 keeps 0x28 for an open moneybox; closed/non-moneybox
              * records use the ordinary 0x10 animation-mask family. */
-            mask_index = (uint8_t)(state->animation_sequence * 3u + 0x28u);
+            mask_index = (uint8_t)(state->mask_variant * 3u + 0x28u);
         } else {
-            mask_index = (uint8_t)(state->animation_sequence * 3u + 0x10u);
+            mask_index = (uint8_t)(state->mask_variant * 3u + 0x10u);
         }
     }
 

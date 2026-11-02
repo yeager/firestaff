@@ -64,14 +64,14 @@ int16_t dm2_v1_creature_can_handle_item_in(
 /* ---- CREATURE_CAN_HANDLE_IT (SKWINSPX v4 skcrture.cpp:1031, v5
  * bcreatur.cpp:1351) ----
  * Test one record against a creature's source item mask. `capability` is
- * the source ItemToThrow/command byte; `animation_sequence` is the AI
- * sequence used to select the 0x10..0x12/0x28 mask family. The callbacks
- * resolve record identity and the source CREATURES mask text. */
+ * the source ItemToThrow/command byte. `mask_variant` is v4 iAnimSeq, or
+ * the v5 SPX_Creature word@8 selector used by the source expression. The
+ * callbacks resolve record identity and the source CREATURES mask text. */
 typedef struct {
     uint16_t item_record;
     uint16_t capability;
     uint8_t creature_type;
-    uint8_t animation_sequence;
+    uint16_t mask_variant;
     uint8_t source_variant; /* 4 = SPX v4; 5 = SPX v5/SKULLWIN */
 } DM2_V1_CreatureCanHandleState;
 
