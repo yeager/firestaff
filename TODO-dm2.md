@@ -2988,3 +2988,21 @@ it is not bound to this input owner or to a live panel flush. The HUD stat
 bridge reads session snapshot data during render and does not consume an
 active stat-pane refresh. Keep the DOS, SPX v4/v5 and shared symbol rows
 partial until panel, cursor and supported non-M11 callers are covered.
+
+2026-11-02 SKProject `CLICK_MONEYBOX` / `SKW_CLICK_MONEYBOX`:
+DOS (`dm2byh.cpp:1015-1044`), SPX v4 (`skuievnt.cpp:329-355`) and SPX v5
+(`skevents.cpp:1941-1987`) gate on right-panel type 4, use the active
+champion's selected hand as the moneybox, deposit the held object or withdraw
+the denomination selected by one of six UI events, refresh the panel after a
+successful transaction, and recalculate the active champion's weight. Their
+input owners dispatch those events in DOS (`dm2byh.cpp:4309`), SPX v4
+(`skuievnt.cpp:798`) and SPX v5 (`uiinput.cpp:346-347`). Firestaff has the
+source-shaped `dm2_v1_click_moneybox` helper and PC-English click-zone records,
+but `m11_game_view.c` does not dispatch events 228-233 to it. FM Towns uses
+authenticated RAW4 candidates, while Macintosh and Amiga take separate pointer
+routes; none currently binds the moneybox transaction. Mega CD input ownership
+is unproven. No runtime callback synchronizes DB9 child-list heads, DB10 links
+and charge/allocation, the held-hand reference and `DungeonData` as one
+mutation. Keep the DOS and SPX v4/v5 rows partial until transaction and
+input/render ownership are bound and verified for all eight supported DM2
+editions/platforms.
