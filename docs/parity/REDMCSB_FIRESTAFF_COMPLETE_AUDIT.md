@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,859 unreviewed, 993 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,951 open rows (2,859 unreviewed, 1,090 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,857 unreviewed, 995 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,952 open rows (2,857 unreviewed, 1,093 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
