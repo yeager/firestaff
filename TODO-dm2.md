@@ -2791,3 +2791,5 @@ item setup for 76, and grouped handling for 72/87/88. Firestaff's dispatcher
 only maps action bytes to handler IDs and leaves per-action mutations and the
 production loop behind a host callback. All three source definitions are now
 `PARTIAL`; edition-bound dispatch and state ownership remain open.
+
+2026-11-02 SKProject `ADJUST_UI_EVENT` source recheck: `SKWINDOS/dm2byf.cpp:5884-5936` uses 0x5f-0x62 rectangle diagonals for spell versus leader clicks and handcooldown[2] on the leader half; SPX v4 `skuievnt.cpp:22-67` has the same diagonal split but gates that half on `herob44`; SPX v5 `uiinput.cpp:121-185` interprets 95-98 as movement arrows, with cooldown[2] gating the movement half and the other half rewritten to 16-19. Firestaff implements those helper variants, but M11's production hit tables do not dispatch 95-98 nor produce 16-19 from pointer input. Updated active-source review and named-symbol summary; remains partial pending edition-authentic panel/arrow hit routes, event dispatch, and platform validation.
