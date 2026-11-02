@@ -95,6 +95,8 @@ void dm2_v1_set_itemtype(
  * dm2_v1_record_ops_pc34_compat.h with its authoritative signature
  * (map_x, map_y, DM2_V1_TileRecordWalkCallbacks). */
 
+/* DM2_SET_ITEM_IMPORTANCE writes DB4 byte 15 bit 2, DB5/6/10 byte 2
+ * bit 7, and DB8 byte 3 bit 7; DB7/9 are source no-ops. */
 typedef struct {
     uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
 } DM2_V1_SetImportanceCallbacks;
