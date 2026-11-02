@@ -3089,3 +3089,11 @@ placeholder graphics. The shared icon-buffer helper still simplifies source
 button-group destination width/offset behavior, and production slot-table
 callbacks are not bound across every supported edition/platform. Keep all
 variant rows PARTIAL.
+
+2026-11-02 SKProject `DRAW_ITEM_SURVEY`:
+The current Firestaff callback only draws a limited item name/icon path.
+SKProject additionally branches to scroll text, item class images and
+description, weight text/state, chest and moneybox contents, charges, and
+item-type-specific potion/weapon/armor/miscellaneous power bars. Update the
+source inventories to PARTIAL; implement and bind the remaining source branches
+for DOS and SPX before claiming item-survey parity.
