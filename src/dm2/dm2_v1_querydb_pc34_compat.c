@@ -536,6 +536,74 @@ int32_t dm2_v1_query_gdat_food_value_from_record_spx_v5(
     return cb->query_gdat_dbspec_word_value(ctx, (uint16_t)record, 3);
 }
 
+static uint32_t dm2_v1_query_cmdstr_text_bits(
+    const char *text, const char *pattern, unsigned width)
+{
+    const char *cursor = text;
+    uint32_t value = 0;
+    size_t pattern_len;
+    uint32_t mask = width == 16u ? 0xffffu : UINT32_MAX;
+
+    if (!text || !pattern || pattern[0] == '\0') return 0;
+    pattern_len = strlen(pattern);
+    while ((cursor = strstr(cursor, pattern)) != NULL) {
+        const unsigned char *p = (const unsigned char *)(cursor + pattern_len);
+        int negative = 0;
+
+        if (*p == '=') ++p;
+        if (*p == '-') {
+            negative = 1;
+            ++p;
+        }
+        while (*p >= '0' && *p <= '9') {
+            value = (value * 10u) + (uint32_t)(*p - '0');
+            value &= mask;
+            ++p;
+        }
+        if (negative) value = (0u - value) & mask;
+        cursor = (const char *)p;
+    }
+    return value;
+}
+
+static int32_t dm2_v1_query_cmdstr_i32_from_bits(uint32_t value)
+{
+    return value <= INT32_MAX
+        ? (int32_t)value
+        : -1 - (int32_t)(UINT32_MAX - value);
+}
+
+int32_t dm2_v1_query_cmdstr_text(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* SPX v5 DM2_QUERY_CMDSTR_TEXT (skgdtqdb.cpp:275-310) accumulates in i32. */
+    return dm2_v1_query_cmdstr_i32_from_bits(
+        dm2_v1_query_cmdstr_text_bits(text, pattern, 32u));
+}
+
+uint16_t dm2_v1_query_cmdstr_text_dos(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* DOS SKW_QUERY_CMDSTR_TEXT (dm2bya.cpp:2114-2143) returns ui16. */
+    return (uint16_t)dm2_v1_query_cmdstr_text_bits(text, pattern, 16u);
+}
+
+uint16_t dm2_v1_query_cmdstr_text_spx_v4(
+    const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    (void)cb;
+    (void)ctx;
+    /* SPX v4 QUERY_CMDSTR_TEXT (sktext.cpp:755-786) returns Bit16u. */
+    return (uint16_t)dm2_v1_query_cmdstr_text_bits(text, pattern, 16u);
+}
+
 int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,
                                                    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {

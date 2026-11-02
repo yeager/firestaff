@@ -25,14 +25,14 @@ outside that ledger. The supplemental
 `SKPROJECT_DM2_ACTIVE_SOURCE_INVENTORY.tsv` lists definitions from
 `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two
 `SKULLWIN/` cross-variant rows, plus the flattened v5
-`SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,936 location-specific rows,
-3,633 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,910 `UNREVIEWED`, 944 `PARTIAL`, 0 `MISSING`,
+`SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,937 location-specific rows,
+3,634 distinct names, and 303 repeated-name definitions. Applying the current
+source-review overrides yields 2,910 `UNREVIEWED`, 945 `PARTIAL`, 0 `MISSING`,
 72 `IMPLEMENTED_PARITY`, 8 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
-rows. By source tree, SKWINDOS has 1,205 rows (849 unreviewed, 330 partial,
-26 implemented); SKWINSPX has 2,729 rows (2,082 unreviewed, 591 partial, 46
+rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (842 unreviewed, 337 partial,
+26 implemented); SKWINSPX has 2,730 rows (2,068 unreviewed, 606 partial, 46
 implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
-cross-variant rows are partial. The review ledger contains 984 rows (901
+cross-variant rows are partial. The review ledger contains 988 rows (905
 partial, 73 implemented, 8 architecture-specific, and 2 outside-game),
 including eight cross-variant rows not present in the supplemental inventory.
 
@@ -52,7 +52,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,936 (2,729 SPX, 1,205 DOS, 2 SKULLWIN) | 2,910 `UNREVIEWED`; 944 `PARTIAL`; 0 `MISSING`; 72 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,937 (2,730 SPX, 1,205 DOS, 2 SKULLWIN) | 2,910 `UNREVIEWED`; 945 `PARTIAL`; 0 `MISSING`; 72 `IMPLEMENTED_PARITY`; 8 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -80,7 +80,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,936-row inventory currently has 2,910 `UNREVIEWED`, 944 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,910 as `UNREVIEWED`, 944 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,937 (2,910 unreviewed, 1,025 partial source/older-ledger rows, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
+With active-source review overrides, the 3,937-row inventory currently has 2,910 `UNREVIEWED`, 945 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,910 as `UNREVIEWED`, 945 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,938 (2,910 unreviewed, 1,026 partial source/older-ledger rows, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
 
 DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
@@ -92,7 +92,7 @@ DOS and SPX v5 `R_2F5DE` are now source-compared. They copy a complete GDAT imag
 
 DOS, SPX v4 and SPX v5 `QUERY_GDAT_IMAGE_METRICS` are source-compared: each chooses raw 10-bit dtImage dimensions when an entry is not resident and decoded image-header dimensions when resident. Firestaff has the latter in an image-buffer receipt, but lacks the source loaded-shelf branch and production cross-platform query binding. All three definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,282 unreviewed, 581 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,282 unreviewed, 654 partial source/older-ledger rows, 5 missing, 2 partial source owners).
 
-DOS `SKW_QUERY_CMDSTR_TEXT` and SPX v5 `DM2_QUERY_CMDSTR_TEXT` are now compared. Firestaff contains the matching bounded repeated-key parser inside CMDSTR receipts, but the public general query declaration has no implementation; DOS result-width wrapping also differs from Firestaff’s checked overflow behavior. Both source definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,282 unreviewed, 581 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,282 unreviewed, 654 partial source/older-ledger rows, 5 missing, 2 partial source owners).
+DOS `SKW_QUERY_CMDSTR_TEXT`, SPX v4 `QUERY_CMDSTR_TEXT`, and SPX v5 `DM2_QUERY_CMDSTR_TEXT` are now compared. Firestaff exports the generic parser and provides matching 16-bit DOS/v4 and 32-bit v5 width wrappers. No production caller binds these helpers to the source key tables or supported platform routes; all three source definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,282 unreviewed, 581 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,282 unreviewed, 654 partial source/older-ledger rows, 5 missing, 2 partial source owners).
 
 DOS and SPX v5 `QUERY_CMDSTR_ENTRY` are now source-compared. Both enforce the 18-key limit, fetch/decode the requested GDAT text, return zero for empty strings and dispatch through the fixed key table. Firestaff has a matching bounded receipt used by runtime callbacks, but generic all-platform ownership is incomplete and the shared parser differs on DOS overflow. Both remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,282 unreviewed, 581 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,282 unreviewed, 654 partial source/older-ledger rows, 5 missing, 2 partial source owners).
 

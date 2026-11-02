@@ -2604,3 +2604,12 @@ previous implementation did not define its declared public symbol; it now
 exports that helper and edition-specific width wrappers. No production caller
 binds the source record/GDAT owner or the supported platform routes, so all
 three source rows remain partial.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 `QUERY_CMDSTR_TEXT`: Firestaff now
+exports the previously missing generic repeated-key parser with source-width
+wrappers. DOS and v4 preserve 16-bit result bits; v5 uses modulo-2^32
+accumulation. Source key-table dispatch and production callers on supported
+platforms remain open, so all three rows stay partial. The v4 method at
+`sktext.cpp:755` was missing from the active-source inventory and is now
+tracked as a separate location-specific row.

@@ -192,6 +192,10 @@ const char *dm2_v1_query_gdat_item_name(int32_t a, int32_t b,
 
 int32_t dm2_v1_query_cmdstr_text(const char *text, const char *pattern,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_text_dos(const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_text_spx_v4(const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 const char *dm2_v1_query_cmdstr_name(int8_t a, int8_t b, int8_t c,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
