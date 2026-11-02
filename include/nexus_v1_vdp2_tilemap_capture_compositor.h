@@ -135,9 +135,10 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
     int original_ymir_capture_verified,
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt);
 
-/* Authentic MAPD NBG0 bitmap row state exported by Ymir --debug. These are
- * capture-time inputs because end-of-pass registers do not contain the
- * scroll accumulators used by every rendered scanline. */
+/* Authentic MAPD NBG0 bitmap row state exported by Ymir --debug. Scroll and
+ * fractional coordinates are 18-bit 11.8 values; zoom increments are 10-bit
+ * 2.8 values. These are capture-time inputs because end-of-pass registers do
+ * not contain the scroll accumulators used by every rendered scanline. */
 typedef struct {
     int32_t scroll_h_11_8;
     int32_t scroll_v_11_8;

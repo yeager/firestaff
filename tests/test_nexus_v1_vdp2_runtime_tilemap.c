@@ -562,6 +562,7 @@ static int run_external_ymir_mapd_nbg0_pass(void)
     uint8_t layer_rows_seen[NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT] = {0};
     Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt receipt;
+    Nexus_V1_Vdp2Nbg0MapdRowState saved_row;
     size_t active_pixels = 0U, transparent_pixels = 0U;
     unsigned int rows_seen = 0U;
     const char *failure = "input files";
@@ -605,6 +606,27 @@ static int run_external_ymir_mapd_nbg0_pass(void)
         receipt.bitmap_vram_offset != 0 || receipt.written_pixels != 20302 ||
         receipt.transparent_pixels != 51378)
         goto cleanup;
+
+    /* The real Ymir row trace stays within the VDP2 18-bit scroll and
+     * 10-bit increment fields. A one-field-corrupted capture row must fail
+     * closed instead of wrapping through the final bitmap coordinate mask. */
+    saved_row = row_state[0];
+    row_state[0].fractional_scroll_x_11_8 = 0x40000;
+    if (nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            row_state, NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT, 1, &receipt))
+        goto cleanup;
+    row_state[0] = saved_row;
+    row_state[0].scroll_inc_v_11_8 = 0x400;
+    if (nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            row_state, NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT, 1, &receipt))
+        goto cleanup;
+    row_state[0] = saved_row;
 
     failure = "Ymir candidate-layer comparison";
     offset = 8U;

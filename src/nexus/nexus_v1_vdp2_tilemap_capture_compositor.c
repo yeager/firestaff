@@ -832,7 +832,13 @@ int nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
             row_state[y].scroll_inc_h_11_8 < 0 ||
             row_state[y].scroll_inc_v_11_8 < 0 ||
             row_state[y].fractional_scroll_x_11_8 < 0 ||
-            row_state[y].fractional_scroll_y_11_8 < 0) {
+            row_state[y].fractional_scroll_y_11_8 < 0 ||
+            (uint32_t)row_state[y].scroll_h_11_8 > 0x3ffffU ||
+            (uint32_t)row_state[y].scroll_v_11_8 > 0x3ffffU ||
+            (uint32_t)row_state[y].scroll_inc_h_11_8 > 0x3ffU ||
+            (uint32_t)row_state[y].scroll_inc_v_11_8 > 0x3ffU ||
+            (uint32_t)row_state[y].fractional_scroll_x_11_8 > 0x3ffffU ||
+            (uint32_t)row_state[y].fractional_scroll_y_11_8 > 0x3ffffU) {
             return 0;
         }
     }
