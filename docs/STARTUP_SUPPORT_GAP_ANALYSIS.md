@@ -140,6 +140,21 @@ mixed-media follow-up confirmed PC 3.4 selects its matching original dungeon.
 This proves the exercised edition-pair admission boundary; it does not cover
 wrong-edition rejection for every DM1 platform.
 
+On current `main` at `dcbc64811`,
+`return_to_menu_rescans_dm1_csb_dm2_real_media` passed against the installed
+authentic-media corpus (1/1, 1,588.63 s). It exercised DM1, CSB, and DM2 return
+routes across available PC, FM Towns, Atari ST, Amiga, and Macintosh editions,
+checked that returning to the launcher rescans installed game availability,
+and verified that direct `--game` exit does not reopen the launcher. This is
+bounded return/rescan coverage, not all-edition or physical-input parity.
+
+At the same source revision, `return_to_menu_rescans_media_mutations_real_media`
+passed (1/1, 92.75 s) using authentic DM1, CSB, and DM2 archives. It removed
+the staged CSB archive while authentic DM1 gameplay was active and confirmed
+the return scan marked CSB unavailable; a second route added original CSB
+media during DM1 gameplay and confirmed the return scan discovered it. The
+original archives remain outside the staged mutation roots.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
@@ -875,6 +890,93 @@ actual collection root containing that original archive; other installed
 editions in the same root may legitimately be discovered. This verifies the
 headless CLI and scanner routes only, not native display, audio, physical input,
 or complete gameplay.
+
+### 2026-11-02 current-main launcher recheck
+
+On current `main` at `d8a21473` (runtime sources unchanged from the tested
+build at `375cebdf`), the three singleton-media M12 startup tests
+passed with authentic local data: `m12_main_menu_dm1_only_real_media`,
+`m12_main_menu_csb_only_real_media`, and
+`m12_main_menu_dm2_only_real_media` (3/3). The mixed-edition default-selection
+tests also passed: DM1 FM Towns with PC media present, CSB FM Towns with Amiga
+media present, CSB FM Towns with Atari media present, and DM2 FM Towns with
+Macintosh media present (4/4). The priority-only game picker passed its
+keyboard selection and launch matrix for DM1, CSB, and DM2 (1/1). Swedish
+real-media startup-scan localization passed again for DM1 PC, CSB FM Towns,
+and DM2 FM Towns (3/3).
+
+The authentic DM1 FM Towns CLI/M12 CTest passed (195.85 s). It covered the
+platform aliases and bare `--game dm1` AUTO route, the original JDM/EDM menu
+programs, and pointer-only M12 game/platform/presentation selection. The
+runtime check required the complete source title and entrance frame sequences
+with their expected cadence before accepting the first runtime receipt. This
+is headless original-media startup evidence, not native display or physical
+input parity.
+
+The current-source priority picker also passed its pointer-only selection
+matrix (30.76 s) and its scan-early selection matrix (31.89 s) against the
+installed authentic DM1, CSB, and DM2 collection. These tests verify that
+mouse platform choices and choices made before the asynchronous scan completes
+still select the intended game/source and reach the tested launch handoff.
+
+DM1's mixed-library AUTO/platform check passed (82.97 s), covering installed
+PC, FM Towns, Atari ST, and Amiga media, explicit CLI platform selection, and
+menu selection from the mixed collection. CSB's full FM Towns mixed-library
+test passed (464.77 s): AUTO chose FM Towns, Atari ST and Amiga were selectable
+from the M12 platform cards, and the explicit FM Towns, Atari ST, and Amiga
+routes reached their source-owned first runtime receipts. The Amiga card also
+passed keyboard and mouse-only selection. The test confirmed the authentic
+Atari utility archive remained unchanged. These extend the named first-runtime
+routes only.
+
+The return-to-launcher archive-removal checks also passed against authentic
+DM1 PC-34 and DM2 PC media. The DM1 case removes only the staged selected-file
+link after its source runtime receipt; on return, the rescan reports DM1
+unavailable while retaining the other discovered games. The original media
+archives remain unchanged. These are bounded launcher, CLI, and first-runtime
+checks; they do not establish native display or input parity, complete
+gameplay, or visual parity.
+
+### 2026-11-02 clean-main five-game startup and menu recheck
+
+Firestaff was configured and fully built from the clean checkout at
+`98e00fab1a3201d062d699caafbbcb866f31d1e6` in a separate build directory.
+Using the installed original media under `~/.firestaff/data/`, all seven
+focused real-media tests passed (669.20 seconds total):
+
+- `m12_main_menu_game_selection_real_media` (416.63 s) selected DM1, CSB,
+  DM2, Nexus, and Theron's Quest through the main menu, using the tested
+  keyboard and mouse paths, then checked each authentic source handoff.
+- `firestaff_cli_startup_diagnostics_real_media` (199.14 s) checked direct
+  CLI source selection, platform defaults, debug/verbose records, and
+  no-game menu discovery for the installed game data.
+- The five `firestaff_*_scan_debug_localization_real_media` tests passed for
+  DM1, CSB, DM2, Nexus, and Theron, including Swedish scan labels and saved or
+  explicit locale settings.
+- `return_to_menu_rescans_dm1_csb_dm2_real_media` passed (1593.82 s) for
+  DM1 PC, FM Towns, Atari ST, and Amiga; CSB FM Towns, Atari ST, and Amiga;
+  and DM2 DOS, Macintosh, Amiga, and FM Towns selected through AUTO. It
+  checked that returning from gameplay rescans the installed collection.
+  Direct-CLI exit behavior was also checked for all five games, including
+  Nexus and Theron, to ensure those routes do not reopen M12.
+- `m12_main_menu_runtime_real_media` passed (725.88 s) with authentic DM1,
+  CSB, and DM2 FM Towns media, DM1 and DM2 Amiga media, and Theron US and JP
+  Track 02 media. It reached the test's bounded runtime receipts through the
+  game menu or direct selection. Nexus remains at its title gate and is not
+  counted as a playable runtime route.
+
+The two unsupported-platform CLI tests also passed (2/2): invalid game and
+platform pairs were rejected before renderer startup. The shell tests stage
+links or temporary copies for their cases; original game archives remain
+outside the repository and are checked for mutation.
+
+This verifies the tested CLI and main-menu routes only. Nexus still stops at
+the authentic Saturn title gate because its native title/menu composition
+does not have the required source-bound capture receipt. Theron is admitted to
+its tested native startup route, but a source-bound, state-driven dungeon
+viewport is still open. SDL dummy-driver checks do not prove native display,
+physical input, audible output, or complete gameplay. No visual parity claim
+is made.
 
 ### 2026-10-27 five-game picker check
 

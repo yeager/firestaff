@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-11-02 current-main launcher recheck: the authentic-media
+`m12_main_menu_game_selection_real_media` CTest passed in 400.06 seconds
+against the installed collection after the scanner permission-recovery fix.
+Its scripted no-game menu selected and handed off DM1, CSB, DM2, Nexus, and
+Theron through the game picker. The CLI option-form and unsupported-platform
+fail-fast tests also passed, along with `asset_scan_access_denied`. These
+headless checks establish the exercised menu handoffs and CLI contracts only;
+they do not make Nexus playable or verify native display/input and complete
+gameplay parity. GitHub Actions for commit `cfadf47d0` passed on Linux, macOS,
+and Windows.
+
 2026-11-01 CLI value validation: `--platform` now rejects a following option
 as a missing value while preserving the full supported-platform hint when no
 value is supplied. The option-form regression also checks an unknown platform

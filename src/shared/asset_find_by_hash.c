@@ -4971,7 +4971,17 @@ static void record_access_denied_directory_if_unreadable(const char *path) {
     {
         struct stat st;
         DIR *directory;
-        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) return;
+        if (stat(path, &st) != 0) {
+            /* If a readable parent exposed an entry but metadata lookup on
+             * that entry is denied, report the containing folder. That is
+             * the actionable directory grant and remains available even
+             * when TCC also denies stat() on the child. */
+            if (asset_scan_access_denied_errno(errno)) {
+                record_access_denied_file_parent(path);
+            }
+            return;
+        }
+        if (!S_ISDIR(st.st_mode)) return;
         directory = opendir(path);
         if (directory) {
             closedir(directory);
@@ -7042,7 +7052,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory_if_unreadable(dir);
+            /* This call site has already established that `dir` is the
+             * directory being scanned. Do not stat it again before
+             * preserving the diagnostic: macOS privacy controls can deny
+             * metadata lookup as well as enumeration, which made the helper
+             * discard the only useful path. */
+            record_access_denied_directory(dir);
         }
         return 0;
     }
@@ -7142,7 +7157,8 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory_if_unreadable(dir);
+            /* `dir` is the known directory currently being traversed. */
+            record_access_denied_directory(dir);
         }
         return 0;
     }
