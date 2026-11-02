@@ -47,7 +47,7 @@ Debug-configured binary with the CLI flag absent, so it confirms the runtime
 flag gate independently of build type. It did not recruit a champion or
 promote a leader, and therefore does not replace those interaction checks.
 
-## MAPD frame-891 whole-frame priority composition remains open
+## MAPD frame-891 Ymir layer composition verified; Firestaff replay remains open
 
 The capture-only NBG1 layer now replays the authentic Ymir fetch source per
 pixel by decoding both adjacent Japanese-retail VRAM snapshots and accepting
@@ -57,14 +57,18 @@ traced dots, stays transparent on all 26,880 zero-priority pixels, and matches
 Ymir RGB on all 44,800 visible pixels. The resulting NBG1-only plane is
 hash-pinned in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
-The retained whole-frame priority-stack output was generated at code head
+The retained Firestaff priority-stack output was generated at code head
 `8f3b5841` from the target pass's end-of-frame VRAM snapshot. It is stale for
-this row-effective source case and still differs on 26,869 pixels in its
-recorded comparison. The next step is to feed the verified row-effective NBG1
-plane into the actual Firestaff priority stack and compare all 71,680 final
-RGB pixels against the pinned same-pass Ymir render. That whole-frame replay
-and production-renderer admission remain open; a fixed row clip is not an
-acceptable substitute.
+this row-effective source case and differs on 26,869 pixels in its recorded
+comparison. A new hash-pinned audit reconstructs the same pass from Ymir's
+complete seven-layer trace and matches all 71,680 final RGB pixels exactly.
+The verified priority order and NBG0 ratio-18 special-color calculation are
+documented in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+Firestaff still needs to decode NBG0's bitmap pixels, the effective NBG1
+row-time fetch source, and VDP1 RGB/palette pixels from authentic raw snapshots,
+then apply the verified priority and color-calculation rules. That full raw
+snapshot replay and production-renderer admission remain open.
 
 ## 2026-11-02 — Full-height NBG0 live-row replay
 

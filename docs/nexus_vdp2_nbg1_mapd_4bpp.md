@@ -158,9 +158,37 @@ hash-pinned limitation was reproduced, not that frame parity passed. It reads
 priority, dot and coordinates from every target-pass trace row; it does not
 encode a fixed vertical cutoff.
 
-The remaining work is to reconstruct VDP1 and all active VDP2 owners for this
-pass, then compare the complete output against Ymir. VDP1 ownership and full
-color-calculation composition remain unverified.
+The complete Ymir candidate-layer trace now independently reconstructs this
+pass at all 71,680 RGB pixels. The audit decodes the trace's low-to-high color
+bytes, sorts active candidates by descending priority and ascending layer id,
+and applies NBG0's per-pixel special color calculation using the captured
+ratio. Its equation follows Ymir's software compositor:
+`lower + (((upper - lower) * ratio) >> 5)`. The reconstructed output hash is
+identical to Ymir's final pass hash. This verifies the Ymir layer trace and
+composition model; it does not yet show that Firestaff can decode the same
+candidates from raw VDP1/VDP2 snapshots.
+
+Reproduce the authentic Ymir layer-to-final comparison with:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/layer-trace-frame891-start60-20261101
+python3 scripts/audit_nexus_ymir_mapd_layer_composition.py \
+  --layers "$evidence/layers.csv" \
+  --render-state "$evidence/render-state.csv" \
+  --render-state-receipt "$evidence/render-state.csv.receipt.txt" \
+  --reference "$evidence/vdp1-891-vdp2-1280-320x224.rgbx8888le" \
+  --output-rgbx /Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr252-row-source-replay/firestaff-independent-ymir-layer-reconstruction.rgbx
+```
+
+The pass uses Ymir layer id 0 for sprites, 2 for NBG0/RBG1, and 3 for NBG1.
+There are 16,179 top NBG0 pixels with special color calculation. The pixel
+ownership and composition order match the current [Ymir compositor source](https://github.com/ymir-emu/Ymir/blob/main/libs/ymir-core/res/shaders/src/vdp/cs_vdp2_compose.hlsl).
+
+This result narrows the Firestaff gap to raw snapshot decoding: NBG0's 8-bit
+bitmap source, effective NBG1 row-time fetch source, VDP1 RGB/palette pixels,
+and their priority/color-calculation composition must still be produced by
+Firestaff and compared against this authentic oracle. The legacy stack remains
+a known mismatch and is not admitted for rendering.
 
 ## SH-2 register-write trace
 
