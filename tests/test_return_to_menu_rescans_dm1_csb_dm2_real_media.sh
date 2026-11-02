@@ -40,6 +40,7 @@ if [ ! -x "$app" ] ||
    { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm1-sourcefile ] &&
      [ "$test_mode" != csb-sourcefile ] && [ "$test_mode" != dm2-sourcefile ] &&
      [ "$test_mode" != dm2-sourcefile-removed ] &&
+     [ "$test_mode" != dm1-sourcefile-removed ] &&
      [ "$test_mode" != csb-atari-only ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
@@ -56,7 +57,8 @@ if [ ! -x "$app" ] ||
    { [ "$test_mode" = return-window-close ] &&
      [ ! -f "$dm1_archive" ]; } ||
    { { [ "$test_mode" = dm1-sourcefile ] || [ "$test_mode" = csb-sourcefile ] ||
-       [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
+       [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ] ||
+       [ "$test_mode" = dm1-sourcefile-removed ]; } &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
    { { [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
@@ -125,7 +127,8 @@ run_return_to_menu_case() {
     set -- "$@" --data-dir "$case_data_root" --debug \
         --script "$script" --duration "$duration_ms"
     removal_report="$case_root/source-removed.offset"
-    if [ "$case_label" = dm2-sourcefile-removed ]; then
+    if [ "$case_label" = dm2-sourcefile-removed ] ||
+       [ "$case_label" = dm1-sourcefile-removed ]; then
         # Remove only the task-owned staged selection after real gameplay is
         # observed; the original media and its other staged link remain intact.
         python3 - "$run_log" "$case_data_root" "$scratch" "$removal_report" <<'PYWATCH' &
@@ -136,12 +139,18 @@ import time
 
 log, selected, scratch, report = map(pathlib.Path, sys.argv[1:])
 selected.relative_to(scratch)
-if selected.name != "Selected-PC.ZIP":
-    raise SystemExit("FAIL: removal target is not the staged selection")
+game_id = "dm1" if "dm1-sourcefile-removed" in str(selected) else "dm2"
+if game_id == "dm2" and selected.name != "Selected-PC.ZIP":
+    raise SystemExit("FAIL: DM2 removal target is not the staged selection")
+if game_id == "dm1" and selected.name != "Dungeon-Master_DOS_EN_Version-34.zip":
+    raise SystemExit("FAIL: DM1 removal target is not the staged selection")
 deadline = time.monotonic() + 50
 while time.monotonic() < deadline:
     trace = log.read_text(encoding="utf-8") if log.exists() else ""
-    if re.search(r"startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1", trace):
+    runtime_pattern = (r"startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1"
+                       if game_id == "dm1" else
+                       r"startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1")
+    if re.search(runtime_pattern, trace):
         selected.unlink()
         report.write_text(str(len(trace)), encoding="ascii")
         break
@@ -192,7 +201,7 @@ if not os.path.isdir(scan_root):
     scan_root = os.path.dirname(os.path.dirname(scan_root))
 
 expected_available = {
-    "dm1": 0 if case_label == "csb-atari-only" else 1,
+    "dm1": 0 if case_label in ("csb-atari-only", "dm1-sourcefile-removed") else 1,
     "csb": 1,
     "dm2": 0 if case_label == "csb-atari-only" else 1,
     "nexus": int(
@@ -218,13 +227,14 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
     raise SystemExit(
         f"FAIL: {game_id} did not finish back at the launcher: {probe}")
 
-if case_label.endswith("-sourcefile") or case_label.startswith("dm2-sourcefile"):
+if (case_label.endswith("-sourcefile") or case_label.startswith("dm1-sourcefile") or
+        case_label.startswith("dm2-sourcefile")):
     expected_root = os.path.dirname(os.path.dirname(data_path))
     root = re.search(r"return-menu rescan-complete data=([^\n]+)", trace)
     if root is None or os.path.normpath(root.group(1)) != os.path.normpath(expected_root):
         raise SystemExit(f"FAIL: selected archive did not rescan its lexical collection: {root}")
 
-if case_label == "dm2-sourcefile-removed":
+if case_label in ("dm1-sourcefile-removed", "dm2-sourcefile-removed"):
     with open(removal_report, encoding="ascii") as stream:
         removal_offset = int(stream.read())
     if os.path.lexists(data_path) or removal_offset >= complete.start():
@@ -234,7 +244,8 @@ inactive_rates = re.findall(
     r"perf game=\S+ active=0[^\n]* game-ticks-per-sec=(\S+)", trace)
 if any(float(rate) != 0.0 for rate in inactive_rates):
     raise SystemExit(f"FAIL: inactive launcher reports gameplay ticks: {inactive_rates}")
-if (case_label.endswith("-sourcefile") or case_label.startswith("dm2-sourcefile")) and not inactive_rates:
+if (case_label.endswith("-sourcefile") or case_label.startswith("dm1-sourcefile") or
+        case_label.startswith("dm2-sourcefile")) and not inactive_rates:
     raise SystemExit("FAIL: selected-archive return omitted inactive performance windows")
 
 print(f"PASS: authentic {game_id} gameplay returned to the launcher and "
@@ -438,13 +449,13 @@ stage_dm1_return_data_root() {
 
 # File selection remains exact at launch; returning to the launcher must
 # inventory the surrounding data/<game> collection, not only that file.
-for sourcefile_case in dm1-sourcefile csb-sourcefile dm2-sourcefile dm2-sourcefile-removed; do
+for sourcefile_case in dm1-sourcefile csb-sourcefile dm2-sourcefile dm2-sourcefile-removed dm1-sourcefile-removed; do
 if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
      [ "$test_mode" = "$sourcefile_case" ]; }; then
     sourcefile_root="$scratch/$sourcefile_case/data"
     mkdir -p "$sourcefile_root/dm1" "$sourcefile_root/csb" "$sourcefile_root/dm2"
     case "$sourcefile_case" in
-        dm1-sourcefile)
+        dm1-sourcefile|dm1-sourcefile-removed)
             sourcefile_game=dm1
             sourcefile_platform=pc
             sourcefile_archive=$dm1_archive
@@ -476,10 +487,10 @@ if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
             ;;
     esac
 
-    if [ "$sourcefile_case" != dm1-sourcefile ]; then
+    if [ "$sourcefile_game" != dm1 ]; then
         ln -s "$dm1_archive" "$sourcefile_root/dm1/$(basename "$dm1_archive")"
     fi
-    if [ "$sourcefile_case" != csb-sourcefile ]; then
+    if [ "$sourcefile_game" != csb ]; then
         ln -s "$csb_archive" "$sourcefile_root/csb/$(basename "$csb_archive")"
     fi
     if [ "$sourcefile_game" != dm2 ]; then
@@ -489,6 +500,9 @@ if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
 
     if [ "$sourcefile_case" = dm2-sourcefile-removed ]; then
         ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/$(basename "$dm2_dos_archive")"
+        sourcefile_script="$sourcefile_script,wait:90"
+    fi
+    if [ "$sourcefile_case" = dm1-sourcefile-removed ]; then
         sourcefile_script="$sourcefile_script,wait:90"
     fi
     if [ "$sourcefile_game" = csb ]; then

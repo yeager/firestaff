@@ -4662,6 +4662,18 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME return_to_menu_rescans_removed_dm1_archive_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" dm1-sourcefile-removed
+    )
+    set_tests_properties(return_to_menu_rescans_removed_dm1_archive_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        PASS_REGULAR_EXPRESSION "PASS: authentic dm1 gameplay returned to the launcher"
+        LABELS "tier2;dm1;startup;launcher;return-to-menu;selected-archive;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 120
+    )
+    add_test(
         NAME return_to_menu_rescans_media_mutations_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
             "$<TARGET_FILE:firestaff>"
