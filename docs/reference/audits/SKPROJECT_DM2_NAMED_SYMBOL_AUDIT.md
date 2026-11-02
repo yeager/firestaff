@@ -252,7 +252,7 @@ awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
   docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv
 ```
 
-SPX v4 `ADD_CACHE_HASH` and the older SKWIN definition share sorted hash lookup, duplicate-index return and insertion ordering with Firestaff’s bounded cache model. Cache-maintenance on tick changes and mement retrieval/touch on duplicate hits are not represented, and supported runtime cache owners remain open.
+SPX v4 `ADD_CACHE_HASH` and the parallel SKWIN definition share tick-change MEMENT maintenance, sorted hash lookup, duplicate-index return plus MEMENT touch, and insertion ordering with Firestaff’s source-shaped adapter. The adapter takes maintenance and cache/MEMENT states from its owner, and no active game runtime routes its resource cache through this helper. Supported platform and edition cache owners remain open; the source rows are partial.
 
 DM2 `ADJUST_UI_EVENT` variants diverge at event codes 95-98. DOS, SPX v4 and SKWIN treat them as spell/leader panel clicks and use rectangle geometry plus the leader-state gate; SPX v5 and SKULLWIN treat them as movement arrows and use the cooldown-2 movement gate. Firestaff’s shared helper implements the SPX-v5 arrow behavior, so the DOS/SPX-v4/SKWIN definitions are partial; the SPX-v5 core mapping matches, but a live platform input owner remains open.
 
