@@ -132,6 +132,14 @@ authentic DM2 PC and Amiga menu-to-runtime tests passed in 91.32 s and 90.31 s.
 These checks exercise game discovery, platform choice, and bounded first-runtime
 handoffs; they do not establish physical input or complete platform parity.
 
+The authentic `dm1_v1_pc34_native_cli_boot` test also passed on this revision
+(511.90 s) with the Atari STX decoder target built. It decoded and identity-
+checked the original Atari ST 1.2 dungeon, then confirmed that the M12 scan and
+direct PC CLI reject PC 3.4 graphics paired only with that Atari dungeon. A
+mixed-media follow-up confirmed PC 3.4 selects its matching original dungeon.
+This proves the exercised edition-pair admission boundary; it does not cover
+wrong-edition rejection for every DM1 platform.
+
 ### 2026-10-30 current-main startup and menu retest
 
 On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
