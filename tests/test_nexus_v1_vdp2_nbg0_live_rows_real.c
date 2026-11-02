@@ -45,7 +45,7 @@ int main(void)
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureInput input;
     Nexus_V1_Vdp2YmirNbg0ScanlineCaptureReceipt receipt;
     const Nexus_V1_Vdp2YmirNbg0RowState rows[] = {
-        {4U, 113U, 0x1f79U, 0x0bcdU, 0x00cdU, 0x00cdU}
+        {0U, 224U, 0x1f79U, 0x0bcdU, 0x00cdU, 0x00cdU}
     };
     FILE *out = NULL; size_t p; int rc = 1;
     if (!root || !*root || !baseline_path || !*baseline_path) {
@@ -83,7 +83,7 @@ int main(void)
         goto done;
     }
     input.nbg1_transparency_verified = 1;
-    if (!nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(fb, &input, &receipt) || !receipt.valid || !receipt.capture_only || receipt.renderer_permitted || !receipt.nbg1_transparency_verified || receipt.uncovered_rows != 111 || receipt.nbg0_pixels != 21455 || receipt.vdp1_pixels != 50225) {
+    if (!nexus_v1_vdp2_capture_replay_ymir_nbg0_scanlines(fb, &input, &receipt) || !receipt.valid || !receipt.capture_only || receipt.renderer_permitted || !receipt.nbg1_transparency_verified || receipt.uncovered_rows != 0 || receipt.nbg0_pixels != 21455 || receipt.vdp1_pixels != 50225) {
         fprintf(stderr, "FAIL: live-row replay receipt nbg0=%d vdp1=%d uncovered=%d\n", receipt.nbg0_pixels, receipt.vdp1_pixels, receipt.uncovered_rows); goto done;
     }
     if (!replay_path || !(out = fopen(replay_path, "wb"))) { fprintf(stderr, "FAIL: replay output path\n"); goto done; }
@@ -92,7 +92,7 @@ int main(void)
         if (fwrite(rgb, 1U, 3U, out) != 3U) { fclose(out); out = NULL; goto done; }
     }
     if (fclose(out)) { out = NULL; goto done; } out = NULL;
-    printf("PASS: live NBG0 rows composed: NBG0=%d VDP1=%d rows=4..116; capture-only\n", receipt.nbg0_pixels, receipt.vdp1_pixels);
+    printf("PASS: live NBG0 rows composed: NBG0=%d VDP1=%d rows=0..223; capture-only\n", receipt.nbg0_pixels, receipt.vdp1_pixels);
     rc = 0;
 done:
     if (out) fclose(out);
