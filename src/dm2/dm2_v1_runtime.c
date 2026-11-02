@@ -22722,7 +22722,8 @@ static int dm2_runtime_set_minion_destination(
     if (!query || !(rt = query->rt) || !rt->boot ||
         !rt->record_pools_valid ||
         !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
-        item == 0xffffu || dm2_v1_record_handle_pool((int16_t)item) < 0 ||
+        item == 0xffffu ||
+        dm2_v1_record_handle_pool((int16_t)item) != 9 ||
         selected_map < 0 || selected_map >= dungeon->level_count ||
         !(record = dm2_v1_record_pool_address_mut(
               &rt->record_pools, (int16_t)item)) ||
