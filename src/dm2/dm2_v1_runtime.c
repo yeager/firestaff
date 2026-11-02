@@ -22704,6 +22704,45 @@ static void dm2_runtime_wield_set_pending(void *ctx, int16_t damage)
     (void)damage;
 }
 
+/* SKULLWIN/c_map.cpp::DM2_SET_DESTINATION_OF_MINION_MAP. The current runtime
+ * keeps every loaded level addressable and stores the destination in record
+ * word 6; it does not switch the globally active map while doing this write. */
+static int dm2_runtime_set_minion_destination(
+    void *ctx, uint16_t item, int16_t x, int16_t y, int16_t selected_map)
+{
+    DM2_RuntimeHandActivationQuery *query = ctx;
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SkprojectMinionDestinationReceipt result;
+    uint8_t *record;
+    uint8_t *raw_record;
+    int raw_size = 0;
+    uint16_t previous_w6;
+
+    if (!query || !(rt = query->rt) || !rt->boot ||
+        !rt->record_pools_valid ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        item == 0xffffu || dm2_v1_record_handle_pool((int16_t)item) < 0 ||
+        selected_map < 0 || selected_map >= dungeon->level_count ||
+        !(record = dm2_v1_record_pool_address_mut(
+              &rt->record_pools, (int16_t)item)) ||
+        dm2_v1_record_pool_record_size(
+            dm2_v1_record_handle_pool((int16_t)item)) < 8)
+        return 0;
+    raw_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, item, NULL, NULL, &raw_size);
+    if (!raw_record || raw_size < 8) return 0;
+    previous_w6 = dm2_runtime_record_rd16(rt, record + 6);
+    if (!dm2_v1_skproject_set_destination_of_minion_map(
+            previous_w6, rt->dungeon_level, x, y, selected_map,
+            dungeon->level_widths[selected_map],
+            dungeon->level_heights[selected_map], &result) || !result.valid)
+        return 0;
+    dm2_runtime_record_wr16(rt, record + 6, result.new_record_w6);
+    dm2_runtime_record_wr16(rt, raw_record + 6, result.new_record_w6);
+    return 1;
+}
+
 static const DM2_RuntimeWieldCallbacks dm2_runtime_wield_callbacks = {
     dm2_runtime_wield_get_creature,
     NULL,
@@ -23258,6 +23297,8 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
     request.attack_hero_flag = rt->source_party.curacthero;
+    request.set_minion_dest_cb = dm2_runtime_set_minion_destination;
+    request.set_minion_dest_ctx = &hand_query;
     if (is_create_minion_action) {
         minion_context.runtime = rt;
         minion_context.map = game->current_level;
