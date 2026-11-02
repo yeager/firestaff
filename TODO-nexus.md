@@ -70,14 +70,17 @@ remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
 and PR [#252](https://github.com/yeager/firestaff/pull/252).
 
-## 2026-10-31 — NBG0 live-row replay
+## 2026-11-02 — Full-height NBG0 live-row replay
 
-The capture-only compositor now accepts Ymir live per-row scroll and
-coordinate increments, demonstrated against the authentic Japanese intro
-capture at rows 4–116. Source transfer timing remains unbound in this capture;
-do not enable this lane in the production renderer. Continue gathering
-same-frame producer-to-VRAM evidence and verify row-state coverage across
-animation frames. See
+The capture-only compositor now consumes Ymir live per-row scroll and
+coordinate increments. The authentic Japanese startup capture at VDP1 frame
+7486 / VDP2 serial 8199 has same-frame registers and full coverage for rows
+0–223; the Firestaff C replay matches the same-pass Ymir RGB frame at all
+71,680 pixels. This single-state result does not establish source ownership or
+transfer timing for other animation frames, arbitrary-frame parity, or
+production-renderer admission. Continue with additional authentic menu and
+gameplay captures and bind the retail source/update path before enabling the
+lane in the production renderer. See
 [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
 
 ## 2026-10-31 — Authentic VDP2 register order and composition rerun

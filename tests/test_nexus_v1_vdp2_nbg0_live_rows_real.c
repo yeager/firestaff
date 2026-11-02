@@ -60,7 +60,6 @@ int main(void)
         !hash_is(&fbs, "0570c79b067adde55161ba2e16c09a628dcdf99b7b49f168d803c948b4479420") ||
         !hash_is(&vram, "2b6fe0392b1ff23c0c55f08423d179a74d7f481990e37aadd4e6bfd657d9cf45") ||
         !hash_is(&cram, "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
-        !hash_is(&regs, "2d3ed242492f06aa8bac0aa90acfc823c488a6d07ec76d5932882233e80d2ff4") ||
         !hash_is(&regs, "2d3ed242492f06aa8bac0aa90acfc823c488a6d07ec76d5932882233e80d2ff4")) {
         fprintf(stderr, "FAIL: authenticated NBG0 live-row capture size/hash\n"); goto done;
     }
