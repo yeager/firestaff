@@ -94,6 +94,8 @@ def verify_register_pointer_link(dumps: Path, register_dumps: Path,
     staging_memory = (dumps / "wram-hi.bin").read_bytes()
     row_snapshot_matches = 0
     face_pointers = set()
+    face_pointers_by_frame: dict[int, set[tuple[str, int]]] = defaultdict(set)
+    face_pointer_counts_by_frame: dict[int, Counter] = defaultdict(Counter)
     per_frame = []
     for frame in range(frame_min, frame_max + 1):
         observed = []
@@ -111,16 +113,26 @@ def verify_register_pointer_link(dumps: Path, register_dumps: Path,
                 raise ValueError(f"face-row bytes differ between captures at {row['r9']}")
             row_snapshot_matches += 1
             face_pointers.add((cpu, pointer))
+            face_pointers_by_frame[frame].add((cpu, pointer))
+            face_pointer_counts_by_frame[frame][(cpu, pointer)] += 1
         expected = staged_keys_by_frame.get(frame, set())
         if len(observed) != len(set(observed)) or set(observed) != expected:
             raise ValueError(f"frame {frame} r2 pointers do not uniquely match staged records")
         per_frame.append({"frame": frame, "read_rows": len(observed),
-                          "staging_records": len(expected), "r2_pointer_matches": len(expected)})
+                          "staging_records": len(expected), "r2_pointer_matches": len(expected),
+                          "unique_cpu_face_row_pointers": len(face_pointers_by_frame[frame])})
+    pointer_sets = [face_pointers_by_frame[frame] for frame in range(frame_min, frame_max + 1)]
+    stable_pointer_set = all(pointer_set == pointer_sets[0] for pointer_set in pointer_sets[1:])
+    pointer_counts = [face_pointer_counts_by_frame[frame]
+                      for frame in range(frame_min, frame_max + 1)]
+    stable_pointer_counts = all(counts == pointer_counts[0] for counts in pointer_counts[1:])
     return {"read_pc": "0x608f364", "command_trace_identical": True,
             "vdp1_vram_identical": True, "matching_output_sha256": output_hashes,
             "per_frame": per_frame,
             "equal_final_face_row_snapshot_observations": row_snapshot_matches,
             "unique_cpu_face_row_pointers": len(face_pointers),
+            "stable_face_pointer_set_across_frames": stable_pointer_set,
+            "stable_face_pointer_multiplicities_across_frames": stable_pointer_counts,
             "limit": "Face-row bytes are compared between final WRAM-H snapshots, not intermediate-frame snapshots."}
 
 
@@ -293,7 +305,11 @@ def main() -> int:
                                        for row in register_link["per_frame"]),
             "equal_final_face_row_snapshot_observations":
                 register_link["equal_final_face_row_snapshot_observations"],
-            "unique_cpu_face_row_pointers": register_link["unique_cpu_face_row_pointers"]}
+            "unique_cpu_face_row_pointers": register_link["unique_cpu_face_row_pointers"],
+            "stable_face_pointer_set_across_frames":
+                register_link["stable_face_pointer_set_across_frames"],
+            "stable_face_pointer_multiplicities_across_frames":
+                register_link["stable_face_pointer_multiplicities_across_frames"]}
     print(json.dumps({"runs": [{"run": item["run"], "frames": len(item["per_frame"]),
                                "total_staging_records": sum(row["complete_staging_records"]
                                                              for row in item["per_frame"]),
