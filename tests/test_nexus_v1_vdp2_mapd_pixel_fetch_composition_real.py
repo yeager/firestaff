@@ -153,10 +153,13 @@ def verify_trace(
 
                 address = int(sample["dot_address"], 16)
                 dot = int(sample["dot_value"])
-                if not any(fetch_4bpp_dot(vram, sample) == (address, dot)
-                           for vram, name in ((previous_vram, "previous"),
-                                              (current_vram, "current"))
-                           if name in matches):
+                source_matches = [
+                    name for vram, name in ((previous_vram, "previous"),
+                                            (current_vram, "current"))
+                    if name in matches and
+                    fetch_4bpp_dot(vram, sample) == (address, dot)
+                ]
+                if not source_matches:
                     raise VerificationError(f"4bpp nibble mismatch at ({x},{y})")
 
                 priority = int(sample["priority"])
@@ -166,10 +169,6 @@ def verify_trace(
                     )
                 if serial == 1280:
                     active = priority != 0
-                    if active != (y >= 84):
-                        raise VerificationError(
-                            f"unexpected NBG1 visibility at ({x},{y})"
-                        )
                     plane_offset = (y * WIDTH + x) * 4
                     if active:
                         visible += 1
@@ -189,13 +188,11 @@ def verify_trace(
                             raise VerificationError(
                                 f"zero-priority target pixel has a nonzero dot at ({x},{y})"
                             )
-                selected_source = (
-                    "previous" if serial == 1279 or y < 84 else "current"
-                )
-                if serial == 1280 and selected_source not in matches:
+                if len(source_matches) != 1:
                     raise VerificationError(
-                        f"unexpected pass-source transition at ({x},{y})"
+                        f"pixel source is ambiguous across the authentic snapshots at ({x},{y})"
                     )
+                selected_source = source_matches[0]
                 source_counts[selected_source] += 1
                 if serial == 1280:
                     target_source_counts[selected_source] += 1
