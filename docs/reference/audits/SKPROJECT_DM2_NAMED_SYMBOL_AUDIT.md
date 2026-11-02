@@ -759,7 +759,7 @@ Compared DOS `SKW_SET_ITEMTYPE` (`SKWINDOS/dm2bya.cpp:6736`), SPX v4 `SET_ITEMTY
 
 ### DM2 item importance flags across editions (2026-11-02)
 
-Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v4/skgame.cpp:3172`), SPX v5 `DM2_SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v5/skrecord.cpp:501`), and SKULLWIN (`SKULLWIN/c_record.cpp:498`). The sources use different DB-specific flags/typed fields, with DB7 and selected container/scroll types as no-ops. Firestaff’s legacy callback writes byte@1 for all record types, unlike those layouts. A separate SKULLWIN-shaped bounded helper exists but is not the live hero callback. Source timer tick-generators also set importance for actuator-created items when flags 0x18 are present, and Firestaff has no bound per-DB live timer/actuator mutator for that route. All four source definitions remain `PARTIAL`; see the active-source ledger.
+Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v4/skgame.cpp:3172`), SPX v5 `DM2_SET_ITEM_IMPORTANCE` (`SKWINSPX/src/v5/skrecord.cpp:501`), and SKULLWIN (`SKULLWIN/c_record.cpp:498`). The sources use DB-specific bits: DB4 byte 15 bit 2, DB5/6/10 byte 2 bit 7, DB8 byte 3 bit 7, with DB7/9 as no-ops. Firestaff’s generic callback now applies those serialized masks. Production timer/hero-item callers still do not bind it, including the source timer tick-generator route that sets importance for actuator-created items when flags 0x18 are present. All four source definitions remain `PARTIAL`; see the active-source ledger.
 
 ### DM2 creature weight query (2026-11-02)
 

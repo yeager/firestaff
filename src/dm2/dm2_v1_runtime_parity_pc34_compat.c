@@ -426,16 +426,39 @@ void dm2_v1_set_item_importance(
     int16_t record_word, int16_t importance,
     const DM2_V1_SetImportanceCallbacks *cb, void *ctx)
 {
+    uint8_t bit;
+    uint16_t db_type;
     if (!cb || record_word == -1)
         return;
     uint8_t *rec = cb->get_record_address(ctx, (uint16_t)record_word);
     if (!rec)
         return;
-    int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
-    if (db_type < 4 || db_type > 10)
-        return;
-    /* Importance stored in bits 8-15 of word+0 (high byte of first word) */
-    rec[1] = (uint8_t)(importance & 0xFF);
+    db_type = ((uint16_t)record_word & 0x3C00u) >> 10;
+    bit = (uint8_t)(importance & 1);
+
+    /* SKW_SET_ITEM_IMPORTANCE (SKWINDOS/dm2bya.cpp:6638),
+     * SET_ITEM_IMPORTANCE (SKWINSPX/src/v4/skgame.cpp:3172), and
+     * DM2_SET_ITEM_IMPORTANCE (SKWINSPX/src/v5/skrecord.cpp:501)
+     * use DB-specific fields. Record words are stored little-endian. */
+    switch (db_type) {
+    case 4: /* creature: byte 15, bit 2 */
+        rec[15] = (uint8_t)((rec[15] & (uint8_t)~0x04u) | (bit << 2));
+        break;
+    case 5: /* weapon */
+    case 6: /* clothing */
+    case 10: /* miscellaneous item */
+        rec[2] = (uint8_t)((rec[2] & (uint8_t)~0x80u) | (bit << 7));
+        break;
+    case 8: /* potion: visible power bit in word 1 */
+        rec[3] = (uint8_t)((rec[3] & (uint8_t)~0x80u) | (bit << 7));
+        break;
+    case 7: /* scroll */
+    case 9: /* container */
+        /* Source implementations intentionally do not mutate these types. */
+        break;
+    default:
+        break;
+    }
 }
 
 /* c_record.cpp:1142 — DM2_ALLOC_NEW_DBITEM
