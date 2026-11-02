@@ -2815,3 +2815,18 @@ test as an English runtime payload. The full app build and physical/native-
 display pixel comparison remain unverified because TRV2 timed out; portraits,
 bars, labels and panel interaction also remain open parts of the reported HUD
 issue.
+
+2026-11-02 skproject DOS/SPX v4/v5 `DECIDE_NEXT_XACT` production-route audit:
+The Firestaff live CCM goal callback invokes `dm2_v1_creature_strategy_select`
+for the authenticated AI goal, but passes `xact_cb=NULL` (`runtime.c` near
+`dm2_runtime_ccm_ai_goal`). The strategy owner intentionally fails closed at
+`creature_ai_loop_pc34_compat.c` before entering its XACT loop when that
+callback is absent. SKProject's DOS, SPX v4 and v5 action loops call
+`DECIDE_NEXT_XACT` and `PROCEED_XACT`, then update the action row and branch
+state; the pure Firestaff `dm2_v1_decide_next_xact` accepts caller-supplied
+rows but no active runtime supplies the source `table1d5f82` and commits its
+register writes/action arguments. The existing inventory notes incorrectly
+said the helper had no production caller at all; corrected to distinguish the
+live strategy entry from the missing dynamic-action loop binding. Keep all
+source rows `PARTIAL` until the table data, command dispatch, mutations and
+platform runtime routes are implemented and verified.
