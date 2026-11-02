@@ -27,10 +27,12 @@ The replay admits 51 indexed texture spans through unique retail DGN image
 and palette joins and 15 direct-RGB texture spans through retail DGN image
 joins. Two mode-0 commands are verified clipped no-ops. Row 79 is a polyline;
 row 80 is a 16-by-41, 8-bit, 256-colour bank-mode normal sprite. Its 656-byte
-texture is taken from the hash-pinned VDP1 VRAM snapshot. The replay reports
-this as captured texture evidence and does not claim that row 80 is owned by
-the DGN. The polyline and sprite are both included in the exact framebuffer
-comparison.
+texture is taken from the hash-pinned VDP1 VRAM snapshot and exactly matches
+decoded Japanese retail `MENU.BPK` entry 144. Every used nontransparent PALT
+word matches same-frame VDP2 CRAM. The capture-only replay still consumes the
+captured texture bytes, while the real-data test separately verifies this
+retail source and palette join. The polyline and sprite are both included in
+the exact framebuffer comparison.
 
 ## 16-bpp source-address alignment
 

@@ -60,11 +60,16 @@ its 65,991 visible top-layer VDP1 pixels to the last-writing VDP1 command and
 that row's source receipt. Exactly 65,500 visible VDP1 pixels map to retail
 indexed `LEV01.DGN` rows. The 15 direct-RGB DGN draws join retail data but own
 no final visible pixels in this capture. The 491 CRAM pixels map to captured
-polyline row 79 (60 pixels) and mode-4 sprite row 80 (431 pixels). The combined
-real-data regression pins these source-class counts together with the complete VDP2 RGB match and DGN
-joins. This proves pixel-to-command/source-class ownership for this captured
-state after matching each visible pixel between replay and display FBS planes,
-not a selected Structure3 face per pixel. Active face selection,
+polyline row 79 (60 pixels) and retail `MENU.BPK` entry 144 at sprite row 80
+(431 pixels). The combined real-data regression pins these source-class counts
+with the complete VDP2 RGB match and DGN joins. Sprite row 80 is further bound
+to decoded Japanese `MENU.BPK` entry 144 and same-frame CRAM for every used
+nontransparent palette index. This proves
+the retail archive source for that sprite's 431 visible pixels; its DMA-time
+payload remains uncaptured, and it does not establish whole-HUD state
+ownership. Pixel-to-command/source-class ownership is verified for this
+captured state after matching each visible pixel between replay and display
+FBS planes, not a selected Structure3 face per pixel. Active face selection,
 transform/culling, other gameplay states, and production renderer admission
 remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)

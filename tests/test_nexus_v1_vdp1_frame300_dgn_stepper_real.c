@@ -1,4 +1,5 @@
 #include "firestaff_x68k_media_receipt.h"
+#include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_vdp1_dgn_material_resolver.h"
 #include "nexus_v1_vdp1_ymir_stepper_capture.h"
 
@@ -29,7 +30,8 @@ typedef enum {
     ROW_CAPTURED_TRANSPARENT,
     ROW_CAPTURED_POLYLINE,
     ROW_CAPTURED_POLYGON,
-    ROW_CAPTURED_MODE4
+    ROW_CAPTURED_MODE4,
+    ROW_RETAIL_MENU_BPK_MODE4
 } RowSourceKind;
 
 static const char *row_source_kind_name(RowSourceKind kind)
@@ -45,6 +47,7 @@ static const char *row_source_kind_name(RowSourceKind kind)
     case ROW_CAPTURED_POLYLINE: return "captured-polyline";
     case ROW_CAPTURED_POLYGON: return "captured-polygon";
     case ROW_CAPTURED_MODE4: return "captured-mode4-vram";
+    case ROW_RETAIL_MENU_BPK_MODE4: return "retail-menu-bpk-mode4";
     case ROW_UNSET: default: return "unset";
     }
 }
@@ -280,6 +283,9 @@ int main(int argc, char **argv)
     char dump_root[4096], paths[sizeof(files) / sizeof(files[0])][4096];
     Blob blobs[sizeof(files) / sizeof(files[0])] = {{0}};
     Blob dgn = {NULL, 0U};
+    Blob menu = {NULL, 0U}, cram = {NULL, 0U};
+    uint8_t menu_sprite[16U * 41U];
+    uint16_t menu_palette[NEXUS_V1_BPK_PALT_ENTRY_COUNT];
     uint8_t *le_vram = NULL;
     Nexus_V1_Vdp1YmirCaptureSurface *surface = NULL;
     Nexus_V1_Vdp1YmirCaptureReceipt receipt;
@@ -294,6 +300,7 @@ int main(int argc, char **argv)
     unsigned int polygon_count = 0U;
     unsigned int dgn_source_count = 0U, transparent_mode1_count = 0U;
     unsigned int direct_source_count = 0U, captured_mode4_count = 0U;
+    unsigned int retail_menu_bpk_count = 0U;
     unsigned int mode0_noops = 0U;
     unsigned int skipped_draw_commands = 0U, end_commands = 0U;
     unsigned int user_clip_updates = 0U, system_clip_updates = 0U, local_updates = 0U;
@@ -351,6 +358,40 @@ int main(int argc, char **argv)
         dgn_resolver.dgn_byte_count = (int)dgn.size;
         dgn_resolver.source_hash_verified = 1;
         dgn_resolver.palette_slot_base = 0;
+    }
+    {
+        char menu_path[4096], cram_path[4096];
+        size_t menu_written = 0U;
+        Nexus_V1_BpkSurfaceEntry menu_surface;
+        Nexus_V1_BpkArchiveInfo menu_archive;
+        uint64_t palette_hash = 0U;
+        int n = snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", dgn_env);
+        int c = snprintf(cram_path, sizeof(cram_path), "%s/vdp2-cram.bin", dump_root);
+        if (n < 0 || (size_t)n >= sizeof(menu_path) ||
+            c < 0 || (size_t)c >= sizeof(cram_path)) {
+            fprintf(stderr, "Nexus MENU.BPK or CRAM path is too long\n"); goto done;
+        }
+        menu = read_blob(menu_path);
+        cram = read_blob(cram_path);
+        if (!menu.bytes || !cram.bytes) {
+            fprintf(stderr, "SKIP: authentic Japanese MENU.BPK or frame-300 VDP2 CRAM is unavailable\n");
+            result = 77; goto done;
+        }
+        if (!hash_is(&menu, "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636") ||
+            cram.size != 4096U ||
+            !hash_is(&cram, "faf2c8f3adbd4d89a562e28b744f772683cbbc822e0413e2088298a51a35f85a") ||
+            nexus_v1_bpk_archive_parse(menu.bytes, menu.size, &menu_archive) != 0 ||
+            menu_archive.entry_count_hint != 163U || menu_archive.prs3_payload_count != 162U ||
+            nexus_v1_bpk_archive_decode_surface(menu.bytes, menu.size, 144U,
+                menu_sprite, sizeof(menu_sprite), &menu_surface, &menu_written) != NEXUS_V1_BPK_DECODE_OK ||
+            menu_written != sizeof(menu_sprite) || menu_surface.entry_index != 144U ||
+            menu_surface.width != 16U || menu_surface.height != 41U ||
+            nexus_v1_bpk_archive_copy_palette_words_be16(menu.bytes, menu.size,
+                menu_palette, &palette_hash) != 0) {
+            fprintf(stderr, "Japanese MENU.BPK entry 144 or PALT decode did not match its pinned retail form\n");
+            goto done;
+        }
+        (void)palette_hash;
     }
     /* VDP1 FBCR bit 3 is DIE; bit 4 is EOS. This capture disables
      * double-interlace and selects even X coordinates for HSS. VDP2 TVMD
@@ -544,6 +585,34 @@ int main(int argc, char **argv)
                     input.sys_clip_h = sys_clip_h;
                     input.sys_clip_v = sys_clip_v;
                     input.single_density_verified = 1;
+                    if (parsed.texture_source_byte_offset != 0x643c0U ||
+                        memcmp(blobs[1].bytes + parsed.texture_source_byte_offset,
+                               menu_sprite, sizeof(menu_sprite)) != 0) {
+                        fprintf(stderr, "frame-300 row 80 does not exactly join Japanese MENU.BPK entry 144\n");
+                        goto done;
+                    }
+                    {
+                        unsigned int used_index;
+                        unsigned int matched_palette_indices = 0U;
+                        uint8_t used[256] = {0};
+                        size_t pixel;
+                        for (pixel = 0U; pixel < sizeof(menu_sprite); ++pixel)
+                            if (menu_sprite[pixel] != 0U) used[menu_sprite[pixel]] = 1U;
+                        for (used_index = 1U; used_index < 256U; ++used_index) {
+                            if (used[used_index] &&
+                                menu_palette[used_index] != read_be16(cram.bytes + used_index * 2U)) {
+                                fprintf(stderr, "MENU.BPK entry 144 PALT index %u differs from same-frame VDP2 CRAM\n", used_index);
+                                goto done;
+                            }
+                            if (used[used_index]) ++matched_palette_indices;
+                        }
+                        if (matched_palette_indices != 3U) {
+                            fprintf(stderr, "MENU.BPK entry 144 used palette-index count changed: %u\n",
+                                    matched_palette_indices);
+                            goto done;
+                        }
+                    }
+                    ++retail_menu_bpk_count;
                     if (!nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
                             surface, &input, &receipt) || !receipt.valid ||
                         receipt.renderer_permitted || !receipt.capture_only ||
@@ -553,7 +622,7 @@ int main(int argc, char **argv)
                         goto done;
                     }
                     ++captured_mode4_count;
-                    row_sources[index] = ROW_CAPTURED_MODE4;
+                    row_sources[index] = ROW_RETAIL_MENU_BPK_MODE4;
                     continue;
                 }
                 if (parsed.command_type == 4U) {
@@ -701,7 +770,7 @@ int main(int argc, char **argv)
     if (frame_rows != EXPECTED_FRAME_ROWS ||
         mode1_count != 51U || dgn_source_count != 51U ||
         transparent_mode1_count != 0U || direct_source_count != 15U ||
-        captured_mode4_count != 1U ||
+        captured_mode4_count != 1U || retail_menu_bpk_count != 1U ||
         mode0_noops != 2U || draws != 71U ||
         skipped_draw_commands != 5U || end_commands != 1U ||
         user_clip_updates != 2U || local_updates != 4U ||
@@ -756,17 +825,18 @@ int main(int argc, char **argv)
             goto done;
         }
     }
-    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u retail_dgn=%u direct_rgb_dgn=%u captured_mode4=%u mode0_clipped=%u skipped=%u ends=%u transparent_mode1=%u polygons=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
+    printf("Ymir stepper composition: frame=%u draws=%u mode1=%u retail_dgn=%u direct_rgb_dgn=%u captured_mode4=%u retail_menu_bpk=%u mode0_clipped=%u skipped=%u ends=%u transparent_mode1=%u polygons=%u opaque=%llu rgb_exact=%llu alpha_exact=%llu; renderer_permitted=false\n",
         FRAME_INDEX,draws,mode1_count,dgn_source_count,direct_source_count,
-        captured_mode4_count,
+        captured_mode4_count,retail_menu_bpk_count,
         mode0_noops,skipped_draw_commands,end_commands,
         transparent_mode1_count,polygon_count,
         (unsigned long long)opaque,(unsigned long long)exact_matches,
         (unsigned long long)alpha_matches);
-    printf("PASS: retail DGN and captured-VRAM Ymir-stepper replay match the authentic VDP1 framebuffer exactly at 320x224; production renderer admission remains blocked\n");
+    printf("PASS: retail DGN and Japanese MENU.BPK source joins plus captured-VRAM Ymir-stepper replay match the authentic VDP1 framebuffer exactly at 320x224; production renderer admission remains blocked\n");
     result=0;
 done:
     free(trace_copy); free(le_vram); free(surface); free_blob(&dgn);
+    free_blob(&menu); free_blob(&cram);
     for(i=0U;i<file_count;i++) free_blob(&blobs[i]);
     return result;
 }
