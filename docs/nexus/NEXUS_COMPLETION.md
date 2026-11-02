@@ -32,6 +32,16 @@ map to hash-verified retail rows (115/138 observations); 23 pointers remain
 unresolved. This does not infer projected-coordinate corner correspondence
 from a cyclic row match.
 
+The retained authentic Ymir frame-1605 trace also joins all 138 projected
+face observations to exact retail texture bytes; all 131 indexed draws have
+exact retail CLUT bytes. For 108 indexed observations, the resolved source face
+is among the Structure3 owners of a byte-matched candidate image record. Four
+indexed source faces have no owner in the scanned retail corpus. Three
+direct-colour face/material links remain unproven, and 23 runtime face pointers
+remain unresolved. This is byte and selector evidence, not proof of visible
+pixel contribution or full-frame parity. See
+[`ymir_face_material_cross_join.md`](ymir_face_material_cross_join.md).
+
 ## Row-80 SCU-DMA source join — 2026-11-02
 
 A complete cold-boot Ymir capture records SCU transfer 3303 writing 1,312
