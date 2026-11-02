@@ -202,6 +202,12 @@ const char *dm2_v1_query_cmdstr_name(int8_t a, int8_t b, int8_t c,
 
 int32_t dm2_v1_query_cmdstr_entry(int32_t a, int32_t b, int32_t c, int32_t d,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_entry_dos(
+    int32_t category, int32_t index, int32_t key_index, int32_t field,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_query_cmdstr_entry_spx_v5(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_query_cur_cmdstr_entry(int32_t a,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);

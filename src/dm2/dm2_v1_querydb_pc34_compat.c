@@ -604,6 +604,70 @@ uint16_t dm2_v1_query_cmdstr_text_spx_v4(
     return (uint16_t)dm2_v1_query_cmdstr_text_bits(text, pattern, 16u);
 }
 
+static const char *dm2_v1_query_cmdstr_key(uint16_t key_index)
+{
+    static const char *const keys[18] = {
+        "SK", "LV", "CM", "BZ", "TR", "ST", "PA", "TA", "NC",
+        "EX", "PB", "DM", "MS", "SD", "RP", "HN", "AT", "WH"
+    };
+    return key_index < 18u ? keys[key_index] : NULL;
+}
+
+static int32_t dm2_v1_query_cmdstr_entry_value(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx, unsigned width)
+{
+    char text[128] = {0};
+    const char *key;
+    char *result;
+    size_t offset = 0u;
+
+    if (!cb || !cb->query_gdat_text ||
+        category < 0 || category > 0xff || index < 0 || index > 0xff ||
+        field < 0 || field > 0xff || key_index < 0 || key_index >= 18)
+        return 0;
+    key = dm2_v1_query_cmdstr_key((uint16_t)key_index);
+    if (!key) return 0;
+    result = cb->query_gdat_text(
+        ctx, (int8_t)(uint8_t)category, (int8_t)(uint8_t)index,
+        (int8_t)(uint8_t)field, text);
+    while (offset < sizeof(text) && result != &text[offset]) ++offset;
+    if (offset == sizeof(text) ||
+        !memchr(result, '\0', sizeof(text) - offset) || result[0] == '\0')
+        return 0;
+    return width == 16u
+        ? (int32_t)(uint16_t)dm2_v1_query_cmdstr_text_bits(result, key, 16u)
+        : dm2_v1_query_cmdstr_i32_from_bits(
+              dm2_v1_query_cmdstr_text_bits(result, key, 32u));
+}
+
+int32_t dm2_v1_query_cmdstr_entry(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* SPX v4 QUERY_CMDSTR_ENTRY (sktext.cpp:792-802) argument order. */
+    return dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 16u);
+}
+
+uint16_t dm2_v1_query_cmdstr_entry_dos(
+    int32_t category, int32_t index, int32_t key_index, int32_t field,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* DOS SKW_QUERY_CMDSTR_ENTRY (dm2bya.cpp:2147-2157) puts key before field. */
+    return (uint16_t)dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 16u);
+}
+
+int32_t dm2_v1_query_cmdstr_entry_spx_v5(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    /* SPX v5 DM2_QUERY_CMDSTR_ENTRY (skgdtqdb.cpp:345-358). */
+    return dm2_v1_query_cmdstr_entry_value(
+        category, index, field, key_index, cb, ctx, 32u);
+}
+
 int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,
                                                    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
