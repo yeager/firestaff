@@ -890,23 +890,23 @@ void dm2_v1_draw_player_attack_dir(
 void dm2_v1_draw_spell_panel(
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb) return;
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_SPELL_PANEL (806-864). */
+    if (!cb || !cb->get_cur_act_hero || !cb->get_hero_nrunes) return;
 
-    int16_t cur = cb->get_cur_act_hero ? cb->get_cur_act_hero(ctx) : 0;
+    int16_t cur = cb->get_cur_act_hero(ctx);
     if (cur <= 0) return;
 
     int32_t hero_idx = cur - 1;
-    uint8_t nrunes = cb->get_hero_nrunes ?
-        cb->get_hero_nrunes(ctx, hero_idx) : 0;
+    uint8_t nrunes = cb->get_hero_nrunes(ctx, hero_idx);
 
     int8_t icon = (int8_t)(nrunes + 1);
     dm2_v1_draw_icon_pict_entry(1, 5, icon, 2, 0x5c, -1, cb, ctx);
 
-    if ((int32_t)nrunes < 4) {
-        /* Draw spell symbol grid (simplified) */
+    if ((int32_t)nrunes < 4 && cb->draw_button_str &&
+        cb->palette_to_ui8) {
         int8_t base = (int8_t)(nrunes * 6 + 0x60);
-        uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 13) : 0;
-        uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+        uint8_t fg = cb->palette_to_ui8(ctx, 13);
+        uint8_t bg = cb->palette_to_ui8(ctx, 0);
 
         char sym[2] = {0, 0};
         for (int i = 0; i < 6; i++) {
