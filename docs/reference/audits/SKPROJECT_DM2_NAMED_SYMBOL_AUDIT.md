@@ -664,3 +664,6 @@ SPX v4 `QUERY_RECTNO_FOR_WALL_ORNATE` is compared with Firestaff's wall-ornament
 ## Latest source review: DRAW_WALL_ORNATE (2026-11-02)
 
 SPX v4 `DRAW_WALL_ORNATE` is compared with Firestaff's source-backed runtime wall-ornament plan and viewport renderer. Image selection, rect placement, local palette, shop-glass graphics and overlays have corresponding paths. The source additionally renders cryocell champion portraits, front/side text panels and text records, clickable ornament/alcove targets, window/outside layers, and DM1-mode visibility/depth behavior; it also has extended animation-loop sound and GFXFix side-D0 selection. Those outputs and interaction hooks are not fully represented in the Firestaff path. The source definition remains `PARTIAL`.
+
+
+SPX v4 `ADJUST_HAND_COOLDOWN` remains a helper-only variant: Firestaff's M11 runtime uses the DOS/v5 cooldown owner and M11 profiles select retail platforms rather than an SPX-v4 runtime. The separate v4 arithmetic helper exists, but no authenticated runtime-version binding chooses it; do not infer SPX v4 from a DOS or Amiga profile.
