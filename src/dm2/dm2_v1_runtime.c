@@ -21762,10 +21762,12 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
     if (!out_object_id || !out_container_cls2 || hero < 0 || hero >= 4 ||
         hand < 0 || hand >= 2 || !rt->record_pools_valid || !rt->boot)
         return 0;
-    /* DISPLAY_RIGHT_PANEL_SQUAD_HANDS routes selected action 2 to the spell
-     * panel before it examines the physical hand's ObjectID. */
-    if (rt->source_selected_hand_action == 2 ||
-        rt->source_spell_panel_flag != 0)
+    /* DOS dm2bye.cpp:2614-2632,2648-2681, SPX v4 skguidrw.cpp:7012-7021,
+     * and v5 skguidr5.cpp:5650-5754 derive panel 4 from a selected hand's
+     * moneybox after handling the spell sentinel. The separate panel
+     * dirty/update flag is set by ordinary ACTIVATE_ACTION_HAND and must not
+     * suppress a DB9 moneybox. */
+    if (rt->source_selected_hand_action == 2)
         return 0;
     object_id = (uint16_t)rt->champion_inventory_objects[hero][hand];
     if (object_id == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||

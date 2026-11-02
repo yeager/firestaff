@@ -3024,3 +3024,13 @@ source-shaped accumulator remains useful for caller-supplied receipts. Native
 moneybox render and input ownership across all supported editions/platforms
 remains partial; the separate click transaction still lacks live DB9/DB10,
 held-hand and weight callbacks.
+
+2026-11-02 SKProject moneybox panel-selection gate:
+DOS `dm2bye.cpp:2614-2632,2648-2681`, SPX v4 `skguidrw.cpp:7012-7021`, and
+SPX v5 `skguidr5.cpp:5650-5754` select panel 4 from the selected physical
+hand's DB9 moneybox, while the spell sentinel selects panel 2. Firestaff's
+`dm2_v1_runtime_get_active_moneybox` also rejected the separate panel update
+flag, which ordinary `ACTIVATE_ACTION_HAND` sets. It now blocks only the spell
+sentinel, allowing the existing live renderer and coin-count path to consume
+the selected moneybox. This does not bind input events 228-233 or implement
+the live wallet transaction; all platform click routes remain partial.
