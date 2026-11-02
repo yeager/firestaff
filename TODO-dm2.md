@@ -2967,3 +2967,11 @@ matches the serialized fields described by the SKProject variant bodies.
 Remaining work is to bind the callback to live timer-created items and hero
 inventory mutations on every supported edition/platform. Keep all source
 rows partial until those callers are wired and verified.
+
+2026-11-02 skproject wall-mecha `ITEM_GENERATOR` (actuator type 0x3c):
+DOS `dm2bya.cpp:5976-5988`, SPX v4 `skevent.cpp:1978-1996`, and SPX v5
+`sktimprc.cpp:2501-2515` allocate the actuator itemspec, set its DB-specific
+item type and optional importance, then call `MOVE_ITEM_TO` with actuator
+charge mode, direction, and once-only state. Firestaff currently fails closed
+for this visitor case. Bind the source edition gate and moverec insertion
+semantics before enabling it; keep the actuator path partial meanwhile.
