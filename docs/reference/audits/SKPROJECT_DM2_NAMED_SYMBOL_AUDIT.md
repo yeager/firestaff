@@ -50,7 +50,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,772 `UNREVIEWED`; 1,049 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,938 open tasks (2,772 unreviewed, 1,164 partial incl. older-ledger rows, 2 partial source owners). |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,769 `UNREVIEWED`; 1,052 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,938 open tasks (2,769 unreviewed, 1,167 partial incl. older-ledger rows, 2 partial source owners). |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -664,13 +664,19 @@ Compared DOS `SKW_QUERY_PLAYER_SKILL_LV`, SPX v4 `QUERY_PLAYER_SKILL_LV`, SPX v5
 
 DOS `SKW_PUSH_PULL_RIGID_BODY`, SPX v4 `PUSH_PULL_RIGID_BODY` and SPX v5 `DM2_PUSH_PULL_RIGID_BODY` are compared against their SKProject bodies and Firestaff's `dm2_v1_push_pull_rigid_body` helper. All six click-zone direction and turn-mode choices match. The source first admits the target with `IS_CREATURE_MOVABLE_THERE`, checks the edition's rigid-body weight predicate, and uses the full `PERFORM_MOVE` transaction; when that predicate fails it emits variant-specific noise for live heroes/champions. Firestaff instead directly moves any record returned by its callback, checks only destination blocking, and queues unconditional generic noise. Its helper has no production caller. All three definitions remain `PARTIAL`; movement admission, object class, transaction, source feedback, and supported-platform routes remain open.
 
-With active-source review overrides applied, the inventory currently maps 2,772 as `UNREVIEWED`, 1,049 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
 
 ## Latest source review: PERFORM_TURN_SQUAD (2026-11-02)
 
-Compared DOS `SKW_PERFORM_TURN_SQUAD`, SPX v4 `PERFORM_TURN_SQUAD`, SPX v5 `DM2_PERFORM_TURN_SQUAD`, and the SKULLWIN callback helper. Firestaff now binds turning to the live DM2 runtime: zero input is a no-op, champion facing directions reset, stair tiles resolve the other level and destination facing, and an active DB1 teleporter transitions before an ordinary turn. The source also removes and reinserts the party record around rotation; v4 adds stair bit 0x08 behavior and a turn Lua hook, and v5 uses `map_3BF83`. Those source state effects and complete DOS/SPX runtime and platform routes remain open, so all four source rows remain `PARTIAL`.
+Compared DOS `SKW_PERFORM_TURN_SQUAD`, SPX v4 `PERFORM_TURN_SQUAD`, SPX v5 `DM2_PERFORM_TURN_SQUAD`, and the SKULLWIN callback helper. Firestaff now binds turning to the live DM2 runtime: zero input is a no-op, champion facing directions reset, stair tiles resolve the other level and destination facing, and an active DB1 teleporter transitions before an ordinary turn. The source also removes and reinserts the party record around rotation; v4 has a turn Lua hook; its extra stair-direction argument is unused in the retail DM2 body, and v5 uses `map_3BF83`. Those source state effects and complete DOS/SPX runtime and platform routes remain open, so all four source rows remain `PARTIAL`.
 
-With active-source review overrides applied, the inventory currently maps 2,772 as `UNREVIEWED`, 1,049 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
+
+## Latest source review: STAIRS TRANSITION (2026-11-02)
+
+Compared DOS `SKW_12b4_00af`, SPX v4 `_12b4_00af`, SPX v5 `DM2_move_12b4_00af`, and SKULLWIN `DM2_move_12b4_00af`. All resolve the destination map from the stair lead bit, rotate the party using the destination tile direction, and restore their source map owner. Firestaff now binds its destination and direction queries to the live movement and turn paths; source party-record relocation and source map-switch/global side effects remain incomplete. SPX v4's extra stair-direction parameter is unused in the retail DM2 body; its Bloodwych-only special-direction branch is outside scope. All four source rows remain `PARTIAL`.
+
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
 
 ## Latest source review: REMOVE_OBJECT_FROM_HAND (2026-11-02)
 
@@ -733,7 +739,7 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,772 as `UNREVIEWED`, 1,049 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 
