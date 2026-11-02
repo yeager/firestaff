@@ -28,6 +28,9 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_pressure_plate.h"
+#include "dm2_v1_shop_price.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
@@ -15909,36 +15912,36 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     }
                 }
                 {
-                    int32_t buy_price_v4 = 0;
-                    int32_t sell_price_v4 = 0;
-                    int32_t buy_price_v5 = 0;
-                    int32_t sell_price_v5 = 0;
+                    uint16_t buy_price_v4 = 0u;
+                    uint16_t sell_price_v4 = 0u;
+                    uint16_t buy_price_v5 = 0u;
+                    uint16_t sell_price_v5 = 0u;
                     uint8_t creature_type =
                         (uint8_t)((pair.wall_w2 >> 7) & 0x01ffu);
                     uint16_t pool_number =
                         (uint16_t)((pair.wall_w4 >> 7) & 0x000fu);
-                    if (dm2_v1_query_48ae_05ae_asset_loader_variant(
-                            DM2_V1_QUERY_48AE_05AE_SPX_V4,
-                            pair.current_item, creature_type, pool_number,
-                            1, 1, -1, &buy_price_v4, loader) &&
-                        dm2_v1_query_48ae_05ae_asset_loader_variant(
-                            DM2_V1_QUERY_48AE_05AE_SPX_V4,
-                            pair.current_item, creature_type, pool_number,
-                            1, 0, -1, &sell_price_v4, loader)) {
-                        entry->shop_buy_price_v4 = (uint16_t)buy_price_v4;
-                        entry->shop_sell_price_v4 = (uint16_t)sell_price_v4;
+                    if (dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V4,
+                            1, 1, &buy_price_v4) &&
+                        dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V4,
+                            1, 0, &sell_price_v4)) {
+                        entry->shop_buy_price_v4 = buy_price_v4;
+                        entry->shop_sell_price_v4 = sell_price_v4;
                         entry->shop_price_v4_valid = 1u;
                     }
-                    if (dm2_v1_query_48ae_05ae_asset_loader_variant(
-                            DM2_V1_QUERY_48AE_05AE_SPX_V5,
-                            pair.current_item, creature_type, pool_number,
-                            1, 1, -1, &buy_price_v5, loader) &&
-                        dm2_v1_query_48ae_05ae_asset_loader_variant(
-                            DM2_V1_QUERY_48AE_05AE_SPX_V5,
-                            pair.current_item, creature_type, pool_number,
-                            1, 0, -1, &sell_price_v5, loader)) {
-                        entry->shop_buy_price_v5 = (uint16_t)buy_price_v5;
-                        entry->shop_sell_price_v5 = (uint16_t)sell_price_v5;
+                    if (dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V5,
+                            1, 1, &buy_price_v5) &&
+                        dm2_v1_shop_price_spx_variant(
+                            loader, pair.current_item, creature_type,
+                            pool_number, DM2_V1_SHOP_PRICE_SPX_V5,
+                            1, 0, &sell_price_v5)) {
+                        entry->shop_buy_price_v5 = buy_price_v5;
+                        entry->shop_sell_price_v5 = sell_price_v5;
                         entry->shop_price_v5_valid = 1u;
                     }
                 }

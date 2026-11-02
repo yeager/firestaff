@@ -9,6 +9,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_spell.h"
 #include "dm2_v1_weather_gdat.h"
+#include "dm2_v1_shop_price.h"
 #include "dm2_v1_mac_input.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_action_hand_pointer_real_media_check.h"
@@ -192,6 +193,136 @@ static int mac_status_pane_real_media_plan_checks(
         dm2_v1_gdat_hud_m11_command_plan_free(&plan);
         if (pane_count != 4) return 0;
     }
+    return 1;
+}
+
+static int mac_shop_price_real_media_check(DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(profile);
+    uint16_t base = 0u;
+    uint16_t charge_bonus = 0u;
+    uint16_t first_percent = 0u;
+    uint16_t second_percent = 0u;
+    uint16_t adjust_percent = 0u;
+    uint16_t first_percent_v5 = 0u;
+    uint16_t second_percent_v5 = 0u;
+    uint16_t expected_buy;
+    uint16_t expected_sell;
+    uint16_t expected_buy_v5;
+    uint16_t expected_sell_v5;
+    uint16_t buy = 0u;
+    uint16_t sell = 0u;
+    uint16_t buy_v5 = 0u;
+    uint16_t sell_v5 = 0u;
+    uint8_t first_mask[64] = { 0u };
+    uint8_t second_mask[64] = { 0u };
+    uint8_t first_mask_v5[64] = { 0u };
+    uint8_t second_mask_v5[64] = { 0u };
+    if (!loader || !loader->loaded) return 0;
+
+    /* Source trace for item 0 / merchant 0 / pool 0 from authentic Mac
+     * GRAPHICS.DAT. CLS1 0x10 is record DB5 per SkProject table1d3298;
+     * the v4 source reads fields D8, A1, and A0 plus item value fields 02/35. */
+    (void)dm2_v1_asset_load_word_value(loader, 0x10, 0, 0x02, &base);
+    (void)dm2_v1_asset_load_word_value(loader, 0x10, 0, 0x35,
+                                       &charge_bonus);
+    (void)dm2_v1_asset_load_word_value(loader, 0x0f, 0, 0xd8,
+                                       &first_percent);
+    (void)dm2_v1_asset_load_word_value(loader, 0x0f, 0, 0xa1,
+                                       &second_percent);
+    (void)dm2_v1_asset_load_word_value(loader, 0x0f, 0, 0xa0,
+                                       &adjust_percent);
+    (void)dm2_v1_asset_load_word_value(loader, 0x0f, 0, 0xa2,
+                                       &first_percent_v5);
+    (void)dm2_v1_asset_load_word_value(loader, 0x0f, 0, 0xa1,
+                                       &second_percent_v5);
+    if (first_percent != 0u)
+        (void)dm2_v1_query_creatures_item_mask_bytes(
+            loader, 0, 18, 0, first_mask);
+    if (second_percent != 0u)
+        (void)dm2_v1_query_creatures_item_mask_bytes(
+            loader, 0, 17, 0, second_mask);
+    if (first_percent_v5 != 0u)
+        (void)dm2_v1_query_creatures_item_mask_bytes(
+            loader, 0, 18, 0, first_mask_v5);
+    if (second_percent_v5 != 0u)
+        (void)dm2_v1_query_creatures_item_mask_bytes(
+            loader, 0x64, 17, 0, second_mask_v5);
+
+    expected_buy = base;
+    expected_sell = base;
+    if (first_percent != 0u && (first_mask[0] & 1u) != 0u) {
+        expected_buy = (uint16_t)(((uint32_t)expected_buy * first_percent) / 100u);
+        expected_sell = (uint16_t)(((uint32_t)expected_sell * first_percent) / 100u);
+    }
+    if (second_percent != 0u && (second_mask[0] & 1u) != 0u) {
+        expected_buy = (uint16_t)(((uint32_t)expected_buy * second_percent) / 100u);
+        expected_sell = (uint16_t)(((uint32_t)expected_sell * second_percent) / 100u);
+    }
+    expected_buy = (uint16_t)(expected_buy + (uint16_t)(charge_bonus * 15u));
+    expected_sell = (uint16_t)(expected_sell + (uint16_t)(charge_bonus * 15u));
+    if (adjust_percent == 0u) adjust_percent = 10u;
+    {
+        uint16_t buy_delta = (uint16_t)(((uint32_t)expected_buy *
+                                         adjust_percent) / 100u);
+        uint16_t sell_delta = (uint16_t)(((uint32_t)expected_sell *
+                                          adjust_percent) / 100u);
+        expected_buy = (uint16_t)(expected_buy + buy_delta);
+        expected_sell = (uint16_t)(expected_sell - sell_delta);
+    }
+    expected_buy_v5 = base;
+    expected_sell_v5 = base;
+    if (first_percent_v5 != 0u && (first_mask_v5[0] & 1u) != 0u) {
+        expected_buy_v5 = (uint16_t)(((uint32_t)expected_buy_v5 *
+                                      first_percent_v5) / 100u);
+        expected_sell_v5 = (uint16_t)(((uint32_t)expected_sell_v5 *
+                                       first_percent_v5) / 100u);
+    }
+    if (second_percent_v5 != 0u && (second_mask_v5[0] & 1u) != 0u) {
+        expected_buy_v5 = (uint16_t)(((uint32_t)expected_buy_v5 *
+                                      second_percent_v5) / 100u);
+        expected_sell_v5 = (uint16_t)(((uint32_t)expected_sell_v5 *
+                                       second_percent_v5) / 100u);
+    }
+    expected_buy_v5 = (uint16_t)(expected_buy_v5 +
+                                 (uint16_t)(charge_bonus * 15u));
+    expected_sell_v5 = (uint16_t)(expected_sell_v5 +
+                                  (uint16_t)(charge_bonus * 15u));
+    if (adjust_percent == 0u) adjust_percent = 10u;
+    {
+        uint16_t buy_delta = (uint16_t)(((uint32_t)expected_buy_v5 *
+                                         adjust_percent) / 100u);
+        uint16_t sell_delta = (uint16_t)(((uint32_t)expected_sell_v5 *
+                                          adjust_percent) / 100u);
+        expected_buy_v5 = (uint16_t)(expected_buy_v5 + buy_delta);
+        if (expected_sell_v5 > 1u) {
+            if (sell_delta < 1u) sell_delta = 1u;
+            expected_sell_v5 = (uint16_t)(expected_sell_v5 - sell_delta);
+        }
+    }
+    if (!dm2_v1_shop_price_spx_variant(
+            loader, 0u, 0u, 0u, DM2_V1_SHOP_PRICE_SPX_V4,
+            1, 1, &buy) ||
+        !dm2_v1_shop_price_spx_variant(
+            loader, 0u, 0u, 0u, DM2_V1_SHOP_PRICE_SPX_V4,
+            1, 0, &sell) ||
+        !dm2_v1_shop_price_spx_variant(
+            loader, 0u, 0u, 0u, DM2_V1_SHOP_PRICE_SPX_V5,
+            1, 1, &buy_v5) ||
+        !dm2_v1_shop_price_spx_variant(
+            loader, 0u, 0u, 0u, DM2_V1_SHOP_PRICE_SPX_V5,
+            1, 0, &sell_v5) ||
+        buy != expected_buy || sell != expected_sell ||
+        buy_v5 != expected_buy_v5 || sell_v5 != expected_sell_v5 ||
+        buy != 2420u || sell != 1980u) {
+        fprintf(stderr,
+                "Mac shop price mismatch: v4 source=%u/%u runtime=%u/%u; v5 source=%u/%u runtime=%u/%u\n",
+                expected_buy, expected_sell, buy, sell,
+                expected_buy_v5, expected_sell_v5, buy_v5, sell_v5);
+        return 0;
+    }
+    printf("PASS: authentic Mac GDAT shop price item=000 creature=00 pool=0 v4=%u/%u v5=%u/%u\n",
+           buy, sell, buy_v5, sell_v5);
     return 1;
 }
 
@@ -658,6 +789,13 @@ int main(void)
         return 1;
     }
     puts("PASS: authenticated Mac A1-A4 status panes cover normal, dead and selected source states");
+    if (!mac_shop_price_real_media_check(
+            (DM2_V1_BootProfile *)view.dm2BootProfile)) {
+        fprintf(stderr,
+                "FAIL: SPX v4 shop prices did not resolve from authenticated Mac GDAT\n");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     {
         DM2_V1_G1CreatureMapChipRuntimeReceipt creatures;
         memset(&creatures, 0, sizeof(creatures));
