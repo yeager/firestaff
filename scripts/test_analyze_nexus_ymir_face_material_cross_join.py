@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import unittest
 
-from analyze_nexus_ymir_face_material_cross_join import relation_for_face_material
+from analyze_nexus_ymir_face_material_cross_join import (
+    relation_for_face_material,
+    source_image_matches_command,
+)
 
 
 class FaceMaterialRelationshipTests(unittest.TestCase):
@@ -33,6 +36,12 @@ class FaceMaterialRelationshipTests(unittest.TestCase):
             relation_for_face_material(1, None, {(1, 8, 42)}),
             "runtime_face_unresolved",
         )
+
+    def test_source_descriptor_must_match_encoding_and_bytes(self) -> None:
+        source = (0x0008, b"retail image", b"palette", "LEV01.DGN[Structure2=1]")
+        self.assertTrue(source_image_matches_command(source, 1, b"retail image"))
+        self.assertFalse(source_image_matches_command(source, 5, b"retail image"))
+        self.assertFalse(source_image_matches_command(source, 1, b"different image"))
 
 
 if __name__ == "__main__":
