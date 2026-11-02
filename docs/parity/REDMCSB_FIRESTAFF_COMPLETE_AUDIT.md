@@ -120,10 +120,15 @@ and cumulative thing-column pointer only when the map changes (`2724-2740`).
 allowed-creature metadata, copies wall/floor/door ornament lists, and writes
 the inscription ordinal (`2742-2762`). Firestaff's similarly named descriptor
 adapter has no production caller; the dungeon-data F0174 adapter updates the
-party-map index and dimensions but does not publish these metadata arrays. The
-live M11 renderer reads selected map data through separate paths. The two
-callable rows therefore remain `PARTIAL`: adapter tests prove only those
-bounded models, not live transition behavior, nor per-platform parity.
+party-map index and dimensions but does not publish these metadata arrays. M11
+publishes through an ornament-cache-gated helper, so F0173/F0174 may remain
+unpublished when that cache is missing or invalid. Source map-transition
+owners invoke F0173/F0174 explicitly, while M11 usually passes explicit map
+indices and has no unified publisher at all matching source current-map
+read/write sites such as cross-map discard/group/projectile processing. The
+two callable rows therefore remain `PARTIAL`: bounded adapters do not prove
+all live current-map consumers and transition behavior, or per-platform
+parity.
 
 The audit below is the DM1/CSB source-function inventory, not a substitute for
 the DM2 skproject inventory or the per-platform status register. Completion
