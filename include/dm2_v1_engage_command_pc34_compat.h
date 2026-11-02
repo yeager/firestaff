@@ -103,6 +103,9 @@ typedef struct {
     uint8_t cmd_flag_8000;    /* high bit of command word */
     DM2_V1_EngageCmdStr cmd;
     uint32_t game_tick;
+    /* SPX v4 CALL_ENCHANTMENT_SELF sets MP to exactly four when its caller
+     * requires MP and the champion has at least four. DOS/v5 subtract four. */
+    uint8_t spx_v4_enchantment_mp_semantics;
 
     /* Optional callbacks for cases that delegate to subsystems.
      * When NULL, the case falls through to fail_closed. */

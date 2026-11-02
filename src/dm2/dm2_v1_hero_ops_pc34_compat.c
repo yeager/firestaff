@@ -421,9 +421,9 @@ static int16_t dm2_max16(int16_t a, int16_t b)
     return a > b ? a : b;
 }
 
-int dm2_v1_hero_cast_enchantment(
+static int dm2_v1_hero_cast_enchantment_variant(
     DM2_V1_HeroState *hero, uint8_t enchant_type,
-    int16_t power, int requires_mp,
+    int16_t power, int requires_mp, int spx_v4,
     const DM2_V1_CastEnchantCallbacks *cb, void *ctx)
 {
     if (!cb || !hero)
@@ -432,8 +432,11 @@ int dm2_v1_hero_cast_enchantment(
     if (requires_mp) {
         if (hero->cur_mp == 0)
             return 0;
-        if (hero->cur_mp >= 4)
-            hero->cur_mp = (int16_t)(hero->cur_mp - 4);
+        if (hero->cur_mp >= 4) {
+            /* DOS/v5 spend four MP; SPX v4 CALL_ENCHANTMENT_SELF assigns
+             * the value four (skchamp.cpp:1046-1059). */
+            hero->cur_mp = spx_v4 ? 4 : (int16_t)(hero->cur_mp - 4);
+        }
         else {
             power >>= 1;
             hero->cur_mp = 0;
@@ -444,6 +447,24 @@ int dm2_v1_hero_cast_enchantment(
     int16_t ench_power = (int16_t)(power >> 5);
     cb->proceed_enchantment_self(ctx, 0x0F, enchant_type, ench_power, duration);
     return full_cost;
+}
+
+int dm2_v1_hero_cast_enchantment(
+    DM2_V1_HeroState *hero, uint8_t enchant_type,
+    int16_t power, int requires_mp,
+    const DM2_V1_CastEnchantCallbacks *cb, void *ctx)
+{
+    return dm2_v1_hero_cast_enchantment_variant(
+        hero, enchant_type, power, requires_mp, 0, cb, ctx);
+}
+
+int dm2_v1_hero_cast_enchantment_spx_v4(
+    DM2_V1_HeroState *hero, uint8_t enchant_type,
+    int16_t power, int requires_mp,
+    const DM2_V1_CastEnchantCallbacks *cb, void *ctx)
+{
+    return dm2_v1_hero_cast_enchantment_variant(
+        hero, enchant_type, power, requires_mp, 1, cb, ctx);
 }
 
 void dm2_v1_shoot_champion_missile(

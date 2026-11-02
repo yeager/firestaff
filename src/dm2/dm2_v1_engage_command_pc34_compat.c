@@ -339,10 +339,15 @@ int dm2_v1_engage_command(
         else
             ench_type = 2;
         if (request->hero && request->enchant_cb) {
-            int r = dm2_v1_hero_cast_enchantment(
-                (DM2_V1_HeroState *)request->hero, ench_type, delay, 1,
-                (const DM2_V1_CastEnchantCallbacks *)request->enchant_cb,
-                request->enchant_ctx);
+            int r = request->spx_v4_enchantment_mp_semantics
+                ? dm2_v1_hero_cast_enchantment_spx_v4(
+                    (DM2_V1_HeroState *)request->hero, ench_type, delay, 1,
+                    (const DM2_V1_CastEnchantCallbacks *)request->enchant_cb,
+                    request->enchant_ctx)
+                : dm2_v1_hero_cast_enchantment(
+                    (DM2_V1_HeroState *)request->hero, ench_type, delay, 1,
+                    (const DM2_V1_CastEnchantCallbacks *)request->enchant_cb,
+                    request->enchant_ctx);
             receipt->enchantment_cast = 1;
             if (!r) receipt->skill_exp_gained >>= 2;
         } else {

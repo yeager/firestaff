@@ -304,6 +304,12 @@ int dm2_v1_hero_cast_enchantment(
     DM2_V1_HeroState *hero, uint8_t enchant_type,
     int16_t power, int requires_mp,
     const DM2_V1_CastEnchantCallbacks *cb, void *ctx);
+/* SPX v4 CALL_ENCHANTMENT_SELF: with MP required, sets MP to four when
+ * current MP is at least four; otherwise halves power and sets MP to zero. */
+int dm2_v1_hero_cast_enchantment_spx_v4(
+    DM2_V1_HeroState *hero, uint8_t enchant_type,
+    int16_t power, int requires_mp,
+    const DM2_V1_CastEnchantCallbacks *cb, void *ctx);
 
 /* ---- DM2_SHOOT_CHAMPION_MISSILE (c_hero.cpp:688) ----
  * Fire a projectile from a champion. After DM2_SHOOT_ITEM, skproject

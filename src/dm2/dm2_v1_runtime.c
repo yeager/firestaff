@@ -22858,6 +22858,8 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
         request.wield_ctx = &wield;
     }
     request.game_tick = (uint32_t)rt->tick_count;
+    request.spx_v4_enchantment_mp_semantics =
+        variant == DM2_V1_COMMAND_SLOT_SPX_V4;
     request.queue_timer_cb = dm2_runtime_queue_attack_timer;
     request.queue_timer_ctx = &queue;
     request.attack_counter = rt->source_attack_counter;
