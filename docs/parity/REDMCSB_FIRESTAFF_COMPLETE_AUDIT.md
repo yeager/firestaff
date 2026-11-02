@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,895 unreviewed, 961 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,895 unreviewed, 1,042 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,889 unreviewed, 967 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,889 unreviewed, 1,048 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
@@ -943,3 +943,8 @@ DOS, SPX v5 and SKULLWIN truncate the active AI entry's w4/w6 and v1e0572 to byt
 ### DM2 XACT 72/87/88 variant review (2026-11-02)
 
 DOS, SPX v5 and SKULLWIN assign low-byte v1e0572 to creature b1a, falling back to low-byte v1e07d8.w4 only when the primary value is 0xff. SPX v4 instead reads glbCreatureCommand_4976_4ee8 and replaces ccmFF_Idle with _4976_5152 before writing CreatureInfoData::Command. Firestaff's core receipt models the DOS/SKULLWIN assignment only and has no live write or v4 state owner. The three active source rows are now `PARTIAL`; the v4 global command binding and all runtime callbacks remain open.
+
+
+### DM2 XACT 89/90 variant review (2026-11-02)
+
+DOS and SPX v5 XACT 89 build a projectile command from low-byte `w6 | 0x80`, use the timer tile and creature target position, and return `v1e056f`; SPX v4 instead uses `_4976_5154`, the current creature position and `_4976_4ee5`. Firestaff's receipt only computes the command byte. For XACT 90, DOS/v5 compare the chance threshold against `RAND16(100)`, while SPX v4 reads its threshold from the edition-specific command global. Firestaff has a generic random-check helper, but neither XACT has a live AI-dispatch binding; both named-symbol rows are now `IMPLEMENTED_NARROW`, and all six active source definitions are `PARTIAL`.

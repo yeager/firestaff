@@ -2710,3 +2710,14 @@ command, and writes CreatureInfoData::Command. Firestaff's helper models only
 the former values in a receipt and has no live write. All three active source
 rows are now `PARTIAL`; SPX-v4 state binding and production XACT callbacks remain
 open.
+
+
+2026-11-02 skproject `PROCEED_XACT_89/90` variant audit correction:
+XACT 89 DOS/v5 dispatch a low-byte `w6 | 0x80` projectile from timer tile to
+creature target and return `v1e056f`; SPX v4 uses edition-specific command and
+result globals. Firestaff only calculates the command byte. XACT 90 uses the
+chance threshold against `RAND16(100)`, with SPX v4 reading the threshold from
+its command global; Firestaff has a helper but no live XACT callback. Both
+named-symbol rows are `IMPLEMENTED_NARROW`; all six active source rows are
+`PARTIAL`, pending projectile/command state ownership, dispatch integration and
+supported-platform runtime bindings.
