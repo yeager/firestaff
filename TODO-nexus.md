@@ -82,18 +82,24 @@ remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
 and PR [#252](https://github.com/yeager/firestaff/pull/252).
 
-## MAPD frame-891 full-frame priority composition remains open
+## MAPD frame-891 whole-frame priority composition remains open
 
-The authentic Japanese MAPD pass has an exact NBG1 layer match on all 44,800
-pixels with nonzero Ymir priority, but the retained Firestaff priority-stack
-output still differs on 26,869 of the 26,880 zero-priority pixels in rows
-0–83. It labels every pixel in that pass as NBG1. The stack output was
-generated at code head `8f3b5841`; subsequent NBG1 decoder edits do not model
-the row-time VRAM version switch recorded by Ymir's fetch trace. No fixed
-84-row clip is acceptable. Capture same-session memory-update timing or
-effective per-scanline source state, then reproduce the complete frame against
-the pinned Ymir render. See
-[`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+The capture-only NBG1 layer now replays the authentic Ymir fetch source per
+pixel by decoding both adjacent Japanese-retail VRAM snapshots and accepting
+only a unique PND-plus-nibble match. This removes the former upper-row layer
+mismatch without assuming a fixed row boundary: Firestaff matches all 71,680
+traced dots, stays transparent on all 26,880 zero-priority pixels, and matches
+Ymir RGB on all 44,800 visible pixels. The resulting NBG1-only plane is
+hash-pinned in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+The retained whole-frame priority-stack output was generated at code head
+`8f3b5841` from the target pass's end-of-frame VRAM snapshot. It is stale for
+this row-effective source case and still differs on 26,869 pixels in its
+recorded comparison. The next step is to feed the verified row-effective NBG1
+plane into the actual Firestaff priority stack and compare all 71,680 final
+RGB pixels against the pinned same-pass Ymir render. That whole-frame replay
+and production-renderer admission remain open; a fixed row clip is not an
+acceptable substitute.
 
 ## 2026-11-02 — Full-height NBG0 live-row replay
 
