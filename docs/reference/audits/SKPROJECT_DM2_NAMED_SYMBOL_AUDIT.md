@@ -26,15 +26,13 @@ outside that ledger. The supplemental
 `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,938 location-specific rows,
-3,635 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,839 `UNREVIEWED`, 1,013 `PARTIAL`, 0 `MISSING`,
-72 `IMPLEMENTED_PARITY`, 12 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
-rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (818 unreviewed, 357 partial,
-26 implemented, 4 architecture-specific); SKWINSPX has 2,731 rows (2,021 unreviewed, 654 partial, 46
-implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
-cross-variant rows are partial. The review ledger contains 1,108 rows (1,021
-partial, 73 implemented, 12 architecture-specific, and 2 outside-game),
-including eight cross-variant rows not present in the supplemental inventory.
+3,635 distinct names, and 303 repeated-name definitions. The separate
+source-review ledger currently overrides locations within that inventory; the
+machine-readable backlog and verifier below are authoritative for current
+status counts. Three supplemental/manual source rows are not represented in
+the 3,938-row backlog, and eight cross-variant review rows are not in the
+supplemental inventory. The review ledger contains 1,108 rows; these counts
+must not be added directly to the location inventory.
 
 DOS `SKW_RETRIEVE_ITEM_BONUS` and SPX v5 `DM2_RETRIEVE_ITEM_BONUS` use the
 conditional gate and low-byte signed result; SPX v4 `RETRIEVE_ITEM_BONUS`
@@ -52,7 +50,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,938 (2,731 SPX, 1,205 DOS, 2 SKULLWIN) | active source review: 2,841 `UNREVIEWED`; 1,011 `PARTIAL`; 72 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,775 `UNREVIEWED`; 1,046 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,938 open tasks (2,775 unreviewed, 1,161 partial incl. older-ledger rows, 2 partial source owners). |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -657,7 +655,7 @@ Compared DOS `SKW_QUERY_PLAYER_SKILL_LV`, SPX v4 `QUERY_PLAYER_SKILL_LV`, SPX v5
 
 DOS `SKW_PUSH_PULL_RIGID_BODY`, SPX v4 `PUSH_PULL_RIGID_BODY` and SPX v5 `DM2_PUSH_PULL_RIGID_BODY` are compared against their SKProject bodies and Firestaff's `dm2_v1_push_pull_rigid_body` helper. All six click-zone direction and turn-mode choices match. The source first admits the target with `IS_CREATURE_MOVABLE_THERE`, checks the edition's rigid-body weight predicate, and uses the full `PERFORM_MOVE` transaction; when that predicate fails it emits variant-specific noise for live heroes/champions. Firestaff instead directly moves any record returned by its callback, checks only destination blocking, and queues unconditional generic noise. Its helper has no production caller. All three definitions remain `PARTIAL`; movement admission, object class, transaction, source feedback, and supported-platform routes remain open.
 
-With active-source review overrides applied, the inventory currently maps 2,884 as `UNREVIEWED`, 968 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,775 as `UNREVIEWED`, 1,046 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).
 
 ## Latest source review: REMOVE_OBJECT_FROM_HAND (2026-11-02)
 
