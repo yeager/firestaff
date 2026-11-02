@@ -2901,3 +2901,37 @@ supported-platform route coverage.
 2026-11-02 SKProject `SKW_CALC_PLAYER_WALK_DELAY` runtime variant: the movement owner now selects DOS's fixed `8*2 > 5*max_load` normal-load test for PC English, PC French, and JewelCase profiles. FM Towns, Macintosh, and Amiga retain the SPX shared helper pending native caller evidence. The full movement transaction, delayed-pose rules, and platform route coverage remain partial.
 
 2026-11-02 SKProject `DM_LOCATE_OTHER_LEVEL` runtime recheck: the source scans candidate map extents at shared world coordinates, reads the candidate's actual tile, and rejects a type-5 tile when its tile record has bit 0 set (`SKULLWIN/c_map.cpp:384-472`). Firestaff's common stair/pit runtime resolver previously initialized every candidate tile type to zero, so overlapping destination maps could incorrectly accept an active teleporter. It now derives the candidate tile with `dm2_v1_dungeon_c_map_get_tile_value` and reads the teleporter flag from the live record pool, with the authenticated dungeon record as fallback. Malformed teleporter records fail closed for that candidate. Its map extents now use decoded dimension counts minus one, matching SKProject's `RawColumn`/`RawRow` checks that admit coordinates through `raw dimension + 1`; passing full dimension counts had admitted an extra edge coordinate. Other `LOCATE_OTHER_LEVEL` callers, active-map side effects, and edition/platform equivalence remain open.
+2026-11-02 authentic HUD-layout diagnostic: `--debug` now records the selected
+edition's RAW4 HUD layout table hash, all four name/portrait/status validity
+masks, source font and palette hashes, and raw plus 320x200 portrait/name/bar
+rectangles. Fresh DOS EN and FM Towns JA runs against the installed original
+archives both reached an accepted first gameplay frame with all HUD-plan
+commands consumed, no blocked materials and no core fallbacks. Both source
+tables report complete four-slot masks and the same position layout; their
+font table hash is `a4ae36ab`, while their authentic palettes differ. Slot 0's
+name rect is raw `(8,-4,47,11)`, rendered `(4,-2,23,5)`, with raw status bars
+at `(100,10,5,26)`, `(116,10,5,26)` and `(132,10,5,26)`. The new trace confirms
+the suspicious above-screen name placement is shared by these editions; it
+does not establish that the position is wrong in the original game. Keep the
+HUD report open until these positions and visible pixels are compared with a
+same-pose original capture. The other DM2 platforms still need runtime output
+from this new diagnostic, and the portrait, bars, text, panel and viewport
+parity gaps remain open.
+
+2026-11-02 authentic DOS/FMTowns text-draw trace: the runtime frame receipt
+now reports the number of source-font glyphs actually consumed and the
+interface text-palette consumption count. With the original DOS EN archive,
+the accepted first dungeon frame binds TORHAM and consumes six glyphs with
+109 text-palette uses. With the original FM Towns JA archive at the same
+party/map/pose, TORHAM is also bound and the same font table hash is loaded,
+but the accepted frame consumes zero font glyphs and one text-palette use;
+its native HUD plan consumes five commands versus DOS's eight. The Towns
+renderer takes its `fmtowns_unmapped_chrome` source-native squad branch and
+returns before the shared champion text overlay in
+`src/dm2/dm2_v1_viewport_renderer.c`; the shared source path draws names and
+three stat values in `SKWINDOS/dm2bye.cpp` and `SKWINDOS/dm2byb.cpp`.
+This is a verified cross-platform rendering difference and a concrete lead
+for the Towns HUD report. It is not yet proof that the Towns frame should use
+the DOS text path: verify the Towns name/stat presentation against a same-pose
+original Towns capture and its native source path before changing rendering.
+

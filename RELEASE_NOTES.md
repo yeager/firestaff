@@ -1,3 +1,25 @@
+# Firestaff v3.0.425
+
+## User-facing changes
+
+- `DM2 New Game selection`: change input handling to wait for the authentic mirror-selection screen before accepting champion selection input.
+- `DM2 status-pane rendering`: change player status panes to draw at their authentic full 77×37 source dimensions on DOS, Macintosh, Amiga and FM Towns paths.
+
+## Developer changes
+
+- `Real-media regressions`: add checks for DM2 New Game mirror selection and full status-pane geometry across DOS, Macintosh, Amiga and FM Towns; cover CSB Amiga archive paths containing spaces; refresh startup-menu catalog references; and expand `--debug` with authentic GDAT source identity, selected image receipts, HUD layout coordinates, font/palette hashes, and consumed font-glyph/text-palette counts.
+
+## DM2
+
+### Fixed
+
+- `DM2 New Game selection`: correct the input flow so it waits for the authentic mirror-selection state before accepting champion-selection input.
+- `DM2 player status panes`: restore the authentic 77×37 drawing bounds on supported DOS, Macintosh, Amiga and FM Towns rendering paths.
+
+### Known limitations
+
+- `DM2 viewport and HUD`: portrait rendering, bars, labels, panel interaction, viewport composition and native-display parity remain open outside the verified status-pane bounds.
+
 # Firestaff v3.0.424
 
 ## User-facing changes

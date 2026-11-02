@@ -17440,6 +17440,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_action_palette_hash;
     g_dm2_frame_ownership.gdat_interface_action_palette_consumed =
         viewport.gdat_interface_action_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_font_consumed =
+        viewport.gdat_interface_font_consumed_count;
     /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A must reach the
      * runtime frame ownership receipt before M11 presents the viewport. */
     g_dm2_frame_ownership.gdat_interface_rect14_ready =

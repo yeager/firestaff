@@ -67529,18 +67529,37 @@ static void m11_debug_trace_dm2_runtime_frame(
 {
     static const M11_GameViewState *previous_state;
     static uint32_t previous_signature;
+    static const M11_GameViewState *hud_cache_state;
+    static const DM2_V1_BootProfile *hud_cache_profile;
+    static char hud_cache_graphics_md5[33];
+    static DM2_V1_InterfaceHudLayout hud_cache_layout;
+    static DM2_V1_InterfacePalette hud_cache_palette;
+    static uint32_t hud_cache_font_hash;
+    static int hud_cache_layout_valid;
+    static int hud_cache_font_valid;
+    static int hud_cache_palette_valid;
     const DM2_V1_BootProfile *profile;
     const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_ViewportItemMaterialTrace item_trace;
     DM2_V1_RuntimeHudMaterialTrace hud_trace;
     DM2_V1_GdatImageEntryBuffReceipt hud_image_receipt;
     DM2_V1_HudPartyState hud_party;
+    DM2_V1_InterfaceHudLayout hud_layout;
+    DM2_V1_InterfacePalette hud_palette;
+    DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
+    const uint8_t *hud_font_rows = NULL;
+    uint32_t hud_font_hash = 0u;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_handoff;
     int item_trace_count;
     int item_trace_index;
     int hud_trace_count;
     int hud_trace_index;
     int hud_party_valid;
+    int hud_layout_valid;
+    int hud_font_valid;
+    int hud_palette_valid;
+    int hud_layout_refresh;
+    int frame_ownership_valid;
     int g1_scene_handoff_valid;
     int render_failure_stage;
     unsigned int hud_occupied_mask = 0u;
@@ -67563,6 +67582,36 @@ static void m11_debug_trace_dm2_runtime_frame(
         &g1_scene_handoff);
     render_failure_stage = dm2_v1_runtime_last_render_failure_stage();
     hud_party_valid = dm2_v1_runtime_last_hud_party_state(&hud_party);
+    memset(&frame_ownership, 0, sizeof(frame_ownership));
+    frame_ownership_valid = dm2_v1_runtime_last_frame_ownership(
+        &frame_ownership);
+    hud_layout_refresh = hud_cache_state != state ||
+        hud_cache_profile != profile ||
+        (profile && strcmp(hud_cache_graphics_md5,
+                           profile->graphics_md5) != 0);
+    if (hud_layout_refresh) {
+        memset(&hud_cache_layout, 0, sizeof(hud_cache_layout));
+        memset(&hud_cache_palette, 0, sizeof(hud_cache_palette));
+        hud_cache_font_hash = 0u;
+        hud_cache_layout_valid = profile && dm2_v1_boot_interface_hud_layout(
+            (DM2_V1_BootProfile *)profile, &hud_cache_layout);
+        hud_cache_font_valid = profile && dm2_v1_boot_interface_font_table(
+            (DM2_V1_BootProfile *)profile, &hud_font_rows,
+            &hud_cache_font_hash);
+        hud_cache_palette_valid = profile && dm2_v1_boot_interface_palette(
+            (DM2_V1_BootProfile *)profile, &hud_cache_palette);
+        hud_cache_state = state;
+        hud_cache_profile = profile;
+        snprintf(hud_cache_graphics_md5, sizeof(hud_cache_graphics_md5),
+                 "%s", profile ? profile->graphics_md5 : "");
+    }
+    hud_layout = hud_cache_layout;
+    hud_palette = hud_cache_palette;
+    hud_layout_valid = hud_cache_layout_valid;
+    hud_font_valid = hud_cache_font_valid;
+    hud_palette_valid = hud_cache_palette_valid;
+    hud_font_hash = hud_cache_font_hash;
+    hud_font_rows = NULL;
     if (hud_party_valid) {
         int slot;
         for (slot = 0; slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++slot) {
@@ -67669,6 +67718,34 @@ static void m11_debug_trace_dm2_runtime_frame(
         M11_DM2_DEBUG_MIX(champion->hp_pct);
         signature = m11_dm2_debug_mix_text(signature, champion->name);
     }
+    M11_DM2_DEBUG_MIX(hud_layout_valid);
+    M11_DM2_DEBUG_MIX(frame_ownership_valid);
+    M11_DM2_DEBUG_MIX(frame_ownership.gdat_interface_font_consumed);
+    M11_DM2_DEBUG_MIX(frame_ownership.gdat_interface_action_palette_consumed);
+    if (hud_layout_valid) {
+        M11_DM2_DEBUG_MIX(hud_layout.table_hash);
+        M11_DM2_DEBUG_MIX(hud_layout.portrait_valid_mask);
+        M11_DM2_DEBUG_MIX(hud_layout.name_valid_mask);
+        for (unsigned int slot = 0;
+             slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT;
+             ++slot) {
+            M11_DM2_DEBUG_MIX(hud_layout.status_valid_mask[slot]);
+            M11_DM2_DEBUG_MIX(hud_layout.portrait[slot].x);
+            M11_DM2_DEBUG_MIX(hud_layout.portrait[slot].y);
+            M11_DM2_DEBUG_MIX(hud_layout.portrait[slot].w);
+            M11_DM2_DEBUG_MIX(hud_layout.portrait[slot].h);
+            M11_DM2_DEBUG_MIX(hud_layout.name[slot].x);
+            M11_DM2_DEBUG_MIX(hud_layout.name[slot].y);
+            M11_DM2_DEBUG_MIX(hud_layout.name[slot].w);
+            M11_DM2_DEBUG_MIX(hud_layout.name[slot].h);
+            for (int bar = 0; bar < 3; ++bar) {
+                M11_DM2_DEBUG_MIX(hud_layout.status[slot][bar].x);
+                M11_DM2_DEBUG_MIX(hud_layout.status[slot][bar].y);
+                M11_DM2_DEBUG_MIX(hud_layout.status[slot][bar].w);
+                M11_DM2_DEBUG_MIX(hud_layout.status[slot][bar].h);
+            }
+        }
+    }
     for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
          ++hud_trace_index) {
         if (!dm2_v1_runtime_last_hud_material_trace(
@@ -67749,6 +67826,50 @@ static void m11_debug_trace_dm2_runtime_frame(
             (unsigned int)asset_loader->entry_count,
             (unsigned int)asset_loader->raw_data_count,
             (unsigned int)asset_loader->ent1_entry_stride);
+    }
+
+    if (hud_layout_refresh) fprintf(stderr,
+        "firestaff: dm2-render-hud-layout game=%s platform=%s valid=%d hash=%08x portrait-mask=%02x name-mask=%02x font={ready:%d hash:%08x glyphs:%d} palette={ready:%d hash:%08x text-consumed:%d}\n",
+        state->sourceId[0] ? state->sourceId : "dm2",
+        m11_dm2_debug_platform_label(platform), hud_layout_valid,
+        hud_layout_valid ? hud_layout.table_hash : 0u,
+        hud_layout_valid ? (unsigned int)hud_layout.portrait_valid_mask : 0u,
+        hud_layout_valid ? (unsigned int)hud_layout.name_valid_mask : 0u,
+        hud_font_valid, hud_font_hash,
+        frame_ownership_valid ? frame_ownership.gdat_interface_font_consumed : -1,
+        hud_palette_valid, hud_palette_valid ? hud_palette.hash : 0u,
+        frame_ownership_valid
+            ? frame_ownership.gdat_interface_action_palette_consumed : -1);
+    if (hud_layout_refresh && hud_layout_valid) {
+        for (unsigned int slot = 0;
+             slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT;
+             ++slot) {
+            const DM2_V1_InterfaceRect *portrait =
+                &hud_layout.portrait[slot];
+            const DM2_V1_InterfaceRect *name = &hud_layout.name[slot];
+            fprintf(stderr,
+                "firestaff: dm2-render-hud-slot game=%s platform=%s slot=%d status-mask=%02x portrait-raw=%d,%d,%d,%d portrait-screen=%d,%d,%d,%d name-raw=%d,%d,%d,%d name-screen=%d,%d,%d,%d bars-raw=%d,%d,%d,%d/%d,%d,%d,%d/%d,%d,%d,%d\n",
+                state->sourceId[0] ? state->sourceId : "dm2",
+                m11_dm2_debug_platform_label(platform), slot,
+                (unsigned int)hud_layout.status_valid_mask[slot],
+                portrait->x, portrait->y, portrait->w, portrait->h,
+                portrait->x / 2, portrait->y / 2,
+                portrait->w / 2, portrait->h / 2,
+                name->x, name->y, name->w, name->h,
+                name->x / 2, name->y / 2, name->w / 2, name->h / 2,
+                hud_layout.status[slot][0].x,
+                hud_layout.status[slot][0].y,
+                hud_layout.status[slot][0].w,
+                hud_layout.status[slot][0].h,
+                hud_layout.status[slot][1].x,
+                hud_layout.status[slot][1].y,
+                hud_layout.status[slot][1].w,
+                hud_layout.status[slot][1].h,
+                hud_layout.status[slot][2].x,
+                hud_layout.status[slot][2].y,
+                hud_layout.status[slot][2].w,
+                hud_layout.status[slot][2].h);
+        }
     }
 
     fprintf(stderr,
