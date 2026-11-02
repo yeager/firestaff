@@ -39,7 +39,7 @@ capture=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapsh
 FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_VRAM="$capture/vdp1-891-vdp2-1280-vdp2-vram.bin" \
 FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM="$capture/vdp1-891-vdp2-1280-vdp2-cram.bin" \
 FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS="$capture/vdp1-891-vdp2-1280-vdp2-registers.bin" \
-FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT=/tmp/nexus-nbg1-frame891-1280.rgba \
+FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT=/Volumes/Extern-disk/nexus-nbg1-frame891-1280.rgba \
   .codex-scratch/build-fast-dev/test_nexus_v1_vdp2_runtime_tilemap
 ```
 
@@ -101,9 +101,44 @@ nonzero palette indices in those rows while Ymir's traced NBG1 layer is fully
 transparent. The captured WCTLA–WCTLD window controls are zero, and the PND and
 character bytes checked at the map origin are nonzero. Do not apply a fixed
 84-row clip or enable this decoder as a full-screen compositor until a
-same-frame source or per-scanline state trace explains the difference. VDP1,
-other layer ownership, and full color-calculation composition remain separate
-parity work.
+same-frame source or per-scanline state trace explains the difference.
+
+## Whole-frame priority stack audit
+
+An existing Firestaff stack output for this authentic pass is retained outside
+Git at
+`nexus_mapd_ymir_vdp_snapshots_20261031/pr239-8f3b5841-validation/frame891-display-stack.raw`.
+The output hash is
+`cc6c926860104797078645bb3fd784c78fc6ad0f768aa2556cfa4fecdc68cddc`; the
+matching Ymir render has hash
+`24cc53361cf3b6e0456bc9b48fddc362d6865ac491376fb203181f3108469f17`.
+Comparing their RGB bytes finds exact equality on all 44,800 active NBG1 pixels
+in rows 84–223. In rows 0–83, Ymir reports zero NBG1 priority and zero dots,
+while the saved Firestaff stack marks every pixel as NBG1; 26,869 of those
+26,880 RGB pixels differ (11 happen to have equal RGB values). This output
+therefore does not establish full-frame composition for MAPD. It documents a
+capture-only limitation, not a production-renderer result. The stack artifact
+was generated at code head `8f3b5841`; the later source changes in the NBG1
+decoder do not address this row-time VRAM-source mismatch.
+
+Reproduce the pinned negative audit with:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus
+python3 scripts/audit_nexus_mapd_frame891_priority_stack.py \
+  --stack "$evidence/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-8f3b5841-validation/frame891-display-stack.raw" \
+  --reference "$evidence/nexus_mapd_ymir_vdp_snapshots_20261031/layer-trace-frame891-start60-20261101/vdp1-891-vdp2-1280-320x224.rgbx8888le" \
+  --trace "$evidence/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/nexus-mapd-frame891-vdp2-pixels.csv" \
+  --receipt "$evidence/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/nexus-mapd-frame891-vdp2-pixels.csv.receipt.json"
+```
+
+The report returns `KNOWN_CAPTURE_ONLY_MISMATCH` on success: success means the
+hash-pinned mismatch was reproduced, not that frame parity passed.
+
+The next requirement is to bind the renderer's per-scanline source version or
+effective pixel fetch to the VDP2 memory-update history. A fixed row clip is
+not a valid repair. VDP1, other layer ownership, and full color-calculation
+composition remain separate parity work.
 
 ## SH-2 register-write trace
 

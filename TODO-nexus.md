@@ -82,6 +82,19 @@ remain unresolved. See
 [`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
 and PR [#252](https://github.com/yeager/firestaff/pull/252).
 
+## MAPD frame-891 full-frame priority composition remains open
+
+The authentic Japanese MAPD pass has an exact NBG1 layer match on all 44,800
+pixels with nonzero Ymir priority, but the retained Firestaff priority-stack
+output still differs on 26,869 of the 26,880 zero-priority pixels in rows
+0–83. It labels every pixel in that pass as NBG1. The stack output was
+generated at code head `8f3b5841`; subsequent NBG1 decoder edits do not model
+the row-time VRAM version switch recorded by Ymir's fetch trace. No fixed
+84-row clip is acceptable. Capture same-session memory-update timing or
+effective per-scanline source state, then reproduce the complete frame against
+the pinned Ymir render. See
+[`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
 ## 2026-11-02 — Full-height NBG0 live-row replay
 
 The capture-only compositor now consumes Ymir live per-row scroll and
