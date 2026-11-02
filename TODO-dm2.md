@@ -1,6 +1,7 @@
 2026-11-02 SKProject `DRAW_CONTAINER_PANEL` item slots:
 Firestaff's callback now obtains each occupied slot's item ID through an
-explicit callback and queries that item's animation frame and cls1/cls2, as
+explicit callback, queries that item's animation frame and cls1/cls2, and
+blits the inventory frame into occupied slots relative to rect 0x5c, as
 DOS `dm2bya.cpp:2680-2705`, SPX v4 `skguidrw.cpp:487-515`, and SPX v5
 `skguidr5.cpp:1541-1570` do. The eight-slot hand-container state and this draw
 callback still have no production DM2 renderer binding, so inventory and
