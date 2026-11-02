@@ -19,14 +19,33 @@ if [ ! -e "$data_dir" ]; then
     exit 77
 fi
 
+# Route the authentic source through a temporary path containing spaces.
+# This keeps the direct CLI and M12 menu checks sensitive to path splitting in
+# both shell launchers and the native media readers.
+source_data_dir=$data_dir
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+spaced_media_root=$(mktemp -d "$test_scratch/csb original media.XXXXXX")
+case "$source_data_dir" in
+    *.zip) data_dir="$spaced_media_root/CSB original media.zip" ;;
+    *.7z) data_dir="$spaced_media_root/CSB original media.7z" ;;
+    *.sit) data_dir="$spaced_media_root/CSB original media.sit" ;;
+    *) data_dir="$spaced_media_root/CSB original media" ;;
+esac
+ln -s "$source_data_dir" "$data_dir"
+cleanup_spaced_media_path() {
+    if [ -n "$spaced_media_root" ] && [ -d "$spaced_media_root" ]; then
+        find "$spaced_media_root" -depth -delete
+    fi
+}
+trap cleanup_spaced_media_path EXIT HUP INT TERM
+
 # A31M/A33M availability requires the source-owned APPA -> ANIM -> APPB ->
 # KAOS program chain as well as the title and dungeon data. Rebuild an isolated
 # negative package from real loose original files with KAOS removed; it may not
 # remain a selectable edition or produce a direct-launch receipt. This does
 # not alter or replace the supplied original media.
 if [ -d "$data_dir" ]; then
-    test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
-    mkdir -p "$test_scratch"
     python3 - "$data_dir" "$firestaff_cli" "$test_scratch" <<'PY'
 import shutil
 import os
@@ -214,6 +233,7 @@ cleanup_menu_temps() {
     if [ -n "$auto_home" ] && [ -d "$auto_home" ]; then
         find "$auto_home" -depth -delete
     fi
+    cleanup_spaced_media_path
 }
 trap cleanup_menu_temps EXIT HUP INT TERM
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -256,7 +276,7 @@ PY
 # Verify the ordinary AUTO platform route against the authentic FTL Amiga
 # archive when it is present. Passing the single original archive keeps this
 # assertion independent of other retail variants a test library may contain.
-auto_data_root=$(dirname "$(dirname "$data_dir")")
+auto_data_root=$(dirname "$(dirname "$source_data_dir")")
 auto_archive="$auto_data_root/csb/Chaos Strikes Back (FTL).zip"
 if [ -f "$auto_archive" ]; then
     auto_home=$(mktemp -d "$test_scratch/csb-amiga-auto-home.XXXXXX")
