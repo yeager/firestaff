@@ -89,6 +89,18 @@ CSB only.
 not a real-media result in this run: it correctly skipped its corpus-specific
 assertion because no explicit DM2 corpus was selected for that standalone test.
 
+## DMWeb and Greatstone source cross-checks
+
+DMWeb and Greatstone are supporting references for all three games, with
+edition- and asset-specific claims. For DM2, `DM2_PC10_EN_GREATSTONE_CROSSCHECK.md`
+locks the local PC English GDAT identity against Greatstone's catalogue and
+uses DMWeb's data-file notes to distinguish heterogeneous GDAT records from
+presentational exports. This is a format/corpus cross-check; it does not close
+feature parity or platform coverage. The companion DM1 and CSB parity matrices
+and source-reference ledgers carry their respective Greatstone asset anchors
+and DMWeb format/edition references. ReDMCSB remains primary for DM1/CSB
+behavior, and SKProject remains primary for DM2 behavior.
+
 ## Remaining evidence work
 
 ### Dynamic c_light platform coverage (2026-10-31)
