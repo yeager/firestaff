@@ -22676,8 +22676,9 @@ int dm2_v1_runtime_engage_command(
     return dm2_v1_engage_command(&patched, receipt);
 }
 
-int dm2_v1_runtime_proceed_hand_command(
-    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+static int dm2_v1_runtime_proceed_hand_command_variant(
+    int slot_index, DM2_V1_CommandSlotVariant variant,
+    DM2_V1_EngageCommandReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
@@ -22707,7 +22708,9 @@ int dm2_v1_runtime_proceed_hand_command(
 
     if (!receipt) receipt = &local_receipt;
     memset(receipt, 0, sizeof(*receipt));
-    if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
+    if ((variant != DM2_V1_COMMAND_SLOT_DOS_SPX_V5 &&
+         variant != DM2_V1_COMMAND_SLOT_SPX_V4) ||
+        slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
         !rt->source_aura_of_speed_valid ||
         !rt->session_snapshot_valid || !rt->record_pools_valid ||
         !rt->boot || !rt->boot->assets_verified ||
@@ -22784,8 +22787,9 @@ int dm2_v1_runtime_proceed_hand_command(
                                      &request.cmd.skill_exp) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 8,
                                      &charge_type) ||
-        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 14,
-                                     &repeat_count) ||
+        (variant == DM2_V1_COMMAND_SLOT_DOS_SPX_V5 &&
+         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 14,
+                                      &repeat_count)) ||
         ((!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
                                        &request.cmd.damage_type)) &&
          request.cmd.action_id != 8)) {
@@ -22880,30 +22884,38 @@ int dm2_v1_runtime_proceed_hand_command(
          * successful command, and seeds w0/b4 only for a nonzero value.
          * DOS R_30DEA and SPX v5 DM2_events_30DEA then consume on w2 == 0,
          * or on RAND16(w0 + 1) == 0 when b4 is set. */
-        if (result) {
-            rt->source_command_hand[active_hero][hand].remaining =
-                (uint16_t)repeat_count;
-            if (repeat_count != 0) {
-                rt->source_command_hand[active_hero][hand].random_range =
+        if (variant == DM2_V1_COMMAND_SLOT_SPX_V4) {
+            /* SPX v4 skgame.cpp::PROCEED_COMMAND_SLOT performs field-8
+             * charge processing unconditionally and has no v1e0adc field-14
+             * probability gate. */
+            consume_charge = 1;
+        } else {
+            if (result) {
+                rt->source_command_hand[active_hero][hand].remaining =
                     (uint16_t)repeat_count;
-                rt->source_command_hand[active_hero][hand].consume_chance = 1u;
+                if (repeat_count != 0) {
+                    rt->source_command_hand[active_hero][hand].random_range =
+                        (uint16_t)repeat_count;
+                    rt->source_command_hand[active_hero][hand].consume_chance = 1u;
+                }
             }
-        }
-        consume_charge =
-            rt->source_command_hand[active_hero][hand].remaining == 0u;
-        if (!consume_charge &&
-            rt->source_command_hand[active_hero][hand].consume_chance) {
-            uint16_t range = rt->source_command_hand[active_hero][hand]
-                                 .random_range;
-            consume_charge = dm2_v1_drops_rand16(
-                &rt->session_rng, (uint16_t)(range + 1u)) == 0u;
+            consume_charge =
+                rt->source_command_hand[active_hero][hand].remaining == 0u;
+            if (!consume_charge &&
+                rt->source_command_hand[active_hero][hand].consume_chance) {
+                uint16_t range = rt->source_command_hand[active_hero][hand]
+                                     .random_range;
+                consume_charge = dm2_v1_drops_rand16(
+                    &rt->session_rng, (uint16_t)(range + 1u)) == 0u;
+            }
         }
         if (consume_charge) {
             if (!dm2_runtime_consume_hand_command_charge(
                     rt, active_hero, hand, item, cls1, cls2,
                     charge_type, &depleted)) {
                 receipt->fail_closed = 1;
-            } else if (depleted) {
+            } else if (depleted &&
+                       variant == DM2_V1_COMMAND_SLOT_DOS_SPX_V5) {
                 memset(&rt->source_command_hand[active_hero][hand], 0,
                        sizeof(rt->source_command_hand[active_hero][hand]));
             }
@@ -22980,6 +22992,23 @@ int dm2_v1_runtime_proceed_hand_command(
      * common L_fin epilogue (lines 825-870). Preserve that result while still
      * running source cooldown/stamina updates on ordinary command failures. */
     return result && action_postcondition;
+}
+
+int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+{
+    /* M11's currently admitted event route follows DOS/SPX v5 semantics. */
+    return dm2_v1_runtime_proceed_hand_command_variant(
+        slot_index, DM2_V1_COMMAND_SLOT_DOS_SPX_V5, receipt);
+}
+
+int dm2_v1_runtime_proceed_hand_command_spx_v4(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+{
+    /* Exposed for source callers that explicitly select SPX v4 behavior; the
+     * original-media platform label is not a source-code-version selector. */
+    return dm2_v1_runtime_proceed_hand_command_variant(
+        slot_index, DM2_V1_COMMAND_SLOT_SPX_V4, receipt);
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

@@ -2659,3 +2659,13 @@ releasing the cache slot before preserving the subsequent no-mement free as a
 no-op. Attached-mement cleanup continues through the existing indexed-free
 owner, which clears the cache link and recycles the mement. Runtime cache
 ownership and platform/edition callers remain open; source rows stay `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_COMMAND_SLOT` edition route:
+Firestaff now has an explicit `dm2_v1_runtime_proceed_hand_command_spx_v4`
+entry point. It performs CMDSTR field-8 charge/depletion handling after each
+non-cancel command and skips the DOS/SPX-v5 field-14 probability state. The
+existing M11 event path remains on DOS/SPX-v5 semantics. `BootProfile.platform`
+identifies original media, not SPX source-code family, so it is not used to
+guess the variant. SPX-v4 input/panel ownership and an explicit source-family
+caller remain open; all three source rows stay `PARTIAL`.

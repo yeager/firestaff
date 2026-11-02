@@ -2010,6 +2010,11 @@ int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt);
 
+typedef enum {
+    DM2_V1_COMMAND_SLOT_DOS_SPX_V5 = 0,
+    DM2_V1_COMMAND_SLOT_SPX_V4 = 1
+} DM2_V1_CommandSlotVariant;
+
 /* Execute one source command-menu slot for the currently selected hand.
  * The command is resolved from the mounted item's authentic CMDSTR entry;
  * the only currently admitted mutation is ATTACK (action id 2), which queues
@@ -2017,6 +2022,10 @@ int dm2_v1_runtime_engage_command(
  * authenticated command types remain fail-closed until their source owners
  * are wired. `slot_index` is the original 0..2 command-menu index. */
 int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt);
+/* SPX v4 PROCEED_COMMAND_SLOT has no DOS/SPX-v5 field-14/RAND16 gate; it
+ * consumes the source CMDSTR field-8 charge after every non-cancel command. */
+int dm2_v1_runtime_proceed_hand_command_spx_v4(
     int slot_index, DM2_V1_EngageCommandReceipt *receipt);
 
 /* ── Special squares ──────────────────────────────────────────────── */
