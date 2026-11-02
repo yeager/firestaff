@@ -7216,10 +7216,17 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
                          s, &shop_item->shop_soldout)) ||
                     !dm2_v1_draw_shop_image(s, &shop_item->shop_navigation) ||
                     (i == DM2_SQ_D1C &&
-                     (!dm2_v1_draw_shop_coin_row(
-                          s, &shop_item->shop_buy_coins_v4) ||
+                     ((!s->asset_loader ||
+                       (s->asset_loader->gdat_version != 4u &&
+                        s->asset_loader->gdat_version != 5u)) ||
                       !dm2_v1_draw_shop_coin_row(
-                          s, &shop_item->shop_sell_coins_v4)))) {
+                          s, s->asset_loader->gdat_version == 4u
+                              ? &shop_item->shop_buy_coins_v4
+                              : &shop_item->shop_buy_coins_v5) ||
+                      !dm2_v1_draw_shop_coin_row(
+                          s, s->asset_loader->gdat_version == 4u
+                              ? &shop_item->shop_sell_coins_v4
+                              : &shop_item->shop_sell_coins_v5)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
                     continue;
