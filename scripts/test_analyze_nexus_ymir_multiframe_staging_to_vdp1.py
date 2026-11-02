@@ -102,6 +102,8 @@ class MultiframeStagingJoinTests(unittest.TestCase):
         link = summary["register_pointer_link"]
         self.assertEqual(link["per_frame"][0]["r2_pointer_matches"], 1)
         self.assertEqual(link["equal_final_face_row_snapshot_observations"], 1)
+        self.assertTrue(link["stable_face_pointer_set_across_frames"])
+        self.assertTrue(link["stable_face_pointer_multiplicities_across_frames"])
 
     def test_rejects_duplicate_staging_slot(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ymir-multiframe-duplicate-") as directory:

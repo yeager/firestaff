@@ -14,8 +14,9 @@ For the control run, a separate SH-2 PC `0x608f364` register capture has
 identical full VDP1 command-trace and VDP1 VRAM hashes. Its 138 `r2` pointers
 per frame all match the control staging writes (1,104/1,104). Face-row bytes at
 the corresponding `r9` pointers also match in both final WRAM-H snapshots for
-all 1,104 observations. The face-row comparison is not an intermediate-frame
-memory snapshot.
+all 1,104 observations. The same set and event multiplicities for the 120 CPU/
+`r9` pointers occur in every traced frame. The face-row comparison is not an
+intermediate-frame memory snapshot.
 
 This establishes input-sensitive projected XY values reaching VDP1 command
 records for this state and window. It does not bind every row to a retail DGN
