@@ -46,14 +46,28 @@ and `rbg1_enabled=0`. The layer-composition audit now requires this row-local
 state before using layer 2 as NBG0, and rejects captures where it is disabled.
 The separately retained register snapshot with the same frame/serial label has
 big-endian `BGON=0x0002` at offset `0x20`, which disables NBG0; its SHA-256 is
-`774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`. Its
-receipt has no timing join to the render-state sample. Do not treat that
-snapshot as render-time enable evidence.
+`774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`. The
+snapshot index has only frame/serial identifiers and no row-time timestamp. A
+cross-check of all 163 render-state passes against their indexed register
+snapshots found nine NBG0-enable disagreements at transitions: 891/1280,
+901/1290, 931/1320, 938/1330, 960/1360, 970/1370, 999/1400, 1008/1409, and
+1036/1440. This repeated pattern shows that the snapshots cannot serve as
+row-time enable evidence; it does not establish which capture point is stale.
 The layer trace also lacks enabled flags for every output layer, so its exact
 RGB reconstruction remains candidate-layer evidence, not a full active-layer
 proof. Obtain or reproduce a same-pass per-layer enable trace and resolve the
 snapshot timing before treating this pass as a complete Ymir compositor oracle.
 See [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+Reproduce the 163-pass cross-check with the authentic external capture:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031
+python3 scripts/audit_nexus_ymir_render_state_register_coherence.py \
+  --render-state "$evidence/render-state.csv" \
+  --snapshot-index "$evidence/vdp-snapshots/index.csv" \
+  --snapshot-dir "$evidence/vdp-snapshots"
+```
 
 ## Capture an authentic odd-address mode-5 draw
 

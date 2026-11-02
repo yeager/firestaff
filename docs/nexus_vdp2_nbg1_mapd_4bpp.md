@@ -176,9 +176,13 @@ label has big-endian `BGON=0x0002` at offset `0x20` (snapshot SHA-256
 `774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`), while
 the render-state rows say NBG0 was enabled before each row was drawn. The
 snapshot is therefore not used as render-time NBG0 enable evidence. The
-differing state has no timing join in the retained receipts, so this remains an
-open provenance discrepancy rather than proof that the register dump and row
-trace describe the same instant.
+differing state has no row-time timestamp in the snapshot index. A cross-check
+of all 163 render-state passes against their indexed VDP2 register snapshots
+found nine NBG0-enable disagreements at MAPD transitions (891/1280, 901/1290,
+931/1320, 938/1330, 960/1360, 970/1370, 999/1400, 1008/1409, and 1036/1440).
+The pattern means the snapshots cannot serve as row-time enable evidence; it
+does not establish which capture point is stale. A same-event register and
+layer-enable trace remains necessary to resolve the discrepancy.
 
 Reproduce the authentic Ymir layer-to-final comparison with:
 
