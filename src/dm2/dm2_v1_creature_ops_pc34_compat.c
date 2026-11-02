@@ -101,7 +101,7 @@ int16_t dm2_v1_creature_can_handle_item_in(
     }
 }
 
-int dm2_v1_creature_can_handle_it(
+int dm2_v1_creature_can_handle_it_source_state(
     const DM2_V1_CreatureCanHandleState *state,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
 {

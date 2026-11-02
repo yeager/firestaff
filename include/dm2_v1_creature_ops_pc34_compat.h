@@ -89,7 +89,7 @@ typedef struct {
                            uint8_t out_mask[64]);
 } DM2_V1_CreatureCanHandleCallbacks;
 
-int dm2_v1_creature_can_handle_it(
+int dm2_v1_creature_can_handle_it_source_state(
     const DM2_V1_CreatureCanHandleState *state,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx);
 
