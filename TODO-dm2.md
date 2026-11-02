@@ -4,12 +4,15 @@ record state, then apply source stretch/light/color-key geometry. DOS and SPX
 v4 also have destroyed and see-through overlay branches; the horizontal
 opening state renders two independently placed door halves. SPX v5 keeps the
 animated split but omits the v4 extended overlays. Firestaff's live M11 route
-has source-bound material/panel/frame/button plans, but no door-leaf body or
-split animation renderer, and no full edition-specific overlay sequence.
-The source-shaped `DRAW_DOOR` callback wrapper has no production M11 consumer
-and does not fill this gap. Keep the three source rows `PARTIAL`; source GDAT
-selection, animation tables, overlays and platform routes need end-to-end
-binding.
+does render source-bound door panels. Its material plan applies the source RAW4
+placement for intermediate vertical openings and submits the two source half
+panels at their separate RAW4 positions for intermediate horizontal openings;
+the panel's decoded palette and color key are also bound from GDAT. Remaining
+gaps include exact door-type image selection (the active path still documents a
+type-0 fallback), the complete DOS/v4 ornate, destroyed and see-through layer
+gates and ordering, and exact source frame geometry and platform binding. The
+source-shaped `DRAW_DOOR` callback wrapper is still not the production M11
+consumer. Keep the three source rows `PARTIAL` until those gaps are closed.
 
 2026-11-02 skproject DOS/SPX v4/v5 `SET_SPELLING_CHAMPION`:
 All three source variants reject a dead champion, publish the selected
