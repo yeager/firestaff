@@ -483,8 +483,8 @@ static int dm2_v1_dm1_creature_generator(
 /* ── ACTIVATE_SHOOTER ─────────────────────────────────────────────── */
 
 /* Source: skevent.cpp:1536-1631; sktimprc.cpp:1611-1800.
- * Shooter types 0x07/0x08/0x0E fire a single projectile;
- * 0x09/0x0A/0x0F fire dual projectiles.
+ * Shooter types 0x07/0x08/0x0A/0x0E fire a single projectile;
+ * 0x09/0x0F fire dual projectiles.
  * Item shooters (0x0E/0x0F) pick items from the source tile.
  * Others allocate via ALLOC_NEW_DBITEM or use missile records.
  *
@@ -1232,6 +1232,7 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
     launch_dir = (dir + 2) & 3;
     single = (type == DM2_ACTU_SOME_SHOOTER ||
               type == DM2_ACTU_MISSILE_SHOOTER ||
+              type == DM2_ACTU_MISSILE_SHOOTER_2 ||
               type == DM2_ACTU_ITEM_SHOOTER);
     if (!(single || type == DM2_ACTU_WEAPON_SHOOTER ||
           type == DM2_ACTU_MISSILE_SHOOTER_2 ||

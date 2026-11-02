@@ -138,6 +138,7 @@ static inline uint8_t dm2_toggle_actuator_message(int action_type,
 #define DM2_ACTU_MISSILE_SHOOTER     0x08
 #define DM2_ACTU_WEAPON_SHOOTER      0x09
 #define DM2_ACTU_MISSILE_SHOOTER_2   0x0A
+#define DM2_ACTU_TRAP_SHOOTER_2      DM2_ACTU_MISSILE_SHOOTER_2
 #define DM2_ACTU_CREATURE_KILLER     0x0B
 #define DM2_ACTU_ITEM_SHOOTER        0x0E
 #define DM2_ACTU_ITEM_SHOOTER_X2     0x0F
@@ -199,9 +200,10 @@ static inline void dm2_door_set_bit13(uint8_t *r, uint8_t v) {
 #define DM2_DB_WEAPON    5
 #define DM2_DB_MISC_ITEM 10
 
-/* Shooter sub-types: single (bp0a=1) vs dual projectile */
+/* Shooter sub-types: single (bp0a=1) vs dual projectile. Source marks 0x07,
+ * 0x08, 0x0A, and 0x0E single; 0x09 and 0x0F are dual. */
 #define DM2_SHOOTER_SINGLE_TYPES(t) \
-    ((t) == 0x07 || (t) == 0x08 || (t) == 0x0E)
+    ((t) == 0x07 || (t) == 0x08 || (t) == 0x0A || (t) == 0x0E)
 
 /* Direction deltas (skproject glbXAxisDelta / glbYAxisDelta) */
 static inline int dm2_x_delta(int dir) {
