@@ -2434,8 +2434,8 @@ supported DOS, Amiga, FM Towns and Macintosh runtime-owner evidence.
 2026-11-01 skproject cache hash source comparison:
 `ADD_CACHE_HASH` matches sorted lookup, duplicate cache-index selection and insertion ordering in Firestaff’s bounded state helper. SPX v4 and the older SKWIN source also run cache-maintenance when the game tick changes and touch/retrieve the mement entry on duplicate hits. Those effects and per-platform runtime cache ownership remain open; the source row is PARTIAL.
 
-2026-11-01 skproject UI-event variant comparison:
-`SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff exposes the v5 arrow branch and the older spell/leader rectangle helper with the source b44 leader gate. Production M11 now routes hand-action events 116-123 by party-relative formation position and selected-hand cooldown. DOS and SPX-v4 spell/leader event ownership remains open; the v4 cooldown indexing still differs, and v5 movement-arrow remapping and non-M11 routes remain partial.
+2026-11-02 skproject UI-event variant comparison:
+`SKW_ADJUST_UI_EVENT` (DOS), `ADJUST_UI_EVENT` (SPX v4), and `ADJUST_UI_EVENT` (SKWIN) map 0x5f-0x62 as spell/leader panel clicks; SPX v5 and SKULLWIN map 95-98 as movement arrows. Firestaff now models DOS's handcooldown[2] gate separately from the SPX-v4/SKWIN b44 leader gate; the spell triangle is handled independently of b44. Production M11 routes hand-action events 116-123 but does not route events 95-98 or 16-19 through a complete source dispatcher. DOS, SPX-v4, SKWIN and non-M11 event ownership, exact v4 cooldown indexing, panel/cursor behavior and supported platform routes remain partial.
 
 2026-11-01 skproject temporary-cache lifecycle comparison:
 SPX v4 and SKWIN `GET_TEMP_CACHE_HASH` advance the source counter per collision probe, while Firestaff uses a local probe and only advances once after allocation. `FREE_TEMP_CACHE_INDEX` frees the cache entry when no mement is attached before the no-op indexed-mement release. Firestaff now models that branch with a cache-free receipt; live cache ownership remains open. The active SPX-v4 cache functions and older SKWIN dispositions remain partial pending runtime ownership.
@@ -2691,14 +2691,15 @@ three rows remain partial until that state and production routes are bound.
 
 
 2026-11-02 skproject UI-event protocol implementation:
-`dm2_v1_skproject_adjust_ui_event_variant` now preserves the SPX v5/SKULLWIN
-movement-arrow default and adds an explicit DOS/SPX-v4/SKWIN spell/leader
-variant. The legacy variant uses the source rectangle diagonal and rewrites
-spell-triangle events by subtracting 0x4f; on the leader half it retains the
-event unless source `b44` is set. DOS, SPX v4 and SKWIN callers still need to
-select the legacy variant; SPX v4 action-hand cooldown indexing, live input
-owners and supported-platform runtime evidence remain open. The source rows
-remain `PARTIAL`.
+`dm2_v1_skproject_adjust_ui_event_variant` now keeps the SPX v5/SKULLWIN
+movement-arrow default and exposes separate DOS and SPX-v4/SKWIN
+spell/leader variants. All variants split the source rectangle by its
+diagonal. DOS gates the leader half with handcooldown[2]; SPX v4/SKWIN gate
+that half with b44; spell-triangle clicks rewrite by subtracting 0x4f in both
+families. Focused regression cases cover the different gates. This remains a
+standalone helper: M11 has no source event route for 95-98/16-19, and platform
+input dispatch, v4 hand cooldown indexing and cursor/panel effects remain
+open. Keep all source rows `PARTIAL`.
 
 
 2026-11-02 skproject `ANIMATE_CREATURE` callback owner:

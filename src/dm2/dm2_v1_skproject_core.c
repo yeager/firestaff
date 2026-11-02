@@ -8431,7 +8431,8 @@ int dm2_v1_skproject_adjust_ui_event_variant(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     receipt.player_dir = (uint16_t)(player_dir & 3u);
-    if (variant != DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 &&
+    if (variant != DM2_V1_SKPROJECT_UI_EVENT_DOS &&
+        variant != DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 &&
         variant != DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER) {
         receipt.blocked_invalid_variant = 1;
         if (event) {
@@ -8503,11 +8504,10 @@ int dm2_v1_skproject_adjust_ui_event_variant(
             receipt.diagonal_w2 = w2;
             receipt.diagonal_w3 = w3;
             if (w3 > w2) {
-                /* DOS dm2byf.cpp::SKW_ADJUST_UI_EVENT (5884-5936), SPX v4
-                 * skuievnt.cpp::ADJUST_UI_EVENT (22-67), and SKWIN
-                 * SkWinCore.cpp::ADJUST_UI_EVENT (12355-12400) keep the
-                 * leader-side event unless hero b44 disables it. SPX v5 and
-                 * SKULLWIN instead gate this half on handcooldown[2]. */
+                /* DOS dm2byf.cpp::SKW_ADJUST_UI_EVENT (5884-5936) and
+                 * SPX v5 uiinput.cpp::DM2_ADJUST_UI_EVENT (121-185) gate
+                 * this side on handcooldown[2]. SPX v4 skuievnt.cpp and
+                 * SKWIN SkWinCore.cpp gate it on hero b44 instead. */
                 if (variant ==
                     DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER) {
                     if (champions[player].leader_action_disabled == 0u) {

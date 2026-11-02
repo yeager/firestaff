@@ -3623,6 +3623,34 @@ static void test_adjust_ui_event(void)
           "ADJUST_UI_EVENT cancels leader event when leader hand cooldown is active");
     champions[2].hand_cooldown[2] = 0u;
 
+    event.event = 95u;
+    champions[2].leader_action_disabled = 1u;
+    CHECK(dm2_v1_skproject_adjust_ui_event_variant(
+              &event, 0u, positions, champions, 4u,
+              DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER, &receipt) == 1 &&
+              event.event == 16u && receipt.selected_spell_triangle,
+          "SPX v4 diagonal maps to the spell event independently of herob44");
+    event.event = 95u;
+    event.x = 11;
+    event.y = 28;
+    CHECK(dm2_v1_skproject_adjust_ui_event_variant(
+              &event, 0u, positions, champions, 4u,
+              DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER, &receipt) == 0 &&
+              event.event == 0u && receipt.blocked_leader_action,
+          "SPX v4 herob44 gate suppresses only the leader half");
+    champions[2].leader_action_disabled = 0u;
+
+    event.event = 95u;
+    event.x = 11;
+    event.y = 28;
+    champions[2].hand_cooldown[2] = 1u;
+    CHECK(dm2_v1_skproject_adjust_ui_event_variant(
+              &event, 0u, positions, champions, 4u,
+              DM2_V1_SKPROJECT_UI_EVENT_DOS, &receipt) == 0 &&
+              event.event == 0u && receipt.blocked_leader_hand_cooldown,
+          "DOS keeps its source handcooldown[2] gate on the leader half");
+    champions[2].hand_cooldown[2] = 0u;
+
     event.event = 50u;
     CHECK(dm2_v1_skproject_adjust_ui_event(
               &event, 0u, positions, champions, 4u, &receipt) == 1 &&

@@ -2255,10 +2255,12 @@ typedef struct {
 } DM2_V1_SkprojectUiChampionState;
 
 typedef enum {
-    /* SPX v5/SKULLWIN use the movement-arrow event protocol by default. */
+    /* SPX v5/SKULLWIN use the movement-arrow protocol by default. */
     DM2_V1_SKPROJECT_UI_EVENT_SPX_V5 = 0,
-    /* DOS/SPX v4/SKWIN use spell/leader panel clicks for events 0x5f-0x62. */
-    DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER = 1
+    /* DOS uses spell/leader clicks and the handcooldown[2] gate. */
+    DM2_V1_SKPROJECT_UI_EVENT_DOS = 1,
+    /* SPX v4/SKWIN use spell/leader clicks and the herob44 gate. */
+    DM2_V1_SKPROJECT_UI_EVENT_LEGACY_SPELL_LEADER = 2
 } DM2_V1_SkprojectUiEventVariant;
 
 typedef struct {
