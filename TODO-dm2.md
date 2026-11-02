@@ -2198,9 +2198,12 @@ the consumed runtime HUD trace and confirms RECT 0xA1 is 77x37; the Mac
 real-media plan test checks all A1-A4 destinations against their RAW4 entries;
 the FM Towns gameplay test checks its full A1 rect; and the Amiga New Game
 test reaches runtime with its original archive. All four tests pass using the
-original DOS, Mac, FM Towns and Amiga archives. The candidate also passes C
-compilation, shell syntax and `git diff --check`. PC French, Mac French and
-the separate PC JewelCase edition still need runtime coverage. The full app
-build and physical/native-display pixel comparison remain unverified because
-TRV2 timed out; portraits, bars, labels and panel interaction also remain
-open parts of the reported HUD issue.
+original DOS, Mac, FM Towns and Amiga archives. The updated code also passes C
+compilation, shell syntax, and `git diff --check`. PC French, Mac French, and
+the separate PC JewelCase edition still need runtime coverage: the PC German
+and French RAR paths are broken symlinks to missing external-disk files, and
+the available French-named Macintosh SIT is identified by the existing media
+test as an English runtime payload. The full app build and physical/native-
+display pixel comparison remain unverified because TRV2 timed out; portraits,
+bars, labels and panel interaction also remain open parts of the reported HUD
+issue.
