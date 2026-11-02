@@ -4464,12 +4464,19 @@ int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
     DM2_V1_SkprojectMementState *state,
     uint32_t tick,
     DM2_V1_SkprojectResetUsageCountersReceipt *out_receipt);
+typedef int (*DM2_V1_SkprojectMementTickMaintenanceFn)(
+    DM2_V1_SkprojectMementState *state,
+    uint32_t game_tick,
+    void *context);
+
 /* SKWINSPX v4 ADD_CACHE_HASH: tick maintenance plus duplicate-hit MEMENT touch. */
 int dm2_v1_skproject_add_cache_hash_with_mement(
     DM2_V1_SkprojectCacheState *cache_state,
     DM2_V1_SkprojectMementState *mement_state,
     uint32_t cache_hash,
     uint32_t game_tick,
+    DM2_V1_SkprojectMementTickMaintenanceFn tick_maintenance,
+    void *tick_maintenance_context,
     uint16_t *out_cache_index);
 
 /* SKWIN/SkWinCore.cpp:^1C9A creature AI pointer / animation family (cycle 6) */

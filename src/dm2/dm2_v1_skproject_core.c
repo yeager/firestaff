@@ -10495,16 +10495,21 @@ int dm2_v1_skproject_add_cache_hash_with_mement(
     DM2_V1_SkprojectMementState *mement_state,
     uint32_t cache_hash,
     uint32_t game_tick,
+    DM2_V1_SkprojectMementTickMaintenanceFn tick_maintenance,
+    void *tick_maintenance_context,
     uint16_t *out_cache_index)
 {
     uint16_t cache_index;
     int result;
 
     if (!cache_state || !mement_state || !out_cache_index) return -1;
-    if (mement_state->last_tick != game_tick &&
-        !dm2_v1_skproject_3e74_44ad_reset_usage_counters(
-            mement_state, game_tick, 0)) {
-        return -1;
+    if (mement_state->last_tick != game_tick) {
+        if (!tick_maintenance ||
+            !tick_maintenance(mement_state, game_tick,
+                              tick_maintenance_context) ||
+            mement_state->last_tick != game_tick) {
+            return -1;
+        }
     }
     result = dm2_v1_skproject_add_cache_hash(
         cache_state, cache_hash, &cache_index);
