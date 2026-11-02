@@ -359,10 +359,9 @@ void dm2_v1_draw_chip_of_magic_map(
 {
     if (!cb || !bmp) return;
 
-    /* The original performs rect clipping against dm2rect3 and blits.
-     * Here we delegate through the blit callback. */
     int16_t chip_w = cb->get_v1d274a ? cb->get_v1d274a(ctx) : 0;
     int16_t chip_h = cb->get_v1d274c ? cb->get_v1d274c(ctx) : 0;
+    if (chip_w <= 0 || chip_h <= 0) return;
 
     DM2_V1_Rect rc;
     rc.x = (int16_t)x;
@@ -370,8 +369,23 @@ void dm2_v1_draw_chip_of_magic_map(
     rc.w = chip_w;
     rc.h = chip_h;
 
-    int16_t srcx = (int16_t)(mul * chip_w);
-    dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, srcx, 0,
+    int16_t crop_x = 0, crop_y = 0;
+    if (cb->get_magic_map_clip_rect) {
+        DM2_V1_Rect clip;
+        if (!cb->get_magic_map_clip_rect(ctx, &clip) ||
+            !dm2_v1_rect_intersect(&rc, &clip, &crop_x, &crop_y))
+            return;
+    }
+
+    /* SKProject clips the destination first. For a mirrored tile, a crop
+     * at its leading edge takes pixels from the opposite source edge. */
+    if (rc.w != chip_w && (flags & 0x1))
+        crop_x = crop_x == 0 ? (int16_t)(chip_w - rc.w) : 0;
+    if (rc.h != chip_h && (flags & 0x2))
+        crop_y = crop_y == 0 ? (int16_t)(chip_h - rc.h) : 0;
+
+    int16_t srcx = (int16_t)(mul * chip_w + crop_x);
+    dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, srcx, crop_y,
                                 0x0a, flags, palette, cb, ctx);
 }
 

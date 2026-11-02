@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "dm2_v1_rect_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,10 +19,6 @@ extern "C" {
 /* ========================================================================
  * Forward types
  * ======================================================================== */
-
-typedef struct DM2_V1_Rect {
-    int16_t x, y, w, h;
-} DM2_V1_Rect;
 
 typedef struct DM2_V1_ImageDesc {
     int16_t x, y;
@@ -123,6 +120,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
                                      int16_t id, int16_t *srcx, int16_t *srcy);
     /* Clip rectangle used by SKProject's DRAW_MONEYBOX. */
     DM2_V1_Rect *(*get_right_panel_clip_rect)(void *ctx, DM2_V1_Rect *out);
+    /* Active magic-map viewport used by DRAW_CHIP_OF_MAGIC_MAP. */
+    DM2_V1_Rect *(*get_magic_map_clip_rect)(void *ctx, DM2_V1_Rect *out);
     DM2_V1_Rect *(*scale_rect)(void *ctx, int16_t id, int16_t num,
                                 int16_t den, DM2_V1_Rect *out);
     DM2_V1_Rect *(*offset_rect)(void *ctx, int32_t buttongroup_id,
