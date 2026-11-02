@@ -112,8 +112,8 @@ def read_render_state(path: Path, receipt: Path) -> tuple[list[int], list[bool],
             if not 0 <= y < HEIGHT or ratios[y] is not None:
                 raise AuditError(f"duplicate or out-of-range render-state row {y}")
             # Ymir's layer 2 aliases NBG0 and RBG1. The render-state trace is
-            # sampled immediately before NBG0 drawing, so use it to reject a
-            # stale layer-2 buffer when the hardware layer is disabled. This
+            # sampled immediately before NBG0 drawing, so use its logged state
+            # to reject a stale layer-2 buffer when NBG0 is reported disabled. This
             # MAPD audit is specifically for NBG0, not the RBG1 path.
             if (bg_enabled["nbg0_enabled"] != 1 or
                     bg_enabled["layer_enabled"] != 1 or
