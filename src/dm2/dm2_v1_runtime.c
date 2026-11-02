@@ -21088,6 +21088,112 @@ int dm2_v1_runtime_get_active_moneybox(uint16_t *out_object_id,
     return 1;
 }
 
+int dm2_v1_runtime_get_active_moneybox_coins(
+    int16_t coin_order[10], int16_t coin_counts[10],
+    uint16_t money_item_ids[10])
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_RuntimeHandActivationQuery query;
+    const DM2_V1_AssetLoader *loader;
+    uint16_t money_ids[10] = {0};
+    uint16_t money_values[10] = {0};
+    uint8_t container_cls2;
+    uint16_t moneybox;
+    uint16_t money_count = 0u;
+    uint16_t contained;
+    int16_t link;
+    unsigned steps = 0u;
+
+    if (coin_order) for (int i = 0; i < 10; ++i) coin_order[i] = -1;
+    if (coin_counts) memset(coin_counts, 0, sizeof(int16_t) * 10u);
+    if (money_item_ids) memset(money_item_ids, 0, sizeof(uint16_t) * 10u);
+    if (!coin_order || !coin_counts || !money_item_ids || !rt->boot ||
+        !rt->record_pools_valid ||
+        !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
+        !dm2_v1_runtime_get_active_moneybox(&moneybox, &container_cls2))
+        return 0;
+
+    /* SKWINSPX/skitem.cpp::LOAD_MISCITEM scans IDs in ascending order and
+     * inserts before equal values. Retain that exact ordering in the ten
+     * source currency slots used by DRAW_MONEYBOX. */
+    for (uint16_t item = 0u; item < 0x80u; ++item) {
+        uint16_t flags = 0u, value = 0u;
+        uint16_t pos;
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 0, &flags) ||
+            (flags & 0x4000u) == 0u)
+            continue;
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 2, &value) ||
+            money_count >= 10u)
+            return 0;
+        pos = money_count;
+        while (pos > 0u && money_values[pos - 1u] >= value) {
+            money_values[pos] = money_values[pos - 1u];
+            money_ids[pos] = money_ids[pos - 1u];
+            --pos;
+        }
+        money_values[pos] = value;
+        money_ids[pos] = (uint16_t)(item + 0x100u);
+        ++money_count;
+    }
+    if (money_count == 0u) return 0;
+
+    for (uint16_t slot = 0u; slot < 10u; ++slot) {
+        DM2_V1_ItemOrderInContainerReceipt order_receipt;
+        if (dm2_v1_get_item_order_in_container_receipt(
+                loader, container_cls2, slot, money_ids, money_count,
+                &order_receipt) && order_receipt.accepted &&
+            order_receipt.money_item_index >= 0 &&
+            order_receipt.money_item_index < (int16_t)money_count)
+            coin_order[slot] = order_receipt.money_item_index;
+    }
+
+    query.rt = rt;
+    query.hero_index = dm2_v1_runtime_get_active_champion_index();
+    if (!dm2_runtime_hand_container_type(
+            &query, moneybox, NULL, NULL, NULL, &contained))
+        return 0;
+    link = (int16_t)contained;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        uint8_t cls2 = 0xffu;
+        uint16_t flags = 0u, distinctive = 0xffffu, charge = 0u;
+        DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+        DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+        int16_t next;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || ++steps > 65536u ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, link, &next))
+            return 0;
+        if (dm2_v1_record_handle_pool(link) == 10 &&
+            dm2_v1_skproject_query_cls2_from_record(
+                (uint16_t)link, &rt->record_pools, &cls2, &cls2_receipt) &&
+            cls2_receipt.valid && cls2 != 0xffu &&
+            dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, cls2, 0, &flags) &&
+            (flags & 0x4000u) != 0u &&
+            dm2_v1_skproject_get_distinctive_itemtype(
+                (uint16_t)link, cls2, &distinctive, &type_receipt) &&
+            type_receipt.valid) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, link);
+            if (!record) return 0;
+            charge = dm2_runtime_hand_query_word(
+                &rt->record_pools, record, 2u);
+            for (uint16_t denomination = 0u;
+                 denomination < money_count; ++denomination) {
+                if (money_ids[denomination] == distinctive) {
+                    coin_counts[denomination] = (int16_t)(
+                        coin_counts[denomination] + (int16_t)(charge + 1u));
+                    break;
+                }
+            }
+        }
+        link = next;
+    }
+    memcpy(money_item_ids, money_ids, sizeof(money_ids));
+    return 1;
+}
+
 int dm2_v1_runtime_get_champion_count(void) {
     const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     if (!rt->source_party_valid || !rt->session_snapshot_valid ||
