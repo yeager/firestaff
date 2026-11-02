@@ -9691,21 +9691,13 @@ static int dm2_v1_render_hud_hand_action_asset(
             item_width > 0 && item_height > 0 && item_stride >= item_width) {
             int item_dst_w = item_width;
             int item_dst_h = item_height;
-            int max_w = source->destination_rect.w - 2;
-            int max_h = source->destination_rect.h - 2;
             int item_x;
             int item_y;
 
-            if (max_w <= 0 || max_h <= 0) return 0;
-            if (item_dst_w > max_w) {
-                item_dst_h = (item_dst_h * max_w) / item_dst_w;
-                item_dst_w = max_w;
-            }
-            if (item_dst_h > max_h) {
-                item_dst_w = (item_dst_w * max_h) / item_dst_h;
-                item_dst_h = max_h;
-            }
-            if (item_dst_w <= 0 || item_dst_h <= 0) return 0;
+            /* SKProject CALC_CENTERED_RECT_IN_RECT retains the bitmap's
+             * decoded dimensions. The destination blitter clips at the
+             * framebuffer edge; it does not scale an oversized image to fit
+             * an inset hand rectangle. */
             item_x = source->destination_rect.x +
                 (source->destination_rect.w - item_dst_w) / 2;
             item_y = source->destination_rect.y +
