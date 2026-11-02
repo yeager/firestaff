@@ -4,6 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+enum {
+    DM1_V1_F0174_WALL_ORNAMENT_CAPACITY = 16,
+    DM1_V1_F0174_FLOOR_ORNAMENT_CAPACITY = 16,
+    DM1_V1_F0174_DOOR_ORNAMENT_CAPACITY = 17
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,6 +58,11 @@ typedef struct {
     size_t currentMapDoorOrnamentCount;
     const uint8_t *currentMapAlcoveOrnamentIndices;
     size_t currentMapAlcoveOrnamentCount;
+
+    /* DUNGEON.C F0174 copies these source arrays into fixed global buffers. */
+    uint8_t f0174WallOrnamentStorage[DM1_V1_F0174_WALL_ORNAMENT_CAPACITY];
+    uint8_t f0174FloorOrnamentStorage[DM1_V1_F0174_FLOOR_ORNAMENT_CAPACITY];
+    uint8_t f0174DoorOrnamentStorage[DM1_V1_F0174_DOOR_ORNAMENT_CAPACITY];
 
     int partyMapIndex;
     int partyMapWidth;
