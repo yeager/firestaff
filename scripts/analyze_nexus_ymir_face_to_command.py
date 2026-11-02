@@ -14,6 +14,9 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 WRITE_PCS = {"0x608f366": 0, "0x608f36a": 1, "0x608f36e": 2, "0x608f372": 3}
+FACE_ROW_BYTES = 12
+FACE_CONTEXT_BYTES = 96
+FACE_CONTEXT_MIN_ANCHORS = 2
 
 def be16(data: bytes, off: int) -> int:
     return int.from_bytes(data[off:off + 2], "big")
@@ -124,13 +127,17 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
         rows.append({"cpu": cpu, "face_ptr": face_addr, "stage_ptr": stage_addr, "face": face,
                      "corners": corners, "dgn_candidates": candidates, "command_exact": exact,
                      "command_cyclic": cyclic, "command_unordered": unordered})
-    # Resolve duplicate single-face topology matches using contiguous face-row runs.
+    # Resolve rows whose topology is duplicated in the retail corpus by using
+    # contiguous captured runs as initial independent source anchors.
     resolved: dict[tuple[str, int], tuple[int, int, int]] = {}
+    resolution_basis: dict[tuple[str, int], str] = {}
     direct_unique = 0
     for row in rows:
         if len(row["dgn_candidates"]) == 1:
             direct_unique += 1
-            resolved[(row["cpu"], row["face_ptr"])] = row["dgn_candidates"][0]
+            key = (row["cpu"], row["face_ptr"])
+            resolved[key] = row["dgn_candidates"][0]
+            resolution_basis[key] = "unique-face-row"
     runs = []
     for cpu in ("master", "slave"):
         cpu_rows = [row for row in rows if row["cpu"] == cpu]
@@ -161,6 +168,78 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
                 if old is not None and old != mapped:
                     raise ValueError(f"DGN single and sequence mappings disagree at {key}: {old} vs {mapped}")
                 resolved[key] = mapped
+                if key not in resolution_basis:
+                    resolution_basis[key] = "unique-contiguous-face-sequence"
+
+    # Face rows are 12 bytes in the observed WRAM-H table. A duplicated face
+    # tuple can still be bound when at least two independently resolved rows
+    # from the same CPU, DGN entry, and local pointer run agree on its ordinal.
+    # Keep the radius short and reject ties; this is a capture-time source join,
+    # not a geometric guess or renderer-admission rule.
+    context_added = 0
+    pointer_stride_anchor_pairs = 0
+    while True:
+        context_matches = []
+        rows_by_cpu: dict[str, dict[int, dict[str, object]]] = defaultdict(dict)
+        for row in rows:
+            rows_by_cpu[row["cpu"]].setdefault(row["face_ptr"], row)
+        for cpu, cpu_rows_by_pointer in rows_by_cpu.items():
+            cpu_rows = sorted(cpu_rows_by_pointer.values(),
+                              key=lambda row: row["face_ptr"])
+            anchors = [row for row in cpu_rows
+                       if (cpu, row["face_ptr"]) in resolved]
+            for row in cpu_rows:
+                key = (cpu, row["face_ptr"])
+                if key in resolved:
+                    continue
+                nearby = [anchor for anchor in anchors
+                          if abs(anchor["face_ptr"] - row["face_ptr"]) <= FACE_CONTEXT_BYTES
+                          and (anchor["face_ptr"] - row["face_ptr"]) % FACE_ROW_BYTES == 0]
+                if len(nearby) < FACE_CONTEXT_MIN_ANCHORS:
+                    continue
+                candidates = []
+                for level, entry, ordinal in row["dgn_candidates"]:
+                    if all(
+                        resolved[(cpu, anchor["face_ptr"])][:2] == (level, entry)
+                        and ordinal + (anchor["face_ptr"] - row["face_ptr"]) // FACE_ROW_BYTES
+                            == resolved[(cpu, anchor["face_ptr"])][2]
+                        for anchor in nearby
+                    ):
+                        candidates.append((level, entry, ordinal))
+                if len(candidates) == 1:
+                    context_matches.append((key, candidates[0]))
+        if not context_matches:
+            break
+        for key, mapped in context_matches:
+            resolved[key] = mapped
+            resolution_basis[key] = "unique-pointer-stride-context"
+            context_added += 1
+
+    # Verify the local row-stride invariant against every already-resolved
+    # same-entry pair in the captured table before using it as source evidence.
+    unique_rows_by_cpu: dict[str, dict[int, dict[str, object]]] = defaultdict(dict)
+    for row in rows:
+        unique_rows_by_cpu[row["cpu"]].setdefault(row["face_ptr"], row)
+    for cpu, pointer_rows in unique_rows_by_cpu.items():
+        anchors = sorted(
+            (address, resolved[(cpu, address)])
+            for address in pointer_rows
+            if (cpu, address) in resolved
+        )
+        for index, (address, mapping) in enumerate(anchors):
+            for other_address, other_mapping in anchors[index + 1:]:
+                delta = other_address - address
+                if delta > FACE_CONTEXT_BYTES:
+                    break
+                if delta % FACE_ROW_BYTES or mapping[:2] != other_mapping[:2]:
+                    continue
+                pointer_stride_anchor_pairs += 1
+                if other_mapping[2] - mapping[2] != delta // FACE_ROW_BYTES:
+                    raise ValueError(
+                        "resolved same-entry faces violate local 12-byte row stride: "
+                        f"{cpu} {address:#x}->{other_address:#x} "
+                        f"{mapping}->{other_mapping}"
+                    )
     # Enforce one-to-one unordered geometry ownership for this captured command set.
     if len(rows) != len(regs):
         raise ValueError("duplicate register/staging association")
@@ -171,7 +250,8 @@ def analyze(evidence: Path, retail: Path, repo: Path, frame: int):
         reverse[row["command_unordered"][0]].append(row)
     if any(len(value) != 1 for value in reverse.values()):
         raise ValueError("a captured VDP1 command geometry maps to multiple staging records")
-    return rows, resolved, direct_unique, runs, unique_runs, len(cmds)
+    return (rows, resolved, resolution_basis, direct_unique, runs, unique_runs,
+            len(cmds), context_added, pointer_stride_anchor_pairs)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -182,14 +262,17 @@ def main():
     parser.add_argument("--csv-out", type=Path, required=True)
     parser.add_argument("--json-out", type=Path, required=True)
     args = parser.parse_args()
-    rows, resolved, direct, runs, unique_runs, command_count = analyze(args.evidence, args.retail_data, args.firestaff_repo, args.frame)
+    (rows, resolved, resolution_basis, direct, runs, unique_runs, command_count,
+     context_added, pointer_stride_anchor_pairs) = analyze(
+        args.evidence, args.retail_data, args.firestaff_repo, args.frame
+    )
     with args.csv_out.open("w", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["cpu", "face_wram_address", "vertex_indices", "source_dgn", "source_entry", "source_face_ordinal", "mapping_basis", "staging_wram_address", "staged_xy_signed", "command_index", "command_vdp1_vram_address", "command_geometry_match"])
         for row in rows:
             key = (row["cpu"], row["face_ptr"])
             mapping = resolved.get(key)
-            basis = "unique-face-row" if len(row["dgn_candidates"]) == 1 else ("unique-contiguous-face-sequence" if mapping else "unresolved")
+            basis = resolution_basis.get(key, "unresolved")
             exact = row["command_exact"]
             cyclic = row["command_cyclic"]
             geometry_match = "ordered" if exact else ("cyclic" if cyclic else "unordered")
@@ -213,6 +296,8 @@ def main():
         "unique_single_face_retail_matches": direct,
         "contiguous_face_runs": len(runs),
         "unique_contiguous_face_run_matches": len(unique_runs),
+        "unique_pointer_stride_context_matches": context_added,
+        "verified_same_entry_pointer_stride_anchor_pairs": pointer_stride_anchor_pairs,
         "unique_runtime_face_row_pointers": len({(row["cpu"], row["face_ptr"]) for row in rows}),
         "distinct_retail_face_rows_resolved": len(resolved),
         "distinct_runtime_face_row_pointers_unresolved": len({(row["cpu"], row["face_ptr"]) for row in rows}) - len(resolved),
@@ -220,7 +305,7 @@ def main():
         "capture_records_unresolved_to_retail_face": sum((row["cpu"], row["face_ptr"]) not in resolved for row in rows),
         "duplicate_capture_records_sharing_face_row": len(rows) - len({(row["cpu"], row["face_ptr"]) for row in rows}),
         "sequence_matches": [{"cpu": run[0]["cpu"], "run_length": len(run), "first_runtime_r9": f"0x{run[0]['face_ptr']:08x}", "level": level, "entry": entry, "first_face_ordinal": first} for run, level, entry, first in unique_runs],
-        "limits": ["Only authentic Ymir frame 1605 is covered.", "Command geometry ownership is an exact four-corner coordinate multiset join; rows marked cyclic/unordered do not prove winding or corner correspondence.", "Unresolved face rows remain unresolved; this does not imply they are absent from retail data.", "No pixel/material ownership, complete frame parity, original-Saturn parity, or production renderer admission is claimed."],
+        "limits": ["Only authentic Ymir frame 1605 is covered.", "Pointer-stride context requires two or more independently resolved same-entry face-row anchors within 96 bytes; unresolved rows remain unresolved.", "Command geometry ownership is an exact four-corner coordinate multiset join; rows marked cyclic/unordered do not prove winding or corner correspondence.", "No pixel/material ownership, complete frame parity, original-Saturn parity, or production renderer admission is claimed."],
     }
     args.json_out.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2))
