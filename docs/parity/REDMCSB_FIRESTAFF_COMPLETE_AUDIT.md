@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,901 unreviewed, 955 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,901 unreviewed, 1,036 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,898 unreviewed, 958 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,939 open rows (2,898 unreviewed, 1,039 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
@@ -934,3 +934,8 @@ DOS/SKULLWIN XACT 84 classifies possession DB types 5..10, checks item flags for
 ### DM2 XACT 85 variant review (2026-11-02)
 
 DOS/SKULLWIN and SPX v5 scan the current creature timer tile for DB2 actuator records with the source mask/subtype, set creature byte b1e and command 0x22 on a match, and otherwise schedule the source command 0x33. SPX v4 instead scans text records for TextMode 1 plus SimpleTextExtUsage 1, copies the TextIndex low byte into ItemToThrow and sets ccm3B_Transform1; its no-match path uses CREATURE_SET_NEW_COMMAND with ccm13_Destroy before setting ccm33. Firestaff's `DM2_PROCEED_XACT_85` receipt only represents the not-found default and does not perform any scan or mutation. All three active source definitions are `PARTIAL`.
+
+
+### DM2 XACT 86 variant review (2026-11-02)
+
+DOS, SPX v5 and SKULLWIN truncate the active AI entry's w4/w6 and v1e0572 to bytes, write creature fields b20/b1e/b1a (b1a plus 0x3d), and return success. SPX v4 uses its edition-specific AI globals b4/b6 and current command plus ccm3D_Explode to write b32, ItemToThrow and Command. Firestaff's core helper calculates the DOS/v5/SKULLWIN values in a receipt but does not commit creature state; its fields do not express the separate v4 state owner. The named-symbol disposition is now narrow and all three active source definitions remain `PARTIAL` pending live XACT callbacks and edition routing.

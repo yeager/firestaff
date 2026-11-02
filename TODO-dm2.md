@@ -2693,3 +2693,11 @@ then has a distinct ccm13_Destroy no-match transition. Firestaff's core receipt
 models only the default not-found values and has no live XACT callback. Its
 named-symbol disposition is now `IMPLEMENTED_NARROW`, while all three active
 source definitions are `PARTIAL`.
+
+
+2026-11-02 skproject `PROCEED_XACT_86` variant audit correction:
+DOS/SKULLWIN/SPX v5 truncate AI-state words into creature b20/b1e/b1a and return
+success. SPX v4 instead reads its separate globals, writing b32, ItemToThrow and
+ccm3D_Explode command state. Firestaff computes a receipt for only the former
+field set and has no live XACT callback. The named-symbol disposition is now
+`IMPLEMENTED_NARROW`; all three active source definitions are `PARTIAL`.

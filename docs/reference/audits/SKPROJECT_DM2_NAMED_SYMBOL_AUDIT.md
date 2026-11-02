@@ -27,10 +27,10 @@ outside that ledger. The supplemental
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,938 location-specific rows,
 3,635 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,901 `UNREVIEWED`, 955 `PARTIAL`, 0 `MISSING`,
+source-review overrides yields 2,898 `UNREVIEWED`, 958 `PARTIAL`, 0 `MISSING`,
 72 `IMPLEMENTED_PARITY`, 8 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
 rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (840 unreviewed, 339 partial,
-26 implemented); SKWINSPX has 2,731 rows (2,061 unreviewed, 614 partial, 46
+26 implemented); SKWINSPX has 2,731 rows (2,058 unreviewed, 617 partial, 46
 implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
 cross-variant rows are partial. The review ledger contains 992 rows (909
 partial, 73 implemented, 8 architecture-specific, and 2 outside-game),
@@ -80,7 +80,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,938-row inventory currently has 2,901 `UNREVIEWED`, 955 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,901 as `UNREVIEWED`, 955 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,939 (2,901 unreviewed, 1,036 partial source/older-ledger rows, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
+With active-source review overrides, the 3,938-row inventory currently has 2,898 `UNREVIEWED`, 958 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, eight architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,898 as `UNREVIEWED`, 958 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count is 3,939 (2,898 unreviewed, 1,039 partial source/older-ledger rows, and two partial source owners). DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
 
 DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
@@ -637,7 +637,7 @@ Compared DOS `SKW_QUERY_PLAYER_SKILL_LV`, SPX v4 `QUERY_PLAYER_SKILL_LV`, SPX v5
 
 DOS `SKW_PUSH_PULL_RIGID_BODY`, SPX v4 `PUSH_PULL_RIGID_BODY` and SPX v5 `DM2_PUSH_PULL_RIGID_BODY` are compared against their SKProject bodies and Firestaff's `dm2_v1_push_pull_rigid_body` helper. All six click-zone direction and turn-mode choices match. The source first admits the target with `IS_CREATURE_MOVABLE_THERE`, checks the edition's rigid-body weight predicate, and uses the full `PERFORM_MOVE` transaction; when that predicate fails it emits variant-specific noise for live heroes/champions. Firestaff instead directly moves any record returned by its callback, checks only destination blocking, and queues unconditional generic noise. Its helper has no production caller. All three definitions remain `PARTIAL`; movement admission, object class, transaction, source feedback, and supported-platform routes remain open.
 
-With active-source review overrides applied, the inventory currently maps 2,901 as `UNREVIEWED`, 955 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,898 as `UNREVIEWED`, 958 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.
 
 ## Latest source review: REMOVE_OBJECT_FROM_HAND (2026-11-02)
 
