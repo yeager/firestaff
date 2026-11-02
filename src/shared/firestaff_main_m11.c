@@ -90,7 +90,7 @@ static void usage(const char* prog) {
             "  --music             Enable title and in-game music\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
-            "  --platform <name>   Select source platform: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, apple-iigs (iigs)\n"
+            "  --platform <name>   Select platform: auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, apple-iigs (iigs)\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
             "  --dm1-fmtowns-ja    Select DM1's verified Japanese FM Towns edition\n"
             "  --csb-fmtowns-ja    Select CSB's verified Japanese FM Towns edition\n"
@@ -1054,12 +1054,12 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--platform") == 0) {
             if (i + 1 >= argc || is_option_token(argv[i + 1])) {
                 fprintf(stderr,
-                        "firestaff: --platform requires a value: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
+                        "firestaff: --platform requires a value: auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)\n");
                 return 2;
             }
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
-                        "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
+                        "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)\n");
                 return 2;
             }
             platformOverrideSpecified = 1;

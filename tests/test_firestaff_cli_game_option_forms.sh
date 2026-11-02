@@ -26,6 +26,8 @@ check_form() {
 
 check_form --game dm1 --version
 check_form --game=dm1 --version
+check_form --game dm1 --platform st --version
+check_form --game dm1 --platform fm_towns --version
 check_form '—game' dm1 --version
 check_form '–game=dm1' --version
 check_form --width 1 --height 4096 --version
@@ -199,7 +201,7 @@ check_invalid_platform() {
         exit 1
     }
     case "$output" in
-        *'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)'*) ;;
+        *'firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari, st), fm-towns (fmtowns, fm_towns), mac, pce (pc-engine), saturn, or apple-iigs (iigs)'*) ;;
         *)
             printf 'fail: invalid --platform value did not produce the documented diagnostic: %s\n%s\n' \
                 "$platform" "$output" >&2
