@@ -977,4 +977,9 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,814 unreviewed, 1,025 partial, 0 missing, and 86 implemented-parity definitions. The generated combined skproject backlog is 3,952 open rows (2,814 unreviewed, 1,136 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,811 unreviewed, 1,028 partial, 0 missing, and 86 implemented-parity definitions. The generated combined skproject backlog is 3,956 open rows (2,811 unreviewed, 1,143 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+
+
+### DM2 distant environment drawing review (2026-11-02)
+
+Compared DOS `SKW_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`dm2byg.cpp:4925`), SPX v4 `ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`skbkgrnd.cpp:35`), SPX v5 `DM2_ENVIRONMENT_DRAW_DISTANT_ELEMENT` (`skguivwp.cpp:296`), and SKULLWIN. The source skips CD=0, maps four FW values to positional flips, applies 0x34 movement scaling and a special 6001 horizon offset, then queries and draws the selected environment image. DOS additionally requests rect CD|0x8000 and passes FW=0x20 as the flip kind; SPX v4/v5 pass rect CD directly. Firestaff models transforms and guards rendering with verified material receipts, but those edition-specific query details and complete runtime callers are not bound across all supported platforms. All source rows remain `PARTIAL`.
