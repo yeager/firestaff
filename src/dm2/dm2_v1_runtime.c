@@ -128,6 +128,8 @@ static int dm2_runtime_attack_creature_at(
     DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
     int map, int x, int y, int target_x, int target_y,
     int16_t creature_record, int allow_wield_action);
+static uint16_t dm2_runtime_record_rd16(const DM2_V1_RuntimeState *rt,
+                                        const uint8_t *p);
 
 static void dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
@@ -661,9 +663,87 @@ static void dm2_runtime_apply_entered_db1_teleporter(
 }
 
 /* SKProject's stair query resolves a map by shared world coordinates rather
- * than by a made-up level +/- 1 rule.  Keep the descriptor/cursor ownership
- * local to the move so every edition uses the authenticated DUNGEON.DAT
- * offsets and dimensions. */
+ * than by a made-up level +/- 1 rule. DM_LOCATE_OTHER_LEVEL also reads the
+ * candidate tile and rejects a type-5 teleporter whose tile record has bit 0
+ * set. Build descriptors for the exact world coordinate being resolved so
+ * that the generic source helper receives those live map facts. */
+static int dm2_runtime_build_locate_map_descriptors(
+    DM2_V1_RuntimeState *rt,
+    const DM2_V1_DungeonData *dungeon,
+    int source_map,
+    int source_x,
+    int source_y,
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS])
+{
+    if (!rt || !dungeon || !maps || source_map < 0 ||
+        source_map >= dungeon->level_count ||
+        dungeon->level_count > DM2_V1_MAX_LEVELS)
+        return 0;
+
+    memset(maps, 0, sizeof(*maps) * DM2_V1_MAX_LEVELS);
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        int local_x = source_x + dungeon->map_offset_x[source_map] -
+                      dungeon->map_offset_x[map];
+        int local_y = source_y + dungeon->map_offset_y[source_map] -
+                      dungeon->map_offset_y[map];
+        int tile = dm2_v1_dungeon_c_map_get_tile_value(
+            dungeon, map, local_x, local_y);
+        uint8_t tile_type = 7u;
+
+        maps[map].map_id = (uint8_t)map;
+        maps[map].level = dungeon->map_level_number[map];
+        maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
+        maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
+        /* SKProject's DM_LOCATE_OTHER_LEVEL bounds local coordinates at
+         * RawColumn/RawRow + 1 (SKULLWIN/c_map.cpp:423-444). These raw
+         * dimensions are the decoded counts minus one, matching the source
+         * map header fields. */
+        maps[map].width = (int16_t)(dungeon->level_widths[map] - 1);
+        maps[map].height = (int16_t)(dungeon->level_heights[map] - 1);
+        if (tile < 0) {
+            maps[map].tile_type_at_local = tile_type;
+            continue;
+        }
+        tile_type = (uint8_t)((tile >> 5) & 0x07);
+        maps[map].tile_type_at_local = tile_type;
+
+        if (tile_type == 5u) {
+            int link = dm2_v1_dungeon_get_first_thing(
+                dungeon, map, local_x, local_y);
+            int record_size = 0;
+            const uint8_t *record = NULL;
+
+            if (link < 0 || link == DM2_THING_END_MARKER ||
+                link == DM2_THING_NULL_MARKER) {
+                maps[map].teleporter_record_active = 1u;
+                continue;
+            }
+            if (rt->record_pools_valid) {
+                int db = dm2_v1_record_handle_pool((int16_t)link);
+                if (db >= 0) {
+                    record = dm2_v1_record_pool_address(
+                        &rt->record_pools, (int16_t)link);
+                    record_size = dm2_v1_record_pool_record_size(db);
+                }
+            }
+            if (!record || record_size < 6) {
+                record = dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)link, NULL, NULL, &record_size);
+            }
+            if (!record || record_size < 6) {
+                maps[map].teleporter_record_active = 1u;
+                continue;
+            }
+            maps[map].teleporter_record_active = (uint8_t)(
+                (rt->record_pools_valid
+                    ? dm2_runtime_record_rd16(rt, record + 4)
+                    : dm2_v1_dungeon_read_record_u16(dungeon, record + 4))
+                & 0x0001u);
+        }
+    }
+    return 1;
+}
+
 static int dm2_runtime_resolve_entered_stairs(
     DM2_V1_DungeonData *dungeon, int source_map, int source_x, int source_y,
     int *out_map, int *out_x, int *out_y)
@@ -687,18 +767,9 @@ static int dm2_runtime_resolve_entered_stairs(
             dungeon, source_map, source_x, source_y) != 3)
         return 0;
 
-    memset(maps, 0, sizeof(maps));
-    for (int map = 0; map < dungeon->level_count; ++map) {
-        maps[map].map_id = (uint8_t)map;
-        maps[map].level = dungeon->map_level_number[map];
-        maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
-        maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
-        maps[map].width = (int16_t)dungeon->level_widths[map];
-        maps[map].height = (int16_t)dungeon->level_heights[map];
-        /* The locator only needs this field to reject a known teleporter
-         * target. The actual destination tile is revalidated below. */
-        maps[map].tile_type_at_local = 0;
-    }
+    if (!dm2_runtime_build_locate_map_descriptors(
+            &g_dm2_runtime, dungeon, source_map, source_x, source_y, maps))
+        return -1;
     delta = (raw & 0x04) ? -1 : 1;
     {
         int target_level = (int)dungeon->map_level_number[source_map] + delta;
@@ -753,16 +824,9 @@ static int dm2_runtime_resolve_entered_pit(
             dungeon, source_map, source_x, source_y) != 2 ||
         (raw & 0x08) == 0 || (raw & 0x01) != 0)
         return 0;
-    memset(maps, 0, sizeof(maps));
-    for (int map = 0; map < dungeon->level_count; ++map) {
-        maps[map].map_id = (uint8_t)map;
-        maps[map].level = dungeon->map_level_number[map];
-        maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
-        maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
-        maps[map].width = (int16_t)dungeon->level_widths[map];
-        maps[map].height = (int16_t)dungeon->level_heights[map];
-        maps[map].tile_type_at_local = 0;
-    }
+    if (!dm2_runtime_build_locate_map_descriptors(
+            &g_dm2_runtime, dungeon, source_map, source_x, source_y, maps))
+        return -1;
     /* DM2_query_19f0_124b's open-pit branch uses direction=1 and
      * flags=0x8; the locator delta is the same source level step. */
     {
