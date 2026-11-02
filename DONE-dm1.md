@@ -4481,3 +4481,10 @@ not used as its final verification.
   IIGS editions passed twice. The test controls party location to isolate the
   original item-use transaction; it does not verify the campaign route or
   complete IIGS gameplay parity.
+
+- 2026-11-02: Tightened the DM1 PC3.4 F0179 aspect-update input contract to
+  accept only `-1` for ReDMCSB `GROUP.C:2074` C32 group-wide updates; values
+  below `-1` now fail before mutating aspects, RNG, or the result receipt.
+  The focused F0179/F0180/F0183/F0184 regression passed with strict compiler
+  warnings. This guards malformed compatibility calls and does not claim
+  attack-event trace or gameplay parity.
