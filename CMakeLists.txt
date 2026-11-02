@@ -4546,7 +4546,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;startup;intro;scan;capture;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
-        TIMEOUT 35
+        TIMEOUT 90
     )
     add_test(
         NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media

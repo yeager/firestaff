@@ -14,6 +14,7 @@ python3 - "$app" "$archive" "${FIRESTAFF_LOCALE_DIR:-$script_dir/../po}" <<'PY'
 import hashlib
 import os
 import pathlib
+import re
 import shutil
 import struct
 import subprocess
@@ -35,6 +36,7 @@ try:
         "FIRESTAFF_AUTOTEST": "1",
         "FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN": "1",
         "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR": str(capture_dir),
+        "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_AFTER_PROGRESS": "1",
         "FIRESTAFF_LOCALE_DIR": locale_dir,
         "SDL_VIDEODRIVER": "dummy",
         "SDL_AUDIODRIVER": "dummy",
@@ -43,7 +45,7 @@ try:
         result = subprocess.run(
             [app, "--lang", "sv", "--data-dir", str(data_root),
              "--debug", "--verbose"],
-            env=env, capture_output=True, text=True, timeout=25)
+            env=env, capture_output=True, text=True, timeout=60)
     except subprocess.TimeoutExpired as error:
         for output in (error.stdout, error.stderr):
             if output:
@@ -59,6 +61,11 @@ try:
             "autotest startup scan capture progress=" not in trace or
             "autotest injected window-close during startup intro asset scan" not in trace):
         raise SystemExit(f"FAIL: no real startup scan frame was captured\n{trace}")
+    captured_progress = re.search(
+        r"autotest startup scan capture progress=(\d+)%", trace)
+    if not captured_progress or not 0 < int(captured_progress.group(1)) < 100:
+        raise SystemExit(
+            f"FAIL: startup scan capture did not show in-progress work\n{trace}")
 
     with captures[0].open("rb") as image:
         header = image.read(54)
@@ -81,9 +88,18 @@ try:
     if track_pixel_bgr != bytes((66, 63, 62)):
         raise SystemExit(
             f"FAIL: centered progress track pixel changed: {track_pixel_bgr!r}")
+    fill_pixel_offset = 54 + 235 * row_stride + 52 * 3
+    with captures[0].open("rb") as image:
+        image.seek(fill_pixel_offset)
+        fill_pixel_bgr = image.read(3)
+    if fill_pixel_bgr != bytes((207, 202, 200)):
+        raise SystemExit(
+            f"FAIL: nonzero scan progress was not drawn into the bar: {fill_pixel_bgr!r}")
     if hashlib.sha256(archive.read_bytes()).digest() != before:
         raise SystemExit("FAIL: original DM1 archive changed during scan")
-    print("PASS: authentic DM1 scan produced a 480x270 intro frame and closed cleanly")
+    print(
+        "PASS: authentic DM1 scan drew a nonzero progress bar in its "
+        "480x270 intro frame and closed cleanly")
 finally:
     shutil.rmtree(root, ignore_errors=True)
 PY

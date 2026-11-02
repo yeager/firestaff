@@ -1355,13 +1355,19 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
             {
                 const char* captureDir = getenv(
                     "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_DIR");
+                const char* captureAfterProgress = getenv(
+                    "FIRESTAFF_AUTOTEST_STARTUP_SCAN_CAPTURE_AFTER_PROGRESS");
                 const size_t percent = snap.totalSteps > 0U
                     ? (snap.completedSteps * 100U +
                        snap.currentStepPercent) / snap.totalSteps
                     : 0U;
+                const int progressCaptureReady =
+                    !captureAfterProgress ||
+                    strcmp(captureAfterProgress, "1") != 0 || percent > 0U;
                 if (!scanCaptureWritten && getenv("FIRESTAFF_AUTOTEST") &&
                     captureDir && captureDir[0] && !snap.complete &&
-                    !snap.cancelled && percent < 100U) {
+                    !snap.cancelled && percent < 100U &&
+                    progressCaptureReady) {
                     char capturePath[1024];
                     if (M11_Screenshot_CaptureRGBA(
                             rgba, M12_STARTUP_INTRO_WIDTH,
