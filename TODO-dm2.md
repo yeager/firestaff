@@ -1,3 +1,11 @@
+2026-11-02 SKProject `DRAW_ITEM_IN_HAND`:
+DOS and SPX v4/v5 resolve the hand item frame, copy its local palette and
+blit a 4-bpp icon into the hand record's bitmap using source dimensions. DOS
+uses a different GDAT parameter order from SPX v4/v5. Firestaff now issues
+the source palette/blit operations through item-record callbacks with an
+optional edition-aware image resolver. No production DM2 caller binds the
+helper to live hand-record targets; all four variant rows remain PARTIAL.
+
 2026-11-02 SKProject `GET_ITEM_ORDER_IN_CONTAINER`:
 The asset-loader receipt reads edition GDAT container entry 0x40, parses the
 digit ranges and J-prefixed +0x100 IDs, then resolves them through the ordered

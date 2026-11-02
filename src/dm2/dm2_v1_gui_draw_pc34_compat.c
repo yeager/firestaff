@@ -1161,15 +1161,50 @@ int8_t dm2_v1_guidraw_2405_014a(
 
 /* ================================================================
  * 32. DRAW_ITEM_IN_HAND
- *     c_gui_draw.cpp:1516
+ *     SKWINDOS/dm2byb.cpp:817-825, SPX v4 skguidrw.cpp:3328-3354,
+ *     SPX v5 skguidr5.cpp:1517-1531
  * ================================================================ */
 
 void dm2_v1_draw_item_in_hand(
     void *item_record,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !item_record) return;
-    /* Delegates to cls1/cls2 queries and blit callbacks */
+    if (!cb || !item_record || !cb->get_item_record_id ||
+        !cb->get_item_record_bitmap || !cb->get_item_record_palette ||
+        !cb->query_cls1 || !cb->query_cls2 ||
+        !cb->query_gdat_dbspec_word || !cb->copy_small_palette ||
+        !cb->blit || !cb->get_bmp_width ||
+        !cb->get_v1d271a || !cb->get_v1d271c)
+        return;
+
+    uint16_t object_id = cb->get_item_record_id(ctx, item_record);
+    void *dstbmp = cb->get_item_record_bitmap(ctx, item_record);
+    void *dstpalette = cb->get_item_record_palette(ctx, item_record);
+    if (object_id == 0xffffu || !dstbmp || !dstpalette) return;
+
+    int8_t cls1 = cb->query_cls1(ctx, object_id);
+    int8_t cls2 = cb->query_cls2(ctx, object_id);
+    int8_t icon = dm2_v1_guidraw_2405_014a(object_id, -1, 1, cb, ctx);
+    if (icon < 0) return;
+
+    void *srcpalette = NULL;
+    void *srcbmp = cb->query_item_hand_image
+        ? cb->query_item_hand_image(ctx, object_id, cls1, cls2, icon,
+                                    &srcpalette)
+        : (cb->query_gdat_image
+            ? cb->query_gdat_image(ctx, cls1, cls2, icon) : NULL);
+    if (!cb->query_item_hand_image && cb->query_gdat_palette)
+        srcpalette = cb->query_gdat_palette(ctx, cls1, cls2, icon);
+    int16_t src_width = srcbmp ? cb->get_bmp_width(ctx, srcbmp) : 0;
+    int16_t width = cb->get_v1d271a(ctx);
+    int16_t height = cb->get_v1d271c(ctx);
+    if (!srcbmp || !srcpalette || src_width <= 0 || width <= 0 || height <= 0)
+        return;
+
+    cb->copy_small_palette(ctx, dstpalette, srcpalette);
+    DM2_V1_Rect rect = {0, 0, width, height};
+    cb->blit(ctx, srcbmp, dstbmp, &rect, 0, 0, src_width, width,
+             -1, 0, 4, 4, NULL);
 }
 
 /* ================================================================

@@ -319,6 +319,13 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     int16_t (*get_strdat_gfxstrw3)(void *ctx);
     /* Returns the object ID in a container slot, or -1 when it is empty. */
     int16_t (*get_container_item)(void *ctx, int32_t container, int32_t slot);
+    uint16_t (*get_item_record_id)(void *ctx, void *item_record);
+    void *(*get_item_record_bitmap)(void *ctx, void *item_record);
+    void *(*get_item_record_palette)(void *ctx, void *item_record);
+    /* Optional edition-aware resolver for DRAW_ITEM_IN_HAND's GDAT tuple. */
+    void *(*query_item_hand_image)(void *ctx, uint16_t object_id,
+                                   int8_t cls1, int8_t cls2, int8_t icon,
+                                   void **palette_out);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================
