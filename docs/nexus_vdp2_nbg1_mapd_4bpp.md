@@ -171,6 +171,12 @@ reconstruction consistent with the row-local NBG0 state; it does not verify
 the active-layer set for every Ymir layer or show that Firestaff can decode the
 same candidates from raw VDP1/VDP2 snapshots.
 
+As a counterfactual, removing the NBG0 candidate while keeping the other
+captured candidates creates 16,179 RGB mismatches against the same Ymir pass.
+This shows that the candidate contributes visible color to this reconstruction;
+it does not resolve the row-state/register-snapshot disagreement or prove the
+complete active-layer set.
+
 The separately retained VDP2 register snapshot carrying the same frame/serial
 label has big-endian `BGON=0x0002` at offset `0x20` (snapshot SHA-256
 `774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`), while

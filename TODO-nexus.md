@@ -57,6 +57,9 @@ The layer trace also lacks enabled flags for every output layer, so its exact
 RGB reconstruction remains candidate-layer evidence, not a full active-layer
 proof. Obtain or reproduce a same-pass per-layer enable trace and resolve the
 snapshot timing before treating this pass as a complete Ymir compositor oracle.
+Removing layer 2 from the candidate stack produces 16,179 RGB mismatches against
+the authentic final pass, confirming its visible effect in this reconstruction
+without resolving the layer-enable discrepancy.
 See [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
 
 Reproduce the 163-pass cross-check with the authentic external capture:

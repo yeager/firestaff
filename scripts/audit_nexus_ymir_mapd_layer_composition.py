@@ -139,6 +139,31 @@ def rgb_from_layer_color(color: int) -> tuple[int, int, int]:
     return color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF
 
 
+def compose_pixel(rows: dict[tuple[int, int], tuple[tuple[int, ...], bytes, bytes]],
+                  y: int, x: int, ratio: int, *, nbg0_enabled: bool,
+                  exclude_nbg0: bool = False) -> tuple[tuple[int, int, int], int]:
+    candidates: list[tuple[int, int, int, int]] = []
+    for layer in range(6):
+        if layer == 2 and (not nbg0_enabled or exclude_nbg0):
+            continue
+        colors, priorities, special = rows[y, layer]
+        priority = priorities[x]
+        if priority:
+            candidates.append((priority, layer, colors[x], special[x]))
+    # Ymir orders higher priority first and lower layer id first on ties.
+    candidates.sort(key=lambda value: (-value[0], value[1]))
+    top = candidates[0] if candidates else (0, 7, 0, 0)
+    under = candidates[1] if len(candidates) > 1 else (0, 7, 0, 0)
+    color = rgb_from_layer_color(top[2])
+    if top[1] == 2 and top[3]:
+        lower = rgb_from_layer_color(under[2])
+        color = tuple(
+            lower[channel] + (((color[channel] - lower[channel]) * ratio) >> 5)
+            for channel in range(3)
+        )
+    return color, top[1]
+
+
 def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
           reference_path: Path, output_path: Path | None) -> dict[str, object]:
     for key, path in (("layers", layers_path), ("render_state", render_state_path),
@@ -158,34 +183,35 @@ def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
     top_counts = [0] * LAYER_COUNT
     pair_counts: dict[str, int] = {}
     special_calculation_pixels = 0
+    nbg0_candidate_removal_mismatches = 0
     for y in range(HEIGHT):
         for x in range(WIDTH):
-            candidates: list[tuple[int, int, int, int]] = []
-            for layer in range(6):
-                if layer == 2 and not nbg0_enabled[y]:
-                    continue
-                colors, priorities, special = rows[y, layer]
-                priority = priorities[x]
-                if priority:
-                    candidates.append((priority, layer, colors[x], special[x]))
-            # Ymir orders higher priority first and lower layer id first on ties.
-            candidates.sort(key=lambda value: (-value[0], value[1]))
-            top = candidates[0] if candidates else (0, 7, 0, 0)
-            under = candidates[1] if len(candidates) > 1 else (0, 7, 0, 0)
-            color = rgb_from_layer_color(top[2])
-            if top[1] == 2 and top[3]:
-                lower = rgb_from_layer_color(under[2])
-                ratio = ratios[y]
-                color = tuple(
-                    lower[channel] + (((color[channel] - lower[channel]) * ratio) >> 5)
-                    for channel in range(3)
-                )
+            color, top_layer = compose_pixel(
+                rows, y, x, ratios[y], nbg0_enabled=nbg0_enabled[y]
+            )
+            if top_layer == 2 and rows[y, 2][2][x]:
                 special_calculation_pixels += 1
-            top_counts[top[1] if top[1] < LAYER_COUNT else 6] += 1
-            pair = f"{top[1]}>{under[1]}"
+            top_counts[top_layer if top_layer < LAYER_COUNT else 6] += 1
+            candidates = sorted(
+                (
+                    (rows[y, layer][1][x], layer)
+                    for layer in range(6)
+                    if rows[y, layer][1][x] and (layer != 2 or nbg0_enabled[y])
+                ),
+                key=lambda value: (-value[0], value[1]),
+            )
+            under_layer = candidates[1][1] if len(candidates) > 1 else 7
+            pair = f"{top_layer}>{under_layer}"
             pair_counts[pair] = pair_counts.get(pair, 0) + 1
             offset = (y * WIDTH + x) * 4
             output[offset : offset + 4] = bytes((*color, 0xFF))
+            without_nbg0, _ = compose_pixel(
+                rows, y, x, ratios[y], nbg0_enabled=nbg0_enabled[y],
+                exclude_nbg0=True,
+            )
+            nbg0_candidate_removal_mismatches += (
+                bytes(without_nbg0) != reference[offset : offset + 3]
+            )
 
     exact = 0
     for pixel in range(PIXELS):
@@ -200,6 +226,7 @@ def audit(layers_path: Path, render_state_path: Path, receipt_path: Path,
         "exact_rgb_pixels": exact,
         "rgb_mismatches": PIXELS - exact,
         "special_color_calculation_pixels": special_calculation_pixels,
+        "nbg0_candidate_removal_rgb_mismatches": nbg0_candidate_removal_mismatches,
         "nbg0_enabled_rows": sum(nbg0_enabled),
         "rbg1_enabled_rows": 0,
         "top_layer_pixels_by_id": top_counts,
