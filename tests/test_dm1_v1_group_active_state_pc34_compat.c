@@ -67,6 +67,21 @@ int main(void)
                      "F0179_GROUP_GetCreatureAspectUpdateTime") == 0,
           "F0179 receipt is source named");
 
+    /* ReDMCSB GROUP.C:2074 derives -1 only from C32; reject other negative
+     * indices instead of treating malformed input as another group update. */
+    active_groups[0].aspect[0] = 0x21;
+    active_groups[0].aspect[1] = 0x32;
+    rng.seed = 17u;
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, -2, 0,
+              1000u, &rng, &aspect_receipt) == 0,
+          "F0179 rejects negative indices other than the C32 group sentinel");
+    check(active_groups[0].aspect[0] == 0x21 &&
+              active_groups[0].aspect[1] == 0x32 && rng.seed == 17u &&
+              !aspect_receipt.valid,
+          "F0179 rejects malformed negative indices without side effects");
+
+    active_groups[0].aspect[0] = 0;
     active_groups[0].aspect[1] = 0;
     rng.seed = 11u;
     check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(

@@ -83,7 +83,7 @@ int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
     if (!active_group || !group || !creature_info || !rng || !out_receipt ||
         active_group->groupThingIndex < 0 || group->count > 3 ||
         group->creatureType > 26 ||
-        creature_index > 3 || (creature_index >= 0 &&
+        creature_index < -1 || creature_index > 3 || (creature_index >= 0 &&
             creature_index > (int)group->count)) {
         return 0;
     }
