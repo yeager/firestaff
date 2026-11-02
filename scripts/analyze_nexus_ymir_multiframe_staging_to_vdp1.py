@@ -84,6 +84,8 @@ def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
             continue
         frame = int(row["vdp1_frame"])
         address = int(row["address"], 16)
+        if int(row["width"]) != 4:
+            raise ValueError(f"{run}: staging coordinate write is not four bytes: {row}")
         slot = WRITE_PCS[pc]
         base = address & ~0xF
         if address != base + slot * 4:
@@ -91,7 +93,10 @@ def analyze(dumps: Path, run: str) -> tuple[dict, list[dict[str, object]]]:
         key = (frame, base)
         if slot in staged[key]:
             raise ValueError(f"{run}: duplicate staging slot at frame {frame}, {base:#x}")
-        staged[key][slot] = int(row["value"], 16)
+        value = int(row["value"], 16)
+        if not 0 <= value <= 0xFFFFFFFF:
+            raise ValueError(f"{run}: staging coordinate value is outside 32-bit range: {row}")
+        staged[key][slot] = value
 
     commands: dict[int, list[tuple[int, tuple[tuple[int, int], ...]]]] = defaultdict(list)
     for row in command_rows:
