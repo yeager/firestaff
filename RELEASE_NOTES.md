@@ -7,8 +7,9 @@
 
 ## Developer changes
 
-- `DM2 container rendering helpers`: change slot and held-item drawing to resolve authentic item IDs, classes, frames and icon layers, and block guessed placeholder icons when source data is missing. A production game-view caller remains unimplemented.
-- `DM2 container and moneybox regressions`: add source-callback, record-pool, held-item, carried-weight, save/load, real-media and FM Towns checks for supported survey and inventory paths.
+- `DM1 creature-group input validation`: reject malformed negative creature indices before changing live aspect state or consuming RNG; the valid source sentinel remains supported.
+- `DM2 item survey helpers`: add source-derived scroll, class-image, weight, container/moneybox and stat-bar branches, and resolve container slots from authentic records instead of guessed icons. Production platform callbacks and complete game-view bindings remain open.
+- `DM1/DM2 regression coverage`: add authentic-media checks for Apple IIGS startup versions and DM2 record pools, held items, carried weight, save/load, moneybox paths and FM Towns behavior.
 - `Nexus VDP1 capture tools`: change source-bound frame replay to validate unique DGN material joins for authentic Saturn captures, and keep retail frame evidence external to the repository.
 - `Theron's Quest verification records`: update the native spawn receipt and Japanese Akutuba capture documentation to separate verified source evidence from unverified campaign and presentation behavior.
 - `DM2 parity documentation`: update source inventories, named-symbol audits and active TODO records to mark renderer bindings, non-DOS transactions and platform parity as incomplete.
