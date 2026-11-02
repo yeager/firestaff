@@ -937,6 +937,36 @@ archives remain unchanged. These are bounded launcher, CLI, and first-runtime
 checks; they do not establish native display or input parity, complete
 gameplay, or visual parity.
 
+### 2026-11-02 clean-main five-game startup and menu recheck
+
+Firestaff was configured and fully built from the clean checkout at
+`98e00fab1a3201d062d699caafbbcb866f31d1e6` in a separate build directory.
+Using the installed original media under `~/.firestaff/data/`, all seven
+focused real-media tests passed (669.20 seconds total):
+
+- `m12_main_menu_game_selection_real_media` (416.63 s) selected DM1, CSB,
+  DM2, Nexus, and Theron's Quest through the main menu, using the tested
+  keyboard and mouse paths, then checked each authentic source handoff.
+- `firestaff_cli_startup_diagnostics_real_media` (199.14 s) checked direct
+  CLI source selection, platform defaults, debug/verbose records, and
+  no-game menu discovery for the installed game data.
+- The five `firestaff_*_scan_debug_localization_real_media` tests passed for
+  DM1, CSB, DM2, Nexus, and Theron, including Swedish scan labels and saved or
+  explicit locale settings.
+
+The two unsupported-platform CLI tests also passed (2/2): invalid game and
+platform pairs were rejected before renderer startup. The shell tests stage
+links or temporary copies for their cases; original game archives remain
+outside the repository and are checked for mutation.
+
+This verifies the tested CLI and main-menu routes only. Nexus still stops at
+the authentic Saturn title gate because its native title/menu composition
+does not have the required source-bound capture receipt. Theron is admitted to
+its tested native startup route, but a source-bound, state-driven dungeon
+viewport is still open. SDL dummy-driver checks do not prove native display,
+physical input, audible output, or complete gameplay. No visual parity claim
+is made.
+
 ### 2026-10-27 five-game picker check
 
 The Firestaff executable was rebuilt from the working tree based on source
