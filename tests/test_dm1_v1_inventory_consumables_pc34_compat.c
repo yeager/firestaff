@@ -202,7 +202,7 @@ int main(void)
         early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = 249;
         ok &= expect_int("S1.0 ROS potion accepted",
                          dm1_inventory_consume_potion_pc34(&early, 6, 100, 0, 0, &r), 1);
-        ok &= expect_int("S1.0 F0348 uses uncapped positive delta",
+        ok &= expect_int("S1.0 F0348 caps the full positive delta at 255",
                          early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 255);
 
         early = base_champion();
