@@ -10490,6 +10490,38 @@ int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
     return 1;
 }
 
+int dm2_v1_skproject_add_cache_hash_with_mement(
+    DM2_V1_SkprojectCacheState *cache_state,
+    DM2_V1_SkprojectMementState *mement_state,
+    uint32_t cache_hash,
+    uint32_t game_tick,
+    uint16_t *out_cache_index)
+{
+    uint16_t cache_index;
+    int result;
+
+    if (!cache_state || !mement_state || !out_cache_index) return -1;
+    if (mement_state->last_tick != game_tick &&
+        !dm2_v1_skproject_3e74_44ad_reset_usage_counters(
+            mement_state, game_tick, 0)) {
+        return -1;
+    }
+    result = dm2_v1_skproject_add_cache_hash(
+        cache_state, cache_hash, &cache_index);
+    if (result < 0) return result;
+    *out_cache_index = cache_index;
+    if (result == 1) {
+        uint16_t mementi = dm2_v1_skproject_query_mementi_from(
+            mement_state, (uint16_t)(cache_index | 0x8000u));
+        if (mementi != DM2_V1_SKPROJECT_MEMENT_NONE &&
+            !dm2_v1_skproject_3e74_48c9_touch_mement(
+                mement_state, mementi, 0)) {
+            return -1;
+        }
+    }
+    return result;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
