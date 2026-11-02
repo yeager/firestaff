@@ -82,6 +82,11 @@ try:
         captures = list(capture_dir.glob("*.bmp"))
         if result.returncode != 0:
             raise SystemExit(f"FAIL: {label} app exited {result.returncode}\n{trace}")
+        if ('startup game=none mode=menu' not in trace or
+                'startup-scan-intro language-index=1 '
+                'label="SÖKER EFTER SPELDATA' not in trace):
+            raise SystemExit(
+                f"FAIL: {label} default no-game intro did not show its Swedish scan label\n{trace}")
         if (len(captures) != 1 or
                 "autotest startup scan capture progress=" not in trace or
                 "autotest injected window-close during startup intro asset scan" not in trace):

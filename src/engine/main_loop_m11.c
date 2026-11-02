@@ -1118,6 +1118,7 @@ static void m11_debug_log_launch_selection(
 }
 
 static int g_m11_debug_startup_detail = 0;
+static int g_m11_debug_intro_scan_label_logged = 0;
 
 typedef struct {
     int hasLastProgress;
@@ -1131,6 +1132,7 @@ static M11_DebugScanProgressTrace g_m11_debug_scan_progress_trace;
 static void m11_debug_reset_scan_progress_trace(void) {
     memset(&g_m11_debug_scan_progress_trace, 0,
            sizeof(g_m11_debug_scan_progress_trace));
+    g_m11_debug_intro_scan_label_logged = 0;
 }
 
 static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress,
@@ -1251,6 +1253,13 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
         snprintf(label, sizeof(label), "%s  %zu%%",
                  M12_StartupMenu_TranslateForLocale(languageIndex,
                                                     "SCANNING GAME DATA"), pct);
+    }
+    if (g_m11_debug_startup_detail &&
+        !g_m11_debug_intro_scan_label_logged) {
+        fprintf(stderr,
+                "firestaff: startup-scan-intro language-index=%d label=\"%s\"\n",
+                languageIndex, label);
+        g_m11_debug_intro_scan_label_logged = 1;
     }
     fontSize = M11_UIScale_Apply(13);
     while (fontSize > 8 &&
