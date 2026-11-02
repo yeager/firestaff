@@ -135,6 +135,29 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
     int original_ymir_capture_verified,
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt);
 
+/* Authentic MAPD NBG0 bitmap row state exported by Ymir --debug. These are
+ * capture-time inputs because end-of-pass registers do not contain the
+ * scroll accumulators used by every rendered scanline. */
+typedef struct {
+    int32_t scroll_h_11_8;
+    int32_t scroll_v_11_8;
+    int32_t scroll_inc_h_11_8;
+    int32_t scroll_inc_v_11_8;
+    int32_t fractional_scroll_x_11_8;
+    int32_t fractional_scroll_y_11_8;
+} Nexus_V1_Vdp2Nbg0MapdRowState;
+
+int nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+    Nexus_V1_Vdp2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    const Nexus_V1_Vdp2Nbg0MapdRowState *row_state,
+    size_t row_state_count,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt);
+
 typedef struct {
     int valid;
     int capture_only;

@@ -780,6 +780,102 @@ static uint32_t ymir_rgb555_shift(uint16_t value)
     return UINT32_C(0xff000000) | (red << 16U) | (green << 8U) | blue;
 }
 
+static int32_t ymir_floor_11_8(int64_t value)
+{
+    if (value >= 0) return (int32_t)(value / 256);
+    return (int32_t)(-((-value + 255) / 256));
+}
+
+int nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+    Nexus_V1_Vdp2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    const Nexus_V1_Vdp2Nbg0MapdRowState *row_state,
+    size_t row_state_count,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt receipt;
+    uint16_t ramctl;
+    size_t y;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.bitmap_vram_offset = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!plane || !vdp2_vram || !vdp2_cram || !vdp2_registers || !row_state ||
+        vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        vdp2_registers_size < 0x120U || row_state_count !=
+            NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT ||
+        register_byte_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+        !original_ymir_capture_verified)
+        return 0;
+#define MAPD_NBG0_REG(offset) read_register16_ordered( \
+        vdp2_registers, (offset), register_byte_order)
+    ramctl = MAPD_NBG0_REG(NEXUS_V1_VDP2_TILEMAP_RAMCTL_OFFSET);
+    if (MAPD_NBG0_REG(0x00U) != 0x8000U ||
+        MAPD_NBG0_REG(0x20U) != 0x0002U ||
+        MAPD_NBG0_REG(0x28U) != 0x0013U ||
+        MAPD_NBG0_REG(0x2aU) != 0x0002U ||
+        MAPD_NBG0_REG(0x2cU) != 0U || MAPD_NBG0_REG(0x3cU) != 0U ||
+        MAPD_NBG0_REG(0xe4U) != 0U || (ramctl >> 12U) != 0U ||
+        MAPD_NBG0_REG(0xecU) != 0x0043U ||
+        MAPD_NBG0_REG(0xf8U) != 0x0400U) {
+        return 0;
+    }
+    for (y = 0U; y < row_state_count; ++y) {
+        if (row_state[y].scroll_h_11_8 < 0 ||
+            row_state[y].scroll_v_11_8 < 0 ||
+            row_state[y].scroll_inc_h_11_8 < 0 ||
+            row_state[y].scroll_inc_v_11_8 < 0 ||
+            row_state[y].fractional_scroll_x_11_8 < 0 ||
+            row_state[y].fractional_scroll_y_11_8 < 0) {
+            return 0;
+        }
+    }
+
+    memset(plane, 0, sizeof(*plane));
+    receipt.registers_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.nbg0_bitmap_mode = 1;
+    receipt.colour_code_256 = 1;
+    receipt.bitmap_vram_offset = 0;
+    for (y = 0U; y < NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++y) {
+        unsigned int x;
+        int64_t source_y_fixed =
+            (int64_t)row_state[y].fractional_scroll_y_11_8 +
+            row_state[y].scroll_v_11_8;
+        unsigned int source_y = (unsigned int)ymir_floor_11_8(source_y_fixed) & 511U;
+        for (x = 0U; x < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH; ++x) {
+            int64_t source_x_fixed =
+                (int64_t)row_state[y].fractional_scroll_x_11_8 +
+                row_state[y].scroll_h_11_8 +
+                (int64_t)x * row_state[y].scroll_inc_h_11_8;
+            unsigned int source_x =
+                (unsigned int)ymir_floor_11_8(source_x_fixed) & 511U;
+            size_t destination = y * NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH + x;
+            uint8_t index = vdp2_vram[(size_t)source_y * 512U + source_x];
+            plane->index_buffer[destination] = index;
+            if (index == 0U) {
+                ++receipt.transparent_pixels;
+            } else {
+                plane->rgba_buffer[destination] = ymir_rgb555_shift(
+                    read_vram16_ordered(vdp2_cram + (size_t)index * 2U,
+                                        register_byte_order));
+                ++receipt.written_pixels;
+            }
+        }
+    }
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef MAPD_NBG0_REG
+    return 1;
+}
+
 static uint8_t ymir_sprite_priority(const uint8_t *registers,
                                     unsigned int priority_index)
 {
