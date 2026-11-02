@@ -611,6 +611,24 @@ The frame-8037 evidence and reproduction instructions are in
 Both bundles are stored outside this repository. To inspect them, mount the
 external evidence volume and open the listed paths relative to its root.
 
+The 2026-11-02 cold-boot capture adds a complete, zero-drop VDP2 event timeline
+from initial memory through the frame-8037 Japanese menu snapshots. A separate
+hash-pinned verifier checks the `TITLE.BIN` span at file offset `0xb8a2`:
+frame 7716 writes 608 unique bytes at NBG0 VRAM offset `0xd404`, every value
+matches the retail source, and all 295 nonzero source bytes are present. The
+first exact 921-byte source state occurs after event sequence 4,075,865; final
+WorkRAMH and frame-8037 VRAM both retain the exact span. Reproduce with
+`scripts/verify_nexus_title_nbg0_full_run_source.py`, the external capture at
+`firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/`, and the
+hash-verified Japanese CUE. The event trace SHA-256 is
+`2829b136bff432ea4ec5be0abefd4952c39667145c69940a25b436dce02acee7`.
+
+This proves one row's storage and write values across the captured run. It does
+not identify the complete NBG0 bitmap producer, prove the SH-2 read values at
+transfer time, or bind the row to visible NBG0 layer pixels. The frame-8037
+layer-output receipt remains incomplete, so title composition parity is still
+unverified.
+
 It does not identify the full title background or prove which pixels survive
 VDP1/VDP2 composition on the screen. Full native title presentation and
 Firestaff renderer parity remain unproven.

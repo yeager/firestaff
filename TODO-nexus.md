@@ -57,6 +57,24 @@ The capture proves the memory timeline and snapshot association for this menu
 run. It does not establish retail source ownership, layer output, or composed
 pixel parity; keep semantic admission blocked.
 
+A hash-pinned follow-up now verifies the Japanese `TITLE.BIN` span at file
+offset `0xb8a2` across that same complete event timeline. In frame 7716, all
+608 writes within the 921-byte destination span match their retail source byte,
+including every one of its 295 nonzero bytes. The span first becomes an exact
+retail-source match after event sequence 4,075,865; its final WorkRAMH and
+frame-8037 VRAM snapshots also match. Reproduce with:
+
+```sh
+python3 scripts/verify_nexus_title_nbg0_full_run_source.py \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/dumps \
+  --cue "/Volumes/Extern-disk/FirestaffUserData/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
+This joins one authentic retail row through the frame-7716 write burst to its
+final storage. It does not identify the complete 131,072-byte bitmap producer,
+the active palette owner, the SH-2 source read at transfer time, or the visible
+layer consumer. Production admission remains blocked.
+
 ## Reconcile MAPD frame-891 layer enable state
 
 The hash-pinned Ymir render-state trace has 224 target-pass rows for VDP1 frame
