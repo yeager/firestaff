@@ -10516,6 +10516,17 @@ wall_mecha_reject:
     return 0;
 }
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    int map;
+} DM2_RuntimeFloorCreatureGeneratorContext;
+
+static int16_t dm2_runtime_floor_generator_allocate(
+    void *context, uint16_t creature_type, uint16_t health_multiplier,
+    uint16_t direction, uint16_t x, uint16_t y);
+static int dm2_runtime_floor_generator_noise(
+    void *context, int map, int x, int y, uint32_t game_tick);
+
 static int dm2_runtime_actuate_floor_mecha_timer(
     void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt)
@@ -10532,6 +10543,8 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     DM2_RuntimeCreatureKillerContext creature_killer_ctx;
     DM2_V1_ResurrectCallbacks resurrect_cb;
     DM2_RuntimeResurrectContext resurrect_ctx;
+    DM2_RuntimeFloorCreatureGeneratorContext generator_ctx;
+    DM2_V1_CreatureGeneratorCallbacks generator_cb;
     DM2_V1_Party party_backup;
     uint32_t inventory_backup[4][30];
     DM2_V1_DropRng rng_backup;
@@ -10620,6 +10633,11 @@ static int dm2_runtime_actuate_floor_mecha_timer(
     memset(&event, 0, sizeof(event));
     dm2_runtime_prepare_resurrect_callbacks(rt, &resurrect_cb,
                                              &resurrect_ctx);
+    generator_ctx.runtime = rt;
+    generator_ctx.map = map;
+    generator_cb.context = &generator_ctx;
+    generator_cb.allocate = dm2_runtime_floor_generator_allocate;
+    generator_cb.queue_teleport_noise = dm2_runtime_floor_generator_noise;
     (void)dm2_v1_actuate_floor_mecha_with_revive(
         &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
         rt->caii_ready ? &rt->caii : NULL,
@@ -10631,6 +10649,7 @@ static int dm2_runtime_actuate_floor_mecha_timer(
         dm2_runtime_queue_ornate_activation_sound, rt,
         &rt->session_rng,
         dm2_runtime_revive_champion, &resurrect_ctx,
+        &generator_cb,
         &event);
     if (!event.valid || event.fail_closed != 0 ||
         creature_killer_ctx.failed) {
@@ -22898,6 +22917,49 @@ create_minion_done:
     free(raw_backup);
     context->failed = !ok;
     return DM2_V1_RECORD_HANDLE_NULL;
+}
+
+static int16_t dm2_runtime_floor_generator_allocate(
+    void *context, uint16_t creature_type, uint16_t health_multiplier,
+    uint16_t direction, uint16_t x, uint16_t y)
+{
+    DM2_RuntimeFloorCreatureGeneratorContext *generator =
+        (DM2_RuntimeFloorCreatureGeneratorContext *)context;
+    DM2_RuntimeCreateMinionContext allocation;
+    if (!generator || !generator->runtime) return DM2_V1_RECORD_HANDLE_NULL;
+    memset(&allocation, 0, sizeof(allocation));
+    allocation.runtime = generator->runtime;
+    allocation.map = generator->map;
+    /* This callback owns the SPX v4 ACTUATE_FLOOR_MECHA source route. */
+    allocation.spx_v4 = 1;
+    return dm2_runtime_alloc_new_creature(
+        &allocation, creature_type, health_multiplier, direction, x, y);
+}
+
+static int dm2_runtime_floor_generator_noise(
+    void *context, int map, int x, int y, uint32_t game_tick)
+{
+    DM2_RuntimeFloorCreatureGeneratorContext *generator =
+        (DM2_RuntimeFloorCreatureGeneratorContext *)context;
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_SoundQueueEnv env;
+    DM2_V1_SoundQueueReceipt sound;
+    if (!generator || !(rt = generator->runtime) || map != generator->map ||
+        !rt->sound_queue_ready) return 0;
+    memset(&env, 0, sizeof(env));
+    env.current_map = (int16_t)map;
+    env.gate_map_a = rt->sound_env.gate_map_a;
+    env.gate_map_b = rt->sound_env.gate_map_b;
+    env.facing = (uint16_t)(rt->view_dir & 3);
+    env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+    env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+    env.gametick = (int32_t)game_tick;
+    memset(&sound, 0, sizeof(sound));
+    /* skdefine.h::SOUND_STD_TELEPORT_MESSAGE is 0x02. The queue rejects
+     * normal map-gate/missing-sample cases as best-effort source audio. */
+    return dm2_v1_sound_queue_noise_gen1(
+        &rt->sound_queue, 0x03, 0x00, 0x02, 0x61, 0x80,
+        (int16_t)x, (int16_t)y, 1, &env, &sound);
 }
 
 static uint8_t dm2_runtime_minion_tile(int16_t x, int16_t y, void *user)

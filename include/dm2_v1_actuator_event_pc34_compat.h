@@ -174,6 +174,7 @@ static inline uint8_t dm2_toggle_actuator_message(int action_type,
 #define DM2_ACTU_INVERSE_FLAG        0x43
 #define DM2_ACTU_TEST_FLAG           0x44
 #define DM2_ACTU_RELAY_3             0x45
+#define DM2_ACTU_DM1_CREATURE_GENERATOR 0x06
 #define DM2_ACTU_PUSH_BUTTON_SWITCH  0x46
 #define DM2_ACTU_ITEM_CAPTURE        0x47
 #define DM2_ACTU_ITEM_TELEPORT_UNK   0x48
@@ -339,6 +340,15 @@ typedef struct {
     int fail_closed;
 } DM2_V1_CreatureGeneratorReceipt;
 
+typedef struct {
+    void *context;
+    int16_t (*allocate)(void *context, uint16_t creature_type,
+                        uint16_t health_multiplier, uint16_t direction,
+                        uint16_t x, uint16_t y);
+    int (*queue_teleport_noise)(void *context, int map, int x, int y,
+                                uint32_t game_tick);
+} DM2_V1_CreatureGeneratorCallbacks;
+
 /* ── Ornate animation length callback ─────────────────────────────── */
 
 typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
@@ -460,6 +470,7 @@ int dm2_v1_actuate_floor_mecha_with_revive(
                                DM2_V1_DropRng *rng,
                                DM2_V1_ReviveChampionFn revive_champion,
                                void *revive_ctx,
+                               const DM2_V1_CreatureGeneratorCallbacks *creature_generator_cb,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.

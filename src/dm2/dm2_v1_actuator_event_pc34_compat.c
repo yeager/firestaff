@@ -408,6 +408,78 @@ int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
     return 0;
 }
 
+static void dm2_v1_creature_record_set_w8(DM2_V1_RecordPoolSet *pool_set,
+                                           uint8_t *record, uint16_t value)
+{
+    if (pool_set->source_words_big_endian) {
+        record[8] = (uint8_t)(value >> 8);
+        record[9] = (uint8_t)value;
+    } else {
+        record[8] = (uint8_t)value;
+        record[9] = (uint8_t)(value >> 8);
+    }
+}
+
+static int dm2_v1_dm1_creature_generator(
+    DM2_V1_RecordPoolSet *pool_set, DM2_V1_DungeonData *dungeon,
+    const uint8_t *actu_record,
+    int map, int x, int y, uint32_t game_tick, DM2_V1_DropRng *rng,
+    const DM2_V1_CreatureGeneratorCallbacks *callbacks,
+    DM2_V1_CreatureGeneratorReceipt *receipt)
+{
+    int16_t creature = DM2_V1_RECORD_HANDLE_NULL;
+    uint16_t direction;
+    uint16_t creature_type;
+    uint8_t *creature_record;
+    uint8_t *raw_creature_record;
+    int raw_record_size = 0;
+
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    if (!pool_set || !dungeon || !actu_record || !callbacks ||
+        !callbacks->allocate ||
+        map < 0 || map > 0xff || x < 0 || x > 0x1f ||
+        y < 0 || y > 0x1f ||
+        (!dm2_actu_once_only(actu_record) && !rng)) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+    direction = dm2_actu_once_only(actu_record)
+        ? (uint16_t)dm2_actu_action_type(actu_record)
+        : dm2_v1_drops_randdir(rng);
+    creature_type = dm2_actu_data(actu_record);
+    creature = callbacks->allocate(callbacks->context, creature_type, 7u,
+                                    direction, (uint16_t)x, (uint16_t)y);
+    if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_record_handle_pool(creature) != 4 ||
+            !(creature_record = dm2_v1_record_pool_address_mut(
+                  pool_set, creature)) ||
+            pool_set->pools[4].record_size < 10u ||
+            !(raw_creature_record = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)creature, NULL, NULL,
+                    &raw_record_size)) || raw_record_size < 10) {
+            receipt->fail_closed = 1;
+            return 0;
+        }
+        receipt->creature_allocated = 1;
+        receipt->creature_placed = 1;
+        if (dm2_actu_revert_effect(actu_record) != 0) {
+            dm2_v1_creature_record_set_w8(pool_set, creature_record,
+                                          dm2_actu_delay(actu_record));
+            dm2_v1_creature_record_set_w8(pool_set, raw_creature_record,
+                                          dm2_actu_delay(actu_record));
+            receipt->anim_seq_set = 1;
+        }
+    }
+    if (dm2_actu_sound_effect(actu_record) != 0 && callbacks->queue_teleport_noise) {
+        receipt->sound_queued = callbacks->queue_teleport_noise(
+            callbacks->context, map, x, y, game_tick) != 0;
+    }
+    receipt->valid = 1;
+    return 1;
+}
+
 /* ── ACTIVATE_SHOOTER ─────────────────────────────────────────────── */
 
 /* Source: skevent.cpp:1536-1631; sktimprc.cpp:1611-1800.
@@ -1070,6 +1142,7 @@ typedef struct {
     DM2_V1_DropRng *rng;
     DM2_V1_ReviveChampionFn revive_champion;
     void *revive_ctx;
+    const DM2_V1_CreatureGeneratorCallbacks *creature_generator_cb;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -2062,6 +2135,19 @@ static int floor_mecha_visitor(void *context,
         r->creature_direction_invoked++;
         break;
 
+    /* SPX v4 DM1 compatibility floor generator (skevent.cpp:2155-2171). */
+    case DM2_ACTU_DM1_CREATURE_GENERATOR: {
+        DM2_V1_CreatureGeneratorReceipt generator_receipt;
+        r->creature_generator_invoked++;
+        if (!dm2_v1_dm1_creature_generator(
+                ctx->pool_set, ctx->dungeon, record,
+                ctx->map, ctx->x, ctx->y,
+                ctx->game_tick, ctx->rng, ctx->creature_generator_cb,
+                &generator_receipt) || generator_receipt.fail_closed)
+            r->fail_closed++;
+        break;
+    }
+
     /* ── CREATURE_ANIMATOR (0x3a) c_tim_proc.cpp:3177-3184 ───── */
     case DM2_ACTU_CREATURE_ANIMATOR:
         r->creature_animator_invoked++;
@@ -2248,6 +2334,7 @@ int dm2_v1_actuate_floor_mecha_with_revive(
                                DM2_V1_DropRng *rng,
                                DM2_V1_ReviveChampionFn revive_champion,
                                void *revive_ctx,
+                               const DM2_V1_CreatureGeneratorCallbacks *creature_generator_cb,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -2281,6 +2368,7 @@ int dm2_v1_actuate_floor_mecha_with_revive(
     ctx.rng = rng;
     ctx.revive_champion = revive_champion;
     ctx.revive_ctx = revive_ctx;
+    ctx.creature_generator_cb = creature_generator_cb;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -2316,7 +2404,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
         pool_set, dungeon, caii, asset_loader, queue, map, x, y,
         action_type, direction, game_tick, global_state, creature_killer_cb,
         get_ornate_anim_len, ornate_ctx, queue_ornate_sound, ornate_sound_ctx,
-        rng, NULL, NULL, receipt);
+        rng, NULL, NULL, NULL, receipt);
 }
 
 /* ── ACTIVATE_CREATURE_KILLER — c_tim_proc.cpp:2907-3007 ──────────── */
