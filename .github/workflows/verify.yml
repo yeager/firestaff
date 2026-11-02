@@ -379,7 +379,7 @@ jobs:
           # production/source boundary that is self-contained.
           set -o pipefail
           ctest --output-on-failure --parallel 4 --timeout 60 \
-            -R 'production|source_boundary' 2>&1 | tee ctest.log
+            -R 'production|source_boundary|parity_review_inventory_structure' 2>&1 | tee ctest.log
           if grep -Eq '[1-9][0-9]* tests failed out of' ctest.log; then
             echo "::error::ctest reported failed tests"
             exit 1
