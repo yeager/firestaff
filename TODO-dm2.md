@@ -1,3 +1,11 @@
+2026-11-02 SKProject `DRAW_ITEM_IN_HAND`:
+DOS and SPX v4/v5 resolve the hand item frame, copy its local palette and
+blit a 4-bpp icon into the hand record's bitmap using source dimensions. DOS
+uses a different GDAT parameter order from SPX v4/v5. Firestaff now issues
+the source palette/blit operations through item-record callbacks with an
+optional edition-aware image resolver. No production DM2 caller binds the
+helper to live hand-record targets; all four variant rows remain PARTIAL.
+
 2026-11-02 SKProject `GET_ITEM_ORDER_IN_CONTAINER`:
 The asset-loader receipt reads edition GDAT container entry 0x40, parses the
 digit ranges and J-prefixed +0x100 IDs, then resolves them through the ordered
@@ -11,8 +19,11 @@ explicit callback, queries that item's animation frame and cls1/cls2, and
 blits the inventory frame into occupied slots relative to rect 0x5c, as
 DOS `dm2bya.cpp:2680-2705`, SPX v4 `skguidrw.cpp:487-515`, and SPX v5
 `skguidr5.cpp:1541-1570` do. The eight-slot hand-container state and this draw
-callback still have no production DM2 renderer binding, so inventory and
-right-panel parity remain incomplete across supported platforms.
+callback still have no production DM2 renderer binding. Missing class/GDAT
+queries now fail closed instead of drawing placeholder item graphics, while
+the static container frames retain their source class-0 fallback when the
+container class callback is absent. Inventory and right-panel parity remain
+incomplete across supported platforms.
 
 2026-11-02 skproject DOS/SPX v4/v5 `SKW_DRAW_DOOR` / `DRAW_DOOR`:
 The active source renderers select the DB0 door material from map DoorType and
@@ -3050,3 +3061,64 @@ flag, which ordinary `ACTIVATE_ACTION_HAND` sets. It now blocks only the spell
 sentinel, allowing the existing live renderer and coin-count path to consume
 the selected moneybox. This does not bind input events 228-233 or implement
 the live wallet transaction; all platform click routes remain partial.
+
+2026-11-02 SKProject `DRAW_CONTAINER_SURVEY`:
+DOS and SPX v4/v5 iterate the container chain, draw at most eight items in
+slots 0x2f through 0x36, and stop at the end-link sentinel. Firestaff's GUI
+callback now requests the first item and follows record links with the same
+limit and slot range. The generic item-icon renderer still lacks complete
+source backgrounds/selection layers, and no production DM2 container renderer
+binds this callback to live state. Keep all four source rows PARTIAL; full
+visual and supported-platform parity remains open.
+
+2026-11-02 SKProject `DRAW_ITEM_STATS_BAR`:
+DOS and SPX v4/v5 pass scaled-bar arguments as value, color, minimum, rect,
+maximum and extra color, then draw the value rune plus low and maximum runes.
+Firestaff previously shifted the arguments, used an incorrect foreground for
+the value rune and omitted two labels. The callback now follows source order
+and draws all labels when font height is available; the rightmost rune is
+omitted without that metric. Production panel bindings and platform coverage
+remain unverified; keep all source rows PARTIAL.
+
+2026-11-02 SKProject `DRAW_ITEM_ICON`:
+The callback now uses source slot-to-rect and empty-slot-frame callbacks, draws
+the champion-hand or inventory backing art, applies the grey/red/blue slab
+branch for redrawable champion slots, and then draws the selected item frame.
+Missing item-class or slot callbacks fail closed instead of substituting
+placeholder graphics. The shared icon-buffer helper still simplifies source
+button-group destination width/offset behavior, and production slot-table
+callbacks are not bound across every supported edition/platform. Keep all
+variant rows PARTIAL.
+
+2026-11-02 SKProject `DRAW_ITEM_SURVEY`:
+The current Firestaff callback only draws a limited item name/icon path.
+SKProject additionally branches to scroll text, item class images and
+description, weight text/state, chest and moneybox contents, charges, and
+item-type-specific potion/weapon/armor/miscellaneous power bars. Update the
+source inventories to PARTIAL; implement and bind the remaining source branches
+for DOS and SPX before claiming item-survey parity.
+
+2026-11-02 SKProject `DRAW_SCROLL_TEXT` / `DRAW_HAND_ACTION_ICONS`:
+The source inventory already marks DOS/SPX definitions PARTIAL. The named audit
+was overclaiming parity: Firestaff's scroll helper queries a message but does
+not parse and lay out source lines, and its hand-action helper draws a single
+direction-selected icon without all source state, background and empty-hand
+branches. Corrected both named-symbol families to PARTIAL pending full source
+rendering and runtime ownership.
+
+2026-11-02 SKProject `MONEY_BOX_SURVEY` / `DRAW_MONEYBOX`:
+The source inventory marks the DOS/SPX moneybox functions PARTIAL, but the
+named-symbol audit incorrectly claimed parity. Firestaff has a callback renderer
+for the source container frame and scattered coin sprites, plus coin-order/count
+receipts, but neither source function is bound to a production DM2 GUI caller.
+Corrected the four SKULLWIN/SKWIN named rows to PARTIAL pending end-to-end
+live-state and supported-platform ownership.
+
+2026-11-02 SKProject `DRAW_SQUAD_SPELL_AND_LEADER_ICON` /
+`DRAW_SPELL_TO_BE_CAST`:
+The current squad/leader callback only selects and clears the direction slot;
+it does not draw the source summary images or cooldown overlays. The rune and
+spell-icon helper has a closer source mapping, but live spell state and panel
+ownership are not bound on every supported platform. Updated the named audits
+to PARTIAL; finish the icon overlays and runtime/platform bindings before
+claiming parity.

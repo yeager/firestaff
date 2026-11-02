@@ -1054,7 +1054,8 @@ void dm2_v1_draw_food_water_poison_panel(
 
 /* ================================================================
  * 30. DRAW_ITEM_STATS_BAR
- *     c_gui_draw.cpp:1232
+ *     SKWINDOS/dm2byb.cpp:883-898, SPX v4 skguidrw.cpp:2542-2567,
+ *     SPX v5 skguidr5.cpp:1233-1276
  * ================================================================ */
 
 void dm2_v1_draw_item_stats_bar(
@@ -1069,22 +1070,30 @@ void dm2_v1_draw_item_stats_bar(
         cb->query_expanded_rect(ctx, (int16_t)rectid, &rc) : NULL;
     if (!expanded) return;
 
-    dm2_v1_guidraw_24a5_0e82(value, rectid, (int32_t)color_idx,
-                              0, (int16_t)max_value, 1, cb, ctx);
+    /* Map source arguments to the helper's value, rect, color, min,
+     * max, extra-color signature. */
+    dm2_v1_guidraw_24a5_0e82(value, rectid, color_idx, 0,
+                              (int16_t)max_value, 1, cb, ctx);
 
-    /* Draw label characters at sides of bar (simplified) */
+    if (!cb->draw_strong_text) return;
+    void *backbuf = cb->get_backbuffer_ptr ? cb->get_backbuffer_ptr(ctx) : NULL;
+    int16_t backw = cb->get_bmp_width ? cb->get_bmp_width(ctx, backbuf) : 0;
+    uint8_t black = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+    uint8_t white = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 15) : 0;
+    uint16_t bg = (uint16_t)black | 0x4000u;
+    int16_t text_y = (int16_t)(rc.y + rc.h - 3);
     char label[2] = {(char)label_char, '\0'};
-    uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, color_idx) : 0;
-    uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
-    int16_t bgcolor = (int16_t)((uint16_t)bg | 0x4000);
-
-    if (cb->draw_strong_text) {
-        void *backbuf = cb->get_backbuffer_ptr ? cb->get_backbuffer_ptr(ctx) : NULL;
-        int16_t backw = cb->get_bmp_width ? cb->get_bmp_width(ctx, backbuf) : 0;
-        int16_t text_y = (int16_t)(rc.y + rc.h - 3);
+    char low_rune[2] = {0x60, '\0'};
+    char max_rune[2] = {0x65, '\0'};
+    cb->draw_strong_text(ctx, backbuf, backw, (int16_t)(rc.x - 9),
+                         text_y, (int16_t)color_idx, (int16_t)bg, label);
+    cb->draw_strong_text(ctx, backbuf, backw, (int16_t)(rc.x + 3),
+                         text_y, (int16_t)white, (int16_t)bg, low_rune);
+    int16_t font_height = cb->get_font_height ? cb->get_font_height(ctx) : 0;
+    if (font_height > 0) {
         cb->draw_strong_text(ctx, backbuf, backw,
-                              (int16_t)(rc.x - 9), text_y,
-                              (int16_t)fg, bgcolor, label);
+                             (int16_t)(rc.x + rc.w - font_height - 2),
+                             text_y, (int16_t)white, (int16_t)bg, max_rune);
     }
 }
 
@@ -1161,15 +1170,50 @@ int8_t dm2_v1_guidraw_2405_014a(
 
 /* ================================================================
  * 32. DRAW_ITEM_IN_HAND
- *     c_gui_draw.cpp:1516
+ *     SKWINDOS/dm2byb.cpp:817-825, SPX v4 skguidrw.cpp:3328-3354,
+ *     SPX v5 skguidr5.cpp:1517-1531
  * ================================================================ */
 
 void dm2_v1_draw_item_in_hand(
     void *item_record,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !item_record) return;
-    /* Delegates to cls1/cls2 queries and blit callbacks */
+    if (!cb || !item_record || !cb->get_item_record_id ||
+        !cb->get_item_record_bitmap || !cb->get_item_record_palette ||
+        !cb->query_cls1 || !cb->query_cls2 ||
+        !cb->query_gdat_dbspec_word || !cb->copy_small_palette ||
+        !cb->blit || !cb->get_bmp_width ||
+        !cb->get_v1d271a || !cb->get_v1d271c)
+        return;
+
+    uint16_t object_id = cb->get_item_record_id(ctx, item_record);
+    void *dstbmp = cb->get_item_record_bitmap(ctx, item_record);
+    void *dstpalette = cb->get_item_record_palette(ctx, item_record);
+    if (object_id == 0xffffu || !dstbmp || !dstpalette) return;
+
+    int8_t cls1 = cb->query_cls1(ctx, object_id);
+    int8_t cls2 = cb->query_cls2(ctx, object_id);
+    int8_t icon = dm2_v1_guidraw_2405_014a(object_id, -1, 1, cb, ctx);
+    if (icon < 0) return;
+
+    void *srcpalette = NULL;
+    void *srcbmp = cb->query_item_hand_image
+        ? cb->query_item_hand_image(ctx, object_id, cls1, cls2, icon,
+                                    &srcpalette)
+        : (cb->query_gdat_image
+            ? cb->query_gdat_image(ctx, cls1, cls2, icon) : NULL);
+    if (!cb->query_item_hand_image && cb->query_gdat_palette)
+        srcpalette = cb->query_gdat_palette(ctx, cls1, cls2, icon);
+    int16_t src_width = srcbmp ? cb->get_bmp_width(ctx, srcbmp) : 0;
+    int16_t width = cb->get_v1d271a(ctx);
+    int16_t height = cb->get_v1d271c(ctx);
+    if (!srcbmp || !srcpalette || src_width <= 0 || width <= 0 || height <= 0)
+        return;
+
+    cb->copy_small_palette(ctx, dstpalette, srcpalette);
+    DM2_V1_Rect rect = {0, 0, width, height};
+    cb->blit(ctx, srcbmp, dstbmp, &rect, 0, 0, src_width, width,
+             -1, 0, 4, 4, NULL);
 }
 
 /* ================================================================
@@ -1193,7 +1237,9 @@ void dm2_v1_draw_container_panel(
 
     /* Source draws only occupied slots, using each contained object's
      * animation and cls1/cls2 rather than the container's class. */
-    if (!cb->get_container_item) return;
+    if (!cb->get_container_item || !cb->query_cls1 || !cb->query_cls2 ||
+        !cb->query_gdat_dbspec_word)
+        return;
     DM2_V1_Rect container_rect;
     bool have_container_rect = flags == 0 && cb->query_expanded_rect &&
         cb->query_expanded_rect(ctx, 0x5c, &container_rect) != NULL;
@@ -1220,8 +1266,8 @@ void dm2_v1_draw_container_panel(
         }
 
         int8_t icon = dm2_v1_guidraw_2405_014a(item, i + 0x1e, 1, cb, ctx);
-        int8_t item_cls1 = cb->query_cls1 ? cb->query_cls1(ctx, item) : 0;
-        int8_t item_cls2 = cb->query_cls2 ? cb->query_cls2(ctx, item) : 0;
+        int8_t item_cls1 = cb->query_cls1(ctx, item);
+        int8_t item_cls2 = cb->query_cls2(ctx, item);
 
         dm2_v1_draw_icon_pict_entry(item_cls1, item_cls2, icon,
                                      2, rect_id, 0x0c, cb, ctx);
@@ -1267,7 +1313,8 @@ void dm2_v1_guidraw_2405_00ec(
 
 /* ================================================================
  * 36. DRAW_ITEM_ICON
- *     c_gui_draw.cpp:1656
+ *     SKWINDOS/dm2bya.cpp:1657-1717, SPX v4 skguidrw.cpp:2421-2500,
+ *     SPX v5 skguidr5.cpp:1657-1793
  * ================================================================ */
 
 void dm2_v1_draw_item_icon(
@@ -1277,45 +1324,103 @@ void dm2_v1_draw_item_icon(
 {
     if (!cb) return;
 
+    if (!cb->get_inventory_slot_rect_id) return;
+    int16_t rect_id = cb->get_inventory_slot_rect_id(ctx, slot);
+    if (rect_id < 0) return;
+
     int8_t cls1, cls2, icon;
 
     if (record != -1) {
-        cls1 = cb->query_cls1 ? cb->query_cls1(ctx, record) : 7;
-        cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
+        if (!cb->query_cls1 || !cb->query_cls2) return;
+        cls1 = cb->query_cls1(ctx, record);
+        cls2 = cb->query_cls2(ctx, record);
         int32_t adj_slot = (slot >= 8) ? slot - 8 : (slot & 1);
         icon = dm2_v1_guidraw_2405_014a(record, adj_slot, 1, cb, ctx);
     } else {
+        if (!cb->get_empty_inventory_slot_icon) return;
         cls1 = 7;
         cls2 = 0;
-        icon = 0; /* from ddat slot table */
+        icon = (int8_t)(cb->get_empty_inventory_slot_icon(ctx, slot) + body_flag);
     }
 
-    /* Background and item blitting (simplified) */
     if (slot < 0x26 && cb->query_expanded_rect) {
         DM2_V1_Rect rc;
-        cb->query_expanded_rect(ctx, (int16_t)slot, &rc);
+        if (cb->query_expanded_rect(ctx, rect_id, &rc)) {
+            void *backbuf = cb->get_backbuffer_ptr ?
+                cb->get_backbuffer_ptr(ctx) : NULL;
+            if (slot < 8) {
+                void *bmp = cb->query_gdat_image ?
+                    cb->query_gdat_image(ctx, 1, 2, 0) : NULL;
+                void *palette = cb->query_gdat_palette ?
+                    cb->query_gdat_palette(ctx, 1, 2, 0) : NULL;
+                DM2_V1_Rect group_rect;
+                DM2_V1_Rect *group = cb->offset_rect ?
+                    cb->offset_rect(ctx, 2, &group_rect, &rc) : NULL;
+                if (bmp && group)
+                    dm2_v1_draw_icon_pict_buff(
+                        bmp, 2, &rc, (int16_t)(rc.x - group->x),
+                        (int16_t)(rc.y - group->y), -1, 0, palette, cb, ctx);
+            } else if (backbuf && cb->query_gdat_image &&
+                       cb->query_gdat_palette) {
+                void *bmp = cb->query_gdat_image(ctx, 7, 0, 0);
+                void *palette = cb->query_gdat_palette(ctx, 7, 0, 0);
+                if (bmp)
+                    dm2_v1_draw_dialogue_pict(bmp, backbuf, &rc,
+                                               rc.x, rc.y, -1, palette,
+                                               cb, ctx);
+            }
+        }
+    }
+
+    if (redraw_flag && slot < 14 && cb->query_expanded_rect) {
+        DM2_V1_Rect rc;
+        dm2_v1_guidraw_2405_011f(rect_id, &rc, cb, ctx);
+        int8_t slab = active_flag ? 6 : (body_flag ? 5 : 4);
+        void *bmp = cb->query_gdat_image ?
+            cb->query_gdat_image(ctx, 1, 2, slab) : NULL;
+        void *palette = cb->query_gdat_palette ?
+            cb->query_gdat_palette(ctx, 1, 2, slab) : NULL;
+        if (bmp && slot < 8) {
+            DM2_V1_Rect group_rect;
+            DM2_V1_Rect *group = cb->offset_rect ?
+                cb->offset_rect(ctx, 2, &group_rect, &rc) : NULL;
+            if (group)
+                dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, 0, 0, 0x0c, 0,
+                                           palette, cb, ctx);
+        } else if (bmp) {
+            dm2_v1_draw_dialogue_parts_pict(bmp, &rc, 0x0c, palette,
+                                             cb, ctx);
+        }
     }
 
     if (icon != -1) {
         if (slot < 8)
             dm2_v1_draw_icon_pict_entry(cls1, cls2, icon, 1,
-                                         (int16_t)slot, 0x0c, cb, ctx);
+                                         rect_id, 0x0c, cb, ctx);
         else if (cb->draw_static_pic)
-            cb->draw_static_pic(ctx, cls1, cls2, icon, (int16_t)slot, 0x0c);
+            cb->draw_static_pic(ctx, cls1, cls2, icon, rect_id, 0x0c);
     }
 }
 
 /* ================================================================
  * 37. DRAW_CONTAINER_SURVEY
- *     c_gui_draw.cpp:1795
+ *     SKWINDOS/dm2byb.cpp:872-879, SPX v4 skguidrw.cpp:2526-2536,
+ *     SPX v5 skguidr5.cpp:1796-1818
  * ================================================================ */
 
 void dm2_v1_draw_container_survey(
     void *record_addr,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !record_addr) return;
-    /* Iterates items in container, calling draw_item_icon for each */
+    if (!cb || !record_addr || !cb->get_container_first_item ||
+        !cb->get_next_record_link)
+        return;
+
+    int16_t item = cb->get_container_first_item(ctx, record_addr);
+    for (int slot = 0; slot < 8 && item != (int16_t)0xfffeu; ++slot) {
+        dm2_v1_draw_item_icon(item, slot + 0x2f, 0, 0, 0, cb, ctx);
+        item = cb->get_next_record_link(ctx, item);
+    }
 }
 
 /* ================================================================
