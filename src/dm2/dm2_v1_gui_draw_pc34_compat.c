@@ -1184,7 +1184,8 @@ void dm2_v1_draw_container_panel(
 {
     if (!cb) return;
 
-    int8_t cls2 = cb->query_cls2 ? cb->query_cls2(ctx, record) : 0;
+    if (!cb->query_cls2) return;
+    int8_t cls2 = cb->query_cls2(ctx, record);
 
     if (flags != 0) {
         dm2_v1_draw_icon_pict_entry(20, cls2, 0x10, 2, 0x5c, -1, cb, ctx);
@@ -1193,7 +1194,9 @@ void dm2_v1_draw_container_panel(
 
     /* Source draws only occupied slots, using each contained object's
      * animation and cls1/cls2 rather than the container's class. */
-    if (!cb->get_container_item) return;
+    if (!cb->get_container_item || !cb->query_cls1 ||
+        !cb->query_gdat_dbspec_word)
+        return;
     DM2_V1_Rect container_rect;
     bool have_container_rect = flags == 0 && cb->query_expanded_rect &&
         cb->query_expanded_rect(ctx, 0x5c, &container_rect) != NULL;
@@ -1220,8 +1223,8 @@ void dm2_v1_draw_container_panel(
         }
 
         int8_t icon = dm2_v1_guidraw_2405_014a(item, i + 0x1e, 1, cb, ctx);
-        int8_t item_cls1 = cb->query_cls1 ? cb->query_cls1(ctx, item) : 0;
-        int8_t item_cls2 = cb->query_cls2 ? cb->query_cls2(ctx, item) : 0;
+        int8_t item_cls1 = cb->query_cls1(ctx, item);
+        int8_t item_cls2 = cb->query_cls2(ctx, item);
 
         dm2_v1_draw_icon_pict_entry(item_cls1, item_cls2, icon,
                                      2, rect_id, 0x0c, cb, ctx);
