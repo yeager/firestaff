@@ -21198,6 +21198,9 @@ int dm2_v1_runtime_get_source_hero_state(
     out_state->ench_aura = hero->ench_aura;
     out_state->first_item = hero->item[0];
     out_state->heroflag = (uint16_t)hero->heroflag;
+    for (unsigned hand = 0u; hand < 3u; ++hand)
+        out_state->hand_cooldown[hand] =
+            (uint8_t)hero->handcooldown[hand];
     return 1;
 }
 

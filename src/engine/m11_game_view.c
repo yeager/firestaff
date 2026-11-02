@@ -96,6 +96,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_sound_sdl_backend.h"
 #include "dm2_v1_startup_layout.h"
@@ -44020,6 +44021,63 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return M11_GAME_INPUT_REDRAW;
                 }
                 return M11_GAME_INPUT_IGNORED;
+            case 95: case 96: case 97: case 98: {
+                DM2_V1_SkprojectUiEvent event;
+                DM2_V1_SkprojectUiChampionState champions[DM2_MAX_HEROES];
+                int16_t player_at_position[4] = {-1, -1, -1, -1};
+                DM2_V1_SkprojectAdjustUiEventReceipt adjust_receipt;
+                int hero_count;
+                int hero;
+                int party_dir = dm2_v1_runtime_get_party_dir();
+
+                memset(champions, 0, sizeof(champions));
+                hero_count = dm2_v1_runtime_get_champion_count();
+                if (hero_count <= 0 || hero_count > DM2_MAX_HEROES ||
+                    party_dir < 0 || party_dir > 3)
+                    return M11_GAME_INPUT_IGNORED;
+                for (hero = 0; hero < hero_count; ++hero) {
+                    DM2_V1_RuntimeSourceHeroStateReceipt source_hero;
+                    if (!dm2_v1_runtime_get_source_hero_state(
+                            (uint8_t)hero, &source_hero))
+                        return M11_GAME_INPUT_IGNORED;
+                    if (source_hero.cur_hp > 0 &&
+                        source_hero.party_position >= 0 &&
+                        source_hero.party_position < 4)
+                        player_at_position[(party_dir +
+                            source_hero.party_position) & 3] = (int16_t)hero;
+                    champions[hero].present = source_hero.cur_hp > 0;
+                    memcpy(champions[hero].hand_cooldown,
+                           source_hero.hand_cooldown,
+                           sizeof(champions[hero].hand_cooldown));
+                }
+                memset(&event, 0, sizeof(event));
+                event.event = input_receipt.event_index;
+                event.x = (int16_t)x;
+                event.y = (int16_t)y;
+                event.rect.x = input_receipt.source_x;
+                event.rect.y = input_receipt.source_y;
+                event.rect.w = input_receipt.source_w;
+                event.rect.h = input_receipt.source_h;
+                if (!dm2_v1_skproject_adjust_ui_event_variant(
+                        &event, (uint16_t)party_dir,
+                        player_at_position, champions,
+                        (uint16_t)hero_count, DM2_V1_SKPROJECT_UI_EVENT_DOS,
+                        &adjust_receipt))
+                    return M11_GAME_INPUT_IGNORED;
+                if (event.event >= 16u && event.event <= 19u) {
+                    /* SKW_SELECT_CHAMPION_LEADER updates mouse_unk0e, a
+                     * distinct owner from party.curactevhero. Keep this
+                     * event fail-closed until Firestaff models that owner. */
+                    return M11_GAME_INPUT_IGNORED;
+                } else if (event.event >= 95u && event.event <= 98u) {
+                    const int position = (int)(event.event - 95u);
+                    const int selected_hero = player_at_position[
+                        (party_dir + position) & 3];
+                    if (dm2_v1_runtime_select_spell_champion(selected_hero))
+                        return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
             case 125: case 126: case 127: case 128:
                 if (dm2_v1_runtime_change_player_pos(
                         (int)(input_receipt.event_index - 125u))) {

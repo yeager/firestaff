@@ -108,6 +108,7 @@ typedef struct {
     int8_t ench_aura;
     int16_t first_item;
     uint16_t heroflag;
+    uint8_t hand_cooldown[3];
 } DM2_V1_RuntimeSourceHeroStateReceipt;
 
 /* Source DB4 movement committed by the timer's MOVE_RECORD_TO owner. This
