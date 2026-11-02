@@ -6992,11 +6992,17 @@ int nexus_v1_vdp1_texture_command_parse(
         parsed.texture_byte_count = ((uint32_t)parsed.texture_width *
             (uint32_t)parsed.texture_height *
             (uint32_t)parsed.texture_bits_per_pixel) / 8U;
-        /* CMDSRCA is the character-pattern address divided by eight. The
-         * resulting range is only a VDP1-VRAM-local bound; no host buffer or
-         * captured byte lane is assigned to it without separate trace proof. */
+        /* CMDSRCA is the character-pattern address divided by eight. Ymir's
+         * libs/ymir-core/src/ymir/hw/vdp/renderer/vdp_renderer_sw.cpp
+         * VDP1PlotTexturedLine (line 1263) force-aligns 16-bpp RGB fetches
+         * down to a 16-byte boundary. Report that effective byte address for
+         * mode 5; other modes retain the encoded eight-byte address. This
+         * remains a VDP1-VRAM-local bound, not proof that an arbitrary host
+         * buffer has those bytes. */
         parsed.texture_source_byte_offset =
             (uint32_t)parsed.texture_source_word * 8U;
+        if (parsed.colour_mode == 5U)
+            parsed.texture_source_byte_offset &= ~UINT32_C(0x0f);
         if (parsed.texture_source_byte_offset <= NEXUS_V1_VDP1_VRAM_BYTES &&
             parsed.texture_byte_count <= NEXUS_V1_VDP1_VRAM_BYTES -
                 parsed.texture_source_byte_offset) {

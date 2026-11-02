@@ -94,6 +94,48 @@ class Font256RetailIdentityTests(unittest.TestCase):
             ):
                 analyzer.main()
 
+    def test_main_accepts_complete_ymir_memory_bundle(self) -> None:
+        font_bytes = b"allowlisted ymir font bytes"
+        digest = hashlib.sha256(font_bytes).hexdigest()
+        frame = {
+            "vdp2-regs": bytes(512),
+            "vdp2-vram": bytes(512 * 1024),
+            "vdp2-cram": bytes(4096),
+        }
+        output = StringIO()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            capture = root / "ymir-bundle"
+            capture.mkdir()
+            data_dir = root / "data"
+            data_dir.mkdir()
+            (data_dir / "FONT256.S2D").write_bytes(font_bytes)
+            argv = [
+                "analyze_nexus_vdp2_char_source_join.py",
+                str(capture),
+                "--data-dir",
+                str(data_dir),
+            ]
+            with (
+                patch.object(sys, "argv", argv),
+                patch.object(analyzer, "FONT256_SHA256", frozenset({digest})),
+                patch.object(analyzer, "font_regions", return_value={
+                    "page": b"page",
+                    "character_generator": b"characters",
+                    "palette": b"palettes",
+                    "attributes": b"attributes",
+                }),
+                patch.object(analyzer, "ymir_bundle_frame",
+                             return_value=(frame, 1605, "big")),
+                redirect_stdout(output),
+            ):
+                result = analyzer.main()
+
+        self.assertEqual(result, 0)
+        self.assertIn("frame=1605 register_byte_order=big", output.getvalue())
+        self.assertIn("font256_vram_span_matches=0/4", output.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,6 +2,7 @@
 #include "firestaff_x68k_media_receipt.h"
 
 #include <limits.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +80,44 @@ static uint8_t *read_exact_bytes(const char *path, size_t expected_size)
     }
     fclose(file);
     return bytes;
+}
+
+static uint8_t *read_all_bytes(const char *path, size_t *out_size)
+{
+    FILE *file;
+    uint8_t *bytes;
+    long size;
+    if (out_size) *out_size = 0U;
+    if (!path || !*path) return NULL;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) < 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1U, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    if (out_size) *out_size = (size_t)size;
+    return bytes;
+}
+
+static uint32_t read_le32_local(const uint8_t *bytes)
+{
+    return (uint32_t)bytes[0] | ((uint32_t)bytes[1] << 8U) |
+        ((uint32_t)bytes[2] << 16U) | ((uint32_t)bytes[3] << 24U);
+}
+
+static uint64_t read_le64_local(const uint8_t *bytes)
+{
+    uint64_t value = 0U;
+    unsigned int i;
+    for (i = 0U; i < 8U; ++i) value |= (uint64_t)bytes[i] << (i * 8U);
+    return value;
 }
 
 static int bytes_have_sha256(const uint8_t *bytes, size_t size,
@@ -380,6 +419,9 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_CRAM");
     const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS");
     const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_OUT");
+    const char *source_version = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_SOURCE_VERSION");
+    const int previous_source = source_version &&
+        strcmp(source_version, "previous") == 0;
     uint8_t *vram = NULL, *cram = NULL, *registers = NULL;
     Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt receipt;
@@ -391,13 +433,18 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     int ok = 0;
 
     if (!vram_path && !cram_path && !registers_path) return 1;
+    if (source_version && strcmp(source_version, "current") != 0 &&
+        strcmp(source_version, "previous") != 0)
+        goto cleanup;
     vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
     cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
     registers = read_exact_bytes(registers_path, 512U);
     plane = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*plane));
     if (!vram || !cram || !registers || !plane ||
         !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
-            "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
+            previous_source ?
+                "2b6fe0392b1ff23c0c55f08423d179a74d7f481990e37aadd4e6bfd657d9cf45" :
+                "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
         !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
             "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
         !bytes_have_sha256(registers, 512U,
@@ -415,10 +462,11 @@ static int run_external_ymir_mapd_nbg1_pass(void)
         receipt.name_table_vram_offset != 0x5c000 ||
         receipt.map_page_columns != 64 || receipt.map_page_rows != 64 ||
         receipt.visible_columns != 40 || receipt.visible_rows != 28 ||
-        receipt.tiles_decoded != 1120 || receipt.written_pixels != 71680 ||
-        receipt.transparent_pixels != 0 ||
-        !capture_plane_have_sha256(plane,
-            "a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea") ||
+        receipt.tiles_decoded != 1120 ||
+        (!previous_source &&
+         (receipt.written_pixels != 71680 || receipt.transparent_pixels != 0 ||
+          !capture_plane_have_sha256(plane,
+              "a7d55feabe7ec09beb568808cb7674274f04b7e90be3758f8d91ed8aad2a0dea"))) ||
         !write_capture_plane(output_path, plane))
         goto cleanup;
     memcpy(saved_scrctl, registers + 0x9aU, sizeof(saved_scrctl));
@@ -448,6 +496,192 @@ static int run_external_ymir_mapd_nbg1_pass(void)
     ok = 1;
 cleanup:
     free(plane);
+    free(registers);
+    free(cram);
+    free(vram);
+    return ok;
+}
+
+static int read_mapd_nbg0_scroll_rows(
+    const char *path, Nexus_V1_Vdp2Nbg0MapdRowState *rows)
+{
+    FILE *input;
+    char line[1024];
+    uint8_t seen[NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT] = {0};
+    unsigned int y;
+    input = fopen(path, "r");
+    if (!input || !fgets(line, sizeof(line), input)) {
+        if (input) fclose(input);
+        return 0;
+    }
+    while (fgets(line, sizeof(line), input)) {
+        unsigned int frame, serial, ordinal, row, field;
+        int32_t scroll_h, scroll_v, inc_h, inc_v, frac_x, frac_y;
+        int parsed = sscanf(line,
+            "%u,%u,%u,%u,%u,%" SCNd32 ",%" SCNd32 ",%" SCNd32
+            ",%" SCNd32 ",%" SCNd32 ",%" SCNd32,
+            &frame, &serial, &ordinal, &row, &field, &scroll_h, &scroll_v,
+            &inc_h, &inc_v, &frac_x, &frac_y);
+        (void)ordinal;
+        (void)field;
+        if (parsed != 11) {
+            fclose(input);
+            return 0;
+        }
+        if (frame != 891U || serial != 1280U) continue;
+        if (row >= NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT || seen[row]) {
+            fclose(input);
+            return 0;
+        }
+        seen[row] = 1U;
+        rows[row].scroll_h_11_8 = scroll_h;
+        rows[row].scroll_v_11_8 = scroll_v;
+        rows[row].scroll_inc_h_11_8 = inc_h;
+        rows[row].scroll_inc_v_11_8 = inc_v;
+        rows[row].fractional_scroll_x_11_8 = frac_x;
+        rows[row].fractional_scroll_y_11_8 = frac_y;
+    }
+    fclose(input);
+    for (y = 0U; y < NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++y)
+        if (!seen[y]) return 0;
+    return 1;
+}
+
+static int run_external_ymir_mapd_nbg0_pass(void)
+{
+    const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_REGS");
+    const char *render_state_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_RENDER_STATE");
+    const char *layers_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_LAYERS");
+    const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_OUT");
+    uint8_t *vram = NULL, *cram = NULL, *registers = NULL;
+    uint8_t *render_state = NULL, *layers = NULL;
+    size_t render_state_size = 0U, layers_size = 0U, offset;
+    Nexus_V1_Vdp2Nbg0MapdRowState row_state[NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT];
+    uint8_t layer_rows_seen[NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT] = {0};
+    Nexus_V1_Vdp2CapturePlane *plane = NULL;
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt receipt;
+    Nexus_V1_Vdp2Nbg0MapdRowState saved_row;
+    size_t active_pixels = 0U, transparent_pixels = 0U;
+    unsigned int rows_seen = 0U;
+    const char *failure = "input files";
+    int ok = 0;
+
+    if (!vram_path && !cram_path && !registers_path && !render_state_path &&
+        !layers_path) return 1;
+    vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_bytes(registers_path, 512U);
+    render_state = read_all_bytes(render_state_path, &render_state_size);
+    layers = read_all_bytes(layers_path, &layers_size);
+    plane = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*plane));
+    if (!vram || !cram || !registers || !render_state || !layers || !plane)
+        goto cleanup;
+    failure = "authenticated input hashes";
+    if (!bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            "7367347e6adcb72ac09c946d03a15e1486e12f32593cee7bf3992e58da3b3d9f") ||
+        !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de") ||
+        !bytes_have_sha256(registers, 512U,
+            "774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1") ||
+        !bytes_have_sha256(render_state, render_state_size,
+            "2dd3b31b0d0ab7bbf6df8e392094063e1ef97b2cbadccd2a575d3b69050de878") ||
+        !bytes_have_sha256(layers, layers_size,
+            "086d660dce00d0df4f38a33fe1591043676d0e72482cd0e867540d215a494526"))
+        goto cleanup;
+    failure = "Ymir row-state parse";
+    if (layers_size < 8U || memcmp(layers, "YMLYR001", 8U) != 0 ||
+        !read_mapd_nbg0_scroll_rows(render_state_path, row_state))
+        goto cleanup;
+    failure = "capture-only NBG0 decoder";
+    if (!nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            row_state, NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT, 1, &receipt) ||
+        !receipt.valid || !receipt.capture_only || receipt.renderer_permitted ||
+        !receipt.registers_verified || !receipt.original_ymir_capture_verified ||
+        !receipt.nbg0_bitmap_mode || !receipt.colour_code_256 ||
+        receipt.bitmap_vram_offset != 0 || receipt.written_pixels != 20302 ||
+        receipt.transparent_pixels != 51378)
+        goto cleanup;
+
+    /* The real Ymir row trace stays within the VDP2 18-bit scroll and
+     * 10-bit increment fields. A one-field-corrupted capture row must fail
+     * closed instead of wrapping through the final bitmap coordinate mask. */
+    saved_row = row_state[0];
+    row_state[0].fractional_scroll_x_11_8 = 0x40000;
+    if (nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            row_state, NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT, 1, &receipt))
+        goto cleanup;
+    row_state[0] = saved_row;
+    row_state[0].scroll_inc_v_11_8 = 0x400;
+    if (nexus_v1_vdp2_capture_decode_ymir_mapd_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            row_state, NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT, 1, &receipt))
+        goto cleanup;
+    row_state[0] = saved_row;
+
+    failure = "Ymir candidate-layer comparison";
+    offset = 8U;
+    while (offset + 28U <= layers_size) {
+        uint64_t frame = read_le64_local(layers + offset);
+        uint64_t serial = read_le64_local(layers + offset + 8U);
+        unsigned int row = (unsigned int)layers[offset + 20U] |
+            ((unsigned int)layers[offset + 21U] << 8U) |
+            ((unsigned int)layers[offset + 22U] << 16U) |
+            ((unsigned int)layers[offset + 23U] << 24U);
+        unsigned int layer = layers[offset + 25U];
+        unsigned int width = (unsigned int)layers[offset + 26U] |
+            ((unsigned int)layers[offset + 27U] << 8U);
+        size_t record_offset = offset + 28U;
+        size_t record_size = 28U + (size_t)width * 6U;
+        unsigned int x;
+        if (record_size > layers_size - offset || width != 320U ||
+            layer >= 7U || row >= 224U) goto cleanup;
+        if (frame == 891U && serial == 1280U && layer == 2U) {
+            const uint8_t *priorities = layers + record_offset + width * 4U;
+            const uint8_t *special = priorities + width;
+            if (layer_rows_seen[row]) goto cleanup;
+            layer_rows_seen[row] = 1U;
+            for (x = 0U; x < width; ++x) {
+                size_t pixel = (size_t)row * width + x;
+                uint32_t ymir_color = read_le32_local(
+                    layers + record_offset + (size_t)x * 4U);
+                uint32_t rgba = plane->rgba_buffer[pixel];
+                if (plane->index_buffer[pixel] == 0U) {
+                    if (priorities[x] != 0U || special[x] != 0U)
+                        goto cleanup;
+                    ++transparent_pixels;
+                } else {
+                    if (priorities[x] != 4U || special[x] != 1U ||
+                        (uint8_t)(rgba >> 16U) != (uint8_t)ymir_color ||
+                        (uint8_t)(rgba >> 8U) != (uint8_t)(ymir_color >> 8U) ||
+                        (uint8_t)rgba != (uint8_t)(ymir_color >> 16U))
+                        goto cleanup;
+                    ++active_pixels;
+                }
+            }
+            ++rows_seen;
+        }
+        offset += record_size;
+    }
+    failure = "complete target-layer coverage";
+    if (offset != layers_size || rows_seen != 224U || active_pixels != 20302U ||
+        transparent_pixels != 51378U || !write_capture_plane(output_path, plane))
+        goto cleanup;
+    ok = 1;
+cleanup:
+    if (!ok) fprintf(stderr, "MAPD NBG0 source regression failed at %s\n", failure);
+    free(plane);
+    free(layers);
+    free(render_state);
     free(registers);
     free(cram);
     free(vram);
@@ -883,6 +1117,15 @@ int main(void)
          getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG1_REGS")) &&
         !run_external_ymir_mapd_nbg1_pass()) {
         fprintf(stderr, "FAIL: authentic Ymir MAPD NBG1 4bpp plane decode\n");
+        return 1;
+    }
+    if ((getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_CRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_REGS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_RENDER_STATE") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_MAPD_NBG0_LAYERS")) &&
+        !run_external_ymir_mapd_nbg0_pass()) {
+        fprintf(stderr, "FAIL: authentic Ymir MAPD NBG0 bitmap source decode\n");
         return 1;
     }
     if ((any_environment_value_set(ymir_pass0_environment,

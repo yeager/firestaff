@@ -102,8 +102,61 @@ the engine handoff. It still lacks authenticated pixel/CLUT ownership for
 stat bars, portraits, spell symbols, inventory art, status effects, VDP2
 minimap placement, and Saturn-owned message text binding.
 
+### Authentic frame-300 composition audit
+
+The retained Japanese retail gameplay capture
+`nexus_face_vdp2_hud_join_20261030/capture-301` provides one same-frame audit
+point (VDP1 frame 300, VDP2 serial 301). All 224 VDP2 row records identify an
+enabled NBG0 512x256 8-bit bitmap at byte offset zero. Its rendered 320x224
+RGB output matches the corresponding Ymir output at all 71,680 pixels. This
+proves output parity for that captured frame, not source ownership or a
+general-purpose compositor.
+
+The authenticated source scan decoded 410 retail resources, including
+`STABG.BIN` (SHA-256
+`7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913`), and
+found no exact NBG0 bitmap source match. The STABG palette also has no exact
+match in captured VDP2 CRAM. A raw-byte scan of captured VDP1 VRAM found exact
+bytes for only 3 of STABG's 791 8x8 source tiles; one is the all-zero tile.
+These are bounded negative byte-join results: they do not rule out decoded,
+repacked, or transformed STABG data.
+
+The frame's VDP1 trace contains 68 textured draws, of which 66 have exact
+retail DGN image matches and 51 also have palette matches (15 use direct
+colour). Two textured commands remain unmatched. This binds many scene draws
+to DGN bytes, but does not bind the visible status bars to STABG, HUD widgets,
+or live champion state. HUD placement, CLUT ownership, and runtime value
+binding therefore remain gated.
+
+The same frame's normal 8bpp sprite at command row 80 is joined to Japanese
+retail `MENU.BPK` entry 144: its decoded 16x41 indexed surface matches all 656
+captured VDP1 VRAM bytes at offset `0x643c0`, and each nontransparent palette
+index used by the sprite matches the same-frame VDP2 CRAM entry. This accounts
+for the row's 431 visible pixels as a retail menu-archive sprite. A separate,
+complete cold-boot SCU-DMA capture records transfer 3303 writing 1,312 bytes
+to VDP1 offset `0x643c0`; its first 656 payload bytes match the same retail
+entry exactly and the full payload matches that run's final VRAM snapshot.
+These DMA and gameplay command observations come from separate emulator runs;
+the cold-boot trace has no command reads from CMDSRCA `0xc878`, so timing and
+consumption are not joined. The sprite's UI meaning and live champion-state
+binding also remain unknown. See
+[`../nexus_vdp1_row80_scu_dma_source_join.md`](../nexus_vdp1_row80_scu_dma_source_join.md).
+The capture-only regression verifies the source and palette join while
+keeping runtime renderer admission closed.
+
+The other 60 previously capture-classified pixels come from command row 79, an
+authenticated untextured VDP1 polyline from the Ymir-captured Japanese retail
+execution. Its four vertices form a 16x16 outline at `(272,8)`–`(287,23)`;
+PMOD is `0x00e0` and CMDCOLR `0x7083` selects VDP2 CRAM entry `0x83` with
+priority index 7. That same-frame CRAM word is `0xe73f`. The integer line
+replay records 64 edge writes; four corners are written twice, so the command
+owns 60 unique pixels in the composed frame. The captured execution binds the
+pixels and palette entry to that VDP1 command, but the outline's HUD meaning
+and state owner remain unverified.
+
 ## Next Steps
-1. Bind HUD widget ownership and placement from an authenticated Saturn capture.
+1. Bind the remaining HUD widget ownership and placement from authenticated
+   Saturn captures, including status values and their original-data sources.
 2. Bind FACE.BIN palette/VDP1 command ownership before portrait blit.
 3. Bind FONT256/SLEV text and attribute consumers before message rendering.
 4. Bind SMAP00-15 VDP2 placement and explored-state writes.

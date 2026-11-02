@@ -611,9 +611,57 @@ The frame-8037 evidence and reproduction instructions are in
 Both bundles are stored outside this repository. To inspect them, mount the
 external evidence volume and open the listed paths relative to its root.
 
-It does not identify the full title background or prove which pixels survive
-VDP1/VDP2 composition on the screen. Full native title presentation and
-Firestaff renderer parity remain unproven.
+The 2026-11-02 cold-boot capture adds a complete, zero-drop VDP2 event timeline
+from initial memory through the frame-8037 Japanese menu snapshots. A separate
+hash-pinned verifier checks the `TITLE.BIN` span at file offset `0xb8a2`:
+frame 7716 writes 608 unique bytes at NBG0 VRAM offset `0xd404`, every value
+matches the retail source, and all 295 nonzero source bytes are present. The
+first exact 921-byte source state occurs after event sequence 4,075,865; final
+WorkRAMH and frame-8037 VRAM both retain the exact span. Reproduce with
+`scripts/verify_nexus_title_nbg0_full_run_source.py`, the external capture at
+`firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/`, and the
+hash-verified Japanese CUE. The event trace SHA-256 is
+`2829b136bff432ea4ec5be0abefd4952c39667145c69940a25b436dce02acee7`.
+The endpoint registers confirm the 512×256, 8bpp NBG0 bitmap at base zero
+(`TVMD=0x8000`, `BGON=1`, `CHCTLA=0x0013`, `PLSZ=2`, `BMPNA=0`).
+
+This proves one row's storage and write values across the captured run. It does
+not identify the complete NBG0 bitmap producer or prove the SH-2 read values at
+transfer time. A follow-up same-run composition replay is recorded below.
+
+### 2026-11-02 — Cold-boot rendered title composition
+
+A second isolated authentic Japanese cold boot captured Ymir's composed
+software-renderer output for VDP1 frame 8037. It used the same hash-verified
+Japanese CUE and IPL, no save state or game save, and the documented BIOS/date
+and title-input schedule. Ymir produced two 320×224 RGBX8888LE buffers at VDP2
+serials 9118 and 9119. Both passes contain 224 main-field row samples, rows
+0–223, with NBG0 enabled; their rendered RGB buffers are byte-identical at
+SHA-256
+`0a37fe5d4c31821001f0b6973e8c768150ef3a35429b581ebd8131fa34802602`. The
+640×448 Ymir screenshot is an exact 2× nearest-neighbor expansion of the
+composed buffer across all 286,720 RGB pixels. It shows the retail Japanese
+title and New Game / Continue / Configuration menu.
+
+Firestaff's existing capture-only frame-8037 compositor was run with the new
+cold-boot dumps and both Ymir pass buffers. It matched all 71,680 RGB pixels
+in each pass with zero differences (`direct=70,185`, `palette=1,495`,
+`NBG0-overlay=18,513`). The fresh capture's VDP1 trace, VDP1 framebuffer and
+registers, and VDP2 VRAM, CRAM, and registers are byte-identical to the
+previously retained frame-8037 capture. Evidence, original receipts, the
+rendered buffers, and their SHA-256 manifest are retained at
+`firestaff-evidence/nexus/nexus-title-menu-render-20261102/` on Extern-disk.
+
+The row-state receipt intentionally remains `capture_status=incomplete`:
+its VDP1-frame contract expects 224 samples but receives 448 because two full
+VDP2 passes share this VDP1 frame label. Each pass independently has complete
+224-row coverage, and the separate rendered-frame receipt is complete. The
+incomplete row receipt is preserved; it is not used as a substitute for the
+direct pixel comparison. This verifies Firestaff's bounded capture-only
+composition against Ymir for this title frame, not hardware parity, full
+retail source ownership, or production-renderer admission. The complete title
+background producer and live display consumer remain unbound, so the
+production title gate stays closed.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
@@ -789,11 +837,40 @@ The capture-only NBG1 decoder accepts the authentic 4bpp tilemap state at frame
 891 / serial 1280 (`BGON=0x0002`, `CHCTLA=0x0013`) and verifies its 1,120 visible
 cells against the hash-pinned Ymir snapshot. It also handles the paired NBG1-
 only state without requiring NBG0 or NBG2 to be enabled. This remains an
-isolated layer decode: it does not establish VDP1/NBG1 arbitration or match the
-same-pass RGBX output, and it does not grant production renderer permission.
-The next consumer step is to implement and verify this register profile's full
-pixel composition against the corresponding same-pass RGBX buffer. The
-producer-side map match alone does not establish Firestaff pixel parity. The
-render-state receipt marks its legacy frame-row status incomplete because
-several VDP1 frame labels contain multiple VDP2 passes; all 163 per-pass
-buffers and snapshot pairs are present.
+isolated layer decode; its raw final-snapshot plane alone is not the rendered
+NBG1 output for every scanline. The render-state receipt marks its legacy
+frame-row status incomplete because several VDP1 frame labels contain multiple
+VDP2 passes; all 163 per-pass buffers and snapshot pairs are present.
+
+### 2026-11-02 — Authentic MAPD pixel-fetch to layer-output join
+
+The new real-data CTest runs Firestaff's 4bpp tilemap decoder against the
+hash-pinned target VDP2 snapshot, then checks Ymir's `--debug` pixel-fetch trace
+for VDP1 frame 891 / VDP2 serial 1280. The trace receipt is complete and covers
+both full 320×224 passes (143,360 records). For every sample, the recorded PND
+matches one of the adjacent authentic VRAM snapshots and the fetched 4bpp
+nibble matches the snapshot selected by that PND's source. In the target pass,
+26,880 samples use serial 1279 VRAM (rows 0–83) and 44,800 use serial 1280
+VRAM (rows 84–223).
+
+The preceding pass has zero NBG1 priority at every pixel. In serial 1280,
+NBG1's nonzero-priority region is exactly rows 84–223. There, Firestaff's
+decoded dot index and RGB match Ymir's final same-pass RGBX output at all
+44,800 pixels. The 26,880 zero-priority pixels have zero fetched dot and are
+excluded from NBG1 output even though the post-transfer raw tile decode has
+data at those coordinates.
+
+Run the test with the retained external data:
+
+```sh
+FIRESTAFF_NEXUS_YMIR_MAPD_COMPOSITION_DIR=/path/to/mapd-frame891-frame1280 \
+FIRESTAFF_NEXUS_YMIR_MAPD_REFERENCE_FILE=/path/to/vdp1-891-vdp2-1280-320x224.rgbx8888le \
+ctest --test-dir build -R '^nexus_v1_vdp2_mapd_pixel_fetch_composition_real$' --output-on-failure
+```
+
+The complete trace, receipt, paired VRAM snapshots, same-pass reference,
+Firestaff output plane, and verification report are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/ymir-vdp2-pixel-fetch-trace-20261101/mapd-frame891-frame1280/`.
+The test and report verify one NBG1 contribution; they do not compose the full
+VDP1+VDP2 frame, establish all MAPD transition frames or original-Saturn
+parity, or permit production rendering.

@@ -88,6 +88,25 @@ is a Sega Saturn 3D polygon remake of DM1.
 - Perspective-correct texture mapping
 - Z-buffer or painter's algorithm
 - 320x224 native, then EPX upscale
+- Authentic Ymir `--debug` traces now join SH-2 projected-coordinate staging
+  to frame-local VDP1 commands for eight consecutive frames in paired control
+  and Up-input captures. In authentic frame 1605, the retail face join resolves
+  97/120 distinct runtime face pointers, and all 138 staging records join
+  uniquely to captured command geometry. Every observed texture span matches
+  retail image bytes; 131 indexed draws also match retail CLUT bytes. Of the
+  resolved face observations, 108 source DGN image records match command image
+  bytes and 48 also match their descriptor palette; four indexed and three
+  direct-colour source/material rows differ. Twenty-three pointers remain
+  unresolved. These are capture-only source joins; per-pixel ownership,
+  complete VDP1+VDP2 parity, original-Saturn parity, and production admission
+  remain open. See
+  [`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md)
+  and [`ymir_face_material_cross_join.md`](ymir_face_material_cross_join.md).
+  A separate frame-1605 replay now matches all 71,680 RGB555 pixels and
+  opacity bits in the authentic VDP1 FBS using all 138 retail DGN image joins
+  and 131 indexed palette joins. This is one-frame, VDP1-only capture parity;
+  VDP1+VDP2 and production admission remain open. See
+  [`nexus_vdp1_frame1605_dgn_composition.md`](nexus_vdp1_frame1605_dgn_composition.md).
 
 ### 3.2 V1: Saturn faithful — requires a source-owned Saturn scene witness
 - Original 320x224 resolution

@@ -65,6 +65,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Verify regional retail identities in VDP1 source scans
         run: |
+          python3 scripts/test_analyze_nexus_vdp2_bitmap_source.py
           python3 tests/test_nexus_v1_checkpoint_verifiers.py
           python3 scripts/test_verify_nexus_title_sprite_screenshot.py
           python3 scripts/test_analyze_nexus_vdp1_source_join.py
@@ -74,9 +75,14 @@ jobs:
           python3 scripts/test_analyze_nexus_vdp1_sh2_write_trace.py
           python3 scripts/test_audit_nexus_vdp1_ymir_trace.py
           python3 scripts/test_analyze_nexus_vdp2_char_source_join.py
+          python3 scripts/test_audit_nexus_ymir_mapd_layer_composition.py
+          python3 scripts/test_audit_nexus_ymir_render_state_register_coherence.py
           python3 scripts/test_analyze_nexus_ymir_vdp2_layer_outputs.py
           python3 scripts/test_analyze_nexus_mouse_event_crossrefs.py
           python3 scripts/test_analyze_nexus_inventory_wram_pair.py
+          python3 scripts/test_analyze_nexus_ymir_multiframe_staging_to_vdp1.py
+          python3 scripts/test_analyze_nexus_ymir_face_to_command.py
+          python3 scripts/test_analyze_nexus_ymir_face_material_cross_join.py
 
   release-notes-policy:
     runs-on: ubuntu-24.04

@@ -1,5 +1,96 @@
 # Nexus: verified completion status
 
+## Authentic frame-1605 retail VDP1 composition replay — 2026-11-02
+
+The capture-only Ymir stepper now reproduces the complete native 320×224 VDP1
+FBS for authentic Japanese retail frame 1605. It joins all 138 textured draws
+to hash-verified `LEV01.DGN` image bytes, including 131 indexed CLUT joins and
+seven direct-colour spans, then matches all 71,680 RGB555 pixels and opacity
+bits against the captured FBS. The replay also covers the captured flat
+polygon, clipping/local-origin state, skipped commands and command trace.
+This is VDP1-only emulator capture parity for one frame; VDP1+VDP2 output,
+hardware parity and production renderer admission remain unverified. See
+[`nexus_vdp1_frame1605_dgn_composition.md`](nexus_vdp1_frame1605_dgn_composition.md).
+
+The same run's complete VDP2 snapshot has zero memory-write trace rows, which
+is valid for this save-state capture: its frame-1605 receipt still binds the
+register, VRAM and CRAM snapshots. The bitmap/source analyzer now accepts that
+complete empty trace and compares the 512×256 8bpp NBG0 bitmap against the
+authentic Japanese retail corpus. It finds no exact bitmap source among 410
+decoded surfaces; the captured CRAM contains the TITLE palette at byte offset
+`0x400` and a retail `LEV13.DGN` Structure2 palette at `0x7e0`. NBG0's
+`BMPNA` selector is zero, so these spans are not evidence for its active
+palette or bitmap owner. The NBG0 source join remains unbound, and this
+snapshot does not supply same-run VDP2 layer output or a final RGBX reference.
+See the open frame-1605 capture item in [`TODO-nexus.md`](../../TODO-nexus.md).
+
+The retail `FONT256.S2D` source comparator accepts this same complete Ymir
+memory bundle. Its 484-byte attribute span matches VDP2 VRAM at offset `0x0`,
+while its Page, Character Generator and palette spans do not match; no CRAM
+palette span matches. The captured registers are `BGON=0x0007`,
+`CHCTLA=0x1013` and `PNCN1=0x0000`. This exact byte overlap is at the NBG0
+bitmap base, and the bundle has no VDP2 write rows. It therefore cannot prove
+that FONT256 was uploaded or consumed, identify the writer, or bind the active
+bitmap owner. The text consumer and NBG0 source remain unbound.
+
+## Consecutive-frame SH-2 staging to VDP1 geometry — 2026-11-02
+
+The authentic Japanese retail Ymir `--debug` movement pair now verifies the
+four SH-2 coordinate staging writes against frame-local VDP1 command geometry
+for eight consecutive frames, 1598–1605. The control capture joins all 138
+staging records in each frame to unique commands (1,104/1,104 overall); the
+paired Up-input capture joins all 132 records in each frame (1,056/1,056).
+Both trace receipts are complete with zero dropped rows. Across the eight
+frames, all 1,056 shared frame/address records contain different XY words after
+the Up input; 48 additional control records are absent from the Up trace.
+For the control run, a separate SH-2 PC `0x608f364` register capture has
+identical full VDP1 command-trace and VDP1 VRAM hashes. Its 138 `r2` pointers
+per frame all match the control staging writes (1,104/1,104). Face-row bytes at
+the corresponding `r9` pointers also match in both final WRAM-H snapshots for
+all 1,104 observations. The same set and event multiplicities for the 120 CPU/
+`r9` pointers occur in every traced frame. The face-row comparison is not an
+intermediate-frame memory snapshot.
+
+This establishes input-sensitive projected XY values reaching VDP1 command
+records for this state and window. It does not bind every row to a retail DGN
+face, prove winding for cyclic or unordered matches, establish material or
+pixel ownership, verify complete VDP1+VDP2 composition, or enable production
+renderer admission. The analysis command and per-frame match counts are in
+[`ymir_face_to_vdp1_command_trace.md`](ymir_face_to_vdp1_command_trace.md).
+
+The frame-1605 retail face join now includes four unique cyclic DGN index-row
+matches that preserve winding. With the existing exact-row, contiguous-run,
+and two-anchor pointer-stride evidence, 97/120 distinct runtime face pointers
+map to hash-verified retail rows (115/138 observations); 23 pointers remain
+unresolved. This does not infer projected-coordinate corner correspondence
+from a cyclic row match.
+
+The retained authentic Ymir frame-1605 trace also joins all 138 projected
+face observations to exact retail texture bytes; all 131 indexed draws have
+exact retail CLUT bytes. For 108 indexed observations, the resolved source face
+is among the Structure3 owners of a byte-matched candidate image record. Four
+indexed source-face material records differ from their command images; three
+direct-colour face/material links also differ and remain unproven, and 23
+runtime face pointers remain unresolved. The 108 matching face-image pairs
+include 48 exact matches to the face descriptor's own palette; the other
+command CLUTs still match retail palette bytes, but use a different palette
+record. This is byte and selector evidence, not proof of visible pixel
+contribution or full-frame parity. See
+[`ymir_face_material_cross_join.md`](ymir_face_material_cross_join.md).
+
+## Row-80 SCU-DMA source join — 2026-11-02
+
+A complete cold-boot Ymir capture records SCU transfer 3303 writing 1,312
+bytes to VDP1 byte address `0x643c0`. All 656 captured 16-bit writes match
+the same run's final VDP1 VRAM snapshot; the first 656 bytes match decoded
+Japanese retail `MENU.BPK[144]` exactly. The separate authenticated frame-300
+command row 80 reads the same address and its 656 texture bytes match the same
+retail entry. The cold-boot trace has no command reads from CMDSRCA `0xc878`,
+so this cross-run source join does not establish DMA timing or consumption by
+that command. It also does not identify the sprite's semantic UI role or
+enable production rendering. Reproduce with
+[`nexus_vdp1_row80_scu_dma_source_join.md`](../nexus_vdp1_row80_scu_dma_source_join.md).
+
 ## Authentic Ymir gameplay pass-0 VDP composition — 2026-11-01
 
 The capture-only Firestaff VDP priority compositor now matches the complete

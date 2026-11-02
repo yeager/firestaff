@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_vdp1_capture_compositor.h"
+#include "nexus_v1_vdp1_ymir_stepper_capture.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +20,48 @@ static void wl16(unsigned char *p, unsigned int value) {
     p[1] = (unsigned char)(value >> 8);
 }
 
+static int mode5_replace_preserves_source_msb(void) {
+    static Nexus_V1_Vdp1YmirCaptureSurface surface;
+    unsigned char command[NEXUS_V1_VDP1_COMMAND_BYTES] = {0};
+    unsigned char texture[16] = {0};
+    Nexus_V1_Vdp1YmirCaptureInput input;
+    Nexus_V1_Vdp1YmirCaptureReceipt receipt;
+    size_t pixel;
+    int found = 0;
+
+    memset(&surface, 0, sizeof(surface));
+    for (pixel = 0; pixel < (size_t)NEXUS_FB_W * NEXUS_FB_H; ++pixel)
+        surface.command_owner[pixel] = NEXUS_V1_VDP1_YMIR_CAPTURE_NO_OWNER;
+    wl16(command, 0U);             /* type 0: normal sprite */
+    wl16(command + 4U, 0x0068U);  /* mode 5, transparency disabled, replace */
+    wl16(command + 10U, 0x0101U); /* 8 x 1 pixels */
+    wl16(command + 12U, 10U);
+    wl16(command + 14U, 10U);
+    memset(&input, 0, sizeof(input));
+    input.command = command;
+    input.command_size = (int)sizeof(command);
+    input.texture_bytes = texture;
+    input.texture_size = (int)sizeof(texture);
+    input.command_capture_verified = 1;
+    input.direct_source_join_verified = 1;
+    input.local_origin_verified = 1;
+    input.system_clip_verified = 1;
+    input.sys_clip_h = 319;
+    input.sys_clip_v = 223;
+    input.single_density_verified = 1;
+    if (!nexus_v1_vdp1_ymir_capture_rasterize_mode5_normal(
+            &surface, &input, &receipt) || !receipt.valid ||
+        receipt.renderer_permitted || receipt.pixels_written <= 0)
+        return 0;
+    for (pixel = 0; pixel < (size_t)NEXUS_FB_W * NEXUS_FB_H; ++pixel) {
+        if (surface.command_owner[pixel] == 0U) {
+            if (surface.rgba[pixel] != 0U) return 0;
+            found = 1;
+        }
+    }
+    return found;
+}
+
 int main(void) {
     unsigned char command[NEXUS_V1_VDP1_COMMAND_BYTES];
     static unsigned char vram[NEXUS_V1_VDP1_VRAM_BYTES];
@@ -36,6 +79,9 @@ int main(void) {
     Nexus_V1_Vdp1Mode1PalettePixel resolved[8];
     Nexus_V1_Vdp1Mode1PalettePixel expected_pixels[8];
     int index;
+
+    expect(mode5_replace_preserves_source_msb(),
+           "mode-5 replace preserves a zero source MSB when transparency is disabled");
 
     memset(command, 0, sizeof(command));
     memset(vram, 0, sizeof(vram));
@@ -255,6 +301,31 @@ int main(void) {
                !parsed.texture_source_range_valid,
                "VDP1 skipped jump does not decode a texture");
         wl16(command, 0U);
+    }
+    {
+        Nexus_V1_Vdp1TextureCommand parsed;
+        /* Decoder-only command fixture for Ymir's mode-5 address alignment;
+         * it is not game data or a substitute for an authentic capture. */
+        memset(command, 0, sizeof(command));
+        wl16(command, 2U);
+        wl16(command + 4, 5U << 3);
+        wl16(command + 8, 1U);
+        wl16(command + 10, 0x0101U);
+        expect(nexus_v1_vdp1_texture_command_parse(
+                   command, sizeof(command), &parsed) == 0 &&
+               parsed.texture_byte_count == 16U &&
+               parsed.texture_source_byte_offset == 0U &&
+               parsed.texture_source_byte_end == 16U &&
+               parsed.texture_source_range_valid,
+               "16-bpp VDP1 fetch aligns odd eight-byte CMDSRCA down to 16 bytes");
+        wl16(command + 8, 0xffffU);
+        expect(nexus_v1_vdp1_texture_command_parse(
+                   command, sizeof(command), &parsed) == 0 &&
+               parsed.texture_source_byte_offset == 0x7fff0U &&
+               parsed.texture_source_byte_end == NEXUS_V1_VDP1_VRAM_BYTES &&
+               parsed.texture_source_range_valid,
+               "aligned 16-bpp VDP1 fetch ending at VRAM boundary remains in range");
+        memset(command, 0, sizeof(command));
     }
     /* CMDPMOD mode 1, CMDCOLR table at 0x20, CMDSRCA texture at 0x40,
      * CMDSIZE = 8x1. Sega VDP1 User's Manual 6.3--6.6. */

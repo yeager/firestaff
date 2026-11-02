@@ -91,3 +91,42 @@ code commit `c1d2664` on 2026-10-31. The test passed against the retained
 external dump and both hash-pinned Ymir pass buffers, matching all 71,680 RGB
 pixels in each pass with zero channel differences. The capture and pass files
 remain external; the result is still limited to this captured display state.
+
+## PR #252 frame-8037 rerun
+
+On 2026-11-01, both authentic frame-8037 regressions passed against code head
+`9aa4e140d2fabdb6c63e5e0f3068093d5b51b1c5`. The VDP2 compositor matched both
+hash-pinned Ymir pass buffers exactly: 71,680 of 71,680 RGB pixels, with
+70,185 direct-color and 1,495 palette pixels; NBG0 overlaid 18,513 pixels.
+The VDP1 source-join test passed three consecutive runs using the Japanese
+retail data whose `TITLE.BIN` and `LEV00.DGN` hashes are pinned above. It
+matched 126 of 137 informative retail texture spans, joined all 121
+informative draws to source data, kept 11 zero spans transparent and
+unowned, and matched the five title-menu sprites and their CRAM palettes at
+all 1,495 screenshot sample points. The VDP2 replay also passed three
+consecutive runs against the same capture and both Ymir passes.
+
+Capture dumps, rendered references, screenshot, and retail game data remain
+outside Git. This verifies the captured menu display state only; selected
+Structure3 face, transform/culling, interactive menu behavior, and production
+renderer admission remain unresolved.
+
+## PR #252 current-head rerun
+
+On code head `3e6d3009cdb85031f8e81f886be621a0cd124422`, the Debug VDP2
+composition target was rebuilt on TRV2 and passed three consecutive runs
+against both pinned Ymir pass buffers. Each run matched all 71,680 RGB pixels;
+the compositor reported 70,185 direct-color VDP1 pixels, 1,495 palette VDP1
+pixels, and an NBG0 overlay. The independent retail source-join test also
+passed three consecutive runs against the same authentic capture, screenshot,
+Japanese `TITLE.BIN`, and `LEV00.DGN` hashes. It matched the pinned receipt for
+126 source spans, 121 informative DGN joins, 113 palette joins, eight direct-
+color joins, and 11 unowned zero-filled spans.
+
+The mode-5 source-address correction does not change this capture's output;
+the result remains specific to the captured New Game menu display. It does
+not establish screenshot-to-session attestation, selected face or runtime
+instance ownership, input handling, dungeon/HUD composition, original-Saturn
+parity, or production renderer admission. Temporary source, build, and copied
+test inputs were removed from TRV2 after verification; the retained originals
+remain on the external disk.

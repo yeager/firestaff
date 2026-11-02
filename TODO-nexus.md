@@ -4,6 +4,137 @@ Reviewed 2026-11-02. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-11-02 — Capture VDP2 output for the authentic frame-1605 VDP1 replay
+
+An inventory of retained Ymir `nexus-vdp2-layer-outputs.bin` receipts found
+three layer-output bundles; all target VDP1 frame 7486 / VDP2 serial 8199.
+The full-frame bundle covers rows 0–223 and the other two are shorter captures
+of that same pass. None contains frame 1605. The authentic frame-1605 VDP1 FBS
+replay therefore still lacks same-run Ymir VDP2 layer output and a final RGBX
+reference. Capture frame 1605 with Ymir `--debug`, full-height VDP2 layer
+outputs and rendered-frame capture, then hash-join the memory snapshots before
+using the existing Firestaff compositor for a whole-frame comparison. Do not
+combine frame-1605 VDP1 state with frame-7486 VDP2 state as a parity result. The
+current TRV2 host did not answer SSH during this check, and no local Ymir binary
+is available; use the shared installed Ymir when it is reachable. The existing
+frame-1605 VDP1-only result is documented in
+[`docs/nexus/nexus_vdp1_frame1605_dgn_composition.md`](docs/nexus/nexus_vdp1_frame1605_dgn_composition.md).
+
+The same-run VDP2 snapshot is now accepted by the bitmap/source analyzer even
+though its complete write trace has zero rows. It identifies a 512×256 8bpp
+NBG0 bitmap at VRAM offset zero. A scan against the authentic Japanese CUE
+(`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`) finds
+no exact bitmap source among 410 decoded retail surfaces. CRAM does contain
+the TITLE palette at offset `0x400` and a `LEV13.DGN` Structure2 palette at
+`0x7e0`. NBG0's `BMPNA` selector is zero, so neither span identifies its active
+palette or bitmap owner. Source join and semantic admission remain blocked
+pending same-frame Ymir layer output and final RGBX capture.
+
+The authentic `FONT256.S2D` comparator also accepts the complete frame-1605
+Ymir memory bundle. Its 484-byte FONT256 attribute span exactly matches VDP2
+VRAM offset `0x0`; the Page, Character Generator and palette spans do not match,
+and no CRAM palette span matches. The frame reports `BGON=0x0007`,
+`CHCTLA=0x1013` and `PNCN1=0x0000`. The byte match overlaps the NBG0 bitmap
+base and the bundle has no VDP2 write rows, so it does not establish a FONT256
+upload, producer, text consumer or bitmap ownership. Source join stays unbound.
+
+The authentic Japanese title-menu capture from a cold boot (Ymir VDP1 frame
+8037) is also accepted from its full-run VDP2 render-event bundle. Replaying
+2,195,061 ordered writes from the initial VRAM/CRAM snapshots reproduces both
+export-time snapshots exactly, including writes whose frame label is `unknown`
+before frame indexing begins. The retail bitmap scan finds zero exact matches
+among 410 decoded surfaces; the TITLE palette bytes occur at CRAM `0x400`, but
+the active NBG0 palette and bitmap owner remain unbound. Reproduce with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/dumps \
+  --cue "/Volumes/Extern-disk/FirestaffUserData/data/nexus/Dungeon Master Nexus (Japan).cue" \
+  --exact-only
+```
+
+The capture proves the memory timeline and snapshot association for this menu
+run. It does not establish retail source ownership, layer output, or composed
+pixel parity; keep semantic admission blocked.
+
+A hash-pinned follow-up now verifies the Japanese `TITLE.BIN` span at file
+offset `0xb8a2` across that same complete event timeline. In frame 7716, all
+608 writes within the 921-byte destination span match their retail source byte,
+including every one of its 295 nonzero bytes. The span first becomes an exact
+retail-source match after event sequence 4,075,865; its final WorkRAMH and
+frame-8037 VRAM snapshots also match. The endpoint registers confirm the active
+512×256, 8bpp NBG0 bitmap at base zero (`TVMD=0x8000`, `BGON=1`,
+`CHCTLA=0x0013`, `PLSZ=2`, `BMPNA=0`). Reproduce with:
+
+```sh
+python3 scripts/verify_nexus_title_nbg0_full_run_source.py \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus-ymir-vdp2-row-state-capture-20261102/dumps \
+  --cue "/Volumes/Extern-disk/FirestaffUserData/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
+This joins one authentic retail row through the frame-7716 write burst to its
+final storage. It does not identify the complete 131,072-byte bitmap producer,
+the active palette owner, the SH-2 source read at transfer time, or the visible
+layer consumer. Production admission remains blocked.
+
+## Reconcile MAPD frame-891 layer enable state
+
+The hash-pinned Ymir render-state trace has 224 target-pass rows for VDP1 frame
+891 / VDP2 serial 1280, each reporting `nbg0_enabled=1`, `layer_enabled=1`,
+and `rbg1_enabled=0`. The layer-composition audit now requires this row-local
+state before using layer 2 as NBG0, and rejects captures where it is disabled.
+The separately retained register snapshot with the same frame/serial label has
+big-endian `BGON=0x0002` at offset `0x20`, which disables NBG0; its SHA-256 is
+`774fa7f2e815b14770b83feb83e8c15406041a931e65ed465b1062944a811dd1`. The
+snapshot index has only frame/serial identifiers and no row-time timestamp. A
+cross-check of all 163 render-state passes against their indexed register
+snapshots found nine NBG0-enable disagreements at transitions: 891/1280,
+901/1290, 931/1320, 938/1330, 960/1360, 970/1370, 999/1400, 1008/1409, and
+1036/1440. This repeated pattern shows that the snapshots cannot serve as
+row-time enable evidence; it does not establish which capture point is stale.
+The layer trace also lacks enabled flags for every output layer, so its exact
+RGB reconstruction remains candidate-layer evidence, not a full active-layer
+proof. Obtain or reproduce a same-pass per-layer enable trace and resolve the
+snapshot timing before treating this pass as a complete Ymir compositor oracle.
+Removing layer 2 from the candidate stack produces 16,179 RGB mismatches against
+the authentic final pass, confirming its visible effect in this reconstruction
+without resolving the layer-enable discrepancy.
+See [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+Reproduce the 163-pass cross-check with the authentic external capture:
+
+```sh
+evidence=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031
+python3 scripts/audit_nexus_ymir_render_state_register_coherence.py \
+  --render-state "$evidence/render-state.csv" \
+  --snapshot-index "$evidence/vdp-snapshots/index.csv" \
+  --snapshot-dir "$evidence/vdp-snapshots"
+```
+
+## Capture an authentic odd-address mode-5 draw
+
+Ymir aligns 16-bpp RGB CMDSRCA down to a 16-byte boundary, and Firestaff now
+uses that effective source address. Scanning the 112 retained Japanese Nexus
+command-trace CSVs found no mode-5 textured draw with an odd CMDSRCA; frame
+300's 15 such draws use the already-aligned value `0xbdac`. The parser
+boundary test checks the hardware rule, but does not replace a real-game
+trace. If an authentic odd-address mode-5 command is found, verify its
+captured VRAM bytes, retail source join, and rendered output against Ymir. See
+[`docs/nexus_vdp1_frame300_ymir_composition.md`](docs/nexus_vdp1_frame300_ymir_composition.md).
+
+## 2026-11-01 — Re-run the frame-8037 composition on the current parser
+
+After the VDP1 mode-5 source-address correction, the authentic Japanese title
+frame-8037 VDP2 compositor and retail source-join regressions each passed
+three consecutive runs on TRV2 at code head
+`3e6d3009cdb85031f8e81f886be621a0cd124422`. The compositor matched both
+hash-pinned Ymir pass buffers at all 71,680 RGB pixels. The source join
+reproduced its pinned TITLE.BIN/LEV00.DGN receipt. This adds a menu-state
+regression alongside gameplay frame 300; it does not verify dungeon/HUD
+states, menu interaction, face selection, hardware parity, or renderer
+admission. See
+[`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
+
 ## 2026-11-02 — gate champion diagnostic output
 
 Champion recruitment and automatic leader-promotion messages now follow the
@@ -15,14 +146,108 @@ stdout message was removed. The champion, engine and launcher translation
 units compile with AppleClang. This is source/compile evidence only; authentic
 runtime output for recruitment and leader promotion remains unverified.
 
-## 2026-10-31 — NBG0 live-row replay
+## 2026-11-02 — reject frame 1800 as a CCMD parity vector
 
-The capture-only compositor now accepts Ymir live per-row scroll and
-coordinate increments, demonstrated against the authentic Japanese intro
-capture at rows 4–116. Source transfer timing remains unbound in this capture;
-do not enable this lane in the production renderer. Continue gathering
-same-frame producer-to-VRAM evidence and verify row-state coverage across
-animation frames. See
+The authentic frame-1800 registers enable additive CCMD and the NBG1/sprite
+calculation gates, but the paired Ymir per-pixel trace shows no eligible top
+pixels: all 148 top NBG1 samples have the per-character PND calculation bit
+clear, and all 60,375 top sprite samples use priorities 2, 6, or 7 while
+`SPCTL` requires priority 5. The final trace color equals the top candidate
+for all 71,680 pixels. Treat this as a register/configuration observation,
+not as an exercised or verified additive-color calculation path. Use
+`scripts/analyze_nexus_vdp2_frame1800_ccmd_eligibility.py` to reproduce the
+hash-pinned audit. Capture a state with an actually eligible visible pixel
+before implementing or claiming this CCMD branch. See
+[`docs/nexus_vdp2_ccmd_frame1800_eligibility.md`](docs/nexus_vdp2_ccmd_frame1800_eligibility.md).
+
+## 2026-11-01 — Frame-300 VDP pixel-to-command ownership
+
+The authentic Japanese gameplay frame-300 VDP2 composition now links each of
+its 65,991 visible top-layer VDP1 pixels to the last-writing VDP1 command and
+that row's source receipt. Exactly 65,500 visible VDP1 pixels map to retail
+indexed `LEV01.DGN` rows. The 15 direct-RGB DGN draws join retail data but own
+no final visible pixels in this capture. The 491 CRAM pixels map to the
+Ymir-captured Japanese retail VDP1 polyline command row 79, selecting
+same-frame CRAM entry `0x83` (60 pixels), and retail `MENU.BPK` entry 144 at
+sprite row 80 (431 pixels). The
+combined real-data regression pins these source-class counts
+with the complete VDP2 RGB match and DGN joins. Sprite row 80 is further bound
+to decoded Japanese `MENU.BPK` entry 144 and same-frame CRAM for every used
+nontransparent palette index. This proves the retail archive source for that
+sprite's 431 visible pixels. A separate complete cold-boot run captures SCU
+transfer 3303 to VDP1 offset `0x643c0`; its first 656 payload bytes match the
+archive entry and its full payload matches that run's final VDP1 VRAM. This is
+a cross-run address/byte join, not same-run timing or command consumption, and
+it does not establish whole-HUD state ownership. Row 79 is pinned as a 16x16 outline with same-frame CRAM entry
+`0x83`; Ymir records 64 edge writes with four duplicated corners, leaving 60 uniquely owned visible
+pixels. Its UI meaning remains unknown.
+Pixel-to-command/source-class ownership is verified for this
+captured state after matching each visible pixel between replay and display
+FBS planes, not a selected Structure3 face per pixel. Active face selection,
+transform/culling, other gameplay states, and production renderer admission
+remain unresolved. See
+[`docs/nexus_vdp2_gameplay_frame300_composition.md`](docs/nexus_vdp2_gameplay_frame300_composition.md)
+and PR [#252](https://github.com/yeager/firestaff/pull/252).
+
+## 2026-11-02 — Extend authentic SH-2 face-to-command ownership
+
+The frame-1605 analyzer now uses the observed 12-byte WRAM-H face-row stride
+to resolve duplicated face tuples when at least two independently resolved
+rows from the same CPU and retail DGN entry anchor the candidate ordinal within
+96 bytes. It verifies 425 nearby same-entry anchor pairs with no conflicts.
+This adds six distinct face-row pointers (ten command observations): 97 of
+120 pointers and 115 of 138 records now join to retail Structure3 rows. The
+other 23 pointers remain unresolved. Re-running the hash-verified analyzer
+against the retained Ymir capture and all 16 canonical retail DGN files
+reproduced these counts. Testing cyclic-rotation candidates against the
+captured pointer-stride anchors did not uniquely resolve any additional row.
+This is one authentic capture and does
+not prove material ownership, all-frame face selection, pixel ownership, or
+production renderer admission. See
+[`docs/nexus/ymir_face_to_vdp1_command_trace.md`](docs/nexus/ymir_face_to_vdp1_command_trace.md).
+
+## MAPD frame-891 Ymir layer composition verified; Firestaff replay remains open
+
+The capture-only NBG1 layer now replays the authentic Ymir fetch source per
+pixel by decoding both adjacent Japanese-retail VRAM snapshots and accepting
+only a unique PND-plus-nibble match. This removes the former upper-row layer
+mismatch without assuming a fixed row boundary: Firestaff matches all 71,680
+traced dots, stays transparent on all 26,880 zero-priority pixels, and matches
+Ymir RGB on all 44,800 visible pixels. The resulting NBG1-only plane is
+hash-pinned in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+The retained Firestaff priority-stack output was generated at code head
+`8f3b5841` from the target pass's end-of-frame VRAM snapshot. It is stale for
+this row-effective source case and differs on 26,869 pixels in its recorded
+comparison. A new hash-pinned audit reconstructs the same pass from Ymir's
+complete seven-layer trace and matches all 71,680 final RGB pixels exactly.
+The verified priority order and NBG0 ratio-18 special-color calculation are
+documented in [`docs/nexus_vdp2_nbg1_mapd_4bpp.md`](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+The capture-only C path now decodes NBG0's 8-bit bitmap from authentic VRAM
+and CRAM using Ymir's captured per-row scroll state, and matches the candidate
+layer's RGB, priority, special-color flag, and transparency on all 71,680
+pixels. The hash-pinned CTest is
+`nexus_v1_vdp2_mapd_nbg0_bitmap_source_real`; the independent source audit is
+`scripts/audit_nexus_ymir_mapd_nbg0_bitmap_source.py`. Deriving or carrying
+this row state from Firestaff's own runtime remains open.
+
+Firestaff still needs to integrate NBG0 row state, the effective NBG1 row-time
+fetch source, and VDP1 RGB/palette pixels into one priority stack, then apply
+the verified color-calculation rules. That full raw snapshot replay and
+production-renderer admission remain open.
+
+## 2026-11-02 — Full-height NBG0 live-row replay
+
+The capture-only compositor now consumes Ymir live per-row scroll and
+coordinate increments. The authentic Japanese startup capture at VDP1 frame
+7486 / VDP2 serial 8199 has same-frame registers and full coverage for rows
+0–223; the Firestaff C replay matches the same-pass Ymir RGB frame at all
+71,680 pixels. This single-state result does not establish source ownership or
+transfer timing for other animation frames, arbitrary-frame parity, or
+production-renderer admission. Continue with additional authentic menu and
+gameplay captures and bind the retail source/update path before enabling the
+lane in the production renderer. See
 [`docs/nexus_vdp2_nbg0_live_rows.md`](docs/nexus_vdp2_nbg0_live_rows.md).
 
 ## 2026-10-31 — Authentic VDP2 register order and composition rerun
@@ -41,9 +266,14 @@ all 286,720 doubled screenshot samples exactly; frame 300 matches all 71,680
 pixels in its same-run Ymir RGB reference. Separate authentic frame-7486
 NBG0 live-row/color-calculation and frame-8037 title-menu composition tests
 also pass against their retained Ymir outputs. The NBG1 active per-character
-color-calculation path remains unverified because the available eligible BKR
-captures contain no visible NBG1 PND with CCE set. These capture-only results
-do not enable production rendering or establish arbitrary-frame parity.
+color-calculation path remains unverified. A paired scan of the retained
+external VDP2 corpus found 404 VRAM dumps, 402 matching register snapshots,
+and 125 captures with enabled NBG1 in character mode; none had CCE set in a
+visible map PND. This does not prove the retail game never uses the feature.
+Repeat the inventory against new authentic captures with
+`python3 scripts/analyze_nexus_vdp2_capture_cce_inventory.py
+/Volumes/Extern-disk/firestaff-evidence/nexus`. The existing capture-only
+results do not enable production rendering or establish arbitrary-frame parity.
 Outputs are retained at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_mapd_ymir_vdp_snapshots_20261031/pr239-c376f0c4-validation/`.
 
@@ -77,6 +307,15 @@ captured states and do not enable production rendering. The later full CI run
 also found unrelated stale localization catalogs and a Theron source-boundary
 failure in the merged PR check. See
 [the MAPD 4bpp capture report](docs/nexus_vdp2_nbg1_mapd_4bpp.md).
+
+The 2026-11-02 Ymir pixel-fetch join now verifies all 71,680 NBG1 fetches in
+the preceding and target passes against adjacent authentic VRAM snapshots.
+Firestaff's decoded dot and RGB match Ymir's final same-pass RGBX at all 44,800
+target pixels with nonzero NBG1 priority. The other 26,880 target pixels have
+zero priority and are excluded from the NBG1 contribution. This is a
+single-layer result; full VDP1+VDP2 frame composition and all MAPD transition
+frames remain open. See
+[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-11-02--authentic-mapd-pixel-fetch-to-layer-output-join).
 
 ## 2026-10-30 — NBG1 8bpp character stride
 
