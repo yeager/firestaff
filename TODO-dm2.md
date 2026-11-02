@@ -2284,8 +2284,8 @@ destination transforms before drawing.
 party direction and formation (`GET_PLAYER_AT_POSITION`), then calls
 `dm2_v1_IS_ITEM_HAND_ACTIVABLE` against that champion's source hand record,
 source-endian DB9/DB14 chains, boot GDAT loader, and mounted CMDSTR entries.
-The runtime hand owner also blocks an active hand cooldown, matching the
-SPX-v5 input gate. M11 now routes formation events 125-129 to
+The runtime hand owner also blocks an active hand cooldown and clears the
+magical-map rune/composed-cost masks on selection, matching the source gates. M11 now routes formation events 125-129 to
 the runtime-owned two-stage formation model. It retains source pending slots
 0..4, performs rotated occupied-slot swaps or empty-slot moves, preserves the
 high-bit direction rule, and synchronizes party/snapshot state. Both hand

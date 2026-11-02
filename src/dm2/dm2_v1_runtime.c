@@ -20890,6 +20890,7 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     rt->source_spell_panel_flag = 1;
     rt->source_v1e0b6c = 1;
     rt->source_v1e0b62 = 0;
+    rt->source_v1e0b4e = 0;
     rt->source_party.curacthero = rt->source_curacthero;
     rt->source_party.curactmode = rt->source_curactmode;
     /* ACTIVATE_ACTION_HAND calls CHAMPION_SQUAD_RECOMPUTE_POSITION after
