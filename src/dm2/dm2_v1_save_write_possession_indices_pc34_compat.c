@@ -25,8 +25,11 @@ int dm2_v1_write_possession_indices(
             continue;
 
         int resolved = cb->resolve_possession_index(cb->ctx, link);
-        if (resolved < 0)
-            continue;
+        /* The source indexes v1e08e4/v1e08f0 directly for every eligible
+         * DB9/DB14 link. If Firestaff cannot resolve that source index, it
+         * must fail the save rather than silently omit these continuation
+         * bits and publish a corrupt stream. */
+        if (resolved < 0) return 1;
 
         uint8_t idx_bytes[2];
         uint8_t idx_mask[2] = {0xff, 0x03};

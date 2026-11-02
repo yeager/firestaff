@@ -44,7 +44,7 @@ void dm2_v1_moverec_2fcf_01c5(
         return;
     uint8_t timer_type = (uint8_t)(direction_flag != 0 ? 0x3D : 0x3C);
     uint32_t fire_tick = cb->game_tick + 5;
-    cb->queue_timer(ctx, timer_type, x, y, record, fire_tick);
     cb->set_minion_door(ctx, record, x, y, map, 1);
+    cb->queue_timer(ctx, timer_type, x, y, record, fire_tick);
 }
 

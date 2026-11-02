@@ -26,6 +26,19 @@ SOURCE_SPECS = (
 )
 LOCKED_SOURCE_COMMIT = "2c59a2c5a7978923ff5c822c15c3479e4d448493"
 
+# BSD ctags omits this qualified v4 definition even though it discovers
+# adjacent SkWinCore methods in the same file. Keep the explicit source row so
+# the active inventory covers all three timer/actuator implementations.
+SUPPLEMENTAL_SOURCE_ROWS = (
+    (
+        "SKWINSPX",
+        "SKWINSPX/src/v4/skcore.cpp",
+        "11765",
+        "INVOKE_ACTUATOR",
+        "void SkWinCore::INVOKE_ACTUATOR(Actuator *ref, U16 actionType, i16 delayPlus)",
+    ),
+)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -85,6 +98,32 @@ def main() -> int:
                     "legacy_audit_exact_symbol_rows": str(legacy_counts.get(symbol, 0)),
                     "review_status": previous_status.get(key, "UNREVIEWED"),
                 })
+
+    for source_tree, relative_path, line_number, symbol, signature \
+            in SUPPLEMENTAL_SOURCE_ROWS:
+        key = (source_tree, relative_path, line_number, symbol)
+        discovered.append({
+            "symbol": symbol,
+            "source_tree": source_tree,
+            "source_file": relative_path,
+            "line": line_number,
+            "signature": signature,
+            "legacy_audit_exact_symbol_rows": str(legacy_counts.get(symbol, 0)),
+            "review_status": previous_status.get(key, "UNREVIEWED"),
+        })
+
+    discovered_keys = {
+        (row["source_tree"], row["source_file"], row["line"], row["symbol"])
+        for row in discovered
+    }
+    for row in previous_rows:
+        key = (row["source_tree"], row["source_file"], row["line"], row["symbol"])
+        if key not in discovered_keys:
+            # Preserve manual/legacy source entries that ctags or the current
+            # source-tree scan does not rediscover. Some are covered by active
+            # review rows and would break audit key coverage if discarded.
+            discovered.append(row)
+            discovered_keys.add(key)
 
     discovered.sort(key=lambda row: (row["source_file"], int(row["line"]),
                                      row["symbol"], row["signature"]))

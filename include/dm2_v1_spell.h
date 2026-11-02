@@ -258,9 +258,10 @@ int dm2_v1_spell_record_mana_cost(const DM2_V1_SpellRecord *record,
  *   other: returned unchanged, no side effect
  * DM2_TRY_CAST_SPELL (c_events.cpp:2738-2786) clears the hero rune tail
  * and redraws the squad hands panel for every class except 0x30.
- * The DM2_UPDATE_GLOB_VAR side effect and the v1e0b6c window write are
- * not yet bound; the receipt marks them pending instead of simulating
- * them. */
+ * The live runtime consumes this receipt to mutate the authenticated global
+ * variable store, v1e0b7c status and v1e0b6c window state. The helper itself
+ * remains side-effect free; glob_update_bound is set only on the runtime copy
+ * after that owner commits the global update. */
 
 typedef struct {
     int valid;            /* receipt populated */
@@ -271,7 +272,7 @@ typedef struct {
     int status_written;   /* 1 for classes 0x10/0x20 */
     int flask_pic_drawn;  /* 1 for class 0x30 (draw call receipted) */
     int glob_var;         /* 0x45/0x46/0x44, or -1 when not written */
-    int glob_update_bound;/* 0: DM2_UPDATE_GLOB_VAR not yet bound */
+    int glob_update_bound;/* 0 in helper; 1 after live runtime applies update */
     int glob_update_index;   /* exact DM2_UPDATE_GLOB_VAR eax index */
     int glob_update_op;      /* exact source mode: 3 (add) */
     int glob_update_operand; /* exact source operand: 1 */

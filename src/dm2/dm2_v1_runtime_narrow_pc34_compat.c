@@ -3,7 +3,9 @@
  * light). See dm2_v1_runtime_narrow_pc34_compat.h for source references. */
 
 #include "dm2_v1_runtime_narrow_pc34_compat.h"
+#include "dm2_v1_party.h"
 #include <stddef.h>
+#include <string.h>
 
 /* =====================================================================
  * c_tim_proc.cpp
@@ -24,6 +26,8 @@ void dm2_v1_continue_ornate_noise_cb(
     cb->requeue_timer(ctx, timer_idx, delay);
 }
 
+/* Chance-based legacy helper; this is not SKProject TRY_ORNATE_NOISE.
+ * The source ornament-animation path is implemented in dm2_v1_runtime.c. */
 void dm2_v1_activate_ornate_animator(
     int16_t x, int16_t y, int frame_count,
     const DM2_V1_ActivateOrnateAnimatorCallbacks *cb, void *ctx)
@@ -86,6 +90,85 @@ void dm2_v1_animate_creature(
         anim->anim_frame = (int16_t)(anim->anim_frame % anim->anim_max);
     if (anim->anim_frame < 0)
         anim->anim_frame = 0;
+}
+
+int dm2_v1_animate_creature_source(
+    int16_t x, int16_t y, int16_t direction,
+    DM2_V1_AnimateCreatureVariant variant,
+    const DM2_V1_AnimateCreatureCallbacks *cb, void *ctx,
+    DM2_V1_AnimateCreatureReceipt *out_receipt)
+{
+    DM2_V1_AnimateCreatureReceipt receipt;
+    int16_t creature;
+    int thinking_state;
+    void *local_state;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (variant != DM2_V1_ANIMATE_CREATURE_DOS &&
+        variant != DM2_V1_ANIMATE_CREATURE_SPX_V4 &&
+        variant != DM2_V1_ANIMATE_CREATURE_SPX_V5) {
+        receipt.blocked_invalid_variant = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!cb || !cb->get_creature_at) {
+        receipt.blocked_missing_callbacks = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    creature = cb->get_creature_at(ctx, x, y);
+    if (creature < 0) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (!cb->query_ai_spec_flags || !cb->get_creature_ai_index ||
+        !cb->allocate_caii_to_creature || !cb->prepare_local_creature ||
+        !cb->has_current_creature_state || !cb->think_creature_0806 ||
+        !cb->think_creature_071b || !cb->unprepare_local_creature) {
+        receipt.blocked_missing_callbacks = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.found_creature = 1;
+    receipt.creature = (uint16_t)creature;
+    if ((cb->query_ai_spec_flags(ctx, (uint16_t)creature) & 0x0001u) != 0u) {
+        int16_t caii = cb->get_creature_ai_index(ctx, (uint16_t)creature);
+        if (caii == -1 || caii == 0xff) {
+            cb->allocate_caii_to_creature(
+                ctx, (uint16_t)creature, x, y, variant);
+            receipt.allocated_caii = 1u;
+        }
+    }
+
+    /* SKProject passes state id 0x21 for DOS, SPX v4 and SPX v5. The source
+     * callback keeps the DOS CUTLX8(x) argument narrowing edition-local. */
+    local_state = cb->prepare_local_creature(
+        ctx, (uint16_t)creature, x, y, 0x21u, variant);
+    receipt.prepared_local_state = 1u;
+    thinking_state = cb->has_current_creature_state(ctx) != 0;
+    receipt.thinking_state_available = (uint8_t)(thinking_state ? 1u : 0u);
+    if (thinking_state) {
+        if (direction != 0) {
+            cb->think_creature_0806(ctx);
+            receipt.dispatched_0806 = 1u;
+        } else {
+            cb->think_creature_071b(ctx);
+            receipt.dispatched_071b = 1u;
+        }
+    }
+
+    if (variant != DM2_V1_ANIMATE_CREATURE_SPX_V4 || thinking_state) {
+        cb->unprepare_local_creature(ctx, local_state);
+        receipt.unprepared_local_state = 1u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 void dm2_v1_advance_tiles_time(
@@ -293,24 +376,28 @@ int32_t dm2_v1_hero_2c1d_135d(
 }
 
 /* DM2_ADJUST_SKILLS — c_hero.cpp:1166 */
-int32_t dm2_v1_adjust_skills(
+static int32_t dm2_v1_adjust_skills_variant(
     int hero_idx, int32_t skill_id, int32_t exp_gain,
-    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx,
+    int spx_v4)
 {
-    if (!cb)
+    if (!cb || !cb->get_exp_scale || !cb->get_skill_lv ||
+        !cb->add_skill_exp)
         return -1;
 
     /* time-window halving for combat (4..11) skill ids */
     if (skill_id >= 4 && skill_id <= 11) {
-        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
-        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
+        if (!cb->get_gametick || !cb->get_exp_window_tick)
+            return -1;
+        int16_t tick = cb->get_gametick(ctx);
+        int16_t window = cb->get_exp_window_tick(ctx);
         if ((int32_t)(tick - 150) > window)
             exp_gain >>= 1;
     }
     if (exp_gain == 0)
         return 0;
 
-    int16_t scale = cb->get_exp_scale ? cb->get_exp_scale(ctx) : 0;
+    int16_t scale = cb->get_exp_scale(ctx);
     if (scale != 0)
         exp_gain *= scale;
 
@@ -322,17 +409,28 @@ int32_t dm2_v1_adjust_skills(
     int16_t level_before = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
 
     if (skill_id >= 4) {
-        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
-        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
-        if (tick - 40 < window)
+        if (!cb->get_gametick || !cb->get_exp_window_tick)
+            return -1;
+        int16_t tick = cb->get_gametick(ctx);
+        int16_t window = cb->get_exp_window_tick(ctx);
+        int double_window = spx_v4 ? 25 : 40;
+        if (tick - double_window < window)
             exp_gain *= 2;
     }
 
-    if (cb->add_skill_exp) {
-        cb->add_skill_exp(ctx, hero_idx, (int)skill_id, exp_gain);
-        if (skill_id >= 4)
-            cb->add_skill_exp(ctx, hero_idx, group, exp_gain);
-    }
+    if (exp_gain != 0 &&
+        (!cb->random_bit || !cb->rand16 || !cb->get_max_hp ||
+         !cb->set_max_hp || !cb->get_max_stamina ||
+         !cb->set_max_stamina || !cb->add_ability_max ||
+         !cb->mark_hero_dirty ||
+         (spx_v4 && !cb->get_current_stamina) ||
+         ((group == 2 || group == 3) &&
+          (!cb->random_dir || !cb->get_max_mp || !cb->set_max_mp))))
+        return -1;
+
+    cb->add_skill_exp(ctx, hero_idx, (int)skill_id, exp_gain);
+    if (skill_id >= 4)
+        cb->add_skill_exp(ctx, hero_idx, group, exp_gain);
 
     int16_t level_after = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
 
@@ -346,43 +444,50 @@ int32_t dm2_v1_adjust_skills(
         int rb1 = cb->random_bit ? cb->random_bit(ctx) : 0;
         int8_t vit_delta = (int8_t)(rb1 + 1);
         int rb2 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int32_t level_gain = (uint16_t)level_after;
         int32_t vit_gain = rb2;
         if (group != 2)
-            vit_gain &= rb0;
+            vit_gain &= (uint8_t)level_gain;
         if (cb->add_ability_max)
             cb->add_ability_max(ctx, hero_idx, /*E_VITALITY*/ 0, (int16_t)vit_gain);
 
         int rb3 = cb->random_bit ? cb->random_bit(ctx) : 0;
-        int16_t antifire_gain = (int16_t)(rb3 & ~rb0);
+        int16_t antifire_gain = (int16_t)(rb3 & ~(uint8_t)level_gain);
         if (cb->add_ability_max)
             cb->add_ability_max(ctx, hero_idx, /*E_ANTIFIRE*/ 1, antifire_gain);
 
-        int16_t hp_gain, sta_gain;
+        int32_t stamina_base = (uint16_t)(spx_v4
+            ? cb->get_current_stamina(ctx, hero_idx)
+            : cb->get_max_stamina(ctx, hero_idx));
+        int32_t maxmp_gain = 0;
         int16_t maxhp, maxsta, maxmp;
         switch (group) {
         case 0: /* fighter */
+            stamina_base >>= 4;
+            level_gain *= 3;
             if (cb->add_ability_max) {
                 cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, vit_delta);
-                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, (int16_t)rb0);
             }
             break;
         case 1: /* ninja */
+            stamina_base /= 21;
+            level_gain *= 2;
             if (cb->add_ability_max) {
-                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, (int16_t)rb0);
                 cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, vit_delta);
             }
             break;
-        case 2: /* wizard */
-            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
-            if (cb->set_max_mp)
-                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+        case 2: /* priest */
+            stamina_base /= 25;
+            maxmp_gain = level_gain;
+            level_gain += (level_gain + 1) >> 1;
             if (cb->add_ability_max)
-                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, (int16_t)rb0);
             break;
-        case 3: /* priest */
-            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
-            if (cb->set_max_mp)
-                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+        case 3: /* wizard */
+            stamina_base >>= 5;
+            maxmp_gain = level_gain + (level_gain >> 1);
             if (cb->add_ability_max)
                 cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, vit_delta);
             break;
@@ -392,7 +497,10 @@ int32_t dm2_v1_adjust_skills(
         if (group == 2 || group == 3) {
             maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
             int mp_jitter = cb->random_dir(ctx) & 3;
-            maxmp = (int16_t)(maxmp + mp_jitter);
+            int mp_jitter_cap = (uint16_t)level_after - 1;
+            if (mp_jitter > mp_jitter_cap)
+                mp_jitter = mp_jitter_cap;
+            maxmp = (int16_t)(maxmp + maxmp_gain + mp_jitter);
             if (maxmp > 0x384)
                 maxmp = 0x384;
             if (cb->set_max_mp)
@@ -408,17 +516,20 @@ int32_t dm2_v1_adjust_skills(
             }
         }
 
-        hp_gain = (int16_t)(1 + rb2);
+        uint16_t hp_random_max = (uint16_t)((level_gain >> 1) + 1);
+        int32_t hp_gain = level_gain +
+            cb->rand16(ctx, hp_random_max);
         maxhp = cb->get_max_hp ? cb->get_max_hp(ctx, hero_idx) : 0;
-        maxhp = (int16_t)(maxhp + hp_gain);
+        maxhp = (int16_t)(maxhp + (int16_t)hp_gain);
         if (maxhp > 999)
             maxhp = 999;
         if (cb->set_max_hp)
             cb->set_max_hp(ctx, hero_idx, maxhp);
 
-        sta_gain = (int16_t)(1 + rb2);
         maxsta = cb->get_max_stamina ? cb->get_max_stamina(ctx, hero_idx) : 0;
-        maxsta = (int16_t)(maxsta + sta_gain);
+        uint16_t sta_random_max = (uint16_t)((stamina_base >> 1) + 1);
+        int32_t sta_gain = stamina_base + cb->rand16(ctx, sta_random_max);
+        maxsta = (int16_t)(maxsta + (int16_t)sta_gain);
         if (maxsta > 9999)
             maxsta = 9999;
         if (cb->set_max_stamina)
@@ -431,6 +542,22 @@ int32_t dm2_v1_adjust_skills(
     }
 
     return level_after;
+}
+
+int32_t dm2_v1_adjust_skills(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+{
+    return dm2_v1_adjust_skills_variant(
+        hero_idx, skill_id, exp_gain, cb, ctx, 0);
+}
+
+int32_t dm2_v1_adjust_skills_spx_v4(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+{
+    return dm2_v1_adjust_skills_variant(
+        hero_idx, skill_id, exp_gain, cb, ctx, 1);
 }
 
 /* DM2_WOUND_PLAYER — c_hero.cpp:1496 */
@@ -689,64 +816,128 @@ int dm2_v1_player_consume_object(
     return cb->dispatch ? cb->dispatch(ctx, hero_idx, item, category) : 0;
 }
 
-/* DM2_CHANGE_PLAYER_POS — c_hero.cpp:4037 */
-void dm2_v1_change_player_pos(
-    int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
-    const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx)
-{
-    if (!cb || !state)
-        return;
-
-    int target_slot = packed_pos & 0x7fff;
-    int also_dir = state->also_swap_direction;
-
-    int target_hero = cb->get_player_at_position
-        ? cb->get_player_at_position(ctx, target_slot) : -1;
-
-    if (state->drag_in_progress) {
-        int src_hero = cb->get_player_at_position
-            ? cb->get_player_at_position(ctx, state->drag_source_position) : -1;
-        if (also_dir && src_hero != -1 && cb->set_direction && cb->get_party_facing) {
-            cb->set_direction(ctx, src_hero, cb->get_party_facing(ctx));
-        }
-        if (state->drag_source_position != target_slot) {
-            if (target_hero != -1 && cb->swap_positions)
-                cb->swap_positions(ctx, target_hero, src_hero);
-        }
-    } else if (target_hero != -1 && cb->swap_positions) {
-        cb->swap_positions(ctx, target_hero, target_slot);
-    }
-}
-
-/* DM2_hero_2c1d_1de2 — c_hero.cpp:3903 (throw item) */
+/* DM2_hero_2c1d_1de2 — SKULLWIN/c_hero.cpp:3903,
+ * SKWINSPX/src/v5/skhero.cpp:3905, v4/skchamp.cpp:1234, and
+ * SKWINDOS/dm2byh.cpp:423. Projectile skill/RNG setup and full SHOOT_ITEM
+ * parameters remain outside this narrow transaction adapter. */
 int32_t dm2_v1_hero_2c1d_1de2(
     int hero_idx, int slot, int16_t x, int16_t y, int direction,
     const DM2_V1_ThrowItemCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    int hand_throw;
+    int party_facing;
+    int16_t previous_slot1 = -1;
+    int16_t throw_strength;
+    int16_t skill_level;
+    int16_t skill_adjustment = 8;
+    uint16_t item;
+    uint16_t throw_power;
+    uint16_t projectile_range;
+    uint8_t projectile_attack;
+    uint8_t projectile_step;
+    uint16_t kinetic_word;
+    int16_t rand16_limit;
+
+    if (!cb || !cb->compute_throw_strength || !cb->queue_launch_noise ||
+        !cb->query_item_weight || !cb->adjust_stamina ||
+        !cb->adjust_hand_cooldown || !cb->query_throw_power ||
+        !cb->adjust_throw_skill || !cb->query_throw_skill_level ||
+        !cb->rand16 || !cb->rand_raw || !cb->query_projectile_range ||
+        !cb->get_party_facing || !cb->shoot_item || !cb->set_throw_state)
         return 0;
 
-    int16_t item;
+    hand_throw = slot < 0;
+
+    if (hand_throw && (!cb->hand_throw_allowed ||
+                       !cb->hand_throw_allowed(ctx) ||
+                       !cb->get_hand_slot1 || !cb->set_hand_slot1 ||
+                       !cb->remove_from_hand))
+        return 0;
+    if (!hand_throw && !cb->remove_possession)
+        return 0;
+    party_facing = cb->get_party_facing(ctx);
+    if (party_facing < 0 || party_facing > 3)
+        return 0;
+
     if (slot < 0) {
-        item = cb->remove_from_hand ? cb->remove_from_hand(ctx) : -1;
-        if (item == -1)
+        /* Source temporarily stages the held item in inventory slot 1 so
+         * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH sees it, then restores the
+         * previous slot before continuing the throw transaction. */
+        previous_slot1 = cb->get_hand_slot1(ctx, hero_idx);
+        int16_t held_item = cb->remove_from_hand(ctx);
+        if (held_item == -1)
             return 0;
-        if (cb->set_hand_slot1)
-            cb->set_hand_slot1(ctx, hero_idx, item);
+        item = (uint16_t)held_item;
+        cb->set_hand_slot1(ctx, hero_idx, held_item);
         slot = 1;
-    } else {
-        item = cb->remove_possession ? cb->remove_possession(ctx, hero_idx, slot) : -1;
-        if (item == -1)
-            return 0;
     }
 
-    int16_t strength = cb->compute_throw_strength
-        ? cb->compute_throw_strength(ctx, hero_idx, slot) : 0;
+    throw_strength = cb->compute_throw_strength(ctx, hero_idx, slot);
 
-    if (cb->queue_launch_noise)
-        cb->queue_launch_noise(ctx, (uint16_t)item, x, y);
-    if (cb->shoot_item)
-        cb->shoot_item(ctx, (uint16_t)item, x, y, direction, strength);
+    if (hand_throw) {
+        cb->set_hand_slot1(ctx, hero_idx, previous_slot1);
+    } else {
+        /* Source computes strength while the item is still in its original
+         * possession slot, and only then removes that possession. */
+        int16_t removed_item = cb->remove_possession(ctx, hero_idx, slot);
+        if (removed_item == -1)
+            return 0;
+        item = (uint16_t)removed_item;
+    }
+
+    cb->queue_launch_noise(ctx, item, x, y);
+    cb->adjust_stamina(
+        ctx, hero_idx,
+        dm2_v1_hero_2c1d_0e23(cb->query_item_weight(ctx, item)));
+    cb->adjust_hand_cooldown(ctx, hero_idx, 4, slot);
+
+    /* skproject SKULLWIN/c_hero.cpp:3980-4017: item DB-spec 9 changes
+     * throw-skill experience; the adjusted strength is then randomized,
+     * clamped, and passed to SHOOT_ITEM with DB-spec 12 range. */
+    throw_power = cb->query_throw_power(ctx, item);
+    if (throw_power != 0u) {
+        skill_adjustment = (int16_t)(throw_power / 4u + 12u);
+    }
+    cb->adjust_throw_skill(ctx, hero_idx, skill_adjustment);
+    kinetic_word = (uint16_t)((uint16_t)throw_strength +
+                              (throw_power != 0u ? throw_power : 1u));
+    skill_level = cb->query_throw_skill_level(ctx, hero_idx);
+    if (skill_level < 0)
+        skill_level = 0;
+    rand16_limit = (int16_t)(((int16_t)kinetic_word >> 2) + 8);
+    kinetic_word = (uint16_t)(kinetic_word +
+                              (uint16_t)cb->rand16(ctx, rand16_limit));
+    kinetic_word = (uint16_t)(kinetic_word + (uint16_t)skill_level);
+    {
+        int16_t signed_kinetic = (int16_t)kinetic_word;
+        if (signed_kinetic > 255)
+            kinetic_word = 255u;
+    }
+
+    {
+        uint32_t random_attack = (uint32_t)cb->rand_raw(ctx) & 0x1fu;
+        int attack = (int)(random_attack + (uint32_t)skill_level * 8u);
+        if (attack < 40)
+            attack = 40;
+        if (attack > 200)
+            attack = 200;
+        projectile_attack = (uint8_t)attack;
+    }
+
+    projectile_range = cb->query_projectile_range(ctx, item);
+    if (projectile_range == 0u) {
+        int range = 11 - skill_level;
+        if (range < 5)
+            range = 5;
+        projectile_step = (uint8_t)range;
+    } else {
+        projectile_step = (uint8_t)projectile_range;
+    }
+
+    cb->shoot_item(ctx, item, x, y, (party_facing + direction) & 3,
+                   party_facing, (uint8_t)kinetic_word,
+                   projectile_attack, projectile_step);
+    cb->set_throw_state(ctx, 4, party_facing);
     return 1;
 }
 
@@ -1008,24 +1199,65 @@ static int dm2_handle_mask_has_class(uint64_t handle_mask, int item_class)
     return (handle_mask & ((uint64_t)1 << item_class)) != 0;
 }
 
+static int32_t dm2_v1_creature_can_handle_it_impl(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx, int is_v4)
+{
+    int item_class = flags & 0x3f;
+    int invert = flags & 0x80;
+
+    /* skproject's 0x3f path reaches the common result label without
+     * consulting a GDAT mask, so it means all ordinary handleable classes. */
+    if (item_class == 0x3f)
+        return !invert;
+
+    if (item_class == 0x3e) {
+        int moneybox = cb && cb->is_container_moneybox &&
+            cb->is_container_moneybox(ctx, item);
+        int has_open_state = moneybox && cb->moneybox_already_opened;
+        int opened = has_open_state &&
+            cb->moneybox_already_opened(ctx, item);
+        /* In skproject, a non-moneybox or an already-open moneybox returns
+         * the inversion bit. A known closed moneybox reaches the common
+         * result; absent state callbacks retain the inversion fallback. */
+        return (!moneybox || opened || !has_open_state) ? invert : !invert;
+    }
+
+    if (item_class == 0x29) {
+        int moneybox = cb && cb->is_container_moneybox &&
+            cb->is_container_moneybox(ctx, item);
+        if (!moneybox)
+            item_class = 7;
+        else {
+            int opened = cb->moneybox_already_opened &&
+                cb->moneybox_already_opened(ctx, item);
+            if (!opened)
+                return invert;
+            /* SPX v4 accepts an opened moneybox directly. SPX v5 instead
+             * checks the creature mask for class 0x29. */
+            if (is_v4)
+                return !invert;
+        }
+    }
+
+    if (!caps) return 0;
+
+    return dm2_handle_mask_has_class(caps->handle_mask, item_class)
+        ? !invert : invert;
+}
+
 int32_t dm2_v1_creature_can_handle_it(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
 {
-    if (!caps)
-        return 0;
-    int item_class = item & 0x3f;
-    if (item_class == 0x3e || item_class == 0x3f)
-        return 0;
+    return dm2_v1_creature_can_handle_it_impl(caps, item, flags, cb, ctx, 0);
+}
 
-    if (item_class == 0x29 && cb && cb->is_container_moneybox &&
-        cb->is_container_moneybox(ctx, item)) {
-        if (cb->moneybox_already_opened && cb->moneybox_already_opened(ctx, item))
-            return dm2_handle_mask_has_class(caps->handle_mask, item_class);
-        return (flags & 0x80) != 0;
-    }
-
-    return dm2_handle_mask_has_class(caps->handle_mask, item_class);
+int32_t dm2_v1_creature_can_handle_it_v4(
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
+{
+    return dm2_v1_creature_can_handle_it_impl(caps, item, flags, cb, ctx, 1);
 }
 
 int32_t dm2_v1_creature_cast_spell(

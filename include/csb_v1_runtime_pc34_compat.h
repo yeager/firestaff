@@ -1301,6 +1301,13 @@ int csb_v1_runtime_main_random_mod(CSB_V1_RuntimeProfile *profile,
                                    int modulus);
 int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
                                     int mask);
+/* ReDMCSB BASE.C F0024-F0026 signed 16-bit comparison helpers. These
+ * expose the source contract for CSB-owned callers; target ABI and
+ * platform-specific linker entry points remain separate. */
+int csb_v1_f0024_main_get_minimum_value(int16_t value1, int16_t value2);
+int16_t csb_v1_f0025_main_get_maximum_value(int16_t value1, int16_t value2);
+int csb_v1_f0026_main_get_bounded_value(
+    int16_t minimum, int16_t value, int16_t maximum);
 
 /* Clean up runtime resources.
  * Unloads the dungeon data loaded by csb_v1_runtime_boot().

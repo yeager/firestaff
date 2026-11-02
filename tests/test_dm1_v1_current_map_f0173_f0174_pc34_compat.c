@@ -135,12 +135,29 @@ static void test_f0174_sets_current_and_party_map(void)
     assert(runtime.currentMapAllowedCreatureTypes ==
            maps[1].allowedCreatureTypes);
     assert(runtime.currentMapAllowedCreatureTypeCount == 2);
-    assert(runtime.currentMapWallOrnamentIndices == maps[1].wallOrnamentIndices);
+    assert(runtime.currentMapWallOrnamentIndices == runtime.f0174WallOrnamentStorage);
     assert(runtime.currentMapWallOrnamentCount == 3);
     assert(runtime.currentMapInscriptionWallOrnamentIndex == 3);
-    assert(runtime.currentMapFloorOrnamentIndices == maps[1].floorOrnamentIndices);
-    assert(runtime.currentMapDoorOrnamentIndices == maps[1].doorOrnamentIndices);
+    assert(runtime.currentMapWallOrnamentIndices[0] == 3);
+    assert(runtime.currentMapWallOrnamentIndices[1] == 4);
+    assert(runtime.currentMapWallOrnamentIndices[2] == 7);
+    assert(runtime.currentMapWallOrnamentIndices[3] == 0);
+    assert(runtime.currentMapFloorOrnamentIndices == runtime.f0174FloorOrnamentStorage);
+    assert(runtime.currentMapFloorOrnamentIndices[0] == 1);
+    assert(runtime.currentMapFloorOrnamentIndices[1] == 8);
+    assert(runtime.currentMapDoorOrnamentIndices == runtime.f0174DoorOrnamentStorage);
+    assert(runtime.currentMapDoorOrnamentIndices[0] == 6);
+    assert(runtime.currentMapDoorOrnamentIndices[1] == 9);
     assert(runtime.currentMapAlcoveOrnamentIndices == maps[1].alcoveOrnamentIndices);
+    assert(runtime.f0173CallCount == 2);
+    assert(runtime.f0174CallCount == 1);
+
+    maps[1].wallOrnamentCount = DM1_V1_F0174_WALL_ORNAMENT_CAPACITY;
+    assert(F0174_DUNGEON_SetCurrentMapAndPartyMap(
+               &runtime, maps, 3, 2, &result) == 0);
+    assert(result.valid == 0);
+    assert(runtime.currentMapIndex == 2);
+    assert(runtime.partyMapIndex == 2);
     assert(runtime.f0173CallCount == 2);
     assert(runtime.f0174CallCount == 1);
 

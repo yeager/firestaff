@@ -125,6 +125,22 @@ int dm2_v1_source_timer_peek_ticket(
 int dm2_v1_source_timer_update_payload(DM2_V1_SourceTimerQueue *queue,
                                        uint32_t ticket,
                                        int x, int y, int map);
+/* SKULLWIN/c_tim_proc.cpp::DM2_ADVANCE_TILES_TIME updates DB14 missile
+ * timers by the record's source timerarray index (DB14 word@6). Preserve the
+ * timer's due tick and queue position while rewriting the packed tile/action
+ * word, record direction bits, and map byte. Returns 1 only for one matching
+ * live missile timer; ambiguous or malformed matches are left unchanged. */
+int dm2_v1_source_timer_update_missile_destination(
+    DM2_V1_SourceTimerQueue *queue, uint16_t source_index,
+    uint16_t missile_record, int x, int y, int map,
+    int timer_direction, int record_direction);
+/* The same source owner scans the whole active timer table for DB15 cloud
+ * timers (type 0x19) whose valueB is the moved ObjectID. It updates every
+ * match in place, preserving due ticks and queue order. Returns the number
+ * of matching live cloud timers updated; malformed coordinates are rejected. */
+int dm2_v1_source_timer_update_cloud_destinations(
+    DM2_V1_SourceTimerQueue *queue, uint16_t cloud_record,
+    int x, int y, int map, int record_direction);
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick);
 DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(

@@ -81,6 +81,24 @@ int main(void) {
     dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_STRENGTH, 5);
     assert(hero.ability[DM2_ABILITY_STRENGTH][DM2_CUR] == 55);
 
+    /* Source ability slots are unsigned bytes even though Firestaff stores
+     * them in int8_t fields. Exercise both sides of the signed-byte boundary. */
+    dm2_v1_party_hero_init(&hero);
+    uint8_t high_current = 180;
+    memcpy(&hero.ability[DM2_ABILITY_STRENGTH][DM2_CUR],
+           &high_current, sizeof(high_current));
+    hero.ability[DM2_ABILITY_STRENGTH][DM2_MAX] = 100;
+    dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_STRENGTH, 10);
+    assert((uint8_t)hero.ability[DM2_ABILITY_STRENGTH][DM2_CUR] == 184);
+
+    dm2_v1_party_hero_init(&hero);
+    hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] = 100;
+    uint8_t high_maximum = 180;
+    memcpy(&hero.ability[DM2_ABILITY_DEXTERITY][DM2_MAX],
+           &high_maximum, sizeof(high_maximum));
+    dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_DEXTERITY, -10);
+    assert((uint8_t)hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] == 96);
+
     /* Small delta within 20 of max: no diminishing */
     dm2_v1_party_hero_init(&hero);
     hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] = 45;

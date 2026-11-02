@@ -214,7 +214,8 @@ typedef struct {
     int16_t record_darkness;
 } DM2_V1_Mode7Flags3Evidence;
 
-/* SKULLWIN/c_light.cpp:386-405: decode one DBE/DBF darkness term. */
+/* SKULLWIN/c_light.cpp:386-405 and SPX v4 skgame.cpp:2128-2137: decode
+ * one DBE fireball-missile or DBF cloud light-modifier term. */
 int dm2_v1_mode7_record_darkness_term(
     uint8_t record_type, uint16_t word_2, uint8_t byte_4,
     int16_t *out_term);

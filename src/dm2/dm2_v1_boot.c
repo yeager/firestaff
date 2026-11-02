@@ -1237,8 +1237,11 @@ static int dm2_v1_boot_materialize_source_hero(
         (int16_t)(source->stamina_base * 10u);
     hero.curMP = hero.maxMP = (int16_t)(source->mana_base * 10u);
     for (i = 0; i < DM2_NUM_ABILITIES; ++i) {
+        /* DOS SKW_REVIVE_PLAYER, SPX v4 REVIVE_PLAYER and SPX v5
+         * DM2_REVIVE_PLAYER all clamp the seven source abilities to 30. */
         hero.ability[i][DM2_CUR] = hero.ability[i][DM2_MAX] =
-            (int8_t)source->ability_base[i];
+            (int8_t)(source->ability_base[i] < 30u ? 30u :
+                     source->ability_base[i]);
     }
     for (i = 0; i < 16; ++i) {
         uint8_t level = source->skill_level[i];
@@ -10868,10 +10871,11 @@ static int dm2_v1_boot_query_blit_text_rect(
  * clipping window; the image's own dimensions supply the unscaled blit size. */
 static int dm2_v1_boot_query_blit_image_rect(
     const uint8_t *raw, size_t raw_size, uint16_t rect_id,
-    int image_width, int image_height, DM2_V1_InterfaceRect *out)
+    int image_width, int image_height, DM2_V1_InterfaceRect *out,
+    int16_t *out_source_x, int16_t *out_source_y)
 {
     DM2_V1_InterfaceRect current, next, clip;
-    int mode, x0, y0, dx = 0, dy = 0, flag = 0;
+    int mode, x0, y0, anchor_x, anchor_y, dx = 0, dy = 0, flag = 0;
     int clip_x = -10000, clip_y = -10000;
     int clip_w = 20000, clip_h = 20000;
     int query_w2 = 0;
@@ -10985,6 +10989,8 @@ static int dm2_v1_boot_query_blit_image_rect(
     if (query_w2 < 0 ||
         !dm2_v1_boot_blit_anchor(mode, x0, y0, image_width, image_height, out))
         return 0;
+    anchor_x = out->x;
+    anchor_y = out->y;
 
     dx = clip_x - out->x;
     if (dx > 0) {
@@ -11000,6 +11006,8 @@ static int dm2_v1_boot_query_blit_image_rect(
     } else {
         out->h = image_height < dy + clip_h ? image_height : dy + clip_h;
     }
+    if (out_source_x) *out_source_x = (int16_t)(out->x - anchor_x);
+    if (out_source_y) *out_source_y = (int16_t)(out->y - anchor_y);
     return out->w > 0 && out->h > 0;
 }
 
@@ -11053,6 +11061,15 @@ int dm2_v1_boot_query_blit_rect_for_dimensions(
     const DM2_V1_BootProfile *profile, uint16_t rect_id,
     int source_width, int source_height, DM2_V1_InterfaceRect *out_rect)
 {
+    return dm2_v1_boot_query_blit_rect_details(
+        profile, rect_id, source_width, source_height, out_rect, NULL, NULL);
+}
+
+int dm2_v1_boot_query_blit_rect_details(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    int source_width, int source_height, DM2_V1_InterfaceRect *out_rect,
+    int16_t *out_source_x, int16_t *out_source_y)
+{
     const DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
     size_t raw_size = 0u;
@@ -11064,10 +11081,12 @@ int dm2_v1_boot_query_blit_rect_for_dimensions(
     raw = dm2_v1_asset_load_typed_sized(
         &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (out_source_x) *out_source_x = 0;
+    if (out_source_y) *out_source_y = 0;
     return raw && raw_size >= 4u &&
         dm2_v1_boot_query_blit_image_rect(raw, raw_size, rect_id,
                                           source_width, source_height,
-                                          out_rect);
+                                          out_rect, out_source_x, out_source_y);
 }
 
 int dm2_v1_boot_g1_static_object_material_receipt(

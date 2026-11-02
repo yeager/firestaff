@@ -77,6 +77,21 @@ int16_t dm2_v1_retrieve_item_bonus(
     int16_t equipped, int16_t context,
     const DM2_V1_ItemBonusCallbacks *cb, void *ctx);
 
+/* SPX v4 RETRIEVE_ITEM_BONUS returns the complete signed GDAT word; DOS and
+ * SPX v5 instead sign-extend its low byte. Keep the edition-specific value
+ * width explicit so shared callers cannot silently use the wrong behavior. */
+int16_t dm2_v1_retrieve_item_bonus_spx_v4(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx);
+
+/* DOS SKW_RETRIEVE_ITEM_BONUS preserves its source conditional gate, which
+ * admits every context except 3 for conditional bonuses. */
+int16_t dm2_v1_retrieve_item_bonus_dos(
+    uint16_t record_word, uint8_t bonus_idx,
+    int16_t equipped, int16_t context,
+    const DM2_V1_ItemBonusCallbacks *cb, void *ctx);
+
 /* ---- DM2_GET_MAX_CHARGE (c_item.cpp:344) ----
  * Get the maximum charge capacity for an item based on db type. */
 int16_t dm2_v1_get_max_charge(uint16_t record_word);

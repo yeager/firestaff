@@ -57,6 +57,9 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int16_t (*add_item_charge)(void *ctx, int16_t record, int32_t amount);
     int16_t (*get_max_charge)(void *ctx, int16_t item_cls);
     int32_t (*query_gdat_dbspec_word_value)(void *ctx, int32_t record, int32_t idx);
+    int32_t (*query_creatures_item_mask)(void *ctx, int32_t creature_type,
+                                         int32_t mask_idx, uint8_t mask_out[64],
+                                         int32_t flag);
 
     /* Creature */
     void    *(*query_creature_ai_spec_from_type)(void *ctx, int32_t type);
@@ -75,7 +78,7 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int16_t (*get_hero_curHP)(void *ctx, int hero);
     uint8_t (*get_hero_partypos)(void *ctx, int hero);
     int16_t (*get_heros_in_party)(void *ctx);
-    int16_t (*get_hero_skill)(void *ctx, int hero, int skill_major, int skill_minor);
+    int32_t (*get_hero_skill)(void *ctx, int hero, int skill_major, int skill_minor);
     int16_t (*get_hero_sbonus)(void *ctx, int hero, int major, int minor);
     int16_t (*get_hero_max_load)(void *ctx, int hero);
     int16_t (*get_player_weight)(void *ctx, int hero);
@@ -87,6 +90,8 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int32_t (*dm_locate_other_level)(void *ctx, int32_t level, int32_t dir,
                                      int16_t *xp, int16_t *yp, void *extra);
     int32_t (*is_creature_allowed_on_level_cb)(void *ctx, int32_t creature, int32_t level);
+    /* Source state: DOS/SPX query override or v4 sleeping gate. */
+    int32_t (*is_player_skill_query_overridden)(void *ctx);
 
 } DM2_V1_QueryDbCallbacks;
 
@@ -177,17 +182,31 @@ int32_t dm2_v1_query_gdat_creature_word_value(int32_t creature_type, int32_t val
 
 int32_t dm2_v1_query_gdat_food_value_from_record(int16_t record,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int16_t dm2_v1_query_gdat_food_value_from_record_dos(int16_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_query_gdat_food_value_from_record_spx_v5(int16_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 const char *dm2_v1_query_gdat_item_name(int32_t a, int32_t b,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_query_cmdstr_text(const char *text, const char *pattern,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_text_dos(const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_text_spx_v4(const char *text, const char *pattern,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 const char *dm2_v1_query_cmdstr_name(int8_t a, int8_t b, int8_t c,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_query_cmdstr_entry(int32_t a, int32_t b, int32_t c, int32_t d,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+uint16_t dm2_v1_query_cmdstr_entry_dos(
+    int32_t category, int32_t index, int32_t key_index, int32_t field,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_query_cmdstr_entry_spx_v5(
+    int32_t category, int32_t index, int32_t field, int32_t key_index,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_query_cur_cmdstr_entry(int32_t a,
@@ -378,8 +397,9 @@ int32_t dm2_v1_query_gdat_potion_behaviour_from_record(int32_t record,
 /* Player / hero queries (10)                                                 */
 /* -------------------------------------------------------------------------- */
 
-int16_t dm2_v1_query_player_skill_lv(int16_t hero, int16_t skill, int32_t include_bonus,
-    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_querydb_player_skill_lv(int32_t player_idx, int32_t skill,
+                                       int32_t include_bonus,
+                                       const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_query_player_load(int32_t player_idx,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
@@ -451,10 +471,35 @@ int32_t dm2_v1_query_48ae_01af(int32_t tile_byte, int32_t dir,
 /* Combat / damage (2)                                                        */
 /* -------------------------------------------------------------------------- */
 
-int32_t dm2_v1_query_48ae_05ae(int32_t itemspec, int32_t slot,
-    int32_t attack_type, int32_t creature_type,
-    int32_t flag, int32_t charges,
+typedef enum {
+    DM2_V1_QUERY_48AE_05AE_DOS = 0,
+    DM2_V1_QUERY_48AE_05AE_SPX_V4 = 4,
+    DM2_V1_QUERY_48AE_05AE_SPX_V5 = 5
+} DM2_V1_Query48ae05aeVariant;
+int32_t dm2_v1_query_48ae_05ae_variant(
+    int32_t itemspec, int32_t creature_type, int32_t slot,
+    int32_t adjust_percent, int32_t increase, int32_t charges,
+    DM2_V1_Query48ae05aeVariant variant,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+int32_t dm2_v1_query_48ae_05ae(int32_t itemspec, int32_t creature_type,
+    int32_t slot, int32_t adjust_percent, int32_t increase, int32_t charges,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+struct DM2_V1_AssetLoader;
+/* Source-ready adapter for DM2_14cd_2807. Returns zero if any required GDAT
+   word or item-mask lookup is unavailable. */
+int dm2_v1_query_48ae_05ae_asset_loader(
+    uint16_t itemspec, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader);
+int dm2_v1_query_48ae_05ae_asset_loader_variant(
+    DM2_V1_Query48ae05aeVariant variant, uint16_t itemspec,
+    uint8_t creature_type, uint16_t creature_word8, int32_t argl0,
+    int32_t argl1, int32_t charges, int32_t *out_value,
+    const struct DM2_V1_AssetLoader *loader);
+int32_t dm2_v1_query_48ae_05ae_skproject_callback(
+    uint16_t distinctive_type, uint8_t creature_type, uint16_t creature_word8,
+    int32_t argl0, int32_t argl1, int32_t charges, int32_t *out_value,
+    void *loader);
 
 void dm2_v1_query_48ae_0767(int32_t gold, int32_t limit,
     int16_t *types, void *counts,

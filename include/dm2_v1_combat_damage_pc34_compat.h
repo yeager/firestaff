@@ -73,7 +73,9 @@ typedef struct {
     uint16_t dbspec_word9;
     uint8_t bodyflag;
     int16_t stamina_adj;
-    uint16_t creature_armor_mult;
+    /* High byte low nibble of AI-spec w22, used by the source XP formula
+     * (c_hero.cpp:417-419). This is not ArmorClass. */
+    uint8_t creature_skill_exp_factor;
     /* DM2_CALC_PLAYER_ATTACK_DAMAGE reads these independently: the map
      * descriptor's high-nibble difficulty (ddat.v1e03c0->w_0c >> 12), and
      * the current party-power value (ddat.v1e0286).  They are not the map

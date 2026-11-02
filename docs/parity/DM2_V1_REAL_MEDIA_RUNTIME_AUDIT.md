@@ -77,6 +77,31 @@ moves from map 0 `(1,8)` to `(1,7)` while retaining direction 0. The complete
 this pointer route. This evidence covers movement arrows only; Amiga formation
 pointer actions and other Amiga HUD interactions remain open.
 
+### Right-panel moneybox draw ownership (2026-11-02)
+
+SKProject `SKWINSPX/src/v4/skguidrw.cpp::DRAW_MONEYBOX` draws the container
+frame from `CONTAINERS/cls2/0x10`, resolves up to ten slot denominations
+through `GET_ITEM_ORDER_IN_CONTAINER`, and scatters up to 32 denomination
+GDAT sprites per slot using the source `table1d275a` offsets and clipping to
+`glbScreenBufferRightPanel.rc2`. The v5 path
+`SKWINSPX/src/v5/skguidr5.cpp::DM2_DRAW_MONEYBOX` has the same denomination,
+sprite, and scatter behavior. Firestaff now resolves the active action-hand
+moneybox ObjectID, `LOAD_MISCITEM` denomination order, the container's `0x40`
+slot text and coin charges, then sends that state to the M11 screen-owned
+renderer. The renderer uses the source frame rect `0x5c`, denomination rects
+`0xdd + slot`, and expanded rect 11 for clipping. The scatter offsets match
+the source table. This closes the missing runtime draw owner. It does not
+establish interactive parity yet: SKProject `CLICK_MONEYBOX` and
+`TAKE_COIN_FROM_WALLET` still need to be traced through M11 for deposit and
+withdraw. The existing wallet transcription is callback-driven; a live owner
+must keep both `DM2_V1_RecordPoolSet` and the corresponding `DungeonData`
+records/parent links coherent. Deposit can merge and deallocate a held DB10
+coin, while withdrawal can decrement a DB10 charge or detach its final coin;
+the source allocation/deallocation queue and leader-hand publication must be
+part of that same transaction. M11 currently has no such owner bound to
+events 228–233. The render and pointer routes have not been verified on DOS,
+Amiga, FM Towns, and Macintosh. Full moneybox parity remains **open**.
+
 ## Interpretation boundary
 
 These results prove the listed boot, handoff, save, and focused runtime paths.
@@ -88,6 +113,18 @@ CSB only.
 `dm2_v1_m11_launcher_handoff_boundary` remains a source-contract regression,
 not a real-media result in this run: it correctly skipped its corpus-specific
 assertion because no explicit DM2 corpus was selected for that standalone test.
+
+## DMWeb and Greatstone source cross-checks
+
+DMWeb and Greatstone are supporting references for all three games, with
+edition- and asset-specific claims. For DM2, `DM2_PC10_EN_GREATSTONE_CROSSCHECK.md`
+locks the local PC English GDAT identity against Greatstone's catalogue and
+uses DMWeb's data-file notes to distinguish heterogeneous GDAT records from
+presentational exports. This is a format/corpus cross-check; it does not close
+feature parity or platform coverage. The companion DM1 and CSB parity matrices
+and source-reference ledgers carry their respective Greatstone asset anchors
+and DMWeb format/edition references. ReDMCSB remains primary for DM1/CSB
+behavior, and SKProject remains primary for DM2 behavior.
 
 ## Remaining evidence work
 

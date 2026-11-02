@@ -208,6 +208,84 @@ int dm2_v1_source_timer_update_payload(DM2_V1_SourceTimerQueue *queue,
     return 0;
 }
 
+static int dm2_v1_source_timer_destination_valid(
+    int x, int y, int map, int direction)
+{
+    return x >= 0 && x < 32 && y >= 0 && y < 32 &&
+           map >= 0 && map < 256 && direction >= 0 && direction < 4;
+}
+
+static void dm2_v1_source_timer_set_map(
+    DM2_V1_SourceTimer *timer, int map)
+{
+    timer->ticks_and_map = ((uint32_t)map << 24) |
+        (timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK);
+}
+
+int dm2_v1_source_timer_update_missile_destination(
+    DM2_V1_SourceTimerQueue *queue, uint16_t source_index,
+    uint16_t missile_record, int x, int y, int map,
+    int timer_direction, int record_direction)
+{
+    size_t match = 0u;
+    size_t i;
+    if (!queue || queue->count > DM2_V1_SOURCE_TIMER_MAX ||
+        !dm2_v1_source_timer_destination_valid(
+            x, y, map, timer_direction) ||
+        record_direction < 0 || record_direction > 3)
+        return 0;
+
+    for (i = 0u; i < queue->count; ++i) {
+        const DM2_V1_SourceTimer *timer = &queue->timers[i];
+        if (queue->source_indices[i] != source_index ||
+            (timer->type != 0x1du && timer->type != 0x1eu) ||
+            (((uint16_t)timer->value_a & 0x3fffu) !=
+             (missile_record & 0x3fffu)))
+            continue;
+        if (match != 0u) return 0;
+        match = i + 1u;
+    }
+    if (match == 0u) return 0;
+    {
+        DM2_V1_SourceTimer *timer = &queue->timers[match - 1u];
+        uint16_t action = (uint16_t)timer->value_b;
+        uint16_t record = (uint16_t)(missile_record & 0x3fffu);
+        action = (uint16_t)((action & 0xf000u) |
+            (uint16_t)x | ((uint16_t)y << 5) |
+            ((uint16_t)timer_direction << 10));
+        timer->value_a = (int16_t)(record |
+            ((uint16_t)record_direction << 14));
+        timer->value_b = (int16_t)action;
+        dm2_v1_source_timer_set_map(timer, map);
+    }
+    return 1;
+}
+
+int dm2_v1_source_timer_update_cloud_destinations(
+    DM2_V1_SourceTimerQueue *queue, uint16_t cloud_record,
+    int x, int y, int map, int record_direction)
+{
+    int updated = 0;
+    size_t i;
+    if (!queue || queue->count > DM2_V1_SOURCE_TIMER_MAX ||
+        !dm2_v1_source_timer_destination_valid(x, y, map, 0) ||
+        record_direction < 0 || record_direction > 3)
+        return 0;
+
+    for (i = 0u; i < queue->count; ++i) {
+        DM2_V1_SourceTimer *timer = &queue->timers[i];
+        if (timer->type != 0x19u ||
+            (uint16_t)timer->value_b != cloud_record)
+            continue;
+        timer->value_a = (int16_t)((uint16_t)x | ((uint16_t)y << 8));
+        timer->value_b = (int16_t)((cloud_record & 0x3fffu) |
+            ((uint16_t)record_direction << 14));
+        dm2_v1_source_timer_set_map(timer, map);
+        ++updated;
+    }
+    return updated;
+}
+
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick)
 {

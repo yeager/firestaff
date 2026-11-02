@@ -1,8 +1,22 @@
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
+
 2026-11-01 ReDMCSB `BLITFILL.C:F0136` screen hatch: the ledger marks Firestaff’s bounded PC34 checkerboard hatch `PARTIAL`; color/pattern and platform-specific box/backend behavior remain open. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
 
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
+
+2026-11-01 ReDMCSB `DUNVIEW.C:F0113` teleporter field rendering: downgraded the
+callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
+projection-mask assets and fails closed when either is absent, but ReDMCSB
+calls F0133 with `M005_RANDOM(2)` and `M003_RANDOM(32)` on each draw. Firestaff's
+live M11 PC34 route now consumes those values from the DM1 master RNG, in
+source order, after field and mask media are available. Its mask sampler now
+consumes the sequential 16-pixel units from the source rectangle rather than
+scaling the mask to the destination. The secondary viewport helper still needs
+production phase-callback ownership. Indexed-pixel sampling does not reproduce
+the source planar temporary-bitmap compositor, and edition-specific RNG and
+bitmap behavior remain open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0127/F0128`: the callable ledger now records the bounded PC34 D0C element/occlusion and per-square scheduler/viewport-order owners as `PARTIAL`; complete material rendering, overlay integration, and all-edition/platform behavior remain open.
 
@@ -12,7 +26,7 @@
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0095` wall-set loading: the callable ledger now marks the active-map PC/I34 wall-set resolver as `PARTIAL`; Firestaff loads graphics lazily and does not reproduce each source edition's preload/cache sequence.
 
-2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: mapped `strlen` within the source 16-bit length domain; marked `strchr` partial because ReDMCSB returns NULL for a NUL search while host `strchr` returns the terminator address.
+2026-11-01 ReDMCSB `STRING.C:F0090/F0091`: added a bounded F0091 helper matching the source `strchr` result, including NULL when searching for NUL; F0090 remains mapped within the source 16-bit length domain. Both remain partial pending production source-call-site integration and target ABI evidence.
 
 2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
 
@@ -943,8 +957,11 @@ GRAPHICS.DAT identities now select the edition's ReDMCSB PANEL.C:1695-1741
 behavior. Atari 1.0a/1.0b use the original 255 cap without diminishing gains;
 1.1 uses strict 120/180 thresholds and cap 250; 1.2+ keeps the 120/150 and
 170 rules. The live M11 mouth transaction supplies the selected graphics MD5
-to the consumable calculation. The focused unit test passes with threshold
-and cap cases. A natural Atari 1.0/1.1 campaign route from potion discovery to
+to the consumable calculation. The rule selector now explicitly covers all 20
+DM1 GRAPHICS.DAT/GRAPHICS.GAME identities in the checksum catalog, including
+PC-98 2.0a/2.0b and X68000 as MEDIA240 editions; the focused regression checks
+every MEDIA240 identity as well as the Atari threshold and cap cases. A
+natural Atari 1.0/1.1 campaign route from potion discovery to
 use remains unverified; authenticated real-media runtime transactions now
 cover both mouth-click and active-hand potion use. This does not claim complete
 early-edition gameplay parity.
@@ -3902,12 +3919,16 @@ platforms' source-specific startup checks.
 
 # ReDMCSB F0039 — slot-box icon index
 
-The source-symbol inventory now maps `OBJECT.C:515-526`
-`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff adapter over the DM1
-PC34 `G0030` slot-box table. The focused regression checks all 46 entries,
-adapter delegation, and invalid-index handling. This establishes only the
-bounded PC34 function mapping; Atari ST, Amiga, FM Towns, and other edition
-runtime integration and parity remain open.
+The source-symbol inventory maps `OBJECT.C:515-526`
+`F0039_OBJECT_GetIconIndexInSlotBox` to the Firestaff PC34 `G0030` table
+adapter. The focused regression checks all 46 fixed entries, adapter
+delegation, and invalid-index handling. ReDMCSB reads the current mutable
+`G0030.IconIndex`; `F0038_OBJECT_DrawIconInSlotBox` updates that field before
+its blit on supported DM1 media, and `F0295_CHAMPION_HasObjectIconInSlotBoxChanged`
+uses it to decide whether action-hand icons must be redrawn. Firestaff's
+adapter reads a constant PC34 mirror, and its live draw route has no matching
+slot-icon state owner. F0038 also remains partial because it does not update that state. The symbol remains partial pending mutable icon-state
+integration and Atari ST, Amiga, FM Towns, Apple IIGS, and other edition routes.
 
 # ReDMCSB F0619 — slot-box border rectangle
 
@@ -3919,3 +3940,17 @@ its focused regression covers those transformations. Platform-specific F0635
 zone data/resolvers and live slot-border rendering remain unintegrated, so this
 is partial coverage and does not establish F0619 parity across supported
 editions.
+
+2026-11-01 ReDMCSB `DUNGEON.C:F0173/F0174` M11 integration: stair, F0003
+map-handoff, post-move, and rope-pit transitions now synchronize the live DM1
+map owner; alcove, render, and click consumers also request source publication.
+The source descriptor uses loaded square bytes,
+map-column cumulative SFT data, the selected map's door sets, and authenticated
+metadata bytes, then publishes it through the F0174 owner. The helper owns the
+current/party map pointer and metadata snapshot when M11 enters a map or a
+map-dependent consumer requests state. This
+closes the adapter-only gap for the PC34-backed M11 path; other production map
+owners and supported edition/platform bindings remain open, so both audit rows
+stay partial.
+
+2026-11-02 ReDMCSB `DUNGEON.C:F0174` fixed-buffer behavior: the descriptor adapter now copies wall, floor, and door ornament bytes into source-sized runtime storage (16, 16, and 17 bytes), then writes `C0_WALL_ORNAMENT_INSCRIPTION` at the wall ornament count. It rejects overflowing metadata before mutating F0173/F0174 state. Focused assertions check bytes, sentinel, and fail-closed behavior. Production edition/platform ownership remains open; F0173/F0174 stay partial.

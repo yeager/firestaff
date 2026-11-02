@@ -52,7 +52,7 @@ typedef enum {
     DM2_ENGAGE_HEAL_SELF        = 35,
     DM2_ENGAGE_LIGHT_2          = 37,
     DM2_ENGAGE_LIGHT_3          = 38,
-    DM2_ENGAGE_TURN_POSITION    = 41,
+    DM2_ENGAGE_THROW_ITEM       = 41,
     DM2_ENGAGE_SET_MINION_DEST  = 43,
     DM2_ENGAGE_MINION_MISSILE   = 44,
     DM2_ENGAGE_MINION_ATTACK    = 45,
@@ -103,6 +103,9 @@ typedef struct {
     uint8_t cmd_flag_8000;    /* high bit of command word */
     DM2_V1_EngageCmdStr cmd;
     uint32_t game_tick;
+    /* SPX v4 CALL_ENCHANTMENT_SELF sets MP to exactly four when its caller
+     * requires MP and the champion has at least four. DOS/v5 subtract four. */
+    uint8_t spx_v4_enchantment_mp_semantics;
 
     /* Optional callbacks for cases that delegate to subsystems.
      * When NULL, the case falls through to fail_closed. */
@@ -159,9 +162,12 @@ typedef struct {
     int (*equip_cb)(void *ctx, int hero_idx, int hand);
     void *equip_ctx;
 
-    /* case 41 TURN: position swap */
-    int (*turn_cb)(void *ctx, int hero_idx, int hand, int16_t swap_dir);
-    void *turn_ctx;
+    /* case 41 throw from active hand; direction is selected by source
+     * relative to party facing and hero party position. */
+    int (*throw_item_cb)(void *ctx, int hero_idx, int hand,
+                         int16_t party_x, int16_t party_y,
+                         int throw_direction);
+    void *throw_item_ctx;
 
     /* case 43 SET_MINION_DEST */
     int (*set_minion_dest_cb)(void *ctx, uint16_t item,
@@ -172,6 +178,14 @@ typedef struct {
     int (*release_minion_cb)(void *ctx, uint16_t minion_record);
     void *release_minion_ctx;
     uint16_t minion_record;   /* word_at(item_record, 2) */
+    int16_t minion_power;     /* QUERY_PLAYER_SKILL_LV(hero, CMDSTR skill, 1) */
+
+    /* cases 44/45: set a minion missile action, or create its missile. */
+    int (*minion_missile_cb)(void *ctx, int *out_created, int action_case,
+                             uint16_t minion_record, uint16_t missile_ref,
+                             int16_t power, int16_t x, int16_t y,
+                             int16_t map, int16_t direction, int8_t facing);
+    void *minion_missile_ctx;
 
     /* case 46/48/49/50 CREATE_MINION */
     int (*create_minion_cb)(void *ctx, uint8_t type, int16_t power,
@@ -210,7 +224,7 @@ typedef struct {
     int minion_created;
     int minion_released;
     int minion_dest_set;
-    int position_swapped;
+    int item_thrown;
     int interface_loaded;
     int enchantment_cast;
     int hero_flag_set;
@@ -218,6 +232,7 @@ typedef struct {
     int creature_attacked;
 
     int16_t cooldown_applied;
+    int16_t hand_cooldown_delay; /* skengage.cpp vol_20; CMDSTR field 3 by default */
     int16_t stamina_cost;
     int16_t skill_exp_gained;
 } DM2_V1_EngageCommandReceipt;

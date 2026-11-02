@@ -66,6 +66,8 @@ int main(void)
     CHECK(dm1_v1_f0023_get_absolute_value_pc34(-14) == 14);
     CHECK(dm1_v1_f0023_get_absolute_value_pc34(INT16_MIN) == INT16_MIN);
     CHECK(F0024_MAIN_GetMinimumValue(9, 4) == 4);
+    CHECK(dm1_v1_f0025_get_maximum_value_pc34(-9, 4) == 4);
+    CHECK(dm1_v1_f0025_get_maximum_value_pc34(4, -9) == 4);
     CHECK(dm1_v1_f0025_get_maximum_value_pc34(9, 4) == 9);
     CHECK(F0026_MAIN_GetBoundedValue(0, 101, 100) == 100);
     CHECK(dm1_v1_f0027_get_16bit_random_number_pc34(&seed_a) == 16614u);

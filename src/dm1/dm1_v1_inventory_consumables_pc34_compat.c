@@ -66,7 +66,10 @@ dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5)
             "b35931b55db649a1bd2d415b61b29801", /* Amiga 2.1/2.2 English */
             "7f9458e4a3972d06e649a6fa85a7f34b", /* Amiga 3.6 Multilanguage */
             "491ca939f9abb33ceeb26619b841fe91", /* Amiga English demo / G14ED */
-            "1045a36952e64eb2bc7b4c7b2965b112"  /* Apple IIGS 2.0/2.1 */
+            "1045a36952e64eb2bc7b4c7b2965b112", /* Apple IIGS 2.0/2.1 */
+            "eaec2131541573658da99c13865c2e67", /* PC-98 2.0a Japanese */
+            "3e3b9b1800c67b4ce850e087813c325d", /* PC-98 2.0b Japanese */
+            "fe08a97c64766614b71164fa06eda545"  /* X68000 Japanese */
         };
         size_t i;
         for (i = 0; i < sizeof(media240_graphics_md5) /

@@ -121,6 +121,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
                                          DM2_V1_Rect *out);
     DM2_V1_Rect *(*query_blit_rect)(void *ctx, void *bmp, DM2_V1_Rect *out,
                                      int16_t id, int16_t *srcx, int16_t *srcy);
+    /* Clip rectangle used by SKProject's DRAW_MONEYBOX. */
+    DM2_V1_Rect *(*get_right_panel_clip_rect)(void *ctx, DM2_V1_Rect *out);
     DM2_V1_Rect *(*scale_rect)(void *ctx, int16_t id, int16_t num,
                                 int16_t den, DM2_V1_Rect *out);
     DM2_V1_Rect *(*offset_rect)(void *ctx, int32_t buttongroup_id,
@@ -204,6 +206,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     int32_t (*get_itemtype_of_itemspec)(void *ctx, int32_t spec);
     int8_t (*query_itemdb_from_distinctive)(void *ctx, int32_t spec);
     void (*count_by_coin_types)(void *ctx, int32_t record, int16_t *out);
+    uint16_t (*get_money_item_id)(void *ctx, int32_t denomination_order);
     void *(*query_cmdstr_name)(void *ctx, int8_t a, int8_t b, int8_t c);
 
     /* ---- UI state ---- */

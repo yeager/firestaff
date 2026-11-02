@@ -152,8 +152,13 @@ void dm2_v1_imgdesc_setres(DM2_V1_ImgDesc *desc, uint8_t res);
 /* init_global_images — initialize two global image structs */
 void dm2_v1_init_global_images(DM2_V1_Image *img1, DM2_V1_Image *img2);
 
-/* DM2_0b36_068f — compute image cache key from bmpid and mode */
+/* Legacy cache-key utility retained for existing host adapters. */
 DM2_V1_CacheKeyReceipt dm2_v1_compute_cache_key(int16_t bmpid, int16_t mode);
+
+/* DM2_0b36_068f — source image cache key: w_36[0..4], w_34[0..6],
+ * and imgdesc.w_06[0..12], packed into bits 0..24. */
+DM2_V1_CacheKeyReceipt dm2_v1_compute_picst_cache_key(
+    const DM2_V1_Image *img);
 
 /* DM2_image_0b36_11c0 — draw image to button group area */
 DM2_V1_DrawReceipt dm2_v1_draw_image_to_button(

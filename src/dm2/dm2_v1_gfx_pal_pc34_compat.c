@@ -117,7 +117,8 @@ DM2_V1_DriverSetColorsReceipt dm2_v1_driver_setcolors(
     const DM2_V1_GfxPalCallbacks *cb, void *ctx, const int8_t *dmpal)
 {
     DM2_V1_DriverSetColorsReceipt receipt = {false, 0};
-    if (!cb || !dmpal) return receipt;
+    if (!cb || !dmpal || !cb->wait_for_vsync || !cb->set_screen_color)
+        return receipt;
 
     /* Convert 6-bit DAC palette to float colors and set via callback */
     float colors[256][3];
@@ -128,18 +129,16 @@ DM2_V1_DriverSetColorsReceipt dm2_v1_driver_setcolors(
         colors[i][2] = (float)((uint8_t)dmpal[base + 2]) * (float)DM2_V1_DMFCOL;
     }
 
-    /* Fade in over 1000 steps */
+    /* DOS dm2D.cpp:driver_setcolors and SPX-v5 gfxpal.cpp:driver_setcolors
+     * publish levels 0..999/1000, then wait for vsync after each write. */
     for (int step = 0; step < 1000; step++) {
-        float t = (float)(step + 1) / 1000.0f;
-        if (cb->wait_for_vsync) cb->wait_for_vsync(ctx);
         for (int i = 0; i < 256; i++) {
-            if (cb->set_screen_color) {
-                cb->set_screen_color(ctx, i,
-                    colors[i][0] * t,
-                    colors[i][1] * t,
-                    colors[i][2] * t);
-            }
+            cb->set_screen_color(ctx, i,
+                (float)((colors[i][0] * (float)step) / 1000.0),
+                (float)((colors[i][1] * (float)step) / 1000.0),
+                (float)((colors[i][2] * (float)step) / 1000.0));
         }
+        cb->wait_for_vsync(ctx);
     }
 
     receipt.colors_set = true;
@@ -177,42 +176,43 @@ DM2_V1_SelectPaletteSetReceipt dm2_v1_select_palette_set(
     int16_t set, const int8_t *dmpal, bool *immediate_colors_ptr)
 {
     DM2_V1_SelectPaletteSetReceipt receipt = {false, 0};
-    if (!cb) return receipt;
+    int8_t bmode = (int8_t)(uint8_t)set;
 
-    if (set == 0) {
+    if (!cb || !immediate_colors_ptr)
+        return receipt;
+
+    if (bmode == 0) {
         /* Fade to black: backup current colors then fade down */
         float saved[256][3];
+        if (!cb->get_screen_color || !cb->set_screen_color ||
+            !cb->wait_for_vsync)
+            return receipt;
         for (int i = 0; i < 256; i++) {
-            if (cb->get_screen_color) {
-                cb->get_screen_color(ctx, i,
-                    &saved[i][0], &saved[i][1], &saved[i][2]);
-            } else {
-                saved[i][0] = saved[i][1] = saved[i][2] = 0.0f;
-            }
+            cb->get_screen_color(ctx, i,
+                &saved[i][0], &saved[i][1], &saved[i][2]);
         }
-        for (int step = 1000; step >= 0; step--) {
-            float t = (float)step / 1000.0f;
-            if (cb->wait_for_vsync) cb->wait_for_vsync(ctx);
+        for (int step = 1000; step > 0; step--) {
             for (int i = 0; i < 256; i++) {
-                if (cb->set_screen_color) {
-                    cb->set_screen_color(ctx, i,
-                        saved[i][0] * t,
-                        saved[i][1] * t,
-                        saved[i][2] * t);
-                }
+                cb->set_screen_color(ctx, i,
+                    (float)((saved[i][0] * (float)step) / 1000.0),
+                    (float)((saved[i][1] * (float)step) / 1000.0),
+                    (float)((saved[i][2] * (float)step) / 1000.0));
             }
+            cb->wait_for_vsync(ctx);
+            cb->wait_for_vsync(ctx);
         }
-        if (immediate_colors_ptr) *immediate_colors_ptr = false;
-    } else {
+        *immediate_colors_ptr = false;
+    } else if (bmode == 1) {
         /* Restore: call driver_setcolors */
-        if (dmpal) {
-            dm2_v1_driver_setcolors(cb, ctx, dmpal);
-        }
-        if (immediate_colors_ptr) *immediate_colors_ptr = true;
+        if (!dmpal || !dm2_v1_driver_setcolors(cb, ctx, dmpal).colors_set)
+            return receipt;
+        *immediate_colors_ptr = true;
+    } else {
+        *immediate_colors_ptr = false;
     }
 
     receipt.applied = true;
-    receipt.mode = set;
+    receipt.mode = bmode;
     return receipt;
 }
 

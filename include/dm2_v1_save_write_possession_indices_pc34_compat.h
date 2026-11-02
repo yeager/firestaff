@@ -17,7 +17,8 @@ extern "C" {
 
 /* Callback to resolve a record link to its contents index.
  * record_link: the full record link word from the possession array.
- * Returns the resolved 10-bit index, or -1 if the record type should be skipped. */
+ * Called only for DB9/DB14 records. Returns the resolved index, or a negative
+ * value if source state is unavailable; unresolved eligible links fail save. */
 typedef struct {
     int (*resolve_possession_index)(void *ctx, uint16_t record_link);
     void *ctx;

@@ -1185,6 +1185,12 @@ int dm2_v1_query_creatures_item_mask_receipt(
     int text_field_base,
     int is_creature,
     DM2_V1_CreaturesItemMaskReceipt *out_receipt);
+int dm2_v1_query_creatures_item_mask_bytes(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int text_field_base,
+    int is_creature,
+    uint8_t out_mask[64]);
 int dm2_v1_is_item_fit_for_equip_receipt(
     const DM2_V1_AssetLoader *loader,
     int category,

@@ -148,6 +148,22 @@ DM2_V1_CacheKeyReceipt dm2_v1_compute_cache_key(int16_t bmpid, int16_t mode)
     return r;
 }
 
+DM2_V1_CacheKeyReceipt dm2_v1_compute_picst_cache_key(
+    const DM2_V1_Image *img)
+{
+    DM2_V1_CacheKeyReceipt r = { 0 };
+    uint32_t key;
+
+    if (!img)
+        return r;
+
+    key = ((uint32_t)((uint16_t)img->w_36 & 0x001fu)) |
+          ((uint32_t)((uint16_t)img->w_34 & 0x007fu) << 5u) |
+          ((uint32_t)((uint16_t)img->imgdesc.w_06 & 0x1fffu) << 12u);
+    r.key = (int32_t)key;
+    return r;
+}
+
 /* ── DM2_image_0b36_11c0 — draw image to button group ─────────────── */
 
 DM2_V1_DrawReceipt dm2_v1_draw_image_to_button(
@@ -187,8 +203,7 @@ DM2_V1_DrawReceipt dm2_v1_query_picst_it(
     img->bmp  = desc->bmp;
 
     if (cb->find_cached) {
-        DM2_V1_CacheKeyReceipt ck = dm2_v1_compute_cache_key(
-            desc->bmpid, desc->mode);
+        DM2_V1_CacheKeyReceipt ck = dm2_v1_compute_picst_cache_key(img);
         uint8_t *cached = cb->find_cached(ctx, ck.key);
         if (cached) {
             img->bmp = cached;

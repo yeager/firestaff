@@ -865,6 +865,12 @@ typedef struct {
     int hud_top_bar_order;
     int hud_status_panel_order;
     int hud_hand_action_order;
+    int moneybox_panel_required;
+    int moneybox_panel_consumed;
+    uint16_t moneybox_object_id;
+    uint8_t moneybox_container_cls2;
+    uint32_t moneybox_panel_hash;
+    int moneybox_panel_draw_count;
     DM2_V1_ViewportDoorPresentationCommand door_command;
     DM2_V1_ViewportDungeonMaterialCommand dungeon_ceiling_command;
     DM2_V1_ViewportDungeonMaterialCommand dungeon_floor_command;
@@ -2217,6 +2223,17 @@ typedef struct {
     /* One successful blit per exact command in the boot-owned HUD plan.
      * A source-required frame must not let M11 promote a partial plan. */
     int gdat_hud_material_plan_consumed_count;
+    /* Live SKProject DISPLAY_RIGHT_PANEL_SQUAD_HANDS moneybox presentation.
+     * The runtime supplies source ObjectID/denomination state; the renderer
+     * resolves only the corresponding retail GDAT materials and RAW4 rects. */
+    int moneybox_panel_active;
+    uint16_t moneybox_object_id;
+    uint8_t moneybox_container_cls2;
+    int16_t moneybox_coin_order[10];
+    int16_t moneybox_coin_counts[10];
+    uint16_t moneybox_item_ids[10];
+    uint32_t moneybox_panel_draw_hash;
+    int moneybox_panel_draw_count;
     /* c_dialog.cpp::DM2_dialog_2066_3820 owns this image and RECT_453.
      * Admission alone must not create a host dialogue. */
     DM2_V1_DialogueBoxHostCommand gdat_dialogue_box_command;
@@ -2357,6 +2374,10 @@ int dm2_v1_viewport_wall_ornament_visible(int source_cell,
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan);
+void dm2_v1_viewport_set_moneybox_panel(
+    DM2_V1_ViewportState *s, uint16_t object_id, uint8_t container_cls2,
+    const int16_t coin_order[10], const int16_t coin_counts[10],
+    const uint16_t money_item_ids[10]);
 void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
     DM2_V1_ViewportState *s,
     const DM2_V1_DialogueBoxHostCommand *command,

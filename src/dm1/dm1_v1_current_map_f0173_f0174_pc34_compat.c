@@ -6,7 +6,7 @@ const char *DM1_V1_F0173_F0174_SourceEvidencePc34(void)
 {
     return
         "DUNGEON.C:2724 F0173_DUNGEON_SetCurrentMap selects "
-        "G0271_i_CurrentMapIndex and current map metadata\n"
+        "G0272_i_CurrentMapIndex and current map metadata\n"
         "DUNGEON.C:2728-2740 refreshes current map width, height, raw map "
         "pointer, column cumulative SquareFirstThing counts, door info, and "
         "does not refresh the F0174-owned metadata arrays\n"
@@ -68,6 +68,25 @@ static int descriptor_valid(const DM1_V1_MapDescriptorF0173F0174Pc34 *map)
     return 1;
 }
 
+static int f0174_metadata_valid(
+    const DM1_V1_MapDescriptorF0173F0174Pc34 *map)
+{
+    if (!map ||
+        map->wallOrnamentCount >= DM1_V1_F0174_WALL_ORNAMENT_CAPACITY ||
+        map->floorOrnamentCount > DM1_V1_F0174_FLOOR_ORNAMENT_CAPACITY ||
+        map->doorOrnamentCount > DM1_V1_F0174_DOOR_ORNAMENT_CAPACITY) {
+        return 0;
+    }
+    if ((map->allowedCreatureTypeCount && !map->allowedCreatureTypes) ||
+        (map->wallOrnamentCount && !map->wallOrnamentIndices) ||
+        (map->floorOrnamentCount && !map->floorOrnamentIndices) ||
+        (map->doorOrnamentCount && !map->doorOrnamentIndices) ||
+        (map->alcoveOrnamentCount && !map->alcoveOrnamentIndices)) {
+        return 0;
+    }
+    return 1;
+}
+
 static void publish_current_map(
     DM1_V1_CurrentMapRuntimeF0173F0174Pc34 *runtime,
     const DM1_V1_MapDescriptorF0173F0174Pc34 *map)
@@ -89,14 +108,33 @@ static void publish_current_map_metadata(
     DM1_V1_CurrentMapRuntimeF0173F0174Pc34 *runtime,
     const DM1_V1_MapDescriptorF0173F0174Pc34 *map)
 {
+    memset(runtime->f0174WallOrnamentStorage, 0,
+           sizeof(runtime->f0174WallOrnamentStorage));
+    memset(runtime->f0174FloorOrnamentStorage, 0,
+           sizeof(runtime->f0174FloorOrnamentStorage));
+    memset(runtime->f0174DoorOrnamentStorage, 0,
+           sizeof(runtime->f0174DoorOrnamentStorage));
+    if (map->wallOrnamentCount) {
+        memcpy(runtime->f0174WallOrnamentStorage, map->wallOrnamentIndices,
+               map->wallOrnamentCount);
+    }
+    if (map->floorOrnamentCount) {
+        memcpy(runtime->f0174FloorOrnamentStorage, map->floorOrnamentIndices,
+               map->floorOrnamentCount);
+    }
+    if (map->doorOrnamentCount) {
+        memcpy(runtime->f0174DoorOrnamentStorage, map->doorOrnamentIndices,
+               map->doorOrnamentCount);
+    }
+    runtime->f0174WallOrnamentStorage[map->wallOrnamentCount] = 0;
     runtime->currentMapAllowedCreatureTypes = map->allowedCreatureTypes;
     runtime->currentMapAllowedCreatureTypeCount = map->allowedCreatureTypeCount;
-    runtime->currentMapWallOrnamentIndices = map->wallOrnamentIndices;
+    runtime->currentMapWallOrnamentIndices = runtime->f0174WallOrnamentStorage;
     runtime->currentMapWallOrnamentCount = map->wallOrnamentCount;
     runtime->currentMapInscriptionWallOrnamentIndex = map->wallOrnamentCount;
-    runtime->currentMapFloorOrnamentIndices = map->floorOrnamentIndices;
+    runtime->currentMapFloorOrnamentIndices = runtime->f0174FloorOrnamentStorage;
     runtime->currentMapFloorOrnamentCount = map->floorOrnamentCount;
-    runtime->currentMapDoorOrnamentIndices = map->doorOrnamentIndices;
+    runtime->currentMapDoorOrnamentIndices = runtime->f0174DoorOrnamentStorage;
     runtime->currentMapDoorOrnamentCount = map->doorOrnamentCount;
     runtime->currentMapAlcoveOrnamentIndices = map->alcoveOrnamentIndices;
     runtime->currentMapAlcoveOrnamentCount = map->alcoveOrnamentCount;
@@ -176,11 +214,16 @@ int F0174_DUNGEON_SetCurrentMapAndPartyMap(
 {
     const DM1_V1_MapDescriptorF0173F0174Pc34 *map;
 
+    map = find_map(maps, mapCount, mapIndex);
+    if (!descriptor_valid(map) || !f0174_metadata_valid(map)) {
+        clear_result(out);
+        return 0;
+    }
+
     if (!F0173_DUNGEON_SetCurrentMap(runtime, maps, mapCount, mapIndex, out)) {
         return 0;
     }
 
-    map = find_map(maps, mapCount, mapIndex);
     publish_current_map_metadata(runtime, map);
     publish_party_map(runtime, map);
     runtime->f0174CallCount += 1;

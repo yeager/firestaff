@@ -36,6 +36,7 @@
  */
 
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
@@ -2284,6 +2285,35 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
     if (!s) return;
     s->gdat_hud_material_plan = plan;
     s->gdat_hud_material_plan_consumed_count = 0;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_moneybox_panel(
+    DM2_V1_ViewportState *s, uint16_t object_id, uint8_t container_cls2,
+    const int16_t coin_order[10], const int16_t coin_counts[10],
+    const uint16_t money_item_ids[10])
+{
+    if (!s) return;
+    s->moneybox_panel_active = 0;
+    s->moneybox_object_id = 0xffffu;
+    s->moneybox_container_cls2 = 0xffu;
+    memset(s->moneybox_coin_order, 0xff,
+           sizeof(s->moneybox_coin_order));
+    memset(s->moneybox_coin_counts, 0, sizeof(s->moneybox_coin_counts));
+    memset(s->moneybox_item_ids, 0, sizeof(s->moneybox_item_ids));
+    s->moneybox_panel_draw_hash = 0u;
+    s->moneybox_panel_draw_count = 0;
+    if (object_id == 0xffffu || container_cls2 == 0xffu || !coin_order ||
+        !coin_counts || !money_item_ids) return;
+    memcpy(s->moneybox_coin_order, coin_order,
+           sizeof(s->moneybox_coin_order));
+    memcpy(s->moneybox_coin_counts, coin_counts,
+           sizeof(s->moneybox_coin_counts));
+    memcpy(s->moneybox_item_ids, money_item_ids,
+           sizeof(s->moneybox_item_ids));
+    s->moneybox_object_id = object_id;
+    s->moneybox_container_cls2 = container_cls2;
+    s->moneybox_panel_active = 1;
     s->dirty = 1;
 }
 
@@ -7710,10 +7740,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                       &panel_stride) == 0 &&
                   panel_pixels && panel_w > 0 && panel_h > 0))) {
                 DM2_V1_DoorAssetBlit blit;
-                /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
-                 * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
-                 * with image 0 for D0/D1 and image 1 for D2. Door type
-                 * decoding is still boot-defaulted to index 0 here. */
+                /* SKProject SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_DOOR
+                 * (4861-4878) selects the map-local DOORS image from the
+                 * door record's DoorType. The render plan carries the image
+                 * selected from an authenticated DB0 root in
+                 * panel_gdat_index; unrecorded compatibility panels use the
+                 * square-specific source field. */
                 if (dm2_v1_viewport_door_panel_asset_blit(render_door,
                                                           panel_w,
                                                           panel_h,
@@ -11868,6 +11900,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             s->last_frame_composition.hud_hand_action_command =
                 s->last_hud_hand_action_presentation_command;
         }
+        s->last_frame_composition.moneybox_panel_required =
+            s->moneybox_panel_active;
+        s->last_frame_composition.moneybox_panel_consumed =
+            !s->moneybox_panel_active ||
+            (s->moneybox_panel_draw_hash != 0u &&
+             s->moneybox_panel_draw_count > 0);
+        s->last_frame_composition.moneybox_object_id =
+            s->moneybox_panel_active ? s->moneybox_object_id : 0xffffu;
+        s->last_frame_composition.moneybox_container_cls2 =
+            s->moneybox_panel_active ? s->moneybox_container_cls2 : 0xffu;
+        s->last_frame_composition.moneybox_panel_hash =
+            s->moneybox_panel_draw_hash;
+        s->last_frame_composition.moneybox_panel_draw_count =
+            s->moneybox_panel_draw_count;
         s->last_frame_composition.valid =
             !s->source_materials_required ||
             (s->last_frame_composition.scene_light_owned &&
@@ -11879,6 +11925,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
              s->last_frame_composition.hud_top_bar_command_consumed &&
              s->last_frame_composition.hud_status_panel_material_consumed &&
              s->last_frame_composition.hud_status_panel_command_consumed &&
+             s->last_frame_composition.moneybox_panel_consumed &&
              (!s->hud_hand_action_source.valid ||
               (s->last_frame_composition.hud_hand_action_command_consumed &&
                s->last_frame_composition.hud_hand_action_command.valid)));
@@ -11893,6 +11940,176 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->dirty = 0;
 }
 
+/* SKProject c_gui_draw.cpp::table1d275a. Keep the active M11 renderer's
+ * source scatter data in its production translation unit; the legacy
+ * callback transcription carrying the original public symbol is test-only. */
+static const int8_t dm2_v1_moneybox_scatter_offsets[32][2] = {
+    {-2,10}, {-8,3}, {7,-3}, {-6,10}, {8,-7}, {-8,11}, {2,-2},
+    {8,-11}, {0,0}, {4,8}, {-8,-10}, {6,7}, {2,2}, {-6,9}, {-3,-11},
+    {2,11}, {0,-11}, {-5,-7}, {-3,3}, {8,11}, {0,-5}, {6,-9},
+    {-7,3}, {5,1}, {4,-7}, {-8,-3}, {8,3}, {-3,-2}, {0,7}, {-3,-4},
+    {-4,0}, {2,-11}
+};
+
+static uint32_t dm2_v1_moneybox_hash_step(uint32_t hash, uint32_t value)
+{
+    for (int byte = 0; byte < 4; ++byte) {
+        hash ^= (uint8_t)(value >> (byte * 8));
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int dm2_v1_render_moneybox_image(
+    DM2_V1_ViewportState *s, int category, int index, int field,
+    uint16_t rect_id, const DM2_V1_InterfaceRect *panel_clip,
+    int transparent_key, const int8_t offsets[32][2], int scatter_count,
+    uint32_t *draw_hash)
+{
+    const DM2_V1_BootProfile *profile;
+    const uint8_t *pixels;
+    DM2_V1_InterfaceRect placement;
+    uint32_t palette_hash = 0u;
+    int16_t source_x = 0, source_y = 0;
+    int width = 0, height = 0;
+    DM2_ImageFormat format;
+    if (!s || !panel_clip || !draw_hash || !s->asset_loader ||
+        !(profile = (const DM2_V1_BootProfile *)s->asset_profile) ||
+        !dm2_v1_asset_load_image_local_palette(
+            s->asset_loader, category, index, field,
+            s->active_asset_palette16, &palette_hash) || !palette_hash ||
+        !(pixels = dm2_v1_asset_load_image_field(
+            s->asset_loader, category, index, field,
+            &width, &height, &format)) || width <= 0 || height <= 0)
+        return 0;
+    if (scatter_count <= 0 || scatter_count > 32 ||
+        !dm2_v1_boot_query_blit_rect_details(
+            profile, rect_id, width, height, &placement,
+            &source_x, &source_y)) {
+        dm2_v1_asset_free_pixels((uint8_t *)pixels);
+        return 0;
+    }
+    s->active_asset_palette_hash = palette_hash;
+    s->active_asset_palette_ready = 1;
+    for (int scatter = 0; scatter < scatter_count; ++scatter) {
+        DM2_V1_InterfaceRect draw = placement;
+        int offset_x = offsets ? offsets[scatter][0] : 0;
+        int offset_y = offsets ? offsets[scatter][1] : 0;
+        int left, top, right, bottom;
+        draw.x += offset_x;
+        draw.y += offset_y;
+        left = draw.x > panel_clip->x ? draw.x : panel_clip->x;
+        top = draw.y > panel_clip->y ? draw.y : panel_clip->y;
+        right = draw.x + draw.w < panel_clip->x + panel_clip->w
+            ? draw.x + draw.w : panel_clip->x + panel_clip->w;
+        bottom = draw.y + draw.h < panel_clip->y + panel_clip->h
+            ? draw.y + draw.h : panel_clip->y + panel_clip->h;
+        if (left >= right || top >= bottom) continue;
+        for (int y = top; y < bottom; ++y) {
+            for (int x = left; x < right; ++x) {
+                int sx = source_x + x - draw.x;
+                int sy = source_y + y - draw.y;
+                uint8_t pixel;
+                if (sx < 0 || sy < 0 || sx >= width || sy >= height ||
+                    x < 0 || y < 0 || x >= s->surface_snapshot.width ||
+                    y >= s->surface_snapshot.height) continue;
+                pixel = pixels[sy * width + sx];
+                if (transparent_key >= 0 && pixel == (uint8_t)transparent_key)
+                    continue;
+                s->framebuffer[y * s->fb_stride + x] =
+                    dm2_v1_material_palette_color(
+                        s, pixel, &s->gdat_interface_palette_consumed_count);
+                *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, pixel);
+            }
+        }
+        *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash,
+                                               (uint32_t)offset_x);
+        *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash,
+                                               (uint32_t)offset_y);
+    }
+    *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, (uint32_t)category);
+    *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, (uint32_t)index);
+    *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, (uint32_t)field);
+    *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, rect_id);
+    *draw_hash = dm2_v1_moneybox_hash_step(*draw_hash, palette_hash);
+    s->moneybox_panel_draw_count += scatter_count;
+    dm2_v1_asset_free_pixels((uint8_t *)pixels);
+    (void)format;
+    return 1;
+}
+
+static void dm2_v1_render_moneybox_panel(DM2_V1_ViewportState *s)
+{
+    const DM2_V1_BootProfile *profile;
+    DM2_V1_BootExpandedRectReceipt clip_receipt;
+    uint8_t saved_palette[16];
+    uint32_t saved_palette_hash;
+    int saved_palette_ready;
+    uint32_t hash = 2166136261u;
+    if (!s || !s->moneybox_panel_active || s->is_outdoor ||
+        s->render_dungeon_backbuffer_only) return;
+    profile = (const DM2_V1_BootProfile *)s->asset_profile;
+    memset(&clip_receipt, 0, sizeof(clip_receipt));
+    if (!profile || !dm2_v1_boot_query_expanded_rect_receipt(
+            profile, 11u, &clip_receipt) || !clip_receipt.valid ||
+        !clip_receipt.receipt_hash || clip_receipt.rect.w <= 0 ||
+        clip_receipt.rect.h <= 0) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    memcpy(saved_palette, s->active_asset_palette16, sizeof(saved_palette));
+    saved_palette_hash = s->active_asset_palette_hash;
+    saved_palette_ready = s->active_asset_palette_ready;
+    hash = dm2_v1_moneybox_hash_step(hash, s->moneybox_object_id);
+    hash = dm2_v1_moneybox_hash_step(hash, s->moneybox_container_cls2);
+    hash = dm2_v1_moneybox_hash_step(hash, clip_receipt.receipt_hash);
+    if (!dm2_v1_render_moneybox_image(
+            s, DM2_GDAT_CATEGORY_CONTAINERS,
+            s->moneybox_container_cls2, 0x10, 0x5c,
+            &clip_receipt.rect, -1, NULL, 1, &hash)) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        goto done;
+    }
+    for (int slot = 0; slot < 10; ++slot) {
+        int order = s->moneybox_coin_order[slot];
+        int count;
+        uint16_t item;
+        int position;
+        int8_t offsets[32][2];
+        if (order < 0 || order >= 10) continue;
+        count = s->moneybox_coin_counts[order];
+        if (count <= 0) continue;
+        item = s->moneybox_item_ids[order];
+        if (item < 0x100u) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            goto done;
+        }
+        position = (slot << 3) + (count > 32 ? count - 32 : 0);
+        if (count > 32) count = 32;
+        for (int coin = 0; coin < count; ++coin) {
+            position = (position + 1) & 31;
+            offsets[coin][0] = dm2_v1_moneybox_scatter_offsets[position][0];
+            offsets[coin][1] = dm2_v1_moneybox_scatter_offsets[position][1];
+        }
+        if (!dm2_v1_render_moneybox_image(
+                s, DM2_GDAT_CATEGORY_MISCELLANEOUS, item & 0xffu,
+                0x18, (uint16_t)(slot + 0xddu), &clip_receipt.rect,
+                12, offsets, count, &hash)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            goto done;
+        }
+    }
+    s->moneybox_panel_draw_hash = hash ? hash : 1u;
+done:
+    memcpy(s->active_asset_palette16, saved_palette, sizeof(saved_palette));
+    s->active_asset_palette_hash = saved_palette_hash;
+    s->active_asset_palette_ready = saved_palette_ready;
+}
+
 void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer || s->render_dungeon_backbuffer_only) return;
@@ -11901,6 +12118,7 @@ void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
      * DM2_DRAWINGS_COMPLETED has presented gfxsys.bitmapptr. */
     dm2_v1_render_carried_item(s);
     dm2_v1_render_ui_chrome(s);
+    dm2_v1_render_moneybox_panel(s);
     if (!s->is_outdoor) {
         s->last_frame_composition.hud_presentation_stage = 11;
         if (s->source_materials_required &&
@@ -11943,6 +12161,20 @@ void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
             s->last_frame_composition.hud_hand_action_command =
                 s->last_hud_hand_action_presentation_command;
         }
+        s->last_frame_composition.moneybox_panel_required =
+            s->moneybox_panel_active;
+        s->last_frame_composition.moneybox_panel_consumed =
+            !s->moneybox_panel_active ||
+            (s->moneybox_panel_draw_hash != 0u &&
+             s->moneybox_panel_draw_count > 0);
+        s->last_frame_composition.moneybox_object_id =
+            s->moneybox_panel_active ? s->moneybox_object_id : 0xffffu;
+        s->last_frame_composition.moneybox_container_cls2 =
+            s->moneybox_panel_active ? s->moneybox_container_cls2 : 0xffu;
+        s->last_frame_composition.moneybox_panel_hash =
+            s->moneybox_panel_draw_hash;
+        s->last_frame_composition.moneybox_panel_draw_count =
+            s->moneybox_panel_draw_count;
         s->last_frame_composition.valid =
             !s->source_materials_required ||
             (s->last_frame_composition.scene_light_owned &&
@@ -11954,6 +12186,7 @@ void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
              s->last_frame_composition.hud_top_bar_command_consumed &&
              s->last_frame_composition.hud_status_panel_material_consumed &&
              s->last_frame_composition.hud_status_panel_command_consumed &&
+             s->last_frame_composition.moneybox_panel_consumed &&
              (!s->hud_hand_action_source.valid ||
               (s->last_frame_composition.hud_hand_action_command_consumed &&
                s->last_frame_composition.hud_hand_action_command.valid)));
@@ -12016,6 +12249,11 @@ static int dm2_v1_viewport_build_m11_frame_receipt(
         c->hud_status_panel_request.valid &&
         c->hud_status_panel_command_consumed &&
         c->hud_status_panel_command.valid &&
+        (!c->moneybox_panel_required ||
+         (c->moneybox_panel_consumed && c->moneybox_panel_hash != 0u &&
+          c->moneybox_panel_draw_count > 0 &&
+          c->moneybox_object_id != 0xffffu &&
+          c->moneybox_container_cls2 != 0xffu)) &&
         (!s->hud_hand_action_source.valid ||
          (c->hud_hand_action_command_consumed &&
           c->hud_hand_action_request.valid &&
