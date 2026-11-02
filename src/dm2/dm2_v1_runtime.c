@@ -14743,20 +14743,38 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     {
         DM2_V1_ChampionStatInput stat_inputs[DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES];
         DM2_V1_ChampionStatBridgeReceipt stat_receipt;
-        int stat_inputs_valid = rt->session_snapshot.original_champion_records_valid &&
+        int live_party_stats_valid = rt->source_party_valid &&
+            rt->source_party.heros_in_party == hud.champion_count;
+        int stat_inputs_valid = (live_party_stats_valid ||
+            rt->session_snapshot.original_champion_records_valid) &&
             hud.champion_count > 0 &&
             hud.champion_count <= DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES;
 
         memset(stat_inputs, 0, sizeof(stat_inputs));
         memset(&stat_receipt, 0, sizeof(stat_receipt));
         for (int slot = 0; slot < hud.champion_count; ++slot) {
-            const uint8_t *raw = rt->session_snapshot.original_champion_records[slot];
-            stat_inputs[slot].cur_hp = dm2_runtime_read_i16_le(raw + 54);
-            stat_inputs[slot].max_hp = dm2_runtime_read_u16_le(raw + 56);
-            stat_inputs[slot].cur_stamina = dm2_runtime_read_u16_le(raw + 58);
-            stat_inputs[slot].max_stamina = dm2_runtime_read_u16_le(raw + 60);
-            stat_inputs[slot].cur_mp = dm2_runtime_read_u16_le(raw + 62);
-            stat_inputs[slot].max_mp = dm2_runtime_read_u16_le(raw + 64);
+            if (live_party_stats_valid) {
+                const DM2_V1_Hero *hero = &rt->source_party.hero[slot];
+                stat_inputs[slot].cur_hp = hero->curHP;
+                stat_inputs[slot].max_hp = (uint16_t)hero->maxHP;
+                stat_inputs[slot].cur_stamina = (uint16_t)hero->curStamina;
+                stat_inputs[slot].max_stamina = (uint16_t)hero->maxStamina;
+                stat_inputs[slot].cur_mp = (uint16_t)hero->curMP;
+                stat_inputs[slot].max_mp = (uint16_t)hero->maxMP;
+                stat_inputs[slot].food = hero->food;
+                stat_inputs[slot].water = hero->water;
+                stat_inputs[slot].poison = hero->poison;
+                stat_inputs[slot].poisoned = (uint8_t)(hero->poisoned != 0);
+            } else if (rt->session_snapshot.original_champion_records_valid) {
+                const uint8_t *raw =
+                    rt->session_snapshot.original_champion_records[slot];
+                stat_inputs[slot].cur_hp = dm2_runtime_read_i16_le(raw + 54);
+                stat_inputs[slot].max_hp = dm2_runtime_read_u16_le(raw + 56);
+                stat_inputs[slot].cur_stamina = dm2_runtime_read_u16_le(raw + 58);
+                stat_inputs[slot].max_stamina = dm2_runtime_read_u16_le(raw + 60);
+                stat_inputs[slot].cur_mp = dm2_runtime_read_u16_le(raw + 62);
+                stat_inputs[slot].max_mp = dm2_runtime_read_u16_le(raw + 64);
+            }
             stat_inputs[slot].is_leader = (uint8_t)(slot == hud.leader_index);
         }
         if (stat_inputs_valid) {
