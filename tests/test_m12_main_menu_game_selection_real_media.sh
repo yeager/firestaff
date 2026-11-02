@@ -454,6 +454,96 @@ if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
         're:amiga20-en' \
         "$dm1_amiga_picker_root"
 fi
+
+# The Apple IIGS original archive contains both authenticated retail disks.
+# Exercise each version from the no-game M12 picker and reach its native first
+# runtime frame, using only an isolated view of this untouched original.
+dm1_iigs_archive="$data_root/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z"
+if [[ -f "$dm1_iigs_archive" ]]; then
+    iigs_picker_root="$scratch/dm1-iigs-picker-data"
+    mkdir -p "$iigs_picker_root/dm1"
+    ln -s "$dm1_iigs_archive" \
+        "$iigs_picker_root/dm1/$(basename "$dm1_iigs_archive")"
+
+    run_iigs_menu_boot_case() {
+        local version=$1
+        local version_id=$2
+        local program_version=$3
+        local case_id="dm1-iigs-$version"
+        local home="$scratch/$case_id-home"
+        local log="$scratch/$case_id.log"
+        local probe="$scratch/$case_id-runtime.json"
+        local source_sha256
+        local navigation
+        local duration_ms=${FIRESTAFF_PICKER_IIGS_DURATION_MS:-30000}
+
+        source_sha256=$(firestaff_sha256_file "$dm1_iigs_archive")
+        mkdir -p "$home"
+        navigation='wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20'
+        if [[ "$version_id" == iigs20-en ]]; then
+            # The original presentation card is selected by default. Accept
+            # it and let the normal launch gate choose the authenticated IIGS
+            # 2.0 release.
+            navigation+=",key:enter"
+        else
+            # The third presentation card opens Game Options. Move from
+            # Architecture to Version, select authenticated IIGS 2.1, then
+            # move through the visible options to Launch.
+            navigation+=",key:down,key:down,key:enter,wait20,key:down,key:right"
+            for _ in 1 2 3 4 5 6 7; do navigation+=",key:down"; done
+            navigation+=",key:enter"
+        fi
+
+        env -u FIRESTAFF_EXIT_AFTER_LAUNCH \
+            FIRESTAFF_CONFIG_PATH="$home/config.toml" \
+            FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+            FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
+            HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+            "$app" --debug --width 1920 --height 1080 \
+                --data-dir "$iigs_picker_root" \
+                --script "$navigation" --duration "$duration_ms" \
+                >"$log" 2>&1 || {
+                    cat "$log" >&2
+                    return 1
+                }
+
+        if ! grep -Fq 'startup game=none mode=menu' "$log" ||
+           ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=Apple IIGS edition=$version_id source=$iigs_picker_root/dm1/$(basename "$dm1_iigs_archive")::" "$log" ||
+           ! grep -Fq "startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437" "$log" ||
+           ! grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$program_version" "$log"; then
+            printf 'FAIL: DM1 Apple IIGS %s no-game picker did not hand off to its native runtime\n' "$version" >&2
+            grep -E 'startup game=|scan complete|game-handoff|FIRESTAFF BOOT PROBE READY|FAIL:|error=' "$log" | tail -n 100 >&2 || true
+            return 1
+        fi
+        python3 - "$probe" "$program_version" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe["startup"]
+expected_version = int(sys.argv[2])
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm1" or
+        probe.get("bootAssetMd5") != "1045a36952e64eb2bc7b4c7b2965b112" or
+        startup.get("receiptReady") != 1 or startup.get("phase") != "dm1-iigs-runtime" or
+        startup.get("startupActive") != 0 or startup.get("levelLoaded") != 1 or
+        probe.get("title") != "Dungeon Master" or expected_version not in (20, 21)):
+    raise SystemExit(f"FAIL: IIGS version {expected_version} menu boot did not reach its native first frame: {probe}")
+print(f"PASS: DM1 IIGS {expected_version} M12 selection reached the native first runtime frame")
+PY
+
+        if [[ $(firestaff_sha256_file "$dm1_iigs_archive") != "$source_sha256" ]]; then
+            echo 'FAIL: original Apple IIGS archive changed during M12 startup' >&2
+            return 1
+        fi
+    }
+
+    run_iigs_menu_boot_case 2.0 iigs20-en 20
+    run_iigs_menu_boot_case 2.1 iigs21-en 21
+fi
+
 csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
     csb_amiga_archive="$data_root/csb/Chaos Strikes Back (FTL).zip"
