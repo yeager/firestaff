@@ -2721,3 +2721,12 @@ its command global; Firestaff has a helper but no live XACT callback. Both
 named-symbol rows are `IMPLEMENTED_NARROW`; all six active source rows are
 `PARTIAL`, pending projectile/command state ownership, dispatch integration and
 supported-platform runtime bindings.
+
+
+2026-11-02 skproject `PROCEED_XACT` dispatcher review:
+DOS/v5 dispatch encoded action bytes after subtracting 63; SPX v4 receives the
+XACT number directly. Source cases include command mutations for 58/60, special
+item setup for 76, and grouped handling for 72/87/88. Firestaff's dispatcher
+only maps action bytes to handler IDs and leaves per-action mutations and the
+production loop behind a host callback. All three source definitions are now
+`PARTIAL`; edition-bound dispatch and state ownership remain open.
