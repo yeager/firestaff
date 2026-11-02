@@ -36,3 +36,46 @@ The external evidence bundle includes `SHA256SUMS.txt`, the analyzer outputs, th
 ## Limits
 
 This verifies a source-face → projected-coordinate staging → VDP1 command geometry join for a subset of one authentic Ymir frame. It does not resolve every face row, prove winding for unordered-only matches, establish material or pixel ownership, verify complete VDP1+VDP2 frame composition, establish original-Saturn parity, or enable production renderer admission. It does not establish arbitrary-frame Nexus support.
+
+## Consecutive-frame staging-to-command verification
+
+The paired authentic movement capture at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_movement_staging_writer_capture_20261030/`
+also contains SH-2 coordinate writes and VDP1 command traces for eight consecutive
+frames. Both runs load the same Japanese retail New Game state; the `up` run adds
+30 frames of Control Pad 1 Up before this frame window. Each trace receipt reports
+complete data with zero dropped rows. The SH-2 trace covers frames 1598–1605, and
+the command trace covers frames 0–1605.
+
+Analyze the authentic control capture and compare it with the paired Up capture:
+
+```sh
+python3 scripts/analyze_nexus_ymir_multiframe_staging_to_vdp1.py \
+  --dumps /path/to/nexus_movement_staging_writer_capture_20261030/control/dumps \
+  --run control \
+  --paired-dumps /path/to/nexus_movement_staging_writer_capture_20261030/up/dumps \
+  --paired-run up \
+  --json-out /path/to/output/control-summary.json \
+  --csv-out /path/to/output/control-joins.csv
+```
+
+The analyzer checks both Ymir receipts, rejects incomplete or dropped traces,
+groups the four observed coordinate writes into each staging record, then
+requires a unique frame-local VDP1 geometry match and one-to-one reverse
+ownership. Its paired comparison counts shared staging addresses whose XY words
+changed between runs and records present in only one run.
+
+| Run | Frames | Staging records | Unique geometry joins | Ordered | Cyclic | Unordered only |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Control | 1598–1605 | 1,104 (138/frame) | 1,104 | 984 | 80 | 40 |
+| Up | 1598–1605 | 1,056 (132/frame) | 1,056 | 888 | 104 | 64 |
+
+All captured records join uniquely in each of the eight frames, with no partial
+staging records. Across the pair, all 1,056 shared frame/address records have
+different XY words after the Up input; 48 additional control records are absent
+from the Up trace. This confirms input-sensitive SH-2 projection coordinates
+reaching authentic VDP1 commands across this captured window. It does not bind
+those rows to retail DGN faces, prove winding for cyclic or unordered matches,
+establish material or pixel ownership, verify full-frame VDP1+VDP2 composition,
+or establish original Saturn parity. It is evidence for this state and frame
+window, not arbitrary gameplay coverage or production renderer admission.

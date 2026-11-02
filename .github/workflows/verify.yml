@@ -77,6 +77,7 @@ jobs:
           python3 scripts/test_analyze_nexus_ymir_vdp2_layer_outputs.py
           python3 scripts/test_analyze_nexus_mouse_event_crossrefs.py
           python3 scripts/test_analyze_nexus_inventory_wram_pair.py
+          python3 scripts/test_analyze_nexus_ymir_multiframe_staging_to_vdp1.py
 
   release-notes-policy:
     runs-on: ubuntu-24.04
