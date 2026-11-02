@@ -893,7 +893,7 @@ or complete gameplay.
 
 ### 2026-11-02 current-main launcher recheck
 
-On current `main` at `65c433a6` (runtime sources unchanged from the tested
+On current `main` at `d8a21473` (runtime sources unchanged from the tested
 build at `375cebdf`), the three singleton-media M12 startup tests
 passed with authentic local data: `m12_main_menu_dm1_only_real_media`,
 `m12_main_menu_csb_only_real_media`, and
@@ -904,6 +904,14 @@ Macintosh media present (4/4). The priority-only game picker passed its
 keyboard selection and launch matrix for DM1, CSB, and DM2 (1/1). Swedish
 real-media startup-scan localization passed again for DM1 PC, CSB FM Towns,
 and DM2 FM Towns (3/3).
+
+The authentic DM1 FM Towns CLI/M12 CTest passed (195.85 s). It covered the
+platform aliases and bare `--game dm1` AUTO route, the original JDM/EDM menu
+programs, and pointer-only M12 game/platform/presentation selection. The
+runtime check required the complete source title and entrance frame sequences
+with their expected cadence before accepting the first runtime receipt. This
+is headless original-media startup evidence, not native display or physical
+input parity.
 
 The current-source priority picker also passed its pointer-only selection
 matrix (30.76 s) and its scan-early selection matrix (31.89 s) against the
