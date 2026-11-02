@@ -5,6 +5,7 @@
 #include "dm2_v1_runtime_narrow_pc34_compat.h"
 #include "dm2_v1_party.h"
 #include <stddef.h>
+#include <string.h>
 
 /* =====================================================================
  * c_tim_proc.cpp
@@ -89,6 +90,85 @@ void dm2_v1_animate_creature(
         anim->anim_frame = (int16_t)(anim->anim_frame % anim->anim_max);
     if (anim->anim_frame < 0)
         anim->anim_frame = 0;
+}
+
+int dm2_v1_animate_creature_source(
+    int16_t x, int16_t y, int16_t direction,
+    DM2_V1_AnimateCreatureVariant variant,
+    const DM2_V1_AnimateCreatureCallbacks *cb, void *ctx,
+    DM2_V1_AnimateCreatureReceipt *out_receipt)
+{
+    DM2_V1_AnimateCreatureReceipt receipt;
+    int16_t creature;
+    int thinking_state;
+    void *local_state;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (variant != DM2_V1_ANIMATE_CREATURE_DOS &&
+        variant != DM2_V1_ANIMATE_CREATURE_SPX_V4 &&
+        variant != DM2_V1_ANIMATE_CREATURE_SPX_V5) {
+        receipt.blocked_invalid_variant = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!cb || !cb->get_creature_at) {
+        receipt.blocked_missing_callbacks = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    creature = cb->get_creature_at(ctx, x, y);
+    if (creature < 0) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (!cb->query_ai_spec_flags || !cb->get_creature_ai_index ||
+        !cb->allocate_caii_to_creature || !cb->prepare_local_creature ||
+        !cb->has_current_creature_state || !cb->think_creature_0806 ||
+        !cb->think_creature_071b || !cb->unprepare_local_creature) {
+        receipt.blocked_missing_callbacks = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.found_creature = 1;
+    receipt.creature = (uint16_t)creature;
+    if ((cb->query_ai_spec_flags(ctx, (uint16_t)creature) & 0x0001u) != 0u) {
+        int16_t caii = cb->get_creature_ai_index(ctx, (uint16_t)creature);
+        if (caii == -1 || caii == 0xff) {
+            cb->allocate_caii_to_creature(
+                ctx, (uint16_t)creature, x, y, variant);
+            receipt.allocated_caii = 1u;
+        }
+    }
+
+    /* SKProject passes state id 0x21 for DOS, SPX v4 and SPX v5. The source
+     * callback keeps the DOS CUTLX8(x) argument narrowing edition-local. */
+    local_state = cb->prepare_local_creature(
+        ctx, (uint16_t)creature, x, y, 0x21u, variant);
+    receipt.prepared_local_state = 1u;
+    thinking_state = cb->has_current_creature_state(ctx) != 0;
+    receipt.thinking_state_available = (uint8_t)(thinking_state ? 1u : 0u);
+    if (thinking_state) {
+        if (direction != 0) {
+            cb->think_creature_0806(ctx);
+            receipt.dispatched_0806 = 1u;
+        } else {
+            cb->think_creature_071b(ctx);
+            receipt.dispatched_071b = 1u;
+        }
+    }
+
+    if (variant != DM2_V1_ANIMATE_CREATURE_SPX_V4 || thinking_state) {
+        cb->unprepare_local_creature(ctx, local_state);
+        receipt.unprepared_local_state = 1u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 void dm2_v1_advance_tiles_time(

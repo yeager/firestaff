@@ -104,6 +104,55 @@ typedef struct {
 void dm2_v1_animate_creature(
     DM2_V1_CreatureAnimState *anim, int16_t direction, int16_t step);
 
+typedef enum {
+    DM2_V1_ANIMATE_CREATURE_DOS = 0,
+    DM2_V1_ANIMATE_CREATURE_SPX_V4 = 1,
+    DM2_V1_ANIMATE_CREATURE_SPX_V5 = 2
+} DM2_V1_AnimateCreatureVariant;
+
+typedef struct {
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    uint16_t (*query_ai_spec_flags)(void *ctx, uint16_t creature);
+    /* Return -1 or 0xff when the creature record has no CAII slot. */
+    int16_t (*get_creature_ai_index)(void *ctx, uint16_t creature);
+    void (*allocate_caii_to_creature)(void *ctx, uint16_t creature,
+                                      int16_t x, int16_t y,
+                                      DM2_V1_AnimateCreatureVariant variant);
+    void *(*prepare_local_creature)(void *ctx, uint16_t creature,
+                                    int16_t x, int16_t y,
+                                    uint8_t state_id,
+                                    DM2_V1_AnimateCreatureVariant variant);
+    int (*has_current_creature_state)(void *ctx);
+    void (*think_creature_0806)(void *ctx);
+    void (*think_creature_071b)(void *ctx);
+    void (*unprepare_local_creature)(void *ctx, void *local_state);
+} DM2_V1_AnimateCreatureCallbacks;
+
+typedef struct {
+    int valid;
+    int blocked_missing_callbacks;
+    int blocked_invalid_variant;
+    int found_creature;
+    uint16_t creature;
+    uint8_t allocated_caii;
+    uint8_t prepared_local_state;
+    uint8_t thinking_state_available;
+    uint8_t dispatched_0806;
+    uint8_t dispatched_071b;
+    uint8_t unprepared_local_state;
+} DM2_V1_AnimateCreatureReceipt;
+
+/* SKProject DOS dm2bya.cpp::SKW_ANIMATE_CREATURE (350-367), SPX v4
+ * skcrture.cpp::ANIMATE_CREATURE (5544-5565), and SPX v5
+ * sktimprc.cpp::DM2_ANIMATE_CREATURE (2860-2900). `direction != 0` selects
+ * AI_0806; `direction == 0` selects AI_071B. DOS and v5 always unprepare,
+ * while v4 performs that cleanup only when thinking state exists. */
+int dm2_v1_animate_creature_source(
+    int16_t x, int16_t y, int16_t direction,
+    DM2_V1_AnimateCreatureVariant variant,
+    const DM2_V1_AnimateCreatureCallbacks *cb, void *ctx,
+    DM2_V1_AnimateCreatureReceipt *out_receipt);
+
 /* ---- DM2_ADVANCE_TILES_TIME (c_tim_proc.cpp:3533) ----
  * Advance a tile's own timer/animation state by delta ticks. */
 typedef struct {

@@ -2639,3 +2639,14 @@ event unless source `b44` is set. DOS, SPX v4 and SKWIN callers still need to
 select the legacy variant; SPX v4 action-hand cooldown indexing, live input
 owners and supported-platform runtime evidence remain open. The source rows
 remain `PARTIAL`.
+
+
+2026-11-02 skproject `ANIMATE_CREATURE` callback owner:
+Firestaff now exposes `dm2_v1_animate_creature_source` for DOS, SPX v4 and SPX
+v5. It resolves the creature at the tile, performs the AI-spec/CAII allocation
+gate, prepares local creature state with ID 0x21, selects AI_0806 or AI_071B
+from the source direction flag, and preserves DOS/v5 unconditional cleanup
+versus SPX-v4 cleanup under the thinking-state guard. The older frame-counter
+helper remains separate. Production timer/AI callers, source-specific callback
+bindings and supported-platform runtime evidence remain open; all source rows
+stay `PARTIAL`.
