@@ -3105,3 +3105,11 @@ not parse and lay out source lines, and its hand-action helper draws a single
 direction-selected icon without all source state, background and empty-hand
 branches. Corrected both named-symbol families to PARTIAL pending full source
 rendering and runtime ownership.
+
+2026-11-02 SKProject `MONEY_BOX_SURVEY` / `DRAW_MONEYBOX`:
+The source inventory marks the DOS/SPX moneybox functions PARTIAL, but the
+named-symbol audit incorrectly claimed parity. Firestaff has a callback renderer
+for the source container frame and scattered coin sprites, plus coin-order/count
+receipts, but neither source function is bound to a production DM2 GUI caller.
+Corrected the four SKULLWIN/SKWIN named rows to PARTIAL pending end-to-end
+live-state and supported-platform ownership.
