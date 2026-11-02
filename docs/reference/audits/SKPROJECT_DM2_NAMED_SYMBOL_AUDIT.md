@@ -27,13 +27,13 @@ outside that ledger. The supplemental
 `SKULLWIN/` cross-variant rows, plus the flattened v5
 `SKW_CALC_PLAYER_WEIGHT` trace missed by ctags: 3,938 location-specific rows,
 3,635 distinct names, and 303 repeated-name definitions. Applying the current
-source-review overrides yields 2,884 `UNREVIEWED`, 968 `PARTIAL`, 0 `MISSING`,
+source-review overrides yields 2,877 `UNREVIEWED`, 975 `PARTIAL`, 0 `MISSING`,
 72 `IMPLEMENTED_PARITY`, 12 `NOT_APPLICABLE_ARCH`, and 2 `NOT_APPLICABLE_GAME`
-rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (835 unreviewed, 340 partial,
-26 implemented, 4 architecture-specific); SKWINSPX has 2,731 rows (2,049 unreviewed, 626 partial, 46
+rows. By source tree with active-source overrides, SKWINDOS has 1,205 rows (830 unreviewed, 345 partial,
+26 implemented, 4 architecture-specific); SKWINSPX has 2,731 rows (2,047 unreviewed, 628 partial, 46
 implemented, 8 architecture-specific, 2 outside-game); the two SKULLWIN
-cross-variant rows are partial. The review ledger contains 1,060 rows (977
-partial, 73 implemented, 8 architecture-specific, and 2 outside-game),
+cross-variant rows are partial. The review ledger contains 1,069 rows (982
+partial, 73 implemented, 12 architecture-specific, and 2 outside-game),
 including eight cross-variant rows not present in the supplemental inventory.
 
 DOS `SKW_RETRIEVE_ITEM_BONUS` and SPX v5 `DM2_RETRIEVE_ITEM_BONUS` use the
@@ -52,7 +52,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,938 (2,731 SPX, 1,205 DOS, 2 SKULLWIN) | active source review: 2,878 `UNREVIEWED`; 974 `PARTIAL`; 72 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,938 (2,731 SPX, 1,205 DOS, 2 SKULLWIN) | active source review: 2,877 `UNREVIEWED`; 975 `PARTIAL`; 72 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME` |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -80,7 +80,7 @@ definitions, SPX v4 `ACTUATE_DOOR` and `STEP_DOOR`, and legacy top-level DOS sou
 the allocated range, unlike the SPX branch. These source variants still
 lack a live Firestaff allocator owner.
 
-With active-source review overrides, the 3,938-row inventory currently has 2,878 `UNREVIEWED`, 974 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, 12 architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,878 as `UNREVIEWED`, 974 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count remains 3,935 (2,878 unreviewed, 1,055 partial source/older-ledger rows, and two partial source owners). The two duplicate DOS `cli`/`sti` definitions in `dm2D.cpp` and `src/c_ints.cpp` only toggle an unread `iflag`; `dm2D.cpp` also compiles CLI/STI call sites as empty macros, so these four stubs are architecture-specific rather than active gameplay behavior. DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
+With active-source review overrides, the 3,938-row inventory currently has 2,877 `UNREVIEWED`, 975 `PARTIAL`, 72 `IMPLEMENTED_PARITY`, 12 architecture-specific rows, and two Bloodwych-only v6 rows excluded as `NOT_APPLICABLE_GAME`; it is not yet a feature-by-platform audit. With active-source review overrides applied, the inventory currently maps 2,877 as `UNREVIEWED`, 975 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`. Including partial older-ledger rows and two partial source-owner rows, the combined open disposition count remains 3,935 (2,877 unreviewed, 1,056 partial source/older-ledger rows, and two partial source owners). The two duplicate DOS `cli`/`sti` definitions in `dm2D.cpp` and `src/c_ints.cpp` only toggle an unread `iflag`; `dm2D.cpp` also compiles CLI/STI call sites as empty macros, so these four stubs are architecture-specific rather than active gameplay behavior. DOS, SPX v4 and SPX v5 ornate-noise routines schedule animation-cadence timers from actuator frame, game tick, GDAT 0x88 and animation length. Firestaff's live callback now applies the DOS/v5 facing-relative offset to phase-zero wall sound; SPX v4 instead uses the passed tile and has a debug-force path, while source-version dispatch and platform routes remain open. The chance-based helper previously attributed to this named symbol is unrelated.
 
 DOS and SPX v5 `SKW_3a15_0d5c` rotate a creature at the actuator-record coordinates under the bit-5/timer-yB gate; Firestaff has narrow matching helpers but no live dispatch owner. SPX v4 explicitly leaves `_3a15_0d5c` as a no-op, which Firestaff mirrors in its v4 actuator event route.
 
@@ -697,3 +697,6 @@ Compared SKWINSPX `DM2_STEP_DOOR` (`src/v5/sktimprc.cpp:128-421`) with Firestaff
 ## Latest source review: CALL_ENCHANTMENT_SELF SPX v4 (2026-11-02)
 
 Compared SKWINSPX `CALL_ENCHANTMENT_SELF` (`src/v4/skchamp.cpp:1041-1060`) and its spell/game callers with Firestaff's `dm2_v1_hero_cast_enchantment_spx_v4` and `dm2_v1_proceed_enchantment_self`. The enchantment mask, aura type, power scaling and duration path correspond. With MP required, the source rejects zero, halves power and sets MP to zero below four, and assigns MP exactly four at four or more. Firestaff's bounded dispatcher now provides those rules through a v4-specific helper and carries the explicit variant selector, while its runtime still leaves hero/enchantment callbacks unbound, so that command fails closed before reaching the helper. M11 still routes DOS/v5; the v4 production edition selector and spell/game callers remain open. This source definition remains `PARTIAL` for production callers and supported-platform integration.
+
+
+With active-source review overrides applied, the inventory currently maps 2,877 as `UNREVIEWED`, 975 as `PARTIAL`, 0 as `MISSING`, and 72 as `IMPLEMENTED_PARITY`.

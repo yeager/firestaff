@@ -923,7 +923,7 @@ Compared DOS SKW_0aaf_0067 (dm2byh.cpp:4539-4612), SPX v4 DIALOG_BOX_0aaf_0067 (
 
 Compared DOS `SKW_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`dm2byb.cpp:136-138`), SPX v4 `QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skitem.cpp:420-423`) and SPX v5 `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` (`skgdtqdb.cpp:1040-1044`). Each requests DBSPEC word field 3. DOS returns signed x16, v4 returns U16, and v5 preserves i32. Firestaff now exports its declared query helper and supplies explicit width-compatible wrappers for all three variants. None is bound to a production DM2 caller that owns the source record/GDAT lookup, so each source row remains `PARTIAL` pending live route and supported-platform evidence.
 
-Applying the active-source review overrides gives 2,878 unreviewed, 974 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,878 unreviewed, 1,055 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,877 unreviewed, 975 partial, 0 missing, and 72 implemented-parity definitions. The generated combined skproject backlog is 3,935 open rows (2,877 unreviewed, 1,056 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 XACT 84 variant review (2026-11-02)
@@ -963,3 +963,7 @@ SKProject `DM2_STEP_DOOR` (`SKWINSPX/src/v5/sktimprc.cpp:128-421`) and DOS `SKW_
 ### DM2 SPX v4 self-enchantment payment comparison (2026-11-02)
 
 SKProject `CALL_ENCHANTMENT_SELF` (`SKWINSPX/src/v4/skchamp.cpp:1041-1060`) applies the matching 0x0f party mask, aura type, adjusted power and duration through Firestaff's enchantment/timer helper. With MP required, the source rejects zero MP and halves power when MP is below 4, setting MP to zero. At 4 or more, it sets MP to exactly 4. Firestaff's bounded dispatcher now has a source-specific v4 helper and carries an explicit v4 selector in its request, while the production runtime still leaves hero/enchantment callbacks unbound, so the command fails closed before reaching the helper. The live M11 route still selects DOS/v5; the production edition selector and v4 spell/game callers remain open, so the feature is partial across the supported routes.
+
+### DM2 SPX v4 CD.DAT music trigger coordinates (2026-11-02)
+
+Compared SKProject `CHECK_TRIGGER_MUSIC_FROM_PLAYER_POSITION` (`SKWINSPX/src/v4/skgame.cpp:3236-3268`) and its movement caller (`skgame.cpp:2512`) with Firestaff's CDDA route. SKProject scans ten triggers after adding the selected map's `MapOffsetX`/`MapOffsetY` to the local party square and uses `Map::Level()` as the trigger's floor key. Firestaff previously passed the raw map index and local coordinates into the DMWeb format-1 40-byte CD.DAT parser. The live FM Towns route now resolves the loaded map offsets and floor number before lookup, and rejects coordinates outside the byte key domain instead of truncating them. The Mega CD route remains unavailable in `dm2_v1_boot_music_track_for_level`, and independent supported-platform runtime/cue evidence remains open; retain `PARTIAL`.

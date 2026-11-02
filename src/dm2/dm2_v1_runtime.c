@@ -1767,10 +1767,12 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     DM2_MusicSystem music_system;
     int party_x = 0;
     int party_y = 0;
+    int music_level;
     int track = -1;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.map_index = rt ? rt->dungeon_level : -1;
+    music_level = rt ? rt->dungeon_level : -1;
     receipt.selected_track = -1;
     if (!rt || !rt->boot) return;
     music_system = dm2_v1_platform_music_system(rt->boot->platform);
@@ -1799,14 +1801,36 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     if (music_system == DM2_MUSIC_SYSTEM_CDDA_COORD) {
         const DM2_V1_GameState *game_state =
             (const DM2_V1_GameState *)rt->boot->dm2_state;
+        const DM2_V1_DungeonData *dungeon =
+            (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        int map = rt->dungeon_level;
         if (!game_state) {
             rt->music_map_receipt = receipt;
             return;
         }
-        party_x = game_state->party_x;
-        party_y = game_state->party_y;
+        /* SKWINSPX/src/v4/skgame.cpp::CHECK_TRIGGER_MUSIC_FROM_PLAYER_POSITION
+         * resolves the selected map definition, adds MapOffsetX/MapOffsetY
+         * to the party's map-local square, and keys CD.DAT by Map::Level().
+         * Keep that conversion at the live route; using the map index and
+         * local square can select the wrong trigger on offset maps. */
+        if (!dungeon || map < 0 || map >= dungeon->level_count ||
+            map >= DM2_V1_MAX_LEVELS) {
+            rt->music_map_receipt = receipt;
+            return;
+        }
+        party_x = game_state->party_x + dungeon->map_offset_x[map];
+        party_y = game_state->party_y + dungeon->map_offset_y[map];
+        music_level = dungeon->map_level_number[map];
+        /* CD.DAT stores byte coordinates/level. Do not truncate a position
+         * outside that source domain into an unrelated trigger key. */
+        if (party_x < 0 || party_x > UINT8_MAX ||
+            party_y < 0 || party_y > UINT8_MAX ||
+            music_level < 0 || music_level > UINT8_MAX) {
+            rt->music_map_receipt = receipt;
+            return;
+        }
     }
-    if (!dm2_v1_boot_music_track_for_level(rt->boot, rt->dungeon_level,
+    if (!dm2_v1_boot_music_track_for_level(rt->boot, music_level,
                                             party_x, party_y, &track)) {
         rt->music_map_receipt = receipt;
         return;
