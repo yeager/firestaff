@@ -2866,3 +2866,15 @@ labels overstated feature parity; both functions are now `PARTIAL`, with DOS
 and SPX v4/v5 active-source rows recorded separately. Static animation side
 effects, production callback ownership, lifecycle integration and all supported
 platform routes remain open.
+
+
+2026-11-02 SKProject `REFRESH_PLAYER_STAT_DISP` audit:
+Compared DOS, SPX v4, both SPX v5 source copies, SKULLWIN and legacy SKWIN.
+The source routine coordinates selection/dirty flags, option icons, champion
+portrait and name, health/damage, item/hand/inventory or food panels,
+weight/max-load text, and viewport restoration. Firestaff's matching helper
+currently draws only the active hero stat pane, health bar and text. The prior
+SKWIN/SKULLWIN `NOT_APPLICABLE_ARCH` dispositions were too broad because this
+routine owns gameplay UI behavior; both are now `PARTIAL`. All four active
+DOS/SPX definitions also remain `PARTIAL` until their source state gates,
+remaining panels, callbacks, and supported platform routes are covered.
