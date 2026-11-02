@@ -2945,3 +2945,5 @@ for horizontal fallback bars. The lighting/palette runtime gate checks both
 the authentic vertical dimensions and the existing horizontal behavior. This
 source geometry fix has no per-platform original-media capture yet; verify the
 reported HUD at matching gameplay poses across DOS, Mac, Amiga and FM Towns.
+
+2026-11-02 SKProject `DM2_FIND_LADDAR_AROUND` / `FIND_LADDER_AROUND` audit: DOS (`dm2byh.cpp:1982`), SPX v4 (`skdungn.cpp:202`) and SPX v5 (`skgdtqdb.cpp:1647`) scan four adjacent tile-record chains. They match ladder actuator/text-ornament records using subtype, destination altitude and GDAT direction rules, and return direction plus an optional record pointer. Firestaff's current helper scans a 3x3 neighborhood of square types, including the origin and diagonals; the source scans four cardinal tile-record chains. Firestaff does not inspect those linked records or bind the query callback into a production transition owner. The named audit dispositions now call these mappings partial; source-record lookup, GDAT gates and runtime movement integration remain open.
