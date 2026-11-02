@@ -3119,9 +3119,10 @@ bindings, platform-specific font metrics and authenticated runtime captures
 remain open; keep the DOS/SPX source rows PARTIAL.
 
 2026-11-02 SKProject `DRAW_HAND_ACTION_ICONS`:
-The named audit remains PARTIAL. Firestaff draws a direction-selected icon but
-does not yet cover all source state, background, empty-hand, item-on-wood-panel
-and production runtime branches.
+The helper now fills dead-hero hand rects black, draws the source background
+icon and applies cooldown/sleep overlays when those callbacks are bound. The
+item-on-wood-panel image, edition-specific sprite/frame handling and all
+production input/runtime bindings remain open. Keep PARTIAL.
 
 2026-11-02 SKProject `MONEY_BOX_SURVEY` / `DRAW_MONEYBOX`:
 The source inventory marks the DOS/SPX moneybox functions PARTIAL, but the

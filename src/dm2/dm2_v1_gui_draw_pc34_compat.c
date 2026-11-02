@@ -1703,11 +1703,8 @@ void dm2_v1_draw_hand_action_icons(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
-    int16_t hp = cb->get_hero_hp ? cb->get_hero_hp(ctx, hero_idx) : 0;
-    if (hp == 0) {
-        /* Fill rect with COL00 */
-        return;
-    }
+    if (!cb->get_hero_hp) return;
+    int16_t hp = cb->get_hero_hp(ctx, hero_idx);
 
     /* Draw hand action icon background and item-on-wood (simplified) */
     uint8_t partypos = cb->get_hero_partypos ?
@@ -1718,8 +1715,32 @@ void dm2_v1_draw_hand_action_icons(
     int16_t rect_base = (hand != 1) ? 0x4a : 0x46;
     int16_t rect_id = (int16_t)(rect_base + dir);
 
+    DM2_V1_Rect rect;
+    memset(&rect, 0, sizeof(rect));
+    if (!cb->query_expanded_rect ||
+        !cb->query_expanded_rect(ctx, rect_id, &rect))
+        return;
+
+    if (hp == 0) {
+        int32_t black = cb->palette_to_pixel ?
+            cb->palette_to_pixel(ctx, 0) : 0;
+        if (cb->fill_rect_summary)
+            cb->fill_rect_summary(ctx, 2, &rect, black);
+        return;
+    }
+
     int8_t icon = (int8_t)(2 * hand + 2 + flags);
     dm2_v1_draw_icon_pict_entry(1, 4, icon, 2, rect_id, -1, cb, ctx);
+
+    /* The source wood-panel item image needs edition-specific item-frame and
+     * palette conversion; leave that layer to its adapter. Preserve the
+     * source cooldown/sleep dimming state for callers that bind it. */
+    const uint8_t cooldown = cb->get_hero_handcooldown ?
+        cb->get_hero_handcooldown(ctx, hero_idx, hand) : 0;
+    const bool sleeping = cb->is_player_sleeping &&
+                          cb->is_player_sleeping(ctx);
+    if ((cooldown != 0 || sleeping) && cb->draw_gray_overlay)
+        cb->draw_gray_overlay(ctx, 2, &rect, 0);
 }
 
 /* ================================================================

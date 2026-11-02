@@ -338,6 +338,9 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*draw_item_survey_class_image)(void *ctx, int8_t cls1, int8_t cls2);
     /* SKProject selects line height and centering constants by text encoding. */
     bool (*query_text_is_mbcs)(void *ctx, const char *text);
+    bool (*is_player_sleeping)(void *ctx);
+    void (*draw_gray_overlay)(void *ctx, int32_t buttongroup_id,
+                              DM2_V1_Rect *rect, int16_t mode);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================
