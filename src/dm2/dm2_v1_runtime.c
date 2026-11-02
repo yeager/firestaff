@@ -15638,6 +15638,119 @@ static int dm2_runtime_bind_shop_image_render(
     return 1;
 }
 
+static int dm2_runtime_shop_currency_values(
+    const DM2_V1_AssetLoader *loader, uint16_t values[10],
+    uint8_t *out_count)
+{
+    uint8_t count = 0u;
+    if (out_count) *out_count = 0u;
+    if (!loader || !values || !out_count) return 0;
+    memset(values, 0, sizeof(uint16_t) * 10u);
+    /* SKWINSPX/src/v4/skitem.cpp::LOAD_MISCITEM scans MISCELLANEOUS IDs
+     * 0..0x7f and inserts before equal values into an ascending table. */
+    for (uint16_t item = 0u; item < 0x80u; ++item) {
+        uint16_t flags = 0u, value = 0u;
+        uint8_t pos;
+        /* QUERY_GDAT_ENTRY_DATA_INDEX returns zero for an absent entry. */
+        (void)dm2_v1_asset_load_word_value(
+            loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 0, &flags);
+        if ((flags & 0x4000u) == 0u) continue;
+        if (count >= 10u || !dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, item, 2, &value))
+            return 0;
+        pos = count;
+        while (pos > 0u && values[pos - 1u] >= value) {
+            values[pos] = values[pos - 1u];
+            --pos;
+        }
+        values[pos] = value;
+        ++count;
+    }
+    *out_count = count;
+    return count > 0u;
+}
+
+static int dm2_runtime_shop_money_value(
+    uint16_t value, const uint16_t money_values[10], uint8_t money_count,
+    uint8_t coin_indices[DM2_V1_SHOP_COIN_ROW_MAX], uint8_t *out_count)
+{
+    int32_t remaining = value;
+    int index = (int)money_count - 1;
+    uint8_t count = 0u;
+    if (out_count) *out_count = 0u;
+    if (!money_values || !coin_indices || !out_count || money_count > 10u)
+        return 0;
+    while (count < DM2_V1_SHOP_COIN_ROW_MAX && remaining > 0 && index >= 0) {
+        uint16_t coin_value = money_values[index];
+        if (coin_value == 0u) break;
+        if ((uint32_t)remaining >= coin_value) {
+            coin_indices[count++] = (uint8_t)index;
+            remaining -= coin_value;
+        } else {
+            --index;
+        }
+    }
+    *out_count = count;
+    return count > 0u;
+}
+
+static int dm2_runtime_bind_shop_coin_row(
+    const DM2_V1_AssetLoader *loader, uint8_t wall_gfx_index,
+    uint16_t rect_number, uint8_t ref_point, uint8_t image_offset_field,
+    uint16_t price, const uint16_t money_values[10], uint8_t money_count,
+    uint16_t colorkey, DM2_V1_ShopCoinRow *row)
+{
+    DM2_V1_QueryGdatSummaryImageReceipt atlas;
+    DM2_V1_WallOrnamentBlitRect blit;
+    uint16_t offset_word = 0u;
+    uint8_t coin_count = 0u;
+    int row_width;
+
+    if (row) memset(row, 0, sizeof(*row));
+    if (!row) return 0;
+    if (price == 0u) return 1;
+    if (!loader || !rect_number || image_offset_field < 0xf0u ||
+        image_offset_field > 0xf1u)
+        return 0;
+    if (!dm2_runtime_shop_money_value(
+            price, money_values, money_count, row->coin_index, &coin_count))
+        return 1; /* Source skips the price row when no coin fits. */
+    row_width = (int)coin_count * 8;
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index, 0x10,
+            &atlas) || !atlas.accepted || atlas.metadata.width < row_width ||
+        atlas.metadata.height < 7u || atlas.palette_hash == 0u ||
+        !dm2_v1_asset_load_image_offset(
+            loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+            image_offset_field, &offset_word) ||
+        !dm2_v1_wall_ornament_query_loaded_blit_rect_with_offset(
+            loader, (uint16_t)(rect_number | 0x8000u), ref_point,
+            row_width, 7, (int8_t)(offset_word >> 8),
+            (int8_t)offset_word, &blit))
+        return 0;
+    for (uint8_t coin = 0u; coin < coin_count; ++coin) {
+        if ((uint16_t)(row->coin_index[coin] * 8u + 8u) >
+            atlas.metadata.width)
+            return 0;
+    }
+    row->valid = 1u;
+    row->coin_count = coin_count;
+    row->category = DM2_GDAT_CATEGORY_WALL_GFX;
+    row->index = wall_gfx_index;
+    row->field = 0x10u;
+    row->colorkey = colorkey;
+    row->image_width = atlas.metadata.width;
+    row->image_height = atlas.metadata.height;
+    row->palette_hash = atlas.palette_hash;
+    row->dst_rect = (DM2_V1_ViewportRect){
+        blit.destination_x, blit.destination_y,
+        blit.destination_width, blit.destination_height };
+    row->src_rect = (DM2_V1_ViewportRect){
+        blit.source_x, blit.source_y,
+        blit.source_width, blit.source_height };
+    return 1;
+}
+
 /* skproject DRAW_WALL_ORNATE -> QUERY_TEMP_PICST -> QUERY_BLIT_RECT.
  * Build placements from the active map's source-owned WALL_GFX fields and
  * INTERFACE_GENERAL RAW4 rectangle graph. */
@@ -15944,6 +16057,47 @@ static void dm2_runtime_bind_wall_ornament_plan(
                         entry->shop_sell_price_v5 = sell_price_v5;
                         entry->shop_price_v5_valid = 1u;
                     }
+                    if (square == DM2_SQ_D1C &&
+                        (entry->shop_price_v4_valid ||
+                         entry->shop_price_v5_valid)) {
+                        uint16_t money_values[10];
+                        uint8_t money_count = 0u;
+                        if (!dm2_runtime_shop_currency_values(
+                                loader, money_values, &money_count) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf0u,
+                                entry->shop_buy_price_v4, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_buy_coins_v4) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf1u,
+                                entry->shop_sell_price_v4, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_sell_coins_v4) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf0u,
+                                entry->shop_buy_price_v5, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_buy_coins_v5) ||
+                            !dm2_runtime_bind_shop_coin_row(
+                                loader, surface->wall_ornate_gfx_index,
+                                surface->wall_ornate_rect_number,
+                                surface->wall_ornate_ref_point, 0xf1u,
+                                entry->shop_sell_price_v5, money_values,
+                                money_count, receipt.colorkey,
+                                &entry->shop_sell_coins_v5)) {
+                            viewport->wall_ornament_plan_status_code = 15u;
+                            viewport->wall_ornament_plan_status_square =
+                                (int8_t)square;
+                            continue;
+                        }
+                    }
                 }
                 entry->shop_glass_pair_valid = 1u;
                 entry->shop_glass_render_pending = 1u;
@@ -15984,6 +16138,30 @@ static void dm2_runtime_bind_wall_ornament_plan(
                     plan_hash ^= ((uint32_t)entry->shop_buy_price_v5 << 16) |
                         entry->shop_sell_price_v5;
                     plan_hash *= 16777619u;
+                }
+                {
+                    const DM2_V1_ShopCoinRow *rows[] = {
+                        &entry->shop_buy_coins_v4,
+                        &entry->shop_sell_coins_v4,
+                        &entry->shop_buy_coins_v5,
+                        &entry->shop_sell_coins_v5 };
+                    for (size_t row = 0u;
+                         row < sizeof(rows) / sizeof(rows[0]); ++row) {
+                        if (!rows[row]->valid) continue;
+                        plan_hash ^= rows[row]->palette_hash;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= rows[row]->coin_count;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= (uint16_t)rows[row]->dst_rect.x;
+                        plan_hash *= 16777619u;
+                        plan_hash ^= (uint16_t)rows[row]->dst_rect.y;
+                        plan_hash *= 16777619u;
+                        for (uint8_t coin = 0u;
+                             coin < rows[row]->coin_count; ++coin) {
+                            plan_hash ^= rows[row]->coin_index[coin];
+                            plan_hash *= 16777619u;
+                        }
+                    }
                 }
                 if (entry->shop_name_valid) {
                     plan_hash ^= entry->shop_name_hash;
