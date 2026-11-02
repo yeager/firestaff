@@ -2621,3 +2621,10 @@ GDAT-text callback and matching 16-bit DOS/v4 or 32-bit v5 result width. The
 v4 definition at `sktext.cpp:792` was also missing from the active-source
 inventory and is now a location-specific row. Production caller and source
 record/GDAT ownership on supported platforms remain open.
+
+
+2026-11-02 skproject DOS/SPX v4/v5 `QUERY_CUR_CMDSTR_ENTRY`: the wrappers
+read current category/index/field globals in edition-specific order, then
+delegate to `QUERY_CMDSTR_ENTRY`. Firestaff has a receipt for an explicit
+current-context tuple but no owner that reads the selected source globals; all
+three rows remain partial until that state and production routes are bound.
