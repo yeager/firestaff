@@ -9716,7 +9716,7 @@ static int dm2_v1_render_hud_hand_action_asset(
         dm2_v1_apply_source_gray_overlay(s, &source->destination_rect);
     }
     memset(&request, 0, sizeof(request));
-    request.valid = 1;
+    request.valid = !source->black_fill_required;
     request.gdat_index = gdat_index;
     request.gdat_category = source->gdat_category;
     request.gdat_subcategory = source->gdat_subcategory;
@@ -9737,7 +9737,8 @@ static int dm2_v1_render_hud_hand_action_asset(
     memset(&command, 0, sizeof(command));
     command.valid = 1;
     command.material = request;
-    command.indexed_pixels = request.indexed_pixels;
+    command.indexed_pixels = source->black_fill_required
+        ? NULL : request.indexed_pixels;
     command.palette16 = request.palette16;
     command.transparent_color = request.transparent_color;
     command.black_fill_required = source->black_fill_required;
@@ -12037,7 +12038,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         }
         if (s->source_materials_required &&
             s->hud_hand_action_source.valid &&
-            s->last_hud_hand_action_material_request.valid) {
+            (s->last_hud_hand_action_material_request.valid ||
+             s->last_hud_hand_action_presentation_command.black_fill_required)) {
             s->last_frame_composition.hud_hand_action_command_consumed = 1;
             s->last_frame_composition.hud_hand_action_request =
                 s->last_hud_hand_action_material_request;
@@ -12302,7 +12304,8 @@ void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
         }
         if (s->source_materials_required &&
             s->hud_hand_action_source.valid &&
-            s->last_hud_hand_action_material_request.valid) {
+            (s->last_hud_hand_action_material_request.valid ||
+             s->last_hud_hand_action_presentation_command.black_fill_required)) {
             s->last_frame_composition.hud_hand_action_command_consumed = 1;
             s->last_frame_composition.hud_hand_action_request =
                 s->last_hud_hand_action_material_request;
@@ -12409,8 +12412,9 @@ static int dm2_v1_viewport_build_m11_frame_receipt(
           c->moneybox_container_cls2 != 0xffu)) &&
         (!s->hud_hand_action_source.valid ||
          (c->hud_hand_action_command_consumed &&
-          c->hud_hand_action_request.valid &&
-          c->hud_hand_action_command.valid));
+          c->hud_hand_action_command.valid &&
+          (c->hud_hand_action_command.black_fill_required ||
+           c->hud_hand_action_request.valid)));
     out_receipt->m11_consume_frame = out_receipt->valid;
     return out_receipt->valid;
 }
