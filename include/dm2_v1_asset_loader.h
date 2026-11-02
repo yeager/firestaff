@@ -142,7 +142,7 @@ typedef enum {
 
 /* ── Asset Loader Context ─────────────────────────────────────────── */
 
-typedef struct DM2_V1_AssetLoader {
+typedef struct {
     uint8_t cls1;
     uint8_t cls2;
     uint8_t cls3;
@@ -152,7 +152,7 @@ typedef struct DM2_V1_AssetLoader {
     uint16_t data_index;
 } DM2_V1_GdatEntry;
 
-typedef struct {
+typedef struct DM2_V1_AssetLoader {
     const uint8_t *data;     /* GRAPHICS.DAT data (owned or ref) */
     size_t         data_size; /* GRAPHICS.DAT size */
     int            category_count;

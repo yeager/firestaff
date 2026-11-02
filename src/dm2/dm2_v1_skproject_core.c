@@ -12125,9 +12125,9 @@ static uint16_t dm2_v1_skproject_ladder_record_word(
    between v4 and the DOS/v5 bodies is the source type naming; the extracted
    word and GDAT predicates are identical. */
 int dm2_v1_skproject_find_ladder_around_source(
-    const DM2_V1_DungeonData *dungeon,
-    const DM2_V1_RecordPoolSet *record_pools,
-    const DM2_V1_AssetLoader *asset_loader,
+    const struct DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *record_pools,
+    const struct DM2_V1_AssetLoader *asset_loader,
     int level,
     int x,
     int y,
