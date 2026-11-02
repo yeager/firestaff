@@ -833,7 +833,7 @@ void dm2_v1_show_attack_result(
     int8_t img_cls = 4;
 
     if (result_code < 0) {
-        if ((uint16_t)result_code >= 0xfffe)
+        if (result_code == -2)
             img_idx = 0x17;
         else if (result_code == -1)
             img_idx = 0x18;
@@ -850,9 +850,13 @@ void dm2_v1_show_attack_result(
         }
     }
 
-    if (cb->query_gdat_summary_image && cb->image_draw) {
-        /* Use image system to render attack result */
-        /* Simplified: delegates to callback */
+    if (cb->query_gdat_summary_image && cb->query_picst_it &&
+        cb->image_draw) {
+        DM2_V1_ImageDesc image;
+        memset(&image, 0, sizeof(image));
+        cb->query_gdat_summary_image(ctx, &image, 1, img_cls, img_idx);
+        cb->query_picst_it(ctx, &image);
+        cb->image_draw(ctx, &image, 2, 57, -1);
     }
 
     if (result_code >= 0 && cb->draw_button_str) {
