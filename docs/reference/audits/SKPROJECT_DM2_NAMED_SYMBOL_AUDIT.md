@@ -668,6 +668,10 @@ With active-source review overrides applied, the inventory currently maps 2,769 
 
 ## Latest source review: PERFORM_TURN_SQUAD (2026-11-02)
 
+## Teleporter transition source review
+
+`DM2_move_2fcf_0434` now resolves the DB1 destination and rotation from the live mutable runtime record pool when movement or turning enters an enabled party teleporter. The decoder uses the authenticated source word byte order. Keep the symbol `PARTIAL`: Firestaff still lacks the complete source map-owner/record-link transaction, teleporter sound behavior and native platform callers.
+
 Compared DOS `SKW_PERFORM_TURN_SQUAD`, SPX v4 `PERFORM_TURN_SQUAD`, SPX v5 `DM2_PERFORM_TURN_SQUAD`, and the SKULLWIN callback helper. Firestaff now binds turning to the live DM2 runtime: zero input is a no-op, champion facing directions reset, stair tiles resolve the other level and destination facing, and an active DB1 teleporter transitions before an ordinary turn. The source also removes and reinserts the party record around rotation; v4 has a turn Lua hook; its extra stair-direction argument is unused in the retail DM2 body, and v5 uses `map_3BF83`. Those source state effects and complete DOS/SPX runtime and platform routes remain open, so all four source rows remain `PARTIAL`.
 
 With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, 106 as `IMPLEMENTED_PARITY`, 12 as `NOT_APPLICABLE_ARCH`, and 2 as `NOT_APPLICABLE_GAME` (3,941 rows; 3,938 generated backlog tasks exclude three supplemental/manual entries).

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +66,13 @@ typedef struct {
 int dm2_v1_db1_teleporter_transition(
     const DM2_V1_DungeonData *dungeon, int map, int x, int y,
     DM2_V1_DB1TeleporterTransition *out);
+
+/* Runtime form of the DB1 transition resolver. Tile/head state comes from
+ * the dungeon, while the mutable record body comes from the live pool owner. */
+int dm2_v1_db1_teleporter_transition_live(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_RecordPoolSet *record_pools,
+    int map, int x, int y, DM2_V1_DB1TeleporterTransition *out);
 
 int dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
     const DM2_V1_DungeonData *dungeon,

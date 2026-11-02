@@ -659,8 +659,9 @@ static int dm2_runtime_apply_entered_db1_teleporter(
     if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
         return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    if (!dm2_v1_db1_teleporter_transition(
-            dungeon, level, x, y, &transition))
+    if (!rt->record_pools_valid ||
+        !dm2_v1_db1_teleporter_transition_live(
+            dungeon, &rt->record_pools, level, x, y, &transition))
         return 0;
     gs->current_level = transition.destination_map;
     gs->party_x = transition.destination_x;
