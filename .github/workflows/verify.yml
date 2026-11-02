@@ -79,6 +79,7 @@ jobs:
           python3 scripts/test_analyze_nexus_inventory_wram_pair.py
           python3 scripts/test_analyze_nexus_ymir_multiframe_staging_to_vdp1.py
           python3 scripts/test_analyze_nexus_ymir_face_to_command.py
+          python3 scripts/test_analyze_nexus_ymir_face_material_cross_join.py
 
   release-notes-policy:
     runs-on: ubuntu-24.04
