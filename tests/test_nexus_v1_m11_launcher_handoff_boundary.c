@@ -256,6 +256,7 @@ static void seed_synthetic_nexus_available(M12_StartupMenuState* menu,
 
 static void expect_nexus_launch_intent_mode(M12_StartupMenuState* menu,
                                             int mode,
+                                            int expectedResolvedMode,
                                             const char* label) {
     M12_LaunchIntent intent;
     const int gi = 3;
@@ -267,8 +268,7 @@ static void expect_nexus_launch_intent_mode(M12_StartupMenuState* menu,
     expect_true(intent.valid == 1, label);
     expect_true(intent.gameId && strcmp(intent.gameId, "nexus") == 0,
                 "Nexus launch intent keeps gameId in V2 mode");
-    expect_true(intent.presentationMode == mode,
-                "Nexus launch intent preserves selected presentation mode");
+    expect_true(intent.presentationMode == expectedResolvedMode, label);
 }
 
 static void run_synthetic_nexus_v2_launch_modes(void) {
@@ -282,16 +282,20 @@ static void run_synthetic_nexus_v2_launch_modes(void) {
 
     expect_nexus_launch_intent_mode(&menu,
                                     M12_PRESENTATION_V1_ORIGINAL,
+                                    M12_PRESENTATION_V1_ORIGINAL,
                                     "Nexus V1 original launch intent remains valid");
     expect_nexus_launch_intent_mode(&menu,
+                                    M12_PRESENTATION_V20_FILTERED,
                                     M12_PRESENTATION_V20_FILTERED,
                                     "Nexus V2.0 launch intent is valid with full startup graphics fallback");
     expect_nexus_launch_intent_mode(&menu,
                                     M12_PRESENTATION_V21_UPSCALED,
+                                    M12_PRESENTATION_V21_UPSCALED,
                                     "Nexus V2.1 launch intent is valid with full startup graphics fallback");
     expect_nexus_launch_intent_mode(&menu,
                                     M12_PRESENTATION_V22_MODERN,
-                                    "Nexus V2.2 launch intent is valid with full startup graphics fallback");
+                                    M12_PRESENTATION_V21_UPSCALED,
+                                    "Nexus V2.2 launch intent falls back to V2.1 until modern art is admitted");
 }
 
 static void run_real_launcher_handoff_if_available(void) {
