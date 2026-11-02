@@ -720,7 +720,7 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,780 as `UNREVIEWED`, 1,046 as `PARTIAL`, 0 as `MISSING`, and 100 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,778 as `UNREVIEWED`, 1,046 as `PARTIAL`, 0 as `MISSING`, and 103 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 
@@ -745,3 +745,7 @@ Compared DOS `SKW_GET_CREATURE_WEIGHT` (`SKWINDOS/dm2byb.cpp:181`), SPX v4 `GET_
 ### DM2 record subtype query across editions (2026-11-02)
 
 Compared DOS `SKW_QUERY_CLS2_FROM_RECORD` (`SKWINDOS/dm2bya.cpp:6677`), SPX v4 `QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v4/skcore.cpp:9618`), SPX v5 `DM2_QUERY_CLS2_FROM_RECORD` (`SKWINSPX/src/v5/skrecord.cpp:206`), and SKULLWIN (`SKULLWIN/c_record.cpp:203`). The common helper covers special handles, text and actuator callbacks, per-DB subtype extraction, and DB14 missile-object recursion. V4 alone can return a DB7 scroll subtype when `bUseScrollIDType` is enabled; Firestaff’s helper currently returns zero for DB7 with no edition-mode input. DOS/v5/SKULLWIN bodies are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL`.
+
+### DM2 record category query across editions (2026-11-02)
+
+Compared DOS `SKW_QUERY_CLS1_FROM_RECORD` (`SKWINDOS/dm2byc.cpp:1136`), SPX v4 `QUERY_CLS1_FROM_RECORD` (`SKWINSPX/src/v4/skcore.cpp:9680`), SPX v5 `DM2_QUERY_CLS1_FROM_RECORD` (`SKWINSPX/src/v5/skrecord.cpp:457`), and SKULLWIN (`SKULLWIN/c_record.cpp:454`). Each follows DB14 missile next-links, returns `table1d3298` for the first non-DB14 record, and returns `0xff` at OBJECT_NULL. Firestaff’s bounded `_ex` helper matches the walk with source-endian pool access and is used by live runtime paths; the separate one-record callback helper is narrower. All four definitions are `IMPLEMENTED_PARITY` at function-body level.
