@@ -7042,7 +7042,12 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory_if_unreadable(dir);
+            /* This call site has already established that `dir` is the
+             * directory being scanned. Do not stat it again before
+             * preserving the diagnostic: macOS privacy controls can deny
+             * metadata lookup as well as enumeration, which made the helper
+             * discard the only useful path. */
+            record_access_denied_directory(dir);
         }
         return 0;
     }
@@ -7142,7 +7147,8 @@ static int scan_dir(const char *dir, const char *expectedMd5,
     d = opendir(dir);
     if (!d) {
         if (asset_scan_access_denied_errno(errno)) {
-            record_access_denied_directory_if_unreadable(dir);
+            /* `dir` is the known directory currently being traversed. */
+            record_access_denied_directory(dir);
         }
         return 0;
     }

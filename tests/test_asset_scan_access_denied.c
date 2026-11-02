@@ -210,6 +210,32 @@ int main(void) {
         return 1;
     }
 
+    /* A TCC-style denial may prevent stat() on the selected root as well as
+     * opendir(). The scanner already knows this exact path was a directory
+     * because it attempted to enumerate it; keep that path for recovery UI. */
+    asset_scan_clear_access_denied_directories();
+    (void)asset_find_all_by_md5_list(blockedRoot, hashes, matchedPaths,
+                                     matched, 1, 4);
+    count = asset_scan_access_denied_directory_count();
+    if (count != 1 || !asset_scan_access_denied_directory_path(0) ||
+        strcmp(asset_scan_access_denied_directory_path(0), blockedRoot) != 0) {
+        fprintf(stderr,
+                "FAIL: scanner lost selected directory path when metadata and enumeration were denied (count=%d)\n",
+                count);
+        unlink(cachePath);
+        rmdir(cacheDir);
+        rmdir(firestaffDir);
+        unlink(configPath);
+        rmdir(home);
+        chmod(blockedParent, 0700);
+        rmdir(blockedRoot);
+        rmdir(blockedParent);
+        chmod(denied, 0700);
+        rmdir(denied);
+        rmdir(root);
+        return 1;
+    }
+
     memset(&menuOptions, 0, sizeof(menuOptions));
     menuOptions.skipAssetScan = 1;
     menuOptions.skipScreenshotGalleryScan = 1;
