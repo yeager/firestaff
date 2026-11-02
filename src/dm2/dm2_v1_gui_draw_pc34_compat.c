@@ -1054,7 +1054,8 @@ void dm2_v1_draw_food_water_poison_panel(
 
 /* ================================================================
  * 30. DRAW_ITEM_STATS_BAR
- *     c_gui_draw.cpp:1232
+ *     SKWINDOS/dm2byb.cpp:883-898, SPX v4 skguidrw.cpp:2542-2567,
+ *     SPX v5 skguidr5.cpp:1233-1276
  * ================================================================ */
 
 void dm2_v1_draw_item_stats_bar(
@@ -1069,22 +1070,29 @@ void dm2_v1_draw_item_stats_bar(
         cb->query_expanded_rect(ctx, (int16_t)rectid, &rc) : NULL;
     if (!expanded) return;
 
-    dm2_v1_guidraw_24a5_0e82(value, rectid, (int32_t)color_idx,
-                              0, (int16_t)max_value, 1, cb, ctx);
+    /* Source order: value, color, min, rect, max, extra-color. */
+    dm2_v1_guidraw_24a5_0e82(value, color_idx, 0, rectid,
+                              (int16_t)max_value, 1, cb, ctx);
 
-    /* Draw label characters at sides of bar (simplified) */
+    if (!cb->draw_strong_text) return;
+    void *backbuf = cb->get_backbuffer_ptr ? cb->get_backbuffer_ptr(ctx) : NULL;
+    int16_t backw = cb->get_bmp_width ? cb->get_bmp_width(ctx, backbuf) : 0;
+    uint8_t black = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+    uint8_t white = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 15) : 0;
+    uint16_t bg = (uint16_t)black | 0x4000u;
+    int16_t text_y = (int16_t)(rc.y + rc.h - 3);
     char label[2] = {(char)label_char, '\0'};
-    uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, color_idx) : 0;
-    uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
-    int16_t bgcolor = (int16_t)((uint16_t)bg | 0x4000);
-
-    if (cb->draw_strong_text) {
-        void *backbuf = cb->get_backbuffer_ptr ? cb->get_backbuffer_ptr(ctx) : NULL;
-        int16_t backw = cb->get_bmp_width ? cb->get_bmp_width(ctx, backbuf) : 0;
-        int16_t text_y = (int16_t)(rc.y + rc.h - 3);
+    char low_rune[2] = {0x60, '\0'};
+    char max_rune[2] = {0x65, '\0'};
+    cb->draw_strong_text(ctx, backbuf, backw, (int16_t)(rc.x - 9),
+                         text_y, (int16_t)color_idx, (int16_t)bg, label);
+    cb->draw_strong_text(ctx, backbuf, backw, (int16_t)(rc.x + 3),
+                         text_y, (int16_t)white, (int16_t)bg, low_rune);
+    int16_t font_height = cb->get_font_height ? cb->get_font_height(ctx) : 0;
+    if (font_height > 0) {
         cb->draw_strong_text(ctx, backbuf, backw,
-                              (int16_t)(rc.x - 9), text_y,
-                              (int16_t)fg, bgcolor, label);
+                             (int16_t)(rc.x + rc.w - font_height - 2),
+                             text_y, (int16_t)white, (int16_t)bg, max_rune);
     }
 }
 

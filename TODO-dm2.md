@@ -3068,3 +3068,12 @@ limit and slot range. The generic item-icon renderer still lacks complete
 source backgrounds/selection layers, and no production DM2 container renderer
 binds this callback to live state. Keep all four source rows PARTIAL; full
 visual and supported-platform parity remains open.
+
+2026-11-02 SKProject `DRAW_ITEM_STATS_BAR`:
+DOS and SPX v4/v5 pass scaled-bar arguments as value, color, minimum, rect,
+maximum and extra color, then draw the value rune plus low and maximum runes.
+Firestaff previously shifted the arguments, used an incorrect foreground for
+the value rune and omitted two labels. The callback now follows source order
+and draws all labels when font height is available; the rightmost rune is
+omitted without that metric. Production panel bindings and platform coverage
+remain unverified; keep all source rows PARTIAL.
