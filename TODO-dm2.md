@@ -87,9 +87,10 @@ v5 both return true when charge reaches zero; the Firestaff `events_30dea`
 helper now matches that return so the caller resets the slot state. Event 112
 retains its profile-specific PC-English DOS reset and FM Towns SPX v5 XOR/mask
 behavior. SPX v4 `PROCEED_COMMAND_SLOT` has no probability gate, so its runtime
-policy is still unmatched. Periodic command repeats, source-native panel
-rendering, and complete input/source ownership on every supported platform
-remain open; all reviewed variant rows stay partial.
+entry point now applies its unconditional field-8 charge handling, but no live
+M11 caller selects that source family. Periodic command repeats,
+source-native panel rendering, and complete input/source ownership on every
+supported platform remain open; all reviewed variant rows stay partial.
 
 2026-11-01 skproject DOS/SPX v4/v5 `FIND_HAND_WITH_EMPTY_FLASK`: implemented
 the generic query owner with the source slot order (action hand 1, then ready
