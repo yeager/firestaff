@@ -14458,14 +14458,12 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
 
     tile = dm2_v1_skproject_cycle13_tile_at(
         tile_values, width, height, x, y);
-    if ((tile >> 5) == 5u &&
-        !dm2_v1_skproject_get_teleporter_detail(
+    memset(&teleporter_receipt, 0, sizeof(teleporter_receipt));
+    if ((tile >> 5) == 5u)
+        (void)dm2_v1_skproject_get_teleporter_detail(
             x, y, tile_values, width, height, pools, current_map,
             dest_tile_values, dest_width, dest_height,
-            &teleporter, &teleporter_receipt)) {
-        receipt.blocked_missing_tile = 1;
-        goto blocked;
-    }
+            &teleporter, &teleporter_receipt);
     if ((tile >> 5) == 5u && teleporter_receipt.valid &&
         ((direction & 3u) == ((teleporter.b_00 + 2u) & 3u))) {
         if (!allowed_level_fn) {
@@ -14474,6 +14472,14 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
         }
         if (!allowed_level_fn(creature_handle, teleporter.b_04, user)) {
             receipt.blocked_disallowed_level = 1;
+            goto blocked;
+        }
+        if (!dest_tile_values || teleporter.b_02 < 0 || teleporter.b_03 < 0 ||
+            teleporter.b_02 >= dest_width || teleporter.b_03 >= dest_height ||
+            dm2_v1_skproject_is_tile_blocked(
+                dest_tile_values[(int)teleporter.b_03 * dest_width +
+                                 teleporter.b_02], NULL)) {
+            receipt.blocked_teleporter_forbidden = 1;
             goto blocked;
         }
         if (has_optional_checks) {
@@ -14516,14 +14522,12 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
         goto blocked;
     }
 
-    if ((tile >> 5) == 5u &&
-        !dm2_v1_skproject_get_teleporter_detail(
+    memset(&teleporter_receipt, 0, sizeof(teleporter_receipt));
+    if ((tile >> 5) == 5u)
+        (void)dm2_v1_skproject_get_teleporter_detail(
             next_x, next_y, tile_values, width, height, pools, current_map,
             dest_tile_values, dest_width, dest_height,
-            &teleporter, &teleporter_receipt)) {
-        receipt.blocked_missing_tile = 1;
-        goto blocked;
-    }
+            &teleporter, &teleporter_receipt);
     if ((tile >> 5) == 5u && teleporter_receipt.valid) {
         if (!allowed_level_fn) {
             receipt.blocked_missing_allowed_level = 1;
