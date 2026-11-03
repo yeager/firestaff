@@ -134,6 +134,7 @@ def verify_documented_dm2_counts() -> None:
         f"({backlog['byStatus']['UNREVIEWED']:,} unreviewed, "
         f"{backlog['byStatus']['PARTIAL']:,} partial source or older-ledger rows, "
         f"{backlog['byStatus'].get('MISSING', 0):,} missing, "
+        f"{backlog['byStatus'].get('UNCERTAIN_NUMBERED_EVIDENCE', 0):,} uncertain numbered evidence rows, "
         f"{backlog['byStatus']['PARTIAL_SOURCE_OWNER']:,} partial source owners)."
     )
     if backlog_summary not in parity_doc:
