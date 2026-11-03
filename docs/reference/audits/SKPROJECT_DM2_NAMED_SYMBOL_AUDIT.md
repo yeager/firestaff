@@ -50,7 +50,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,735 `UNREVIEWED`; 1,086 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,975 open tasks (2,735 unreviewed, 1,238 partial incl. older-ledger rows, 2 partial source owners). |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,735 `UNREVIEWED`; 1,086 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,976 open tasks (2,735 unreviewed, 1,239 partial incl. older-ledger rows, 2 partial source owners). |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
