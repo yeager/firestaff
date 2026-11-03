@@ -8624,15 +8624,15 @@ typedef struct {
     int16_t front_y;
     int16_t wallet_handle;
     int used_sell_path;
-    int money_path_checked;
-    int16_t creature_price_after;
-    uint16_t generated_coin_count;
-    int8_t xact64_result;
     int item_path_checked;
     int16_t item_can_handle_result;
     int16_t item_transfer_result;
     int16_t creature_w10_after;
     int8_t result;
+    int money_path_checked;
+    int16_t creature_price_after;
+    uint16_t generated_coin_count;
+    int8_t xact64_result;
 } DM2_V1_SkprojectXact82Receipt;
 
 int dm2_v1_skproject_proceed_xact_82(

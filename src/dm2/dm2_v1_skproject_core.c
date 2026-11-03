@@ -22967,12 +22967,6 @@ static int dm2_v1_skproject_xact82_sell(
             wallet_handle = item;
         item = (uint16_t)next;
     }
-    if (wallet_handle == DM2_V1_OBJECT_NULL &&
-        !ctx->append_coin_to_possession_fn) {
-        receipt->blocked_missing_context = 1;
-        return 0;
-    }
-
     /* SKULLWIN c_ai.cpp:1891-1903 exchanges every moneybox in the current
      * creature's possession chain and retains the last one for new coins. */
     item = ctx->possession;
@@ -23049,6 +23043,11 @@ static int dm2_v1_skproject_xact82_sell(
         if (coin_count == 0u) {
             receipt->result = -2;
             return 1;
+        }
+        if (wallet_handle == DM2_V1_OBJECT_NULL &&
+            !ctx->append_coin_to_possession_fn) {
+            receipt->blocked_missing_context = 1;
+            return 0;
         }
         for (uint16_t n = coin_count; n > 0u; --n) {
             uint8_t coin_index = coin_indices[n - 1u];
