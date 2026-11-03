@@ -993,6 +993,11 @@ typedef struct {
     int failed;
 } DM2_V1_RuntimeSpellLightContext;
 
+static const int16_t dm2_runtime_light_table[16] = {
+    0, 5, 12, 24, 33, 40, 46, 51,
+    59, 68, 76, 82, 89, 94, 97, 100
+};
+
 static void dm2_runtime_spell_queue_light_timer(
     void *context, int16_t value, uint32_t fire_tick)
 {
@@ -4799,10 +4804,6 @@ int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt)
 {
-    static const int16_t light_table[16] = {
-        0, 5, 12, 24, 33, 40, 46, 51,
-        59, 68, 76, 82, 89, 94, 97, 100
-    };
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_Hero *hero;
     DM2_V1_RuntimeSpellTable table;
@@ -5185,9 +5186,9 @@ int dm2_v1_runtime_cast_spell_player(
     light_ctx.runtime = rt;
     memset(&light_callbacks, 0, sizeof(light_callbacks));
     light_callbacks.global_light = &rt->source_light_level;
-    light_callbacks.light_table = light_table;
-    light_callbacks.light_table_size = (int)(sizeof(light_table) /
-                                              sizeof(light_table[0]));
+    light_callbacks.light_table = dm2_runtime_light_table;
+    light_callbacks.light_table_size = (int)(sizeof(dm2_runtime_light_table) /
+                                              sizeof(dm2_runtime_light_table[0]));
     light_callbacks.game_tick = (uint32_t)rt->tick_count;
     light_callbacks.queue_light_timer = dm2_runtime_spell_queue_light_timer;
     light_callbacks.recalc_light = dm2_runtime_spell_recalc_light;
@@ -25327,6 +25328,13 @@ int dm2_v1_runtime_engage_command(
 {
     DM2_V1_EngageCommandRequest patched;
     DM2_V1_EngageCommandReceipt local;
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_RuntimeSpellLightContext light_ctx;
+    DM2_V1_ProceedLightCallbacks light_callbacks;
+    DM2_V1_SourceTimerQueue timer_queue_before;
+    int16_t light_before;
+    int bind_light;
+    int result;
     if (!receipt) receipt = &local;
     if (!request) {
         memset(receipt, 0, sizeof(*receipt));
@@ -25335,18 +25343,44 @@ int dm2_v1_runtime_engage_command(
     }
     patched = *request;
 
-    /* Bind PROCEED_LIGHT callbacks when the runtime has a light system.
-     * The light_cb/ctx remain NULL for now (the runtime light table is
-     * not yet populated), so cases 5/37/38 will still fall through to
-     * the engage_command's own NULL guard until the light subsystem is
-     * wired.  This is the correct layering: the runtime owns the
-     * binding decision. */
+    /* SKWINSPX skengage.cpp sends the original light command code through
+     * PROCEED_LIGHT. Bind the same source table, 0x46 timer owner and light
+     * accumulator used by the direct spell-cast route. */
+    bind_light = patched.cmd.action_id == 6 ||
+                 patched.cmd.action_id == 0x26 ||
+                 patched.cmd.action_id == 0x27;
+    memset(&light_ctx, 0, sizeof(light_ctx));
+    memset(&light_callbacks, 0, sizeof(light_callbacks));
+    if (bind_light) {
+        light_ctx.runtime = rt;
+        light_callbacks.global_light = &rt->source_light_level;
+        light_callbacks.light_table = dm2_runtime_light_table;
+        light_callbacks.light_table_size =
+            (int)(sizeof(dm2_runtime_light_table) /
+                  sizeof(dm2_runtime_light_table[0]));
+        light_callbacks.game_tick = (uint32_t)rt->tick_count;
+        light_callbacks.queue_light_timer = dm2_runtime_spell_queue_light_timer;
+        light_callbacks.recalc_light = dm2_runtime_spell_recalc_light;
+        patched.light_cb = &light_callbacks;
+        patched.light_ctx = &light_ctx;
+        timer_queue_before = rt->timer_queue;
+        light_before = rt->source_light_level;
+    }
 
-    /* Bind CONFUSE_CREATURE callbacks when the runtime has creature data.
-     * Same layering: the confuse_cb stays NULL until the runtime owns
-     * the creature record resolver and AI spec query. */
-
-    return dm2_v1_engage_command(&patched, receipt);
+    /* CONFUSE_CREATURE remains fail-closed until a production creature owner
+     * is bound to the command route. */
+    result = dm2_v1_engage_command(&patched, receipt);
+    if (bind_light && light_ctx.failed) {
+        rt->timer_queue = timer_queue_before;
+        rt->source_light_level = light_before;
+        receipt->success = 0;
+        receipt->fail_closed = 1;
+        receipt->hand_cooldown_delay = 0;
+        receipt->stamina_cost = 0;
+        receipt->skill_exp_gained = 0;
+        return 0;
+    }
+    return result;
 }
 
 static int dm2_v1_runtime_proceed_hand_command_variant(
