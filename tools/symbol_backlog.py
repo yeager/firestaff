@@ -25,6 +25,10 @@ SKPROJECT_REVIEW_COLUMNS = (
     "source_tree", "source_file", "line", "symbol", "review_status",
     "firestaff_mapping", "review_notes",
 )
+SKPROJECT_NAMED_AUDIT_COLUMNS = (
+    "symbol", "family", "source_file", "line", "firestaff_mapping", "status",
+    "notes",
+)
 
 REDMCSB_OPEN = {
     "MISSING",
@@ -100,18 +104,29 @@ def read_optional_tsv(path: Path, warnings: list[str]) -> list[dict[str, str]]:
 
 def read_skproject_source_reviews(path: Path) -> list[dict[str, str]]:
     """Read the headerless seven-column SKProject source-review ledger."""
+    return read_headerless_tsv(path, SKPROJECT_REVIEW_COLUMNS)
+
+
+def read_skproject_named_audit(path: Path) -> list[dict[str, str]]:
+    """Read the headerless seven-field legacy named-symbol audit."""
+    return read_headerless_tsv(path, SKPROJECT_NAMED_AUDIT_COLUMNS)
+
+
+def read_headerless_tsv(path: Path, columns: tuple[str, ...]) -> list[dict[str, str]]:
     if not path.exists():
         raise FileNotFoundError(f"required audit TSV is missing: {path}")
     rows: list[dict[str, str]] = []
     with path.open(newline="", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, 1):
-            values = line.rstrip("\r\n").split("\t", len(SKPROJECT_REVIEW_COLUMNS) - 1)
-            if len(values) != len(SKPROJECT_REVIEW_COLUMNS):
+            values = line.rstrip("\r\n").split("\t", len(columns) - 1)
+            if tuple(values) == columns:
+                continue
+            if len(values) != len(columns):
                 raise ValueError(
-                    f"{path}:{line_number}: expected at least "
-                    f"{len(SKPROJECT_REVIEW_COLUMNS)} tab-separated fields, found {len(values)}"
+                    f"{path}:{line_number}: expected at least {len(columns)} "
+                    f"tab-separated fields, found {len(values)}"
                 )
-            rows.append(dict(zip(SKPROJECT_REVIEW_COLUMNS, values)))
+            rows.append(dict(zip(columns, values)))
     return rows
 
 
@@ -341,7 +356,11 @@ def main() -> int:
     warnings: list[str] = []
     if args.allow_missing_audits:
         redmcsb_rows = read_optional_tsv(REDMCSB_AUDIT, warnings)
-        skproject_rows = read_optional_tsv(SKPROJECT_AUDIT, warnings)
+        if SKPROJECT_AUDIT.exists():
+            skproject_rows = read_skproject_named_audit(SKPROJECT_AUDIT)
+        else:
+            warnings.append(f"missing audit TSV: {SKPROJECT_AUDIT}")
+            skproject_rows = []
         skproject_source_rows = read_optional_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY, warnings)
         if SKPROJECT_ACTIVE_SOURCE_REVIEW.exists():
             skproject_source_reviews = read_skproject_source_reviews(
@@ -351,7 +370,7 @@ def main() -> int:
             skproject_source_reviews = []
     else:
         redmcsb_rows = read_tsv(REDMCSB_AUDIT)
-        skproject_rows = read_tsv(SKPROJECT_AUDIT)
+        skproject_rows = read_skproject_named_audit(SKPROJECT_AUDIT)
         skproject_source_rows = read_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY)
         skproject_source_reviews = read_skproject_source_reviews(
             SKPROJECT_ACTIVE_SOURCE_REVIEW)

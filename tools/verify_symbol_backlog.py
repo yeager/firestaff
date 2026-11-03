@@ -27,6 +27,8 @@ def read_skproject_reviews(path: Path) -> list[dict[str, str]]:
         rows: list[dict[str, str]] = []
         for line_number, line in enumerate(handle, 1):
             values = line.rstrip("\r\n").split("\t", len(SKPROJECT_REVIEW_COLUMNS) - 1)
+            if tuple(values) == SKPROJECT_REVIEW_COLUMNS:
+                continue
             if len(values) != len(SKPROJECT_REVIEW_COLUMNS):
                 raise AssertionError(
                     f"{path}:{line_number}: expected at least "

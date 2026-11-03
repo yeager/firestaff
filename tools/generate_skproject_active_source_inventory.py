@@ -25,6 +25,27 @@ SOURCE_SPECS = (
     ("SKWINDOS", "SKWINDOS", False),
 )
 LOCKED_SOURCE_COMMIT = "2c59a2c5a7978923ff5c822c15c3479e4d448493"
+LEGACY_AUDIT_COLUMNS = (
+    "symbol", "family", "source_file", "line", "firestaff_mapping", "status",
+    "notes",
+)
+
+
+def read_legacy_audit(path: Path) -> list[dict[str, str]]:
+    """Read the headerless named-symbol ledger, preserving tabs in notes."""
+    rows: list[dict[str, str]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, 1):
+            values = line.rstrip("\r\n").split("\t", len(LEGACY_AUDIT_COLUMNS) - 1)
+            if tuple(values) == LEGACY_AUDIT_COLUMNS:
+                continue
+            if len(values) != len(LEGACY_AUDIT_COLUMNS):
+                raise ValueError(
+                    f"{path}:{line_number}: expected at least "
+                    f"{len(LEGACY_AUDIT_COLUMNS)} tab-separated fields, found {len(values)}"
+                )
+            rows.append(dict(zip(LEGACY_AUDIT_COLUMNS, values)))
+    return rows
 
 # BSD ctags omits this qualified v4 definition even though it discovers
 # adjacent SkWinCore methods in the same file. Keep the explicit source row so
@@ -55,8 +76,7 @@ def main() -> int:
     if revision != LOCKED_SOURCE_COMMIT:
         raise SystemExit(
             f"expected skproject {LOCKED_SOURCE_COMMIT}, got {revision}")
-    legacy_rows = list(csv.DictReader(
-        LEGACY_AUDIT.open(newline="", encoding="utf-8"), delimiter="\t"))
+    legacy_rows = read_legacy_audit(LEGACY_AUDIT)
     legacy_counts = Counter(row["symbol"] for row in legacy_rows)
     previous_rows = []
     if args.output.exists():
