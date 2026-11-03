@@ -161,10 +161,14 @@ def verify_firestaff() -> list[str]:
             "m11_draw_item_sprite_material")
     _vproj_start, _vproj_end, vproj_body = find_function(
         text, "m11_draw_viewport_projectile_sprite")
-    if "m11_draw_projectile_sprite(" not in vproj_body:
+    if not all(marker in vproj_body for marker in (
+        "m11_draw_dm1_media009_object(",
+        "m11_draw_thrown_object_projectile_sprite(",
+        "m11_draw_projectile_sprite_ex(",
+    )):
         raise AssertionError(
-            "Firestaff m11_draw_viewport_projectile_sprite no longer delegates "
-            "to m11_draw_projectile_sprite")
+            "Firestaff m11_draw_viewport_projectile_sprite no longer routes "
+            "its MEDIA009, thrown-object, and ordinary projectile branches")
 
     return [
         f"Firestaff m11_draw_wall_face starts at {FIRESTAFF_SRC}:{line_no(text, wall_start)}",

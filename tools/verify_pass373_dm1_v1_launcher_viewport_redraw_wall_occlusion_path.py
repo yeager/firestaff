@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pass373 verifier: launcher route reaches live viewport redraw and source-locked wall/occlusion renderer path."""
 from __future__ import annotations
-import hashlib, json, os, pathlib, re, shutil, struct, subprocess, sys, tempfile, time, zlib
+import hashlib, json, os, pathlib, re, shutil, struct, subprocess, sys, time, zlib
 from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 from datetime import datetime, timezone
 from typing import Any
@@ -49,7 +49,7 @@ OTHER_SOURCE_LOCKS = [
     {"file":"DRAWVIEW.C","lines":"709-722","function":"F0097_DUNGEONVIEW_DrawViewport","claim":"source draw pass flips the viewport redraw request and waits for vblank","markers":["void F0097_DUNGEONVIEW_DrawViewport(","G0324_B_DrawViewportRequested = C1_TRUE;","M526_WaitVerticalBlank();"]},
 ]
 PRODUCT_MARKERS = [
-    {"file":"src/engine/main_loop_m11.c","claim":"script token route feeds the active game view and redraw result calls M11_GameView_Draw","markers":["m11_next_script_input(&scriptCursor)","M11_GameView_HandleInput(&gameView, input)","if (result == M11_GAME_INPUT_REDRAW)","M11_GameView_Draw(&gameView"]},
+    {"file":"src/engine/main_loop_m11.c","claim":"script token route feeds the active game view and redraw result calls M11_GameView_Draw","markers":["m11_next_script_input(&scriptCursor,","M11_GameView_HandleInput(&gameView, input)","if (result == M11_GAME_INPUT_REDRAW)","M11_GameView_Draw(&gameView"]},
     {"file":"src/engine/main_loop_m11.c","claim":"runtime probe records the same live movement pipeline result used by the redraw route","markers":["FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON","lastDm1V1MovementPipelineResult.core.queue.dequeued","lastDm1V1MovementPipelineResult.viewportDirty"]},
     {"file":"src/engine/m11_game_view.c","claim":"input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport","markers":[
         # 2026-07-20 round 16 re-anchor (same-drift-family): the input->command
@@ -126,8 +126,11 @@ def main()->int:
     # token updates as PRODUCT_MARKERS above.
     order=["m11_draw_viewport_background(state", "visibility.nearest_blocking_center_depth_index", "m11_dm1_f0128_dispatch_wall_material_square(", "m11_dm1_f0128_dispatch_door_material_square(", "m11_dm1_f0128_dispatch_foreground_square(", "if (state->showDebugHUD)"]
     checks.append({"kind":"firestaff_viewport_order_lock","file":"src/engine/m11_game_view.c","function":"m11_draw_viewport","ok":bool(body) and assert_order(body,order),"orderedMarkers":order})
+    source_env=os.environ.copy()
+    source_env["FIRESTAFF_REDMCSB_SOURCE"]=str(REDMCSB)
+    source_env["FIRESTAFF_REDMCSB_DUNVIEW"]=str(REDMCSB/"DUNVIEW.C")
     for cmd in PRIOR_GATES:
-        r=run(cmd, timeout=240); checks.append({"kind":"prior_wall_occlusion_gate","cmd":cmd,"ok":r["returncode"]==0,"result":r})
+        r=run(cmd, env=source_env, timeout=240); checks.append({"kind":"prior_wall_occlusion_gate","cmd":cmd,"ok":r["returncode"]==0,"result":r})
     executable=BUILD_DIR/"firestaff"
     if not executable.is_file():
         # A focused out-of-tree CTest build may intentionally contain only its
@@ -140,7 +143,13 @@ def main()->int:
     expected_media={"TITLE":"adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745","DATA/GRAPHICS.DAT":"2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e","DATA/DUNGEON.DAT":"d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"}
     media={name:hashlib.sha256(read_member_in_memory(DM1_ARCHIVE,name)).hexdigest() for name in expected_media}
     checks.append({"kind":"authentic_pc34_zip_in_memory","ok":media==expected_media,"members":media,"readMode":"in-memory/no-extraction"})
-    home_dir=pathlib.Path(tempfile.mkdtemp(prefix="firestaff-pass373-",dir="/dev/shm"))
+    # CTest supplies a task-specific home under the build tree. Honor it so
+    # this authentic-media verifier also runs on macOS, which has no /dev/shm,
+    # and does not write test scratch outside the configured build directory.
+    configured_home=os.environ.get("FIRESTAFF_PASS373_HOME_DIR")
+    home_dir=pathlib.Path(configured_home) if configured_home else OUT_DIR/"home"
+    shutil.rmtree(home_dir,ignore_errors=True)
+    home_dir.mkdir(parents=True,exist_ok=True)
     probe_json=OUT_DIR/"launcher_route_viewport_redraw_probe.json"
     env=os.environ.copy(); env.update({"HOME":str(home_dir),"SDL_VIDEODRIVER":"dummy","FIRESTAFF_AUTOTEST":"1","FIRESTAFF_FAIL_IF_NO_LAUNCH":"1","FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON":str(probe_json)})
     # The previous timeout=45s shell wrapper could SIGKILL firestaff mid-cleanup
@@ -148,8 +157,8 @@ def main()->int:
     # the shell timeout to 60s so --duration 9000 completes naturally and the
     # probe JSON written in m11_write_autotest_runtime_probe captures the final
     # post-script game state.
-    cmd=["timeout","30s",str(executable),"--game","dm1","--platform","pc","--presentation-mode","v1","--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
-    try: r=run(cmd, env=env, timeout=40)
+    cmd=[str(executable),"--game","dm1","--platform","pc","--presentation-mode","v1","--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
+    try: r=run(cmd, env=env, timeout=30)
     finally: shutil.rmtree(home_dir,ignore_errors=True)
     checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
     runtime={}; live_ok=False

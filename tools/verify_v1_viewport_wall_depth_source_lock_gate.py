@@ -224,7 +224,7 @@ def main() -> int:
         fire, "m11_dm1_f0128_execute_source_step")
     require_in_order(view, [
         ("sample viewport cells", "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])"),
-        ("derive max visible", "maxVisibleForward = visibility.max_visible_forward;"),
+        ("derive visibility receipt", "visibility = m11_dm1_lane_visibility(cells);"),
         ("build source schedule", "m11_dm1_f0128_build_live_view_plan"),
         ("dispatch source schedule", "m11_dm1_f0128_dispatch_live_view_plan"),
         ("fail closed", "if (!dm1F0128PlanDispatched)"),

@@ -5,6 +5,7 @@
 - `DM2 moneybox`: change the DOS PC-English panel to display source-derived coin stacks and route supported deposit and withdrawal actions through the selected moneybox. Other editions and complete transaction parity remain open.
 - `DM2 lighting recalculation`: update shared dynamic-light state on supported item and inventory transitions.
 - `DM2 FM Towns HUD`: restore all six authentic movement controls and draw the live Health, Stamina and Mana bars from Towns RAW4 rectangles, champion state and the original interface palette.
+- `DM2 PC Jewel Case startup`: fix the German DOS Jewel Case edition's launcher route so starting a new game reaches the first dungeon frame through the shared, source-matched PC menu path.
 
 ## Developer changes
 
@@ -12,6 +13,7 @@
 - `DM2 scroll-text rendering helper`: calculate source-style line spacing and centering, render explicit empty lines, and select the MBCS layout path. Production game-view bindings remain incomplete.
 - `Startup scan diagnostics`: update detailed debug logging to include the translated intro scan label, and regenerate startup-menu catalogs after source references shift.
 - `DM2 item survey helpers`: add source-derived scroll, class-image, weight, container/moneybox and stat-bar branches, and resolve container slots from authentic records instead of guessed icons. Production platform callbacks and complete game-view bindings remain open.
+- `DM1 viewport verification`: make the authentic ReDMCSB redraw/occlusion verifier use its configured source checkout and build-tree scratch directory across macOS and Linux.
 - `DM2 render diagnostics`: report HUD plan failure stage and per-region framebuffer coverage under `--debug`; authentic Towns output verifies the accepted viewport and 11-command HUD plan.
 - `DM1/DM2 regression coverage`: add authentic-media checks for Apple IIGS startup versions and DM2 record pools, held items, carried weight, save/load, moneybox paths and FM Towns behavior.
 - `Nexus VDP1 capture tools`: change source-bound frame replay to validate unique DGN material joins for authentic Saturn captures, and keep retail frame evidence external to the repository.

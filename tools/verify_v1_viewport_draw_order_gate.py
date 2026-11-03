@@ -7,13 +7,18 @@ wall/item/creature/projectile work cannot silently reorder layers.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
-REDMCSB_DUNVIEW = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+REDMCSB_SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+))
+REDMCSB_DUNVIEW = REDMCSB_SOURCE / "DUNVIEW.C"
 
 
 def line_no(text: str, offset: int) -> int:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -11,7 +12,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+))
 MANIFEST = ROOT / "parity-evidence/verification/pass361_dm1_v1_viewport_occlusion_redraw_order_gate/manifest.json"
 EVIDENCE = ROOT / "parity-evidence/pass361_dm1_v1_viewport_occlusion_redraw_order_gate.md"
 EXPECTED_STATUS = "PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE"
