@@ -23421,10 +23421,11 @@ int dm2_v1_skproject_proceed_xact_82(
                     0x3eu, front_possession,
                     (uint16_t)((direction + 2u) & 3u), ctx->user);
             if (can_handle == -2) can_handle = -1;
-            if (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5)
-                transfer_result = dm2_v1_skproject_14cd_2886(
-                    (uint16_t)creature, 0x10u,
-                    (uint16_t)((direction + 2u) & 3u), 0u, 1u,
+            if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
+                transfer_result = dm2_v1_skproject_14cd_2886_mode(
+                    (uint16_t)creature,
+                    (uint8_t)((direction + 2u) & 3u),
+                    0u, 0x10u, 1u, 1u,
                     ctx->xact82_oversee_record_fn, ctx->user,
                     &transfer_receipt);
             else
