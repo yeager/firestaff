@@ -13,13 +13,25 @@ This file inventories all known local reference sources and artifacts available 
   and Apple IIGS runtime lanes. Edition-specific media/version identities and
   evidence are tracked separately in `docs/PLATFORM_STATUS.md`.
 - **CSB** — Atari ST 2.0/2.1, Amiga 3.1/3.5, and FM Towns English/Japanese.
-- **DM2** — PC English, French, and German/English JewelCase editions.
+- **DM2** — DOS English/French, Amiga, FM Towns, and Macintosh large-retail
+  runtime routes, as listed in `docs/PLATFORM_STATUS.md`. Macintosh localized
+  editions are preservation-only, and PC-98 media are unsupported; neither
+  inherits the supported runtime claims.
 
-This edition list follows the current [project guide](../PROJECT_GUIDE.md).
+This edition list follows the current [project guide](../PROJECT_GUIDE.md) and
+`docs/PLATFORM_STATUS.md`.
 Parity review must cover each supported edition and platform path, not only the
 edition used for a focused source or media check. The current DM1 runtime lane
-list includes bounded original-media routes beyond PC 3.4; those routes do not
-inherit PC source/runtime parity claims.
+list includes bounded original-media routes beyond PC 3.4; DM2 likewise has
+bounded routes beyond DOS. Those routes do not inherit PC source/runtime
+parity claims.
+
+The SKProject trees (`SKWINDOS`, `SKWINSPX` v4/v5, `SKWIN`, `SKULLWIN`) are
+source-code variants, not Firestaff platform IDs. Do not infer a source variant
+from a `DM2_Platform` value. Compare each source definition independently and
+map its behavior to a supported Firestaff platform only where code, media, or
+other direct evidence establishes the relationship. Keep unsupported mappings
+partial rather than assigning a source branch by assumption.
 
 V2 (modern graphics/resolution) and V3 (modern 3D) are separate product tracks.
 Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementation.
