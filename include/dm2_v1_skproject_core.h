@@ -5628,8 +5628,14 @@ int dm2_v1_skproject_is_creature_movable_there(
 
 /* Variant-exact SKProject form. DOS/SPX v5 reject weights >0xfd while SPX
    v4/SKULLWIN reject only 0xff. Occupancy and allowed-level decisions are
-   supplied by source-shaped callbacks; a NULL callback means the source call
-   site did not request that check only where source does so conditionally. */
+   supplied by source-shaped callbacks. creature_at_fn returns
+   DM2_V1_RECORD_HANDLE_NULL (-1) for an empty tile and otherwise the
+   zero-extended 16-bit creature handle. A non-NULL callback validates the
+   origin occupant. A non-NULL out_creature_handle requests the source's
+   optional destination/teleporter-exit occupancy checks and requires
+   creature_at_fn; with a NULL out pointer those optional checks are skipped.
+   allowed_level_fn is required for any teleporter branch that reaches the
+   source level check; a NULL callback blocks that branch. */
 typedef enum {
     DM2_V1_MOVABLE_THERE_SKULLWIN = 0,
     DM2_V1_MOVABLE_THERE_SPX_V4 = 1,
