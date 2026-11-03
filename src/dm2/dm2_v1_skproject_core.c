@@ -14394,7 +14394,7 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
     receipt.creature_handle = creature_handle;
     receipt.creature_weight = creature_weight;
     receipt.source_variant = (int)variant;
-    has_optional_checks = creature_at_fn != NULL;
+    has_optional_checks = out_creature_handle != NULL;
 
     if (variant < DM2_V1_MOVABLE_THERE_SKULLWIN ||
         variant > DM2_V1_MOVABLE_THERE_SPX_V5) {
@@ -14415,6 +14415,10 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
     if (!tile_values || width <= 0 || height <= 0 || !pools) {
         receipt.blocked_missing_tile = !tile_values || width <= 0 || height <= 0;
         receipt.blocked_missing_record_pool = !pools;
+        goto blocked;
+    }
+    if (has_optional_checks && !creature_at_fn) {
+        receipt.blocked_missing_creature_at = 1;
         goto blocked;
     }
     if (creature_at_fn &&
@@ -14512,6 +14516,43 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
 blocked:
     if (out_receipt) *out_receipt = receipt;
     return 0;
+}
+
+int dm2_v1_skproject_is_creature_movable_there_from_record(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    const uint8_t *tile_values, int16_t width, int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools, uint8_t current_map,
+    const uint8_t *dest_tile_values, int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectMovableThereFromRecordReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMovableThereFromRecordReceipt receipt;
+    uint16_t weight = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_skproject_resolve_creature_weight(
+            creature_handle, pools, ai_spec_fn, user, &weight,
+            &receipt.weight)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_is_creature_movable_there_variant(
+            x, y, direction, creature_handle, weight, tile_values,
+            width, height, pools, current_map, dest_tile_values,
+            dest_width, dest_height, variant, creature_at_fn,
+            allowed_level_fn, user, out_creature_handle,
+            &receipt.movement)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46. */

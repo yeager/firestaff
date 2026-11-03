@@ -5584,6 +5584,7 @@ typedef struct {
     int blocked_target_occupied;
     int blocked_missing_tile;
     int blocked_missing_record_pool;
+    int blocked_missing_creature_at;
     int blocked_missing_allowed_level;
     int blocked_disallowed_level;
     int source_variant;
@@ -5639,6 +5640,27 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
     DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
     void *user, uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    DM2_V1_SkprojectResolveCreatureWeightReceipt weight;
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt movement;
+} DM2_V1_SkprojectMovableThereFromRecordReceipt;
+
+/* Compose the source record->AI-spec weight lookup with the edition-exact
+   movement predicate so callers cannot accidentally substitute a guessed or
+   stale creature weight. */
+int dm2_v1_skproject_is_creature_movable_there_from_record(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    const uint8_t *tile_values, int16_t width, int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools, uint8_t current_map,
+    const uint8_t *dest_tile_values, int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectMovableThereFromRecordReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator
    record walk for side-indexed wall gfx. The simple entry below delegates the
