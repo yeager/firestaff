@@ -6048,6 +6048,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     uint8_t dest_tiles[64];
     uint8_t out_bytes[8];
     uint8_t pos;
+    uint16_t movable_creature_out = 0u;
     uint16_t word;
     uint16_t creature_timer_word;
     uint16_t word32;
@@ -6182,6 +6183,25 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               dest_tiles, 3, 3, NULL, &qmov) == 1 &&
               qmov.valid && qmov.movable,
           "DM2_IS_CREATURE_MOVABLE_THERE admits open forward tile");
+    tile_values[4] = (uint8_t)(5u << 5);
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, &movable_creature_out, &qmov) == 1 &&
+              qmov.valid && qmov.movable && movable_creature_out == 0x1234u,
+          "DM2_IS_CREATURE_MOVABLE_THERE legacy wrapper preserves origin teleporter exit moves");
+    tile_values[4] = 0x20u;
+    tile_values[1] = (uint8_t)(5u << 5);
+    CHECK(!dm2_v1_skproject_is_creature_movable_there_variant(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, DM2_V1_MOVABLE_THERE_DOS, NULL, NULL,
+              NULL, NULL, &qmov) && qmov.blocked_missing_allowed_level,
+          "DM2_IS_CREATURE_MOVABLE_THERE variant requires the source level callback");
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, &movable_creature_out, &qmov) == 1 &&
+              qmov.valid && qmov.movable && movable_creature_out == 0x1234u,
+          "DM2_IS_CREATURE_MOVABLE_THERE legacy wrapper preserves forward teleporter moves");
+    tile_values[1] = 0x20u;
     pool3_bytes[0] = 0xfeu;
     pool3_bytes[1] = 0xffu; /* no linked actuator for this teleporter tile */
     tile_values[1] = (uint8_t)(5u << 5);

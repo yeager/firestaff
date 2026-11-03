@@ -14370,6 +14370,15 @@ int dm2_v1_skproject_get_teleporter_detail(
 }
 
 /* SKULLWIN/c_querydb.cpp:3173 DM2_IS_CREATURE_MOVABLE_THERE. */
+static int32_t dm2_v1_skproject_legacy_skip_level_gate(
+    uint16_t creature_handle, int16_t destination_level, void *user)
+{
+    (void)creature_handle;
+    (void)destination_level;
+    (void)user;
+    return 1;
+}
+
 int dm2_v1_skproject_is_creature_movable_there(
     int16_t x,
     int16_t y,
@@ -14387,11 +14396,16 @@ int dm2_v1_skproject_is_creature_movable_there(
     uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
 {
-    return dm2_v1_skproject_is_creature_movable_there_variant(
+    int movable;
+
+    if (out_creature_handle)
+        *out_creature_handle = creature_handle;
+    movable = dm2_v1_skproject_is_creature_movable_there_variant(
         x, y, direction, creature_handle, creature_weight, tile_values,
         width, height, pools, current_map, dest_tile_values, dest_width,
-        dest_height, DM2_V1_MOVABLE_THERE_DOS, NULL, NULL, NULL,
-        out_creature_handle, out_receipt);
+        dest_height, DM2_V1_MOVABLE_THERE_DOS, NULL,
+        dm2_v1_skproject_legacy_skip_level_gate, NULL, NULL, out_receipt);
+    return movable;
 }
 
 int dm2_v1_skproject_is_creature_movable_there_variant(

@@ -5609,6 +5609,9 @@ typedef struct {
     uint8_t movable;
 } DM2_V1_SkprojectIsCreatureMovableThereReceipt;
 
+/* Compatibility wrapper for the original DOS-threshold helper: without live
+   creature-at/level table owners it skips optional occupancy and level gates.
+   Use the variant API below for source-exact callback-backed checks. */
 int dm2_v1_skproject_is_creature_movable_there(
     int16_t x,
     int16_t y,
