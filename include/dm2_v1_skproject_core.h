@@ -6778,6 +6778,12 @@ typedef struct {
     DM2_V1_Skproject19f00559State *state0559;
     DM2_V1_SkprojectOverseeRecordFn xact82_oversee_record_fn;
     int16_t creature_w10; /* caller-owned s350.creatures->w_10 shadow */
+    int16_t creature_w0c; /* caller-owned s350.creatures->w_0c shadow */
+    const uint16_t *coin_values; /* ddat.v1e03ac, ascending denominations */
+    uint16_t coin_type_count; /* ddat.v1e03fe */
+    const struct DM2_V1_WalletCallbacks *wallet_callbacks;
+    void *wallet_ctx; /* defaults to user when null */
+    int32_t (*append_coin_to_possession_fn)(uint16_t coin, void *user);
 } DM2_V1_SkprojectXactContext;
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
@@ -8618,6 +8624,10 @@ typedef struct {
     int16_t front_y;
     int16_t wallet_handle;
     int used_sell_path;
+    int money_path_checked;
+    int16_t creature_price_after;
+    uint16_t generated_coin_count;
+    int8_t xact64_result;
     int item_path_checked;
     int16_t item_can_handle_result;
     int16_t item_transfer_result;
