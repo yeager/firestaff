@@ -17793,6 +17793,21 @@ int16_t dm2_v1_skproject_14cd_2886(
     void *user,
     DM2_V1_Skproject14cd2886Receipt *out_receipt)
 {
+    return dm2_v1_skproject_14cd_2886_mode(
+        record, 0u, w1, w2, w3, w4, oversee_fn, user, out_receipt);
+}
+
+int16_t dm2_v1_skproject_14cd_2886_mode(
+    uint16_t record,
+    uint8_t mode,
+    uint16_t w1,
+    uint16_t w2,
+    uint16_t w3,
+    uint16_t w4,
+    DM2_V1_SkprojectOverseeRecordFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject14cd2886Receipt *out_receipt)
+{
     DM2_V1_Skproject14cd2886Receipt receipt;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -17810,7 +17825,7 @@ int16_t dm2_v1_skproject_14cd_2886(
     receipt.state_words[2] = (int16_t)w2;
     receipt.state_words[3] = (int16_t)w3;
     receipt.state_words[4] = (int16_t)w4;
-    oversee_fn(record, 0u, receipt.state_words, user);
+    oversee_fn(record, mode, receipt.state_words, user);
     receipt.result = receipt.state_words[0];
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
@@ -22916,6 +22931,29 @@ int dm2_v1_skproject_exchange_moneybox(
 }
 
 /* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell. */
+static int dm2_v1_skproject_xact82_proceed_xact64(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact64Receipt *receipt,
+    int32_t *out_result)
+{
+    if (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5) {
+        *out_result = dm2_v1_skproject_proceed_xact_64(ctx, receipt);
+        return receipt->valid != 0;
+    }
+    if (!ctx->xact82_proceed_xact64_fn) return 0;
+    {
+        int command_issued = 0;
+        int32_t result = ctx->xact82_proceed_xact64_fn(
+            ctx->user, &command_issued);
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->valid = 1;
+        receipt->result = (int8_t)result;
+        receipt->command_issued = command_issued != 0;
+        *out_result = result;
+    }
+    return 1;
+}
+
 static int dm2_v1_skproject_xact82_sell(
     DM2_V1_SkprojectXactContext *ctx,
     DM2_V1_SkprojectXact82Receipt *receipt)
@@ -22930,6 +22968,7 @@ static int dm2_v1_skproject_xact82_sell(
     uint16_t item;
     uint32_t steps = 0u;
     int16_t price;
+    int32_t xact64_result;
 
     if (ctx->v1e0572 == 1)
         price = ctx->creature_w10;
@@ -22938,13 +22977,19 @@ static int dm2_v1_skproject_xact82_sell(
     else
         price = ctx->creature_w0c;
 
-    if (!ctx->next_fn || !wallet || !wallet->is_container_moneybox ||
+    if ((ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         ctx->xact82_variant != DM2_V1_XACT82_SPX_V4 &&
+         ctx->xact82_variant != DM2_V1_XACT82_DOS) ||
+        !ctx->next_fn || !wallet || !wallet->is_container_moneybox ||
         !wallet->coin_type_table ||
         wallet->coin_type_table_size < (int)ctx->coin_type_count ||
         !wallet->alloc_new_dbitem ||
         !ctx->coin_values || ctx->coin_type_count == 0u ||
-        ctx->coin_type_count > 10u || !ctx->can_handle_item_in_fn ||
-        !ctx->cmd2165_fn) {
+        ctx->coin_type_count > 10u ||
+        (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         (!ctx->can_handle_item_in_fn || !ctx->cmd2165_fn)) ||
+        (ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         !ctx->xact82_proceed_xact64_fn)) {
         receipt->blocked_missing_context = 1;
         return 0;
     }
@@ -22988,7 +23033,8 @@ static int dm2_v1_skproject_xact82_sell(
             exchange_request.coin_values = ctx->coin_values;
             exchange_request.coin_type_count = ctx->coin_type_count;
             exchange_request.only_test = 0;
-            exchange_request.dos_add_coin_non_currency_semantics = 0;
+            exchange_request.dos_add_coin_non_currency_semantics =
+                ctx->xact82_variant == DM2_V1_XACT82_DOS;
             exchange_request.wallet_callbacks = wallet;
             exchange_request.wallet_ctx = wallet_ctx;
             if (!dm2_v1_skproject_exchange_moneybox(
@@ -23003,11 +23049,11 @@ static int dm2_v1_skproject_xact82_sell(
     ctx->v1e0572 = 0x47;
     receipt->used_sell_path = 1;
     receipt->money_path_checked = 1;
+    receipt->source_variant = (uint8_t)ctx->xact82_variant;
     receipt->wallet_handle = (int16_t)wallet_handle;
     if (price <= 0) {
-        int xact64_result = dm2_v1_skproject_proceed_xact_64(
-            ctx, &xact64_receipt);
-        if (!xact64_receipt.valid) {
+        if (!dm2_v1_skproject_xact82_proceed_xact64(
+                ctx, &xact64_receipt, &xact64_result)) {
             receipt->blocked_missing_context = 1;
             return 0;
         }
@@ -23056,6 +23102,9 @@ static int dm2_v1_skproject_xact82_sell(
             if (coin == DM2_V1_OBJECT_NULL) break;
             if (wallet_handle == DM2_V1_OBJECT_NULL)
                 (void)ctx->append_coin_to_possession_fn(coin, ctx->user);
+            else if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
+                (void)dm2_v1_add_coin_to_wallet(
+                    wallet_handle, coin, wallet, wallet_ctx);
             else
                 (void)dm2_v1_add_coin_to_wallet_spx(
                     wallet_handle, coin, wallet, wallet_ctx);
@@ -23063,12 +23112,12 @@ static int dm2_v1_skproject_xact82_sell(
         }
     }
 
-    receipt->xact64_result = (int8_t)dm2_v1_skproject_proceed_xact_64(
-        ctx, &xact64_receipt);
-    if (!xact64_receipt.valid) {
+    if (!dm2_v1_skproject_xact82_proceed_xact64(
+            ctx, &xact64_receipt, &xact64_result)) {
         receipt->blocked_missing_context = 1;
         return 0;
     }
+    receipt->xact64_result = (int8_t)xact64_result;
     receipt->result = -4;
     return 1;
 }
@@ -23084,7 +23133,10 @@ int dm2_v1_skproject_proceed_xact_82(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
 
-    if (!ctx || !ctx->creature_at_fn) {
+    if (!ctx || !ctx->creature_at_fn ||
+        (ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         ctx->xact82_variant != DM2_V1_XACT82_SPX_V4 &&
+         ctx->xact82_variant != DM2_V1_XACT82_DOS)) {
         receipt.blocked_missing_context = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -23106,6 +23158,7 @@ int dm2_v1_skproject_proceed_xact_82(
         receipt.has_creature = 1;
         receipt.creature_handle = (int16_t)creature;
         receipt.out_b1a = 29;
+        receipt.source_variant = (uint8_t)ctx->xact82_variant;
         ctx->creature_b1a = 29;
 
         if (ctx->v1e0572 == 0) {
@@ -23114,8 +23167,11 @@ int dm2_v1_skproject_proceed_xact_82(
             DM2_V1_Skproject14cd2886Receipt transfer_receipt;
             int16_t transfer_result;
 
-            if (!ctx->record_fn || !ctx->can_handle_item_in_fn ||
-                !ctx->xact82_oversee_record_fn) {
+            if (!ctx->record_fn || !ctx->xact82_oversee_record_fn ||
+                (ctx->xact82_variant == DM2_V1_XACT82_DOS &&
+                 !ctx->xact82_dos_can_handle_item_fn) ||
+                (ctx->xact82_variant != DM2_V1_XACT82_DOS &&
+                 !ctx->can_handle_item_in_fn)) {
                 receipt.blocked_missing_context = 1;
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
@@ -23132,15 +23188,28 @@ int dm2_v1_skproject_proceed_xact_82(
              * runs the source 14cd_2886 transfer against that creature. */
             front_possession = (uint16_t)(front_record[2] |
                                            ((uint16_t)front_record[3] << 8));
-            can_handle = ctx->can_handle_item_in_fn(
-                0x3eu, front_possession, (uint16_t)((direction + 2u) & 3u),
-                ctx->user);
+            if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
+                can_handle = ctx->xact82_dos_can_handle_item_fn(
+                    0x3eu, (uint16_t)((direction + 2u) & 3u),
+                    front_possession, ctx->user);
+            else
+                can_handle = ctx->can_handle_item_in_fn(
+                    0x3eu, front_possession,
+                    (uint16_t)((direction + 2u) & 3u), ctx->user);
             if (can_handle == -2) can_handle = -1;
-            transfer_result = dm2_v1_skproject_14cd_2886(
-                (uint16_t)creature, 0x10u,
-                (uint16_t)((direction + 2u) & 3u), 0u, 1u,
-                ctx->xact82_oversee_record_fn, ctx->user,
-                &transfer_receipt);
+            if (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5)
+                transfer_result = dm2_v1_skproject_14cd_2886(
+                    (uint16_t)creature, 0x10u,
+                    (uint16_t)((direction + 2u) & 3u), 0u, 1u,
+                    ctx->xact82_oversee_record_fn, ctx->user,
+                    &transfer_receipt);
+            else
+                transfer_result = dm2_v1_skproject_14cd_2886_mode(
+                    (uint16_t)creature,
+                    (uint8_t)((direction + 2u) & 3u),
+                    0x10u, 0u, 1u, 1u,
+                    ctx->xact82_oversee_record_fn, ctx->user,
+                    &transfer_receipt);
             if (!transfer_receipt.valid) {
                 receipt.blocked_missing_context = 1;
                 if (out_receipt) *out_receipt = receipt;
@@ -23149,8 +23218,15 @@ int dm2_v1_skproject_proceed_xact_82(
             receipt.item_path_checked = 1;
             receipt.item_can_handle_result = (int16_t)can_handle;
             receipt.item_transfer_result = transfer_result;
-            if ((transfer_result != 0 && transfer_result != -1) ||
-                can_handle != -1) {
+            if ((ctx->xact82_variant == DM2_V1_XACT82_DOS &&
+                 !((transfer_result == 0 || transfer_result == -1) &&
+                   can_handle == -1)) ||
+                (ctx->xact82_variant == DM2_V1_XACT82_SPX_V4 &&
+                 (transfer_result == -1 || can_handle == -1)) ||
+                (ctx->xact82_variant ==
+                     DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+                 ((transfer_result != 0 && transfer_result != -1) ||
+                  can_handle != -1))) {
                 ctx->creature_w10 = transfer_result > 0
                     ? transfer_result : 0;
                 receipt.creature_w10_after = ctx->creature_w10;

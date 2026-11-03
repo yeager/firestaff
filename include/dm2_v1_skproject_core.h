@@ -6736,6 +6736,12 @@ int dm2_v1_skproject_19f0_0d10(
 
 /* SKULLWIN/c_ai.cpp cycle-16 batch — shared caller-owned creature AI state
    derived from the s350/ddat runtime words. */
+typedef enum {
+    DM2_V1_XACT82_SKULLWIN_SPX_V5 = 0,
+    DM2_V1_XACT82_SPX_V4 = 1,
+    DM2_V1_XACT82_DOS = 2
+} DM2_V1_SkprojectXact82Variant;
+
 typedef struct DM2_V1_SkprojectXactContext {
     int16_t creature_x;      /* s350.v1e0562.getxA */
     int16_t creature_y;      /* s350.v1e0562.getyA */
@@ -6784,6 +6790,13 @@ typedef struct DM2_V1_SkprojectXactContext {
     const struct DM2_V1_WalletCallbacks *wallet_callbacks;
     void *wallet_ctx; /* defaults to user when null */
     int32_t (*append_coin_to_possession_fn)(uint16_t coin, void *user);
+    DM2_V1_SkprojectXact82Variant xact82_variant;
+    /* DOS dm2byh.cpp:2418 calls 1c9a_0732(item_type, slot, possession). */
+    int32_t (*xact82_dos_can_handle_item_fn)(
+        uint16_t item_type, uint16_t slot, uint16_t possession, void *user);
+    /* DOS/SPX v4 have edition-owned XACT64 state and command bindings. */
+    int32_t (*xact82_proceed_xact64_fn)(
+        void *user, int *out_command_issued);
 } DM2_V1_SkprojectXactContext;
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
@@ -6822,6 +6835,19 @@ typedef struct {
 
 int16_t dm2_v1_skproject_14cd_2886(
     uint16_t record,
+    uint16_t w1,
+    uint16_t w2,
+    uint16_t w3,
+    uint16_t w4,
+    DM2_V1_SkprojectOverseeRecordFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject14cd2886Receipt *out_receipt);
+
+/* DOS/SKWINSPX keep the OVERSEE_RECORD direction as its mode argument and
+   use different state-word ordering at XACT82 than the SKULLWIN wrapper. */
+int16_t dm2_v1_skproject_14cd_2886_mode(
+    uint16_t record,
+    uint8_t mode,
     uint16_t w1,
     uint16_t w2,
     uint16_t w3,
@@ -8633,6 +8659,7 @@ typedef struct {
     int16_t creature_price_after;
     uint16_t generated_coin_count;
     int8_t xact64_result;
+    uint8_t source_variant;
 } DM2_V1_SkprojectXact82Receipt;
 
 int dm2_v1_skproject_proceed_xact_82(
