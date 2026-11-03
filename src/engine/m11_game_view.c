@@ -2246,14 +2246,15 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
             }
             if (load_ok && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
-                /* DOS (English and French) and Amiga own their first
-                 * champion selection inside the GAME_LOAD transaction.
+                /* DOS (English, French, and JewelCase) and Amiga own their
+                 * first champion selection inside the GAME_LOAD transaction.
                  * Macintosh and FM Towns retain
                  * the source mirror with no party until its native viewport
                  * event selects a champion; committing either one here skips
                  * that authentic boundary. */
                 (profile->platform == DM2_PLATFORM_PC_EN ||
                  profile->platform == DM2_PLATFORM_PC_FR ||
+                 profile->platform == DM2_PLATFORM_PC_JEWEL ||
                  profile->platform == DM2_PLATFORM_AMIGA_EN) &&
                 m11_dm2_clear_new_game_party_state(state)) {
                 /* STARTEND's first authenticated champion selection is part
@@ -4097,10 +4098,14 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
         return M11_GAME_INPUT_IGNORED;
     }
     if (((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
-            DM2_PLATFORM_PC_EN) {
-        /* The PC-DOS title's Enter action is source event 0xd7.  Its selected
-         * row state is not a substitute for the GDAT action, so dispatch the
-         * verified source rectangle directly. */
+              DM2_PLATFORM_PC_EN ||
+         ((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
+              DM2_PLATFORM_PC_JEWEL) {
+        /* The PC-DOS title's Enter action is source event 0xd7. The authentic
+         * JewelCase and PC English archives contain byte-identical SKULL.EXE,
+         * so the SKProject title-menu event table and GAME_LOAD path are
+         * shared. The selected row is not a substitute for the GDAT action;
+         * dispatch the verified source rectangle for both profiles. */
         memset(&pointer_layout, 0, sizeof(pointer_layout));
         if (!dm2_v1_boot_startup_menu_pointer_layout(
                 (DM2_V1_BootProfile *)state->dm2BootProfile,
