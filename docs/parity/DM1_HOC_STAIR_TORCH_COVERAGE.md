@@ -16,6 +16,12 @@ The final light assertion reads M11's F0337-backed light result. These tests
 cover ownership and interaction for Atari ST, Amiga 2.0, and FM Towns only;
 they make no pixel or wall-art assertions.
 
+On 2026-11-03 the configured Release CTest run passed all three platform
+tests against their installed original archives. The bounded M11 backward-
+stairs route completed without a hang, and the carried torch remained lit
+after the transition. This does not rule out a native-window/event-loop hang
+and does not establish HUD or viewport pixel parity.
+
 CTest reads the original archives from `FIRESTAFF_DM1_DATA_DIR`, supplied by
 `FIRESTAFF_DM1_WORKSPACE_DATA_DIR` at configure time. Missing archives are
 reported as skipped tests. Original game data is not copied into the source

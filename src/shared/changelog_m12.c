@@ -19,6 +19,7 @@ static const char* const g_changelogLines[] = {
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-11-03)",
     "  - DM1 creature-group updates reject malformed negative indices before changing state or consuming RNG.",
     "  - DM1 viewport redraw verification uses the configured ReDMCSB checkout and build-tree scratch path across macOS and Linux.",
+    "  - Authentic DM1 HoC torch and stair routes pass on Atari ST, Amiga 2.0 and FM Towns; native-window hang and pixel parity remain unverified.",
     "  - DM2 scroll text now has source-style line centering, blank-line rendering and MBCS layout helpers; production bindings remain incomplete.",
     "  - DM2 FM Towns HUD restores six authentic movement controls from the source RAW4 placement table; the HUD plan failure stage and framebuffer coverage are available under --debug.",
     "  - DM2 DOS Jewel Case now reaches the first dungeon frame through its source-matched startup menu route.",

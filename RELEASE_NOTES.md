@@ -16,6 +16,7 @@
 - `DM1 viewport verification`: make the authentic ReDMCSB redraw/occlusion verifier use its configured source checkout and build-tree scratch directory across macOS and Linux.
 - `DM2 render diagnostics`: report HUD plan failure stage and per-region framebuffer coverage under `--debug`; authentic Towns output verifies the accepted viewport and 11-command HUD plan.
 - `DM1/DM2 regression coverage`: add authentic-media checks for Apple IIGS startup versions and DM2 record pools, held items, carried weight, save/load, moneybox paths and FM Towns behavior.
+- `DM1 HoC stair interaction checks`: verify torch pickup, equipment, stair descent and carried light on authentic Atari ST, Amiga 2.0 and FM Towns data; native-window hang and pixel parity remain unverified.
 - `Nexus VDP1 capture tools`: change source-bound frame replay to validate unique DGN material joins for authentic Saturn captures, and keep retail frame evidence external to the repository.
 - `Theron's Quest verification records`: update the native spawn receipt and Japanese Akutuba capture documentation to separate verified source evidence from unverified campaign and presentation behavior.
 - `DM2 parity documentation`: update source inventories, named-symbol audits and active TODO records to mark renderer bindings, non-DOS transactions and platform parity as incomplete.

@@ -739,7 +739,16 @@ presentation hang. Rebuilt and reran `m11_dm1_hoc_stair_torch_pc34` on
 transition and carried light passed. Capture the reported native run and
 matching DOSBox-X original pose, then audit the route-specific frame timer,
 F0115/F0107 asset composition, C10 glyph raster/palette, F0128 stairs
-dispatch and frame ownership before changing any mapping. Use the
+dispatch and frame ownership before changing any mapping. On 2026-11-03,
+`m11_dm1_hoc_stair_torch_atari_st`, `m11_dm1_hoc_stair_torch_amiga20`, and
+`m11_dm1_hoc_stair_torch_fmtowns` all passed against the installed original
+archives. Each test recruits an authentic C127 champion, picks up and equips
+the HoC torch, descends the original stairs, and checks the destination light
+result. The backward-stairs hang was not reproduced in these M11 routes; the
+tests use SDL dummy drivers and do not rule out a native window/event-loop
+hang or verify mirror/HUD pixels. See the
+[DM1 HoC stair-torch coverage](docs/parity/DM1_HOC_STAIR_TORCH_COVERAGE.md).
+Use the
 [DMWeb PC DOS Level 00 map](http://dmweb.free.fr/games/dungeon-master/solutions/maps-christophef/level-00/)
 for Hall of Champions: its inscription list places “Hall Of Champions” at
 (08,04) and “Vi Altar Of Rebirth” at (04,17). Level 01 is a separate map and
