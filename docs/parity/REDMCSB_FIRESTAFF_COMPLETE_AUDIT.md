@@ -1030,3 +1030,7 @@ Compared ReDMCSB FILLBOX.C `F1128_IsLeftMouseButtonDown` with UTIO.C `F2008_IsLe
 
 
 The same ReDMCSB/FIREFSTAFF inventory correction applies to `F2047_GetMouseX` and `F2048_GetMouseY`: both source-named accessors exist over caller-owned mouse state, but ReDMCSB Amiga reads `MouseX`/`MouseY` from its Intuition window. The inventory changes both from `MISSING` to `PARTIAL`; native event/window ownership and CSB callers are not proven.
+
+### DM2 SKWIN inventory refresh (2026-11-03)
+
+The active-source ledgers now include separate SKWIN `CLICK_MAGICAL_MAP_AT` and `PROCEED_XACT_82` definitions, each reviewed as partial against `SKWIN/SkWinCore.cpp`. Applying the active-source review overrides gives 2,717 unreviewed, 1,107 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,983 open rows (2,717 unreviewed, 1,264 partial source or older-ledger rows, 0 missing, 0 uncertain numbered evidence rows, 2 partial source owners).
