@@ -13,6 +13,208 @@ typedef struct {
     unsigned deallocations;
 } MoneyboxFixture;
 
+#define BATCH_ITEMS 32
+typedef struct {
+    uint16_t heads[4];
+    uint16_t next[BATCH_ITEMS];
+    uint16_t db_type[BATCH_ITEMS];
+    uint16_t denomination[BATCH_ITEMS];
+    uint8_t charge[BATCH_ITEMS];
+    uint16_t possession_next[4];
+    uint16_t next_alloc;
+    unsigned allocations;
+    unsigned fail_after;
+    unsigned deallocations;
+} MultiMoneyboxFixture;
+
+static int batch_is_moneybox(void *ctx, uint16_t container)
+{
+    (void)ctx;
+    return container == 1u || container == 3u;
+}
+
+static int batch_is_currency(void *ctx, uint16_t item)
+{
+    MultiMoneyboxFixture *f = (MultiMoneyboxFixture *)ctx;
+    return item < BATCH_ITEMS &&
+        f->db_type[item] == DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+}
+
+static uint16_t batch_get_db_type(void *ctx, uint16_t item)
+{
+    return ((MultiMoneyboxFixture *)ctx)->db_type[item];
+}
+
+static uint16_t batch_get_denomination(void *ctx, uint16_t item)
+{
+    return ((MultiMoneyboxFixture *)ctx)->denomination[item];
+}
+
+static uint16_t batch_get_head(void *ctx, uint16_t container)
+{
+    return ((MultiMoneyboxFixture *)ctx)->heads[container];
+}
+
+static uint16_t batch_get_next(void *ctx, uint16_t item)
+{
+    return ((MultiMoneyboxFixture *)ctx)->next[item];
+}
+
+static uint8_t batch_get_charge(void *ctx, uint16_t item)
+{
+    return ((MultiMoneyboxFixture *)ctx)->charge[item];
+}
+
+static void batch_set_charge(void *ctx, uint16_t item, uint8_t charge)
+{
+    ((MultiMoneyboxFixture *)ctx)->charge[item] = charge;
+}
+
+static void batch_append_item(void *ctx, uint16_t item, uint16_t container)
+{
+    MultiMoneyboxFixture *f = (MultiMoneyboxFixture *)ctx;
+    uint16_t tail;
+    if (f->heads[container] == DM2_V1_OBJECT_END) {
+        f->heads[container] = item;
+        f->next[item] = DM2_V1_OBJECT_END;
+        return;
+    }
+    tail = f->heads[container];
+    while (f->next[tail] != DM2_V1_OBJECT_END) tail = f->next[tail];
+    f->next[tail] = item;
+    f->next[item] = DM2_V1_OBJECT_END;
+}
+
+static void batch_cut_item(void *ctx, uint16_t item, uint16_t container)
+{
+    MultiMoneyboxFixture *f = (MultiMoneyboxFixture *)ctx;
+    uint16_t current;
+    if (f->heads[container] == item) {
+        f->heads[container] = f->next[item];
+        return;
+    }
+    current = f->heads[container];
+    while (current != DM2_V1_OBJECT_END && f->next[current] != item)
+        current = f->next[current];
+    if (current != DM2_V1_OBJECT_END) f->next[current] = f->next[item];
+}
+
+static void batch_dealloc(void *ctx, uint16_t item)
+{
+    (void)item;
+    ++((MultiMoneyboxFixture *)ctx)->deallocations;
+}
+
+static uint16_t batch_alloc(void *ctx, uint16_t denomination)
+{
+    MultiMoneyboxFixture *f = (MultiMoneyboxFixture *)ctx;
+    uint16_t item;
+    if (f->allocations >= f->fail_after || f->next_alloc >= BATCH_ITEMS)
+        return DM2_V1_OBJECT_NULL;
+    ++f->allocations;
+    item = f->next_alloc++;
+    f->db_type[item] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+    f->denomination[item] = denomination;
+    return item;
+}
+
+static int32_t batch_next_record(uint16_t item, void *ctx)
+{
+    MultiMoneyboxFixture *f = (MultiMoneyboxFixture *)ctx;
+    if (item >= 4u) return DM2_V1_OBJECT_END;
+    return f->possession_next[item];
+}
+
+static int32_t creature_at(int16_t x, int16_t y, void *ctx);
+static int32_t can_handle_item(uint16_t type, uint16_t possession,
+                               uint16_t slot, void *ctx);
+static void cmd2165(uint16_t mode, int16_t x, int16_t y,
+                    int16_t target_x, int16_t target_y,
+                    int16_t arg5, int16_t arg6, void *ctx);
+
+static int test_later_moneybox_allocation_failure_is_atomic(void)
+{
+    static const uint16_t coin_types[] = {10u, 20u};
+    static const uint16_t coin_values[] = {1u, 5u};
+    MultiMoneyboxFixture f;
+    DM2_V1_WalletCallbacks callbacks;
+    DM2_V1_SkprojectXactContext xact;
+    DM2_V1_SkprojectXact82Receipt receipt;
+    int result;
+
+    memset(&f, 0, sizeof(f));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&xact, 0, sizeof(xact));
+    for (unsigned i = 0; i < 4; ++i) {
+        f.heads[i] = DM2_V1_OBJECT_END;
+        f.possession_next[i] = DM2_V1_OBJECT_END;
+    }
+    f.next_alloc = 20u;
+    f.fail_after = 2u; /* payout and first wallet succeed; second wallet fails */
+    f.possession_next[1] = 3u;
+
+    callbacks.is_container_moneybox = batch_is_moneybox;
+    callbacks.is_item_currency = batch_is_currency;
+    callbacks.get_item_db_type = batch_get_db_type;
+    callbacks.get_distinctive_item_type = batch_get_denomination;
+    callbacks.get_container_head = batch_get_head;
+    callbacks.get_next_item_in_list = batch_get_next;
+    callbacks.get_item_charge = batch_get_charge;
+    callbacks.set_item_charge = batch_set_charge;
+    callbacks.append_item_to_container = batch_append_item;
+    callbacks.cut_item_from_container = batch_cut_item;
+    callbacks.dealloc_record = batch_dealloc;
+    callbacks.alloc_new_dbitem = batch_alloc;
+    callbacks.coin_type_table = coin_types;
+    callbacks.coin_type_table_size = 2;
+
+    /* Both moneyboxes contain five 1-value coins and need a 5-value stack. */
+    for (uint16_t i = 0; i < 5; ++i) {
+        uint16_t first = (uint16_t)(4u + i);
+        uint16_t second = (uint16_t)(9u + i);
+        f.db_type[first] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+        f.denomination[first] = coin_types[0];
+        f.next[first] = i == 4u ? DM2_V1_OBJECT_END : (uint16_t)(first + 1u);
+        f.db_type[second] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+        f.denomination[second] = coin_types[0];
+        f.next[second] = i == 4u ? DM2_V1_OBJECT_END : (uint16_t)(second + 1u);
+    }
+    f.heads[1] = 4u;
+    f.heads[3] = 9u;
+
+    xact.possession = 1u;
+    xact.v1e0572 = 3;
+    xact.creature_w0c = 5;
+    xact.coin_values = coin_values;
+    xact.coin_type_count = 2u;
+    xact.wallet_callbacks = &callbacks;
+    xact.wallet_ctx = &f;
+    xact.user = &f;
+    xact.next_fn = batch_next_record;
+    xact.creature_at_fn = creature_at;
+    xact.can_handle_item_in_fn = can_handle_item;
+    xact.cmd2165_fn = cmd2165;
+    xact.xact82_variant = DM2_V1_XACT82_SKULLWIN_SPX_V5;
+
+    result = dm2_v1_skproject_proceed_xact_82(&xact, &receipt);
+    if (result != 0 ||
+        !receipt.payout_incomplete || !receipt.blocked_missing_context ||
+        receipt.price_consumed || receipt.wallet_mutated ||
+        xact.creature_w0c != 5 ||
+        f.heads[1] != 4u || f.heads[3] != 9u ||
+        f.next[4] != 5u || f.next[5] != 6u || f.next[6] != 7u ||
+        f.next[7] != 8u || f.next[8] != DM2_V1_OBJECT_END ||
+        f.next[9] != 10u || f.next[10] != 11u || f.next[11] != 12u ||
+        f.next[12] != 13u || f.next[13] != DM2_V1_OBJECT_END ||
+        f.deallocations != 2u) {
+        fprintf(stderr,
+                "later moneybox allocation failure left a partial sale mutation\n");
+        return 0;
+    }
+    puts("PASS: later moneybox allocation failure preserves every wallet");
+    return 1;
+}
+
 static int is_moneybox(void *ctx, uint16_t container)
 {
     (void)ctx;
@@ -254,5 +456,6 @@ int main(void)
         }
     }
     puts("PASS: SKProject XACT 82 requires atomic append for multi-coin sale");
+    if (!test_later_moneybox_allocation_failure_is_atomic()) return 1;
     return 0;
 }
