@@ -5562,6 +5562,9 @@ typedef struct {
     int blocked_target_occupied;
     int blocked_missing_tile;
     int blocked_missing_record_pool;
+    int blocked_missing_allowed_level;
+    int blocked_disallowed_level;
+    int source_variant;
     int16_t x;
     int16_t y;
     uint8_t direction;
@@ -5585,6 +5588,34 @@ int dm2_v1_skproject_is_creature_movable_there(
     int16_t dest_width,
     int16_t dest_height,
     uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
+
+/* Variant-exact SKProject form. DOS/SPX v5 reject weights >0xfd while SPX
+   v4/SKULLWIN reject only 0xff. Occupancy and allowed-level decisions are
+   supplied by source-shaped callbacks; a NULL callback means the source call
+   site did not request that check only where source does so conditionally. */
+typedef enum {
+    DM2_V1_MOVABLE_THERE_SKULLWIN = 0,
+    DM2_V1_MOVABLE_THERE_SPX_V4 = 1,
+    DM2_V1_MOVABLE_THERE_DOS = 2,
+    DM2_V1_MOVABLE_THERE_SPX_V5 = 3
+} DM2_V1_SkprojectMovableThereVariant;
+
+typedef int32_t (*DM2_V1_SkprojectMovableThereCreatureAtFn)(
+    int16_t map, int16_t x, int16_t y, void *user);
+typedef int32_t (*DM2_V1_SkprojectMovableThereAllowedLevelFn)(
+    uint16_t creature, int16_t level, void *user);
+
+int dm2_v1_skproject_is_creature_movable_there_variant(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    uint16_t creature_weight, const uint8_t *tile_values, int16_t width,
+    int16_t height, const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map, const uint8_t *dest_tile_values,
+    int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator

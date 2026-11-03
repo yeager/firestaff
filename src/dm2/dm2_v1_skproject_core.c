@@ -14309,13 +14309,33 @@ int dm2_v1_skproject_is_creature_movable_there(
     uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
 {
+    return dm2_v1_skproject_is_creature_movable_there_variant(
+        x, y, direction, creature_handle, creature_weight, tile_values,
+        width, height, pools, current_map, dest_tile_values, dest_width,
+        dest_height, DM2_V1_MOVABLE_THERE_DOS, NULL, NULL, NULL,
+        out_creature_handle, out_receipt);
+}
+
+int dm2_v1_skproject_is_creature_movable_there_variant(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    uint16_t creature_weight, const uint8_t *tile_values, int16_t width,
+    int16_t height, const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map, const uint8_t *dest_tile_values,
+    int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
+{
     DM2_V1_SkprojectIsCreatureMovableThereReceipt receipt;
-    DM2_V1_SkprojectTeleporterDetail c12;
-    DM2_V1_SkprojectGetTeleporterDetailReceipt tele_receipt;
-    uint8_t dir;
-    int16_t new_x;
-    int16_t new_y;
-    uint8_t tile_value;
+    DM2_V1_SkprojectTeleporterDetail teleporter;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt teleporter_receipt;
+    int16_t next_x;
+    int16_t next_y;
+    uint8_t tile;
+    int has_optional_checks;
+    int overweight;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -14324,90 +14344,125 @@ int dm2_v1_skproject_is_creature_movable_there(
     receipt.direction = (uint8_t)(direction & 3u);
     receipt.creature_handle = creature_handle;
     receipt.creature_weight = creature_weight;
+    receipt.source_variant = (int)variant;
+    has_optional_checks = creature_at_fn != NULL;
 
+    if (variant < DM2_V1_MOVABLE_THERE_SKULLWIN ||
+        variant > DM2_V1_MOVABLE_THERE_SPX_V5) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
+    }
     if (creature_handle == 0xffffu) {
         receipt.blocked_missing_creature = 1;
-        if (out_creature_handle) *out_creature_handle = 0xffffu;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
     }
-    if (creature_weight > 0x00fdu) {
+    overweight = (variant == DM2_V1_MOVABLE_THERE_DOS ||
+                  variant == DM2_V1_MOVABLE_THERE_SPX_V5)
+        ? creature_weight > 0x00fdu : creature_weight == 0x00ffu;
+    if (overweight) {
         receipt.blocked_overweight = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
+    }
+    if (!tile_values || width <= 0 || height <= 0 || !pools) {
+        receipt.blocked_missing_tile = !tile_values || width <= 0 || height <= 0;
+        receipt.blocked_missing_record_pool = !pools;
+        goto blocked;
+    }
+    if (creature_at_fn &&
+        creature_at_fn(current_map, x, y, user) != (int32_t)creature_handle) {
+        receipt.blocked_missing_creature = 1;
+        goto blocked;
     }
 
-    dir = receipt.direction;
-
-    /* Teleporter at current square. */
-    if (dm2_v1_skproject_get_teleporter_detail(
+    tile = dm2_v1_skproject_cycle13_tile_at(
+        tile_values, width, height, x, y);
+    if ((tile >> 5) == 5u &&
+        !dm2_v1_skproject_get_teleporter_detail(
             x, y, tile_values, width, height, pools, current_map,
             dest_tile_values, dest_width, dest_height,
-            &c12, &tele_receipt) && tele_receipt.valid) {
-        uint8_t dir_plus_2 = (uint8_t)((c12.b_00 + 2u) & 3u);
-        if (dir == dir_plus_2) {
-            uint8_t dest_tile_value;
-            /* Source changes map and checks the destination tile.  We keep it
-               bounded to the supplied destination tile plane. */
-            if (!dest_tile_values || dest_width <= 0 || dest_height <= 0) {
-                receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
+            &teleporter, &teleporter_receipt)) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
+    }
+    if ((tile >> 5) == 5u && teleporter_receipt.valid &&
+        ((direction & 3u) == ((teleporter.b_00 + 2u) & 3u))) {
+        if (!allowed_level_fn) {
+            receipt.blocked_missing_allowed_level = 1;
+            goto blocked;
+        }
+        if (!allowed_level_fn(creature_handle, teleporter.b_04, user)) {
+            receipt.blocked_disallowed_level = 1;
+            goto blocked;
+        }
+        if (has_optional_checks) {
+            int16_t adjacent_x = (int16_t)(teleporter.b_02 +
+                s_cycle13_dx[teleporter.b_01 & 3u]);
+            int16_t adjacent_y = (int16_t)(teleporter.b_03 +
+                s_cycle13_dy[teleporter.b_01 & 3u]);
+            int32_t occupant;
+            if (adjacent_x < 0 || adjacent_y < 0 ||
+                adjacent_x >= dest_width || adjacent_y >= dest_height ||
+                !dest_tile_values) {
+                receipt.blocked_missing_tile = 1;
+                goto blocked;
             }
-            if (c12.b_02 >= (uint8_t)dest_width || c12.b_03 >= (uint8_t)dest_height) {
+            occupant = creature_at_fn(teleporter.b_04, adjacent_x,
+                                      adjacent_y, user);
+            if (occupant != DM2_V1_RECORD_HANDLE_NULL) {
                 receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
+                goto blocked;
             }
-            dest_tile_value = dest_tile_values[(int)c12.b_03 * (int)dest_width + (int)c12.b_02];
-            if (dm2_v1_skproject_is_tile_blocked(dest_tile_value, NULL)) {
-                receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
-            }
-            /* Source checks an adjacent square for a creature here.  We do not
-               have the runtime creature spatial index in this helper, so the
-               occupancy gate is skipped rather than invented. */
         }
     }
 
-    /* Forward square. */
-    new_x = (int16_t)(x + s_cycle13_dx[dir]);
-    new_y = (int16_t)(y + s_cycle13_dy[dir]);
-    tile_value = dm2_v1_skproject_cycle13_tile_at(
-        tile_values, width, height, new_x, new_y);
-    if (dm2_v1_skproject_is_tile_blocked(tile_value, NULL)) {
-        receipt.blocked_target_blocked = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+    next_x = (int16_t)(x + s_cycle13_dx[direction & 3u]);
+    next_y = (int16_t)(y + s_cycle13_dy[direction & 3u]);
+    if (next_x < 0 || next_x >= width || next_y < 0 || next_y >= height) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
     }
-    if (((uint8_t)(tile_value >> 5)) == 3u) {
+    tile = tile_values[(int)next_y * width + next_x];
+    if (dm2_v1_skproject_is_tile_blocked(tile, NULL) ||
+        (tile >> 5) == 3u) {
         receipt.blocked_target_blocked = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
     }
-    /* Source checks for a creature at the forward square here.  Without the
-       spatial index we skip the occupancy gate. */
+    if (has_optional_checks &&
+        creature_at_fn(current_map, next_x, next_y, user) !=
+            DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_target_occupied = 1;
+        goto blocked;
+    }
 
-    /* Teleporter at forward square (level-allowed check only).  Source calls
-       DM2_IS_CREATURE_ALLOWED_ON_LEVEL; without the level-allowed table we
-       skip the gate rather than fail closed. */
-    (void)dm2_v1_skproject_get_teleporter_detail(
-        new_x, new_y, tile_values, width, height, pools, current_map,
-        dest_tile_values, dest_width, dest_height,
-        &c12, &tele_receipt);
+    if ((tile >> 5) == 5u &&
+        !dm2_v1_skproject_get_teleporter_detail(
+            next_x, next_y, tile_values, width, height, pools, current_map,
+            dest_tile_values, dest_width, dest_height,
+            &teleporter, &teleporter_receipt)) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
+    }
+    if ((tile >> 5) == 5u && teleporter_receipt.valid) {
+        if (!allowed_level_fn) {
+            receipt.blocked_missing_allowed_level = 1;
+            goto blocked;
+        }
+        if (!allowed_level_fn(creature_handle, teleporter.b_04, user)) {
+            receipt.blocked_disallowed_level = 1;
+            goto blocked;
+        }
+    }
 
     receipt.movable = 1u;
     receipt.valid = 1;
-    if (out_creature_handle) *out_creature_handle = creature_handle;
+    if (has_optional_checks && out_creature_handle)
+        *out_creature_handle = creature_handle;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+
+blocked:
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
 }
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46. */
