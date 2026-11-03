@@ -3802,6 +3802,15 @@ int dm2_v1_skproject_alloc_new_pict(
     uint16_t height,
     uint16_t bpp,
     DM2_V1_SkprojectNewPictReceipt *out_receipt);
+/* SKWINDOS/c_dballocx.cpp::SKW_ALLOC_NEW_PICT uses a 16-bit wrapped
+ * allocation byte count; keep that DOS rule separate from the 32-bit
+ * SKWIN/SPX allocation calculation above. */
+int dm2_v1_skproject_alloc_new_pict_dos(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt);
 uint32_t dm2_v1_skproject_calc_pict_ent_hash(
     const DM2_V1_SkprojectExtendedPictureRef *ref);
 int dm2_v1_skproject_0b36_00c3_cache_picture(

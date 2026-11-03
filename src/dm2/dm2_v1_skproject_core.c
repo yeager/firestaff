@@ -6921,6 +6921,32 @@ int dm2_v1_skproject_alloc_new_pict(
     return 1;
 }
 
+int dm2_v1_skproject_alloc_new_pict_dos(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt)
+{
+    uint32_t row_bytes;
+    uint32_t total_bytes;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || height == 0u) return 0;
+    row_bytes = bpp == 4u ? (uint32_t)(((width + 1u) & 0xfffeu) >> 1)
+                          : (uint32_t)width;
+    total_bytes = (row_bytes * (uint32_t)height) & 0xffffu;
+    out_receipt->index = index;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->bpp = bpp;
+    out_receipt->payload_bytes = total_bytes;
+    out_receipt->header_width = width;
+    out_receipt->header_height = height;
+    out_receipt->header_bpp = bpp;
+    return 1;
+}
+
 uint32_t dm2_v1_skproject_calc_pict_ent_hash(
     const DM2_V1_SkprojectExtendedPictureRef *ref)
 {
