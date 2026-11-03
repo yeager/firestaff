@@ -291,6 +291,7 @@ struct DM2_V1_RuntimeState {
     int light_check_pending;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
+    uint32_t gdat_scene_source_word_mask;
     uint32_t gdat_scene_control_query_count;
     uint16_t gdat_scene_colorkey;
     uint16_t gdat_scene_flags;
@@ -1037,7 +1038,7 @@ static void dm2_runtime_spell_recalc_light(void *context)
     if (rt->c_light_map_descriptor.valid &&
         rt->c_light_map_descriptor.dynamic_light &&
         !dm2_runtime_recalc_dynamic_light(
-            rt, rt->gdat_scene_control_present_mask,
+            rt, rt->gdat_scene_source_word_mask,
             rt->gdat_scene_rain, rt->gdat_scene_highest_light_level)) {
         light_ctx->failed = 1;
     }
@@ -1706,6 +1707,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_scene_control_ready = 0;
     rt->gdat_scene_control_hash = 0u;
     rt->gdat_scene_control_present_mask = 0u;
+    rt->gdat_scene_source_word_mask = 0u;
     rt->gdat_scene_control_query_count = 0u;
     rt->gdat_scene_colorkey = 0u;
     rt->gdat_scene_flags = 0u;
@@ -1754,6 +1756,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         return;
     }
     scene_word_mask = rt->gdat_scene_control_present_mask;
+    rt->gdat_scene_source_word_mask = scene_word_mask;
     /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT resolves the selected
      * GRAPHICSSET's ceiling/floor IMG3 pair before its light and wall
      * passes.  The control words above authenticate the map identity, but
@@ -4826,6 +4829,7 @@ int dm2_v1_runtime_cast_spell_player(
     DM2_V1_Hero hero_before;
     DM2_V1_Party party_before;
     DM2_V1_SourceTimerQueue queue_before;
+    DM2_V1_CLightM11Receipt c_light_before;
     int16_t light_before;
     int light_type;
     int enchant_type;
@@ -5202,6 +5206,7 @@ int dm2_v1_runtime_cast_spell_player(
     hero_before = *hero;
     queue_before = rt->timer_queue;
     light_before = rt->source_light_level;
+    c_light_before = rt->c_light_receipt;
     memset(&light_ctx, 0, sizeof(light_ctx));
     light_ctx.runtime = rt;
     memset(&light_callbacks, 0, sizeof(light_callbacks));
@@ -5218,6 +5223,7 @@ int dm2_v1_runtime_cast_spell_player(
         *hero = hero_before;
         rt->timer_queue = queue_before;
         rt->source_light_level = light_before;
+        rt->c_light_receipt = c_light_before;
         if (out_receipt) *out_receipt = receipt;
         return 1;
     }
@@ -18504,6 +18510,14 @@ int dm2_v1_runtime_last_m11_frame_receipt(
 {
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_last_m11_frame;
+    return out_receipt->valid;
+}
+
+int dm2_v1_runtime_current_c_light_receipt(
+    DM2_V1_CLightM11Receipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.c_light_receipt;
     return out_receipt->valid;
 }
 

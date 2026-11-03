@@ -533,6 +533,10 @@ int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
 int dm2_v1_runtime_last_m11_frame_receipt(
     DM2_V1_ViewportM11FrameReceipt *out_receipt);
+/* Read the current source-derived c_light receipt before the next frame
+ * refresh. Intended for transaction checks and debug evidence. */
+int dm2_v1_runtime_current_c_light_receipt(
+    DM2_V1_CLightM11Receipt *out_receipt);
 
 /* Resolve a dungeon viewport click through the renderer-owned c_rwbb list.
  * This is the DM2 CLICK_VWPT boundary from c_events.cpp:1404.  It never
