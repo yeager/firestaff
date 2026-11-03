@@ -12848,11 +12848,12 @@ static int dm2_runtime_process_0e_timer(void *user,
     return 1;
 }
 
-/* DM2_CONTINUE_ORNATE_NOISE (c_tim_proc.cpp:~1120).  0x5A carries the
- * actuator record in value_b and the source x/y pair in value_a.  The
- * inactive arm clears only the frame high byte; the active arm resolves the
- * wall/floor decoration from the mounted map and requeues at the source
- * animation cadence.  GEN2 is best-effort, but a failed timer enqueue must
+/* DM2_CONTINUE_ORNATE_NOISE (SKWINDOS/dm2bya.cpp:5505; SPX v5
+ * sktimprc.cpp:1093).  0x5A carries the actuator record in value_b and the
+ * source x/y pair in value_a.  The inactive/off-map arm truncates the
+ * 9-bit ActuatorData field to its low 8 bits (w2 bit 15 clear); the active
+ * current-map arm resolves wall/floor decoration and requeues at the source
+ * animation cadence. GEN2 is best-effort, but a failed timer enqueue must
  * roll back both the record and the sound queue. */
 static int dm2_runtime_ornate_noise_timer(
     void *context, const DM2_V1_SourceTimer *timer,
@@ -12860,6 +12861,7 @@ static int dm2_runtime_ornate_noise_timer(
     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
     DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_SoundQueueState sound_backup;
     uint8_t record_backup[16];
@@ -12881,12 +12883,11 @@ static int dm2_runtime_ornate_noise_timer(
 
     if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
         !rt->boot->dungeon_data || !rt->record_pools_valid ||
-        !rt->sound_queue_ready)
+        !rt->sound_queue_ready || !rt->boot->dm2_state)
         return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
-    if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
-        return 0;
     if (dm2_v1_record_handle_pool(timer->value_b) != 3)
         return 0;
     record_size = rt->record_pools.pools[3].record_size;
@@ -12896,6 +12897,20 @@ static int dm2_runtime_ornate_noise_timer(
                                              timer->value_b);
     if (!record)
         return 0;
+
+    /* DOS/SKULLWIN and SPX v4/v5 truncate the 9-bit ActuatorData field to
+     * its low byte when the ornate is inactive or its timer is off the
+     * player map. In the packed DB3 word, only bit 15 is removed. The source
+     * does this before looking up the timer tile, so off-map timers must not
+     * be rejected by the live-map/tile guards below. */
+    active = (record[4] & 0x01u) != 0;
+    if (!active || map != game->current_level) {
+        record[3] &= 0x7fu;
+        return 1;
+    }
+    if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
+        return 0;
+
     x = (int)(int8_t)(timer->value_a & 0xff);
     y = (int)(int8_t)(((uint16_t)timer->value_a >> 8) & 0xff);
     if (x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
@@ -12905,11 +12920,6 @@ static int dm2_runtime_ornate_noise_timer(
     memcpy(record_backup, record, (size_t)record_size);
     queue_backup = rt->timer_queue;
     sound_backup = rt->sound_queue;
-    active = (record[4] & 0x01u) != 0;
-    if (!active) {
-        record[3] = 0u;
-        return 1;
-    }
 
     raw_tile = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
     if (raw_tile < 0)
