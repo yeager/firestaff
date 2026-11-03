@@ -8523,7 +8523,10 @@ static int dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                         blit.transparent_color,
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
-                    if (c->source_kind == 2 && c->depth == 3 &&
+                    /* skevents.cpp:1345-1387 identifies the target as front
+                     * view slot 3. Firestaff's projection depth is forward-1,
+                     * so that same front tile is depth 0 here. */
+                    if (c->source_kind == 2 && c->depth == 0 &&
                         c->map_x == s->party_x +
                             (s->party_dir == 1 ? 1 : s->party_dir == 3 ? -1 : 0) &&
                         c->map_y == s->party_y +
