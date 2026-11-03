@@ -10519,10 +10519,13 @@ int main(void)
     {
         DM2_V1_SkprojectXactContext ctx;
         memset(&ctx, 0, sizeof(ctx));
+        ctx.creature_at_fn = xact82_probe_creature_at;
+        ctx.xact82_variant = DM2_V1_XACT82_DOS;
         DM2_V1_SkprojectXact82Receipt r;
         int rv = dm2_v1_skproject_proceed_xact_82(&ctx, &r);
-        CHECK(rv == 1 && r.valid == 1 && r.out_b1a == 29,
-              "xact_82 sets b1a to 29");
+        CHECK(rv == 0 && r.blocked_missing_context && r.out_b1a == 29 &&
+                  ctx.creature_b1a == 29,
+              "xact_82 sets b1a before blocking missing transfer callbacks");
     }
     {
         Xact82TransferProbe probe = {0};
