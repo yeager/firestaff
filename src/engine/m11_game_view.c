@@ -11798,15 +11798,26 @@ static void m11_hatch_rect(unsigned char* framebuffer,
                            int x,
                            int y,
                            int w,
-                           int h) {
+                           int h,
+                           unsigned char sourceColor,
+                           int amigaSourcePattern) {
     int yy;
     for (yy = y; yy < y + h; ++yy) {
         int xx;
         for (xx = x; xx < x + w; ++xx) {
-            /* DM1 PC VGA VIDEODRV.C F8155_VIDRV_06_HatchScreenBox:
-             * leave odd (x^y) pixels untouched and force even checker
-             * pixels to black. */
-            if (((xx ^ yy) & 1) == 0) {
+            if (amigaSourcePattern) {
+                /* ReDMCSB BLITFILL.C F0136 sets Amiga RastPort.AreaPtrn to
+                 * G1100={0xAAAA,0x5555}, AreaPtSz=1, and fills with the
+                 * caller's pen. The two 16-bit rows alternate by screen y;
+                 * bit 15 is the leftmost pixel in each row. */
+                unsigned int pattern = ((yy & 1) != 0) ? 0x5555u : 0xaaaau;
+                if ((pattern & (0x8000u >> ((unsigned int)xx & 15u))) != 0u)
+                    m11_put_pixel(framebuffer, framebufferWidth,
+                                  framebufferHeight, xx, yy, sourceColor);
+            } else if (((xx ^ yy) & 1) == 0) {
+                /* DM1 PC VGA VIDEODRV.C F8155_VIDRV_06_HatchScreenBox:
+                 * leave odd (x^y) pixels untouched and force even checker
+                 * pixels to black. */
                 m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
                               xx, yy, M11_COLOR_BLACK);
             }
@@ -64981,7 +64992,7 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
          * complete source hit-zone boundary so its visible extent matches
          * the arrow button that Q/E, Home/End, WASD and cursor input drive. */
         m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
-                       x, y, w, h);
+                       x, y, w, h, M11_COLOR_BLACK, 0);
         cueColor = receipt.cueColorKind == 1
             ? M11_COLOR_YELLOW
             : M11_COLOR_LIGHT_CYAN;
@@ -67059,7 +67070,8 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         if (iconReceipt.hatch ||
             M11_GameView_ShouldHatchV1ActionIconCell(state, slot)) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
-                           cellX, cellY, cellW, cellH);
+                           cellX, cellY, cellW, cellH, M11_COLOR_BLACK,
+                           state->assetLoader.dm1Amiga36);
         }
         ++drawn;
     }
