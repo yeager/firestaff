@@ -23257,7 +23257,9 @@ static int dm2_v1_skproject_xact82_sell(
     DM2_V1_SkprojectQuery48ae0767Receipt pack_receipt;
     uint8_t coin_indices[18];
     int16_t coin_weights[10];
+    uint16_t payout_coins[18];
     uint16_t coin_count = 0u;
+    uint16_t payout_coin_count = 0u;
     int32_t total_value = 0;
     const DM2_V1_WalletCallbacks *wallet = ctx->wallet_callbacks;
     void *wallet_ctx = ctx->wallet_ctx ? ctx->wallet_ctx : ctx->user;
@@ -23281,6 +23283,8 @@ static int dm2_v1_skproject_xact82_sell(
         !ctx->next_fn || !wallet || !wallet->is_container_moneybox ||
         !wallet->coin_type_table ||
         wallet->coin_type_table_size < (int)ctx->coin_type_count ||
+        !wallet->is_item_currency || !wallet->get_item_db_type ||
+        !wallet->get_distinctive_item_type || !wallet->set_item_charge ||
         !wallet->alloc_new_dbitem ||
         !wallet->dealloc_record ||
         !ctx->coin_values || ctx->coin_type_count == 0u ||
@@ -23320,6 +23324,40 @@ static int dm2_v1_skproject_xact82_sell(
         return 0;
     }
 
+    /* Preflight every moneybox before the first exchange. Wallet insertion
+     * stops at non-currency records in SPX, while DOS can report success
+     * without attaching a coin after such a record. */
+    if (wallet_handle != DM2_V1_OBJECT_NULL) {
+        item = ctx->possession;
+        steps = 0u;
+        while (item != DM2_V1_OBJECT_END) {
+            int32_t next;
+            if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+                receipt->blocked_missing_context = 1;
+                return 0;
+            }
+            next = ctx->next_fn(item, ctx->user);
+            if (next < 0 || (uint32_t)next > UINT16_MAX) {
+                receipt->blocked_missing_context = 1;
+                return 0;
+            }
+            if (wallet->is_container_moneybox(wallet_ctx, item)) {
+                uint16_t coin = wallet->get_container_head(wallet_ctx, item);
+                uint32_t coin_steps = 0u;
+                while (coin != DM2_V1_OBJECT_END) {
+                    if (coin == DM2_V1_OBJECT_NULL || ++coin_steps > 65536u ||
+                        wallet->get_item_db_type(wallet_ctx, coin) !=
+                            DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY) {
+                        receipt->blocked_missing_context = 1;
+                        return 0;
+                    }
+                    coin = wallet->get_next_item_in_list(wallet_ctx, coin);
+                }
+            }
+            item = (uint16_t)next;
+        }
+    }
+
     /* SKProject exchanges wallets before packing a valid payout. This bounded
      * implementation also rejects prices that cannot be paid exactly. Do
      * that pure rejection check before mutating any wallet. */
@@ -23339,6 +23377,34 @@ static int dm2_v1_skproject_xact82_sell(
             !ctx->append_coin_to_possession_fn) {
             receipt->blocked_missing_context = 1;
             return 0;
+        }
+        /* Allocate and validate the whole payout before any wallet is
+         * rebalanced. This avoids changing moneyboxes when the sale cannot
+         * obtain all records needed for its coins. */
+        for (uint16_t n = coin_count; n > 0u; --n) {
+            uint8_t coin_index = coin_indices[n - 1u];
+            uint16_t coin;
+            if (coin_index >= ctx->coin_type_count) {
+                receipt->payout_incomplete = 1;
+                receipt->blocked_missing_context = 1;
+                goto xact82_sell_precommit_failure;
+            }
+            coin = wallet->alloc_new_dbitem(
+                wallet_ctx, wallet->coin_type_table[coin_index]);
+            if (coin == DM2_V1_OBJECT_NULL ||
+                !wallet->is_item_currency(wallet_ctx, coin) ||
+                wallet->get_item_db_type(wallet_ctx, coin) !=
+                    DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY ||
+                wallet->get_distinctive_item_type(wallet_ctx, coin) !=
+                    wallet->coin_type_table[coin_index]) {
+                if (coin != DM2_V1_OBJECT_NULL)
+                    wallet->dealloc_record(wallet_ctx, coin);
+                receipt->payout_incomplete = 1;
+                receipt->blocked_missing_context = 1;
+                goto xact82_sell_precommit_failure;
+            }
+            wallet->set_item_charge(wallet_ctx, coin, 0u);
+            payout_coins[payout_coin_count++] = coin;
         }
     }
 
@@ -23369,6 +23435,8 @@ static int dm2_v1_skproject_xact82_sell(
             exchange_request.wallet_ctx = wallet_ctx;
             if (!dm2_v1_skproject_exchange_moneybox(
                     &exchange_request, &exchange_receipt)) {
+                for (uint16_t i = 0; i < payout_coin_count; ++i)
+                    wallet->dealloc_record(wallet_ctx, payout_coins[i]);
                 receipt->wallet_mutated |=
                     exchange_receipt.mutated != 0;
                 receipt->blocked_missing_context = 1;
@@ -23397,24 +23465,8 @@ static int dm2_v1_skproject_xact82_sell(
     }
 
     {
-        {
-            uint16_t allocated[18];
-            uint16_t allocated_count = 0u;
-            for (uint16_t n = coin_count; n > 0u; --n) {
-                uint8_t coin_index = coin_indices[n - 1u];
-                uint16_t coin = wallet->alloc_new_dbitem(
-                    wallet_ctx, wallet->coin_type_table[coin_index]);
-                if (coin == DM2_V1_OBJECT_NULL) {
-                    for (uint16_t i = 0; i < allocated_count; ++i)
-                        wallet->dealloc_record(wallet_ctx, allocated[i]);
-                    receipt->payout_incomplete = 1;
-                    receipt->blocked_missing_context = 1;
-                    return 0;
-                }
-                allocated[allocated_count++] = coin;
-            }
-            for (uint16_t i = 0; i < allocated_count; ++i) {
-                uint16_t coin = allocated[i];
+            for (uint16_t i = 0; i < payout_coin_count; ++i) {
+                uint16_t coin = payout_coins[i];
                 int attached;
                 if (wallet_handle == DM2_V1_OBJECT_NULL) {
                     attached = ctx->append_coin_to_possession_fn(
@@ -23428,8 +23480,8 @@ static int dm2_v1_skproject_xact82_sell(
                 }
                 if (!attached) {
                     for (uint16_t j = (uint16_t)(i + 1u);
-                         j < allocated_count; ++j)
-                        wallet->dealloc_record(wallet_ctx, allocated[j]);
+                         j < payout_coin_count; ++j)
+                        wallet->dealloc_record(wallet_ctx, payout_coins[j]);
                     receipt->payout_incomplete = 1;
                     if (wallet_handle == DM2_V1_OBJECT_NULL)
                         receipt->possession_mutated |= i != 0u;
@@ -23444,7 +23496,6 @@ static int dm2_v1_skproject_xact82_sell(
                 else
                     receipt->wallet_mutated = 1;
             }
-        }
         if (price_selector == 1)
             ctx->creature_w10 = -1;
         else if (price_selector == 2)
@@ -23463,6 +23514,11 @@ static int dm2_v1_skproject_xact82_sell(
     receipt->xact64_result = (int8_t)xact64_result;
     receipt->result = -4;
     return 1;
+
+xact82_sell_precommit_failure:
+    for (uint16_t i = 0; i < payout_coin_count; ++i)
+        wallet->dealloc_record(wallet_ctx, payout_coins[i]);
+    return 0;
 }
 
 int dm2_v1_skproject_proceed_xact_82(
