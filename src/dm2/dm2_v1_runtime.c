@@ -144,6 +144,16 @@ static int dm2_runtime_attack_creature_at(
     int16_t creature_record, int allow_wield_action);
 static uint16_t dm2_runtime_record_rd16(const DM2_V1_RuntimeState *rt,
                                         const uint8_t *p);
+static int dm2_runtime_item_hand_activable(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand);
+
+typedef struct {
+    uint16_t random_range;
+    uint16_t remaining;
+    uint16_t item_handle;
+    int8_t command_slot;
+    uint8_t consume_chance;
+} DM2_RuntimeCommandHandState;
 
 static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
@@ -187,11 +197,7 @@ struct DM2_V1_RuntimeState {
      * SKWINSPX/src/v5/skevents.cpp::DM2_PROCEED_COMMAND_SLOT use one
      * eight-byte v1e0adc record per hero and hand. Keep the fields consumed
      * by that transaction as values instead of depending on host layout. */
-    struct {
-        uint16_t random_range;
-        uint16_t remaining;
-        uint8_t consume_chance;
-    } source_command_hand[DM2_MAX_HEROES][2];
+    DM2_RuntimeCommandHandState source_command_hand[DM2_MAX_HEROES][2];
     /* c_events.cpp/startend.cpp savegames1.b_04: Aura of Speed. */
     uint8_t source_aura_of_speed;
     int source_aura_of_speed_valid;
@@ -13820,6 +13826,72 @@ missile_rollback:
  * DB4, CAII, timer and sound state.  The source recycler, cross-map placement
  * and missing-owner branches remain fail-closed. */
 
+static int dm2_v1_runtime_proceed_hand_command_variant(
+    int slot_index, DM2_V1_CommandSlotVariant variant,
+    DM2_V1_EngageCommandReceipt *receipt);
+
+/* SKWINDOS/dm2byf.cpp::SKW_2759_12e6 and
+ * SKWINSPX/src/v5/map.cpp::SKW_2759_12e6 run after the source event loop.
+ * Re-engage the recorded hand command only while its source item still owns
+ * that hand. The admission query is intentionally side-effect free, matching
+ * the source's IS_ITEM_HAND_ACTIVABLE call rather than the UI activation
+ * routine. */
+static void dm2_runtime_repeat_hand_commands(DM2_V1_RuntimeState *rt)
+{
+    int16_t saved_curacthero;
+    int16_t saved_curactmode;
+    int16_t saved_visual_hero;
+    int16_t saved_visual_hand;
+
+    if (!rt || !rt->source_party_valid || !rt->record_pools_valid ||
+        rt->source_party.heros_in_party < 1 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES)
+        return;
+    saved_curacthero = rt->source_party.curacthero;
+    saved_curactmode = rt->source_party.curactmode;
+    saved_visual_hero = rt->source_curacthero;
+    saved_visual_hand = rt->source_curactmode;
+    for (int hero_index = 0;
+         hero_index < rt->source_party.heros_in_party; ++hero_index) {
+        DM2_V1_Hero *hero = &rt->source_party.hero[hero_index];
+        for (int hand = 0; hand < 2; ++hand) {
+            DM2_RuntimeCommandHandState *state =
+                &rt->source_command_hand[hero_index][hand];
+            DM2_V1_EngageCommandReceipt receipt;
+            if (state->remaining == 0u) continue;
+            if (hero->curHP == 0 || state->item_handle !=
+                    (uint16_t)hero->item[hand]) {
+                state->remaining = 0u;
+                continue;
+            }
+            if (state->consume_chance != 0u) {
+                state->consume_chance = 0u;
+                continue;
+            }
+            state->remaining--;
+            rt->source_party.curacthero = (int16_t)(hero_index + 1);
+            rt->source_party.curactmode = (int16_t)hand;
+            rt->source_curacthero = (int16_t)(hero_index + 1);
+            rt->source_curactmode = (int16_t)hand;
+            /* The source invokes this query but ignores its return value. */
+            (void)dm2_runtime_item_hand_activable(rt, hero_index, hand);
+            memset(&receipt, 0, sizeof(receipt));
+            (void)dm2_v1_runtime_proceed_hand_command_variant(
+                state->command_slot, DM2_V1_COMMAND_SLOT_DOS_SPX_V5,
+                &receipt);
+        }
+    }
+    rt->source_party.curacthero = saved_curacthero;
+    rt->source_party.curactmode = saved_curactmode;
+    rt->source_curacthero = saved_visual_hero;
+    rt->source_curactmode = saved_visual_hand;
+    if (saved_curacthero > 0 &&
+        saved_curacthero <= rt->source_party.heros_in_party &&
+        saved_curactmode >= 0 && saved_curactmode < 2)
+        (void)dm2_runtime_item_hand_activable(
+            rt, saved_curacthero - 1, saved_curactmode);
+}
+
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
@@ -13999,6 +14071,10 @@ void dm2_v1_runtime_tick(void) {
                 rt->proceed_timers.actuator_tile_unbound_tally[tile_class];
         }
     }
+
+    /* The source game loop executes SKW_2759_12e6 after event processing;
+     * Firestaff's source tick is the nearest owner after its timer batch. */
+    dm2_runtime_repeat_hand_commands(rt);
 
     /* SKWINSPX/src/v4/skcore.cpp checks glbDoLightCheck after timer
      * processing and before drawing the player viewport; DOS/SKULLWIN use
@@ -21962,29 +22038,24 @@ int dm2_v1_runtime_recompute_player_pos(void)
     return 1;
 }
 
-int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+static int dm2_runtime_item_hand_activable(
+    DM2_V1_RuntimeState *rt, int hero_index, int hand)
+{
     DM2_V1_Hero *hero;
     DM2_V1_HandActivableCallbacks callbacks;
     DM2_V1_HandActionEntry actions[DM2_V1_ITEM_HAND_ACTIVABLE_MAX_ACTIONS];
-    DM2_V1_ItemMissileReceipt activation_receipt;
+    DM2_V1_ItemMissileReceipt receipt;
     DM2_RuntimeHandActivationQuery query;
     size_t action_count = 0u;
 
-    if (hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
+    if (!rt || hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
         hand < 0 || hand > 1 || !rt->source_party_valid ||
         !rt->session_snapshot_valid || !rt->record_pools_valid ||
-        hero_index >= rt->source_party.heros_in_party) {
+        hero_index >= rt->source_party.heros_in_party)
         return 0;
-    }
     hero = &rt->source_party.hero[hero_index];
-    /* SKWINSPX/src/v5/uiinput.cpp::DM2_ADJUST_UI_EVENT rejects hand-click
-     * events while that hand's cooldown is active, before dispatching
-     * ACTIVATE_ACTION_HAND. Keep this guard in the runtime owner as well so
-     * every authenticated platform input route observes the same gate. */
-    if (hero->curHP == 0 || hero->handcooldown[hand] != 0) return 0;
     memset(&callbacks, 0, sizeof(callbacks));
-    memset(&activation_receipt, 0, sizeof(activation_receipt));
+    memset(&receipt, 0, sizeof(receipt));
     memset(&query, 0, sizeof(query));
     query.rt = rt;
     query.hero_index = hero_index;
@@ -22002,12 +22073,30 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         dm2_runtime_hand_find_pouch_or_scabbard;
     callbacks.player_skill_level = dm2_runtime_hand_skill_level;
     callbacks.context = &query;
-    if (!dm2_v1_IS_ITEM_HAND_ACTIVABLE(
-            &callbacks, (int16_t)hero_index,
-            (uint16_t)hero->item[hand], (int16_t)hand,
-            actions, DM2_V1_ITEM_HAND_ACTIVABLE_MAX_ACTIONS,
-            &action_count, &activation_receipt) ||
-        !activation_receipt.valid || !activation_receipt.result) return 0;
+    return dm2_v1_IS_ITEM_HAND_ACTIVABLE(
+               &callbacks, (int16_t)hero_index,
+               (uint16_t)hero->item[hand], (int16_t)hand,
+               actions, DM2_V1_ITEM_HAND_ACTIVABLE_MAX_ACTIONS,
+               &action_count, &receipt) && receipt.valid && receipt.result;
+}
+
+int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+
+    if (hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
+        hand < 0 || hand > 1 || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        hero_index >= rt->source_party.heros_in_party) {
+        return 0;
+    }
+    hero = &rt->source_party.hero[hero_index];
+    /* SKWINSPX/src/v5/uiinput.cpp::DM2_ADJUST_UI_EVENT rejects hand-click
+     * events while that hand's cooldown is active, before dispatching
+     * ACTIVATE_ACTION_HAND. Keep this guard in the runtime owner as well so
+     * every authenticated platform input route observes the same gate. */
+    if (hero->curHP == 0 || hero->handcooldown[hand] != 0) return 0;
+    if (!dm2_runtime_item_hand_activable(rt, hero_index, hand)) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
     rt->source_selected_hand_action = (int16_t)hand;
@@ -25418,6 +25507,10 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
                 if (repeat_count != 0) {
                     rt->source_command_hand[active_hero][hand].random_range =
                         (uint16_t)repeat_count;
+                    rt->source_command_hand[active_hero][hand].item_handle =
+                        item;
+                    rt->source_command_hand[active_hero][hand].command_slot =
+                        (int8_t)slot_index;
                     rt->source_command_hand[active_hero][hand].consume_chance = 1u;
                 }
             }
