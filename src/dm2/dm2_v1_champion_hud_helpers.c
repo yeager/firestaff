@@ -56,6 +56,7 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     int16_t mode;
     uint16_t item_ref;
     int walkspeed_changed;
+    int spx_v4_semantics;
     int i;
 
     if (!out_receipt) {
@@ -84,6 +85,8 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     mode = input->mode;
     item_ref = input->item_ref;
+    spx_v4_semantics = input->source_variant ==
+        DM2_V1_ITEM_BONUS_SOURCE_SPX_V4;
 
     /* slot >= 0x1E is not an equip slot -- skip to weight recalc. */
     if (input->slot >= 0x1E) {
@@ -160,7 +163,7 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     for (i = 0; i < DM2_V1_NUM_SKILL_SLOTS; i++) {
         bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
                     item_ref, (uint8_t)(0x1E + i), fit_flag, mode);
-        if (bonus != 0) {
+        if (bonus != 0 || (spx_v4_semantics && dbspec_word0 != 0)) {
             out_receipt->sbonus_delta[i] += (int8_t)bonus;
             out_receipt->skill_dirty = 1;
             out_receipt->heroflag_or |= 0x2000;
@@ -179,10 +182,12 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     /* --- Light bonus (DBSPEC index 0x32) --- */
     /* Skipped when mode is 2, -2, or 3. */
-    if (mode != 2 && mode != -2 && mode != 3) {
+    if (spx_v4_semantics
+            ? (mode != 2 && mode != -1 && mode != 3)
+            : (mode != 2 && mode != -2 && mode != 3)) {
         bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
                     item_ref, 0x32, fit_flag, mode);
-        if (bonus != 0) {
+        if (bonus != 0 || (spx_v4_semantics && dbspec_word0 != 0)) {
             out_receipt->light_w00_delta += bonus;
             out_receipt->light_bonus_dirty = 1;
             if (mode != 0) {
@@ -193,7 +198,8 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     }
 
     /* --- Walkspeed timer (mode == 2 and walkspeed changed) --- */
-    if (walkspeed_changed && mode == 2) {
+    if ((walkspeed_changed || (spx_v4_semantics && dbspec_word0 != 0)) &&
+        mode == 2) {
         out_receipt->queue_timer = 1;
         if (callbacks->query_dbspec_word) {
             out_receipt->timer_dbspec_0x13 =

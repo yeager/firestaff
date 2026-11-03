@@ -12,6 +12,8 @@ extern "C" {
 #define DM2_V1_CHAMPION_HUD_NULL_ITEM 0xffffu
 #define DM2_V1_NUM_ABILITIES  7
 #define DM2_V1_NUM_SKILL_SLOTS 20
+#define DM2_V1_ITEM_BONUS_SOURCE_DOS_V5 0
+#define DM2_V1_ITEM_BONUS_SOURCE_SPX_V4 1
 
 typedef struct {
     int handled;
@@ -71,6 +73,7 @@ typedef struct {
     uint16_t item_ref;      /* edx: item record (0xFFFF = bail) */
     int16_t  slot;          /* ebx: equip slot index */
     int16_t  mode;          /* ecx: operation mode */
+    uint8_t source_variant; /* edition behavior; defaults to DOS/v5 */
 } DM2_V1_ProcessItemBonusInput;
 
 /* Receipt: all hero mutations produced by the algorithm.
