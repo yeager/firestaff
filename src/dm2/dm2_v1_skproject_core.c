@@ -23092,6 +23092,11 @@ static int dm2_v1_skproject_xact82_sell(
             receipt->blocked_missing_context = 1;
             return 0;
         }
+        if (total_value != price) {
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
         if (coin_count == 0u) {
             receipt->payout_incomplete = 1;
             receipt->blocked_missing_context = 1;
