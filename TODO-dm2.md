@@ -1,3 +1,16 @@
+2026-11-03 DM2 FM Towns M11 movement controls:
+Authentic Towns GDAT stores the six 29x23 movement-arrow placements in its
+RAW4 `QUERY_BLIT_RECT` table; they are not present in the expanded-rectangle
+receipt list. The HUD builder now resolves each placement from that source
+table, binds the table identity through authenticated `RECT_A1`, and appends
+all six arrows to the Towns squad plan. The authentic FM Towns NEW GAME test
+now checks the 11-command plan, exact F5 backdrop pixels and consumed source
+materials. A `--debug` run using the installed Towns archive reports an
+accepted frame, 11 complete HUD commands, zero blocked materials, three
+source-bound portraits and non-empty viewport/HUD regions. DOS, Macintosh and
+Amiga real-media M11/boot checks also pass; their existing arrow receipts are
+left unchanged. Other HUD bindings and full platform parity remain open.
+
 2026-11-02 SKProject `DRAW_ITEM_IN_HAND`:
 DOS and SPX v4/v5 resolve the hand item frame, copy its local palette and
 blit a 4-bpp icon into the hand record's bitmap using source dimensions. DOS
@@ -2984,6 +2997,27 @@ for horizontal fallback bars. The lighting/palette runtime gate checks both
 the authentic vertical dimensions and the existing horizontal behavior. This
 source geometry fix has no per-platform original-media capture yet; verify the
 reported HUD at matching gameplay poses across DOS, Mac, Amiga and FM Towns.
+
+2026-11-02 authentic four-platform presented-pixel diagnostics: `--debug` now
+reports non-black pixel count, palette-index diversity and a hash for the
+320x200 viewport, right HUD, top band and bottom band after the accepted V1
+frame reaches M11's indexed framebuffer. This is separate from GDAT asset
+receipts and consumed-command counts. Fresh normal-menu starts against the
+installed original DOS EN, Amiga EN, FM Towns JA and Macintosh EN archives all
+reached map 0 at `(1,8)`, facing north, with one champion. Every platform
+reports `accepted=1`, `complete=1`, zero blocked materials and zero core
+fallbacks. Across sampled frames, the viewport region has 22,178–24,123
+non-black pixels of 27,360 on DOS/Towns, 22,406 on Amiga and 23,038–24,151 on
+Macintosh. The right HUD has 3,836/18,400 pixels on DOS/Macintosh, 5,815 on
+Amiga and 2,827 on Towns. The bottom 320x40 band has 4,594/12,800 on DOS,
+4,516 on Macintosh, 4,730 on Amiga and 3,568 on Towns. The DOS and Towns
+captures visibly retain large dark areas despite the successful receipts;
+the Amiga and Macintosh traces show the same coverage gap at the same start
+pose. This confirms that `complete` means command/asset consumption, not
+composition coverage or visual parity. It does not establish which dark
+areas are incorrect for a one-champion pose. Compare matching source-owned
+captures across all four platforms before changing layout or selecting
+substitute assets.
 
 2026-11-02 SKProject `DM2_FIND_LADDAR_AROUND` / `FIND_LADDER_AROUND` audit: the verified DOS (`dm2byh.cpp:1982`) and SPX v5 (`skgdtqdb.cpp:1647`) bodies scan four adjacent tile-record chains. Their DB2 text-ornament usage gates differ: DOS admits usage 7; SPX v5 admits usages 6 and 7. Firestaff's source helper now selects these variants explicitly, checks DB3 ladder actuators against target altitude and DB2 ornaments against WALL_GFX GDAT direction, and returns direction plus an optional actuator handle. Raw source-pool records use `source_words_big_endian` independently of dungeon-word order; the byte-order distinction has a focused contract check, and the authenticated Mac dungeon still yields valid ladder matches. The SPX v4 source body is not present in the inspected reference checkout and remains unverified. The older 3x3 square-type helper remains narrow; no source query is bound to a production movement/transition owner, so all platform variants remain partial.
 2026-11-02 SKProject `DM2_FIND_LADDAR_AROUND` / `FIND_LADDER_AROUND` audit: DOS (`dm2byh.cpp:1982`), SPX v4 (`skdungn.cpp:202`) and SPX v5 (`skgdtqdb.cpp:1647`) scan four adjacent tile-record chains. Firestaff now has `dm2_v1_skproject_find_ladder_around_source`, which checks DB3 ladder actuators against target altitude, DB2 text ornaments against usage and WALL_GFX GDAT direction, and returns direction plus an optional actuator handle. It can use live record pools and source-endian words. The older 3x3 square-type helper remains narrow; the source query is still not bound to a production movement/transition owner, so all source variants remain partial.

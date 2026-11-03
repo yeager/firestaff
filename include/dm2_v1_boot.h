@@ -421,6 +421,15 @@ typedef struct {
 
 /* DM2 boot profile — collected at startup before game loop begins.
  * All fields are set once and read-only during gameplay. */
+enum {
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_NONE = 0,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_RECT = 1,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_ASSET = 2,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_ARROW_RAW4 = 3,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_SQUAD = 4,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_APPEND = 5,
+    DM2_V1_BOOT_HUD_PLAN_FAILURE_TOWNS_HASH = 6
+};
 typedef struct {
     /* ── Identity ────────────────────────────────────────── */
     char             game_id[8];        /* "dm2" */
@@ -607,6 +616,8 @@ typedef struct {
      * live session: tick, movement and world interaction must remain inert
      * until party, record pools, possessions and timers share one owner. */
     int     source_game_load_session_ready;
+    int     last_hud_m11_plan_failure_stage;
+    int     last_hud_m11_plan_failure_index;
 } DM2_V1_BootProfile;
 
 /* Retain one complete source-ordered New Game candidate in this profile.
