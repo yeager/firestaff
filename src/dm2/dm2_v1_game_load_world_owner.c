@@ -24,6 +24,31 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* These world-load event paths operate on byte-for-byte dungeon records.
+ * Route actuator word access through the matching mutable record pool so
+ * Mac/Amiga big-endian words are interpreted and written in source order. */
+#define dm2_actu_w2(r) dm2_actu_w2_for_pool((r), pool_set)
+#define dm2_actu_type(r) dm2_actu_type_for_pool((r), pool_set)
+#define dm2_actu_data(r) dm2_actu_data_for_pool((r), pool_set)
+#define dm2_actu_set_data(r, v) dm2_actu_set_data_for_pool((r), (v), pool_set)
+#define dm2_actu_w4(r) dm2_actu_w4_for_pool((r), pool_set)
+#define dm2_actu_set_w4(r, v) dm2_actu_set_w4_for_pool((r), (v), pool_set)
+#define dm2_actu_active_status(r) dm2_actu_active_status_for_pool((r), pool_set)
+#define dm2_actu_set_active_status(r, v) \
+    dm2_actu_set_active_status_for_pool((r), (v), pool_set)
+#define dm2_actu_once_only(r) dm2_actu_once_only_for_pool((r), pool_set)
+#define dm2_actu_set_once_only(r, v) \
+    dm2_actu_set_once_only_for_pool((r), (v), pool_set)
+#define dm2_actu_action_type(r) dm2_actu_action_type_for_pool((r), pool_set)
+#define dm2_actu_revert_effect(r) dm2_actu_revert_effect_for_pool((r), pool_set)
+#define dm2_actu_sound_effect(r) dm2_actu_sound_effect_for_pool((r), pool_set)
+#define dm2_actu_delay(r) dm2_actu_delay_for_pool((r), pool_set)
+#define dm2_actu_w6(r) dm2_actu_w6_for_pool((r), pool_set)
+#define dm2_actu_direction(r) dm2_actu_direction_for_pool((r), pool_set)
+#define dm2_actu_xcoord(r) dm2_actu_xcoord_for_pool((r), pool_set)
+#define dm2_actu_ycoord(r) dm2_actu_ycoord_for_pool((r), pool_set)
+#define dm2_actu_next_link(r) dm2_actu_next_link_for_pool((r), pool_set)
+
 enum {
     DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG = 0x474c574fu, /* "GLWO" */
     DM2_V1_GAME_LOAD_RUNTIME_CANDIDATE_LIFECYCLE_TAG = 0x47534c43u /* "GSLC" */
@@ -4138,6 +4163,7 @@ static int dm2_v1_game_load_candidate_dispatch_counter_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadCandidateActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     int limit = 0, count = 0, steps = 0;
     int16_t link;
     int16_t *links = NULL;
@@ -4481,7 +4507,8 @@ static int dm2_v1_game_load_candidate_dispatch_floor_text(
         if (!record || !dm2_v1_record_pool_next_link(
                 &candidate->record_pools, link, &next))
             goto done;
-        w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        w2 = dm2_actu_read_word(record, 2u,
+            candidate->record_pools.source_words_big_endian);
         mode = (uint8_t)((w2 >> 1) & 3u);
         text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
         ext_usage = (uint8_t)((text_index >> 8) & 0x1fu);
@@ -4519,11 +4546,12 @@ static int dm2_v1_game_load_candidate_dispatch_floor_text(
     for (int i = 0; i < link_count; ++i) {
         uint8_t *record = dm2_v1_record_pool_address_mut(
             &candidate->record_pools, links[i]);
-        uint16_t w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        uint16_t w2 = dm2_actu_read_word(record, 2u,
+            candidate->record_pools.source_words_big_endian);
         if ((uint8_t)(w2 & 1u) != visibility[i]) {
             w2 = (uint16_t)((w2 & ~1u) | visibility[i]);
-            record[2] = (uint8_t)w2;
-            record[3] = (uint8_t)(w2 >> 8);
+            dm2_actu_write_word(record, 2u, w2,
+                candidate->record_pools.source_words_big_endian);
             ++receipt->text_records_toggled;
         }
     }
@@ -4547,6 +4575,7 @@ static int dm2_v1_game_load_candidate_dispatch_finite_relay_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadCandidateActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     int limit = 0, count = 0, message_count = 0, steps = 0;
     int16_t link;
     int16_t *links = NULL;
@@ -4676,6 +4705,7 @@ static int dm2_v1_game_load_candidate_dispatch_cross_map_wall(
     uint8_t direction, uint8_t action,
     DM2_V1_GameLoadCandidateActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     int limit = 0, count = 0, steps = 0;
     int16_t link;
     DM2_V1_TimerEntry *messages = NULL;
@@ -4790,6 +4820,7 @@ static int dm2_v1_game_load_candidate_dispatch_relay_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadCandidateActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     int limit = 0, count = 0, message_count = 0, steps = 0;
     int16_t link;
     DM2_V1_TimerEntry *messages = NULL;
@@ -4911,6 +4942,7 @@ static int dm2_v1_game_load_candidate_dispatch_push_button_floor(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
     uint8_t action, DM2_V1_GameLoadCandidateActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     int limit = 0;
     int count = 0;
     int16_t link;
@@ -5266,6 +5298,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
     uint32_t game_tick,
     DM2_V1_GameLoadCandidateTickGeneratorReceipt *out_receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     DM2_V1_GameLoadCandidateTickGeneratorReceipt receipt;
     DM2_V1_TimerEntry timer_entry;
     DM2_V1_TimerEntry message;
@@ -5274,7 +5307,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
     DM2_V1_TimerEntry *timer_backup = NULL;
     int16_t *index_backup = NULL;
     uint8_t *record = NULL;
-    uint8_t record_byte4 = 0u;
+    uint16_t record_word4_backup = 0u;
     int16_t timer_slot;
     int old_map;
     int map;
@@ -5323,9 +5356,9 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
                                                    record_link)))
         goto generator_rollback;
     receipt.action = 0u;
-    record_byte4 = record[4];
-    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    record_word4_backup = dm2_actu_w4(record);
+    w2 = dm2_actu_w2(record);
+    w4 = dm2_actu_w4(record);
     control_bit2 = (w4 & 0x0004u) != 0u;
     alternating = (w4 & 0x0018u) == 0x0018u;
     if (alternating) {
@@ -5375,7 +5408,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
             goto generator_rollback;
         receipt.requeued = 1;
     } else {
-        record[4] &= (uint8_t)~0x01u;
+        dm2_actu_set_active_status(record, 0u);
         receipt.active_flag_cleared = 1;
     }
     receipt.valid = 1;
@@ -5395,7 +5428,7 @@ generator_rollback:
             (void)dm2_v1_game_load_runtime_candidate_change_current_map(
                 candidate, old_map, 0);
     }
-    if (record) record[4] = record_byte4;
+    if (record) dm2_actu_set_w4(record, record_word4_backup);
     free(index_backup);
     free(timer_backup);
     if (out_receipt) *out_receipt = receipt;
@@ -7373,6 +7406,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
     uint32_t game_tick,
     DM2_V1_GameLoadOrnateNoiseTimerReceipt *out_receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     DM2_V1_GameLoadOrnateNoiseTimerReceipt receipt;
     DM2_V1_TimerEntry timer_entry;
     DM2_V1_TimerEntry next_timer;
@@ -7465,8 +7499,8 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
         goto ornate_noise_rollback;
     }
     receipt.map_switch = old_map != map;
-    receipt.word2_before = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    active = (record[4] & 0x01u) != 0;
+    receipt.word2_before = dm2_actu_w2(record);
+    active = dm2_actu_active_status(record) != 0;
     if (active) {
         raw_tile = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
         if (raw_tile < 0 || map != candidate->local_level_graphics.map) {
@@ -7475,7 +7509,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
         }
         wall = ((raw_tile >> 5) & 7) == 0;
         category = wall ? 0x09 : 0x0a;
-        actuator_word = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+        actuator_word = dm2_actu_w4(record);
         graphic_index = (uint8_t)((actuator_word >> 12) & 0x0fu);
         decoration = 0xffu;
         if (wall) {
@@ -7511,9 +7545,9 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
     }
     dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
     if (!active) {
-        record[2] = (uint8_t)(receipt.word2_before & 0xffu);
-        record[3] = 0u;
-        receipt.word2_after = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        dm2_actu_set_data(record,
+            (uint16_t)(dm2_actu_data(record) & 0xffu));
+        receipt.word2_after = dm2_actu_w2(record);
         receipt.frame_cleared = 1;
     } else {
         sound_env.current_map = (int16_t)map;
@@ -7576,6 +7610,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
     uint32_t game_tick,
     DM2_V1_GameLoadOrnateAnimatorTimerReceipt *out_receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = candidate ? &candidate->record_pools : NULL;
     DM2_V1_GameLoadOrnateAnimatorTimerReceipt receipt;
     DM2_V1_TimerEntry timer_entry;
     DM2_V1_TimerEntry next_timer;
@@ -7659,7 +7694,7 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
      * unlike 0x5A, 0x55 must not infer the GDAT category from the tile. */
     wall = (timer_entry.wvalueB & 1) != 0;
     category = wall ? 0x09 : 0x0a;
-    word4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    word4 = dm2_actu_w4(record);
     graphic_index = (uint8_t)((word4 >> 12) & 0x0fu);
     decoration = 0xffu;
     if (wall) {
@@ -7677,14 +7712,13 @@ int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
     }
     receipt.decoration = decoration;
     receipt.animation_length = anim.length;
-    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    word2 = dm2_actu_w2(record);
     frame = (uint16_t)((word2 >> 7) & 0x1ffu);
     receipt.word2_before = word2;
     receipt.frame_before = frame;
     frame = (uint16_t)((frame + 1u) & 0x1ffu);
     word2 = (uint16_t)((word2 & 0x007fu) | (frame << 7));
-    record[2] = (uint8_t)word2;
-    record[3] = (uint8_t)(word2 >> 8);
+    dm2_actu_set_data(record, frame);
     receipt.frame_after = frame;
     receipt.word2_after = word2;
     receipt.frame_advanced = 1;
@@ -7880,12 +7914,12 @@ static int dm2_v1_resurrection_cloud_has_matching_actuator(
             int match;
             if (pools->pools[DM2_DB_ACTUATOR].record_size < 6)
                 return -1;
-            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            w2 = dm2_actu_w2_for_pool(record, pools);
             if ((w2 & 0x7fu) == 0x26u) {
                 match = (w2 & 0xff80u) == 0xff80u ||
                     (uint16_t)(w2 >> 7) ==
                         (uint16_t)((cloud_spell - (int16_t)0xff80) & 0x7f);
-                w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+                w4 = dm2_actu_w4_for_pool(record, pools);
                 match ^= (int)((w4 >> 5) & 1u);
                 if ((w4 & 0x0004u) != 0u &&
                     intensity < ((uint16_t)cloud_spell == 0xff82u ? 0x7f : 0xff))
@@ -7903,8 +7937,8 @@ static int dm2_v1_resurrection_cloud_has_matching_actuator(
                         else next_once = once; /* source default: unchanged */
                         w4 = (uint16_t)((w4 & (uint16_t)~0x0004u) |
                                         ((uint16_t)next_once << 2));
-                        record_mut[4] = (uint8_t)w4;
-                        record_mut[5] = (uint8_t)(w4 >> 8);
+                        dm2_actu_set_once_only_for_pool(
+                            record_mut, next_once, pools);
                     }
                     if (!apply) return 1;
                 }
@@ -12530,12 +12564,13 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
     const DM2_V1_TimerEntry *timer,
     DM2_V1_GameLoadTickGeneratorReceipt *out_receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     DM2_V1_GameLoadTickGeneratorReceipt receipt;
     DM2_V1_TimerEntry *timer_backup = NULL;
     int16_t *index_backup = NULL;
     DM2_V1_TimerQueue queue_backup;
     uint8_t *record;
-    uint8_t record_byte4;
+    uint16_t record_word4_backup;
     const int previous_map = owner ? owner->current_map : 0;
     const int map = timer ? dm2_v1_timer_get_map(timer) : -1;
     const int16_t record_link = timer ? (int16_t)((uint16_t)(uint8_t)timer->xA |
@@ -12560,7 +12595,7 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
     }
     record = dm2_v1_record_pool_address_mut(&owner->record_pools, record_link);
     if (!record) return 0;
-    record_byte4 = record[4];
+    record_word4_backup = dm2_actu_w4(record);
 
     /* c_tim_proc.cpp:995-1066 schedules an ACTUATE message before it places
      * the next 0x56 instance in c_tim. Snapshot the complete private heap so
@@ -12577,8 +12612,8 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
     queue_backup = owner->timer_queue;
     owner->current_map = map; /* PROCEED_TIMERS changes map before dispatch. */
 
-    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    w2 = dm2_actu_w2(record);
+    w4 = dm2_actu_w4(record);
     control_bit2 = (w4 & 0x0004u) != 0u;
     alternating = (w4 & 0x0018u) == 0x0018u;
     if (alternating) {
@@ -12634,7 +12669,7 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
         if (dm2_v1_timer_queue(&owner->timer_queue, &continuation) < 0) goto fail;
         receipt.requeued = 1;
     } else {
-        record[4] &= (uint8_t)~0x01u;
+        dm2_actu_set_active_status(record, 0u);
         receipt.active_flag_cleared = 1;
     }
 
@@ -12650,7 +12685,7 @@ fail:
     if (index_backup) memcpy(owner->timer_indices, index_backup,
         (size_t)owner->timer_capacity * sizeof(*index_backup));
     if (timer_backup && index_backup) owner->timer_queue = queue_backup;
-    if (record) record[4] = record_byte4;
+    if (record) dm2_actu_set_w4(record, record_word4_backup);
     owner->current_map = previous_map;
     free(index_backup);
     free(timer_backup);
@@ -12681,6 +12716,7 @@ static int dm2_v1_game_load_owner_dispatch_push_button_floor(
     DM2_V1_GameLoadWorldOwner *owner, int map, int x, int y,
     uint8_t action, DM2_V1_GameLoadActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     int chain_limit = 0;
     int16_t link;
     int16_t *targets = NULL;
@@ -12805,6 +12841,7 @@ static int dm2_v1_game_load_owner_dispatch_cross_map_wall(
     DM2_V1_GameLoadWorldOwner *owner, int map, int x, int y,
     uint8_t direction, uint8_t action, DM2_V1_GameLoadActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     int chain_limit = 0;
     int16_t link;
     DM2_V1_TimerEntry *messages = NULL;
@@ -12951,6 +12988,7 @@ static int dm2_v1_game_load_owner_dispatch_counter_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     int chain_limit = 0;
     int16_t link;
     int16_t *links = NULL;
@@ -13133,6 +13171,7 @@ static int dm2_v1_game_load_owner_dispatch_relay_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     int chain_limit = 0;
     int16_t link;
     DM2_V1_TimerEntry *messages = NULL;
@@ -13272,6 +13311,7 @@ static int dm2_v1_game_load_owner_dispatch_finite_relay_chain(
     uint8_t direction, uint8_t incoming_action,
     DM2_V1_GameLoadActuateReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = owner ? &owner->record_pools : NULL;
     int limit = 0, count = 0, message_count = 0, steps = 0, result = 0;
     int16_t link;
     int16_t *links = NULL;
@@ -13571,7 +13611,8 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
                 receipt.blocked_incomplete_chain = 1;
                 goto floor_done;
             }
-            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            w2 = dm2_actu_read_word(record, 2u,
+                owner->record_pools.source_words_big_endian);
             mode = (uint8_t)((w2 >> 1) & 3u);
             text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
             ext_usage = (uint8_t)((text_index >> 8) & 0x1fu);
@@ -13634,11 +13675,12 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
             uint8_t *record = dm2_v1_record_pool_address_mut(
                 &owner->record_pools, links[i]);
             uint16_t w2;
-            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            w2 = dm2_actu_read_word(record, 2u,
+                owner->record_pools.source_words_big_endian);
             if ((uint8_t)(w2 & 1u) != visibility[i]) {
                 w2 = (uint16_t)((w2 & ~1u) | visibility[i]);
-                record[2] = (uint8_t)w2;
-                record[3] = (uint8_t)(w2 >> 8);
+                dm2_actu_write_word(record, 2u, w2,
+                    owner->record_pools.source_words_big_endian);
                 ++receipt.text_records_toggled;
             }
         }

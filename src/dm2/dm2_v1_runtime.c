@@ -90,6 +90,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* The runtime record pools preserve source byte order. Use their endian
+ * metadata for every actuator word read or write in this translation unit. */
+#define dm2_actu_w2(r) dm2_actu_w2_for_pool((r), pool_set)
+#define dm2_actu_type(r) dm2_actu_type_for_pool((r), pool_set)
+#define dm2_actu_data(r) dm2_actu_data_for_pool((r), pool_set)
+#define dm2_actu_set_data(r, v) dm2_actu_set_data_for_pool((r), (v), pool_set)
+#define dm2_actu_w4(r) dm2_actu_w4_for_pool((r), pool_set)
+#define dm2_actu_set_w4(r, v) dm2_actu_set_w4_for_pool((r), (v), pool_set)
+#define dm2_actu_active_status(r) dm2_actu_active_status_for_pool((r), pool_set)
+#define dm2_actu_set_active_status(r, v) \
+    dm2_actu_set_active_status_for_pool((r), (v), pool_set)
+#define dm2_actu_once_only(r) dm2_actu_once_only_for_pool((r), pool_set)
+#define dm2_actu_set_once_only(r, v) \
+    dm2_actu_set_once_only_for_pool((r), (v), pool_set)
+#define dm2_actu_action_type(r) dm2_actu_action_type_for_pool((r), pool_set)
+#define dm2_actu_revert_effect(r) dm2_actu_revert_effect_for_pool((r), pool_set)
+#define dm2_actu_sound_effect(r) dm2_actu_sound_effect_for_pool((r), pool_set)
+#define dm2_actu_delay(r) dm2_actu_delay_for_pool((r), pool_set)
+#define dm2_actu_w6(r) dm2_actu_w6_for_pool((r), pool_set)
+#define dm2_actu_direction(r) dm2_actu_direction_for_pool((r), pool_set)
+#define dm2_actu_xcoord(r) dm2_actu_xcoord_for_pool((r), pool_set)
+#define dm2_actu_ycoord(r) dm2_actu_ycoord_for_pool((r), pool_set)
+#define dm2_actu_next_link(r) dm2_actu_next_link_for_pool((r), pool_set)
+
 static int dm2_runtime_projectile_query_word(
     int record_link, int word_index, void *userdata);
 static int dm2_runtime_projectile_query_weight(
@@ -10335,6 +10359,7 @@ static int16_t dm2_runtime_get_ornate_anim_len(
     void *context, const uint8_t *record, int is_wall)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_RecordPoolSet *pool_set = rt ? &rt->record_pools : NULL;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_GetOrnateAnimLenReceipt anim;
     int category;
@@ -10348,8 +10373,7 @@ static int16_t dm2_runtime_get_ornate_anim_len(
 
     category = is_wall ? 0x09 : 0x0a;
     gfx_count = is_wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
-    gfx_index = (uint8_t)(((uint16_t)record[4] |
-                           ((uint16_t)record[5] << 8)) >> 12);
+    gfx_index = (uint8_t)(dm2_actu_w4(record) >> 12);
     if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count) {
         decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
                              : rt->map_floor_gfx_list[gfx_index - 1u];
@@ -10375,6 +10399,7 @@ static void dm2_runtime_queue_ornate_activation_sound(
     int map, int x, int y, uint32_t game_tick, int is_wall)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_RecordPoolSet *pool_set = rt ? &rt->record_pools : NULL;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SoundQueueEnv env;
@@ -10395,8 +10420,7 @@ static void dm2_runtime_queue_ornate_activation_sound(
     category = is_wall ? 0x09 : 0x0a;
     gfx_count = is_wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
     if (gfx_count <= 0 || gfx_count > 16) return;
-    gfx_index = (uint8_t)((((uint16_t)record[4] |
-                            ((uint16_t)record[5] << 8)) >> 12) & 0x0fu);
+    gfx_index = (uint8_t)((dm2_actu_w4(record) >> 12) & 0x0fu);
     if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
         decoration = is_wall ? rt->map_wall_gfx_list[gfx_index - 1u]
                              : rt->map_floor_gfx_list[gfx_index - 1u];
@@ -12407,6 +12431,7 @@ static void dm2_runtime_tick_generator_invoke(void *ctx, uint8_t *record,
     DM2_V1_RuntimeTickGeneratorContext *generator =
         (DM2_V1_RuntimeTickGeneratorContext *)ctx;
     DM2_V1_RuntimeState *rt = generator ? generator->runtime : NULL;
+    DM2_V1_RecordPoolSet *pool_set = rt ? &rt->record_pools : NULL;
     DM2_V1_SourceTimer message;
     int map;
 
@@ -12743,6 +12768,7 @@ static int dm2_runtime_ornate_animator_timer(
     uint16_t source_index __attribute__((unused)),
     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_RecordPoolSet *pool_set = rt ? &rt->record_pools : NULL;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SourceTimerQueue queue_backup;
     DM2_V1_SourceTimer continuation;
@@ -12782,9 +12808,8 @@ static int dm2_runtime_ornate_animator_timer(
      * getBlong() is passed directly to DM2_GET_ORNATE_ANIM_LEN. */
     wall = (timer->value_b & 1) != 0;
     category = wall ? 0x09 : 0x0a;
-    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    gfx_index = (uint8_t)(((uint16_t)record[4] |
-                           ((uint16_t)record[5] << 8)) >> 12);
+    word2 = dm2_actu_w2(record);
+    gfx_index = (uint8_t)(dm2_actu_w4(record) >> 12);
     wall_gfx_count = dm2_v1_dungeon_get_map_wall_gfx_list(
         dungeon, map, wall_gfx_list, (int)sizeof(wall_gfx_list));
     floor_gfx_count = dm2_v1_dungeon_get_map_floor_gfx_list(
@@ -12818,12 +12843,10 @@ static int dm2_runtime_ornate_animator_timer(
            rt->record_pools.pools[3].record_size);
     frame = (uint16_t)((word2 >> 7) & 0x1ffu);
     frame = (uint16_t)((frame + 1u) & 0x1ffu);
-    word2 = (uint16_t)((word2 & 0x007fu) | (frame << 7));
-    record[2] = (uint8_t)word2;
-    record[3] = (uint8_t)(word2 >> 8);
+    dm2_actu_set_data(record, frame);
     queue_backup = rt->timer_queue;
     if ((frame % (uint16_t)anim.length) == 0u) {
-        record[4] &= (uint8_t)~0x01u;
+        dm2_actu_set_active_status(record, 0u);
         return 1;
     }
     continuation = *timer;
@@ -12887,6 +12910,7 @@ static int dm2_runtime_ornate_noise_timer(
     uint16_t source_index,
     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_RecordPoolSet *pool_set = rt ? &rt->record_pools : NULL;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_GameState *game;
     DM2_V1_SourceTimerQueue queue_backup;
@@ -12930,9 +12954,10 @@ static int dm2_runtime_ornate_noise_timer(
      * player map. In the packed DB3 word, only bit 15 is removed. The source
      * does this before looking up the timer tile, so off-map timers must not
      * be rejected by the live-map/tile guards below. */
-    active = (record[4] & 0x01u) != 0;
+    active = dm2_actu_active_status(record) != 0;
     if (!active || map != game->current_level) {
-        record[3] &= 0x7fu;
+        dm2_actu_set_data(record,
+            (uint16_t)(dm2_actu_data(record) & 0xffu));
         return 1;
     }
     if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
@@ -12954,8 +12979,7 @@ static int dm2_runtime_ornate_noise_timer(
     wall = ((raw_tile >> 5) & 7) == 0;
     category = wall ? 0x09 : 0x0a;
     gfx_count = wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
-    gfx_index = (uint8_t)(((uint16_t)record[4] |
-                           ((uint16_t)record[5] << 8)) >> 12);
+    gfx_index = (uint8_t)(dm2_actu_w4(record) >> 12);
     decoration = 0xffu;
     if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count) {
         decoration = wall ? rt->map_wall_gfx_list[gfx_index - 1u]
