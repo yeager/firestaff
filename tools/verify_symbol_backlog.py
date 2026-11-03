@@ -25,11 +25,12 @@ def read_skproject_reviews(path: Path) -> list[dict[str, str]]:
     """Read the headerless seven-column active-source review ledger."""
     with path.open(newline="", encoding="utf-8") as handle:
         rows: list[dict[str, str]] = []
-        for line_number, values in enumerate(csv.reader(handle, delimiter="\t"), 1):
+        for line_number, line in enumerate(handle, 1):
+            values = line.rstrip("\r\n").split("\t", len(SKPROJECT_REVIEW_COLUMNS) - 1)
             if len(values) != len(SKPROJECT_REVIEW_COLUMNS):
                 raise AssertionError(
-                    f"{path}:{line_number}: expected {len(SKPROJECT_REVIEW_COLUMNS)} "
-                    f"columns, found {len(values)}"
+                    f"{path}:{line_number}: expected at least "
+                    f"{len(SKPROJECT_REVIEW_COLUMNS)} tab-separated fields, found {len(values)}"
                 )
             rows.append(dict(zip(SKPROJECT_REVIEW_COLUMNS, values)))
     return rows
