@@ -209,6 +209,29 @@ static int16_t container_panel_bmp_width(void *ctx, void *bmp) {
     return 16;
 }
 
+static int16_t container_panel_button_group_width(void *ctx,
+                                                   int32_t button_group) {
+    (void)ctx;
+    (void)button_group;
+    return 16;
+}
+
+static DM2_V1_Rect *container_panel_offset_rect(void *ctx,
+                                                int32_t button_group,
+                                                DM2_V1_Rect *out,
+                                                DM2_V1_Rect *in) {
+    (void)ctx;
+    (void)button_group;
+    *out = *in;
+    return out;
+}
+
+static int32_t container_panel_bmp_bpp(void *ctx, void *bmp) {
+    (void)ctx;
+    (void)bmp;
+    return 4;
+}
+
 static void *container_panel_bmp(void *ctx, int16_t dbidx) {
     (void)dbidx;
     return ctx;
@@ -240,8 +263,11 @@ static void setup_container_panel_callbacks(DM2_V1_GuiDrawCallbacks *cb) {
     cb->query_gdat_image = container_panel_image;
     cb->query_blit_rect = container_panel_blit_rect;
     cb->get_bmp_width = container_panel_bmp_width;
+    cb->get_button_group_width = container_panel_button_group_width;
     cb->get_bmp = container_panel_bmp;
+    cb->get_bmp_bpp = container_panel_bmp_bpp;
     cb->blit = container_panel_blit;
+    cb->offset_rect = container_panel_offset_rect;
     cb->get_container_item = container_panel_item;
     cb->query_cls1 = container_panel_cls1;
     cb->query_cls2 = container_panel_cls2;
@@ -255,8 +281,11 @@ static void test_draw_container_panel_keeps_frame_without_cls2_query(void) {
     cb.query_gdat_image = container_panel_image;
     cb.query_blit_rect = container_panel_blit_rect;
     cb.get_bmp_width = container_panel_bmp_width;
+    cb.get_button_group_width = container_panel_button_group_width;
     cb.get_bmp = container_panel_bmp;
+    cb.get_bmp_bpp = container_panel_bmp_bpp;
     cb.blit = container_panel_blit;
+    cb.offset_rect = container_panel_offset_rect;
 
     dm2_v1_draw_container_panel(0, 1, &cb, &fixture);
 
