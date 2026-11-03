@@ -155,6 +155,12 @@ typedef struct {
     uint8_t consume_chance;
 } DM2_RuntimeCommandHandState;
 
+typedef struct {
+    uint16_t item_handle;
+    int8_t command_slot;
+    int8_t action_id;
+} DM2_RuntimeHandCommandRef;
+
 static int dm2_runtime_apply_entered_db1_teleporter(
     DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
 
@@ -198,6 +204,9 @@ struct DM2_V1_RuntimeState {
      * eight-byte v1e0adc record per hero and hand. Keep the fields consumed
      * by that transaction as values instead of depending on host layout. */
     DM2_RuntimeCommandHandState source_command_hand[DM2_MAX_HEROES][2];
+    /* DM2_ENGAGE_COMMAND writes its action id to c_hero.handcmd, while
+     * follow-up runtime queries also need the originating CMDSTR slot. */
+    DM2_RuntimeHandCommandRef source_hand_command[DM2_MAX_HEROES][2];
     /* c_events.cpp/startend.cpp savegames1.b_04: Aura of Speed. */
     uint8_t source_aura_of_speed;
     int source_aura_of_speed_valid;
@@ -5441,6 +5450,13 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
     rt->source_party = candidate->party;
     memset(rt->source_command_hand, 0, sizeof(rt->source_command_hand));
+    for (int hero = 0; hero < DM2_MAX_HEROES; ++hero) {
+        for (int hand = 0; hand < 2; ++hand) {
+            rt->source_hand_command[hero][hand].item_handle = 0xffffu;
+            rt->source_hand_command[hero][hand].command_slot = -1;
+            rt->source_hand_command[hero][hand].action_id = -1;
+        }
+    }
     rt->source_party_valid = 1;
     rt->source_next_champion_number = candidate->source_next_champion_number;
     rt->source_hero_ench_countdown = candidate->source_savegames1_valid &&
@@ -24317,7 +24333,13 @@ static int dm2_runtime_attack_creature_at(
         return 0;
     loader = dm2_v1_boot_asset_loader(rt->boot);
     if (!loader) return 0;
-    slot = hero->handcmd[hand];
+    slot = rt->source_hand_command[rt->source_party.curacthero - 1][hand]
+               .command_slot;
+    if (rt->source_hand_command[rt->source_party.curacthero - 1][hand]
+            .item_handle != item || hero->handcmd[hand] !=
+                rt->source_hand_command[rt->source_party.curacthero - 1][hand]
+                    .action_id)
+        return 0;
     if (slot < 0 || slot > 2) return 0;
     memset(&request, 0, sizeof(request));
     request.hero_index = rt->source_party.curacthero - 1;
@@ -25378,11 +25400,19 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
         if (receipt) receipt->fail_closed = 1;
         return 0;
     }
-    /* c_engage.cpp writes the raw command selector to
-     * hero->handcmd[curactmode] before resolving CMDSTR.  Keep that source
-     * owner live so a subsequent party/creature collision can resolve the
-     * same authenticated action rather than guessing from the UI slot. */
-    hero->handcmd[rt->source_party.curactmode] = (int8_t)slot_index;
+    /* c_engage.cpp stores CMDSTR field 2 (the action id) in handcmd, not the
+     * zero-based command slot. Keep the slot separately for bounded runtime
+     * lookups that need the original CMDSTR row. */
+    hero->handcmd[rt->source_party.curactmode] =
+        (int8_t)request.cmd.action_id;
+    rt->source_hand_command[rt->source_party.curacthero - 1]
+                           [rt->source_party.curactmode].item_handle = item;
+    rt->source_hand_command[rt->source_party.curacthero - 1]
+                           [rt->source_party.curactmode].command_slot =
+        (int8_t)slot_index;
+    rt->source_hand_command[rt->source_party.curacthero - 1]
+                           [rt->source_party.curactmode].action_id =
+        (int8_t)request.cmd.action_id;
     game = (DM2_V1_GameState *)rt->boot->dm2_state;
     request.hero_index = rt->source_party.curacthero - 1;
     request.hand = rt->source_party.curactmode;
