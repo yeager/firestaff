@@ -13828,6 +13828,7 @@ missile_rollback:
 
 static int dm2_v1_runtime_proceed_hand_command_variant(
     int slot_index, DM2_V1_CommandSlotVariant variant,
+    int repeated,
     DM2_V1_EngageCommandReceipt *receipt);
 
 /* SKWINDOS/dm2byf.cpp::SKW_2759_12e6 and
@@ -13877,7 +13878,7 @@ static void dm2_runtime_repeat_hand_commands(DM2_V1_RuntimeState *rt)
             (void)dm2_runtime_item_hand_activable(rt, hero_index, hand);
             memset(&receipt, 0, sizeof(receipt));
             (void)dm2_v1_runtime_proceed_hand_command_variant(
-                state->command_slot, DM2_V1_COMMAND_SLOT_DOS_SPX_V5,
+                state->command_slot, DM2_V1_COMMAND_SLOT_DOS_SPX_V5, 1,
                 &receipt);
         }
     }
@@ -25241,6 +25242,7 @@ int dm2_v1_runtime_engage_command(
 
 static int dm2_v1_runtime_proceed_hand_command_variant(
     int slot_index, DM2_V1_CommandSlotVariant variant,
+    int repeated,
     DM2_V1_EngageCommandReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
@@ -25484,7 +25486,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
             ? (int16_t)narrowed
             : (int16_t)((int32_t)narrowed - 65536);
     }
-    hero->heroflag |= 0x0800;
+    if (!repeated) hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
     {
         int active_hero = rt->source_party.curacthero - 1;
@@ -25545,7 +25547,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
          receipt->door_attacked) &&
         (!is_attack_action || queue.queued);
     if (!result || !action_postcondition) {
-        hero->heroflag &= (int16_t)~0x0800;
+        if (!repeated) hero->heroflag &= (int16_t)~0x0800;
         /* ATTACK's source callback enqueues before reaching L_fin. If the
          * same dispatch is subsequently rejected as an unowned route,
          * restore that source state along with the temporary hand flag. */
@@ -25572,11 +25574,11 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     }
     /* Common skproject ENGAGE_COMMAND epilogue: vol_20 (normally CMDSTR
      * field 3, with source branch overrides) adjusts the active hand. */
-    if (receipt->hand_cooldown_delay != 0)
+    if (!repeated && receipt->hand_cooldown_delay != 0)
         dm2_runtime_apply_hand_cooldown(
             rt, hero, receipt->hand_cooldown_delay,
             rt->source_party.curactmode);
-    if (receipt->stamina_cost != 0) {
+    if (!repeated && receipt->stamina_cost != 0) {
         DM2_RuntimeStaminaContext stamina_context;
         DM2_V1_StaminaCallbacks stamina_callbacks;
         int stamina_result;
@@ -25614,7 +25616,7 @@ int dm2_v1_runtime_proceed_hand_command(
 {
     /* M11's currently admitted event route follows DOS/SPX v5 semantics. */
     return dm2_v1_runtime_proceed_hand_command_variant(
-        slot_index, DM2_V1_COMMAND_SLOT_DOS_SPX_V5, receipt);
+        slot_index, DM2_V1_COMMAND_SLOT_DOS_SPX_V5, 0, receipt);
 }
 
 int dm2_v1_runtime_proceed_hand_command_spx_v4(
@@ -25623,7 +25625,7 @@ int dm2_v1_runtime_proceed_hand_command_spx_v4(
     /* Exposed for source callers that explicitly select SPX v4 behavior; the
      * original-media platform label is not a source-code-version selector. */
     return dm2_v1_runtime_proceed_hand_command_variant(
-        slot_index, DM2_V1_COMMAND_SLOT_SPX_V4, receipt);
+        slot_index, DM2_V1_COMMAND_SLOT_SPX_V4, 0, receipt);
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */
