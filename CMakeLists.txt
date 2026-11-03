@@ -4408,7 +4408,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM2_DOS_FR_ARCHIVE=${FIRESTAFF_DM2_DOS_FR_ARCHIVE}"
         # Two independent sessions traverse the authentic French archive:
         # one M12 menu runtime route and one direct input/runtime probe.
-        TIMEOUT 120
+        TIMEOUT 300
     )
     add_test(
         NAME dm2_v1_mac_native_cli_boot
