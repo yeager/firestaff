@@ -662,7 +662,7 @@ SKW_2c1d_1bb5	SKWINDOS	SKWINDOS/dm2byg.cpp	1890	void SKW_2c1d_1bb5(x16 eaxw, x16
 SKW_CALC_PLAYER_WEIGHT	SKWINDOS	SKWINDOS/dm2byg.cpp	1928	void SKW_CALC_PLAYER_WEIGHT(x16 eaxw)	0	PARTIAL
 SKW_ADD_ITEM_TO_PLAYER	SKWINDOS	SKWINDOS/dm2byg.cpp	1953	void SKW_ADD_ITEM_TO_PLAYER(x16 eaxw, x16 edxw)	0	PARTIAL
 SKW_IS_TILE_BLOCKED	SKWINDOS	SKWINDOS/dm2byg.cpp	1992	bool SKW_IS_TILE_BLOCKED(x8 eaxb)	0	UNREVIEWED
-SKW_32cb_01b6	SKWINDOS	SKWINDOS/dm2byg.cpp	2015	bool SKW_32cb_01b6(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16* argpw0)	0	UNREVIEWED
+SKW_32cb_01b6	SKWINDOS	SKWINDOS/dm2byg.cpp	2015	bool SKW_32cb_01b6(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16* argpw0)	0	PARTIAL
 SKW_32cb_0287	SKWINDOS	SKWINDOS/dm2byg.cpp	2051	bool SKW_32cb_0287(x16 eaxw, x16 ebxw, x16 edxw)	0	UNREVIEWED
 SKW_DRAW_DUNGEON_GRAPHIC	SKWINDOS	SKWINDOS/dm2byg.cpp	2092	void SKW_DRAW_DUNGEON_GRAPHIC(x8 eaxb, x8 ebxb, x16 ecxw, x8 edxb, x16 argw0, x16 argw1)	0	UNREVIEWED
 SKW_QUERY_TEMP_PICST	SKWINDOS	SKWINDOS/dm2byg.cpp	2115	void SKW_QUERY_TEMP_PICST(x16 eaxw, x16 ebxw, x16 ecxw, x16 edxw, x16 argw0, x16 argw1, x16 argw2, x16 argw3, x16 argw4, x16 argw5, x8 argb6, x8 argb7, x8 argb8)	0	UNREVIEWED
@@ -1405,7 +1405,7 @@ _44c8_1e43	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	479	void SkWinCore::_44c8_1e43(
 GET_LOCAL_PALETTE_32cb_0649	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	587	U8 *SkWinCore::GET_LOCAL_PALETTE_32cb_0649(U8 iGDatCls1Category, U8 iGDatCls2MainItemId, U8 iGDatCls4EntryId, i16 iTransparentColorKey)	0	PARTIAL
 DRAW_RAIN_32cb_0c7d	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	611	void SkWinCore::DRAW_RAIN_32cb_0c7d(ExtendedPicture *ref, U16 xx, U16 yy)	0	PARTIAL
 QUERY_CREATURE_PICST	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	645	void SkWinCore::QUERY_CREATURE_PICST(U16 xx, i16 iDistToPlayer, Creature *xCreature, CreatureInfoData *xInfo, ObjectID rl)	0	UNREVIEWED
-_32cb_01b6	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	757	U16 SkWinCore::_32cb_01b6(U16 xx, U16 yy, U16 ss, U16 tt, U16 *ww)	0	UNREVIEWED
+_32cb_01b6	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	757	U16 SkWinCore::_32cb_01b6(U16 xx, U16 yy, U16 ss, U16 tt, U16 *ww)	0	PARTIAL
 FREE_PICT_ENTRY	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	794	void SkWinCore::FREE_PICT_ENTRY(U8* xPictureBuffer)	0	UNREVIEWED
 QUERY_BLIT_RECT	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	842	SRECT *SkWinCore::QUERY_BLIT_RECT(Bit8u *buff, SRECT *rect, U16 rectno, i16 *yourcx, i16 *yourcy, i16 ww) //#DS=4976?	0	UNREVIEWED
 MOVE_MEMORY	SKWINSPX	SKWINSPX/src/v4/skbltgfx.cpp	1206	void SkWinCore::MOVE_MEMORY(const void *buffSrc, void *buffDst, U16 size)	0	UNREVIEWED
@@ -3108,7 +3108,7 @@ DM2_events_121e_03ae	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1171	static i32 DM2_e
 DM2_events_121e_0003	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1222	static void DM2_events_121e_0003(i32 eaxl)	1	UNREVIEWED
 DM2_events_37BBB	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1290	static i32 DM2_events_37BBB(i16 eaxw)	1	UNREVIEWED
 DM2_events_121e_0351	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1298	static void DM2_events_121e_0351(i32 eaxl, i32 edxl)	1	UNREVIEWED
-DM2_guivp_32cb_01b6	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1345	static bool DM2_guivp_32cb_01b6(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16* argpw0)	1	UNREVIEWED
+DM2_guivp_32cb_01b6	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1345	static bool DM2_guivp_32cb_01b6(i32 eaxl, i32 edxl, i32 ebxl, i32 ecxl, i16* argpw0)	1	PARTIAL
 DM2_CLICK_VWPT	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1404	void DM2_CLICK_VWPT(i32 eaxl, i32 edxl)	1	UNREVIEWED
 DM2_CLICK_INVENTORY_EYE	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1846	void DM2_CLICK_INVENTORY_EYE(void)	1	UNREVIEWED
 DM2_ADD_RUNE_TO_TAIL	SKWINSPX	SKWINSPX/src/v5/skevents.cpp	1871	void DM2_ADD_RUNE_TO_TAIL(i16 eaxw)	1	PARTIAL
