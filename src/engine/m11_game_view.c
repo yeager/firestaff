@@ -67071,7 +67071,10 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             M11_GameView_ShouldHatchV1ActionIconCell(state, slot)) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                            cellX, cellY, cellW, cellH, M11_COLOR_BLACK,
-                           state->assetLoader.dm1Amiga36);
+                           state->assetLoader.dm1Amiga36 ||
+                           (state->assetLoader.legacyDm1 &&
+                            state->assetLoader.legacyBigEndian) ||
+                           state->assetLoader.csbAmiga);
         }
         ++drawn;
     }
