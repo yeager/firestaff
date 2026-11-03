@@ -3045,11 +3045,13 @@ moneybox fixture in `data/sksave2.bak`: hero record 3's second hand owns DB9
 test now asserts that source record chain. A complete deposit/withdrawal has
 not yet been run through the live M11 runtime against this saved state, so
 end-to-end transaction behavior remains unverified. Macintosh and Amiga use
-separate pointer routes and are not wired; Mega CD input ownership is
-unproven. Therefore only the PC-English and Towns M11 input routes are closed
-at the routing level. Keep gameplay parity partial for DOS and SPX v4/v5, and
-keep Macintosh, Amiga and Mega CD partial, until their distinct input owners
-and original-media transaction state are verified.
+separate pointer routes and are not wired: M11 currently checks Mac/Amiga hand
+actions, six arrow rectangles and then the C080 viewport, without admitting
+moneybox events 228-233. Mega CD input ownership is unproven. Therefore only
+the PC-English and Towns M11 input routes are closed at the routing level.
+Keep gameplay parity partial for DOS and SPX v4/v5, and keep Macintosh, Amiga
+and Mega CD partial, until their distinct input owners and original-media
+transaction state are verified.
 
 
 2026-11-02 SKProject `COUNT_BY_COIN_TYPES` live moneybox rendering:
