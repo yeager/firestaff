@@ -25325,6 +25325,7 @@ static int dm2_v1_runtime_proceed_hand_command_variant(
     memset(&hand_query, 0, sizeof(hand_query));
     hand_query.rt = rt;
     hand_query.hero_index = rt->source_party.curacthero - 1;
+    request.cmd_flag_8000 = repeated ? 1u : 0u;
     if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
                                      &request.cmd.action_id)) {
         if (receipt) receipt->fail_closed = 1;
