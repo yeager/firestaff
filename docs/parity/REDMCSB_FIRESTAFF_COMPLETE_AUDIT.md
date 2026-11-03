@@ -980,7 +980,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 ### DM2 CLICK_MONEYBOX review (2026-11-02)
 
-Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
+Compared DOS `SKW_CLICK_MONEYBOX` (`dm2byh.cpp:1015-1044`), SPX v4 `CLICK_MONEYBOX` (`skuievnt.cpp:329-355`), SPX v5 `DM2_CLICK_MONEYBOX` (`skevents.cpp:1941-1987`) and SKWIN `CLICK_MONEYBOX` (`SkWinCore.cpp:16380-16420`). All four gate on moneybox panel type, deposit the held coin or withdraw the clicked denomination, refresh after successful changes and recalculate hero weight. Firestaff binds PC-English events 228-233 and authenticated FM Towns inventory rectangles to a rollback-capable record/party transaction. PC French, Amiga and Macintosh large-retail English routes remain uncovered; keep all four source variants `PARTIAL`.
 
 Applying the active-source review overrides gives 2,725 unreviewed, 1,096 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,980 open rows (2,725 unreviewed, 1,253 partial source or older-ledger rows, 0 missing, 0 uncertain numbered evidence rows, 2 partial source owners).
 
@@ -1033,4 +1033,4 @@ The same ReDMCSB/FIREFSTAFF inventory correction applies to `F2047_GetMouseX` an
 
 ### DM2 SKWIN inventory refresh (2026-11-03)
 
-The active-source ledgers now include separate SKWIN `CLICK_MAGICAL_MAP_AT` and `PROCEED_XACT_82` definitions, each reviewed as partial against `SKWIN/SkWinCore.cpp`. Applying the active-source review overrides gives 2,717 unreviewed, 1,107 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,983 open rows (2,717 unreviewed, 1,264 partial source or older-ledger rows, 0 missing, 0 uncertain numbered evidence rows, 2 partial source owners).
+The active-source ledgers now include separate SKWIN `CLICK_MAGICAL_MAP_AT`, `CLICK_MONEYBOX` and `PROCEED_XACT_82` definitions, each reviewed as partial against `SKWIN/SkWinCore.cpp`. Applying the active-source review overrides gives 2,717 unreviewed, 1,108 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,984 open rows (2,717 unreviewed, 1,265 partial source or older-ledger rows, 0 missing, 0 uncertain numbered evidence rows, 2 partial source owners).
