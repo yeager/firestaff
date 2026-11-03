@@ -63,6 +63,11 @@ typedef struct {
     int16_t  (*retrieve_item_bonus)(void *ctx, uint16_t item_ref,
                                      uint8_t dbspec_idx,
                                      int32_t fit_flag, int16_t mode);
+    /* SPX v4 keeps the complete signed GDAT word. Required when the input
+     * selects DM2_V1_ITEM_BONUS_SOURCE_SPX_V4. */
+    int16_t  (*retrieve_item_bonus_spx_v4)(void *ctx, uint16_t item_ref,
+                                            uint8_t dbspec_idx,
+                                            int32_t fit_flag, int16_t mode);
     /* DM2_QUERY_CLS2_FROM_RECORD(item_ref). */
     uint8_t  (*query_cls2_from_record)(void *ctx, uint16_t item_ref);
     void *ctx;
