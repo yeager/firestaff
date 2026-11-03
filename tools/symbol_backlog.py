@@ -21,6 +21,11 @@ SKPROJECT_ACTIVE_SOURCE_INVENTORY = ROOT / "docs/reference/audits/SKPROJECT_DM2_
 SKPROJECT_ACTIVE_SOURCE_REVIEW = ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv"
 SYMBOL_DISPOSITIONS = ROOT / "docs/reference/audits/SYMBOL_DISPOSITIONS.tsv"
 
+SKPROJECT_REVIEW_COLUMNS = (
+    "source_tree", "source_file", "line", "symbol", "review_status",
+    "firestaff_mapping", "review_notes",
+)
+
 REDMCSB_OPEN = {
     "MISSING",
     "UNCERTAIN_NUMBERED_EVIDENCE",
@@ -91,6 +96,22 @@ def read_optional_tsv(path: Path, warnings: list[str]) -> list[dict[str, str]]:
         warnings.append(f"missing audit TSV: {path}")
         return []
     return read_tsv(path)
+
+
+def read_skproject_source_reviews(path: Path) -> list[dict[str, str]]:
+    """Read the headerless seven-column SKProject source-review ledger."""
+    if not path.exists():
+        raise FileNotFoundError(f"required audit TSV is missing: {path}")
+    rows: list[dict[str, str]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        for line_number, values in enumerate(csv.reader(handle, delimiter="\t"), 1):
+            if len(values) != len(SKPROJECT_REVIEW_COLUMNS):
+                raise ValueError(
+                    f"{path}:{line_number}: expected {len(SKPROJECT_REVIEW_COLUMNS)} "
+                    f"columns, found {len(values)}"
+                )
+            rows.append(dict(zip(SKPROJECT_REVIEW_COLUMNS, values)))
+    return rows
 
 
 def read_dispositions(path: Path = SYMBOL_DISPOSITIONS) -> dict[tuple[str, str], dict[str, str]]:
@@ -321,12 +342,18 @@ def main() -> int:
         redmcsb_rows = read_optional_tsv(REDMCSB_AUDIT, warnings)
         skproject_rows = read_optional_tsv(SKPROJECT_AUDIT, warnings)
         skproject_source_rows = read_optional_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY, warnings)
-        skproject_source_reviews = read_optional_tsv(SKPROJECT_ACTIVE_SOURCE_REVIEW, warnings)
+        if SKPROJECT_ACTIVE_SOURCE_REVIEW.exists():
+            skproject_source_reviews = read_skproject_source_reviews(
+                SKPROJECT_ACTIVE_SOURCE_REVIEW)
+        else:
+            warnings.append(f"missing audit TSV: {SKPROJECT_ACTIVE_SOURCE_REVIEW}")
+            skproject_source_reviews = []
     else:
         redmcsb_rows = read_tsv(REDMCSB_AUDIT)
         skproject_rows = read_tsv(SKPROJECT_AUDIT)
         skproject_source_rows = read_tsv(SKPROJECT_ACTIVE_SOURCE_INVENTORY)
-        skproject_source_reviews = read_tsv(SKPROJECT_ACTIVE_SOURCE_REVIEW)
+        skproject_source_reviews = read_skproject_source_reviews(
+            SKPROJECT_ACTIVE_SOURCE_REVIEW)
     active_reviews = {}
     for review in skproject_source_reviews:
         key = (review["source_tree"], review["source_file"],

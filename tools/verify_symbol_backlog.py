@@ -15,6 +15,24 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKLOG = ROOT / "tools" / "symbol_backlog.py"
+SKPROJECT_REVIEW_COLUMNS = (
+    "source_tree", "source_file", "line", "symbol", "review_status",
+    "firestaff_mapping", "review_notes",
+)
+
+
+def read_skproject_reviews(path: Path) -> list[dict[str, str]]:
+    """Read the headerless seven-column active-source review ledger."""
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows: list[dict[str, str]] = []
+        for line_number, values in enumerate(csv.reader(handle, delimiter="\t"), 1):
+            if len(values) != len(SKPROJECT_REVIEW_COLUMNS):
+                raise AssertionError(
+                    f"{path}:{line_number}: expected {len(SKPROJECT_REVIEW_COLUMNS)} "
+                    f"columns, found {len(values)}"
+                )
+            rows.append(dict(zip(SKPROJECT_REVIEW_COLUMNS, values)))
+    return rows
 
 
 def run(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -78,8 +96,7 @@ def verify_documented_dm2_counts() -> None:
     review_path = audit_dir / "SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv"
     with inventory_path.open(newline="", encoding="utf-8") as handle:
         inventory = list(csv.DictReader(handle, delimiter="\t"))
-    with review_path.open(newline="", encoding="utf-8") as handle:
-        reviews = list(csv.DictReader(handle, delimiter="\t"))
+    reviews = read_skproject_reviews(review_path)
     review_by_key = {
         (row["source_tree"], row["source_file"], row["line"], row["symbol"]): row
         for row in reviews
@@ -107,7 +124,6 @@ def verify_documented_dm2_counts() -> None:
     backlog_result = run([
         sys.executable, str(BACKLOG), "--reference", "skproject", "--game", "DM2",
         "--format", "json", "--limit", "0",
-        "--dispositions", str(ROOT / "docs/reference/audits/SKPROJECT_DM2_ACTIVE_SOURCE_REVIEW.tsv"),
     ])
     backlog = json.loads(backlog_result.stdout)["summary"]
     backlog_summary = (
