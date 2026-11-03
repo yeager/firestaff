@@ -4996,6 +4996,28 @@ int dm2_v1_skproject_get_creature_weight(
     uint16_t *out_weight,
     DM2_V1_SkprojectGetCreatureWeightReceipt *out_receipt);
 
+/* Source GET_CREATURE_WEIGHT resolves DB4 byte@4 to the edition's AI spec,
+   then reads unsigned byte@0x1d (DOS uses byte 1 of word@0x1c). */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_bad_record_type;
+    int blocked_missing_ai_spec;
+    uint16_t creature_handle;
+    uint8_t creature_type;
+    uint8_t weight;
+} DM2_V1_SkprojectResolveCreatureWeightReceipt;
+
+typedef const uint8_t *(*DM2_V1_SkprojectCreatureAISpecBytesFn)(
+    uint8_t creature_type, uint16_t *out_size, void *user);
+
+int dm2_v1_skproject_resolve_creature_weight(
+    uint16_t creature_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    void *user, uint16_t *out_weight,
+    DM2_V1_SkprojectResolveCreatureWeightReceipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
    caller-owned RGB888 palette to an RGB666 destination, with optional
    per-index translation table. */

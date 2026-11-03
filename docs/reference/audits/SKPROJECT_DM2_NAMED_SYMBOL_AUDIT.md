@@ -763,7 +763,7 @@ Compared DOS `SKW_SET_ITEM_IMPORTANCE` (`SKWINDOS/dm2bya.cpp:6638`), SPX v4 `SET
 
 ### DM2 creature weight query (2026-11-02)
 
-Compared DOS `SKW_GET_CREATURE_WEIGHT` (`SKWINDOS/dm2byb.cpp:181`), SPX v4 `GET_CREATURE_WEIGHT` (`SKWINSPX/src/v4/skcrture.cpp:1934`), SPX v5 `DM2_GET_CREATURE_WEIGHT` (`SKWINSPX/src/v5/skgdtqdb.cpp:984`), and SKULLWIN (`SKULLWIN/c_querydb.cpp:982`). Each resolves a creature AI spec and returns unsigned byte `0x1d` (DOS names the containing field at offset `0x1c`). Firestaff’s querydb callback can read that byte when given a creature type, but no production caller binds record/type resolution to the movement/lifting path; the source-shaped core receipt accepts an already resolved weight. All four definitions remain `PARTIAL`.
+Compared DOS `SKW_GET_CREATURE_WEIGHT` (`SKWINDOS/dm2byb.cpp:181`), SPX v4 `GET_CREATURE_WEIGHT` (`SKWINSPX/src/v4/skcrture.cpp:1934`), SPX v5 `DM2_GET_CREATURE_WEIGHT` (`SKWINSPX/src/v5/skgdtqdb.cpp:984`), and SKULLWIN (`SKULLWIN/c_querydb.cpp:982`). Each resolves a creature AI spec and returns unsigned byte `0x1d` (DOS names the containing field at offset `0x1c`). Firestaff now has a source-driven helper that validates DB4, reads creature type byte@4, resolves a caller-owned AI-spec byte span and returns byte@0x1d. The edition-specific AI-spec data source and production movement/lifting caller are still unbound. All four definitions remain `PARTIAL`.
 
 ### DM2 record subtype query across editions (2026-11-02)
 

@@ -12606,6 +12606,55 @@ int dm2_v1_skproject_get_creature_weight(
     return 1;
 }
 
+/* DOS dm2byb.cpp:181, SPX v4 skcrture.cpp:1934, SPX v5 skgdtqdb.cpp:984,
+   and SKULLWIN c_querydb.cpp:982 resolve the creature type to the AI-spec
+   weight byte. The platform-specific spec source remains caller-owned. */
+int dm2_v1_skproject_resolve_creature_weight(
+    uint16_t creature_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    void *user, uint16_t *out_weight,
+    DM2_V1_SkprojectResolveCreatureWeightReceipt *out_receipt)
+{
+    DM2_V1_SkprojectResolveCreatureWeightReceipt receipt;
+    const uint8_t *record;
+    const uint8_t *ai_spec;
+    uint16_t ai_spec_size = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.creature_handle = creature_handle;
+    if (out_weight) *out_weight = 0u;
+
+    if (((creature_handle >> 10) & 0x0fu) != 4u || !pools) {
+        receipt.blocked_bad_record_type = ((creature_handle >> 10) & 0x0fu) != 4u;
+        receipt.blocked_missing_record = pools == NULL;
+        goto done;
+    }
+    record = dm2_v1_record_pool_address(pools, (int16_t)creature_handle);
+    if (!record || pools->pools[4].record_size < 5) {
+        receipt.blocked_missing_record = 1;
+        goto done;
+    }
+    receipt.creature_type = record[4];
+    if (!ai_spec_fn) {
+        receipt.blocked_missing_ai_spec = 1;
+        goto done;
+    }
+    ai_spec = ai_spec_fn(receipt.creature_type, &ai_spec_size, user);
+    if (!ai_spec || ai_spec_size <= 0x1du) {
+        receipt.blocked_missing_ai_spec = 1;
+        goto done;
+    }
+    receipt.weight = ai_spec[0x1du];
+    receipt.valid = 1;
+    if (out_weight) *out_weight = receipt.weight;
+
+done:
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
 /* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
    caller-owned RGB888 palette into an RGB666 destination.  An optional
    256-byte translation table is applied first, matching the source's use of
