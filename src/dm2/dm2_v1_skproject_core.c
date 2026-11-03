@@ -23432,7 +23432,7 @@ int dm2_v1_skproject_proceed_xact_82(
                 transfer_result = dm2_v1_skproject_14cd_2886_mode(
                     (uint16_t)creature,
                     (uint8_t)((direction + 2u) & 3u),
-                    0x10u, 0u, 1u, 1u,
+                    0u, 0x10u, 1u, 1u,
                     ctx->xact82_oversee_record_fn, ctx->user,
                     &transfer_receipt);
             if (!transfer_receipt.valid) {

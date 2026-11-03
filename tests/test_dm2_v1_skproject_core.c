@@ -9,6 +9,51 @@
 
 static int failed;
 
+typedef struct {
+    uint8_t oversee_mode;
+    int16_t oversee_words[5];
+    uint16_t can_handle_type;
+    uint16_t can_handle_slot;
+    uint16_t can_handle_possession;
+} Xact82TransferProbe;
+
+static int32_t xact82_probe_creature_at(int16_t x, int16_t y, void *user)
+{
+    (void)x;
+    (void)y;
+    (void)user;
+    return 0x1200;
+}
+
+static const uint8_t *xact82_probe_record(
+    uint16_t record, uint16_t *out_size, void *user)
+{
+    static const uint8_t bytes[4] = {0u, 0u, 0x34u, 0x12u};
+    (void)record;
+    (void)user;
+    if (out_size) *out_size = sizeof(bytes);
+    return bytes;
+}
+
+static int32_t xact82_probe_can_handle_item_in(
+    uint16_t item_type, uint16_t possession, uint16_t slot, void *user)
+{
+    Xact82TransferProbe *probe = (Xact82TransferProbe *)user;
+    probe->can_handle_type = item_type;
+    probe->can_handle_slot = slot;
+    probe->can_handle_possession = possession;
+    return -1;
+}
+
+static void xact82_probe_oversee(
+    uint16_t record, uint8_t mode, int16_t *words, void *user)
+{
+    Xact82TransferProbe *probe = (Xact82TransferProbe *)user;
+    (void)record;
+    probe->oversee_mode = mode;
+    memcpy(probe->oversee_words, words, sizeof(probe->oversee_words));
+}
+
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
         ++failed; \
@@ -10439,6 +10484,31 @@ int main(void)
         int rv = dm2_v1_skproject_proceed_xact_82(&ctx, &r);
         CHECK(rv == 1 && r.valid == 1 && r.out_b1a == 29,
               "xact_82 sets b1a to 29");
+    }
+    {
+        Xact82TransferProbe probe = {0};
+        DM2_V1_SkprojectXactContext ctx;
+        DM2_V1_SkprojectXact82Receipt r;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.creature_word_e = 0u;
+        ctx.creature_at_fn = xact82_probe_creature_at;
+        ctx.record_fn = xact82_probe_record;
+        ctx.can_handle_item_in_fn = xact82_probe_can_handle_item_in;
+        ctx.xact82_oversee_record_fn = xact82_probe_oversee;
+        ctx.xact82_variant = DM2_V1_XACT82_SPX_V4;
+        ctx.user = &probe;
+        CHECK(dm2_v1_skproject_proceed_xact_82(&ctx, &r) && r.valid &&
+                  r.out_b1a == 29u && r.item_path_checked &&
+                  r.item_transfer_result == -1 &&
+                  probe.can_handle_type == 0x3eu &&
+                  probe.can_handle_slot == 2u &&
+                  probe.can_handle_possession == 0x1234u &&
+                  probe.oversee_mode == 2u &&
+                  probe.oversee_words[1] == 0 &&
+                  probe.oversee_words[2] == 0x10 &&
+                  probe.oversee_words[3] == 1 &&
+                  probe.oversee_words[4] == 1,
+              "xact_82 SPX v4 transfer preserves SKProject state-word order and facing slot");
     }
 
     /* ---- batch 21a: DM2_PROCEED_XACT_83 ---- */
