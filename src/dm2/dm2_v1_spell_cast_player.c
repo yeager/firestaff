@@ -84,10 +84,9 @@ static void dm2_cast_player_light_payload(
  * terminator; for runtime lookup we pack the first rune as the POWER rune and
  * the next three symbols into the query key tail. */
 /* Pack a runtime record key from the full rune sequence (power rune first,
- * followed by tail runes).  The source DM2_FIND_SPELL_BY_RUNES stores the
- * power rune in the top byte and the tail runes in the low 24 bits; a zero
- * top byte means any power rune matches.  Single-rune spells (e.g. Light)
- * have an empty tail and a power-locked top byte. */
+ * followed by tail runes). The source lookup requires at least one tail rune.
+ * It stores the power rune in the top byte and tail runes in the low 24 bits;
+ * a zero top byte means any power rune matches. */
 static uint32_t dm2_cast_player_pack_key(const uint8_t *runes, int count)
 {
     uint32_t key = 0u;
@@ -195,7 +194,9 @@ int dm2_v1_spell_cast_player_find_by_runes(
     while (runes[rune_count] != 0 && rune_count < 4) {
         rune_count++;
     }
-    if (rune_count < 1) return -1;
+    /* DOS, SPX v4 and SPX v5 all reject rune strings without a tail rune
+     * before building a lookup key (SKW/DM2_FIND_SPELL_BY_RUNES). */
+    if (rune_count < 2) return -1;
 
     /* Pack the live hero string as power + tail.  Single-rune spells (e.g.
      * Light) are power-locked to that one symbol. */
