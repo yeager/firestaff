@@ -18497,6 +18497,8 @@ int dm2_v1_runtime_route_viewport_click(
         receipt.target_kind = target->target_kind;
         receipt.object_id = target->object_id;
         receipt.view_slot = target->view_slot;
+        receipt.map_x = target->map_x;
+        receipt.map_y = target->map_y;
         if (target->target_kind == 5u && target->w > 0 &&
             target->source_frame_w > 0 && target->source_image_w > 0) {
             int relative_x = screen_x - target->x;
@@ -19616,6 +19618,72 @@ int dm2_v1_runtime_query_creature_at(
     }
     *out_record_handle = dm2_v1_get_creature_at(
         &rt->record_pools, dungeon, map, x, y);
+    return 1;
+}
+
+/* SKWINSPX/src/v5/skevents.cpp:1778-1819 calls DM2_ROTATE_CREATURE for a
+ * non-centre opaque creature-picture hit. c_creature.cpp:58-101 owns the
+ * DB4 facing and possession-direction update. */
+static uint8_t *dm2_runtime_creature_rotate_record(void *context,
+                                                   uint16_t record_word)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    if (!rt || !rt->record_pools_valid) return NULL;
+    return dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                         (int16_t)record_word);
+}
+
+static uint16_t dm2_runtime_creature_rotate_ai_flags(void *context,
+                                                      uint16_t record_word)
+{
+    uint8_t *record = dm2_runtime_creature_rotate_record(context, record_word);
+    uint16_t flags = 0u;
+    if (!record || !dm2_v1_creature_ai_spec_flags(record[4], &flags))
+        return 0u;
+    return flags;
+}
+
+int dm2_v1_runtime_turn_front_creature(
+    uint16_t record_handle, int map_x, int map_y, int relative_direction)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_AIDefinition *ai;
+    DM2_V1_CreatureRotateCallbacks callbacks;
+    int16_t current_handle = DM2_V1_RECORD_HANDLE_NULL;
+    static const int16_t dx[4] = { 0, 1, 0, -1 };
+    static const int16_t dy[4] = { -1, 0, 1, 0 };
+    int party_dir;
+
+    if ((relative_direction != 1 && relative_direction != 3) ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dm2_state ||
+        !rt->boot->dungeon_data || dm2_v1_record_handle_pool(
+            (int16_t)record_handle) != 4) {
+        return 0;
+    }
+    party_dir = dm2_v1_runtime_get_party_dir() & 3;
+    if (map_x != dm2_v1_runtime_get_party_x() + dx[party_dir] ||
+        map_y != dm2_v1_runtime_get_party_y() + dy[party_dir] ||
+        !dm2_v1_runtime_query_creature_at(
+            rt->dungeon_level, map_x, map_y, &current_handle) ||
+        (uint16_t)current_handle != record_handle ||
+        !dm2_v1_record_pool_address(&rt->record_pools, current_handle)) {
+        return 0;
+    }
+    {
+        const uint8_t *record = dm2_v1_record_pool_address(
+            &rt->record_pools, current_handle);
+        if (!record ||
+            !(ai = dm2_v1_creature_ai_spec(record[4])) ||
+            !(ai->w0AIFlags & 0x0001u) || ai->Weight == 0xffu) {
+            return 0;
+        }
+    }
+
+    callbacks.get_record_address = dm2_runtime_creature_rotate_record;
+    callbacks.query_ai_spec_flags = dm2_runtime_creature_rotate_ai_flags;
+    callbacks.get_next_record_address = NULL;
+    dm2_v1_creature_ops_rotate_creature(
+        record_handle, 0, relative_direction, &callbacks, rt);
     return 1;
 }
 

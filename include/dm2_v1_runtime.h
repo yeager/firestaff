@@ -546,6 +546,8 @@ typedef struct DM2_V1_RuntimeViewportClickReceipt {
     int object_id;
     int view_slot;
     int orientation;
+    int map_x;
+    int map_y;
     DM2_V1_ViewportRect rect;
 } DM2_V1_RuntimeViewportClickReceipt;
 
@@ -1477,6 +1479,10 @@ int dm2_v1_runtime_creature_record_receipt(
  * dungeon/pools or coordinates are unavailable. */
 int dm2_v1_runtime_query_creature_at(
     int map, int x, int y, int16_t *out_record_handle);
+/* SKProject CLICK_VWPT turns the front creature when an opaque creature
+ * picture hit selects a non-centre lateral orientation. */
+int dm2_v1_runtime_turn_front_creature(
+    uint16_t record_handle, int map_x, int map_y, int relative_direction);
 int dm2_v1_runtime_last_creature_damage_receipt(
     DM2_V1_RuntimeCreatureDamageReceipt *out);
 int dm2_v1_runtime_last_wield_attack_receipt(

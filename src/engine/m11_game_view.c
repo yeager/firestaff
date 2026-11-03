@@ -48135,12 +48135,9 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* DM2's C080 path is c_events.cpp::CLICK_VWPT.  Its hit list is
-     * produced by the source viewport renderer (c_rwbb), not by DM1's
-     * front-cell/door/mirror handler.  Until the corresponding DM2
-     * object-action owners are bound, fail closed after resolving only a
-     * renderer-owned target; this prevents a DM1 action from mutating a DM2
-     * session. */
+    /* DM2's C080 path is c_events.cpp::CLICK_VWPT. Its hit list comes from
+     * the source viewport renderer (c_rwbb); only DM2-owned target handlers
+     * may mutate this session. */
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_runtime_route_viewport_click(x, y, &receipt) ||
         !receipt.accepted) {
@@ -48170,6 +48167,13 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
             m11_sync_dm2_state_from_runtime(state);
             return M11_GAME_INPUT_REDRAW;
         }
+    }
+    if (receipt.target_kind == 5 && receipt.orientation != 0 &&
+        dm2_v1_runtime_turn_front_creature(
+            (uint16_t)receipt.object_id, receipt.map_x, receipt.map_y,
+            receipt.orientation)) {
+        m11_sync_dm2_state_from_runtime(state);
+        return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
 }
