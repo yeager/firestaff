@@ -109,7 +109,7 @@ output=$(FIRESTAFF_CONFIG_PATH="$picker_home/config.toml" \
     FIRESTAFF_DATA="$picker_data_root" \
     HOME="$picker_home" XDG_CONFIG_HOME="$picker_home" APPDATA="$picker_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --debug --game dm2 --data-dir "$picker_data_root" --boot-probe \
+    --debug --game dm2 --platform pc --data-dir "$picker_data_root" --boot-probe \
     --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
