@@ -14073,10 +14073,6 @@ void dm2_v1_runtime_tick(void) {
         }
     }
 
-    /* The source game loop executes SKW_2759_12e6 after event processing;
-     * Firestaff's source tick is the nearest owner after its timer batch. */
-    dm2_runtime_repeat_hand_commands(rt);
-
     /* SKWINSPX/src/v4/skcore.cpp checks glbDoLightCheck after timer
      * processing and before drawing the player viewport; DOS/SKULLWIN use
      * ddat.v1e0390. Wall/floor ornate animators and trickwall timers publish
@@ -14086,9 +14082,15 @@ void dm2_v1_runtime_tick(void) {
         dm2_runtime_refresh_gdat_scene_control(rt);
     }
 
+    /* SKWINDOS/dm2byf.cpp::SKW_2759_12e6 and
+     * SKWINSPX/src/v5/startend.cpp::DM2_2759_12e6 run after the event loop
+     * and immediately before source sound flushing. Keep command-generated
+     * noise in this tick's queue so the following DM2_SOUND8 drain owns it. */
+    dm2_runtime_repeat_hand_commands(rt);
+
     /* Drain sound queue — DM2_SOUND8 (c_sound.cpp:633-647).
-     * Timer handlers (0x15, 0x5A) and actuator events push entries;
-     * the flush drains them to the audio backend each tick. */
+     * Timer handlers (0x15, 0x5A), actuator events, and repeated hand
+     * commands push entries; the flush drains them to audio each tick. */
     if (rt->sound_queue_ready) {
         DM2_V1_SoundPlayReceipt snd_receipt;
         memset(&snd_receipt, 0, sizeof(snd_receipt));
