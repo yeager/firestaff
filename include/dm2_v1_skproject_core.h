@@ -4818,6 +4818,7 @@ typedef struct {
     int blocked_invalid_cls2;
     uint8_t cls2;
     uint16_t data_index;
+    uint16_t spring_type;
     uint8_t spring_flag;
     uint32_t gdat_receipt_hash;
 } DM2_V1_SkprojectWallOrnateSpringReceipt;

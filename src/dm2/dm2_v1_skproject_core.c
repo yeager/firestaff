@@ -11953,12 +11953,10 @@ int dm2_v1_skproject_is_rebirth_altar(
     return (value != -1) ? 1 : 0;
 }
 
-/* SKULLWIN/c_querydb.cpp:793 DM2_IS_WALL_ORNATE_SPRING — after the source
-   resolves the wall-ornate record to a cls2 via DM2_QUERY_CLS2_FROM_RECORD,
-   it queries GDAT category DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2,
-   type DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 12, and returns the
-   predicate (data_index != 0).  This receipt takes the already-resolved
-   data_index so the helper stays independent of the asset loader. */
+/* SKULLWIN/c_querydb.cpp:793 DM2_IS_WALL_ORNATE_SPRING resolves cls2 from
+   the record and returns raw GDAT(9, cls2, word-value, field 12), or zero for
+   cls2 0xff. Preserve that raw value even though the source symbol is named
+   "IS". This receipt takes resolved cls2/data_index inputs. */
 int dm2_v1_skproject_is_wall_ornate_spring(
     uint8_t cls2,
     uint16_t data_index,
@@ -11975,12 +11973,13 @@ int dm2_v1_skproject_is_wall_ornate_spring(
         return 0;
     }
     receipt.data_index = data_index;
+    receipt.spring_type = data_index;
     receipt.spring_flag = (data_index != 0u) ? 1u : 0u;
     receipt.gdat_receipt_hash = dm2_v1_skproject_hash_bytes(
         &receipt, sizeof(receipt) - sizeof(receipt.gdat_receipt_hash));
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
-    return (int)receipt.spring_flag;
+    return (int)receipt.spring_type;
 }
 
 /* SKULLWIN/c_querydb.cpp:1486 DM2_GET_CREATURE_AT — source-locked wrapper
