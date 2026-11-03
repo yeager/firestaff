@@ -3028,6 +3028,27 @@ areas are incorrect for a one-champion pose. Compare matching source-owned
 captures across all four platforms before changing layout or selecting
 substitute assets.
 
+2026-11-02 authentic four-platform presented-pixel diagnostics: `--debug` now
+reports non-black pixel count, palette-index diversity and a hash for the
+320x200 viewport, right HUD, top band and bottom band after the accepted V1
+frame reaches M11's indexed framebuffer. This is separate from GDAT asset
+receipts and consumed-command counts. Fresh normal-menu starts against the
+installed original DOS EN, Amiga EN, FM Towns JA and Macintosh EN archives all
+reached map 0 at `(1,8)`, facing north, with one champion. Every platform
+reports `accepted=1`, `complete=1`, zero blocked materials and zero core
+fallbacks. Across sampled frames, the viewport region has 22,178–24,123
+non-black pixels of 27,360 on DOS/Towns, 22,406 on Amiga and 23,038–24,151 on
+Macintosh. The right HUD has 3,836/18,400 pixels on DOS/Macintosh, 5,815 on
+Amiga and 2,827 on Towns. The bottom 320x40 band has 4,594/12,800 on DOS,
+4,516 on Macintosh, 4,730 on Amiga and 3,568 on Towns. The DOS and Towns
+captures visibly retain large dark areas despite the successful receipts;
+the Amiga and Macintosh traces show the same coverage gap at the same start
+pose. This confirms that `complete` means command/asset consumption, not
+composition coverage or visual parity. It does not establish which dark
+areas are incorrect for a one-champion pose. Compare matching source-owned
+captures across all four platforms before changing layout or selecting
+substitute assets.
+
 2026-11-02 SKProject `DM2_FIND_LADDAR_AROUND` / `FIND_LADDER_AROUND` audit: the verified DOS (`dm2byh.cpp:1982`) and SPX v5 (`skgdtqdb.cpp:1647`) bodies scan four adjacent tile-record chains. Their DB2 text-ornament usage gates differ: DOS admits usage 7; SPX v5 admits usages 6 and 7. Firestaff's source helper now selects these variants explicitly, checks DB3 ladder actuators against target altitude and DB2 ornaments against WALL_GFX GDAT direction, and returns direction plus an optional actuator handle. Raw source-pool records use `source_words_big_endian` independently of dungeon-word order; the byte-order distinction has a focused contract check, and the authenticated Mac dungeon still yields valid ladder matches. The SPX v4 source body is not present in the inspected reference checkout and remains unverified. The older 3x3 square-type helper remains narrow; no source query is bound to a production movement/transition owner, so all platform variants remain partial.
 2026-11-02 SKProject `DM2_FIND_LADDAR_AROUND` / `FIND_LADDER_AROUND` audit: DOS (`dm2byh.cpp:1982`), SPX v4 (`skdungn.cpp:202`) and SPX v5 (`skgdtqdb.cpp:1647`) scan four adjacent tile-record chains. Firestaff now has `dm2_v1_skproject_find_ladder_around_source`, which checks DB3 ladder actuators against target altitude, DB2 text ornaments against usage and WALL_GFX GDAT direction, and returns direction plus an optional actuator handle. It can use live record pools and source-endian words. The older 3x3 square-type helper remains narrow; the source query is still not bound to a production movement/transition owner, so all source variants remain partial.
 2026-11-02 skproject DOS/SPX v4/v5 `SET_ITEM_IMPORTANCE`:
