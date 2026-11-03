@@ -10,7 +10,11 @@ scratch=$(mktemp -d "$scratch_root/dm2-zip-owner.XXXXXX")
 trap 'rc=$?; if [[ $rc != 0 && -f $scratch/output.log ]]; then cat "$scratch/output.log" >&2; fi; rm -rf "$scratch"' EXIT
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 platforms=(pc mac fm-towns amiga)
-files=('Dungeon-Master-II-Skullkeep_DOS_EN.zip' 'Dungeon-Master-II-Skullkeep_Mac_EN (1).zip' 'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip' 'Dungeon-Master-II-Skullkeep_Amiga_EN.zip')
+mac_file='Dungeon-Master-II-Skullkeep_Mac_EN.zip'
+if [[ ! -f "$data_root/dm2/$mac_file" ]]; then
+    mac_file='Dungeon-Master-II-Skullkeep_Mac_EN (1).zip'
+fi
+files=('Dungeon-Master-II-Skullkeep_DOS_EN.zip' "$mac_file" 'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip' 'Dungeon-Master-II-Skullkeep_Amiga_EN.zip')
 hashes=(25247ede4dabb6a71e5dabdfbcd5907d 5cab25f6b975957eae4a203174e7f2a6 027ff3b8ddc2c4c4cdda7ada0b0bc46c 1c940ea95703eaea0ecdf84d17e954b9)
 for file in "${files[@]}"; do
     [[ -f "$data_root/dm2/$file" ]] || { echo "SKIP: missing original $file"; exit 77; }
