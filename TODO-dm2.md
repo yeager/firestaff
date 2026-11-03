@@ -2955,8 +2955,8 @@ the suspicious above-screen name placement is shared by these editions; it
 does not establish that the position is wrong in the original game. Keep the
 HUD report open until these positions and visible pixels are compared with a
 same-pose original capture. The other DM2 platforms still need runtime output
-from this new diagnostic, and the portrait, bars, text, panel and viewport
-parity gaps remain open.
+from this new diagnostic. The portrait, text, panel and viewport parity gaps
+remain open; Towns now draws its live bars from the authenticated coordinates.
 
 2026-11-02 authentic DOS/FMTowns text-draw trace: the runtime frame receipt
 now reports the number of source-font glyphs actually consumed and the
@@ -2965,7 +2965,8 @@ the accepted first dungeon frame binds TORHAM and consumes six glyphs with
 109 text-palette uses. With the original FM Towns JA archive at the same
 party/map/pose, TORHAM is also bound and the same font table hash is loaded,
 but the accepted frame consumes zero font glyphs and one text-palette use;
-its native HUD plan consumes five commands versus DOS's eight. The Towns
+its 11-command HUD plan is five champion assets plus six native movement
+arrows, versus eight DOS commands. The Towns
 renderer takes its `fmtowns_unmapped_chrome` source-native squad branch and
 returns before the shared champion text overlay in
 `src/dm2/dm2_v1_viewport_renderer.c`; the shared source path draws names and
@@ -2994,9 +2995,17 @@ scales the source rectangle's height by current/max; the shared Firestaff HUD
 helper had scaled width for every bar, leaving vertical source bars effectively
 unfilled. It now scales height for tall rectangles and preserves width scaling
 for horizontal fallback bars. The lighting/palette runtime gate checks both
-the authentic vertical dimensions and the existing horizontal behavior. This
-source geometry fix has no per-platform original-media capture yet; verify the
-reported HUD at matching gameplay poses across DOS, Mac, Amiga and FM Towns.
+the authentic vertical dimensions and the existing horizontal behavior.
+
+2026-11-03 FM Towns live vital-bar rendering: the authentic HME-242 route now
+applies those percentages after drawing its source panel and squad assets,
+using the Towns interface palette and slot rectangles. The real-media M11 test
+checks a visible framebuffer pixel in each live bar; it exposed that the 5px
+source width is odd even though its 640x400 origin and height map cleanly to
+the 320x200 surface. The renderer keeps the source x/y/height bounds and uses
+the same integer half-width as the shared layout code. PC, Mac and Amiga have
+separate HUD paths and still need same-pose original-media comparison for
+complete parity.
 
 2026-11-02 authentic four-platform presented-pixel diagnostics: `--debug` now
 reports non-black pixel count, palette-index diversity and a hash for the

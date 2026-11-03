@@ -9823,6 +9823,66 @@ static int dm2_v1_viewport_scene_control_command(
     return out_command->valid;
 }
 
+/* HME-242's native status wells and three narrow vital-sign strips are
+ * addressed by the authentic INTERFACE/0 RAW4 layout. The earlier Towns
+ * early-return drew the well art but skipped the live bars that the shared
+ * PC/Mac path paints after loading that same source-owned table. */
+static int dm2_v1_render_fmtowns_status_bars(DM2_V1_ViewportState *s)
+{
+    if (!s || !s->framebuffer || !s->hud_party_valid ||
+        !s->gdat_interface_hud_layout ||
+        !s->gdat_interface_hud_layout->valid ||
+        !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u ||
+        s->hud_party.champion_count <= 0 ||
+        s->hud_party.champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) {
+        return 0;
+    }
+
+    for (int slot = 0; slot < s->hud_party.champion_count; ++slot) {
+        const DM2_V1_HudChampionState *hero =
+            &s->hud_party.champions[slot];
+        const uint8_t percentages[3] = {
+            hero->hp_pct, hero->stamina_pct, hero->mana_pct
+        };
+        if (!hero->occupied) continue;
+        if (!hero->state_source_bound ||
+            !hero->stat_bar_color_source_bound ||
+            hero->stat_bar_color >= 16u ||
+            s->gdat_interface_hud_layout->status_valid_mask[slot] != 0x07u)
+            continue;
+
+        for (int stat = 0; stat < 3; ++stat) {
+            const DM2_V1_InterfaceRect *source_bar =
+                &s->gdat_interface_hud_layout->status[slot][stat];
+            DM2_V1_ViewportRect bar;
+            DM2_V1_ViewportRect fill;
+            if (source_bar->x < 0 || source_bar->y < 0 ||
+                source_bar->w <= 0 || source_bar->h <= 0 ||
+                ((source_bar->x | source_bar->y | source_bar->h) & 1) != 0 ||
+                source_bar->x + source_bar->w > 640 ||
+                source_bar->y + source_bar->h > 400) {
+                continue;
+            }
+            bar = (DM2_V1_ViewportRect){
+                source_bar->x / 2, source_bar->y / 2,
+                source_bar->w / 2, source_bar->h / 2
+            };
+            if (bar.w <= 0 || bar.h <= 0) continue;
+            fill = dm2_v1_hud_bar_fill(&bar, percentages[stat]);
+            dm2_v1_fill_rect(s, &bar,
+                dm2_v1_hud_palette_color(s, DM2_COL_BLACK));
+            if (fill.w > 0 && fill.h > 0) {
+                dm2_v1_fill_rect(s, &fill,
+                    dm2_v1_hud_palette_color(s,
+                        hero->stat_bar_color));
+            }
+            s->last_hud_core_pixel_count += (uint32_t)(bar.w * bar.h);
+        }
+    }
+    return 1;
+}
+
 static int dm2_v1_render_fmtowns_squad_plan(
     DM2_V1_ViewportState *s,
     uint8_t *target,
@@ -10404,7 +10464,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
         s->last_hud_core_pixel_count +=
             (uint32_t)(command->destination.w * command->destination.h);
     }
-    return movement_arrows_seen == 0x3fu &&
+    return dm2_v1_render_fmtowns_status_bars(s) &&
+        movement_arrows_seen == 0x3fu &&
         formation_receipts == s->hud_party.champion_count &&
         icons == (expected_count - formation_receipts) &&
         s->gdat_hud_material_plan_consumed_count - gdat_counter_base ==

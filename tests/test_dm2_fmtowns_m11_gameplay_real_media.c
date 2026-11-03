@@ -1534,6 +1534,73 @@ int main(void)
         {
             const DM2_V1_BootProfile *profile =
                 (const DM2_V1_BootProfile *)view.dm2BootProfile;
+            DM2_V1_HudPartyState live_party;
+            DM2_V1_InterfaceHudLayout source_layout;
+            DM2_V1_InterfacePalette source_palette;
+            int have_live_state = dm2_v1_runtime_last_hud_party_state(
+                &live_party);
+            int have_layout = dm2_v1_boot_interface_hud_layout(
+                (DM2_V1_BootProfile *)profile, &source_layout);
+            int have_palette = dm2_v1_boot_interface_palette(
+                (DM2_V1_BootProfile *)profile, &source_palette);
+            int authentic_bars_visible = have_live_state && have_layout &&
+                have_palette && live_party.champion_count > 0;
+
+            if (authentic_bars_visible) {
+                for (int slot = 0; slot < live_party.champion_count; ++slot) {
+                    const DM2_V1_HudChampionState *hero =
+                        &live_party.champions[slot];
+                    const uint8_t percentages[3] = {
+                        hero->hp_pct, hero->stamina_pct, hero->mana_pct
+                    };
+                    if (!hero->occupied) continue;
+                    if (!hero->state_source_bound ||
+                        !hero->stat_bar_color_source_bound ||
+                        hero->stat_bar_color >= 16u ||
+                        source_layout.status_valid_mask[slot] != 0x07u) {
+                        authentic_bars_visible = 0;
+                        break;
+                    }
+                    for (int stat = 0; stat < 3; ++stat) {
+                        const DM2_V1_InterfaceRect *source_bar =
+                            &source_layout.status[slot][stat];
+                        int x = source_bar->x / 2;
+                        int y = source_bar->y / 2;
+                        int height = source_bar->h / 2;
+                        int fill_height =
+                            (height * percentages[stat]) / 100;
+                        uint8_t expected = fill_height > 0
+                            ? source_palette.palette16[hero->stat_bar_color]
+                            : source_palette.palette16[0];
+                        if (source_bar->x < 0 || source_bar->y < 0 ||
+                            source_bar->w <= 0 || source_bar->h <= 0 ||
+                            x < 0 || y < 0 || x >= M11_FB_WIDTH ||
+                            y >= M11_FB_HEIGHT ||
+                            framebuffer[y * M11_FB_WIDTH + x] != expected) {
+                            fprintf(stderr,
+                                "  Towns live stat bar mismatch slot=%d stat=%d pct=%u color=%u at=%d,%d actual=%u expected=%u rect=%d,%d,%d,%d layout-mask=%02x\n",
+                                slot, stat, percentages[stat],
+                                hero->stat_bar_color, x, y,
+                                (unsigned int)(x >= 0 && x < M11_FB_WIDTH &&
+                                    y >= 0 && y < M11_FB_HEIGHT
+                                        ? framebuffer[y * M11_FB_WIDTH + x]
+                                        : 0xffu),
+                                (unsigned int)expected,
+                                source_bar->x, source_bar->y,
+                                source_bar->w, source_bar->h,
+                                source_layout.status_valid_mask[slot]);
+                            authentic_bars_visible = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+            check(authentic_bars_visible,
+                  "FM Towns live champion vitals paint all three source-positioned bars from authenticated state and palette");
+        }
+        {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)view.dm2BootProfile;
             DM2_V1_HudPartyState squad;
             memset(&squad, 0, sizeof(squad));
             squad.champion_count = 1;

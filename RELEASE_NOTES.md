@@ -4,7 +4,7 @@
 
 - `DM2 moneybox`: change the DOS PC-English panel to display source-derived coin stacks and route supported deposit and withdrawal actions through the selected moneybox. Other editions and complete transaction parity remain open.
 - `DM2 lighting recalculation`: update shared dynamic-light state on supported item and inventory transitions.
-- `DM2 FM Towns HUD`: restore all six authentic movement controls and bind them to the Towns RAW4 placement table.
+- `DM2 FM Towns HUD`: restore all six authentic movement controls and draw the live Health, Stamina and Mana bars from Towns RAW4 rectangles, champion state and the original interface palette.
 
 ## Developer changes
 
@@ -21,7 +21,7 @@
 
 ## Known limitations
 
-- `DM2 viewport and HUD`: complete viewport composition, portraits, labels, panel interactions and physical-display parity remain open.
+- `DM2 viewport and HUD`: Towns live vital bars and movement controls now use authentic data, while complete viewport composition, champion labels, panel interactions and physical-display parity remain open. Other edition-specific HUD paths still have documented gaps.
 - `DM2 containers and moneybox`: container drawing helpers do not yet have a production game-view caller; DOS PC-English moneybox actions do not establish parity across supported editions.
 - `DM2 scroll text`: the line-layout helper has no production game-view caller, so playable platform scrolls remain unverified.
 - `Nexus`: Saturn title/menu composition and playable gameplay remain gated; capture and composition checks do not establish a playable viewport or HUD.
