@@ -23136,6 +23136,10 @@ static int dm2_v1_skproject_xact82_sell(
     DM2_V1_SkprojectXact64Receipt xact64_receipt;
     DM2_V1_SkprojectExchangeMoneyboxRequest exchange_request;
     DM2_V1_SkprojectQuery48ae0767Receipt pack_receipt;
+    uint8_t coin_indices[18];
+    int16_t coin_weights[10];
+    uint16_t coin_count = 0u;
+    int32_t total_value = 0;
     const DM2_V1_WalletCallbacks *wallet = ctx->wallet_callbacks;
     void *wallet_ctx = ctx->wallet_ctx ? ctx->wallet_ctx : ctx->user;
     uint16_t wallet_handle = DM2_V1_OBJECT_NULL;
@@ -23169,15 +23173,6 @@ static int dm2_v1_skproject_xact82_sell(
         receipt->blocked_missing_context = 1;
         return 0;
     }
-    if (wallet_handle != DM2_V1_OBJECT_NULL &&
-        (!wallet->is_item_currency || !wallet->get_item_db_type ||
-         !wallet->get_distinctive_item_type || !wallet->get_container_head ||
-         !wallet->get_next_item_in_list || !wallet->get_item_charge ||
-         !wallet->set_item_charge || !wallet->append_item_to_container)) {
-        receipt->blocked_missing_context = 1;
-        return 0;
-    }
-
     /* Resolve the last moneybox before mutation so a missing possession
      * append callback cannot leave already-rebalanced wallets behind. */
     item = ctx->possession;
@@ -23196,6 +23191,38 @@ static int dm2_v1_skproject_xact82_sell(
             wallet_handle = item;
         item = (uint16_t)next;
     }
+
+    if (wallet_handle != DM2_V1_OBJECT_NULL &&
+        (!wallet->is_item_currency || !wallet->get_item_db_type ||
+         !wallet->get_distinctive_item_type || !wallet->get_container_head ||
+         !wallet->get_next_item_in_list || !wallet->get_item_charge ||
+         !wallet->set_item_charge || !wallet->append_item_to_container)) {
+        receipt->blocked_missing_context = 1;
+        return 0;
+    }
+
+    /* SKProject exchanges wallets before packing a valid payout. This bounded
+     * implementation also rejects prices that cannot be paid exactly. Do
+     * that pure rejection check before mutating any wallet. */
+    if (price > 0) {
+        for (uint16_t i = 0; i < ctx->coin_type_count; ++i)
+            coin_weights[i] = (int16_t)ctx->coin_values[i];
+        dm2_v1_skproject_query_48ae_0767(
+            price, 18u, coin_indices, &coin_count,
+            ctx->coin_type_count, coin_weights, &total_value,
+            &pack_receipt);
+        if (!pack_receipt.valid || total_value != price || coin_count == 0u) {
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
+        if (wallet_handle == DM2_V1_OBJECT_NULL &&
+            !ctx->append_coin_to_possession_fn) {
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
+    }
+
     /* SKULLWIN c_ai.cpp:1891-1903 exchanges every moneybox in the current
      * creature's possession chain and retains the last one for new coins. */
     item = ctx->possession;
@@ -23251,36 +23278,6 @@ static int dm2_v1_skproject_xact82_sell(
     }
 
     {
-        uint8_t coin_indices[18];
-        int16_t coin_weights[10];
-        uint16_t coin_count = 0u;
-        int32_t total_value = 0;
-
-        for (uint16_t i = 0; i < ctx->coin_type_count; ++i)
-            coin_weights[i] = (int16_t)ctx->coin_values[i];
-        dm2_v1_skproject_query_48ae_0767(
-            price, 18u, coin_indices, &coin_count,
-            ctx->coin_type_count, coin_weights, &total_value,
-            &pack_receipt);
-        if (!pack_receipt.valid) {
-            receipt->blocked_missing_context = 1;
-            return 0;
-        }
-        if (total_value != price) {
-            receipt->payout_incomplete = 1;
-            receipt->blocked_missing_context = 1;
-            return 0;
-        }
-        if (coin_count == 0u) {
-            receipt->payout_incomplete = 1;
-            receipt->blocked_missing_context = 1;
-            return 0;
-        }
-        if (wallet_handle == DM2_V1_OBJECT_NULL &&
-            !ctx->append_coin_to_possession_fn) {
-            receipt->blocked_missing_context = 1;
-            return 0;
-        }
         {
             uint16_t allocated[18];
             uint16_t allocated_count = 0u;
