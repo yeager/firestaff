@@ -55,7 +55,7 @@ elif route in {"csb-atari-st", "csb-atari-st-france-label-en"}:
             not probe.get("csbViewportHash") or
             party_state != (0, 9, 1, 2, 0)):
         fail("CSB Atari ST picker route missed its C200-to-runtime step", probe)
-elif route == "dm2-pc":
+elif route in {"dm2-pc", "dm2-pc-jewelcase"}:
     if (probe.get("sourceId") != "dm2" or startup.get("receiptReady") != 1 or
             startup.get("phase") != "dm2-runtime" or
             startup.get("startupActive") != 0 or
@@ -64,7 +64,7 @@ elif route == "dm2-pc":
                 "accepted": 1, "realAssets": 1,
                 "noCoreFallbacks": 1, "fallbackDraws": 0,
             } or party_state != (0, 1, 8, 0, 1)):
-        fail("DM2 PC-DOS picker route missed its first dungeon frame", probe)
+        fail(f"{route} picker route missed its first dungeon frame", probe)
 else:
     raise SystemExit(f"FAIL: unsupported M12 alternate runtime route: {route}")
 

@@ -17,6 +17,7 @@ dm1_atari_st13="$data_root/dm1/Dungeon-Master_Atari-ST_FR_Version-13.zip"
 csb_atari="$data_root/csb/chaos_strikes_back_ftl.zip"
 csb_atari_france="$data_root/csb/chaos_strikes_back_ftl_france.zip"
 dm2_pc="$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+dm2_pc_jewelcase="$data_root/dm2/Dungeon-Master-II-Skullkeep_German-JewelCase.zip"
 
 case "$route" in
     dm1-pc)
@@ -76,6 +77,12 @@ case "$route" in
     dm2-pc)
         selected_game=dm2; game_down=2; platform_down=1
         selected_archive=$dm2_pc; edition=pc-en; platform=PC
+        width=320; height=200; duration=90000
+        game_input='wait:1800,key:enter,key:enter'
+        ;;
+    dm2-pc-jewelcase)
+        selected_game=dm2; game_down=2; platform_down=1
+        selected_archive=$dm2_pc_jewelcase; edition=pc-jewel; platform=PC
         width=320; height=200; duration=90000
         game_input='wait:1800,key:enter,key:enter'
         ;;
@@ -154,6 +161,11 @@ for game_id in dm1 csb dm2; do
             continue
         fi
         if [[ "$route" == csb-atari-st-france-label-en && "$game_id" == csb &&
+              "$(basename "$archive")" != "$(basename "$selected_archive")" ]]; then
+            continue
+        fi
+        if [[ "$route" == dm2-pc-jewelcase && "$game_id" == dm2 &&
+              "$(basename "$archive")" != 'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip' &&
               "$(basename "$archive")" != "$(basename "$selected_archive")" ]]; then
             continue
         fi
@@ -250,10 +262,12 @@ if ! python3 "$(dirname "$0")/verify_m12_alternate_platform_runtime.py" "$route"
     cat "$log" >&2
     exit 1
 fi
-if [[ "$route" == dm2-pc ]]; then
+if [[ "$route" == dm2-pc || "$route" == dm2-pc-jewelcase ]]; then
+    expected_dm2_platform=pc-en
+    [[ "$route" != dm2-pc-jewelcase ]] || expected_dm2_platform=pc-jewel
     if ! grep -Eq '^firestaff: dm2-render-debug .*item-traces:[1-9][0-9]*([[:space:]]|$)' "$log" ||
-       ! grep -Eq '^firestaff: dm2-render-item game=dm2 platform=pc-en .* gdat=[0-9a-f]+ .* rect=-?[0-9]+,-?[0-9]+,[1-9][0-9]*,[1-9][0-9]*$' "$log"; then
-        printf 'FAIL: authentic DM2 PC startup did not produce a populated source item render trace\n' >&2
+       ! grep -Eq "^firestaff: dm2-render-item game=dm2 platform=$expected_dm2_platform .* gdat=[0-9a-f]+ .* rect=-?[0-9]+,-?[0-9]+,[1-9][0-9]*,[1-9][0-9]*$" "$log"; then
+        printf 'FAIL: authentic DM2 %s startup did not produce a populated source item render trace\n' "$expected_dm2_platform" >&2
         print_diagnostics "$log"
         exit 1
     fi
