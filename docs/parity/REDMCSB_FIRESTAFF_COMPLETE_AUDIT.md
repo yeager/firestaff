@@ -1012,7 +1012,7 @@ Compared DOS `SKW_CALC_SIZE_OF_COMPRESSED_RECT`, SPX v4 `CALC_SIZE_OF_COMPRESSED
 
 ### DM2 compressed rectangle query review (2026-11-02)
 
-Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and SKULLWIN. Firestaff `dm2_v1_query_rect` preserves zero rejection, linked range lookup, the four-entry result ring and source mask encodings for common coordinates, compressed byte coordinates, signed/unsigned byte dimensions and word dimensions. DOS and SPX v5 are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL` because it accepts unsigned U16 rectangle IDs while Firestaff currently stores signed int16 query/range fields.
+Compared DOS `SKW_QUERY_RECT`, SPX v4 `QUERY_RECT`, SPX v5 `DM2_QUERY_RECT`, and SKULLWIN. Firestaff's shared decoder preserves zero rejection, linked range lookup, the four-entry result ring and source mask encodings for common coordinates, compressed byte coordinates, signed/unsigned byte dimensions and word dimensions. Its SPX v4 entry compares query, range bounds and local index as U16; the DOS/SPX v5/SKULLWIN entry retains signed range behavior. DOS and SPX v5 are `IMPLEMENTED_PARITY`; SPX v4 remains `PARTIAL` pending proof of source runtime caller and supported-platform binding.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 

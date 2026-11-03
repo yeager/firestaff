@@ -124,8 +124,11 @@ int16_t dm2_v1_calc_size_of_compressed_rect(uint8_t mask)
 
 /* ── DM2_QUERY_RECT ─────────────────────────────────────────────────── */
 
-/* Source: c_xrect.cpp SKW_QUERY_RECT */
-DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st, int16_t query)
+/* Shared decoder; SPX v4 stores/compares rectangle IDs as U16, while DOS,
+ * SPX v5 and SKULLWIN use signed 16-bit range values. */
+static DM2_V1_Rect *query_rect_with_range_mode(DM2_V1_XrectState *st,
+                                               uint16_t query,
+                                               int unsigned_range)
 {
     if (query == 0)
         return NULL;
@@ -134,12 +137,23 @@ DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st, int16_t query)
     for (;;) {
         if (rnodep == NULL)
             return NULL;
-        if (rnodep->min <= query && query <= rnodep->max)
-            break;
+        if (unsigned_range) {
+            if ((uint16_t)rnodep->min <= query &&
+                query <= (uint16_t)rnodep->max)
+                break;
+        } else {
+            int16_t signed_query = (int16_t)query;
+            if (rnodep->min <= signed_query &&
+                signed_query <= rnodep->max)
+                break;
+        }
         rnodep = rnodep->next;
     }
 
-    query -= rnodep->min;
+    if (unsigned_range)
+        query = (uint16_t)(query - (uint16_t)rnodep->min);
+    else
+        query = (uint16_t)((int16_t)query - rnodep->min);
 
     if (++st->queryrectsindex >= DM2_V1_NUM_QUERYRECTS)
         st->queryrectsindex = 0;
@@ -160,7 +174,8 @@ DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st, int16_t query)
         ptr += 2;
     }
 
-    ptr += query * dm2_v1_calc_size_of_compressed_rect(mask);
+    ptr += (uint32_t)query *
+           (uint32_t)dm2_v1_calc_size_of_compressed_rect(mask);
 
     if (mask & 0x4) {
         r->x = (uint16_t)(uint8_t)*ptr++;
@@ -189,6 +204,19 @@ DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st, int16_t query)
     }
 
     return r;
+}
+
+/* Source: DOS/SKULLWIN c_xrect.cpp SKW_QUERY_RECT / DM2_QUERY_RECT. */
+DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st, int16_t query)
+{
+    return query_rect_with_range_mode(st, (uint16_t)query, 0);
+}
+
+/* Source: SKWINSPX v4 skcore.cpp::QUERY_RECT. */
+DM2_V1_Rect *dm2_v1_query_rect_spx_v4(DM2_V1_XrectState *st,
+                                      uint16_t query)
+{
+    return query_rect_with_range_mode(st, query, 1);
 }
 
 /* ── DM2_PT_IN_EXPANDED_RECT ───────────────────────────────────────── */
