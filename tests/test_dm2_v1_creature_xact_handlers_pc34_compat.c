@@ -190,13 +190,13 @@ static void test_xact68_null_safety(void)
 }
 
 /* ================================================================== */
-/* XACT 69 — Emit sound (fully implemented)                           */
+/* XACT 69 — Set target/action (narrow receipt)                           */
 /* ================================================================== */
 
 static void test_xact69_null_safety(void)
 {
-    DM2_V1_XactEmitSoundReceipt receipt;
-    int r = dm2_v1_xact_emit_sound(NULL, &receipt);
+    DM2_V1_XactSetTargetActionReceipt receipt;
+    int r = dm2_v1_xact_set_target_action(NULL, &receipt);
     assert(r == 0);
     assert(receipt.fail_closed == 1);
     printf("  PASS: xact69_null_safety\n");
@@ -204,14 +204,14 @@ static void test_xact69_null_safety(void)
 
 static void test_xact69_direction_north(void)
 {
-    DM2_V1_XactEmitSoundReceipt receipt;
-    DM2_V1_XactEmitSoundRequest req;
+    DM2_V1_XactSetTargetActionReceipt receipt;
+    DM2_V1_XactSetTargetActionRequest req;
     memset(&req, 0, sizeof(req));
-    req.pos_x = 10;
-    req.pos_y = 10;
+    req.timer_x = 10;
+    req.timer_y = 10;
     req.direction = 0; /* North: dx=0, dy=-1 */
     req.v1e0572 = 1;
-    int r = dm2_v1_xact_emit_sound(&req, &receipt);
+    int r = dm2_v1_xact_set_target_action(&req, &receipt);
     assert(r == 1);
     assert(receipt.valid == 1);
     assert(receipt.target_x == 10);     /* 10 + 0 */
@@ -223,14 +223,14 @@ static void test_xact69_direction_north(void)
 
 static void test_xact69_direction_east(void)
 {
-    DM2_V1_XactEmitSoundReceipt receipt;
-    DM2_V1_XactEmitSoundRequest req;
+    DM2_V1_XactSetTargetActionReceipt receipt;
+    DM2_V1_XactSetTargetActionRequest req;
     memset(&req, 0, sizeof(req));
-    req.pos_x = 5;
-    req.pos_y = 5;
+    req.timer_x = 5;
+    req.timer_y = 5;
     req.direction = 1; /* East: dx=1, dy=0 */
     req.v1e0572 = 0;
-    int r = dm2_v1_xact_emit_sound(&req, &receipt);
+    int r = dm2_v1_xact_set_target_action(&req, &receipt);
     assert(r == 1);
     assert(receipt.target_x == 6);
     assert(receipt.target_y == 5);
@@ -241,14 +241,14 @@ static void test_xact69_direction_east(void)
 
 static void test_xact69_direction_wrap(void)
 {
-    DM2_V1_XactEmitSoundReceipt receipt;
-    DM2_V1_XactEmitSoundRequest req;
+    DM2_V1_XactSetTargetActionReceipt receipt;
+    DM2_V1_XactSetTargetActionRequest req;
     memset(&req, 0, sizeof(req));
-    req.pos_x = 0;
-    req.pos_y = 0;
+    req.timer_x = 0;
+    req.timer_y = 0;
     req.direction = 0; /* North: dy=-1 wraps to 31 */
     req.v1e0572 = 5;
-    int r = dm2_v1_xact_emit_sound(&req, &receipt);
+    int r = dm2_v1_xact_set_target_action(&req, &receipt);
     assert(r == 1);
     assert(receipt.target_x == 0);
     assert(receipt.target_y == 31);     /* (0 + (-1)) & 0x1f = 31 */
@@ -259,11 +259,11 @@ static void test_xact69_direction_wrap(void)
 
 static void test_xact69_invalid_direction(void)
 {
-    DM2_V1_XactEmitSoundReceipt receipt;
-    DM2_V1_XactEmitSoundRequest req;
+    DM2_V1_XactSetTargetActionReceipt receipt;
+    DM2_V1_XactSetTargetActionRequest req;
     memset(&req, 0, sizeof(req));
     req.direction = 5; /* invalid */
-    int r = dm2_v1_xact_emit_sound(&req, &receipt);
+    int r = dm2_v1_xact_set_target_action(&req, &receipt);
     assert(r == 0);
     assert(receipt.fail_closed == 1);
     printf("  PASS: xact69_invalid_direction\n");

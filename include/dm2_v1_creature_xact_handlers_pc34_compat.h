@@ -429,31 +429,37 @@ int dm2_v1_xact_guard_position(const DM2_V1_XactGuardPositionRequest *req,
                                  DM2_V1_XactGuardPositionReceipt *receipt);
 
 /* ================================================================== */
-/* XACT 69: PROCEED_XACT_69 — Emit Sound (c_ai.cpp:828-840)           */
+/* XACT 69: PROCEED_XACT_69 — set target tile/action (c_ai.cpp:828-840) */
 /* ================================================================== */
-/* Fully implementable: computes target from direction + delta tables,
- * sets b_1d sound type and b_1a to 1. */
+/* Computes the adjacent target from the creature-facing and timer tile,
+ * then sets b_1d from v1e0572 and b_1a to the edition-family command. */
+
+typedef enum {
+    DM2_V1_XACT_69_DOS_SPX_V5 = 0, /* command 21/22 */
+    DM2_V1_XACT_69_SPX_V4 = 1      /* command 15/16 */
+} DM2_V1_Xact69Variant;
 
 typedef struct {
-    int16_t pos_x;
-    int16_t pos_y;
+    int16_t timer_x;            /* s350.v1e0562.getxA() */
+    int16_t timer_y;            /* s350.v1e0562.getyA() */
     int16_t direction;         /* s350.creatures->w_0e */
-    int16_t v1e0572;           /* sound parameter */
-    int16_t w_18_x;            /* s350.creatures->w_18 target x (input) */
-    int16_t w_18_y;            /* s350.creatures->w_18 target y (input) */
-} DM2_V1_XactEmitSoundRequest;
+    int16_t v1e0572;           /* copied into creature b_1d */
+    uint16_t w_18;             /* existing packed target word */
+    DM2_V1_Xact69Variant variant;
+} DM2_V1_XactSetTargetActionRequest;
 
 typedef struct {
     int valid;
     int fail_closed;
-    int16_t target_x;          /* computed target x = pos_x + dx[dir] */
-    int16_t target_y;          /* computed target y = pos_y + dy[dir] */
-    int8_t b_1d;               /* sound type from v1e0572 */
-    int8_t b_1a;               /* always set to 1 */
-} DM2_V1_XactEmitSoundReceipt;
+    int16_t target_x;          /* (timer_x + dir_dx[dir]) & 31 */
+    int16_t target_y;          /* (timer_y + dir_dy[dir]) & 31 */
+    uint16_t w_18;              /* preserved unrelated bits + target x/y */
+    int8_t b_1d;               /* CUTX8(v1e0572) */
+    int8_t b_1a;               /* variant command 15/16 or 21/22 */
+} DM2_V1_XactSetTargetActionReceipt;
 
-int dm2_v1_xact_emit_sound(const DM2_V1_XactEmitSoundRequest *req,
-                             DM2_V1_XactEmitSoundReceipt *receipt);
+int dm2_v1_xact_set_target_action(const DM2_V1_XactSetTargetActionRequest *req,
+                             DM2_V1_XactSetTargetActionReceipt *receipt);
 
 /* ================================================================== */
 /* XACT 70: PROCEED_XACT_70 — Face Party (c_ai.cpp:843-894)           */
