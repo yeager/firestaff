@@ -209,6 +209,8 @@ typedef struct {
     uint16_t empty_item_roots;
     uint16_t processed_leader_hand;
     uint16_t empty_leader_hand;
+    /* Sum of PROCESS_ITEM_BONUS light additions to savegames1.w_00. */
+    int16_t light_w00_delta;
     uint32_t source_hash;
 } DM2_V1_SksaveItemBonusReceipt;
 

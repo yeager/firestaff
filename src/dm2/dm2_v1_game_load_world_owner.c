@@ -10451,6 +10451,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         source->selected_party.heros_in_party > DM2_MAX_HEROES ||
         source->selected_party.curactevhero < 0 ||
         source->selected_party.curactevhero >= source->selected_party.heros_in_party ||
+        !source->champion_item_bonus.valid ||
+        source->champion_item_bonus.blocked ||
         !source->record_pools.valid || !source->dungeon.raw_data ||
         source->dungeon.raw_size <= 0 || !source->dungeon.record_graph_complete ||
         !source->timer_entries || !source->timer_indices || source->timer_capacity == 0u ||
@@ -10526,6 +10528,10 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     if (!dm2_v1_game_load_runtime_candidate_sound_clone(&candidate.sound_owner,
                                                          &source->sound_owner)) goto fail;
     candidate.party = source->selected_party;
+    /* DM2_EQUIP_ITEM_TO_HAND calls PROCESS_ITEM_BONUS(mode 1) as each
+     * selected mirror contributes its possessions.  Preserve the same
+     * savegames1.w_00 accumulation for the runtime's c_light owner. */
+    candidate.source_light_level = source->champion_item_bonus.light_w00_delta;
     candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
     dm2_v1_game_load_runtime_candidate_init_movement_state(&candidate.movement);
     candidate.moverec = source->source_moverec;
@@ -10624,6 +10630,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
             candidate.source_weather_fresh_game);
     }
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)candidate.party.heros_in_party);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        (uint16_t)candidate.source_light_level);
     /* Fresh GAME_LOAD owns the source c_wbbb block from zero. Keep the
      * complete block in the candidate even though its b_04 consumer is the
      * first runtime effect currently admitted. */
