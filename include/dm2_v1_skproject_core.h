@@ -6776,6 +6776,8 @@ typedef struct {
     DM2_V1_SkprojectCmd06bdFn cmd06bd_fn;
     DM2_V1_SkprojectRandomData *randdat;
     DM2_V1_Skproject19f00559State *state0559;
+    DM2_V1_SkprojectOverseeRecordFn xact82_oversee_record_fn;
+    int16_t creature_w10; /* caller-owned s350.creatures->w_10 shadow */
 } DM2_V1_SkprojectXactContext;
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
@@ -8616,6 +8618,10 @@ typedef struct {
     int16_t front_y;
     int16_t wallet_handle;
     int used_sell_path;
+    int item_path_checked;
+    int16_t item_can_handle_result;
+    int16_t item_transfer_result;
+    int16_t creature_w10_after;
     int8_t result;
 } DM2_V1_SkprojectXact82Receipt;
 

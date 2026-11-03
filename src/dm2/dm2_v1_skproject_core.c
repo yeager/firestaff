@@ -22944,10 +22944,62 @@ int dm2_v1_skproject_proceed_xact_82(
                                    ctx->user);
     receipt.result = -3;
     if (creature != -1 && (uint16_t)creature != 0xffffu) {
+        const uint8_t *front_record;
+        uint16_t front_record_size = 0u;
         receipt.has_creature = 1;
         receipt.creature_handle = (int16_t)creature;
         receipt.out_b1a = 29;
         ctx->creature_b1a = 29;
+
+        if (ctx->v1e0572 == 0) {
+            uint16_t front_possession;
+            int32_t can_handle;
+            DM2_V1_Skproject14cd2886Receipt transfer_receipt;
+            int16_t transfer_result;
+
+            if (!ctx->record_fn || !ctx->can_handle_item_in_fn ||
+                !ctx->xact82_oversee_record_fn) {
+                receipt.blocked_missing_context = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            front_record = ctx->record_fn(
+                (uint16_t)creature, &front_record_size, ctx->user);
+            if (!front_record || front_record_size < 4u) {
+                receipt.blocked_missing_context = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            /* SKULLWIN c_ai.cpp:1898-1918 reads the front creature's
+             * possession word, checks item 0x3e in the facing slot, then
+             * runs the source 14cd_2886 transfer against that creature. */
+            front_possession = (uint16_t)(front_record[2] |
+                                           ((uint16_t)front_record[3] << 8));
+            can_handle = ctx->can_handle_item_in_fn(
+                0x3eu, front_possession, (uint16_t)((direction + 2u) & 3u),
+                ctx->user);
+            if (can_handle == -2) can_handle = -1;
+            transfer_result = dm2_v1_skproject_14cd_2886(
+                (uint16_t)creature, 0x10u,
+                (uint16_t)((direction + 2u) & 3u), 0u, 1u,
+                ctx->xact82_oversee_record_fn, ctx->user,
+                &transfer_receipt);
+            if (!transfer_receipt.valid) {
+                receipt.blocked_missing_context = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            receipt.item_path_checked = 1;
+            receipt.item_can_handle_result = (int16_t)can_handle;
+            receipt.item_transfer_result = transfer_result;
+            if ((transfer_result != 0 && transfer_result != -1) ||
+                can_handle != -1) {
+                ctx->creature_w10 = transfer_result > 0
+                    ? transfer_result : 0;
+                receipt.creature_w10_after = ctx->creature_w10;
+                receipt.result = -2;
+            }
+        }
     }
 
     receipt.valid = 1;
