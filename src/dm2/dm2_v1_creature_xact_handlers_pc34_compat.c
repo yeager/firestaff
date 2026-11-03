@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_creature_xact_handlers_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <string.h>
 
@@ -757,11 +758,24 @@ int dm2_v1_xact_commerce(
 
     receipt->valid = 1;
 
-    /* c_ai.cpp:1805-1936 — very complex commerce/trade.
-     * Requires GET_CREATURE_AT, GET_ADDRESS_OF_RECORD, IS_CONTAINER_MONEYBOX,
-     * 14cd_3582, query_48ae_0767, ALLOC_NEW_DBITEM, ADD_COIN_TO_WALLET,
-     * APPEND_RECORD_TO, PROCEED_XACT_64. Fail-closed. */
-    receipt->fail_closed = 1;
+    /* c_ai.cpp:1805-1936 — delegate the source state and callbacks to the
+     * full SKProject-backed helper. Preserve fail-closed behavior for callers
+     * that still provide only the legacy narrow request fields. */
+    if (!req->source_context) {
+        receipt->fail_closed = 1;
+        return 1;
+    }
+    {
+        DM2_V1_SkprojectXact82Receipt source_receipt;
+        if (!dm2_v1_skproject_proceed_xact_82(
+                req->source_context, &source_receipt) ||
+            source_receipt.blocked_missing_context) {
+            receipt->fail_closed = 1;
+            return 1;
+        }
+        receipt->result = source_receipt.result;
+        receipt->state_changed = source_receipt.has_creature;
+    }
     return 1;
 }
 

@@ -15,6 +15,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+struct DM2_V1_SkprojectXactContext;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -728,6 +730,7 @@ typedef struct {
     DM2_V1_GetCreatureAtFn get_creature_at;
     DM2_V1_CreatureCanHandleItemInFn can_handle_item;
     DM2_V1_GetAddressOfRecordFn get_address_of_record;
+    struct DM2_V1_SkprojectXactContext *source_context;
     void *ctx;
 } DM2_V1_XactCommerceRequest;
 

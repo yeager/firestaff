@@ -6736,7 +6736,7 @@ int dm2_v1_skproject_19f0_0d10(
 
 /* SKULLWIN/c_ai.cpp cycle-16 batch — shared caller-owned creature AI state
    derived from the s350/ddat runtime words. */
-typedef struct {
+typedef struct DM2_V1_SkprojectXactContext {
     int16_t creature_x;      /* s350.v1e0562.getxA */
     int16_t creature_y;      /* s350.v1e0562.getyA */
     uint16_t creature_word_e;/* s350.v1e054e->w_0e */
