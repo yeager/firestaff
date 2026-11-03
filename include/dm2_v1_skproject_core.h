@@ -1508,6 +1508,8 @@ typedef struct {
 typedef struct {
     uint8_t alive;
     uint16_t strength;
+    /* Source STAMINA_ADJUSTED_ATTR result after the edition's event/leader
+       and light-creature bonuses. Zero is a valid value. */
     uint16_t stamina_adjusted_strength;
     uint16_t max_stamina;
     uint16_t cur_stamina;
@@ -1526,6 +1528,8 @@ typedef struct {
     uint8_t blocked_overweight_creature;
     uint8_t can_lift;
     uint16_t checked_heroes;
+    uint16_t strength_before_stamina_adjustment[
+        DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
     uint16_t stamina_adjustments[DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
 } DM2_V1_SkprojectLiftReceipt;
 

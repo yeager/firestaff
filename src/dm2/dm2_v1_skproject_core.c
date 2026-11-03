@@ -6118,9 +6118,12 @@ int dm2_v1_skproject_move_12b4_099e(
             strength = (uint16_t)(strength + strength / 8u);
         if (request->creature_weight <= 0x002du)
             strength = (uint16_t)(strength + strength / 4u);
-        if ((hero->stamina_adjusted_strength != 0u ?
-             hero->stamina_adjusted_strength : strength) >=
-                request->creature_weight ||
+        receipt.strength_before_stamina_adjustment[i] = strength;
+        /* SKW_12b4_099e / CHAMPION_WEIGHT_CREATURE_12b4_099e calls
+         * STAMINA_ADJUSTED_ATTR after applying the event/leader and light-
+         * creature bonuses. Zero is a valid adjusted result, not a missing
+         * input; falling back to raw strength changes the lift decision. */
+        if (hero->stamina_adjusted_strength >= request->creature_weight ||
             request->rand16_values[i] == 0u) {
             receipt.can_lift = 1u;
             break;
