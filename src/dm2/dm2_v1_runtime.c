@@ -12728,9 +12728,10 @@ static int dm2_runtime_light_timer(
     return 1;
 }
 
-/* DM2_CONTINUE_ORNATE_ANIMATOR (c_tim_proc.cpp:~1080).  The timer payload
- * carries the DB3 actuator handle in value_a and the wall/floor mode in
- * value_b; the live map and GDAT owner determine the animation length. */
+/* DM2_CONTINUE_ORNATE_ANIMATOR (SKWINDOS/dm2bya.cpp:4564; SPX v5
+ * sktimprc.cpp:962). The timer carries the DB3 actuator in value_a and the
+ * wall/floor mode in value_b; its map selects the graphics list, and its
+ * existing tick is advanced by one before requeue, as in the source. */
 static int dm2_runtime_ornate_animator_timer(
     void *context, const DM2_V1_SourceTimer *timer,
     uint16_t source_index __attribute__((unused)),
@@ -12750,6 +12751,10 @@ static int dm2_runtime_ornate_animator_timer(
     uint16_t word2;
     uint16_t frame;
     DM2_V1_GetOrnateAnimLenReceipt anim;
+    uint8_t wall_gfx_list[16] = {0};
+    uint8_t floor_gfx_list[16] = {0};
+    int wall_gfx_count;
+    int floor_gfx_count;
 
     if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
         !rt->boot->dungeon_data || !rt->record_pools_valid)
@@ -12757,7 +12762,8 @@ static int dm2_runtime_ornate_animator_timer(
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
     /* SKWINDOS/SKWINSPX/SKWIN process this timer without a player-map gate;
-     * the active global map graphics list supplies the decoration lookup. */
+     * their dispatcher selects the timer map before the handler, so resolve
+     * the decoration from that map's graphics list. */
     if (map >= dungeon->level_count)
         return 0;
     record = dm2_v1_record_pool_address_mut(&rt->record_pools,
@@ -12773,15 +12779,21 @@ static int dm2_runtime_ornate_animator_timer(
     word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
     gfx_index = (uint8_t)(((uint16_t)record[4] |
                            ((uint16_t)record[5] << 8)) >> 12);
+    wall_gfx_count = dm2_v1_dungeon_get_map_wall_gfx_list(
+        dungeon, map, wall_gfx_list, (int)sizeof(wall_gfx_list));
+    floor_gfx_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+        dungeon, map, floor_gfx_list, (int)sizeof(floor_gfx_list));
+    if (wall_gfx_count < 0 || floor_gfx_count < 0)
+        return 0;
     decoration = 0xffu;
     if (wall) {
-        gfx_count = rt->map_wall_gfx_count;
+        gfx_count = wall_gfx_count;
         if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
-            decoration = rt->map_wall_gfx_list[gfx_index - 1u];
+            decoration = wall_gfx_list[gfx_index - 1u];
     } else {
-        gfx_count = rt->map_floor_gfx_count;
+        gfx_count = floor_gfx_count;
         if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
-            decoration = rt->map_floor_gfx_list[gfx_index - 1u];
+            decoration = floor_gfx_list[gfx_index - 1u];
     }
     memset(&anim, 0, sizeof(anim));
     if (decoration == 0xffu) {
@@ -12810,7 +12822,8 @@ static int dm2_runtime_ornate_animator_timer(
     }
     continuation = *timer;
     continuation.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
-        (((uint32_t)rt->tick_count + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        ((((timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) + 1u)) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
     if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &continuation, 0u) !=
         DM2_V1_SOURCE_TIMER_OK) {
         rt->timer_queue = queue_backup;
@@ -12966,7 +12979,8 @@ static int dm2_runtime_ornate_noise_timer(
     {
         DM2_V1_SourceTimer next_timer = *timer;
         next_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
-            (((uint32_t)rt->tick_count + (uint32_t)anim.length) &
+            (((timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) +
+              (uint32_t)anim.length) &
              DM2_V1_SOURCE_TIMER_TICK_MASK);
         if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &next_timer,
                                         source_index) !=
