@@ -2910,7 +2910,7 @@ int dm2_v1_query_gdat_image_metrics_variant_receipt(
     DM2_V1_GdatImageMetricsReceipt *out_receipt)
 {
     const DM2_V1_GdatEntry *entry;
-    const uint8_t *raw;
+    const uint8_t *raw = NULL;
     size_t raw_size = 0u;
     uint16_t width;
     uint16_t height;
