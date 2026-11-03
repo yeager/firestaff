@@ -5,6 +5,12 @@ cache-hash consumption, lift RNG outcomes, and SPX v4 diagonal coordinates.
 This is helper-level evidence only; source inventory and live platform owners
 remain open.
 
+2026-11-03 SKProject `SKWIN/SkWinCore.cpp:24955-25049` cross-check: Windows
+uses the same full map-click transaction as SPX v4, with UI event `0x96` and
+expanded rect 99. Firestaff’s authenticated PC matrix supplies rect `0x63`, and
+its M11 event switch has no event-150 transaction. Keep the source variants
+separate until each native rect and caller route is bound.
+
 2026-11-02 SKProject `DRAW_ITEM_IN_HAND`:
 DOS and SPX v4/v5 resolve the hand item frame, copy its local palette and
 blit a 4-bpp icon into the hand record's bitmap using source dimensions. DOS
