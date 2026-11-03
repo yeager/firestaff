@@ -12756,7 +12756,9 @@ static int dm2_runtime_ornate_animator_timer(
         return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
-    if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
+    /* SKWINDOS/SKWINSPX/SKWIN process this timer without a player-map gate;
+     * the active global map graphics list supplies the decoration lookup. */
+    if (map >= dungeon->level_count)
         return 0;
     record = dm2_v1_record_pool_address_mut(&rt->record_pools,
                                              timer->value_a);
@@ -12782,12 +12784,18 @@ static int dm2_runtime_ornate_animator_timer(
             decoration = rt->map_floor_gfx_list[gfx_index - 1u];
     }
     memset(&anim, 0, sizeof(anim));
-    if (decoration == 0xffu || !dm2_v1_boot_asset_loader(rt->boot) ||
-        !dm2_v1_get_ornate_anim_len_receipt(
-            dm2_v1_boot_asset_loader(rt->boot), category,
-                                             decoration, 0, &anim) ||
-        !anim.accepted || anim.length == 0u)
+    if (decoration == 0xffu) {
+        if (!dm2_v1_get_ornate_anim_len_receipt(
+                NULL, category, decoration, 1, &anim) ||
+            !anim.accepted || anim.length == 0u)
+            return 0;
+    } else if (!dm2_v1_boot_asset_loader(rt->boot) ||
+               !dm2_v1_get_ornate_anim_len_receipt(
+                   dm2_v1_boot_asset_loader(rt->boot), category,
+                   decoration, 0, &anim) || !anim.accepted ||
+               anim.length == 0u) {
         return 0;
+    }
     memcpy(record_backup, record,
            rt->record_pools.pools[3].record_size);
     frame = (uint16_t)((word2 >> 7) & 0x1ffu);
