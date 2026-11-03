@@ -719,9 +719,10 @@ typedef struct {
      * source-ordered 0x47 timer owner. */
     uint8_t source_hero_ench_countdown;
     int16_t source_hero_ench_target;
-    /* Exact c_wbbb/ddat.savegames1 source block. Fresh GAME_LOAD starts
-     * zeroed; SKSAVE Resume must transfer the authenticated six bytes before
-     * this candidate can become playable. */
+    /* Current c_wbbb/ddat.savegames1 source block. Fresh GAME_LOAD starts
+     * zeroed; SKSAVE Resume transfers the post-global-timer reconstruction.
+     * Its original serialized bytes remain separately retained by the
+     * SKSAVE load owner. */
     uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
     int source_savegames1_valid;
     /* Exact source clock/RNG/weather, cloned from fresh GAME_LOAD or restored

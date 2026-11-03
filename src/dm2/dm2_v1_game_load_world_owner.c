@@ -10670,6 +10670,14 @@ int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
         !source->runtime_timer_entries || !source->runtime_timer_indices ||
         source->runtime_timer_capacity == 0u || !source->source_sound_materialized ||
         !source->sound_owner.valid || !source->source_savegames1_valid ||
+        !source->global_effects_complete ||
+        !source->global_effect_receipt.valid ||
+        source->savegames1[0] !=
+            (uint8_t)(uint16_t)source->global_effect_receipt.light_accumulator ||
+        source->savegames1[1] !=
+            (uint8_t)((uint16_t)source->global_effect_receipt.light_accumulator >> 8) ||
+        source->savegames1[2] !=
+            (uint8_t)source->global_effect_receipt.attack_count ||
         source->state.champion_count == 0u ||
         source->state.champion_count > DM2_MAX_HEROES ||
         source->state.leader_index >= source->state.champion_count) return 0;
@@ -10741,11 +10749,20 @@ int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
     candidate.source_display_x = (int16_t)source->state.party_x;
     candidate.source_display_y = (int16_t)source->state.party_y;
     candidate.source_runtime_display_direction = candidate.source_party_direction;
-    candidate.source_hero_ench_countdown = source->source_savegames1[2];
     candidate.source_hero_ench_target = -1;
-    memcpy(candidate.source_savegames1, source->source_savegames1,
+    memcpy(candidate.source_savegames1, source->savegames1,
            sizeof(candidate.source_savegames1));
     candidate.source_savegames1_valid = 1;
+    /* READ_SKSAVE_DUNGEON is followed by PROCEED_GLOBAL_EFFECT_TIMERS,
+     * which clears savegames1 and rebuilds w_00 from type-0x46 timers.
+     * Transfer that final source accumulator, not the original serialized
+     * bytes or the now-overwritten mode-0 item-bonus intermediate. */
+    candidate.source_light_level =
+        (int16_t)source->global_effect_receipt.light_accumulator;
+    candidate.source_hero_ench_countdown = candidate.source_savegames1[2];
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        dm2_v1_game_load_owner_hash_bytes(candidate.source_savegames1,
+            sizeof(candidate.source_savegames1)));
     /* DM2_GAME_LOAD has restored s_savegamebuffer's clock, RNG and weather
      * fields at this point.  Bind the one map-local v1e1472 selector using
      * the same GDAT query LOAD_LOCALLEVEL_DYN performs before c_weather's
@@ -10783,6 +10800,8 @@ int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
         candidate.timer_capacity);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint32_t)candidate.party.heros_in_party);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        (uint16_t)candidate.source_light_level);
     if (hash == 0u) goto fail;
     candidate.candidate_hash = hash;
     candidate.valid = 1;

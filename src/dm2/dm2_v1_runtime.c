@@ -5289,8 +5289,9 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
                            !sksave_source->asset_loader ||
                            sksave_source->asset_loader != candidate->asset_loader ||
                            !sksave_source->source_savegames1_valid ||
+                           !sksave_source->global_effects_complete ||
                            !candidate->source_savegames1_valid ||
-                           memcmp(sksave_source->source_savegames1,
+                           memcmp(sksave_source->savegames1,
                                   candidate->source_savegames1,
                                   sizeof(candidate->source_savegames1)) != 0 ||
                            (sksave_source->state.fixed_sections_hash ^
@@ -5466,10 +5467,9 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->source_hero_ench_target = candidate->source_hero_ench_target;
     memcpy(rt->source_savegames1, candidate->source_savegames1,
            sizeof(rt->source_savegames1));
-    /* For a fresh GAME_LOAD this block was initialized from source-zero.
-     * For SKSAVE Resume the preflight above proved byte identity with the
-     * immutable source snapshot before any ownership moved; this copy is the
-     * single writable runtime global-state owner. */
+    /* For a fresh GAME_LOAD this block starts at source-zero. SKSAVE Resume
+     * carries the post-PROCEED_GLOBAL_EFFECT_TIMERS c_wbbb bytes admitted by
+     * the private load owner; this becomes the writable runtime global owner. */
     rt->source_aura_of_speed = candidate->source_savegames1_valid
         ? candidate->source_savegames1[4] : 0u;
     rt->source_aura_of_speed_valid = candidate->source_savegames1_valid;
