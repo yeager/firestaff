@@ -982,7 +982,7 @@ Compared SKProject `CHECK_RECOMPUTE_LIGHT` (`SKWINSPX/src/v4/skgame.cpp:2188-223
 
 Compared DOS `SKW_CLICK_MONEYBOX`, SPX v4 `CLICK_MONEYBOX`, and SPX v5 `DM2_CLICK_MONEYBOX`. Each checks moneybox panel mode, deposits a held coin or withdraws the clicked denomination, refreshes after success, and recalculates hero weight. Firestaff has the callback event handler and wallet helpers, but M11 leaves source input events 228-233 unhandled and has no live record/panel callback binding. All three platform rows remain partial.
 
-Applying the active-source review overrides gives 2,735 unreviewed, 1,086 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,976 open rows (2,735 unreviewed, 1,239 partial source or older-ledger rows, 0 missing, 2 partial source owners).
+Applying the active-source review overrides gives 2,735 unreviewed, 1,086 partial, 0 missing, and 106 implemented-parity definitions. The generated combined skproject backlog is 3,977 open rows (2,735 unreviewed, 1,240 partial source or older-ledger rows, 0 missing, 2 partial source owners).
 
 
 ### DM2 distant environment drawing review (2026-11-02)
