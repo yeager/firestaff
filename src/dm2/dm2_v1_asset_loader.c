@@ -2907,14 +2907,14 @@ int dm2_v1_query_gdat_image_metrics_variant_receipt(
     uint16_t decoded_height,
     uint16_t *out_width,
     uint16_t *out_height,
-    DM2_V1_GdatImageEntryBuffReceipt *out_receipt)
+    DM2_V1_GdatImageMetricsReceipt *out_receipt)
 {
     const DM2_V1_GdatEntry *entry;
     const uint8_t *raw;
     size_t raw_size = 0u;
     uint16_t width;
     uint16_t height;
-    DM2_V1_GdatImageEntryBuffReceipt receipt;
+    DM2_V1_GdatImageMetricsReceipt receipt;
 
     if (out_width) *out_width = 0u;
     if (out_height) *out_height = 0u;
@@ -2940,9 +2940,8 @@ int dm2_v1_query_gdat_image_metrics_variant_receipt(
     receipt.category = (uint8_t)category;
     receipt.index = (uint8_t)index;
     receipt.field = (uint8_t)field;
-    receipt.requested_data_index = entry->data_index;
-    receipt.selected_data_index = entry->data_index;
-    receipt.selected_raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+    receipt.source_shelf_entry_resident = (uint8_t)(source_shelf_entry_resident != 0);
+    receipt.data_index = entry->data_index;
     receipt.width = width;
     receipt.height = height;
     if (source_shelf_entry_resident) {
@@ -2952,7 +2951,7 @@ int dm2_v1_query_gdat_image_metrics_variant_receipt(
     receipt.receipt_hash = dm2_gdat_file_receipt_hash(
         ((uint32_t)(uint8_t)category << 16) |
             ((uint32_t)(uint8_t)index << 8) | (uint32_t)(uint8_t)field,
-        receipt.selected_data_index,
+        receipt.data_index,
         ((uint32_t)width << 16) | height,
         receipt.raw_hash ^ (uint32_t)(source_shelf_entry_resident != 0));
     *out_width = width;
