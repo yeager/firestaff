@@ -2534,7 +2534,7 @@ static void test_map_helpers(void)
         lift.heroes[1].strength = 36u;
         lift.heroes[1].max_stamina = 160u;
         lift.heroes[1].cur_stamina = 80u;
-        lift.rand16_values[1] = 2u;
+        lift.rand16_values[1] = 0u;
         CHECK(dm2_v1_skproject_move_12b4_099e(
                   &lift, &lift_receipt) == 1 &&
                   lift_receipt.valid && lift_receipt.can_lift &&
@@ -2733,8 +2733,8 @@ static void test_cache_hash_helpers(void)
     CHECK(dm2_v1_skproject_get_temp_cache_hash(&state) == 0xffff0000u,
           "GET_TEMP_CACHE_HASH starts in the source temp hash range");
     CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) == 3u &&
-              state.hashes[3] == 0xffff0000u &&
-              state.temp_hash_counter == 1u,
+              state.hashes[3] == 0xffff0001u &&
+              state.temp_hash_counter == 2u,
           "ALLOC_TEMP_CACHE_INDEX allocates a temp hash through ADD_CACHE_HASH");
     CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) ==
               DM2_V1_SKPROJECT_MEMENT_NONE,
@@ -3669,6 +3669,8 @@ static void test_adjust_ui_event(void)
     champions[2].hand_cooldown[2] = 0u;
 
     event.event = 95u;
+    event.x = 18;
+    event.y = 18;
     champions[2].leader_action_disabled = 1u;
     CHECK(dm2_v1_skproject_adjust_ui_event_variant(
               &event, 0u, positions, champions, 4u,

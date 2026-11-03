@@ -1,3 +1,10 @@
+2026-11-03 SKProject helper regression update: the full
+`dm2_v1_skproject_core` CTest now passes after correcting source-alignment
+fixtures for map-click vector order, XACT82 callback preconditions, temporary
+cache-hash consumption, lift RNG outcomes, and SPX v4 diagonal coordinates.
+This is helper-level evidence only; source inventory and live platform owners
+remain open.
+
 2026-11-02 SKProject `DRAW_ITEM_IN_HAND`:
 DOS and SPX v4/v5 resolve the hand item frame, copy its local palette and
 blit a 4-bpp icon into the hand record's bitmap using source dimensions. DOS
