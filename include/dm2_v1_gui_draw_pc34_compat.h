@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "dm2_v1_rect_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,10 +19,6 @@ extern "C" {
 /* ========================================================================
  * Forward types
  * ======================================================================== */
-
-typedef struct DM2_V1_Rect {
-    int16_t x, y, w, h;
-} DM2_V1_Rect;
 
 typedef struct DM2_V1_ImageDesc {
     int16_t x, y;
@@ -123,6 +120,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
                                      int16_t id, int16_t *srcx, int16_t *srcy);
     /* Clip rectangle used by SKProject's DRAW_MONEYBOX. */
     DM2_V1_Rect *(*get_right_panel_clip_rect)(void *ctx, DM2_V1_Rect *out);
+    /* Active magic-map viewport used by DRAW_CHIP_OF_MAGIC_MAP. */
+    DM2_V1_Rect *(*get_magic_map_clip_rect)(void *ctx, DM2_V1_Rect *out);
     DM2_V1_Rect *(*scale_rect)(void *ctx, int16_t id, int16_t num,
                                 int16_t den, DM2_V1_Rect *out);
     DM2_V1_Rect *(*offset_rect)(void *ctx, int32_t buttongroup_id,
@@ -136,6 +135,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void *(*get_bmp)(void *ctx, int16_t dbidx);
     int16_t (*get_bmp_width)(void *ctx, void *bmp);
     int16_t (*get_bmp_height)(void *ctx, void *bmp);
+    int16_t (*get_button_group_width)(void *ctx, int32_t buttongroup_id);
     int16_t (*get_font_height)(void *ctx);
     int32_t (*get_bmp_bpp)(void *ctx, void *bmp);
     void *(*get_bmp_pixels)(void *ctx, void *bmp);
@@ -209,6 +209,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*count_by_coin_types)(void *ctx, int32_t record, int16_t *out);
     uint16_t (*get_money_item_id)(void *ctx, int32_t denomination_order);
     void *(*query_cmdstr_name)(void *ctx, int8_t a, int8_t b, int8_t c);
+    bool (*get_command_slot_fields)(void *ctx, int32_t slot,
+                                    uint8_t *category, uint8_t *index,
+                                    uint8_t *entry);
+    int8_t (*get_held_container_type)(void *ctx);
 
     /* ---- UI state ---- */
     int16_t (*get_v1e0976)(void *ctx);
@@ -235,6 +239,7 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*set_v1d66fc)(void *ctx, int16_t val);
     int16_t (*get_v1d67bc)(void *ctx);
     void (*set_v1d67bc)(void *ctx, int16_t val);
+    int16_t (*get_v1d67d6)(void *ctx);
     int16_t (*get_v1d694a)(void *ctx);
     void (*set_v1d694a)(void *ctx, int16_t val);
     int32_t (*get_gametick)(void *ctx);
@@ -264,6 +269,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*query_gdat_summary_image)(void *ctx, void *image, int8_t cls,
                                      int8_t sub, int8_t idx);
     void (*query_picst_it)(void *ctx, void *image);
+    /* Map damage 0..40 to the edition's source-specific summary-image
+     * stretch fields (SPX v4 and DOS/SPX v5 use different dimensions). */
+    void (*set_attack_result_image_stretch)(void *ctx, void *image,
+                                            int16_t damage);
     void *(*set_image)(void *ctx, int16_t dbidx, void *imgdesc);
     void (*image_draw)(void *ctx, void *image, int32_t bg_id,
                        int16_t rectid, int16_t alpha);
@@ -338,6 +347,13 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*draw_item_survey_class_image)(void *ctx, int8_t cls1, int8_t cls2);
     /* SKProject selects line height and centering constants by text encoding. */
     bool (*query_text_is_mbcs)(void *ctx, const char *text);
+    bool (*is_player_sleeping)(void *ctx);
+    void (*draw_gray_overlay)(void *ctx, int32_t buttongroup_id,
+                              DM2_V1_Rect *rect, int16_t mode);
+    /* Edition adapter maps ExtendedPicture::mirrorFlip before image draw. */
+    void (*set_summary_image_mirror)(void *ctx, void *image, bool mirror);
+    /* SKWIN uses squad leader; DOS/SPX v5 select the active/event hero. */
+    int16_t (*get_squad_leader_hero_idx)(void *ctx);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

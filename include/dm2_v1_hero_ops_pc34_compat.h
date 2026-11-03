@@ -147,7 +147,7 @@ int dm2_v1_process_poison(
 #define DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY 0xA
 #define DM2_V1_COIN_CHARGE_MAX 0x3F
 
-typedef struct {
+typedef struct DM2_V1_WalletCallbacks {
     int (*is_container_moneybox)(void *ctx, uint16_t container_ref);
     int (*is_item_currency)(void *ctx, uint16_t item_ref);
     uint16_t (*get_item_db_type)(void *ctx, uint16_t item_ref);

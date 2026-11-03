@@ -50,7 +50,7 @@ the game runtime.
 | Source set | Definitions | Result |
 |---|---:|---|
 | Project-owned `.cpp` in `SKWIN/` and `SKULLWIN/`, plus selected `DM2_ARRANGE_DUNGEON` | 1,762 | Callable-definition rows in the disposition ledger |
-| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,769 `UNREVIEWED`; 1,052 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,938 open tasks (2,769 unreviewed, 1,167 partial incl. older-ledger rows, 2 partial source owners). |
+| `SKWINSPX/src`, `SKWINDOS/src`, legacy top-level `SKWINDOS/`, and two `SKULLWIN/` definitions | 3,941 inventory rows (2,734 SPX, 1,205 DOS, 2 SKULLWIN) | active-source overrides: 2,729 `UNREVIEWED`; 1,092 `PARTIAL`; 106 `IMPLEMENTED_PARITY`; 12 `NOT_APPLICABLE_ARCH`; 2 `NOT_APPLICABLE_GAME`. Backlog tool: 3,980 open tasks (2,729 unreviewed, 1,249 partial incl. older-ledger rows, 2 partial source owners). |
 
 The active-source definitions are tracked per location and source variant,
 not deduplicated by symbol name. The status split above keeps SPX v4 and SPX v5
@@ -62,11 +62,11 @@ of completed product features or platform-complete behaviors.
 
 | Status | Count |
 |---|---:|
-| `IMPLEMENTED_PARITY` | 1,049 |
+| `IMPLEMENTED_PARITY` | 1,046 |
 | `NOT_APPLICABLE_ARCH` | 558 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 0 |
-| `PARTIAL` | 80 |
+| `PARTIAL` | 83 |
 | `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 2 |
 | `MISSING` | 0 |
@@ -581,7 +581,7 @@ Compared DOS `SKW_24a5_0e82` and both duplicate SPX v5 `DM2_guidraw_24a5_0e82` d
 Compared DOS `SKW_24a5_1532` and both duplicate SPX v5 `DM2_24a5_1532` definitions. They draw active-champion skill rows from source GDAT labels and query skill levels (cap 16, skip level 1), then draw six ability rows with current-versus-prior comparison colors and source-layout max values. Firestaff's skproject panel helper is a structural receipt only; its actual M11 skills/statistics view is a ReDMCSB DM1 feature, not a DM2 equivalent. No live DM2 skill/ability panel renderer exists. All three definitions remain `PARTIAL`. Active-source counts: 3,314 unreviewed, 549 partial, 5 missing, 56 implemented-parity, 8 architecture-specific, 2 outside-game; combined backlog 3,943 (3,314 unreviewed, 622 partial source/older-ledger rows, 5 missing, 2 partial source owners).
 
 
-DOS `SKW_DRAW_HAND_ACTION_ICONS`, SPX v4 `DRAW_HAND_ACTION_ICONS` and both duplicate SPX v5 `DM2_DRAW_HAND_ACTION_ICONS` definitions are now compared. Each selects the hand background GDAT and direction-adjusted rectangle, draws an item on the wood panel, and applies cooldown/sleep dimming; the source also blacks out a dead hero's hand rectangle. Firestaff has a live source-backed runtime owner for both hand backdrops and the selected state, with a viewport renderer and selected-hand item image route. Its item materialization does not yet reproduce the complete source `DRAW_ITEM_ON_WOOD_PANEL` behavior, and dead-slot and all-platform runtime coverage remain open. All four definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,278 unreviewed, 585 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,278 unreviewed, 658 partial source/older-ledger rows, 5 missing, 2 partial source owners).
+DOS `SKW_DRAW_HAND_ACTION_ICONS`, SPX v4 `DRAW_HAND_ACTION_ICONS` and both duplicate SPX v5 `DM2_DRAW_HAND_ACTION_ICONS` definitions are now compared. Each selects the hand background GDAT and direction-adjusted rectangle, draws an item on the wood panel, and applies cooldown/sleep dimming; the source also blacks out a dead hero's hand rectangle. Firestaff has a live source-backed runtime owner for both hand backdrops and the selected state, with a viewport renderer and selected-hand item image route. The production M11 viewport now black-fills bound zero-HP hand rectangles and centers admitted item bitmaps at decoded dimensions as the source does. Its temporary wood-panel image composition still does not reproduce the complete source `DRAW_ITEM_ON_WOOD_PANEL` behavior, and exact all-platform runtime coverage remains open. All four definitions remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,278 unreviewed, 585 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,278 unreviewed, 658 partial source/older-ledger rows, 5 missing, 2 partial source owners).
 
 
 DOS `SKW_29ee_0396`, both duplicate SPX v5 `DM2_29ee_0396` helpers and the SPX v4 inline formation draw in `UPDATE_RIGHT_PANEL` are compared. They draw the F5 squad background, crop living heroes' GDAT portraits by facing into formation rectangles, suppress the dragged hero, optionally jitter icons, animate directional aura overlays and gray the panel state. Firestaff has a partial squad-icon crop helper plus distinct live Amiga and Towns formation paths, but lacks the full DOS/PC formation panel, drag/jitter/aura animation and overlay behavior across supported platforms. The DOS and both SPX v5 rows remain `PARTIAL`. Historical active-source counts at the recorded review point: 3,275 unreviewed, 588 partial, 5 missing, 56 implemented-parity, 8 architecture-specific and 2 outside-game; combined DM2 backlog: 3,943 open rows (3,275 unreviewed, 661 partial source/older-ledger rows, 5 missing, 2 partial source owners).
@@ -743,7 +743,7 @@ Compared DOS `SKW_REFRESH_PLAYER_STAT_DISP` (`dm2bye.cpp:940 onward`), SPX v4 `R
 Compared DOS SKW_14cd_102e (dm2bye.cpp:1323-1348), SPX v4 _14cd_102e (skcrture.cpp:5818-5835), SPX v5 DM2_14cd_102e (skai.cpp:1186-1282), and SKULLWIN. All recurse into creature possessions and optionally chests. SPX v4/v5 and SKULLWIN count direction-matched DB5..DB13 items accepted by CREATURE_CAN_HANDLE_IT; DOS applies its distinct SKW_1c9a_0006 class predicate. Firestaff has two bounded callback helpers for the SPX/SKULLWIN-style count, but no production XACT/AI caller supplies the source item/action state. DOS selection semantics, runtime caller integration, and supported platform routes remain incomplete; every source definition stays PARTIAL.
 
 
-With active-source review overrides applied, the inventory currently maps 2,769 as `UNREVIEWED`, 1,052 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,729 as `UNREVIEWED`, 1,092 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
 
 ### DM2 pending squad position recomputation (2026-11-02)
 

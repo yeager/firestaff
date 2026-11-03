@@ -46,16 +46,24 @@ void dm2_v1_draw_icon_pict_buff(
     void *palette,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb || !blitrect) return;
-    if (!cb->blit) return;
+    /* Source: SKWINSPX/src/v5/skguidrw.cpp, DM2_DRAW_ICON_PICT_BUFF (32-58).
+     * The blit destination is offset into the button group and uses the
+     * group's width, not the source image width. */
+    if (!cb || !srcbmp || !blitrect || !cb->blit || !cb->offset_rect ||
+        !cb->get_button_group_width || !cb->get_bmp || !cb->get_bmp_width ||
+        !cb->get_bmp_bpp)
+        return;
 
-    int16_t srcw = cb->get_bmp_width ? cb->get_bmp_width(ctx, srcbmp) : 0;
-    void *dstbmp = cb->get_bmp ? cb->get_bmp(ctx, (int16_t)bg_id) : NULL;
-    int16_t dstw = srcw; /* simplified; real impl uses buttongroup width */
+    int16_t srcw = cb->get_bmp_width(ctx, srcbmp);
+    void *dstbmp = cb->get_bmp(ctx, (int16_t)bg_id);
+    int16_t dstw = cb->get_button_group_width(ctx, bg_id);
+    DM2_V1_Rect offset;
+    DM2_V1_Rect *dstrect = cb->offset_rect(ctx, bg_id, &offset, blitrect);
+    if (!dstbmp || srcw <= 0 || dstw <= 0 || !dstrect) return;
 
-    cb->blit(ctx, srcbmp, dstbmp, blitrect, srcx, srcy,
+    cb->blit(ctx, srcbmp, dstbmp, dstrect, srcx, srcy,
              srcw, dstw, alphamask, blitmode,
-             cb->get_bmp_bpp ? cb->get_bmp_bpp(ctx, srcbmp) : 0,
+             cb->get_bmp_bpp(ctx, srcbmp),
              8, palette);
 
     if (cb->adjust_buttongroup_rects)
@@ -357,12 +365,14 @@ void dm2_v1_draw_chip_of_magic_map(
     void *palette,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
+    /* Source: SKWINDOS/dm2bya.cpp:2601,
+     * SKWINSPX/src/v4/skguidrw.cpp:825, and
+     * SKWINSPX/src/v5/skguidr5.cpp:312. */
     if (!cb || !bmp) return;
 
-    /* The original performs rect clipping against dm2rect3 and blits.
-     * Here we delegate through the blit callback. */
     int16_t chip_w = cb->get_v1d274a ? cb->get_v1d274a(ctx) : 0;
     int16_t chip_h = cb->get_v1d274c ? cb->get_v1d274c(ctx) : 0;
+    if (chip_w <= 0 || chip_h <= 0) return;
 
     DM2_V1_Rect rc;
     rc.x = (int16_t)x;
@@ -370,8 +380,22 @@ void dm2_v1_draw_chip_of_magic_map(
     rc.w = chip_w;
     rc.h = chip_h;
 
-    int16_t srcx = (int16_t)(mul * chip_w);
-    dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, srcx, 0,
+    int16_t crop_x = 0, crop_y = 0;
+    DM2_V1_Rect clip;
+    if (!cb->get_magic_map_clip_rect ||
+        !cb->get_magic_map_clip_rect(ctx, &clip) ||
+        !dm2_v1_rect_intersect(&rc, &clip, &crop_x, &crop_y))
+        return;
+
+    /* SKProject clips the destination first. For a mirrored tile, a crop
+     * at its leading edge takes pixels from the opposite source edge. */
+    if (rc.w != chip_w && (flags & 0x1))
+        crop_x = crop_x == 0 ? (int16_t)(chip_w - rc.w) : 0;
+    if (rc.h != chip_h && (flags & 0x2))
+        crop_y = crop_y == 0 ? (int16_t)(chip_h - rc.h) : 0;
+
+    int16_t srcx = (int16_t)(mul * chip_w + crop_x);
+    dm2_v1_draw_icon_pict_buff(bmp, 2, &rc, srcx, crop_y,
                                 0x0a, flags, palette, cb, ctx);
 }
 
@@ -692,20 +716,41 @@ void dm2_v1_draw_cmd_slot(
     int16_t slot_idx, int8_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb) return;
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_CMD_SLOT (694-711).
+     * DOS (SKWINDOS/dm2bya.cpp:2589) and SPX v4 (skguidrw.cpp:766) have
+     * edition-specific field order/index formulas. */
+    if (!cb || slot_idx < 0) return;
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
     int16_t v1e0b62 = cb->get_v1e0b62 ? cb->get_v1e0b62(ctx) : 0;
+    uint8_t category = 0, index = 0, entry = 0;
+    if (!cb->get_command_slot_fields ||
+        !cb->get_command_slot_fields(ctx, slot_idx, &category, &index, &entry))
+        return;
+
     if (v1e0b62 != 0) {
-        /* Enchanted mode: draw from GDAT class 20 */
-        dm2_v1_draw_icon_pict_entry(20, 0, (int8_t)(flags + 21),
-                                     2, (int16_t)(slot_idx + 0x3f), -1,
+        if (!cb->get_held_container_type) return;
+        int8_t held_type = cb->get_held_container_type(ctx);
+        int16_t image = (int16_t)(((int16_t)entry - 8) * 2 + 0x41 + flags);
+        dm2_v1_draw_icon_pict_entry(20, held_type, (int8_t)image,
+                                     2, (int16_t)(slot_idx + 0x6e), -1,
                                      cb, ctx);
-    } else {
-        dm2_v1_draw_icon_pict_entry(1, 4, (int8_t)(flags + 21),
-                                     2, (int16_t)(slot_idx + 0x3f), -1,
-                                     cb, ctx);
+        return;
+    }
+
+    dm2_v1_draw_icon_pict_entry(1, 4, (int8_t)(flags + 21),
+                                 2, (int16_t)(slot_idx + 0x3f), -1,
+                                 cb, ctx);
+    if (cb->query_cmdstr_name && cb->draw_name_str) {
+        void *name = cb->query_cmdstr_name(ctx, (int8_t)category,
+                                           (int8_t)index, (int8_t)entry);
+        uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 15) : 0;
+        uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+        if (name)
+            cb->draw_name_str(ctx, 2, (int32_t)(slot_idx + 0x42),
+                              (int16_t)fg,
+                              (int16_t)((uint16_t)bg | 0x4000), name);
     }
 }
 
@@ -759,14 +804,79 @@ void dm2_v1_draw_player_attack_dir(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_PLAYER_ATTACK_DIR
+     * (734-790). DOS and SPX v4 use edition-specific hero/jitter state. */
+    int16_t graphics_set = cb->get_v1d67d6 ? cb->get_v1d67d6(ctx) : -1;
+    if (graphics_set >= 0)
+        dm2_v1_draw_icon_pict_entry(8, (int8_t)graphics_set, -10,
+                                     2, 0x5d, -1, cb, ctx);
+
     int16_t cur = cb->get_cur_act_hero ? cb->get_cur_act_hero(ctx) : 0;
-    if (cur <= 0) return;
+    if (cur > 0) {
+        int32_t hero_idx = cur - 1;
+        int16_t width = cb->get_v1d272c ? cb->get_v1d272c(ctx) : 0;
+        int16_t height = cb->get_v1d272e ? cb->get_v1d272e(ctx) : 0;
+        void *bmp = width > 0 && height > 0 && cb->alloc_pict_buff ?
+            cb->alloc_pict_buff(ctx, width, height, 0, 4) : NULL;
+        bool jitter_enabled = cb->get_savegames_b04 &&
+                              cb->get_savegames_b04(ctx) != 0;
+        bool jitter_available = cb->get_savegames_b04 &&
+                                (!jitter_enabled || cb->randdir);
+        bool squad_icon_available = cb->get_hero_absdir &&
+            cb->get_v1e0258 && cb->get_savegames_b02 &&
+            cb->copy_small_palette && cb->query_gdat_palette &&
+            cb->query_gdat_image && cb->draw_dialogue_pict;
+        if (bmp && cb->query_blit_rect && cb->free_pict_buff) {
+            DM2_V1_Rect rect;
+            int16_t src_x = 0, src_y = 0;
+            if (jitter_available && squad_icon_available &&
+                cb->query_blit_rect(ctx, bmp, &rect, 0x5e,
+                                    &src_x, &src_y)) {
+                if (jitter_enabled) {
+                    int16_t jitter = cb->randdir(ctx);
+                    if (jitter != 0) {
+                        rect.y = (int16_t)(rect.y + jitter - 2);
+                        jitter = cb->randdir(ctx);
+                        if (jitter != 0)
+                            rect.x = (int16_t)(rect.x + jitter - 2);
+                    }
+                }
 
-    /* Draw directional attack indicator (simplified) */
-    dm2_v1_draw_icon_pict_entry(8, 0, -10, 2, 0x5d, -1, cb, ctx);
+                uint8_t palette[16] = {0};
+                dm2_v1_query_gdat_squad_icon(bmp, hero_idx, palette,
+                                               cb, ctx);
+                dm2_v1_draw_icon_pict_buff(bmp, 2, &rect, src_x, src_y,
+                                            0x0c, 0, palette, cb, ctx);
 
-    int32_t hero_idx = cur - 1;
-    /* Squad icon and enchantment aura handled through callbacks */
+                if (cb->get_hero_ench_power &&
+                    cb->get_hero_ench_power(ctx, hero_idx) != 0 &&
+                    cb->query_gdat_summary_image && cb->query_picst_it &&
+                    cb->image_draw && cb->get_hero_ench_aura &&
+                    cb->get_hero_absdir && cb->get_v1e0258 &&
+                    cb->get_gametick) {
+                    DM2_V1_ImageDesc aura;
+                    memset(&aura, 0, sizeof(aura));
+                    cb->query_gdat_summary_image(
+                        ctx, &aura, 1, 7,
+                        (int8_t)cb->get_hero_ench_aura(ctx, hero_idx));
+                    cb->query_picst_it(ctx, &aura);
+                    aura.mode |= 0x10;
+                    int32_t relative_dir =
+                        (cb->get_hero_absdir(ctx, hero_idx) + 4 -
+                         cb->get_v1e0258(ctx)) & 0x3;
+                    aura.width >>= 2;
+                    aura.x = (int16_t)(relative_dir * aura.width);
+                    aura.height >>= 2;
+                    aura.y = (int16_t)((cb->get_gametick(ctx) & 0x3) *
+                                       aura.height);
+                    cb->image_draw(ctx, &aura, 2, 0x5e, 0x0c);
+                }
+            }
+            cb->free_pict_buff(ctx, bmp);
+        } else if (bmp && cb->free_pict_buff) {
+            cb->free_pict_buff(ctx, bmp);
+        }
+    }
 
     dm2_v1_draw_icon_pict_entry(1, 4, 16, 2, 0x60, -1, cb, ctx);
     dm2_v1_draw_icon_pict_entry(1, 4, 18, 2, 0x61, -1, cb, ctx);
@@ -780,23 +890,23 @@ void dm2_v1_draw_player_attack_dir(
 void dm2_v1_draw_spell_panel(
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
-    if (!cb) return;
+    /* Source: SKWINSPX/src/v5/skguidr5.cpp, DM2_DRAW_SPELL_PANEL (806-864). */
+    if (!cb || !cb->get_cur_act_hero || !cb->get_hero_nrunes) return;
 
-    int16_t cur = cb->get_cur_act_hero ? cb->get_cur_act_hero(ctx) : 0;
+    int16_t cur = cb->get_cur_act_hero(ctx);
     if (cur <= 0) return;
 
     int32_t hero_idx = cur - 1;
-    uint8_t nrunes = cb->get_hero_nrunes ?
-        cb->get_hero_nrunes(ctx, hero_idx) : 0;
+    uint8_t nrunes = cb->get_hero_nrunes(ctx, hero_idx);
 
     int8_t icon = (int8_t)(nrunes + 1);
     dm2_v1_draw_icon_pict_entry(1, 5, icon, 2, 0x5c, -1, cb, ctx);
 
-    if ((int32_t)nrunes < 4) {
-        /* Draw spell symbol grid (simplified) */
+    if ((int32_t)nrunes < 4 && cb->draw_button_str &&
+        cb->palette_to_ui8) {
         int8_t base = (int8_t)(nrunes * 6 + 0x60);
-        uint8_t fg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 13) : 0;
-        uint8_t bg = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+        uint8_t fg = cb->palette_to_ui8(ctx, 13);
+        uint8_t bg = cb->palette_to_ui8(ctx, 0);
 
         char sym[2] = {0, 0};
         for (int i = 0; i < 6; i++) {
@@ -833,7 +943,7 @@ void dm2_v1_show_attack_result(
     int8_t img_cls = 4;
 
     if (result_code < 0) {
-        if ((uint16_t)result_code >= 0xfffe)
+        if (result_code == -2)
             img_idx = 0x17;
         else if (result_code == -1)
             img_idx = 0x18;
@@ -850,9 +960,16 @@ void dm2_v1_show_attack_result(
         }
     }
 
-    if (cb->query_gdat_summary_image && cb->image_draw) {
-        /* Use image system to render attack result */
-        /* Simplified: delegates to callback */
+    if (cb->query_gdat_summary_image && cb->query_picst_it &&
+        cb->image_draw) {
+        DM2_V1_ImageDesc image;
+        memset(&image, 0, sizeof(image));
+        cb->query_gdat_summary_image(ctx, &image, 1, img_cls, img_idx);
+        if (result_code >= 0 && result_code <= 40 &&
+            cb->set_attack_result_image_stretch)
+            cb->set_attack_result_image_stretch(ctx, &image, result_code);
+        cb->query_picst_it(ctx, &image);
+        cb->image_draw(ctx, &image, 2, 57, -1);
     }
 
     if (result_code >= 0 && cb->draw_button_str) {
@@ -905,32 +1022,66 @@ void dm2_v1_draw_squad_spell_and_leader_icon(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
-    uint8_t partypos = cb->get_hero_partypos ?
-        cb->get_hero_partypos(ctx, hero_idx) : 0;
-    int16_t heading = cb->get_v1e0258 ? cb->get_v1e0258(ctx) : 0;
+    if (!cb->get_hero_partypos || !cb->get_v1e0258) return;
+    uint8_t partypos = cb->get_hero_partypos(ctx, hero_idx);
+    int16_t heading = cb->get_v1e0258(ctx);
     int32_t dir = ((int32_t)partypos + 4 - (int32_t)heading) & 0x3;
 
-    /* Fill background rect with E_COL00 */
-    uint8_t col00 = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
+    /* SKProject clears the direction slot before checking hero state. */
     DM2_V1_Rect rc;
+    memset(&rc, 0, sizeof(rc));
     int16_t rect_id = (int16_t)(dir + 0x4f);
-    if (cb->query_expanded_rect)
-        cb->query_expanded_rect(ctx, rect_id, &rc);
+    if (!cb->query_expanded_rect ||
+        !cb->query_expanded_rect(ctx, rect_id, &rc))
+        return;
+    int32_t black = cb->palette_to_pixel ?
+        cb->palette_to_pixel(ctx, 0) : 0;
     if (cb->fill_rect_summary)
-        cb->fill_rect_summary(ctx, 2, &rc, (int32_t)col00);
+        cb->fill_rect_summary(ctx, 2, &rc, black);
 
-    int16_t hp = cb->get_hero_hp ? cb->get_hero_hp(ctx, hero_idx) : 0;
+    if (!cb->get_hero_hp) return;
+    int16_t hp = cb->get_hero_hp(ctx, hero_idx);
     if (hp == 0) return;
 
-    /* Draw leader and spell icons (simplified) */
-    int8_t icon_base = (dir > 1) ? 0x0c : 0x0a;
-    int16_t evhero = cb->get_event_heroidx ? cb->get_event_heroidx(ctx) : -1;
-    if (hero_idx == evhero)
-        icon_base++;
+    /* Source draws spell/action first, then leader status icon. */
+    const bool mirror = dir == 1 || dir == 2;
+    int8_t spell_icon = (dir > 1) ? 8 : 6;
+    int8_t leader_icon = (dir > 1) ? 0x0c : 0x0a;
+    if (flags != 0) ++spell_icon;
+    int16_t leader_idx = cb->get_squad_leader_hero_idx ?
+        cb->get_squad_leader_hero_idx(ctx) :
+        (cb->get_event_heroidx ? cb->get_event_heroidx(ctx) : -1);
+    if (hero_idx == leader_idx) ++leader_icon;
 
-    /* Two image draws for leader and spell indicators */
-    if (cb->query_gdat_summary_image && cb->image_draw) {
-        /* Simplified: handled through callbacks */
+    if (cb->query_gdat_summary_image && cb->query_picst_it && cb->image_draw) {
+        DM2_V1_ImageDesc icons[2];
+        const int8_t icon_indices[2] = {spell_icon, leader_icon};
+        const int16_t rect_ids[2] = {
+            (int16_t)(dir + 0x57), (int16_t)(dir + 0x53)
+        };
+        for (int i = 0; i < 2; ++i) {
+            memset(&icons[i], 0, sizeof(icons[i]));
+            cb->query_gdat_summary_image(ctx, &icons[i], 1, 4,
+                                         icon_indices[i]);
+            if (cb->set_summary_image_mirror)
+                cb->set_summary_image_mirror(ctx, &icons[i], mirror);
+            cb->query_picst_it(ctx, &icons[i]);
+            cb->image_draw(ctx, &icons[i], 2, rect_ids[i], 4);
+        }
+
+        const bool sleeping = cb->is_player_sleeping &&
+                              cb->is_player_sleeping(ctx);
+        const uint8_t hand_cooldown = cb->get_hero_handcooldown ?
+            cb->get_hero_handcooldown(ctx, hero_idx, 2) : 0;
+        const int16_t active_overlay = cb->get_v1e0238 ?
+            cb->get_v1e0238(ctx) : 0;
+        if ((sleeping || active_overlay != 0 || hand_cooldown != 0) &&
+            cb->draw_gray_overlay &&
+            cb->query_expanded_rect(ctx, rect_ids[0], &rc))
+            cb->draw_gray_overlay(ctx, 2, &rc, 0);
+        if ((sleeping || active_overlay != 0) && cb->draw_gray_overlay &&
+            cb->query_expanded_rect(ctx, rect_ids[1], &rc))
+            cb->draw_gray_overlay(ctx, 2, &rc, 0);
     }
 }
 
@@ -1703,11 +1854,8 @@ void dm2_v1_draw_hand_action_icons(
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
-    int16_t hp = cb->get_hero_hp ? cb->get_hero_hp(ctx, hero_idx) : 0;
-    if (hp == 0) {
-        /* Fill rect with COL00 */
-        return;
-    }
+    if (!cb->get_hero_hp) return;
+    int16_t hp = cb->get_hero_hp(ctx, hero_idx);
 
     /* Draw hand action icon background and item-on-wood (simplified) */
     uint8_t partypos = cb->get_hero_partypos ?
@@ -1718,8 +1866,31 @@ void dm2_v1_draw_hand_action_icons(
     int16_t rect_base = (hand != 1) ? 0x4a : 0x46;
     int16_t rect_id = (int16_t)(rect_base + dir);
 
+    DM2_V1_Rect rect;
+    memset(&rect, 0, sizeof(rect));
+    const bool have_rect = cb->query_expanded_rect &&
+        cb->query_expanded_rect(ctx, rect_id, &rect) != NULL;
+
+    if (hp == 0) {
+        int32_t black = cb->palette_to_pixel ?
+            cb->palette_to_pixel(ctx, 0) : 0;
+        if (have_rect && cb->fill_rect_summary)
+            cb->fill_rect_summary(ctx, 2, &rect, black);
+        return;
+    }
+
     int8_t icon = (int8_t)(2 * hand + 2 + flags);
     dm2_v1_draw_icon_pict_entry(1, 4, icon, 2, rect_id, -1, cb, ctx);
+
+    /* The source wood-panel item image needs edition-specific item-frame and
+     * palette conversion; leave that layer to its adapter. Preserve the
+     * source cooldown/sleep dimming state for callers that bind it. */
+    const uint8_t cooldown = cb->get_hero_handcooldown ?
+        cb->get_hero_handcooldown(ctx, hero_idx, hand) : 0;
+    const bool sleeping = cb->is_player_sleeping &&
+                          cb->is_player_sleeping(ctx);
+    if (have_rect && (cooldown != 0 || sleeping) && cb->draw_gray_overlay)
+        cb->draw_gray_overlay(ctx, 2, &rect, 0);
 }
 
 /* ================================================================

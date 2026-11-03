@@ -9664,14 +9664,20 @@ static int dm2_v1_render_hud_hand_action_asset(
         source->destination_rect.h != source->source_rect.h) {
         return 0;
     }
-    dm2_v1_blit_scaled_material_bitmap(
-        s, s->framebuffer, s->fb_stride, source->destination_rect.x,
-        source->destination_rect.y, source->destination_rect.w,
-        source->destination_rect.h,
-        pixels + source->source_rect.y * stride + source->source_rect.x,
-        source->source_rect.w, source->source_rect.h, stride,
-        DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
-    if (source->item_present && source->item_gdat_index != 0) {
+    if (source->black_fill_required) {
+        dm2_v1_fill_rect(s, &source->destination_rect,
+                         dm2_v1_hud_palette_color(s, DM2_COL_BLACK));
+    } else {
+        dm2_v1_blit_scaled_material_bitmap(
+            s, s->framebuffer, s->fb_stride, source->destination_rect.x,
+            source->destination_rect.y, source->destination_rect.w,
+            source->destination_rect.h,
+            pixels + source->source_rect.y * stride + source->source_rect.x,
+            source->source_rect.w, source->source_rect.h, stride,
+            DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
+    }
+    if (!source->black_fill_required && source->item_present &&
+        source->item_gdat_index != 0) {
         const uint8_t *item_pixels = NULL;
         int item_width = 0;
         int item_height = 0;
@@ -9685,21 +9691,13 @@ static int dm2_v1_render_hud_hand_action_asset(
             item_width > 0 && item_height > 0 && item_stride >= item_width) {
             int item_dst_w = item_width;
             int item_dst_h = item_height;
-            int max_w = source->destination_rect.w - 2;
-            int max_h = source->destination_rect.h - 2;
             int item_x;
             int item_y;
 
-            if (max_w <= 0 || max_h <= 0) return 0;
-            if (item_dst_w > max_w) {
-                item_dst_h = (item_dst_h * max_w) / item_dst_w;
-                item_dst_w = max_w;
-            }
-            if (item_dst_h > max_h) {
-                item_dst_w = (item_dst_w * max_h) / item_dst_h;
-                item_dst_h = max_h;
-            }
-            if (item_dst_w <= 0 || item_dst_h <= 0) return 0;
+            /* SKProject CALC_CENTERED_RECT_IN_RECT retains the bitmap's
+             * decoded dimensions. The destination blitter clips at the
+             * framebuffer edge; it does not scale an oversized image to fit
+             * an inset hand rectangle. */
             item_x = source->destination_rect.x +
                 (source->destination_rect.w - item_dst_w) / 2;
             item_y = source->destination_rect.y +
@@ -9714,11 +9712,11 @@ static int dm2_v1_render_hud_hand_action_asset(
              * presentation is reported by the HUD command receipt. */
         }
     }
-    if (source->gray_overlay_required) {
+    if (!source->black_fill_required && source->gray_overlay_required) {
         dm2_v1_apply_source_gray_overlay(s, &source->destination_rect);
     }
     memset(&request, 0, sizeof(request));
-    request.valid = 1;
+    request.valid = !source->black_fill_required;
     request.gdat_index = gdat_index;
     request.gdat_category = source->gdat_category;
     request.gdat_subcategory = source->gdat_subcategory;
@@ -9739,9 +9737,11 @@ static int dm2_v1_render_hud_hand_action_asset(
     memset(&command, 0, sizeof(command));
     command.valid = 1;
     command.material = request;
-    command.indexed_pixels = request.indexed_pixels;
+    command.indexed_pixels = source->black_fill_required
+        ? NULL : request.indexed_pixels;
     command.palette16 = request.palette16;
     command.transparent_color = request.transparent_color;
+    command.black_fill_required = source->black_fill_required;
     command.source_rect = request.source_rect;
     command.destination_rect = request.destination_rect;
     s->last_hud_hand_action_material_request = request;
@@ -12038,7 +12038,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         }
         if (s->source_materials_required &&
             s->hud_hand_action_source.valid &&
-            s->last_hud_hand_action_material_request.valid) {
+            (s->last_hud_hand_action_material_request.valid ||
+             s->last_hud_hand_action_presentation_command.black_fill_required)) {
             s->last_frame_composition.hud_hand_action_command_consumed = 1;
             s->last_frame_composition.hud_hand_action_request =
                 s->last_hud_hand_action_material_request;
@@ -12303,7 +12304,8 @@ void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
         }
         if (s->source_materials_required &&
             s->hud_hand_action_source.valid &&
-            s->last_hud_hand_action_material_request.valid) {
+            (s->last_hud_hand_action_material_request.valid ||
+             s->last_hud_hand_action_presentation_command.black_fill_required)) {
             s->last_frame_composition.hud_hand_action_command_consumed = 1;
             s->last_frame_composition.hud_hand_action_request =
                 s->last_hud_hand_action_material_request;
@@ -12410,8 +12412,9 @@ static int dm2_v1_viewport_build_m11_frame_receipt(
           c->moneybox_container_cls2 != 0xffu)) &&
         (!s->hud_hand_action_source.valid ||
          (c->hud_hand_action_command_consumed &&
-          c->hud_hand_action_request.valid &&
-          c->hud_hand_action_command.valid));
+          c->hud_hand_action_command.valid &&
+          (c->hud_hand_action_command.black_fill_required ||
+           c->hud_hand_action_request.valid)));
     out_receipt->m11_consume_frame = out_receipt->valid;
     return out_receipt->valid;
 }

@@ -805,6 +805,7 @@ typedef struct {
     const uint8_t *indexed_pixels;
     const uint8_t *palette16;
     int transparent_color;
+    uint8_t black_fill_required;
     DM2_V1_ViewportRect source_rect;
     DM2_V1_ViewportRect destination_rect;
 } DM2_V1_ViewportHudPresentationCommand;
@@ -824,6 +825,8 @@ typedef struct {
     uint8_t rectno;
     uint8_t hand_cooldown;
     uint8_t gray_overlay_required;
+    /* SKProject blackens dead champions' expanded hand rectangles. */
+    uint8_t black_fill_required;
     /* Optional source-owned item image. It is present only when the original
      * hand record resolves to an authenticated GDAT image; no replacement
      * icon is implied by absence. */
