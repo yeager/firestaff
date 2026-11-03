@@ -5114,41 +5114,49 @@ int dm2_v1_runtime_cast_spell_player(
                 enchant_type = 0; /* ENCHANTMENT_FIRE_SHIELD */
             enchant_mask = (uint8_t)((1u << rt->source_party.heros_in_party) - 1u);
         }
-        for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
-            if (rt->source_party.hero[i].curHP <= 0)
-                enchant_mask = (uint8_t)(enchant_mask &
-                                         (uint8_t)~(1u << i));
-        }
-        if (enchant_mask == 0u || receipt.cast.timer_value_a <= 0) {
+        if (receipt.cast.timer_value_a <= 0) {
             if (out_receipt) *out_receipt = receipt;
             return 1;
         }
         party_before = rt->source_party;
         queue_before = rt->timer_queue;
         {
-            int replace = 0;
-            for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
-                if ((enchant_mask & (uint8_t)(1u << i)) != 0u &&
-                    rt->source_party.hero[i].ench_aura != enchant_type) {
-                    replace = 1;
-                    break;
+            int halve_power = 0;
+            int16_t enchant_power = (int16_t)receipt.cast.timer_value_a;
+            /* SPX v4/v5 scan all four champion slots.  A selected dead hero
+             * is removed from the shared mask, clears its power, and may
+             * prune overlapping 0x48 timers; the >50 check then applies to
+             * every slot, including heroes outside the target mask. */
+            for (int i = 0; i < DM2_MAX_HEROES; ++i) {
+                DM2_V1_Hero *target = &rt->source_party.hero[i];
+                uint8_t bit = (uint8_t)(1u << i);
+                if ((enchant_mask & bit) != 0u) {
+                    int dead = target->curHP <= 0;
+                    if (dead)
+                        enchant_mask = (uint8_t)(enchant_mask &
+                                                 (uint8_t)~bit);
+                    if (target->ench_aura != enchant_type || dead) {
+                        target->ench_power = 0;
+                        dm2_runtime_remove_enchant_timer_mask(
+                            &rt->timer_queue, enchant_mask);
+                    }
                 }
+                if (target->ench_power > 50)
+                    halve_power = 1;
             }
-            if (replace)
-                dm2_runtime_remove_enchant_timer_mask(
-                    &rt->timer_queue, enchant_mask);
+            if (halve_power)
+                enchant_power = (int16_t)(enchant_power >> 2);
             for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
                 DM2_V1_Hero *target = &rt->source_party.hero[i];
                 int32_t next;
-                if ((enchant_mask & (uint8_t)(1u << i)) == 0u ||
-                    target->curHP <= 0)
+                if ((enchant_mask & (uint8_t)(1u << i)) == 0u)
                     continue;
                 target->ench_aura = (int8_t)enchant_type;
-                next = (int32_t)target->ench_power +
-                       receipt.cast.timer_value_a;
-                if (next > INT16_MAX) next = INT16_MAX;
-                target->ench_power = (int16_t)next;
+                next = (uint8_t)((uint16_t)(uint8_t)target->ench_power +
+                                 (uint16_t)(uint8_t)enchant_power);
+                target->ench_power = (int16_t)(uint8_t)next;
             }
+            receipt.cast.timer_value_a = enchant_power;
         }
         {
             DM2_V1_SourceTimer timer;
