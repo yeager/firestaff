@@ -12,6 +12,8 @@ extern "C" {
 #define DM2_V1_CHAMPION_HUD_NULL_ITEM 0xffffu
 #define DM2_V1_NUM_ABILITIES  7
 #define DM2_V1_NUM_SKILL_SLOTS 20
+#define DM2_V1_ITEM_BONUS_SOURCE_DOS_V5 0
+#define DM2_V1_ITEM_BONUS_SOURCE_SPX_V4 1
 
 typedef struct {
     int handled;
@@ -61,6 +63,11 @@ typedef struct {
     int16_t  (*retrieve_item_bonus)(void *ctx, uint16_t item_ref,
                                      uint8_t dbspec_idx,
                                      int32_t fit_flag, int16_t mode);
+    /* SPX v4 keeps the complete signed GDAT word. Required when the input
+     * selects DM2_V1_ITEM_BONUS_SOURCE_SPX_V4. */
+    int16_t  (*retrieve_item_bonus_spx_v4)(void *ctx, uint16_t item_ref,
+                                            uint8_t dbspec_idx,
+                                            int32_t fit_flag, int16_t mode);
     /* DM2_QUERY_CLS2_FROM_RECORD(item_ref). */
     uint8_t  (*query_cls2_from_record)(void *ctx, uint16_t item_ref);
     void *ctx;
@@ -71,6 +78,7 @@ typedef struct {
     uint16_t item_ref;      /* edx: item record (0xFFFF = bail) */
     int16_t  slot;          /* ebx: equip slot index */
     int16_t  mode;          /* ecx: operation mode */
+    uint8_t source_variant; /* edition behavior; defaults to DOS/v5 */
 } DM2_V1_ProcessItemBonusInput;
 
 /* Receipt: all hero mutations produced by the algorithm.

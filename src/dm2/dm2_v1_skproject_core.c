@@ -3865,9 +3865,12 @@ int dm2_v1_skproject_click_magical_map_at(
      * facing transform here; map-level resolution remains a caller input. */
     tile_x = party_x;
     tile_y = party_y;
+    /* SKProject's DM2_CLICK_MAGICAL_MAP_AT calls CALC_VECTOR_W_DIR with
+     * forward = 3 - row and side = column - 3 (DOS dm2byh.cpp; SPX v4
+     * skuievnt.cpp; SPX v5 SK1031.cpp). Keep that source argument order. */
     if (!dm2_v1_skproject_calc_vector_w_dir(
-            (int16_t)party_dir, (int16_t)(cell_x - 3),
-            (int16_t)(3 - cell_y), &tile_x, &tile_y, NULL)) {
+            (int16_t)party_dir, (int16_t)(3 - cell_y),
+            (int16_t)(cell_x - 3), &tile_x, &tile_y, NULL)) {
         receipt.blocked_invalid_tile = 1u;
         *out_receipt = receipt;
         return 0;
@@ -6118,9 +6121,12 @@ int dm2_v1_skproject_move_12b4_099e(
             strength = (uint16_t)(strength + strength / 8u);
         if (request->creature_weight <= 0x002du)
             strength = (uint16_t)(strength + strength / 4u);
-        if ((hero->stamina_adjusted_strength != 0u ?
-             hero->stamina_adjusted_strength : strength) >=
-                request->creature_weight ||
+        receipt.strength_before_stamina_adjustment[i] = strength;
+        /* SKW_12b4_099e / CHAMPION_WEIGHT_CREATURE_12b4_099e calls
+         * STAMINA_ADJUSTED_ATTR after applying the event/leader and light-
+         * creature bonuses. Zero is a valid adjusted result, not a missing
+         * input; falling back to raw strength changes the lift decision. */
+        if (hero->stamina_adjusted_strength >= request->creature_weight ||
             request->rand16_values[i] == 0u) {
             receipt.can_lift = 1u;
             break;
@@ -6912,6 +6918,32 @@ int dm2_v1_skproject_alloc_new_pict(
     out_receipt->height = height;
     out_receipt->bpp = bpp;
     out_receipt->payload_bytes = row_bytes * (uint32_t)height;
+    out_receipt->header_width = width;
+    out_receipt->header_height = height;
+    out_receipt->header_bpp = bpp;
+    return 1;
+}
+
+int dm2_v1_skproject_alloc_new_pict_dos(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt)
+{
+    uint32_t row_bytes;
+    uint32_t total_bytes;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || height == 0u) return 0;
+    row_bytes = bpp == 4u ? (uint32_t)(((width + 1u) & 0xfffeu) >> 1)
+                          : (uint32_t)width;
+    total_bytes = (row_bytes * (uint32_t)height) & 0xffffu;
+    out_receipt->index = index;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->bpp = bpp;
+    out_receipt->payload_bytes = total_bytes;
     out_receipt->header_width = width;
     out_receipt->header_height = height;
     out_receipt->header_bpp = bpp;
@@ -12606,6 +12638,55 @@ int dm2_v1_skproject_get_creature_weight(
     return 1;
 }
 
+/* DOS dm2byb.cpp:181, SPX v4 skcrture.cpp:1934, SPX v5 skgdtqdb.cpp:984,
+   and SKULLWIN c_querydb.cpp:982 resolve the creature type to the AI-spec
+   weight byte. The platform-specific spec source remains caller-owned. */
+int dm2_v1_skproject_resolve_creature_weight(
+    uint16_t creature_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    void *user, uint16_t *out_weight,
+    DM2_V1_SkprojectResolveCreatureWeightReceipt *out_receipt)
+{
+    DM2_V1_SkprojectResolveCreatureWeightReceipt receipt;
+    const uint8_t *record;
+    const uint8_t *ai_spec;
+    uint16_t ai_spec_size = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.creature_handle = creature_handle;
+    if (out_weight) *out_weight = 0u;
+
+    if (((creature_handle >> 10) & 0x0fu) != 4u || !pools) {
+        receipt.blocked_bad_record_type = ((creature_handle >> 10) & 0x0fu) != 4u;
+        receipt.blocked_missing_record = pools == NULL;
+        goto done;
+    }
+    record = dm2_v1_record_pool_address(pools, (int16_t)creature_handle);
+    if (!record || pools->pools[4].record_size < 5) {
+        receipt.blocked_missing_record = 1;
+        goto done;
+    }
+    receipt.creature_type = record[4];
+    if (!ai_spec_fn) {
+        receipt.blocked_missing_ai_spec = 1;
+        goto done;
+    }
+    ai_spec = ai_spec_fn(receipt.creature_type, &ai_spec_size, user);
+    if (!ai_spec || ai_spec_size <= 0x1du) {
+        receipt.blocked_missing_ai_spec = 1;
+        goto done;
+    }
+    receipt.weight = ai_spec[0x1du];
+    receipt.valid = 1;
+    if (out_weight) *out_weight = receipt.weight;
+
+done:
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
 /* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
    caller-owned RGB888 palette into an RGB666 destination.  An optional
    256-byte translation table is applied first, matching the source's use of
@@ -14292,6 +14373,15 @@ int dm2_v1_skproject_get_teleporter_detail(
 }
 
 /* SKULLWIN/c_querydb.cpp:3173 DM2_IS_CREATURE_MOVABLE_THERE. */
+static int32_t dm2_v1_skproject_legacy_skip_level_gate(
+    uint16_t creature_handle, int16_t destination_level, void *user)
+{
+    (void)creature_handle;
+    (void)destination_level;
+    (void)user;
+    return 1;
+}
+
 int dm2_v1_skproject_is_creature_movable_there(
     int16_t x,
     int16_t y,
@@ -14309,13 +14399,38 @@ int dm2_v1_skproject_is_creature_movable_there(
     uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
 {
+    int movable;
+
+    if (out_creature_handle)
+        *out_creature_handle = creature_handle;
+    movable = dm2_v1_skproject_is_creature_movable_there_variant(
+        x, y, direction, creature_handle, creature_weight, tile_values,
+        width, height, pools, current_map, dest_tile_values, dest_width,
+        dest_height, DM2_V1_MOVABLE_THERE_DOS, NULL,
+        dm2_v1_skproject_legacy_skip_level_gate, NULL, NULL, out_receipt);
+    return movable;
+}
+
+int dm2_v1_skproject_is_creature_movable_there_variant(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    uint16_t creature_weight, const uint8_t *tile_values, int16_t width,
+    int16_t height, const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map, const uint8_t *dest_tile_values,
+    int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
+{
     DM2_V1_SkprojectIsCreatureMovableThereReceipt receipt;
-    DM2_V1_SkprojectTeleporterDetail c12;
-    DM2_V1_SkprojectGetTeleporterDetailReceipt tele_receipt;
-    uint8_t dir;
-    int16_t new_x;
-    int16_t new_y;
-    uint8_t tile_value;
+    DM2_V1_SkprojectTeleporterDetail teleporter;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt teleporter_receipt;
+    int16_t next_x;
+    int16_t next_y;
+    uint8_t tile;
+    int has_optional_checks;
+    int overweight;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -14324,88 +14439,168 @@ int dm2_v1_skproject_is_creature_movable_there(
     receipt.direction = (uint8_t)(direction & 3u);
     receipt.creature_handle = creature_handle;
     receipt.creature_weight = creature_weight;
+    receipt.source_variant = (int)variant;
+    has_optional_checks = out_creature_handle != NULL;
 
+    if (variant < DM2_V1_MOVABLE_THERE_SKULLWIN ||
+        variant > DM2_V1_MOVABLE_THERE_SPX_V5) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
+    }
     if (creature_handle == 0xffffu) {
         receipt.blocked_missing_creature = 1;
-        if (out_creature_handle) *out_creature_handle = 0xffffu;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
     }
-    if (creature_weight > 0x00fdu) {
+    overweight = (variant == DM2_V1_MOVABLE_THERE_DOS ||
+                  variant == DM2_V1_MOVABLE_THERE_SPX_V5)
+        ? creature_weight > 0x00fdu : creature_weight == 0x00ffu;
+    if (overweight) {
         receipt.blocked_overweight = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
+    }
+    if (!tile_values || width <= 0 || height <= 0 || !pools) {
+        receipt.blocked_missing_tile = !tile_values || width <= 0 || height <= 0;
+        receipt.blocked_missing_record_pool = !pools;
+        goto blocked;
+    }
+    if (has_optional_checks && !creature_at_fn) {
+        receipt.blocked_missing_creature_at = 1;
+        goto blocked;
+    }
+    if (creature_at_fn &&
+        creature_at_fn(current_map, x, y, user) != (int32_t)creature_handle) {
+        receipt.blocked_missing_creature = 1;
+        goto blocked;
     }
 
-    dir = receipt.direction;
-
-    /* Teleporter at current square. */
-    if (dm2_v1_skproject_get_teleporter_detail(
+    tile = dm2_v1_skproject_cycle13_tile_at(
+        tile_values, width, height, x, y);
+    memset(&teleporter_receipt, 0, sizeof(teleporter_receipt));
+    if ((tile >> 5) == 5u)
+        (void)dm2_v1_skproject_get_teleporter_detail(
             x, y, tile_values, width, height, pools, current_map,
             dest_tile_values, dest_width, dest_height,
-            &c12, &tele_receipt) && tele_receipt.valid) {
-        uint8_t dir_plus_2 = (uint8_t)((c12.b_00 + 2u) & 3u);
-        if (dir == dir_plus_2) {
-            uint8_t dest_tile_value;
-            /* Source changes map and checks the destination tile.  We keep it
-               bounded to the supplied destination tile plane. */
-            if (!dest_tile_values || dest_width <= 0 || dest_height <= 0) {
-                receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
+            &teleporter, &teleporter_receipt);
+    if ((tile >> 5) == 5u && teleporter_receipt.valid &&
+        ((direction & 3u) == ((teleporter.b_00 + 2u) & 3u))) {
+        if (!allowed_level_fn) {
+            receipt.blocked_missing_allowed_level = 1;
+            goto blocked;
+        }
+        if (!allowed_level_fn(creature_handle, teleporter.b_04, user)) {
+            receipt.blocked_disallowed_level = 1;
+            goto blocked;
+        }
+        if (!dest_tile_values || teleporter.b_02 >= dest_width ||
+            teleporter.b_03 >= dest_height ||
+            dm2_v1_skproject_is_tile_blocked(
+                dest_tile_values[(int)teleporter.b_03 * dest_width +
+                                 teleporter.b_02], NULL)) {
+            receipt.blocked_teleporter_forbidden = 1;
+            goto blocked;
+        }
+        if (has_optional_checks) {
+            int16_t adjacent_x = (int16_t)(teleporter.b_02 +
+                s_cycle13_dx[teleporter.b_01 & 3u]);
+            int16_t adjacent_y = (int16_t)(teleporter.b_03 +
+                s_cycle13_dy[teleporter.b_01 & 3u]);
+            int32_t occupant;
+            if (adjacent_x < 0 || adjacent_y < 0 ||
+                adjacent_x >= dest_width || adjacent_y >= dest_height ||
+                !dest_tile_values) {
+                receipt.blocked_missing_tile = 1;
+                goto blocked;
             }
-            if (c12.b_02 >= (uint8_t)dest_width || c12.b_03 >= (uint8_t)dest_height) {
+            occupant = creature_at_fn(teleporter.b_04, adjacent_x,
+                                      adjacent_y, user);
+            if (occupant != DM2_V1_RECORD_HANDLE_NULL) {
                 receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
+                goto blocked;
             }
-            dest_tile_value = dest_tile_values[(int)c12.b_03 * (int)dest_width + (int)c12.b_02];
-            if (dm2_v1_skproject_is_tile_blocked(dest_tile_value, NULL)) {
-                receipt.blocked_teleporter_forbidden = 1;
-                if (out_creature_handle) *out_creature_handle = creature_handle;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
-            }
-            /* Source checks an adjacent square for a creature here.  We do not
-               have the runtime creature spatial index in this helper, so the
-               occupancy gate is skipped rather than invented. */
         }
     }
 
-    /* Forward square. */
-    new_x = (int16_t)(x + s_cycle13_dx[dir]);
-    new_y = (int16_t)(y + s_cycle13_dy[dir]);
-    tile_value = dm2_v1_skproject_cycle13_tile_at(
-        tile_values, width, height, new_x, new_y);
-    if (dm2_v1_skproject_is_tile_blocked(tile_value, NULL)) {
-        receipt.blocked_target_blocked = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+    next_x = (int16_t)(x + s_cycle13_dx[direction & 3u]);
+    next_y = (int16_t)(y + s_cycle13_dy[direction & 3u]);
+    if (next_x < 0 || next_x >= width || next_y < 0 || next_y >= height) {
+        receipt.blocked_missing_tile = 1;
+        goto blocked;
     }
-    if (((uint8_t)(tile_value >> 5)) == 3u) {
+    tile = tile_values[(int)next_y * width + next_x];
+    if (dm2_v1_skproject_is_tile_blocked(tile, NULL) ||
+        (tile >> 5) == 3u) {
         receipt.blocked_target_blocked = 1;
-        if (out_creature_handle) *out_creature_handle = creature_handle;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        goto blocked;
     }
-    /* Source checks for a creature at the forward square here.  Without the
-       spatial index we skip the occupancy gate. */
+    if (has_optional_checks &&
+        creature_at_fn(current_map, next_x, next_y, user) !=
+            DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_target_occupied = 1;
+        goto blocked;
+    }
 
-    /* Teleporter at forward square (level-allowed check only).  Source calls
-       DM2_IS_CREATURE_ALLOWED_ON_LEVEL; without the level-allowed table we
-       skip the gate rather than fail closed. */
-    (void)dm2_v1_skproject_get_teleporter_detail(
-        new_x, new_y, tile_values, width, height, pools, current_map,
-        dest_tile_values, dest_width, dest_height,
-        &c12, &tele_receipt);
+    memset(&teleporter_receipt, 0, sizeof(teleporter_receipt));
+    if ((tile >> 5) == 5u)
+        (void)dm2_v1_skproject_get_teleporter_detail(
+            next_x, next_y, tile_values, width, height, pools, current_map,
+            dest_tile_values, dest_width, dest_height,
+            &teleporter, &teleporter_receipt);
+    if ((tile >> 5) == 5u && teleporter_receipt.valid) {
+        if (!allowed_level_fn) {
+            receipt.blocked_missing_allowed_level = 1;
+            goto blocked;
+        }
+        if (!allowed_level_fn(creature_handle, teleporter.b_04, user)) {
+            receipt.blocked_disallowed_level = 1;
+            goto blocked;
+        }
+    }
 
     receipt.movable = 1u;
     receipt.valid = 1;
-    if (out_creature_handle) *out_creature_handle = creature_handle;
+    if (has_optional_checks && out_creature_handle)
+        *out_creature_handle = creature_handle;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+blocked:
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_is_creature_movable_there_from_record(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    const uint8_t *tile_values, int16_t width, int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools, uint8_t current_map,
+    const uint8_t *dest_tile_values, int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectMovableThereFromRecordReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMovableThereFromRecordReceipt receipt;
+    uint16_t weight = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_skproject_resolve_creature_weight(
+            creature_handle, pools, ai_spec_fn, user, &weight,
+            &receipt.weight)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_is_creature_movable_there_variant(
+            x, y, direction, creature_handle, weight, tile_values,
+            width, height, pools, current_map, dest_tile_values,
+            dest_width, dest_height, variant, creature_at_fn,
+            allowed_level_fn, user, out_creature_handle,
+            &receipt.movement)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
@@ -17793,6 +17988,21 @@ int16_t dm2_v1_skproject_14cd_2886(
     void *user,
     DM2_V1_Skproject14cd2886Receipt *out_receipt)
 {
+    return dm2_v1_skproject_14cd_2886_mode(
+        record, 0u, w1, w2, w3, w4, oversee_fn, user, out_receipt);
+}
+
+int16_t dm2_v1_skproject_14cd_2886_mode(
+    uint16_t record,
+    uint8_t mode,
+    uint16_t w1,
+    uint16_t w2,
+    uint16_t w3,
+    uint16_t w4,
+    DM2_V1_SkprojectOverseeRecordFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject14cd2886Receipt *out_receipt)
+{
     DM2_V1_Skproject14cd2886Receipt receipt;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -17810,7 +18020,7 @@ int16_t dm2_v1_skproject_14cd_2886(
     receipt.state_words[2] = (int16_t)w2;
     receipt.state_words[3] = (int16_t)w3;
     receipt.state_words[4] = (int16_t)w4;
-    oversee_fn(record, 0u, receipt.state_words, user);
+    oversee_fn(record, mode, receipt.state_words, user);
     receipt.result = receipt.state_words[0];
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
@@ -22767,15 +22977,22 @@ int dm2_v1_skproject_14cd_3582(
     return 1;
 }
 
-int dm2_v1_skproject_exchange_moneybox(
+static int dm2_v1_skproject_exchange_moneybox_internal(
     const DM2_V1_SkprojectExchangeMoneyboxRequest *req,
-    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt)
+    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt,
+    const uint16_t *prepared_coins,
+    size_t prepared_coin_count)
 {
     DM2_V1_SkprojectExchangeMoneyboxReceipt receipt;
     const DM2_V1_WalletCallbacks *cb;
     int64_t remaining_value = 0;
     uint32_t steps = 0;
     uint16_t counts[10] = {0};
+    uint16_t *old_coins = NULL;
+    uint16_t *new_coins = NULL;
+    size_t old_coin_count = 0u;
+    size_t new_coin_count = 0u;
+    size_t staged_coin_count = 0u;
     int changed = 0;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -22884,38 +23101,635 @@ int dm2_v1_skproject_exchange_moneybox(
         return 1;
     }
 
-    /* Source mutation removes every old denomination before allocating the
-     * canonical set, so failures remain visible rather than silently
-     * claiming that the original wallet was preserved. */
+    /* Stage every replacement before changing the live wallet. The source
+     * removes old stacks before rebuilding; doing the allocation phase first
+     * preserves those stacks when the record pool is exhausted. Source:
+     * DOS dm2byg.cpp:429-487; SPX v4 skcrture.cpp:3192-3239. */
+    old_coins = (uint16_t *)malloc(65536u * sizeof(*old_coins));
+    if (!old_coins) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    {
+        uint16_t item = cb->get_container_head(
+            req->wallet_ctx, req->wallet_handle);
+        steps = 0u;
+        while (item != DM2_V1_OBJECT_END) {
+            uint16_t next;
+            uint16_t db_type;
+            uint16_t denomination;
+            int known_denomination = 0;
+            if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
+            }
+            next = cb->get_next_item_in_list(req->wallet_ctx, item);
+            db_type = cb->get_item_db_type(req->wallet_ctx, item);
+            /* SKW_TAKE_COIN_FROM_WALLET stops at the first non-DB10 record.
+             * The earlier count pass includes currency records anywhere in
+             * the chain, so exchanging a mixed wallet here could duplicate
+             * coins after that stopping point. Fail closed before mutation. */
+            if (db_type != DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY) {
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
+            }
+            denomination = cb->get_distinctive_item_type(
+                req->wallet_ctx, item);
+            for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+                if (cb->coin_type_table[i] == denomination) {
+                    known_denomination = 1;
+                    break;
+                }
+            }
+            if (known_denomination)
+                old_coins[old_coin_count++] = item;
+            item = next;
+        }
+    }
     for (uint16_t i = 0; i < req->coin_type_count; ++i) {
-        uint16_t coin;
-        do {
-            coin = dm2_v1_take_coin_from_wallet(
-                req->wallet_handle, (int16_t)i, cb, req->wallet_ctx);
-            if (coin != DM2_V1_OBJECT_NULL)
-                cb->dealloc_record(req->wallet_ctx, coin);
-        } while (coin != DM2_V1_OBJECT_NULL);
+        if (new_coin_count > SIZE_MAX - counts[i]) {
+            receipt.blocked_missing_context = 1;
+            goto exchange_precommit_failure;
+        }
+        new_coin_count += counts[i];
+    }
+    if (new_coin_count > 65536u) {
+        receipt.blocked_missing_context = 1;
+        goto exchange_precommit_failure;
+    }
+    if (new_coin_count != 0u) {
+        new_coins = (uint16_t *)malloc(new_coin_count * sizeof(*new_coins));
+        if (!new_coins) {
+            receipt.blocked_missing_context = 1;
+            goto exchange_precommit_failure;
+        }
     }
     for (uint16_t i = 0; i < req->coin_type_count; ++i) {
         for (uint16_t n = 0; n < counts[i]; ++n) {
-            uint16_t coin = cb->alloc_new_dbitem(
-                req->wallet_ctx, cb->coin_type_table[i]);
-            if (coin != DM2_V1_OBJECT_NULL) {
-                if (req->dos_add_coin_non_currency_semantics)
-                    (void)dm2_v1_add_coin_to_wallet(
-                        req->wallet_handle, coin, cb, req->wallet_ctx);
-                else
-                    (void)dm2_v1_add_coin_to_wallet_spx(
-                        req->wallet_handle, coin, cb, req->wallet_ctx);
+            uint16_t coin;
+            if (prepared_coins) {
+                if (staged_coin_count >= prepared_coin_count) {
+                    receipt.blocked_missing_context = 1;
+                    goto exchange_precommit_failure;
+                }
+                coin = prepared_coins[staged_coin_count];
+            } else {
+                coin = cb->alloc_new_dbitem(
+                    req->wallet_ctx, cb->coin_type_table[i]);
+            }
+            if (coin == DM2_V1_OBJECT_NULL ||
+                !cb->is_item_currency(req->wallet_ctx, coin) ||
+                cb->get_item_db_type(req->wallet_ctx, coin) !=
+                    DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY ||
+                cb->get_distinctive_item_type(req->wallet_ctx, coin) !=
+                    cb->coin_type_table[i]) {
+                if (!prepared_coins && coin != DM2_V1_OBJECT_NULL)
+                    cb->dealloc_record(req->wallet_ctx, coin);
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
+            }
+            cb->set_item_charge(req->wallet_ctx, coin, 0u);
+            new_coins[staged_coin_count++] = coin;
+        }
+    }
+    if (prepared_coins && staged_coin_count != prepared_coin_count) {
+        receipt.blocked_missing_context = 1;
+        goto exchange_precommit_failure;
+    }
+
+    /* Commit only after every target coin has a valid allocated record. */
+    for (size_t i = 0; i < old_coin_count; ++i) {
+        cb->cut_item_from_container(
+            req->wallet_ctx, old_coins[i], req->wallet_handle);
+        cb->dealloc_record(req->wallet_ctx, old_coins[i]);
+    }
+    receipt.mutated = 0;
+    for (size_t i = 0; i < new_coin_count; ++i) {
+        uint16_t coin = new_coins[i];
+        int attached = req->dos_add_coin_non_currency_semantics
+            ? dm2_v1_add_coin_to_wallet(
+                  req->wallet_handle, coin, cb, req->wallet_ctx)
+            : dm2_v1_add_coin_to_wallet_spx(
+                  req->wallet_handle, coin, cb, req->wallet_ctx);
+        if (!attached) {
+            /* The staged item was validated above and all callback/box
+             * preconditions were checked before commit, so this indicates a
+             * source adapter contract violation after mutation began. */
+            receipt.blocked_missing_context = 1;
+            free(old_coins);
+            free(new_coins);
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.mutated = 1;
+    }
+    free(old_coins);
+    free(new_coins);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+exchange_precommit_failure:
+    if (new_coins) {
+        for (size_t i = 0; i < staged_coin_count; ++i)
+        if (!prepared_coins)
+            cb->dealloc_record(req->wallet_ctx, new_coins[i]);
+    }
+    free(old_coins);
+    free(new_coins);
+    receipt.mutated = 0;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_exchange_moneybox(
+    const DM2_V1_SkprojectExchangeMoneyboxRequest *req,
+    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt)
+{
+    return dm2_v1_skproject_exchange_moneybox_internal(
+        req, out_receipt, NULL, 0u);
+}
+
+typedef struct {
+    size_t first_coin;
+    size_t coin_count;
+    DM2_V1_SkprojectExchangeMoneyboxReceipt receipt;
+} DM2_V1_SkprojectPreparedWallet;
+
+/* Prepare replacement records for every wallet before committing any one of
+ * them. This keeps a later record-pool failure from partially rebalancing a
+ * creature's moneyboxes. */
+static int dm2_v1_skproject_exchange_moneyboxes(
+    const DM2_V1_SkprojectExchangeMoneyboxRequest *base_req,
+    const uint16_t *wallet_handles,
+    size_t wallet_count,
+    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt)
+{
+    DM2_V1_SkprojectExchangeMoneyboxReceipt aggregate;
+    DM2_V1_SkprojectPreparedWallet *wallets = NULL;
+    uint16_t *coins = NULL;
+    size_t total_coins = 0u;
+    size_t staged_coins = 0u;
+    size_t committed_coins = 0u;
+    int ok = 0;
+
+    memset(&aggregate, 0, sizeof(aggregate));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!base_req || (!wallet_handles && wallet_count != 0u) ||
+        wallet_count > 65536u) {
+        aggregate.blocked_missing_context = 1;
+        goto done;
+    }
+    if (wallet_count == 0u) {
+        aggregate.valid = 1;
+        ok = 1;
+        goto done;
+    }
+    wallets = (DM2_V1_SkprojectPreparedWallet *)calloc(
+        wallet_count, sizeof(*wallets));
+    if (!wallets) {
+        aggregate.blocked_missing_context = 1;
+        goto done;
+    }
+
+    for (size_t w = 0; w < wallet_count; ++w) {
+        DM2_V1_SkprojectExchangeMoneyboxRequest request = *base_req;
+        request.wallet_handle = wallet_handles[w];
+        request.only_test = 1;
+        if (!dm2_v1_skproject_exchange_moneybox_internal(
+                &request, &wallets[w].receipt, NULL, 0u)) {
+            aggregate.blocked_missing_context = 1;
+            goto done;
+        }
+        wallets[w].first_coin = total_coins;
+        if (wallets[w].receipt.needs_rebalance) {
+            for (uint16_t i = 0; i < base_req->coin_type_count; ++i) {
+                size_t count = wallets[w].receipt.target_counts[i];
+                if (total_coins > SIZE_MAX - count) {
+                    aggregate.blocked_missing_context = 1;
+                    goto done;
+                }
+                total_coins += count;
             }
         }
     }
-    receipt.mutated = 1;
-    if (out_receipt) *out_receipt = receipt;
-    return 1;
+
+    if (total_coins > 65536u) {
+        aggregate.blocked_missing_context = 1;
+        goto done;
+    }
+    if (total_coins != 0u) {
+        size_t staged = 0u;
+        coins = (uint16_t *)malloc(total_coins * sizeof(*coins));
+        if (!coins) {
+            aggregate.blocked_missing_context = 1;
+            goto done;
+        }
+        for (size_t w = 0; w < wallet_count; ++w) {
+            if (!wallets[w].receipt.needs_rebalance) continue;
+            for (uint16_t i = 0; i < base_req->coin_type_count; ++i) {
+                for (uint16_t n = 0;
+                     n < wallets[w].receipt.target_counts[i]; ++n) {
+                    const DM2_V1_WalletCallbacks *cb =
+                        base_req->wallet_callbacks;
+                    uint16_t coin = cb->alloc_new_dbitem(
+                        base_req->wallet_ctx, cb->coin_type_table[i]);
+                    if (coin == DM2_V1_OBJECT_NULL ||
+                        !cb->is_item_currency(base_req->wallet_ctx, coin) ||
+                        cb->get_item_db_type(base_req->wallet_ctx, coin) !=
+                            DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY ||
+                        cb->get_distinctive_item_type(
+                            base_req->wallet_ctx, coin) !=
+                            cb->coin_type_table[i]) {
+                        if (coin != DM2_V1_OBJECT_NULL)
+                            cb->dealloc_record(base_req->wallet_ctx, coin);
+                        aggregate.blocked_missing_context = 1;
+                        goto done;
+                    }
+                    cb->set_item_charge(base_req->wallet_ctx, coin, 0u);
+                    coins[staged++] = coin;
+                    staged_coins = staged;
+                    ++wallets[w].coin_count;
+                }
+            }
+        }
+    }
+
+    for (size_t w = 0; w < wallet_count; ++w) {
+        DM2_V1_SkprojectExchangeMoneyboxRequest request = *base_req;
+        DM2_V1_SkprojectExchangeMoneyboxReceipt committed;
+        request.wallet_handle = wallet_handles[w];
+        request.only_test = 0;
+        if (!dm2_v1_skproject_exchange_moneybox_internal(
+                &request, &committed,
+                wallets[w].coin_count != 0u
+                    ? &coins[wallets[w].first_coin] : NULL,
+                wallets[w].coin_count)) {
+            aggregate.blocked_missing_context = 1;
+            goto done;
+        }
+        aggregate.valid = 1;
+        aggregate.mutated |= committed.mutated;
+        aggregate.needs_rebalance |= committed.needs_rebalance;
+        aggregate.coin_type_count = committed.coin_type_count;
+        committed_coins += wallets[w].coin_count;
+    }
+    ok = 1;
+
+done:
+    if (coins) {
+        const DM2_V1_WalletCallbacks *cb = base_req
+            ? base_req->wallet_callbacks : NULL;
+        if (cb && cb->dealloc_record) {
+            /* A successful commit owns every staged record. On a failure
+             * before commits, staged records remain with this transaction. */
+            if (!ok) {
+                for (size_t i = committed_coins; i < staged_coins; ++i)
+                    cb->dealloc_record(base_req->wallet_ctx, coins[i]);
+            }
+        }
+    }
+    free(coins);
+    free(wallets);
+    if (!ok && !aggregate.blocked_missing_context)
+        aggregate.blocked_missing_context = 1;
+    if (out_receipt) *out_receipt = aggregate;
+    return ok;
 }
 
 /* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell. */
+static int dm2_v1_skproject_xact82_proceed_xact64(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact64Receipt *receipt,
+    int32_t *out_result)
+{
+    if (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5) {
+        *out_result = dm2_v1_skproject_proceed_xact_64(ctx, receipt);
+        return receipt->valid != 0;
+    }
+    if (!ctx->xact82_proceed_xact64_fn) return 0;
+    {
+        int command_issued = 0;
+        int32_t result = ctx->xact82_proceed_xact64_fn(
+            ctx->user, &command_issued);
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->valid = 1;
+        receipt->result = (int8_t)result;
+        receipt->command_issued = command_issued != 0;
+        *out_result = result;
+    }
+    return 1;
+}
+
+static int dm2_v1_skproject_xact82_sell(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact82Receipt *receipt)
+{
+    DM2_V1_SkprojectExchangeMoneyboxReceipt exchange_receipt;
+    DM2_V1_SkprojectXact64Receipt xact64_receipt;
+    DM2_V1_SkprojectExchangeMoneyboxRequest exchange_request;
+    DM2_V1_SkprojectQuery48ae0767Receipt pack_receipt;
+    uint8_t coin_indices[18];
+    int16_t coin_weights[10];
+    uint16_t payout_coins[18];
+    uint16_t coin_count = 0u;
+    uint16_t payout_coin_count = 0u;
+    int32_t total_value = 0;
+    const DM2_V1_WalletCallbacks *wallet = ctx->wallet_callbacks;
+    void *wallet_ctx = ctx->wallet_ctx ? ctx->wallet_ctx : ctx->user;
+    uint16_t wallet_handle = DM2_V1_OBJECT_NULL;
+    uint16_t *wallet_handles = NULL;
+    size_t wallet_count = 0u;
+    size_t wallet_cursor = 0u;
+    uint16_t item;
+    uint32_t steps = 0u;
+    int16_t price;
+    int16_t price_selector = ctx->v1e0572;
+    int32_t xact64_result;
+
+    if (price_selector == 1)
+        price = ctx->creature_w10;
+    else if (price_selector == 2)
+        price = (int16_t)ctx->creature_w0e;
+    else
+        price = ctx->creature_w0c;
+
+    if ((ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         ctx->xact82_variant != DM2_V1_XACT82_SPX_V4 &&
+         ctx->xact82_variant != DM2_V1_XACT82_DOS) ||
+        !ctx->next_fn || !wallet || !wallet->is_container_moneybox ||
+        !wallet->coin_type_table ||
+        wallet->coin_type_table_size < (int)ctx->coin_type_count ||
+        !wallet->is_item_currency || !wallet->get_item_db_type ||
+        !wallet->get_distinctive_item_type || !wallet->set_item_charge ||
+        !wallet->alloc_new_dbitem ||
+        !wallet->dealloc_record ||
+        !ctx->coin_values || ctx->coin_type_count == 0u ||
+        ctx->coin_type_count > 10u ||
+        (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         (!ctx->can_handle_item_in_fn || !ctx->cmd2165_fn)) ||
+        (ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         !ctx->xact82_proceed_xact64_fn)) {
+        receipt->blocked_missing_context = 1;
+        return 0;
+    }
+    /* Resolve the last moneybox before mutation so a missing possession
+     * append callback cannot leave already-rebalanced wallets behind. */
+    item = ctx->possession;
+    while (item != DM2_V1_OBJECT_END) {
+        int32_t next;
+        if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+            receipt->blocked_missing_context = 1;
+            goto xact82_sell_precommit_failure;
+        }
+        next = ctx->next_fn(item, ctx->user);
+        if (next < 0 || (uint32_t)next > UINT16_MAX) {
+            receipt->blocked_missing_context = 1;
+            goto xact82_sell_precommit_failure;
+        }
+        if (wallet->is_container_moneybox(wallet_ctx, item)) {
+            wallet_handle = item;
+            ++wallet_count;
+        }
+        item = (uint16_t)next;
+    }
+
+    if (wallet_handle != DM2_V1_OBJECT_NULL &&
+        (!wallet->is_item_currency || !wallet->get_item_db_type ||
+         !wallet->get_distinctive_item_type || !wallet->get_container_head ||
+         !wallet->get_next_item_in_list || !wallet->get_item_charge ||
+         !wallet->set_item_charge || !wallet->append_item_to_container)) {
+        receipt->blocked_missing_context = 1;
+        return 0;
+    }
+
+    if (wallet_count != 0u) {
+        wallet_handles = (uint16_t *)malloc(
+            wallet_count * sizeof(*wallet_handles));
+        if (!wallet_handles) {
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
+    }
+
+    /* Preflight every moneybox before the first exchange. Wallet insertion
+     * stops at non-currency records in SPX, while DOS can report success
+     * without attaching a coin after such a record. */
+    if (wallet_handle != DM2_V1_OBJECT_NULL) {
+        item = ctx->possession;
+        steps = 0u;
+        while (item != DM2_V1_OBJECT_END) {
+            int32_t next;
+            if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+                receipt->blocked_missing_context = 1;
+                free(wallet_handles);
+                return 0;
+            }
+            next = ctx->next_fn(item, ctx->user);
+            if (next < 0 || (uint32_t)next > UINT16_MAX) {
+                receipt->blocked_missing_context = 1;
+                free(wallet_handles);
+                return 0;
+            }
+            if (wallet->is_container_moneybox(wallet_ctx, item)) {
+                if (wallet_cursor >= wallet_count) {
+                    receipt->blocked_missing_context = 1;
+                    free(wallet_handles);
+                    return 0;
+                }
+                wallet_handles[wallet_cursor++] = item;
+                uint16_t coin = wallet->get_container_head(wallet_ctx, item);
+                uint32_t coin_steps = 0u;
+                while (coin != DM2_V1_OBJECT_END) {
+                    if (coin == DM2_V1_OBJECT_NULL || ++coin_steps > 65536u ||
+                        wallet->get_item_db_type(wallet_ctx, coin) !=
+                            DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY) {
+                        receipt->blocked_missing_context = 1;
+                        free(wallet_handles);
+                        return 0;
+                    }
+                    coin = wallet->get_next_item_in_list(wallet_ctx, coin);
+                }
+            }
+            item = (uint16_t)next;
+        }
+        if (wallet_cursor != wallet_count) {
+            receipt->blocked_missing_context = 1;
+            free(wallet_handles);
+            return 0;
+        }
+    }
+
+    /* SKProject exchanges wallets before packing a valid payout. This bounded
+     * implementation also rejects prices that cannot be paid exactly. Do
+     * that pure rejection check before mutating any wallet. */
+    if (price > 0) {
+        for (uint16_t i = 0; i < ctx->coin_type_count; ++i)
+            coin_weights[i] = (int16_t)ctx->coin_values[i];
+        dm2_v1_skproject_query_48ae_0767(
+            price, 18u, coin_indices, &coin_count,
+            ctx->coin_type_count, coin_weights, &total_value,
+            &pack_receipt);
+        if (!pack_receipt.valid || total_value != price || coin_count == 0u) {
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            free(wallet_handles);
+            return 0;
+        }
+        if (wallet_handle == DM2_V1_OBJECT_NULL &&
+            !ctx->append_coin_to_possession_fn) {
+            receipt->blocked_missing_context = 1;
+            free(wallet_handles);
+            return 0;
+        }
+        if (wallet_handle == DM2_V1_OBJECT_NULL && coin_count > 1u &&
+            !ctx->append_coins_to_possession_fn) {
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            free(wallet_handles);
+            return 0;
+        }
+        /* Allocate and validate the whole payout before any wallet is
+         * rebalanced. This avoids changing moneyboxes when the sale cannot
+         * obtain all records needed for its coins. */
+        for (uint16_t n = coin_count; n > 0u; --n) {
+            uint8_t coin_index = coin_indices[n - 1u];
+            uint16_t coin;
+            if (coin_index >= ctx->coin_type_count) {
+                receipt->payout_incomplete = 1;
+                receipt->blocked_missing_context = 1;
+                free(wallet_handles);
+                goto xact82_sell_precommit_failure;
+            }
+            coin = wallet->alloc_new_dbitem(
+                wallet_ctx, wallet->coin_type_table[coin_index]);
+            if (coin == DM2_V1_OBJECT_NULL ||
+                !wallet->is_item_currency(wallet_ctx, coin) ||
+                wallet->get_item_db_type(wallet_ctx, coin) !=
+                    DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY ||
+                wallet->get_distinctive_item_type(wallet_ctx, coin) !=
+                    wallet->coin_type_table[coin_index]) {
+                if (coin != DM2_V1_OBJECT_NULL)
+                    wallet->dealloc_record(wallet_ctx, coin);
+                receipt->payout_incomplete = 1;
+                receipt->blocked_missing_context = 1;
+                free(wallet_handles);
+                goto xact82_sell_precommit_failure;
+            }
+            wallet->set_item_charge(wallet_ctx, coin, 0u);
+            payout_coins[payout_coin_count++] = coin;
+        }
+    }
+
+    /* SKULLWIN c_ai.cpp:1891-1903 exchanges every moneybox in the current
+     * creature's possession chain and retains the last one for new coins. */
+    memset(&exchange_request, 0, sizeof(exchange_request));
+    exchange_request.coin_values = ctx->coin_values;
+    exchange_request.coin_type_count = ctx->coin_type_count;
+    exchange_request.only_test = 0;
+    exchange_request.dos_add_coin_non_currency_semantics =
+        ctx->xact82_variant == DM2_V1_XACT82_DOS;
+    exchange_request.wallet_callbacks = wallet;
+    exchange_request.wallet_ctx = wallet_ctx;
+    if (!dm2_v1_skproject_exchange_moneyboxes(
+            &exchange_request, wallet_handles,
+            wallet_handle == DM2_V1_OBJECT_NULL ? 0u : wallet_count,
+            &exchange_receipt)) {
+        receipt->wallet_mutated |= exchange_receipt.mutated != 0;
+        receipt->payout_incomplete = price > 0;
+        receipt->blocked_missing_context = 1;
+        free(wallet_handles);
+        goto xact82_sell_precommit_failure;
+    }
+    receipt->wallet_mutated |= exchange_receipt.mutated != 0;
+    free(wallet_handles);
+
+    ctx->v1e0572 = 0x47;
+    receipt->used_sell_path = 1;
+    receipt->money_path_checked = 1;
+    receipt->source_variant = (uint8_t)ctx->xact82_variant;
+    receipt->wallet_handle = (int16_t)wallet_handle;
+    if (price <= 0) {
+        if (!dm2_v1_skproject_xact82_proceed_xact64(
+                ctx, &xact64_receipt, &xact64_result)) {
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
+        receipt->xact64_result = (int8_t)xact64_result;
+        receipt->result = xact64_result == -4 ? -4 : -2;
+        receipt->creature_price_after = price;
+        return 1;
+    }
+
+    if (wallet_handle == DM2_V1_OBJECT_NULL && payout_coin_count > 1u) {
+        if (ctx->append_coins_to_possession_fn(
+                payout_coins, payout_coin_count, ctx->user) <= 0) {
+            for (uint16_t i = 0; i < payout_coin_count; ++i)
+                wallet->dealloc_record(wallet_ctx, payout_coins[i]);
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            return 0;
+        }
+        receipt->generated_coin_count = payout_coin_count;
+        receipt->possession_mutated = 1;
+    } else {
+        for (uint16_t i = 0; i < payout_coin_count; ++i) {
+            uint16_t coin = payout_coins[i];
+            int attached;
+            if (wallet_handle == DM2_V1_OBJECT_NULL) {
+                attached = ctx->append_coin_to_possession_fn(
+                    coin, ctx->user) > 0;
+            } else if (ctx->xact82_variant == DM2_V1_XACT82_DOS) {
+                attached = dm2_v1_add_coin_to_wallet(
+                    wallet_handle, coin, wallet, wallet_ctx);
+            } else {
+                attached = dm2_v1_add_coin_to_wallet_spx(
+                    wallet_handle, coin, wallet, wallet_ctx);
+            }
+            if (!attached) {
+                wallet->dealloc_record(wallet_ctx, coin);
+                for (uint16_t j = (uint16_t)(i + 1u);
+                     j < payout_coin_count; ++j)
+                    wallet->dealloc_record(wallet_ctx, payout_coins[j]);
+                receipt->payout_incomplete = 1;
+                if (wallet_handle == DM2_V1_OBJECT_NULL)
+                    receipt->possession_mutated |= i != 0u;
+                else
+                    receipt->wallet_mutated |= i != 0u;
+                receipt->blocked_missing_context = 1;
+                return 0;
+            }
+            ++receipt->generated_coin_count;
+            if (wallet_handle == DM2_V1_OBJECT_NULL)
+                receipt->possession_mutated = 1;
+            else
+                receipt->wallet_mutated = 1;
+        }
+    }
+    if (price_selector == 1)
+        ctx->creature_w10 = -1;
+    else if (price_selector == 2)
+        ctx->creature_w0e = 0xffffu;
+    else
+        ctx->creature_w0c = -1;
+    receipt->creature_price_after = -1;
+    receipt->price_consumed = 1;
+
+    if (!dm2_v1_skproject_xact82_proceed_xact64(
+            ctx, &xact64_receipt, &xact64_result)) {
+        receipt->blocked_missing_context = 1;
+        return 0;
+    }
+    receipt->xact64_result = (int8_t)xact64_result;
+    receipt->result = -4;
+    return 1;
+
+xact82_sell_precommit_failure:
+    for (uint16_t i = 0; i < payout_coin_count; ++i)
+        wallet->dealloc_record(wallet_ctx, payout_coins[i]);
+    return 0;
+}
+
 int dm2_v1_skproject_proceed_xact_82(
     DM2_V1_SkprojectXactContext *ctx,
     DM2_V1_SkprojectXact82Receipt *out_receipt)
@@ -22927,7 +23741,10 @@ int dm2_v1_skproject_proceed_xact_82(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
 
-    if (!ctx || !ctx->creature_at_fn) {
+    if (!ctx || !ctx->creature_at_fn ||
+        (ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+         ctx->xact82_variant != DM2_V1_XACT82_SPX_V4 &&
+         ctx->xact82_variant != DM2_V1_XACT82_DOS)) {
         receipt.blocked_missing_context = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -22949,6 +23766,7 @@ int dm2_v1_skproject_proceed_xact_82(
         receipt.has_creature = 1;
         receipt.creature_handle = (int16_t)creature;
         receipt.out_b1a = 29;
+        receipt.source_variant = (uint8_t)ctx->xact82_variant;
         ctx->creature_b1a = 29;
 
         if (ctx->v1e0572 == 0) {
@@ -22957,8 +23775,11 @@ int dm2_v1_skproject_proceed_xact_82(
             DM2_V1_Skproject14cd2886Receipt transfer_receipt;
             int16_t transfer_result;
 
-            if (!ctx->record_fn || !ctx->can_handle_item_in_fn ||
-                !ctx->xact82_oversee_record_fn) {
+            if (!ctx->record_fn || !ctx->xact82_oversee_record_fn ||
+                (ctx->xact82_variant == DM2_V1_XACT82_DOS &&
+                 !ctx->xact82_dos_can_handle_item_fn) ||
+                (ctx->xact82_variant != DM2_V1_XACT82_DOS &&
+                 !ctx->can_handle_item_in_fn)) {
                 receipt.blocked_missing_context = 1;
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
@@ -22975,15 +23796,29 @@ int dm2_v1_skproject_proceed_xact_82(
              * runs the source 14cd_2886 transfer against that creature. */
             front_possession = (uint16_t)(front_record[2] |
                                            ((uint16_t)front_record[3] << 8));
-            can_handle = ctx->can_handle_item_in_fn(
-                0x3eu, front_possession, (uint16_t)((direction + 2u) & 3u),
-                ctx->user);
+            if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
+                can_handle = ctx->xact82_dos_can_handle_item_fn(
+                    0x3eu, (uint16_t)((direction + 2u) & 3u),
+                    front_possession, ctx->user);
+            else
+                can_handle = ctx->can_handle_item_in_fn(
+                    0x3eu, front_possession,
+                    (uint16_t)((direction + 2u) & 3u), ctx->user);
             if (can_handle == -2) can_handle = -1;
-            transfer_result = dm2_v1_skproject_14cd_2886(
-                (uint16_t)creature, 0x10u,
-                (uint16_t)((direction + 2u) & 3u), 0u, 1u,
-                ctx->xact82_oversee_record_fn, ctx->user,
-                &transfer_receipt);
+            if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
+                transfer_result = dm2_v1_skproject_14cd_2886_mode(
+                    (uint16_t)creature,
+                    (uint8_t)((direction + 2u) & 3u),
+                    0u, 0x10u, 1u, 1u,
+                    ctx->xact82_oversee_record_fn, ctx->user,
+                    &transfer_receipt);
+            else
+                transfer_result = dm2_v1_skproject_14cd_2886_mode(
+                    (uint16_t)creature,
+                    (uint8_t)((direction + 2u) & 3u),
+                    0u, 0x10u, 1u, 1u,
+                    ctx->xact82_oversee_record_fn, ctx->user,
+                    &transfer_receipt);
             if (!transfer_receipt.valid) {
                 receipt.blocked_missing_context = 1;
                 if (out_receipt) *out_receipt = receipt;
@@ -22992,13 +23827,23 @@ int dm2_v1_skproject_proceed_xact_82(
             receipt.item_path_checked = 1;
             receipt.item_can_handle_result = (int16_t)can_handle;
             receipt.item_transfer_result = transfer_result;
-            if ((transfer_result != 0 && transfer_result != -1) ||
-                can_handle != -1) {
+            if ((ctx->xact82_variant == DM2_V1_XACT82_DOS &&
+                 !((transfer_result == 0 || transfer_result == -1) &&
+                   can_handle == -1)) ||
+                (ctx->xact82_variant == DM2_V1_XACT82_SPX_V4 &&
+                 (transfer_result == -1 || can_handle == -1)) ||
+                (ctx->xact82_variant ==
+                     DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
+                 ((transfer_result != 0 && transfer_result != -1) ||
+                  can_handle != -1))) {
                 ctx->creature_w10 = transfer_result > 0
                     ? transfer_result : 0;
                 receipt.creature_w10_after = ctx->creature_w10;
                 receipt.result = -2;
             }
+        } else if (!dm2_v1_skproject_xact82_sell(ctx, &receipt)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
         }
     }
 

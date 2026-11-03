@@ -11798,15 +11798,28 @@ static void m11_hatch_rect(unsigned char* framebuffer,
                            int x,
                            int y,
                            int w,
-                           int h) {
+                           int h,
+                           unsigned char sourceColor,
+                           int sourceColorPattern) {
     int yy;
     for (yy = y; yy < y + h; ++yy) {
         int xx;
         for (xx = x; xx < x + w; ++xx) {
-            /* DM1 PC VGA VIDEODRV.C F8155_VIDRV_06_HatchScreenBox:
-             * leave odd (x^y) pixels untouched and force even checker
-             * pixels to black. */
-            if (((xx ^ yy) & 1) == 0) {
+            if (sourceColorPattern) {
+                /* ReDMCSB BLITFILL.C F0136 routes Amiga through the
+                 * alternating G1100 rows (AreaPtSz=1), and FM Towns through
+                 * F0697_HatchScreenBox/TOWNSSCR.C:53-67, whose EGB pattern is
+                 * G4107={0xAAAAAAAA,0x55555555} with a 4x2 repeat. Both write
+                 * the caller's color only at set bits; screen coordinates
+                 * retain the source pattern origin. */
+                unsigned int pattern = ((yy & 1) != 0) ? 0x5555u : 0xaaaau;
+                if ((pattern & (0x8000u >> ((unsigned int)xx & 15u))) != 0u)
+                    m11_put_pixel(framebuffer, framebufferWidth,
+                                  framebufferHeight, xx, yy, sourceColor);
+            } else if (((xx ^ yy) & 1) == 0) {
+                /* DM1 PC VGA VIDEODRV.C F8155_VIDRV_06_HatchScreenBox:
+                 * leave odd (x^y) pixels untouched and force even checker
+                 * pixels to black. */
                 m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
                               xx, yy, M11_COLOR_BLACK);
             }
@@ -48122,12 +48135,9 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* DM2's C080 path is c_events.cpp::CLICK_VWPT.  Its hit list is
-     * produced by the source viewport renderer (c_rwbb), not by DM1's
-     * front-cell/door/mirror handler.  Until the corresponding DM2
-     * object-action owners are bound, fail closed after resolving only a
-     * renderer-owned target; this prevents a DM1 action from mutating a DM2
-     * session. */
+    /* DM2's C080 path is c_events.cpp::CLICK_VWPT. Its hit list comes from
+     * the source viewport renderer (c_rwbb); only DM2-owned target handlers
+     * may mutate this session. */
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_runtime_route_viewport_click(x, y, &receipt) ||
         !receipt.accepted) {
@@ -48157,6 +48167,13 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
             m11_sync_dm2_state_from_runtime(state);
             return M11_GAME_INPUT_REDRAW;
         }
+    }
+    if (receipt.target_kind == 5 && receipt.orientation != 0 &&
+        dm2_v1_runtime_turn_front_creature(
+            (uint16_t)receipt.object_id, receipt.map_x, receipt.map_y,
+            receipt.orientation)) {
+        m11_sync_dm2_state_from_runtime(state);
+        return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
 }
@@ -64981,7 +64998,7 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
          * complete source hit-zone boundary so its visible extent matches
          * the arrow button that Q/E, Home/End, WASD and cursor input drive. */
         m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
-                       x, y, w, h);
+                       x, y, w, h, M11_COLOR_BLACK, 0);
         cueColor = receipt.cueColorKind == 1
             ? M11_COLOR_YELLOW
             : M11_COLOR_LIGHT_CYAN;
@@ -67059,7 +67076,13 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         if (iconReceipt.hatch ||
             M11_GameView_ShouldHatchV1ActionIconCell(state, slot)) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
-                           cellX, cellY, cellW, cellH);
+                           cellX, cellY, cellW, cellH, M11_COLOR_BLACK,
+                           state->assetLoader.dm1Amiga36 ||
+                           (state->assetLoader.legacyDm1 &&
+                            state->assetLoader.legacyBigEndian) ||
+                           state->assetLoader.csbAmiga ||
+                           state->assetLoader.dm1Fmtowns ||
+                           state->assetLoader.csbFmtowns);
         }
         ++drawn;
     }

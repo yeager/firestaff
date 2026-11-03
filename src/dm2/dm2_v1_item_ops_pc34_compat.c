@@ -636,6 +636,8 @@ static int dm2_v1_sksave_process_one_item_bonus_root(
      * restoring each hero item.  This mode rebuilds skill and walk-speed
      * bonuses from source records; its MP/ability deltas are zero. */
     dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
+    receipt->light_w00_delta = (int16_t)(receipt->light_w00_delta +
+        bonus.light_w00_delta);
     if (leader_hand) ++receipt->processed_leader_hand;
     else ++receipt->processed_item_roots;
     return 1;
@@ -727,6 +729,8 @@ int dm2_v1_new_game_apply_source_item_bonuses(
                 return 0;
             }
             dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
+            receipt.light_w00_delta = (int16_t)(receipt.light_w00_delta +
+                bonus.light_w00_delta);
             if (!dm2_v1_query_source_item_weight(item, pools, loader,
                                                  &weight_receipt) ||
                 !weight_receipt.valid || weight_receipt.blocked) {

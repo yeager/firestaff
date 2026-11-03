@@ -104,7 +104,10 @@ Required game data must block launch:
 and Apple IIGS runtime lanes. Verified media/version identities and the limits
 of each bounded route are listed in `docs/PLATFORM_STATUS.md`.
 **CSB:** Atari ST 2.0/2.1, Amiga 3.1/3.5, FM Towns English/Japanese. CSBWin/ReDMCSB are reference lineages, not Windows/DOS game editions.
-**DM2:** PC English, PC French, PC German/English JewelCase
+**DM2:** DOS English/French, Amiga, FM Towns, and Macintosh large-retail
+runtime routes. See `docs/PLATFORM_STATUS.md` for each route's verified scope
+and remaining boundary; Macintosh localized editions and Japanese PC-98 media
+remain preservation-only or unsupported, respectively.
 **Nexus:** Saturn DMDF/DGN format (138 files)
 **Theron:** PC Engine CD JP/US Track 02 provenance
 

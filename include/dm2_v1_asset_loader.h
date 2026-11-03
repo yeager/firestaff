@@ -671,6 +671,20 @@ typedef struct {
 
 typedef struct {
     uint8_t accepted;
+    uint8_t source_shelf_entry_resident;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t data_index;
+    uint16_t width;
+    uint16_t height;
+    uint32_t raw_length;
+    uint32_t raw_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatImageMetricsReceipt;
+
+typedef struct {
+    uint8_t accepted;
     uint8_t used_existing_bitmap;
     uint8_t used_cached_bitmap;
     uint8_t queried_gdat_image;
@@ -1088,6 +1102,20 @@ int dm2_v1_query_gdat_image_metrics_receipt(
     uint16_t *out_width,
     uint16_t *out_height,
     DM2_V1_GdatImageEntryBuffReceipt *out_receipt);
+/* SKProject QUERY_GDAT_IMAGE_METRICS selects raw GDAT metadata when the
+ * source shelf entry is resident, and decoded image-buffer metrics otherwise.
+ * Callers provide that source-owned shelf decision and the decoded dimensions. */
+int dm2_v1_query_gdat_image_metrics_variant_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int source_shelf_entry_resident,
+    uint16_t decoded_width,
+    uint16_t decoded_height,
+    uint16_t *out_width,
+    uint16_t *out_height,
+    DM2_V1_GdatImageMetricsReceipt *out_receipt);
 int dm2_v1_query_pict_bits_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t mode,

@@ -261,11 +261,22 @@ void dm2_v1_gfx_str_format_skstr(const char *src, char *dest,
 
 /* DM2_QUERY_GDAT_TEXT — query game data text with decryption.
  * Source: c_gfx_str.cpp DM2_QUERY_GDAT_TEXT */
+typedef enum {
+    DM2_V1_GDAT_TEXT_CIPHER_SKWINDOS_SPX_V4 = 0,
+    DM2_V1_GDAT_TEXT_CIPHER_SPX_V5 = 1
+} DM2_V1_GdatTextCipher;
+
 bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
                                      int32_t cls, int32_t sub,
                                      int32_t idx, char *buf,
                                      const DM2_V1_GfxStrCallbacks *cb,
                                      void *ctx);
+/* Edition-aware source path. `encoded` corresponds to v1e0984. Missing
+ * entries leave an empty output and still return success, like SKProject. */
+bool dm2_v1_gfx_str_query_gdat_text_source(
+    DM2_V1_GfxStrState *state, int32_t cls, int32_t sub, int32_t idx,
+    char *buf, DM2_V1_GdatTextCipher cipher, int encoded,
+    const DM2_V1_GfxStrCallbacks *cb, void *ctx);
 
 /* DM2_DRAW_TEXT_TO_BACKBUFF — draw to backbuffer.
  * Source: c_gfx_str.cpp DM2_DRAW_TEXT_TO_BACKBUFF */

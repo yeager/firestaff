@@ -130,6 +130,78 @@ static int find_towns_figure_transparency_sample(
     return 0;
 }
 
+static int exercise_light_cast_full_timer_queue_rollback(
+    DM2_V1_BootProfile *profile, uint8_t *framebuffer,
+    const DM2_V1_DungeonData *dungeon)
+{
+    static const uint8_t light_runes[] = {DM2_RUNE_YA, DM2_RUNE_FUL};
+    DM2_V1_RuntimeSpellCastReceipt cast;
+    DM2_V1_CLightM11Receipt before_receipt, after_receipt;
+    DM2_V1_BootRuntimeRenderReceipt render;
+    DM2_V1_BootRuntimeReceipt runtime;
+    DM2_V1_SourceTimer timer;
+    const int caster = 0;
+    int full = 0;
+    int map;
+
+    if (!profile || !framebuffer || !dungeon ||
+        dungeon->level_count <= 3)
+        return 0;
+    if (!dm2_v1_runtime_select_mac_charsheet_champion(caster) ||
+        !dm2_v1_runtime_activate_action_hand(caster, 0) ||
+        !dm2_v1_runtime_set_spell_runes(caster, light_runes,
+                                         sizeof(light_runes)))
+        return 0;
+
+    if (!dm2_v1_boot_runtime_capture(profile, &runtime) ||
+        runtime.current_level < 0 || runtime.current_level >= dungeon->level_count)
+        return 0;
+    map = runtime.current_level;
+    /* The authenticated DB1 route to map 38 is a source-valid dynamic-light
+     * map. Fill the live queue only after its mutable light inputs resolve. */
+    dm2_v1_runtime_set_outdoor(dm2_v1_dungeon_is_outdoor(dungeon, map));
+    memset(framebuffer, 0, M11_FB_WIDTH * M11_FB_HEIGHT);
+    memset(&render, 0, sizeof(render));
+    if (!dm2_v1_boot_runtime_render_frame(
+            profile, framebuffer, M11_FB_WIDTH, M11_FB_WIDTH, M11_FB_HEIGHT,
+            NULL, NULL, &render) || !render.v1_succeeded)
+        return 0;
+    memset(&before_receipt, 0, sizeof(before_receipt));
+    if (!dm2_v1_runtime_current_c_light_receipt(&before_receipt) ||
+        !before_receipt.valid || before_receipt.receipt_hash == 0u)
+        return 0;
+
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)map << 24) |
+        (((uint32_t)dm2_v1_runtime_get_tick_count() + 1u) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = 0x7fu; /* inert until the test ends; no gameplay tick */
+    for (size_t i = 0; i <= DM2_V1_SOURCE_TIMER_MAX; ++i) {
+        DM2_V1_SourceTimerResult result =
+            dm2_v1_runtime_enqueue_source_timer(&timer, 0u);
+        if (result == DM2_V1_SOURCE_TIMER_FULL) {
+            full = 1;
+            break;
+        }
+        if (result != DM2_V1_SOURCE_TIMER_OK)
+            return 0;
+        timer.ticks_and_map = ((uint32_t)map << 24) |
+            (((uint32_t)dm2_v1_runtime_get_tick_count() + 2u +
+              (uint32_t)i) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    }
+    memset(&cast, 0, sizeof(cast));
+    if (!full ||
+        !dm2_v1_runtime_cast_spell_player(caster, 0, &cast) ||
+        !cast.valid || !cast.cast.cast_success ||
+        cast.cast.spell_index != 5 ||
+        cast.cast.timer_kind != DM2_V1_SPELL_TIMER_LIGHT || cast.applied ||
+        cast.timer_enqueued)
+        return 0;
+    memset(&after_receipt, 0, sizeof(after_receipt));
+    return dm2_v1_runtime_current_c_light_receipt(&after_receipt) &&
+        memcmp(&before_receipt, &after_receipt, sizeof(before_receipt)) == 0;
+}
+
 static int failures;
 
 static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
@@ -2423,6 +2495,51 @@ int main(void)
         }
         check(live_draw_found,
               "HME-242 authentic Fireball produces its source current-slot draw call");
+    }
+    M11_GameView_Shutdown(&view);
+    M11_GameView_Init(&view);
+    int fresh_started = M11_GameView_Start(&view, &spec) == 1;
+    check(fresh_started,
+          "FM Towns reinitializes a clean session for light rollback boundary verification");
+    if (fresh_started) {
+        DM2_V1_StartupMenuPointerLayout fresh_layout;
+        for (step = 0; step < 20000 && view.dm2FmtownsSwooshActive; ++step)
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        for (step = 0; step < 20000 && !view.dm2FmtownsTitleFinished; ++step)
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        memset(&fresh_layout, 0, sizeof(fresh_layout));
+        int new_game_ready = view.dm2FmtownsTitleFinished &&
+            dm2_v1_boot_startup_menu_pointer_layout(
+                (DM2_V1_BootProfile *)view.dm2BootProfile, &fresh_layout) &&
+            fresh_layout.valid && fresh_layout.new_game.w > 0 &&
+            fresh_layout.new_game.h > 0;
+        check(new_game_ready,
+              "FM Towns fresh session reaches the authentic new-game menu before light rollback testing");
+        if (new_game_ready) {
+            int new_game_x = fresh_layout.new_game.x +
+                fresh_layout.new_game.w / 2;
+            int new_game_y = fresh_layout.new_game.y +
+                fresh_layout.new_game.h / 2;
+            check(M11_GameView_HandlePointerButton(
+                      &view, new_game_x, new_game_y,
+                      DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                  M11_GameView_HandlePointerButton(
+                      &view, 100, 60, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                      M11_GAME_INPUT_REDRAW && view.dm2State.level_loaded,
+                  "FM Towns fresh source GAME_LOAD commits a party for light rollback testing");
+        }
+        DM2_V1_BootProfile *fresh_profile =
+            (DM2_V1_BootProfile *)view.dm2BootProfile;
+        const DM2_V1_DungeonData *fresh_dungeon = fresh_profile
+            ? (const DM2_V1_DungeonData *)fresh_profile->dungeon_data : NULL;
+        int on_dynamic_map = new_game_ready && fresh_dungeon &&
+            exercise_authentic_db1(fresh_profile, fresh_dungeon,
+                                   3, 13, 11, 38);
+        check(on_dynamic_map,
+              "FM Towns fresh session reaches dynamic map 38 through the authentic DB1 route");
+        check(on_dynamic_map && exercise_light_cast_full_timer_queue_rollback(
+                  fresh_profile, framebuffer, fresh_dungeon),
+              "HME-242 rejected full-queue Light cast preserves the prior dynamic c_light receipt");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

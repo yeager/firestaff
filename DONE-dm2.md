@@ -1,3 +1,10 @@
+- 2026-11-03: Corrected four SKProject helper-test fixtures to match source
+  semantics for magical-map vector order, XACT82's required transfer context,
+  the consuming temporary-cache-hash counter, lift RNG outcomes, and SPX v4
+  diagonal coordinates. The complete `dm2_v1_skproject_core` CTest now passes.
+  This validates the tested helper behavior; active source inventory rows and
+  production/platform gameplay routes remain incomplete.
+
 - 2026-11-02: Fixed DM2 post-load inventory-weight handling for signed empty
   item handles and retained-state-only owners without materialized item data.
   The post-load global-effects executable passed; authentic DOS New Game,

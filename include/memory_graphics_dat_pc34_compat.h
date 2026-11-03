@@ -20,6 +20,16 @@ int F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(
     const unsigned char *data, long size,
     struct MemoryGraphicsDatState_Compat* state);
 
+/* ReDMCSB Amiga FLOPPY.C:F0534 adapter: report stream size while restoring
+   its current cursor. FILE* is the host handle, not the Amiga BPTR ABI. */
+long F0534_FLOPPY_GetFileSize_HostCompat(FILE* file);
+
+/* ReDMCSB Amiga MEMORY.C:F0535: query the selected GRAPHICS.DAT. Uses the
+   current stream when open; otherwise opens graphics_path for this query. */
+long F0535_MEMORY_GetGraphicsDatFileSize_HostCompat(
+    const char* graphics_path,
+    struct MemoryGraphicsDatState_Compat* state);
+
 int F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(
     struct MemoryGraphicsDatState_Compat* state);
 

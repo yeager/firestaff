@@ -1,3 +1,16 @@
+2026-11-03 SKProject helper regression update: the full
+`dm2_v1_skproject_core` CTest now passes after correcting source-alignment
+fixtures for map-click vector order, XACT82 callback preconditions, temporary
+cache-hash consumption, lift RNG outcomes, and SPX v4 diagonal coordinates.
+This is helper-level evidence only; source inventory and live platform owners
+remain open.
+
+2026-11-03 SKProject `SKWIN/SkWinCore.cpp:24955-25049` cross-check: Windows
+uses the same full map-click transaction as SPX v4, with UI event `0x96` and
+expanded rect 99. Firestaff’s authenticated PC matrix supplies rect `0x63`, and
+its M11 event switch has no event-150 transaction. Keep the source variants
+separate until each native rect and caller route is bound.
+
 2026-11-03 DM2 FM Towns M11 movement controls:
 Authentic Towns GDAT stores the six 29x23 movement-arrow placements in its
 RAW4 `QUERY_BLIT_RECT` table; they are not present in the expanded-rectangle
@@ -100,9 +113,10 @@ v5 both return true when charge reaches zero; the Firestaff `events_30dea`
 helper now matches that return so the caller resets the slot state. Event 112
 retains its profile-specific PC-English DOS reset and FM Towns SPX v5 XOR/mask
 behavior. SPX v4 `PROCEED_COMMAND_SLOT` has no probability gate, so its runtime
-policy is still unmatched. Periodic command repeats, source-native panel
-rendering, and complete input/source ownership on every supported platform
-remain open; all reviewed variant rows stay partial.
+entry point now applies its unconditional field-8 charge handling, but no live
+M11 caller selects that source family. Periodic command repeats,
+source-native panel rendering, and complete input/source ownership on every
+supported platform remain open; all reviewed variant rows stay partial.
 
 2026-11-01 skproject DOS/SPX v4/v5 `FIND_HAND_WITH_EMPTY_FLASK`: implemented
 the generic query owner with the source slot order (action hand 1, then ready
@@ -2834,6 +2848,8 @@ production loop behind a host callback. All three source definitions are now
 
 2026-11-02 SKProject `ADJUST_UI_EVENT` source recheck: `SKWINDOS/dm2byf.cpp:5884-5936` uses 0x5f-0x62 rectangle diagonals for spell versus leader clicks and handcooldown[2] on the leader half; SPX v4 `skuievnt.cpp:22-67` has the same diagonal split but gates that half on `herob44`; SPX v5 `uiinput.cpp:121-185` interprets 95-98 as movement arrows, with cooldown[2] gating the movement half and the other half rewritten to 16-19. Firestaff implements those helper variants, but M11's production hit tables do not dispatch 95-98 nor produce 16-19 from pointer input. The SKProject v4 cooldown helper is also confirmed source-only because M11's retail platform profiles do not identify that runtime version. Updated active-source review and named-symbol summary; remains partial pending edition-authentic panel/arrow hit routes, event dispatch, and platform validation.
 
+2026-11-03 SKProject `CLICK_MAGICAL_MAP_AT` vector correction: the bounded Firestaff receipt now passes forward=`3-row` and side=`column-3`, matching DOS `dm2byh.cpp`, SPX v4 `skuievnt.cpp`, and SPX v5 `SK1031.cpp`. Its focused assertion confirms a map click to the right of a north-facing party targets the eastern tile. The full event transaction and all-platform owner gaps below remain open.
+
 2026-11-02 SKProject `CLICK_MAGICAL_MAP_AT` recheck: DOS `SKWINDOS/dm2byh.cpp:3944-4024`, SPX v4 `SKWINSPX/src/v4/skuievnt.cpp:636-694`, and SPX v5 `SKWINSPX/src/v5/SK1031.cpp:834-1001` require their variant's magical-map event, a map-chip in the active hand, and its owned minion missile. DOS and SPX v5 use event `0x55`; SPX v4 uses `UI_EVENTCODE_x96_MAGIC_MAP`=`0x96` (`SKWINSPX/src/v0/skdefine.h:1382`). They apply expanded-map-rect offsets and source cell/vector math, locate and temporarily select the destination level, admit valid floor/alcove/trick-wall tiles while rejecting walls and map exits, apply the conditional party-teleporter destination override, set the minion destination, free its creature cache, refresh the right panel, and restore the previous map. SPX v4 uses rectangle 99 and its selected-hand/container API; DOS/v5 use rectangle 0x63 and their respective source-global state. The authenticated PC click matrix resolves the map image as event 150 (`0x96`, rect `0x63`), but M11's dispatcher omits 150 and only handles rune events 151..154. The FM Towns event table has no 150 entry, and the Mac/Amiga C080 routes have no bound map-click owner. Firestaff's `dm2_v1_skproject_click_magical_map_at` remains test-only. It now validates active-hand mode and facing, applies `CALC_VECTOR_W_DIR`, checks a caller-supplied destination tile and records a caller-resolved map. It still does not verify the owned missile, run `LOCATE_OTHER_LEVEL`, switch maps, find the teleporter override record, release the creature cache, mutate the minion destination or refresh the panel. The passage input and production event 150 route are also unbound. Keep all source variants partial until one source-backed gameplay owner performs the full transaction and is reachable through each supported edition/platform input route.
 
 2026-11-02 status-pane geometry correction: the retail SKProject
@@ -3108,11 +3124,13 @@ moneybox fixture in `data/sksave2.bak`: hero record 3's second hand owns DB9
 test now asserts that source record chain. A complete deposit/withdrawal has
 not yet been run through the live M11 runtime against this saved state, so
 end-to-end transaction behavior remains unverified. Macintosh and Amiga use
-separate pointer routes and are not wired; Mega CD input ownership is
-unproven. Therefore only the PC-English and Towns M11 input routes are closed
-at the routing level. Keep gameplay parity partial for DOS and SPX v4/v5, and
-keep Macintosh, Amiga and Mega CD partial, until their distinct input owners
-and original-media transaction state are verified.
+separate pointer routes and are not wired: M11 currently checks Mac/Amiga hand
+actions, six arrow rectangles and then the C080 viewport, without admitting
+moneybox events 228-233. Mega CD input ownership is unproven. Therefore only
+the PC-English and Towns M11 input routes are closed at the routing level.
+Keep gameplay parity partial for DOS and SPX v4/v5, and keep Macintosh, Amiga
+and Mega CD partial, until their distinct input owners and original-media
+transaction state are verified.
 
 
 2026-11-02 SKProject `COUNT_BY_COIN_TYPES` live moneybox rendering:
@@ -3220,3 +3238,15 @@ party/weapon/aura overlays; the spell panel omits source spell-state variants;
 and attack-result rendering formats positive damage text but does not draw the
 source result-image branch. Updated the DOS/SPX inventory and named audit to
 PARTIAL until those source behaviors and live platform owners are implemented.
+
+2026-11-03 SKProject push/pull callback boundary:
+`dm2_v1_push_pull_rigid_body` now rejects adapters that omit destination
+blocking, front-record lookup, or record movement callbacks, avoiding a
+success receipt when no move callback is bound. SKProject
+`SKWINSPX/src/v5/skevents.cpp:467-621` instead validates the front creature
+and weight, records source movement state, then dispatches `PERFORM_MOVE`;
+DOS and SPX v4 have corresponding source routes. Firestaff's helper still
+moves directly through a callback, does not classify the creature or invoke
+the movement transaction, and has no production caller. Pointer-zone preview,
+transient mode, arrow redraw and all supported-edition routes also remain
+unimplemented. Keep the source rows PARTIAL.

@@ -1508,6 +1508,8 @@ typedef struct {
 typedef struct {
     uint8_t alive;
     uint16_t strength;
+    /* Source STAMINA_ADJUSTED_ATTR result after the edition's event/leader
+       and light-creature bonuses. Zero is a valid value. */
     uint16_t stamina_adjusted_strength;
     uint16_t max_stamina;
     uint16_t cur_stamina;
@@ -1526,6 +1528,8 @@ typedef struct {
     uint8_t blocked_overweight_creature;
     uint8_t can_lift;
     uint16_t checked_heroes;
+    uint16_t strength_before_stamina_adjustment[
+        DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
     uint16_t stamina_adjustments[DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
 } DM2_V1_SkprojectLiftReceipt;
 
@@ -3798,6 +3802,15 @@ int dm2_v1_skproject_alloc_new_pict(
     uint16_t height,
     uint16_t bpp,
     DM2_V1_SkprojectNewPictReceipt *out_receipt);
+/* SKWINDOS/c_dballocx.cpp::SKW_ALLOC_NEW_PICT uses a 16-bit wrapped
+ * allocation byte count; keep that DOS rule separate from the 32-bit
+ * SKWIN/SPX allocation calculation above. */
+int dm2_v1_skproject_alloc_new_pict_dos(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt);
 uint32_t dm2_v1_skproject_calc_pict_ent_hash(
     const DM2_V1_SkprojectExtendedPictureRef *ref);
 int dm2_v1_skproject_0b36_00c3_cache_picture(
@@ -4996,6 +5009,28 @@ int dm2_v1_skproject_get_creature_weight(
     uint16_t *out_weight,
     DM2_V1_SkprojectGetCreatureWeightReceipt *out_receipt);
 
+/* Source GET_CREATURE_WEIGHT resolves DB4 byte@4 to the edition's AI spec,
+   then reads unsigned byte@0x1d (DOS uses byte 1 of word@0x1c). */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_bad_record_type;
+    int blocked_missing_ai_spec;
+    uint16_t creature_handle;
+    uint8_t creature_type;
+    uint8_t weight;
+} DM2_V1_SkprojectResolveCreatureWeightReceipt;
+
+typedef const uint8_t *(*DM2_V1_SkprojectCreatureAISpecBytesFn)(
+    uint8_t creature_type, uint16_t *out_size, void *user);
+
+int dm2_v1_skproject_resolve_creature_weight(
+    uint16_t creature_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    void *user, uint16_t *out_weight,
+    DM2_V1_SkprojectResolveCreatureWeightReceipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
    caller-owned RGB888 palette to an RGB666 destination, with optional
    per-index translation table. */
@@ -5562,6 +5597,10 @@ typedef struct {
     int blocked_target_occupied;
     int blocked_missing_tile;
     int blocked_missing_record_pool;
+    int blocked_missing_creature_at;
+    int blocked_missing_allowed_level;
+    int blocked_disallowed_level;
+    int source_variant;
     int16_t x;
     int16_t y;
     uint8_t direction;
@@ -5570,6 +5609,9 @@ typedef struct {
     uint8_t movable;
 } DM2_V1_SkprojectIsCreatureMovableThereReceipt;
 
+/* Compatibility wrapper for the original DOS-threshold helper: without live
+   creature-at/level table owners it skips optional occupancy and level gates.
+   Use the variant API below for source-exact callback-backed checks. */
 int dm2_v1_skproject_is_creature_movable_there(
     int16_t x,
     int16_t y,
@@ -5586,6 +5628,61 @@ int dm2_v1_skproject_is_creature_movable_there(
     int16_t dest_height,
     uint16_t *out_creature_handle,
     DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
+
+/* Variant-exact SKProject form. DOS/SPX v5 reject weights >0xfd while SPX
+   v4/SKULLWIN reject only 0xff. Occupancy and allowed-level decisions are
+   supplied by source-shaped callbacks. creature_at_fn returns
+   DM2_V1_RECORD_HANDLE_NULL (-1) for an empty tile and otherwise the
+   zero-extended 16-bit creature handle. A non-NULL callback validates the
+   origin occupant. A non-NULL out_creature_handle requests the source's
+   optional destination/teleporter-exit occupancy checks and requires
+   creature_at_fn; with a NULL out pointer those optional checks are skipped.
+   allowed_level_fn is required for any teleporter branch that reaches the
+   source level check; a NULL callback blocks that branch. */
+typedef enum {
+    DM2_V1_MOVABLE_THERE_SKULLWIN = 0,
+    DM2_V1_MOVABLE_THERE_SPX_V4 = 1,
+    DM2_V1_MOVABLE_THERE_DOS = 2,
+    DM2_V1_MOVABLE_THERE_SPX_V5 = 3
+} DM2_V1_SkprojectMovableThereVariant;
+
+typedef int32_t (*DM2_V1_SkprojectMovableThereCreatureAtFn)(
+    int16_t map, int16_t x, int16_t y, void *user);
+typedef int32_t (*DM2_V1_SkprojectMovableThereAllowedLevelFn)(
+    uint16_t creature, int16_t level, void *user);
+
+int dm2_v1_skproject_is_creature_movable_there_variant(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    uint16_t creature_weight, const uint8_t *tile_values, int16_t width,
+    int16_t height, const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map, const uint8_t *dest_tile_values,
+    int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    DM2_V1_SkprojectResolveCreatureWeightReceipt weight;
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt movement;
+} DM2_V1_SkprojectMovableThereFromRecordReceipt;
+
+/* Compose the source record->AI-spec weight lookup with the edition-exact
+   movement predicate so callers cannot accidentally substitute a guessed or
+   stale creature weight. */
+int dm2_v1_skproject_is_creature_movable_there_from_record(
+    int16_t x, int16_t y, uint8_t direction, uint16_t creature_handle,
+    const uint8_t *tile_values, int16_t width, int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools, uint8_t current_map,
+    const uint8_t *dest_tile_values, int16_t dest_width, int16_t dest_height,
+    DM2_V1_SkprojectMovableThereVariant variant,
+    DM2_V1_SkprojectCreatureAISpecBytesFn ai_spec_fn,
+    DM2_V1_SkprojectMovableThereCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectMovableThereAllowedLevelFn allowed_level_fn,
+    void *user, uint16_t *out_creature_handle,
+    DM2_V1_SkprojectMovableThereFromRecordReceipt *out_receipt);
 
 /* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator
    record walk for side-indexed wall gfx. The simple entry below delegates the
@@ -6736,7 +6833,13 @@ int dm2_v1_skproject_19f0_0d10(
 
 /* SKULLWIN/c_ai.cpp cycle-16 batch — shared caller-owned creature AI state
    derived from the s350/ddat runtime words. */
-typedef struct {
+typedef enum {
+    DM2_V1_XACT82_SKULLWIN_SPX_V5 = 0,
+    DM2_V1_XACT82_SPX_V4 = 1,
+    DM2_V1_XACT82_DOS = 2
+} DM2_V1_SkprojectXact82Variant;
+
+typedef struct DM2_V1_SkprojectXactContext {
     int16_t creature_x;      /* s350.v1e0562.getxA */
     int16_t creature_y;      /* s350.v1e0562.getyA */
     uint16_t creature_word_e;/* s350.v1e054e->w_0e */
@@ -6778,6 +6881,26 @@ typedef struct {
     DM2_V1_Skproject19f00559State *state0559;
     DM2_V1_SkprojectOverseeRecordFn xact82_oversee_record_fn;
     int16_t creature_w10; /* caller-owned s350.creatures->w_10 shadow */
+    int16_t creature_w0c; /* caller-owned s350.creatures->w_0c shadow */
+    const uint16_t *coin_values; /* ddat.v1e03ac, ascending denominations */
+    uint16_t coin_type_count; /* ddat.v1e03fe */
+    const struct DM2_V1_WalletCallbacks *wallet_callbacks;
+    void *wallet_ctx; /* defaults to user when null */
+    /* Positive means appended; non-positive guarantees no mutation occurred.
+       Used for a one-coin payout when no moneybox is present. */
+    int32_t (*append_coin_to_possession_fn)(uint16_t coin, void *user);
+    DM2_V1_SkprojectXact82Variant xact82_variant;
+    /* DOS dm2byh.cpp:2418 calls 1c9a_0732(item_type, slot, possession). */
+    int32_t (*xact82_dos_can_handle_item_fn)(
+        uint16_t item_type, uint16_t slot, uint16_t possession, void *user);
+    /* DOS/SPX v4 have edition-owned XACT64 state and command bindings. */
+    int32_t (*xact82_proceed_xact64_fn)(
+        void *user, int *out_command_issued);
+    /* Atomic multi-coin append for no-moneybox sales: positive means every
+       coin was appended; non-positive guarantees that none were appended.
+       XACT 82 fails closed without it when the payout has multiple coins. */
+    int32_t (*append_coins_to_possession_fn)(
+        const uint16_t *coins, uint16_t coin_count, void *user);
 } DM2_V1_SkprojectXactContext;
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
@@ -6816,6 +6939,19 @@ typedef struct {
 
 int16_t dm2_v1_skproject_14cd_2886(
     uint16_t record,
+    uint16_t w1,
+    uint16_t w2,
+    uint16_t w3,
+    uint16_t w4,
+    DM2_V1_SkprojectOverseeRecordFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject14cd2886Receipt *out_receipt);
+
+/* DOS/SKWINSPX keep the OVERSEE_RECORD direction as its mode argument and
+   use different state-word ordering at XACT82 than the SKULLWIN wrapper. */
+int16_t dm2_v1_skproject_14cd_2886_mode(
+    uint16_t record,
+    uint8_t mode,
     uint16_t w1,
     uint16_t w2,
     uint16_t w3,
@@ -8623,6 +8759,15 @@ typedef struct {
     int16_t item_transfer_result;
     int16_t creature_w10_after;
     int8_t result;
+    int money_path_checked;
+    int16_t creature_price_after;
+    uint16_t generated_coin_count;
+    int8_t xact64_result;
+    uint8_t source_variant;
+    uint8_t wallet_mutated;
+    uint8_t possession_mutated;
+    uint8_t payout_incomplete;
+    uint8_t price_consumed;
 } DM2_V1_SkprojectXact82Receipt;
 
 int dm2_v1_skproject_proceed_xact_82(

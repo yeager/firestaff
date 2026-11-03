@@ -21,6 +21,31 @@
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_tile_record_walk_pc34_compat.h"
 
+/* Event logic is shared by little-endian PC and big-endian Mac/Amiga
+ * records. Every function using these aliases must have a local
+ * `pool_set` pointing at the source record owner. */
+#define dm2_actu_w2(r) dm2_actu_w2_for_pool((r), pool_set)
+#define dm2_actu_type(r) dm2_actu_type_for_pool((r), pool_set)
+#define dm2_actu_data(r) dm2_actu_data_for_pool((r), pool_set)
+#define dm2_actu_set_data(r, v) dm2_actu_set_data_for_pool((r), (v), pool_set)
+#define dm2_actu_w4(r) dm2_actu_w4_for_pool((r), pool_set)
+#define dm2_actu_set_w4(r, v) dm2_actu_set_w4_for_pool((r), (v), pool_set)
+#define dm2_actu_active_status(r) dm2_actu_active_status_for_pool((r), pool_set)
+#define dm2_actu_set_active_status(r, v) \
+    dm2_actu_set_active_status_for_pool((r), (v), pool_set)
+#define dm2_actu_once_only(r) dm2_actu_once_only_for_pool((r), pool_set)
+#define dm2_actu_set_once_only(r, v) \
+    dm2_actu_set_once_only_for_pool((r), (v), pool_set)
+#define dm2_actu_action_type(r) dm2_actu_action_type_for_pool((r), pool_set)
+#define dm2_actu_revert_effect(r) dm2_actu_revert_effect_for_pool((r), pool_set)
+#define dm2_actu_sound_effect(r) dm2_actu_sound_effect_for_pool((r), pool_set)
+#define dm2_actu_delay(r) dm2_actu_delay_for_pool((r), pool_set)
+#define dm2_actu_w6(r) dm2_actu_w6_for_pool((r), pool_set)
+#define dm2_actu_direction(r) dm2_actu_direction_for_pool((r), pool_set)
+#define dm2_actu_xcoord(r) dm2_actu_xcoord_for_pool((r), pool_set)
+#define dm2_actu_ycoord(r) dm2_actu_ycoord_for_pool((r), pool_set)
+#define dm2_actu_next_link(r) dm2_actu_next_link_for_pool((r), pool_set)
+
 /* Creature-killer types and declaration in dm2_v1_actuator_event_pc34_compat.h */
 
 /* ── Timer construction helpers ─────────────────────────────────────── */
@@ -56,6 +81,7 @@ static int16_t encode_xy(int x, int y)
  * DM2_INVOKE_ACTUATOR reads the actuator's (Xcoord, Ycoord, Direction),
  * adds its stored delay and the caller's extra ticks, then fires the message. */
 int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
+                           DM2_V1_RecordPoolSet *pool_set,
                            const uint8_t *actu_record,
                            int action_type, int delay_add,
                            int map, uint32_t game_tick)
@@ -98,7 +124,6 @@ int dm2_v1_activate_relay1(DM2_V1_RecordPoolSet *pool_set,
                            int delay_as_mult,
                            int map, uint32_t game_tick)
 {
-    (void)pool_set;
     (void)dungeon;
 
     if (queue == NULL || actu_record == NULL) return 0;
@@ -148,7 +173,6 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
                            int actu_data_param,
                            int map, uint32_t game_tick)
 {
-    (void)pool_set;
     (void)dungeon;
 
     if (queue == NULL || actu_record == NULL) return 0;
@@ -158,7 +182,7 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
 
     if (actu_action == 3) {
         if (dm2_actu_revert_effect(actu_record) != 0) {
-            dm2_v1_invoke_actuator(queue, actu_record, timer_action_type, 0,
+            dm2_v1_invoke_actuator(queue, pool_set, actu_record, timer_action_type, 0,
                                     map, game_tick);
             if (di == 0) {
                 int si;
@@ -168,12 +192,12 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
                     case 2: si = 2; break;
                     default: si = timer_action_type; break;
                 }
-                dm2_v1_invoke_actuator(queue, actu_record, si, di,
+                dm2_v1_invoke_actuator(queue, pool_set, actu_record, si, di,
                                         map, game_tick);
             }
             return 1;
         }
-        dm2_v1_invoke_actuator(queue, actu_record, timer_action_type, di,
+        dm2_v1_invoke_actuator(queue, pool_set, actu_record, timer_action_type, di,
                                 map, game_tick);
         return 1;
     }
@@ -183,7 +207,7 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
             return 1;
     }
 
-    dm2_v1_invoke_actuator(queue, actu_record, actu_action, di,
+    dm2_v1_invoke_actuator(queue, pool_set, actu_record, actu_action, di,
                             map, game_tick);
     return 1;
 }
@@ -191,7 +215,8 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
 /* ── ACTIVATE_TICK_GENERATOR ───────────────────────────────────────── */
 
 /* Source: skevent.cpp:357-400 */
-int dm2_v1_activate_tick_generator(DM2_V1_SourceTimerQueue *queue,
+int dm2_v1_activate_tick_generator(DM2_V1_RecordPoolSet *pool_set,
+                                   DM2_V1_SourceTimerQueue *queue,
                                    const uint8_t *actu_record,
                                    int16_t record_link,
                                    int map, uint32_t game_tick)
@@ -768,6 +793,7 @@ static int item_teleport_process_item(ItemTeleportCtx *ctx,
                                       int16_t possession_previous,
                                       int16_t saved_next)
 {
+    DM2_V1_RecordPoolSet *pool_set = ctx->pool_set;
     int db_type = dm2_v1_record_handle_pool(handle);
     int item_dir = (int)(((uint16_t)handle >> 14) & 3u);
     uint16_t distinctive = 0xffffu;
@@ -1214,6 +1240,7 @@ static int activate_shooter_live(DM2_V1_RecordPoolSet *pools,
                                  int map, uint32_t game_tick,
                                  DM2_V1_ShooterReceipt *receipt)
 {
+    DM2_V1_RecordPoolSet *pool_set = pools;
     int type, data, low, high, single, dir, launch_dir, launch_x, launch_y;
     int16_t objects[2] = {-1, -1};
     int object_count = 1;
@@ -1404,6 +1431,7 @@ static int wall_mecha_visitor(void *context,
                               const uint8_t *record)
 {
     WallMechaCtx *ctx = (WallMechaCtx *)context;
+    DM2_V1_RecordPoolSet *pool_set = ctx->pool_set;
     DM2_V1_ActuatorEventReceipt *r = ctx->receipt;
     int db_type;
     uint8_t atype;
@@ -1462,7 +1490,7 @@ static int wall_mecha_visitor(void *context,
             int fwd = dm2_actu_once_only(record)
                     ? (int)dm2_actu_action_type(record)
                     : ctx->action_type;
-            dm2_v1_invoke_actuator(ctx->queue, record, fwd, 0,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record, fwd, 0,
                                    ctx->map, ctx->game_tick);
         }
         r->work_timer_invoked++;
@@ -1498,11 +1526,11 @@ static int wall_mecha_visitor(void *context,
         bp0e = (actu_data == 0 || (actu_data & 256) != 0) ? 1 : 0;
         if (bp0e == bp0c) break;
         if (dm2_actu_action_type(record) == 3) {
-            dm2_v1_invoke_actuator(ctx->queue, record_mut,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record_mut,
                 (dm2_actu_revert_effect(record) == bp0e) ? 1 : 0,
                 0, ctx->map, ctx->game_tick);
         } else if (bp0e != 0) {
-            dm2_v1_invoke_actuator(ctx->queue, record_mut,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record_mut,
                 (int)dm2_actu_action_type(record),
                 0, ctx->map, ctx->game_tick);
         }
@@ -1516,7 +1544,7 @@ static int wall_mecha_visitor(void *context,
             if (record_mut) {
                 dm2_actu_set_data(record_mut, (uint16_t)(actu_data - 1));
             }
-            dm2_v1_invoke_actuator(ctx->queue, record,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
                 ctx->action_type, 0, ctx->map, ctx->game_tick);
         }
         /* Probabilistic path (400-500) omitted: requires RAND16 */
@@ -1536,7 +1564,7 @@ static int wall_mecha_visitor(void *context,
             dm2_actu_set_once_only(record_mut, new_once);
             if (dm2_actu_active_status(record_mut) != 0 || new_once == 0)
                 break;
-            dm2_v1_activate_tick_generator(ctx->queue, record_mut,
+            dm2_v1_activate_tick_generator(ctx->pool_set, ctx->queue, record_mut,
                 handle, ctx->map, ctx->game_tick);
         }
         r->tick_generator_invoked++;
@@ -1705,7 +1733,7 @@ static int wall_mecha_visitor(void *context,
         }
         if (dm2_actu_revert_effect(record) != 0 &&
             dm2_actu_action_type(record) == 3) {
-            dm2_v1_invoke_actuator(ctx->queue, record,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
                 ctx->action_type, 0, ctx->map, ctx->game_tick);
         }
         break;
@@ -1823,7 +1851,7 @@ static int wall_mecha_visitor(void *context,
         (void)dm2_v1_update_glob_var_direct(
             ctx->global_state, (int16_t)dm2_actu_data(record),
             (int16_t)global_operation, 1);
-        dm2_v1_invoke_actuator(ctx->queue, record,
+        dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
         break;
@@ -1847,7 +1875,7 @@ static int wall_mecha_visitor(void *context,
                          ((revert == (gv_val != 0u)) &&
                           ctx->action_type == 1);
         if (should_forward) {
-            dm2_v1_invoke_actuator(ctx->queue, record,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
         }
         r->test_flag_invoked++;
@@ -1998,6 +2026,7 @@ static int floor_mecha_visitor(void *context,
                                const uint8_t *record)
 {
     WallMechaCtx *ctx = (WallMechaCtx *)context;
+    DM2_V1_RecordPoolSet *pool_set = ctx->pool_set;
     DM2_V1_ActuatorEventReceipt *r = ctx->receipt;
     int db_type;
     uint8_t atype;
@@ -2076,7 +2105,7 @@ static int floor_mecha_visitor(void *context,
         }
         if (dm2_actu_revert_effect(record) != 0 &&
             dm2_actu_action_type(record) == 3) {
-            dm2_v1_invoke_actuator(ctx->queue, record,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
                 ctx->action_type, 0, ctx->map, ctx->game_tick);
         }
         break;
@@ -2278,7 +2307,7 @@ static int floor_mecha_visitor(void *context,
         (void)dm2_v1_update_glob_var_direct(
             ctx->global_state, (int16_t)dm2_actu_data(record),
             (int16_t)global_operation, 1);
-        dm2_v1_invoke_actuator(ctx->queue, record,
+        dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
             fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
         break;
@@ -2302,7 +2331,7 @@ static int floor_mecha_visitor(void *context,
                          ((revert == (gv_val != 0u)) &&
                           ctx->action_type == 1);
         if (should_forward) {
-            dm2_v1_invoke_actuator(ctx->queue, record,
+            dm2_v1_invoke_actuator(ctx->queue, ctx->pool_set, record,
                 fwd_action, 0, ctx->map, ctx->game_tick);
         }
         r->test_flag_invoked++;

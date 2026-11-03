@@ -9,6 +9,51 @@
 
 static int failed;
 
+typedef struct {
+    uint8_t oversee_mode;
+    int16_t oversee_words[5];
+    uint16_t can_handle_type;
+    uint16_t can_handle_slot;
+    uint16_t can_handle_possession;
+} Xact82TransferProbe;
+
+static int32_t xact82_probe_creature_at(int16_t x, int16_t y, void *user)
+{
+    (void)x;
+    (void)y;
+    (void)user;
+    return 0x1200;
+}
+
+static const uint8_t *xact82_probe_record(
+    uint16_t record, uint16_t *out_size, void *user)
+{
+    static const uint8_t bytes[4] = {0u, 0u, 0x34u, 0x12u};
+    (void)record;
+    (void)user;
+    if (out_size) *out_size = sizeof(bytes);
+    return bytes;
+}
+
+static int32_t xact82_probe_can_handle_item_in(
+    uint16_t item_type, uint16_t possession, uint16_t slot, void *user)
+{
+    Xact82TransferProbe *probe = (Xact82TransferProbe *)user;
+    probe->can_handle_type = item_type;
+    probe->can_handle_slot = slot;
+    probe->can_handle_possession = possession;
+    return -1;
+}
+
+static void xact82_probe_oversee(
+    uint16_t record, uint8_t mode, int16_t *words, void *user)
+{
+    Xact82TransferProbe *probe = (Xact82TransferProbe *)user;
+    (void)record;
+    probe->oversee_mode = mode;
+    memcpy(probe->oversee_words, words, sizeof(probe->oversee_words));
+}
+
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
         ++failed; \
@@ -2489,7 +2534,7 @@ static void test_map_helpers(void)
         lift.heroes[1].strength = 36u;
         lift.heroes[1].max_stamina = 160u;
         lift.heroes[1].cur_stamina = 80u;
-        lift.rand16_values[1] = 2u;
+        lift.rand16_values[1] = 0u;
         CHECK(dm2_v1_skproject_move_12b4_099e(
                   &lift, &lift_receipt) == 1 &&
                   lift_receipt.valid && lift_receipt.can_lift &&
@@ -2688,8 +2733,8 @@ static void test_cache_hash_helpers(void)
     CHECK(dm2_v1_skproject_get_temp_cache_hash(&state) == 0xffff0000u,
           "GET_TEMP_CACHE_HASH starts in the source temp hash range");
     CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) == 3u &&
-              state.hashes[3] == 0xffff0000u &&
-              state.temp_hash_counter == 1u,
+              state.hashes[3] == 0xffff0001u &&
+              state.temp_hash_counter == 2u,
           "ALLOC_TEMP_CACHE_INDEX allocates a temp hash through ADD_CACHE_HASH");
     CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) ==
               DM2_V1_SKPROJECT_MEMENT_NONE,
@@ -3624,6 +3669,8 @@ static void test_adjust_ui_event(void)
     champions[2].hand_cooldown[2] = 0u;
 
     event.event = 95u;
+    event.x = 18;
+    event.y = 18;
     champions[2].leader_action_disabled = 1u;
     CHECK(dm2_v1_skproject_adjust_ui_event_variant(
               &event, 0u, positions, champions, 4u,
@@ -4962,7 +5009,7 @@ static void test_skwin_core_symbol_batch_cycle8(void)
     item_record[5] = 0x20u; /* bits 13-15 == 0x2 -> map chip */
     memset(minion_record, 0, sizeof(minion_record));
     memset(magical_map_tiles, 0, sizeof(magical_map_tiles));
-    magical_map_tiles[55] = 0x20u; /* source-admitted floor at (5,5) */
+    magical_map_tiles[66] = 0x20u; /* right of party facing north: (6,6) */
     CHECK(dm2_v1_skproject_click_magical_map_at(
               100, 80, 0x55u, 1u, 0u, 0u, 0x1234u, item_record,
               sizeof(item_record), minion_record, sizeof(minion_record),
@@ -4971,9 +5018,9 @@ static void test_skwin_core_symbol_batch_cycle8(void)
               &map_receipt) == 1,
           "DM2_CLICK_MAGICAL_MAP_AT accepts valid map-chip click");
     CHECK(map_receipt.valid && map_receipt.requested_set_destination &&
-              map_receipt.requested_change_map && map_receipt.target_x == 5 &&
-              map_receipt.target_y == 5,
-          "DM2_CLICK_MAGICAL_MAP_AT receipt requests destination");
+              map_receipt.requested_change_map && map_receipt.target_x == 6 &&
+              map_receipt.target_y == 6,
+          "DM2_CLICK_MAGICAL_MAP_AT preserves forward/side source vector order");
 
     CHECK(dm2_v1_skproject_click_magical_map_at(
               100, 80, 0x54u, 1u, 0u, 0u, 0x1234u, item_record,
@@ -6003,6 +6050,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     uint8_t dest_tiles[64];
     uint8_t out_bytes[8];
     uint8_t pos;
+    uint16_t movable_creature_out = 0u;
     uint16_t word;
     uint16_t creature_timer_word;
     uint16_t word32;
@@ -6137,6 +6185,44 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               dest_tiles, 3, 3, NULL, &qmov) == 1 &&
               qmov.valid && qmov.movable,
           "DM2_IS_CREATURE_MOVABLE_THERE admits open forward tile");
+    tile_values[4] = (uint8_t)(5u << 5);
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, &movable_creature_out, &qmov) == 1 &&
+              qmov.valid && qmov.movable && movable_creature_out == 0x1234u,
+          "DM2_IS_CREATURE_MOVABLE_THERE legacy wrapper preserves origin teleporter exit moves");
+    tile_values[4] = 0x20u;
+    tile_values[1] = (uint8_t)(5u << 5);
+    CHECK(!dm2_v1_skproject_is_creature_movable_there_variant(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, DM2_V1_MOVABLE_THERE_DOS, NULL, NULL,
+              NULL, NULL, &qmov) && qmov.blocked_missing_allowed_level,
+          "DM2_IS_CREATURE_MOVABLE_THERE variant requires the source level callback");
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 8, 8, &movable_creature_out, &qmov) == 1 &&
+              qmov.valid && qmov.movable && movable_creature_out == 0x1234u,
+          "DM2_IS_CREATURE_MOVABLE_THERE legacy wrapper preserves forward teleporter moves");
+    tile_values[1] = 0x20u;
+    pool3_bytes[0] = 0xfeu;
+    pool3_bytes[1] = 0xffu; /* no linked actuator for this teleporter tile */
+    tile_values[1] = (uint8_t)(5u << 5);
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) == 1 &&
+              qmov.valid && qmov.movable,
+          "DM2_IS_CREATURE_MOVABLE_THERE continues when target teleporter detail is unresolved");
+    pool3_bytes[0] = 0xfeu;
+    pool3_bytes[1] = 0xffu;
+    tile_values[4] = (uint8_t)(5u << 5);
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) == 1 &&
+              qmov.valid && qmov.movable,
+          "DM2_IS_CREATURE_MOVABLE_THERE continues when origin teleporter detail is unresolved");
+    tile_values[4] = 0x20u;
+    pool3_bytes[0] = 0x01u;
+    pool3_bytes[1] = 0x0cu;
     tile_values[1] = 0x00u; /* blocked tile north of (1,1) */
     CHECK(!dm2_v1_skproject_is_creature_movable_there(
               1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
@@ -10435,10 +10521,38 @@ int main(void)
     {
         DM2_V1_SkprojectXactContext ctx;
         memset(&ctx, 0, sizeof(ctx));
+        ctx.creature_at_fn = xact82_probe_creature_at;
+        ctx.xact82_variant = DM2_V1_XACT82_DOS;
         DM2_V1_SkprojectXact82Receipt r;
         int rv = dm2_v1_skproject_proceed_xact_82(&ctx, &r);
-        CHECK(rv == 1 && r.valid == 1 && r.out_b1a == 29,
-              "xact_82 sets b1a to 29");
+        CHECK(rv == 0 && r.blocked_missing_context && r.out_b1a == 29 &&
+                  ctx.creature_b1a == 29,
+              "xact_82 sets b1a before blocking missing transfer callbacks");
+    }
+    {
+        Xact82TransferProbe probe = {0};
+        DM2_V1_SkprojectXactContext ctx;
+        DM2_V1_SkprojectXact82Receipt r;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.creature_word_e = 0u;
+        ctx.creature_at_fn = xact82_probe_creature_at;
+        ctx.record_fn = xact82_probe_record;
+        ctx.can_handle_item_in_fn = xact82_probe_can_handle_item_in;
+        ctx.xact82_oversee_record_fn = xact82_probe_oversee;
+        ctx.xact82_variant = DM2_V1_XACT82_SPX_V4;
+        ctx.user = &probe;
+        CHECK(dm2_v1_skproject_proceed_xact_82(&ctx, &r) && r.valid &&
+                  r.out_b1a == 29u && r.item_path_checked &&
+                  r.item_transfer_result == -1 &&
+                  probe.can_handle_type == 0x3eu &&
+                  probe.can_handle_slot == 2u &&
+                  probe.can_handle_possession == 0x1234u &&
+                  probe.oversee_mode == 2u &&
+                  probe.oversee_words[1] == 0 &&
+                  probe.oversee_words[2] == 0x10 &&
+                  probe.oversee_words[3] == 1 &&
+                  probe.oversee_words[4] == 1,
+              "xact_82 SPX v4 transfer preserves SKProject state-word order and facing slot");
     }
 
     /* ---- batch 21a: DM2_PROCEED_XACT_83 ---- */

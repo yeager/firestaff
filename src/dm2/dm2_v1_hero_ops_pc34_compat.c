@@ -272,30 +272,33 @@ void dm2_v1_proceed_enchantment_self(
     int halve_power = 0;
     uint16_t mask = hero_mask;
 
-    /* Pass 1: check aura mismatch, clean up old timers, detect halving */
-    for (int i = 0; i < 4 && i < cb->hero_count; i++) {
+    /* Pass 1: source scans all four champion slots.  Aura cleanup applies
+     * only to selected slots, but the >50 power reduction considers every
+     * slot, including a champion outside the selected target mask. */
+    for (int i = 0; i < 4; i++) {
         uint16_t hero_bit = (uint16_t)(1 << i);
-        if ((mask & hero_bit) == 0)
-            continue;
         DM2_V1_HeroState *hero = cb->get_hero(ctx, i);
         if (!hero)
             continue;
-        if (hero->cur_hp == 0)
-            mask &= ~hero_bit;
-        if (aura_type != hero->ench_aura || hero->cur_hp == 0) {
-            hero->ench_power = 0;
-            int timer_count = cb->get_timer_count(ctx);
-            for (int t = 0; t < timer_count; t++) {
-                if (cb->get_timer_type(ctx, t) != 0x48)
-                    continue;
-                uint8_t actor = cb->get_timer_actor(ctx, t);
-                if ((actor & mask) == 0)
-                    continue;
-                uint8_t remaining = actor & ~(uint8_t)mask;
-                if (remaining != 0)
-                    cb->set_timer_actor(ctx, t, (uint8_t)(actor & ~(uint8_t)(mask & 0xFF)));
-                else
-                    cb->delete_timer(ctx, t);
+        if ((mask & hero_bit) != 0) {
+            if (hero->cur_hp == 0)
+                mask &= (uint16_t)~hero_bit;
+            if (aura_type != hero->ench_aura || hero->cur_hp == 0) {
+                hero->ench_power = 0;
+                int timer_count = cb->get_timer_count(ctx);
+                for (int t = 0; t < timer_count; t++) {
+                    if (cb->get_timer_type(ctx, t) != 0x48)
+                        continue;
+                    uint8_t actor = cb->get_timer_actor(ctx, t);
+                    if ((actor & mask) == 0)
+                        continue;
+                    uint8_t remaining = actor & ~(uint8_t)mask;
+                    if (remaining != 0)
+                        cb->set_timer_actor(ctx, t,
+                            (uint8_t)(actor & ~(uint8_t)(mask & 0xFF)));
+                    else
+                        cb->delete_timer(ctx, t);
+                }
             }
         }
         if (hero->ench_power > 50)

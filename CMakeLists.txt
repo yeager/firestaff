@@ -18117,6 +18117,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_skproject_core
     )
 
+    add_executable(test_dm2_v1_skproject_moneybox
+        tests/test_dm2_v1_skproject_moneybox.c
+        src/dm2/dm2_v1_skproject_core.c
+    )
+    target_include_directories(test_dm2_v1_skproject_moneybox PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_skproject_moneybox PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_skproject_moneybox PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_skproject_moneybox
+        COMMAND test_dm2_v1_skproject_moneybox
+    )
+
     add_executable(test_dm2_v1_skproject_ladder_source
         tests/test_dm2_v1_skproject_ladder_source.c
         src/dm2/dm2_v1_skproject_core.c
