@@ -11,6 +11,7 @@
 struct DM2_V1_RecordPoolSet;
 struct DM2_V1_DungeonData;
 struct DM2_V1_AssetLoader;
+struct DM2_V1_WalletCallbacks;
 
 typedef struct {
     int16_t x;
@@ -8560,7 +8561,8 @@ int dm2_v1_skproject_proceed_xact_81(
     uint16_t w04,
     DM2_V1_SkprojectXact81Receipt *out_receipt);
 
-/* SKULLWIN/c_ai.cpp:1679 DM2_14cd_3582 — coin wallet rebalance helper for xact_82. */
+/* Legacy receipt-only estimate; use the exchange request below for the
+ * source denomination comparison and wallet-record mutation. */
 typedef struct {
     int valid;
     int blocked_missing_context;
@@ -8575,6 +8577,32 @@ int dm2_v1_skproject_14cd_3582(
     const uint16_t *coin_values,
     uint16_t coin_type_count,
     DM2_V1_Skproject14cd3582Receipt *out_receipt);
+
+/* DOS dm2byg.cpp:429-487 and SPX v4 skcrture.cpp:3192-3239 implement
+ * the complete count/compare/rebuild transaction for a moneybox. */
+typedef struct {
+    uint16_t wallet_handle;
+    const uint16_t *coin_counts;
+    const uint16_t *coin_values;
+    uint16_t coin_type_count;
+    int32_t only_test;
+    const struct DM2_V1_WalletCallbacks *wallet_callbacks;
+    void *wallet_ctx;
+} DM2_V1_SkprojectExchangeMoneyboxRequest;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int32_t total_value;
+    int needs_rebalance;
+    int mutated;
+    uint16_t coin_type_count;
+    uint16_t target_counts[10];
+} DM2_V1_SkprojectExchangeMoneyboxReceipt;
+
+int dm2_v1_skproject_exchange_moneybox(
+    const DM2_V1_SkprojectExchangeMoneyboxRequest *req,
+    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt);
 
 /* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell interaction. */
 typedef struct {

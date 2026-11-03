@@ -4,6 +4,7 @@
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_find_ladder_around.h"
+#include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 
@@ -22726,9 +22727,10 @@ int dm2_v1_skproject_proceed_xact_81(
     return 1;
 }
 
-/* SKULLWIN/c_ai.cpp:1679 DM2_14cd_3582 — coin wallet rebalance.
-   Computes total value from coin counts * coin_values, then determines
-   if a rebalance is needed (different denomination breakdown). */
+/* Receipt-only legacy estimate for the SKULLWIN DM2_14cd_3582 audit row.
+   It cannot calculate denomination changes because this API carries no
+   wallet counts. Use dm2_v1_skproject_exchange_moneybox when the caller can
+   provide source counts and wallet record callbacks. */
 int dm2_v1_skproject_14cd_3582(
     int32_t mode,
     uint16_t wallet_handle,
@@ -22761,6 +22763,115 @@ int dm2_v1_skproject_14cd_3582(
     receipt.needs_rebalance = (receipt.comparison_mode != 1) ? 1 : 0;
 
     receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_exchange_moneybox(
+    const DM2_V1_SkprojectExchangeMoneyboxRequest *req,
+    DM2_V1_SkprojectExchangeMoneyboxReceipt *out_receipt)
+{
+    DM2_V1_SkprojectExchangeMoneyboxReceipt receipt;
+    const DM2_V1_WalletCallbacks *cb;
+    int64_t remaining_value = 0;
+    uint16_t counts[10] = {0};
+    int changed = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!req || !req->coin_counts || !req->coin_values ||
+        req->coin_type_count == 0 || req->coin_type_count > 10 ||
+        !req->wallet_callbacks) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    cb = req->wallet_callbacks;
+    if (!cb->coin_type_table ||
+        cb->coin_type_table_size < (int)req->coin_type_count ||
+        !cb->is_container_moneybox || !cb->is_item_currency ||
+        !cb->get_container_head || !cb->get_next_item_in_list ||
+        !cb->get_item_db_type || !cb->get_distinctive_item_type ||
+        !cb->get_item_charge || !cb->set_item_charge ||
+        !cb->append_item_to_container || !cb->cut_item_from_container ||
+        !cb->dealloc_record || !cb->alloc_new_dbitem) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!cb->is_container_moneybox(req->wallet_ctx, req->wallet_handle)) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.coin_type_count = req->coin_type_count;
+    for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+        if (req->coin_values[i] == 0 ||
+            (i > 0 && req->coin_values[i] < req->coin_values[i - 1])) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        remaining_value += (int64_t)req->coin_values[i] *
+                           (int64_t)req->coin_counts[i];
+        if (remaining_value > INT32_MAX) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+    }
+    receipt.total_value = (int32_t)remaining_value;
+
+    /* The DOS and SPX v4 sources greedily rebuild denominations from the
+     * highest value down, then compare the result to COUNT_BY_COIN_TYPES. */
+    for (int i = (int)req->coin_type_count - 1; i >= 0 &&
+         remaining_value > 0; --i) {
+        uint16_t value = req->coin_values[i];
+        while (remaining_value >= (int32_t)value) {
+            if (counts[i] == UINT16_MAX) {
+                receipt.blocked_missing_context = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            ++counts[i];
+            remaining_value -= (int32_t)value;
+        }
+        if (counts[i] != req->coin_counts[i]) changed = 1;
+    }
+
+    receipt.needs_rebalance = changed;
+    memcpy(receipt.target_counts, counts,
+           req->coin_type_count * sizeof(counts[0]));
+    receipt.valid = 1;
+    if (!changed || req->only_test == 1) {
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Source mutation removes every old denomination before allocating the
+     * canonical set, so failures remain visible rather than silently
+     * claiming that the original wallet was preserved. */
+    for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+        uint16_t coin;
+        do {
+            coin = dm2_v1_take_coin_from_wallet(
+                req->wallet_handle, (int16_t)i, cb, req->wallet_ctx);
+            if (coin != DM2_V1_OBJECT_NULL)
+                cb->dealloc_record(req->wallet_ctx, coin);
+        } while (coin != DM2_V1_OBJECT_NULL);
+    }
+    for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+        for (uint16_t n = 0; n < counts[i]; ++n) {
+            uint16_t coin = cb->alloc_new_dbitem(
+                req->wallet_ctx, cb->coin_type_table[i]);
+            if (coin != DM2_V1_OBJECT_NULL)
+                (void)dm2_v1_add_coin_to_wallet_spx(
+                    req->wallet_handle, coin, cb, req->wallet_ctx);
+        }
+    }
+    receipt.mutated = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
