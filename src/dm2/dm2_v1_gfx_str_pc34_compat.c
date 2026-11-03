@@ -508,11 +508,11 @@ static const char *dm2_v1_gfx_str_presented_text(
     return fs_po_gettext_in_domain("dm2", source_text);
 }
 
-bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
-                                     int32_t cls, int32_t sub,
-                                     int32_t idx, char *buf,
-                                     const DM2_V1_GfxStrCallbacks *cb,
-                                     void *ctx)
+static bool dm2_v1_gfx_str_query_gdat_text_impl(
+    DM2_V1_GfxStrState *state, int32_t cls, int32_t sub,
+    int32_t idx, char *buf, DM2_V1_GdatTextCipher cipher,
+    int encoded, int missing_is_success,
+    const DM2_V1_GfxStrCallbacks *cb, void *ctx)
 {
     uint8_t raw[256];
     char formatted[256];
@@ -552,17 +552,29 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
     if (cb->query_gdat_entry_data_buff == NULL) return false;
 
     len = cb->query_gdat_entry_data_length(ctx, cls, sub, idx);
-    if (len <= 0 || len > (int32_t)sizeof(raw) - 1) return false;
+    if (len <= 0) return missing_is_success != 0;
+    if (len > (int32_t)sizeof(raw) - 1) return false;
 
     if (!cb->query_gdat_entry_data_buff(ctx, cls, sub, idx, raw, len))
         return false;
 
-    /* Source: c_gfx_str.cpp DM2_QUERY_GDAT_TEXT decryption loop.
-     * XOR each byte with rotating key starting from (len & 0xFF). */
-    key = (uint8_t)(len & 0xFF);
-    for (i = 0; i < len; i++) {
-        raw[i] ^= key;
-        key = (uint8_t)(key + 3);
+    if (encoded) {
+        if (cipher == DM2_V1_GDAT_TEXT_CIPHER_SKWINDOS_SPX_V4) {
+            /* DOS dm2bya.cpp::SKW_QUERY_GDAT_TEXT and SPX v4
+             * SkWinCore::QUERY_GDAT_TEXT decode with (~byte)-position. */
+            for (i = 0; i < len; i++)
+                raw[i] = (uint8_t)((uint8_t)~raw[i] - (uint8_t)i);
+        } else if (cipher == DM2_V1_GDAT_TEXT_CIPHER_SPX_V5) {
+            /* SPX v5 gfxstr.cpp::DM2_QUERY_GDAT_TEXT uses an XOR key
+             * initialized from the entry length and incremented by 3. */
+            key = (uint8_t)(len & 0xff);
+            for (i = 0; i < len; i++) {
+                raw[i] ^= key;
+                key = (uint8_t)(key + 3u);
+            }
+        } else {
+            return false;
+        }
     }
     raw[len] = '\0';
 
@@ -581,6 +593,27 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
     }
 
     return true;
+}
+
+bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
+                                     int32_t cls, int32_t sub,
+                                     int32_t idx, char *buf,
+                                     const DM2_V1_GfxStrCallbacks *cb,
+                                     void *ctx)
+{
+    /* Preserve the existing SPX v5 entry point for current callers. */
+    return dm2_v1_gfx_str_query_gdat_text_impl(
+        state, cls, sub, idx, buf, DM2_V1_GDAT_TEXT_CIPHER_SPX_V5,
+        1, 0, cb, ctx);
+}
+
+bool dm2_v1_gfx_str_query_gdat_text_source(
+    DM2_V1_GfxStrState *state, int32_t cls, int32_t sub, int32_t idx,
+    char *buf, DM2_V1_GdatTextCipher cipher, int encoded,
+    const DM2_V1_GfxStrCallbacks *cb, void *ctx)
+{
+    return dm2_v1_gfx_str_query_gdat_text_impl(
+        state, cls, sub, idx, buf, cipher, encoded, 1, cb, ctx);
 }
 
 /* ── DM2_DRAW_TEXT_TO_BACKBUFF ────────────────────────────────────── */
