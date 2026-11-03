@@ -11800,16 +11800,18 @@ static void m11_hatch_rect(unsigned char* framebuffer,
                            int w,
                            int h,
                            unsigned char sourceColor,
-                           int amigaSourcePattern) {
+                           int sourceColorPattern) {
     int yy;
     for (yy = y; yy < y + h; ++yy) {
         int xx;
         for (xx = x; xx < x + w; ++xx) {
-            if (amigaSourcePattern) {
-                /* ReDMCSB BLITFILL.C F0136 sets Amiga RastPort.AreaPtrn to
-                 * G1100={0xAAAA,0x5555}, AreaPtSz=1, and fills with the
-                 * caller's pen. The two 16-bit rows alternate by screen y;
-                 * bit 15 is the leftmost pixel in each row. */
+            if (sourceColorPattern) {
+                /* ReDMCSB BLITFILL.C F0136 routes Amiga through the
+                 * alternating G1100 rows (AreaPtSz=1), and FM Towns through
+                 * F0697_HatchScreenBox/TOWNSSCR.C:53-67, whose EGB pattern is
+                 * G4107={0xAAAAAAAA,0x55555555} with a 4x2 repeat. Both write
+                 * the caller's color only at set bits; screen coordinates
+                 * retain the source pattern origin. */
                 unsigned int pattern = ((yy & 1) != 0) ? 0x5555u : 0xaaaau;
                 if ((pattern & (0x8000u >> ((unsigned int)xx & 15u))) != 0u)
                     m11_put_pixel(framebuffer, framebufferWidth,
@@ -67074,7 +67076,9 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                            state->assetLoader.dm1Amiga36 ||
                            (state->assetLoader.legacyDm1 &&
                             state->assetLoader.legacyBigEndian) ||
-                           state->assetLoader.csbAmiga);
+                           state->assetLoader.csbAmiga ||
+                           state->assetLoader.dm1Fmtowns ||
+                           state->assetLoader.csbFmtowns);
         }
         ++drawn;
     }
