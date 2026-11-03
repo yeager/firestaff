@@ -1024,11 +1024,23 @@ static void dm2_runtime_spell_queue_light_timer(
 
 static void dm2_runtime_spell_recalc_light(void *context)
 {
-    /* DM2_PROCEED_LIGHT's source callback reaches the c_light recalculation
-     * owner. Runtime light-map recalculation is still a separate viewport
-     * consumer; the source light scalar and 0x46 timer are the complete
-     * gameplay mutation owned by this cast transaction. */
-    (void)context;
+    DM2_V1_RuntimeSpellLightContext *light_ctx =
+        (DM2_V1_RuntimeSpellLightContext *)context;
+    DM2_V1_RuntimeState *rt = light_ctx ? light_ctx->runtime : NULL;
+    if (!rt) {
+        if (light_ctx) light_ctx->failed = 1;
+        return;
+    }
+    /* SPX v4/v5 PROCEED_LIGHT calls RECALC_LIGHT_LEVEL synchronously. A
+     * static map remains at its source default; dynamic maps must refresh the
+     * admitted light receipt from the newly updated spell accumulator. */
+    if (rt->c_light_map_descriptor.valid &&
+        rt->c_light_map_descriptor.dynamic_light &&
+        !dm2_runtime_recalc_dynamic_light(
+            rt, rt->gdat_scene_control_present_mask,
+            rt->gdat_scene_rain, rt->gdat_scene_highest_light_level)) {
+        light_ctx->failed = 1;
+    }
 }
 
 static void dm2_runtime_remove_enchant_timer_mask(
