@@ -22983,6 +22983,11 @@ int dm2_v1_skproject_exchange_moneybox(
     int64_t remaining_value = 0;
     uint32_t steps = 0;
     uint16_t counts[10] = {0};
+    uint16_t *old_coins = NULL;
+    uint16_t *new_coins = NULL;
+    size_t old_coin_count = 0u;
+    size_t new_coin_count = 0u;
+    size_t staged_coin_count = 0u;
     int changed = 0;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -23091,35 +23096,131 @@ int dm2_v1_skproject_exchange_moneybox(
         return 1;
     }
 
-    /* Source mutation removes every old denomination before allocating the
-     * canonical set, so failures remain visible rather than silently
-     * claiming that the original wallet was preserved. */
+    /* Stage every replacement before changing the live wallet. The source
+     * removes old stacks before rebuilding; doing the allocation phase first
+     * preserves those stacks when the record pool is exhausted. Source:
+     * DOS dm2byg.cpp:429-487; SPX v4 skcrture.cpp:3192-3239. */
+    old_coins = (uint16_t *)malloc(65536u * sizeof(*old_coins));
+    if (!old_coins) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    {
+        uint16_t item = cb->get_container_head(
+            req->wallet_ctx, req->wallet_handle);
+        steps = 0u;
+        while (item != DM2_V1_OBJECT_END) {
+            uint16_t next;
+            uint16_t db_type;
+            uint16_t denomination;
+            int known_denomination = 0;
+            if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
+            }
+            next = cb->get_next_item_in_list(req->wallet_ctx, item);
+            db_type = cb->get_item_db_type(req->wallet_ctx, item);
+            /* SKW_TAKE_COIN_FROM_WALLET stops at the first non-DB10 record.
+             * The earlier count pass includes currency records anywhere in
+             * the chain, so exchanging a mixed wallet here could duplicate
+             * coins after that stopping point. Fail closed before mutation. */
+            if (db_type != DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY) {
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
+            }
+            denomination = cb->get_distinctive_item_type(
+                req->wallet_ctx, item);
+            for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+                if (cb->coin_type_table[i] == denomination) {
+                    known_denomination = 1;
+                    break;
+                }
+            }
+            if (known_denomination)
+                old_coins[old_coin_count++] = item;
+            item = next;
+        }
+    }
     for (uint16_t i = 0; i < req->coin_type_count; ++i) {
-        uint16_t coin;
-        do {
-            coin = dm2_v1_take_coin_from_wallet(
-                req->wallet_handle, (int16_t)i, cb, req->wallet_ctx);
-            if (coin != DM2_V1_OBJECT_NULL)
-                cb->dealloc_record(req->wallet_ctx, coin);
-        } while (coin != DM2_V1_OBJECT_NULL);
+        if (new_coin_count > SIZE_MAX - counts[i]) {
+            receipt.blocked_missing_context = 1;
+            goto exchange_precommit_failure;
+        }
+        new_coin_count += counts[i];
+    }
+    if (new_coin_count > 65536u) {
+        receipt.blocked_missing_context = 1;
+        goto exchange_precommit_failure;
+    }
+    if (new_coin_count != 0u) {
+        new_coins = (uint16_t *)malloc(new_coin_count * sizeof(*new_coins));
+        if (!new_coins) {
+            receipt.blocked_missing_context = 1;
+            goto exchange_precommit_failure;
+        }
     }
     for (uint16_t i = 0; i < req->coin_type_count; ++i) {
         for (uint16_t n = 0; n < counts[i]; ++n) {
             uint16_t coin = cb->alloc_new_dbitem(
                 req->wallet_ctx, cb->coin_type_table[i]);
-            if (coin != DM2_V1_OBJECT_NULL) {
-                if (req->dos_add_coin_non_currency_semantics)
-                    (void)dm2_v1_add_coin_to_wallet(
-                        req->wallet_handle, coin, cb, req->wallet_ctx);
-                else
-                    (void)dm2_v1_add_coin_to_wallet_spx(
-                        req->wallet_handle, coin, cb, req->wallet_ctx);
+            if (coin == DM2_V1_OBJECT_NULL ||
+                !cb->is_item_currency(req->wallet_ctx, coin) ||
+                cb->get_item_db_type(req->wallet_ctx, coin) !=
+                    DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY ||
+                cb->get_distinctive_item_type(req->wallet_ctx, coin) !=
+                    cb->coin_type_table[i]) {
+                if (coin != DM2_V1_OBJECT_NULL)
+                    cb->dealloc_record(req->wallet_ctx, coin);
+                receipt.blocked_missing_context = 1;
+                goto exchange_precommit_failure;
             }
+            cb->set_item_charge(req->wallet_ctx, coin, 0u);
+            new_coins[staged_coin_count++] = coin;
         }
     }
-    receipt.mutated = 1;
+
+    /* Commit only after every target coin has a valid allocated record. */
+    for (size_t i = 0; i < old_coin_count; ++i) {
+        cb->cut_item_from_container(
+            req->wallet_ctx, old_coins[i], req->wallet_handle);
+        cb->dealloc_record(req->wallet_ctx, old_coins[i]);
+    }
+    receipt.mutated = 0;
+    for (size_t i = 0; i < new_coin_count; ++i) {
+        uint16_t coin = new_coins[i];
+        int attached = req->dos_add_coin_non_currency_semantics
+            ? dm2_v1_add_coin_to_wallet(
+                  req->wallet_handle, coin, cb, req->wallet_ctx)
+            : dm2_v1_add_coin_to_wallet_spx(
+                  req->wallet_handle, coin, cb, req->wallet_ctx);
+        if (!attached) {
+            /* The staged item was validated above and all callback/box
+             * preconditions were checked before commit, so this indicates a
+             * source adapter contract violation after mutation began. */
+            receipt.blocked_missing_context = 1;
+            free(old_coins);
+            free(new_coins);
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.mutated = 1;
+    }
+    free(old_coins);
+    free(new_coins);
     if (out_receipt) *out_receipt = receipt;
     return 1;
+
+exchange_precommit_failure:
+    if (new_coins) {
+        for (size_t i = 0; i < staged_coin_count; ++i)
+            cb->dealloc_record(req->wallet_ctx, new_coins[i]);
+    }
+    free(old_coins);
+    free(new_coins);
+    receipt.mutated = 0;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
 }
 
 /* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell. */
