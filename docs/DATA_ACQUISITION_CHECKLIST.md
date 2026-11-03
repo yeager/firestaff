@@ -211,7 +211,7 @@ coverage**, not registry correctness.
 |---|---|---|---|
 | PC English | ✅ `c387ee42…` (8.6 MB) | ✅ `cfadfd40…` (39 KB) | runtime target; DMWeb PC page identifies Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, HMI sound-driver patch/update material, and DOS Alt-S / Shift-arrow / keypad command table |
 | PC French | ✅ `7b8bbf6a…` (8.7 MB) | ✅ `cfadfd40…` (39 KB) | Authentic French DOS ZIP is locally staged and hash-locked; the native in-memory start-menu/runtime/movement probe passes. |
-| PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | DMWeb PC page identifies Germany CD/JewelCase/Blackmarket/Bestseller lines, redump BIN/CUE images, and CD-content archive sources; file not acquired |
+| PC German/English JewelCase | ✅ `e52ab5e01715042b16a4dcff02052e5d` | ✅ `6caccd7875009e82fe2e28e7f6d6adc0` | Authentic German JewelCase CD-content archive is locally staged as `Dungeon-Master-II-Skullkeep_German-JewelCase.zip`; both required DAT hashes match. CLI boot probe and isolated start-menu handoff are verified. |
 | Amiga | 🟡 | 🟡 | DMWeb page identifies Europe-only EN/FR/GE v1.0 as six ADF/IPF floppy images that must be installed to hard disk; MOD music maps through `CD.DAT`; hardware reality is 68020+, OCS/ECS works, AGA not required; Amiga keyboard table uses Ctrl-S disk menu, Del/Help movement, and keypad wall-ornate hotkeys |
 | Macintosh | 🔴 | 🔴 | DMWeb page identifies JP and USA retail as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
@@ -223,18 +223,13 @@ coverage**, not registry correctness.
 
 ### DM2 acquisition gaps
 
-1. **PC JewelCase (German/English)** — this MD5-locked variant is not
-   locally staged. The French DOS archive is now locally verified and has
-   its own native start-menu/runtime/movement regression; JewelCase remains
-   the outstanding PC retail variant for the corresponding
-   `md5_matches(profile->graphics_md5, "…")` branch.
-2. **Sega CD / Mega CD** — without it we cannot verify DM2's
+1. **Sega CD / Mega CD** — without it we cannot verify DM2's
    BIN/CUE mixed-mode CD path, data-track extraction, CD-audio path,
    track-7 silence variant, or its `*.dat` animations against real
    data. The Macintosh `.moov` variant is the closest substitute for
    the animation side (QuickTime vs Sega CD raw) and we should acquire
    at least one of the two.
-3. **DM2 DOS demo** — useful for regression baselines because the demo has
+2. **DM2 DOS demo** — useful for regression baselines because the demo has
    shorter level data and known-good Greatstone extractions exist.
 
 ## Nexus — Dungeon Master Nexus (Sega Saturn)

@@ -179,6 +179,7 @@ run_game_picker_case() {
     local menu_data_root=${7:-$data_root}
     local case_id=${8:-$game_id-$input_method}
     local source_mode=${9:-exact}
+    local architecture_override=${10:-}
     local edition_pattern=$edition
     local edition_label=$edition
     local home="$scratch/$case_id-home"
@@ -186,6 +187,19 @@ run_game_picker_case() {
     local source_hash
 
     mkdir -p "$home"
+    if [[ -n "$architecture_override" ]]; then
+        local game_slot
+        case "$game_id" in
+            dm1) game_slot=0 ;;
+            csb) game_slot=1 ;;
+            dm2) game_slot=2 ;;
+            nexus) game_slot=3 ;;
+            theron) game_slot=4 ;;
+            *) printf 'FAIL: unknown game for architecture override: %s\n' "$game_id" >&2; return 1 ;;
+        esac
+        printf 'game_%s_architecture_index = %s\n' \
+            "$game_slot" "$architecture_override" > "$home/config.toml"
+    fi
     source_hash=$(firestaff_sha256_file "$game_archive")
     # Keep both configuration and HOME isolated so previous cases cannot
     # supply stale scanner or extracted-asset state.
@@ -316,6 +330,8 @@ run_alternate_platform_picker_case() {
     local platform=$4
     local edition=$5
     local picker_data_root=${6:-$archive_data_root}
+    local architecture_override=${7:-}
+    local case_id=${8:-$game_id-$platform-picker}
     local navigation='wait-scan-complete,wait20'
     local game_card_index=0
     local index
@@ -341,7 +357,7 @@ run_alternate_platform_picker_case() {
     navigation+=",key:enter,wait20,key:enter,wait20,key:enter"
     run_game_picker_case "$game_id" "$overlay_archive" "$navigation" \
         "$edition" keyboard "$platform" "$picker_data_root" \
-        "$game_id-$platform-picker" resolved
+        "$case_id" resolved "$architecture_override"
     alternate_platform_cases=$((alternate_platform_cases + 1))
 }
 
@@ -678,8 +694,30 @@ PY
         original_sources+=("$dm2_jewelcase_archive")
         original_source_hashes+=("$(firestaff_sha256_file "$dm2_jewelcase_archive")")
     fi
+    # Preserve the normal DM2 platform-card order while isolating the PC
+    # edition. Otherwise an English DOS or French DOS ZIP can win the same
+    # PC card, and this case would test the sibling archive instead of the
+    # authenticated JewelCase source. Keep the other priority-game cards
+    # populated with their authentic archives so keyboard navigation remains
+    # identical to the ordinary launcher route.
+    dm2_jewelcase_picker_root="$scratch/dm2-jewelcase-picker-data"
+    for game_id in dm1 csb dm2; do
+        mkdir -p "$dm2_jewelcase_picker_root/$game_id"
+        while IFS= read -r -d '' source_archive; do
+            source_basename=$(basename "$source_archive")
+            if [[ "$game_id" == dm2 &&
+                  "$source_basename" != 'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip' &&
+                  "$source_basename" != "$(basename "$dm2_jewelcase_archive")" ]]; then
+                continue
+            fi
+            ln -s "$source_archive" \
+                "$dm2_jewelcase_picker_root/$game_id/$source_basename"
+        done < <(find "$archive_data_root/$game_id" -maxdepth 1 -type l -print0)
+    done
     run_alternate_platform_picker_case dm2 \
-        "$dm2_jewelcase_overlay" 1 PC pc-jewel
+        "$dm2_jewelcase_picker_root/dm2/$(basename "$dm2_jewelcase_archive")" \
+        0 PC pc-jewel "$dm2_jewelcase_picker_root" 1 \
+        dm2-pc-jewelcase-picker
 else
     echo 'SKIP: authentic DM2 PC JewelCase media is not staged; pc-jewel CLI/menu handoff remains unverified'
 fi
