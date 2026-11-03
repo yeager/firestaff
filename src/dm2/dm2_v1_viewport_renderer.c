@@ -1761,7 +1761,8 @@ static void dm2_v1_viewport_append_source_floor_item_target(
  * decoded creature blit so CLICK_VWPT can apply the same alpha-mask gate. */
 static void dm2_v1_viewport_append_source_creature_target(
     DM2_V1_ViewportState *s, const DM2_CreatureSprite *creature,
-    const DM2_V1_CreatureAssetBlit *blit, const uint8_t *pixels)
+    const DM2_V1_CreatureAssetBlit *blit, const uint8_t *pixels,
+    int source_image_w)
 {
     DM2_V1_ViewportClickTarget *target;
     int ordinal;
@@ -1785,6 +1786,7 @@ static void dm2_v1_viewport_append_source_creature_target(
     target->click_mask_ordinal = (uint8_t)(ordinal + 1);
     target->source_frame_x = (int16_t)blit->frame_x;
     target->source_frame_w = (int16_t)blit->frame_w;
+    target->source_image_w = (int16_t)source_image_w;
     target->source_flip_x = (uint8_t)(blit->flip_mirror & 1);
     target->map_x = creature->map_x;
     target->map_y = creature->map_y;
@@ -8527,7 +8529,8 @@ static int dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                         c->map_y == s->party_y +
                             (s->party_dir == 2 ? 1 : s->party_dir == 0 ? -1 : 0)) {
                         dm2_v1_viewport_append_source_creature_target(
-                            s, &s->creatures[c->creature_index], &blit, pixels);
+                            s, &s->creatures[c->creature_index], &blit,
+                            pixels, src_w);
                     }
                     ++s->asset_creature_drawn_count;
                     if (c->source_kind == 2 &&
