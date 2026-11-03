@@ -3159,3 +3159,15 @@ party/weapon/aura overlays; the spell panel omits source spell-state variants;
 and attack-result rendering formats positive damage text but does not draw the
 source result-image branch. Updated the DOS/SPX inventory and named audit to
 PARTIAL until those source behaviors and live platform owners are implemented.
+
+2026-11-03 SKProject push/pull callback boundary:
+`dm2_v1_push_pull_rigid_body` now rejects adapters that omit destination
+blocking, front-record lookup, or record movement callbacks, avoiding a
+success receipt when no move callback is bound. SKProject
+`SKWINSPX/src/v5/skevents.cpp:467-621` instead validates the front creature
+and weight, records source movement state, then dispatches `PERFORM_MOVE`;
+DOS and SPX v4 have corresponding source routes. Firestaff's helper still
+moves directly through a callback, does not classify the creature or invoke
+the movement transaction, and has no production caller. Pointer-zone preview,
+transient mode, arrow redraw and all supported-edition routes also remain
+unimplemented. Keep the source rows PARTIAL.
