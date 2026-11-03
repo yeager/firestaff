@@ -8612,13 +8612,15 @@ typedef struct {
     uint8_t out_b1a;
     int has_creature;
     int16_t creature_handle;
+    int16_t front_x;
+    int16_t front_y;
     int16_t wallet_handle;
     int used_sell_path;
     int8_t result;
 } DM2_V1_SkprojectXact82Receipt;
 
 int dm2_v1_skproject_proceed_xact_82(
-    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXactContext *ctx,
     DM2_V1_SkprojectXact82Receipt *out_receipt);
 
 /* SKULLWIN/c_ai.cpp:1939 DM2_PROCEED_XACT_83 — creature action 0x23-0x25. */

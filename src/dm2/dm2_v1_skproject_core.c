@@ -22917,22 +22917,38 @@ int dm2_v1_skproject_exchange_moneybox(
 
 /* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell. */
 int dm2_v1_skproject_proceed_xact_82(
-    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXactContext *ctx,
     DM2_V1_SkprojectXact82Receipt *out_receipt)
 {
     DM2_V1_SkprojectXact82Receipt receipt;
+    uint16_t direction;
+    int32_t creature;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
 
-    if (!ctx) {
+    if (!ctx || !ctx->creature_at_fn) {
         receipt.blocked_missing_context = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
 
-    receipt.out_b1a = 29; /* reference: line 1820 */
-    receipt.result = -3;  /* default */
+    /* SKULLWIN c_ai.cpp:1812-1824 finds the creature one tile ahead
+     * before setting the current command byte to 29. */
+    direction = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
+    receipt.front_x = (int16_t)(ctx->creature_x +
+                                dm2_v1_skproject_step_x[direction]);
+    receipt.front_y = (int16_t)(ctx->creature_y +
+                                dm2_v1_skproject_step_y[direction]);
+    creature = ctx->creature_at_fn(receipt.front_x, receipt.front_y,
+                                   ctx->user);
+    receipt.result = -3;
+    if (creature != -1 && (uint16_t)creature != 0xffffu) {
+        receipt.has_creature = 1;
+        receipt.creature_handle = (int16_t)creature;
+        receipt.out_b1a = 29;
+        ctx->creature_b1a = 29;
+    }
 
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
