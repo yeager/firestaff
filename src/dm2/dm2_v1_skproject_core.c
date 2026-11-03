@@ -11834,12 +11834,12 @@ int dm2_v1_skproject_query_gdat_dyn_buff(
     return 1;
 }
 
-/* SKULLWIN/c_querydb.cpp:635 DM2_IS_WALL_ORNATE_ALCOVE — after the source
-   resolves the wall-ornate cls2, it queries GDAT category
-   DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2, type
-   DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 10, and returns the predicate
-   (data_index != 0).  This receipt takes the already-resolved data_index so
-   the helper stays independent of the asset loader. */
+/* SKULLWIN/c_querydb.cpp:635 DM2_IS_WALL_ORNATE_ALCOVE and
+   SKWINSPX/src/v4/skdungn.cpp:274 GET_WALL_ORNATE_ALCOVE_TYPE query GDAT
+   category 9, cls2, word-value type 11, field 10. Despite its historical
+   "IS" name, the source returns the raw type: 0=none, 1=alcove, 2=shop glass,
+   3=active sleep device. Keep that distinction for callers that require
+   exactly type 1. This receipt accepts the resolved data_index. */
 int dm2_v1_skproject_is_wall_ornate_alcove(
     uint8_t cls2,
     uint16_t data_index,
@@ -11856,12 +11856,13 @@ int dm2_v1_skproject_is_wall_ornate_alcove(
         return 0;
     }
     receipt.data_index = data_index;
+    receipt.alcove_type = data_index;
     receipt.alcove_flag = (data_index != 0u) ? 1u : 0u;
     receipt.gdat_receipt_hash = dm2_v1_skproject_hash_bytes(
         &receipt, sizeof(receipt) - sizeof(receipt.gdat_receipt_hash));
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
-    return (int)receipt.alcove_flag;
+    return (int)receipt.alcove_type;
 }
 
 /* SKULLWIN/c_querydb.cpp:646 DM2_IS_TILE_BLOCKED — source tile-type bit
