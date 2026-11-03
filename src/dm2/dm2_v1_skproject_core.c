@@ -14474,8 +14474,8 @@ int dm2_v1_skproject_is_creature_movable_there_variant(
             receipt.blocked_disallowed_level = 1;
             goto blocked;
         }
-        if (!dest_tile_values || teleporter.b_02 < 0 || teleporter.b_03 < 0 ||
-            teleporter.b_02 >= dest_width || teleporter.b_03 >= dest_height ||
+        if (!dest_tile_values || teleporter.b_02 >= dest_width ||
+            teleporter.b_03 >= dest_height ||
             dm2_v1_skproject_is_tile_blocked(
                 dest_tile_values[(int)teleporter.b_03 * dest_width +
                                  teleporter.b_02], NULL)) {
