@@ -18480,13 +18480,15 @@ int dm2_v1_runtime_route_viewport_click(
             screen_y >= target->y + target->h) {
             continue;
         }
-        if (target->target_kind >= 1u && target->target_kind <= 3u) {
+        if ((target->target_kind >= 1u && target->target_kind <= 3u) ||
+            target->target_kind == 5u) {
             int local_x = screen_x - g_dm2_runtime.source_click_scene_x;
             int local_y = screen_y - g_dm2_runtime.source_click_scene_y;
             if ((unsigned)local_x >= DM2_VP_WIDTH ||
                 (unsigned)local_y >= DM2_VP_HEIGHT ||
                 g_dm2_runtime.source_click_item_pixels[
-                    local_y * DM2_VP_WIDTH + local_x] != (uint8_t)(i + 1))
+                    local_y * DM2_VP_WIDTH + local_x] !=
+                    target->click_mask_ordinal)
                 continue;
         }
         receipt.valid = 1;
