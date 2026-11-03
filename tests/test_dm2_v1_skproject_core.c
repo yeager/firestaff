@@ -5007,7 +5007,7 @@ static void test_skwin_core_symbol_batch_cycle8(void)
     item_record[5] = 0x20u; /* bits 13-15 == 0x2 -> map chip */
     memset(minion_record, 0, sizeof(minion_record));
     memset(magical_map_tiles, 0, sizeof(magical_map_tiles));
-    magical_map_tiles[55] = 0x20u; /* source-admitted floor at (5,5) */
+    magical_map_tiles[66] = 0x20u; /* right of party facing north: (6,6) */
     CHECK(dm2_v1_skproject_click_magical_map_at(
               100, 80, 0x55u, 1u, 0u, 0u, 0x1234u, item_record,
               sizeof(item_record), minion_record, sizeof(minion_record),
@@ -5016,9 +5016,9 @@ static void test_skwin_core_symbol_batch_cycle8(void)
               &map_receipt) == 1,
           "DM2_CLICK_MAGICAL_MAP_AT accepts valid map-chip click");
     CHECK(map_receipt.valid && map_receipt.requested_set_destination &&
-              map_receipt.requested_change_map && map_receipt.target_x == 5 &&
-              map_receipt.target_y == 5,
-          "DM2_CLICK_MAGICAL_MAP_AT receipt requests destination");
+              map_receipt.requested_change_map && map_receipt.target_x == 6 &&
+              map_receipt.target_y == 6,
+          "DM2_CLICK_MAGICAL_MAP_AT preserves forward/side source vector order");
 
     CHECK(dm2_v1_skproject_click_magical_map_at(
               100, 80, 0x54u, 1u, 0u, 0u, 0x1234u, item_record,

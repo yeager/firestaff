@@ -3865,9 +3865,12 @@ int dm2_v1_skproject_click_magical_map_at(
      * facing transform here; map-level resolution remains a caller input. */
     tile_x = party_x;
     tile_y = party_y;
+    /* SKProject's DM2_CLICK_MAGICAL_MAP_AT calls CALC_VECTOR_W_DIR with
+     * forward = 3 - row and side = column - 3 (DOS dm2byh.cpp; SPX v4
+     * skuievnt.cpp; SPX v5 SK1031.cpp). Keep that source argument order. */
     if (!dm2_v1_skproject_calc_vector_w_dir(
-            (int16_t)party_dir, (int16_t)(cell_x - 3),
-            (int16_t)(3 - cell_y), &tile_x, &tile_y, NULL)) {
+            (int16_t)party_dir, (int16_t)(3 - cell_y),
+            (int16_t)(cell_x - 3), &tile_x, &tile_y, NULL)) {
         receipt.blocked_invalid_tile = 1u;
         *out_receipt = receipt;
         return 0;
