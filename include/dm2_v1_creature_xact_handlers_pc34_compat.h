@@ -739,6 +739,7 @@ typedef struct {
     int fail_closed;
     int16_t result;
     int state_changed;
+    int wallet_mutated;
 } DM2_V1_XactCommerceReceipt;
 
 int dm2_v1_xact_commerce(const DM2_V1_XactCommerceRequest *req,

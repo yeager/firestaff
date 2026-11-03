@@ -22968,11 +22968,12 @@ static int dm2_v1_skproject_xact82_sell(
     uint16_t item;
     uint32_t steps = 0u;
     int16_t price;
+    int16_t price_selector = ctx->v1e0572;
     int32_t xact64_result;
 
-    if (ctx->v1e0572 == 1)
+    if (price_selector == 1)
         price = ctx->creature_w10;
-    else if (ctx->v1e0572 == 2)
+    else if (price_selector == 2)
         price = (int16_t)ctx->creature_w0e;
     else
         price = ctx->creature_w0c;
@@ -22984,12 +22985,21 @@ static int dm2_v1_skproject_xact82_sell(
         !wallet->coin_type_table ||
         wallet->coin_type_table_size < (int)ctx->coin_type_count ||
         !wallet->alloc_new_dbitem ||
+        !wallet->dealloc_record ||
         !ctx->coin_values || ctx->coin_type_count == 0u ||
         ctx->coin_type_count > 10u ||
         (ctx->xact82_variant == DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
          (!ctx->can_handle_item_in_fn || !ctx->cmd2165_fn)) ||
         (ctx->xact82_variant != DM2_V1_XACT82_SKULLWIN_SPX_V5 &&
          !ctx->xact82_proceed_xact64_fn)) {
+        receipt->blocked_missing_context = 1;
+        return 0;
+    }
+    if (wallet_handle != DM2_V1_OBJECT_NULL &&
+        (!wallet->is_item_currency || !wallet->get_item_db_type ||
+         !wallet->get_distinctive_item_type || !wallet->get_container_head ||
+         !wallet->get_next_item_in_list || !wallet->get_item_charge ||
+         !wallet->set_item_charge || !wallet->append_item_to_container)) {
         receipt->blocked_missing_context = 1;
         return 0;
     }
@@ -23039,9 +23049,12 @@ static int dm2_v1_skproject_xact82_sell(
             exchange_request.wallet_ctx = wallet_ctx;
             if (!dm2_v1_skproject_exchange_moneybox(
                     &exchange_request, &exchange_receipt)) {
+                receipt->wallet_mutated |=
+                    exchange_receipt.mutated != 0;
                 receipt->blocked_missing_context = 1;
                 return 0;
             }
+            receipt->wallet_mutated |= exchange_receipt.mutated != 0;
         }
         item = (uint16_t)next;
     }
@@ -23075,41 +23088,76 @@ static int dm2_v1_skproject_xact82_sell(
             price, 18u, coin_indices, &coin_count,
             ctx->coin_type_count, coin_weights, &total_value,
             &pack_receipt);
-        if (ctx->v1e0572 == 1)
-            ctx->creature_w10 = -1;
-        else if (ctx->v1e0572 == 2)
-            ctx->creature_w0e = 0xffffu;
-        else
-            ctx->creature_w0c = -1;
-        receipt->creature_price_after = -1;
         if (!pack_receipt.valid) {
             receipt->blocked_missing_context = 1;
             return 0;
         }
         if (coin_count == 0u) {
-            receipt->result = -2;
-            return 1;
+            receipt->payout_incomplete = 1;
+            receipt->blocked_missing_context = 1;
+            return 0;
         }
         if (wallet_handle == DM2_V1_OBJECT_NULL &&
             !ctx->append_coin_to_possession_fn) {
             receipt->blocked_missing_context = 1;
             return 0;
         }
-        for (uint16_t n = coin_count; n > 0u; --n) {
-            uint8_t coin_index = coin_indices[n - 1u];
-            uint16_t coin = wallet->alloc_new_dbitem(
-                wallet_ctx, wallet->coin_type_table[coin_index]);
-            if (coin == DM2_V1_OBJECT_NULL) break;
-            if (wallet_handle == DM2_V1_OBJECT_NULL)
-                (void)ctx->append_coin_to_possession_fn(coin, ctx->user);
-            else if (ctx->xact82_variant == DM2_V1_XACT82_DOS)
-                (void)dm2_v1_add_coin_to_wallet(
-                    wallet_handle, coin, wallet, wallet_ctx);
-            else
-                (void)dm2_v1_add_coin_to_wallet_spx(
-                    wallet_handle, coin, wallet, wallet_ctx);
-            ++receipt->generated_coin_count;
+        {
+            uint16_t allocated[18];
+            uint16_t allocated_count = 0u;
+            for (uint16_t n = coin_count; n > 0u; --n) {
+                uint8_t coin_index = coin_indices[n - 1u];
+                uint16_t coin = wallet->alloc_new_dbitem(
+                    wallet_ctx, wallet->coin_type_table[coin_index]);
+                if (coin == DM2_V1_OBJECT_NULL) {
+                    for (uint16_t i = 0; i < allocated_count; ++i)
+                        wallet->dealloc_record(wallet_ctx, allocated[i]);
+                    receipt->payout_incomplete = 1;
+                    receipt->blocked_missing_context = 1;
+                    return 0;
+                }
+                allocated[allocated_count++] = coin;
+            }
+            for (uint16_t i = 0; i < allocated_count; ++i) {
+                uint16_t coin = allocated[i];
+                int attached;
+                if (wallet_handle == DM2_V1_OBJECT_NULL) {
+                    attached = ctx->append_coin_to_possession_fn(
+                        coin, ctx->user) > 0;
+                } else if (ctx->xact82_variant == DM2_V1_XACT82_DOS) {
+                    attached = dm2_v1_add_coin_to_wallet(
+                        wallet_handle, coin, wallet, wallet_ctx);
+                } else {
+                    attached = dm2_v1_add_coin_to_wallet_spx(
+                        wallet_handle, coin, wallet, wallet_ctx);
+                }
+                if (!attached) {
+                    for (uint16_t j = (uint16_t)(i + 1u);
+                         j < allocated_count; ++j)
+                        wallet->dealloc_record(wallet_ctx, allocated[j]);
+                    receipt->payout_incomplete = 1;
+                    if (wallet_handle == DM2_V1_OBJECT_NULL)
+                        receipt->possession_mutated |= i != 0u;
+                    else
+                        receipt->wallet_mutated |= i != 0u;
+                    receipt->blocked_missing_context = 1;
+                    return 0;
+                }
+                ++receipt->generated_coin_count;
+                if (wallet_handle == DM2_V1_OBJECT_NULL)
+                    receipt->possession_mutated = 1;
+                else
+                    receipt->wallet_mutated = 1;
+            }
         }
+        if (price_selector == 1)
+            ctx->creature_w10 = -1;
+        else if (price_selector == 2)
+            ctx->creature_w0e = 0xffffu;
+        else
+            ctx->creature_w0c = -1;
+        receipt->creature_price_after = -1;
+        receipt->price_consumed = 1;
     }
 
     if (!dm2_v1_skproject_xact82_proceed_xact64(

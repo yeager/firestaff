@@ -6789,6 +6789,7 @@ typedef struct DM2_V1_SkprojectXactContext {
     uint16_t coin_type_count; /* ddat.v1e03fe */
     const struct DM2_V1_WalletCallbacks *wallet_callbacks;
     void *wallet_ctx; /* defaults to user when null */
+    /* Positive means appended; non-positive guarantees no mutation occurred. */
     int32_t (*append_coin_to_possession_fn)(uint16_t coin, void *user);
     DM2_V1_SkprojectXact82Variant xact82_variant;
     /* DOS dm2byh.cpp:2418 calls 1c9a_0732(item_type, slot, possession). */
@@ -8660,6 +8661,10 @@ typedef struct {
     uint16_t generated_coin_count;
     int8_t xact64_result;
     uint8_t source_variant;
+    uint8_t wallet_mutated;
+    uint8_t possession_mutated;
+    uint8_t payout_incomplete;
+    uint8_t price_consumed;
 } DM2_V1_SkprojectXact82Receipt;
 
 int dm2_v1_skproject_proceed_xact_82(

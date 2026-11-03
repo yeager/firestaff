@@ -767,14 +767,15 @@ int dm2_v1_xact_commerce(
     }
     {
         DM2_V1_SkprojectXact82Receipt source_receipt;
-        if (!dm2_v1_skproject_proceed_xact_82(
-                req->source_context, &source_receipt) ||
-            source_receipt.blocked_missing_context) {
+        int source_result = dm2_v1_skproject_proceed_xact_82(
+            req->source_context, &source_receipt);
+        receipt->wallet_mutated = source_receipt.wallet_mutated != 0;
+        receipt->state_changed = source_receipt.has_creature;
+        if (!source_result || source_receipt.blocked_missing_context) {
             receipt->fail_closed = 1;
             return 1;
         }
         receipt->result = source_receipt.result;
-        receipt->state_changed = source_receipt.has_creature;
     }
     return 1;
 }
