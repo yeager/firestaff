@@ -1119,7 +1119,11 @@ int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
 {
     if (!out_plan) return 0;
     memset(out_plan, 0, sizeof(*out_plan));
-    if (!loader || loader->gdat_version != 5u || !destinations ||
+    /* DM2's Towns v4 GDAT uses the same source navigation family
+     * INTERFACE_GENERAL/3/{2,4,...,12}; its destination rectangles are read
+     * from the Towns RAW4 table by the caller. */
+    if (!loader || (loader->gdat_version != 4u &&
+                    loader->gdat_version != 5u) || !destinations ||
         !dm2_v1_asset_loader_verify(loader)) return 0;
     for (int arrow = 0; arrow < 6; ++arrow) {
         DM2_V1_GdatHudM11Command *command;

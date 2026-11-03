@@ -860,7 +860,7 @@ int main(void)
             check(live_ok && live_receipt.valid &&
                       dm2_v1_runtime_get_active_champion_index() == -1 &&
                       live_receipt.hud_material_plan_required &&
-                      live_receipt.hud_material_plan_command_count == 5 &&
+                      live_receipt.hud_material_plan_command_count == 11 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
                       backdrop_sample_count > 0u &&
@@ -1571,7 +1571,7 @@ int main(void)
                 memset(&plan, 0, sizeof(plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &plan) &&
-                      plan.command_count == 5 &&
+                      plan.command_count == 11 &&
                       plan.commands[0].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
                       plan.commands[0].destination_rect_id ==
@@ -1633,7 +1633,43 @@ int main(void)
                         DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR) != 0u) ==
                           (relative == 1 || relative == 2),
                       "FM Towns squad plan preserves fill, image fields, RAW4 destinations, and mirror state for each relative position");
-                if (plan.command_count == 5) {
+                {
+                    DM2_V1_BootExpandedRectReceipt table_identity;
+                    int arrows_bound = plan.valid &&
+                        plan.command_count == 11 &&
+                        dm2_v1_boot_query_expanded_rect_receipt(
+                            (DM2_V1_BootProfile *)profile, 0xa1u,
+                            &table_identity) && table_identity.valid &&
+                        table_identity.raw4_hash != 0u;
+                    for (int arrow = 0; arrows_bound && arrow < 6; ++arrow) {
+                        DM2_V1_InterfaceRect destination;
+                        const DM2_V1_GdatHudM11Command *command =
+                            &plan.commands[5 + arrow];
+                        arrows_bound =
+                            dm2_v1_boot_query_blit_rect_for_dimensions(
+                                (DM2_V1_BootProfile *)profile,
+                                (uint16_t)(40 + arrow), 29, 23,
+                                &destination) &&
+                            command->kind ==
+                                DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW &&
+                            command->destination_rect_id ==
+                                (uint16_t)(40 + arrow) &&
+                            command->gdat_category ==
+                                DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                            command->gdat_index == 3 &&
+                            command->gdat_field == 2 + arrow * 2 &&
+                            command->width == 29 && command->height == 23 &&
+                            command->destination_table_hash ==
+                                table_identity.raw4_hash &&
+                            command->destination.x == destination.x &&
+                            command->destination.y == destination.y &&
+                            command->destination.w == destination.w &&
+                            command->destination.h == destination.h;
+                    }
+                    check(arrows_bound,
+                          "FM Towns movement arrows bind all six authentic GDAT fields and RAW4 placements");
+                }
+                if (plan.command_count == 11) {
                     const DM2_V1_AssetLoader *loader =
                         dm2_v1_boot_asset_loader(profile);
                     DM2_ImageFormat figure_format = DM2_IMG_FMT_UNKNOWN;
@@ -1709,7 +1745,7 @@ int main(void)
                     check(palette_ready && main_key_sample &&
                               status_key_sample &&
                               figure_key_sample &&
-                              chrome.gdat_hud_material_plan_consumed_count == 5 &&
+                              chrome.gdat_hud_material_plan_consumed_count == 11 &&
                               framebuffer[main_key_y * M11_FB_WIDTH + main_key_x] ==
                                   0xfeu &&
                               framebuffer[status_key_y * M11_FB_WIDTH + status_key_x] ==
@@ -1753,7 +1789,7 @@ int main(void)
                                         (direction + 4) * 17,
                                     17u) != 0) crop_matches = 0;
                         }
-                        check(invisible_plan.command_count == 5 &&
+                        check(invisible_plan.command_count == 11 &&
                                   figure->source_state_flags ==
                                       (uint8_t)((direction <<
                                           DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
@@ -1811,7 +1847,7 @@ int main(void)
                                 dm2_v1_boot_gdat_hud_m11_command_plan(
                                     (DM2_V1_BootProfile *)profile, &squad,
                                     &frame_plan) &&
-                                frame_plan.command_count == 7 &&
+                                frame_plan.command_count == 13 &&
                                 frame_plan.commands[5].animation_direction ==
                                     (uint8_t)direction &&
                                 frame_plan.commands[5].animation_frame ==
@@ -1837,7 +1873,7 @@ int main(void)
                 memset(&aura_plan, 0, sizeof(aura_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad,
-                          &aura_plan) && aura_plan.command_count == 7 &&
+                          &aura_plan) && aura_plan.command_count == 13 &&
                           aura_plan.commands[5].kind ==
                               DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA &&
                           aura_plan.commands[6].kind ==
@@ -1854,7 +1890,7 @@ int main(void)
                           aura_plan.commands[5].destination.w == 21 &&
                           aura_plan.commands[5].destination.h == 21,
                       "FM Towns active enchantment adds original field 7 at selected-hero RECT 0x5e");
-                if (aura_plan.command_count == 7 && aura_sheet) {
+                if (aura_plan.command_count == 13 && aura_sheet) {
                     for (int y = 0; y < 21; ++y) {
                         check(memcmp(aura_plan.commands[5].pixels + y * 21,
                                   aura_sheet + (2 * 21 + y) * 84 + 2 * 21,
@@ -1889,7 +1925,7 @@ int main(void)
                         &chrome, &aura_plan);
                     dm2_v1_render_ui_chrome(&chrome);
                     check(palette_ready &&
-                              chrome.gdat_hud_material_plan_consumed_count == 7,
+                              chrome.gdat_hud_material_plan_consumed_count == 13,
                           "FM Towns renderer consumes aura with authenticated HUD materials");
                     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
@@ -1933,7 +1969,7 @@ int main(void)
                 memset(&two_hero_plan, 0, sizeof(two_hero_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &two_heroes,
-                          &two_hero_plan) && two_hero_plan.command_count == 10,
+                          &two_hero_plan) && two_hero_plan.command_count == 16,
                       "FM Towns keeps the squad HUD available while omitting only unverified fallback figure crops");
                 dm2_v1_gdat_hud_m11_command_plan_free(&two_hero_plan);
             }
@@ -1945,7 +1981,7 @@ int main(void)
                 memset(&dead_plan, 0, sizeof(dead_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &dead_plan) &&
-                      dead_plan.command_count == 3 &&
+                      dead_plan.command_count == 9 &&
                       dead_plan.commands[0].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
                       dead_plan.commands[1].kind ==
