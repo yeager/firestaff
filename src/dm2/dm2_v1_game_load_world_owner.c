@@ -10632,14 +10632,18 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)candidate.party.heros_in_party);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint16_t)candidate.source_light_level);
-    /* Fresh GAME_LOAD owns the source c_wbbb block from zero. Keep the
-     * complete block in the candidate even though its b_04 consumer is the
-     * first runtime effect currently admitted. */
+    /* Fresh GAME_LOAD starts c_wbbb at zero, then mode-1 PROCESS_ITEM_BONUS
+     * adds the selected party's light contribution to w_00. */
     memset(candidate.source_savegames1, 0,
            sizeof(candidate.source_savegames1));
+    candidate.source_savegames1[0] =
+        (uint8_t)(uint16_t)candidate.source_light_level;
+    candidate.source_savegames1[1] =
+        (uint8_t)((uint16_t)candidate.source_light_level >> 8);
     candidate.source_savegames1_valid = 1;
     hash = dm2_v1_game_load_owner_hash_step(hash,
-        candidate.source_savegames1_valid);
+        dm2_v1_game_load_owner_hash_bytes(candidate.source_savegames1,
+            sizeof(candidate.source_savegames1)));
     if (hash == 0u) goto fail;
     candidate.candidate_hash = hash;
     candidate.valid = 1;
