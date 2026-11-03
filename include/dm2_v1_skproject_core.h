@@ -6886,7 +6886,8 @@ typedef struct DM2_V1_SkprojectXactContext {
     uint16_t coin_type_count; /* ddat.v1e03fe */
     const struct DM2_V1_WalletCallbacks *wallet_callbacks;
     void *wallet_ctx; /* defaults to user when null */
-    /* Positive means appended; non-positive guarantees no mutation occurred. */
+    /* Positive means appended; non-positive guarantees no mutation occurred.
+       Used for a one-coin payout when no moneybox is present. */
     int32_t (*append_coin_to_possession_fn)(uint16_t coin, void *user);
     DM2_V1_SkprojectXact82Variant xact82_variant;
     /* DOS dm2byh.cpp:2418 calls 1c9a_0732(item_type, slot, possession). */
@@ -6895,6 +6896,11 @@ typedef struct DM2_V1_SkprojectXactContext {
     /* DOS/SPX v4 have edition-owned XACT64 state and command bindings. */
     int32_t (*xact82_proceed_xact64_fn)(
         void *user, int *out_command_issued);
+    /* Atomic multi-coin append for no-moneybox sales: positive means every
+       coin was appended; non-positive guarantees that none were appended.
+       XACT 82 fails closed without it when the payout has multiple coins. */
+    int32_t (*append_coins_to_possession_fn)(
+        const uint16_t *coins, uint16_t coin_count, void *user);
 } DM2_V1_SkprojectXactContext;
 
 /* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item

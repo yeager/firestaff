@@ -141,6 +141,13 @@ static void cmd2165(uint16_t mode, int16_t x, int16_t y,
     (void)ctx;
 }
 
+static int32_t append_possession_single(uint16_t coin, void *ctx)
+{
+    (void)coin;
+    (void)ctx;
+    return 1;
+}
+
 int main(void)
 {
     static const uint16_t coin_types[] = {10u, 20u};
@@ -218,5 +225,34 @@ int main(void)
         }
     }
     puts("PASS: SKProject XACT 82 allocation failure preserves price and wallet");
+
+    {
+        DM2_V1_SkprojectXactContext xact;
+        DM2_V1_SkprojectXact82Receipt xact_receipt;
+        memset(&xact, 0, sizeof(xact));
+        xact.possession = DM2_V1_OBJECT_END;
+        xact.v1e0572 = 3;
+        xact.creature_w0c = 3;
+        xact.coin_values = coin_values;
+        xact.coin_type_count = 2u;
+        xact.wallet_callbacks = &callbacks;
+        xact.wallet_ctx = &fixture;
+        xact.next_fn = next_record;
+        xact.creature_at_fn = creature_at;
+        xact.can_handle_item_in_fn = can_handle_item;
+        xact.cmd2165_fn = cmd2165;
+        xact.append_coin_to_possession_fn = append_possession_single;
+        xact.xact82_variant = DM2_V1_XACT82_SKULLWIN_SPX_V5;
+        if (dm2_v1_skproject_proceed_xact_82(&xact, &xact_receipt) != 0 ||
+            !xact_receipt.payout_incomplete ||
+            !xact_receipt.blocked_missing_context ||
+            xact_receipt.price_consumed || xact.creature_w0c != 3 ||
+            xact_receipt.generated_coin_count != 0u ||
+            fixture.deallocations != 0u) {
+            fprintf(stderr, "XACT 82 multi-coin payout lacked atomic append\n");
+            return 1;
+        }
+    }
+    puts("PASS: SKProject XACT 82 requires atomic append for multi-coin sale");
     return 0;
 }
