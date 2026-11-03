@@ -7463,6 +7463,9 @@ static int32_t dm2_runtime_ccm_proceed_walking(
     void *context, uint8_t command, uint16_t creature_type,
     uint8_t *slot, uint16_t adj0, uint16_t adj1,
     unsigned long game_tick);
+static int dm2_runtime_ccm_creature_shoot(
+    DM2_RuntimeCcmGoalContext *goal, uint8_t *slot,
+    uint16_t creature_type);
 
 /* c_1c9a.cpp FIND_WALK_PATH adapters.  These callbacks deliberately expose
  * only the currently committed GAME_LOAD map and party owners.  Tile
@@ -7961,6 +7964,14 @@ static int32_t dm2_runtime_ccm_proceed_walking(
         creature_record[0x0f] = (uint8_t)((creature_record[0x0f] & 0xfcu) |
                                           (new_facing & 3u));
         return 0; /* source CCM06 handler is void */
+    }
+    if (command == 0x0eu || command == 0x0fu) {
+        /* SKProject SPX v4/v5 CCM dispatch sends both source shoot-item
+         * commands through CREATURE_SHOOT_ITEM. ItemToThrow remains in
+         * CAII byte@0x1e; b28/b27 at 0x1c/0x1b are the projectile's source
+         * direction and facing fields. */
+        if (!slot) return 1;
+        return dm2_runtime_ccm_creature_shoot(goal, slot, creature_type);
     }
     if (command == 0x03u || command == 0x04u) {
         uint8_t phase;
@@ -21321,6 +21332,351 @@ static int dm2_runtime_hand_is_moneybox(void *context, uint16_t item_ref)
     return dm2_runtime_hand_container_type(
                query, item_ref, &type, NULL, NULL, NULL) && type == 0u &&
            dm2_runtime_hand_has_moneybox_list(query, item_ref);
+}
+
+typedef struct {
+    DM2_RuntimeCcmGoalContext *goal;
+    const DM2_V1_AssetLoader *loader;
+    uint8_t creature_type;
+    uint16_t mask_variant;
+} DM2_RuntimeCreatureMaskContext;
+
+static int dm2_runtime_creature_mask_is_moneybox(void *context,
+                                                  uint16_t item_ref)
+{
+    DM2_RuntimeCreatureMaskContext *mask = context;
+    DM2_RuntimeHandActivationQuery query;
+    if (!mask || !mask->goal || !mask->goal->runtime) return 0;
+    query.rt = mask->goal->runtime;
+    query.hero_index = -1;
+    return dm2_runtime_hand_is_moneybox(&query, item_ref);
+}
+
+static int dm2_runtime_creature_mask_moneybox_closed(void *context,
+                                                      uint16_t item_ref)
+{
+    DM2_RuntimeCreatureMaskContext *mask = context;
+    const uint8_t *record;
+    if (!mask || !mask->goal || !mask->goal->runtime ||
+        dm2_v1_record_handle_pool((int16_t)item_ref) != 9 ||
+        !(record = dm2_v1_record_pool_address(
+              &mask->goal->runtime->record_pools, (int16_t)item_ref)) ||
+        dm2_v1_record_pool_record_size(9) < 8) return 0;
+    return (record[7] & 0x04u) != 0u;
+}
+
+static int dm2_runtime_creature_mask_item_index(void *context,
+    uint16_t item_ref, uint8_t db_type, uint16_t *out_index)
+{
+    DM2_RuntimeCreatureMaskContext *mask = context;
+    DM2_V1_RuntimeState *rt;
+    const uint8_t *record;
+    uint16_t distinctive;
+    uint8_t cls2;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+
+    if (out_index) *out_index = 0u;
+    if (!mask || !mask->goal || !(rt = mask->goal->runtime) || !out_index ||
+        db_type != dm2_v1_record_handle_pool((int16_t)item_ref) ||
+        !(record = dm2_v1_record_pool_address(&rt->record_pools,
+                                              (int16_t)item_ref))) return 0;
+    if (db_type == 4u) {
+        if (dm2_v1_record_pool_record_size(4) < 5) return 0;
+        *out_index = record[4];
+        return 1;
+    }
+    if (db_type == 3u) {
+        uint16_t actuator = dm2_runtime_record_rd16(rt, record + 2);
+        uint16_t actuator_type = actuator & 0x007fu;
+        if (dm2_v1_record_pool_record_size(3) < 8) return 0;
+        if (actuator_type == 0x1bu && (actuator & 0x0080u) == 0u)
+            return 0;
+        if (actuator_type == 0x1au || actuator_type == 0x1bu) {
+            DM2_V1_DungeonData *dungeon = (DM2_V1_DungeonData *)
+                rt->boot->dungeon_data;
+            uint8_t wall_gfx[16];
+            uint16_t data_index = 0xffffu;
+            int ordinal = (int)((dm2_runtime_record_rd16(rt, record + 4) >>
+                                 12) & 0x0fu);
+            int count = dungeon ? dm2_v1_dungeon_get_map_wall_gfx_list(
+                dungeon, mask->goal->map, wall_gfx,
+                (int)sizeof(wall_gfx)) : -1;
+            if (ordinal <= 0 || count <= 0 || ordinal > count ||
+                !dm2_v1_query_gdat_entry_data_index(
+                    mask->loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                    wall_gfx[ordinal - 1], DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+                    0x0e, &data_index) || data_index == 0xffffu)
+                return 0;
+            *out_index = data_index;
+            return 1;
+        }
+        *out_index = actuator_type;
+        return 1;
+    }
+    if (db_type < 5u || db_type > 10u ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item_ref, &rt->record_pools, &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu ||
+        !dm2_v1_skproject_get_distinctive_itemtype(
+            item_ref, cls2, &distinctive, &type_receipt) ||
+        !type_receipt.valid) return 0;
+    *out_index = distinctive;
+    return 1;
+}
+
+static int dm2_runtime_creature_mask_query(void *context,
+    uint8_t creature_type, uint8_t mask_index, int is_creature,
+    uint8_t out_mask[64])
+{
+    DM2_RuntimeCreatureMaskContext *mask = context;
+    DM2_V1_CreaturesItemMaskReceipt receipt;
+    if (!mask || !mask->loader || creature_type != mask->creature_type ||
+        mask_index > 0xefu || !out_mask ||
+        !dm2_v1_query_creatures_item_mask_receipt(
+            mask->loader, creature_type, mask_index, is_creature, &receipt) ||
+        !receipt.accepted) return 0;
+    memcpy(out_mask, receipt.mask, sizeof(receipt.mask));
+    return 1;
+}
+
+/* SKProject v5 c_creature.cpp/bcreatur.cpp + bitem.cpp: remove the first
+ * mask-admitted possession, roll source damage, publish its DB14 record at
+ * the creature timer tile, and queue the matching 0x1d timer as one runtime
+ * transaction. The live route uses DB4 word@8 as the mask selector. */
+static int dm2_runtime_ccm_creature_shoot(
+    DM2_RuntimeCcmGoalContext *goal, uint8_t *slot,
+    uint16_t creature_type)
+{
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_CreatureCanHandleState mask_state;
+    DM2_V1_CreatureCanHandleCallbacks mask_callbacks;
+    DM2_RuntimeCreatureMaskContext mask_context;
+    DM2_V1_RecordPoolSet pools_before;
+    DM2_V1_SourceTimerQueue queue_before;
+    DM2_V1_SoundQueueState sound_before;
+    DM2_V1_DropRng rng_before;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult enqueue_result;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    uint8_t *raw_before = NULL;
+    uint8_t *creature_record;
+    uint8_t *missile_record;
+    const DM2_AIDefinition *ai = NULL;
+    uint16_t item = 0xfffeu;
+    uint16_t possession;
+    int16_t new_head;
+    int16_t damage;
+    int16_t link;
+    int16_t missile_handle;
+    int tile_raw;
+    int16_t tile_head;
+    uint8_t item_cls1 = 0xffu;
+    uint8_t item_cls2 = 0xffu;
+    DM2_V1_SkprojectQueryCls1Receipt item_cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt item_cls2_receipt;
+    int found = 0;
+
+    memset(&pools_before, 0, sizeof(pools_before));
+    if (!goal || !slot || !(rt = goal->runtime) || !rt->boot ||
+        !(dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data) ||
+        !(loader = dm2_v1_boot_asset_loader(rt->boot)) ||
+        !rt->record_pools_valid || !rt->record_pools.record_graph_complete ||
+        !rt->caii_ready || goal->map < 0 || goal->map >= dungeon->level_count ||
+        goal->x < 0 || goal->y < 0 ||
+        goal->x >= dungeon->level_widths[goal->map] ||
+        goal->y >= dungeon->level_heights[goal->map] ||
+        dm2_v1_record_handle_pool(goal->record_handle) != 4 ||
+        !(creature_record = dm2_v1_record_pool_address_mut(
+              &rt->record_pools, goal->record_handle)) ||
+        dm2_v1_record_pool_record_size(4) < 10 ||
+        creature_record[4] != (uint8_t)creature_type ||
+        !dm2_v1_creature_ai_spec_def((int)creature_type, &ai) || !ai)
+        return -1;
+
+    memset(&mask_context, 0, sizeof(mask_context));
+    mask_context.goal = goal;
+    mask_context.loader = loader;
+    mask_context.creature_type = (uint8_t)creature_type;
+    mask_context.mask_variant = dm2_runtime_record_rd16(
+        rt, creature_record + 8);
+    memset(&mask_callbacks, 0, sizeof(mask_callbacks));
+    mask_callbacks.is_moneybox = dm2_runtime_creature_mask_is_moneybox;
+    mask_callbacks.moneybox_is_closed =
+        dm2_runtime_creature_mask_moneybox_closed;
+    mask_callbacks.get_mask_item_index =
+        dm2_runtime_creature_mask_item_index;
+    mask_callbacks.query_item_mask = dm2_runtime_creature_mask_query;
+
+    possession = dm2_runtime_record_rd16(rt, creature_record + 2);
+    link = (int16_t)possession;
+    for (int step = 0; step < 512; ++step) {
+        uint16_t word = (uint16_t)link;
+        uint8_t db_type;
+        if (word == 0xfffeu || word == 0xffffu) break;
+        db_type = (uint8_t)((word >> 10) & 0x0fu);
+        if (db_type == 3u || db_type == 4u ||
+            (db_type >= 5u && db_type <= 10u)) {
+            memset(&mask_state, 0, sizeof(mask_state));
+            mask_state.item_record = word;
+            mask_state.capability = slot[0x1e];
+            mask_state.creature_type = (uint8_t)creature_type;
+            mask_state.mask_variant = mask_context.mask_variant;
+            mask_state.source_variant = 5u;
+            if (dm2_v1_creature_can_handle_it_source_state(
+                    &mask_state, &mask_callbacks, &mask_context)) {
+                item = word;
+                found = 1;
+                break;
+            }
+        }
+        if (!dm2_v1_record_pool_next_link(&rt->record_pools, word, &link) ||
+            (uint16_t)link == word) return -1;
+    }
+    /* c_creature.cpp returns success when no possession matches. */
+    if (!found) return 1;
+    if (!dm2_v1_record_pool_set_clone(&pools_before, &rt->record_pools) ||
+        !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        !(raw_before = (uint8_t *)malloc((size_t)dungeon->raw_size))) {
+        dm2_v1_record_pool_set_free(&pools_before);
+        free(raw_before);
+        return -1;
+    }
+    memcpy(raw_before, dungeon->raw_data, (size_t)dungeon->raw_size);
+    queue_before = rt->timer_queue;
+    sound_before = rt->sound_queue;
+    rng_before = rt->session_rng;
+
+    new_head = (int16_t)possession;
+    if (!dm2_v1_record_pool_cut_from_list(&rt->record_pools, &new_head,
+                                          (int16_t)item))
+        goto creature_shoot_rollback;
+    creature_record = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, goal->record_handle);
+    if (!creature_record) goto creature_shoot_rollback;
+    dm2_runtime_record_wr16(rt, creature_record + 2, new_head);
+
+    damage = (int16_t)(ai->AttackStrength / 4u + 1u);
+    damage = (int16_t)(damage + dm2_v1_drops_rand16(
+        &rt->session_rng, (uint16_t)damage));
+    damage = (int16_t)(damage + dm2_v1_drops_rand16(
+        &rt->session_rng, (uint16_t)damage));
+    if (damage < 20) damage = 20;
+    if (damage > 255) damage = 255;
+
+    missile_handle = dm2_v1_record_pool_alloc_new_record(
+        &rt->record_pools, 14u);
+    missile_record = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, missile_handle);
+    if (missile_handle < 0) {
+        /* SKProject bitem.cpp:1058-1068 moves an ordinary object to the
+         * launch tile when DB14 allocation fails (DB15 clouds are the sole
+         * no-fallback class, and cannot enter this possession scan). */
+        DM2_V1_MoveRecordToReceipt move;
+        int16_t directed_item = (int16_t)(((uint16_t)item & 0x3fffu) |
+            ((uint16_t)(slot[0x1c] & 3u) << 14));
+        memset(&move, 0, sizeof(move));
+        if (!dm2_v1_move_record_to(
+                &rt->record_pools, dungeon, &rt->timer_queue,
+                directed_item, -1, 0, (int16_t)goal->x,
+                (int16_t)goal->y, (int16_t)(slot[0x1c] & 3u),
+                goal->map, (uint32_t)rt->tick_count, &move) ||
+            !move.valid || move.fail_closed)
+            goto creature_shoot_rollback;
+        dm2_v1_record_pool_set_free(&pools_before);
+        free(raw_before);
+        return 0;
+    }
+    if (!missile_record || rt->record_pools.pools[14].record_size < 8)
+        goto creature_shoot_rollback;
+    dm2_runtime_record_wr16(rt, missile_record, 0xfffeu);
+    dm2_runtime_record_wr16(rt, missile_record + 2, item);
+    missile_record[4] = (uint8_t)damage;
+    missile_record[5] = ai->Defense;
+    dm2_runtime_record_wr16(rt, missile_record + 6, 0u);
+
+    /* SKProject c_item.cpp:1097-1100 queues the ordinary throw sound before
+     * publishing the DB14 record. This source routine is void, so a missing
+     * or rejected sound binding is best-effort and does not suppress flight. */
+    memset(&item_cls1_receipt, 0, sizeof(item_cls1_receipt));
+    memset(&item_cls2_receipt, 0, sizeof(item_cls2_receipt));
+    if (rt->sound_queue_ready &&
+        dm2_v1_skproject_query_cls1_from_record_ex(
+            item, &rt->record_pools, &item_cls1, &item_cls1_receipt) &&
+        item_cls1_receipt.valid &&
+        dm2_v1_skproject_query_cls2_from_record(
+            item, &rt->record_pools, &item_cls2, &item_cls2_receipt) &&
+        item_cls2_receipt.valid) {
+        sound_env = rt->sound_env;
+        sound_env.current_map = (int16_t)goal->map;
+        sound_env.gametick = rt->tick_count;
+        memset(&sound_receipt, 0, sizeof(sound_receipt));
+        (void)dm2_v1_sound_queue_noise_gen2(
+            &rt->sound_queue, (int8_t)item_cls1, (int8_t)item_cls2,
+            (int8_t)0x86, (int8_t)0xfe, (int16_t)goal->x,
+            (int16_t)goal->y, 1, 0x6e, 0x80,
+            &sound_env, &sound_receipt);
+    }
+
+    tile_raw = dm2_v1_dungeon_get_tile_raw(
+        dungeon, goal->map, goal->x, goal->y);
+    tile_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, goal->map, goal->x, goal->y);
+    if (tile_head < 0 &&
+        (tile_raw < 0 || (tile_raw & 0x10) == 0)) {
+        if (dm2_v1_dungeon_insert_first_thing_empty_tile(
+                dungeon, goal->map, goal->x, goal->y,
+                (uint16_t)(((uint16_t)missile_handle & 0x3fffu) |
+                    ((uint16_t)(slot[0x1c] & 3u) << 14))) != 0)
+            goto creature_shoot_rollback;
+    } else if (tile_head < 0) {
+        if (dm2_v1_dungeon_set_first_thing(
+                dungeon, goal->map, goal->x, goal->y,
+                (uint16_t)(((uint16_t)missile_handle & 0x3fffu) |
+                    ((uint16_t)(slot[0x1c] & 3u) << 14))) != 0)
+            goto creature_shoot_rollback;
+    } else {
+        if (!dm2_v1_record_pool_append_to_list(
+                &rt->record_pools, &tile_head,
+                (int16_t)(((uint16_t)missile_handle & 0x3fffu) |
+                    ((uint16_t)(slot[0x1c] & 3u) << 14))) ||
+            dm2_v1_dungeon_set_first_thing(
+                dungeon, goal->map, goal->x, goal->y,
+                (uint16_t)tile_head) != 0)
+            goto creature_shoot_rollback;
+    }
+
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)(goal->map & 0xff) << 24) |
+        (((uint32_t)rt->tick_count + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = 0x1du;
+    timer.value_a = (int16_t)(((uint16_t)missile_handle & 0x3fffu) |
+                              ((uint16_t)(slot[0x1c] & 3u) << 14));
+    timer.value_b = (int16_t)((goal->x & 0x1f) |
+        ((goal->y & 0x1f) << 5) | ((slot[0x1b] & 3u) << 10) |
+        ((8u & 0x0fu) << 12));
+    enqueue_result = dm2_v1_source_timer_enqueue(
+        &rt->timer_queue, &timer, 0u);
+    if (enqueue_result != DM2_V1_SOURCE_TIMER_OK)
+        goto creature_shoot_rollback;
+    dm2_runtime_record_wr16(rt, missile_record + 6, 0u);
+    dm2_v1_record_pool_set_free(&pools_before);
+    free(raw_before);
+    return 0;
+
+creature_shoot_rollback:
+    memcpy(dungeon->raw_data, raw_before, (size_t)dungeon->raw_size);
+    dm2_v1_record_pool_set_free(&rt->record_pools);
+    rt->record_pools = pools_before;
+    memset(&pools_before, 0, sizeof(pools_before));
+    rt->timer_queue = queue_before;
+    rt->sound_queue = sound_before;
+    rt->session_rng = rng_before;
+    free(raw_before);
+    return -1;
 }
 
 static int dm2_runtime_hand_is_chest(void *context, uint16_t item_ref)
