@@ -8582,10 +8582,10 @@ int dm2_v1_skproject_14cd_3582(
  * the complete count/compare/rebuild transaction for a moneybox. */
 typedef struct {
     uint16_t wallet_handle;
-    const uint16_t *coin_counts;
     const uint16_t *coin_values;
     uint16_t coin_type_count;
     int32_t only_test;
+    int dos_add_coin_non_currency_semantics; /* select SKW_ADD_COIN behavior */
     const struct DM2_V1_WalletCallbacks *wallet_callbacks;
     void *wallet_ctx;
 } DM2_V1_SkprojectExchangeMoneyboxRequest;
@@ -8597,6 +8597,7 @@ typedef struct {
     int needs_rebalance;
     int mutated;
     uint16_t coin_type_count;
+    uint32_t source_counts[10];
     uint16_t target_counts[10];
 } DM2_V1_SkprojectExchangeMoneyboxReceipt;
 

@@ -22774,12 +22774,13 @@ int dm2_v1_skproject_exchange_moneybox(
     DM2_V1_SkprojectExchangeMoneyboxReceipt receipt;
     const DM2_V1_WalletCallbacks *cb;
     int64_t remaining_value = 0;
+    uint32_t steps = 0;
     uint16_t counts[10] = {0};
     int changed = 0;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
-    if (!req || !req->coin_counts || !req->coin_values ||
+    if (!req || !req->coin_values ||
         req->coin_type_count == 0 || req->coin_type_count > 10 ||
         !req->wallet_callbacks) {
         receipt.blocked_missing_context = 1;
@@ -22807,6 +22808,37 @@ int dm2_v1_skproject_exchange_moneybox(
     }
 
     receipt.coin_type_count = req->coin_type_count;
+    {
+        uint16_t item = cb->get_container_head(
+            req->wallet_ctx, req->wallet_handle);
+        while (item != DM2_V1_OBJECT_END) {
+            uint16_t next;
+            if (item == DM2_V1_OBJECT_NULL || ++steps > 65536u) {
+                receipt.blocked_missing_context = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            next = cb->get_next_item_in_list(req->wallet_ctx, item);
+            if (cb->is_item_currency(req->wallet_ctx, item)) {
+                uint16_t denomination = cb->get_distinctive_item_type(
+                    req->wallet_ctx, item);
+                for (uint16_t i = 0; i < req->coin_type_count; ++i) {
+                    if (cb->coin_type_table[i] == denomination) {
+                        uint32_t count = (uint32_t)cb->get_item_charge(
+                            req->wallet_ctx, item) + 1u;
+                        if (receipt.source_counts[i] > UINT32_MAX - count) {
+                            receipt.blocked_missing_context = 1;
+                            if (out_receipt) *out_receipt = receipt;
+                            return 0;
+                        }
+                        receipt.source_counts[i] += count;
+                        break;
+                    }
+                }
+            }
+            item = next;
+        }
+    }
     for (uint16_t i = 0; i < req->coin_type_count; ++i) {
         if (req->coin_values[i] == 0 ||
             (i > 0 && req->coin_values[i] < req->coin_values[i - 1])) {
@@ -22815,7 +22847,7 @@ int dm2_v1_skproject_exchange_moneybox(
             return 0;
         }
         remaining_value += (int64_t)req->coin_values[i] *
-                           (int64_t)req->coin_counts[i];
+                           (int64_t)receipt.source_counts[i];
         if (remaining_value > INT32_MAX) {
             receipt.blocked_missing_context = 1;
             if (out_receipt) *out_receipt = receipt;
@@ -22824,8 +22856,10 @@ int dm2_v1_skproject_exchange_moneybox(
     }
     receipt.total_value = (int32_t)remaining_value;
 
-    /* The DOS and SPX v4 sources greedily rebuild denominations from the
-     * highest value down, then compare the result to COUNT_BY_COIN_TYPES. */
+    /* DOS SKW_14cd_3582 (dm2byg.cpp:429-487) and SPX v4
+     * EXCHANGE_MONEYBOX (skcrture.cpp:3192-3239) greedily rebuild
+     * denominations from the highest value down, then compare the result
+     * with COUNT_BY_COIN_TYPES. */
     for (int i = (int)req->coin_type_count - 1; i >= 0 &&
          remaining_value > 0; --i) {
         uint16_t value = req->coin_values[i];
@@ -22838,7 +22872,7 @@ int dm2_v1_skproject_exchange_moneybox(
             ++counts[i];
             remaining_value -= (int32_t)value;
         }
-        if (counts[i] != req->coin_counts[i]) changed = 1;
+        if (counts[i] != receipt.source_counts[i]) changed = 1;
     }
 
     receipt.needs_rebalance = changed;
@@ -22866,9 +22900,14 @@ int dm2_v1_skproject_exchange_moneybox(
         for (uint16_t n = 0; n < counts[i]; ++n) {
             uint16_t coin = cb->alloc_new_dbitem(
                 req->wallet_ctx, cb->coin_type_table[i]);
-            if (coin != DM2_V1_OBJECT_NULL)
-                (void)dm2_v1_add_coin_to_wallet_spx(
-                    req->wallet_handle, coin, cb, req->wallet_ctx);
+            if (coin != DM2_V1_OBJECT_NULL) {
+                if (req->dos_add_coin_non_currency_semantics)
+                    (void)dm2_v1_add_coin_to_wallet(
+                        req->wallet_handle, coin, cb, req->wallet_ctx);
+                else
+                    (void)dm2_v1_add_coin_to_wallet_spx(
+                        req->wallet_handle, coin, cb, req->wallet_ctx);
+            }
         }
     }
     receipt.mutated = 1;
