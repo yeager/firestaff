@@ -18497,6 +18497,20 @@ int dm2_v1_runtime_route_viewport_click(
         receipt.target_kind = target->target_kind;
         receipt.object_id = target->object_id;
         receipt.view_slot = target->view_slot;
+        if (target->target_kind == 5u && target->w > 0 &&
+            target->source_frame_w > 0) {
+            int relative_x = screen_x - target->x;
+            int source_offset = (relative_x * target->source_frame_w) / target->w;
+            if (target->source_flip_x)
+                source_offset = target->source_frame_w - 1 - source_offset;
+            {
+                int centered = source_offset - target->source_frame_w / 2;
+                int normalized = centered * 100 /
+                    (target->source_frame_w / 2 ? target->source_frame_w / 2 : 1);
+                receipt.orientation = normalized < -75 ? 3 :
+                    normalized > 75 ? 1 : 0;
+            }
+        }
         receipt.rect.x = target->x;
         receipt.rect.y = target->y;
         receipt.rect.w = target->w;

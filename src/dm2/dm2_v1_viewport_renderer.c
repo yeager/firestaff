@@ -1783,6 +1783,9 @@ static void dm2_v1_viewport_append_source_creature_target(
     target->view_slot = 3u; /* source front-tile creature hit path */
     target->target_kind = 5u;
     target->click_mask_ordinal = (uint8_t)(ordinal + 1);
+    target->source_frame_x = (int16_t)blit->frame_x;
+    target->source_frame_w = (int16_t)blit->frame_w;
+    target->source_flip_x = (uint8_t)(blit->flip_mirror & 1);
     target->map_x = creature->map_x;
     target->map_y = creature->map_y;
 
@@ -8524,7 +8527,7 @@ static int dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                         c->map_y == s->party_y +
                             (s->party_dir == 2 ? 1 : s->party_dir == 0 ? -1 : 0)) {
                         dm2_v1_viewport_append_source_creature_target(
-                            s, c, &blit, pixels);
+                            s, &s->creatures[c->creature_index], &blit, pixels);
                     }
                     ++s->asset_creature_drawn_count;
                     if (c->source_kind == 2 &&

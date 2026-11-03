@@ -545,6 +545,7 @@ typedef struct DM2_V1_RuntimeViewportClickReceipt {
     int target_kind;
     int object_id;
     int view_slot;
+    int orientation;
     DM2_V1_ViewportRect rect;
 } DM2_V1_RuntimeViewportClickReceipt;
 

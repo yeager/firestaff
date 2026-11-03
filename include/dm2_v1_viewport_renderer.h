@@ -75,6 +75,9 @@ typedef struct {
     uint8_t view_slot; /* c_rwbb::b_0a */
     uint8_t target_kind; /* c_rwbb::b_0b */
     uint8_t click_mask_ordinal; /* one-based slot in source_click_item_pixels */
+    int16_t source_frame_x;
+    int16_t source_frame_w;
+    uint8_t source_flip_x;
     int16_t map_x; /* authenticated floor record tile; -1 for controls */
     int16_t map_y;
 } DM2_V1_ViewportClickTarget;
