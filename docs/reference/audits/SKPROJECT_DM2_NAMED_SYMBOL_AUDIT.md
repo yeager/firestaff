@@ -777,4 +777,4 @@ Compared DOS `SKW_QUERY_CLS1_FROM_RECORD` (`SKWINDOS/dm2byc.cpp:1136`), SPX v4 `
 
 Compared DOS `SKW_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINDOS/dm2byc.cpp:1101`), SPX v4 `GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINSPX/src/v4/skdungn.cpp:1564`), SPX v5 `DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR` (`SKWINSPX/src/v5/skrecord.cpp:406`), and SKULLWIN (`SKULLWIN/c_record.cpp:403`). All mask the low nine bits, subtract the same quadrant bases at `0x80`, `0x100`, `0x180`, `0x1b0`, and `0x1e0`, and map quadrant-3 values at/above `0x1fc` to zero. Firestaff’s helper matches and is used in item allocation/runtime routes. All four definitions are `IMPLEMENTED_PARITY` at function-body level.
 
-With active-source review overrides applied, the inventory currently maps 2,717 as `UNREVIEWED`, 1,116 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
+With active-source review overrides applied, the inventory currently maps 2,717 as `UNREVIEWED`, 1,117 as `PARTIAL`, 0 as `MISSING`, and 106 as `IMPLEMENTED_PARITY`.
