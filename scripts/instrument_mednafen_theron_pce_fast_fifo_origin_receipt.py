@@ -177,6 +177,10 @@ void TheronTracePCEFastOriginRAMWrite(uint32 logical_address,
 
 '''
 
+PCE_HELPER_ANCHOR = "static void TheronTraceA1B7BMTWrite(uint32 physical_destination,\n" \
+                   "                                    size_t backing_offset,\n" \
+                   "                                    uint8 old_value, uint8 written_value);\n"
+
 
 def insert_once(text: str, anchor: str, block: str, label: str) -> str:
     if block.strip() in text:
@@ -233,7 +237,7 @@ def main() -> None:
     pce_text = pce.read_text(encoding="utf-8")
     pce_text = insert_once(
         pce_text,
-        "static void TheronTraceA1B7BMTWrite(uint32 physical_destination,\n",
+        PCE_HELPER_ANCHOR,
         ORIGIN_HELPERS,
         "PCE Fast origin-RAM receipt implementation",
     )
