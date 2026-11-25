@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from functools import partial
 import hashlib
 from pathlib import Path
 from typing import Iterator
@@ -55,7 +56,7 @@ def load_events(path: Path) -> Iterator[dict[str, str]]:
 
 def validate_bundle(
     dumps: Path,
-) -> tuple[dict[str, str], Path, bytearray, bytearray, bytes, bytes]:
+) -> tuple[dict[str, str], list[dict[str, str]], bytearray, bytearray, bytes, bytes]:
     receipt = parse_receipt(dumps / "vdp2-memory-write-bundle.txt")
     require(receipt.get("format") == "ymir-vdp2-memory-write-bundle-v1", "unsupported Ymir bundle format")
     for key in (
@@ -89,16 +90,19 @@ def validate_bundle(
     event_count = 0
     writes = 0
     scanlines = 0
-    for index, row in enumerate(load_events(event_path)):
+    events = list(load_events(event_path))
+    for index, row in enumerate(events):
         event_count += 1
         sequence = int(row["sequence"])
         require(sequence > previous_sequence, f"event sequence is not strictly increasing at row {index + 2}")
         previous_sequence = sequence
-        require(row["vdp1_frame"] == "unknown" or row["vdp1_frame"].isdigit(),
+        require(row["vdp1_frame"] == "unknown" or
+                (row["vdp1_frame"].isascii() and row["vdp1_frame"].isdecimal()),
                 f"invalid VDP1 frame at event row {index + 2}")
         if row["event"] == "scanline":
             scanlines += 1
-            require(row["row"].isdigit(), f"scanline event has no row at event row {index + 2}")
+            require(row["row"].isascii() and row["row"].isdecimal(),
+                    f"scanline event has no row at event row {index + 2}")
             require(not any(row[field] for field in ("memory", "address", "width", "value")),
                     f"scanline event contains write fields at row {index + 2}")
         else:
@@ -117,15 +121,17 @@ def validate_bundle(
     require(writes == int(receipt["trace_rows"]), "write count differs from the legacy receipt field")
     require(event_count > 0, "render event trace is empty")
     require(scanlines > 0, "render event trace has no scanline markers")
-    return receipt, event_path, start_vram, start_cram, final_vram, final_cram
+    return receipt, events, start_vram, start_cram, final_vram, final_cram
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path, help="Ymir capture root or its dumps directory")
-    parser.add_argument("--watch-vram", action="append", default=[], metavar="ADDRESS:LENGTH",
+    parser.add_argument("--watch-vram", action="append", type=partial(parse_watch_range, size=VRAM_SIZE),
+                        default=[], metavar="ADDRESS:LENGTH",
                         help="emit bytes from this VRAM range at every scanline boundary; repeatable")
-    parser.add_argument("--watch-cram", action="append", default=[], metavar="ADDRESS:LENGTH",
+    parser.add_argument("--watch-cram", action="append", type=partial(parse_watch_range, size=CRAM_SIZE),
+                        default=[], metavar="ADDRESS:LENGTH",
                         help="emit bytes from this CRAM range at every scanline boundary; repeatable")
     parser.add_argument("--row-details", action="store_true",
                         help="emit per-scanline hashes and requested byte ranges (can produce large output)")
@@ -137,13 +143,13 @@ def main() -> int:
     if (args.detail_frame or args.detail_row) and not args.row_details:
         parser.error("--detail-frame and --detail-row require --row-details")
     dumps = args.capture / "dumps" if (args.capture / "dumps").is_dir() else args.capture
-    receipt, event_path, vram, cram, final_vram, final_cram = validate_bundle(dumps)
-    vram_watches = [parse_watch_range(value, VRAM_SIZE) for value in args.watch_vram]
-    cram_watches = [parse_watch_range(value, CRAM_SIZE) for value in args.watch_cram]
+    receipt, events, vram, cram, final_vram, final_cram = validate_bundle(dumps)
+    vram_watches = args.watch_vram
+    cram_watches = args.watch_cram
     scanlines = 0
     detailed_scanlines = 0
 
-    for row in load_events(event_path):
+    for row in events:
         if row["event"] == "write":
             memory = vram if row["memory"] == "VRAM" else cram
             address = int(row["address"], 16)
