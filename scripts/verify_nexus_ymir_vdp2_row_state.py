@@ -8,7 +8,8 @@ import csv
 from functools import partial
 import hashlib
 from pathlib import Path
-from typing import Iterator
+import tempfile
+from typing import Iterator, TextIO
 
 
 VRAM_SIZE = 0x80000
@@ -47,16 +48,15 @@ def sha256(data: bytes | bytearray) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def load_events(path: Path) -> Iterator[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        require(reader.fieldnames == EVENT_FIELDS, "render event CSV has an unexpected schema")
-        yield from reader
+def load_events(handle: TextIO) -> Iterator[dict[str, str]]:
+    reader = csv.DictReader(handle)
+    require(reader.fieldnames == EVENT_FIELDS, "render event CSV has an unexpected schema")
+    yield from reader
 
 
 def validate_bundle(
     dumps: Path,
-) -> tuple[dict[str, str], list[dict[str, str]], bytearray, bytearray, bytes, bytes]:
+) -> tuple[dict[str, str], TextIO, bytearray, bytearray, bytes, bytes]:
     receipt = parse_receipt(dumps / "vdp2-memory-write-bundle.txt")
     require(receipt.get("format") == "ymir-vdp2-memory-write-bundle-v1", "unsupported Ymir bundle format")
     for key in (
@@ -90,38 +90,53 @@ def validate_bundle(
     event_count = 0
     writes = 0
     scanlines = 0
-    events = list(load_events(event_path))
-    for index, row in enumerate(events):
-        event_count += 1
-        sequence = int(row["sequence"])
-        require(sequence > previous_sequence, f"event sequence is not strictly increasing at row {index + 2}")
-        previous_sequence = sequence
-        require(row["vdp1_frame"] == "unknown" or
-                (row["vdp1_frame"].isascii() and row["vdp1_frame"].isdecimal()),
-                f"invalid VDP1 frame at event row {index + 2}")
-        if row["event"] == "scanline":
-            scanlines += 1
-            require(row["row"].isascii() and row["row"].isdecimal(),
-                    f"scanline event has no row at event row {index + 2}")
-            require(not any(row[field] for field in ("memory", "address", "width", "value")),
-                    f"scanline event contains write fields at row {index + 2}")
-        else:
-            require(row["event"] == "write", f"unknown event type at row {index + 2}")
-            writes += 1
-            require(not row["row"], f"write event unexpectedly has a row at event row {index + 2}")
-            require(row["memory"] in ("VRAM", "CRAM"), f"unknown memory type at event row {index + 2}")
-            width = int(row["width"])
-            require(width in (1, 2), f"unsupported write width at event row {index + 2}")
-            address = int(row["address"], 16)
-            value = int(row["value"], 16)
-            memory_size = VRAM_SIZE if row["memory"] == "VRAM" else CRAM_SIZE
-            require(0 <= address <= memory_size - width, f"write exceeds {row['memory']} at event row {index + 2}")
-            require(0 <= value < 1 << (width * 8), f"write value exceeds width at event row {index + 2}")
-    require(event_count == int(receipt["render_event_rows"]), "render event count differs from the receipt")
-    require(writes == int(receipt["trace_rows"]), "write count differs from the legacy receipt field")
-    require(event_count > 0, "render event trace is empty")
-    require(scanlines > 0, "render event trace has no scanline markers")
-    return receipt, events, start_vram, start_cram, final_vram, final_cram
+    validated_events = tempfile.TemporaryFile(mode="w+t", newline="", encoding="utf-8")
+    try:
+        writer = csv.DictWriter(validated_events, fieldnames=EVENT_FIELDS, lineterminator="\n")
+        writer.writeheader()
+        with event_path.open(newline="", encoding="utf-8") as source_events:
+            for index, row in enumerate(load_events(source_events)):
+                event_count += 1
+                sequence = int(row["sequence"])
+                require(sequence > previous_sequence,
+                        f"event sequence is not strictly increasing at row {index + 2}")
+                previous_sequence = sequence
+                require(row["vdp1_frame"] == "unknown" or
+                        (row["vdp1_frame"].isascii() and row["vdp1_frame"].isdecimal()),
+                        f"invalid VDP1 frame at event row {index + 2}")
+                if row["event"] == "scanline":
+                    scanlines += 1
+                    require(row["row"].isascii() and row["row"].isdecimal(),
+                            f"scanline event has no row at event row {index + 2}")
+                    require(not any(row[field] for field in ("memory", "address", "width", "value")),
+                            f"scanline event contains write fields at row {index + 2}")
+                else:
+                    require(row["event"] == "write", f"unknown event type at row {index + 2}")
+                    writes += 1
+                    require(not row["row"], f"write event unexpectedly has a row at event row {index + 2}")
+                    require(row["memory"] in ("VRAM", "CRAM"),
+                            f"unknown memory type at event row {index + 2}")
+                    width = int(row["width"])
+                    require(width in (1, 2), f"unsupported write width at event row {index + 2}")
+                    address = int(row["address"], 16)
+                    value = int(row["value"], 16)
+                    memory_size = VRAM_SIZE if row["memory"] == "VRAM" else CRAM_SIZE
+                    require(0 <= address <= memory_size - width,
+                            f"write exceeds {row['memory']} at event row {index + 2}")
+                    require(0 <= value < 1 << (width * 8),
+                            f"write value exceeds width at event row {index + 2}")
+                writer.writerow(row)
+        require(event_count == int(receipt["render_event_rows"]),
+                "render event count differs from the receipt")
+        require(writes == int(receipt["trace_rows"]),
+                "write count differs from the legacy receipt field")
+        require(event_count > 0, "render event trace is empty")
+        require(scanlines > 0, "render event trace has no scanline markers")
+        validated_events.seek(0)
+        return receipt, validated_events, start_vram, start_cram, final_vram, final_cram
+    except Exception:
+        validated_events.close()
+        raise
 
 
 def main() -> int:
@@ -149,30 +164,33 @@ def main() -> int:
     scanlines = 0
     detailed_scanlines = 0
 
-    for row in events:
-        if row["event"] == "write":
-            memory = vram if row["memory"] == "VRAM" else cram
-            address = int(row["address"], 16)
-            width = int(row["width"])
-            value = int(row["value"], 16)
-            memory[address : address + width] = value.to_bytes(width, "big")
-            continue
+    try:
+        replay_events = load_events(events)
+        for row in replay_events:
+            if row["event"] == "write":
+                memory = vram if row["memory"] == "VRAM" else cram
+                address = int(row["address"], 16)
+                width = int(row["width"])
+                value = int(row["value"], 16)
+                memory[address : address + width] = value.to_bytes(width, "big")
+                continue
 
-        frame = row["vdp1_frame"]
-        selected_frame = not args.detail_frame or (frame != "unknown" and int(frame) in args.detail_frame)
-        selected_row = not args.detail_row or int(row["row"]) in args.detail_row
-        if (args.row_details or args.detail_frame or args.detail_row) and selected_frame and selected_row:
             frame = row["vdp1_frame"]
-            prefix = f"row_state sequence={row['sequence']} vdp1_frame={frame} row={row['row']}"
-            print(f"{prefix} vram_sha256={sha256(vram)} cram_sha256={sha256(cram)}")
-            for watch_index, (address, length) in enumerate(vram_watches):
-                value = vram[address : address + length].hex()
-                print(f"watch_vram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
-            for watch_index, (address, length) in enumerate(cram_watches):
-                value = cram[address : address + length].hex()
-                print(f"watch_cram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
-            detailed_scanlines += 1
-        scanlines += 1
+            selected_frame = not args.detail_frame or (frame != "unknown" and int(frame) in args.detail_frame)
+            selected_row = not args.detail_row or int(row["row"]) in args.detail_row
+            if (args.row_details or args.detail_frame or args.detail_row) and selected_frame and selected_row:
+                prefix = f"row_state sequence={row['sequence']} vdp1_frame={frame} row={row['row']}"
+                print(f"{prefix} vram_sha256={sha256(vram)} cram_sha256={sha256(cram)}")
+                for watch_index, (address, length) in enumerate(vram_watches):
+                    value = vram[address : address + length].hex()
+                    print(f"watch_vram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
+                for watch_index, (address, length) in enumerate(cram_watches):
+                    value = cram[address : address + length].hex()
+                    print(f"watch_cram index={watch_index} range=0x{address:x}:0x{length:x} bytes={value}")
+                detailed_scanlines += 1
+            scanlines += 1
+    finally:
+        events.close()
 
     require(bytes(vram) == final_vram, "replayed VRAM does not match the export-time snapshot")
     require(bytes(cram) == final_cram, "replayed CRAM does not match the export-time snapshot")
