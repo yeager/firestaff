@@ -28766,6 +28766,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     int dm1EndianDungeonFormat = 0;
     int dm1VirtualGraphicsRequired = 0;
     int dm1Pc34Graphics = 0;
+    int dm1InitialSoundSourceBound = 0;
     int dm1Pc34ExplicitDungeon = 0;
     int dm1Amiga36LanguageWorld = 0;
     const char* dm1DefaultDungeonMember = "DUNGEON.DAT";
@@ -29698,6 +29699,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                  graphicsVirtual);
         state->assetsAvailable = 1;
     }
+    /* F0882 enters NEWMAP.C F0003 / GROUP.C F0195 before the caller presents
+     * the startup sequence. Preserve its source sound requests only after the
+     * selected edition's matching audio owner is bound: I34 SND3, native
+     * Atari ST, or the supported big-endian Amiga graphics bank. FM Towns
+     * validates its native launcher later and A36 has a separate sound owner. */
+    dm1InitialSoundSourceBound = dm1Pc34Graphics ||
+        state->assetLoader.atariStDm1 ||
+        (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
     if (dm1VirtualDungeonBytes) {
         /* Amiga GRAPHICS.DAT uses a big-endian legacy layout, but the
          * authenticated DUNGEON.DAT's F0434 checksum trailer and scalar
@@ -29711,11 +29720,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             ? F0882M_WORLD_InitFromPcMultilangBodyBufferWithResult_Compat(
                   dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
                   0xF1A5U, &state->world,
-                  dm1Pc34Graphics ? &state->lastTickResult : NULL)
+                  dm1InitialSoundSourceBound ? &state->lastTickResult : NULL)
             : F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
                   dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
                   0xF1A5U, &state->world,
-                  dm1Pc34Graphics ? &state->lastTickResult : NULL);
+                  dm1InitialSoundSourceBound ? &state->lastTickResult : NULL);
     } else if (spec->dm1Fmtowns && spec->dataDir) {
         int read = FSP_DirExists(spec->dataDir)
             ? asset_read_path_alloc(dungeonPath, &dm1FmtownsDungeonBytes,
@@ -29744,7 +29753,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         dm1FmtownsBufferLoaded =
             F0882_WORLD_InitFromDungeonDatWithResult_Compat(
                 dungeonPath, 0xF1A5U, &state->world,
-                dm1Pc34Graphics ? &state->lastTickResult : NULL);
+                dm1InitialSoundSourceBound ? &state->lastTickResult : NULL);
     }
     free(dm1FmtownsDungeonBytes);
     dm1FmtownsDungeonBytes = NULL;

@@ -11,10 +11,13 @@ title/entrance setup. M11 tick sound emissions now use the media-bound DM1
 audio adapter, so Atari ST and supported legacy Amiga requests reach their
 native GRAPHICS.DAT tables instead of the generic PC34 SND3 owner. PC34 remains
 source-SND3-backed, and FM Towns retains its per-sample volume/arbitration path.
-This does not add
-native A36 sound ownership or change the IIGS lane. Startup F0195 sound receipts
-on non-I34 editions remain uncollected. Source-accurate per-edition
-priority/arbitration and runtime audio captures remain open.
+These changes do not add native A36 sound ownership or change the IIGS lane.
+Startup F0195 sound receipts are now captured for I34, Atari ST and the
+supported older Amiga formats after their sound source is bound. FM Towns
+startup receipts remain uncollected because its native launcher is admitted
+after dungeon initialization; A36 and IIGS keep separate sound owners.
+Source-accurate per-edition priority/arbitration and runtime audio captures
+remain open.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 
