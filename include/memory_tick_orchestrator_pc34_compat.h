@@ -454,6 +454,13 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     const char* dungeonPath,
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
+/* Result-bearing startup handoff; F0195 emissions are published only after
+ * initialization succeeds. */
+int F0882_WORLD_InitFromDungeonDatWithResult_Compat(
+    const char* dungeonPath,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result);
 
 /* Same source-owned world handoff for packed media already decoded into
  * bounded memory. The bytes are never written to a game-data path. */
@@ -462,6 +469,12 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     int dungeonByteCount,
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
+int F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result);
 /* The caller authenticates the native program owner that supplied 27 rows.
  * Copies its profile after default initialization and before active groups.
  * The input is the complete native LE body including its checksum. */
@@ -469,6 +482,11 @@ int F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
     const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
     const DM1_V1_IigsCreatureInfo* rows, size_t rowCount,
     struct GameWorld_Compat* outWorld);
+int F0882G_WORLD_InitFromIigsDungeonDatBufferWithResult_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    const DM1_V1_IigsCreatureInfo* rows, size_t rowCount,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result);
 
 /* Original I34M French/German body handoff. Caller must authenticate the
  * complete original buffer before entering this checksumless media path. */
@@ -477,6 +495,12 @@ int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
     int dungeonByteCount,
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
+int F0882M_WORLD_InitFromPcMultilangBodyBufferWithResult_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result);
 
 /* F20J retail JDATA handoff.  Kept separate so checksumless Japanese CD
  * media cannot relax validation for any generic dungeon/save buffer. */
@@ -485,6 +509,12 @@ int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
     int dungeonByteCount,
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
+int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJpWithResult_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result);
 
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world);
 
@@ -523,6 +553,9 @@ int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
  * original dungeon state.  It never manufactures a group or square chain. */
 int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
     struct GameWorld_Compat* world);
+int F0195_DM1_GROUP_AddAllActiveGroupsWithResult_Compat(
+    struct GameWorld_Compat* world,
+    struct TickResult_Compat* result);
 
 /* NEWMAP.C F0003: transactional outgoing F0194 / incoming F0195 owner
  * handoff without advancing time. Caller supplies destination coordinates

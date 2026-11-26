@@ -5,7 +5,10 @@ At generator destinations, audible F0267 teleporter requests precede F0179
 and F0185's generation buzz follows it, matching MOVESENS.C and GROUP.C
 request order. The orchestrator and M11 transition callers consume those
 TickResult emissions. Remaining work is authentic sound-priority/arbitration
-evidence and edition metadata beyond I34.
+evidence and edition metadata beyond I34. PC34/I34 initial F0195 sounds now
+flow through F0882 to M11 after the authentic sound source is bound and before
+title/entrance setup. Other-edition startup F0195 calls remain result-less
+until their F0179 sound metadata is bound.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 
@@ -2513,9 +2516,10 @@ parity.
   (GROUP.C:242, 270-280). F0183 map-entry sound requests now enter the
   TickResult on staged F0003 transitions and result-bearing group generator
   and deferred-F0267 arrivals; the orchestrator and M11 transition callers
-  consume those emissions. Edition metadata beyond I34 and authentic sound
-  priority/arbitration captures remain open. Do not replace these with a
-  generic audio effect.
+  consume those emissions. PC34/I34 startup world-load F0195 requests now
+  reach M11 before title/entrance setup. Other-edition startup metadata and
+  authentic sound-priority/arbitration captures remain open. Do not replace
+  these with a generic audio effect.
   Remaining integration requirements:
   - Audit remaining attack-entry transitions beyond C31-C37 with their
     own deletion/delay rules. Obtain turning-pair

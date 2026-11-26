@@ -28762,6 +28762,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (!state || !spec || !spec->title) {
         return 0;
     }
+    if (spec->gameId && strcmp(spec->gameId, "dm1") == 0)
+        memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     /* These caches belong to one loaded dungeon owner. A reused M11 state
      * may launch another edition or game with the same numeric map indices. */
     memset(state->ornamentCacheLoaded, 0,
@@ -29695,12 +29697,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * the generic/save buffer reader's trailer requirement intact. */
         dm1FmtownsBufferLoaded = dm1Pc34Graphics && !dm1Pc34ExplicitDungeon &&
             strcmp(dm1DefaultDungeonMd5, "766450c940651fc021c92fe5d0d0b3a6") != 0
-            ? F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
+            ? F0882M_WORLD_InitFromPcMultilangBodyBufferWithResult_Compat(
                   dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
-                  0xF1A5U, &state->world)
-            : F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+                  0xF1A5U, &state->world,
+                  dm1Pc34Graphics ? &state->lastTickResult : NULL)
+            : F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
                   dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
-                  0xF1A5U, &state->world);
+                  0xF1A5U, &state->world,
+                  dm1Pc34Graphics ? &state->lastTickResult : NULL);
     } else if (spec->dm1Fmtowns && spec->dataDir) {
         int read = FSP_DirExists(spec->dataDir)
             ? asset_read_path_alloc(dungeonPath, &dm1FmtownsDungeonBytes,
@@ -29721,14 +29725,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             ? F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
                   dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,
                   0xF1A5U, &state->world)
-            : F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+            : F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
                   dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,
-                  0xF1A5U, &state->world);
+                  0xF1A5U, &state->world, NULL);
     } else {
         fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
         dm1FmtownsBufferLoaded =
-            F0882_WORLD_InitFromDungeonDat_Compat(
-                dungeonPath, 0xF1A5U, &state->world);
+            F0882_WORLD_InitFromDungeonDatWithResult_Compat(
+                dungeonPath, 0xF1A5U, &state->world,
+                dm1Pc34Graphics ? &state->lastTickResult : NULL);
     }
     free(dm1FmtownsDungeonBytes);
     dm1FmtownsDungeonBytes = NULL;
@@ -29850,6 +29855,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             M11_GameView_Shutdown(state);
             return 0;
         }
+        /* STARTUP2.C:1183 runs F0003/F0195 before title/entrance setup.
+         * F0882 retained those F0179 sounds until the authenticated graphics
+         * source bound the matching sound bank; publish them now, before the
+         * startup animation sequence begins. */
+        if (state->lastTickResult.emissionCount > 0)
+            M11_GameView_ProcessTickEmissions(state);
         /* ReDMCSB MEMORY.C F0608 applies G2004 to every graphics-size/load
          * request in I34M/A36M. The A36 world is already selected above;
          * bind the same language's translated graphics bank before drawing. */

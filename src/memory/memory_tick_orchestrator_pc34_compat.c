@@ -14,6 +14,24 @@
 #include <ctype.h>
 #include <limits.h>
 
+static void orch_append_tick_result_emissions_compat(
+    struct TickResult_Compat* destination,
+    const struct TickResult_Compat* source)
+{
+    int emission;
+    if (!destination || !source || destination->emissionCount < 0 ||
+        destination->emissionCount > TICK_EMISSION_CAPACITY ||
+        source->emissionCount < 0) return;
+    for (emission = 0;
+         emission < source->emissionCount &&
+         emission < TICK_EMISSION_CAPACITY &&
+         destination->emissionCount < TICK_EMISSION_CAPACITY;
+         ++emission) {
+        destination->emissions[destination->emissionCount++] =
+            source->emissions[emission];
+    }
+}
+
 int F0884_WORLD_AwardSkillExperience_Compat(
     struct GameWorld_Compat* world, int championIndex, int skillIndex,
     int experience, int mapDifficulty, struct LevelUpMarker_Compat* marker)
@@ -1530,13 +1548,15 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     return 1;
 }
 
-int F0882_WORLD_InitFromDungeonDat_Compat(
+int F0882_WORLD_InitFromDungeonDatWithResult_Compat(
     const char* dungeonPath,
     uint32_t seed,
-    struct GameWorld_Compat* outWorld)
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result)
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
+    struct TickResult_Compat stagedResult;
     int direction = 0, py = 0, px = 0;
 
     if (!dungeonPath || !outWorld) return 0;
@@ -1555,6 +1575,8 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
      * behaviour is preserved; the warning makes the divergence
      * observable. Ref: ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList. */
     (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
+
+    if (result) memset(&stagedResult, 0, sizeof(stagedResult));
 
     /* Set up the world to own these. */
     memset(outWorld, 0, sizeof(*outWorld));
@@ -1577,7 +1599,10 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
      * location is decoded.  F0003 installs the current map and then invokes
      * GROUP.C F0195, so the loaded C04 chains own initial active state and
      * C37 scheduling rather than an empty host-only AI table. */
-    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(outWorld) < 0) goto fail;
+    if (F0195_DM1_GROUP_AddAllActiveGroupsWithResult_Compat(
+            outWorld, result ? &stagedResult : NULL) < 0) goto fail;
+
+    if (result) orch_append_tick_result_emissions_compat(result, &stagedResult);
 
     return 1;
 
@@ -1592,6 +1617,15 @@ fail:
         free(things);
     }
     return 0;
+}
+
+int F0882_WORLD_InitFromDungeonDat_Compat(
+    const char* dungeonPath,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld)
+{
+    return F0882_WORLD_InitFromDungeonDatWithResult_Compat(
+        dungeonPath, seed, outWorld, NULL);
 }
 
 static int orch_bind_iigs_creature_profile(struct GameWorld_Compat* world,
@@ -1639,13 +1673,16 @@ static int world_init_from_dungeon_dat_buffer_compat(
     uint32_t seed,
     struct GameWorld_Compat* outWorld,
     int originalBodyFormat,
-    const DM1_V1_IigsCreatureInfo* nativeRows)
+    const DM1_V1_IigsCreatureInfo* nativeRows,
+    struct TickResult_Compat* result)
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
+    struct TickResult_Compat stagedResult;
     int direction = 0, py = 0, px = 0;
 
     if (!dungeonBytes || dungeonByteCount <= 0 || !outWorld) return 0;
+    if (result) memset(&stagedResult, 0, sizeof(stagedResult));
     dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
     things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
     if (!dungeon || !things) goto fail;
@@ -1673,7 +1710,9 @@ static int world_init_from_dungeon_dat_buffer_compat(
     outWorld->party.mapY = py;
     (void)F0284_CHAMPION_SetPartyDirection_Compat(&outWorld->party, direction);
     outWorld->partyMapIndex = 0;
-    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(outWorld) < 0) goto fail;
+    if (F0195_DM1_GROUP_AddAllActiveGroupsWithResult_Compat(
+            outWorld, result ? &stagedResult : NULL) < 0) goto fail;
+    if (result) orch_append_tick_result_emissions_compat(result, &stagedResult);
     return 1;
 
 fail:
@@ -1697,7 +1736,18 @@ int F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
 {
     if (!rows || rowCount != 27U) return 0;
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 0, rows);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, rows, NULL);
+}
+
+int F0882G_WORLD_InitFromIigsDungeonDatBufferWithResult_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    const DM1_V1_IigsCreatureInfo* rows, size_t rowCount,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result)
+{
+    if (!rows || rowCount != 27U) return 0;
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, rows, result);
 }
 
 int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
@@ -1707,7 +1757,16 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 0, NULL);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, NULL, NULL);
+}
+
+int F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0, NULL, result);
 }
 
 int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
@@ -1717,7 +1776,16 @@ int F0882M_WORLD_InitFromPcMultilangBodyBuffer_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 2, NULL);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 2, NULL, NULL);
+}
+
+int F0882M_WORLD_InitFromPcMultilangBodyBufferWithResult_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 2, NULL, result);
 }
 
 int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
@@ -1727,7 +1795,16 @@ int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
     struct GameWorld_Compat* outWorld)
 {
     return world_init_from_dungeon_dat_buffer_compat(
-        dungeonBytes, dungeonByteCount, seed, outWorld, 1, NULL);
+        dungeonBytes, dungeonByteCount, seed, outWorld, 1, NULL, NULL);
+}
+
+int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJpWithResult_Compat(
+    const unsigned char* dungeonBytes, int dungeonByteCount, uint32_t seed,
+    struct GameWorld_Compat* outWorld,
+    struct TickResult_Compat* result)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 1, NULL, result);
 }
 
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world) {
@@ -12230,6 +12307,20 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
     struct GameWorld_Compat* world)
 {
     return orch_f0195_add_all_active_groups_with_result_compat(world, NULL);
+}
+
+int F0195_DM1_GROUP_AddAllActiveGroupsWithResult_Compat(
+    struct GameWorld_Compat* world,
+    struct TickResult_Compat* result)
+{
+    struct TickResult_Compat stagedResult;
+    int added;
+    if (!result) return F0195_DM1_GROUP_AddAllActiveGroups_Compat(world);
+    memset(&stagedResult, 0, sizeof(stagedResult));
+    added = orch_f0195_add_all_active_groups_with_result_compat(
+        world, &stagedResult);
+    if (added >= 0) orch_append_tick_result_emissions_compat(result, &stagedResult);
+    return added;
 }
 
 /* ReDMCSB NEWMAP.C F0003 changes the party map between GROUP.C F0194 and
