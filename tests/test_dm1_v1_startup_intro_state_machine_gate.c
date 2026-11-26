@@ -1114,6 +1114,25 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  selected_boot_receipt.valid == 0 &&
                  selected_boot_receipt.selected_entry_receipt_valid == 0,
              1);
+    selected_boot_facts.expected_game_id = "dm1";
+    selected_boot_facts.actual_source_id = "dm1";
+    selected_boot_facts.verified_asset_md5 =
+        "7f9458e4a3972d06e649a6fa85a7f34b";
+    expect_i("A36M boot-probe rejects missing F0441 entrance receipt",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.valid == 0 &&
+                 selected_boot_receipt.selected_entry_receipt_valid == 0,
+             1);
+    selected_boot_facts.source_entrance_consumed = 1;
+    expect_i("A36M boot-probe accepts consumed F0441 entrance receipt",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.valid == 1 &&
+                 selected_boot_receipt.selected_entry_receipt_valid == 1,
+             1);
     selected_boot_facts.expected_game_id = "csb";
     selected_boot_facts.actual_source_id = "csb";
     expect_i("CSB selected boot-probe receipt stays generic-valid",

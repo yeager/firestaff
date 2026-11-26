@@ -4764,14 +4764,15 @@ int dm1_v1_startup_selected_boot_probe_receipt_pc34(
         dm1_v1_startup_selected_entry_receipt_valid_pc34(
             facts->expected_game_id,
             facts->intro_bypassed);
-    /* Amiga 3.6 Multilanguage is admitted as an authentic runtime while its
-     * source-owned F0441 intro handoff remains unimplemented. Accept its
-     * narrowly identified direct path without changing the PC34/A20 gate. */
+    /* Amiga 3.6 Multilanguage skips the F0437 title, but STARTUP1.C/2.C
+     * still call ENTRANCE.C F0441 before loading a new game. Require the
+     * runtime handoff receipt for that source-owned entrance. */
     if (facts->expected_game_id && facts->verified_asset_md5 &&
         strcmp(facts->expected_game_id, "dm1") == 0 &&
         strcmp(facts->verified_asset_md5,
                "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
-        facts->intro_bypassed && facts->started_from_launcher) {
+        facts->intro_bypassed && facts->started_from_launcher &&
+        facts->source_entrance_consumed) {
         receipt.selected_entry_receipt_valid = 1;
     }
     /* In boot-probe phase-a, `active` means the selected-entry launcher is

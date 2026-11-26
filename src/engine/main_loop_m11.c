@@ -15350,6 +15350,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             selectedFacts.active = receipt.active;
             selectedFacts.started_from_launcher = receipt.startedFromLauncher;
             selectedFacts.intro_bypassed = receipt.dm1StartupIntroBypassed;
+            selectedFacts.source_entrance_consumed =
+                receipt.dm1StartupEntranceConsumed;
             selectedFacts.verified_asset_md5 = receipt.bootAssetMd5;
             /* GS first-world startup has its own authenticated native route.
              * Preserve the PC startup validator and its intro requirements. */
