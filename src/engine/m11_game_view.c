@@ -29700,12 +29700,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->assetsAvailable = 1;
     }
     /* F0882 enters NEWMAP.C F0003 / GROUP.C F0195 before the caller presents
-     * the startup sequence. Preserve its source sound requests only after the
-     * selected edition's matching audio owner is bound: I34 SND3, native
-     * Atari ST, or the supported big-endian Amiga graphics bank. FM Towns
-     * validates its native launcher later and A36 has a separate sound owner. */
+     * the startup sequence. Preserve its sound requests only when a matching
+     * owner exists: I34 SND3, native Atari ST, supported big-endian Amiga, or
+     * FM Towns. Towns playback waits for its later native launcher receipt;
+     * A36 and IIGS have separate sound owners. */
     dm1InitialSoundSourceBound = dm1Pc34Graphics ||
         state->assetLoader.atariStDm1 ||
+        state->assetLoader.dm1Fmtowns ||
         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
     if (dm1VirtualDungeonBytes) {
         /* Amiga GRAPHICS.DAT uses a big-endian legacy layout, but the
@@ -29742,12 +29743,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         dm1FmtownsBufferLoaded = spec->dm1FmtownsJapanese
-            ? F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
+            ? F0882J_WORLD_InitFromDungeonDatBufferFmTownsJpWithResult_Compat(
                   dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,
-                  0xF1A5U, &state->world)
+                  0xF1A5U, &state->world,
+                  dm1InitialSoundSourceBound ? &state->lastTickResult : NULL)
             : F0882_WORLD_InitFromDungeonDatBufferWithResult_Compat(
                   dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,
-                  0xF1A5U, &state->world, NULL);
+                  0xF1A5U, &state->world,
+                  dm1InitialSoundSourceBound ? &state->lastTickResult : NULL);
     } else {
         fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
         dm1FmtownsBufferLoaded =
@@ -29879,7 +29882,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * F0882 retained those F0179 sounds until the authenticated graphics
          * source bound the matching sound bank; publish them now, before the
          * startup animation sequence begins. */
-        if (state->lastTickResult.emissionCount > 0)
+        if (!state->assetLoader.dm1Fmtowns &&
+            state->lastTickResult.emissionCount > 0)
             M11_GameView_ProcessTickEmissions(state);
         /* ReDMCSB MEMORY.C F0608 applies G2004 to every graphics-size/load
          * request in I34M/A36M. The A36 world is already selected above;
@@ -29973,6 +29977,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
             DM1_V1_VBlankTiming_ConfigureFmTowns(&state->vblankTiming);
             state->world.levelUpAntimagicModulus = 3;
+            /* F20 SOUND.C F0064/F0065 queues the loudest request per native
+             * sample and flushes it on the sound tick. Keep F0195's startup
+             * requests until the selected EDM/JDM source is authenticated,
+             * then use the same Towns volume and arbitration path. */
+            if (state->lastTickResult.emissionCount > 0)
+                M11_GameView_ProcessTickEmissions(state);
         }
     } else {
         state->active = 1;

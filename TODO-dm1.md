@@ -14,8 +14,9 @@ source-SND3-backed, and FM Towns retains its per-sample volume/arbitration path.
 These changes do not add native A36 sound ownership or change the IIGS lane.
 Startup F0195 sound receipts are now captured for I34, Atari ST and the
 supported older Amiga formats after their sound source is bound. FM Towns
-startup receipts remain uncollected because its native launcher is admitted
-after dungeon initialization; A36 and IIGS keep separate sound owners.
+F0195 requests are retained during dungeon initialization and dispatched
+through its per-sample volume/arbitration queue only after the selected native
+EDM/JDM launcher receipt is admitted. A36 and IIGS keep separate sound owners.
 Source-accurate per-edition priority/arbitration and runtime audio captures
 remain open.
 
