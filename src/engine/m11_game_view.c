@@ -18146,11 +18146,10 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
     }
     if (plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
         if (m11_is_dm1_source_kind(state->sourceKind)) {
-            /* ReDMCSB SOUND.C F0064 (1476-1665) dispatches the event through
+            /* ReDMCSB SOUND.C F0064 (1476-1754) dispatches the event through
              * the selected edition's sound table and native playback path.
-             * The generic SND3 owner is only correct for PC34; Atari ST,
-             * Amiga and FM Towns must use the same media-bound adapter as
-             * direct DM1 source-sound requests. */
+             * Atari ST and supported legacy Amiga editions must use the same
+             * media-bound adapter as direct DM1 source-sound requests. */
             m11_audio_emit_source_sound(
                 state, plan.sourceSoundIndex,
                 M11_Audio_FallbackMarkerForSoundIndex(
