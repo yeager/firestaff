@@ -4,10 +4,13 @@
 #include <string.h>
 #include "memory_graphics_dat_pc34_compat.h"
 
-static long graphics_dat_file_size(FILE* file) {
+long F0534_FLOPPY_GetFileSize_HostCompat(FILE* file) {
         long current;
         long size;
 
+        if (file == 0) {
+                return -1;
+        }
 
         current = ftell(file);
         if (current < 0) {
@@ -38,10 +41,36 @@ struct MemoryGraphicsDatState_Compat*  state FINAL_SEPARATOR
                 state->referenceCount = 0;
                 return 0;
         }
-        state->fileSize = graphics_dat_file_size(state->file);
+        state->fileSize = F0534_FLOPPY_GetFileSize_HostCompat(state->file);
         state->cachedChunkIndex = -1;
         state->cacheContainsGraphicData = 0;
         return state->fileSize >= 0;
+}
+
+long F0535_MEMORY_GetGraphicsDatFileSize_HostCompat(
+const char* graphics_path SEPARATOR
+struct MemoryGraphicsDatState_Compat* state FINAL_SEPARATOR
+{
+        long size;
+
+        if (state == 0) {
+                return -1;
+        }
+        if (state->referenceCount > 0 && state->file != 0) {
+                return F0534_FLOPPY_GetFileSize_HostCompat(state->file);
+        }
+        if (graphics_path == 0) {
+                return -1;
+        }
+        if (!F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(graphics_path, state)) {
+                if (state->referenceCount > 0 && state->file != 0) {
+                        F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+                }
+                return -1;
+        }
+        size = F0534_FLOPPY_GetFileSize_HostCompat(state->file);
+        F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+        return size;
 }
 
 int F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(

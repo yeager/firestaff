@@ -15,10 +15,10 @@ static const DM1_V1_AmigaPlatformBoundaryPc34 kF0535 = {
     "AMIGA.H:336; MEMORY.C; STARTUP1.C",
     "Amiga-host graphics.dat sizing",
     0,
-    "The reviewed callable and platform-boundary audits leave this as an "
-    "Amiga host-facing GRAPHICS.DAT size query with no source-backed portable "
-    "PC3.4 file-size contract. Firestaff must use its existing asset-loader "
-    "routes rather than this symbol as a synthetic file-size API."
+    "Firestaff now exposes a source-mapped host FILE adapter in "
+    "memory_graphics_dat_pc34_compat.c, but the Amiga global graphics handle, "
+    "native BPTR/DOS layer and startup caller are not bound. The symbol remains "
+    "Amiga-specific; this is not a PC3.4 runtime route."
 };
 
 static const DM1_V1_AmigaPlatformBoundaryPc34 kF0551 = {

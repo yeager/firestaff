@@ -117,6 +117,12 @@ bool dm2_v1_pt_in_expanded_rect(DM2_V1_XrectState *st,
 DM2_V1_Rect *dm2_v1_query_rect(DM2_V1_XrectState *st,
                                 int16_t query);
 
+/* SPX v4 skcore.cpp::QUERY_RECT takes U16 rectangle IDs and compares the
+   stored range as unsigned values. Keep this entry separate from the signed
+   DOS/SPX v5/SKULLWIN path. */
+DM2_V1_Rect *dm2_v1_query_rect_spx_v4(DM2_V1_XrectState *st,
+                                      uint16_t query);
+
 /* Source: DM2_rect_098d_04c7 -- interpolate two rects */
 DM2_V1_Rect098d04c7Receipt dm2_v1_rect_098d_04c7(
     DM2_V1_XrectState *st,

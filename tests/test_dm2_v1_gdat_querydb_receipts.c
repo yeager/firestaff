@@ -270,6 +270,16 @@ static void test_fixture_entry_queries(void)
               width == 2u && height == 2u &&
               image_receipt.selected_data_index == 4u,
           "QUERY_GDAT_IMAGE_METRICS returns source IMG3 dimensions");
+    CHECK(dm2_v1_query_gdat_image_metrics_variant_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 1, 0, 1, 9u, 7u,
+              &width, &height, &image_receipt) &&
+              width == 2u && height == 2u,
+          "QUERY_GDAT_IMAGE_METRICS reads masked raw dimensions for a resident shelf entry");
+    CHECK(dm2_v1_query_gdat_image_metrics_variant_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 1, 0, 0, 9u, 7u,
+              &width, &height, &image_receipt) &&
+              width == 9u && height == 7u,
+          "QUERY_GDAT_IMAGE_METRICS uses decoded bitmap dimensions for a nonresident shelf entry");
     CHECK(dm2_v1_query_pict_bits_receipt(
               &loader, 0x04u, 0, 0, DM2_GDAT_CATEGORY_TITLE, 1, 0,
               &pict_bits) &&

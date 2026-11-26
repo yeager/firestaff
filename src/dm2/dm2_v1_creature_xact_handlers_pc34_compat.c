@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_creature_xact_handlers_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <string.h>
 
@@ -388,13 +389,12 @@ int dm2_v1_xact_guard_position(
 }
 
 /* ================================================================== */
-/* XACT 69 — Emit sound (c_ai.cpp:828-840)                           */
-/* Fully implemented — pure arithmetic on creature state fields.      */
+/* XACT 69 — Set target/action (c_ai.cpp:828-840). */
 /* ================================================================== */
 
-int dm2_v1_xact_emit_sound(
-    const DM2_V1_XactEmitSoundRequest *req,
-    DM2_V1_XactEmitSoundReceipt *receipt)
+int dm2_v1_xact_set_target_action(
+    const DM2_V1_XactSetTargetActionRequest *req,
+    DM2_V1_XactSetTargetActionReceipt *receipt)
 {
     if (!receipt) return 0;
     memset(receipt, 0, sizeof(*receipt));
@@ -412,17 +412,25 @@ int dm2_v1_xact_emit_sound(
         return 0;
     }
 
-    /* c_ai.cpp:833 — target X: (pos_x + dir_dx[dir]) & 0x1f */
-    receipt->target_x = (req->pos_x + dm2_v1_dir_delta_x[dir]) & 0x1F;
+    /* Source combines timer xA with the direction table, not creature x. */
+    receipt->target_x = (req->timer_x + dm2_v1_dir_delta_x[dir]) & 0x1F;
 
-    /* c_ai.cpp:837 — target Y: (pos_y + dir_dy[dir]) & 0x1f */
-    receipt->target_y = (req->pos_y + dm2_v1_dir_delta_y[dir]) & 0x1F;
+    receipt->target_y = (req->timer_y + dm2_v1_dir_delta_y[dir]) & 0x1F;
+    receipt->w_18 = (uint16_t)((req->w_18 & 0xfc00u) |
+        ((uint16_t)receipt->target_y << 5) | (uint16_t)receipt->target_x);
 
-    /* c_ai.cpp:838 — b_1d = CUTX8(v1e0572) */
+    /* c_ai.cpp:838 — b_1d = CUTX8(v1e0572). */
     receipt->b_1d = (int8_t)(req->v1e0572 & 0xFF);
 
-    /* c_ai.cpp:839 — b_1a = (b_1d == 1 ? 1 : 0) + 21 */
-    receipt->b_1a = (receipt->b_1d == 1 ? 1 : 0) + 21;
+    /* DOS/v5 select 21/22; SPX v4 selects 15/16. */
+    if (req->variant != DM2_V1_XACT_69_DOS_SPX_V5 &&
+        req->variant != DM2_V1_XACT_69_SPX_V4) {
+        receipt->fail_closed = 1;
+        receipt->valid = 0;
+        return 0;
+    }
+    receipt->b_1a = (int8_t)((receipt->b_1d == 1 ? 1 : 0) +
+        (req->variant == DM2_V1_XACT_69_SPX_V4 ? 15 : 21));
 
     return 1;
 }
@@ -757,11 +765,25 @@ int dm2_v1_xact_commerce(
 
     receipt->valid = 1;
 
-    /* c_ai.cpp:1805-1936 — very complex commerce/trade.
-     * Requires GET_CREATURE_AT, GET_ADDRESS_OF_RECORD, IS_CONTAINER_MONEYBOX,
-     * 14cd_3582, query_48ae_0767, ALLOC_NEW_DBITEM, ADD_COIN_TO_WALLET,
-     * APPEND_RECORD_TO, PROCEED_XACT_64. Fail-closed. */
-    receipt->fail_closed = 1;
+    /* c_ai.cpp:1805-1936 — delegate the source state and callbacks to the
+     * full SKProject-backed helper. Preserve fail-closed behavior for callers
+     * that still provide only the legacy narrow request fields. */
+    if (!req->source_context) {
+        receipt->fail_closed = 1;
+        return 1;
+    }
+    {
+        DM2_V1_SkprojectXact82Receipt source_receipt;
+        int source_result = dm2_v1_skproject_proceed_xact_82(
+            req->source_context, &source_receipt);
+        receipt->wallet_mutated = source_receipt.wallet_mutated != 0;
+        receipt->state_changed = source_receipt.has_creature;
+        if (!source_result || source_receipt.blocked_missing_context) {
+            receipt->fail_closed = 1;
+            return 1;
+        }
+        receipt->result = source_receipt.result;
+    }
     return 1;
 }
 

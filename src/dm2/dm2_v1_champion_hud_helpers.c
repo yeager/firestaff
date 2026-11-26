@@ -28,6 +28,19 @@ static int16_t dm2_clamp_i16(int value, int minimum, int maximum)
     return (int16_t)value;
 }
 
+static int16_t dm2_process_item_bonus_retrieve(
+    const DM2_V1_ProcessItemBonusCallbacks *callbacks,
+    int spx_v4_semantics, uint16_t item_ref, uint8_t dbspec_idx,
+    int32_t fit_flag, int16_t mode)
+{
+    if (spx_v4_semantics) {
+        return callbacks->retrieve_item_bonus_spx_v4(
+            callbacks->ctx, item_ref, dbspec_idx, fit_flag, mode);
+    }
+    return callbacks->retrieve_item_bonus(
+        callbacks->ctx, item_ref, dbspec_idx, fit_flag, mode);
+}
+
 void dm2_v1_champion_hud_receipt_clear(
     DM2_V1_ChampionHudReceipt *receipt)
 {
@@ -56,6 +69,7 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     int16_t mode;
     uint16_t item_ref;
     int walkspeed_changed;
+    int spx_v4_semantics;
     int i;
 
     if (!out_receipt) {
@@ -84,6 +98,8 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     mode = input->mode;
     item_ref = input->item_ref;
+    spx_v4_semantics = input->source_variant ==
+        DM2_V1_ITEM_BONUS_SOURCE_SPX_V4;
 
     /* slot >= 0x1E is not an equip slot -- skip to weight recalc. */
     if (input->slot >= 0x1E) {
@@ -109,7 +125,9 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     /* IS_ITEM_FIT_FOR_EQUIP(item_ref, slot, 1). */
     if (!callbacks->is_item_fit_for_equip ||
-        !callbacks->retrieve_item_bonus) {
+        (spx_v4_semantics
+            ? !callbacks->retrieve_item_bonus_spx_v4
+            : !callbacks->retrieve_item_bonus)) {
         out_receipt->blocked = 1;
         return;
     }
@@ -120,7 +138,7 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     /* --- MP bonus (DBSPEC index 0x14) --- */
     /* Skipped when mode is 0, 3, or -2. */
     if (mode != 0 && mode != 3 && mode != -2) {
-        bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
+        bonus = dm2_process_item_bonus_retrieve(callbacks, spx_v4_semantics,
                     item_ref, 0x14, fit_flag, mode);
         if (bonus != 0) {
             if (mode == 1 || mode == -1) {
@@ -139,8 +157,9 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
         /* --- Ability loop (DBSPEC indices 0x15..0x1B, abilities 0..6) --- */
         for (i = 0; i < DM2_V1_NUM_ABILITIES; i++) {
-            bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
-                        item_ref, (uint8_t)(0x15 + i), fit_flag, mode);
+            bonus = dm2_process_item_bonus_retrieve(callbacks,
+                        spx_v4_semantics, item_ref,
+                        (uint8_t)(0x15 + i), fit_flag, mode);
             if (bonus != 0) {
                 if (mode == 1 || mode == -1) {
                     /* eability[i] += (int8_t)bonus */
@@ -158,9 +177,9 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     /* --- Skill bonus loop (DBSPEC indices 0x1E..0x31, skills 0..19) --- */
     for (i = 0; i < DM2_V1_NUM_SKILL_SLOTS; i++) {
-        bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
+        bonus = dm2_process_item_bonus_retrieve(callbacks, spx_v4_semantics,
                     item_ref, (uint8_t)(0x1E + i), fit_flag, mode);
-        if (bonus != 0) {
+        if (bonus != 0 || (spx_v4_semantics && dbspec_word0 != 0)) {
             out_receipt->sbonus_delta[i] += (int8_t)bonus;
             out_receipt->skill_dirty = 1;
             out_receipt->heroflag_or |= 0x2000;
@@ -169,7 +188,7 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     }
 
     /* --- Walkspeed bonus (DBSPEC index 0x33) --- */
-    bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
+    bonus = dm2_process_item_bonus_retrieve(callbacks, spx_v4_semantics,
                 item_ref, 0x33, fit_flag, mode);
     if (bonus != 0) {
         out_receipt->walkspeed_delta += (int8_t)bonus;
@@ -179,10 +198,12 @@ void dm2_v1_PROCESS_ITEM_BONUS(
 
     /* --- Light bonus (DBSPEC index 0x32) --- */
     /* Skipped when mode is 2, -2, or 3. */
-    if (mode != 2 && mode != -2 && mode != 3) {
-        bonus = callbacks->retrieve_item_bonus(callbacks->ctx,
+    if (spx_v4_semantics
+            ? (mode != 2 && mode != -1 && mode != 3)
+            : (mode != 2 && mode != -2 && mode != 3)) {
+        bonus = dm2_process_item_bonus_retrieve(callbacks, spx_v4_semantics,
                     item_ref, 0x32, fit_flag, mode);
-        if (bonus != 0) {
+        if (bonus != 0 || (spx_v4_semantics && dbspec_word0 != 0)) {
             out_receipt->light_w00_delta += bonus;
             out_receipt->light_bonus_dirty = 1;
             if (mode != 0) {
@@ -193,7 +214,8 @@ void dm2_v1_PROCESS_ITEM_BONUS(
     }
 
     /* --- Walkspeed timer (mode == 2 and walkspeed changed) --- */
-    if (walkspeed_changed && mode == 2) {
+    if ((walkspeed_changed || (spx_v4_semantics && dbspec_word0 != 0)) &&
+        mode == 2) {
         out_receipt->queue_timer = 1;
         if (callbacks->query_dbspec_word) {
             out_receipt->timer_dbspec_0x13 =

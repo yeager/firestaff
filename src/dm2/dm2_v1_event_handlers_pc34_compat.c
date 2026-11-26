@@ -1257,13 +1257,19 @@ void dm2_v1_push_pull_rigid_body(
 
     memset(&r, 0, sizeof(r));
     if (receipt) *receipt = r;
-    if (!cb || !cb->dx_table || !cb->dy_table) return;
+    /* SKWINSPX/src/v5/skevents.cpp:467-621 resolves the front creature,
+     * validates its destination, then enters PERFORM_MOVE. Require the core
+     * callbacks so an incomplete adapter cannot claim that a body moved. */
+    if (!cb || !cb->dx_table || !cb->dy_table ||
+        !cb->is_tile_blocked || !cb->get_tile_record || !cb->move_record) {
+        return;
+    }
     if (direction_param > 5) return;
 
-    /* Compute push direction from the 6 click sub-zones:
-     * 0: forward, 1: forward-right, 2: left,
-     * 3: right, 4: back-left, 5: forward-left
-     * Source: c_events.cpp:489-534 switch */
+    /* Compute push direction from the six source click zones:
+     * 0: forward, 1: forward-right, 2: back-right, 3: back,
+     * 4: back-left, 5: forward-left.
+     * Source: SKWINSPX/src/v5/skevents.cpp:489-534. */
     switch (direction_param) {
     case 0:
         push_dir = cb->party_dir;
@@ -1301,13 +1307,12 @@ void dm2_v1_push_pull_rigid_body(
     int16_t dest_x = (int16_t)(target_x + cb->dx_table[push_dir]);
     int16_t dest_y = (int16_t)(target_y + cb->dy_table[push_dir]);
 
-    if (cb->is_tile_blocked && cb->is_tile_blocked(ctx, dest_x, dest_y))
+    if (cb->is_tile_blocked(ctx, dest_x, dest_y))
         return;
 
     /* Get the record at the target tile */
     int16_t record = -1;
-    if (cb->get_tile_record)
-        record = cb->get_tile_record(ctx, target_x, target_y);
+    record = cb->get_tile_record(ctx, target_x, target_y);
 
     if (record == -1)
         return;
@@ -1321,8 +1326,7 @@ void dm2_v1_push_pull_rigid_body(
         *cb->v1e0538 = mode;
 
     /* Move the record */
-    if (cb->move_record)
-        cb->move_record(ctx, record, target_x, target_y, dest_x, dest_y);
+    cb->move_record(ctx, record, target_x, target_y, dest_x, dest_y);
 
     if (cb->queue_noise)
         cb->queue_noise(ctx, 0x82);

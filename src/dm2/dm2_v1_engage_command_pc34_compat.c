@@ -202,8 +202,10 @@ int dm2_v1_engage_command(
     case 37: /* PROCEED_LIGHT (variant) */
     case 38: /* PROCEED_LIGHT (variant) */
         if (request->light_cb) {
+            /* PROCEED_LIGHT receives the original command code (6, 0x26,
+             * or 0x27); only ENGAGE_COMMAND's switch uses code - 1. */
             dm2_v1_proceed_light(
-                (uint16_t)(request->cmd.action_id - 1),
+                (uint16_t)request->cmd.action_id,
                 request->cmd.delay,
                 request->light_cb, request->light_ctx);
             receipt->light_toggled = 1;

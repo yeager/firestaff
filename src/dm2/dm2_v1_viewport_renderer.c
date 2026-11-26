@@ -1729,6 +1729,7 @@ static void dm2_v1_viewport_append_source_floor_item_target(
     target->object_id = (int16_t)item->object_id;
     target->view_slot = (uint8_t)view_slot;
     target->target_kind = 1u;
+    target->click_mask_ordinal = (uint8_t)(ordinal + 1);
     target->map_x = (int16_t)item->map_x;
     target->map_y = (int16_t)item->map_y;
     for (int y = 0; y < blit->dst_rect.h; ++y) {
@@ -1746,6 +1747,63 @@ static void dm2_v1_viewport_append_source_floor_item_target(
             if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s) ||
                 sx < 0 || sy < 0 ||
                 sx >= blit->src_stride) continue;
+            if (blit->transparent_color >= 0 &&
+                pixels[sy * blit->src_stride + sx] ==
+                    (uint8_t)blit->transparent_color) continue;
+            s->source_click_item_pixels[fy * DM2_VP_WIDTH + fx] =
+                (uint8_t)(ordinal + 1);
+        }
+    }
+}
+
+/* SKProject c_events.cpp creature pick path queries the front tile's depth-3
+ * picture, then accepts only an opaque source pixel. Publish the exact
+ * decoded creature blit so CLICK_VWPT can apply the same alpha-mask gate. */
+static void dm2_v1_viewport_append_source_creature_target(
+    DM2_V1_ViewportState *s, const DM2_CreatureSprite *creature,
+    const DM2_V1_CreatureAssetBlit *blit, const uint8_t *pixels,
+    int source_image_w)
+{
+    DM2_V1_ViewportClickTarget *target;
+    int ordinal;
+    if (!s || !creature || !blit || !pixels || !s->source_materials_required ||
+        creature->source_kind != 2u || !creature->source_material_proven ||
+        creature->object_id == 0u || creature->object_id == 0xffffu ||
+        blit->dst_rect.w <= 0 || blit->dst_rect.h <= 0 ||
+        blit->frame_w <= 0 || blit->frame_h <= 0 || blit->src_stride <= 0 ||
+        s->source_click_target_count >= DM2_V1_VIEWPORT_CLICK_TARGET_COUNT)
+        return;
+
+    ordinal = (int)s->source_click_target_count;
+    target = &s->source_click_targets[s->source_click_target_count++];
+    target->x = (int16_t)blit->dst_rect.x;
+    target->y = (int16_t)blit->dst_rect.y;
+    target->w = (int16_t)blit->dst_rect.w;
+    target->h = (int16_t)blit->dst_rect.h;
+    target->object_id = (int16_t)creature->object_id;
+    target->view_slot = 3u; /* source front-tile creature hit path */
+    target->target_kind = 5u;
+    target->click_mask_ordinal = (uint8_t)(ordinal + 1);
+    target->source_frame_x = (int16_t)blit->frame_x;
+    target->source_frame_w = (int16_t)blit->frame_w;
+    target->source_image_w = (int16_t)source_image_w;
+    target->source_flip_x = (uint8_t)(blit->flip_mirror & 1);
+    target->map_x = creature->map_x;
+    target->map_y = creature->map_y;
+
+    for (int y = 0; y < blit->dst_rect.h; ++y) {
+        int fy = blit->dst_rect.y + y;
+        int sy = blit->frame_y + ((blit->flip_mirror & 2)
+            ? blit->frame_h - 1 - (y * blit->frame_h) / blit->dst_rect.h
+            : (y * blit->frame_h) / blit->dst_rect.h);
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+        for (int x = 0; x < blit->dst_rect.w; ++x) {
+            int fx = blit->dst_rect.x + x;
+            int rx = (x * blit->frame_w) / blit->dst_rect.w;
+            int sx = blit->frame_x + ((blit->flip_mirror & 1)
+                ? blit->frame_w - 1 - rx : rx);
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s) ||
+                sx < 0 || sy < 0 || sx >= blit->src_stride) continue;
             if (blit->transparent_color >= 0 &&
                 pixels[sy * blit->src_stride + sx] ==
                     (uint8_t)blit->transparent_color) continue;
@@ -8465,6 +8523,18 @@ static int dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                         blit.transparent_color,
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
+                    /* skevents.cpp:1345-1387 identifies the target as front
+                     * view slot 3. Firestaff's projection depth is forward-1,
+                     * so that same front tile is depth 0 here. */
+                    if (c->source_kind == 2 && c->depth == 0 &&
+                        c->map_x == s->party_x +
+                            (s->party_dir == 1 ? 1 : s->party_dir == 3 ? -1 : 0) &&
+                        c->map_y == s->party_y +
+                            (s->party_dir == 2 ? 1 : s->party_dir == 0 ? -1 : 0)) {
+                        dm2_v1_viewport_append_source_creature_target(
+                            s, &s->creatures[c->creature_index], &blit,
+                            pixels, src_w);
+                    }
                     ++s->asset_creature_drawn_count;
                     if (c->source_kind == 2 &&
                         s->g1_scene_creature_material_ready &&

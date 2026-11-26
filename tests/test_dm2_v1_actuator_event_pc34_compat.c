@@ -85,7 +85,7 @@ static void test_invoke_actuator(void)
     actu[6] = (uint8_t)(w6 & 0xFF);
     actu[7] = (uint8_t)(w6 >> 8);
 
-    assert(dm2_v1_invoke_actuator(&queue, actu, DM2_ACTMSG_TOGGLE, 5, 0, 100) == 1);
+    assert(dm2_v1_invoke_actuator(&queue, NULL, actu, DM2_ACTMSG_TOGGLE, 5, 0, 100) == 1);
     assert(queue.count == 1);
     assert(queue.timers[0].type == 0x04);
 
@@ -107,7 +107,7 @@ static void test_activate_tick_generator(void)
     dm2_actu_set_data(actu, 10);
 
     int16_t handle = 0x0C05; /* db3, index 5 */
-    assert(dm2_v1_activate_tick_generator(&queue, actu, handle, 0, 1000) == 1);
+    assert(dm2_v1_activate_tick_generator(NULL, &queue, actu, handle, 0, 1000) == 1);
     assert(queue.count == 1);
     assert(queue.timers[0].type == DM2_V1_TIMER_TICK_GENERATOR);
     assert(queue.timers[0].value_a == handle);
@@ -115,7 +115,7 @@ static void test_activate_tick_generator(void)
     /* data = 0 should NOT queue */
     dm2_v1_source_timer_queue_init(&queue);
     dm2_actu_set_data(actu, 0);
-    assert(dm2_v1_activate_tick_generator(&queue, actu, handle, 0, 1000) == 1);
+    assert(dm2_v1_activate_tick_generator(NULL, &queue, actu, handle, 0, 1000) == 1);
     assert(queue.count == 0);
 
     printf("  PASS: activate_tick_generator\n");
@@ -179,8 +179,8 @@ static void test_null_safety(void)
                                        NULL, &receipt) == 0);
     assert(receipt.fail_closed == 1);
 
-    assert(dm2_v1_invoke_actuator(NULL, NULL, 0, 0, 0, 0) == 0);
-    assert(dm2_v1_activate_tick_generator(NULL, NULL, 0, 0, 0) == 0);
+    assert(dm2_v1_invoke_actuator(NULL, NULL, NULL, 0, 0, 0, 0) == 0);
+    assert(dm2_v1_activate_tick_generator(NULL, NULL, NULL, 0, 0, 0) == 0);
 
     printf("  PASS: null_safety\n");
 }

@@ -100,6 +100,111 @@ static inline int16_t dm2_actu_next_link(const uint8_t *r) {
     return (int16_t)((uint16_t)r[0] | ((uint16_t)r[1] << 8));
 }
 
+/* SKProject's SKWINSPX/src/v4/skevent.cpp::ACTUATE_WALL_MECHA (1643-2063)
+ * and ACTUATE_FLOOR_MECHA (2080-2145) read and mutate the same actuator
+ * words through the source Actuator record. Firestaff's record-pool
+ * initializer keeps the source bytes unchanged; Mac/Amiga words therefore
+ * need the pool-aware order here instead of the little-endian compatibility
+ * helpers above. */
+static inline uint16_t dm2_actu_read_word(const uint8_t *r, unsigned offset,
+                                           int big_endian) {
+    return big_endian
+        ? (uint16_t)(((uint16_t)r[offset] << 8) | r[offset + 1u])
+        : (uint16_t)(r[offset] | ((uint16_t)r[offset + 1u] << 8));
+}
+static inline void dm2_actu_write_word(uint8_t *r, unsigned offset,
+                                        uint16_t value, int big_endian) {
+    if (big_endian) {
+        r[offset] = (uint8_t)(value >> 8);
+        r[offset + 1u] = (uint8_t)value;
+    } else {
+        r[offset] = (uint8_t)value;
+        r[offset + 1u] = (uint8_t)(value >> 8);
+    }
+}
+static inline uint16_t dm2_actu_w2_for_pool(const uint8_t *r,
+                                             const DM2_V1_RecordPoolSet *p) {
+    return dm2_actu_read_word(r, 2u, p && p->source_words_big_endian);
+}
+static inline uint8_t dm2_actu_type_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)(dm2_actu_w2_for_pool(r, p) & 0x7Fu);
+}
+static inline uint16_t dm2_actu_data_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint16_t)((dm2_actu_w2_for_pool(r, p) >> 7) & 0x01FFu);
+}
+static inline void dm2_actu_set_data_for_pool(
+    uint8_t *r, uint16_t val, const DM2_V1_RecordPoolSet *p) {
+    uint16_t w2 = dm2_actu_w2_for_pool(r, p);
+    w2 = (uint16_t)((w2 & 0x007Fu) | ((val & 0x01FFu) << 7));
+    dm2_actu_write_word(r, 2u, w2, p && p->source_words_big_endian);
+}
+static inline uint16_t dm2_actu_w4_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return dm2_actu_read_word(r, 4u, p && p->source_words_big_endian);
+}
+static inline void dm2_actu_set_w4_for_pool(
+    uint8_t *r, uint16_t val, const DM2_V1_RecordPoolSet *p) {
+    dm2_actu_write_word(r, 4u, val, p && p->source_words_big_endian);
+}
+static inline uint8_t dm2_actu_active_status_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)(dm2_actu_w4_for_pool(r, p) & 1u);
+}
+static inline void dm2_actu_set_active_status_for_pool(
+    uint8_t *r, uint8_t v, const DM2_V1_RecordPoolSet *p) {
+    uint16_t w4 = dm2_actu_w4_for_pool(r, p);
+    dm2_actu_set_w4_for_pool(r, (uint16_t)((w4 & ~1u) | (v & 1u)), p);
+}
+static inline uint8_t dm2_actu_once_only_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w4_for_pool(r, p) >> 2) & 1u);
+}
+static inline void dm2_actu_set_once_only_for_pool(
+    uint8_t *r, uint8_t v, const DM2_V1_RecordPoolSet *p) {
+    uint16_t w4 = dm2_actu_w4_for_pool(r, p);
+    dm2_actu_set_w4_for_pool(r,
+        (uint16_t)((w4 & ~(1u << 2)) | ((v & 1u) << 2)), p);
+}
+static inline uint8_t dm2_actu_action_type_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w4_for_pool(r, p) >> 3) & 3u);
+}
+static inline uint8_t dm2_actu_revert_effect_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w4_for_pool(r, p) >> 5) & 1u);
+}
+static inline uint8_t dm2_actu_sound_effect_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w4_for_pool(r, p) >> 6) & 1u);
+}
+static inline uint8_t dm2_actu_delay_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w4_for_pool(r, p) >> 7) & 0xFu);
+}
+static inline uint16_t dm2_actu_w6_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return dm2_actu_read_word(r, 6u, p && p->source_words_big_endian);
+}
+static inline uint8_t dm2_actu_direction_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w6_for_pool(r, p) >> 4) & 3u);
+}
+static inline uint8_t dm2_actu_xcoord_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w6_for_pool(r, p) >> 6) & 0x1Fu);
+}
+static inline uint8_t dm2_actu_ycoord_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (uint8_t)((dm2_actu_w6_for_pool(r, p) >> 11) & 0x1Fu);
+}
+static inline int16_t dm2_actu_next_link_for_pool(
+    const uint8_t *r, const DM2_V1_RecordPoolSet *p) {
+    return (int16_t)dm2_actu_read_word(r, 0u,
+                                       p && p->source_words_big_endian);
+}
+
 /* DB type from a record handle (ObjectID): bits 10-13 */
 static inline int dm2_handle_db_type(int16_t handle) {
     return (int)((handle >> 10) & 0xFu);
@@ -477,7 +582,8 @@ int dm2_v1_actuate_floor_mecha_with_revive(
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.
  * Source: skevent.cpp:357-400 */
-int dm2_v1_activate_tick_generator(DM2_V1_SourceTimerQueue *queue,
+int dm2_v1_activate_tick_generator(DM2_V1_RecordPoolSet *pool_set,
+                                   DM2_V1_SourceTimerQueue *queue,
                                    const uint8_t *actu_record,
                                    int16_t record_link,
                                    int map, uint32_t game_tick);
@@ -505,6 +611,7 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
 /* INVOKE_ACTUATOR — decode actuator target and queue a timer message.
  * Source: c_tim_proc.cpp:4367-4392 */
 int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
+                           DM2_V1_RecordPoolSet *pool_set,
                            const uint8_t *actu_record,
                            int action_type, int delay_add,
                            int map, uint32_t game_tick);

@@ -2897,6 +2897,69 @@ int dm2_v1_query_gdat_image_metrics_receipt(
     return 1;
 }
 
+int dm2_v1_query_gdat_image_metrics_variant_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int source_shelf_entry_resident,
+    uint16_t decoded_width,
+    uint16_t decoded_height,
+    uint16_t *out_width,
+    uint16_t *out_height,
+    DM2_V1_GdatImageMetricsReceipt *out_receipt)
+{
+    const DM2_V1_GdatEntry *entry;
+    const uint8_t *raw = NULL;
+    size_t raw_size = 0u;
+    uint16_t width;
+    uint16_t height;
+    DM2_V1_GdatImageMetricsReceipt receipt;
+
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !out_width || !out_height) return 0;
+
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    if (!entry) return 0;
+    if (source_shelf_entry_resident) {
+        raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+        if (!raw || raw_size < 4u) return 0;
+        width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
+        height = (uint16_t)(img_rd16(raw + 2u, loader->big_endian) & 0x03ffu);
+    } else {
+        width = decoded_width;
+        height = decoded_height;
+    }
+    if (width == 0u || height == 0u) return 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.accepted = 1u;
+    receipt.category = (uint8_t)category;
+    receipt.index = (uint8_t)index;
+    receipt.field = (uint8_t)field;
+    receipt.source_shelf_entry_resident = (uint8_t)(source_shelf_entry_resident != 0);
+    receipt.data_index = entry->data_index;
+    receipt.width = width;
+    receipt.height = height;
+    if (source_shelf_entry_resident) {
+        receipt.raw_length = (uint32_t)raw_size;
+        receipt.raw_hash = dm2_fnv1a_bytes(raw, raw_size);
+    }
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        ((uint32_t)(uint8_t)category << 16) |
+            ((uint32_t)(uint8_t)index << 8) | (uint32_t)(uint8_t)field,
+        receipt.data_index,
+        ((uint32_t)width << 16) | height,
+        receipt.raw_hash ^ (uint32_t)(source_shelf_entry_resident != 0));
+    *out_width = width;
+    *out_height = height;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_query_pict_bits_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t mode,

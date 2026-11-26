@@ -57,6 +57,7 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction,
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 7;
     viewport.creatures[0].source_kind = 2;
+    viewport.creatures[0].source_material_proven = 1;
     viewport.creatures[0].object_id = 0x1000u;
     viewport.creatures[0].map_x = 12;
     viewport.creatures[0].map_y = 9;
@@ -64,6 +65,9 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction,
     viewport.creatures[0].screen_x = 160;
     viewport.creatures[0].screen_y = 90;
     viewport.creatures[0].health_pct = 100;
+    viewport.party_x = 12;
+    viewport.party_y = 10;
+    viewport.party_dir = 0;
     memset(&receipt, 0, sizeof(receipt));
     receipt.valid = 1;
     receipt.material_count = 1;
@@ -96,6 +100,13 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction,
         : viewport.asset_creature_drawn_count == 1 &&
               viewport.g1_scene_creature_material_consumed_count == 1 &&
               viewport.blocked_material_draw_count == 0 &&
+              viewport.source_click_target_count == 1u &&
+              viewport.source_click_targets[0].target_kind == 5u &&
+              viewport.source_click_targets[0].view_slot == 3u &&
+              viewport.source_click_targets[0].object_id == 0x1000 &&
+              viewport.source_click_targets[0].click_mask_ordinal == 1u &&
+              viewport.source_click_targets[0].w > 0 &&
+              viewport.source_click_targets[0].h > 0 &&
               (!direct_handoff ||
                (asset_fetch_calls == 0 && palette_fetch_calls == 0));
 }
