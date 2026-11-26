@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_REDMCSB_F0914_GRAPHIC21_H
 #define FIRESTAFF_REDMCSB_F0914_GRAPHIC21_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -26,6 +27,7 @@ extern "C" {
  */
 typedef struct {
     uint16_t *fuzzy_bits;
+    size_t fuzzy_bit_word_count;
     int16_t *fuzzy_sector_analyzed;
     int32_t *last_event22_time;
     int16_t *check_last_event22_time;
@@ -34,11 +36,13 @@ typedef struct {
 /* GRAPH21.C:170-204, MEDIA432_A20E: scans sector words 20 through 508. */
 int16_t redmcsb_f0914_graphic21_a20e(
     const uint16_t *sector_buffer,
+    size_t sector_word_count,
     redmcsb_f0914_graphic21_result *result);
 
 /* GRAPH21.C:207-241, MEDIA618_A31E: scans sector words 635 through 1123. */
 int16_t redmcsb_f0914_graphic21_a31e(
     const uint16_t *sector_buffer,
+    size_t sector_word_count,
     redmcsb_f0914_graphic21_result *result);
 
 const char *redmcsb_f0914_graphic21_source_evidence(void);

@@ -4,6 +4,7 @@
 
 static int16_t redmcsb_f0914_graphic21_run(
     const uint16_t *sector_buffer,
+    size_t sector_word_count,
     redmcsb_f0914_graphic21_result *result,
     uint16_t first_word_index,
     uint16_t last_word_index)
@@ -17,6 +18,9 @@ static int16_t redmcsb_f0914_graphic21_run(
     /* The source writes through result[0..3] and scans an edition-specific
      * sector span. Reject incomplete host buffers before making those writes. */
     if (!sector_buffer || !result || !result->fuzzy_bits ||
+        sector_word_count <= last_word_index ||
+        result->fuzzy_bit_word_count <
+            REDMCSB_F0914_GRAPHIC21_FUZZY_WORD_COUNT ||
         !result->fuzzy_sector_analyzed || !result->last_event22_time ||
         !result->check_last_event22_time) {
         return INT16_C(-1);
@@ -49,19 +53,23 @@ static int16_t redmcsb_f0914_graphic21_run(
 
 int16_t redmcsb_f0914_graphic21_a20e(
     const uint16_t *sector_buffer,
+    size_t sector_word_count,
     redmcsb_f0914_graphic21_result *result)
 {
     return redmcsb_f0914_graphic21_run(
-        sector_buffer, result, REDMCSB_F0914_GRAPHIC21_A20E_FIRST_WORD_INDEX,
+        sector_buffer, sector_word_count, result,
+        REDMCSB_F0914_GRAPHIC21_A20E_FIRST_WORD_INDEX,
         REDMCSB_F0914_GRAPHIC21_A20E_LAST_WORD_INDEX);
 }
 
 int16_t redmcsb_f0914_graphic21_a31e(
     const uint16_t *sector_buffer,
+    size_t sector_word_count,
     redmcsb_f0914_graphic21_result *result)
 {
     return redmcsb_f0914_graphic21_run(
-        sector_buffer, result, REDMCSB_F0914_GRAPHIC21_A31E_FIRST_WORD_INDEX,
+        sector_buffer, sector_word_count, result,
+        REDMCSB_F0914_GRAPHIC21_A31E_FIRST_WORD_INDEX,
         REDMCSB_F0914_GRAPHIC21_A31E_LAST_WORD_INDEX);
 }
 

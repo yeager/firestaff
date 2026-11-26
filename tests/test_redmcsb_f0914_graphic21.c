@@ -17,6 +17,7 @@ static redmcsb_f0914_graphic21_result make_result(
 {
     redmcsb_f0914_graphic21_result result = {
         fuzzy_bits,
+        REDMCSB_F0914_GRAPHIC21_FUZZY_WORD_COUNT,
         analyzed,
         last_event22_time,
         check_last_event22_time
@@ -36,7 +37,9 @@ int main(void)
     redmcsb_f0914_graphic21_result result = make_result(
         fuzzy_bits, &analyzed, &last_event22_time, &check_last_event22_time);
 
-    assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &result) == 0);
+    assert(redmcsb_f0914_graphic21_a20e(
+        a20e_sector, sizeof(a20e_sector) / sizeof(a20e_sector[0]),
+        &result) == 0);
     assert(last_event22_time == 0);
     assert(analyzed == REDMCSB_F0914_GRAPHIC21_ANALYZED_VALUE);
     assert(check_last_event22_time == REDMCSB_F0914_GRAPHIC21_CHECK_TIME_VALUE);
@@ -44,14 +47,39 @@ int main(void)
     {
         redmcsb_f0914_graphic21_result invalid = result;
         invalid.fuzzy_bits = NULL;
-        assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &invalid) == -1);
-        assert(redmcsb_f0914_graphic21_a20e(NULL, &result) == -1);
-        assert(redmcsb_f0914_graphic21_a20e(a20e_sector, NULL) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, 509U, &invalid) == -1);
+        invalid = result;
+        invalid.fuzzy_sector_analyzed = NULL;
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, 509U, &invalid) == -1);
+        invalid = result;
+        invalid.last_event22_time = NULL;
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, 509U, &invalid) == -1);
+        invalid = result;
+        invalid.check_last_event22_time = NULL;
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, sizeof(a20e_sector) / sizeof(a20e_sector[0]),
+            &invalid) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, sizeof(a20e_sector) / sizeof(a20e_sector[0]),
+            NULL) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(NULL, 0U, &result) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(a20e_sector, 508U, &result) == -1);
+        invalid = result;
+        invalid.fuzzy_bit_word_count = 28U;
+        assert(redmcsb_f0914_graphic21_a20e(
+            a20e_sector, 509U, &invalid) == -1);
+        assert(last_event22_time == 0);
+        assert(analyzed == REDMCSB_F0914_GRAPHIC21_ANALYZED_VALUE);
+        assert(check_last_event22_time ==
+               REDMCSB_F0914_GRAPHIC21_CHECK_TIME_VALUE);
     }
 
     last_event22_time = INT32_C(91);
     a20e_sector[36] = UINT16_C(0x4000);
-    assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &result) == 1);
+    assert(redmcsb_f0914_graphic21_a20e(a20e_sector, 509U, &result) == 1);
     assert(fuzzy_bits[0] == 1U);
     assert(last_event22_time == INT32_C(91));
 
@@ -59,13 +87,13 @@ int main(void)
     a20e_sector[36] = 0U;
     a20e_sector[REDMCSB_F0914_GRAPHIC21_A20E_LAST_WORD_INDEX] =
         UINT16_C(0x4000);
-    assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &result) == 1);
+    assert(redmcsb_f0914_graphic21_a20e(a20e_sector, 509U, &result) == 1);
     assert(fuzzy_bits[REDMCSB_F0914_GRAPHIC21_FUZZY_WORD_COUNT - 1U] == 1U);
 
     memset(fuzzy_bits, 0, sizeof(fuzzy_bits));
     last_event22_time = INT32_C(47);
     a31e_sector[651] = UINT16_C(0x4000);
-    assert(redmcsb_f0914_graphic21_a31e(a31e_sector, &result) == 1);
+    assert(redmcsb_f0914_graphic21_a31e(a31e_sector, 1124U, &result) == 1);
     assert(fuzzy_bits[0] == 1U);
     assert(last_event22_time == INT32_C(47));
 
