@@ -1,8 +1,10 @@
 #include "redmcsb_f0914_graphic21.h"
 
+#include <stddef.h>
+
 static int16_t redmcsb_f0914_graphic21_run(
     const uint16_t *sector_buffer,
-    const redmcsb_f0914_graphic21_result *result,
+    redmcsb_f0914_graphic21_result *result,
     uint16_t first_word_index,
     uint16_t last_word_index)
 {
@@ -11,6 +13,14 @@ static int16_t redmcsb_f0914_graphic21_run(
     uint16_t fuzzy_bit_count = UINT16_C(0);
     uint16_t fuzzy_bits = UINT16_C(0);
     int16_t differing_word_count = INT16_C(0);
+
+    /* The source writes through result[0..3] and scans an edition-specific
+     * sector span. Reject incomplete host buffers before making those writes. */
+    if (!sector_buffer || !result || !result->fuzzy_bits ||
+        !result->fuzzy_sector_analyzed || !result->last_event22_time ||
+        !result->check_last_event22_time) {
+        return INT16_C(-1);
+    }
 
     for (byte_index = first_word_index; byte_index <= last_word_index;
          ++byte_index) {
@@ -39,7 +49,7 @@ static int16_t redmcsb_f0914_graphic21_run(
 
 int16_t redmcsb_f0914_graphic21_a20e(
     const uint16_t *sector_buffer,
-    const redmcsb_f0914_graphic21_result *result)
+    redmcsb_f0914_graphic21_result *result)
 {
     return redmcsb_f0914_graphic21_run(
         sector_buffer, result, REDMCSB_F0914_GRAPHIC21_A20E_FIRST_WORD_INDEX,
@@ -48,7 +58,7 @@ int16_t redmcsb_f0914_graphic21_a20e(
 
 int16_t redmcsb_f0914_graphic21_a31e(
     const uint16_t *sector_buffer,
-    const redmcsb_f0914_graphic21_result *result)
+    redmcsb_f0914_graphic21_result *result)
 {
     return redmcsb_f0914_graphic21_run(
         sector_buffer, result, REDMCSB_F0914_GRAPHIC21_A31E_FIRST_WORD_INDEX,

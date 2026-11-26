@@ -2,6 +2,15 @@
 
 2026-11-03 ReDMCSB `BLITFILL.C:F0136` screen hatch: the PC34 M11 renderer matches the `VIDEODRV.C:F8155` VGA checker rule exactly (black at absolute pixels where `(x XOR y)&1` is zero; VGA ignores the color argument). The live action-icon hatch now selects caller-color source patterns for Amiga and FM Towns, matching Amiga G1100 and Towns EGB G4107 (`TOWNSSCR.C:53-67`) on supported DM1 and CSB profiles. Keep `PARTIAL`: EGA/Tandy, Atari ST, IIGS, other Amiga/Towns callers and other CSB platform branches still need source-specific runtime coverage. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
 
+2026-11-26 ReDMCSB `GRAPH21.C:F0914` fuzzy-sector analysis: hardened the
+bounded A20E/A31E adapter against null inputs and added regressions for both
+the source word ranges plus authentic Atari ST v1.2 STX sector 432, read from
+the original `.firestaff` archive and converted from the 68000 big-endian
+word stream. The focused tests pass. Keep the copy-protection route `PARTIAL`:
+Firestaff does not yet attach this analysis to the Atari ST runtime, model the
+protected floppy re-read/event sequence, or execute the hidden code launcher
+(`COPYPRO3.C:F0137`).
+
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.

@@ -21,7 +21,8 @@ extern "C" {
  * casts result[2] to long *. The portable boundary makes each destination
  * explicit. The caller owns all pointed-to storage and must provide a sector
  * buffer through the selected branch's last word index and 29 fuzzy words.
- * F0914 performs no null or capacity validation in the original source.
+ * The bounded host adapter rejects null pointers; callers still own the
+ * supplied buffer capacities.
  */
 typedef struct {
     uint16_t *fuzzy_bits;
@@ -33,12 +34,12 @@ typedef struct {
 /* GRAPH21.C:170-204, MEDIA432_A20E: scans sector words 20 through 508. */
 int16_t redmcsb_f0914_graphic21_a20e(
     const uint16_t *sector_buffer,
-    const redmcsb_f0914_graphic21_result *result);
+    redmcsb_f0914_graphic21_result *result);
 
 /* GRAPH21.C:207-241, MEDIA618_A31E: scans sector words 635 through 1123. */
 int16_t redmcsb_f0914_graphic21_a31e(
     const uint16_t *sector_buffer,
-    const redmcsb_f0914_graphic21_result *result);
+    redmcsb_f0914_graphic21_result *result);
 
 const char *redmcsb_f0914_graphic21_source_evidence(void);
 

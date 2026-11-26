@@ -63116,6 +63116,16 @@ set_tests_properties(test_dm1_v1_atari_st_stx PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
     LABELS "dm1;atari;stx;real-media;in-memory")
 
+add_executable(test_redmcsb_f0914_graphic21
+    tests/test_redmcsb_f0914_graphic21.c
+    src/shared/redmcsb_f0914_graphic21.c)
+target_include_directories(test_redmcsb_f0914_graphic21 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_redmcsb_f0914_graphic21
+    COMMAND test_redmcsb_f0914_graphic21)
+set_tests_properties(test_redmcsb_f0914_graphic21 PROPERTIES
+    LABELS "dm1;redmcsb;copy-protection;unit")
+
 add_executable(test_dm1_v1_fmtowns_iso9660
     tests/test_dm1_v1_fmtowns_iso9660.c
     src/dm1/dm1_v1_fmtowns_iso9660.c

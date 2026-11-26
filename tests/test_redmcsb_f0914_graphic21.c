@@ -34,13 +34,20 @@ int main(void)
     int32_t last_event22_time = INT32_C(91);
     int16_t check_last_event22_time = INT16_C(-1);
     redmcsb_f0914_graphic21_result result = make_result(
-    (void)result;
         fuzzy_bits, &analyzed, &last_event22_time, &check_last_event22_time);
 
     assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &result) == 0);
     assert(last_event22_time == 0);
     assert(analyzed == REDMCSB_F0914_GRAPHIC21_ANALYZED_VALUE);
     assert(check_last_event22_time == REDMCSB_F0914_GRAPHIC21_CHECK_TIME_VALUE);
+
+    {
+        redmcsb_f0914_graphic21_result invalid = result;
+        invalid.fuzzy_bits = NULL;
+        assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &invalid) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(NULL, &result) == -1);
+        assert(redmcsb_f0914_graphic21_a20e(a20e_sector, NULL) == -1);
+    }
 
     last_event22_time = INT32_C(91);
     a20e_sector[36] = UINT16_C(0x4000);
