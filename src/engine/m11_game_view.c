@@ -21431,10 +21431,14 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
         state->world.party.mapX = stairs.newMapX;
         state->world.party.mapY = stairs.newMapY;
         state->world.party.direction = stairs.newDirection;
-        if (m11_is_dm1_source_kind(state->sourceKind) &&
-            !F0003_WORLD_TransitionPartyMap_Compat(&state->world,stairs.toMapIndex)) {
-            state->world.party = before;
-            return 0;
+        if (m11_is_dm1_source_kind(state->sourceKind)) {
+            memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+            if (!F0003_WORLD_TransitionPartyMapWithResult_Compat(
+                    &state->world, stairs.toMapIndex, &state->lastTickResult)) {
+                state->world.party = before;
+                return 0;
+            }
+            M11_GameView_ProcessTickEmissions(state);
         }
         if (m11_is_dm1_source_kind(state->sourceKind))
             m11_dm1_wire_current_map_alcove_list(state, stairs.toMapIndex);
@@ -36001,13 +36005,18 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
      * timeline pass. Without this handoff PC34 groups on later maps never
      * become active and cannot move or attack. */
     if (m11_is_dm1_source_kind(state->sourceKind) &&
-        state->world.party.mapIndex != state->world.partyMapIndex &&
-        !F0003_WORLD_TransitionPartyMap_Compat(&state->world,state->world.party.mapIndex)) {
-        --state->world.gameTick;
-        state->world.party = beforeParty;
-        state->dm1V1MovementPipeline = beforePipeline;
-        m11_set_status(state,actionLabel,"DM1 MAP HANDOFF REJECTED");
-        return 0;
+        state->world.party.mapIndex != state->world.partyMapIndex) {
+        memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        if (!F0003_WORLD_TransitionPartyMapWithResult_Compat(
+                &state->world, state->world.party.mapIndex,
+                &state->lastTickResult)) {
+            --state->world.gameTick;
+            state->world.party = beforeParty;
+            state->dm1V1MovementPipeline = beforePipeline;
+            m11_set_status(state,actionLabel,"DM1 MAP HANDOFF REJECTED");
+            return 0;
+        }
+        M11_GameView_ProcessTickEmissions(state);
     }
     if (m11_is_dm1_source_kind(state->sourceKind) &&
         beforeParty.mapIndex != state->world.partyMapIndex) {

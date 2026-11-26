@@ -529,6 +529,12 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
  * in world->party; failure preserves group/timeline ownership. */
 int F0003_WORLD_TransitionPartyMap_Compat(
     struct GameWorld_Compat* world, int destinationMapIndex);
+/* Result-bearing F0003 variant for live callers that consume TickResult
+ * emissions. The result is appended only after the staged handoff commits. */
+int F0003_WORLD_TransitionPartyMapWithResult_Compat(
+    struct GameWorld_Compat* world,
+    int destinationMapIndex,
+    struct TickResult_Compat* result);
 
 /* ================================================================
  *  Group B — Tick Orchestrator (F0884-F0886)

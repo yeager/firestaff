@@ -11953,7 +11953,8 @@ static int orch_add_generated_group_active_state_compat(
     int mapIndex,
     int mapX,
     int mapY,
-    int activeGroupCapacity)
+    int activeGroupCapacity,
+    struct TickResult_Compat* result)
 {
     struct CreatureAIState_Compat* ai;
     DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
@@ -11998,6 +11999,17 @@ static int orch_add_generated_group_active_state_compat(
         memset(ai, 0, sizeof(*ai));
         for (creature = 0; creature < 4; ++creature)
             ai->aspect[creature] = (uint8_t)active.aspect[creature];
+        if (result && receipt.emitted_sound_count > 0) {
+            struct OrchF0179SoundList_Compat sounds;
+            struct TimelineEvent_Compat event;
+            memset(&sounds, 0, sizeof(sounds));
+            memset(&event, 0, sizeof(event));
+            orch_record_f0179_sounds_compat(&sounds, &receipt);
+            event.mapIndex = mapIndex;
+            event.mapX = mapX;
+            event.mapY = mapY;
+            orch_emit_f0179_sounds_compat(world, &event, result, &sounds);
+        }
     }
 
     /* ReDMCSB GROUP.C:414-447/F0183 creates ACTIVE_GROUP state for a
@@ -12109,8 +12121,9 @@ int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
     return dm1_v1_group_state_initialize_f0196_pc34(world, NULL);
 }
 
-int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
-    struct GameWorld_Compat* world)
+static int orch_f0195_add_all_active_groups_with_result_compat(
+    struct GameWorld_Compat* world,
+    struct TickResult_Compat* result)
 {
     const struct DungeonMapDesc_Compat* map;
     const struct DungeonMapTiles_Compat* tiles;
@@ -12188,7 +12201,8 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
                 if (world->creatureAICount < DM1_PC34_ACTIVE_GROUP_CAPACITY) {
                     if (!orch_add_generated_group_active_state_compat(
                             world, groupIndex, group, world->partyMapIndex,
-                            mapX, mapY, DM1_PC34_ACTIVE_GROUP_CAPACITY)) {
+                            mapX, mapY, DM1_PC34_ACTIVE_GROUP_CAPACITY,
+                            result)) {
                         return -1;
                     }
                 }
@@ -12212,17 +12226,25 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
     return added;
 }
 
+int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
+    struct GameWorld_Compat* world)
+{
+    return orch_f0195_add_all_active_groups_with_result_compat(world, NULL);
+}
+
 /* ReDMCSB NEWMAP.C F0003 changes the party map between GROUP.C F0194 and
  * F0195.  Both sides write source-owned state (C04 and the event heap), so
  * stage the complete ownership boundary before publishing it to M10. */
-int F0003_WORLD_TransitionPartyMap_Compat(
+int F0003_WORLD_TransitionPartyMapWithResult_Compat(
     struct GameWorld_Compat* world,
-    int destinationMapIndex)
+    int destinationMapIndex,
+    struct TickResult_Compat* result)
 {
     struct GameWorld_Compat staged;
     struct DungeonThings_Compat stagedThings;
     struct DungeonGroup_Compat* stagedGroups = NULL;
     struct DM1ActiveGroup_Compat activeGroups[DM1_PC34_ACTIVE_GROUP_CAPACITY];
+    struct TickResult_Compat stagedResult;
     int activeCount;
     int i;
 
@@ -12251,6 +12273,7 @@ int F0003_WORLD_TransitionPartyMap_Compat(
     }
 
     staged = *world;
+    if (result) memset(&stagedResult, 0, sizeof(stagedResult));
     stagedThings = *world->things;
     stagedThings.groups = stagedGroups;
     /* F0194/F0180 may change decoded C04 fields. Defer raw publication
@@ -12320,7 +12343,8 @@ int F0003_WORLD_TransitionPartyMap_Compat(
     staged.partyMapIndex = destinationMapIndex;
     staged.party.mapIndex = destinationMapIndex;
     staged.newPartyMapIndex = -1;
-    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(&staged) < 0) {
+    if (orch_f0195_add_all_active_groups_with_result_compat(
+            &staged, result ? &stagedResult : NULL) < 0) {
         free(stagedGroups);
         return 0;
     }
@@ -12353,7 +12377,23 @@ int F0003_WORLD_TransitionPartyMap_Compat(
     world->pc34ActiveGroupSourceCount = staged.pc34ActiveGroupSourceCount;
     world->timeline = staged.timeline;
     world->masterRng = staged.masterRng;
+    if (result) {
+        int emission;
+        for (emission = 0; emission < stagedResult.emissionCount; ++emission) {
+            if (result->emissionCount >= TICK_EMISSION_CAPACITY) break;
+            result->emissions[result->emissionCount++] =
+                stagedResult.emissions[emission];
+        }
+    }
     return 1;
+}
+
+int F0003_WORLD_TransitionPartyMap_Compat(
+    struct GameWorld_Compat* world,
+    int destinationMapIndex)
+{
+    return F0003_WORLD_TransitionPartyMapWithResult_Compat(
+        world, destinationMapIndex, NULL);
 }
 
 static int orch_link_existing_group_to_square_compat(
@@ -12388,7 +12428,7 @@ static int orch_link_existing_group_to_square_compat(
 
     (void)orch_add_generated_group_active_state_compat(
         world, groupIndex, group, mapIndex, mapX, mapY,
-        GAMEWORLD_CREATURE_AI_CAPACITY);
+        GAMEWORLD_CREATURE_AI_CAPACITY, NULL);
     orch_schedule_generated_group_wandering_event_compat(
         world, groupIndex, group, mapIndex, mapX, mapY);
     return 1;
@@ -15973,8 +16013,8 @@ int F0884_ORCH_AdvanceOneTick_Compat(
                  * map.  Its authenticated ACTIVE_GROUP/timeline state stays
                  * intact until an actual F0003 handoff occurs. */
                 world->newPartyMapIndex = -1;
-            } else if (!F0003_WORLD_TransitionPartyMap_Compat(
-                           world, world->newPartyMapIndex)) {
+            } else if (!F0003_WORLD_TransitionPartyMapWithResult_Compat(
+                           world, world->newPartyMapIndex, outResult)) {
                 return ORCH_FAIL;
             }
             mapTransitions++;

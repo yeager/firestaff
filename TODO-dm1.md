@@ -2501,9 +2501,11 @@ parity.
   an individual slot without reproducing an out-of-bounds Aspect[-1] read.
   F0179 now carries its PC3.4 Couatl movement and Animated Armour ongoing-
   attack sound gates through committed reaction/fanout dispatch
-  (GROUP.C:242, 270-280). F0183 map-entry initialization still has no
-  result-emission handoff, and authentic live captures must validate sound
-  priority/arbitration; do not replace these with a generic audio effect.
+  (GROUP.C:242, 270-280). F0183 map-entry sound requests now enter the
+  TickResult on staged F0003 transitions and are published only after the
+  map handoff commits; the orchestrator, M11 stair and movement callers now
+  consume those emissions. Validate sound priority/arbitration with authentic
+  live captures. Do not replace these with a generic audio effect.
   Remaining integration requirements:
   - Audit remaining attack-entry transitions beyond C31-C37 with their
     own deletion/delay rules. Obtain turning-pair
