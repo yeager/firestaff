@@ -9,7 +9,8 @@ extern "C" {
 #endif
 
 /* DM2 COMPACT_TIMERLIST — remove empty timer slots before save.
- * Source: sksvgame.cpp:1715-1737.
+ * Source: SKProject 2c59a2c, SKULLWIN/c_savegame.cpp:1715-1737 and
+ * SKWINDOS/src/c_savegame.cpp:1098-1120.
  *
  * Walks num_timers entries. When a no-type (type == 0) entry is found,
  * copies the next non-empty entry into it and clears the source.
@@ -17,13 +18,16 @@ extern "C" {
 
 /* Compact timer array in place.
  * timers: raw byte array of timer entries.
+ * timer_capacity: number of entries available in the caller-owned array.
  * entry_size: size of each timer entry in bytes.
  * type_offset: byte offset of the type field within each entry.
  * num_timers: number of entries to process.
  *
- * No-type entries (type byte == 0) are filled from the next non-empty entry. */
+ * No-type entries (type byte == 0) are filled from the next non-empty entry.
+ * An empty tail is preserved; invalid capacities and offsets are ignored. */
 void dm2_v1_compact_timerlist(
     uint8_t *timers,
+    size_t timer_capacity,
     size_t entry_size,
     size_t type_offset,
     int num_timers);

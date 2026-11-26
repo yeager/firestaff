@@ -149,7 +149,7 @@ static void test_timer_accessors(void) {
 /* ── Test 13: compact timerlist no-op on full list ───────────────────── */
 static void test_compact_timerlist_noop(void) {
     uint8_t timers[6] = {1, 10, 2, 20, 3, 30};
-    dm2_v1_compact_timerlist(timers, 2, 0, 3);
+    dm2_v1_compact_timerlist(timers, 3, 2, 0, 3);
     assert(timers[0] == 1 && timers[2] == 2 && timers[4] == 3);
     printf("  PASS: compact timerlist no-op on full list\n");
 }

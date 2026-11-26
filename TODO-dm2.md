@@ -105,6 +105,15 @@ the source's valid-empty-tail assumption but leaving corrupt/missing sentinel
 behavior unbounded. Keep DOS and v5 partial until a transactional live-save
 owner binds the ordered operation and bounds its source array.
 
+2026-11-26 SKProject `COMPACT_TIMERLIST` bounds: the standalone Firestaff
+helper now takes caller capacity, validates active count and type offset, and
+preserves an empty tail without scanning beyond `num_timers`, matching the
+source's valid nonempty compaction order while containing its empty-tail
+assumption (`SKWINDOS/src/c_savegame.cpp:1098-1120`,
+`SKULLWIN/c_savegame.cpp:1715-1737`). Unit regressions cover ordinary gaps,
+empty tails and count greater than capacity. The helper remains outside a
+transactional live-save owner; DOS/v5 save parity remains `PARTIAL`.
+
 2026-11-01 skproject `PROCEED_COMMAND_SLOT` / `events_30DEA`: M11 events
 113-115 now track per-hero/hand command counters, apply the DOS/SPX v5
 field-14/RAND16 charge gate, consume CMDSTR field-8 charges, and remove plus
