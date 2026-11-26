@@ -4489,12 +4489,16 @@ not used as its final verification.
   warnings. This guards malformed compatibility calls and does not claim
   attack-event trace or gameplay parity.
 
-- 2026-11-26: Routed ReDMCSB `GROUP.C:F0179` map-entry sound requests through
-  the staged `NEWMAP.C:F0003` transition result. A successful F0183 admission
-  appends its Couatl movement or Animated Armour request to `TickResult`; a
-  rejected handoff publishes no sound. The world-tick orchestrator and both
-  direct M11 map-transition callers consume the result through the standard
-  emission handler. The focused source files pass C11 syntax checks, and
-  GitHub Actions run 45887505469 passed all Linux, macOS and Windows builds,
-  verifications and policy jobs. Authentic sound-priority arbitration and
-  edition metadata beyond I34 remain unverified.
+- 2026-11-26: Routed ReDMCSB `GROUP.C:F0179` active-group sound requests into
+  `TickResult` on staged `NEWMAP.C:F0003` transitions and result-bearing
+  generator/deferred-F0267 arrivals. Generator arrivals request audible
+  teleporter sounds before F0183/F0179 and the F0185 generation buzz after,
+  matching ReDMCSB `MOVESENS.C`/`GROUP.C` order. A successful F0183 admission
+  forwards Couatl movement or Animated Armour requests; a rejected staged
+  handoff publishes no sound. The world-tick orchestrator and direct M11
+  transition callers consume these emissions through the standard handler.
+  The focused changed C source passes a C11 syntax check. The earlier staged
+  map-transition path passed GitHub Actions run 45887505469; the added
+  generator/deferred-arrival path is awaiting its CI run.
+  Authentic sound-priority arbitration and edition metadata beyond I34 remain
+  unverified.

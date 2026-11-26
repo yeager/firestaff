@@ -1,8 +1,11 @@
-2026-11-26 ReDMCSB `GROUP.C:F0179/F0183` map-entry sound handoff: F0179's
-Couatl movement and Animated Armour requests now flow through the staged
-F0003 transition into `TickResult`; the orchestrator, M11 stair and movement
-callers publish them only after a successful map handoff. Remaining work is
-authentic sound-priority/arbitration evidence and edition metadata beyond I34.
+2026-11-26 ReDMCSB `GROUP.C:F0179/F0183` active-group sound handoff: F0179's
+Couatl movement and Animated Armour requests now flow through staged F0003
+map transitions and result-bearing group generator/deferred-F0267 arrivals.
+At generator destinations, audible F0267 teleporter requests precede F0179
+and F0185's generation buzz follows it, matching MOVESENS.C and GROUP.C
+request order. The orchestrator and M11 transition callers consume those
+TickResult emissions. Remaining work is authentic sound-priority/arbitration
+evidence and edition metadata beyond I34.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 
@@ -2508,8 +2511,8 @@ parity.
   F0179 now carries its PC3.4 Couatl movement and Animated Armour ongoing-
   attack sound gates through committed reaction/fanout dispatch
   (GROUP.C:242, 270-280). F0183 map-entry sound requests now enter the
-  TickResult on staged F0003 transitions and are published only after the
-  map handoff commits; the orchestrator, M11 stair and movement callers now
+  TickResult on staged F0003 transitions and result-bearing group generator
+  and deferred-F0267 arrivals; the orchestrator and M11 transition callers
   consume those emissions. Edition metadata beyond I34 and authentic sound
   priority/arbitration captures remain open. Do not replace these with a
   generic audio effect.
@@ -2533,7 +2536,8 @@ parity.
 - Complete F0183/F0180 admission fidelity beyond the implemented F0179 aspect/RNG
   initialization and successful staged RNG publication. Obtain original traces
   beyond the bounded multi-group scan-order and partial-admission rollback tests.
-  Check Couatl sound emission and edition-specific metadata beyond I34.
+  Couatl/Animated Armour requests are now carried for I34 F0183 admissions;
+  verify edition-specific metadata beyond I34 and original sound arbitration.
   ReDMCSB TIMELINE.C F0234:126-151 orders equal-time events by descending
   native type, descending priority, then ascending source event-pool address.
   The M11 queue now preserves those first two keys for C29-C41 events when

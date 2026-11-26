@@ -12401,7 +12401,8 @@ static int orch_link_existing_group_to_square_compat(
     int groupIndex,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    struct TickResult_Compat* result)
 {
     struct DungeonGroup_Compat* group;
     int sftIndex;
@@ -12428,7 +12429,7 @@ static int orch_link_existing_group_to_square_compat(
 
     (void)orch_add_generated_group_active_state_compat(
         world, groupIndex, group, mapIndex, mapX, mapY,
-        GAMEWORLD_CREATURE_AI_CAPACITY, NULL);
+        GAMEWORLD_CREATURE_AI_CAPACITY, result);
     orch_schedule_generated_group_wandering_event_compat(
         world, groupIndex, group, mapIndex, mapX, mapY);
     return 1;
@@ -12475,17 +12476,19 @@ static int orch_materialize_generated_group_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     const struct GeneratorResult_Compat* generator,
-    int* outGroupIndex,
-    struct OrchTeleporterBuzzList_Compat* outTeleporterBuzzes)
+    struct TickResult_Compat* result,
+    int* outGroupIndex)
 {
     struct DungeonGroup_Compat* group;
+    struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
     int sftIndex;
     int groupIndex;
     int i;
 
     if (outGroupIndex) *outGroupIndex = -1;
-    orch_teleporter_buzz_list_init_compat(outTeleporterBuzzes);
-    if (!world || !ev || !generator || !world->dungeon || !world->things) return 0;
+    orch_teleporter_buzz_list_init_compat(&teleporterBuzzes);
+    if (!world || !ev || !generator || !result ||
+        !world->dungeon || !world->things) return 0;
     if (!generator->spawned) return 0;
 
     sftIndex = orch_square_first_thing_list_index_compat(
@@ -12530,7 +12533,7 @@ static int orch_materialize_generated_group_compat(
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
             world, groupIndex, &destMapIndex, &destMapX, &destMapY,
-            outTeleporterBuzzes);
+            &teleporterBuzzes);
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
                 &fallKilledGroup, movingFixedDropCells,
@@ -12555,6 +12558,13 @@ static int orch_materialize_generated_group_compat(
             !routePlan.valid) {
             return 0;
         }
+
+        /* MOVESENS.C F0267:521-524 requests each audible teleporter buzz
+         * while traversing the destination chain, before linking the group.
+         * The link then enters GROUP.C F0183:414-447/F0179:242,270-280;
+         * GROUP.C F0185:543-547 requests the independent generation buzz
+         * after F0267 returns. Preserve that order in the live TickResult. */
+        orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
 
         if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_REMOVE_PC34) {
             if (!fallKilledGroup) {
@@ -12588,7 +12598,7 @@ static int orch_materialize_generated_group_compat(
 
         if (!orch_link_existing_group_to_square_compat(
                 world, groupIndex, destMapIndex,
-                routePlan.mapX, routePlan.mapY)) {
+                routePlan.mapX, routePlan.mapY, result)) {
             return 0;
         }
         if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -12717,7 +12727,7 @@ static int orch_handle_deferred_group_move_event_compat(
             routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_CHAOS_ADJACENT_INSERT_PC34
                 ? ev->mapIndex
                 : retry.mapIndex,
-            routePlan.mapX, routePlan.mapY);
+            routePlan.mapX, routePlan.mapY, result);
     }
 }
 
@@ -14103,7 +14113,6 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     const struct DungeonSensor_Compat* sensor;
     struct GeneratorContext_Compat ctx;
     struct GeneratorResult_Compat generator;
-    struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
 
     if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
     if (ev->aux4 > 0) {
@@ -14164,8 +14173,7 @@ static int orch_handle_group_generator_trigger_runtime_compat(
 
     {
         int placed = orch_materialize_generated_group_compat(
-            world, ev, &generator, 0, &teleporterBuzzes);
-        orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
+            world, ev, &generator, result, 0);
         if (placed) {
             /* ReDMCSB GROUP.C:543-547/F0185: successful placement requests
              * M560_SOUND_BUZZ independently of the sensor's Audible flag. */

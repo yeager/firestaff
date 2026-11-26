@@ -1,7 +1,12 @@
-# Firestaff v3.0.426
+# Unreleased
 
 ## User-facing changes
 
+- `DM1 group-entry sounds`: carry creature movement and attack sound requests through map and group arrivals, preserving audible teleporter, creature and group-generation request order.
+
+# Firestaff v3.0.426
+
+## User-facing changes
 - `DM2 moneybox`: change the DOS PC-English panel to display source-derived coin stacks and route supported deposit and withdrawal actions through the selected moneybox. Other editions and complete transaction parity remain open.
 - `DM2 lighting recalculation`: update shared dynamic-light state on supported item and inventory transitions.
 - `DM2 FM Towns HUD`: restore all six authentic movement controls and draw the live Health, Stamina and Mana bars from Towns RAW4 rectangles, champion state and the original interface palette.
