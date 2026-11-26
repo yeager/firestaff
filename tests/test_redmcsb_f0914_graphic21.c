@@ -93,6 +93,8 @@ int main(void)
     memset(fuzzy_bits, 0, sizeof(fuzzy_bits));
     last_event22_time = INT32_C(47);
     a31e_sector[651] = UINT16_C(0x4000);
+    assert(redmcsb_f0914_graphic21_a31e(a31e_sector, 1123U, &result) == -1);
+    assert(last_event22_time == INT32_C(47));
     assert(redmcsb_f0914_graphic21_a31e(a31e_sector, 1124U, &result) == 1);
     assert(fuzzy_bits[0] == 1U);
     assert(last_event22_time == INT32_C(47));
