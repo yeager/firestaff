@@ -242,7 +242,7 @@ ReDMCSB `VIDEO.C` F133 around lines 839–1006 and `DUNVIEW.C` around lines
 authentic asset-composition checks; an end-to-end live explosion capture
 remains open. This work alone does not establish full viewport parity.
 
-2026-10-30 CSB Atari F0115 ordinary explosion work in progress: the new
+2026-10-30 CSB Atari F0115 ordinary explosion implementation: the
 planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226/G0228 and native
 M614 mapping. The live Atari route reads C15 records in SFT order, validates
 them against the runtime explosion list, uses the shared G0349 random stream
