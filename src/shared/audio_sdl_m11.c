@@ -1893,7 +1893,7 @@ int M11_Audio_PlayDm1Amiga36Sound(M11_AudioState* state,
     };
     unsigned char* raw;
     size_t rawSize = 0u;
-    unsigned int sourceRate, outputCount, i;
+    unsigned int devicePeriod, sourceRate, outputCount, i;
     float* stereo = NULL;
     int accepted = 0;
     if (!state || !state->initialized || !graphics || soundIndex < 0 ||
@@ -1903,7 +1903,9 @@ int M11_Audio_PlayDm1Amiga36Sound(M11_AudioState* state,
     if (!dm1_v1_amiga36_graphic_read_raw(graphics, graphicsSize,
             sounds[soundIndex].graphic, raw, 65535u, &rawSize) ||
         rawSize <= 2u) goto done;
-    sourceRate = 3579545u / sounds[soundIndex].period;
+    devicePeriod = 72800u / sounds[soundIndex].period;
+    if (!devicePeriod) goto done;
+    sourceRate = 3579545u / devicePeriod;
     if (!sourceRate) goto done;
     outputCount = (unsigned int)(((rawSize - 2u) * M11_AUDIO_SAMPLE_RATE +
         sourceRate - 1u) / sourceRate);
