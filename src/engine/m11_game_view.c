@@ -68,6 +68,8 @@
 #include "csb_v1_atari_f0115_explosion_plan.h"
 #include "csb_v1_atari_f0115_click_bounds.h"
 #include "csb_v1_atari_f0113_fluxcage_plan.h"
+#include "csb_v1_atari_f0115_alcove_shift.h"
+#include "csb_v1_atari_f0115_alcove_shift.h"
 #include "csb_v1_atari_f0113_fluxcage_blit.h"
 #include "csb_v1_atari_f0133_indexed_blit.h"
 #include "csb_v1_atari_f0128_cell_schedule.h"
@@ -6958,10 +6960,8 @@ static int m11_csb_atari_st_draw_alcove_objects(
                 }
                 /* Match the source coordinate gate, rather than the blitter's
                  * pixel count, when advancing the pile sequence. */
-                if (alcove_coordinate_visible) {
-                    ++shift_index;
-                    if (shift_index >= 14u) shift_index = 2u;
-                }
+                shift_index = csb_v1_atari_f0115_alcove_shift_advance(
+                    shift_index, alcove_coordinate_visible);
             }
         }
         next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing_id);

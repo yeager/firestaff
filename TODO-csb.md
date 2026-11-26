@@ -1770,7 +1770,10 @@ ReDMCSB DUNVIEW.C F0115 advances the index after that coordinate gate and
 before blitting, so transparent/clipped sprites still consume a shift. The
 Atari walker now reads the bounded source aspect/coordinate tables and advances
 only when the source Y-coordinate is nonzero. This correction has not yet been
-exercised with an original-media alcove encounter or pixel comparison, so the
+exercised with an original-media alcove encounter or pixel comparison. A
+focused F0115 helper now owns the G0217 advance/wrap rule and covers absent
+coordinates, visible coordinates, and wraparound; this narrows the logic gap
+but does not verify the live renderer against original Atari media, so the
 route remains partial.
 
 2026-11-26 CSB Atari F0115 status reconciliation: earlier viewport backlog
