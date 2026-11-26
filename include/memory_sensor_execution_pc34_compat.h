@@ -62,6 +62,7 @@ struct SensorEffect_Compat {
     int sourceSensorIndex;   /* Transient F0272 owner; not serialized */
     int sourceOnceOnly;      /* Transient F0272 mutation receipt; not serialized */
     int sourceAudible;       /* Transient F0276 switch-sound receipt; not serialized */
+    int sourceLeaderIndex;   /* Transient G0411 snapshot for leader-only C10 */
 };
 
 struct SensorEffectList_Compat {
@@ -189,6 +190,12 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList);
+
+/* Attach the G0411 leader captured at the source sensor pass to transient
+ * local C10 receipts. This never changes the serialized sensor format. */
+void F0724_SENSOR_SetLeaderReceipt_Compat(
+    struct SensorEffectList_Compat* effects,
+    int leaderIndex);
 
 /* ReDMCSB MOVESENS.C F0276 object add/remove pass for a floor square.
  * The caller owns the source link/unlink transaction and invokes this after

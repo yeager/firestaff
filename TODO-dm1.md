@@ -2725,9 +2725,12 @@ parity.
   ReDMCSB MOVESENS.C F0270's floor C10 local effect now reaches M11 as a
   typed local Steal-XP effect; the production WALK_ON consumer divides 300
   across the source champion count and awards each living champion through
-  F0304. Its focused regression checks the CELL_ANY receipt. Cell-specific
-  leader-only C10 still needs the authenticated G0411 identity in the sensor
-  context; do not substitute the UI-selected champion. F0271's final
+  F0304. The object-change receipt now retains F0276's trigger cell (the
+  changed Thing's packed cell on wall squares and CELL_ANY on floor squares),
+  so CELL_ANY still divides 300 across the source champion count, while a
+  cell-specific C10 awards all 300 only to the living G0411 leader. The
+  leader receipt uses the runtime leader field restored independently from
+  PANEL.C's G0423 inventory owner. F0271's final
   CLEAR/TOGGLE rotation now reaches the shared chain mutator after each
   party F0276 batch. F0272 disables triggered OnceOnly sensors on the party
   route and preserves raw Type_Data; other local effects, OnceOnly behavior

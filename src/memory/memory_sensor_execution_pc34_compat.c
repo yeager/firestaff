@@ -501,6 +501,7 @@ int F0276_SENSOR_ProcessObjectFloorChange_Compat(
     int changedType;
     int changedObjectType;
     int sensorCount;
+    int triggerCell = -1;
     int existingObject = 0;
     int existingGroup = 0;
     int sameTypeObject = 0;
@@ -522,6 +523,14 @@ int F0276_SENSOR_ProcessObjectFloorChange_Compat(
      * exclude that exact record from the census to preserve the source view. */
     sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
     if (sftIdx >= 0 && sftIdx < things->squareFirstThingCount) {
+        if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount &&
+            dungeon->tiles && dungeon->tiles[mapIndex].squareData &&
+            (dungeon->tiles[mapIndex].squareData[sftIdx] &
+             DUNGEON_SQUARE_MASK_TYPE) >> 5 == DUNGEON_ELEMENT_WALL) {
+            /* ReDMCSB F0276 keys wall sensor passes to the changed Thing's
+             * M011_CELL; floor passes use CM1_CELL_ANY. */
+            triggerCell = (int)THING_GET_CELL(changedThing);
+        }
         unsigned short ref = things->squareFirstThings[sftIdx];
         while (ref != THING_NONE && ref != THING_ENDOFLIST && safety < 64) {
             int type;
@@ -596,7 +605,8 @@ int F0276_SENSOR_ProcessObjectFloorChange_Compat(
             effect->destMapIndex = source->localEffect ? mapIndex : -1;
             effect->destMapX = onSquare->targetMapX;
             effect->destMapY = onSquare->targetMapY;
-            effect->destCell = source->localEffect ? -1 : onSquare->targetCell;
+            effect->destCell = source->localEffect
+                ? triggerCell : onSquare->targetCell;
             effect->textIndex = source->localEffect
                 ? source->localMultiple : result.resolvedEffect;
             effect->delayTicks = source->value;
@@ -758,6 +768,7 @@ static int sensor_process_party_enter_leave(
                     ? mapIndex : -1;
                 effect->destMapX = sensors[i].targetMapX;
                 effect->destMapY = sensors[i].targetMapY;
+                /* ReDMCSB F0276 party passes call F0272 with CELL_ANY. */
                 effect->destCell = sourceSensor->localEffect
                     ? -1 : sensors[i].targetCell;
                 effect->textIndex = sourceSensor->localEffect
@@ -859,6 +870,19 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     return sensor_process_party_enter_leave(
         dungeon, things, mapIndex, mapX, mapY, triggerEvent, partyOnSquare,
         party, leaderHandThing, outList);
+}
+
+void F0724_SENSOR_SetLeaderReceipt_Compat(
+    struct SensorEffectList_Compat* effects,
+    int leaderIndex)
+{
+    int i;
+    if (!effects) return;
+    for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
+        if (effects->effects[i].kind == SENSOR_EFFECT_LOCAL_STEAL_XP) {
+            effects->effects[i].sourceLeaderIndex = leaderIndex;
+        }
+    }
 }
 
 int F0720_SENSOR_CountAudiblePartyPass_Compat(

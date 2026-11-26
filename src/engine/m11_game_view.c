@@ -20773,10 +20773,15 @@ static int m11_apply_dm1_square_actuator(
 }
 
 static void m11_apply_sensor_effects(M11_GameViewState* state,
-                                     const struct SensorEffectList_Compat* effects) {
+                                     struct SensorEffectList_Compat* effects) {
     const struct SensorEffect_Compat* lastLocalEffect = NULL;
     int i;
     if (!state || !effects || effects->count <= 0) return;
+
+    /* The source floor pass runs with G0411 stable through dispatch. Snapshot
+     * it into transient C10 receipts before any effect mutates runtime state. */
+    F0724_SENSOR_SetLeaderReceipt_Compat(
+        effects, state->world.party.activeChampionIndex);
 
     for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
         const struct SensorEffect_Compat* e = &effects->effects[i];
@@ -20948,14 +20953,27 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             /* ReDMCSB MOVESENS.C:F0269:1038-1075/F0270:1081-1097: C10
              * awards 300 Steal XP.
              * For CM1_CELL_ANY the source divides before iterating living
-             * champions; a cell-specific local C10 awards only G0411, whose
-             * identity is not yet present in this movement receipt. */
+             * champions; a cell-specific local C10 awards only G0411, captured
+             * in the transient sensor receipt before dispatch. */
             const int total = 300;
             int championCount = state->world.party.championCount;
             int champion;
             int amount;
-            if (e->textIndex != 10 || e->destCell >= 0 || championCount <= 0 ||
+            if (e->textIndex != 10 || championCount <= 0 ||
                 championCount > CHAMPION_MAX_PARTY) {
+                break;
+            }
+            if (e->destCell >= 0) {
+                champion = e->sourceLeaderIndex;
+                if (champion < 0 || champion >= championCount ||
+                    champion >= CHAMPION_MAX_PARTY ||
+                    !state->world.party.champions[champion].present ||
+                    state->world.party.champions[champion].hp.current <= 0) {
+                    break;
+                }
+                m11_award_magic_xp(state, champion, LIFECYCLE_SKILL_STEAL,
+                                   total);
+                m11_refresh_hash(state);
                 break;
             }
             amount = total / championCount;
