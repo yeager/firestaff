@@ -1595,10 +1595,10 @@ int F0882_WORLD_InitFromDungeonDatWithResult_Compat(
     (void)F0284_CHAMPION_SetPartyDirection_Compat(&outWorld->party, direction);
     outWorld->partyMapIndex = 0;
 
-    /* ReDMCSB STARTUP2.C reaches NEWMAP.C F0003 after the initial party
-     * location is decoded.  F0003 installs the current map and then invokes
-     * GROUP.C F0195, so the loaded C04 chains own initial active state and
-     * C37 scheduling rather than an empty host-only AI table. */
+    /* ReDMCSB STARTUP2.C:1183 calls NEWMAP.C F0003 after the initial party
+     * location is decoded. F0003 invokes GROUP.C F0195; return its staged
+     * F0183/F0179 sounds so M11 can publish them after binding the source
+     * sound bank. The bounded-buffer adapters share this F0003/F0195 route. */
     if (F0195_DM1_GROUP_AddAllActiveGroupsWithResult_Compat(
             outWorld, result ? &stagedResult : NULL) < 0) goto fail;
 
