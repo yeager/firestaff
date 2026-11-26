@@ -2736,8 +2736,10 @@ parity.
   source-mapped but still need original-media sensor results. F0271's final
   CLEAR/TOGGLE rotation now reaches the shared chain mutator after each
   party F0276 batch. F0272 disables triggered OnceOnly sensors on the party
-  route and preserves raw Type_Data; OnceOnly behavior on non-party event
-  paths and original-media sensor results remain open.
+  and object-change routes and preserves raw Type_Data. The F0275 wall-click
+  route now uses the same F0272 mutation, including its packed-byte update.
+  OnceOnly behavior on other event paths and original-media sensor results
+  remain open.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

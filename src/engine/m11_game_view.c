@@ -47741,11 +47741,16 @@ static M11_GameInputResult m11_c080_process_front_wall_sensor_click(
                             }
 
                             /* ReDMCSB F0275: onceOnly sensors are disabled
-                             * after triggering (M44_SET_TYPE_DISABLED). */
+                             * after triggering (M44_SET_TYPE_DISABLED).
+                             * F0272 also preserves unrelated packed flag bits
+                             * in raw Type_Data. */
                             if (tr->sensorDisabled &&
                                 tr->sensorIndex >= 0 &&
                                 tr->sensorIndex < state->world.things->sensorCount) {
-                                state->world.things->sensors[tr->sensorIndex].sensorType = 0;
+                                if (F0272_SENSOR_DisableOnceOnly_Compat(
+                                        &state->world, tr->sensorIndex)) {
+                                    m11_refresh_hash(state);
+                                }
                             }
 
                             /* ReDMCSB F0275: end game sensor (C018). */
