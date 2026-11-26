@@ -1176,9 +1176,11 @@ The `dm1_v1_iigs_graphics_real_media` and `firestaff_iigs_cli_real_media`
 CTest cases pass against both original disk images. The CLI test asserts title
 frame 18 and F0437 completion precede `DM1 IIGS READY` for direct and M12
 launches.
-Current zoom sampling is explicitly nearest-neighbour and does not reproduce
-the GS-specific F0129 scaler, and the source palette fade stages remain open
-visual-parity work. The MEDIA351 IIGS title branch does not show the
+2026-11-27 follow-up: the zoom now uses ReDMCSB BLTSHRNK.C:F0129's
+MEDIA351 G20/G21 fixed-point source-step calculation (10-bit quotient
+promoted to 16.16, zero initial phase) for both axes. Its source-sampling
+gap is closed at the algorithm level; the source palette fade stages remain
+open visual-parity work. The MEDIA351 IIGS title branch does not show the
 PRESENTS/MASTER overlays used by other editions. The F0441 entrance is
 implemented as a separate startup stage and is covered by the authentic G20/G21
 direct and M12 launch tests described below. Hardware visual/input parity and

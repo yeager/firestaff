@@ -1,3 +1,11 @@
+- 2026-11-27: Replaced the Apple IIGS F0437 title zoom's exact-ratio
+  nearest-neighbour sampling with ReDMCSB `BLTSHRNK.C:F0129` MEDIA351's
+  10-bit quotient promoted to a 16.16 source step, starting at source phase
+  zero on both axes. The changed translation unit compiles with the configured
+  DM1 build flags. This closes the source sampling algorithm gap; original
+  G20/G21 framebuffer comparison, palette fades, and native hardware parity
+  remain open.
+
 - 2026-11-26: Tightened the Amiga 3.6 Multilanguage boot-probe exception.
   ReDMCSB `STARTUP1.C:162` and `STARTUP2.C:1444` include A36M in the
   source-owned F0441 entrance call even though its title route bypasses F0437.
