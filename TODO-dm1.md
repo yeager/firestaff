@@ -1186,8 +1186,9 @@ M11 F0437 sequence also omitted F0437's DATA.C C001 PRESENTS crop
 the production intro around the 18 zoom blits. F0436 now applies the source's
 16 one-register-step passes to the initial dark-blue palette, PRESENTS-to-white
 palette, zoom palette, and final post-MASTER palette, at the admitted 60-Hz
-host cadence. The exact palette active on original hardware before F0437 and
-matched G20/G21 framebuffer timing/pixels remain unverified. The F0441
+host cadence, followed by F0437's extra post-fade VBlank. The exact palette
+active on original hardware before F0437 and matched G20/G21 framebuffer
+timing/pixels remain unverified. The F0441
 entrance is implemented as a separate startup stage and is covered by the
 authentic G20/G21 direct and M12 launch tests described below. Hardware
 visual/input parity and complete native startup parity remain unverified.

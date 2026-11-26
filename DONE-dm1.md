@@ -19,6 +19,10 @@
   translation units compile with the configured flags; exact original
   initial-palette and framebuffer comparison remain open.
 
+- 2026-11-27: Added F0437 MEDIA008's extra post-F0436 VBlank before handing
+  off from the IIGS title, using the same active-time 60-Hz schedule as the
+  title animation. Source: ReDMCSB `TITLE.C` F0437 line 250.
+
 - 2026-11-26: Tightened the Amiga 3.6 Multilanguage boot-probe exception.
   ReDMCSB `STARTUP1.C:162` and `STARTUP2.C:1444` include A36M in the
   source-owned F0441 entrance call even though its title route bypasses F0437.

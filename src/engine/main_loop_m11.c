@@ -9015,6 +9015,15 @@ static int m11_play_dm1_iigs_title_f0437(
         if (quitRequested) result=2;
         goto cleanup;
     }
+    /* ReDMCSB TITLE.C F0437 MEDIA008 waits one more VBlank after the final
+     * F0436 fade so a fast host cannot replace the title immediately. */
+    if (m11_wait_for_intro_active_tick(
+            started+(((Uint64)(vblankOrdinal+1u)*1000u+30u)/60u),
+            &quitRequested)) {
+        if (quitRequested) result=2;
+        goto cleanup;
+    }
+    ++vblankOrdinal;
     if (g_m11_debug_startup_detail)
         fprintf(stderr,"firestaff: startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=F0129-fixed-step overlays=presents-master source=%s graphics=%s\n",
             version->versionId,installation.graphics_path);
