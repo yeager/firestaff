@@ -872,7 +872,7 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
         party, leaderHandThing, outList);
 }
 
-void F0724_SENSOR_SetLeaderReceipt_Compat(
+void SensorEffectList_SetLeaderReceipt_Compat(
     struct SensorEffectList_Compat* effects,
     int leaderIndex)
 {

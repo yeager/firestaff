@@ -20780,7 +20780,7 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
 
     /* The source sensor pass runs with G0411 stable through dispatch. Snapshot
      * it into transient C10 receipts before any effect mutates runtime state. */
-    F0724_SENSOR_SetLeaderReceipt_Compat(
+    SensorEffectList_SetLeaderReceipt_Compat(
         effects, state->world.party.activeChampionIndex);
 
     for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
