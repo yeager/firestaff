@@ -8848,11 +8848,10 @@ static int m11_selected_dm1_is_iigs(const M12_StartupMenuState* menuState,
                M12_ARCH_APPLE_IIGS;
 }
 
-/* ReDMCSB TITLE.C F0437, MEDIA351 (G20E/G21E), lines 185-214, and
+/* ReDMCSB TITLE.C F0437, MEDIA351 (G20E/G21E), and
  * STARTUP2.C MEDIA274, lines 1391-1392: play native C001 before
  * LOADSAVE/F0434 opens the first world. Key and pointer input is
- * consumed by the intro event pump while no game view is active. The title
- * zoom's host scaler is currently nearest-neighbour, not GS F0129 parity. */
+ * consumed by the intro event pump while no game view is active. */
 static int m11_play_dm1_iigs_title_f0437(
     const M12_StartupMenuState* menuState, const M12_MenuEntry* entry,
     int bootProbe) {
@@ -8892,6 +8891,23 @@ static int m11_play_dm1_iigs_title_f0437(
     started=SDL_GetTicks();
     if (!dm1_v1_iigs_title_f0437_compose(title,0u,framebuffer,palette))
         goto cleanup;
+    /* TITLE.C:F0437 MEDIA008 blits the C001 PRESENTS crop before the zoom. */
+    if (!dm1_v1_iigs_title_f0437_compose_presents(title,framebuffer))
+        goto cleanup;
+    for (unsigned int i=0u;i<16u;++i) {
+        const uint16_t presents = i==15u ? 0x0fffu : 0x0009u;
+        rgb4[i][0]=(uint8_t)((presents>>8)&15u);
+        rgb4[i][1]=(uint8_t)((presents>>4)&15u);
+        rgb4[i][2]=(uint8_t)(presents&15u);
+    }
+    for (unsigned int i=16u;i<256u;++i) {
+        rgb4[i][0]=rgb4[i&15u][0];
+        rgb4[i][1]=rgb4[i&15u][1];
+        rgb4[i][2]=rgb4[i&15u][2];
+    }
+    if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK) goto cleanup;
+    if (M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+        goto cleanup;
     for (unsigned int i=0u;i<16u;++i) {
         rgb4[i][0]=(uint8_t)((palette[i]>>8)&15u);
         rgb4[i][1]=(uint8_t)((palette[i]>>4)&15u);
@@ -8909,7 +8925,8 @@ static int m11_play_dm1_iigs_title_f0437(
             if (quitRequested) result=2;
             goto cleanup;
         }
-        if (!dm1_v1_iigs_title_f0437_compose(title,frame,framebuffer,palette))
+        if (!dm1_v1_iigs_title_f0437_compose_zoom_over(
+                title,frame,framebuffer))
             goto cleanup;
         if (M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
             goto cleanup;
@@ -8924,8 +8941,27 @@ static int m11_play_dm1_iigs_title_f0437(
             goto cleanup;
         }
     }
+    /* DATA.C C001 master crop is drawn after the zoom, before F0436's final
+     * palette transition. Keep its existing screen outside rows 118..174. */
+    if (!dm1_v1_iigs_title_f0437_compose_master(title,framebuffer))
+        goto cleanup;
+    palette[10]=0x0000u;
+    palette[12]=0x0700u; /* Preserve the source's documented MEDIA351 value. */
+    for (unsigned int i=0u;i<16u;++i) {
+        rgb4[i][0]=(uint8_t)((palette[i]>>8)&15u);
+        rgb4[i][1]=(uint8_t)((palette[i]>>4)&15u);
+        rgb4[i][2]=(uint8_t)(palette[i]&15u);
+    }
+    for (unsigned int i=16u;i<256u;++i) {
+        rgb4[i][0]=rgb4[i&15u][0];
+        rgb4[i][1]=rgb4[i&15u][1];
+        rgb4[i][2]=rgb4[i&15u][2];
+    }
+    if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK ||
+        M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+        goto cleanup;
     if (g_m11_debug_startup_detail)
-        fprintf(stderr,"firestaff: startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx source=%s graphics=%s\n",
+        fprintf(stderr,"firestaff: startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=F0129-fixed-step overlays=presents-master source=%s graphics=%s\n",
             version->versionId,installation.graphics_path);
     result=1;
 cleanup:

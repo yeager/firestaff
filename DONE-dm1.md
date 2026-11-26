@@ -6,6 +6,12 @@
   G20/G21 framebuffer comparison, palette fades, and native hardware parity
   remain open.
 
+- 2026-11-27: Restored the live Apple IIGS F0437 C001 PRESENTS and MASTER
+  crops around the 18 zoom blits using ReDMCSB `TITLE.C` and `DATA.C` source
+  rectangles. Both changed translation units compile with the configured
+  flags. The F0436 palette fade steps and original-frame comparison remain
+  open; this is not full IIGS title parity.
+
 - 2026-11-26: Tightened the Amiga 3.6 Multilanguage boot-probe exception.
   ReDMCSB `STARTUP1.C:162` and `STARTUP2.C:1444` include A36M in the
   source-owned F0441 entrance call even though its title route bypasses F0437.

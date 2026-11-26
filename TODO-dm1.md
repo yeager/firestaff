@@ -1179,12 +1179,17 @@ launches.
 2026-11-27 follow-up: the zoom now uses ReDMCSB BLTSHRNK.C:F0129's
 MEDIA351 G20/G21 fixed-point source-step calculation (10-bit quotient
 promoted to 16.16, zero initial phase) for both axes. Its source-sampling
-gap is closed at the algorithm level; the source palette fade stages remain
-open visual-parity work. The MEDIA351 IIGS title branch does not show the
-PRESENTS/MASTER overlays used by other editions. The F0441 entrance is
-implemented as a separate startup stage and is covered by the authentic G20/G21
-direct and M12 launch tests described below. Hardware visual/input parity and
-complete native startup parity remain unverified.
+gap is closed at the algorithm level. A follow-up audit found that the live
+M11 F0437 sequence also omitted F0437's DATA.C C001 PRESENTS crop
+(source rows 137..152, screen rows 90..105) and MASTER crop (source rows
+80..136, screen rows 118..174); both source rectangles are now composed in
+the production intro around the 18 zoom blits. F0437's initial dark-blue fade,
+PRESENTS-to-white fade, zoom-palette fade, and final post-MASTER fade are not
+yet reproduced as F0436's 16 per-channel steps; their timing and exact initial
+palette remain open. The F0441 entrance is implemented as a separate startup
+stage and is covered by the authentic G20/G21 direct and M12 launch tests
+described below. Hardware visual/input parity and complete native startup
+parity remain unverified.
 
 2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
 envelope to the original-save-only F0435 reader, so valid Firestaff saves
