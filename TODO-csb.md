@@ -1772,3 +1772,17 @@ Atari walker now reads the bounded source aspect/coordinate tables and advances
 only when the source Y-coordinate is nonzero. This correction has not yet been
 exercised with an original-media alcove encounter or pixel comparison, so the
 route remains partial.
+
+2026-11-26 CSB Atari F0115 status reconciliation: earlier viewport backlog
+paragraphs that say ordinary objects/creatures/projectiles/explosions are absent
+predate the live F0128 integration and are stale as a current inventory.
+`m11_csb_atari_st_draw_scheduled_cell` now dispatches source-ordered object,
+creature, projectile, explosion, and deferred Fluxcage passes, and
+`m11_csb_atari_st_draw_alcove_objects` handles the conditional zero-order
+alcove pass. ReDMCSB `DUNVIEW.C:F0115` remains the behavior reference. This
+establishes implementation presence only: the stock Atari campaign has no live
+C14 projectile scenario, no suitable ordinary explosion encounter has been
+asserted, and no original-media populated-alcove pixel capture verifies the
+visible results. Keep these gameplay and visual-parity claims partial; update
+older inventory notes with their subsequent dated corrections rather than
+using them as statements of current code state.
