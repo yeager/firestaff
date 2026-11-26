@@ -11,6 +11,14 @@ this analysis to the Atari ST runtime, model the protected floppy
 re-read/event sequence, or execute the hidden code launcher
 (`COPYPRO3.C:F0137`).
 
+2026-11-26 ReDMCSB `COPYPRO1.C:F0079` focused regression: registered the
+existing bounded helper as a CTest and covered source JMP-absolute resolution,
+Atari ST `UNLK A6 / RTS`, Amiga `UNLK A5 / RTS`, caller-skip-table checksum,
+and malformed/truncated inputs. The Release test passes. This verifies the
+standalone checksum calculation only; no authenticated executable image or
+production floppy/save-load caller is attached, so the callable route remains
+`PARTIAL`.
+
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
 2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
@@ -39,7 +47,7 @@ bitmap behavior remain open.
 
 2026-11-01 ReDMCSB `DEFS.H:F0082-F0088` runtime symbols: compiler-private Megamax long-arithmetic and structure helpers are now distinguished from game functions; `strcat`, `strcmp`, and `strcpy` map to Firestaff host libc on bounded valid-string inputs. Invalid memory, compiler ABI, and host-library edge behavior remain outside that mapping.
 
-2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: corrected the Atari ST alias and callable row to `MISSING`. The source function computes DOS/Amiga copy-protection code checksums; Firestaff has no equivalent checksum route.
+2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: the Atari ST alias/callable row remains `MISSING` for production because Firestaff has no authenticated executable-code owner. A bounded checksum helper now covers the terminated Atari ST/Amiga routines and the G14ED/G20E/G21E skip-table route, but the source-protected save/load caller remains absent; see the 2026-11-26 focused-regression entry and keep overall status `PARTIAL`.
 
 2026-11-01 ReDMCSB `IO.C:F0074-F0078` pointer drawing and visibility: the ledger now maps the host SDL cursor/event route rather than unrelated numeric hits. Firestaff relies on window-system cursor composition; source bitmap save/restore, Atari ST interrupt callbacks, and the paired redraw visibility protocol remain open.
 

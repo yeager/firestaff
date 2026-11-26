@@ -2515,6 +2515,11 @@ firestaff_add_optional_dm_test(test_dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_
     NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
 )
 
+firestaff_add_optional_dm_test(test_dm1_v1_f0079_cpsc_checksum_add_pc34_compat dm1_v1_f0079_cpsc_checksum_add_pc34_compat
+    SOURCES src/dm1/dm1_v1_f0079_cpsc_checksum_add_pc34_compat.c
+    NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
+)
+
 firestaff_add_optional_dm_test(test_dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat
     SOURCES src/dm1/dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat.c
     NON_MSVC_OPTIONS -Wall -Wextra -Werror -pedantic
