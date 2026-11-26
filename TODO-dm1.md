@@ -1183,13 +1183,14 @@ gap is closed at the algorithm level. A follow-up audit found that the live
 M11 F0437 sequence also omitted F0437's DATA.C C001 PRESENTS crop
 (source rows 137..152, screen rows 90..105) and MASTER crop (source rows
 80..136, screen rows 118..174); both source rectangles are now composed in
-the production intro around the 18 zoom blits. F0437's initial dark-blue fade,
-PRESENTS-to-white fade, zoom-palette fade, and final post-MASTER fade are not
-yet reproduced as F0436's 16 per-channel steps; their timing and exact initial
-palette remain open. The F0441 entrance is implemented as a separate startup
-stage and is covered by the authentic G20/G21 direct and M12 launch tests
-described below. Hardware visual/input parity and complete native startup
-parity remain unverified.
+the production intro around the 18 zoom blits. F0436 now applies the source's
+16 one-register-step passes to the initial dark-blue palette, PRESENTS-to-white
+palette, zoom palette, and final post-MASTER palette, at the admitted 60-Hz
+host cadence. The exact palette active on original hardware before F0437 and
+matched G20/G21 framebuffer timing/pixels remain unverified. The F0441
+entrance is implemented as a separate startup stage and is covered by the
+authentic G20/G21 direct and M12 launch tests described below. Hardware
+visual/input parity and complete native startup parity remain unverified.
 
 2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
 envelope to the original-save-only F0435 reader, so valid Firestaff saves

@@ -8848,6 +8848,49 @@ static int m11_selected_dm1_is_iigs(const M12_StartupMenuState* menuState,
                M12_ARCH_APPLE_IIGS;
 }
 
+/* ReDMCSB PALETTE.C:F0436 MEDIA351 steps each 0x0RGB component by one
+ * register unit per VBlank, for exactly sixteen passes. */
+static int m11_dm1_iigs_fade_palette(
+    uint16_t current[16], const uint16_t target[16], uint8_t *framebuffer,
+    uint64_t started, unsigned int *vblank_ordinal, int *outQuitRequested) {
+    uint8_t rgb4[256][3] = {{0}};
+    if (!current || !target || !framebuffer || !vblank_ordinal) return 0;
+    for (unsigned int step=0u;step<16u;++step) {
+        const Uint64 deadline=started+
+            (((Uint64)(*vblank_ordinal+1u)*1000u+30u)/60u);
+        if (m11_wait_for_intro_active_tick(deadline,outQuitRequested))
+            return 0;
+        for (unsigned int i=0u;i<16u;++i) {
+            int red=(current[i]>>8)&15;
+            int green=(current[i]>>4)&15;
+            int blue=current[i]&15;
+            const int target_red=(target[i]>>8)&15;
+            const int target_green=(target[i]>>4)&15;
+            const int target_blue=target[i]&15;
+            if (red>target_red) --red;
+            if (red<target_red) ++red;
+            if (green>target_green) --green;
+            if (green<target_green) ++green;
+            if (blue>target_blue) --blue;
+            if (blue<target_blue) ++blue;
+            current[i]=(uint16_t)((red<<8)|(green<<4)|blue);
+            rgb4[i][0]=(uint8_t)red;
+            rgb4[i][1]=(uint8_t)green;
+            rgb4[i][2]=(uint8_t)blue;
+        }
+        for (unsigned int i=16u;i<256u;++i) {
+            rgb4[i][0]=rgb4[i&15u][0];
+            rgb4[i][1]=rgb4[i&15u][1];
+            rgb4[i][2]=rgb4[i&15u][2];
+        }
+        if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK ||
+            M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+            return 0;
+        ++*vblank_ordinal;
+    }
+    return 1;
+}
+
 /* ReDMCSB TITLE.C F0437, MEDIA351 (G20E/G21E), and
  * STARTUP2.C MEDIA274, lines 1391-1392: play native C001 before
  * LOADSAVE/F0434 opens the first world. Key and pointer input is
@@ -8862,8 +8905,10 @@ static int m11_play_dm1_iigs_title_f0437(
     uint8_t *graphics=NULL, *title=NULL, *framebuffer;
     size_t graphicsSize=0u;
     uint16_t width=0u,height=0u;
-    uint16_t palette[16];
+    uint16_t palette[16], currentPalette[16], targetPalette[16];
+    uint8_t currentRgb8[256][3];
     uint64_t started;
+    unsigned int vblankOrdinal=0u;
     uint8_t rgb4[256][3]={{0}};
     int quitRequested=0;
     int result=0;
@@ -8888,30 +8933,44 @@ static int m11_play_dm1_iigs_title_f0437(
 
     M11_Render_SetV2PresentationActive(0);
     M11_Render_SetModernPresentationActive(0);
-    started=SDL_GetTicks();
+    started=m11_intro_active_ticks();
+    memset(currentRgb8,0,sizeof(currentRgb8));
+    (void)M11_Render_CopyIndexedPaletteRgb8(currentRgb8);
+    for (unsigned int i=0u;i<16u;++i) {
+        currentPalette[i]=(uint16_t)(
+            ((uint16_t)(currentRgb8[i][0]>>4)<<8) |
+            ((uint16_t)(currentRgb8[i][1]>>4)<<4) |
+            (uint16_t)(currentRgb8[i][2]>>4));
+        targetPalette[i]=0x0009u;
+    }
+    if (!m11_dm1_iigs_fade_palette(currentPalette,targetPalette,framebuffer,
+            started,&vblankOrdinal,&quitRequested)) {
+        if (quitRequested) result=2;
+        goto cleanup;
+    }
     if (!dm1_v1_iigs_title_f0437_compose(title,0u,framebuffer,palette))
         goto cleanup;
     /* TITLE.C:F0437 MEDIA008 blits the C001 PRESENTS crop before the zoom. */
     if (!dm1_v1_iigs_title_f0437_compose_presents(title,framebuffer))
         goto cleanup;
-    for (unsigned int i=0u;i<16u;++i) {
-        const uint16_t presents = i==15u ? 0x0fffu : 0x0009u;
-        rgb4[i][0]=(uint8_t)((presents>>8)&15u);
-        rgb4[i][1]=(uint8_t)((presents>>4)&15u);
-        rgb4[i][2]=(uint8_t)(presents&15u);
-    }
-    for (unsigned int i=16u;i<256u;++i) {
-        rgb4[i][0]=rgb4[i&15u][0];
-        rgb4[i][1]=rgb4[i&15u][1];
-        rgb4[i][2]=rgb4[i&15u][2];
-    }
-    if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK) goto cleanup;
-    if (M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+    memcpy(targetPalette,currentPalette,sizeof(targetPalette));
+    targetPalette[15]=0x0fffu;
+    if (!m11_dm1_iigs_fade_palette(currentPalette,targetPalette,framebuffer,
+            started,&vblankOrdinal,&quitRequested)) {
+        if (quitRequested) result=2;
         goto cleanup;
+    }
+    memcpy(targetPalette,palette,sizeof(targetPalette));
+    if (!m11_dm1_iigs_fade_palette(currentPalette,targetPalette,framebuffer,
+            started,&vblankOrdinal,&quitRequested)) {
+        if (quitRequested) result=2;
+        goto cleanup;
+    }
     for (unsigned int i=0u;i<16u;++i) {
-        rgb4[i][0]=(uint8_t)((palette[i]>>8)&15u);
-        rgb4[i][1]=(uint8_t)((palette[i]>>4)&15u);
-        rgb4[i][2]=(uint8_t)(palette[i]&15u);
+        currentPalette[i]=targetPalette[i];
+        rgb4[i][0]=(uint8_t)((currentPalette[i]>>8)&15u);
+        rgb4[i][1]=(uint8_t)((currentPalette[i]>>4)&15u);
+        rgb4[i][2]=(uint8_t)(currentPalette[i]&15u);
     }
     for (unsigned int i=16u;i<256u;++i) {
         rgb4[i][0]=rgb4[i&15u][0];
@@ -8920,11 +8979,13 @@ static int m11_play_dm1_iigs_title_f0437(
     }
     if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK) goto cleanup;
     for (unsigned int frame=0u;frame<DM1_V1_IIGS_TITLE_ZOOM_FRAMES;++frame) {
-        const Uint64 deadline=started+((Uint64)(frame+1u)*1000u+30u)/60u;
+        const Uint64 deadline=started+
+            (((Uint64)(vblankOrdinal+1u)*1000u+30u)/60u);
         if (m11_wait_for_intro_active_tick((Uint64)deadline,&quitRequested)) {
             if (quitRequested) result=2;
             goto cleanup;
         }
+        ++vblankOrdinal;
         if (!dm1_v1_iigs_title_f0437_compose_zoom_over(
                 title,frame,framebuffer))
             goto cleanup;
@@ -8935,31 +8996,25 @@ static int m11_play_dm1_iigs_title_f0437(
     }
     for (unsigned int hold=1u;hold<=2u;++hold) {
         if (m11_wait_for_intro_active_tick(
-                started+((Uint64)(DM1_V1_IIGS_TITLE_ZOOM_FRAMES+hold)*1000u+30u)/60u,
+                started+(((Uint64)(vblankOrdinal+1u)*1000u+30u)/60u),
                 &quitRequested)) {
             if (quitRequested) result=2;
             goto cleanup;
         }
+        ++vblankOrdinal;
     }
     /* DATA.C C001 master crop is drawn after the zoom, before F0436's final
      * palette transition. Keep its existing screen outside rows 118..174. */
     if (!dm1_v1_iigs_title_f0437_compose_master(title,framebuffer))
         goto cleanup;
-    palette[10]=0x0000u;
-    palette[12]=0x0700u; /* Preserve the source's documented MEDIA351 value. */
-    for (unsigned int i=0u;i<16u;++i) {
-        rgb4[i][0]=(uint8_t)((palette[i]>>8)&15u);
-        rgb4[i][1]=(uint8_t)((palette[i]>>4)&15u);
-        rgb4[i][2]=(uint8_t)(palette[i]&15u);
-    }
-    for (unsigned int i=16u;i<256u;++i) {
-        rgb4[i][0]=rgb4[i&15u][0];
-        rgb4[i][1]=rgb4[i&15u][1];
-        rgb4[i][2]=rgb4[i&15u][2];
-    }
-    if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK ||
-        M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+    memcpy(targetPalette,currentPalette,sizeof(targetPalette));
+    targetPalette[10]=0x0000u;
+    targetPalette[12]=0x0700u; /* Preserve the source's documented MEDIA351 value. */
+    if (!m11_dm1_iigs_fade_palette(currentPalette,targetPalette,framebuffer,
+            started,&vblankOrdinal,&quitRequested)) {
+        if (quitRequested) result=2;
         goto cleanup;
+    }
     if (g_m11_debug_startup_detail)
         fprintf(stderr,"firestaff: startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=F0129-fixed-step overlays=presents-master source=%s graphics=%s\n",
             version->versionId,installation.graphics_path);

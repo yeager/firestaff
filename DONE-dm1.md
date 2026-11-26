@@ -2,15 +2,22 @@
   nearest-neighbour sampling with ReDMCSB `BLTSHRNK.C:F0129` MEDIA351's
   10-bit quotient promoted to a 16.16 source step, starting at source phase
   zero on both axes. The changed translation unit compiles with the configured
-  DM1 build flags. This closes the source sampling algorithm gap; original
-  G20/G21 framebuffer comparison, palette fades, and native hardware parity
-  remain open.
+  DM1 build flags. This closes the source sampling algorithm gap; overlay and
+  palette-fade follow-ups are recorded below. Original G20/G21 framebuffer
+  comparison and native hardware parity remain open.
 
 - 2026-11-27: Restored the live Apple IIGS F0437 C001 PRESENTS and MASTER
   crops around the 18 zoom blits using ReDMCSB `TITLE.C` and `DATA.C` source
   rectangles. Both changed translation units compile with the configured
   flags. The F0436 palette fade steps and original-frame comparison remain
   open; this is not full IIGS title parity.
+
+- 2026-11-27: Added ReDMCSB `PALETTE.C:F0436` MEDIA351's sixteen per-channel
+  RGB4 steps at the source 60-Hz host cadence for all four G20/G21 F0437 fade
+  phases. The current M11 palette is the starting palette because Firestaff
+  does not own the IIGS hardware's pre-title registers. Both changed
+  translation units compile with the configured flags; exact original
+  initial-palette and framebuffer comparison remain open.
 
 - 2026-11-26: Tightened the Amiga 3.6 Multilanguage boot-probe exception.
   ReDMCSB `STARTUP1.C:162` and `STARTUP2.C:1444` include A36M in the
