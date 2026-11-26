@@ -90,7 +90,11 @@ def validate_bundle(
     event_count = 0
     writes = 0
     scanlines = 0
-    validated_events = tempfile.TemporaryFile(mode="w+t", newline="", encoding="utf-8")
+    # Keep the validated stream beside its capture instead of using the system
+    # temporary directory (which may be /tmp and can be space-limited).
+    validated_events = tempfile.TemporaryFile(
+        mode="w+t", newline="", encoding="utf-8", dir=dumps
+    )
     try:
         writer = csv.DictWriter(validated_events, fieldnames=EVENT_FIELDS, lineterminator="\n")
         writer.writeheader()
