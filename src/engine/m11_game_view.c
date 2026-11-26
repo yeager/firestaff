@@ -78765,6 +78765,14 @@ static void m11_dm1_sync_slot_box_icon_indexes(M11_GameViewState* state)
                     state->dm1SlotBoxIconIndexes, 38 + chest_index, icon_index);
             }
         }
+    } else if (inventory_owner >= 0 && !state->world.things) {
+        int slot_box;
+        /* Missing source Things cannot validate any inventory/chest icon. */
+        for (slot_box = 8; slot_box < DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT;
+             ++slot_box) {
+            (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                state->dm1SlotBoxIconIndexes, slot_box, -1);
+        }
     } else if (inventory_owner < 0 && !state->candidateMirrorPanelActive) {
         int slot_box;
         /* F0296 does not visit inventory/chest slots without an owner. These
