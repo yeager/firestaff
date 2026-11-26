@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V1_SLOT_BOXES_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_SLOT_BOXES_PC34_COMPAT_H
 
+#include <stdint.h>
+
 /*
  * ReDMCSB source-lock pin for Graphics.dat item 562 init var
  * G0030_as_Graphic562_SlotBoxes[46].
@@ -104,6 +106,17 @@ dm1_v1_slot_boxes_get_zone_index_pc34(int slot_box_index);
 
 short
 dm1_v1_slot_boxes_get_icon_index_pc34(int slot_box_index);
+
+/* Mutable runtime owner adapters for the source G0030 IconIndex fields. */
+int
+dm1_v1_slot_boxes_set_runtime_icon_pc34(
+    int16_t icon_indexes[DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT],
+    int slot_box_index, int icon_index);
+
+short
+dm1_v1_slot_boxes_get_runtime_icon_pc34(
+    const int16_t icon_indexes[DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT],
+    int slot_box_index);
 
 int
 dm1_v1_slot_boxes_is_status_hand_pc34(int slot_box_index);

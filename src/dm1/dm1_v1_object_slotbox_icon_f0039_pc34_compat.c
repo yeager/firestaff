@@ -11,6 +11,12 @@ short dm1_v1_object_get_icon_index_in_slotbox_f0039_pc34(
     return F0039_OBJECT_GetIconIndexInSlotBox(slotBoxIndex);
 }
 
+short dm1_v1_object_get_runtime_icon_index_in_slotbox_f0039_pc34(
+    const int16_t iconIndexes[46], int slotBoxIndex) {
+    return dm1_v1_slot_boxes_get_runtime_icon_pc34(iconIndexes,
+                                                    slotBoxIndex);
+}
+
 const char* dm1_v1_object_get_icon_index_in_slotbox_f0039_source_pc34(void) {
     return "ReDMCSB OBJECT.C F0039_OBJECT_GetIconIndexInSlotBox: "
            "returns G0030_as_Graphic562_SlotBoxes[slotBoxIndex].IconIndex; "

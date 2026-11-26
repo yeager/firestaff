@@ -201,6 +201,29 @@ dm1_v1_slot_boxes_get_icon_index_pc34(int slot_box_index)
 }
 
 int
+dm1_v1_slot_boxes_set_runtime_icon_pc34(
+    int16_t icon_indexes[DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT],
+    int slot_box_index, int icon_index)
+{
+    if (!icon_indexes || slot_box_index < 0 ||
+        slot_box_index >= kSlotBoxCount || icon_index < -1 ||
+        icon_index > kIconIndexOkMax) return 0;
+    /* ReDMCSB OBJECT.C F0038:435-525 writes G0030 before its ICON_NONE return. */
+    icon_indexes[slot_box_index] = (int16_t)icon_index;
+    return 1;
+}
+
+short
+dm1_v1_slot_boxes_get_runtime_icon_pc34(
+    const int16_t icon_indexes[DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT],
+    int slot_box_index)
+{
+    if (!icon_indexes || slot_box_index < 0 ||
+        slot_box_index >= kSlotBoxCount) return (short)kIconIndexNone;
+    return (short)icon_indexes[slot_box_index];
+}
+
+int
 dm1_v1_slot_boxes_is_status_hand_pc34(int slot_box_index)
 {
     return (slot_box_index >= kStatusHandOffset &&

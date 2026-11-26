@@ -3951,10 +3951,26 @@ adapter. The focused regression checks all 46 fixed entries, adapter
 delegation, and invalid-index handling. ReDMCSB reads the current mutable
 `G0030.IconIndex`; `F0038_OBJECT_DrawIconInSlotBox` updates that field before
 its blit on supported DM1 media, and `F0295_CHAMPION_HasObjectIconInSlotBoxChanged`
-uses it to decide whether action-hand icons must be redrawn. Firestaff's
-adapter reads a constant PC34 mirror, and its live draw route has no matching
-slot-icon state owner. F0038 also remains partial because it does not update that state. The symbol remains partial pending mutable icon-state
-integration and Atari ST, Amiga, FM Towns, Apple IIGS, and other edition routes.
+uses it to decide whether action-hand icons must be redrawn. The adapter
+historically read a constant PC34 mirror and had no live slot-icon state owner.
+The 2026-11-26 integration below supersedes that implementation gap for the
+active M11 session route; visual pixel parity and other edition rendering
+remain separate open work.
+
+2026-11-26 F0038/F0039 M11 cache integration: M11 owns the 46-entry G0030
+`IconIndex` array for each active DM1 session. Before a full-frame redraw it
+reconciles the values used by the composed status hands, selected inventory
+owner's 30 slots, and open chest's eight slots. The status-hand projection
+includes the inventory owner because M11 still draws that owner's status row;
+it updates only for present, living champions, matching M11's visible
+hand-box draw gate. PC34 and FM Towns status-hand, inventory, and chest icon
+rendering then read the same entries through F0039; non-DM1 profiles retain
+their prior fallback.
+This is a full-frame cache projection using F0038 slot writes and F0296's
+slot-box ranges. M11 still does not port F0295's changed-only filtering or
+F0296's F0386 action-icon redraw cadence. Those redraw effects, other
+edition/platform rendering, and matched original-frame icon pixels remain
+open.
 
 # ReDMCSB F0619 — slot-box border rectangle
 

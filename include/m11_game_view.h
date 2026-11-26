@@ -1062,6 +1062,8 @@ typedef struct {
      * Zero supports legacy/direct fixtures without explicit selection. */
     int dm1InventoryChampionOrdinal;
     int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
+    /* ReDMCSB OBJECT.C F0038/F0039 G0030 runtime IconIndex fields. */
+    int16_t dm1SlotBoxIconIndexes[46];
     int csbGameFrozen;           /* CSB C147/C148 freeze/unfreeze keyboard state */
     int dm2GameFrozen;           /* Macintosh C147-style freeze/unfreeze state */
     /* ReDMCSB COMMAND.C C140 / LOADSAVE.C F0433-F0435 save-disk modal.

@@ -15,6 +15,8 @@
 #include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "dm1_v1_object_slotbox_icon_f0039_pc34_compat.h"
+#include "firestaff/dm1/v1/slot_boxes_pc34_compat.h"
 #include "firestaff/dm1/v1/G0208_pc34_compat.h"
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -1182,6 +1184,8 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight);
+static int m11_dm1_get_slot_box_icon_index(
+    const M11_GameViewState* state, int slot_box, int fallback_icon_index);
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -67468,7 +67472,9 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                              framebufferHeight, dstX, dstY, 0);
     }
 
-    iconIndex = m11_v1_status_hand_icon_index(state, championSlot, handIndex);
+    iconIndex = m11_dm1_get_slot_box_icon_index(
+        state, championSlot * 2 + handIndex,
+        m11_v1_status_hand_icon_index(state, championSlot, handIndex));
     if (iconIndex < 0) return 1;
 
     {
@@ -74131,8 +74137,9 @@ static int m11_draw_dm1_fmtowns_top_row_zones(
                 /* F0291/F0038 uses C212+slot*2 for an empty hand; held
                  * objects use F0033's current object icon record. An
                  * unbound icon stays absent while the native frame remains. */
-                iconIndex = m11_v1_status_hand_icon_index(
-                    state, slot, hand);
+                iconIndex = m11_dm1_get_slot_box_icon_index(
+                    state, slot * 2 + hand,
+                    m11_v1_status_hand_icon_index(state, slot, hand));
                 if (iconIndex >= 0) {
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth,
@@ -76745,7 +76752,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                     if (!f31_slot) { zx = zone.x; zy = zone.y; }
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
-                        iconIndex,
+                        m11_dm1_get_slot_box_icon_index(
+                            state, sourceSlotBox, iconIndex),
                         M11_VIEWPORT_X + zx,
                         M11_VIEWPORT_Y + zy,
                         0);
@@ -76828,7 +76836,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                         state, state->world.things, chestSlots[chestOrdinal]);
                     (void)m11_draw_dm_object_icon_index(
                         state, framebuffer, framebufferWidth, framebufferHeight,
-                        iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
+                        m11_dm1_get_slot_box_icon_index(
+                            state, 38 + chestOrdinal, iconIndex),
+                        M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
                 }
             }
             (void)m11_draw_v1_inventory_panel_arrow_or_eye(
@@ -78673,6 +78683,122 @@ int M11_GameView_RenderDm1IigsEntranceC255(
     return 1;
 }
 
+/* ReDMCSB OBJECT.C F0038:435-525 writes each drawn slot's G0030 IconIndex;
+ * CHAMDRAW.C F0296:1226-1252 provides the owner/slot ranges for changed-icon
+ * scans. M11 rebuilds the complete frame every presentation, so reconcile
+ * the drawn status hands, selected inventory owner's C08..C37 slots, and open
+ * chest C38..C45 before composing it. Status-hand projection includes the
+ * inventory owner because M11 still draws that owner's status row. This
+ * projects current frame state; it
+ * does not model F0295's changed-only redraw cadence. The table lives in the
+ * M11 game session and survives repeated frames like source G0030. */
+static void m11_dm1_sync_slot_box_icon_indexes(M11_GameViewState* state)
+{
+    int champion_index;
+    int inventory_owner;
+
+    if (!state || !state->active || !m11_is_dm1_source_kind(state->sourceKind) ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+
+    inventory_owner = state->inventoryPanelActive
+        ? m11_inventory_champion_index(state) : -1;
+    /* F0296 returns before touching G0030 while a candidate mirror is open
+     * with no inventory owner. Preserve that event-driven source state. */
+    if (state->candidateMirrorOrdinal > 0 && inventory_owner < 0) return;
+    for (champion_index = 0;
+         champion_index < state->world.party.championCount &&
+         champion_index < CHAMPION_MAX_PARTY;
+         ++champion_index) {
+        int hand_index;
+        for (hand_index = 0; hand_index < 2; ++hand_index) {
+            const int slot_box = (champion_index * 2) + hand_index;
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[champion_index];
+            if (!champion->present || champion->hp.current == 0) continue;
+            const unsigned short thing = m11_get_status_hand_thing(
+                champion, hand_index);
+            const int icon_index =
+                thing != THING_NONE && thing != THING_ENDOFLIST
+                    ? (state->world.things
+                           ? m11_object_icon_index_for_thing(
+                                 state, state->world.things, thing)
+                           : -1)
+                    : DM1_ChampionPanel_EmptyHandIconIndex(
+                          hand_index, (uint16_t)champion->wounds);
+            (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                state->dm1SlotBoxIconIndexes, slot_box, icon_index);
+        }
+    }
+
+    if (inventory_owner >= 0 && inventory_owner < state->world.party.championCount &&
+        state->world.things) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[inventory_owner];
+        int slot_index;
+        for (slot_index = 0; slot_index < CHAMPION_SLOT_COUNT; ++slot_index) {
+            const int slot_box =
+                dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+                    slot_index);
+            const unsigned short thing = champion->inventory[slot_index];
+            int icon_index = -1;
+            if (!slot_box) continue;
+            if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+                icon_index = m11_v1_inventory_slot_icon_index_for_thing(
+                    state, slot_index, thing);
+            }
+            (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                state->dm1SlotBoxIconIndexes, slot_box, icon_index);
+        }
+
+        if (DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) != THING_NONE) {
+            unsigned short chest_slots[8];
+            int chest_index;
+            (void)m11_v1_read_open_chest_slots(state, chest_slots);
+            for (chest_index = 0; chest_index < 8; ++chest_index) {
+                int icon_index = -1;
+                if (chest_slots[chest_index] != THING_NONE &&
+                    chest_slots[chest_index] != THING_ENDOFLIST) {
+                    icon_index = m11_object_icon_index_for_thing(
+                        state, state->world.things, chest_slots[chest_index]);
+                }
+                (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                    state->dm1SlotBoxIconIndexes, 38 + chest_index, icon_index);
+            }
+        }
+    } else if (inventory_owner < 0 && !state->candidateMirrorPanelActive) {
+        int slot_box;
+        /* F0296 does not visit inventory/chest slots without an owner. These
+         * entries are invisible in this composition; retire stale cache data. */
+        for (slot_box = 8; slot_box < DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT;
+             ++slot_box) {
+            (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                state->dm1SlotBoxIconIndexes, slot_box, -1);
+        }
+    }
+    if (inventory_owner >= 0 &&
+        DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) == THING_NONE) {
+        int slot_box;
+        for (slot_box = 38; slot_box < DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT;
+             ++slot_box) {
+            (void)dm1_v1_slot_boxes_set_runtime_icon_pc34(
+                state->dm1SlotBoxIconIndexes, slot_box, -1);
+        }
+    }
+}
+
+static int m11_dm1_get_slot_box_icon_index(
+    const M11_GameViewState* state, int slot_box, int fallback_icon_index)
+{
+    if (state && slot_box >= 0 && slot_box <
+                       DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT &&
+        m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0) {
+        return dm1_v1_object_get_runtime_icon_index_in_slotbox_f0039_pc34(
+            state->dm1SlotBoxIconIndexes, slot_box);
+    }
+    return fallback_icon_index;
+}
+
 static void m11_game_view_draw_source(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
@@ -78694,6 +78820,7 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    m11_dm1_sync_slot_box_icon_indexes(state);
     retainDm2DosMveFrame = state &&
         state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2State.startup_menu_active && state->dm2DosMveIntroActive &&
