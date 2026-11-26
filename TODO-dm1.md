@@ -7,8 +7,12 @@ request order. The orchestrator and M11 transition callers consume those
 TickResult emissions. Remaining work is authentic sound-priority/arbitration
 evidence and edition metadata beyond I34. PC34/I34 initial F0195 sounds now
 flow through F0882 to M11 after the authentic sound source is bound and before
-title/entrance setup. Other-edition startup F0195 calls remain result-less
-until their F0179 sound metadata is bound.
+title/entrance setup. M11 tick sound emissions now use the media-bound DM1
+audio adapter, so Atari ST and Amiga requests reach their native GRAPHICS.DAT
+tables instead of the generic PC34 SND3 owner; PC34 remains source-SND3-backed,
+and FM Towns retains its per-sample volume/arbitration path. Startup F0195
+sound receipts on non-I34 editions remain uncollected. Source-accurate
+per-edition priority/arbitration and runtime audio captures remain open.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 
