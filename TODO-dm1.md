@@ -2730,11 +2730,14 @@ parity.
   so CELL_ANY still divides 300 across the source champion count, while a
   cell-specific C10 awards all 300 only to the living G0411 leader. The
   leader receipt uses the runtime leader field restored independently from
-  PANEL.C's G0423 inventory owner. F0271's final
+  PANEL.C's G0423 inventory owner. The F0275 wall-click route now sends
+  local C10 with its clicked cell through the same award path; wall sensor
+  rotation remains on the separate F0271 batch receipt. These routes remain
+  source-mapped but still need original-media sensor results. F0271's final
   CLEAR/TOGGLE rotation now reaches the shared chain mutator after each
   party F0276 batch. F0272 disables triggered OnceOnly sensors on the party
-  route and preserves raw Type_Data; other local effects, OnceOnly behavior
-  on other event paths and original-media sensor results remain open.
+  route and preserves raw Type_Data; OnceOnly behavior on non-party event
+  paths and original-media sensor results remain open.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

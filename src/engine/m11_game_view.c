@@ -20778,7 +20778,7 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
     int i;
     if (!state || !effects || effects->count <= 0) return;
 
-    /* The source floor pass runs with G0411 stable through dispatch. Snapshot
+    /* The source sensor pass runs with G0411 stable through dispatch. Snapshot
      * it into transient C10 receipts before any effect mutates runtime state. */
     F0724_SENSOR_SetLeaderReceipt_Compat(
         effects, state->world.party.activeChampionIndex);
@@ -47751,6 +47751,30 @@ static M11_GameInputResult m11_c080_process_front_wall_sensor_click(
                             /* ReDMCSB F0275: end game sensor (C018). */
                             if (tr->endGameGameWon) {
                                 m11_set_status(state, "SENSOR", "GAME WON");
+                            }
+
+                            /* ReDMCSB MOVESENS.C F0275 -> F0272 -> F0270:
+                             * wall-local C10 receives the clicked M011_CELL,
+                             * so F0269 awards all 300 Steal XP to G0411. */
+                            if (tr->isLocal &&
+                                tr->localEffectValue ==
+                                    DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
+                                effects.count < SENSOR_EFFECT_LIST_MAX_COUNT) {
+                                struct SensorEffect_Compat* localEffect =
+                                    &effects.effects[effects.count++];
+                                localEffect->kind = SENSOR_EFFECT_LOCAL_STEAL_XP;
+                                localEffect->sensorType = tr->sensorIndex >= 0 &&
+                                        tr->sensorIndex <
+                                            state->world.things->sensorCount
+                                    ? state->world.things->sensors[
+                                          tr->sensorIndex].sensorType : -1;
+                                localEffect->destMapIndex =
+                                    state->world.party.mapIndex;
+                                localEffect->destMapX = frontCell.mapX;
+                                localEffect->destMapY = frontCell.mapY;
+                                localEffect->destCell = ctx.cell;
+                                localEffect->textIndex = tr->localEffectValue;
+                                localEffect->sourceSensorIndex = tr->sensorIndex;
                             }
 
                             /* Convert to remote-target toggle for the
