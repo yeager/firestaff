@@ -3103,13 +3103,19 @@ all platform rows partial.
 `SKWINSPX/src/v4/skgame.cpp:1345-1360` synchronously calls
 `DISPLAY_RIGHT_PANEL_SQUAD_HANDS`, `UPDATE_RIGHT_PANEL(0)`, and
 `REFRESH_PLAYER_STAT_DISP` after passing the hand activation gate and
-publishing selection. Firestaff's live M11 route validates the source hand
-predicate, publishes selection, and rebuilds the visible hand/HUD next frame,
-but `dm2_v1_UPDATE_RIGHT_PANEL` only creates a bounded panel-mode receipt;
-it is not bound to this input owner or to a live panel flush. The HUD stat
-bridge reads session snapshot data during render and does not consume an
-active stat-pane refresh. Keep the DOS, SPX v4/v5 and shared symbol rows
-partial until panel, cursor and supported non-M11 callers are covered.
+publishing selection. The live M11 input routes for DOS/M11 key events and
+Mac/Amiga pointer zones call `dm2_v1_runtime_activate_action_hand`; it checks
+the living champion, cooldown and source activability, publishes selected
+champion/hand, clears magical-map flags and applies pending formation-drag
+recomputation. The next accepted frame consumes `source_curactmode` in
+`dm2_runtime_bind_source_squad_hands` and selects the source-bound active-hand
+graphic while rendering the HUD. This closes the earlier claim that selection
+had no observable consumer. The narrow status-panel/stat refresh receipt still
+does not reproduce the native synchronous `UPDATE_RIGHT_PANEL` /
+`REFRESH_PLAYER_STAT_DISP` call sequence, and the live pointer routes and panel
+pixels lack original same-pose capture comparisons on all supported platforms.
+Keep the DOS, SPX v4/v5 and shared symbol rows partial for those remaining
+caller, cursor, refresh and platform gaps.
 
 2026-11-02 SKProject `CLICK_MONEYBOX` / `SKW_CLICK_MONEYBOX`:
 DOS (`dm2byh.cpp:1015-1044`), SPX v4 (`skuievnt.cpp:329-355`) and SPX v5
