@@ -64,7 +64,7 @@ not establish the writer's CD-source ownership. See the
 | Stage-2 contiguous entry path | PROVEN | 0xB5 bytes ($4000-$40B4) fully bound |
 | System Card status callback byte | PROVEN | Authentic JP cold trace: `$1800=$C8`, `$1801=$04`, callback writes `$2259=$04`; [source-locked r5 trace](../docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md#2026-10-31-r5-callback-and-transfer-boundary) |
 | BIOS continuation after callback | PROVEN | `$E162` reads `$2259=$04`; `$E166->$E176` |
-| Original cold RUN reaches game-owned code | OPEN | The cited JP System Card capture follows `$E166->$E176`, but has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff. This original-emulator gate is separate from Firestaff's native JP fresh-start and US Continue routes, which reach loaded dungeons. |
+| Original cold RUN reaches game-owned code | OPEN | The cited JP System Card capture follows `$E166->$E176`, but has no `$E174`, `$E11D`, `$E130`, or `$E209` receipt, game-owned poll, or confirmed game handoff. A later manual host-key capture verifies that RUN and Button I reach the BIOS `$E4C5` poll, but its `$4000` target window is not branch-joined and it still has no game-owned poll; [capture report](../docs/source-lock/theron-disassembly/theron-jp-hostkey-cold-system-card-handoff-20261101.md). This original-emulator gate is separate from Firestaff's native JP fresh-start and US Continue routes, which reach loaded dungeons. |
 
 ### 2. Command Dispatcher
 

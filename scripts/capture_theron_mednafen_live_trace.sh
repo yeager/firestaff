@@ -2,6 +2,30 @@
 set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+require_capture_helpers() {
+    local label=$1
+    shift
+    local helper
+    local missing=()
+    for helper in "$@"; do
+        if [[ ! -r "$script_dir/$helper" ]]; then
+            missing+=("$helper")
+        elif [[ "$helper" == *.sh && "$helper" != theron_x11_keymap.sh &&
+                ! -x "$script_dir/$helper" ]]; then
+            missing+=("$helper (not executable)")
+        fi
+    done
+    if (( ${#missing[@]} > 0 )); then
+        printf 'FAIL: %s is missing required helper(s):\n' "$label" >&2
+        printf '  %s\n' "${missing[@]}" >&2
+        return 1
+    fi
+}
+require_capture_helpers 'capture startup' \
+    theron_x11_keymap.sh \
+    prepare_theron_authentic_bram.sh \
+    watch_theron_capture_output_budget.py \
+    verify_theron_stage2_system_card_call_trace.sh || exit 1
 source "$script_dir/theron_x11_keymap.sh"
 source "$script_dir/prepare_theron_authentic_bram.sh"
 scripted_input_consumption_verifier="$script_dir/verify_theron_scripted_input_consumption.sh"
@@ -10,6 +34,12 @@ cue=${THERON_US_CUE:-${THERON_CUE:-}}
 system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
+capture_output_budget_bytes=${THERON_CAPTURE_MAX_OUTPUT_BYTES:-1073741824}
+if [[ ! "$capture_output_budget_bytes" =~ ^[0-9]+$ ]] ||
+   (( capture_output_budget_bytes < 1048576 || capture_output_budget_bytes > 1099511627776 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAX_OUTPUT_BYTES must be an integer from 1048576 through 1099511627776' >&2
+    exit 1
+fi
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
 # Leave the default unset until the selected module is known.  PCE Fast
 # reaches CloseGame and flushes its reference snapshots on TERM, while its
@@ -26,6 +56,10 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+if [[ "$capture_pointer_c1df_trace" == 1 &&
+      -z ${THERON_CAPTURE_MEDNAFEN_MODULE:-} ]]; then
+    capture_mednafen_module=pce_fast
+fi
 system_card_io_ram_pc_filter=${THERON_CAPTURE_SYSTEM_CARD_IO_RAM_PC_FILTER:-none}
 state_trace_only=${THERON_CAPTURE_STATE_TRACE_ONLY:-0}
 if [[ "$system_card_io_ram_pc_filter" != none &&
@@ -45,6 +79,42 @@ fi
 if [[ "$state_trace_only" == 1 && -z ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STATE_TRACE_ONLY=1 requires THERON_CAPTURE_AUTOLOAD_STATE' >&2
     exit 1
+fi
+if [[ "$capture_mednafen_module" == pce_fast &&
+      -n "$mednafen_bin" && -n "$cue" && -n "$system_card" && -n "$trace" ]]; then
+    pce_fast_capture_helpers=()
+    if [[ "$state_trace_only" != 1 ]]; then
+        pce_fast_capture_helpers+=(
+            verify_theron_jp_code_follow_trace.py
+            verify_theron_syscard_status_trace.py
+            verify_theron_syscard_callback_state_trace.py
+            verify_theron_syscard_io_ram_trace.py
+            verify_theron_syscard_decision_trace.py
+            verify_theron_jp_syscard_bootstrap_follow.py
+        )
+    fi
+    if [[ -n ${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-} ]]; then
+        pce_fast_capture_helpers+=(verify_theron_scripted_input_consumption.sh)
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_INDIRECT_JUMP_TRACE:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(
+            verify_theron_indirect_jump_trace.py
+            verify_theron_jp_indirect_jump_follow_trace.py
+        )
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_CODE_FETCH_SOURCE_VERIFY:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(verify_theron_pce_fast_code_fetch_source.py)
+    fi
+    if [[ ${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0} == 1 ]]; then
+        pce_fast_capture_helpers+=(merge_theron_pce_fast_source_graphics_events.py)
+    fi
+    if [[ "$state_trace_only" == 1 ]]; then
+        require_capture_helpers 'PCE Fast state capture' \
+            "${pce_fast_capture_helpers[@]}" || exit 1
+    else
+        require_capture_helpers 'PCE Fast cold capture' \
+            "${pce_fast_capture_helpers[@]}" || exit 1
+    fi
 fi
 huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
@@ -230,6 +300,7 @@ pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
 cd_data_read_start_at_track02=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02:-0}
+cd_exact_source_lba=${THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA:-}
 cd_ram_target_write_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT:-8192}
 cd_ram_writer_pc_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT:-131072}
 input_trace_limit_default=65536
@@ -305,6 +376,27 @@ if [[ "$cd_data_read_start_at_track02" == 1 &&
       "$capture_mednafen_module" != pce_fast ]]; then
     printf '%s\n' 'FAIL: Track 02 CD data-read filtering requires the PCE Fast module' >&2
     exit 1
+fi
+if [[ -n "$cd_exact_source_lba" ]]; then
+    [[ "$cd_exact_source_lba" =~ ^[0-9]+$ ]] || {
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295' >&2
+        exit 1
+    }
+    cd_exact_source_lba_normalized=$cd_exact_source_lba
+    while [[ "$cd_exact_source_lba_normalized" == 0* &&
+             ${#cd_exact_source_lba_normalized} -gt 1 ]]; do
+        cd_exact_source_lba_normalized=${cd_exact_source_lba_normalized#0}
+    done
+    if (( ${#cd_exact_source_lba_normalized} > 10 )) ||
+       (( 10#$cd_exact_source_lba_normalized > 4294967295 )); then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA must be a decimal integer from 0 through 4294967295' >&2
+        exit 1
+    fi
+    cd_exact_source_lba=$cd_exact_source_lba_normalized
+    if [[ "$capture_mednafen_module" != pce_fast ]]; then
+        printf '%s\n' 'FAIL: exact source-LBA filtering requires the PCE Fast module' >&2
+        exit 1
+    fi
 fi
 normalize_decimal_limit() {
     local value=$1
@@ -1359,7 +1451,9 @@ wait_for_trace_producer() {
     local attempt
 
     for ((attempt = 0; attempt < attempts; ++attempt)); do
-        if [[ -s "$file" ]] && grep -Fqx "$marker" "$file"; then
+        if [[ -s "$file" ]] && awk -v marker="$marker" \
+            'index($0, marker) == 1 && (length($0) == length(marker) || substr($0, length(marker) + 1, 1) == " ") { found = 1 } END { exit !found }' \
+            "$file"; then
             return 0
         fi
         sleep 0.25
@@ -1650,6 +1744,12 @@ scripted_input_consumption_receipt="${trace}.scripted-input-consumption"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
+capture_output_budget_marker="${trace}.output-budget-exceeded"
+if [[ -e "$capture_output_budget_marker" || -L "$capture_output_budget_marker" ]]; then
+    printf 'FAIL: refusing to overwrite existing output-budget receipt: %s\n' \
+        "$capture_output_budget_marker" >&2
+    exit 1
+fi
 
 require_instrumented_mednafen_binary "$mednafen_bin" || exit 1
 if [[ -n "$replay_input_script" ]] &&
@@ -1871,6 +1971,11 @@ cleanup_capture() {
     local exit_status=$?
 
     trap - EXIT INT TERM
+    if [[ "${capture_output_budget_watch_pid:-}" =~ ^[1-9][0-9]*$ ]] &&
+       kill -0 "$capture_output_budget_watch_pid" 2>/dev/null; then
+        kill -TERM "$capture_output_budget_watch_pid" 2>/dev/null || true
+        wait "$capture_output_budget_watch_pid" 2>/dev/null || true
+    fi
     if [[ "${mednafen_pid:-}" =~ ^[1-9][0-9]*$ ]] &&
        kill -0 "$mednafen_pid" 2>/dev/null; then
         # gtimeout owns a separate process group; terminate it as a group so
@@ -1958,6 +2063,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02" \
+    FIRESTAFF_THERON_PCE_FAST_EXACT_SOURCE_LBA="$cd_exact_source_lba" \
     FIRESTAFF_THERON_SYSTEM_CARD_DISPATCH_TRACE="$system_card_dispatch_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace" \
     FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace" \
@@ -2055,6 +2161,21 @@ launch+=(
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
 mednafen_pid=$!
+capture_output_budget_watch_pid=
+capture_output_budget_args=(
+    --pid "$mednafen_pid"
+    --limit-bytes "$capture_output_budget_bytes"
+    --marker "$capture_output_budget_marker"
+    --directory "$trace_dir"
+    --prefix "$(basename -- "$trace")"
+    --path "$trace"
+)
+if [[ -n "$huc6280_23ad_trace" ]]; then
+    capture_output_budget_args+=(--path "$huc6280_23ad_trace")
+fi
+python3 "$script_dir/watch_theron_capture_output_budget.py" \
+    "${capture_output_budget_args[@]}" &
+capture_output_budget_watch_pid=$!
 mednafen_ui_pid=0
 if [[ "$host_input_requested" == 1 ]]; then
     host_key_previous_delay=0
@@ -2323,6 +2444,26 @@ if [[ "$host_input_requested" == 1 ]]; then
 fi
 wait "$mednafen_pid"
 status=$?
+if [[ -e "$capture_output_budget_marker" ]]; then
+    wait "$capture_output_budget_watch_pid" 2>/dev/null
+    capture_output_budget_watch_status=$?
+else
+    kill -TERM "$capture_output_budget_watch_pid" 2>/dev/null || true
+    wait "$capture_output_budget_watch_pid" 2>/dev/null
+    capture_output_budget_watch_status=$?
+fi
+capture_output_budget_watch_pid=
+if [[ -e "$capture_output_budget_marker" ]]; then
+    printf 'FAIL: capture output watchdog rejected the run; receipt: %s\n' \
+        "$capture_output_budget_marker" >&2
+    cat "$capture_output_budget_marker" >&2
+    exit 1
+fi
+if (( capture_output_budget_watch_status != 0 && capture_output_budget_watch_status != 143 )); then
+    printf 'FAIL: capture output budget watchdog exited unexpectedly with status %s\n' \
+        "$capture_output_budget_watch_status" >&2
+    exit 1
+fi
 set -e
 
 autoload_state_load_status=not_requested
@@ -2833,8 +2974,11 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
                        bank[1] != "mpr_bank" || !is_hex(bank[2], 2) || slot[2] != int(hex_value(logical[2]) / 8192) ||
                        physical[2] != sprintf("%06x", hex_value(bank[2]) * 8192 + hex_value(logical[2]) % 8192)) exit 1
                    old_color = hex_value(old[2]); input_byte = hex_value(input[2])
-                   expected_color = reg[2] == 4 ? int(old_color / 256) * 256 + input_byte :
-                       old_color % 256 + (input_byte % 2) * 256
+                   if (reg[2] == 4) {
+                       expected_color = int(old_color / 256) * 256 + input_byte
+                   } else {
+                       expected_color = old_color % 256 + (input_byte % 2) * 256
+                   }
                    if (hex_value(value[2]) != expected_color) exit 1
                    previous = event[2]; count++; if (count > limit) exit 1; next
                }
@@ -2874,7 +3018,10 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
                 --huc6280-23ad-limit 2000000
             )
         fi
-        merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")
+        merge_source_graphics_args+=(
+            --exact-source-lba "${cd_exact_source_lba:-none}"
+            --output "$pce_fast_source_graphics_event_order"
+        )
         python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
             "${merge_source_graphics_args[@]}" || exit 1
         if ! trace_files_are_line_delimited "$pce_fast_source_graphics_event_order"; then
@@ -3208,6 +3355,7 @@ fi
     printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
     printf 'cd_data_port_read_trace_limit=%s\n' "$cd_data_read_trace_limit"
     printf 'cd_data_port_read_start_at_track02=%s\n' "$cd_data_read_start_at_track02"
+    printf 'exact_source_lba_filter=%s\n' "${cd_exact_source_lba:-none}"
     printf 'source_bound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_bound_count"
     printf 'source_unbound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_unbound_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"

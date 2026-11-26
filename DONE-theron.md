@@ -1,5 +1,27 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-11-01 — reconcile current Akutuba capture-tool readiness docs
+
+- Updated the Theron capture TODO and maintained readiness summary to record
+  that the exact-LBA filter exists but no accepted authentic capture has used
+  it, and that the follow-up reference binary is not capture-ready until the
+  current fetch-hook patch is verified and a standalone-SDL2 build passes its
+  runtime linkage/startup check.
+- Updated the documentation index to expose that tooling gate. Native Theron
+  support and the active-map source-to-consumer evidence boundary are unchanged.
+- Documentation-only update; no tests or builds were run.
+
+## 2026-11-01 — add an exact-LBA Akutuba capture filter
+
+- Added `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA` with decimal `uint32`
+  validation, a PCE Fast module gate, and an `exact_source_lba_filter` capture
+  summary field. LBA 3674 now gates CD data-port rows and FIFO-origin RAM
+  receipts before their trace quotas while retaining FIFO byte-origin tracking.
+- The capture-wrapper regression and the complete Mednafen patch-application
+  regression passed three consecutive loops. No accepted authentic capture has
+  used this filter; retail byte authentication, game-owned consumer joins, and
+  rendering evidence remain open.
+
 ## 2026-11-01 — reconcile Akutuba capture target with available LBA filters
 
 - Reviewed the JP Akutuba source report, capture wrapper, CD-port trace and
@@ -10388,6 +10410,35 @@ improvement only: it does not implement an inventory screen or establish
 T900/original inventory semantics. No synthetic media was used.
 
 # Firestaff DONE — Theron's Quest
+
+## 2026-11-01 — source-trace the JP `$D515` alternate-branch boundary
+
+- Rechecked a retained authentic JP state-only runtime trace against the
+  hash-locked `$D515/$D588` disassembly. The trace enters `$D515` at physical
+  `$0D7515` under MPR6 `$6B`, then reaches `$D52C` with accumulator `$FF`;
+  the branch skips the `$D530` call to `$D588`.
+- Bound the trace to its one controller event at `$44D2`, autoloaded-state
+  receipt, and trace SHA-256. It has no mouse-coordinate receipt, cold
+  CD-to-RAM provenance, or unique Track 02 source-copy join.
+- Updated the pointer-click work order. No pointer, hitbox, Button-I, or
+  gameplay meaning is inferred from this state-only path.
+
+## 2026-11-01 — reconcile the current Theron capture documentation
+
+- Audited the current Theron support summaries, capture-readiness page, input
+  guide, runbook, documentation index, and active TODO/DONE entries against
+  the implemented native title hold and capture-wrapper safeguards.
+- Clarified that Firestaff's three-second title hold is implemented and
+  regression-tested, while matching the original game's timing remains
+  unverified. No new gameplay or retail-parity claim was added.
+- Confirmed that helper preflight and the aggregate output budget are already
+  described in the capture-readiness page, runbook, index, TODO, and DONE.
+- Aligned review and evidence dates to 2026-11-01, renamed the D515 report to
+  match its verified capture date, and propagated its evidence boundary through
+  the README, project/platform summaries, completion matrix and wiki.
+- Corrected the input guide: USE dispatches to the facing door, while authentic
+  Track 02 doors remain fail-closed pending the original T900 consumer. Also
+  relabeled an October 31 capture note as historical rather than current.
 
 ## 2026-11-01 — add shared sequencing to C852 reference checkpoints
 

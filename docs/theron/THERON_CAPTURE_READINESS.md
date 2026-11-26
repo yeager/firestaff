@@ -27,6 +27,24 @@ game boundary, not original-game pointer selection, spawn/RNG behavior,
 creature creation, or visual/gameplay parity. See the
 [debug receipt note](../source-lock/theron-track02-spawn-debug-receipt-20261101.md).
 
+The PCE Fast reference wrapper now supports the exact source-sector filter
+`THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674`. It gates CD data-port rows and
+FIFO-origin RAM receipts before their trace quotas; CD FIFO origin tracking
+continues across all sectors to preserve byte attribution. This is capture
+tooling only. No accepted authentic capture has exercised the filter, and
+LBA 3674 has not yet been joined to a game-owned active-map or tile consumer.
+See the [filter implementation and verification note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
+The data-port verifier accepts the authenticated raw BIN and MODE1/2048 ISO
+projection, and can require complete LBA 3674 user-byte coverage for the
+descriptor/map span; see that note for the exact command and fixture boundary.
+
+The follow-up Mednafen binary is not yet capture-ready: one build was rejected
+because it linked against `sdl2-compat`, and a later linked binary predates the
+latest indirect-jump fetch-hook call. Reapply and verify the current patch,
+build against standalone SDL2, and pass the runtime linkage/startup check
+before recording a new capture. Do not treat either binary as accepted runtime
+evidence.
+
 Everything below this maintained summary is a dated capture and tooling
 runbook. Historical results retain their original scope and may refer to
 earlier diagnostic paths; they do not supersede the current parity boundaries
@@ -47,7 +65,7 @@ regional Track 02 source checks, JP fresh start, US BRAM Continue, JP
 later-dungeon runtime, and both regions' keyboard/SDL input routes. The longer
 SDL route includes mouse-panel and touch input, movement, wait, champion
 selection, and the US item interaction sequence. These tests establish those
-bounded routes only; they do not close the gameplay-parity gaps below. A newer authentic US cold Drator replay exercised the independent instruction
+bounded routes only; they do not close the gameplay-parity gaps below. A separate native macOS Debug run of the US event-loop suite passed three consecutive times against hash-verified authentic Track 02 (MD5 `f23601102138f87c33025877767ebf76`; 348.13 seconds total); see the [run receipt](../source-lock/theron-native-sdl-input-real-media-20261101.md). A newer authentic US cold Drator replay exercised the independent instruction
 window and observed `$C852` → `$C85E` `JSR $5039` → `$5039` in order. Its
 first five `$C852` 512-byte windows match US Track 02 at raw offset `$A3AD2`;
 the live `$5039` bytes (`44 05 86`) differ from the old static stage-two
@@ -495,6 +513,14 @@ all three scripted inputs at System Card controller polls, but observes no non-S
 poll, runtime CD source-read join, or authenticated CD-to-RAM handoff. It does
 not establish a game-owned handoff, title-menu action, or gameplay input
 semantics. See the [returned-mask capture report](../source-lock/theron-disassembly/theron-us-cold-scripted-input-returned-mask-20261031.md).
+
+A separate authentic JP state-only code-follow trace reaches `$D515`, but its
+indexed record yields `$FF` and branches around the `$D530` call to `$D588`.
+It has one controller event at `$44D2`, no mouse-coordinate receipt, and no
+cold CD-to-RAM provenance; the seven identical Track 02 copies remain
+ambiguous. The next pointer trace must produce the `$D530` → `$D588` path and
+join its result to the Button-I consumer before native world clicks can be
+enabled. See the [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261102.md).
 
 A separate US saved-state PCE Fast run loaded its existing state and recorded
 scripted input-apply events. Its shared input trace contains 1,354

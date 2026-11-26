@@ -1,8 +1,46 @@
 # Theron's Quest Technical Reference
 
+> **Current renderer/audio boundary (2026-11-01):** the accepted latest PCE
+> Fast reference capture is a bounded JP state-only UP/control replay. A
+> rebuilt isolated instrumenter now includes the `$0E8B14` target-write
+> address, but no cold loader capture has yet exercised it. Presenting an authenticated
+> captured screen is not a state-driven dungeon renderer. Authentic square or
+> material records are not yet joined to retail tile selection, active map,
+> party pose, BAT/VRAM, VCE/VDC state, and a paired retail frame. Do not infer
+> or synthesize the missing tile mapping. Production CDDA currently covers
+> title Track 01; although authentic JP tracks 03–18 can be decoded by bounded
+> tests, gameplay events are not joined to the original track-selection
+> commands. Static `$E03F` candidates do not prove that route. See the maintained
+> [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
+> [Theron TODO](../../TODO-theron.md).
+
 > Current evidence overview: [Theron capture readiness](../theron/THERON_CAPTURE_READINESS.md).
+> The latest authentic cold JP map-byte capture was rejected: `$E11D` handoff and LBA 3674 reads were absent, and the corrected input verifier still found an event interval without a matching guest controller read. See the [cold JP map-byte capture](../source-lock/theron-disassembly/theron-jp-cold-map-byte-writer-capture-20261101.md). This is not loader-provenance or gameplay-input evidence.
+> The latest v4 map-reader evidence is a state-only UP/control replay, not a
+> cold load: [capture details](../source-lock/theron-disassembly/theron-jp-state-only-map-index-context-capture-20261101.md).
+> The capture reports `$BC` at `$0E8B14` against source `$B4`; an audit found
+> the original writer allowlist excluded that address, making its zero-row
+> result inconclusive. A rebuilt isolated instrumenter includes the target,
+> with no cold loader capture yet: [writer-trace audit](../source-lock/theron-disassembly/theron-jp-map-byte-writer-trace-audit-20261101.md).
 > This page is a technical reference; dated capture notes retain their
 > historical scope and do not supersede the current project-status page.
+
+> **Native title input (2026-11-01):** Firestaff gates Theron title
+> accept/action inputs from keyboard, left mouse and mapped gamepad until the
+> input has remained held for at least 3,000 ms; the action dispatches on
+> release. The focused regression covers short holds, the exact threshold and
+> millisecond-counter wrap, and the Linux, macOS and Windows CI CTest jobs
+> passed for PR #248. This is host-side behavior; it does not reproduce or
+> establish the original JP game's captured four-second hold. See the
+> [verified implementation record](../../DONE-theron.md#2026-11-01--gate-native-title-actions-on-a-three-second-hold)
+> and [native input guide](../theron/theron_input.md).
+
+> **Pointer/click boundary (2026-11-01):** an authentic JP state-only trace
+> enters `$D515` but branches around the `$D530` call to `$D588`; it records
+> no mouse-coordinate receipt and is not joined to cold CD-to-RAM loading.
+> This is a branch observation only and does not establish pointer-table,
+> hitbox, Button-I, or world-click semantics. See the
+> [source-locked report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
 
 > **Status reviewed 2026-11-01.** Firestaff runs Theron's Quest in native
 > C/SDL using authentic PC Engine CD Track 02 data through bounded Japanese
@@ -55,6 +93,18 @@
 > events cannot be treated as movement evidence. This negative observation
 > does not define runtime spawn semantics; see the
 > [spawn capture report](../source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+> **JP candidate map-index reader (2026-11-01):** a 256-byte `$50D2` code
+> window from the authentic JP state matches one raw Track 02 occurrence. A bounded trace observes reads from a candidate four-list structure at
+> the end of the unclassified `thing_list` region. Its relation to an active
+> map or tile consumer remains unproven. See the
+> [disassembly report](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
+> **JP UP/control data-read comparison (2026-11-01):** a later matched
+> state-only pair verifies the scripted UP read at `$44C1` and records 256
+> identical authentic-source-matched data reads in each run. The addresses
+> are before the map arrays; the fields are unidentified and neither trace
+> records a movement-command write. This does not establish movement, map
+> selection, rendering, cold handoff or parity. See the
+> [matched trace report](../source-lock/theron-disassembly/theron-jp-state-only-up-control-data-read-20261101.md).
 > **US standard-PCE state mapping (2026-11-01):** a read-only join matches all
 > four US Akutuba source arrays in `HuC.SysCardRAM`; saved MPR3 selects their
 > physical page `$74` in the `$6000–$7fff` CPU window. The arrays are all
@@ -102,6 +152,15 @@
 > source-analysis aid only; it does not authorize runtime rendering. See the [source-sector
 > report](../source-lock/theron-disassembly/theron-jp-akutuba-map-source-sector-20261101.md)
 > and [capture acceptance chain](../../TODO-theron.md#2026-11-01--define-the-jp-active-map-capture-acceptance-chain).
+
+> **Exact source-sector capture filter:** set
+> `THERON_CAPTURE_PCE_FAST_EXACT_SOURCE_LBA=3674` to gate the PCE Fast
+> CD-data-port and FIFO-origin RAM receipt sidecars before their row quotas.
+> The FIFO origin queue continues tracking all bytes, preserving attribution
+> across unrelated sectors. The capture summary records the selected LBA.
+> This reduces diagnostic volume but does not prove a retail-byte match, map
+> selection, a pose-bound consumer, or a rendered response. See the
+> [implementation note](../source-lock/theron-jp-akutuba-exact-lba-capture-tool-20261101.md).
 
 > **Matched PCE Fast control-flow trace (2026-10-31):** three state-only runs
 > record the same 128-instruction path into `$C1FC`, including `$C1D6`
@@ -366,7 +425,7 @@ receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
 ## Scope
 
-**Current capture boundary (reviewed 2026-10-31):** An isolated authentic JP
+**2026-10-31 capture boundary:** An isolated authentic JP
 cold capture confirms that a four-second Button I hold on NEW GAME opens file
 selection and a second four-second hold on FILE 1 enters the Akutuba story.
 The later dungeon `.mc0` is an emulator snapshot, not BRAM. This visible result

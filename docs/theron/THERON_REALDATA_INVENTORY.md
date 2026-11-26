@@ -83,8 +83,11 @@ the same component and complete-image hash checks used for the US split pair.
   hash-verified US Track 02 projection finds each of the four Akutuba map
   arrays exactly once in `HuC.SysCardRAM`. Its saved MPR3 selects page `$74`
   in CPU window `$6000–$7fff`; map selection and a live map/pose/tile-consumer
-  join remain unverified. The save-state bytes do not establish the earlier
-  CD-to-RAM transfer. See the [US state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md).
+  join remain unverified. A separate JP state-only trace captures reads from
+  a candidate pointer-like structure adjacent to the map arrays, but does not
+  bind them to an active map or tile consumer. The save-state bytes do not
+  establish the earlier CD-to-RAM transfer. See the [US state-map report](../source-lock/theron-us-authentic-standard-pce-state-map-binding-20261101.md)
+  and the [JP reader disassembly](../source-lock/theron-disassembly/theron-jp-akutuba-map-index-reader-20261101.md).
 - Later-level runtime receipts retain the retail resource frame length
   (`LE16(+2)-5`) and exact user-data end offset in addition to the block and
   payload hashes. The payload remains opaque until the HuC6280 consumer is

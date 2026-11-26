@@ -5,8 +5,12 @@ desktop mapping. SDL regression coverage verifies command dispatch and
 bounded US pickup/reselect/drop; it does not establish full retail input
 semantics. On 2026-10-31, the macOS SDL3 Debug build passed three runs each of
 the authentic US and Japanese Rev. 1 input suites. This still does not verify
-world-space clicks or visual parity. See the
-[capture-readiness summary](THERON_CAPTURE_READINESS.md).
+world-space clicks or visual parity. On 2026-11-01, the native US SDL
+event-loop suite passed three consecutive runs against the
+hash-verified authentic US BIN, covering the command routes below
+and source-backed sandals pickup/reselect/drop. See the
+[run receipt](../source-lock/theron-native-sdl-input-real-media-20261101.md)
+and [capture-readiness summary](THERON_CAPTURE_READINESS.md).
 
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts
@@ -60,8 +64,10 @@ confirmed. The PCE Fast module's mouse port is documented by
 reference result does not identify absolute cursor coordinates, establish
 click-to-command behavior, or prove native Firestaff parity.
 
-Firestaff adds desktop mouse controls as a host-side convenience. During
-startup, left-click selects and right-click goes back. During dungeon play,
+Firestaff adds desktop mouse controls as a host-side convenience. On the title
+screen, a left-click accept requires a three-second hold and commits on
+release. On later startup screens, left-click selects and right-click goes
+back. During dungeon play,
 left-click activates one of the twelve visible control-panel actions. Holding
 right mouse while pressing a direction key applies the manual's Button II
 simplified-movement modifier; a right click by itself does not advance a tick.
@@ -76,19 +82,22 @@ respectively.
 
 These are Firestaff's native-runtime bindings, not a PC Engine timing model.
 On 2026-10-24, separate SDL key-down events advanced authentic JP media from
-title through stage select and Soul Room into a loaded dungeon. The original
-Japanese title-menu action was subsequently confirmed to advance after a
-four-second Button I hold. That does not prove Firestaff requires or
-reproduces the same hold duration; its native route remains driven by separate
-SDL input events. The retail manual documents Button I as menu confirmation
-but gives no multi-second timing rule. See
+title through stage select and Soul Room into a loaded dungeon. Firestaff's
+native title accepts require a three-second minimum hold, measured until key,
+mouse button or gamepad button release. This is a host-side startup policy;
+it does not claim to reproduce the original game's exact timing. The original
+Japanese title-menu action was confirmed to advance after a four-second
+Button I hold. The retail manual documents Button I as menu confirmation but
+gives no multi-second timing rule. See
 [DMWeb and Greatstone references](../DMWEB_REFERENCE.md), the
 [capture report](../source-lock/theron-jp-four-second-title-action-capture-20261031.md),
-and [TODO-theron.md](../../TODO-theron.md).
+and [TODO-theron.md](../../TODO-theron.md). The focused duration-boundary
+regression passed in the full Linux, macOS and Windows CTest jobs for PR #248;
+this host policy is not a retail parity claim.
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
-| Advance from title  | Z, Return, Space            |
+| Advance from title  | Z, Return, Space (hold 3 s) |
 | Navigate menu       | Up/Down Arrow, W/S          |
 | Select stage        | Z, Return, Space            |
 | Select/deselect hero| Z, Return, Space            |
@@ -199,7 +208,10 @@ the highlighted control changes.
   consumer before source-derived hit testing can be enabled. The viewport
   must also update from native game state for clicks to provide visible,
   end-to-end gameplay. See the current evidence and remaining capture gate in
-  [`TODO-theron.md`](../../TODO-theron.md).
+  [`TODO-theron.md`](../../TODO-theron.md). One authentic JP state-only trace
+  reaches `$D515` but takes `$D52C` around `$D588`; it records no mouse
+  coordinates and has no cold media-to-RAM provenance. See the
+  [branch-boundary report](../source-lock/theron-disassembly/theron-jp-d515-alternate-branch-boundary-20261101.md).
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
@@ -209,9 +221,10 @@ the highlighted control changes.
   Changing champion clears the selection. I selects the next source-backed
   slot for the active champion, so a carried occurrence can be selected again
   after resume; compact item IDs without provenance are skipped. DROP without
-  a selected source slot remains unavailable. Use operates an existing door in the facing cell;
-  a locked source-level door remains closed until the original T900 key
-  consumer is recovered.
+  a selected source slot remains unavailable. U dispatches USE to the facing
+  door. Authentic Track 02 doors remain fail-closed until the original T900
+  button/actuator consumer is bound; fixture door transitions do not establish
+  retail effects.
 - F12 = screenshot (engine-global).
 - Theron currently has no usable Firestaff save command in the dungeon:
   `Ctrl+S` and `F5` report `THERON SAVE HANDOFF NOT READY`, and `F9` cannot

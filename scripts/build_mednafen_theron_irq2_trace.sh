@@ -429,6 +429,8 @@ python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_code_ram_write_trace.
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_main_ram_target_write_trace.py" \
     "$build_root/source" \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_fifo_origin_receipt.py" \
+    "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_transfer_trace.patch"
 if [[ "$pce_fast_tia_trace" == 1 ]]; then

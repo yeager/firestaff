@@ -38,6 +38,7 @@ def run_case(
     huc6280_23ad_limit: Optional[int] = None,
     expected_completeness: str = "not_checked",
     expected_filtered_prefix_streams: Optional[list[str]] = None,
+    exact_source_lba_filter: str = "none",
 ) -> None:
     case = root / name
     case.mkdir()
@@ -56,6 +57,7 @@ def run_case(
         "--cd-data-port", str(trace_paths[0]),
         "--cd-ram-target", str(trace_paths[1]),
         "--vram-commit", str(trace_paths[2]),
+        "--exact-source-lba", exact_source_lba_filter,
     ]
     if cd_data_port_limit is not None:
         command.extend(("--cd-data-port-limit", str(cd_data_port_limit)))
@@ -97,6 +99,8 @@ def run_case(
             raise AssertionError(f"wrong merged chronology metadata: {rows[0]!r}")
         if rows[0].get("completeness") != expected_completeness:
             raise AssertionError(f"wrong merged completeness metadata: {rows[0]!r}")
+        if rows[0].get("exact_source_lba_filter") != exact_source_lba_filter:
+            raise AssertionError(f"wrong exact-source-LBA metadata: {rows[0]!r}")
         if rows[0].get("filtered_prefix_streams") != (
             expected_filtered_prefix_streams or []
         ):
@@ -221,6 +225,14 @@ run_case(
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
     "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
     0,
+)
+run_case(
+    "ordered-exact-source-lba",
+    "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+    exact_source_lba_filter="3674",
 )
 run_case(
     "ordered-with-vce",
