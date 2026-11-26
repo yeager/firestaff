@@ -1765,9 +1765,10 @@ still required before claiming that route verified.
 
 2026-11-26 CSB Atari ST alcove pile shifts: the live F0115 alcove walker
 previously advanced the G0217 pile-shift index for every matching floor item,
-even when the object pass found no visible coordinate or wrote no pixels.
-ReDMCSB DUNVIEW.C F0115 advances that index only inside the visible-object draw
-path. The Atari alcove walker now advances and wraps the index only when the
-object renderer reports a draw. This is a narrow source-parity correction; it
-has not yet been exercised with an original-media alcove encounter or pixel
-comparison, so the route remains partial.
+even when the object pass found no visible G0218 alcove coordinate.
+ReDMCSB DUNVIEW.C F0115 advances the index after that coordinate gate and
+before blitting, so transparent/clipped sprites still consume a shift. The
+Atari walker now reads the bounded source aspect/coordinate tables and advances
+only when the source Y-coordinate is nonzero. This correction has not yet been
+exercised with an original-media alcove encounter or pixel comparison, so the
+route remains partial.

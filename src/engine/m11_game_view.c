@@ -6902,6 +6902,34 @@ static int m11_csb_atari_st_draw_alcove_objects(
             CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
             if (csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
                     dungeon, thing_id, &object_info) && object_info.valid) {
+                int alcove_coordinate_visible = 0;
+                int source_aspect = -1;
+                if (state->csbAtariStObjectAspectsValid &&
+                    object_info.object_info_index >= 0 &&
+                    object_info.object_info_index <
+                        (int)CSB_V1_CSBWIN_OBJDESC_022F_COUNT) {
+                    source_aspect = state->csbAtariStObjectAspects[
+                        object_info.object_info_index];
+                }
+                /* F0115 advances G0217 after the G0218 alcove Y-coordinate
+                 * test, before bitmap blitting. A transparent or clipped
+                 * sprite still consumes the pile shift when its coordinate
+                 * exists. */
+                if (source_aspect >= 0 && source_aspect < 85 &&
+                    source_view_square >= 0 && source_view_square < 10 &&
+                    m11_dm1_media009_metadata(state)) {
+                    const unsigned coordinate_set =
+                        state->dm1NativeObjectAspects[
+                            source_aspect * 6 + 5];
+                    if (coordinate_set < 3u) {
+                        const size_t coordinate_offset =
+                            (((size_t)coordinate_set * 10u +
+                              (size_t)source_view_square) * 5u + 4u) * 2u;
+                        alcove_coordinate_visible =
+                            state->dm1NativeObjectCoordinates[
+                                coordinate_offset + 1u] != 0;
+                    }
+                }
                 const int drawn = m11_draw_dm1_media009_object(
                     state, framebuffer, framebuffer_width, framebuffer_height,
                     object_info.thing_type, object_info.subtype, 0,
@@ -6924,10 +6952,9 @@ static int m11_csb_atari_st_draw_alcove_objects(
                             absolute_cell, (unsigned)thing_id, type,
                             object_info.subtype, shift_index, drawn);
                 }
-                /* ReDMCSB DUNVIEW.C F0115 advances the alcove pile index
-                 * only after an object has a visible coordinate and is
-                 * actually drawn. Hidden items must not consume a shift. */
-                if (drawn > 0) {
+                /* Match the source coordinate gate, rather than the blitter's
+                 * pixel count, when advancing the pile sequence. */
+                if (alcove_coordinate_visible) {
                     ++shift_index;
                     if (shift_index >= 14u) shift_index = 2u;
                 }
