@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_vdp2_bitmap_source import ymir_bundle_frame
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
@@ -116,9 +117,19 @@ def main() -> int:
     if required <= args.frame:
         print("NEXUS_VDP2_CHAR_SOURCE_INVALID: frame is outside capture")
         return 1
+    bundle_byte_order = None
     try:
-        capture = args.capture.read_bytes()
-        frames, _ = frame_regions(capture, required)
+        if args.capture.is_dir():
+            if args.frame != 0:
+                raise ValueError("--frame applies only to multi-frame raw captures")
+            frame, frame_index, bundle_byte_order = ymir_bundle_frame(args.capture)
+            frames = [frame]
+            selected_frame = 0
+        else:
+            capture = args.capture.read_bytes()
+            frames, _ = frame_regions(capture, required)
+            frame_index = args.frame
+            selected_frame = args.frame
         font = (args.data_dir / "FONT256.S2D").read_bytes()
         if hashlib.sha256(font).hexdigest() not in FONT256_SHA256:
             raise ValueError("FONT256.S2D hash mismatch")
@@ -127,15 +138,15 @@ def main() -> int:
         print(f"NEXUS_VDP2_CHAR_SOURCE_INVALID: {error}")
         return 1
 
-    frame = frames[args.frame]
+    frame = frames[selected_frame]
     registers = frame["vdp2-regs"]
-    byte_order = detect_byte_order(registers)
+    byte_order = bundle_byte_order or detect_byte_order(registers)
     bgon = read_u16(registers, 0x20, byte_order)
     chctla = read_u16(registers, 0x28, byte_order)
     pncn1 = read_u16(registers, 0x32, byte_order)
     vram = frame["vdp2-vram"]
     cram = frame["vdp2-cram"]
-    print(f"frame={args.frame} register_byte_order={byte_order} "
+    print(f"frame={frame_index} register_byte_order={byte_order} "
           f"bgon=0x{bgon:04x} chctla=0x{chctla:04x} pncn1=0x{pncn1:04x}")
 
     trace_vram = trace_cram = None
