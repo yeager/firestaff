@@ -1,3 +1,9 @@
+2026-11-26 ReDMCSB `GROUP.C:F0179/F0183` map-entry sound handoff: F0179's
+Couatl movement and Animated Armour requests now flow through the staged
+F0003 transition into `TickResult`; the orchestrator, M11 stair and movement
+callers publish them only after a successful map handoff. Remaining work is
+authentic sound-priority/arbitration evidence and edition metadata beyond I34.
+
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 
 2026-11-03 ReDMCSB `BLITFILL.C:F0136` screen hatch: the PC34 M11 renderer matches the `VIDEODRV.C:F8155` VGA checker rule exactly (black at absolute pixels where `(x XOR y)&1` is zero; VGA ignores the color argument). The live action-icon hatch now selects caller-color source patterns for Amiga and FM Towns, matching Amiga G1100 and Towns EGB G4107 (`TOWNSSCR.C:53-67`) on supported DM1 and CSB profiles. Keep `PARTIAL`: EGA/Tandy, Atari ST, IIGS, other Amiga/Towns callers and other CSB platform branches still need source-specific runtime coverage. `COPYPRO3.C:F0137` is `MISSING`: Firestaff does not patch executable code with hidden launchers for fuzzy-sector copy protection.
@@ -2504,8 +2510,9 @@ parity.
   (GROUP.C:242, 270-280). F0183 map-entry sound requests now enter the
   TickResult on staged F0003 transitions and are published only after the
   map handoff commits; the orchestrator, M11 stair and movement callers now
-  consume those emissions. Validate sound priority/arbitration with authentic
-  live captures. Do not replace these with a generic audio effect.
+  consume those emissions. Edition metadata beyond I34 and authentic sound
+  priority/arbitration captures remain open. Do not replace these with a
+  generic audio effect.
   Remaining integration requirements:
   - Audit remaining attack-entry transitions beyond C31-C37 with their
     own deletion/delay rules. Obtain turning-pair

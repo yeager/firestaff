@@ -4488,3 +4488,13 @@ not used as its final verification.
   The focused F0179/F0180/F0183/F0184 regression passed with strict compiler
   warnings. This guards malformed compatibility calls and does not claim
   attack-event trace or gameplay parity.
+
+- 2026-11-26: Routed ReDMCSB `GROUP.C:F0179` map-entry sound requests through
+  the staged `NEWMAP.C:F0003` transition result. A successful F0183 admission
+  appends its Couatl movement or Animated Armour request to `TickResult`; a
+  rejected handoff publishes no sound. The world-tick orchestrator and both
+  direct M11 map-transition callers consume the result through the standard
+  emission handler. The focused source files pass C11 syntax checks, and
+  GitHub Actions run 45887505469 passed all Linux, macOS and Windows builds,
+  verifications and policy jobs. Authentic sound-priority arbitration and
+  edition metadata beyond I34 remain unverified.
