@@ -1,3 +1,12 @@
+2026-11-26 ReDMCSB `SOUND.C:F0064/F0065` Amiga 3.6 effects now resolve the
+original MEDIA719 sample rows from authenticated A36 GRAPHICS.DAT items,
+resample source PCM from the Paula clock and row `Period`, compute MEDIA425 directional stereo
+volume, and arbitrate two pending sounds by MEDIA746 volume class then native
+priority before the loop flush. Startup F0195 requests are retained until A36
+graphics bind and use that same owner. PAL/NTSC selection, audio.device's two
+channel-pair timing across separate M11 calls and original runtime audio
+captures remain open.
+
 2026-11-26 ReDMCSB `GROUP.C:F0179/F0183` active-group sound handoff: F0179's
 Couatl movement and Animated Armour requests now flow through staged F0003
 map transitions and result-bearing group generator/deferred-F0267 arrivals.
@@ -11,14 +20,15 @@ title/entrance setup. M11 tick sound emissions now use the media-bound DM1
 audio adapter, so Atari ST and supported legacy Amiga requests reach their
 native GRAPHICS.DAT tables instead of the generic PC34 SND3 owner. PC34 remains
 source-SND3-backed, and FM Towns retains its per-sample volume/arbitration path.
-These changes do not add native A36 sound ownership or change the IIGS lane.
+Amiga 3.6 now has its own MEDIA719/MEDIA746 source sound owner; this does not
+change the IIGS lane or add sound ownership to other Amiga editions.
 Startup F0195 sound receipts are now captured for I34, Atari ST and the
 supported older Amiga formats after their sound source is bound. FM Towns
 F0195 requests are retained during dungeon initialization and dispatched
 through its per-sample volume/arbitration queue only after the selected native
-EDM/JDM launcher receipt is admitted. A36 and IIGS keep separate sound owners.
-Source-accurate per-edition priority/arbitration and runtime audio captures
-remain open.
+EDM/JDM launcher receipt is admitted. IIGS keeps its separate sound owner.
+Source-accurate per-edition priority/arbitration remains open for the other
+editions, as do original runtime audio captures.
 
 2026-11-01 ReDMCSB `COPYPRO1.C:F0079`: added a bounded helper for the Atari ST 68k-word scan (4E5E4E75), Amiga scan (4E5D4E75), and G14ED/G20E/G21E caller skip-table sum. It resolves a source JMP-absolute entry only inside an authenticated caller-owned code image and rejects truncated spans. The function remains partial because Firestaff has no source-protected save/load caller or authenticated executable-code owner; the ordinary PC34 native save path intentionally defines `NOCOPYPROTECTION`.
 

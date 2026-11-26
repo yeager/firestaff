@@ -82,6 +82,15 @@ int dm1_v1_amiga36_graphic_expand(const uint8_t *stream, size_t stream_size,
                                   uint16_t *out_width,
                                   uint16_t *out_height);
 
+/* ReDMCSB MEMORY.C F0490 with NOT_EXPANDED reads the exact Amiga 3.6
+ * GRAPHICS.DAT item bytes without running EXPAND.C F0466. Sound items use
+ * that route; return one bounded source record, including its two-byte
+ * sound prefix. */
+int dm1_v1_amiga36_graphic_read_raw(const uint8_t *data, size_t size,
+                                   uint16_t graphic_index,
+                                   uint8_t *out_bytes, size_t capacity,
+                                   size_t *out_size);
+
 #ifdef __cplusplus
 }
 #endif

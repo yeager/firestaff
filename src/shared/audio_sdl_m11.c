@@ -8,6 +8,7 @@
 #include "swsh_frontend_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 
 #include <limits.h>
@@ -1277,6 +1278,13 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (!state) return;
 
 #if M11_HAVE_SDL_AUDIO
+    for (int streamIndex = 0; streamIndex < 2; ++streamIndex) {
+        if (state->dm1AmigaStereoStream[streamIndex]) {
+            SDL_DestroyAudioStream(
+                (SDL_AudioStream*)state->dm1AmigaStereoStream[streamIndex]);
+            state->dm1AmigaStereoStream[streamIndex] = NULL;
+        }
+    }
     if (state->iigsStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->iigsStream);
         state->iigsStream = NULL;
@@ -1321,6 +1329,8 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     dm1_v1_iigs_doc_mixer_destroy(state->iigsMixer);
     state->iigsMixer = NULL;
     state->hostResumeIigsStream = 0;
+    memset(state->hostResumeDm1AmigaStereoStream, 0,
+           sizeof(state->hostResumeDm1AmigaStereoStream));
     {
         int i;
         for (i = 0; i < M11_AUDIO_MARKER_COUNT; ++i) {
@@ -1345,6 +1355,8 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
 
     state->hostPaused = 0;
     state->hostResumeSdlStream = 0;
+    memset(state->hostResumeDm1AmigaStereoStream, 0,
+           sizeof(state->hostResumeDm1AmigaStereoStream));
     state->hostResumeMusicStream = 0;
     state->hostResumeMovieStream = 0;
     state->hostResumeCddaStream = 0;
@@ -1430,6 +1442,14 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
         float gain = ((float)state->masterVolume / M11_AUDIO_VOLUME_MAX) *
                      ((float)state->sfxVolume / M11_AUDIO_VOLUME_MAX);
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->iigsStream, gain);
+    }
+    for (int streamIndex = 0; streamIndex < 2; ++streamIndex) {
+        if (state->dm1AmigaStereoStream[streamIndex]) {
+            float gain = (float)state->masterVolume / M11_AUDIO_VOLUME_MAX;
+            SDL_SetAudioStreamGain(
+                (SDL_AudioStream*)state->dm1AmigaStereoStream[streamIndex],
+                gain);
+        }
     }
     if (state->sdlStream) {
         float gain = (float)state->masterVolume / (float)M11_AUDIO_VOLUME_MAX;
@@ -1852,6 +1872,112 @@ int M11_Audio_EmitDm1AmigaSound(M11_AudioState* state,
             m11_fnv1a_bytes(raw + 2u, (int)(length - 2u)), 64);
         if (accepted) state->lastSoundIndex = pc34Index;
     }
+    free(raw);
+    return accepted;
+}
+
+/* ReDMCSB DATA.C MEDIA719 binds A36 events to these native graphic rows and
+ * periods. SOUND.C F0064/F0709 sends signed samples to paired audio.device
+ * channels; MEMORY.C F0490's NOT_EXPANDED path supplies the source record. */
+int M11_Audio_PlayDm1Amiga36Sound(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int soundIndex,
+    unsigned char leftVolume, unsigned char rightVolume)
+{
+    static const struct { uint16_t graphic; uint8_t period; } sounds[35] = {
+        {671,112},{672,112},{673,112},{673,79},{674,112},{675,112},
+        {675,112},{677,112},{678,112},{679,112},{680,112},{681,112},
+        {682,112},{684,112},{685,112},{687,138},{683,112},{707,120},
+        {704,86},{690,112},{691,112},{692,112},{693,112},{688,112},
+        {708,138},{689,112},{709,138},{710,112},{701,138},{702,138},
+        {703,138},{705,138},{706,138},{711,138},{712,150}
+    };
+    unsigned char* raw;
+    size_t rawSize = 0u;
+    unsigned int sourceRate, outputCount, i;
+    float* stereo = NULL;
+    int accepted = 0;
+    if (!state || !state->initialized || !graphics || soundIndex < 0 ||
+        soundIndex >= 35 || leftVolume > 64u || rightVolume > 64u) return 0;
+    raw = (unsigned char*)malloc(65535u);
+    if (!raw) return 0;
+    if (!dm1_v1_amiga36_graphic_read_raw(graphics, graphicsSize,
+            sounds[soundIndex].graphic, raw, 65535u, &rawSize) ||
+        rawSize <= 2u) goto done;
+    sourceRate = 3579545u / sounds[soundIndex].period;
+    if (!sourceRate) goto done;
+    outputCount = (unsigned int)(((rawSize - 2u) * M11_AUDIO_SAMPLE_RATE +
+        sourceRate - 1u) / sourceRate);
+    if (!outputCount || outputCount > 65536u) goto done;
+    stereo = (float*)malloc((size_t)outputCount * 2u * sizeof(float));
+    if (!stereo) goto done;
+    for (i = 0u; i < outputCount; ++i) {
+        unsigned int sourceIndex = i * sourceRate / M11_AUDIO_SAMPLE_RATE;
+        float sample;
+        if (sourceIndex >= (unsigned int)(rawSize - 2u))
+            sourceIndex = (unsigned int)(rawSize - 3u);
+        sample = (float)(int8_t)raw[2u + sourceIndex] / 128.0f;
+        stereo[i * 2u] = sample * ((float)leftVolume / 64.0f) *
+                         ((float)state->sfxVolume / M11_AUDIO_VOLUME_MAX);
+        stereo[i * 2u + 1u] = sample * ((float)rightVolume / 64.0f) *
+                              ((float)state->sfxVolume / M11_AUDIO_VOLUME_MAX);
+    }
+    accepted = 1;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 &&
+        m11_sdl_audio_backend_enabled()) {
+        int streamIndex = -1;
+        for (int i = 0; i < 2; ++i) {
+            SDL_AudioStream* candidate = (SDL_AudioStream*)
+                state->dm1AmigaStereoStream[i];
+            if (!candidate || (SDL_GetAudioStreamQueued(candidate) == 0 &&
+                               SDL_GetAudioStreamAvailable(candidate) == 0)) {
+                streamIndex = i;
+                break;
+            }
+        }
+        if (streamIndex < 0) {
+            int class0 = state->dm1AmigaStereoLeftVolume[0] +
+                         state->dm1AmigaStereoRightVolume[0] > 25 ? 2 :
+                         state->dm1AmigaStereoLeftVolume[0] +
+                         state->dm1AmigaStereoRightVolume[0] < 15 ? 0 : 1;
+            int class1 = state->dm1AmigaStereoLeftVolume[1] +
+                         state->dm1AmigaStereoRightVolume[1] > 25 ? 2 :
+                         state->dm1AmigaStereoLeftVolume[1] +
+                         state->dm1AmigaStereoRightVolume[1] < 15 ? 0 : 1;
+            streamIndex = class0 > class1 ? 1 : 0;
+        }
+        SDL_AudioStream* stream = (SDL_AudioStream*)
+            state->dm1AmigaStereoStream[streamIndex];
+        if (!stream) {
+            SDL_AudioSpec spec;
+            SDL_zero(spec);
+            spec.format = SDL_AUDIO_F32;
+            spec.channels = 2;
+            spec.freq = M11_AUDIO_SAMPLE_RATE;
+            stream = FIRESTAFF_M11_SDL_OPEN_AUDIO_DEVICE_STREAM(
+                Firestaff_AudioDevice_ResolvePlayback(), &spec, NULL, NULL);
+            if (stream) {
+                state->dm1AmigaStereoStream[streamIndex] = stream;
+                (void)SDL_SetAudioStreamGain(stream,
+                    (float)state->masterVolume / M11_AUDIO_VOLUME_MAX);
+                if (state->hostPaused) {
+                    state->hostResumeDm1AmigaStereoStream[streamIndex] = 1;
+                } else if (!SDL_ResumeAudioStreamDevice(stream)) {
+                    SDL_DestroyAudioStream(stream);
+                    state->dm1AmigaStereoStream[streamIndex] = NULL;
+                    stream = NULL;
+                }
+            }
+        }
+        if (stream && SDL_PutAudioStreamData(stream, stereo,
+                (int)((size_t)outputCount * 2u * sizeof(float)))) {
+            state->dm1AmigaStereoLeftVolume[streamIndex] = leftVolume;
+            state->dm1AmigaStereoRightVolume[streamIndex] = rightVolume;
+        }
+    }
+#endif
+done:
+    free(stereo);
     free(raw);
     return accepted;
 }
@@ -2753,6 +2879,15 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
                 state->hostResumeIigsStream = 1;
             else ok = 0;
         }
+        for (int streamIndex = 0; streamIndex < 2; ++streamIndex) {
+            SDL_AudioStream* stream = (SDL_AudioStream*)
+                state->dm1AmigaStereoStream[streamIndex];
+            if (stream && !SDL_AudioStreamDevicePaused(stream)) {
+                if (SDL_PauseAudioStreamDevice(stream))
+                    state->hostResumeDm1AmigaStereoStream[streamIndex] = 1;
+                else ok = 0;
+            }
+        }
         if (state->sdlStream &&
             !SDL_AudioStreamDevicePaused((SDL_AudioStream*)state->sdlStream)) {
             if (SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->sdlStream))
@@ -2782,6 +2917,15 @@ int M11_Audio_SetHostPaused(M11_AudioState* state, int paused)
             if (!state->iigsStream || SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->iigsStream))
                 state->hostResumeIigsStream = 0;
             else ok = 0;
+        }
+        for (int streamIndex = 0; streamIndex < 2; ++streamIndex) {
+            if (state->hostResumeDm1AmigaStereoStream[streamIndex]) {
+                if (!state->dm1AmigaStereoStream[streamIndex] ||
+                    SDL_ResumeAudioStreamDevice((SDL_AudioStream*)
+                        state->dm1AmigaStereoStream[streamIndex]))
+                    state->hostResumeDm1AmigaStereoStream[streamIndex] = 0;
+                else ok = 0;
+            }
         }
         if (state->hostResumeSdlStream) {
             if (!state->sdlStream ||

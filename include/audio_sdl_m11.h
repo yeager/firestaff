@@ -80,6 +80,9 @@ typedef struct {
     void* iigsMixer;
     int hostResumeIigsStream;
     void* sdlStream;
+    void* dm1AmigaStereoStream[2];
+    unsigned char dm1AmigaStereoLeftVolume[2];
+    unsigned char dm1AmigaStereoRightVolume[2];
     /* Independent native SONG.DAT transport; never contains SFX PCM. */
     void* musicStream;
     void* movieStream; /* DM2 Mac mixed film PCM, isolated from SFX. */
@@ -92,6 +95,7 @@ typedef struct {
     int   cddaPaused;
     int   hostPaused;
     int   hostResumeSdlStream;
+    int   hostResumeDm1AmigaStereoStream[2];
     int   hostResumeMusicStream;
     int   hostResumeMovieStream;
     int   hostResumeCddaStream;
@@ -173,6 +177,9 @@ int M11_Audio_EmitDm1FmtownsSound(M11_AudioState* state,
     int sourceVolume);
 int M11_Audio_EmitDm1AmigaSound(M11_AudioState* state,
     const unsigned char* graphics, size_t graphicsSize, int pc34Index);
+int M11_Audio_PlayDm1Amiga36Sound(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int soundIndex,
+    unsigned char leftVolume, unsigned char rightVolume);
 
 int M11_Audio_Init(M11_AudioState* state);
 /* Like Init, requires an empty/shut-down state. Authenticates and owns the

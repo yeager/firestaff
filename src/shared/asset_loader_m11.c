@@ -165,6 +165,7 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
     loader->fileState = fileState;
     loader->runtimeState = runtimeState;
     loader->ownedBuffer = ownedBuffer;
+    loader->ownedBufferSize = (size_t)size;
     loader->graphicCount = runtimeState->graphicCount;
     loader->initialized = 1;
     {

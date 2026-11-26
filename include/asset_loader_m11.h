@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_ASSET_LOADER_M11_H
 #define FIRESTAFF_ASSET_LOADER_M11_H
 
+#include <stddef.h>
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 
 /*
@@ -57,6 +58,7 @@ typedef struct {
     /* Resident source for InitFromBuffer. The IMG3 file state keeps byte
      * pointers into it, so archive-backed media must remain RAM-resident. */
     unsigned char* ownedBuffer;
+    size_t ownedBufferSize;
 
     unsigned short graphicCount; /* total graphics in file */
 

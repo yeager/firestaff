@@ -237,3 +237,33 @@ int dm1_v1_amiga_graphics_decode(const uint8_t *data, size_t size,
     free(expanded);
     return result;
 }
+
+int dm1_v1_amiga36_graphic_read_raw(const uint8_t *data, size_t size,
+                                   uint16_t graphic_index,
+                                   uint8_t *out_bytes, size_t capacity,
+                                   size_t *out_size) {
+    const size_t count = DM1_AMIGA_GRAPHICS_EXPECTED_COUNT;
+    const size_t counts_offset = 4u;
+    const size_t expanded_counts_offset = counts_offset + count * 2u;
+    const size_t payload_offset = 4u + count * 8u;
+    size_t offset = payload_offset;
+    size_t item_size = 0u;
+    if (out_size) *out_size = 0u;
+    if (!data || !out_bytes || !out_size || graphic_index >= count ||
+        size < payload_offset || data[0] != 0x80u || data[1] != 0x01u ||
+        rd16be(data + 2u) != count) return 0;
+    for (size_t i = 0u; i < count; ++i) {
+        size_t compressed = rd16be(data + counts_offset + i * 2u);
+        size_t expanded = rd16be(data + expanded_counts_offset + i * 2u);
+        if (compressed != expanded || compressed > size - offset) return 0;
+        if (i == graphic_index) {
+            item_size = compressed;
+            if (item_size > capacity) return 0;
+            memcpy(out_bytes, data + offset, item_size);
+            *out_size = item_size;
+            return 1;
+        }
+        offset += compressed;
+    }
+    return 0;
+}

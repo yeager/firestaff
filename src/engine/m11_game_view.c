@@ -17946,6 +17946,25 @@ static void m11_audio_emit_source_sound_with_volume(
                 sourceVolume);
             return;
         }
+        if (state->assetLoader.dm1Amiga36) {
+            DM1_SoundSystem volumeState;
+            DM1_SoundVolume volume;
+            DM1_Sound_Init(&volumeState);
+            DM1_Sound_SetPartyPosition(&volumeState,
+                (int16_t)state->world.party.mapX,
+                (int16_t)state->world.party.mapY,
+                (int16_t)state->world.party.direction,
+                (int16_t)state->world.party.mapIndex);
+            if (DM1_Sound_GetVolume(&volumeState,
+                    (int16_t)state->world.party.mapX,
+                    (int16_t)state->world.party.mapY, &volume)) {
+                (void)M11_Audio_PlayDm1Amiga36Sound(&state->audioState,
+                    state->assetLoader.ownedBuffer,
+                    state->assetLoader.ownedBufferSize, soundIndex,
+                    volume.left, volume.right);
+            }
+            return;
+        }
         if (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian) {
             (void)M11_Audio_EmitDm1AmigaSound(&state->audioState,
                 state->assetLoader.legacyData,
@@ -18160,6 +18179,106 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
         }
         state->audioEventCount += 1;
     }
+}
+
+typedef struct M11Dm1AmigaQueuedSound {
+    int soundIndex;
+    int priority;
+    DM1_SoundVolume volume;
+} M11Dm1AmigaQueuedSound;
+
+static int m11_dm1_a36_sound_priority(int soundIndex) {
+    static const unsigned char priorities[DM1_SND_COUNT] = {
+        11,15,72,79,10,99,98,110,2,80,82,84,86,40,70,75,95,120,
+        86,57,52,50,96,60,56,55,58,53,24,21,23,27,28,29,22
+    };
+    return soundIndex >= 0 && soundIndex < DM1_SND_COUNT
+        ? priorities[soundIndex] : -1;
+}
+
+static int m11_dm1_a36_volume_class(DM1_SoundVolume volume) {
+    int total = (int)volume.left + (int)volume.right;
+    return total > 25 ? 2 : total < 15 ? 0 : 1;
+}
+
+static int m11_dm1_a36_compare_volume(DM1_SoundVolume a,
+                                      DM1_SoundVolume b) {
+    int aClass = m11_dm1_a36_volume_class(a);
+    int bClass = m11_dm1_a36_volume_class(b);
+    return aClass > bClass ? 1 : aClass < bClass ? -1 : 0;
+}
+
+static int m11_dm1_a36_sound_volume(const M11_GameViewState* state,
+                                    int mapX, int mapY,
+                                    DM1_SoundVolume* outVolume) {
+    DM1_SoundSystem volumeState;
+    if (!state || !outVolume) return 0;
+    DM1_Sound_Init(&volumeState);
+    DM1_Sound_SetPartyPosition(&volumeState,
+        (int16_t)state->world.party.mapX, (int16_t)state->world.party.mapY,
+        (int16_t)state->world.party.direction,
+        (int16_t)state->world.party.mapIndex);
+    return DM1_Sound_GetVolume(&volumeState, (int16_t)mapX, (int16_t)mapY,
+                               outVolume);
+}
+
+static void m11_dm1_a36_queue_sound(
+    const M11_GameViewState* state,
+    const struct TickEmission_Compat* emission,
+    int soundIndex,
+    M11Dm1AmigaQueuedSound pending[2]) {
+    DM1_SoundVolume volume;
+    M11Dm1AmigaQueuedSound request;
+    int compareFirst, compareSecond;
+    int mapX, mapY, mapIndex;
+    if (!state || !emission || !pending || soundIndex < 0 ||
+        soundIndex >= DM1_SND_COUNT) return;
+    if (emission->kind == EMIT_SOUND_REQUEST) {
+        mapX = emission->payload[1];
+        mapY = emission->payload[2];
+        mapIndex = emission->payload[3];
+    } else {
+        mapX = state->world.party.mapX;
+        mapY = state->world.party.mapY;
+        mapIndex = state->world.party.mapIndex;
+    }
+    if (mapIndex != state->world.party.mapIndex ||
+        !m11_dm1_a36_sound_volume(state, mapX, mapY, &volume)) return;
+    request.soundIndex = soundIndex;
+    request.volume = volume;
+    request.priority = m11_dm1_a36_sound_priority(soundIndex);
+    if (pending[0].soundIndex < 0) {
+        pending[0] = request;
+        return;
+    }
+    if (pending[1].soundIndex < 0) {
+        pending[1] = request;
+        return;
+    }
+    compareFirst = m11_dm1_a36_compare_volume(volume, pending[0].volume);
+    compareSecond = m11_dm1_a36_compare_volume(volume, pending[1].volume);
+    if (compareFirst > 0 || compareSecond > 0) {
+        if (m11_dm1_a36_compare_volume(pending[0].volume,
+                                       pending[1].volume) > 0) {
+            pending[1] = request;
+        } else {
+            pending[0] = request;
+        }
+    } else if (compareFirst == 0 &&
+               request.priority > pending[0].priority) {
+        pending[0] = request;
+    } else if (compareSecond == 0 &&
+               request.priority > pending[1].priority) {
+        pending[1] = request;
+    }
+}
+
+static void m11_dm1_a36_play_sound(M11_GameViewState* state,
+                                   const M11Dm1AmigaQueuedSound* queued) {
+    if (!state || !queued || queued->soundIndex < 0) return;
+    (void)M11_Audio_PlayDm1Amiga36Sound(&state->audioState,
+        state->assetLoader.ownedBuffer, state->assetLoader.ownedBufferSize,
+        queued->soundIndex, queued->volume.left, queued->volume.right);
 }
 
 static int m11_dm1_fmtowns_tick_sound_volume(
@@ -27256,10 +27375,14 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
     int fmtownsPendingSound[22];
     unsigned char fmtownsPendingVolume[22] = {0};
+    M11Dm1AmigaQueuedSound amigaPending[2];
     if (!state) {
         return;
     }
     for (i = 0; i < 22; ++i) fmtownsPendingSound[i] = DM1_SND_NONE;
+    memset(amigaPending, 0, sizeof(amigaPending));
+    amigaPending[0].soundIndex = -1;
+    amigaPending[1].soundIndex = -1;
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         const struct TickEmission_Compat* e = &state->lastTickResult.emissions[i];
         if (state->dm1FmtownsStartupReceiptValid) {
@@ -27275,6 +27398,14 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                     fmtownsPendingVolume[nativeIndex] = (unsigned char)volume;
                     fmtownsPendingSound[nativeIndex] = plan.sourceSoundIndex;
                 }
+                state->audioEventCount += 1;
+            }
+        } else if (state->assetLoader.dm1Amiga36) {
+            DM1_V1_AudioEmissionPlanPc34 plan;
+            if (DM1_V1_BuildAudioEmissionPlanPc34(e, &plan) &&
+                plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND) {
+                m11_dm1_a36_queue_sound(state, e, plan.sourceSoundIndex,
+                                         amigaPending);
                 state->audioEventCount += 1;
             }
         } else {
@@ -27560,6 +27691,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                         fmtownsPendingSound[i]));
             }
         }
+    }
+    if (state->assetLoader.dm1Amiga36) {
+        m11_dm1_a36_play_sound(state, &amigaPending[0]);
+        m11_dm1_a36_play_sound(state, &amigaPending[1]);
     }
 
     /* V1 projectile cycle: after the M10 orchestrator has advanced
@@ -29701,11 +29836,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     /* F0882 enters NEWMAP.C F0003 / GROUP.C F0195 before the caller presents
      * the startup sequence. Preserve its sound requests only when a matching
-     * owner exists: I34 SND3, native Atari ST, supported big-endian Amiga, or
-     * FM Towns. Towns playback waits for its later native launcher receipt;
-     * A36 and IIGS have separate sound owners. */
+     * owner exists: I34 SND3, native Atari ST, supported big-endian Amiga,
+     * FM Towns or Amiga 3.6. Towns playback waits for its later native
+     * launcher receipt; IIGS has a separate sound owner. */
     dm1InitialSoundSourceBound = dm1Pc34Graphics ||
         state->assetLoader.atariStDm1 ||
+        state->assetLoader.dm1Amiga36 ||
         state->assetLoader.dm1Fmtowns ||
         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
     if (dm1VirtualDungeonBytes) {
