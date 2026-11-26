@@ -647,16 +647,47 @@ static void write_le16(uint8_t *p, uint16_t value)
     p[1] = (uint8_t)(value >> 8U);
 }
 
+static int rasterize_normal_sprite_as_quad(
+    Nexus_V1_Vdp1YmirCaptureSurface *surface,
+    const Nexus_V1_Vdp1YmirCaptureInput *in,
+    const Nexus_V1_Vdp1TextureCommand *parsed,
+    unsigned int expected_color_mode,
+    Nexus_V1_Vdp1YmirCaptureReceipt *out)
+{
+    Nexus_V1_Vdp1YmirCaptureInput adapted;
+    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES];
+    int32_t x0 = parsed->xa;
+    int32_t y0 = parsed->ya;
+    int32_t x1 = x0 + (int32_t)parsed->texture_width - 1;
+    int32_t y1 = y0 + (int32_t)parsed->texture_height - 1;
+    uint16_t control;
+
+    if (x1 < -4096 || x1 > 4095 || y1 < -4096 || y1 > 4095)
+        return 0;
+
+    /* Ymir expands a normal sprite's origin and size to an A-B-C-D quad. */
+    memcpy(command, in->command, sizeof(command));
+    control = (uint16_t)((le16(command) & (uint16_t)~0x000fU) | 2U);
+    write_le16(command, control);
+    write_le16(command + 12U, (uint16_t)x0);
+    write_le16(command + 14U, (uint16_t)y0);
+    write_le16(command + 16U, (uint16_t)x1);
+    write_le16(command + 18U, (uint16_t)y0);
+    write_le16(command + 20U, (uint16_t)x1);
+    write_le16(command + 22U, (uint16_t)y1);
+    write_le16(command + 24U, (uint16_t)x0);
+    write_le16(command + 26U, (uint16_t)y1);
+    adapted = *in;
+    adapted.command = command;
+    return rasterize_distorted(surface, &adapted, out, expected_color_mode);
+}
+
 int nexus_v1_vdp1_ymir_capture_rasterize_mode5_normal(
     Nexus_V1_Vdp1YmirCaptureSurface *surface,
     const Nexus_V1_Vdp1YmirCaptureInput *in,
     Nexus_V1_Vdp1YmirCaptureReceipt *out)
 {
     Nexus_V1_Vdp1TextureCommand parsed;
-    Nexus_V1_Vdp1YmirCaptureInput adapted;
-    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES];
-    int32_t x0, y0, x1, y1;
-    uint16_t control;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!surface || !in || !in->command ||
@@ -678,28 +709,7 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode5_normal(
         in->local_origin_y < -4096 || in->local_origin_y > 4095)
         return 0;
 
-    /* Ymir's normal-sprite command expands its origin and size to the same
-     * A-B-C-D quad consumed by the distorted-sprite rasterizer. */
-    x0 = parsed.xa;
-    y0 = parsed.ya;
-    x1 = x0 + (int32_t)parsed.texture_width - 1;
-    y1 = y0 + (int32_t)parsed.texture_height - 1;
-    if (x1 < -4096 || x1 > 4095 || y1 < -4096 || y1 > 4095)
-        return 0;
-    memcpy(command, in->command, sizeof(command));
-    control = (uint16_t)((le16(command) & (uint16_t)~0x000fU) | 2U);
-    write_le16(command, control);
-    write_le16(command + 12U, (uint16_t)x0);
-    write_le16(command + 14U, (uint16_t)y0);
-    write_le16(command + 16U, (uint16_t)x1);
-    write_le16(command + 18U, (uint16_t)y0);
-    write_le16(command + 20U, (uint16_t)x1);
-    write_le16(command + 22U, (uint16_t)y1);
-    write_le16(command + 24U, (uint16_t)x0);
-    write_le16(command + 26U, (uint16_t)y1);
-    adapted = *in;
-    adapted.command = command;
-    return rasterize_distorted(surface, &adapted, out, 5U);
+    return rasterize_normal_sprite_as_quad(surface, in, &parsed, 5U, out);
 }
 
 int nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
@@ -708,10 +718,6 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
     Nexus_V1_Vdp1YmirCaptureReceipt *out)
 {
     Nexus_V1_Vdp1TextureCommand parsed;
-    Nexus_V1_Vdp1YmirCaptureInput adapted;
-    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES];
-    int32_t x0, y0, x1, y1;
-    uint16_t control;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!surface || !in || !in->command || !in->texture_bytes ||
@@ -731,26 +737,7 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode4_normal_capture(
         in->local_origin_x < -4096 || in->local_origin_x > 4095 ||
         in->local_origin_y < -4096 || in->local_origin_y > 4095)
         return 0;
-    x0 = parsed.xa;
-    y0 = parsed.ya;
-    x1 = x0 + (int32_t)parsed.texture_width - 1;
-    y1 = y0 + (int32_t)parsed.texture_height - 1;
-    if (x1 < -4096 || x1 > 4095 || y1 < -4096 || y1 > 4095)
-        return 0;
-    memcpy(command, in->command, sizeof(command));
-    control = (uint16_t)((le16(command) & (uint16_t)~0x000fU) | 2U);
-    write_le16(command, control);
-    write_le16(command + 12U, (uint16_t)x0);
-    write_le16(command + 14U, (uint16_t)y0);
-    write_le16(command + 16U, (uint16_t)x1);
-    write_le16(command + 18U, (uint16_t)y0);
-    write_le16(command + 20U, (uint16_t)x1);
-    write_le16(command + 22U, (uint16_t)y1);
-    write_le16(command + 24U, (uint16_t)x0);
-    write_le16(command + 26U, (uint16_t)y1);
-    adapted = *in;
-    adapted.command = command;
-    return rasterize_distorted(surface, &adapted, out, 4U);
+    return rasterize_normal_sprite_as_quad(surface, in, &parsed, 4U, out);
 }
 
 int nexus_v1_vdp1_ymir_capture_rasterize_polyline(
