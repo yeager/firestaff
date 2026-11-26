@@ -125,6 +125,12 @@ static size_t mock_get_timer_entry_size(void *ctx)
     return 12;
 }
 
+static int mock_prepare_timer_list_for_save(void *ctx)
+{
+    (void)ctx;
+    return 0;
+}
+
 static uint16_t mock_get_hero_item_link(void *ctx, int hero_idx, int slot)
 {
     (void)ctx; (void)hero_idx; (void)slot;
@@ -246,6 +252,7 @@ static DM2_SaveOrchestratorCallbacks make_callbacks(void)
     cb.get_save_state = mock_get_save_state;
     cb.get_timer_array = mock_get_timer_array;
     cb.get_timer_entry_size = mock_get_timer_entry_size;
+    cb.prepare_timer_list_for_save = mock_prepare_timer_list_for_save;
     cb.get_hero_item_link = mock_get_hero_item_link;
     cb.get_wpc_link = mock_get_wpc_link;
     cb.get_sgwords_field = mock_get_sgwords_field;

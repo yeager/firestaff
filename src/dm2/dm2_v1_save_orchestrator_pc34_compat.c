@@ -149,7 +149,8 @@ static int dm2_v1_save_orchestrator_callbacks_valid(
            cb->fill_savegame_buffer && cb->get_globalb &&
            cb->get_v1e0104 && cb->get_globalw && cb->get_hero_data &&
            cb->get_hero_count && cb->get_save_state && cb->get_timer_array &&
-           cb->get_timer_entry_size && cb->get_hero_item_link &&
+           cb->get_timer_entry_size && cb->prepare_timer_list_for_save &&
+           cb->get_hero_item_link &&
            cb->get_wpc_link && cb->get_sgwords_field &&
            cb->write_record_cb.get_record &&
            cb->write_record_cb.get_next_link &&
@@ -191,14 +192,6 @@ int dm2_v1_save_orchestrate(
         sizeof(possession_links[0]);
     dm2_v1_save_collect_callbacks(&record_callbacks, &possession_collector,
                                   &cb->write_record_cb);
-
-    timer_data = cb->get_timer_array(cb->ctx, &timer_count);
-    timer_entry_size = cb->get_timer_entry_size(cb->ctx);
-    if (dm2_v1_save_timer_links_from_raw(timer_data, timer_count,
-            timer_entry_size, timer_links) != 0) {
-        result->error = 10;
-        return -1;
-    }
 
     const uint8_t *record_sizes = dm2_v1_save_record_sizes();
     int rc;
@@ -267,6 +260,25 @@ int dm2_v1_save_orchestrate(
                 result->error = 7; return -1;
             }
         }
+    }
+
+    /* SKProject c_savegame.cpp::DM2_GAME_SAVE runs
+     * DM2_1c9a_3bab/DM2_COMPACT_TIMERLIST here, after raw dungeon data and
+     * before filling s_savegamebuffer or encoding c_tim. COMPACT_TIMERLIST
+     * also sorts the heap and repairs hero/record timer backlinks through
+     * DM2_3a15_020f. Require one owner for that entire mutation transaction;
+     * merely compacting a detached timer snapshot would serialize stale
+     * backlink indices. */
+    if (cb->prepare_timer_list_for_save(cb->ctx) != 0) {
+        result->error = 10;
+        return -1;
+    }
+    timer_data = cb->get_timer_array(cb->ctx, &timer_count);
+    timer_entry_size = cb->get_timer_entry_size(cb->ctx);
+    if (dm2_v1_save_timer_links_from_raw(timer_data, timer_count,
+            timer_entry_size, timer_links) != 0) {
+        result->error = 10;
+        return -1;
     }
 
     /* Phase 2: SUPPRESS-encoded sections.

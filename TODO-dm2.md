@@ -3259,3 +3259,13 @@ moves directly through a callback, does not classify the creature or invoke
 the movement transaction, and has no production caller. Pointer-zone preview,
 transient mode, arrow redraw and all supported-edition routes also remain
 unimplemented. Keep the source rows PARTIAL.
+
+2026-11-26 SKProject `COMPACT_TIMERLIST` orchestrator seam: the save
+orchestrator now requires `prepare_timer_list_for_save` and calls it after raw
+record/map writes, before reading the timer array, filling the savegame buffer,
+and encoding timers. That callback owns the ordered
+`1c9a_3bab` -> `COMPACT_TIMERLIST` -> sort -> `3a15_020f` transaction, so
+record-checkcode timer links are collected from the post-compaction array.
+This closes the ordering seam in the callback orchestrator only. No live DM2
+runtime callback binds its source-owned timer, hero, and record graph yet; the
+quicksave remains fail-closed and original save parity remains `PARTIAL`.

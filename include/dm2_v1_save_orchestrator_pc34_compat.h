@@ -121,6 +121,12 @@ typedef struct {
     /* Get timer entry size. */
     size_t (*get_timer_entry_size)(void *ctx);
 
+    /* Run the source timer pre-save transaction at the DM2_GAME_SAVE point
+     * after raw record/map writes and before savegame-buffer/timer encoding.
+     * The live owner must perform 1c9a_3bab, COMPACT_TIMERLIST (including
+     * SORT_TIMERS and 3a15_020f backlink repair) atomically. */
+    int (*prepare_timer_list_for_save)(void *ctx);
+
     /* Get hero item link for WRITE_RECORD_CHECKCODE.
      * hero_idx: 0..N-1, slot: 0..29.
      * Returns record link word. */
