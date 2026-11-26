@@ -6924,9 +6924,14 @@ static int m11_csb_atari_st_draw_alcove_objects(
                             absolute_cell, (unsigned)thing_id, type,
                             object_info.subtype, shift_index, drawn);
                 }
+                /* ReDMCSB DUNVIEW.C F0115 advances the alcove pile index
+                 * only after an object has a visible coordinate and is
+                 * actually drawn. Hidden items must not consume a shift. */
+                if (drawn > 0) {
+                    ++shift_index;
+                    if (shift_index >= 14u) shift_index = 2u;
+                }
             }
-            ++shift_index;
-            if (shift_index >= 14u) shift_index = 2u;
         }
         next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing_id);
         if (next == 0xfffeu || next == 0xffffu) return 0;

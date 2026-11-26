@@ -1761,3 +1761,13 @@ The Atari-specific F0107 presenter consumes the G0261 accessor with authentic
 G0192/G0194/G0205 source tables; F0115 now draws G0209 objects in the matching
 alcove lane. A real-media run that visibly reaches an alcove with an item is
 still required before claiming that route verified.
+
+
+2026-11-26 CSB Atari ST alcove pile shifts: the live F0115 alcove walker
+previously advanced the G0217 pile-shift index for every matching floor item,
+even when the object pass found no visible coordinate or wrote no pixels.
+ReDMCSB DUNVIEW.C F0115 advances that index only inside the visible-object draw
+path. The Atari alcove walker now advances and wraps the index only when the
+object renderer reports a draw. This is a narrow source-parity correction; it
+has not yet been exercised with an original-media alcove encounter or pixel
+comparison, so the route remains partial.
