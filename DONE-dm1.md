@@ -1,3 +1,13 @@
+- 2026-11-26: Tightened the Amiga 3.6 Multilanguage boot-probe exception.
+  ReDMCSB `STARTUP1.C:162` and `STARTUP2.C:1444` include A36M in the
+  source-owned F0441 entrance call even though its title route bypasses F0437.
+  The selected-game receipt now accepts that bypass only when M11 reports
+  `dm1StartupEntranceConsumed` from the runtime handoff. The regression covers
+  both a missing and a consumed entrance receipt. C syntax checks passed and
+  GitHub Actions `45896555520` passed all Linux, macOS, and Windows builds,
+  unit tests, and contract checks. No original-media visual parity claim is
+  made by this boot-probe gate.
+
 - 2026-11-02: Verified the incomplete DM1 PC34 diagnostic with authentic
   `GRAPHICS.DAT` from the original DOS v3.4 archive in an isolated partial
   data root. `--menu --debug --verbose` identified `pc34-en`, reported the
