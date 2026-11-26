@@ -1,8 +1,9 @@
 2026-11-26 ReDMCSB `SOUND.C:F0064/F0065` Amiga 3.6 effects now resolve the
 original MEDIA719 sample rows from authenticated A36 GRAPHICS.DAT items,
-resample source PCM from the Paula clock and row `Period`, compute MEDIA425 directional stereo
-volume, and arbitrate two pending sounds by MEDIA746 volume class then native
-priority before the loop flush. Startup F0195 requests are retained until A36
+resample source PCM with the Paula audio clock and ReDMCSB's `ioa_Period`
+conversion (`72800 / Period`), compute MEDIA425 directional stereo volume,
+and arbitrate two pending sounds by MEDIA746 volume class then native priority
+before the loop flush. Startup F0195 requests are retained until A36
 graphics bind and use that same owner. PAL/NTSC selection, audio.device's two
 channel-pair timing across separate M11 calls and original runtime audio
 captures remain open.
