@@ -90,10 +90,14 @@ def validate_bundle(
     event_count = 0
     writes = 0
     scanlines = 0
-    # Keep the validated stream beside its capture instead of using the system
-    # temporary directory (which may be /tmp and can be space-limited).
+    # Keep the validated stream in the ignored build directory instead of
+    # using the system temporary directory (which may be /tmp).
+    validated_stream_dir = (
+        Path(__file__).resolve().parents[1] / "build" / "validated-event-streams"
+    )
+    validated_stream_dir.mkdir(parents=True, exist_ok=True)
     validated_events = tempfile.TemporaryFile(
-        mode="w+t", newline="", encoding="utf-8", dir=dumps
+        mode="w+t", newline="", encoding="utf-8", dir=validated_stream_dir
     )
     try:
         writer = csv.DictWriter(validated_events, fieldnames=EVENT_FIELDS, lineterminator="\n")
