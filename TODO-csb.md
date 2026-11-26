@@ -1759,8 +1759,11 @@ dungeon probes compare its result byte-for-byte with the expanded original and
 pass; the Atari case reads DUNGEON.DAT from the nested 7z member in RAM.
 The Atari-specific F0107 presenter consumes the G0261 accessor with authentic
 G0192/G0194/G0205 source tables; F0115 now draws G0209 objects in the matching
-alcove lane. A real-media run that visibly reaches an alcove with an item is
-still required before claiming that route verified.
+alcove lane. Later F0115 work added the conditional alcove pass to the live
+F0128 traversal and corrected its pile-shift advance gate; see the dated
+2026-11-26 entries below. A real-media run that visibly reaches an alcove
+with an item and a pixel comparison are still required before claiming that
+route verified.
 
 
 2026-11-26 CSB Atari ST alcove pile shifts: the live F0115 alcove walker
@@ -1769,12 +1772,11 @@ even when the object pass found no visible G0218 alcove coordinate.
 ReDMCSB DUNVIEW.C F0115 advances the index after that coordinate gate and
 before blitting, so transparent/clipped sprites still consume a shift. The
 Atari walker now reads the bounded source aspect/coordinate tables and advances
-only when the source Y-coordinate is nonzero. This correction has not yet been
-exercised with an original-media alcove encounter or pixel comparison. A
-focused F0115 helper now owns the G0217 advance/wrap rule and covers absent
-coordinates, visible coordinates, and wraparound; this narrows the logic gap
-but does not verify the live renderer against original Atari media, so the
-route remains partial.
+only when the source Y-coordinate is nonzero. The focused F0115 helper owns the
+G0217 advance/wrap rule and covers absent coordinates, visible coordinates,
+and wraparound. This correction and the live conditional alcove pass have not
+yet been exercised with an original-media alcove encounter or pixel
+comparison, so the route remains partial.
 
 2026-11-26 CSB Atari F0115 status reconciliation: earlier viewport backlog
 paragraphs that say ordinary objects/creatures/projectiles/explosions are absent
