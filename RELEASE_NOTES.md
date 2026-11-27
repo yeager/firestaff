@@ -1,8 +1,35 @@
 # Unreleased
 
+# Firestaff v3.0.427
+
 ## User-facing changes
 
-- `DM1 group-entry sounds`: carry creature movement and attack sound requests through map and group arrivals, preserving audible teleporter, creature and group-generation request order.
+- `DM1 audio`: add Amiga 3.6 sample playback and change map-entry and group-arrival handling to send sound requests through the native audio path in source event order.
+- `DM1 Apple IIGS controls`: add source-backed keyboard and pointer freeze/rest handling, including authentic idle-tick behavior and localized freeze status.
+- `DM1 Atari ST and Amiga rendering`: change status-slot drawing to clear stale icons and use authenticated slot-box state in the shared M11 view.
+- `CSB Atari alcoves`: change hidden-item and alcove-shift handling to follow the source-owned boundary and pile movement rules.
+- `DM2 viewport interaction`: change opaque creature-click handling to use source-owned orientation and engagement logic, with click direction exposed in diagnostics.
+- `DM2 movement and lighting`: change movement admission and light-command handling to follow source owners, then refresh the scene receipt after light casts.
+- `Theron title input`: change native title actions to activate only after a three-second hold; this host input policy is not claimed as original-game timing parity.
+
+## Developer changes
+
+- `DM1 and CSB source parity`: add sensor dispatch, map-entry sounds, group slot-drop ordering, hidden-item boundaries, alcove movement, and bounded checksum adapters with source-linked regression coverage.
+- `DM1 Apple IIGS`: add keyboard and mouse rest/freeze boundaries, render the rest screen, match title palette fades and overlays, and expand authentic-table comparisons; the unresolved source layout and some runtime timing gates remain documented.
+- `DM2 runtime and source audit`: change selected creature-click, movement-admission and light-command paths; stage wallet records before exchange; guard map-grid rectangles; and trace the source map transaction. End-to-end wallet transactions and production map-chip drawing remain unverified.
+- `Nexus renderer evidence`: add authentic Ymir joins for VDP1 face materials and command ownership, VDP2 MAPD/NBG0/NBG1 rows, SCU DMA payloads, frame 300 and frame 1605 composition, and full-run title bitmap writes. These checks strengthen capture analysis but do not enable the gated Saturn renderer.
+- `Theron's Quest capture tooling`: bound live trace output, add source-identity checks across Japanese CD layouts, and require held native title actions; these changes do not establish the active-map consumer or complete campaign rendering.
+- `Five-game startup and localization`: update startup catalogs and add real-media launch/runtime checks, authentic-media receipts, and localized IIGS controls.
+- `Release metadata`: update the CMake project version, embedded launcher changelog and reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `Nexus Saturn presentation`: the capture evidence does not yet bind a complete native title/menu composition to Firestaff's live renderer; gameplay remains gated and is not a playable route.
+- `Theron's Quest gameplay`: bounded input, launch and capture paths do not establish complete active-map semantics, dungeon rendering, campaign progression, audio or save parity.
+- `DM2 viewport and HUD`: new click and state routes do not establish full viewport composition, champion labels, panel interaction or cross-platform pixel parity.
+- `DM2 magic map and moneybox`: platform callbacks and end-to-end wallet transactions remain partial; the map command fills its background but has no production M11 grid traversal or tile-chip renderer.
+- `DM1 and CSB platform parity`: source-backed runtime changes and selected authentic-media tests do not establish full gameplay, native-window presentation or audio parity across every edition.
+- `Original game media`: game data, save files and firmware are not included in release packages.
 
 # Firestaff v3.0.426
 
