@@ -1791,9 +1791,10 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
 int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out);
-/* Source-shaped eight-word map-chip summary for the record-independent
- * class-3 branch and the direction-matching class-4 branch. Class-4 side
- * mismatch requires the separate DB-record decoration query and is rejected. */
+/* Source-shaped eight-word map-chip summary for class-3 and bounded class-4
+ * branches. Class-4 side mismatch is admitted only when the adjacent root is
+ * empty or its record type triggers the source query's early return; DB0..DB3
+ * decoration queries remain rejected. */
 typedef struct {
     int valid;
     int level;

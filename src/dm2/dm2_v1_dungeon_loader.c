@@ -7267,6 +7267,7 @@ int dm2_v1_dungeon_magic_map_class34_summary(
     uint16_t link;
     uint16_t seen[256];
     unsigned seen_count = 0u;
+    int class4_side_mismatch = 0;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -7284,12 +7285,30 @@ int dm2_v1_dungeon_magic_map_class34_summary(
     if (tile_class != 3u && tile_class != 4u) return 0;
     side_bit = ((unsigned)raw >> 3) & 1u;
     heading_side = (unsigned)direction & 1u;
-    if (tile_class == 4u && side_bit != heading_side) {
-        /* SKULLWIN/c_gui_vp.cpp:2687-2703 invokes
-         * DM2_query_0cee_1a46 on the neighboring tile's record chain here.
-         * Do not substitute the C_LIGHT receipt: it does not retain the
-         * source's eight-word mutations. */
-        return 0;
+    class4_side_mismatch = tile_class == 4u && side_bit != heading_side;
+    if (class4_side_mismatch) {
+        static const int8_t dx[4] = { 0, 1, 0, -1 };
+        static const int8_t dy[4] = { -1, 0, 1, 0 };
+        unsigned adjacent_direction = ((unsigned)direction + 1u) & 3u;
+        int adjacent_raw = dm2_v1_dungeon_get_tile_raw(
+            d, level, x + dx[adjacent_direction],
+            y + dy[adjacent_direction]);
+        int adjacent_first = dm2_v1_dungeon_get_first_thing(
+            d, level, x + dx[adjacent_direction],
+            y + dy[adjacent_direction]);
+        if (adjacent_raw < 0 || adjacent_raw > 0xff || adjacent_first < -1 ||
+            adjacent_first == (int)DM2_THING_NULL_MARKER ||
+            (d->square_bytes == 1 && (adjacent_raw & 0x10) != 0 &&
+             adjacent_first < 0)) {
+            return 0;
+        }
+        /* The source query returns before mutating words 3..7 for an empty
+         * root or a DB type above 3. DB0..DB3 need its full record/GDAT walk. */
+        if (adjacent_first >= 0 &&
+            adjacent_first != (int)DM2_THING_END_MARKER &&
+            (((unsigned)adjacent_first >> 10) & 0x0fu) <= 3u) {
+            return 0;
+        }
     }
 
     receipt.level = level;
@@ -7299,7 +7318,7 @@ int dm2_v1_dungeon_magic_map_class34_summary(
     receipt.tile_type = (uint8_t)tile_class;
     receipt.words[0] = tile_class == 3u
         ? (uint16_t)(0x12u + (side_bit != heading_side ? 1u : 0u))
-        : 0x10u;
+        : (uint16_t)(class4_side_mismatch ? 0x11u : 0x10u);
     receipt.words[1] = (uint16_t)raw;
     receipt.words[2] = first < 0 ? DM2_THING_END_MARKER : (uint16_t)first;
     receipt.words[3] = tile_class == 3u
