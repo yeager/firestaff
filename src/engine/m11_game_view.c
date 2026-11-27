@@ -25898,6 +25898,11 @@ static int m11_check_group_death_and_drop(
         }
     }
 
+    if (killedAllApply.shouldClearGroupHealth) {
+        /* ReDMCSB GROUP.C F0189:759-761 zeroes all C04 Health before F0267
+         * removes the dead group, including stale unused slots. */
+        memset(g->health, 0, sizeof(g->health));
+    }
     if (killedAllApply.shouldUnlinkGroupFromSquare) {
         (void)m11_unlink_thing_from_square(
             &state->world, killedAllApply.mapIndex, killedAllApply.mapX,

@@ -1522,6 +1522,7 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     if (in->groupIndex < 0) return 1;
 
     out->shouldUnlinkGroupFromSquare = 1;
+    out->shouldClearGroupHealth = 1;
     out->shouldClearGroupNext = 1;
     out->shouldRemoveActiveGroupState = 1;
     out->shouldDeleteGroupEvents = 1;
@@ -1550,6 +1551,7 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
 
     out->shouldUnlinkGroupFromSquare =
         statePlan->shouldUnlinkGroupFromSquare;
+    out->shouldClearGroupHealth = statePlan->shouldClearGroupHealth;
     out->shouldClearGroupNext = statePlan->shouldClearGroupNext;
     out->shouldRemoveActiveGroupState =
         statePlan->shouldRemoveActiveGroupState;
@@ -1647,6 +1649,7 @@ int dm1_v1_melee_delete_group_receipt_f0189_pc34(
     out->mapX = apply.mapX;
     out->mapY = apply.mapY;
     out->shouldUnlinkGroupFromSquare = apply.shouldUnlinkGroupFromSquare;
+    out->shouldClearGroupHealth = apply.shouldClearGroupHealth;
     out->shouldClearGroupNext = apply.shouldClearGroupNext;
     out->shouldRemoveActiveGroupState = apply.shouldRemoveActiveGroupState;
     out->shouldDeleteGroupEvents = apply.shouldDeleteGroupEvents;
@@ -1897,6 +1900,7 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     }
     out->shouldApplyKilledAllSideEffects =
         out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
+        out->killedAllStatePlan.shouldClearGroupHealth ||
         out->killedAllStatePlan.shouldClearGroupNext ||
         out->killedAllStatePlan.shouldRemoveActiveGroupState ||
         out->killedAllStatePlan.shouldDeleteGroupEvents;

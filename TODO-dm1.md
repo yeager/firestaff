@@ -2640,7 +2640,8 @@ parity.
   retain a rejected item plus its unprocessed tail in `GROUP.Slot`; the shared
   F0267 entry also rechecks raw/decoded `Next` ownership for every slot Thing.
   ReDMCSB F0188/F0189 leaves the Slot head intact while retiring the group; both
-  runtimes now preserve that state. Add live coverage for teleporter, pit,
+  runtimes now preserve that state, and both clear the full C04 health array
+  as F0189 requires. Add live coverage for teleporter, pit,
   stairs, and sensor destinations; do not treat the source-ordered
   implementation as complete death-aftermath parity.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement

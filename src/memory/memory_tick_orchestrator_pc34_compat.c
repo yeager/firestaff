@@ -3819,13 +3819,12 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
         !applyPlan.valid) {
         return;
     }
-    if (applyPlan.shouldClearGroupNext &&
+    if (applyPlan.shouldClearGroupHealth &&
         applyPlan.groupIndex >= 0 &&
         applyPlan.groupIndex < world->things->groupCount &&
         world->things->groups) {
-        /* ReDMCSB GROUP.C F0189 clears all C04 health slots before F0267
-         * unlinks the group. F0190 only guarantees the killed slot itself,
-         * so stale unused HP values must not reach native save/export. */
+        /* ReDMCSB GROUP.C F0189:759-761 clears every C04 Health slot before
+         * F0267 unlinks the group, even after F0190 killed its members. */
         memset(world->things->groups[applyPlan.groupIndex].health, 0,
                sizeof(world->things->groups[applyPlan.groupIndex].health));
     }
@@ -3840,9 +3839,8 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
         world->things->groups) {
         world->things->groups[applyPlan.groupIndex].next =
             applyPlan.clearedNextThing;
-        /* ReDMCSB GROUP.C F0188 drops GROUP.Slot before F0189 clears
-         * GROUP.Next. Persist both writes together: native save/export
-         * reads the raw C04 record, not this decoded-only mutation. */
+        /* ReDMCSB GROUP.C F0189:760-761 clears GROUP.Next but leaves
+         * GROUP.Slot as written by F0188's moves. Persist raw C04 for export. */
         orch_write_raw_group_compat(world->things, applyPlan.groupIndex);
     }
     /* ReDMCSB GROUP.C F0189 lines 759-766 retires ACTIVE_GROUP only while
