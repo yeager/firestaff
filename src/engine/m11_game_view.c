@@ -48207,7 +48207,8 @@ static M11_GameInputResult m11_c080_process_front_wall_sensor_click(
                                        sensorThing != THING_NONE &&
                                        sensorSafety++ < 64) {
                                     if (THING_GET_TYPE(sensorThing) == THING_TYPE_SENSOR &&
-                                        THING_GET_INDEX(sensorThing) == tr->sensorIndex) {
+                                        (int)THING_GET_INDEX(sensorThing) ==
+                                            tr->sensorIndex) {
                                         if (sensorThing != squareHead &&
                                             m11_unlink_thing_from_square(
                                                 &state->world,
