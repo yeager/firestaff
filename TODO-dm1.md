@@ -4105,7 +4105,9 @@ table enters the shared rest state, and Return or a left click in the G0450
 viewport wakes the party. Idle source ticks use F0331 recovery while resting
 and skip movement dispatch. IIGS now clears the viewport and draws the
 source-owned cyan-on-black “WAKE UP” text using the GS font and centered C006
-zone geometry. Esc/freeze, complete source layout-record parity, and native
+zone geometry. Escape now toggles the source-owned IIGS freeze/unfreeze state
+and centered “GAME FROZEN” screen; source clocks, food/VBlank timing, and idle
+ticks stop while frozen. Complete source layout-record parity and native
 runtime behavior remain unverified.
 
 2026-11-27 IIGS rest tick correction: the first control wiring advanced

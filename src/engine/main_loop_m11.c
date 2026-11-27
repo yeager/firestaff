@@ -11703,14 +11703,18 @@ static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* o
 /* ReDMCSB COMMAND.C:579-610, MEDIA707_I34E/I34M.  Keep the original
  * interface keys ahead of Firestaff-only shortcuts in the live host route. */
 static int m11_dm1_sdl_key_to_menu_input(int key, int ctrlDown, int shiftDown,
+                                         int dm1IigsActive,
                                          M12_MenuInput* outInput) {
     if (!outInput) {
         return 0;
     }
     if (key == SDLK_ESCAPE) {
+        if (dm1IigsActive) {
+            *outInput = M12_MENU_INPUT_FREEZE_TOGGLE;
+            return 1;
+        }
         /* DM1 uses Escape for the LOADSAVE.C return/quit route.  C147/C148
-         * freeze is CSB-only, so routing DM1 through FREEZE_TOGGLE left the
-         * game on a misleading frozen status instead of its source dialog. */
+         * freeze belongs to CSB and Apple IIGS, not the PC34 quit route. */
         *outInput = M12_MENU_INPUT_BACK;
         return 1;
     }
@@ -12055,7 +12059,8 @@ static M12_MenuInput m11_boot_probe_key_input(const M11_GameViewState* gameView,
         case SDLK_S: return M12_MENU_INPUT_DOWN;
         case SDLK_RETURN:
         case SDLK_KP_ENTER: return M12_MENU_INPUT_ACCEPT;
-        case SDLK_ESCAPE: return M12_MENU_INPUT_BACK;
+        case SDLK_ESCAPE: return gameView && gameView->dm1IigsActive
+            ? M12_MENU_INPUT_FREEZE_TOGGLE : M12_MENU_INPUT_BACK;
         case SDLK_SPACE: return M12_MENU_INPUT_ACTION;
         case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
         case SDLK_R: return gameView && gameView->active ? M12_MENU_INPUT_REST_TOGGLE : M12_MENU_INPUT_NONE;
@@ -13572,6 +13577,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                             (int)ev.key.key,
                             (ev.key.mod & SDL_KMOD_CTRL) != 0,
                             (ev.key.mod & SDL_KMOD_SHIFT) != 0,
+                            gameView->dm1IigsActive,
                             &mappedInput)) {
                         return mappedInput;
                     }
@@ -14345,6 +14351,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                             (int)ev.key.keysym.sym,
                             (ev.key.keysym.mod & KMOD_CTRL) != 0,
                             (ev.key.keysym.mod & KMOD_SHIFT) != 0,
+                            gameView->dm1IigsActive,
                             &mappedInput)) {
                         return mappedInput;
                     }
@@ -15798,6 +15805,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 m11_sync_focus_pause(&gameView, &menuState,
                     (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0);
             if (wasPaused || M11_GameView_IsPaused(&gameView) ||
+                gameView.dm1IigsFrozen ||
                 observedLaunchSerial != g_m11_sync_launch_serial) {
                 observedLaunchSerial = g_m11_sync_launch_serial;
                 lastLoopTick = SDL_GetTicks();
@@ -15811,7 +15819,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             uint32_t loopDeltaMs = (uint32_t)(now - lastLoopTick);
             int timerReminderBefore = gameView.sessionTimerReminderOverlayActive;
             int timerPauseBefore = gameView.sessionTimerForcedPauseDialogActive;
-            if (M11_GameView_IsPaused(&gameView)) loopDeltaMs = 0;
+            if (M11_GameView_IsPaused(&gameView) || gameView.dm1IigsFrozen)
+                loopDeltaMs = 0;
             int foodCommandWasPending = gameView.v1FoodCommandPending;
             uint32_t foodElapsedMs = (uint32_t)now - foodClockLastMs;
             foodClockLastMs = (uint32_t)now;
@@ -15824,7 +15833,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* Source F0349 cannot run ordinary game-loop work during its
              * synchronous waits. Keep pumping host events, but discard
              * simulation debt including the command's completion slice. */
-            if (M11_GameView_IsPaused(&gameView) || foodCommandWasPending || gameView.v1FoodCommandPending)
+            if (M11_GameView_IsPaused(&gameView) || gameView.dm1IigsFrozen ||
+                foodCommandWasPending || gameView.v1FoodCommandPending)
                 idleAccumulatorMs = 0;
             else
                 idleAccumulatorMs += loopDeltaMs;
@@ -16271,7 +16281,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         {
             int dm2TimedMediaRedraw = 0;
             int csbStartupSourceRedraw = 0;
-            while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
+            while (gameView.active && !gameView.dm1IigsFrozen &&
+                   idleAccumulatorMs >= (uint32_t)gameTickInterval) {
                 M11_GameInputResult tickResult =
                     M11_GameView_AdvanceIdleTick(&gameView);
                 m11_debug_dm1_combat_tick(&gameView);

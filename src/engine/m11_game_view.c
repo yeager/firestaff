@@ -35479,7 +35479,8 @@ M11_GameInputResult M11_GameView_AdvanceDm1Pc34EndgameClockMs(
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     int mouthRedraw;
-    if (!state || !state->active || M11_GameView_IsPaused(state)) {
+    if (!state || !state->active || M11_GameView_IsPaused(state) ||
+        (state->dm1IigsActive && state->dm1IigsFrozen)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->dm1IigsActive && (state->candidateMirrorPanelActive || state->v1FoodCommandPending))
@@ -39972,6 +39973,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
         if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
+        /* ReDMCSB COMMAND.C:2383-2415 C147/C148 switches to G0451/G0461;
+         * freeze stops source time, and Escape is the only IIGS unfreeze key. */
+        if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
+            state->dm1IigsFrozen = !state->dm1IigsFrozen;
+            m11_set_status(state, "DM1 IIGS",
+                           state->dm1IigsFrozen ? "FROZEN" : "UNFROZEN");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     state->dm1IigsFrozen ? "GAME FROZEN" :
+                     (state->resting ? "RESTING" : "ACTIVE"));
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "PRESS ESCAPE TO %s GAME",
+                     state->dm1IigsFrozen ? "UNFREEZE" : "FREEZE");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
         if (state->candidateMirrorPanelActive) {
             if (input == M12_MENU_INPUT_BACK)
                 return M11_GameView_CancelMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -42976,6 +42992,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (!state->active || state->v1FoodCommandPending || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
         state->pointerX = x; state->pointerY = y;
+        if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
         /* ReDMCSB COMMAND.C G0450:162-171 maps left clicks in the native
          * 224x136 viewport to C146 while the party is resting. */
         if (state->resting) {
@@ -79035,14 +79052,18 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
      * "WAKE UP". TEXT.C F0649:1954-1969 centers using the source GS
      * six-pixel font; the C006 viewport-center placement is x=91 and
      * top=65, expressed here as F0040's baseline at screen y=102. */
-    if (state->resting) {
+    if (state->resting || state->dm1IigsFrozen) {
         DM1_V1_LayoutZoneRectPc34 centeredText;
+        const char* screenText = state->dm1IigsFrozen
+            ? "GAME FROZEN" : "WAKE UP";
+        const int textWidth = state->dm1IigsFrozen ? 66 : 42;
         memset(native + 33 * 320, 0, 224U * 136U);
-        if (dm1_v1_viewport_centered_text_rect_pc34(42, 6, &centeredText)) {
+        if (dm1_v1_viewport_centered_text_rect_pc34(textWidth, 6,
+                                                   &centeredText)) {
             (void)M11_Font_DrawIigsString(
                 &state->originalFont, native, 320, 200,
                 centeredText.x, 33 + centeredText.y + 4,
-                "WAKE UP", 4, 0);
+                screenText, 4, 0);
         }
     }
     for (y = 0; y < height; ++y)

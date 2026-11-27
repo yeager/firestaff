@@ -834,6 +834,7 @@ typedef struct {
                            * include/theron_v2_hud_launch_mode_pc34.h. */
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     int dm1IigsActive;
+    int dm1IigsFrozen;
     unsigned int dm1IigsDrawCount;
     DM1_V1_IigsInstallation dm1IigsInstallation;
     DM1_V1_IigsAudioMetadata dm1IigsAudioMetadata;
