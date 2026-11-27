@@ -25688,7 +25688,7 @@ static int m11_drop_group_slot_possessions_f0188(
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
     unsigned short thing;
     int i;
-    int audibleIndex;
+    int sensorReceiptIndex;
 
     if (!state || !state->world.things || !group) return 0;
     memset(&in, 0, sizeof(in));
@@ -25743,15 +25743,25 @@ static int m11_drop_group_slot_possessions_f0188(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
-        /* F0276 requests audible C01 before F0270 applies local C10. */
-        for (audibleIndex = 0;
-             audibleIndex < moveResult.audibleSensorTriggers;
-             ++audibleIndex) {
-            m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
-        }
-        if (moveResult.localSensorEffects.count > 0) {
-            m11_apply_sensor_effects(
-                state, &moveResult.localSensorEffects);
+        for (sensorReceiptIndex = 0;
+             sensorReceiptIndex < moveResult.sensorReceiptCount &&
+             sensorReceiptIndex < F0267_SENSOR_RECEIPT_CAPACITY;
+             ++sensorReceiptIndex) {
+            const struct F0267SensorReceiptPc34Compat* receipt =
+                &moveResult.sensorReceipts[sensorReceiptIndex];
+            if (receipt->kind == F0267_SENSOR_RECEIPT_SOUND) {
+                m11_audio_emit_source_sound(
+                    state, receipt->value, M11_AUDIO_MARKER_DOOR);
+            } else if (receipt->kind ==
+                       F0267_SENSOR_RECEIPT_LOCAL_STEAL_XP) {
+                struct SensorEffectList_Compat localEffects;
+                memset(&localEffects, 0, sizeof(localEffects));
+                localEffects.count = 1;
+                localEffects.effects[0].kind = SENSOR_EFFECT_LOCAL_STEAL_XP;
+                localEffects.effects[0].textIndex = receipt->value;
+                localEffects.effects[0].destCell = -1;
+                m11_apply_sensor_effects(state, &localEffects);
+            }
         }
     }
     if (plan.shouldDrop && state->audioState.lastSoundIndex >= -1) {

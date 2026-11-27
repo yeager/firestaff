@@ -636,6 +636,19 @@ struct F0270SensorRotationStatePc34Compat {
     int cell;
 };
 
+enum {
+    F0267_SENSOR_RECEIPT_SOUND = 1,
+    F0267_SENSOR_RECEIPT_LOCAL_STEAL_XP = 2,
+    /* Two F0276 passes, up to 16 sensors per pass, with sound plus one
+     * local effect receipt per sensor. */
+    F0267_SENSOR_RECEIPT_CAPACITY = 64
+};
+
+struct F0267SensorReceiptPc34Compat {
+    int kind;
+    int value;
+};
+
 struct F0267ThingMoveResultPc34Compat {
     int valid;
     int moved;
@@ -645,8 +658,9 @@ struct F0267ThingMoveResultPc34Compat {
     int destinationSensorPasses;
     int sensorDispatches;
     int sensorDispatchOverflow;
-    int audibleSensorTriggers;
-    struct SensorEffectList_Compat localSensorEffects;
+    int sensorReceiptCount;
+    struct F0267SensorReceiptPc34Compat
+        sensorReceipts[F0267_SENSOR_RECEIPT_CAPACITY];
     int localSensorRotations;
     struct F0270SensorRotationStatePc34Compat lastLocalSensorRotation;
     int teleporterChainCount;

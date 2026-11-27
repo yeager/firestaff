@@ -10705,26 +10705,30 @@ static void orch_f0267_dispatch_sensor_results_compat(
             (void)F0272_SENSOR_DisableOnceOnly_Compat(
                 world, trigger->sensorIndex);
         }
-        if (trigger->audible) ++moveResult->audibleSensorTriggers;
-        if (trigger->isLocal) {
-            if (trigger->effectKind == SENSOR_EFFECT_ADD_XP &&
-                moveResult->localSensorEffects.count <
-                    SENSOR_EFFECT_LIST_MAX_COUNT) {
-                struct SensorEffect_Compat* local =
-                    &moveResult->localSensorEffects.effects[
-                        moveResult->localSensorEffects.count++];
-                memset(local, 0, sizeof(*local));
-                local->kind = SENSOR_EFFECT_LOCAL_STEAL_XP;
-                local->sensorType = world->things->sensors[
-                    trigger->sensorIndex].sensorType;
-                local->sourceSensorIndex = trigger->sensorIndex;
-                local->destMapIndex = sourceMapIndex;
-                local->destMapX = sourceMapX;
-                local->destMapY = sourceMapY;
-                local->destCell = -1;
-                local->textIndex = trigger->localEffectValue;
-            } else if (trigger->effectKind == SENSOR_EFFECT_ADD_XP) {
+        if (trigger->audible) {
+            if (moveResult->sensorReceiptCount <
+                F0267_SENSOR_RECEIPT_CAPACITY) {
+                struct F0267SensorReceiptPc34Compat* receipt =
+                    &moveResult->sensorReceipts[
+                        moveResult->sensorReceiptCount++];
+                receipt->kind = F0267_SENSOR_RECEIPT_SOUND;
+                receipt->value = DM1_SND_SWITCH;
+            } else {
                 moveResult->sensorDispatchOverflow = 1;
+            }
+        }
+        if (trigger->isLocal) {
+            if (trigger->effectKind == SENSOR_EFFECT_ADD_XP) {
+                if (moveResult->sensorReceiptCount <
+                    F0267_SENSOR_RECEIPT_CAPACITY) {
+                    struct F0267SensorReceiptPc34Compat* receipt =
+                        &moveResult->sensorReceipts[
+                            moveResult->sensorReceiptCount++];
+                    receipt->kind = F0267_SENSOR_RECEIPT_LOCAL_STEAL_XP;
+                    receipt->value = trigger->localEffectValue;
+                } else {
+                    moveResult->sensorDispatchOverflow = 1;
+                }
             }
             continue;
         }
@@ -11602,11 +11606,10 @@ static int orch_drop_group_slot_possessions_compat(
     int sftIndex;
     unsigned short thing;
     int i;
-    int localIndex;
+    int receiptIndex;
     int champion;
     int championCount;
     int amount;
-    int audibleIndex;
     DM1_MeleeF0188GroupSlotDropInputPc34 in;
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
 
@@ -11676,27 +11679,24 @@ static int orch_drop_group_slot_possessions_compat(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
-        /* ReDMCSB F0276 requests audible C01 before F0270 applies C10. */
-        for (audibleIndex = 0;
-             audibleIndex < moveResult.audibleSensorTriggers;
-             ++audibleIndex) {
-            emit(result, EMIT_SOUND_REQUEST, DM1_SND_SWITCH,
-                 mapX, mapY, mapIndex);
-        }
-        /* F0270's local C10 applies during each F0267 destination pass. */
+        /* Replay F0276 receipts in sensor order: audible F0064 request,
+         * then F0270 local C10 XP where present. */
         championCount = world->party.championCount;
-        if (championCount > 0 && championCount <= CHAMPION_MAX_PARTY) {
-            amount = 300 / championCount;
-            for (localIndex = 0;
-                 localIndex < moveResult.localSensorEffects.count &&
-                 localIndex < SENSOR_EFFECT_LIST_MAX_COUNT;
-                 ++localIndex) {
-                const struct SensorEffect_Compat* local =
-                    &moveResult.localSensorEffects.effects[localIndex];
-                if (local->kind != SENSOR_EFFECT_LOCAL_STEAL_XP ||
-                    local->textIndex != DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
-                    continue;
-                }
+        amount = championCount > 0 && championCount <= CHAMPION_MAX_PARTY
+            ? 300 / championCount : 0;
+        for (receiptIndex = 0;
+             receiptIndex < moveResult.sensorReceiptCount &&
+             receiptIndex < F0267_SENSOR_RECEIPT_CAPACITY;
+             ++receiptIndex) {
+            const struct F0267SensorReceiptPc34Compat* receipt =
+                &moveResult.sensorReceipts[receiptIndex];
+            if (receipt->kind == F0267_SENSOR_RECEIPT_SOUND) {
+                emit(result, EMIT_SOUND_REQUEST, receipt->value,
+                     mapX, mapY, mapIndex);
+            } else if (receipt->kind ==
+                       F0267_SENSOR_RECEIPT_LOCAL_STEAL_XP &&
+                       receipt->value == DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
+                       amount > 0) {
                 for (champion = 0; champion < championCount; ++champion) {
                     const struct ChampionState_Compat* member =
                         &world->party.champions[champion];
