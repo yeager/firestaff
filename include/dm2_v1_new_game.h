@@ -521,6 +521,16 @@ int dm2_v1_original_raw_sksave_db_record_receipt(
     int db_pool,
     int record_index,
     DM2_V1_OriginalRawDbRecordReceipt *out_receipt);
+/* Explicit raw word order for platforms whose SKSave record pools are
+ * big-endian. The legacy entry point above remains the DOS little-endian
+ * form. */
+int dm2_v1_original_raw_sksave_db_record_receipt_ordered(
+    const uint8_t *buf,
+    size_t buf_size,
+    int words_big_endian,
+    int db_pool,
+    int record_index,
+    DM2_V1_OriginalRawDbRecordReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_door_receipt(
     const uint8_t *buf,
     size_t buf_size,
@@ -539,6 +549,12 @@ int dm2_v1_original_raw_sksave_creature_receipt(
 int dm2_v1_original_raw_sksave_text_receipt(
     const uint8_t *buf,
     size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawTextReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_text_receipt_ordered(
+    const uint8_t *buf,
+    size_t buf_size,
+    int words_big_endian,
     int record_index,
     DM2_V1_OriginalRawTextReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_teleporter_receipt(

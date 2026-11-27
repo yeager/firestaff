@@ -1477,6 +1477,15 @@ int dm2_v1_original_raw_sksave_db_record_receipt(
     const uint8_t *buf, size_t buf_size, int db_pool, int record_index,
     DM2_V1_OriginalRawDbRecordReceipt *out_receipt)
 {
+    return dm2_v1_original_raw_sksave_db_record_receipt_ordered(
+        buf, buf_size, 0, db_pool, record_index, out_receipt);
+}
+
+int dm2_v1_original_raw_sksave_db_record_receipt_ordered(
+    const uint8_t *buf, size_t buf_size, int words_big_endian,
+    int db_pool, int record_index,
+    DM2_V1_OriginalRawDbRecordReceipt *out_receipt)
+{
     DM2_V1_OriginalRawDungeonReceipt dungeon;
     DM2_V1_OriginalRawDbRecordReceipt candidate;
     size_t record_size;
@@ -1486,7 +1495,8 @@ int dm2_v1_original_raw_sksave_db_record_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!buf || db_pool < 0 || db_pool >= DM2_RAW_SKSAVE_DB_POOL_COUNT ||
         record_index < 0 ||
-        !dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size, 0, &dungeon) ||
+        !dm2_v1_parse_raw_sksave_dungeon_prefix(
+            buf, buf_size, words_big_endian ? 1 : 0, &dungeon) ||
         !dungeon.valid || record_index >= dungeon.db_record_counts[db_pool]) {
         return 0;
     }
@@ -1596,18 +1606,32 @@ int dm2_v1_original_raw_sksave_text_receipt(
     const uint8_t *buf, size_t buf_size, int record_index,
     DM2_V1_OriginalRawTextReceipt *out_receipt)
 {
+    return dm2_v1_original_raw_sksave_text_receipt_ordered(
+        buf, buf_size, 0, record_index, out_receipt);
+}
+
+int dm2_v1_original_raw_sksave_text_receipt_ordered(
+    const uint8_t *buf, size_t buf_size, int words_big_endian,
+    int record_index, DM2_V1_OriginalRawTextReceipt *out_receipt)
+{
     DM2_V1_OriginalRawTextReceipt candidate;
     uint16_t attributes;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_original_raw_sksave_db_record_receipt(
-            buf, buf_size, 2, record_index, &candidate.record) ||
+    if (!dm2_v1_original_raw_sksave_db_record_receipt_ordered(
+            buf, buf_size, words_big_endian, 2, record_index,
+            &candidate.record) ||
         !candidate.record.valid || candidate.record.record_size != 4u ||
         candidate.record.record_offset > buf_size - 4u) {
         return 0;
     }
-    attributes = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    /* SKProject SKWIN/DME.h::Text stores visibility, TextMode, and TextIndex
+     * in w2. Decode that word with the order admitted by the raw dungeon
+     * prefix; the legacy receipt is the DOS little-endian wrapper. */
+    attributes = dm2_v1_read_u16_at_order(
+        buf, candidate.record.record_offset + 2u,
+        words_big_endian ? 1 : 0);
     candidate.visible = (uint8_t)(attributes & 1u);
     candidate.mode = (uint8_t)((attributes >> 1) & 3u);
     candidate.text_index = (uint16_t)((attributes >> 3) & 0x1fffu);
