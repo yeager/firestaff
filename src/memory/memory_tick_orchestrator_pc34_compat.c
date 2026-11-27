@@ -10627,8 +10627,8 @@ static int orch_f0267_sensor_pass_count_compat(
         index >= 0 && index < world->things->thingCounts[type] &&
         world->things->rawThingData[type] &&
         s_orch_thing_data_byte_count[type] >= 4) {
-        objectType = (int)(r_u16(world->things->rawThingData[type] +
-            (index * s_orch_thing_data_byte_count[type]) + 2) & 0x007fu);
+        objectType = dm1_v1_dungeon_get_object_type_pc34(
+            world->things, movingThing);
     }
 
     memset(&context, 0, sizeof(context));
@@ -10787,8 +10787,8 @@ static int orch_f0267_sensor_pass_dispatch_compat(
         index >= 0 && index < world->things->thingCounts[type] &&
         world->things->rawThingData[type] &&
         s_orch_thing_data_byte_count[type] >= 4) {
-        objectType = (int)(r_u16(world->things->rawThingData[type] +
-            (index * s_orch_thing_data_byte_count[type]) + 2) & 0x007fu);
+        objectType = dm1_v1_dungeon_get_object_type_pc34(
+            world->things, movingThing);
     }
     memset(&context, 0, sizeof(context));
     context.mapX = mapX;
