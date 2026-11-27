@@ -147,6 +147,7 @@ static void test_m11_iigs_rest_keyboard_bindings(void) {
     assert(state.dm1IigsFrozen == 1);
     assert(state.resting == 1 && state.world.partyIsResting == 1 &&
            state.world.lifecycle.rest.isResting == 1);
+    assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_IGNORED);
     assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_FREEZE_TOGGLE) ==
            M11_GAME_INPUT_REDRAW);
     assert(state.dm1IigsFrozen == 0);
