@@ -25688,6 +25688,7 @@ static int m11_drop_group_slot_possessions_f0188(
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
     unsigned short thing;
     int i;
+    int audibleIndex;
 
     if (!state || !state->world.things || !group) return 0;
     memset(&in, 0, sizeof(in));
@@ -25741,6 +25742,12 @@ static int m11_drop_group_slot_possessions_f0188(
                 &state->world, &request, &moveResult) || !moveResult.moved) {
             group->slot = plan.steps[i].sourceThing;
             return 0;
+        }
+        /* F0276 requests C01 once per audible sensor in each F0267 pass. */
+        for (audibleIndex = 0;
+             audibleIndex < moveResult.audibleSensorTriggers;
+             ++audibleIndex) {
+            m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
         }
     }
     if (plan.shouldDrop && state->audioState.lastSoundIndex >= -1) {

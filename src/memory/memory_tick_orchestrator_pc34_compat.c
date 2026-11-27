@@ -10695,6 +10695,7 @@ static void orch_f0267_dispatch_sensor_results_compat(
             (void)F0272_SENSOR_DisableOnceOnly_Compat(
                 world, trigger->sensorIndex);
         }
+        if (trigger->audible) ++moveResult->audibleSensorTriggers;
         if (trigger->isLocal) continue;
         map = &world->dungeon->maps[sourceMapIndex];
         if (!world->dungeon->tiles[sourceMapIndex].squareData ||

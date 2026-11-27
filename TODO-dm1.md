@@ -2787,8 +2787,9 @@ parity.
   M11's per-kind subtype decoding for scrolls, containers, potions, weapons,
   armour, and junk. M10 F0276 now applies F0272 OnceOnly disabling before
   either local or remote dispatch and mutates both decoded sensor state and
-  raw Type_Data. The authentic English v1.2 menu-to-HoC route passes after the
-  changes, but does not verify every later sensor
+  raw Type_Data. F0188 group-slot drops now retain audible F0276 hits through
+  the M10 movement receipt and request C01 in M11. The authentic English v1.2
+  menu-to-HoC route passes after the changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
   ReDMCSB MOVESENS.C F0270's floor C10 local effect now reaches M11 as a
