@@ -26,7 +26,9 @@ def main() -> int:
                                  min(fssb_exclusion, utility_exclusion))
     # Later source-list exclusions may follow before the next FILTER, so
     # inspect only this list(REMOVE_ITEM ...) command, not intervening CMake.
-    exclusion_end = text.find(")", exclusion_start)
+    # CMake variable references contain ')' too; the closing list delimiter
+    # is the standalone parenthesis on its own line.
+    exclusion_end = text.find("\n)", exclusion_start)
     exclusion = text[exclusion_start:exclusion_end]
     if (exclusion_start < 0 or exclusion_end < 0 or
             FSSB_NAME not in exclusion or UTILITY_NAME not in exclusion):
