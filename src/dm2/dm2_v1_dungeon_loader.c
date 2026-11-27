@@ -23,22 +23,19 @@
  *     ...
  *     offset 42: uint16_t thing_count[dbCloud]
  *
- *   The PC retail member is a direct File_header image. Firestaff currently
- *   treats the real-data DB pool bases as unproven because the bytes between the
- *   skproject-sized DB pools and the trailing map-data block contain an
- *   additional PC G1 block that still needs source proof.
+ *   The PC retail member is a direct File_header image. Its serialized section
+ *   order is header, map definitions, per-column offsets, ground stacks, text,
+ *   declared DB pools, then File_header::cbMapData bytes. SKWIN/SkWinCore.cpp
+ *   READ_DUNGEON_STRUCTURE:39936-40106 reads this order and makes each map's
+ *   column pointers aliases into dunMapData at Map_definitions::w0. The map
+ *   graphics candidate and adjacent graphics tables therefore live in that
+ *   declared map-data block, after each tile grid.
  *
- *   PC G1 MAP DEFINITION (16 bytes each; source-compatible with
- *   skproject SKWIN/DME.h Map_definitions for offset + w8 dimensions):
- *     offset 0:  uint16_t raw_map_data_byte_offset
- *     offset 2:  uint8_t  offset_map_x
- *     offset 3:  uint8_t  offset_map_y
- *     offset 4:  uint16_t bitfield_a: level_id(6) + width-1(5) + height-1(5)
- *     offset 6:  uint16_t bitfield_b: wall_orn(4)+rand_wall(4)+floor(4)+rand_floor(4)
- *     offset 8:  uint16_t bitfield_c: door_orn(4)+creature_type(4)+unref(4)+diff(4)
- *     offset 10: uint16_t bitfield_d: floor_set(4)+wall_set(4)+door_set0(4)+door_set1(4)
- *     offset 12: uint16_t level_width_override  (DM2 extension)
- *     offset 14: uint16_t level_height_override (DM2 extension)
+ *   Map_definitions (SKWIN/DME.h:131-145): w0 is the offset into dunMapData;
+ *   w8 carries level and dimensions; w10 carries wall, random-wall and floor
+ *   graphic counts; w12 carries the creature-type prefix and door-ornament
+ *   count; w14 carries graphics style and door types. The PC G1 source uses
+ *   one-byte, column-major tiles, with dimensions encoded in w8.
  *
  *   The legacy 16-bit square-word path below remains for older Firestaff
  *   synthetic fixtures only. Real PC G1 data uses the byte-square path.
@@ -73,6 +70,9 @@ static uint16_t rd16be_local(const uint8_t *p) {
 }
 
 #define RD16(p) rd16le(p)
+
+static uint32_t dm2_v1_g1_raw_hash(const uint8_t *data,
+                                   uint32_t byte_count);
 
 static uint16_t dm2_v1_dungeon_rd16(const DM2_V1_DungeonData *d,
                                     const uint8_t *p)
@@ -339,6 +339,7 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
     out->random_decoration_seed = RD16(dat + 0);
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
+    out->raw_map_data_byte_count = RD16(dat + 2);
     /* A raw SKSave has the source pool sequence directly before map bytes.
      * It has no PC G1 extension and must never enter the G1 partial-world
      * route merely because zero is a plausible byte offset. */
@@ -432,9 +433,12 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
 
     out->raw_map_data_base = thing_cursor;
     if (raw_map_bytes <= 0 || out->raw_map_data_base < 0 ||
-        out->raw_map_data_base + raw_map_bytes > size) {
+        out->raw_map_data_byte_count < (uint32_t)raw_map_bytes ||
+        out->raw_map_data_base +
+            (int)out->raw_map_data_byte_count > size) {
         return 0;
     }
+    out->raw_map_data_source_bound = 1;
     out->column_index_base = column_index_base;
     out->square_first_thing_base = sft_base;
     out->text_data_base = text_base;
@@ -700,6 +704,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     out->random_decoration_seed = rd16be(dat + 0);
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
+    out->raw_map_data_byte_count = rd16be(dat + 2);
     out->column_index_base = -1;
     out->square_first_thing_base = -1;
     out->text_data_base = -1;
@@ -805,6 +810,8 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
             return 0;
         out->g1_extension_size = 0;
         out->raw_map_data_base = thing_cursor;
+        out->raw_map_data_byte_count = rd16be(dat + 2);
+        out->raw_map_data_source_bound = 1;
     } else {
         if (out->g1_extension_size <= 0) return 0;
         out->raw_map_data_base = size - raw_map_bytes;
@@ -7529,6 +7536,169 @@ int dm2_v1_dungeon_magic_map_class7_summary(
     receipt.words[7] = 0u;
     receipt.valid = 1;
     *out = receipt;
+    return 1;
+}
+
+int dm2_v1_dungeon_skproject_map_decoration_candidates(
+    const DM2_V1_DungeonData *d, int level,
+    DM2_V1_SkprojectMapDecorationCandidateReceipt *out)
+{
+    DM2_V1_SkprojectMapDecorationCandidateReceipt receipt;
+    const uint8_t *descriptor;
+    const uint8_t *candidate_data;
+    uint16_t word10, word12;
+    int descriptor_offset;
+    int next_map_offset;
+    int candidate_relative;
+    int table_end;
+    int map_end;
+    int candidate_count;
+    int floor_count;
+    int door_count;
+    int creature_type_count;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!d || !d->raw_data || !d->raw_map_data_source_bound ||
+        d->square_bytes != 1 || level < 0 || level >= d->level_count ||
+        d->raw_map_data_base < 0 || d->raw_map_data_byte_count == 0u ||
+        d->raw_map_data_base > d->raw_size ||
+        d->raw_map_data_byte_count > (uint32_t)(d->raw_size -
+                                                d->raw_map_data_base)) {
+        return 0;
+    }
+
+    descriptor_offset = DM2_DUNGEON_HEADER_SIZE +
+                        level * DM2_MAP_DESC_SIZE;
+    if (descriptor_offset < DM2_DUNGEON_HEADER_SIZE ||
+        descriptor_offset > d->raw_size - DM2_MAP_DESC_SIZE) {
+        return 0;
+    }
+    descriptor = d->raw_data + descriptor_offset;
+    word10 = dm2_v1_dungeon_rd16(d, descriptor + 10u);
+    word12 = dm2_v1_dungeon_rd16(d, descriptor + 12u);
+    candidate_count = (int)(word10 & 0x0fu);
+    floor_count = (int)((word10 >> 8) & 0x0fu);
+    creature_type_count = (int)((word12 >> 4) & 0x0fu);
+    door_count = (int)(word12 & 0x0fu);
+
+    map_end = d->level_offsets[level] +
+              d->level_widths[level] * d->level_heights[level];
+    candidate_relative = map_end + creature_type_count;
+    table_end = candidate_relative + candidate_count + floor_count +
+                door_count;
+    if (d->level_offsets[level] < 0 || map_end < d->level_offsets[level] ||
+        candidate_relative < map_end || table_end < candidate_relative ||
+        table_end > (int)d->raw_map_data_byte_count) {
+        return 0;
+    }
+
+    next_map_offset = (int)d->raw_map_data_byte_count;
+    for (int i = 0; i < d->level_count; ++i) {
+        if (i == level) continue;
+        if (d->level_offsets[i] == d->level_offsets[level]) return 0;
+        if (d->level_offsets[i] > d->level_offsets[level] &&
+            d->level_offsets[i] < next_map_offset) {
+            next_map_offset = d->level_offsets[i];
+        }
+    }
+    if (table_end > next_map_offset) return 0;
+
+    candidate_data = d->raw_data + d->raw_map_data_base +
+                     candidate_relative;
+    receipt.level = level;
+    receipt.map_descriptor_offset = (uint32_t)descriptor_offset;
+    receipt.map_data_relative_offset = (uint32_t)d->level_offsets[level];
+    receipt.candidate_table_offset = (uint32_t)(candidate_data - d->raw_data);
+    receipt.candidate_table_byte_count = (uint32_t)candidate_count;
+    receipt.wall_graphic_count = (uint8_t)candidate_count;
+    receipt.wall_random_decoration_count = (uint8_t)((word10 >> 4) & 0x0fu);
+    receipt.floor_graphic_count = (uint8_t)floor_count;
+    receipt.creature_type_count = (uint8_t)creature_type_count;
+    receipt.door_decoration_graphic_count = (uint8_t)door_count;
+    if (candidate_count > 0) {
+        memcpy(receipt.candidates, candidate_data,
+               (size_t)candidate_count);
+    }
+    receipt.descriptor_hash = dm2_v1_g1_raw_hash(
+        descriptor, DM2_MAP_DESC_SIZE);
+    receipt.candidate_table_hash = dm2_v1_g1_raw_hash(
+        candidate_data, (uint32_t)candidate_count);
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
+int dm2_v1_dungeon_magic_map_class0_empty_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y, int direction,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt summary;
+    DM2_V1_SkprojectMapDecorationCandidateReceipt candidates_receipt;
+    DM2_V1_SkprojectMap0CEEWallDecorationState state;
+    DM2_V1_SkprojectMap0CEEWallDecorationReceipt decoration_receipt;
+    uint8_t candidates[16] = { 0 };
+    uint16_t decorations[4] = { 0 };
+    int raw;
+    int first;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&summary, 0, sizeof(summary));
+    memset(&state, 0, sizeof(state));
+    memset(&decoration_receipt, 0, sizeof(decoration_receipt));
+    if (!d || direction < 0 || direction > 3) return 0;
+
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 0u ||
+        (first != -1 && first != (int)DM2_THING_END_MARKER) ||
+        !dm2_v1_dungeon_skproject_map_decoration_candidates(
+            d, level, &candidates_receipt) || !candidates_receipt.valid ||
+        candidates_receipt.wall_random_decoration_count >
+            candidates_receipt.wall_graphic_count) {
+        return 0;
+    }
+
+    memcpy(candidates, candidates_receipt.candidates, sizeof(candidates));
+    state.map_width = (int16_t)d->level_widths[level];
+    state.map_height = (int16_t)d->level_heights[level];
+    state.current_map_index = (int16_t)level;
+    state.x = (int16_t)x;
+    state.y = (int16_t)y;
+    state.dungeon_seed = d->random_decoration_seed;
+    state.wall_random_decoration_count =
+        candidates_receipt.wall_random_decoration_count;
+    state.candidate_table = candidates;
+    /* The source lookup is limited by WallGraphicsRandomDecorations(). Admit
+     * only maps where every possible selected index is inside the bytes that
+     * LOAD_LOCALLEVEL_GRAPHICS_TABLE actually copied into v1e02cc. */
+    state.candidate_table_count = candidates_receipt.wall_graphic_count;
+    state.rotation = (uint16_t)direction;
+    for (int i = 0; i < 4; ++i) {
+        static const uint8_t gate_bits[4] = { 0x08u, 0x04u, 0x02u, 0x01u };
+        state.gates[i] =
+            ((unsigned)raw & gate_bits[(i + direction) & 3]) != 0u ? 1u : 0u;
+    }
+    if (!dm2_v1_skproject_map_0cee_wall_decoration_chain(
+            &state, decorations, &decoration_receipt) ||
+        !decoration_receipt.valid) {
+        return 0;
+    }
+
+    summary.level = level;
+    summary.x = x;
+    summary.y = y;
+    summary.direction = direction;
+    summary.tile_type = 0u;
+    summary.words[0] = 0u;
+    summary.words[1] = (uint16_t)raw;
+    summary.words[2] = first < 0 ? DM2_THING_END_MARKER : (uint16_t)first;
+    for (int i = 0; i < 4; ++i) summary.words[3 + i] = decorations[i];
+    summary.words[7] = 0u;
+    summary.valid = 1;
+    *out = summary;
     return 1;
 }
 

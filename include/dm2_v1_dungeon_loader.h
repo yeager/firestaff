@@ -29,14 +29,16 @@ struct DM2_V1_RecordPoolSet;
  *   Byte offset 12: uint16_le: nRecords[0] (53)
  *   Byte offset 14: uint16_le: nRecords[1] (217)
  *   ...
- *   The PC real-data path reads 16-byte skproject-compatible
- *   Map_definitions from byte 44 and byte-sized column-major map squares
- *   from the trailing map-data block. It also bounds the G1-specific
- *   extension between the standard DB-pool prefix and map tail, without
- *   assigning it record ownership before source proof. Tile type is stored
- *   in the high three bits and bit 0x10 marks a thing-list square. The old
- *   16-bit map-fixture reader is excluded from product builds; it exists
- *   only in the explicit fixture test target.
+ *   The authenticated File_header path reads 16-byte SKProject
+ *   Map_definitions from byte 44, then the source-ordered column table,
+ *   ground stacks, text, declared DB pools and exactly cbMapData bytes.
+ *   Map columns alias this serialized data at each descriptor's w0; graphic
+ *   candidate tables follow each tile grid in that same bounded block. A
+ *   separate legacy diagnostic byte-layout reader still bounds its observed
+ *   G1 continuation, but it does not own the authenticated retail layout.
+ *   Tile type is stored in the high three bits and bit 0x10 marks a
+ *   thing-list square. The old 16-bit map-fixture reader is excluded from
+ *   product builds; it exists only in the explicit fixture test target.
  *
  *   Confirmed against: SKProject SKWIN/DME.h::File_header and
  *   SkWinCore.cpp::READ_DUNGEON_STRUCTURE, plus the mounted PC-DOS member.
@@ -1492,6 +1494,10 @@ typedef struct DM2_V1_DungeonData {
     int initial_party_dir;
     int square_bytes;
     int raw_map_data_base;
+    /* Source-declared File_header::cbMapData size when its serialized map
+     * block is bound directly after the DB pools. */
+    uint32_t raw_map_data_byte_count;
+    int raw_map_data_source_bound;
     int column_index_base;
     int square_first_thing_base;
     int square_first_thing_count;
@@ -1831,6 +1837,34 @@ int dm2_v1_dungeon_magic_map_class5_empty_summary(
 int dm2_v1_dungeon_magic_map_class7_summary(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     DM2_V1_MagicMapTileSummaryReceipt *out);
+/* Source-shaped class-0 summary for an empty record chain. Uses the bounded
+ * per-map v1e02cc table and File_header seed; record-bearing tiles remain
+ * unsupported here. */
+int dm2_v1_dungeon_magic_map_class0_empty_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y, int direction,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
+/* Source-bound SKProject map-tail graphics data. This receipt copies the
+ * wall candidate bytes from Map_definitions::w10/w12 and bounds the adjacent
+ * floor and door-ornament spans inside File_header::cbMapData. */
+typedef struct {
+    int valid;
+    int level;
+    uint32_t map_descriptor_offset;
+    uint32_t map_data_relative_offset;
+    uint32_t candidate_table_offset;
+    uint32_t candidate_table_byte_count;
+    uint8_t wall_graphic_count;
+    uint8_t wall_random_decoration_count;
+    uint8_t floor_graphic_count;
+    uint8_t creature_type_count;
+    uint8_t door_decoration_graphic_count;
+    uint8_t candidates[16];
+    uint32_t descriptor_hash;
+    uint32_t candidate_table_hash;
+} DM2_V1_SkprojectMapDecorationCandidateReceipt;
+int dm2_v1_dungeon_skproject_map_decoration_candidates(
+    const DM2_V1_DungeonData *d, int level,
+    DM2_V1_SkprojectMapDecorationCandidateReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
  * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
  * is absent. The source summary retains ceiling word FF; a following

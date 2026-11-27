@@ -5330,8 +5330,9 @@ int dm2_v1_skproject_map_0cee_wall_decoration_chain(
         *out_receipt = receipt;
         return 0;
     }
-    if (!state->candidate_table || state->candidate_table_count == 0u ||
-        state->wall_random_decoration_count == 0u) {
+    if (!state->candidate_table ||
+        (state->candidate_table_count == 0u &&
+         state->wall_random_decoration_count != 0u)) {
         receipt.blocked_missing_candidates = 1u;
         *out_receipt = receipt;
         return 0;

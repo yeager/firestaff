@@ -394,7 +394,9 @@ static int same_layout(const DM2_V1_DungeonData *a,
     SAME(map_level_number); SAME(map_graphics_flip_seed);
     SAME(map_door_set0); SAME(map_door_set1); SAME(map_use_door0);
     SAME(map_use_door1); SAME(map_door_ornate_count);
-    SAME(square_bytes); SAME(raw_map_data_base); SAME(column_index_base);
+    SAME(square_bytes); SAME(raw_map_data_base);
+    SAME(raw_map_data_byte_count); SAME(raw_map_data_source_bound);
+    SAME(column_index_base);
     SAME(square_first_thing_base); SAME(square_first_thing_count);
     SAME(text_data_base); SAME(text_word_count);
     SAME(g1_extension_base); SAME(g1_extension_size);
