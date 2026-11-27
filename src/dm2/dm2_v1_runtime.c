@@ -932,6 +932,22 @@ int dm2_v1_runtime_collect_magic_map_grid(
                     ++receipt.missing_selector_count;
                 }
             }
+            if (cell->tile_type == 3u || cell->tile_type == 4u) {
+                DM2_V1_MagicMapTileSummaryReceipt summary;
+                if (dm2_v1_dungeon_magic_map_class34_summary(
+                        dungeon, selected_map, x, y, heading, &summary) &&
+                    summary.valid) {
+                    memcpy(cell->tile_summary_words, summary.words,
+                           sizeof(cell->tile_summary_words));
+                    cell->tile_summary_valid = 1u;
+                } else {
+                    ++receipt.missing_summary_count;
+                }
+            } else {
+                /* Other source classes still need their corresponding
+                 * DM2_SUMMARIZE_STONE_ROOM branch before pixel composition. */
+                ++receipt.missing_summary_count;
+            }
             cell->valid = 1u;
         }
     }

@@ -34,7 +34,9 @@
 #define DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS 64
 
 /* Source-ordered dungeon cells selected by guidraw_29ee_1946. These are
- * map-data inputs for the later GDAT chip renderer, not drawn pixels. */
+ * map-data inputs for the later GDAT chip renderer, not drawn pixels.
+ * tile_summary_words are populated only for the bounded class-3/class-4
+ * summary paths; missing_summary_count reports all other unhandled cases. */
 typedef struct DM2_V1_RuntimeMagicMapCell {
     int16_t x;
     int16_t y;
@@ -45,6 +47,8 @@ typedef struct DM2_V1_RuntimeMagicMapCell {
     uint8_t tile_type;
     uint8_t map_graphic_selector;
     uint8_t map_graphic_selector_valid;
+    uint8_t tile_summary_valid;
+    uint16_t tile_summary_words[8];
     uint8_t valid;
 } DM2_V1_RuntimeMagicMapCell;
 
@@ -61,6 +65,7 @@ typedef struct DM2_V1_RuntimeMagicMapGridReceipt {
     uint8_t cell_count;
     uint8_t missing_cell_count;
     uint8_t missing_selector_count;
+    uint8_t missing_summary_count;
     DM2_V1_RuntimeMagicMapCell cells[DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS];
 } DM2_V1_RuntimeMagicMapGridReceipt;
 #include "dm2_v1_boot.h"
@@ -518,9 +523,10 @@ int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
 
-/* Collect the source-ordered DM2 magic-map tile cells from the active
- * authenticated dungeon. The caller supplies the pose and map-pan offsets
- * consumed by guidraw_29ee_1946. This does not claim chip pixels were drawn. */
+/* Collect source-ordered DM2 magic-map cells and bounded class-3/class-4
+ * summary words from the active authenticated dungeon. The caller supplies
+ * the pose and map-pan offsets consumed by guidraw_29ee_1946. This does not
+ * claim that every cell has a full summary or that chip pixels were drawn. */
 int dm2_v1_runtime_collect_magic_map_grid(
     int16_t party_x, int16_t party_y, int16_t party_map, int16_t heading,
     int16_t pixel_offset_x, int16_t pixel_offset_y,
