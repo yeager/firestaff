@@ -14,6 +14,7 @@ The source files used for the findings have these local SHA-256 identities:
 `REVIVE.C` `d0168118386c297cadab04525ab24efcf7138e0156074207d727d1edc3d4a18b`,
 `PANEL.C` `88b706cb539ae848c065a8ad02162a43c1d6344a6285160adaf0c59b2b1d074a`,
 `DEFS.H` `33b3160a5dd7d9c62b9ad0f3d26ac09ddacd6328c9717656fe2bbe8786625728`,
+`COPYPRO6.C` `7fb68f2a3c10c6e4fceb0ba60c1eca4631254186c54120245b02166372d6cfee`,
 `CHAMDRAW.C` `8192e23c011575b69da1e5a4c62616665f590cc37df1de9a548a266b24883a7c`,
 `COMMAND.C` `68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f`,
 and `STARTUP1.C`
@@ -217,11 +218,40 @@ state clears the same zone that its draw and command tables own. The source
 owners agree on 570; an authentic P20JB layout/hit-table check and runtime
 redraw check are still needed before treating the patch as confirmed behavior.
 
+### ReDMCSB copy-protection patch F — retain fuzzy-sector bytes
+
+`COPYPRO6.C:149-198` implements the `MEDIA607_X30J_X31J` check. It skips the
+eight-byte `HPR-0007` header, compares the next four random bytes against two
+prior readings in `G0293_ai_FuzzyBits_CPSE`, shifts the newest reading to the
+second slot, and then line 197 mistakenly stores `P0593_puc_SectorBuffer`
+itself into that history array. `DEFS.H:5667-5669` declares the X30J history
+as 32 `int16_t` values (64 bytes); `DEFS.H:3216-3218` maps the check buffer to
+`G0295`, which `BASE.C:20-23` allocates as 256 bytes for X30J. Thus the four
+bytes at offsets 8-11 are within the read buffer and the pointer write is an
+incorrect history update, not an overrun of the history array.
+
+Replace the pointer assignment with a bytewise copy of the same four values
+the assembly compared:
+
+```diff
+-        *((unsigned char**)G0293_ai_FuzzyBits_CPSE) = P0593_puc_SectorBuffer; /* BUGX_XX: Stores the address ... instead of actual bytes in the buffer */
++        ((unsigned char*)G0293_ai_FuzzyBits_CPSE)[0] = P0593_puc_SectorBuffer[8];
++        ((unsigned char*)G0293_ai_FuzzyBits_CPSE)[1] = P0593_puc_SectorBuffer[9];
++        ((unsigned char*)G0293_ai_FuzzyBits_CPSE)[2] = P0593_puc_SectorBuffer[10];
++        ((unsigned char*)G0293_ai_FuzzyBits_CPSE)[3] = P0593_puc_SectorBuffer[11];
+```
+
+Bytewise stores avoid alignment and aliasing assumptions while preserving the
+assembly's four-byte read order. **Apply after:** compile the X30J target and
+exercise repeated sector-7 reads using authenticated original media to confirm
+the two-reading history and copy-protection result. Source and disassembly
+evidence establish the defect and intended values; no matching X30J executable
+or runtime trace was available to confirm the final behavior.
+
 ## Other ReDMCSB annotations to investigate
 
 | Source | Candidate | Next evidence needed |
 | --- | --- | --- |
-| `COPYPRO6.C:197` | The comment says an address is written where fuzzy-sector bytes are expected. | Resolve `G0293`'s effective type, allocation size, and consumers before selecting a copy width. |
 | `GRF1.C`, `VDEO1.C`, `VDEO2.C` | Graphics/display paths contain platform assembly boundaries. | Retain the target ABI and authentic framebuffer/media evidence; no portable patch follows from the callable names alone. |
 
 ## Tooling and limits
@@ -232,8 +262,8 @@ there and used to disassemble the extracted OMF; Firestaff's ProDOS reader
 performed the extraction. These tools and extracted game files are outside
 Git; no user media was added to the repository.
 
-The five ReDMCSB hunks are proposed source patches, not changes to the external
-archive. Patch E remains a source-consistency candidate until P20JB media and
-runtime redraw behavior are checked. The IIGS patch is applied in Firestaff.
+The six ReDMCSB hunks are proposed source patches, not changes to the external
+archive. Patches E and F remain source-supported candidates until authentic
+media and runtime behavior are checked. The IIGS patch is applied in Firestaff.
 No upstream message, release, or tag was created. Source/disassembly evidence
 is not a substitute for a matched original-media interactive runtime trace.
