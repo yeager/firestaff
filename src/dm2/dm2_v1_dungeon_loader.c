@@ -7346,6 +7346,7 @@ int dm2_v1_dungeon_magic_map_class34_summary(
         seen[seen_count++] = link;
         record_type = ((unsigned)link >> 10) & 0x0fu;
         if (record_type > 3u) break;
+        if (d->g1_w0_chains_disabled) return 0;
         if (!dm2_v1_dungeon_get_thing_record(d, link, NULL, NULL, NULL))
             return 0;
         next = dm2_v1_dungeon_get_next_thing(d, link);
