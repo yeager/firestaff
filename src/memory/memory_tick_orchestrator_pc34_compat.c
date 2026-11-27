@@ -11570,8 +11570,15 @@ static int orch_drop_group_slot_possessions_compat(
          * calls MOVESENS.C F0267 with CM1_MAPX_NOT_ON_A_SQUARE before the next
          * cell draw. F0267 owns the off-square item and destination sensors,
          * including teleporter/pit/stairs chains. */
-        (void)orch_f0267_move_owned_thing_compat(
-            world, &request, &moveResult, ORCH_F0267_SOURCE_GROUP_SLOT);
+        if (!orch_f0267_move_owned_thing_compat(
+                world, &request, &moveResult,
+                ORCH_F0267_SOURCE_GROUP_SLOT) || !moveResult.moved) {
+            /* F0188's source path assumes F0267 can place every valid Slot
+             * entry. If the bounded native route rejects one, retain that
+             * entry and its unprocessed tail instead of clearing them below. */
+            group->slot = plan.steps[i].sourceThing;
+            return 0;
+        }
     }
     if (plan.shouldClearGroupSlot) {
         group->slot = THING_ENDOFLIST;

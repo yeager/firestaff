@@ -52,7 +52,9 @@ random draw, M10 validates every raw ordinary-item record and its `Next` link
 across the captured chain, so a malformed later record cannot leave an earlier
 item partially moved. Runtime coverage for
 group-slot drops on teleporter, pit, stairs, and sensor destinations remains
-open, as do full death-path RNG and original-emulator comparisons.
+open. If a bounded native F0267 move rejects an item, M10 preserves that item
+and the unprocessed Slot tail rather than clearing them. Full death-path RNG
+and original-emulator comparisons also remain open.
 
 Affected materializers include:
 
