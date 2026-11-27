@@ -26,6 +26,21 @@ The primary disk image's unadmitted `DUNGEON.MASTER` has MD5
 
 ## Findings
 
+### Apple IIGS rest keyboard bindings are present in ReDMCSB
+
+`COMMAND.C`'s G0460 table binds Return (`0x000D`) to C146 wake-up and
+Escape (`0x001B`) to C147 freeze; G0461 binds Escape to C148 unfreeze.
+Firestaff's IIGS input path had suppressed Return while resting and rejected
+Escape whenever already frozen, leaving those source commands unavailable.
+`M11_GameView_HandleInput` now routes Return to the shared rest wake-up and
+toggles the IIGS frozen state in either direction. Other ordinary commands
+remain suppressed during rest. The focused
+`test_m11_iigs_rest_keyboard_bindings` regression checks the two Escape
+transitions, rejects movement and rest-toggle while resting, and checks that
+Return clears all three rest-state mirrors. This is a Firestaff integration
+fix; no ReDMCSB source patch is indicated. Native IIGS runtime verification
+remains outstanding.
+
 This report separates proposed fixes to ReDMCSB itself from Firestaff
 implementation gaps. A source-complete behavior does not need a ReDMCSB
 patch simply because Firestaff's corresponding path is incomplete.

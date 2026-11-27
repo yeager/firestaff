@@ -40092,10 +40092,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
         if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
-        /* G20E/G21E maps Escape to C147; its G0461 keyboard table has no
-         * C148 entry, so frozen input can only be restored by the G0451 mouse. */
+        /* ReDMCSB COMMAND.C G0460 maps Escape to C147 (freeze), and G0461
+         * maps Escape to C148 (unfreeze) on G20E/G21E. */
         if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
-            if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
             state->dm1IigsFrozen = !state->dm1IigsFrozen;
             m11_set_status(state, state->dm1IigsFrozen
                 ? M11_DM1_PRESENTED("GAME FROZEN") : "", "");
@@ -40128,12 +40127,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
-        /* G20E/G21E G0460 has no keyboard wake command. Rest can end only
-         * through the source G0450 mouse bindings handled below. Preserve
-         * idle ticks for recovery and suppress ordinary world commands. */
+        /* ReDMCSB COMMAND.C G0460 maps Return to C146 wake-up. Preserve idle
+         * ticks for recovery, but route that source command before suppressing
+         * ordinary world input. */
         if (state->resting) {
-            if (input != M12_MENU_INPUT_NONE &&
-                input != M12_MENU_INPUT_REST_TOGGLE)
+            if (input == M12_MENU_INPUT_ACCEPT) {
+                m11_wake_party_from_rest(state);
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                              (unsigned int)state->world.gameTick);
+                m11_set_status(state, "REST", "PARTY AWAKE");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                         "AWAKE");
+                state->inspectDetail[0] = '\0';
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input != M12_MENU_INPUT_NONE)
                 return M11_GAME_INPUT_IGNORED;
         }
         /* ReDMCSB COMMAND.C C145 switches to G0450/G0460. Keep all three

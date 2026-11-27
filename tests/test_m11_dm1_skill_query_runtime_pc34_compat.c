@@ -128,6 +128,40 @@ static void test_m11_skill_query_resting_returns_neophyte(void) {
     assert(M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_WIZARD) == 1);
 }
 
+static void test_m11_iigs_rest_keyboard_bindings(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+
+    init_state(&state, &things, weapons, junks);
+    state.dm1IigsActive = 1;
+    state.resting = 1;
+    state.world.partyIsResting = 1;
+    state.world.lifecycle.rest.isResting = 1;
+
+    /* ReDMCSB COMMAND.C G0460/G0461 bind Escape to freeze/unfreeze and
+     * Return to C146 wake-up for G20E/G21E. */
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_FREEZE_TOGGLE) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.dm1IigsFrozen == 1);
+    assert(state.resting == 1 && state.world.partyIsResting == 1 &&
+           state.world.lifecycle.rest.isResting == 1);
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_FREEZE_TOGGLE) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.dm1IigsFrozen == 0);
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) ==
+           M11_GAME_INPUT_IGNORED);
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_REST_TOGGLE) ==
+           M11_GAME_INPUT_IGNORED);
+    assert(state.resting == 1 && state.world.partyIsResting == 1 &&
+           state.world.lifecycle.rest.isResting == 1);
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.resting == 0 && state.world.partyIsResting == 0 &&
+           state.world.lifecycle.rest.isResting == 0);
+}
+
 static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -611,6 +645,7 @@ int main(void) {
     test_m11_skill_query_uses_inventory_modifiers();
     test_m11_skill_query_uses_hidden_skill_average_and_heal_items();
     test_m11_skill_query_resting_returns_neophyte();
+    test_m11_iigs_rest_keyboard_bindings();
     test_m11_cast_spell_validation_uses_f0303_skill_query();
     test_m11_cast_spell_validation_failure_stops_cast();
     test_m11_f0230_parry_attack_uses_f0303_query();

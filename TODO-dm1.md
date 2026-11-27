@@ -4104,15 +4104,16 @@ unverified.
 
 2026-11-27 Apple IIGS rest controls: C145 in the authenticated G0449 mouse
 table enters the shared rest state. G20E/G21E wakes through a left click in
-the G0450 viewport or a right click anywhere on screen; it has no keyboard
-wake binding. Idle source ticks use F0331 recovery while resting and skip
-movement dispatch. Escape freezes IIGS; a left or right click anywhere on
-screen unfreezes it through G0451. Frozen G0461 has no keyboard binding.
-Source clocks, food/VBlank timing, and idle ticks stop while frozen.
-ReDMCSB COMMAND.C compiles the “WAKE UP” and “GAME FROZEN” F0649 text calls
-only for MEDIA561/MEDIA736 editions, not G20E/G21E. M11 had incorrectly added
-those labels using PC34 C006 geometry; it now leaves the native IIGS viewport
-blank in both states. Native runtime verification remains outstanding.
+the G0450 viewport, a right click anywhere on screen, or Return through
+COMMAND.C G0460 C146. Idle source ticks use F0331 recovery while resting and
+skip movement dispatch. Escape freezes through G0460 C147 and unfreezes
+through G0461 C148; a left or right click anywhere on screen also unfreezes
+through G0451. Source clocks, food/VBlank timing, and idle ticks stop while
+frozen. ReDMCSB COMMAND.C compiles the “WAKE UP” and “GAME FROZEN” F0649 text
+calls only for MEDIA561/MEDIA736 editions, not G20E/G21E. M11 leaves the
+native IIGS viewport blank in both states. A focused keyboard regression now
+covers Return wake and Escape freeze/unfreeze; native runtime verification
+remains outstanding.
 
 2026-11-27 IIGS layout source recheck: `COORD.C F0641` loads layout graphic
 696 only under MEDIA720, which excludes G20E/G21E. `TEXT.C F0649` and both
