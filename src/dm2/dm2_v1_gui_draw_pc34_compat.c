@@ -1899,11 +1899,25 @@ void dm2_v1_draw_hand_action_icons(
  * ================================================================ */
 
 void dm2_v1_draw_map_chip(
-    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
+    int32_t record, int32_t tile_x, int32_t tile_y, int32_t heading,
     int16_t chip_x, int16_t chip_y, int8_t style, int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
     if (!cb) return;
+
+    /* SKULLWIN c_gui_draw.cpp:3919 forwards
+     * (record, tile X, tile Y, heading, pixel X, pixel Y, style, flags).
+     * The source helper changes the active map before this call; it is not
+     * an argument to DRAW_MAP_CHIP. */
+    (void)record;
+    (void)tile_x;
+    (void)tile_y;
+    (void)heading;
+    (void)chip_x;
+    (void)chip_y;
+    (void)style;
+    (void)flags;
+    (void)ctx;
 
     /* SUMMARIZE_STONE_ROOM for the tile */
     if (cb->summarize_stone_room) {
@@ -1968,11 +1982,23 @@ void dm2_v1_guidraw_29ee_1d03(
  * ================================================================ */
 
 void dm2_v1_guidraw_29ee_1946(
-    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
-    int16_t chip_x, int32_t heading, int32_t side, int32_t flags,
+    int32_t record, int32_t party_x, int32_t party_y, int32_t map_index,
+    int16_t heading, int32_t pixel_offset_x, int32_t pixel_offset_y,
+    int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
     if (!cb) return;
+
+    /* SKULLWIN c_gui_draw.cpp:4122 and DOS dm2byg.cpp:1475 pass
+     * (record, party X, party Y, map index, heading, pixel X offset,
+     * pixel Y offset, flags). */
+    (void)record;
+    (void)party_x;
+    (void)party_y;
+    (void)map_index;
+    (void)heading;
+    (void)pixel_offset_x;
+    (void)pixel_offset_y;
 
     /* Store map navigation state if not restoring */
     if ((flags & 0x8) == 0) {
