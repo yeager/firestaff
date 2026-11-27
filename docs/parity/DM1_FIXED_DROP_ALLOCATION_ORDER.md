@@ -30,14 +30,19 @@ For PC 3.4's MEDIA016 branch, a centered source draws one random cell;
 an off-center source first draws whether to randomize, then conditionally
 draws the cell. Neither cell draw occurs after failed allocation.
 
-## Native mismatch
+## Current native status
 
-`F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat` in
-`src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c` resolves every optional
-decision and cell before its caller allocates any record. Consequently an
-allocation failure still consumes cell RNG and can change subsequent optional
-decisions. Successful per-item move side effects are also deferred until after
-all drop decisions; their RNG implications require separate verification.
+`F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat` remains a precomputed
+receipt helper; callers that use it do not model allocation-time RNG. The
+production M10, M11, and CSB materializers use
+`F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat` instead. It performs
+each optional decision, reservation, cell draw, and publication in source
+order. Failed reservations skip the cell draw, and the publish callback runs
+F0267 before the next table entry. M10 passes the live `world->masterRng`
+through that sequence, so destination effects can influence later decisions.
+Existing pool tests establish the bounded allocation/cell sequence; they do
+not establish the complete death-path RNG stream, all nested F0267 sensor
+effects, or original-emulator parity.
 
 Affected materializers include:
 
@@ -50,7 +55,7 @@ Affected materializers include:
 
 The F0186 melee receipt also uses the precomputed resolver. Its payload is not
 proof of allocation-failure parity. Existing successful-pool tests do not cover
-this contract.
+the complete death-path RNG contract.
 
 ## Required correction and evidence
 
