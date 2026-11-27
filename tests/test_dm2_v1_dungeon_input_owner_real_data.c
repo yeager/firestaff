@@ -35,6 +35,7 @@ int main(void)
     DM2_V1_DungeonInputOwner owner;
     DM2_V1_DungeonInputReceipt receipt;
     Sink sink;
+    const char *expected_graphics_md5;
 
     if (!root || !*root) {
         puts("SKIP: FIRESTAFF_DM2_DATA_DIR is unset");
@@ -46,13 +47,20 @@ int main(void)
     dm2_v1_boot_profile_init(&profile);
     if (!require(dm2_v1_boot_scan_assets(&profile, root) == 0 &&
                  profile.assets_verified &&
-                 profile.platform == DM2_PLATFORM_PC_EN &&
-                 strcmp(profile.graphics_md5,
-                        DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) == 0,
-                 "startup scanner admits the real PC-English GRAPHICS.DAT") ||
+                 (profile.platform == DM2_PLATFORM_PC_EN ||
+                  profile.platform == DM2_PLATFORM_PC_FR),
+                 "startup scanner admits an authenticated PC retail edition")) {
+        dm2_v1_boot_cleanup(&profile);
+        return 1;
+    }
+    expected_graphics_md5 = profile.platform == DM2_PLATFORM_PC_EN
+        ? DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5
+        : DM2_V1_DUNGEON_INPUT_PC_FR_GRAPHICS_MD5;
+    if (!require(strcmp(profile.graphics_md5, expected_graphics_md5) == 0,
+                 "scanner reports the exact English or French graphics identity") ||
         !require(dm2_v1_dungeon_input_owner_init(&owner,
                                                   profile.graphics_md5),
-                 "owner accepts only the scanner's real graphics identity")) {
+                 "owner accepts only a scanner-authenticated PC retail identity")) {
         dm2_v1_boot_cleanup(&profile);
         return 1;
     }
@@ -86,6 +94,22 @@ int main(void)
         return 1;
     }
 
+    memset(&sink, 0, sizeof(sink));
+    if (!require(dm2_v1_dungeon_input_owner_route_pc_view(
+                     &owner, DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT,
+                     235, 60, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                     capture, &sink, &receipt),
+                 "moneybox slot click is admitted for the authenticated PC edition") ||
+        !require(receipt.event_index == 228 &&
+                     receipt.source_zone_index == 181 &&
+                     receipt.source_x == 231 && receipt.source_y == 57 &&
+                     receipt.source_w == 27 && receipt.source_h == 32 &&
+                     sink.calls == 1 && sink.event_index == 228,
+                 "moneybox slot retains SKWIN event and shared RAW4 rectangle")) {
+        dm2_v1_boot_cleanup(&profile);
+        return 1;
+    }
+
     if (!require(!dm2_v1_dungeon_input_owner_route(
                      &owner, 100, 100, 0x8000u,
                      capture, &sink, &receipt) &&
@@ -98,6 +122,6 @@ int main(void)
     }
 
     dm2_v1_boot_cleanup(&profile);
-    puts("PASS: real DM2 PC GDAT-owned dungeon input route");
+    puts("PASS: real DM2 English/French PC GDAT-owned dungeon input route");
     return 0;
 }

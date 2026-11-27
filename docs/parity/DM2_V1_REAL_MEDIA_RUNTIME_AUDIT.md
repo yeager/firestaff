@@ -85,21 +85,23 @@ items from `LOAD_MISCITEM`, counts the source DB10 coin charges, and paints
 with the source frame, denomination images, scatter offsets, and clipping.
 The shared runtime click transaction is also implemented with rollback-safe
 record and party publication. M11 binds the click events for the authenticated
-PC English geometry and the FM Towns inventory rectangles.
+PC English/French shared geometry and the FM Towns inventory rectangles.
 
-The source review identifies the remaining supported-edition gap as PC French,
-Amiga English, and large-retail Macintosh English. PC French has authentic
-local media, but the only relocated `MOUSE_INPUT` rectangle matrix in Firestaff
-is locked to PC English `GRAPHICS.DAT` MD5
-`25247ede4dabb6a71e5dabdfbcd5907d`; the French graphics must be independently
-decoded and its event/rectangle table authenticated before those coordinates
-can be reused. Amiga and Macintosh use separate native UI/input owners; the
-PC matrix cannot establish their routes. The Amiga movement-arrow owner is not
-evidence for inventory event ownership, and the Macintosh title/input routes
-do not establish moneybox hitboxes.
+The supported-edition gap is now Amiga English and large-retail Macintosh
+English. A direct comparison of the authentic DOS English and DOS French
+`GRAPHICS.DAT` files found identical complete `INTERFACE_GENERAL/0 RAW4`
+records: 17,588 bytes, SHA-256
+`6dfdb85a7c9cafb51d8add900d1ccb4775658d63888443b1c6da6827aff33573`. The
+shared PC route owner now admits both scanner-authenticated graphics hashes,
+and the real-media owner regression verifies source viewport, movement, and
+moneybox event 228 against both archives. Amiga and Macintosh use separate
+native UI/input owners; the PC matrix cannot establish their routes. The Amiga
+movement-arrow owner is not evidence for inventory event ownership, and the
+Macintosh title/input routes do not establish moneybox hitboxes.
 
-To close this gap, recover the source `MOUSE_INPUT` event-to-rectangle mapping
-for each supported edition from its own original graphics/data, bind events
+To close the remaining gap, recover the source `MOUSE_INPUT`
+event-to-rectangle mapping for each platform from its own original
+graphics/data, bind events
 228–233 only after the active moneybox panel is established, and verify held-
 coin deposit, denomination withdrawal, redraw, leader hand, and weight updates
 against each edition's runtime. Until then, retain `PARTIAL` for all

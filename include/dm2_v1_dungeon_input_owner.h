@@ -25,6 +25,8 @@ extern "C" {
 
 #define DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5 \
     "25247ede4dabb6a71e5dabdfbcd5907d"
+#define DM2_V1_DUNGEON_INPUT_PC_FR_GRAPHICS_MD5 \
+    "b4d733576ea60c41737f79f212faf528"
 
 typedef struct {
     int active;

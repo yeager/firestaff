@@ -160,14 +160,21 @@ static uint32_t dm2_v1_dungeon_input_table_hash(void)
     return hash;
 }
 
+static int dm2_v1_dungeon_input_pc_graphics_admitted(const char *graphics_md5)
+{
+    return graphics_md5 &&
+        (strcmp(graphics_md5,
+                DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) == 0 ||
+         strcmp(graphics_md5,
+                DM2_V1_DUNGEON_INPUT_PC_FR_GRAPHICS_MD5) == 0);
+}
+
 int dm2_v1_dungeon_input_owner_init(DM2_V1_DungeonInputOwner *owner,
                                     const char *graphics_md5)
 {
     if (!owner) return 0;
     memset(owner, 0, sizeof(*owner));
-    if (!graphics_md5 ||
-        strcmp(graphics_md5, DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) != 0)
-        return 0;
+    if (!dm2_v1_dungeon_input_pc_graphics_admitted(graphics_md5)) return 0;
 
     owner->source_table_hash = dm2_v1_dungeon_input_table_hash();
     if (owner->source_table_hash == 0u) return 0;
@@ -438,8 +445,7 @@ int dm2_v1_dungeon_input_owner_route_pc_view(
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     if (!owner || !owner->active || owner->fmtowns ||
-        strcmp(owner->graphics_md5,
-               DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) != 0 ||
+        !dm2_v1_dungeon_input_pc_graphics_admitted(owner->graphics_md5) ||
         view < DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT ||
         view > DM2_TOUCH_CLICK_VIEW_SAVEGAME_SLOTS_PC34_COMPAT) {
         receipt.blocked_unverified_graphics = 1;
@@ -508,8 +514,8 @@ int dm2_v1_dungeon_input_owner_route(
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     if (!owner || !owner->active ||
-        (!owner->fmtowns && strcmp(owner->graphics_md5,
-                                   DM2_V1_DUNGEON_INPUT_PC_EN_GRAPHICS_MD5) != 0) ||
+        (!owner->fmtowns &&
+         !dm2_v1_dungeon_input_pc_graphics_admitted(owner->graphics_md5)) ||
         (owner->fmtowns && strcmp(owner->graphics_md5,
                                   DM2_V1_DUNGEON_INPUT_FMTOWNS_GRAPHICS_MD5) != 0)) {
         receipt.blocked_unverified_graphics = 1;
