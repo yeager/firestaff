@@ -10714,21 +10714,23 @@ static void orch_f0267_dispatch_sensor_results_compat(
             resolved.targetEventType == DM1_EVENT_NONE) {
             continue;
         }
-        if (world->pendingSensorEffects.count >= SENSOR_EFFECT_LIST_MAX_COUNT) {
-            moveResult->sensorDispatchOverflow = 1;
-            continue;
-        }
-        effect = &world->pendingSensorEffects.effects[
-            world->pendingSensorEffects.count++];
-        memset(effect, 0, sizeof(*effect));
-        effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
-        effect->sensorType = resolved.effectKind;
-        effect->destMapIndex = -1;
-        effect->destMapX = resolved.targetMapX;
-        effect->destMapY = resolved.targetMapY;
-        effect->destCell = resolved.targetCell;
-        effect->textIndex = resolved.resolvedEffect;
         moveResult->sensorDispatches++;
+        if (world->pendingSensorEffects.count >= SENSOR_EFFECT_LIST_MAX_COUNT) {
+            /* This serialized list is a bounded receipt. Its overflow must
+             * not suppress F0268's authoritative gameplay event below. */
+            moveResult->sensorDispatchOverflow = 1;
+        } else {
+            effect = &world->pendingSensorEffects.effects[
+                world->pendingSensorEffects.count++];
+            memset(effect, 0, sizeof(*effect));
+            effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+            effect->sensorType = resolved.effectKind;
+            effect->destMapIndex = -1;
+            effect->destMapX = resolved.targetMapX;
+            effect->destMapY = resolved.targetMapY;
+            effect->destCell = resolved.targetCell;
+            effect->textIndex = resolved.resolvedEffect;
+        }
 
         /* ReDMCSB MOVESENS.C F0268 queues the remote square event after
          * F0276 has evaluated the sensor. Remote floor sensors do not carry

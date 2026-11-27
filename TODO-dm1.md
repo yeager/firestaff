@@ -2788,7 +2788,9 @@ parity.
   armour, and junk. M10 F0276 now applies F0272 OnceOnly disabling before
   either local or remote dispatch and mutates both decoded sensor state and
   raw Type_Data. F0188 group-slot drops now retain audible F0276 hits through
-  the M10 movement receipt and request C01 in M11. The authentic English v1.2
+  the M10 movement receipt and request C01 in M11. A full serialized sensor
+  receipt buffer now reports overflow without suppressing F0268's event.
+  The authentic English v1.2
   menu-to-HoC route passes after the changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
