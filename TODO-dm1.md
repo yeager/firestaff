@@ -3787,7 +3787,9 @@ An actual original scroll verifies its source-defined opening/icon operation.
 The 24 original mirror chains contain no scroll, Jewel Symal or Illumulet;
 their recruitment activation branches lack original runtime coverage. Other
 modifier branches and all remaining heroes also need authentic checks.
-Remaining: reincarnation/rename, full inventory/spell/interaction and scene
+Native IIGS reincarnation/rename is now source-wired through F0281/F0282,
+including the G20/G21 no-halving rules; original-media runtime coverage is
+still outstanding. Remaining: full inventory/spell/interaction and scene
 consumers, intro/entrance and audible DOC playback. Visual parity remains
 deferred.
 
@@ -4101,30 +4103,38 @@ code-wiring gap; native runtime, visual, and complete campaign parity remain
 unverified.
 
 2026-11-27 Apple IIGS rest controls: C145 in the authenticated G0449 mouse
-table enters the shared rest state, and Return or a left click in the G0450
-viewport wakes the party. Idle source ticks use F0331 recovery while resting
-and skip movement dispatch. IIGS now clears the viewport and draws the
-source-owned cyan-on-black “WAKE UP” text using the GS font and centered C006
-zone geometry. Escape now toggles the source-owned IIGS freeze/unfreeze state
-and centered “GAME FROZEN” screen; source clocks, food/VBlank timing, and idle
-ticks stop while frozen. Complete source layout-record parity and native
-runtime behavior remain unverified.
+table enters the shared rest state. G20E/G21E wakes through a left click in
+the G0450 viewport or a right click anywhere on screen; it has no keyboard
+wake binding. Idle source ticks use F0331 recovery while resting and skip
+movement dispatch. Escape freezes IIGS; a left or right click anywhere on
+screen unfreezes it through G0451. Frozen G0461 has no keyboard binding.
+Source clocks, food/VBlank timing, and idle ticks stop while frozen.
+ReDMCSB COMMAND.C compiles the “WAKE UP” and “GAME FROZEN” F0649 text calls
+only for MEDIA561/MEDIA736 editions, not G20E/G21E. M11 had incorrectly added
+those labels using PC34 C006 geometry; it now leaves the native IIGS viewport
+blank in both states. Native runtime verification remains outstanding.
 
-2026-11-27 IIGS C006 layout source recheck: ReDMCSB COORD.C F0641 calls
-F0640 with `C696_GRAPHIC_LAYOUT=696` (DEFS.H:2265), and IIGS C145/C147
-reach `TEXT.C F0649` with zone C006. Reading the authenticated original G20
-disk in memory shows its `GRAPHICS.GAME` header declares 575 records, so
-record 696 cannot be resolved through the ordinary IIGS graphics table used
-by Firestaff's bounded reader. Do not claim that the existing PC34 viewport
-centering helper reproduces the IIGS F0635 record. Trace whether the original
-IIGS startup establishes a separate layout owner or source remap before
-changing the current render path; native C006 placement remains partial.
+2026-11-27 IIGS layout source recheck: `COORD.C F0641` loads layout graphic
+696 only under MEDIA720, which excludes G20E/G21E. `TEXT.C F0649` and both
+rest/freeze text call sites also exclude those IIGS editions. The earlier
+inference from the 575-entry IIGS graphics header to a missing C006 layout
+record was not relevant to this path: no IIGS F0649 call consumes C006 here.
+Do not borrow PC34 layout geometry for IIGS rest/freeze rendering.
 
 2026-11-27 IIGS rest tick correction: the first control wiring advanced
 F0884/F0890 time without invoking M11's F0331 champion effects. The IIGS rest
 idle path now runs the existing champion-time, creature-tick and death checks
 after a successful idle tick, while keeping movement dispatch suppressed.
-F0379's IIGS rest text is composed into the viewport with its original GS font
-using the existing centered-zone helper. The source translation and font
-metrics were checked, and the M11 translation unit compiles. Original-media
-runtime verification remains outstanding.
+Original-media runtime verification remains outstanding.
+
+2026-11-27 IIGS reincarnation follow-up: ReDMCSB REVIVE.C F0281:402-419,
+515-687 and F0282:806-835 establish the G20/G21 C161 path: native name/title
+entry, all 20 skill records cleared, and twelve M002_RANDOM(7) statistic
+increments. MEDIA351 does not compile the later S20E vital-halving rules.
+M11 now opens C027 with the authenticated GS font and routes rename text and
+controls. Its twelve statistic selections use the low bit of SDL's monotonic
+performance counter as a host stand-in for the GS HORIZCNT sample used by
+MEDIA351 BASE.C F0027; this preserves the source routine's one-bit result but
+is not random-sequence parity. The M11 translation unit compiles; original-
+media runtime verification remains outstanding, so this does not prove full
+reincarnation or campaign parity.

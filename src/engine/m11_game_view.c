@@ -38779,7 +38779,24 @@ static int m11_iigs_select_front_candidate(M11_GameViewState* state)
     return 1;
 }
 
-static int m11_iigs_finish_candidate(M11_GameViewState* state, int cancel)
+static int m11_iigs_random_statistic(void)
+{
+    const uint8_t horizontalCounter =
+        (uint8_t)SDL_GetPerformanceCounter();
+    uint8_t folded = horizontalCounter;
+    int bit;
+    /* BASE.C F0027 MEDIA351 reads the GS HORIZCNT register, then folds the
+     * original byte through five LSR/EOR steps and returns one bit. The
+     * host has no Apple IIgs counter; use the low byte of SDL's monotonic
+     * performance counter as the corresponding live hardware sample. */
+    for (bit = 0; bit < 5; ++bit)
+        folded = (uint8_t)((folded >> 1) ^ horizontalCounter);
+    return (int)(folded & 1U) % LIFECYCLE_STAT_COUNT;
+}
+
+static int m11_iigs_finish_candidate(M11_GameViewState* state,
+                                     int cancel,
+                                     int reincarnate)
 {
     if (!state || !state->active || !state->world.things || !state->world.dungeon) return 0;
     int slot = state->candidateMirrorPartyIndex;
@@ -38800,6 +38817,7 @@ static int m11_iigs_finish_candidate(M11_GameViewState* state, int cancel)
             sensor < 0 || sensor >= state->world.things->sensorCount ||
             state->world.things->sensors[sensor].sensorType != 127 ||
             state->world.things->sensors[sensor].sensorData != state->candidateMirrorOrdinal) return 0;
+        if (reincarnate && !state->world.party.champions[slot].name[0]) return 0;
         memcpy(inventory,state->world.party.champions[slot].inventory,sizeof(inventory));
         head = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(state->world.dungeon,
             state->world.party.mapIndex,x,y);
@@ -38829,6 +38847,44 @@ static int m11_iigs_finish_candidate(M11_GameViewState* state, int cancel)
         memset(&state->world.lifecycle.champions[slot],0,sizeof(state->world.lifecycle.champions[slot]));
     }
     state->candidateMirrorPanelActive = 0; state->inventoryPanelActive = 0;
+    if (!cancel && reincarnate) {
+        struct ChampionState_Compat* champion = &state->world.party.champions[slot];
+        struct ChampionLifecycleState_Compat* lifecycle =
+            &state->world.lifecycle.champions[slot];
+        int statistic;
+        int draw;
+        /* ReDMCSB REVIVE.C F0282:806-835 applies the original G20/G21
+         * reincarnation branch: F0281 has already renamed the candidate,
+         * all 20 skill records are cleared, and twelve M002_RANDOM(7)
+         * draws increment the selected statistic's current and maximum.
+         * The later S20E halving rule is not compiled for MEDIA351 G20E/G21E.
+         * MEDIA351 BASE.C F0027 samples HORIZCNT and yields one bit; M11's
+         * helper uses a monotonic host-counter sample at that boundary. */
+        memset(lifecycle->skills20, 0, sizeof(lifecycle->skills20));
+        memset(champion->skillLevels, 0, sizeof(champion->skillLevels));
+        memset(champion->skillExperience, 0, sizeof(champion->skillExperience));
+        for (draw = 0; draw < 12; ++draw) {
+            statistic = m11_iigs_random_statistic();
+            ++lifecycle->statistics[statistic][LIFECYCLE_STAT_CURRENT];
+            ++lifecycle->statistics[statistic][LIFECYCLE_STAT_MAXIMUM];
+            if (statistic > LIFECYCLE_STAT_LUCK) {
+                const int attribute = statistic - 1;
+                champion->attributes[attribute] =
+                    lifecycle->statistics[statistic][LIFECYCLE_STAT_CURRENT];
+                champion->attributeMaximums[attribute] =
+                    lifecycle->statistics[statistic][LIFECYCLE_STAT_MAXIMUM];
+            } else if (state->world.party.activeChampionIndex == slot) {
+                state->world.magic.luckCurrent =
+                    lifecycle->statistics[statistic][LIFECYCLE_STAT_CURRENT];
+            }
+        }
+        if (state->world.party.championCount == 1) {
+            state->world.party.activeChampionIndex = 0;
+            state->world.magic.luckCurrent =
+                lifecycle->statistics[LIFECYCLE_STAT_LUCK]
+                    [LIFECYCLE_STAT_CURRENT];
+        }
+    }
     state->candidateMirrorOrdinal = -1; state->candidateMirrorPartyIndex = -1;
     m11_repair_dead_party_leader(state);
     m11_dm1_refresh_carried_loads(state);
@@ -38846,8 +38902,11 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
     /* Native GS reincarnation/rename has its own older F0281/F0282 rules;
      * do not inherit the later PC halving or a PC keyboard panel. */
-    if (state && state->dm1IigsActive)
-        return reincarnate ? 0 : m11_iigs_finish_candidate(state,0);
+    if (state && state->dm1IigsActive) {
+        if (!reincarnate) return m11_iigs_finish_candidate(state, 0, 0);
+        return state->candidateMirrorRenameActive
+            ? 0 : M11_GameView_BeginMirrorCandidateReincarnateRename(state);
+    }
     DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
     DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
@@ -39112,6 +39171,17 @@ static int m11_finish_candidate_rename_if_accepted(M11_GameViewState* state) {
         memset(champ->title, 0, sizeof(champ->title));
         memcpy(champ->title, state->candidateMirrorRename.title, titleLen);
     }
+    if (state->dm1IigsActive) {
+        if (m11_iigs_finish_candidate(state, 0, 1)) {
+            state->candidateMirrorRenameActive = 0;
+            memset(&state->candidateMirrorRename, 0,
+                   sizeof(state->candidateMirrorRename));
+            return 1;
+        }
+        state->candidateMirrorRename.okAccepted = 0;
+        state->candidateMirrorRename.returned = 0;
+        return 0;
+    }
     state->candidateMirrorRenameActive = 0;
     memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     return M11_GameView_ConfirmMirrorCandidate(state, 1);
@@ -39207,7 +39277,8 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
 }
 
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
-    if (state && state->dm1IigsActive) return m11_iigs_finish_candidate(state,1);
+    if (state && state->dm1IigsActive)
+        return m11_iigs_finish_candidate(state, 1, 0);
     DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
     DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
@@ -39973,9 +40044,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
         if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
-        /* ReDMCSB COMMAND.C:2383-2415 C147/C148 switches to G0451/G0461;
-         * freeze stops source time, and Escape is the only IIGS unfreeze key. */
+        /* G20E/G21E maps Escape to C147; its G0461 keyboard table has no
+         * C148 entry, so frozen input can only be restored by the G0451 mouse. */
         if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
+            if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
             state->dm1IigsFrozen = !state->dm1IigsFrozen;
             m11_set_status(state, state->dm1IigsFrozen
                 ? M11_DM1_PRESENTED("GAME FROZEN") : "", "");
@@ -39984,6 +40056,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
+        if (state->candidateMirrorRenameActive) {
+            if (input == M12_MENU_INPUT_BACK) {
+                return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                           state,
+                           DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
+            if (input == M12_MENU_INPUT_ACCEPT ||
+                input == M12_MENU_INPUT_ACTION) {
+                return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                           state,
+                           DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (state->candidateMirrorPanelActive) {
             if (input == M12_MENU_INPUT_BACK)
                 return M11_GameView_CancelMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -39992,20 +40080,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
-        /* ReDMCSB COMMAND.C G0460:308-312 admits Return (C146) while
-         * resting. Preserve idle ticks for the native rest recovery path,
-         * but do not dispatch other commands through the ordinary world list. */
+        /* G20E/G21E G0460 has no keyboard wake command. Rest can end only
+         * through the source G0450 mouse bindings handled below. Preserve
+         * idle ticks for recovery and suppress ordinary world commands. */
         if (state->resting) {
-            if (input == M12_MENU_INPUT_ACCEPT) {
-                m11_wake_party_from_rest(state);
-                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
-                              (unsigned int)state->world.gameTick);
-                m11_set_status(state, "REST", "PARTY AWAKE");
-                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "AWAKE");
-                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                         "REST ENDED. RESUME EXPLORING.");
-                return M11_GAME_INPUT_REDRAW;
-            }
             if (input != M12_MENU_INPUT_NONE &&
                 input != M12_MENU_INPUT_REST_TOGGLE)
                 return M11_GAME_INPUT_IGNORED;
@@ -40023,8 +40101,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY IS RESTING");
             snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
-            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "HP AND STAMINA RECOVER SLOWLY. PRESS ENTER TO WAKE.");
+            state->inspectDetail[0] = '\0';
             return M11_GAME_INPUT_REDRAW;
         }
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY && input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY)
@@ -42988,13 +43065,33 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (!state->active || state->v1FoodCommandPending || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
         state->pointerX = x; state->pointerY = y;
-        if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
+        if (state->dm1IigsFrozen) {
+            if ((buttonMask & (DM1_V1_MOUSE_MASK_LEFT_PC34 |
+                               DM1_V1_MOUSE_MASK_RIGHT_PC34)) != 0 &&
+                x >= 0 && x < 320 && y >= 0 && y < 200) {
+                state->dm1IigsFrozen = 0;
+                m11_set_status(state, "", "");
+                m11_set_inspect_readout(state, "NO FOCUS", "");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         /* ReDMCSB COMMAND.C G0450:162-171 maps left clicks in the native
-         * 224x136 viewport to C146 while the party is resting. */
+         * 224x136 viewport to C146 while resting. MEDIA351 also maps a
+         * right click anywhere on the screen to C146. */
         if (state->resting) {
-            if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) &&
-                x >= 0 && x < 224 && y >= 33 && y < 169) {
-                return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            if (((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) &&
+                 x >= 0 && x < 224 && y >= 33 && y < 169) ||
+                ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) &&
+                 x >= 0 && x < 320 && y >= 0 && y < 200)) {
+                m11_wake_party_from_rest(state);
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                              (unsigned int)state->world.gameTick);
+                m11_set_status(state, "REST", "PARTY AWAKE");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                         "AWAKE");
+                state->inspectDetail[0] = '\0';
+                return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
         }
@@ -79032,10 +79129,36 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
         char name[CHAMPION_NAME_TEXT_CAPACITY];
         m11_format_champion_name(champion->name,name,sizeof(name));
         m11_iigs_blit(state,native,17,0,33,224,136,0,0,0,0);
-        m11_iigs_blit(state,native,40,80,85,144,73,0,0,0,0);
+        m11_iigs_blit(state,native,
+            state->candidateMirrorRenameActive ? 27U : 40U,
+            80,85,144,73,0,0,0,0);
         m11_iigs_blit(state,native,26,slot*69+7,0,32,29,
             (champion->portraitIndex&7)*32,(champion->portraitIndex>>3)*29,0,0);
         (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,3,40,name,13,0);
+        if (state->candidateMirrorRenameActive) {
+            const DM1_V1_ResurrectionRenameUiGatePc34Compat* rename =
+                &state->candidateMirrorRename;
+            /* ReDMCSB REVIVE.C F0281:407-419 lays out C027, the name/title
+             * guides and the first cursor with the native six-pixel GS font.
+             * F0052 coordinates are viewport-relative, whose screen origin
+             * is y=33 in DRAWVIEW.C F2172. */
+            (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+                177,91,"_______",13,12);
+            (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+                105,109,"___________________",13,12);
+            if (rename->name[0])
+                (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+                    177,91,rename->name,13,12);
+            if (rename->title[0])
+                (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+                    105,109,rename->title,13,12);
+            if (!(rename->fieldMode ==
+                      DM1_V1_RESURRECTION_RENAME_UI_FIELD_TITLE_PC34_COMPAT &&
+                  rename->characterIndex >=
+                      DM1_V1_RESURRECTION_RENAME_UI_TITLE_MAX_PC34_COMPAT))
+                (void)M11_Font_DrawIigsString(&state->originalFont,native,320,200,
+                    rename->cursorX,rename->cursorY,"_",9,12);
+        }
     }
     if (state->dm1IigsActive && state->v1FoodCommandPending &&
         (state->v1MouthVisualIconIndex == 205 || state->v1MouthVisualIconIndex == 206))
@@ -79043,26 +79166,14 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
             (state->v1MouthVisualIconIndex-192)*16,0,0,0);
     if (!state->candidateMirrorPanelActive && state->leaderHandObjectPresent)
         m11_iigs_draw_thing_icon(state,native,state->leaderHandThing,state->pointerX,state->pointerY);
-    /* ReDMCSB COMMAND.C F0379:1996-2034 clears the native 224x136
-     * viewport and, for I34E, calls F0649 with C006, cyan on black,
-     * "WAKE UP". TEXT.C F0649:1954-1969 resolves C006 through F0635
-     * and the six-pixel GS font. Firestaff currently centers in the
-     * viewport with the PC34 geometry helper; F0635 parity is unresolved:
-     * COORD.C F0641 requests C696=696, but the authenticated IIGS
-     * GRAPHICS.GAME header contains 575 records. */
+    /* ReDMCSB COMMAND.C F0379 and C147 clear the IIGS viewport, but their
+     * WAKE UP/GAME FROZEN text calls are compiled only for later media
+     * families. IIGS G20E/G21E has neither the MEDIA720 F0641 layout owner
+     * nor the MEDIA561/MEDIA736 F0649 text branches. Keep its source screen
+     * blank instead of borrowing PC34's C006 geometry. */
     if (state->resting || state->dm1IigsFrozen) {
-        DM1_V1_LayoutZoneRectPc34 centeredText;
-        const char* screenText = state->dm1IigsFrozen
-            ? "GAME FROZEN" : "WAKE UP";
-        const int textWidth = state->dm1IigsFrozen ? 66 : 42;
-        memset(native + 33 * 320, 0, 224U * 136U);
-        if (dm1_v1_viewport_centered_text_rect_pc34(textWidth, 6,
-                                                   &centeredText)) {
-            (void)M11_Font_DrawIigsString(
-                &state->originalFont, native, 320, 200,
-                centeredText.x, 33 + centeredText.y + 4,
-                screenText, 4, 0);
-        }
+        for (y = 33; y < 33 + 136; ++y)
+            memset(native + (size_t)y * 320U, 0, 224U);
     }
     for (y = 0; y < height; ++y)
         for (x = 0; x < width; ++x)
