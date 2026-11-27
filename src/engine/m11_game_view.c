@@ -25696,11 +25696,23 @@ static int m11_drop_group_slot_possessions_f0188(
     thing = group->slot;
     while (thing != THING_NONE && thing != THING_ENDOFLIST &&
            in.chainEntryCount < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        unsigned short rawNext;
+        unsigned short decodedNext;
+
+        /* Validate the entire Slot chain before source-order RNG or movement.
+         * ReDMCSB GROUP.C F0188 snapshots every Next before the first move. */
+        if (type < THING_TYPE_WEAPON || type > THING_TYPE_JUNK ||
+            index < 0 || index >= state->world.things->thingCounts[type] ||
+            !state->world.things->rawThingData[type]) {
+            return 0;
+        }
+        rawNext = m11_get_raw_next_thing(state->world.things, thing);
+        decodedNext = m11_get_decoded_next_thing(state->world.things, thing);
+        if (rawNext != decodedNext) return 0;
         in.chain[in.chainEntryCount].thing = thing;
-        in.chain[in.chainEntryCount].nextThing =
-            m11_get_raw_next_thing(state->world.things, thing);
-        in.randomCells[in.randomCellCount++] = (unsigned char)
-            F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 4);
+        in.chain[in.chainEntryCount].nextThing = rawNext;
         thing = in.chain[in.chainEntryCount].nextThing;
         ++in.chainEntryCount;
     }
@@ -25709,12 +25721,28 @@ static int m11_drop_group_slot_possessions_f0188(
         return 0;
     }
     for (i = 0; i < plan.stepCount; ++i) {
-        if (!m11_prepend_thing_to_square(&state->world, mapIndex, mapX, mapY,
-                                         plan.steps[i].droppedThing)) {
+        struct F0267ThingMoveRequestPc34Compat request;
+        struct F0267ThingMoveResultPc34Compat moveResult;
+        int cell = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 4);
+
+        memset(&request, 0, sizeof(request));
+        memset(&moveResult, 0, sizeof(moveResult));
+        request.thing = (unsigned short)((plan.steps[i].sourceThing & 0x3fffu) |
+                                         ((unsigned short)cell << 14));
+        request.sourceMapIndex = mapIndex;
+        request.sourceMapX = -1;
+        request.sourceMapY = 0;
+        request.destinationMapIndex = mapIndex;
+        request.destinationMapX = mapX;
+        request.destinationMapY = mapY;
+        /* ReDMCSB GROUP.C F0188:724-732 draws one cell then invokes MOVESENS.C
+         * F0267 from CM1_MAPX_NOT_ON_A_SQUARE before processing the next item. */
+        if (!F0267_MOVE_DropGroupSlotThingOnLoadedChain_Compat(
+                &state->world, &request, &moveResult) || !moveResult.moved) {
+            group->slot = plan.steps[i].sourceThing;
             return 0;
         }
     }
-    if (plan.shouldClearGroupSlot) group->slot = THING_ENDOFLIST;
     if (plan.shouldDrop && state->audioState.lastSoundIndex >= -1) {
         m11_audio_emit_source_sound(
             state, plan.weaponDropped ? DM1_SND_METALLIC_THUD : DM1_SND_WOODEN_THUD,
@@ -25722,8 +25750,8 @@ static int m11_drop_group_slot_possessions_f0188(
     }
 
     /* ReDMCSB: GROUP.C F0188 lines 723-736 snapshots each Slot.Next,
-     * assigns RANDOM(4) cell bits, moves it through F0267 in chain order,
-     * and only then F0189 deletes the group. */
+     * assigns RANDOM(4) cell bits, and moves through F0267 in chain order.
+     * F0189 retires the group without clearing its Slot field. */
     return 1;
 }
 

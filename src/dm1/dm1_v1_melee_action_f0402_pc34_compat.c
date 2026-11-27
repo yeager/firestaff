@@ -1329,7 +1329,9 @@ int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
     }
 
     out->shouldDrop = 1;
-    out->shouldClearGroupSlot = 1;
+    /* ReDMCSB GROUP.C F0188:724-736 moves each saved Slot entry, then
+     * GROUP.C F0189 retires the group without clearing GROUP.Slot. */
+    out->shouldClearGroupSlot = 0;
     current = in->slotHead;
     for (i = 0; i < in->chainEntryCount &&
                 i < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34; ++i) {

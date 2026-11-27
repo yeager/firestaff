@@ -1141,9 +1141,9 @@ static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
                  "event60 pit death also drops carried group slot on lower map square");
     ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
                  "event60 pit death dropped weapon terminates lower chain");
-    ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
+    ok &= expect(world.things->groups[0].slot == (unsigned short)((THING_TYPE_WEAPON << 10) | 0) &&
                  world.things->groups[0].health[0] == 0,
-                 "event60 pit death clears carried slot and kills group before insertion");
+                 "event60 pit death preserves F0189 source Slot while killing group");
     ok &= expect(world.creatureAICount == 0 && world.timeline.count == 0,
                  "event60 pit death does not insert group or schedule C37 retry");
 
@@ -1715,9 +1715,9 @@ static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void)
                  "event60 disallowed group drops carried slot on destination square");
     ok &= expect(world.things->weapons[0].next == THING_ENDOFLIST,
                  "event60 disallowed carried slot terminates destination chain");
-    ok &= expect(world.things->groups[0].slot == THING_ENDOFLIST &&
+    ok &= expect(world.things->groups[0].slot == (unsigned short)((THING_TYPE_WEAPON << 10) | 0) &&
                  world.things->groups[0].next == THING_ENDOFLIST,
-                 "event60 disallowed group remains unlinked after drop");
+                 "event60 disallowed group retains F0189 source Slot unlinked");
     ok &= expect(world.creatureAICount == 0 && world.timeline.count == 0,
                  "event60 disallowed group does not insert or schedule retry");
 

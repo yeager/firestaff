@@ -2636,10 +2636,12 @@ parity.
   item's cell draw, preserving destination sensors and chained movement before
   the next draw. Its prepass now validates every raw ordinary-item record and
   Next link before the first RNG draw, avoiding a partial drop from a malformed
-  later link. If F0267 rejects an individual native move, M10 now retains that
-  item and the unprocessed tail in `GROUP.Slot`. Add live coverage for
-  teleporter, pit, stairs, and sensor destinations; do not treat the
-  source-ordered implementation as complete death-aftermath parity.
+  later link. M10 and M11 route each item through F0267 in source order and
+  retain a rejected item plus its unprocessed tail in `GROUP.Slot`. ReDMCSB
+  F0188/F0189 leaves the Slot head intact while retiring the group; both
+  runtimes now preserve that state. Add live coverage for teleporter, pit,
+  stairs, and sensor destinations; do not treat the source-ordered
+  implementation as complete death-aftermath parity.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement
   and source C15/C25 smoke publication are verified in bounded fixtures;
   they do not establish full death aftermath or emulator parity.

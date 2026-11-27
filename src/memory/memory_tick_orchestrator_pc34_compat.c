@@ -11148,6 +11148,15 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
         world, request, outResult, ORCH_F0267_SOURCE_SQUARE);
 }
 
+int F0267_MOVE_DropGroupSlotThingOnLoadedChain_Compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult)
+{
+    return orch_f0267_move_owned_thing_compat(
+        world, request, outResult, ORCH_F0267_SOURCE_GROUP_SLOT);
+}
+
 /* ReDMCSB TIMELINE.C F0249:1352-1465 snapshots the source square before
  * moving its Things through F0267, because a move can unlink a later entry
  * or loop back onto the same square. Party and GROUP use their own F0267
@@ -11579,9 +11588,6 @@ static int orch_drop_group_slot_possessions_compat(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
-    }
-    if (plan.shouldClearGroupSlot) {
-        group->slot = THING_ENDOFLIST;
     }
     if (outSoundId) *outSoundId = plan.soundId;
     return 1;

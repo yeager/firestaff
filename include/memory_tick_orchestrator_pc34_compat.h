@@ -670,6 +670,13 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     const struct F0267ThingMoveRequestPc34Compat* request,
     struct F0267ThingMoveResultPc34Compat* outResult);
 
+/* ReDMCSB GROUP.C F0188 passes CM1_MAPX_NOT_ON_A_SQUARE for carried Slot
+ * Things; retain that ownership mode while using the common F0267 resolver. */
+int F0267_MOVE_DropGroupSlotThingOnLoadedChain_Compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult);
+
 /* GROUP.C F0186: reserve, consume cell RNG and publish each fixed drop
  * through F0267. Returns materialized count, or -1 for invalid world input.
  * outSoundId is source sound 0/4 even on pool exhaustion for fixed-drop

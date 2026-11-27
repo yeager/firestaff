@@ -2461,8 +2461,8 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
              "F0188 group slot snapshots next thing");
     CHECK_EQ((int)THING_GET_CELL(slotDropOut.steps[2].droppedThing), 2,
              "F0188 group slot third random cell");
-    CHECK_EQ(slotDropOut.shouldClearGroupSlot, 1,
-             "F0188 group slot clears source slot");
+    CHECK_EQ(slotDropOut.shouldClearGroupSlot, 0,
+             "F0188 leaves GROUP.Slot for F0189 retirement");
 
     slotDropIn.slotHead = (unsigned short)((THING_TYPE_JUNK << 10) | 1);
     slotDropIn.chainEntryCount = 1;
