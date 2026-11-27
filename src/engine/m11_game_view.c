@@ -44620,7 +44620,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return M11_GAME_INPUT_IGNORED;
                 }
             }
-            if (profile->platform == DM2_PLATFORM_PC_EN) {
+            if (profile->platform == DM2_PLATFORM_PC_EN ||
+                profile->platform == DM2_PLATFORM_PC_FR) {
                 DM2_V1_DungeonInputReceipt moneybox_route;
                 uint16_t moneybox_object;
                 uint8_t moneybox_cls2;
@@ -44665,7 +44666,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             case 80:
                 return m11_process_dm2_v1_c080_click(state, x, y);
             case 228: case 229: case 230: case 231: case 232: case 233:
-                if (profile->platform == DM2_PLATFORM_PC_EN &&
+                if ((profile->platform == DM2_PLATFORM_PC_EN ||
+                     profile->platform == DM2_PLATFORM_PC_FR) &&
                     dm2_v1_runtime_click_moneybox_slot(
                         (int)(input_receipt.event_index - 228u))) {
                     m11_sync_dm2_state_from_runtime(state);
