@@ -4106,3 +4106,10 @@ G0450 viewport wakes the party. Idle source ticks use the existing F0331
 recovery cadence while resting and skip the movement pipeline. This wires the
 controls to existing DM1 runtime owners; IIGS rest-screen artwork, Esc/freeze,
 and native runtime behavior remain unverified.
+
+2026-11-27 IIGS rest tick correction: the first control wiring advanced
+F0884/F0890 time without invoking M11's F0331 champion effects. The IIGS rest
+idle path now runs the existing champion-time, creature-tick and death checks
+after a successful idle tick, while keeping movement dispatch suppressed.
+This is source-path inspection only; build, focused runtime and original-media
+verification remain outstanding.
