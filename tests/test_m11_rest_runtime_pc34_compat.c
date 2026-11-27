@@ -227,6 +227,29 @@ static void test_resting_idle_tick_recovers_at_boundary(void) {
               "F0331 resting mana formula recovers capped mana");
 }
 
+static void test_iigs_resting_idle_tick_runs_champion_recovery(void) {
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_rest_recovery_boundary_state(&state);
+    state.dm1IigsActive = 1;
+    state.world.partyIsResting = 1;
+    state.world.lifecycle.rest.isResting = 1;
+
+    result = M11_GameView_AdvanceIdleTick(&state);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "IIGS resting idle tick redraws");
+    ASSERT_EQ(state.world.gameTick, 4,
+              "IIGS resting idle tick advances to boundary");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 11,
+              "IIGS F0331 resting recovery restores two hp");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 9,
+              "IIGS F0331 mana regeneration spends stamina");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 5,
+              "IIGS F0331 resting recovery caps mana");
+}
+
 static void test_f0331_runs_on_first_source_tick(void) {
     M11_GameViewState state;
     M11_GameInputResult result;
@@ -266,6 +289,7 @@ int main(void) {
     test_creature_attack_runtime_uses_f0230_parry_skill();
     test_wake_input_does_not_spend_recovery_tick();
     test_resting_idle_tick_recovers_at_boundary();
+    test_iigs_resting_idle_tick_runs_champion_recovery();
     test_f0331_runs_on_first_source_tick();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

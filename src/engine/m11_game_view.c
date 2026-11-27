@@ -35489,7 +35489,16 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
          * resting party's source-tick recovery. Do not run the movement
          * pipeline while the G0450/G0460 command list is active. */
         if (state->resting) {
-            m11_apply_tick(state, CMD_NONE, "WAIT");
+            /* The generic F0884 idle tick advances M10 time but does not
+             * own M11's F0331 champion recovery. Mirror the common idle
+             * boundary here after its successful source tick, without
+             * allowing a queued movement command through F0380. */
+            if (m11_apply_tick(state, CMD_NONE, "WAIT")) {
+                m11_apply_champion_time_effects(state);
+                m11_process_creature_ticks(state);
+                m11_check_party_death(state);
+                m11_refresh_hash(state);
+            }
         } else {
             (void)m11_process_dm1_v1_pipeline_tick(state,"WAIT");
         }
