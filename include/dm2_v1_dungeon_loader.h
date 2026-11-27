@@ -1813,9 +1813,15 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, uint32_t tick,
     DM2_V1_MagicMapTileSummaryReceipt *out);
+/* Source-shaped class-6 type-1 branch, gated by raw bit 0x04, with the
+ * same map-GDAT 0x6b selector and optional tick-selected frame. */
+int dm2_v1_dungeon_magic_map_class6_empty_summary(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
 /* Source-shaped class-5 simple summary: when either raw bit 0x08 or 0x04 is
  * clear, emit type 1 and clear bit 0x08 in the summarized tile word. */
-int dm2_v1_dungeon_magic_map_empty_summary(
+int dm2_v1_dungeon_magic_map_class5_empty_summary(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     DM2_V1_MagicMapTileSummaryReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4

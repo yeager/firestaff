@@ -7359,9 +7359,10 @@ int dm2_v1_dungeon_magic_map_class34_summary(
     return 1;
 }
 
-int dm2_v1_dungeon_magic_map_class1_empty_summary(
+static int dm2_v1_dungeon_magic_map_empty_gdat_summary(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
-    int level, int x, int y, uint32_t tick,
+    int level, int x, int y, uint32_t tick, unsigned tile_class,
+    unsigned required_raw_bits,
     DM2_V1_MagicMapTileSummaryReceipt *out)
 {
     DM2_V1_MagicMapTileSummaryReceipt receipt;
@@ -7377,7 +7378,9 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
     if (!d || !loader || !loader->loaded) return 0;
     raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
     first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 1u ||
+    if (raw < 0 || raw > 0xff ||
+        ((unsigned)raw >> 5) != tile_class ||
+        (((unsigned)raw & required_raw_bits) != required_raw_bits) ||
         first < -1 || first == (int)DM2_THING_NULL_MARKER ||
         (d->square_bytes == 1 && (raw & 0x10) != 0 && first < 0) ||
         (first >= 0 && first != (int)DM2_THING_END_MARKER)) {
@@ -7390,7 +7393,7 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
     receipt.x = x;
     receipt.y = y;
     receipt.direction = -1;
-    receipt.tile_type = 1u;
+    receipt.tile_type = (uint8_t)tile_class;
     receipt.words[0] = 1u;
     receipt.words[1] = (uint16_t)raw;
     receipt.words[2] = DM2_THING_END_MARKER;
@@ -7400,7 +7403,7 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
     receipt.words[6] = 0x00ffu;
     receipt.words[7] = 0u;
 
-    /* SKULLWIN/c_gui_vp.cpp:2828-2856: class 1 first resolves the
+    /* SKULLWIN/c_gui_vp.cpp:2828-2856: this source branch resolves the
      * map-style ceiling selector from GDAT (8, style, 11, 0x6b), then
      * optionally replaces its frame word with QUERY_ORNATE_ANIM_FRAME. */
     if (dm2_v1_query_gdat_entry_data_index(
@@ -7424,11 +7427,31 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
     return 1;
 }
 
+int dm2_v1_dungeon_magic_map_class1_empty_summary(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    return dm2_v1_dungeon_magic_map_empty_gdat_summary(
+        d, loader, level, x, y, tick, 1u, 0u, out);
+}
+
+/* SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2800-2810, 2828-2856.
+ * Class 6 enters the same type-1 map-GDAT branch when raw bit 0x04 is set. */
+int dm2_v1_dungeon_magic_map_class6_empty_summary(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    return dm2_v1_dungeon_magic_map_empty_gdat_summary(
+        d, loader, level, x, y, tick, 6u, 0x04u, out);
+}
+
 /* SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2768-2792.
  * Class 5 takes the simple summary when either raw tile bit 0x08 or 0x04
  * is clear. The source clears bit 0x08 in summary word 1 and does not enter
  * class 1's map-style GDAT ceiling selector path. */
-int dm2_v1_dungeon_magic_map_empty_summary(
+int dm2_v1_dungeon_magic_map_class5_empty_summary(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     DM2_V1_MagicMapTileSummaryReceipt *out)
 {
