@@ -15824,7 +15824,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int foodCommandWasPending = gameView.v1FoodCommandPending;
             uint32_t foodElapsedMs = (uint32_t)now - foodClockLastMs;
             foodClockLastMs = (uint32_t)now;
-            if (M11_GameView_AdvanceFoodClockMs(&gameView, foodElapsedMs) ==
+            if (!gameView.dm1IigsFrozen &&
+                M11_GameView_AdvanceFoodClockMs(&gameView, foodElapsedMs) ==
                 M11_GAME_INPUT_REDRAW) {
                 m11_draw_game_frame_for_loop(&gameView, o->debug,
                     &perfLoopDrawMs, &perfLoopDrawCount);
