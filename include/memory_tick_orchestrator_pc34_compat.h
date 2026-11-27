@@ -646,6 +646,7 @@ struct F0267ThingMoveResultPc34Compat {
     int sensorDispatches;
     int sensorDispatchOverflow;
     int audibleSensorTriggers;
+    struct SensorEffectList_Compat localSensorEffects;
     int localSensorRotations;
     struct F0270SensorRotationStatePc34Compat lastLocalSensorRotation;
     int teleporterChainCount;

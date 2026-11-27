@@ -10696,7 +10696,28 @@ static void orch_f0267_dispatch_sensor_results_compat(
                 world, trigger->sensorIndex);
         }
         if (trigger->audible) ++moveResult->audibleSensorTriggers;
-        if (trigger->isLocal) continue;
+        if (trigger->isLocal) {
+            if (trigger->effectKind == SENSOR_EFFECT_ADD_XP &&
+                moveResult->localSensorEffects.count <
+                    SENSOR_EFFECT_LIST_MAX_COUNT) {
+                struct SensorEffect_Compat* local =
+                    &moveResult->localSensorEffects.effects[
+                        moveResult->localSensorEffects.count++];
+                memset(local, 0, sizeof(*local));
+                local->kind = SENSOR_EFFECT_LOCAL_STEAL_XP;
+                local->sensorType = world->things->sensors[
+                    trigger->sensorIndex].sensorType;
+                local->sourceSensorIndex = trigger->sensorIndex;
+                local->destMapIndex = sourceMapIndex;
+                local->destMapX = sourceMapX;
+                local->destMapY = sourceMapY;
+                local->destCell = -1;
+                local->textIndex = trigger->localEffectValue;
+            } else if (trigger->effectKind == SENSOR_EFFECT_ADD_XP) {
+                moveResult->sensorDispatchOverflow = 1;
+            }
+            continue;
+        }
         map = &world->dungeon->maps[sourceMapIndex];
         if (!world->dungeon->tiles[sourceMapIndex].squareData ||
             trigger->targetMapX < 0 || trigger->targetMapX >= map->width ||

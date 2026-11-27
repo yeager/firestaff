@@ -25743,6 +25743,10 @@ static int m11_drop_group_slot_possessions_f0188(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
+        if (moveResult.localSensorEffects.count > 0) {
+            m11_apply_sensor_effects(
+                state, &moveResult.localSensorEffects);
+        }
         /* F0276 requests C01 once per audible sensor in each F0267 pass. */
         for (audibleIndex = 0;
              audibleIndex < moveResult.audibleSensorTriggers;
