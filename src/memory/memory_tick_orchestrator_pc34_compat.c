@@ -3837,18 +3837,18 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
                sizeof(world->things->groups[applyPlan.groupIndex].health));
     }
     if (applyPlan.shouldUnlinkGroupFromSquare) {
-        struct F0267ThingMoveResultPc34Compat sourceRemovalResult;
-        memset(&sourceRemovalResult, 0, sizeof(sourceRemovalResult));
-        /* ReDMCSB MOVESENS.C F0267:799-807 runs F0276 for the group while it
-         * is still on its source square, before unlinking it. */
-        (void)orch_f0267_sensor_pass_dispatch_compat(
-            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
-            applyPlan.groupThing, 0, &sourceRemovalResult);
-    }
-    if (applyPlan.shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
             world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
             applyPlan.groupThing);
+    }
+    if (applyPlan.shouldUnlinkGroupFromSquare) {
+        struct F0267ThingMoveResultPc34Compat sourceRemovalResult;
+        memset(&sourceRemovalResult, 0, sizeof(sourceRemovalResult));
+        /* ReDMCSB F0276 unlinks first (MOVESENS.C:1615-1617), then evaluates
+         * the source-square sensors from F0267 (MOVESENS.C:799-807). */
+        (void)orch_f0267_sensor_pass_dispatch_compat(
+            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+            applyPlan.groupThing, 0, &sourceRemovalResult);
     }
     if (applyPlan.shouldClearGroupNext &&
         applyPlan.groupIndex >= 0 &&

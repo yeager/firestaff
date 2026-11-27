@@ -2641,8 +2641,9 @@ parity.
   F0267 entry also rechecks raw/decoded `Next` ownership for every slot Thing.
   ReDMCSB F0188/F0189 leaves the Slot head intact while retiring the group; both
   runtimes now preserve that state, and both clear the full C04 health array
-  as F0189 requires. M10 and M11 also run their bounded F0276 source-removal
-  pass before unlinking the dead group. Full sensor-type/edition coverage and
+  as F0189 requires. M10 and M11 now follow F0276's removal order: unlink the
+  dead group before evaluating source-square sensors. Full sensor-type/edition
+  coverage and
   live checks for teleporter, pit, stairs, and sensor destinations remain
   open; do not treat the source-ordered implementation as complete
   death-aftermath parity.

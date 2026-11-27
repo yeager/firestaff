@@ -518,9 +518,9 @@ int F0276_SENSOR_ProcessObjectFloorChange_Compat(
     if (changedType != THING_TYPE_GROUP &&
         !sensor_floor_object_class(changedType)) return 1;
 
-    /* ReDMCSB MOVESENS.C F0276: the add path counts the old floor chain
-     * before linking the incoming object. M11 calls after its mutation, so
-     * exclude that exact record from the census to preserve the source view. */
+    /* ReDMCSB MOVESENS.C F0276: additions count the old chain before linking;
+     * removals unlink before census. Exclude the changed record when a caller
+     * has already applied the corresponding mutation. */
     sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
     if (sftIdx >= 0 && sftIdx < things->squareFirstThingCount) {
         if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount &&

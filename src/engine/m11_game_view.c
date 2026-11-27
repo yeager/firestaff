@@ -21142,7 +21142,7 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
 
 /* ReDMCSB MOVESENS.C F0276 runs the floor sensor pass for object/group
  * admission and removal. The caller owns link timing: additions are checked
- * before linking, removals before unlinking. This adapter is bounded to DM1. */
+ * before linking, removals after unlinking. This adapter is bounded to DM1. */
 static void m11_process_dm1_floor_thing_change(M11_GameViewState* state,
                                                int mapIndex,
                                                int mapX,
@@ -25904,16 +25904,16 @@ static int m11_check_group_death_and_drop(
         memset(g->health, 0, sizeof(g->health));
     }
     if (killedAllApply.shouldUnlinkGroupFromSquare) {
-        /* F0267 runs the F0276 removal pass before unlinking. The bounded
-         * floor adapter excludes this group from its existing-group census. */
-        m11_process_dm1_floor_thing_change(
-            state, killedAllApply.mapIndex, killedAllApply.mapX,
-            killedAllApply.mapY, killedAllApply.groupThing, 0);
-    }
-    if (killedAllApply.shouldUnlinkGroupFromSquare) {
         (void)m11_unlink_thing_from_square(
             &state->world, killedAllApply.mapIndex, killedAllApply.mapX,
             killedAllApply.mapY, killedAllApply.groupThing);
+    }
+    if (killedAllApply.shouldUnlinkGroupFromSquare) {
+        /* F0276 unlinks first (MOVESENS.C:1615-1617), then evaluates the
+         * source-square sensors from F0267 (MOVESENS.C:799-807). */
+        m11_process_dm1_floor_thing_change(
+            state, killedAllApply.mapIndex, killedAllApply.mapX,
+            killedAllApply.mapY, killedAllApply.groupThing, 0);
     }
     if (killedAllApply.shouldClearGroupNext) {
         m11_set_raw_next_thing(state->world.things, killedAllApply.groupThing,
