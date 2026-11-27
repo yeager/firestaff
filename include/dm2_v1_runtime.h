@@ -43,6 +43,8 @@ typedef struct DM2_V1_RuntimeMagicMapCell {
     int16_t side;
     uint8_t tile_value;
     uint8_t tile_type;
+    uint8_t map_graphic_selector;
+    uint8_t map_graphic_selector_valid;
     uint8_t valid;
 } DM2_V1_RuntimeMagicMapCell;
 
@@ -58,6 +60,7 @@ typedef struct DM2_V1_RuntimeMagicMapGridReceipt {
     uint8_t column_count;
     uint8_t cell_count;
     uint8_t missing_cell_count;
+    uint8_t missing_selector_count;
     DM2_V1_RuntimeMagicMapCell cells[DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS];
 } DM2_V1_RuntimeMagicMapGridReceipt;
 #include "dm2_v1_boot.h"

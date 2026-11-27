@@ -835,11 +835,13 @@ int dm2_v1_runtime_collect_magic_map_grid(
     DM2_V1_RuntimeMagicMapGridReceipt receipt;
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_DungeonData *dungeon;
+    DM2_V1_MagicMapSelectorReceipt map_selectors;
     DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
     uint8_t candidates[DM2_V1_MAX_LEVELS + 1];
     uint16_t candidate_count = 0u;
     int row_first;
     int side_first;
+    int map_selectors_attempted = 0;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.source_map = party_map;
@@ -854,6 +856,7 @@ int dm2_v1_runtime_collect_magic_map_grid(
         !rt->boot->dungeon_data || rt->outdoor || party_map < 0 ||
         party_map >= DM2_V1_MAX_LEVELS) return 0;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    memset(&map_selectors, 0, sizeof(map_selectors));
     if (party_map >= dungeon->level_count ||
         dungeon->level_count > DM2_V1_MAX_LEVELS ||
         heading < 0 || heading > 3) return 0;
@@ -912,12 +915,30 @@ int dm2_v1_runtime_collect_magic_map_grid(
             }
             cell->tile_value = (uint8_t)tile_value;
             cell->tile_type = (uint8_t)((tile_value >> 5) & 0x07);
+            if (cell->tile_type == 7u) {
+                const unsigned level_number =
+                    dungeon->map_level_number[selected_map];
+                if (!map_selectors_attempted) {
+                    (void)dm2_v1_dungeon_resolve_magic_map_selectors(
+                        dungeon, &map_selectors);
+                    map_selectors_attempted = 1;
+                }
+                if (map_selectors.valid &&
+                    level_number < map_selectors.selector_count) {
+                    cell->map_graphic_selector =
+                        map_selectors.selectors[level_number];
+                    cell->map_graphic_selector_valid = 1u;
+                } else {
+                    ++receipt.missing_selector_count;
+                }
+            }
             cell->valid = 1u;
         }
     }
     receipt.valid = receipt.cell_count ==
         (uint8_t)(receipt.row_count * receipt.column_count) &&
-        receipt.missing_cell_count == 0u;
+        receipt.missing_cell_count == 0u &&
+        receipt.missing_selector_count == 0u;
     *out_receipt = receipt;
     return receipt.valid;
 }

@@ -1161,6 +1161,19 @@ typedef struct {
         texts[DM2_V1_FILE_HEADER_RUNTIME_MAX_TEXT_RECORDS];
 } DM2_V1_FileHeaderRuntimeTextReceipt;
 
+/* Source selector table built by SKW_2066_2498 / DM2_savegame_2066_2498.
+ * The decimal digits are decoded from the mode-0 DB2 Text record at the
+ * original map-0 start tile and indexed by Map_definitions::w8 level. */
+typedef struct {
+    int valid;
+    int source_text_link;
+    uint16_t source_text_index;
+    uint16_t decoded_character_count;
+    uint8_t maximum_level;
+    uint8_t selector_count;
+    uint8_t selectors[DM2_V1_MAX_LEVELS];
+} DM2_V1_MagicMapSelectorReceipt;
+
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
  * directly to c_map.cpp CHANGE_CURRENT_MAP_TO(), whose map-array access has no
@@ -2025,6 +2038,12 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
 int dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeTextReceipt *out);
+/* Decode the per-level map-chip graphic selectors used for tile type 7.
+ * Source: SKW_2066_2498 / DM2_savegame_2066_2498. Unknown text escapes or a
+ * missing/non-mode-0 source Text record reject the receipt. */
+int dm2_v1_dungeon_resolve_magic_map_selectors(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_MagicMapSelectorReceipt *out);
 /* Finds one previously materialized direct DB3 root by source map
  * coordinate. This is a lookup-only handoff: it does not invoke the
  * actuator, follow GenericRecord::w0, or mutate a record/timer. */

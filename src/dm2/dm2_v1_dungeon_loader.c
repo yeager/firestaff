@@ -4305,6 +4305,182 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
     return 1;
 }
 
+static int dm2_v1_decode_magic_map_selector_text(
+    const DM2_V1_DungeonData *d, uint16_t text_index,
+    char out_text[200], uint16_t *out_length)
+{
+    unsigned output = 0u;
+    unsigned phrase = 0u;
+
+    if (out_text) out_text[0] = '\0';
+    if (out_length) *out_length = 0u;
+    if (!d || !d->raw_data || !out_text || !out_length ||
+        d->text_data_base < 0 || d->text_word_count <= 0 ||
+        text_index >= (uint16_t)d->text_word_count) {
+        return 0;
+    }
+
+    /* SKWINDOS/dm2byf.cpp::SKW_QUERY_MESSAGE_TEXT (2779-2902) reads three
+     * packed five-bit codes per dunTextData word. The phrase selectors match
+     * SKWINDOS/src/dm2data.cpp::table1d292c (1177; a-x, then 0-7) and
+     * table1d282c (146; x/y). */
+    for (unsigned word_index = text_index;
+         word_index < (unsigned)d->text_word_count; ++word_index) {
+        const size_t offset = (size_t)d->text_data_base +
+                              (size_t)word_index * 2u;
+        uint16_t word;
+        unsigned codes[3];
+
+        if (offset > (size_t)d->raw_size ||
+            2u > (size_t)d->raw_size - offset) {
+            return 0;
+        }
+        word = dm2_v1_dungeon_rd16(d, d->raw_data + offset);
+        codes[0] = (word >> 10) & 0x1fu;
+        codes[1] = (word >> 5) & 0x1fu;
+        codes[2] = word & 0x1fu;
+        for (unsigned group = 0u; group < 3u; ++group) {
+            const unsigned code = codes[group];
+            char value;
+
+            if (phrase == 1u) {
+                value = code < 24u ? (char)('a' + code)
+                                   : (char)('0' + (code - 24u));
+                phrase = 0u;
+            } else if (phrase == 2u) {
+                if (code > 1u) return 0;
+                value = (char)('x' + code);
+                phrase = 0u;
+            } else if (code < 26u) {
+                value = (char)('A' + code);
+            } else if (code == 26u) {
+                value = ' ';
+            } else if (code == 27u) {
+                value = '.';
+            } else if (code == 28u) {
+                value = '\n';
+            } else if (code == 29u || code == 30u) {
+                phrase = code == 29u ? 1u : 2u;
+                continue;
+            } else {
+                out_text[output] = '\0';
+                *out_length = (uint16_t)output;
+                return output != 0u;
+            }
+
+            if (output + 1u >= 200u) return 0;
+            out_text[output++] = value;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_dungeon_resolve_magic_map_selectors(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_MagicMapSelectorReceipt *out)
+{
+    DM2_V1_MagicMapSelectorReceipt candidate;
+    char text[200];
+    uint16_t text_length = 0u;
+    uint16_t record_w2;
+    uint16_t text_index;
+    uint16_t link;
+    uint16_t steps = 0u;
+    unsigned total_records = 0u;
+    int maximum_level = 0;
+    int text_link = -1;
+    const uint8_t *record = NULL;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!d || !d->raw_data || d->raw_size <= 0 ||
+        !d->record_graph_complete ||
+        d->level_count <= 0 || d->level_count > DM2_V1_MAX_LEVELS ||
+        !d->initial_party_pose_valid || d->text_data_base < 0 ||
+        d->text_word_count <= 0 ||
+        d->initial_party_x < 0 || d->initial_party_y < 0 ||
+        d->initial_party_x >= d->level_widths[0] ||
+        d->initial_party_y >= d->level_heights[0]) {
+        return 0;
+    }
+    for (int map = 0; map < d->level_count; ++map) {
+        if (d->map_level_number[map] > maximum_level)
+            maximum_level = d->map_level_number[map];
+    }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0 ||
+            d->thing_type_counts[type] > UINT16_MAX ||
+            total_records > UINT16_MAX - (unsigned)d->thing_type_counts[type])
+            return 0;
+        total_records += (unsigned)d->thing_type_counts[type];
+    }
+    candidate.maximum_level = (uint8_t)maximum_level;
+    candidate.selector_count = (uint8_t)(maximum_level + 1);
+
+    /* SKWINDOS/dm2byg.cpp::SKW_2066_2498 (1206-1248) and
+     * SKULLWIN/c_savegame.cpp::DM2_savegame_2066_2498 (129-220) start with
+     * the File_header pose on map 0, then follow that tile's record chain to
+     * its first DB2 Text. They accept it only when TextMode() is zero before
+     * reading the shared message string. */
+    link = (uint16_t)dm2_v1_dungeon_get_first_thing(
+        d, 0, d->initial_party_x, d->initial_party_y);
+    while (link != DM2_THING_END_MARKER &&
+           link != DM2_THING_NULL_MARKER && steps < total_records) {
+        int type = -1;
+        int size = 0;
+        int next;
+
+        record = dm2_v1_dungeon_get_thing_record(
+            d, link, &type, NULL, &size);
+        if (!record || size < 2) return 0;
+        if (type == 2) {
+            if (size < 4) return 0;
+            text_link = link;
+            record_w2 = dm2_v1_dungeon_rd16(d, record + 2);
+            break;
+        }
+        next = dm2_v1_dungeon_get_next_thing(d, link);
+        if (next < 0) return 0;
+        link = (uint16_t)next;
+        ++steps;
+    }
+    if (text_link < 0 || !record ||
+        (record_w2 & 0x0006u) != 0u) {
+        return 0;
+    }
+    text_index = (uint16_t)((record_w2 >> 3) & 0x1fffu);
+    if (!dm2_v1_decode_magic_map_selector_text(
+            d, text_index, text, &text_length)) {
+        return 0;
+    }
+    candidate.source_text_link = text_link;
+    candidate.source_text_index = text_index;
+    candidate.decoded_character_count = text_length;
+
+    {
+        unsigned cursor = 0u;
+        for (unsigned selector = 0u;
+             selector < (unsigned)candidate.selector_count; ++selector) {
+            unsigned char value;
+            while (cursor < text_length &&
+                   (text[cursor] == '\0' || text[cursor] == '\n' ||
+                    text[cursor] == ' ')) {
+                ++cursor;
+            }
+            if (cursor >= text_length) return 0;
+            value = (unsigned char)text[cursor++];
+            if (value < (unsigned char)'0' || value > (unsigned char)'7')
+                return 0;
+            candidate.selectors[selector] =
+                (uint8_t)(value - (unsigned char)'0');
+        }
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_g1_runtime_map_actuator_at(
     const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
     int x,
