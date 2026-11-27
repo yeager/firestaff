@@ -3303,3 +3303,15 @@ record-checkcode timer links are collected from the post-compaction array.
 This closes the ordering seam in the callback orchestrator only. No live DM2
 runtime callback binds its source-owned timer, hero, and record graph yet; the
 quicksave remains fail-closed and original save parity remains `PARTIAL`.
+
+2026-11-27 SKWIN moneybox cross-check: SKWIN `skval1.h:92` entries 181–186
+map events 0xE4–0xE9 to RAW4 rectangles 0x00DD–0x00E2, but this Windows
+inventory owner does not establish the original Macintosh or Amiga input
+route. The retail Mac CODE(8) dispatcher at +0x1ad8 sends its own events
+20–65 to CODE(10)+0x1e3c, and the existing Mac source audit says dynamic
+CODE(3)/CODE(11) controls must not be replaced by guessed static rectangles.
+The Amiga movement-arrow route is separately authenticated, but its inventory
+owner remains unproven. A proposed cross-platform RAW4 shortcut was removed.
+Keep Mac and Amiga moneybox pointer transactions open until their native
+owners are established from original source or retail binaries and exercised
+against authentic media.
