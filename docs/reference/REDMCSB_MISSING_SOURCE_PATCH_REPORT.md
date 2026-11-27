@@ -1,8 +1,8 @@
 # ReDMCSB source-gap and patch report
 
 **Review date:** 2026-11-27
-**Reference:** ReDMCSB source archive and the locally installed Apple IIgs
-G20E retail image under `.firestaff`
+**Reference:** ReDMCSB source archive and Apple IIgs disk images found in the
+locally installed ZIP under `.firestaff` (program revision not authenticated)
 **Scope:** source defects and omissions relevant to Firestaff DM1/CSB work.
 **Status:** report and Firestaff-side patch only; the external ReDMCSB archive
 was not modified.
@@ -18,7 +18,8 @@ The source files used for the findings have these local SHA-256 identities:
 `COMMAND.C` `68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f`,
 and `STARTUP1.C`
 `86b2498d027e4815505869028beae0f0023baf15ead8348d8a1955213e79120d`. The
-disk image's `DUNGEON.MASTER` has SHA-256
+primary disk image's unadmitted `DUNGEON.MASTER` has MD5
+`3265c912344d847a628e8e27e481f17a` and SHA-256
 `46abaf65e3265cf305969b147abf322624762a823255ebf341c3f8d284d18107`.
 
 ## Findings
@@ -35,21 +36,32 @@ lines 1694-1695 includes `G20E/G21E`; F0027 therefore has an IIGS
 implementation. `DEFS.H:1` maps `M002_RANDOM(n)` to F0027, while the
 HORIZCNT-based F0028/F0029 helpers are separate one-bit/two-bit APIs.
 
-I also extracted `DUNGEON.MASTER` (ProDOS type `$B5`, 232,158 bytes) from the
-first authentic G20E 2IMG disk with Firestaff's existing bounded ProDOS
-reader, then used the locally installed CiderPress II CLI to disassemble the
-65816 code. The output around code bank `02`, offsets `$05A0-$05E6`, shows the
-F0027 LCG operation: the `$BB40E62D` multiplier, `+11` state update, and the
-shifted 16-bit result. The adjacent HORIZCNT routines begin at `$05F2` and
-`$0627`, matching the distinct F0028/F0029 source branches. The OMF also
-resolves the seed path: F0027 reads and writes its 32-bit state as two direct-
-page words at `$0084/$0086` (`02/$05B2`, `02/$05D0-$05D3`). IIGS startup
+I inspected the installed ZIP's primary 2IMG image using Firestaff's bounded
+ProDOS reader. Its `DUNGEON.MASTER` is type `$B5` and 232,158 bytes, but its
+MD5 does not match either admitted program owner (G20: `51b9d22c7418651ee49ad77f37c80a3c`; G21:
+`eccc49e7b29ee233cfb10615e8ec86f3`). A second valid `[b][non boot]` image
+contains a same-length program with MD5 `49bc1f77956e03978521adfd23550ea5`;
+the two local program copies differ at 121 bytes in 25 ranges. None of those
+differences occur in the six spans used by the current IIGS metadata adapter
+for source-owned tables. These facts show matching table data but do not
+authenticate either executable revision as G20E or G21E.
+
+I also used the locally installed CiderPress II CLI to disassemble the primary
+image's 65816 code. The output around code bank `02`, offsets `$05A0-$05E6`,
+shows an F0027-shaped LCG operation: the `$BB40E62D` multiplier, `+11` state
+update, and the shifted 16-bit result. The adjacent HORIZCNT routines begin
+at `$05F2` and `$0627`, consistent with the separate F0028/F0029 source
+branches. The OMF also resolves this file's seed path: the routine reads and
+writes a 32-bit state as two direct-page words at `$0084/$0086` (`02/$05B2`,
+`02/$05D0-$05D3`). IIGS startup
 `STARTUP1.C:229-238` reserves four words, calls `ReadTimeHex`, then stores the
 first two returned words to `G0349` and `G0349+2`; the OMF shows those stores
 to `$0084/$0086` at `03/$C939-$C945`. CiderPress II documents the first four
-IIgs date/time bytes as seconds, minutes, hours, and year minus 1900. This is
-the F0027 startup seed; it overwrites the source global's zero-initialized
-BSS value before the game uses it.
+IIgs date/time bytes as seconds, minutes, hours, and year minus 1900. This
+matches the seed initialization described for the source F0027 path. Because
+the local program owner is not version-authenticated, the disassembly is
+supporting evidence for the source comparison, not proof that this installed
+build is an admitted G20E/G21E executable.
 
 **Disposition:** no ReDMCSB source patch is needed for IIGS F0027. Firestaff's
 previous SDL-counter substitution and fixed `0xF1A5` initializer were gaps.
@@ -70,14 +82,15 @@ initializer keeps its existing zero-to-one rule:
  }
 ```
 
-The Firestaff IIGS path now matches the startup clock seed's byte layout and
-preserves zero through world initialization. `F0280`'s two
+The Firestaff IIGS implementation now matches the startup clock seed's byte
+layout and preserves zero through world initialization. `F0280`'s two
 `M003_RANDOM(256)` food/water draws also match the source order. Exact parity
 still depends on matching every earlier runtime F0027 draw, not merely the
 seed and C161's twelve final draws.
 
-**Remaining Firestaff gap:** verify the startup and candidate RNG state at
-runtime on original media, including source draws between `F0280` and C161.
+**Remaining Firestaff gap:** admit and identify the installed program revision,
+then verify startup and candidate RNG state at runtime on version-authenticated
+original media, including source draws between `F0280` and C161.
 The IIGS F0280 candidate path already consumes two matching F0027 draws for
 `M003_RANDOM(256)` food and water at `REVIVE.C:184-185`; Firestaff's native
 candidate constructor does the same. What remains unverified is the global

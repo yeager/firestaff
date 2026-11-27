@@ -4150,12 +4150,23 @@ its hash gate or count the locked real-media regression as passing; establish
 the nested dump's provenance/version and compare its program-owned tables
 before adding an authenticated variant or test route.
 
+2026-11-27 IIGS nested-disk program comparison: the `[b][non boot]` member is
+also a valid ProDOS image and contains a 232,158-byte `DUNGEON.MASTER` with
+MD5 `49bc1f77956e03978521adfd23550ea5`. The primary and `[b]` programs differ
+in 121 bytes across 25 ranges, but none of the six spans used for the current
+source-owned metadata tables differs. This supports a shared table layout;
+neither program matches the admitted G20/G21 executable hashes, so neither is
+yet an authenticated runtime owner. The disassembly comparison is now
+described with that limit in
+`docs/reference/REDMCSB_MISSING_SOURCE_PATCH_REPORT.md`.
+
 2026-11-27 IIGS reincarnation RNG follow-up: `DEFS.H:1` maps
 `M002_RANDOM(7)` to F0027, whose `BASE.C:1694-1695` MEDIA202 branch includes
 G20E/G21E. The HORIZCNT folds at `BASE.C:1731-1754` and `1779-1802` belong to
-F0028/F0029 and are not used by reincarnation. The authentic
-`DUNGEON.MASTER` OMF was extracted from the local G20E image and disassembled:
-code bank 02 offset `$05A0` confirms the shared `0xBB40E62D` LCG and `+11`
+F0028/F0029 and are not used by reincarnation. The local primary-image
+`DUNGEON.MASTER` OMF was extracted and disassembled; its version is not
+authenticated by the current hash gate. Code bank 02 offset `$05A0` shows an
+F0027-shaped `0xBB40E62D` LCG and `+11`
 advance, while `$05F2`/`$0627` contain the separate HORIZCNT helpers. M11 now
 uses `F0732_COMBAT_RngRandom_Compat` on its session RNG for each of the twelve
 seven-way draws. This confirms algorithm and draw count; original-media
