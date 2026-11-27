@@ -1984,10 +1984,10 @@ void dm2_v1_guidraw_29ee_1946(
     /* Fill map background rect */
     uint8_t col00 = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
     DM2_V1_Rect map_rc;
-    if (cb->query_expanded_rect)
-        cb->query_expanded_rect(ctx, 99, &map_rc);
-    if (cb->fill_rect_summary)
-        cb->fill_rect_summary(ctx, 2, &map_rc, (int32_t)col00);
+    DM2_V1_Rect *map_rect = cb->query_expanded_rect
+        ? cb->query_expanded_rect(ctx, 99, &map_rc) : NULL;
+    if (map_rect && cb->fill_rect_summary)
+        cb->fill_rect_summary(ctx, 2, map_rect, (int32_t)col00);
 
     /* Iterate visible tiles and call dm2_v1_draw_map_chip for each */
 }
