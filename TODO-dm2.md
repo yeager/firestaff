@@ -2990,6 +2990,24 @@ supported-platform route coverage.
 
 2026-11-27 DM2 map-grid rect failure handling: `guidraw_29ee_1946` now skips the background fill unless expanded rect 99 resolves successfully, so a missing/failing layout callback cannot pass an uninitialized rectangle to the renderer. This is a fail-closed guard only; tile enumeration and map-chip drawing remain unimplemented.
 
+2026-11-27 magical-map implementation source trace: DOS
+`SKW_29ee_1946` (`dm2byf.cpp:6588-6746`) and SKULLWIN
+`DM2_guidraw_29ee_1946` (`c_gui_draw.cpp:3561-3927`) agree on the live grid
+transaction; SKWINSPX v5 has the same translated routine at `skguidr5.cpp`
+3562-3928. The grid retains its input map/party pose and pixel offsets, fills
+expanded rect 99, then visits seven or eight rows and columns around the party
+according to the sign of the two offsets. Each cell uses
+`CALC_VECTOR_W_DIR`, tries `LOCATE_OTHER_LEVEL`, reads the selected level's
+tile state, derives the source map-chip code (including the tile-type-7
+`v1e03d4` case), applies highlight/minion/teleporter flag bits, and calls
+`DRAW_MAP_CHIP`; it restores the original current map after the pass. In
+Firestaff `dm2_v1_guidraw_29ee_1946` currently only fills rect 99 and
+`dm2_v1_draw_map_chip` has no tile behavior. A repository-wide source search
+also finds no production M11 construction of `DM2_V1_GuiDrawCallbacks` or
+call to `dm2_v1_draw_majic_map`. Implement the complete map data/display owner
+before claiming a drawn-map receipt; callback-only probes are not production
+coverage.
+
 2026-11-02 SKProject `DM2_TRY_CAST_SPELL` failure-state correction: DOS, SPX v4 and SPX v5 clear the live hero rune tail for failed casts except class `0x30`, which keeps the runes while requesting an empty flask. Firestaff's live M11 caster now applies that source-owned rune mutation to `c_hero` and synchronizes the save/load snapshot when the cast receipt requests clearing. The live route now also applies `PROCEED_SPELL_FAILURE` status/global/window state and resolves the exact class-0x30 GDAT image into a no-draw receipt. It remains partial because M11 does not render that image/status, cast-chance/RNG and spell execution coverage are incomplete, and edition/platform caller ownership remains open.
 
 2026-11-02 SKProject `SKW_CALC_PLAYER_WALK_DELAY` runtime variant: the movement owner now selects DOS's fixed `8*2 > 5*max_load` normal-load test for PC English, PC French, and JewelCase profiles. FM Towns, Macintosh, and Amiga retain the SPX shared helper pending native caller evidence. The full movement transaction, delayed-pose rules, and platform route coverage remain partial.
