@@ -354,6 +354,9 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*set_summary_image_mirror)(void *ctx, void *image, bool mirror);
     /* SKWIN uses squad leader; DOS/SPX v5 select the active/event hero. */
     int16_t (*get_squad_leader_hero_idx)(void *ctx);
+    /* Optional production owner for the source map state and visible-tile
+     * pass. Return nonzero only after the complete magic-map grid is drawn. */
+    int (*draw_magic_map_grid)(void *ctx, int32_t record);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

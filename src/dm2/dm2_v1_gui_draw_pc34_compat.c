@@ -2015,7 +2015,6 @@ void dm2_v1_draw_majic_map(
     if ((v1e0b62 & 0x400) == 0) {
         dm2_v1_draw_icon_pict_entry(20, cls2, 16, 2, 0x5c, -1, cb, ctx);
 
-        int16_t cmd_count = cb->get_v1e0b62 ? cb->get_v1e0b62(ctx) : 0;
         /* Draw command slots */
         dm2_v1_guidraw_29ee_1d03(0, cb, ctx);
 
@@ -2023,8 +2022,14 @@ void dm2_v1_draw_majic_map(
             cb->set_v1e0b62(ctx, (int16_t)(v1e0b62 | 0x490));
     }
 
-    /* Navigate map and draw tiles via guidraw_29ee_1946 */
-    if (receipt) receipt->map_drawn = true;
+    /* SKProject calls guidraw_29ee_1946 here to navigate and draw every
+     * visible tile. The source-shaped helper cannot infer the live map,
+     * origin, or record graph; delegate that complete pass to its owner and
+     * never report a map as drawn when only the background was painted. */
+    if (cb->draw_magic_map_grid && cb->draw_magic_map_grid(ctx, record) &&
+        receipt) {
+        receipt->map_drawn = true;
+    }
 }
 
 /* ================================================================
