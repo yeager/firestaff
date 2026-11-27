@@ -836,6 +836,8 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
     candidate.column_index_count = (uint16_t)total_columns;
     candidate.ground_stack_count = (uint16_t)sft_count;
     candidate.text_word_count = (uint16_t)text_words;
+    candidate.text_data_offset = column_index_base + total_columns * 2u +
+                                 sft_count * 2u;
     candidate.descriptor_hash = dm2_v1_raw_sksave_hash(
         buf + DM2_RAW_DUNGEON_HEADER_SIZE,
         (size_t)map_count * DM2_RAW_MAP_DESC_SIZE);

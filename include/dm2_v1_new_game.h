@@ -155,6 +155,9 @@ typedef struct {
     uint16_t column_index_count;
     uint16_t ground_stack_count;
     uint16_t text_word_count;
+    /* Byte offset of the saved dungeon's text words in the authenticated
+     * raw SKSave body. This is distinct from DUNGEON.DAT's text_data_base. */
+    size_t text_data_offset;
     /* Source c_map geometry, retained per map instead of being discarded
      * after the prefix hash is calculated. Offsets are relative to the
      * authenticated map-data span. */
