@@ -44,6 +44,13 @@ Existing pool tests establish the bounded allocation/cell sequence; they do
 not establish the complete death-path RNG stream, all nested F0267 sensor
 effects, or original-emulator parity.
 
+M10's F0188 group-slot drops now also follow the source's per-item order:
+snapshot `Next`, draw the cell, then call F0267 from the off-square source
+before drawing the next item's cell. This replaces direct floor-list insertion
+and admits destination sensor and chained-move behavior. Runtime coverage for
+group-slot drops on teleporter, pit, stairs, and sensor destinations remains
+open, as do full death-path RNG and original-emulator comparisons.
+
 Affected materializers include:
 
 - `orch_drop_creature_fixed_possessions_compat` (M10 death aftermath, now

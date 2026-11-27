@@ -8545,11 +8545,17 @@ struct OrchFixedDropContext {
     unsigned short thing;
 };
 
-static int orch_f0267_move_allocated_fixed_drop_compat(
+enum {
+    ORCH_F0267_SOURCE_SQUARE = 0,
+    ORCH_F0267_SOURCE_FRESH_DROP = 1,
+    ORCH_F0267_SOURCE_GROUP_SLOT = 2
+};
+
+static int orch_f0267_move_owned_thing_compat(
     struct GameWorld_Compat* world,
     const struct F0267ThingMoveRequestPc34Compat* request,
     struct F0267ThingMoveResultPc34Compat* outResult,
-    int freshlyAllocated);
+    int sourceKind);
 
 static int orch_reserve_fixed_drop(void* opaque,
     const struct DM1FixedPossessionDrop_Compat* drop)
@@ -8572,9 +8578,9 @@ static void orch_publish_fixed_drop(void* opaque,
     request.destinationMapX = ctx->mapX;
     request.destinationMapY = ctx->mapY;
     /* GROUP.C F0186:625-643: this callback owns the record just reserved
-     * above. Only that private provenance admits the off-square F0267 path. */
-    if (orch_f0267_move_allocated_fixed_drop_compat(
-            ctx->world, &request, NULL, 1))
+     * above; the source kind admits its off-square F0267 path. */
+    if (orch_f0267_move_owned_thing_compat(
+            ctx->world, &request, NULL, ORCH_F0267_SOURCE_FRESH_DROP))
         ++ctx->droppedAny;
     else {
         (void)orch_set_next_thing_compat(ctx->world->things, thing, THING_NONE);
@@ -10927,11 +10933,11 @@ static int orch_f0267_resolve_non_group_chain_compat(
     return 1;
 }
 
-static int orch_f0267_move_allocated_fixed_drop_compat(
+static int orch_f0267_move_owned_thing_compat(
     struct GameWorld_Compat* world,
     const struct F0267ThingMoveRequestPc34Compat* request,
     struct F0267ThingMoveResultPc34Compat* outResult,
-    int freshlyAllocated)
+    int sourceKind)
 {
     struct F0267ThingMoveResultPc34Compat result;
     struct F0267ThingMoveRequestPc34Compat resolvedRequest;
@@ -10965,13 +10971,17 @@ static int orch_f0267_move_allocated_fixed_drop_compat(
         type > THING_TYPE_EXPLOSION ||
         !orch_f0267_validate_raw_live_thing_owner_compat(
             world->things, request->thing) ||
-        (!freshlyAllocated && !orch_f0267_thing_is_present_on_square_compat(
+        (sourceKind == ORCH_F0267_SOURCE_SQUARE &&
+         !orch_f0267_thing_is_present_on_square_compat(
             world, request->sourceMapIndex, request->sourceMapX,
-            request->sourceMapY, request->thing))) {
+            request->sourceMapY, request->thing)) ||
+        (sourceKind != ORCH_F0267_SOURCE_SQUARE &&
+         sourceKind != ORCH_F0267_SOURCE_FRESH_DROP &&
+         sourceKind != ORCH_F0267_SOURCE_GROUP_SLOT)) {
         if (outResult) *outResult = result;
         return 0;
     }
-    if (freshlyAllocated &&
+    if (sourceKind == ORCH_F0267_SOURCE_FRESH_DROP &&
         ((type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR &&
           type != THING_TYPE_JUNK) ||
          !world->things->rawThingData[type] ||
@@ -10995,7 +11005,7 @@ static int orch_f0267_move_allocated_fixed_drop_compat(
     result.finalMapX = resolvedRequest.destinationMapX;
     result.finalMapY = resolvedRequest.destinationMapY;
     result.finalThing = resolvedRequest.thing;
-    if (freshlyAllocated) {
+    if (sourceKind != ORCH_F0267_SOURCE_SQUARE) {
         unsigned char square;
         int sftIndex, used = 0, m, i, count = 0, column = 0;
         unsigned short cursor;
@@ -11041,18 +11051,19 @@ static int orch_f0267_move_allocated_fixed_drop_compat(
     /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
      * source unlink for ordinary things. C14 projectiles and C15 explosions
      * levitate under F0264 and therefore use F0164 directly. */
-    if (!freshlyAllocated && !result.levitates) {
+    if (sourceKind == ORCH_F0267_SOURCE_SQUARE && !result.levitates) {
         result.sourceSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing, 0, &result);
     }
-    if (!freshlyAllocated && !orch_unlink_thing_from_square_compat(
+    if (sourceKind == ORCH_F0267_SOURCE_SQUARE &&
+        !orch_unlink_thing_from_square_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing)) {
         if (outResult) *outResult = result;
         return 0;
     }
-    result.sourceUnlinked = !freshlyAllocated;
+    result.sourceUnlinked = sourceKind == ORCH_F0267_SOURCE_SQUARE;
 
     /* MOVESENS.C:F0267 lines 892-897 runs the destination F0276 pass
      * before linking ordinary things; F0264 keeps C14/C15 levitating. */
@@ -11061,7 +11072,8 @@ static int orch_f0267_move_allocated_fixed_drop_compat(
             world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
             resolvedRequest.destinationMapY, resolvedRequest.thing, 1, &result);
     }
-    if (!(freshlyAllocated && world->dungeon->columnsCumulativeSquareFirstThingCount
+    if (!(sourceKind != ORCH_F0267_SOURCE_SQUARE &&
+          world->dungeon->columnsCumulativeSquareFirstThingCount
         ? F0514_DUNGEON_LinkThingToList_Compat(world->dungeon, world->things,
             resolvedRequest.thing, THING_ENDOFLIST,
             resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
@@ -11071,7 +11083,8 @@ static int orch_f0267_move_allocated_fixed_drop_compat(
             resolvedRequest.destinationMapY, resolvedRequest.thing))) {
         /* A failed destination link is not allowed to discard an original
          * Thing. Restore its source position before reporting failure. */
-        if (!freshlyAllocated) (void)orch_link_thing_to_square_tail_compat(
+        if (sourceKind == ORCH_F0267_SOURCE_SQUARE)
+            (void)orch_link_thing_to_square_tail_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing);
         result.sourceUnlinked = 0;
@@ -11131,7 +11144,8 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     const struct F0267ThingMoveRequestPc34Compat* request,
     struct F0267ThingMoveResultPc34Compat* outResult)
 {
-    return orch_f0267_move_allocated_fixed_drop_compat(world, request, outResult, 0);
+    return orch_f0267_move_owned_thing_compat(
+        world, request, outResult, ORCH_F0267_SOURCE_SQUARE);
 }
 
 /* ReDMCSB TIMELINE.C F0249:1352-1465 snapshots the source square before
@@ -11516,8 +11530,6 @@ static int orch_drop_group_slot_possessions_compat(
         nextThing = orch_next_thing_compat(world->things, thing);
         in.chain[in.chainEntryCount].thing = thing;
         in.chain[in.chainEntryCount].nextThing = nextThing;
-        in.randomCells[in.randomCellCount++] =
-            (unsigned char)F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
         ++in.chainEntryCount;
         thing = nextThing;
     }
@@ -11526,10 +11538,26 @@ static int orch_drop_group_slot_possessions_compat(
         return 0;
     }
     for (i = 0; i < plan.stepCount; ++i) {
-        if (!orch_link_thing_to_square_tail_compat(
-                world, mapIndex, mapX, mapY, plan.steps[i].droppedThing)) {
-            return 0;
-        }
+        struct F0267ThingMoveRequestPc34Compat request;
+        struct F0267ThingMoveResultPc34Compat moveResult;
+        int cell = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4);
+
+        memset(&request, 0, sizeof(request));
+        memset(&moveResult, 0, sizeof(moveResult));
+        request.thing = (unsigned short)((plan.steps[i].sourceThing & 0x3fffu) |
+                                         ((unsigned short)cell << 14));
+        request.sourceMapIndex = mapIndex;
+        request.sourceMapX = -1;
+        request.sourceMapY = 0;
+        request.destinationMapIndex = mapIndex;
+        request.destinationMapX = mapX;
+        request.destinationMapY = mapY;
+        /* ReDMCSB GROUP.C F0188:724-732 snapshots Next, draws one cell, then
+         * calls MOVESENS.C F0267 with CM1_MAPX_NOT_ON_A_SQUARE before the next
+         * cell draw. F0267 owns the off-square item and destination sensors,
+         * including teleporter/pit/stairs chains. */
+        (void)orch_f0267_move_owned_thing_compat(
+            world, &request, &moveResult, ORCH_F0267_SOURCE_GROUP_SLOT);
     }
     if (plan.shouldClearGroupSlot) {
         group->slot = THING_ENDOFLIST;

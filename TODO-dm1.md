@@ -2632,6 +2632,11 @@ parity.
 
 - Extend explosion F0191 verification to possession drops and original
   death-smoke captures across supported platforms.
+  M10 F0188 now routes each group-slot possession through F0267 after that
+  item's cell draw, preserving destination sensors and chained movement before
+  the next draw. Add live coverage for teleporter, pit, stairs, and sensor
+  destinations; do not treat the source-ordered implementation as complete
+  death-aftermath parity.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement
   and source C15/C25 smoke publication are verified in bounded fixtures;
   they do not establish full death aftermath or emulator parity.
