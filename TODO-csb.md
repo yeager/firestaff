@@ -1,5 +1,14 @@
 # Firestaff TODO — CSB
 
+2026-11-27 Atari ST native campaign recheck: rebuilt the focused F0115
+alcove-shift unit target locally and passed its bounds/coordinate/wrap cases.
+Then `csb_v1_atari_stx_native_cli_boot` passed against the installed original
+STX and campaign archive (181.81 seconds), exercising the authenticated
+startup, runtime, input, champion, door, stair, and creature route. This
+confirms that campaign path only; it does not expose a populated alcove,
+projectile, or ordinary explosion encounter, nor establish Atari viewport
+pixel parity. Those CSB gaps remain open.
+
 2026-11-27 CSB hidden-code raster gate: the live M11 source-graphic provider
 now maps authenticated Atari ST and Amiga editions to the
 Greatstone/CSBWin-backed hidden-code table before image decoding. Known code
