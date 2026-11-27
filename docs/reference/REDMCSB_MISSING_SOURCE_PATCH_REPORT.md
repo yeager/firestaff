@@ -37,7 +37,8 @@ toggles the IIGS frozen state in either direction. Other ordinary commands
 remain suppressed during rest. The focused
 `test_m11_iigs_rest_keyboard_bindings` regression checks the two Escape
 transitions, rejects movement and rest-toggle while resting, and checks that
-Return clears all three rest-state mirrors. This is a Firestaff integration
+Return clears all three rest-state mirrors. It also checks that a frozen
+party does not advance through an idle tick. This is a Firestaff integration
 fix; no ReDMCSB source patch is indicated. Native IIGS runtime verification
 remains outstanding.
 

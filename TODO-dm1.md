@@ -4112,8 +4112,8 @@ through G0451. Source clocks, food/VBlank timing, and idle ticks stop while
 frozen. ReDMCSB COMMAND.C compiles the “WAKE UP” and “GAME FROZEN” F0649 text
 calls only for MEDIA561/MEDIA736 editions, not G20E/G21E. M11 leaves the
 native IIGS viewport blank in both states. A focused keyboard regression now
-covers Return wake and Escape freeze/unfreeze; native runtime verification
-remains outstanding.
+covers Return wake and Escape freeze/unfreeze, with a frozen idle-tick gate;
+native runtime verification remains outstanding.
 
 2026-11-27 IIGS layout source recheck: `COORD.C F0641` loads layout graphic
 696 only under MEDIA720, which excludes G20E/G21E. `TEXT.C F0649` and both
