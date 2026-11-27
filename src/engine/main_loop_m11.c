@@ -1,9 +1,8 @@
 /*
- * main_loop_m11.c — M11 Phase A stub.
+ * main_loop_m11.c — M11 application loop.
  *
- * Opens a window via render_sdl_m11, presents a black framebuffer, pumps
- * events until either the user quits or the configured duration elapses,
- * then shuts down.
+ * Owns the SDL application lifecycle, startup and launcher flow, active game
+ * presentation, input routing, and orderly shutdown for Firestaff runtimes.
  */
 
 #include "main_loop_m11.h"
