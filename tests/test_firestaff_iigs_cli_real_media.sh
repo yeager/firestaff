@@ -59,7 +59,7 @@ for version in 20 21; do
             cat "$scratch/g$version-direct.log"; exit 1;
         }
     assert_trace 'startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=18/18 input=ignored' "$scratch/g$version-direct.log"
-    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx' "$scratch/g$version-direct.log"
+    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=F0129-fixed-step overlays=presents-master' "$scratch/g$version-direct.log"
     assert_trace 'DM1 IIGS READY:' "$scratch/g$version-direct.log"
     title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-direct.log" | cut -d: -f1)
     world_line=$(grep -n -F 'DM1 IIGS READY:' "$scratch/g$version-direct.log" | cut -d: -f1)
@@ -96,7 +96,7 @@ for version in 20 21; do
             cat "$scratch/g$version-menu.log"; exit 1;
         }
     assert_trace 'startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=18/18 input=ignored' "$scratch/g$version-menu.log"
-    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx' "$scratch/g$version-menu.log"
+    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=F0129-fixed-step overlays=presents-master' "$scratch/g$version-menu.log"
     assert_trace "DM1 IIGS READY: version=$version graphicsPath=$scratch/g$version.po::GRAPHICS.GAME" "$scratch/g$version-menu.log"
     assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" "$scratch/g$version-menu.log"
     title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-menu.log" | cut -d: -f1)

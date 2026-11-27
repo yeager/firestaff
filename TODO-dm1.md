@@ -54,7 +54,7 @@ production floppy/save-load caller is attached, so the callable route remains
 
 2026-11-01 ReDMCSB `FLIPHORI.C:F0130`, `FLIPVERT.C:F0131`, `BLIT.C:F0132`, and `BLITMASK.C:F0133`: the ledger now maps bounded PC34 flip/blit primitives and the DM1 field-mask renderer as `PARTIAL`; packed source formats, generic mask semantics, and complete cross-platform callers remain open.
 
-2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`; the IIGS title still uses nearest-neighbor, and complete per-edition pixel parity remains open.
+2026-11-01 ReDMCSB `BLTSHRNK.C:F0129`: the ledger now marks the bounded PC34 door-button, CSB shrink/palette, and FM Towns title sampling routes `PARTIAL`. The IIGS title's G20/G21 fixed-step sampling was implemented on 2026-11-27 (see the follow-up below); full per-edition pixel parity and the remaining platform routes stay open.
 
 2026-11-01 ReDMCSB `DUNVIEW.C:F0113` teleporter field rendering: downgraded the
 callable row to `PARTIAL`. Firestaff loads the authentic PC34 field and
