@@ -3,7 +3,8 @@
   Escape/C148 unfreezes). Ordinary input remains suppressed while resting,
   and the three rest-state mirrors clear together on wake. The focused M11
   regression passes and covers movement/rest-toggle suppression, both Escape
-  transitions, Return wake, and the frozen idle-tick gate. GitHub Actions
+  transitions, Return wake, G0450/G0451 mouse bounds, and the frozen idle-tick
+  gate. GitHub Actions
   `45984447876` has passed its unit verification and build checks other than
   the still-running macOS build at the time of this entry. Native IIGS runtime
   verification remains outstanding; this is not full IIGS parity.

@@ -38,9 +38,10 @@ remain suppressed during rest. The focused
 `test_m11_iigs_rest_keyboard_bindings` regression checks the two Escape
 transitions, rejects movement and rest-toggle while resting, and checks that
 Return clears all three rest-state mirrors. It also checks that a frozen
-party does not advance through an idle tick. This is a Firestaff integration
-fix; no ReDMCSB source patch is indicated. Native IIGS runtime verification
-remains outstanding.
+party does not advance through an idle tick. Pointer assertions retain the
+G0450 viewport edge, right-click whole-screen wake, and G0451 whole-screen
+unfreeze bindings. This is a Firestaff integration fix; no ReDMCSB source
+patch is indicated. Native IIGS runtime verification remains outstanding.
 
 This report separates proposed fixes to ReDMCSB itself from Firestaff
 implementation gaps. A source-complete behavior does not need a ReDMCSB

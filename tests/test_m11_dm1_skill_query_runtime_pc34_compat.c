@@ -161,6 +161,41 @@ static void test_m11_iigs_rest_keyboard_bindings(void) {
            M11_GAME_INPUT_REDRAW);
     assert(state.resting == 0 && state.world.partyIsResting == 0 &&
            state.world.lifecycle.rest.isResting == 0);
+
+    state.resting = 1;
+    state.world.partyIsResting = 1;
+    state.world.lifecycle.rest.isResting = 1;
+    assert(M11_GameView_HandlePointerButton(&state, 224, 168,
+                                           DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+           M11_GAME_INPUT_IGNORED);
+    assert(state.resting == 1 && state.world.partyIsResting == 1 &&
+           state.world.lifecycle.rest.isResting == 1);
+    assert(M11_GameView_HandlePointerButton(&state, 223, 168,
+                                           DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.resting == 0 && state.world.partyIsResting == 0 &&
+           state.world.lifecycle.rest.isResting == 0);
+
+    state.resting = 1;
+    state.world.partyIsResting = 1;
+    state.world.lifecycle.rest.isResting = 1;
+    assert(M11_GameView_HandlePointerButton(&state, 319, 199,
+                                           DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.resting == 0 && state.world.partyIsResting == 0 &&
+           state.world.lifecycle.rest.isResting == 0);
+
+    assert(M11_GameView_HandleInput(&state, M12_MENU_INPUT_FREEZE_TOGGLE) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.dm1IigsFrozen == 1);
+    assert(M11_GameView_HandlePointerButton(&state, 320, 200,
+                                           DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+           M11_GAME_INPUT_IGNORED);
+    assert(state.dm1IigsFrozen == 1);
+    assert(M11_GameView_HandlePointerButton(&state, 319, 199,
+                                           DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+           M11_GAME_INPUT_REDRAW);
+    assert(state.dm1IigsFrozen == 0);
 }
 
 static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
