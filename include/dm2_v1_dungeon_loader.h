@@ -1807,6 +1807,12 @@ typedef struct {
 int dm2_v1_dungeon_magic_map_class34_summary(
     const DM2_V1_DungeonData *d, int level, int x, int y, int direction,
     DM2_V1_MagicMapTileSummaryReceipt *out);
+/* Source-shaped class-1/no-record summary, including the map-GDAT 0x6b
+ * selector and optional tick-selected class-10 ornament frame. */
+int dm2_v1_dungeon_magic_map_class1_empty_summary(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
  * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
  * is absent. The source summary retains ceiling word FF; a following

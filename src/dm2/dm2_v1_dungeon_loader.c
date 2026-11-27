@@ -7359,6 +7359,71 @@ int dm2_v1_dungeon_magic_map_class34_summary(
     return 1;
 }
 
+int dm2_v1_dungeon_magic_map_class1_empty_summary(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt receipt;
+    DM2_V1_QueryOrnateAnimFrameReceipt animation;
+    uint16_t ornament_word = 0u;
+    int raw;
+    int first;
+    int graphicsset;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!d || !loader || !loader->loaded) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 1u ||
+        first < -1 || first == (int)DM2_THING_NULL_MARKER ||
+        (d->square_bytes == 1 && (raw & 0x10) != 0 && first < 0) ||
+        (first >= 0 && first != (int)DM2_THING_END_MARKER)) {
+        return 0;
+    }
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(d, level);
+    if (graphicsset < 0 || graphicsset > 15) return 0;
+
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = -1;
+    receipt.tile_type = 1u;
+    receipt.words[0] = 1u;
+    receipt.words[1] = (uint16_t)raw;
+    receipt.words[2] = DM2_THING_END_MARKER;
+    receipt.words[3] = 0x00ffu;
+    receipt.words[4] = 0x00ffu;
+    receipt.words[5] = 0x00ffu;
+    receipt.words[6] = 0x00ffu;
+    receipt.words[7] = 0u;
+
+    /* SKULLWIN/c_gui_vp.cpp:2828-2856: class 1 first resolves the
+     * map-style ceiling selector from GDAT (8, style, 11, 0x6b), then
+     * optionally replaces its frame word with QUERY_ORNATE_ANIM_FRAME. */
+    if (dm2_v1_query_gdat_entry_data_index(
+            loader, 8, graphicsset, 11, 0x6b, &ornament_word) &&
+        ornament_word != 0u) {
+        uint16_t ornament_index = ornament_word & 0x00ffu;
+        receipt.words[5] = ornament_index;
+        if ((ornament_word & 0x8000u) != 0u) {
+            memset(&animation, 0, sizeof(animation));
+            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                    loader, 10, ornament_index, tick, 0u, &animation) ||
+                !animation.accepted || animation.receipt_hash == 0u) {
+                return 0;
+            }
+            receipt.words[5] = (uint16_t)(ornament_index |
+                (uint16_t)((uint32_t)animation.frame * 10u << 8));
+        }
+    }
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)

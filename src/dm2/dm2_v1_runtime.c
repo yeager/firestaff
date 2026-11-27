@@ -932,7 +932,21 @@ int dm2_v1_runtime_collect_magic_map_grid(
                     ++receipt.missing_selector_count;
                 }
             }
-            if (cell->tile_type == 3u || cell->tile_type == 4u) {
+            if (cell->tile_type == 1u) {
+                DM2_V1_MagicMapTileSummaryReceipt summary;
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(rt->boot);
+                if (dm2_v1_dungeon_magic_map_class1_empty_summary(
+                        dungeon, loader, selected_map, x, y,
+                        (uint32_t)rt->tick_count, &summary) &&
+                    summary.valid) {
+                    memcpy(cell->tile_summary_words, summary.words,
+                           sizeof(cell->tile_summary_words));
+                    cell->tile_summary_valid = 1u;
+                } else {
+                    ++receipt.missing_summary_count;
+                }
+            } else if (cell->tile_type == 3u || cell->tile_type == 4u) {
                 DM2_V1_MagicMapTileSummaryReceipt summary;
                 if (dm2_v1_dungeon_magic_map_class34_summary(
                         dungeon, selected_map, x, y, heading, &summary) &&
