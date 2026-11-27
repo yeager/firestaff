@@ -50,10 +50,11 @@ before drawing the next item's cell. This replaces direct floor-list insertion
 and admits destination sensor and chained-move behavior. Before the first
 random draw, both runtimes validate every raw ordinary-item record and its
 `Next` link across the captured chain, so a malformed later record cannot leave
-an earlier item partially moved. ReDMCSB F0188/F0189 does not clear the group's
-Slot head while retiring it; both runtimes preserve that field. If a bounded
-native F0267 move rejects an item, the failing item and unprocessed Slot tail
-are retained. Runtime coverage for group-slot drops on teleporter, pit, stairs,
+an earlier item partially moved. The shared off-square F0267 entry rechecks
+raw/decoded `Next` ownership for each item. ReDMCSB F0188/F0189 does not clear
+the group's Slot head while retiring it; both runtimes preserve that field. If
+a bounded native F0267 move rejects an item, the failing item and unprocessed
+Slot tail are retained. Runtime coverage for group-slot drops on teleporter, pit, stairs,
 and sensor destinations remains open, as do full death-path RNG and
 original-emulator comparisons.
 

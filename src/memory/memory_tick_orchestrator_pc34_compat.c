@@ -10942,6 +10942,7 @@ static int orch_f0267_move_owned_thing_compat(
     struct F0267ThingMoveResultPc34Compat result;
     struct F0267ThingMoveRequestPc34Compat resolvedRequest;
     int type;
+    int thingIndex;
 
     memset(&result, 0, sizeof(result));
     if (!world || !world->dungeon || !world->things || !request ||
@@ -10952,6 +10953,7 @@ static int orch_f0267_move_owned_thing_compat(
     }
     resolvedRequest = *request;
     type = THING_GET_TYPE(request->thing);
+    thingIndex = THING_GET_INDEX(request->thing);
     result.thingType = type;
     if (type == THING_TYPE_PROJECTILE) {
         int projectileIndex = THING_GET_INDEX(request->thing);
@@ -10977,7 +10979,13 @@ static int orch_f0267_move_owned_thing_compat(
             request->sourceMapY, request->thing)) ||
         (sourceKind != ORCH_F0267_SOURCE_SQUARE &&
          sourceKind != ORCH_F0267_SOURCE_FRESH_DROP &&
-         sourceKind != ORCH_F0267_SOURCE_GROUP_SLOT)) {
+         sourceKind != ORCH_F0267_SOURCE_GROUP_SLOT) ||
+        (sourceKind == ORCH_F0267_SOURCE_GROUP_SLOT &&
+         (type < THING_TYPE_WEAPON || type > THING_TYPE_JUNK ||
+          thingIndex < 0 || thingIndex >= world->things->thingCounts[type] ||
+          !world->things->rawThingData[type] ||
+          r_u16(world->things->rawThingData[type] + thingIndex * 4) !=
+              orch_next_thing_compat(world->things, request->thing)))) {
         if (outResult) *outResult = result;
         return 0;
     }

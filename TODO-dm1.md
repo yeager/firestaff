@@ -2637,8 +2637,9 @@ parity.
   the next draw. Its prepass now validates every raw ordinary-item record and
   Next link before the first RNG draw, avoiding a partial drop from a malformed
   later link. M10 and M11 route each item through F0267 in source order and
-  retain a rejected item plus its unprocessed tail in `GROUP.Slot`. ReDMCSB
-  F0188/F0189 leaves the Slot head intact while retiring the group; both
+  retain a rejected item plus its unprocessed tail in `GROUP.Slot`; the shared
+  F0267 entry also rechecks raw/decoded `Next` ownership for every slot Thing.
+  ReDMCSB F0188/F0189 leaves the Slot head intact while retiring the group; both
   runtimes now preserve that state. Add live coverage for teleporter, pit,
   stairs, and sensor destinations; do not treat the source-ordered
   implementation as complete death-aftermath parity.
