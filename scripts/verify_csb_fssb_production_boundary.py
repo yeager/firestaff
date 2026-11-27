@@ -24,7 +24,9 @@ def main() -> int:
     utility_exclusion = text.find(UTILITY)
     exclusion_start = text.rfind("list(REMOVE_ITEM M10_SOURCES", 0,
                                  min(fssb_exclusion, utility_exclusion))
-    exclusion_end = text.find("list(FILTER M10_SOURCES", exclusion_start)
+    # Later source-list exclusions may follow before the next FILTER, so
+    # inspect only this list(REMOVE_ITEM ...) command, not intervening CMake.
+    exclusion_end = text.find(")", exclusion_start)
     exclusion = text[exclusion_start:exclusion_end]
     if (exclusion_start < 0 or exclusion_end < 0 or
             FSSB_NAME not in exclusion or UTILITY_NAME not in exclusion):
