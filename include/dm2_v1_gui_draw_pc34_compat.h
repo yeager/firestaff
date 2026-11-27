@@ -357,6 +357,8 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     /* Optional production owner for the source map state and visible-tile
      * pass. Return nonzero only after the complete magic-map grid is drawn. */
     int (*draw_magic_map_grid)(void *ctx, int32_t record);
+    /* Source ddat.v1e0b7a: number of command slots visible in this panel. */
+    int16_t (*get_magic_map_command_slot_count)(void *ctx);
 } DM2_V1_GuiDrawCallbacks;
 
 /* ========================================================================

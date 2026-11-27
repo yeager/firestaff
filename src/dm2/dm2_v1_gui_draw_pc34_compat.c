@@ -2015,7 +2015,17 @@ void dm2_v1_draw_majic_map(
     if ((v1e0b62 & 0x400) == 0) {
         dm2_v1_draw_icon_pict_entry(20, cls2, 16, 2, 0x5c, -1, cb, ctx);
 
-        /* Draw command slots */
+        /* ReDMCSB/DOS and SKWINSPX draw slots 0..v1e0b7a-1 before the
+         * direction controls. The mapped count is callback-owned because it
+         * belongs to the live spell/map panel state. */
+        if (cb->get_magic_map_command_slot_count) {
+            int16_t commandCount =
+                cb->get_magic_map_command_slot_count(ctx);
+            if (commandCount < 0) commandCount = 0;
+            if (commandCount > 3) commandCount = 3;
+            for (int16_t slot = 0; slot < commandCount; ++slot)
+                dm2_v1_draw_cmd_slot(slot, 0, cb, ctx);
+        }
         dm2_v1_guidraw_29ee_1d03(0, cb, ctx);
 
         if (cb->set_v1e0b62)
