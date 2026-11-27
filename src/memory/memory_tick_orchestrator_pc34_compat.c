@@ -11527,7 +11527,21 @@ static int orch_drop_group_slot_possessions_compat(
     while (thing != THING_NONE && thing != THING_ENDOFLIST &&
            in.chainEntryCount < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34) {
         unsigned short nextThing;
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+
+        /* Validate the complete source chain before the first RNG draw or
+         * move. F0267's raw-owner guard only covers projectiles/explosions;
+         * ReDMCSB GROUP.C F0188:724-732 assumes each Slot link is a live item. */
+        if (type < THING_TYPE_WEAPON || type > THING_TYPE_JUNK ||
+            index < 0 || index >= world->things->thingCounts[type] ||
+            !world->things->rawThingData[type]) {
+            return 0;
+        }
         nextThing = orch_next_thing_compat(world->things, thing);
+        if (r_u16(world->things->rawThingData[type] + index * 4) != nextThing) {
+            return 0;
+        }
         in.chain[in.chainEntryCount].thing = thing;
         in.chain[in.chainEntryCount].nextThing = nextThing;
         ++in.chainEntryCount;
