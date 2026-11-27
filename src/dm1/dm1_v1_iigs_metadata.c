@@ -66,11 +66,13 @@ int dm1_v1_iigs_metadata_read(const uint8_t *program, size_t size,
      * initializer was compared with BOTH original executables at these
      * offsets, including all 70 GS mandatory graphics and six RGB4 dungeon
      * palettes. Read words explicitly in the original little-endian order. */
-    /* DATA.C G0026/G0030/G0038 and COMMAND.C G0449, exact LE16
-     * spans independently matched in authenticated G20/G21 programs. */
+    /* DATA.C G0026/G0030/G0038 and COMMAND.C:122-161 G0449 / 217-227
+     * G0456, exact LE16 spans independently matched in authenticated
+     * G20/G21 programs. */
     if (!iigs_meta_words(program,size,57947U,value.icon_first,7U) ||
         !iigs_meta_signed_words(program,size,57989U,value.slot_boxes,138U) ||
         !iigs_meta_signed_words(program,size,46961U,value.inventory_mouse,228U) ||
+        !iigs_meta_signed_words(program,size,47873U,value.chest_mouse,54U) ||
         !iigs_meta_words(program,size,58313U,value.slot_masks,38U) ||
         !iigs_meta_words(program,size,45068U,value.food_amounts,8U)) return 0;
     if (!iigs_meta_words(program,size,57615U,value.credits_palette,16U) ||

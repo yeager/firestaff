@@ -4087,3 +4087,15 @@ ProDOS file owner after a cached solid-archive scan. The original IIGS
 2.0/2.1 disks and nested ZIP ownership regressions pass. This validates media
 discovery provenance; it does not establish full IIGS campaign or visual
 parity.
+
+2026-11-27 IIGS chest interaction follow-up: ReDMCSB COMMAND.C:135-136 G0449
+C071 now enters the existing F0352 eye route, and COMMAND.C:160 C081 delegates
+open-chest clicks to G0456:217-227. C058..C065 use the existing F0302/F0334
+chest transaction; live C38..C45 contents are drawn from DATA.C:303-310 G0030
+positions, and CHEST.C:43-48's C025 panel is drawn through DATA.C:314 G0032
+with the DEFS.H:2086 C08 red transparency.
+F0333's C144-to-C145 action-hand icon change is reflected while the chest is
+open by hand. The metadata adapter reads the exact G0456 span from the
+authenticated G20/G21 program owner. This closes the IIGS chest interaction
+code-wiring gap; native runtime, visual, and complete campaign parity remain
+unverified.

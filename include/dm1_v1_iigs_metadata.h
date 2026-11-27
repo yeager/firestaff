@@ -67,8 +67,9 @@ typedef struct DM1_V1_IigsCreatureReplacementColorSet {
  * not another platform's ten-times-index representation. Frames contain
  * X1,X2,Y1,Y2,packed-byte-width,height; aspects contain the six native bytes.
  * Palette-change pairs use D3 then D2 order. No input pointers are retained.
- * This set covers DATA.C G0000..G0021 and DUNVIEW.C G0190..G0218 tables
- * used here, plus native creature/projectile/explosion inputs G0210..G0228.
+ * This set covers DATA.C G0000..G0021, COMMAND.C G0449/G0456, and DUNVIEW.C
+ * G0190..G0218 tables used here, plus native creature/projectile/explosion
+ * inputs G0210..G0228.
  * These are data helpers; native runtime integration remains unfinished. */
 typedef struct DM1_V1_IigsMetadata {
     DM1_V1_IigsProgramVersion program_version;
@@ -79,6 +80,7 @@ typedef struct DM1_V1_IigsMetadata {
     uint16_t ui_boxes[17][4];
     int16_t slot_boxes[46][3]; /* G0030: x,y,cached icon; viewport for8+ */
     int16_t inventory_mouse[38][6]; /* G0449: command, inclusive box, button */
+    int16_t chest_mouse[9][6]; /* G0456: chest slots, inclusive box, button */
     uint16_t icon_first[7];
     uint16_t slot_masks[38];
     uint16_t food_amounts[8]; /* Native G0242, apple through dragon steak */

@@ -42932,16 +42932,38 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             else if (x >= 104 && x <= 217 && y >= 146 && y <= 156)
                 handled = M11_GameView_CancelMirrorCandidate(state);
         } else if (state->inventoryPanelActive) {
-            /* Authenticated old GS G0449 screen-coordinate table. Mouth,
-             * eye, chest, rest and save remain separate unbound commands. */
+            /* ReDMCSB COMMAND.C:135-136 G0449 routes C071 to the eye;
+             * :160 C081 delegates to G0456:217-227 while a chest is open. */
             for (int i = 0; i < 38 && meta->inventory_mouse[i][0]; ++i) {
                 const int16_t* row = meta->inventory_mouse[i];
                 if (!(buttonMask & row[5]) || x < row[1] || x > row[2] || y < row[3] || y > row[4]) continue;
                 if (row[0] == 11)
                     return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
-                if (row[0] == 70) handled = m11_process_v1_mouth_click(state);
-                if (row[0] >= 28 && row[0] <= 57)
+                if (row[0] == 70) {
+                    handled = m11_process_v1_mouth_click(state);
+                } else if (row[0] == 71) {
+                    handled = m11_process_v1_eye_click(state);
+                    if (handled) state->v1EyePressActive = 1;
+                } else if (row[0] == 81 && m11_v1_open_chest_valid(state)) {
+                    int chestIndex;
+                    for (chestIndex = 0;
+                         chestIndex < 8 && meta->chest_mouse[chestIndex][0];
+                         ++chestIndex) {
+                        const int16_t* chestRow = meta->chest_mouse[chestIndex];
+                        if (!(buttonMask & chestRow[5]) || x < chestRow[1] ||
+                            x > chestRow[2] || y < chestRow[3] ||
+                            y > chestRow[4]) continue;
+                        handled = m11_process_v1_inventory_slot_box_click(
+                            state, chestRow[0] - 20);
+                        if (handled) {
+                            state->v1InventoryDragActive = 1;
+                            state->v1InventoryDragSourceSlotBox = chestRow[0] - 20;
+                        }
+                        break;
+                    }
+                } else if (row[0] >= 28 && row[0] <= 57) {
                     handled = m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),row[0]-28);
+                }
                 break;
             }
         }
@@ -66846,21 +66868,20 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     unsigned short slotThing;
 
     if (!state || !state->inventoryPanelActive) return 0;
-    if (state->dm1IigsActive) return m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),sourceSlotBoxIndex-8);
     /* ReDMCSB COMMAND.C F0380 dispatches F0302 against the live M516 table.
      * CSB M11's party is presentation-only and can be refreshed by a timer,
-     * death, equip filter, or runtime handoff while C017 remains open.  The
-     * status-hand path already refreshed before F0302; ordinary equipment
-     * and backpack boxes did not, so a click could swap a stale mirrored RN
-     * back into the real party and overwrite the current CSB possession.
-     * Rebind before reading active champion or slot, and fail closed if the
-     * runtime receipt cannot be consumed. */
+     * death, equip filter, or runtime handoff while C017 remains open. Rebind
+     * before any ordinary or chest slot change so a stale host mirror cannot
+     * overwrite the current CSB possession. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         !m11_csb_refresh_party_mirror_from_runtime(state)) {
         return 0;
     }
     if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
         return m11_process_v1_chest_slot_box_click(state, sourceSlotBoxIndex);
+    }
+    if (state->dm1IigsActive) {
+        return m11_iigs_exchange_slot(state,m11_inventory_champion_index(state),sourceSlotBoxIndex-8);
     }
     /* CHAMPION.C F0302 uses G0423 for inventory slots; G0411 still
      * owns the object exchanged through the mouse hand. */
@@ -78720,6 +78741,30 @@ static void m11_iigs_blit(M11_GameViewState* state, unsigned char* target,
     }
 }
 
+static void m11_iigs_blit_transparent(M11_GameViewState* state,
+    unsigned char* target, unsigned index, int x, int y, int width, int height,
+    int sourceX, int sourceY, int flip, int viewport, unsigned transparentColor)
+{
+    const M11_AssetSlot* asset = M11_AssetLoader_Load(&state->assetLoader, index);
+    int row, col;
+    if (!asset || sourceX < 0 || sourceY < 0 || width <= 0 || height <= 0 ||
+        sourceX + width > asset->width || sourceY + height > asset->height) return;
+    for (row = 0; row < height; ++row) {
+        int dy = y + row;
+        if (dy < 0 || dy >= 200) continue;
+        for (col = 0; col < width; ++col) {
+            int dx = x + col;
+            int sx = sourceX + col;
+            unsigned char pixel;
+            if (dx < 0 || dx >= 320 || (viewport && dx >= 224)) continue;
+            if (flip) sx = asset->width - 1 - sx;
+            pixel = asset->pixels[(sourceY + row) * asset->width + sx];
+            if (pixel == transparentColor) continue;
+            target[dy * 320 + dx] = pixel + (viewport ? 16 : 0);
+        }
+    }
+}
+
 static int m11_iigs_relative_wall(const M11_GameViewState* state, int depth, int side)
 {
     static const int east[4] = {0,1,0,-1}, south[4] = {-1,0,1,0};
@@ -78749,6 +78794,10 @@ static void m11_iigs_draw_thing_icon(M11_GameViewState* state, unsigned char* na
     const DM1_V1_IigsMetadata* meta = &state->dm1IigsInstallation.metadata;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return;
     icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
+    /* ReDMCSB CHEST.C F0333 changes the action-hand icon while the container
+     * is open; an eye-opened chest keeps its ordinary closed-hand icon. */
+    if (thing == state->v1OpenChestThing && !state->v1OpenChestOpenedByEye &&
+        icon == 144) icon = 145;
     if (icon < 0 || icon >= 224) return;
     while (bank < 6 && meta->icon_first[bank+1] <= icon) ++bank;
     relative = icon-meta->icon_first[bank];
@@ -78883,6 +78932,18 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
                 if (host >= 0 && host < CHAMPION_SLOT_COUNT)
                     m11_iigs_draw_thing_icon(state,native,champion->inventory[host],
                         metadata->slot_boxes[i][0],metadata->slot_boxes[i][1]+33);
+            }
+            if (m11_v1_open_chest_valid(state)) {
+                unsigned short chestSlots[8];
+                /* ReDMCSB CHEST.C:43-48 F0333 blits C025 to the source
+                 * DATA.C:314 G0032 panel box with DEFS.H:2086 C08 red key. */
+                m11_iigs_blit_transparent(state,native,25,80,85,144,73,
+                    0,0,0,1,8);
+                (void)m11_v1_read_open_chest_slots(state, chestSlots);
+                for (i = 0; i < 8; ++i)
+                    m11_iigs_draw_thing_icon(state,native,chestSlots[i],
+                        metadata->slot_boxes[38+i][0],
+                        metadata->slot_boxes[38+i][1]+33);
             }
         }
     }
