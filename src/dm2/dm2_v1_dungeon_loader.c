@@ -336,6 +336,7 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
 
     memset(out, 0, sizeof(*out));
     out->level_count = map_count;
+    out->random_decoration_seed = RD16(dat + 0);
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
     /* A raw SKSave has the source pool sequence directly before map bytes.
@@ -476,6 +477,7 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
 
     memset(out, 0, sizeof(*out));
     out->level_count = map_count;
+    out->random_decoration_seed = RD16(dat + 0);
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
     out->column_index_base = -1;
@@ -695,6 +697,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
 
     memset(out, 0, sizeof(*out));
     out->level_count = map_count;
+    out->random_decoration_seed = rd16be(dat + 0);
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
     out->column_index_base = -1;
@@ -888,6 +891,7 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
         return -1;
 
     out->level_count = mc;
+    out->random_decoration_seed = RD16(dat + 0);
     out->square_bytes = 2;
     out->raw_map_data_base = DM2_TILE_DATA_START;
     out->column_index_base = -1;

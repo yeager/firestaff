@@ -1466,6 +1466,8 @@ typedef struct {
 
 typedef struct DM2_V1_DungeonData {
     int level_count;
+    /* File_header::w0, consumed by SKProject random map-decoration routes. */
+    uint16_t random_decoration_seed;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
     int level_heights[DM2_V1_MAX_LEVELS];
