@@ -12,6 +12,10 @@ The source files used for the findings have these local SHA-256 identities:
 `IBMIO.C` `2e56d93e2e6a61168279b6723ade3686d65c325fdad73f80622bdeea88cda3bb`,
 `MUSIC.C` `b3216caa7c350a0de66ff8b669290a85e54ca4b6c5c9478ebd9acf9995a2cd88`,
 `REVIVE.C` `d0168118386c297cadab04525ab24efcf7138e0156074207d727d1edc3d4a18b`,
+`PANEL.C` `88b706cb539ae848c065a8ad02162a43c1d6344a6285160adaf0c59b2b1d074a`,
+`DEFS.H` `33b3160a5dd7d9c62b9ad0f3d26ac09ddacd6328c9717656fe2bbe8786625728`,
+`CHAMDRAW.C` `8192e23c011575b69da1e5a4c62616665f590cc37df1de9a548a266b24883a7c`,
+`COMMAND.C` `68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f`,
 and `STARTUP1.C`
 `86b2498d027e4815505869028beae0f0023baf15ead8348d8a1955213e79120d`. The
 disk image's `DUNGEON.MASTER` has SHA-256
@@ -173,11 +177,37 @@ while editing a title, then backspace and type at the start of the title. The
 source comments document the unsafe pointer state; the proposed repair has
 not been run against the original executable.
 
+### ReDMCSB zone-consistency patch E — clear the P20JB music toggle zone
+
+`PANEL.C:2391-2394` clears `C568_ZONE_TOGGLE_MUSIC_ICON` when the P20JB
+inventory hides the music state. Under `MEDIA469_P20JB`, however,
+`DEFS.H:3933-3934` defines `M701_ZONE_TOGGLE_MUSIC_ICON` as zone 570.
+Independent draw and input owners both use that `M701` constant:
+`CHAMDRAW.C:1099-1101` paints or clears the icon in zone 570, and
+`COMMAND.C:417` routes `C141_COMMAND_TOGGLE_MUSIC` through zone 570. The
+PANEL clear therefore targets the stale zone 568 and can leave the old music
+icon pixels behind when this P20JB state is hidden.
+
+```diff
+diff --git a/Toolchains/Common/Source/PANEL.C b/Toolchains/Common/Source/PANEL.C
+--- a/Toolchains/Common/Source/PANEL.C
++++ b/Toolchains/Common/Source/PANEL.C
+@@
+         if (!G2106_B_ShowMusicState) {
+-                F0734_ClearZoneInInventory(C568_ZONE_TOGGLE_MUSIC_ICON);
++                F0734_ClearZoneInInventory(M701_ZONE_TOGGLE_MUSIC_ICON);
+         }
+```
+
+**Apply after:** compile the P20JB target and verify that hiding the music
+state clears the same zone that its draw and command tables own. The source
+owners agree on 570; an authentic P20JB layout/hit-table check and runtime
+redraw check are still needed before treating the patch as confirmed behavior.
+
 ## Other ReDMCSB annotations to investigate
 
 | Source | Candidate | Next evidence needed |
 | --- | --- | --- |
-| `PANEL.C:2393`, `DEFS.H:3932-3934` | P20JB clears zone 568 while the music-toggle constant is 570. | Verify the P20JB layout and hit-table owner. |
 | `COPYPRO6.C:197` | The comment says an address is written where fuzzy-sector bytes are expected. | Resolve `G0293`'s effective type, allocation size, and consumers before selecting a copy width. |
 | `GRF1.C`, `VDEO1.C`, `VDEO2.C` | Graphics/display paths contain platform assembly boundaries. | Retain the target ABI and authentic framebuffer/media evidence; no portable patch follows from the callable names alone. |
 
@@ -189,7 +219,8 @@ there and used to disassemble the extracted OMF; Firestaff's ProDOS reader
 performed the extraction. These tools and extracted game files are outside
 Git; no user media was added to the repository.
 
-The four ReDMCSB hunks are proposed source patches, not changes to the external
-archive. The IIGS patch is applied in Firestaff. No upstream message, release,
-or tag was created. Source/disassembly evidence is not a substitute for a
-matched original-media interactive runtime trace.
+The five ReDMCSB hunks are proposed source patches, not changes to the external
+archive. Patch E remains a source-consistency candidate until P20JB media and
+runtime redraw behavior are checked. The IIGS patch is applied in Firestaff.
+No upstream message, release, or tag was created. Source/disassembly evidence
+is not a substitute for a matched original-media interactive runtime trace.
