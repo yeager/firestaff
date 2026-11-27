@@ -6912,9 +6912,9 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
 {
     DM2_V1_QueryOrnateAnimFrameReceipt animation;
     uint16_t graphicsset_word = 0u;
-    int graphicsset;
     int raw;
     int first;
+    int graphicsset;
     unsigned raw_class;
     unsigned first_type = DM2_THING_TYPE_COUNT;
     int accepted = 0;
@@ -7419,6 +7419,48 @@ int dm2_v1_dungeon_magic_map_class1_empty_summary(
                 (uint16_t)((uint32_t)animation.frame * 10u << 8));
         }
     }
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2768-2792.
+ * Class 5 takes the simple summary when either raw tile bit 0x08 or 0x04
+ * is clear. The source clears bit 0x08 in summary word 1 and does not enter
+ * class 1's map-style GDAT ceiling selector path. */
+int dm2_v1_dungeon_magic_map_empty_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt receipt;
+    int raw;
+    int first;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!d) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 5u ||
+        (((unsigned)raw & 0x0cu) == 0x0cu) ||
+        (first != -1 && first != (int)DM2_THING_END_MARKER) ||
+        (d->square_bytes == 1 && (raw & 0x10) != 0)) {
+        return 0;
+    }
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = -1;
+    receipt.tile_type = 5u;
+    receipt.words[0] = 1u;
+    receipt.words[1] = (uint16_t)(raw & ~0x08);
+    receipt.words[2] = DM2_THING_END_MARKER;
+    receipt.words[3] = 0x00ffu;
+    receipt.words[4] = 0x00ffu;
+    receipt.words[5] = 0x00ffu;
+    receipt.words[6] = 0x00ffu;
+    receipt.words[7] = 0u;
     receipt.valid = 1;
     *out = receipt;
     return 1;
