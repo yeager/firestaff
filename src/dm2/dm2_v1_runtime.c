@@ -822,6 +822,12 @@ static int dm2_runtime_build_locate_map_descriptors(
     return 1;
 }
 
+static int dm2_runtime_magic_map_class2_empty_summary(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
+
 /* SKULLWIN/c_gui_draw.cpp::DM2_guidraw_29ee_1946 and
  * SKWINDOS/dm2byf.cpp::SKW_29ee_1946. This pass resolves the source map and
  * tile byte for each visible cell, including same-level overlaps and active
@@ -946,6 +952,20 @@ int dm2_v1_runtime_collect_magic_map_grid(
                 } else {
                     ++receipt.missing_summary_count;
                 }
+            } else if (cell->tile_type == 2u) {
+                DM2_V1_MagicMapTileSummaryReceipt summary;
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(rt->boot);
+                if (dm2_runtime_magic_map_class2_empty_summary(
+                        dungeon, loader, selected_map, x, y,
+                        (uint32_t)rt->tick_count, &summary) &&
+                    summary.valid) {
+                    memcpy(cell->tile_summary_words, summary.words,
+                           sizeof(cell->tile_summary_words));
+                    cell->tile_summary_valid = 1u;
+                } else {
+                    ++receipt.missing_summary_count;
+                }
             } else if (cell->tile_type == 3u || cell->tile_type == 4u) {
                 DM2_V1_MagicMapTileSummaryReceipt summary;
                 if (dm2_v1_dungeon_magic_map_class34_summary(
@@ -971,6 +991,71 @@ int dm2_v1_runtime_collect_magic_map_grid(
         receipt.missing_selector_count == 0u;
     *out_receipt = receipt;
     return receipt.valid;
+}
+
+static int dm2_runtime_magic_map_class2_empty_summary(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_AssetLoader *loader,
+    int level, int x, int y, uint32_t tick,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt summary;
+    DM2_V1_QueryOrnateAnimFrameReceipt animation;
+    uint16_t ornament_word = 0u;
+    int raw;
+    int first;
+    int graphicsset;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&summary, 0, sizeof(summary));
+    if (!dungeon || !loader || !loader->loaded) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 2u ||
+        (raw & 0x08) != 0 ||
+        (first != -1 && first != (int)DM2_THING_END_MARKER) ||
+        (dungeon->square_bytes == 1 && (raw & 0x10) != 0)) {
+        return 0;
+    }
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(dungeon, level);
+    if (graphicsset < 0 || graphicsset > 15) return 0;
+
+    /* SKULLWIN/c_gui_vp.cpp:2681-2688: class 2 with raw bit 0x08 clear
+     * selects summary type 1, then shares the map-style GDAT 0x6b lookup
+     * with class 1. With an empty root, no record-query mutations follow. */
+    (void)dm2_v1_query_gdat_entry_data_index(
+        loader, 8, graphicsset, 11, 0x6b, &ornament_word);
+    summary.level = level;
+    summary.x = x;
+    summary.y = y;
+    summary.direction = -1;
+    summary.tile_type = 2u;
+    summary.words[0] = 1u;
+    summary.words[1] = (uint16_t)raw;
+    summary.words[2] = DM2_THING_END_MARKER;
+    summary.words[3] = 0x00ffu;
+    summary.words[4] = 0x00ffu;
+    summary.words[5] = 0x00ffu;
+    summary.words[6] = 0x00ffu;
+    summary.words[7] = 0u;
+    if (ornament_word != 0u) {
+        const uint16_t ornament_index = ornament_word & 0x00ffu;
+        summary.words[5] = ornament_index;
+        if ((ornament_word & 0x8000u) != 0u) {
+            memset(&animation, 0, sizeof(animation));
+            if (!dm2_v1_query_ornate_anim_frame_receipt(
+                    loader, 10, ornament_index, tick, 0u, &animation) ||
+                !animation.accepted || animation.receipt_hash == 0u) {
+                return 0;
+            }
+            summary.words[5] = (uint16_t)(ornament_index |
+                (uint16_t)((uint32_t)animation.frame * 10u << 8));
+        }
+    }
+    summary.valid = 1;
+    *out = summary;
+    return 1;
 }
 
 typedef struct {
