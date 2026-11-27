@@ -7489,6 +7489,45 @@ int dm2_v1_dungeon_magic_map_class5_empty_summary(
     return 1;
 }
 
+/* SKULLWIN/c_gui_vp.cpp::DM2_SUMMARIZE_STONE_ROOM:2557-2560 returns
+ * classes above 6 immediately after preserving the tile link in word 2. */
+int dm2_v1_dungeon_magic_map_class7_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt receipt;
+    int raw;
+    int first;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!d) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || ((unsigned)raw >> 5) != 7u ||
+        first < -1 || first == (int)DM2_THING_NULL_MARKER) {
+        return 0;
+    }
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = -1;
+    receipt.tile_type = 7u;
+    receipt.words[0] = 7u;
+    receipt.words[1] = (uint16_t)raw;
+    receipt.words[2] = first < 0 ? DM2_THING_END_MARKER :
+        (uint16_t)first;
+    receipt.words[3] = 0x00ffu;
+    receipt.words[4] = 0x00ffu;
+    receipt.words[5] = 0x00ffu;
+    receipt.words[6] = 0x00ffu;
+    receipt.words[7] = 0u;
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)

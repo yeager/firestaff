@@ -1824,6 +1824,11 @@ int dm2_v1_dungeon_magic_map_class6_empty_summary(
 int dm2_v1_dungeon_magic_map_class5_empty_summary(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     DM2_V1_MagicMapTileSummaryReceipt *out);
+/* Source early return for tile classes above 6; class-7 map art selection is
+ * supplied separately by the per-level selector receipt. */
+int dm2_v1_dungeon_magic_map_class7_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
  * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
  * is absent. The source summary retains ceiling word FF; a following

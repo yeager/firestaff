@@ -921,7 +921,8 @@ int dm2_v1_runtime_collect_magic_map_grid(
             }
             cell->tile_value = (uint8_t)tile_value;
             cell->tile_type = (uint8_t)((tile_value >> 5) & 0x07);
-            if (cell->tile_type == 7u) {
+            if (cell->tile_type == 1u &&
+                (cell->tile_value & 0x08u) != 0u) {
                 const unsigned level_number =
                     dungeon->map_level_number[selected_map];
                 if (!map_selectors_attempted) {
@@ -984,6 +985,17 @@ int dm2_v1_runtime_collect_magic_map_grid(
                 if (dm2_v1_dungeon_magic_map_class6_empty_summary(
                         dungeon, loader, selected_map, x, y,
                         (uint32_t)rt->tick_count, &summary) &&
+                    summary.valid) {
+                    memcpy(cell->tile_summary_words, summary.words,
+                           sizeof(cell->tile_summary_words));
+                    cell->tile_summary_valid = 1u;
+                } else {
+                    ++receipt.missing_summary_count;
+                }
+            } else if (cell->tile_type == 7u) {
+                DM2_V1_MagicMapTileSummaryReceipt summary;
+                if (dm2_v1_dungeon_magic_map_class7_summary(
+                        dungeon, selected_map, x, y, &summary) &&
                     summary.valid) {
                     memcpy(cell->tile_summary_words, summary.words,
                            sizeof(cell->tile_summary_words));
