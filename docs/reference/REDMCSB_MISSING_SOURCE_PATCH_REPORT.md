@@ -89,6 +89,36 @@ layout and preserves zero through world initialization. `F0280`'s two
 still depends on matching every earlier runtime F0027 draw, not merely the
 seed and C161's twelve final draws.
 
+### Installed Apple IIgs images: metadata-comparison scope
+
+The installed `Dungeon-Master_Apple-IIgs_EN.zip` contains four nested ZIPs,
+including the primary 2IMG and a `[b][non boot]` 2IMG. Both images contain an
+819,200-byte ProDOS volume. Their `DUNGEON.MASTER` files are 232,158 bytes;
+the primary and `[b]` MD5s are `3265c912344d847a628e8e27e481f17a` and
+`49bc1f77956e03978521adfd23550ea5`, respectively. Neither equals the admitted
+G20/G21 executable hashes.
+
+I then compared all 49 source spans read by the metadata and audio adapters
+against the primary and `[b]` program files using Firestaff’s ProDOS reader
+and the installed `libfirestaff_m12`/ZIP/zlib libraries. This includes all
+startup and dungeon palettes, UI geometry, inventory/chest hit tables, ornament/object
+frames and aspects, creature/projectile/explosion tables, attack sounds,
+native sound records, and the distance-volume grid. Every span was byte-equal
+between these two installed programs. This closes the earlier *between these
+two files* comparison gap, but does not authenticate their ownership: neither
+program was compared to the admitted G20/G21 executable at every span, and a
+third-party modification could preserve these tables while changing code.
+
+The primary disk's `GRAPHICS.GAME`, `DUNGEON.GAME`, `DUNGEON.BONUS`, and
+`SYSTEM/START` match the currently recognized authentic resource hashes. The
+`[b]` disk matches the first three, but its `SYSTEM/START` differs. Therefore
+the primary is a strong candidate for an original-media variant with altered
+program bytes, while the `[b]` image remains less fully bound. Firestaff's
+current owner validator still requires an exact G20/G21 program hash. Do not
+weaken that gate from table equality or matching companions alone; identify
+the executable revision and bind the program to an authoritative original
+release before admitting another identity.
+
 **Remaining Firestaff gap:** admit and identify the installed program revision,
 then verify startup and candidate RNG state at runtime on version-authenticated
 original media, including source draws between `F0280` and C161.
