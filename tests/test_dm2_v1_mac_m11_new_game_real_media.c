@@ -947,6 +947,21 @@ int main(void)
                 return 1;
             }
         }
+        for (uint16_t slot = 0u; slot < 6u; ++slot) {
+            DM2_V1_BootExpandedRectReceipt moneybox_rect;
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    profile, (uint16_t)(0x00ddu + slot), &moneybox_rect) ||
+                !moneybox_rect.valid || moneybox_rect.rect.w <= 0 ||
+                moneybox_rect.rect.h <= 0 || moneybox_rect.rect.y != 220) {
+                fprintf(stderr,
+                        "FAIL: Mac moneybox RAW4 rect 0x%04x did not retain its native y=220 placement (valid=%d xywh=%d,%d,%d,%d)\n",
+                        0x00ddu + slot, moneybox_rect.valid,
+                        moneybox_rect.rect.x, moneybox_rect.rect.y,
+                        moneybox_rect.rect.w, moneybox_rect.rect.h);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
         {
             /* Retail CODE(8)+0x2838 probes these IDs for held-object
              * placement. Mac RAW4 rows link to size markers 758/759; their

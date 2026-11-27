@@ -10,6 +10,7 @@
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include "firestaff_zip_extract.h"
 #include "firestaff_amiga_adf.h"
+#include "firestaff_ftl_decode.h"
 
 /* This is a real-media regression target and CI builds it in Release.  Keep
  * its validation live there: relying on assert with NDEBUG would turn every
@@ -146,6 +147,44 @@ static void verify_original_animation(const DM2_V1_AmigaLzxArchive *archive,
     dm2_v1_amiga_lzx_free(decoded);
 }
 
+static void verify_original_moneybox_pointer_owner(
+    const DM2_V1_AmigaLzxArchive *archive, const uint8_t *joined)
+{
+    static const uint8_t event_rect_rows[36] = {
+        0x00,0xe4, 0x00,0xdd, 0x00,0x02,
+        0x00,0xe5, 0x00,0xde, 0x00,0x02,
+        0x00,0xe6, 0x00,0xdf, 0x00,0x02,
+        0x00,0xe7, 0x00,0xe0, 0x00,0x02,
+        0x00,0xe8, 0x00,0xe1, 0x00,0x02,
+        0x00,0xe9, 0x00,0xe2, 0x00,0x02
+    };
+    static const uint8_t event_dispatch[26] = {
+        0x0c,0x47,0x00,0xe4,0x65,0x18,0x0c,0x47,0x00,0xe9,
+        0x62,0x12,0x30,0x07,0x06,0x40,0xff,0x1c,0x3f,0x00,
+        0x4e,0xad,0x0e,0x02,0x54,0x8f
+    };
+    const DM2_V1_AmigaLzxEntry *entry;
+    FirestaffFtl ftl;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
+
+    memset(&ftl, 0, sizeof(ftl));
+    entry = dm2_v1_amiga_lzx_find(archive, "SKUL.FTL");
+    assert(entry && entry->uncompressed_size == 270778u &&
+           dm2_v1_amiga_lzx_extract_entry(
+               archive, joined, entry, &bytes, &byte_count) == 1);
+    assert(FirestaffFtl_Parse(bytes, byte_count, &ftl) == 0);
+    assert(FirestaffFtl_Decode(&ftl) == 0);
+    assert(ftl.hunk_data_decoded_size >= 0x2a50u &&
+           memcmp(ftl.hunk_data_decoded + 0x2a2cu,
+                  event_rect_rows, sizeof(event_rect_rows)) == 0);
+    assert(ftl.hunk_code_size >= 0x1df72u &&
+           memcmp(ftl.hunk_code + 0x1df58u,
+                  event_dispatch, sizeof(event_dispatch)) == 0);
+    FirestaffFtl_Free(&ftl);
+    dm2_v1_amiga_lzx_free(bytes);
+}
+
 static void test_original_installer_media(void) {
     const char *archive_path = amiga_archive_path();
     DM2_V1_AmigaLzxPart parts[DM2_V1_AMIGA_LZX_PART_COUNT] = {{0}};
@@ -181,6 +220,7 @@ static void test_original_installer_media(void) {
     assert(archive.valid == 1);
     assert(archive.entry_count == 35u);
     assert(dm2_v1_amiga_lzx_has_install_payload(&archive) == 1);
+    verify_original_moneybox_pointer_owner(&archive, joined);
     verify_original_animation(&archive, joined, "SWSH.DAT", 19u, 1u, 1u);
     verify_original_animation(&archive, joined, "TITL.DAT", 225u, 2u, 5u);
     verify_original_animation(&archive, joined, "ENDA.DAT", 442u, 14u, 57u);

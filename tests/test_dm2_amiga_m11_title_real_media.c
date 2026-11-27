@@ -106,6 +106,17 @@ int main(void)
                ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_titl_bytes &&
                ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_enda_bytes,
            "M11 receives all three hash-verified original Amiga startup streams");
+    if (view.dm2BootProfile) {
+        for (uint16_t slot = 0u; slot < 6u; ++slot) {
+            DM2_V1_BootExpandedRectReceipt moneybox_rect;
+            expect(dm2_v1_boot_query_expanded_rect_receipt(
+                (DM2_V1_BootProfile *)view.dm2BootProfile,
+                (uint16_t)(0x00ddu + slot), &moneybox_rect) &&
+                       moneybox_rect.valid && moneybox_rect.rect.w > 0 &&
+                       moneybox_rect.rect.h > 0 && moneybox_rect.rect.y == 220,
+                   "Amiga moneybox RAW4 hitboxes retain their native y=220 placement");
+        }
+    }
     expect(view.dm2FmtownsTitleBound && view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitleFrameReceipt.valid &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&

@@ -62839,6 +62839,9 @@ add_executable(test_dm2_v1_amiga_lzx_real_media
     src/dm2/dm2_v1_fmtowns_anim_stream.c
     src/shared/firestaff_amiga_adf.c
     src/shared/firestaff_amiga_mfm.c
+    src/shared/firestaff_ftl_decode.c
+    src/shared/firestaff_pak_decode.c
+    src/shared/firestaff_ftl_hunk_data_zero_run.c
 )
 target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_amiga_lzx_real_media PRIVATE firestaff_zip_extract)

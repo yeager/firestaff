@@ -3304,14 +3304,17 @@ This closes the ordering seam in the callback orchestrator only. No live DM2
 runtime callback binds its source-owned timer, hero, and record graph yet; the
 quicksave remains fail-closed and original save parity remains `PARTIAL`.
 
-2026-11-27 SKWIN moneybox cross-check: SKWIN `skval1.h:92` entries 181–186
-map events 0xE4–0xE9 to RAW4 rectangles 0x00DD–0x00E2, but this Windows
-inventory owner does not establish the original Macintosh or Amiga input
-route. The retail Mac CODE(8) dispatcher at +0x1ad8 sends its own events
-20–65 to CODE(10)+0x1e3c, and the existing Mac source audit says dynamic
-CODE(3)/CODE(11) controls must not be replaced by guessed static rectangles.
-The Amiga movement-arrow route is separately authenticated, but its inventory
-owner remains unproven. A proposed cross-platform RAW4 shortcut was removed.
-Keep Mac and Amiga moneybox pointer transactions open until their native
-owners are established from original source or retail binaries and exercised
-against authentic media.
+2026-11-27 DM2 native moneybox pointer owners: original Amiga `SKUL.FTL`
+HUNK_DATA at `0x2a2c..0x2a50` maps events 228–233 to RAW4 rectangles
+`0x00DD..0x00E2`; HUNK_CODE at `0x1df58..0x1df72` maps those events to
+moneybox slots 0–5. The original Mac application independently records the
+same event/rectangle pairs in DATA(0) at `0x3c42..0x3c64`, and CODE(8) at
+`0x1b46..0x1b60` sends slot 0–5 to its native moneybox handler at A5+`0x0e82`.
+The Amiga and Mac real-media M11 profiles both resolve all six rectangles at
+y=220, below the current 320x200 surface. The original owners are locked by
+the Mac resource test and Amiga LZX test, and both platform geometry checks
+record this native placement. Do not route Mac or Amiga moneybox clicks through
+the current viewport while these zones are unreachable. Recover and implement
+the native display/input coordinate contract before enabling those routes.
+Both platforms still need complete live deposit/withdrawal transaction
+coverage; keep gameplay parity PARTIAL until those checks pass.
