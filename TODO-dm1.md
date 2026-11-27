@@ -2780,7 +2780,10 @@ parity.
   direction. F0276's C006 group-generator and C007 floor-creature sensors are
   skipped during party walk-on; the timed C006 generator event remains
   separately dispatched. Focused regressions cover these gates. The authentic
-  English v1.2 menu-to-HoC
+  M10's F0267 bridge maps raw C04..C15 Thing types into F0722's distinct
+  PARTY/CREATURE/OBJECT/PROJECTILE source namespace, so group and object floor
+  sensor predicates see the source class. The authentic English v1.2
+  menu-to-HoC
   route passes after the changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.

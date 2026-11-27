@@ -10585,6 +10585,22 @@ static int orch_f0267_validate_raw_live_thing_owner_compat(
     }
 }
 
+static int orch_f0276_trigger_source_for_thing_type_compat(int thingType)
+{
+    /* ReDMCSB MOVESENS.C F0276 stores C04+ types, while F0722 evaluates its
+     * distinct PARTY/CREATURE/OBJECT/PROJECTILE trigger-source namespace. */
+    if (thingType == THING_TYPE_GROUP) return DM1_TRIGGER_SOURCE_CREATURE;
+    if (thingType == THING_TYPE_PROJECTILE ||
+        thingType == THING_TYPE_EXPLOSION) {
+        return DM1_TRIGGER_SOURCE_PROJECTILE;
+    }
+    if (thingType > THING_TYPE_GROUP &&
+        thingType < THING_TYPE_PROJECTILE) {
+        return DM1_TRIGGER_SOURCE_OBJECT;
+    }
+    return -1;
+}
+
 static int orch_f0267_sensor_pass_count_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -10600,10 +10616,13 @@ static int orch_f0267_sensor_pass_count_compat(
     int index;
     int objectType = -1;
     int sensorCount;
+    int triggerSource;
 
     if (!world || !world->dungeon || !world->things) return 0;
     type = THING_GET_TYPE(movingThing);
     index = THING_GET_INDEX(movingThing);
+    triggerSource = orch_f0276_trigger_source_for_thing_type_compat(type);
+    if (triggerSource < 0) return 0;
     if (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE &&
         index >= 0 && index < world->things->thingCounts[type] &&
         world->things->rawThingData[type] &&
@@ -10615,7 +10634,7 @@ static int orch_f0267_sensor_pass_count_compat(
     memset(&context, 0, sizeof(context));
     context.mapX = mapX;
     context.mapY = mapY;
-    context.thingType = type;
+    context.thingType = triggerSource;
     context.objectType = objectType;
     context.partyOnSquare = (world->partyMapIndex == mapIndex &&
         world->party.mapX == mapX && world->party.mapY == mapY);
@@ -10757,10 +10776,13 @@ static int orch_f0267_sensor_pass_dispatch_compat(
     int index;
     int objectType = -1;
     int sensorCount;
+    int triggerSource;
 
     if (!world || !world->dungeon || !world->things || !moveResult) return 0;
     type = THING_GET_TYPE(movingThing);
     index = THING_GET_INDEX(movingThing);
+    triggerSource = orch_f0276_trigger_source_for_thing_type_compat(type);
+    if (triggerSource < 0) return 0;
     if (type > THING_TYPE_GROUP && type < THING_TYPE_PROJECTILE &&
         index >= 0 && index < world->things->thingCounts[type] &&
         world->things->rawThingData[type] &&
@@ -10771,7 +10793,7 @@ static int orch_f0267_sensor_pass_dispatch_compat(
     memset(&context, 0, sizeof(context));
     context.mapX = mapX;
     context.mapY = mapY;
-    context.thingType = type;
+    context.thingType = triggerSource;
     context.objectType = objectType;
     context.partyOnSquare = (world->partyMapIndex == mapIndex &&
         world->party.mapX == mapX && world->party.mapY == mapY);
