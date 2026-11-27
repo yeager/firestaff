@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +93,11 @@ typedef struct DM2_V1_QueryDbCallbacks {
     int32_t (*is_creature_allowed_on_level_cb)(void *ctx, int32_t creature, int32_t level);
     /* Source state: DOS/SPX query override or v4 sleeping gate. */
     int32_t (*is_player_skill_query_overridden)(void *ctx);
+
+    /* Source dungeon text words (v1e03d0), decoded at the supplied source
+     * word index. The output is always NUL-terminated on success. */
+    int32_t (*query_dungeon_text)(void *ctx, uint16_t word_index,
+                                  char *out, size_t out_capacity);
 
 } DM2_V1_QueryDbCallbacks;
 
@@ -224,6 +230,9 @@ void dm2_v1_query_creatures_item_mask(int32_t creature_type, int32_t mask_idx,
     uint8_t *mask_out, int32_t flag,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
+/* Source c_querydb.cpp::DM2_QUERY_MESSAGE_TEXT. `out` must hold 128 bytes,
+ * matching the source t_text buffer. Dungeon text mode requires the explicit
+ * source-word decoder callback below; absent data leaves `out` empty. */
 void dm2_v1_query_message_text(char *out, int32_t record, int32_t flags,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 

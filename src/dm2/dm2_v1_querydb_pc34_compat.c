@@ -29,6 +29,64 @@ static int32_t dm2_v1_querydb_cls1_from_record(
     int32_t record, const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 int16_t dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec);
 
+void dm2_v1_query_message_text(char *out, int32_t record, int32_t flags,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
+{
+    const uint8_t *record_bytes;
+    uint8_t text[128];
+    uint16_t text_word;
+    unsigned mode;
+    const char *text_ptr;
+    size_t text_len;
+    size_t prefix_len;
+
+    if (!out) return;
+    out[0] = '\0';
+    if (!cb || !cb->get_address_of_record || record < 0 ||
+        (uint32_t)record > UINT16_MAX) return;
+    record_bytes = (const uint8_t *)cb->get_address_of_record(
+        ctx, (uint16_t)record);
+    if (!record_bytes) return;
+    text_word = (uint16_t)record_bytes[2] |
+                (uint16_t)((uint16_t)record_bytes[3] << 8);
+    mode = (unsigned)(text_word >> 1) & 3u;
+
+    if ((text_word & 1u) == 0u && ((uint32_t)flags & 0x8000u) == 0u)
+        return;
+
+    text[0] = '\0';
+    if (mode == 1u) {
+        const unsigned extension = ((unsigned)text_word >> 11) & 0x1fu;
+        const unsigned text_index = ((unsigned)text_word >> 3) & 0xffu;
+        char *queried;
+        size_t queried_offset = 0u;
+
+        if (extension != 14u || !cb->query_gdat_text) return;
+        queried = cb->query_gdat_text(ctx, 3, 0, (int8_t)text_index,
+                                      (char *)text);
+        while (queried_offset < sizeof(text) &&
+               queried != (char *)&text[queried_offset]) ++queried_offset;
+        if (!queried || queried_offset >= sizeof(text) ||
+            !memchr(queried, '\0', sizeof(text) - queried_offset)) return;
+        text_ptr = queried;
+    } else if (mode == 0u) {
+        const uint16_t text_index = (uint16_t)(text_word >> 3);
+        if (!cb->query_dungeon_text ||
+            !cb->query_dungeon_text(ctx, text_index, (char *)text,
+                                    sizeof(text))) return;
+        if (!memchr(text, '\0', sizeof(text))) return;
+        text_ptr = (const char *)text;
+    } else {
+        return;
+    }
+
+    text_len = strlen(text_ptr);
+    prefix_len = (((uint32_t)flags & 0x7fffu) == 1u) ? 1u : 0u;
+    if (text_len + prefix_len >= sizeof(text)) return;
+    if (prefix_len) out[0] = '\n';
+    memcpy(out + prefix_len, text_ptr, text_len + 1u);
+}
+
 /* The AI specification is a packed PC-DOS structure.  Its 16-bit fields
  * must retain their source little-endian order on every Firestaff host; do
  * not cast an arbitrary byte offset to an int16_t pointer. */
