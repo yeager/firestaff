@@ -79030,6 +79030,21 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
             (state->v1MouthVisualIconIndex-192)*16,0,0,0);
     if (!state->candidateMirrorPanelActive && state->leaderHandObjectPresent)
         m11_iigs_draw_thing_icon(state,native,state->leaderHandThing,state->pointerX,state->pointerY);
+    /* ReDMCSB COMMAND.C F0379:1996-2034 clears the native 224x136
+     * viewport and, for I34E, calls F0649 with C006, cyan on black,
+     * "WAKE UP". TEXT.C F0649:1954-1969 centers using the source GS
+     * six-pixel font; the C006 viewport-center placement is x=91 and
+     * top=65, expressed here as F0040's baseline at screen y=102. */
+    if (state->resting) {
+        DM1_V1_LayoutZoneRectPc34 centeredText;
+        memset(native + 33 * 320, 0, 224U * 136U);
+        if (dm1_v1_viewport_centered_text_rect_pc34(42, 6, &centeredText)) {
+            (void)M11_Font_DrawIigsString(
+                &state->originalFont, native, 320, 200,
+                centeredText.x, 33 + centeredText.y + 4,
+                "WAKE UP", 4, 0);
+        }
+    }
     for (y = 0; y < height; ++y)
         for (x = 0; x < width; ++x)
             framebuffer[(size_t)y*(size_t)width+(size_t)x] = native[

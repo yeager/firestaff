@@ -4101,15 +4101,18 @@ code-wiring gap; native runtime, visual, and complete campaign parity remain
 unverified.
 
 2026-11-27 Apple IIGS rest controls: C145 in the authenticated G0449 mouse
-table now enters the shared rest state, and Return or a left click in the
-G0450 viewport wakes the party. Idle source ticks use the existing F0331
-recovery cadence while resting and skip the movement pipeline. This wires the
-controls to existing DM1 runtime owners; IIGS rest-screen artwork, Esc/freeze,
-and native runtime behavior remain unverified.
+table enters the shared rest state, and Return or a left click in the G0450
+viewport wakes the party. Idle source ticks use F0331 recovery while resting
+and skip movement dispatch. IIGS now clears the viewport and draws the
+source-owned cyan-on-black “WAKE UP” text using the GS font and centered C006
+zone geometry. Esc/freeze, complete source layout-record parity, and native
+runtime behavior remain unverified.
 
 2026-11-27 IIGS rest tick correction: the first control wiring advanced
 F0884/F0890 time without invoking M11's F0331 champion effects. The IIGS rest
 idle path now runs the existing champion-time, creature-tick and death checks
 after a successful idle tick, while keeping movement dispatch suppressed.
-This is source-path inspection only; build, focused runtime and original-media
-verification remain outstanding.
+F0379's IIGS rest text is composed into the viewport with its original GS font
+using the existing centered-zone helper. The source translation and font
+metrics were checked, and the M11 translation unit compiles. Original-media
+runtime verification remains outstanding.
