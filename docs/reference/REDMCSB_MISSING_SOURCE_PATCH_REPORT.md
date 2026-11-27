@@ -18,8 +18,9 @@ The source files used for the findings have these local SHA-256 identities:
 `CHAMDRAW.C` `8192e23c011575b69da1e5a4c62616665f590cc37df1de9a548a266b24883a7c`,
 `COMMAND.C` `68c7388a693c08c207c8dc7907acf1322b99a9467a035a044600c343c903a20f`,
 and `STARTUP1.C`
-`86b2498d027e4815505869028beae0f0023baf15ead8348d8a1955213e79120d`. The
-primary disk image's unadmitted `DUNGEON.MASTER` has MD5
+`86b2498d027e4815505869028beae0f0023baf15ead8348d8a1955213e79120d`, and
+`SWITCH.C` `3acc4d7dae9949d3bfd34ed6fad5b6e77940e7b652774e01340fcc8603dab494`.
+The primary disk image's unadmitted `DUNGEON.MASTER` has MD5
 `3265c912344d847a628e8e27e481f17a` and SHA-256
 `46abaf65e3265cf305969b147abf322624762a823255ebf341c3f8d284d18107`.
 
@@ -278,6 +279,29 @@ the two-reading history and copy-protection result. Source and disassembly
 evidence establish the defect and intended values; no matching X30J executable
 or runtime trace was available to confirm the final behavior.
 
+### ReDMCSB allocation-failure patch G — validate segment-header buffer
+
+`SWITCH.C:103-109` allocates `L5182_puc_SegmentHeadersBuffer` using the
+untrusted file header's bounded segment count, then checks
+`L5181_puc_HeaderBuffer` instead. The first allocation has already succeeded
+and is non-NULL, so failure of the second allocation is not detected; the next
+cast and `Fread` receive a NULL destination. Check the pointer that was just
+allocated:
+
+```diff
+         L5182_puc_SegmentHeadersBuffer = F1650_AllocateMemory(L5180_l_ByteCount, P5081_i_Requirements);
+-        if (L5181_puc_HeaderBuffer == NULL) { /* BUGX_XX: Wrong variable tested, should be L5182_puc_SegmentHeadersBuffer */
++        if (L5182_puc_SegmentHeadersBuffer == NULL) {
+                 L5179_i_Result = -6;
+```
+
+**Apply after:** compile each affected Amiga `exec` target and inject failure
+of the second allocation after the header allocation succeeds. The existing
+error label already closes the file and releases the first buffer; verify that
+the corrected check returns `-6` before a read through a NULL segment-header
+pointer. The source comment and control flow establish the faulty check; no affected-target runtime test
+was available during this review.
+
 ## Other ReDMCSB annotations to investigate
 
 | Source | Candidate | Next evidence needed |
@@ -292,8 +316,9 @@ there and used to disassemble the extracted OMF; Firestaff's ProDOS reader
 performed the extraction. These tools and extracted game files are outside
 Git; no user media was added to the repository.
 
-The six ReDMCSB hunks are proposed source patches, not changes to the external
-archive. Patches E and F remain source-supported candidates until authentic
-media and runtime behavior are checked. The IIGS patch is applied in Firestaff.
+The ReDMCSB hunks are proposed source patches, not changes to the external
+archive. Patches E, F, and G remain source-supported candidates until their
+target builds and relevant runtime behavior are checked. The IIGS patch is
+applied in Firestaff.
 No upstream message, release, or tag was created. Source/disassembly evidence
 is not a substitute for a matched original-media interactive runtime trace.
