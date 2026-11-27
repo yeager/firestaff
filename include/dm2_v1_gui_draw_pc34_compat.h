@@ -525,7 +525,7 @@ void dm2_v1_draw_hand_action_icons(
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx);
 
 void dm2_v1_draw_map_chip(
-    int32_t record, int32_t tile_x, int32_t map_index, int32_t tile_y,
+    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
     int16_t chip_x, int16_t chip_y, int8_t style, int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx);
 
@@ -609,9 +609,8 @@ void dm2_v1_guidraw_29ee_1d03(
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx);
 
 void dm2_v1_guidraw_29ee_1946(
-    int32_t record, int32_t party_x, int32_t map_index, int32_t party_y,
-    int16_t heading, int32_t pixel_offset_x, int32_t pixel_offset_y,
-    int32_t flags,
+    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
+    int16_t chip_x, int32_t heading, int32_t side, int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx);
 
 #ifdef __cplusplus
