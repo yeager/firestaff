@@ -2994,9 +2994,7 @@ supported-platform route coverage.
 `SKW_29ee_1946` (`dm2byf.cpp:6588-6746`) and SKULLWIN
 `DM2_guidraw_29ee_1946` (`c_gui_draw.cpp:3561-3927`) agree on the live grid
 transaction; SKWINSPX v5 has the same translated routine at `skguidr5.cpp`
-3562-3928. The map opens from the dungeon-view UI through event `0x96` / rect
-`0x63`; M11 F9 is quick resume, not the map toggle. The grid retains its input
-map/party pose and pixel offsets, fills
+3562-3928. The grid retains its input map/party pose and pixel offsets, fills
 expanded rect 99, then visits seven or eight rows and columns around the party
 according to the sign of the two offsets. Each cell uses
 `CALC_VECTOR_W_DIR`, tries `LOCATE_OTHER_LEVEL`, reads the selected level's
@@ -3351,6 +3349,6 @@ coverage; keep gameplay parity PARTIAL until those checks pass.
 
 2026-11-27 SKSAVE text-span follow-up: `dm2_v1_parse_raw_sksave_dungeon_prefix` already validates and hashes the save-owned text-word span before DB pools, but the receipt omitted its start offset. The receipt now retains `text_data_offset` alongside `text_word_count`; this is still raw-byte provenance, not a decoded selector string. Special DB2 selection, endian-aware text decoding, bounded selector parsing, and runtime ownership remain open.
 
-2026-11-27 magical-map input/text-source correction: the PC source opens the map from UI event `0x96`, rect `0x63` (the click-zone matrix already contains this evidence); M11 F9 is quick resume, not the map toggle. The real source caller reaches `DM2_DRAW_MAJIC_MAP` from the dungeon-view/right-panel UI (`SKULLWIN/c_gui_draw.cpp:5740`). Its type-7 selector comes from a DB2 text record on the saved map-0 party tile, but `DM2_QUERY_MESSAGE_TEXT` has two paths: mode-1/simple-extension-14 text queries GDAT category 3, subcategory 0, indexed by the record, while dungeon text mode decodes the saved `dunTextData` words. Firestaff has no production event-0x96 handler or `DM2_QUERY_MESSAGE_TEXT` implementation bound to this walk; preserve both text sources and the raw-SKSAVE endian flag. The saved text-span offset alone does not complete selector acquisition. Keep the map UI, selector, and chip renderer partial.
+2026-11-27 magical-map input/text-source correction: although the authenticated PC click-zone table has event `0x96` / rect `0x63`, SKProject `DM2_TRANSMIT_UI_EVENT` excludes event 150 from mapped scripts and `DM2_HANDLE_UI_EVENT` has no event-150 branch; that zone does not open the map. The actual right-panel route is selected when the active hand contains a `DM2_IS_CONTAINER_MAP` object and `v1e0b62==0`: SKProject charges 1 MP, sets `v1d67bc=3`, then calls `DM2_DRAW_MAJIC_MAP` (`SKULLWIN/c_gui_draw.cpp:5640-5740`). M11 F9 remains quick resume. The type-7 selector comes from a DB2 text record on map 0's source start tile, but `DM2_QUERY_MESSAGE_TEXT` has two paths: mode-1/simple-extension-14 text queries GDAT category 3, subcategory 0, indexed by the record, while dungeon text mode decodes the saved `dunTextData` words. Firestaff lacks the production map-container panel transition and renderer; its test-isolated querydb helper does not complete this route. Preserve both text sources and the raw-SKSAVE endian flag. Keep the map UI, selector, and chip renderer partial.
 
 2026-11-27 `DM2_QUERY_MESSAGE_TEXT` helper: the compatibility query module now implements the TextMode/simple-extension-14 GDAT category-3 route and delegates dungeon-text mode through a bounded callback. This is a callback contract only: CMake excludes the querydb transcription from M10 production because its broader callbacks lack authenticated runtime ownership. No selector walk or production map-panel callsite is added; keep this helper out of claims about a working map.
