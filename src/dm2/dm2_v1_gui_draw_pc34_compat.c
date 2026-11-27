@@ -1899,11 +1899,25 @@ void dm2_v1_draw_hand_action_icons(
  * ================================================================ */
 
 void dm2_v1_draw_map_chip(
-    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
+    int32_t record, int32_t tile_x, int32_t map_index, int32_t tile_y,
     int16_t chip_x, int16_t chip_y, int8_t style, int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
     if (!cb) return;
+
+    /* SKWINDOS dm2bye.cpp:26 and SKULLWIN c_gui_draw.cpp:2412
+     * receive record, tile X, map index, tile Y, pixel X, pixel Y,
+     * source chip style, and source flags in this order. The tile/map
+     * owner is not bound yet, so do not substitute map pixels here. */
+    (void)record;
+    (void)tile_x;
+    (void)map_index;
+    (void)tile_y;
+    (void)chip_x;
+    (void)chip_y;
+    (void)style;
+    (void)flags;
+    (void)ctx;
 
     /* SUMMARIZE_STONE_ROOM for the tile */
     if (cb->summarize_stone_room) {
@@ -1968,16 +1982,27 @@ void dm2_v1_guidraw_29ee_1d03(
  * ================================================================ */
 
 void dm2_v1_guidraw_29ee_1946(
-    int32_t map_x, int32_t map_y, int32_t adj_x, int32_t adj_y,
-    int16_t chip_x, int32_t heading, int32_t side, int32_t flags,
+    int32_t record, int32_t party_x, int32_t map_index, int32_t party_y,
+    int16_t heading, int32_t pixel_offset_x, int32_t pixel_offset_y,
+    int32_t flags,
     const DM2_V1_GuiDrawCallbacks *cb, void *ctx)
 {
     if (!cb) return;
 
-    /* Store map navigation state if not restoring */
-    if ((flags & 0x8) == 0) {
-        /* Save map_y, adj_x, adj_y, chip_x, heading, side into ddat */
-    }
+    /* DOS dm2byf.cpp:6588 and SKULLWIN c_gui_draw.cpp:3561 call this
+     * with (record, party X, map index, party Y, facing, pixel X offset,
+     * pixel Y offset, flags). */
+    (void)record;
+    (void)party_x;
+    (void)map_index;
+    (void)party_y;
+    (void)heading;
+    (void)pixel_offset_x;
+    (void)pixel_offset_y;
+
+    /* ReDMCSB/SKProject stores party Y, party X, map index, heading, and
+     * both pixel offsets when flag 0x8 is clear. This adapter has no live
+     * map-state owner yet, so it does not mutate a shadow copy here. */
 
     dm2_v1_guidraw_29ee_00a3(0, cb, ctx);
 
