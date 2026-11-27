@@ -2785,8 +2785,10 @@ parity.
   sensor predicates see the source class. M10 C004 also resolves the moving
   object's F0032 ObjectInfo type through the loaded raw Thing record, matching
   M11's per-kind subtype decoding for scrolls, containers, potions, weapons,
-  armour, and junk. The authentic English v1.2 menu-to-HoC
-  route passes after the changes, but does not verify every later sensor
+  armour, and junk. M10 F0276 now applies F0272 OnceOnly disabling before
+  either local or remote dispatch and mutates both decoded sensor state and
+  raw Type_Data. The authentic English v1.2 menu-to-HoC route passes after the
+  changes, but does not verify every later sensor
   type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.
   ReDMCSB MOVESENS.C F0270's floor C10 local effect now reaches M11 as a

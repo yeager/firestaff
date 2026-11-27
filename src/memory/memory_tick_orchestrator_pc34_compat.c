@@ -10688,13 +10688,14 @@ static void orch_f0267_dispatch_sensor_results_compat(
             !world->things->sensors) {
             continue;
         }
-        if (trigger->isLocal) {
-            if (trigger->sensorDisabled) {
-                world->things->sensors[trigger->sensorIndex].sensorType =
-                    DM1_SENSOR_DISABLED;
-            }
-            continue;
+        /* ReDMCSB MOVESENS.C F0272 disables OnceOnly before dispatching
+         * either F0270's local effect or F0268's remote square event. Keep
+         * the decoded sensor and loaded raw Type_Data in sync on this path. */
+        if (trigger->sensorDisabled) {
+            (void)F0272_SENSOR_DisableOnceOnly_Compat(
+                world, trigger->sensorIndex);
         }
+        if (trigger->isLocal) continue;
         map = &world->dungeon->maps[sourceMapIndex];
         if (!world->dungeon->tiles[sourceMapIndex].squareData ||
             trigger->targetMapX < 0 || trigger->targetMapX >= map->width ||
