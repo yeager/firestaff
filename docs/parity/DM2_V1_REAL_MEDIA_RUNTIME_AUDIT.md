@@ -87,24 +87,28 @@ The shared runtime click transaction is also implemented with rollback-safe
 record and party publication. M11 binds the click events for the authenticated
 PC English/French shared geometry and the FM Towns inventory rectangles.
 
-The supported-edition gap is now Amiga English and large-retail Macintosh
-English. A direct comparison of the authentic DOS English and DOS French
+The supported-edition gap is now the native display/input coordinate contract
+for Amiga English and large-retail Macintosh English. Original Amiga SKUL.FTL
+and Macintosh CODE(8)/DATA(0) independently map events 228–233 to RAW4
+rectangles 0xDD–0xE2 and moneybox slots 0–5. Both authentic M11 profiles
+resolve these six rectangles at y=220, below the current 320x200 surface, so
+the routes must remain disabled until that native surface/input contract is
+implemented. The Mac resource and Amiga LZX regressions lock these binary
+owners, while platform M11 real-media checks lock the rectangle placement.
+A direct comparison of the authentic DOS English and DOS French
 `GRAPHICS.DAT` files found identical complete `INTERFACE_GENERAL/0 RAW4`
 records: 17,588 bytes, SHA-256
 `6dfdb85a7c9cafb51d8add900d1ccb4775658d63888443b1c6da6827aff33573`. The
 shared PC route owner now admits both scanner-authenticated graphics hashes,
 and the real-media owner regression verifies source viewport, movement, and
 moneybox event 228 against both archives. Amiga and Macintosh use separate
-native UI/input owners; the PC matrix cannot establish their routes. The Amiga
-movement-arrow owner is not evidence for inventory event ownership, and the
-Macintosh title/input routes do not establish moneybox hitboxes.
+native UI/input owners; the PC matrix cannot establish their routes.
 
-To close the remaining gap, recover the source `MOUSE_INPUT`
-event-to-rectangle mapping for each platform from its own original
-graphics/data, bind events
-228–233 only after the active moneybox panel is established, and verify held-
-coin deposit, denomination withdrawal, redraw, leader hand, and weight updates
-against each edition's runtime. Until then, retain `PARTIAL` for all
+To close the remaining gap, recover and implement the original Mac and Amiga
+display/input coordinate contract, then bind events 228–233 only after the
+active moneybox panel is established. Verify held-coin deposit, denomination
+withdrawal, redraw, leader hand, and weight updates against each edition's
+runtime. Until then, retain `PARTIAL` for all
 `GET_ITEM_ORDER_IN_CONTAINER`, `DRAW_MONEYBOX`, and `CLICK_MONEYBOX` source
 rows. PC JewelCase, localized Macintosh editions, and Mega CD remain outside
 the current DM2 support matrix.

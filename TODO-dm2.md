@@ -19,11 +19,11 @@ found their complete interface RAW4 records identical: 17,588 bytes, SHA-256
 `6dfdb85a7c9cafb51d8add900d1ccb4775658d63888443b1c6da6827aff33573` for both.
 The shared PC route is now admitted for both scanner-authenticated PC variants;
 the real-media test verifies viewport, movement arrow, and moneybox event 228
-against both archives. The remaining supported-edition gap is Amiga and
-large-retail Macintosh English, whose event/rectangle ownership still needs
-authentication from their own source data. The renderer already consumes
-edition GDAT container ordering; see the moneybox entry below and the real-media
-audit.
+against both archives. Amiga and large-retail Macintosh English native
+event/rectangle owners are now authenticated, but their hitboxes resolve below
+the current M11 surface. Recover their native display/input coordinate
+contract before enabling those routes. The renderer already consumes edition
+GDAT container ordering; see the moneybox entry below and the real-media audit.
 
 2026-11-03 DM2 FM Towns M11 movement controls:
 Authentic Towns GDAT stores the six 29x23 movement-arrow placements in its
@@ -55,9 +55,10 @@ hitboxes. The DOS-English and DOS-French PC GDAT interface RAW4 records are
 byte-identical (17,588 bytes; SHA-256
 `6dfdb85a7c9cafb51d8add900d1ccb4775658d63888443b1c6da6827aff33573`), and
 the real-media input-owner regression admits the common SKWIN event table for
-both original archives. Amiga English and large-retail Macintosh English
-remain open because their event/rectangle ownership has not been authenticated
-from their own source data. Verify deposit, withdrawal, redraw, leader hand and
+both original archives. Amiga English and large-retail Macintosh English have
+authenticated native event/rectangle owners, but their RAW4 zones resolve to
+y=220 below M11's 320x200 surface. Recover their native display/input
+coordinate contract. Verify deposit, withdrawal, redraw, leader hand and
 weight updates on all admitted routes. Keep
 `GET_ITEM_ORDER_IN_CONTAINER`, `DRAW_MONEYBOX`, and `CLICK_MONEYBOX` rows
 PARTIAL. See
@@ -3166,11 +3167,13 @@ moneybox fixture in `data/sksave2.bak`: hero record 3's second hand owns DB9
 `0x2401`, whose chain contains DB10 currency `0x2805` (class2 112). The corpus
 test now asserts that source record chain. A complete deposit/withdrawal has
 not yet been run through the live M11 runtime against this saved state, so
-end-to-end transaction behavior remains unverified. Macintosh and Amiga use
-separate pointer routes and are not wired: M11 currently checks Mac/Amiga hand
-actions, six arrow rectangles and then the C080 viewport, without admitting
-moneybox events 228-233. Mega CD input ownership is unproven. Therefore only
-the PC-English and Towns M11 input routes are closed at the routing level.
+end-to-end transaction behavior remains unverified. Macintosh and Amiga native
+moneybox event owners are authenticated from their retail binaries, but their
+six RAW4 zones resolve at y=220 below M11's 320x200 surface, so those routes
+remain disabled. M11 currently checks Mac/Amiga hand actions, six arrow
+rectangles and then the C080 viewport, without admitting moneybox events
+228-233. Mega CD input ownership is unproven. Therefore only the PC-English
+and Towns M11 input routes are closed at the routing level.
 Keep gameplay parity partial for DOS and SPX v4/v5, and keep Macintosh, Amiga
 and Mega CD partial, until their distinct input owners and original-media
 transaction state are verified.
