@@ -67,6 +67,9 @@ for domain in "${DOMAINS[@]}"; do
         msgmerge --update --quiet --no-wrap --no-fuzzy-matching --backup=none "$catalog" "$pot"
     done
 done
+# Apply reviewed DM1 status strings after msgmerge. The seed script accepts the
+# scratch directory so --check and --update produce identical catalogs.
+FIRESTAFF_PO_DIR="$WORK_PO" python3 "$ROOT/po/dm1_translations_seed.py"
 # Reapply reviewed terminology after msgmerge.  It updates only explicit
 # source-owned entries and leaves unknown player text as an honest fallback.
 python3 "$ROOT/po/refresh_major_language_catalogs.py" --po-dir "$WORK_PO"

@@ -68,3 +68,27 @@ TRANSLATIONS = {
     'zh': ZH,
     'tr': TR,
 }
+
+# Reviewed M11 status text added after the imported 547-entry vocabulary.
+for _language, _translation in {
+    'cs': 'HRA JE ZAMRZLÁ',
+    'da': 'SPILLET ER FRYSET',
+    'de': 'SPIEL EINGEFROREN',
+    'es': 'JUEGO CONGELADO',
+    'fi': 'PELI ON JÄÄDYTETTY',
+    'fr': 'JEU FIGÉ',
+    'hu': 'JÁTÉK FAGYASZTVA',
+    'it': 'GIOCO BLOCCATO',
+    'ja': 'ゲーム一時停止中',
+    'ko': '게임 정지됨',
+    'nl': 'SPEL BEVROREN',
+    'no': 'SPILLET ER FRYST',
+    'pl': 'GRA ZAMROŻONA',
+    'pt': 'JOGO CONGELADO',
+    'ru': 'ИГРА ЗАМОРОЖЕНА',
+    'sv': 'SPELET ÄR FRUSET',
+    'tr': 'OYUN DONDURULDU',
+    'zh': '游戏已冻结',
+    'id': 'PERMAINAN DIBEKUKAN',
+}.items():
+    TRANSLATIONS.setdefault(_language, {})['GAME FROZEN'] = _translation

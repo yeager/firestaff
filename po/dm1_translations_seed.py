@@ -1109,7 +1109,7 @@ def main():
     except ImportError:
         print("Using dm1_translations_seed.py (90 strings x 17 locales)")
         table_dict = TRANSLATIONS
-    po_dir = os.path.dirname(os.path.abspath(__file__))
+    po_dir = os.environ.get('FIRESTAFF_PO_DIR', os.path.dirname(os.path.abspath(__file__)))
     total_updated = 0
     for lang, table in table_dict.items():
         path = os.path.join(po_dir, f'dm1.{lang}.po')
