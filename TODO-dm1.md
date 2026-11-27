@@ -4110,6 +4110,16 @@ and centered “GAME FROZEN” screen; source clocks, food/VBlank timing, and id
 ticks stop while frozen. Complete source layout-record parity and native
 runtime behavior remain unverified.
 
+2026-11-27 IIGS C006 layout source recheck: ReDMCSB COORD.C F0641 calls
+F0640 with `C696_GRAPHIC_LAYOUT=696` (DEFS.H:2265), and IIGS C145/C147
+reach `TEXT.C F0649` with zone C006. Reading the authenticated original G20
+disk in memory shows its `GRAPHICS.GAME` header declares 575 records, so
+record 696 cannot be resolved through the ordinary IIGS graphics table used
+by Firestaff's bounded reader. Do not claim that the existing PC34 viewport
+centering helper reproduces the IIGS F0635 record. Trace whether the original
+IIGS startup establishes a separate layout owner or source remap before
+changing the current render path; native C006 placement remains partial.
+
 2026-11-27 IIGS rest tick correction: the first control wiring advanced
 F0884/F0890 time without invoking M11's F0331 champion effects. The IIGS rest
 idle path now runs the existing champion-time, creature-tick and death checks

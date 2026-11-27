@@ -79045,9 +79045,11 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
         m11_iigs_draw_thing_icon(state,native,state->leaderHandThing,state->pointerX,state->pointerY);
     /* ReDMCSB COMMAND.C F0379:1996-2034 clears the native 224x136
      * viewport and, for I34E, calls F0649 with C006, cyan on black,
-     * "WAKE UP". TEXT.C F0649:1954-1969 centers using the source GS
-     * six-pixel font; the C006 viewport-center placement is x=91 and
-     * top=65, expressed here as F0040's baseline at screen y=102. */
+     * "WAKE UP". TEXT.C F0649:1954-1969 resolves C006 through F0635
+     * and the six-pixel GS font. Firestaff currently centers in the
+     * viewport with the PC34 geometry helper; F0635 parity is unresolved:
+     * COORD.C F0641 requests C696=696, but the authenticated IIGS
+     * GRAPHICS.GAME header contains 575 records. */
     if (state->resting || state->dm1IigsFrozen) {
         DM1_V1_LayoutZoneRectPc34 centeredText;
         const char* screenText = state->dm1IigsFrozen
