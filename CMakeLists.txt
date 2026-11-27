@@ -5449,7 +5449,6 @@ list(REMOVE_ITEM M10_SOURCES
     # exists; it must not offer a synthetic movement route from M10.
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_perform_move_exec_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d2l_d2r_wall_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c"
@@ -7344,6 +7343,9 @@ list(REMOVE_ITEM M10_SOURCES
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    # The production Atari ST CSB raster decoder rejects executable
+    # GRAPHICS.DAT records through this source-backed item table.
+    src/csb/csb_hidden_code_skip_table.c
     # Bounds-checked decoder for the DM1 SNES ROMDUNGEON H03 slots. SNES
     # runtime selection remains gated until its full data adapter is ready.
     src/dm1/dm1_snes_h03.c

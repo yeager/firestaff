@@ -11,6 +11,15 @@ expanded rect 99. Firestaff’s authenticated PC matrix supplies rect `0x63`, an
 its M11 event switch has no event-150 transaction. Keep the source variants
 separate until each native rect and caller route is bound.
 
+2026-11-27 moneybox click dispatch audit correction: SKProject's live M11
+caller binds events 228–233 for PC English and routes authenticated FM Towns
+RAW4 inventory rectangles through the same rollback-capable transaction. The
+older source-audit wording “generic click callback is not wired” is stale. The
+remaining supported-edition gap is PC French, Amiga and large-retail Macintosh
+English; each needs event/rectangle ownership authenticated from its own data
+before its click route can be enabled. The renderer already consumes edition
+GDAT container ordering; see the moneybox entry below and the real-media audit.
+
 2026-11-03 DM2 FM Towns M11 movement controls:
 Authentic Towns GDAT stores the six 29x23 movement-arrow placements in its
 RAW4 `QUERY_BLIT_RECT` table; they are not present in the expanded-rectangle
@@ -32,12 +41,18 @@ the source palette/blit operations through item-record callbacks with an
 optional edition-aware image resolver. No production DM2 caller binds the
 helper to live hand-record targets; all four variant rows remain PARTIAL.
 
-2026-11-02 SKProject `GET_ITEM_ORDER_IN_CONTAINER`:
-The asset-loader receipt reads edition GDAT container entry 0x40, parses the
-digit ranges and J-prefixed +0x100 IDs, then resolves them through the ordered
-currency table. The live M11 moneybox renderer calls it to build source-slot
-coin order. The generic click callback is not wired to that same transaction,
-and per-platform click behavior remains unverified. Keep source rows PARTIAL.
+2026-11-27 SKProject moneybox edition coverage:
+The live M11 renderer reads edition GDAT container entry 0x40, orders source
+currency items, counts DB10 coin charges and paints the moneybox. Its shared
+click transaction commits deposit/withdraw record changes with rollback-safe
+publication. M11 binds authenticated PC-English and FM-Towns hitboxes. PC
+French, Amiga English, and large-retail Macintosh English remain open because
+their event/rectangle ownership has not been authenticated from each edition's
+own data; PC-English geometry must not be reused as evidence. Recover and bind
+events 228–233 per edition, then verify deposit, withdrawal, redraw, leader
+hand and weight updates. Keep `GET_ITEM_ORDER_IN_CONTAINER`, `DRAW_MONEYBOX`,
+and `CLICK_MONEYBOX` rows PARTIAL. See
+`docs/parity/DM2_V1_REAL_MEDIA_RUNTIME_AUDIT.md`.
 
 2026-11-02 SKProject `DRAW_CONTAINER_PANEL` item slots:
 Firestaff's callback now obtains each occupied slot's item ID through an

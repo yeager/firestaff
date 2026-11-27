@@ -47,6 +47,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_graphics_hidden_item_skip_pc34_compat.h"
 #include "csb_hint_oracle_atari_runtime.h"
 #include "csb_v1_atari_save_decode_pc34_compat.h"
 #include "csb_v1_fmtowns_cd.h"
@@ -4477,9 +4478,32 @@ static int m11_csb_decode_active_source_graphic(
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_receipt)
 {
+    CSB_V1_HiddenPlatform hiddenPlatform = CSB_V1_HIDDEN_PLATFORM_PC34;
+    if (out_pixels) *out_pixels = NULL;
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !profile->graphics_verified || !profile->graphics_path[0]) {
         return 0;
     }
+    switch (profile->variant_id) {
+        case CSB_V1_VARIANT_ST20_EN:
+        case CSB_V1_VARIANT_ST21_EN:
+            hiddenPlatform = CSB_V1_HIDDEN_PLATFORM_ATARI_ST;
+            break;
+        case CSB_V1_VARIANT_AMIGA31_EN:
+        case CSB_V1_VARIANT_AMIGA31_MULTI:
+        case CSB_V1_VARIANT_AMIGA35_EN:
+        case CSB_V1_VARIANT_AMIGA35_MULTI:
+            hiddenPlatform = CSB_V1_HIDDEN_PLATFORM_AMIGA;
+            break;
+        default:
+            break;
+    }
+    if (hiddenPlatform != CSB_V1_HIDDEN_PLATFORM_PC34 &&
+        graphic_index <= UINT16_MAX &&
+        csb_v1_graphics_hidden_should_skip_item(hiddenPlatform,
+            (uint16_t)graphic_index).should_skip) return 0;
     if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
         profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
         return csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
@@ -30721,6 +30745,29 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB STARTUP1.C:229-238 seeds G0349 with the first four bytes returned
+ * by ReadTimeHex. Apple's IIgs Date/Time layout is second, minute, hour, and
+ * year-since-1900 in bytes 0..3. The retail OMF stores those first two words
+ * at $0084/$0086, the same direct-page long used by F0027 at bank 02:$05B2. */
+static uint32_t m11_iigs_readtimehex_seed(void)
+{
+    SDL_Time now;
+    SDL_DateTime dateTime;
+
+    if (!SDL_GetCurrentTime(&now) ||
+        !SDL_TimeToDateTime(now, &dateTime, true) ||
+        dateTime.year < 1900 || dateTime.year > 2155 ||
+        dateTime.second < 0 || dateTime.second > 59 ||
+        dateTime.minute < 0 || dateTime.minute > 59 ||
+        dateTime.hour < 0 || dateTime.hour > 23) {
+        return 0u;
+    }
+    return (uint32_t)dateTime.second |
+        ((uint32_t)dateTime.minute << 8u) |
+        ((uint32_t)dateTime.hour << 16u) |
+        ((uint32_t)(dateTime.year - 1900) << 24u);
+}
+
 int M11_GameView_StartIigs(M11_GameViewState* state,
     const char* selectedRoot, int expectedVersion)
 {
@@ -30731,6 +30778,7 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     unsigned char *dungeon = NULL, *expanded = NULL;
     size_t graphicsSize = 0, programSize = 0, startSize = 0, dungeonSize = 0;
     size_t expandedSize = 0, produced = 0;
+    uint32_t iigsRandomSeed;
     char root[ASSET_PATH_MAX];
     const char *failureStage = "input";
     int result = 0, debugHUD;
@@ -30741,6 +30789,9 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
     state->showDebugHUD = debugHUD;
+    /* STARTUP1 reads the IIgs clock before opening the world data. Capture
+     * the corresponding seed at launch entry, before media authentication. */
+    iigsRandomSeed = m11_iigs_readtimehex_seed();
 #define M11_IIGS_REQUIRE(condition, stage) do { \
         if (!(condition)) { failureStage = (stage); goto cleanup; } \
     } while (0)
@@ -30787,7 +30838,7 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     }
     failureStage = "world-init";
     if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
-            (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
+            (int)expandedSize, iigsRandomSeed, metadata.creature_info, 27U,
             &state->world)) goto cleanup;
     /* Both IIGS source revisions share the authenticated graphics bank. The
      * source MEDIA278/346 policy is shared too: C009 has no later numeric
@@ -38779,19 +38830,16 @@ static int m11_iigs_select_front_candidate(M11_GameViewState* state)
     return 1;
 }
 
-static int m11_iigs_random_statistic(void)
+static int m11_iigs_random_statistic(M11_GameViewState* state)
 {
-    const uint8_t horizontalCounter =
-        (uint8_t)SDL_GetPerformanceCounter();
-    uint8_t folded = horizontalCounter;
-    int bit;
-    /* BASE.C F0027 MEDIA351 reads the GS HORIZCNT register, then folds the
-     * original byte through five LSR/EOR steps and returns one bit. The
-     * host has no Apple IIgs counter; use the low byte of SDL's monotonic
-     * performance counter as the corresponding live hardware sample. */
-    for (bit = 0; bit < 5; ++bit)
-        folded = (uint8_t)((folded >> 1) ^ horizontalCounter);
-    return (int)(folded & 1U) % LIFECYCLE_STAT_COUNT;
+    if (!state) return 0;
+    /* REVIVE.C F0282 calls M002_RANDOM(7), mapped by DEFS.H to F0027.
+     * BASE.C F0027's MEDIA202 branch includes G20E/G21E and advances the
+     * shared G0349 LCG. The extracted DUNGEON.MASTER OMF confirms the same
+     * 0xBB40E62D multiplier and +11 update at code bank 02 offset $05A0;
+     * HORIZCNT is only the separate F0028/F0029 path. */
+    return F0732_COMBAT_RngRandom_Compat(
+        &state->world.masterRng, LIFECYCLE_STAT_COUNT);
 }
 
 static int m11_iigs_finish_candidate(M11_GameViewState* state,
@@ -38858,13 +38906,13 @@ static int m11_iigs_finish_candidate(M11_GameViewState* state,
          * all 20 skill records are cleared, and twelve M002_RANDOM(7)
          * draws increment the selected statistic's current and maximum.
          * The later S20E halving rule is not compiled for MEDIA351 G20E/G21E.
-         * MEDIA351 BASE.C F0027 samples HORIZCNT and yields one bit; M11's
-         * helper uses a monotonic host-counter sample at that boundary. */
+         * The extracted IIGS executable confirms F0027's source LCG. M11
+         * advances the same session master RNG once per M002_RANDOM(7) call. */
         memset(lifecycle->skills20, 0, sizeof(lifecycle->skills20));
         memset(champion->skillLevels, 0, sizeof(champion->skillLevels));
         memset(champion->skillExperience, 0, sizeof(champion->skillExperience));
         for (draw = 0; draw < 12; ++draw) {
-            statistic = m11_iigs_random_statistic();
+            statistic = m11_iigs_random_statistic(state);
             ++lifecycle->statistics[statistic][LIFECYCLE_STAT_CURRENT];
             ++lifecycle->statistics[statistic][LIFECYCLE_STAT_MAXIMUM];
             if (statistic > LIFECYCLE_STAT_LUCK) {

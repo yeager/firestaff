@@ -1496,7 +1496,9 @@ static void init_save_header(struct GameWorld_Compat* w) {
     w->saveHeader.sectionCount = SAVEGAME_SECTION_COUNT;
 }
 
-int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed) {
+static int world_init_default_with_seed_policy_compat(
+    struct GameWorld_Compat* world, uint32_t seed, int preserveZeroSeed)
+{
     int i;
     if (!world) return 0;
     /* Preserve any dungeon pointers the caller set up before init. */
@@ -1525,7 +1527,9 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     world->pendingCombatTargetReceipt = 0;
 
     F0720_TIMELINE_Init_Compat(&world->timeline, 0);
-    F0730_COMBAT_RngInit_Compat(&world->masterRng, seed ? seed : 1u);
+    F0730_COMBAT_RngInit_Compat(
+        &world->masterRng,
+        preserveZeroSeed ? seed : (seed ? seed : 1u));
     memset(&world->party, 0, sizeof(world->party));
     for (i = 0; i < CHAMPION_MAX_PARTY; i++)
         F0600_CHAMPION_InitEmpty_Compat(&world->party.champions[i]);
@@ -1546,6 +1550,10 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
 
     init_save_header(world);
     return 1;
+}
+
+int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed) {
+    return world_init_default_with_seed_policy_compat(world, seed, 0);
 }
 
 int F0882_WORLD_InitFromDungeonDatWithResult_Compat(
@@ -1701,7 +1709,9 @@ static int world_init_from_dungeon_dat_buffer_compat(
     outWorld->ownsDungeon = 1;
     outWorld->dungeonFingerprint = dungeon_file_fingerprint(
         "dm1-fmtowns-dungeon-buffer");
-    if (!F0881_WORLD_InitDefault_Compat(outWorld, seed)) goto fail;
+    if (!(nativeRows
+              ? world_init_default_with_seed_policy_compat(outWorld, seed, 1)
+              : F0881_WORLD_InitDefault_Compat(outWorld, seed))) goto fail;
     if (nativeRows && !orch_bind_iigs_creature_profile(outWorld, nativeRows)) goto fail;
     F0501_DUNGEON_DecodePartyLocation_Compat(
         dungeon->header.initialPartyLocation, &direction, &py, &px);

@@ -77,30 +77,35 @@ moves from map 0 `(1,8)` to `(1,7)` while retaining direction 0. The complete
 this pointer route. This evidence covers movement arrows only; Amiga formation
 pointer actions and other Amiga HUD interactions remain open.
 
-### Right-panel moneybox draw ownership (2026-11-02)
+### Moneybox input and edition coverage (2026-11-27)
 
-SKProject `SKWINSPX/src/v4/skguidrw.cpp::DRAW_MONEYBOX` draws the container
-frame from `CONTAINERS/cls2/0x10`, resolves up to ten slot denominations
-through `GET_ITEM_ORDER_IN_CONTAINER`, and scatters up to 32 denomination
-GDAT sprites per slot using the source `table1d275a` offsets and clipping to
-`glbScreenBufferRightPanel.rc2`. The v5 path
-`SKWINSPX/src/v5/skguidr5.cpp::DM2_DRAW_MONEYBOX` has the same denomination,
-sprite, and scatter behavior. Firestaff now resolves the active action-hand
-moneybox ObjectID, `LOAD_MISCITEM` denomination order, the container's `0x40`
-slot text and coin charges, then sends that state to the M11 screen-owned
-renderer. The renderer uses the source frame rect `0x5c`, denomination rects
-`0xdd + slot`, and expanded rect 11 for clipping. The scatter offsets match
-the source table. This closes the missing runtime draw owner. It does not
-establish interactive parity yet: SKProject `CLICK_MONEYBOX` and
-`TAKE_COIN_FROM_WALLET` still need to be traced through M11 for deposit and
-withdraw. The existing wallet transcription is callback-driven; a live owner
-must keep both `DM2_V1_RecordPoolSet` and the corresponding `DungeonData`
-records/parent links coherent. Deposit can merge and deallocate a held DB10
-coin, while withdrawal can decrement a DB10 charge or detach its final coin;
-the source allocation/deallocation queue and leader-hand publication must be
-part of that same transaction. M11 currently has no such owner bound to
-events 228–233. The render and pointer routes have not been verified on DOS,
-Amiga, FM Towns, and Macintosh. Full moneybox parity remains **open**.
+The current M11 moneybox renderer resolves the active action-hand container,
+parses the selected edition's GDAT container entry `0x40`, orders currency
+items from `LOAD_MISCITEM`, counts the source DB10 coin charges, and paints
+with the source frame, denomination images, scatter offsets, and clipping.
+The shared runtime click transaction is also implemented with rollback-safe
+record and party publication. M11 binds the click events for the authenticated
+PC English geometry and the FM Towns inventory rectangles.
+
+The source review identifies the remaining supported-edition gap as PC French,
+Amiga English, and large-retail Macintosh English. PC French has authentic
+local media, but the only relocated `MOUSE_INPUT` rectangle matrix in Firestaff
+is locked to PC English `GRAPHICS.DAT` MD5
+`25247ede4dabb6a71e5dabdfbcd5907d`; the French graphics must be independently
+decoded and its event/rectangle table authenticated before those coordinates
+can be reused. Amiga and Macintosh use separate native UI/input owners; the
+PC matrix cannot establish their routes. The Amiga movement-arrow owner is not
+evidence for inventory event ownership, and the Macintosh title/input routes
+do not establish moneybox hitboxes.
+
+To close this gap, recover the source `MOUSE_INPUT` event-to-rectangle mapping
+for each supported edition from its own original graphics/data, bind events
+228–233 only after the active moneybox panel is established, and verify held-
+coin deposit, denomination withdrawal, redraw, leader hand, and weight updates
+against each edition's runtime. Until then, retain `PARTIAL` for all
+`GET_ITEM_ORDER_IN_CONTAINER`, `DRAW_MONEYBOX`, and `CLICK_MONEYBOX` source
+rows. PC JewelCase, localized Macintosh editions, and Mega CD remain outside
+the current DM2 support matrix.
 
 ## Interpretation boundary
 

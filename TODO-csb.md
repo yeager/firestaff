@@ -1,5 +1,14 @@
 # Firestaff TODO — CSB
 
+2026-11-27 CSB hidden-code raster gate: the live M11 source-graphic provider
+now maps authenticated Atari ST and Amiga editions to the
+Greatstone/CSBWin-backed hidden-code table before image decoding. Known code
+items are rejected, while normal Atari items retain the DMCSB1 LZW/IMAGE1
+path. The existing skip-table and raw-loader checks cover the table and
+source records. CMake configuration and syntax-only compilation pass for the
+changed production units; the full application link and original interactive
+routes remain unverified. CSB viewport and all-platform parity remain open.
+
 2026-11-01 follow-up to the missing Amiga intro report: the A31E English
 no-game-menu launch also skipped SWSH because M11 incorrectly required the
 generic `dataDir` argument even though this menu route supplies the matched

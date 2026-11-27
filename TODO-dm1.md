@@ -4132,9 +4132,43 @@ Original-media runtime verification remains outstanding.
 entry, all 20 skill records cleared, and twelve M002_RANDOM(7) statistic
 increments. MEDIA351 does not compile the later S20E vital-halving rules.
 M11 now opens C027 with the authenticated GS font and routes rename text and
-controls. Its twelve statistic selections use the low bit of SDL's monotonic
-performance counter as a host stand-in for the GS HORIZCNT sample used by
-MEDIA351 BASE.C F0027; this preserves the source routine's one-bit result but
-is not random-sequence parity. The M11 translation unit compiles; original-
-media runtime verification remains outstanding, so this does not prove full
-reincarnation or campaign parity.
+controls. The twelve statistic selections advance the shared LCG once per
+`M002_RANDOM(7)` call. Original-media runtime verification remains outstanding,
+so this does not prove full reincarnation or campaign parity.
+
+2026-11-27 installed IIgs media identity follow-up: the local
+`Dungeon-Master_Apple-IIgs_EN.zip` contains nested 2IMG disks, not the `.7z`
+archive of `.po` members expected by `dm1_v1_iigs_dungeon_real_media.sh`.
+CiderPress II exported the primary image's sector data without changing it;
+its `DUNGEON.GAME` and `DUNGEON.BONUS` match the test's source MD5s, while its
+`DUNGEON.MASTER` is 232,158 bytes with MD5 `3265c912344d847a628e8e27e481f17a`
+(SHA-256 `46abaf65e3265cf305969b147abf322624762a823255ebf341c3f8d284d18107`).
+The current metadata adapter only admits G20 `51b9d22c7418651ee49ad77f37c80a3c`
+and G21 `eccc49e7b29ee233cfb10615e8ec86f3`, so this installed build cannot
+be assigned either program profile from the current evidence. Do not weaken
+its hash gate or count the locked real-media regression as passing; establish
+the nested dump's provenance/version and compare its program-owned tables
+before adding an authenticated variant or test route.
+
+2026-11-27 IIGS reincarnation RNG follow-up: `DEFS.H:1` maps
+`M002_RANDOM(7)` to F0027, whose `BASE.C:1694-1695` MEDIA202 branch includes
+G20E/G21E. The HORIZCNT folds at `BASE.C:1731-1754` and `1779-1802` belong to
+F0028/F0029 and are not used by reincarnation. The authentic
+`DUNGEON.MASTER` OMF was extracted from the local G20E image and disassembled:
+code bank 02 offset `$05A0` confirms the shared `0xBB40E62D` LCG and `+11`
+advance, while `$05F2`/`$0627` contain the separate HORIZCNT helpers. M11 now
+uses `F0732_COMBAT_RngRandom_Compat` on its session RNG for each of the twelve
+seven-way draws. This confirms algorithm and draw count; original-media
+reincarnation input/runtime verification and exact global seed/call-order
+parity remain outstanding. ReDMCSB BASE.C:164-167 declares the G20E/G21E
+global in zero-initialized storage. STARTUP1.C:229-238 then calls
+`ReadTimeHex` and stores its first two words to the RNG global; OMF offsets
+`03/$C939-$C945` show those writes to `$0084/$0086`, which F0027 uses as its
+32-bit state at `02/$05B2`. The IIgs time structure's first four bytes are
+seconds, minutes, hours, and year since 1900. M11 now seeds the IIGS world
+from those local-time fields and preserves seed zero through the native
+world initializer without changing generic PC34 zero-to-one behavior. The
+source F0280 candidate route's two `M003_RANDOM(256)` food/water draws at
+REVIVE.C:184-185 are also present in Firestaff. Exact parity still requires
+an original-media C161 run to compare all F0027 draws between startup,
+F0280, and the final rename/accept action.

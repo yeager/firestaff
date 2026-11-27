@@ -40,9 +40,12 @@ static int rejected(const uint8_t *source, size_t size, uint8_t *guarded, size_t
 static int check_native_profile(const uint8_t *body, size_t size,
     const DM1_V1_IigsMetadata *metadata, const struct GameWorld_Compat *control) {
     struct GameWorld_Compat *native=calloc(1,sizeof(*native)), *clone=calloc(1,sizeof(*clone));
+    struct GameWorld_Compat *zeroSeed=calloc(1,sizeof(*zeroSeed)),
+        *oneSeed=calloc(1,sizeof(*oneSeed));
+    struct GameWorld_Compat defaultZeroSeed;
     DM1_V1_IigsCreatureInfo copied[27];
-    int loaded=0, cloned=0, result=0;
-    REQUIRE(native && clone,"bounded native profile worlds");
+    int loaded=0, cloned=0, zeroLoaded=0, oneLoaded=0, result=0;
+    REQUIRE(native && clone && zeroSeed && oneSeed,"bounded native profile worlds");
     memcpy(copied,metadata->creature_info,sizeof(copied));
     REQUIRE(!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(body,(int)size,0xF1A5u,copied,26u,native) &&
         !native->iigsCreatureProfileBound,"native constructor requires all 27 original creature rows");
@@ -52,6 +55,17 @@ static int check_native_profile(const uint8_t *body, size_t size,
         native->party.mapX==control->party.mapX && native->party.mapY==control->party.mapY &&
         memcmp(native->iigsCreatureInfo,metadata->creature_info,sizeof(copied))==0,
         "actual native world owns authentic creature rows independently of caller lifetime");
+    zeroLoaded=F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
+        body,(int)size,0u,metadata->creature_info,27u,zeroSeed);
+    oneLoaded=F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(
+        body,(int)size,1u,metadata->creature_info,27u,oneSeed);
+    REQUIRE(zeroLoaded && oneLoaded &&
+        zeroSeed->masterRng.seed != oneSeed->masterRng.seed,
+        "native IIGS constructor preserves zero as an RNG seed distinctly from one");
+    memset(&defaultZeroSeed,0,sizeof(defaultZeroSeed));
+    REQUIRE(F0881_WORLD_InitDefault_Compat(&defaultZeroSeed,0u) &&
+        defaultZeroSeed.masterRng.seed==1u,
+        "generic world initialization retains the non-IIGS zero-to-one seed policy");
     for (int i=0; i<27; ++i) {
         const DM1_V1_IigsCreatureInfo *r=&metadata->creature_info[i];
         struct DM1CreatureInfo_Compat actual, pc, baseline;
@@ -90,8 +104,10 @@ static int check_native_profile(const uint8_t *body, size_t size,
     result=1;
 cleanup:
     if (cloned) F0883_WORLD_Free_Compat(clone);
+    if (oneLoaded) F0883_WORLD_Free_Compat(oneSeed);
+    if (zeroLoaded) F0883_WORLD_Free_Compat(zeroSeed);
     if (loaded) F0883_WORLD_Free_Compat(native);
-    free(clone); free(native); return result;
+    free(oneSeed); free(zeroSeed); free(clone); free(native); return result;
 }
 
 static int check_world(const uint8_t *source, size_t size, const OriginalWorld *expected,
