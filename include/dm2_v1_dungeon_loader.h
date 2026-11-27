@@ -1791,6 +1791,21 @@ int dm2_v1_dungeon_c_light_stone_room_receipt_for_direction(
 int dm2_v1_dungeon_c_light_class34_receipt(
     const DM2_V1_DungeonData *d, int level, int x, int y,
     int direction, DM2_V1_CLightStoneRoomReceipt *out);
+/* Source-shaped eight-word map-chip summary for the record-independent
+ * class-3 branch and the direction-matching class-4 branch. Class-4 side
+ * mismatch requires the separate DB-record decoration query and is rejected. */
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    int direction;
+    uint8_t tile_type;
+    uint16_t words[8];
+} DM2_V1_MagicMapTileSummaryReceipt;
+int dm2_v1_dungeon_magic_map_class34_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y, int direction,
+    DM2_V1_MagicMapTileSummaryReceipt *out);
 /* Bounded SUMMARIZE_STONE_ROOM branch for a class-5 DB1->DB3(0x27)->DB4
  * chain whose actuator cannot decorate this map and whose map GDAT 0x6b
  * is absent. The source summary retains ceiling word FF; a following

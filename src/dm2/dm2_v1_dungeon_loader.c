@@ -7254,6 +7254,91 @@ int dm2_v1_dungeon_c_light_class34_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_magic_map_class34_summary(
+    const DM2_V1_DungeonData *d, int level, int x, int y, int direction,
+    DM2_V1_MagicMapTileSummaryReceipt *out)
+{
+    DM2_V1_MagicMapTileSummaryReceipt receipt;
+    int raw;
+    int first;
+    unsigned tile_class;
+    unsigned side_bit;
+    unsigned heading_side;
+    uint16_t link;
+    uint16_t seen[256];
+    unsigned seen_count = 0u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!d || direction < 0 || direction > 3) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (raw < 0 || raw > 0xff || first < -1 ||
+        first == (int)DM2_THING_NULL_MARKER ||
+        (d->square_bytes == 1 && (raw & 0x10) != 0 && first < 0)) {
+        return 0;
+    }
+
+    tile_class = (unsigned)raw >> 5;
+    if (tile_class != 3u && tile_class != 4u) return 0;
+    side_bit = ((unsigned)raw >> 3) & 1u;
+    heading_side = (unsigned)direction & 1u;
+    if (tile_class == 4u && side_bit != heading_side) {
+        /* SKULLWIN/c_gui_vp.cpp:2687-2703 invokes
+         * DM2_query_0cee_1a46 on the neighboring tile's record chain here.
+         * Do not substitute the C_LIGHT receipt: it does not retain the
+         * source's eight-word mutations. */
+        return 0;
+    }
+
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = direction;
+    receipt.tile_type = (uint8_t)tile_class;
+    receipt.words[0] = tile_class == 3u
+        ? (uint16_t)(0x12u + (side_bit != heading_side ? 1u : 0u))
+        : 0x10u;
+    receipt.words[1] = (uint16_t)raw;
+    receipt.words[2] = first < 0 ? DM2_THING_END_MARKER : (uint16_t)first;
+    receipt.words[3] = tile_class == 3u
+        ? (uint16_t)(raw & 0x04) : (uint16_t)(raw & 0x07);
+    receipt.words[4] = tile_class == 4u
+        ? (first < 0 ? DM2_THING_END_MARKER : (uint16_t)first)
+        : 0x00ffu;
+    receipt.words[5] = 0x00ffu;
+    receipt.words[6] = 0x00ffu;
+    receipt.words[7] = 0u;
+
+    /* SKULLWIN/c_gui_vp.cpp:2750-2765 filters DB0..DB3 from the
+     * original tile root before publishing summary word 2. */
+    link = receipt.words[2];
+    while (link != DM2_THING_END_MARKER) {
+        unsigned record_type;
+        int next;
+        if (link == DM2_THING_NULL_MARKER || seen_count >= 256u ||
+            !dm2_v1_dungeon_record_list_traversal_allowed(d)) {
+            return 0;
+        }
+        for (unsigned i = 0u; i < seen_count; ++i) {
+            if (seen[i] == link) return 0;
+        }
+        seen[seen_count++] = link;
+        record_type = ((unsigned)link >> 10) & 0x0fu;
+        if (record_type > 3u) break;
+        if (!dm2_v1_dungeon_get_thing_record(d, link, NULL, NULL, NULL))
+            return 0;
+        next = dm2_v1_dungeon_get_next_thing(d, link);
+        if (next < 0 || next == (int)link) return 0;
+        link = (uint16_t)next;
+    }
+    receipt.words[2] = link;
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
 int dm2_v1_dungeon_c_light_class5_sensor_creature_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     int level, int x, int y, DM2_V1_CLightStoneRoomReceipt *out)
