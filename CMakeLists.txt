@@ -5442,9 +5442,6 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c"
-    # Hidden executable item filtering is a read-only safety helper until a
-    # source-backed runtime graphics consumer owns its admitted result.
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c"
     # This legacy PERFORM_MOVE executor classifies caller-authored plan,
     # creature and door inputs.  No GAME_LOAD session owns the c_map,
     # c_hero, c_tim and moverec transaction it would need in product.

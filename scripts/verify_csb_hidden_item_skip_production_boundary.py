@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep the unconsumed CSB hidden-item safety loader out of Firestaff M10."""
+"""Keep the source-backed CSB hidden-item decision available to M11."""
 
 from pathlib import Path
 import sys
@@ -26,18 +26,22 @@ def target_names_source(target: str) -> bool:
 
 def main() -> int:
     source_pos = CMAKE.find(SOURCE)
+    if source_pos < 0:
+        return fail("hidden-item decision source is missing from CMake")
     exclusion_start = CMAKE.rfind("list(REMOVE_ITEM M10_SOURCES", 0, source_pos)
     exclusion_end = CMAKE.find("list(FILTER M10_SOURCES", exclusion_start)
     exclusion = CMAKE[exclusion_start:exclusion_end]
-    if exclusion_start < 0 or exclusion_end < 0 or SOURCE not in exclusion:
-        return fail("hidden-item safety loader is not excluded from M10")
+    if exclusion_start >= 0 and exclusion_end >= 0 and SOURCE in exclusion:
+        return fail("M11's authenticated hidden-item decision is excluded from M10")
+    if "csb_v1_graphics_hidden_should_skip_item" not in (ROOT / "src/engine/m11_game_view.c").read_text(encoding="utf-8"):
+        return fail("M11 must consume the source-backed hidden-item decision")
     if CMAKE.count(CONTRACT_DEFINE) != 2:
         return fail("hidden-item contract mode must be restricted to its test and real-media probe")
     if not target_names_source("test_csb_v1_graphics_hidden_item_skip"):
         return fail("the focused hidden-item regression must compile its helper explicitly")
     if not target_names_source("firestaff_csb_v1_real_asset_launch_probe"):
         return fail("the real-media launch probe must compile its helper explicitly")
-    print("PASS: unconsumed CSB hidden-item safety loader is test/probe-only")
+    print("PASS: M11 consumes the source-backed CSB hidden-item decision")
     return 0
 
 
