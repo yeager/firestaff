@@ -4099,3 +4099,10 @@ open by hand. The metadata adapter reads the exact G0456 span from the
 authenticated G20/G21 program owner. This closes the IIGS chest interaction
 code-wiring gap; native runtime, visual, and complete campaign parity remain
 unverified.
+
+2026-11-27 Apple IIGS rest controls: C145 in the authenticated G0449 mouse
+table now enters the shared rest state, and Return or a left click in the
+G0450 viewport wakes the party. Idle source ticks use the existing F0331
+recovery cadence while resting and skip the movement pipeline. This wires the
+controls to existing DM1 runtime owners; IIGS rest-screen artwork, Esc/freeze,
+and native runtime behavior remain unverified.

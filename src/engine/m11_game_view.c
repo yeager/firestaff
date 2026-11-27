@@ -35485,7 +35485,14 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (state->dm1IigsActive && (state->candidateMirrorPanelActive || state->v1FoodCommandPending))
         return M11_GAME_INPUT_IGNORED;
     if (state->dm1IigsActive) {
-        (void)m11_process_dm1_v1_pipeline_tick(state,"WAIT");
+        /* ReDMCSB GAMELOOP.C F0320 and CHAMPION.C F0309/F0313 own the
+         * resting party's source-tick recovery. Do not run the movement
+         * pipeline while the G0450/G0460 command list is active. */
+        if (state->resting) {
+            m11_apply_tick(state, CMD_NONE, "WAIT");
+        } else {
+            (void)m11_process_dm1_v1_pipeline_tick(state,"WAIT");
+        }
         return M11_GAME_INPUT_REDRAW;
     }
     /* F0349's synchronous source command does not run the game loop while
@@ -39964,6 +39971,41 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
+        /* ReDMCSB COMMAND.C G0460:308-312 admits Return (C146) while
+         * resting. Preserve idle ticks for the native rest recovery path,
+         * but do not dispatch other commands through the ordinary world list. */
+        if (state->resting) {
+            if (input == M12_MENU_INPUT_ACCEPT) {
+                m11_wake_party_from_rest(state);
+                m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                              (unsigned int)state->world.gameTick);
+                m11_set_status(state, "REST", "PARTY AWAKE");
+                snprintf(state->inspectTitle, sizeof(state->inspectTitle), "AWAKE");
+                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                         "REST ENDED. RESUME EXPLORING.");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input != M12_MENU_INPUT_NONE &&
+                input != M12_MENU_INPUT_REST_TOGGLE)
+                return M11_GAME_INPUT_IGNORED;
+        }
+        /* ReDMCSB COMMAND.C C145 switches to G0450/G0460. Keep all three
+         * rest-state mirrors synchronized for the native F0380/F0198 ticks. */
+        if (input == M12_MENU_INPUT_REST_TOGGLE) {
+            state->mapOverlayActive = 0;
+            state->inventoryPanelActive = 0;
+            state->spellPanelOpen = 0;
+            state->resting = 1;
+            state->world.partyIsResting = 1;
+            state->world.lifecycle.rest.isResting = 1;
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
+                          (unsigned int)state->world.gameTick);
+            m11_set_status(state, "REST", "PARTY IS RESTING");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "HP AND STAMINA RECOVER SLOWLY. PRESS ENTER TO WAKE.");
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY && input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY)
             return m11_toggle_champion_inventory(state,input-M12_MENU_INPUT_CHAMPION_1_INVENTORY);
         if (input == M12_MENU_INPUT_CYCLE_CHAMPION)
@@ -42925,6 +42967,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (!state->active || state->v1FoodCommandPending || M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
         state->pointerX = x; state->pointerY = y;
+        /* ReDMCSB COMMAND.C G0450:162-171 maps left clicks in the native
+         * 224x136 viewport to C146 while the party is resting. */
+        if (state->resting) {
+            if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) &&
+                x >= 0 && x < 224 && y >= 33 && y < 169) {
+                return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (state->candidateMirrorPanelActive) {
             if (!(buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) return M11_GAME_INPUT_IGNORED;
             if (x >= 104 && x <= 158 && y >= 86 && y <= 142)
@@ -42941,6 +42992,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return m11_toggle_champion_inventory(state,m11_inventory_champion_index(state));
                 if (row[0] == 70) {
                     handled = m11_process_v1_mouth_click(state);
+                } else if (row[0] == 145) {
+                    /* COMMAND.C G0449 C145 enters G0450/G0460; the shared
+                     * IIGS HandleInput branch owns native rest state/ticks. */
+                    return M11_GameView_HandleInput(state,
+                                                    M12_MENU_INPUT_REST_TOGGLE);
                 } else if (row[0] == 71) {
                     handled = m11_process_v1_eye_click(state);
                     if (handled) state->v1EyePressActive = 1;
