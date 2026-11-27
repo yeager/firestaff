@@ -21140,15 +21140,15 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
     }
 }
 
-/* ReDMCSB MOVESENS.C F0276 runs the floor sensor pass for object
- * admission/removal after a successful floor-chain mutation. This adapter is
- * currently bounded to the DM1 PC34 path. */
-static void m11_process_dm1_object_floor_change(M11_GameViewState* state,
-                                                int mapIndex,
-                                                int mapX,
-                                                int mapY,
-                                                unsigned short thing,
-                                                int isAddition) {
+/* ReDMCSB MOVESENS.C F0276 runs the floor sensor pass for object/group
+ * admission and removal. The caller owns link timing: additions are checked
+ * before linking, removals before unlinking. This adapter is bounded to DM1. */
+static void m11_process_dm1_floor_thing_change(M11_GameViewState* state,
+                                               int mapIndex,
+                                               int mapX,
+                                               int mapY,
+                                               unsigned short thing,
+                                               int isAddition) {
     struct SensorEffectList_Compat effects;
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
         !state->world.dungeon || !state->world.things) return;
@@ -23402,7 +23402,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
                        M11_DM1_PRESENTED("HAND ROUTE FAILED"));
         return 0;
     }
-    m11_process_dm1_object_floor_change(state,
+    m11_process_dm1_floor_thing_change(state,
         state->world.party.mapIndex, state->world.party.mapX,
         state->world.party.mapY, item, 0);
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
@@ -23511,7 +23511,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         }
         m11_debug_trace_floor_drop(state, "mouse-hand", item,
                                    beforeHead, 1);
-        m11_process_dm1_object_floor_change(state,
+        m11_process_dm1_floor_thing_change(state,
             state->world.party.mapIndex, state->world.party.mapX,
             state->world.party.mapY, item, 1);
         m11_get_source_item_name(state, state->world.things, item,
@@ -23575,7 +23575,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
                                    beforeHead, 1);
     }
 
-    m11_process_dm1_object_floor_change(state,
+    m11_process_dm1_floor_thing_change(state,
         state->world.party.mapIndex, state->world.party.mapX,
         state->world.party.mapY, item, 1);
 
@@ -25902,6 +25902,13 @@ static int m11_check_group_death_and_drop(
         /* ReDMCSB GROUP.C F0189:759-761 zeroes all C04 Health before F0267
          * removes the dead group, including stale unused slots. */
         memset(g->health, 0, sizeof(g->health));
+    }
+    if (killedAllApply.shouldUnlinkGroupFromSquare) {
+        /* F0267 runs the F0276 removal pass before unlinking. The bounded
+         * floor adapter excludes this group from its existing-group census. */
+        m11_process_dm1_floor_thing_change(
+            state, killedAllApply.mapIndex, killedAllApply.mapX,
+            killedAllApply.mapY, killedAllApply.groupThing, 0);
     }
     if (killedAllApply.shouldUnlinkGroupFromSquare) {
         (void)m11_unlink_thing_from_square(
@@ -47482,7 +47489,7 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
                                     targetMapX, targetMapY, item);
         return 0;
     }
-    m11_process_dm1_object_floor_change(state,
+    m11_process_dm1_floor_thing_change(state,
         state->world.party.mapIndex, targetMapX, targetMapY, item, 0);
 
     {
@@ -47534,7 +47541,7 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
                                         target->thing);
             return 0;
         }
-        m11_process_dm1_object_floor_change(state,
+        m11_process_dm1_floor_thing_change(state,
             target->mapIndex, target->mapX, target->mapY,
             target->thing, 0);
         m11_get_source_item_name(state, state->world.things, target->thing,
@@ -47591,7 +47598,7 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
         DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
         return 0;
     }
-    m11_process_dm1_object_floor_change(state,
+    m11_process_dm1_floor_thing_change(state,
         state->world.party.mapIndex, targetMapX, targetMapY,
         placedItem, 1);
 

@@ -198,11 +198,12 @@ void SensorEffectList_SetLeaderReceipt_Compat(
     int leaderIndex);
 
 /* ReDMCSB MOVESENS.C F0276 object add/remove pass for a floor square.
- * The caller owns the source link/unlink transaction and invokes this after
- * the mutation. Added `thing` is excluded from the pre-existing-weight scan,
- * matching F0276's add-before-link census. This bounded adapter handles floor
- * C001/C002/C004/C007 admission and emits F0272 effect receipts; wall-cell
- * sensor branches remain in the wall/object interaction path. */
+ * The caller owns the source link/unlink transaction. Added `thing` is
+ * excluded from the pre-existing-weight scan (add-before-link); removed
+ * `thing` is excluded from the existing-group/object census (remove-before-
+ * unlink). This bounded adapter handles floor C001/C002/C004/C007 admission
+ * and emits F0272 effect receipts; wall-cell sensor branches remain in the
+ * wall/object interaction path. */
 int F0276_SENSOR_ProcessObjectFloorChange_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,

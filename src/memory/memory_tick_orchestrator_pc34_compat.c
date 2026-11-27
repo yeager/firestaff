@@ -3805,6 +3805,14 @@ static int orch_cmd_attack_schedule_f0231_reaction_compat(
 static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
     struct GameWorld_Compat* world,
     const DM1_MeleeF0190KilledAllStatePlanPc34* plan);
+static int orch_f0267_sensor_pass_dispatch_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short movingThing,
+    int isAddition,
+    struct F0267ThingMoveResultPc34Compat* moveResult);
 
 static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
     struct GameWorld_Compat* world,
@@ -3827,6 +3835,15 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
          * F0267 unlinks the group, even after F0190 killed its members. */
         memset(world->things->groups[applyPlan.groupIndex].health, 0,
                sizeof(world->things->groups[applyPlan.groupIndex].health));
+    }
+    if (applyPlan.shouldUnlinkGroupFromSquare) {
+        struct F0267ThingMoveResultPc34Compat sourceRemovalResult;
+        memset(&sourceRemovalResult, 0, sizeof(sourceRemovalResult));
+        /* ReDMCSB MOVESENS.C F0267:799-807 runs F0276 for the group while it
+         * is still on its source square, before unlinking it. */
+        (void)orch_f0267_sensor_pass_dispatch_compat(
+            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+            applyPlan.groupThing, 0, &sourceRemovalResult);
     }
     if (applyPlan.shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
