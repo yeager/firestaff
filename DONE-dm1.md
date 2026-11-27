@@ -1,3 +1,13 @@
+- 2026-11-27: Corrected Apple IIGS rest keyboard dispatch from ReDMCSB
+  `COMMAND.C:G0460-G0461` (Return/C146 wakes; Escape/C147 freezes and
+  Escape/C148 unfreezes). Ordinary input remains suppressed while resting,
+  and the three rest-state mirrors clear together on wake. The focused M11
+  regression passes and covers movement/rest-toggle suppression, both Escape
+  transitions, Return wake, and the frozen idle-tick gate. GitHub Actions
+  `45984447876` has passed its unit verification and build checks other than
+  the still-running macOS build at the time of this entry. Native IIGS runtime
+  verification remains outstanding; this is not full IIGS parity.
+
 - 2026-11-27: Replaced the Apple IIGS F0437 title zoom's exact-ratio
   nearest-neighbour sampling with ReDMCSB `BLTSHRNK.C:F0129` MEDIA351's
   10-bit quotient promoted to a 16.16 source step, starting at source phase
