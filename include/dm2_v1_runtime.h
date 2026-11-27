@@ -30,6 +30,36 @@
 
 #include <stdint.h>
 #include <stddef.h>
+
+#define DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS 64
+
+/* Source-ordered dungeon cells selected by guidraw_29ee_1946. These are
+ * map-data inputs for the later GDAT chip renderer, not drawn pixels. */
+typedef struct DM2_V1_RuntimeMagicMapCell {
+    int16_t x;
+    int16_t y;
+    int16_t map;
+    int16_t forward;
+    int16_t side;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    uint8_t valid;
+} DM2_V1_RuntimeMagicMapCell;
+
+typedef struct DM2_V1_RuntimeMagicMapGridReceipt {
+    int valid;
+    int16_t source_map;
+    int16_t heading;
+    int16_t party_x;
+    int16_t party_y;
+    int16_t pixel_offset_x;
+    int16_t pixel_offset_y;
+    uint8_t row_count;
+    uint8_t column_count;
+    uint8_t cell_count;
+    uint8_t missing_cell_count;
+    DM2_V1_RuntimeMagicMapCell cells[DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS];
+} DM2_V1_RuntimeMagicMapGridReceipt;
 #include "dm2_v1_boot.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_spell_cast_player.h"
@@ -484,6 +514,14 @@ int  dm2_v1_runtime_last_perform_move_receipt(
 int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=ok -1=unbooted */
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
+
+/* Collect the source-ordered DM2 magic-map tile cells from the active
+ * authenticated dungeon. The caller supplies the pose and map-pan offsets
+ * consumed by guidraw_29ee_1946. This does not claim chip pixels were drawn. */
+int dm2_v1_runtime_collect_magic_map_grid(
+    int16_t party_x, int16_t party_y, int16_t party_map, int16_t heading,
+    int16_t pixel_offset_x, int16_t pixel_offset_y,
+    DM2_V1_RuntimeMagicMapGridReceipt *out_receipt);
 
 typedef struct DM2_V1_RuntimeMusicMapReceipt {
     int valid;

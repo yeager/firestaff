@@ -3004,9 +3004,15 @@ tile state, derives the source map-chip code (including the tile-type-7
 Firestaff `dm2_v1_guidraw_29ee_1946` currently only fills rect 99 and
 `dm2_v1_draw_map_chip` has no tile behavior. A repository-wide source search
 also finds no production M11 construction of `DM2_V1_GuiDrawCallbacks` or
-call to `dm2_v1_draw_majic_map`. Implement the complete map data/display owner
-before claiming a drawn-map receipt; callback-only probes are not production
-coverage.
+call to `dm2_v1_draw_majic_map`. The runtime now exposes
+`dm2_v1_runtime_collect_magic_map_grid`, which emits the source-ordered 7x7 or
+8x8 cells with selected map, local coordinates, raw tile byte, and tile type.
+It resolves same-level overlaps and active teleporter rejection through the
+existing per-cell level descriptors, and does not change current-map state.
+This is data enumeration only: map-chip selection from the eight-word room
+summary (including the tile-type-7 `v1e03d4` route), highlight/minion flags,
+GDAT chip composition, and M11 panel binding remain absent. Do not treat its
+receipt as a drawn map; callback-only probes are not production coverage.
 
 2026-11-02 SKProject `DM2_TRY_CAST_SPELL` failure-state correction: DOS, SPX v4 and SPX v5 clear the live hero rune tail for failed casts except class `0x30`, which keeps the runes while requesting an empty flask. Firestaff's live M11 caster now applies that source-owned rune mutation to `c_hero` and synchronizes the save/load snapshot when the cast receipt requests clearing. The live route now also applies `PROCEED_SPELL_FAILURE` status/global/window state and resolves the exact class-0x30 GDAT image into a no-draw receipt. It remains partial because M11 does not render that image/status, cast-chance/RNG and spell execution coverage are incomplete, and edition/platform caller ownership remains open.
 

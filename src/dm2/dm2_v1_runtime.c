@@ -822,6 +822,106 @@ static int dm2_runtime_build_locate_map_descriptors(
     return 1;
 }
 
+/* SKULLWIN/c_gui_draw.cpp::DM2_guidraw_29ee_1946 and
+ * SKWINDOS/dm2byf.cpp::SKW_29ee_1946. This pass resolves the source map and
+ * tile byte for each visible cell, including same-level overlaps and active
+ * teleporter rejection. DRAW_MAP_CHIP still owns the separate summary/GDAT
+ * composition, so this receipt deliberately makes no pixel-draw claim. */
+int dm2_v1_runtime_collect_magic_map_grid(
+    int16_t party_x, int16_t party_y, int16_t party_map, int16_t heading,
+    int16_t pixel_offset_x, int16_t pixel_offset_y,
+    DM2_V1_RuntimeMagicMapGridReceipt *out_receipt)
+{
+    DM2_V1_RuntimeMagicMapGridReceipt receipt;
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
+    uint8_t candidates[DM2_V1_MAX_LEVELS + 1];
+    uint16_t candidate_count = 0u;
+    int row_first;
+    int side_first;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_map = party_map;
+    receipt.heading = heading;
+    receipt.party_x = party_x;
+    receipt.party_y = party_y;
+    receipt.pixel_offset_x = pixel_offset_x;
+    receipt.pixel_offset_y = pixel_offset_y;
+    if (out_receipt) *out_receipt = receipt;
+
+    if (!out_receipt || !rt->boot || !rt->source_party_valid ||
+        !rt->boot->dungeon_data || rt->outdoor || party_map < 0 ||
+        party_map >= DM2_V1_MAX_LEVELS) return 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (party_map >= dungeon->level_count ||
+        dungeon->level_count > DM2_V1_MAX_LEVELS ||
+        heading < 0 || heading > 3) return 0;
+
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        if (dungeon->map_level_number[map] ==
+            dungeon->map_level_number[party_map])
+            candidates[candidate_count++] = (uint8_t)map;
+    }
+    candidates[candidate_count] = 0xffu;
+    if (candidate_count == 0u) return 0;
+
+    row_first = pixel_offset_y < 0 ? 4 : 3;
+    side_first = pixel_offset_x < 0 ? -4 : -3;
+    receipt.row_count = (uint8_t)(row_first + 4);
+    receipt.column_count = (uint8_t)(4 - side_first);
+
+    for (int forward = row_first; forward >= -3; --forward) {
+        for (int side = side_first; side <= 3; ++side) {
+            DM2_V1_RuntimeMagicMapCell *cell;
+            DM2_V1_SkprojectLocateOtherLevelReceipt locate_receipt;
+            int16_t x = party_x;
+            int16_t y = party_y;
+            int selected_map;
+            int tile_value;
+
+            if (receipt.cell_count >= DM2_V1_RUNTIME_MAGIC_MAP_MAX_CELLS ||
+                !dm2_v1_skproject_calc_vector_w_dir(
+                    heading, (int16_t)forward, (int16_t)side, &x, &y, NULL) ||
+                !dm2_runtime_build_locate_map_descriptors(
+                    rt, dungeon, party_map, x, y, maps)) {
+                ++receipt.missing_cell_count;
+                continue;
+            }
+
+            selected_map = dm2_v1_skproject_locate_other_level(
+                maps, (uint16_t)dungeon->level_count, party_map, 0,
+                &x, &y, candidates, (uint16_t)(candidate_count + 1u), 0,
+                NULL, &locate_receipt);
+            if (selected_map < 0) {
+                selected_map = party_map;
+                /* LOCATE_OTHER_LEVEL leaves its inputs untouched on a
+                 * miss, so x/y remain the attempted source-map coordinates. */
+            }
+            tile_value = dm2_v1_dungeon_c_map_get_tile_value(
+                dungeon, selected_map, x, y);
+            cell = &receipt.cells[receipt.cell_count++];
+            cell->x = x;
+            cell->y = y;
+            cell->map = (int16_t)selected_map;
+            cell->forward = (int16_t)forward;
+            cell->side = (int16_t)side;
+            if (tile_value < 0) {
+                ++receipt.missing_cell_count;
+                continue;
+            }
+            cell->tile_value = (uint8_t)tile_value;
+            cell->tile_type = (uint8_t)((tile_value >> 5) & 0x07);
+            cell->valid = 1u;
+        }
+    }
+    receipt.valid = receipt.cell_count ==
+        (uint8_t)(receipt.row_count * receipt.column_count) &&
+        receipt.missing_cell_count == 0u;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 typedef struct {
     const DM2_V1_DungeonData *dungeon;
     int level;
