@@ -2434,3 +2434,7 @@ msgid ""
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
 msgstr ""
+
+#. M11_DM1_PRESENTED: ReDMCSB COMMAND.C C147 IIGS freeze-screen label.
+msgid "GAME FROZEN"
+msgstr ""

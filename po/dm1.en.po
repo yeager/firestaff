@@ -2438,3 +2438,7 @@ msgstr ""
 
 #~ msgid "dm1.hud.water"
 #~ msgstr "WATER"
+
+#. M11_DM1_PRESENTED: ReDMCSB COMMAND.C C147 IIGS freeze-screen label.
+msgid "GAME FROZEN"
+msgstr ""

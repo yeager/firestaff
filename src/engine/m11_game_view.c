@@ -39977,14 +39977,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * freeze stops source time, and Escape is the only IIGS unfreeze key. */
         if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
             state->dm1IigsFrozen = !state->dm1IigsFrozen;
-            m11_set_status(state, "DM1 IIGS",
-                           state->dm1IigsFrozen ? "FROZEN" : "UNFROZEN");
-            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
-                     state->dm1IigsFrozen ? "GAME FROZEN" :
-                     (state->resting ? "RESTING" : "ACTIVE"));
-            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "PRESS ESCAPE TO %s GAME",
-                     state->dm1IigsFrozen ? "UNFREEZE" : "FREEZE");
+            m11_set_status(state, state->dm1IigsFrozen
+                ? M11_DM1_PRESENTED("GAME FROZEN") : "", "");
+            m11_set_inspect_readout(state, state->dm1IigsFrozen
+                ? M11_DM1_PRESENTED("GAME FROZEN") : "NO FOCUS", "");
             return M11_GAME_INPUT_REDRAW;
         }
         if (state->dm1IigsFrozen) return M11_GAME_INPUT_IGNORED;
