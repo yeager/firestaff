@@ -7899,7 +7899,8 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const DM1_MeleeF0190MutationDispatchPlanPc34* plan);
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan,
+    struct TickResult_Compat* result);
 
 static void orch_schedule_group_reaction_compat(
     struct GameWorld_Compat* world,
@@ -7995,7 +7996,8 @@ static int orch_process_group_projectile_impacts_on_square_compat(
     int mapX,
     int mapY,
     const unsigned char ordinalInCell[4],
-    int* outKilledGroup)
+    int* outKilledGroup,
+    struct TickResult_Compat* result)
 {
     int sftIndex;
     int restart;
@@ -8169,7 +8171,7 @@ authenticated_projectile_scan_complete:
                     /* This helper returns whether F0190 fear triggered, not
                      * a success code; a calm survivor is still a valid hit. */
                     (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                        world, group, &dispatchPlan);
+                        world, group, &dispatchPlan, result);
                 }
                 /* ReDMCSB PROJEXPL.C:F0217 calls F0209 C30 after every
                  * creature impact except a whole-group kill.  This includes
@@ -8207,7 +8209,8 @@ static int orch_apply_f0266_group_projectile_precheck_compat(
     int sourceMapY,
     int destinationMapX,
     int destinationMapY,
-    int* outKilledGroup)
+    int* outKilledGroup,
+    struct TickResult_Compat* result)
 {
     struct DungeonGroup_Compat* group;
     unsigned char sourceOrdinalInCell[4];
@@ -8231,14 +8234,14 @@ static int orch_apply_f0266_group_projectile_precheck_compat(
         sourceOrdinalInCell, destinationOrdinalInCell, intermediaryOrdinalInCell);
     if (!orch_process_group_projectile_impacts_on_square_compat(
             world, group, sourceMapIndex, sourceMapX, sourceMapY,
-            sourceOrdinalInCell, outKilledGroup)) {
+            sourceOrdinalInCell, outKilledGroup, result)) {
         return 0;
     }
     if (outKilledGroup && *outKilledGroup) return 1;
     if (checkDestination) {
         if (!orch_process_group_projectile_impacts_on_square_compat(
                 world, group, sourceMapIndex, destinationMapX, destinationMapY,
-                intermediaryOrdinalInCell, outKilledGroup)) {
+                intermediaryOrdinalInCell, outKilledGroup, result)) {
             return 0;
         }
     }
@@ -8618,7 +8621,8 @@ static int orch_drop_group_slot_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY,
-    int* outSoundId);
+    int* outSoundId,
+    struct TickResult_Compat* result);
 static int orch_link_thing_to_square_tail_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -8638,7 +8642,8 @@ static int orch_cmd_attack_apply_f0190_fear_compat(
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const DM1_MeleeF0190MutationDispatchPlanPc34* plan);
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan,
+    struct TickResult_Compat* result);
 
 static int orch_materialize_projectile_associated_thing_compat(
     struct GameWorld_Compat* world,
@@ -9754,7 +9759,7 @@ static int orch_apply_projectile_group_action_compat(
             &f0231ApplyPlan, &killedAllAfterplay);
         if (f0231ApplyPlan.shouldApplyMutationDispatch) {
             (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                world, group, &f0231ApplyPlan.mutationDispatchPlan);
+                world, group, &f0231ApplyPlan.mutationDispatchPlan, result);
         }
         if (killedAllAfterplay.shouldPresentSourceSmoke) {
             (void)orch_create_explosion_with_fallback_compat(
@@ -9976,10 +9981,12 @@ static int orch_build_explosion_digest_compat(
 
 static int orch_apply_door_group_damage_f0191_compat(
     struct GameWorld_Compat* world, int groupIndex, int mapIndex,
-    int mapX, int mapY, int attack, int* outKilledAll);
+    int mapX, int mapY, int attack, int* outKilledAll,
+    struct TickResult_Compat* result);
 static int orch_apply_explosion_group_action_compat(
     struct GameWorld_Compat* world,
-    const struct CombatAction_Compat* action);
+    const struct CombatAction_Compat* action,
+    struct TickResult_Compat* result);
 
 static int orch_apply_explosion_party_action_compat(
     struct GameWorld_Compat* world,
@@ -10015,7 +10022,8 @@ static int orch_apply_initial_explosion_burst_compat(
     if (burst.emittedCombatActionPartyCount)
         (void)orch_apply_explosion_party_action_compat(world, &burst.outActionParty, NULL);
     if (burst.emittedCombatActionGroupCount)
-        (void)orch_apply_explosion_group_action_compat(world, &burst.outActionGroup);
+        (void)orch_apply_explosion_group_action_compat(
+            world, &burst.outActionGroup, NULL);
     return 1;
 }
 
@@ -10071,7 +10079,7 @@ static int orch_handle_explosion_advance_event_compat(
     }
     if (tickResult.emittedCombatActionGroupCount > 0) {
         (void)orch_apply_explosion_group_action_compat(
-            world, &tickResult.outActionGroup);
+            world, &tickResult.outActionGroup, result);
     }
 
     if (tickResult.emittedDoorDestructionEvent) {
@@ -10164,7 +10172,8 @@ static int orch_apply_explosion_party_action_compat(
 
 static int orch_apply_explosion_group_action_compat(
     struct GameWorld_Compat* world,
-    const struct CombatAction_Compat* action)
+    const struct CombatAction_Compat* action,
+    struct TickResult_Compat* result)
 {
     struct DungeonGroup_Compat* group;
     DM1_ExplosionGroupApplyPlanPc34 applyPlan;
@@ -10184,7 +10193,7 @@ static int orch_apply_explosion_group_action_compat(
          * same per-creature randomized transaction as door damage. */
         return orch_apply_door_group_damage_f0191_compat(world, groupIndex,
             action->targetMapIndex, action->targetMapX, action->targetMapY,
-            action->rawAttackValue, NULL);
+            action->rawAttackValue, NULL, result);
     }
     if (!dm1_v1_explosion_group_apply_pc34(action, group, &applyPlan)) {
         return 0;
@@ -10223,7 +10232,8 @@ static int orch_apply_door_group_damage_f0191_compat(
     int mapX,
     int mapY,
     int attack,
-    int* outKilledAll)
+    int* outKilledAll,
+    struct TickResult_Compat* result)
 {
     struct CombatResult_Compat damage;
     struct DungeonGroup_Compat* group;
@@ -10314,7 +10324,7 @@ static int orch_apply_door_group_damage_f0191_compat(
                 return 0;
             }
             (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                world, group, &dispatchPlan);
+                world, group, &dispatchPlan, result);
 
             memset(&smokeIn, 0, sizeof(smokeIn));
             memset(&smokePlan, 0, sizeof(smokePlan));
@@ -11404,7 +11414,8 @@ static int orch_drop_group_slot_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY,
-    int* outSoundId);
+    int* outSoundId,
+    struct TickResult_Compat* result);
 
 static int orch_drop_group_f0267_rejection_possessions_compat(
     struct GameWorld_Compat* world,
@@ -11422,7 +11433,7 @@ static int orch_drop_group_f0267_rejection_possessions_compat(
     (void)orch_drop_group_fixed_possessions_compat(
         world, group, mapIndex, mapX, mapY);
     return orch_drop_group_slot_possessions_compat(
-        world, group, mapIndex, mapX, mapY, NULL);
+        world, group, mapIndex, mapX, mapY, NULL, NULL);
 }
 
 static int orch_apply_group_move_removal_plan_f0267_compat(
@@ -11436,7 +11447,8 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
     int sourceMapY,
     int destinationMapIndex,
     int destinationMapX,
-    int destinationMapY)
+    int destinationMapY,
+    struct TickResult_Compat* result)
 {
     DM1_V1_GroupMoveRemovalPlanPc34 plan;
 
@@ -11460,7 +11472,7 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
             world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
         return orch_drop_group_slot_possessions_compat(
             world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY,
-            NULL);
+            NULL, result);
     }
     return 1;
 }
@@ -11584,11 +11596,17 @@ static int orch_drop_group_slot_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY,
-    int* outSoundId)
+    int* outSoundId,
+    struct TickResult_Compat* result)
 {
     int sftIndex;
     unsigned short thing;
     int i;
+    int localIndex;
+    int champion;
+    int championCount;
+    int amount;
+    int audibleIndex;
     DM1_MeleeF0188GroupSlotDropInputPc34 in;
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
 
@@ -11658,6 +11676,37 @@ static int orch_drop_group_slot_possessions_compat(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
+        /* ReDMCSB F0276 requests audible C01 before F0270 applies C10. */
+        for (audibleIndex = 0;
+             audibleIndex < moveResult.audibleSensorTriggers;
+             ++audibleIndex) {
+            emit(result, EMIT_SOUND_REQUEST, DM1_SND_SWITCH,
+                 mapX, mapY, mapIndex);
+        }
+        /* F0270's local C10 applies during each F0267 destination pass. */
+        championCount = world->party.championCount;
+        if (championCount > 0 && championCount <= CHAMPION_MAX_PARTY) {
+            amount = 300 / championCount;
+            for (localIndex = 0;
+                 localIndex < moveResult.localSensorEffects.count &&
+                 localIndex < SENSOR_EFFECT_LIST_MAX_COUNT;
+                 ++localIndex) {
+                const struct SensorEffect_Compat* local =
+                    &moveResult.localSensorEffects.effects[localIndex];
+                if (local->kind != SENSOR_EFFECT_LOCAL_STEAL_XP ||
+                    local->textIndex != DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+                    continue;
+                }
+                for (champion = 0; champion < championCount; ++champion) {
+                    const struct ChampionState_Compat* member =
+                        &world->party.champions[champion];
+                    if (!member->present || member->hp.current <= 0) continue;
+                    orch_award_skill_experience_compat(
+                        world, champion, LIFECYCLE_SKILL_STEAL, amount,
+                        orch_cmd_attack_map_difficulty_compat(world), result);
+                }
+            }
+        }
     }
     if (outSoundId) *outSoundId = plan.soundId;
     return 1;
@@ -11666,7 +11715,8 @@ static int orch_drop_group_slot_possessions_compat(
 static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan)
+    const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan,
+    struct TickResult_Compat* result)
 {
     DM1_MeleeF0190PossessionDropApplyPlanPc34 applyPlan;
     int slotDropSoundId = -1;
@@ -11703,7 +11753,7 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     if (applyPlan.shouldDropGroupSlotPossessions) {
         if (orch_drop_group_slot_possessions_compat(
                 world, group, applyPlan.mapIndex, applyPlan.mapX,
-                applyPlan.mapY, &slotDropSoundId) &&
+                applyPlan.mapY, &slotDropSoundId, result) &&
             slotDropSoundId >= 0) {
             struct TimelineEvent_Compat sound;
 
@@ -11937,7 +11987,8 @@ static int orch_cmd_attack_apply_killed_some_receipt_compat(
 static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
-    const DM1_MeleeF0190MutationDispatchPlanPc34* plan)
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan,
+    struct TickResult_Compat* result)
 {
     DM1_MeleeF0190MutationDispatchApplyPlanPc34 applyPlan;
     int fearTriggered = 0;
@@ -11952,7 +12003,7 @@ static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
     }
     if (applyPlan.shouldDropPossessions) {
         orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
-            world, group, &applyPlan.possessionDropPlan);
+            world, group, &applyPlan.possessionDropPlan, result);
     }
     if (applyPlan.shouldApplyKilledSomeState) {
         (void)orch_cmd_attack_apply_killed_some_receipt_compat(
@@ -12794,7 +12845,8 @@ static int orch_materialize_generated_group_compat(
                     fallKilledGroup ? movingFixedDropCells : NULL,
                     fallKilledGroup ? movingFixedDropCellCount : 0,
                     fallKilledGroup, creatureAllowed, -1, 0,
-                    destMapIndex, routePlan.mapX, routePlan.mapY)) {
+                    destMapIndex, routePlan.mapX, routePlan.mapY,
+                    result)) {
                 return 0;
             }
             if (outGroupIndex) *outGroupIndex = groupIndex;
@@ -12919,7 +12971,7 @@ static int orch_handle_deferred_group_move_event_compat(
                 fallKilledGroup ? movingFixedDropCells : NULL,
                 fallKilledGroup ? movingFixedDropCellCount : 0,
                 fallKilledGroup, creatureAllowed, -1, 0,
-                retry.mapIndex, routePlan.mapX, routePlan.mapY);
+                retry.mapIndex, routePlan.mapX, routePlan.mapY, result);
         }
         if (routePlan.route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
             retry.fireAtTick = routePlan.retryFireAtTick;
@@ -13020,7 +13072,7 @@ static int orch_f0249_move_group_first_square_thing_compat(
 
     if (!orch_apply_f0266_group_projectile_precheck_compat(
             world, groupIndex, mapIndex, mapX, mapY, mapX, mapY,
-            &killedByProjectile)) {
+            &killedByProjectile, result)) {
         return 0;
     }
     if (killedByProjectile) {
@@ -13151,7 +13203,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     if (movePlan.route != DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
         if (!orch_apply_f0266_group_projectile_precheck_compat(
                 world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
-                destMapX, destMapY, &killedByProjectile)) {
+                destMapX, destMapY, &killedByProjectile, result)) {
             return 0;
         }
         if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
@@ -14208,7 +14260,7 @@ static int orch_handle_creature_reaction_event_compat(
                 group, ordinalInCell);
             if (!orch_process_group_projectile_impacts_on_square_compat(
                     world, group, ev->mapIndex, ev->mapX, ev->mapY,
-                    ordinalInCell, &killedAllByPendingProjectile)) {
+                    ordinalInCell, &killedAllByPendingProjectile, result)) {
                 return 0;
             }
             cellsChangedByPendingProjectile =
@@ -14947,7 +14999,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                 orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
                                     world, &world->things->groups[groupIndex],
                                     &aftermathApplyPlan
-                                        .mutationDispatchPlan);
+                                        .mutationDispatchPlan, result);
                         }
                         if (killedAllAfterplay.shouldPresentSourceSmoke) {
                             (void)orch_create_explosion_with_fallback_compat(
@@ -15526,7 +15578,7 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                                 groupIndex < world->things->groupCount) {
                                 (void)orch_apply_door_group_damage_f0191_compat(
                                     world, groupIndex, ev.mapIndex, ev.mapX, ev.mapY,
-                                    obstruction.damageAmount, &killedAll);
+                                    obstruction.damageAmount, &killedAll, result);
                                 if (!killedAll) {
                                     memset(&dangerAction, 0, sizeof(dangerAction));
                                     dangerAction.targetMapIndex = ev.mapIndex;

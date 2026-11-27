@@ -25743,15 +25743,15 @@ static int m11_drop_group_slot_possessions_f0188(
             group->slot = plan.steps[i].sourceThing;
             return 0;
         }
-        if (moveResult.localSensorEffects.count > 0) {
-            m11_apply_sensor_effects(
-                state, &moveResult.localSensorEffects);
-        }
-        /* F0276 requests C01 once per audible sensor in each F0267 pass. */
+        /* F0276 requests audible C01 before F0270 applies local C10. */
         for (audibleIndex = 0;
              audibleIndex < moveResult.audibleSensorTriggers;
              ++audibleIndex) {
             m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR);
+        }
+        if (moveResult.localSensorEffects.count > 0) {
+            m11_apply_sensor_effects(
+                state, &moveResult.localSensorEffects);
         }
     }
     if (plan.shouldDrop && state->audioState.lastSoundIndex >= -1) {

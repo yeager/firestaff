@@ -2790,7 +2790,9 @@ parity.
   raw Type_Data. F0188 group-slot drops now retain audible F0276 hits through
   the M10 movement receipt and request C01 in M11. Local C10 results on this
   route now reach M11's source champion XP award path; rotation remains
-  batch-owned by M10 F0271. A full serialized sensor
+  batch-owned by M10 F0271. M10's internal F0190/F0267 group-drop routes now
+  apply C10 awards and publish audible C01 requests through the available
+  tick result. A full serialized sensor
   receipt buffer now reports overflow without suppressing F0268's event.
   The authentic English v1.2
   menu-to-HoC route passes after the changes, but does not verify every later sensor
