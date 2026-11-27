@@ -67,9 +67,32 @@ for domain in "${DOMAINS[@]}"; do
         msgmerge --update --quiet --no-wrap --no-fuzzy-matching --backup=none "$catalog" "$pot"
     done
 done
-# Apply reviewed DM1 status strings after msgmerge. The seed script accepts the
-# scratch directory so --check and --update produce identical catalogs.
-FIRESTAFF_PO_DIR="$WORK_PO" python3 "$ROOT/po/dm1_translations_seed.py"
+# Keep the IIGS freeze label translated after the canonical merge. The
+# source-table override only changes this newly introduced key.
+python3 - "$WORK_PO" <<'PY'
+import sys
+from pathlib import Path
+
+po_dir = Path(sys.argv[1])
+translations = {
+    "cs": "HRA JE ZAMRZLÁ", "da": "SPILLET ER FRYSET",
+    "de": "SPIEL EINGEFROREN", "es": "JUEGO CONGELADO",
+    "fi": "PELI ON JÄÄDYTETTY", "fr": "JEU FIGÉ",
+    "hu": "JÁTÉK FAGYASZTVA", "it": "GIOCO BLOCCATO",
+    "ja": "ゲーム一時停止中", "ko": "게임 정지됨",
+    "nl": "SPEL BEVROREN", "no": "SPILLET ER FRYST",
+    "pl": "GRA ZAMROŻONA", "pt": "JOGO CONGELADO",
+    "ru": "ИГРА ЗАМОРОЖЕНА", "sv": "SPELET ÄR FRUSET",
+    "tr": "OYUN DONDURULDU", "zh": "游戏已冻结",
+    "id": "PERMAINAN DIBEKUKAN",
+}
+for language, translation in translations.items():
+    path = po_dir / f"dm1.{language}.po"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace('msgid "GAME FROZEN"\nmsgstr ""',
+                        f'msgid "GAME FROZEN"\nmsgstr "{translation}"')
+    path.write_text(text, encoding="utf-8")
+PY
 # Reapply reviewed terminology after msgmerge.  It updates only explicit
 # source-owned entries and leaves unknown player text as an honest fallback.
 python3 "$ROOT/po/refresh_major_language_catalogs.py" --po-dir "$WORK_PO"

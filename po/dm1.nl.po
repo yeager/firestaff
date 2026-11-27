@@ -2452,3 +2452,7 @@ msgstr ""
 "HEB JE HET GEDAAN\n"
 "WARE AARD VAN\n"
 "DE BRANDWEER."
+
+#. M11_DM1_PRESENTED: ReDMCSB COMMAND.C C147 IIGS freeze-screen label.
+msgid "GAME FROZEN"
+msgstr "SPEL BEVROREN"

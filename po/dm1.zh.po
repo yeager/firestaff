@@ -2451,3 +2451,7 @@ msgstr ""
 "DID YOU GUESS THE\n"
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
+
+#. M11_DM1_PRESENTED: ReDMCSB COMMAND.C C147 IIGS freeze-screen label.
+msgid "GAME FROZEN"
+msgstr "游戏已冻结"

@@ -2452,3 +2452,7 @@ msgstr ""
 "GÆTTE DU\n"
 "SANDE ART AF\n"
 "BRANDMÆSEN."
+
+#. M11_DM1_PRESENTED: ReDMCSB COMMAND.C C147 IIGS freeze-screen label.
+msgid "GAME FROZEN"
+msgstr "SPILLET ER FRYSET"
