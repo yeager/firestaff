@@ -47,7 +47,10 @@ effects, or original-emulator parity.
 M10's F0188 group-slot drops now also follow the source's per-item order:
 snapshot `Next`, draw the cell, then call F0267 from the off-square source
 before drawing the next item's cell. This replaces direct floor-list insertion
-and admits destination sensor and chained-move behavior. Runtime coverage for
+and admits destination sensor and chained-move behavior. Before the first
+random draw, M10 validates every raw ordinary-item record and its `Next` link
+across the captured chain, so a malformed later record cannot leave an earlier
+item partially moved. Runtime coverage for
 group-slot drops on teleporter, pit, stairs, and sensor destinations remains
 open, as do full death-path RNG and original-emulator comparisons.
 

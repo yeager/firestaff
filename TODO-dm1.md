@@ -2634,7 +2634,9 @@ parity.
   death-smoke captures across supported platforms.
   M10 F0188 now routes each group-slot possession through F0267 after that
   item's cell draw, preserving destination sensors and chained movement before
-  the next draw. Add live coverage for teleporter, pit, stairs, and sensor
+  the next draw. Its prepass now validates every raw ordinary-item record and
+  Next link before the first RNG draw, avoiding a partial drop from a malformed
+  later link. Add live coverage for teleporter, pit, stairs, and sensor
   destinations; do not treat the source-ordered implementation as complete
   death-aftermath parity.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement
